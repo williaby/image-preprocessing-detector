@@ -2,15 +2,46 @@
 
 **Purpose**: Prioritize and track key architectural and implementation decisions before starting development.
 
+**Status**: ✅ **DECISIONS FINALIZED** - Phase 1 implementation approved (2025-01-15)
+
+---
+
+## ✅ FINALIZED DECISIONS (2025-01-15)
+
+### Decision #1: Throughput Target - **APPROVED**
+- **Target**: 1,000 pages/hour (0.28 pages/sec, ~3.6 sec/page)
+- **Rationale**: Baseline from OCR project, achievable with modest hardware
+- **Performance Budget**: < 500ms/page (Phase 1 classical CV), < 150ms/page (Phase 2-3 with ML)
+
+### Decision #2: Hardware Configuration - **APPROVED**
+- **GPU**: NVIDIA Quadro P2000 (5GB VRAM, Pascal architecture)
+- **CPU**: 2× Intel Xeon E5-2690 (16 cores total, 8 cores each)
+- **Environment**: Unraid server (shared GPU across processes)
+- **Deployment Strategy**: CPU-first (Phase 1), GPU acceleration (Phase 2-3)
+
+### Decision #3: v1 Detection Scope - **APPROVED**
+- **Must-Have**: Tables, Text blocks, Images/Figures
+- **Ideally (if feasible)**: Handwriting, Mathematical Formulas
+- **Timeline**: Standard scope (14 weeks to v1)
+- **Training Data**: Available via DocLayNet (11 layout classes including all target classes)
+
+### Decision #4: Test Data - **APPROVED**
+- **Source**: `/home/byron/dev/data_ingestor/data/benchmarks/`
+- **Datasets**:
+  - READoc: 500 PDFs with Markdown ground truth
+  - DocLayNet: 1,000 images with layout annotations (11 classes)
+  - PubTables-1M: 500 tables with structure annotations
+- **Validation Strategy**: Use DocLayNet for layout detection validation
+
 ---
 
 ## Decision Priority Matrix
 
 | # | Decision | Impact | Urgency | Dependencies | Status | Owner |
 |---|----------|--------|---------|--------------|--------|-------|
-| 1 | Throughput target (pages/hour) | CRITICAL | HIGH | Affects hardware sizing, architecture choices | 🔴 BLOCKED | Project Manager |
-| 2 | Hardware deployment (GPU/CPU mix) | CRITICAL | HIGH | Depends on #1 (throughput), affects cost | 🔴 BLOCKED | DevOps Lead |
-| 3 | v1 detection scope (element classes) | HIGH | HIGH | Affects training data needs, timeline | 🟡 PENDING | Product Owner |
+| 1 | Throughput target (pages/hour) | CRITICAL | HIGH | Affects hardware sizing, architecture choices | ✅ **APPROVED** | Byron Williams |
+| 2 | Hardware deployment (GPU/CPU mix) | CRITICAL | HIGH | Depends on #1 (throughput), affects cost | ✅ **APPROVED** | Byron Williams |
+| 3 | v1 detection scope (element classes) | HIGH | HIGH | Affects training data needs, timeline | ✅ **APPROVED** | Byron Williams |
 | 4 | PDF source distribution | HIGH | MEDIUM | Affects training data strategy | 🟡 PENDING | Data Team |
 | 5 | Language/script coverage | MEDIUM | MEDIUM | Affects model complexity | 🟡 PENDING | Product Owner |
 | 6 | Superscript/footnote timing | MEDIUM | LOW | Affects v1 scope, downstream coordination | 🟢 RECOMMENDED | Architecture Team |
