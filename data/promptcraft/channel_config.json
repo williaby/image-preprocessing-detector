@@ -1,0 +1,19 @@
+{
+  "graduation_criteria": {
+    "minimum_age_days": 7,
+    "minimum_usage_requests": 50,
+    "minimum_success_rate": 0.95,
+    "minimum_humaneval_score": 70.0
+  },
+  "detection_config": {
+    "check_interval_hours": 6,
+    "quality_filters": {
+      "min_context_window": 4000,
+      "exclude_providers": [
+        "experimental",
+        "test"
+      ]
+    }
+  },
+  "last_updated": "2025-11-04T10:54:29.776777"
+}

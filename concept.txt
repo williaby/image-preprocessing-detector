@@ -1,0 +1,39 @@
+This project is going to be focused on training a custom opencv model. The model will be used by other projects, primarily one focused on data ingestion for RAG AI applications where the data needs to be stored in a vector database. The goal is to train a model that is able to review an image file and determine the necessary preprocessing steps that should be applied prior to further work on moving it into the database. The workload will be split into two parts. The first is for image issues and the second is for documents focused on PDFs. If a file comes in as a non-image file, it will be converted to an image.
+
+If the PDF is less than 300dpi, we will need opencv to upscale the image to 300dpi. If it does not detect text in the image, it will need to determine if there are image quality issues that need addressed including:
+
+·         Noise,
+
+·         Blur,
+
+·         Skew/Rotation
+
+·         Perspective Distortion
+
+·         Low Contrast
+
+·         Image Orientation
+
+If the document does have text it needs to identify the elements on the page to help ensure proper processing. This includes identifying:
+
+·         Handwriting
+
+·         Superscript Font
+
+·         Footnotes and Endnotes
+
+·         Images
+
+·         Tables
+
+·         Non-latin characters
+
+·         Mathematical Formulas
+
+For certain issues, OpenCV would handle the correction itself. This includes deskew the image, applying perspective warp to flatten page, applying sharpening, CLAHE, denoising, background normalization, and upsampling.
+
+For each file it reviews, it will need to prepare an output json that identifies the file name and the elements identified. For source files that have more than one page, the individual outputs will be combined into a final output. This way the downstream processes can track the nature of the issues that will need to be resolved.
+
+For documents the files will then be passed on to LayoutParser for analysis before going to Tesseract, Marker, or Docling. That work is outside the scope of this project. This project will be responsible for handling the training and evaluation of that model so that it can properly output the needed information.
+
+Build out a project plan for this effort.
