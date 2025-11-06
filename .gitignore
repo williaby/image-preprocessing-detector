@@ -67,7 +67,10 @@ data/layout/*.jpg
 data/layout/*.png
 data/test/*.pdf
 data/test/*.jpg
+data/test/*.jpeg
 data/test/*.png
+data/test/*.avif
+data/test/*.webp
 data/annotations/*.json
 *.dvc
 
@@ -111,3 +114,14 @@ Desktop.ini
 # Linux
 *~
 .directory
+
+# Benchmark datasets (large) - added 2025-11-05
+data/benchmarks/
+data/SignaTR6K.zip
+
+# Validation artifacts (large)
+validation/datasets/
+validation/synthetic_images/
+validation/characteristic_curves/
+validation/doclaynet_validation_results.json
+validation/handwriting_samples_analysis.json

@@ -26,6 +26,9 @@ dependencies = [
     # PDF Processing
     "pymupdf>=1.23.0",
 
+    # CLI
+    "click>=8.1.0",
+
     # Deep Learning (placeholder - will add specific versions after testing)
     # "torch>=2.0.0",
     # "torchvision>=0.15.0",
@@ -99,7 +102,7 @@ api = [
 ]
 
 [project.scripts]
-imgprep = "image_preprocessing_detector.cli:main"
+imgprep = "image_preprocessing_detector.cli:cli"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -119,6 +122,7 @@ opencv-python = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
 pymupdf = "^1.23.0"
+click = "^8.1.0"
 pydantic = "^2.0.0"
 pydantic-settings = "^2.0.0"
 python-dotenv = "^1.0.0"
@@ -140,6 +144,8 @@ mkdocs-material = "^9.1.0"
 mkdocstrings = {extras = ["python"], version = "^0.22.0"}
 jupyter = "^1.0.0"
 ipykernel = "^6.25.0"
+matplotlib = "^3.10.7"
+datasets = "^4.4.1"
 
 [tool.poetry.group.ml]
 optional = true
@@ -266,6 +272,7 @@ omit = [
     "*/test_*.py",
     "*/__pycache__/*",
     "*/site-packages/*",
+    "validation/*",  # Exclude standalone validation scripts
 ]
 
 [tool.coverage.report]
