@@ -5,6 +5,11 @@ Handles loading documents from various formats (PDF, images) and converting
 them to standardized numpy arrays for processing.
 """
 
+from image_preprocessing_detector.ingestion.image_loader import (
+    ImageLoader,
+    ImageMetadata,
+    load_image,
+)
 from image_preprocessing_detector.ingestion.pdf_loader import (
     PageImage,
     PDFLoader,
@@ -15,4 +20,7 @@ __all__ = [
     "PDFLoader",
     "PageImage",
     "load_pdf",
+    "ImageLoader",
+    "ImageMetadata",
+    "load_image",
 ]
