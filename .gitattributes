@@ -1,0 +1,40 @@
+# .gitattributes
+#
+# Marks generated code and dependencies for GitHub linguist and improves
+# What The Diff filtering. See docs/WTD-Runbook.md for details.
+
+# Generated dependencies and lock files
+poetry.lock linguist-generated=true
+requirements*.txt linguist-generated=true
+
+# Test coverage reports
+htmlcov/* linguist-generated=true
+.coverage linguist-generated=true
+
+# Model weights and artifacts (if committed)
+*.pt linguist-generated=true
+*.pth linguist-generated=true
+*.onnx linguist-generated=true
+*.h5 linguist-generated=true
+*.pkl linguist-generated=true
+*.joblib linguist-generated=true
+
+# Documentation builds
+docs/_build/* linguist-generated=true
+site/* linguist-generated=true
+
+# Temporary files and validation artifacts
+tmp_cleanup/* linguist-generated=true
+validation/report.json linguist-generated=true
+
+# Binary files - treat as binary to avoid diff issues
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.tiff binary
+*.pt binary
+*.pth binary
+*.onnx binary
+*.h5 binary
