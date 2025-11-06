@@ -96,7 +96,7 @@ ml = [
 
 api = [
     # API Dependencies (install for Phase 4)
-    "fastapi>=0.100.0",
+    "fastapi>=0.115.0",  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
     "uvicorn[standard]>=0.23.0",
     "python-multipart>=0.0.6",
 ]
@@ -135,7 +135,7 @@ pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.0"
 pytest-xdist = "^3.3.0"
 hypothesis = "^6.82.0"
-black = "^23.7.0"
+black = ">=24.3.0"
 ruff = "^0.0.280"
 mypy = "^1.4.0"
 pre-commit = "^3.3.0"
@@ -146,6 +146,7 @@ jupyter = "^1.0.0"
 ipykernel = "^6.25.0"
 matplotlib = "^3.10.7"
 datasets = "^4.4.1"
+safety = "^3.7.0"
 
 [tool.poetry.group.ml]
 optional = true
@@ -162,7 +163,7 @@ onnxruntime = "^1.15.0"
 optional = true
 
 [tool.poetry.group.api.dependencies]
-fastapi = "^0.100.0"
+fastapi = "^0.115.0"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
 uvicorn = {extras = ["standard"], version = "^0.23.0"}
 python-multipart = "^0.0.6"
 

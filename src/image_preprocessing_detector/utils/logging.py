@@ -36,15 +36,17 @@ def setup_logging(
         format="%(message)s",
         level=log_level,
         handlers=[
-            RichHandler(
-                console=console,
-                rich_tracebacks=True,
-                show_time=include_timestamp,
-                show_level=True,
-                show_path=True,
+            (
+                RichHandler(
+                    console=console,
+                    rich_tracebacks=True,
+                    show_time=include_timestamp,
+                    show_level=True,
+                    show_path=True,
+                )
+                if not json_logs
+                else logging.StreamHandler(sys.stdout)
             )
-            if not json_logs
-            else logging.StreamHandler(sys.stdout)
         ],
     )
 
@@ -54,9 +56,11 @@ def setup_logging(
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="iso")
-        if include_timestamp
-        else lambda *_args, **_kwargs: {},
+        (
+            structlog.processors.TimeStamper(fmt="iso")
+            if include_timestamp
+            else lambda *_args, **_kwargs: {}
+        ),
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
@@ -127,7 +131,7 @@ if __name__ == "__main__":
     logger.debug("Debug message", extra_field="debug_value")
     logger.info("Processing started", document_id="doc_001", pages=10)
     logger.warning("Low confidence detection", confidence=0.42, threshold=0.5)
-    logger.error("Failed to process", error="file_not_found", path="/tmp/missing.pdf")
+    logger.error("Failed to process", error="file_not_found", path="./missing.pdf")
 
     log_performance(
         logger,

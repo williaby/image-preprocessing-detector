@@ -21,7 +21,7 @@ repos:
 
   # Python code formatting with Black
   - repo: https://github.com/psf/black
-    rev: 23.12.1
+    rev: 25.9.0
     hooks:
       - id: black
         language_version: python3.12
@@ -44,7 +44,7 @@ repos:
           - types-pillow
           - types-python-dateutil
         args: ['--ignore-missing-imports', '--python-version=3.12']
-        exclude: 'tests/.*'
+        exclude: '^(tests/.*|validation/.*)'
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
