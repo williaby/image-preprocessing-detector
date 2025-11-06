@@ -1,0 +1,336 @@
+A Comprehensive Validation Framework for Pre-Conversion Document Analysis in RAG Pipelines
+
+
+
+
+A Strategic Framework for Document Pre-Conversion Validation
+
+
+The automated ingestion of documents, such as PDFs and JPGs, into a Retrieval-Augmented Generation (RAG) pipeline requires a preliminary validation step to prevent the introduction of corrupted or unparseable data. A "bad" document—one that fails to convert cleanly to markdown—presents a bifurcated failure mode. This report establishes a validation framework that addresses both systemic document failures and semantic structural failures, providing a comprehensive review of existing datasets to build a robust testing suite.
+This framework is built on a core dichotomy:
+1. Functional Failure (Systemic Issues): This pertains to failures where the entire document or large portions of it are unreadable, leading to a catastrophic failure of the Optical Character Recognition (A) process itself. This category maps directly to image quality issues such as low lighting, noise, blur, and low resolution. The validation goal is to test a model's ability to measure image quality against a continuous metric.
+2. Semantic Failure (Structural Issues): This pertains to failures where the document image is of high quality and perfectly legible, but its content includes structural elements that a standard, linear markdown converter cannot correctly parse. This includes tables, mathematical formulas, and handwritten annotations, which become jumbled or lost, corrupting the semantic meaning of the extracted text.1 The validation goal is to test a model's ability to detect and locate these high-risk structures using discrete ground truth, such as bounding boxes.
+Within this framework, a second distinction is critical for validating systemic failures: the nature of the ground truth itself. Document Image Quality Assessment (DIQA) is often measured in two ways: subjective human perception or objective functional outcome.3
+* Subjective (Mean Opinion Score - MOS): Datasets like DIQA-5000 5 and others 6 employ human annotators to provide a MOS score, answering the question, "Does this document look sharp and high-quality to a person?"
+* Objective (OCR Accuracy): Other datasets, as referenced in multiple studies 3, use OCR accuracy as the ground truth quality score. This answers the functional question, "Can a machine successfully read this document?"
+For the specific application of a RAG pipeline, which is an automated, non-human process, the success of text extraction is not dependent on human-perceived quality (MOS). It is 100% dependent on the success of the OCR engine (e.g., Tesseract, ABBYY) used in the pipeline. Therefore, datasets that utilize OCR accuracy as the ground truth 7 are functionally superior and more relevant to this use case than those based on subjective human scores. This analysis will prioritize datasets that enable this direct, functional validation.
+
+
+Benchmarking Systemic Degradations: Document Image Quality Assessment (DIQA)
+
+
+This section reviews datasets designed to validate the detection of systemic "image issues" (low lighting, noise, blur), structured by the subjective-versus-objective ground truth principle.
+
+
+Subjective (Perceptual) Benchmarks: Validating against Human Perception (MOS)
+
+
+These datasets are typically large, modern, and well-suited for training a robust model to recognize a wide variety of degradations that humans perceive as "low quality."
+* DIQA-5000 (VQualA 2025 Challenge): This dataset is built from 500 original document images captured by mobile phones, encompassing text-heavy pages, tables, diagrams, and handwritten notes.5 The originals contain the exact degradations sought: "defocus blur, moiré patterns, creases or warping, and shadows" 5, which map to blur, noise, and low lighting. Each original is processed with enhancement algorithms to create 10 variants, totaling 5,000 images.5 The ground truth is a key feature: 15 annotators provided three separate Mean Opinion Scores (MOS) on a 0-5 scale for: 1) overall quality, 2) sharpness, and 3) color fidelity.5 This multi-dimensional ground truth would allow a validation model to be tested specifically on its ability to predict the "sharpness" score as a proxy for blur.
+* DocIQ (DIQA-5000 Dataset): A separate but similarly named dataset, this DIQA-5000 consists of 5,000 document images derived from 500 real-world PDFs that were printed and then "enhanced".8 It also provides multi-dimensional subjective ratings from 15 subjects for "overall quality, sharpness, and color fidelity".9 The associated research highlights a model that uses layout masks during quality assessment, suggesting that the location of a blur (e.g., on a title vs. a footer) impacts perceived quality.11
+
+
+Objective (Functional) Benchmarks: Validating against Machine Readability (OCR)
+
+
+This approach represents the gold standard for RAG pre-flight validation, as it directly correlates image degradation with the functional failure of text extraction.
+* Sharpness-OCR-Correlation (SOC) Dataset: This is a smaller, highly focused dataset ideal for functional validation.7 It contains 175 document images captured from 25 "ideally clean" documents.12 The sole degradation introduced is "varying levels of focal-blur introduced manually".13
+The ground truth is not a human score but the "character level OCR accuracy" 13 obtained from three separate OCR engines: ABBYY Finereader (acc_f), Tesseract (acc_t), and Omnipage (acc_o).7 This ground truth is provided in a simple Excel file (SOC_gt.xlsx).7
+This dataset enables a direct and powerful validation strategy. The RAG pipeline will almost certainly use an OCR engine like Tesseract to extract text. The SOC dataset provides the exact Tesseract accuracy (acc_t) for its 175 images. A validation framework can thus bypass proxies like "blur level" and test the model on its ability to predict the actual outcome of interest.
+Recommended Validation Strategy:
+   1. Define a functional failure threshold (e.g., "any document where Tesseract accuracy is $< 90\%$ must be flagged").
+   2. Run the OpenCV detection model against the 175 images in the SOC dataset.
+   3. Measure the model's precision, recall, and F1-score in predicting which images fall below this acc_t < 0.90 threshold.
+This provides the most functionally relevant, high-impact validation possible for detecting "image issues."
+
+
+Table 1: Comparative Analysis of Document Image Quality Assessment (DIQA) Datasets
+
+
+
+
+Dataset
+	Size
+	Degradation Types
+	Ground Truth Format
+	File Formats
+	Key Differentiator for RAG
+	DIQA-5000 (VQualA)
+	5,000 images
+	Defocus blur, moiré, creases, shadows, enhancement artifacts 5
+	Mean Opinion Score (MOS) 0-5 for 3 dimensions: overall, sharpness, color fidelity 5
+	JPGs, output.txt for demo scores 5
+	Large-scale, multi-dimensional perceptual quality benchmark. Good for training.
+	DocIQ (DIQA-5000)
+	5,000 images
+	Enhancement artifacts on printed PDFs [8, 9]
+	Mean Opinion Score (MOS) 0-5 for 3 dimensions: overall, sharpness, color fidelity 9
+	1600x1600 images 11
+	State-of-the-art perceptual benchmark. Associated with layout-aware quality metrics.11
+	SOC Dataset
+	175 images
+	Varying levels of focal blur 13
+	OCR Accuracy (ABBYY, Tesseract, Omnipage) 7
+	Images (format not specified) + SOC_gt.xlsx 7
+	Gold standard for RAG validation. Directly links blur to functional OCR failure.[3]
+
+
+Validating Structural Hazard Detection: Layout, Tables, and Formulas
+
+
+This section transitions from systemic quality to structural hazards. In these cases, the images are assumed to be high-quality, but their content (layout, tables, formulas) will break a simple markdown conversion. The validation goal is to confirm the model can detect and flag these semantic regions.
+
+
+General Layout Analysis (The "Table" Detector)
+
+
+The primary task is to detect tables, which is best validated using a general-purpose document layout analysis dataset.
+   * PubLayNet: This is a large dataset annotated with bounding boxes and segmentations.14 However, its critical limitation is its source: it is derived only from the PubMed Central Open Access Subset.14 The annotations are also automatically generated by matching PDF and XML formats, not by human review.14
+   * DocLayNet: This dataset was created specifically to address the "severe lack in layout variability" of datasets like PubLayNet.15 Research shows that models trained on PubLayNet's scientific-only layouts experience a significant drop in accuracy when applied to more diverse, challenging layouts.15 DocLayNet contains 80,863 pages that are manually annotated by experts.15 Its strength comes from its source diversity, including 6 document categories: Finance, Science, Patents, Tenders, Law, and Manuals.17
+For an "in-the-wild" RAG pipeline that will ingest diverse documents (legal, financial, technical), DocLayNet is the only appropriate choice for validation. Validating against PubLayNet would be misleading. The DocLayNet ground truth is provided as PNG images (1025x1025) with annotations in COCO JSON format.17 A table detector can be validated by filtering these annotations for the "Table" class and measuring performance against those bounding boxes.
+
+
+Specialized Table Detection
+
+
+Should the general "Table" class in DocLayNet prove insufficient, more specialized datasets exist.
+   * TableBank: A large dataset of 417K labeled tables generated with weak supervision from Word and Latex documents.18 For the detection task, it provides annotations in the familiar MS COCO format.18
+   * PubTabNet: An even larger dataset with over 568k images, also from PubMed.20 Its ground truth is significantly more detailed, providing a full HTML representation of the table, including Cell Content and Cell Location.20
+For the user's task of detection (flagging a region), not recognition (parsing the table's contents), the detailed ground truth of PubTabNet is unnecessary. The TableBank-Detection dataset 18 would be the most appropriate specialized dataset. However, the primary recommendation remains to start with DocLayNet, as it validates table detection within the context of complex, full-page layouts.
+
+
+Mathematical Formula Detection
+
+
+Detecting mathematical formulas is a unique challenge. The primary difficulty, as noted in research 22, lies in the "huge variations" in aspect ratio, the "small size of embedded or inline formulas," and the "similarity between variables and normal text characters." These "inline" formulas are the true RAG-killers, as they are easily mangled with surrounding text.
+   * Marmot Dataset: Sourced from 400 document pages, this dataset provides extremely detailed, multi-level ground truth.23 It contains precise bounding boxes for 1,575 "isolated formulas" and, crucially, 7,907 "embedded formulas".23 It even provides bounding boxes and Unicode for individual characters within each formula.23
+   * TFD-ICDAR 2019: This dataset provides ground truth at two levels: 1) "math regions" (a bounding box for the whole formula) and 2) "character locations" (a bounding box for each character, labeled as "MATH_SYMBOL" or "ORDINARY_TEXT").24 It contains approximately 38,000 total math expressions across ~800 pages.24
+A validation strategy that lumps all formula types together would be dangerously misleading. A model could achieve high accuracy by only finding large, isolated formulas while missing 100% of the critical inline ones. Therefore, the validation must be structured to report two separate F1-scores: one for "Isolated Formula Detection" and one for "Inline Formula Detection." The latter score, validated against the 7,907 embedded formulas in Marmot 23 or the equivalent in TFD-ICDAR 2019 24, is the mission-critical metric for this task.
+
+
+Table 2: Comparative Analysis of Document Layout Analysis Datasets
+
+
+
+
+Dataset
+	Size
+	Source Diversity
+	No. of Classes
+	Annotation Format
+	Key RAG Implication
+	PubLayNet
+	335K+ images
+	Very Low (PubMed only) [14, 15]
+	5 (text, title, list, table, figure)
+	COCO (Auto-generated) 14
+	Misleading for "in-the-wild" validation. Accuracy drops significantly on other doc types.15
+	DocLayNet
+	80,863 images
+	High (Finance, Legal, Patents, Manuals, etc.) 17
+	11 (e.g., Table, Caption, Footer) 17
+	COCO (Human-annotated) 15
+	Gold standard for general layout validation. Matches diverse, real-world RAG inputs.
+
+
+Table 3: Comparative Analysis of Mathematical Formula Detection Datasets
+
+
+
+
+Dataset
+	Size
+	Ground Truth Format
+	Explicit "Inline" Support
+	File Formats
+	Key RAG Implication
+	Marmot
+	400 pages; 1,575 isolated + 7,907 embedded formulas 23
+	BBox for formula; BBox + Unicode for chars within formula 23
+	Yes (7,907 "embedded" formulas) 23
+	PDF + Images 23
+	Ideal for RAG. Explicitly separates "isolated" and "embedded" formulas for granular validation.
+	TFD-ICDAR 2019
+	~800 pages; ~38,000 total expressions 24
+	BBox for "math region"; BBox + label for chars ("MATH" vs "TEXT") 24
+	Yes (distinguishes single-char vs multi-char expressions) 24
+	PDF URLs + GT files 24
+	Also excellent. Character-level labels allow validation of detection (region) and classification (text vs. math).
+
+
+Isolating Modality and Geometric Issues: Handwriting and Skew
+
+
+This section addresses the final two detection tasks: identifying non-printed text (handwriting) and geometric distortion (skew), both of which are critical failures for standard OCR.
+
+
+Handwritten vs. Printed Text Segmentation
+
+
+The challenge is not classifying entire documents as handwritten. The real-world problem, common in forms and annotated legal or financial documents, is the "mixed-modality" case where handwritten text and printed text "coexist" or "overlap" on the same page.2 This requires a segmentation approach, not a simple classification. Key benchmarks for this task emerge from the ICDAR and ICFHR conferences.29
+   * Dataset: SignaTR6K: This is the ideal dataset for this task. It consists of over 6,000 augmented images derived from 200 "pixel-level manually annotated crops" from "genuine legal documents".26 Its ground truth is provided as pixel-level segmentation masks for three classes: Printed Text (PT), Handwritten Text (HT), and Background (BG).26
+   * Validation Strategy: The pixel-level masks in SignaTR6K 26 are perfect for a precise, robust validation metric like the Intersection over Union (IoU).31 The OpenCV model's generated "handwriting region" (whether a bounding box or a mask) can be compared directly to the ground truth "HT" mask to calculate a precise IoU score.
+
+
+Geometric Distortion (Skew) Detection
+
+
+Skew, or document rotation, will cause line-based OCR to fail. The validation metric is the "absolute difference of the estimated skew and the ground truth skew angle" 33, also known as the Average Error Deviation (AED).34 A robust validation requires a two-part strategy.
+   1. The "Unit Test": Algorithm Correctness
+   * Dataset: DISEC'13: This dataset tests the skew-detection algorithm in a "clean-room" environment. It contains 155 unique images, each synthetically rotated 10 times (1550 total samples).35 The ground truth is a precise floating-point angle "randomly selected from the limited range of ($−15^\circ$, $+15^\circ$)".35 Success on this dataset confirms the algorithm (e.g., Hough Transform 36) is mathematically correct.
+   2. The "Integration Test": Algorithm Robustness
+   * Dataset: Kaggle "Noisy and Rotated Scanned Documents": This dataset tests the algorithm in a real-world scenario. It contains 600 scanned images (500 labeled) that are both "noisy" and "rotated".37 The ground truth is the scanned angle 37 in a tighter range of -5° to 5°.40
+This two-part validation is essential. A skew-detection algorithm relies on finding text lines; image noise can break these lines, causing the algorithm to fail even on a correct image. If a model performs well on DISEC'13 but poorly on the Kaggle dataset, this indicates the algorithm is correct but not robust. The solution would be to implement a denoising pre-processing step before the skew detection is performed.
+
+
+Table 4: Comparative Analysis of Handwriting & Skew Validation Datasets
+
+
+
+
+Task
+	Dataset
+	Size
+	Ground Truth Format
+	Key Features
+	Validation Metric
+	Handwriting
+	SignaTR6K
+	6,000+ images (from 200 crops) 26
+	Pixel-level segmentation masks (PT, HT, BG) 26
+	Real legal docs [28]; focuses on overlapping text 26
+	Intersection over Union (IoU) 31
+	Skew
+	DISEC'13
+	1,550 samples (155 unique) 35
+	Precise rotation angle ($−15^\circ$ to $+15^\circ$) 35
+	"Unit Test": Clean images, only rotation. Tests algorithm correctness.
+	Average Error Deviation (AED) 35
+	Skew
+	Kaggle Noisy/Rotated
+	600 images (500 labeled) 37
+	Rotation angle ($-5^\circ$ to $5^\circ$) 40
+	"Integration Test": Images are both noisy and rotated. Tests algorithm robustness.
+	Average Error Deviation (AED)
+
+
+Synthetic Generation: A Controlled Environment for Comprehensive Validation
+
+
+An advanced alternative (or supplement) to collecting static datasets is to synthetically generate validation data. This provides programmatic control over degradation parameters, enabling the generation of "massive ground-truthed data with high variability".41
+   * Tool 1: DocCreator: An open-source, cross-platform software for generating synthetic documents and applying degradations.42 Its strengths lie in simulating physical and print defects, such as "Bleed-through," "Ink degradation," "Adaptive blur," "Holes," "Phantom character apparition," and "Paper deformation".42
+   * Tool 2: Genalog: An "open-source Python library" from Microsoft.45 Being a library makes it highly integrable into an ML validation workflow. It excels at simulating digital and scan defects, including "blur," "bleed-through," "salt-and-pepper noise," and "morphological operations" (e.g., erode, dilate).45 A 2023 benchmark found Genalog to be a "strong performer," "best-balanced tool," and "slightly better for numerical accuracy" than DocCreator.45
+These tools enable a far more sophisticated validation methodology: Sensitivity Analysis.
+Instead of a simple F1-score on a static dataset with random degradation levels, a synthetic tool allows for the creation of a validation set on a gradient. For example:
+doc_skew_0.5.jpg (skew = $0.5^\circ$)
+doc_skew_1.0.jpg (skew = $1.0^\circ$)
+doc_skew_1.5.jpg (skew = $1.5^\circ$)
+...
+doc_skew_10.0.jpg (skew = $10.0^\circ$)
+The same can be done for blur kernel size, noise percentage, etc. By running the OpenCV detector against this gradient, it is possible to plot the model's "Issue Detected" probability against the ground truth degradation parameter. This plot, or "characteristic curve," reveals precisely at what point (e.g., "$3.5^\circ$," "$2.0px$ blur kernel") the model's detection activates. This allows for the precise tuning of the model's internal thresholds to match a specific business requirement, transforming validation from a pass/fail check into a robust engineering practice.
+
+
+Table 5: Capabilities of Synthetic Document Generation Tools
+
+
+
+
+Tool
+	Type
+	Supported Degradations
+	Ground Truth
+	Key RAG Implication
+	DocCreator
+	Software (GUI/C++) [42, 43]
+	Physical/Print: Bleed-through, Ink degradation, Adaptive blur, Holes, Phantom characters, Paper deformation 42
+	Controlled XML ground truth 42
+	Excellent for simulating aging and printing defects on physical documents.
+	Genalog
+	Python Library 45
+	Digital/Scan: Blur, Bleed-through, Salt-and-pepper noise, Morphological operations (erode/dilate) 45
+	Controlled (text + HTML/CSS templates) 45
+	Ideal for automation. Easy to script and integrate into a validation pipeline for sensitivity analysis.
+
+
+Strategic Recommendations for Validation Suite Construction
+
+
+A comprehensive validation framework for this RAG pre-flight model should be constructed in two stages: a "Core Suite" of existing datasets for broad functional validation, and an "Advanced Strategy" for precise threshold tuning.
+
+
+The "Core Suite": Immediate Validation Plan
+
+
+This suite provides a pragmatic collection of the best-in-class existing datasets to build a comprehensive validation testbed.
+   1. For Systemic Quality (Blur, Noise):
+   * Dataset: SOC Dataset.7
+   * Reason: Its ground truth is Tesseract OCR accuracy, which is the most functionally relevant metric for the RAG pipeline. This is a direct test of the consequence of the blur, not just the blur itself.7
+   2. For Structural Layout (Tables):
+   * Dataset: DocLayNet.17
+   * Reason: Its high source diversity (legal, financial, patents) 17 matches the "in-the-wild" nature of a RAG pipeline. Its "Table" class provides a "gold-standard" human-annotated 17 ground truth in COCO format.
+   3. For Structural Content (Formulas):
+   * Dataset: Marmot 23 or TFD-ICDAR 2019.24
+   * Reason: Both provide explicit bounding boxes for the mission-critical "inline" / "embedded" formulas 22, allowing for a separate, crucial validation score.
+   4. For Modality (Handwriting):
+   * Dataset: SignaTR6K.26
+   * Reason: Its pixel-level masks for overlapping printed and handwritten text 26 provide a robust validation (via IoU metric) for the most challenging version of this problem.
+   5. For Geometry (Skew):
+   * Dataset 1: DISEC'13 35 (as a "Unit Test" for correctness).
+   * Dataset 2: Kaggle "Noisy and Rotated" 37 (as an "Integration Test" for robustness).
+   * Reason: This two-part approach validates the algorithm's correctness against its robustness to noise, which are two separate failure modes.
+
+
+The "Advanced" Strategy: Sensitivity and Threshold Analysis
+
+
+This second phase of validation moves beyond simple pass/fail accuracy to robust engineering.
+   * Tool: Use Genalog.45 Its nature as a Python library makes it the easiest to integrate into an automated validation script.
+   * Methodology: Implement the "Sensitivity Analysis" described in Section V.
+   * Action: Create a script that iterates through a range of degradation parameters (e.g., skew_angle from 0 to 10 in 0.5-degree steps; blur_kernel from 1 to 5 in 0.5px steps).
+   * Outcome: This produces a characteristic curve for each detector. This allows the model's internal OpenCV thresholds to be quantitatively tuned to meet a specific, documented performance target (e.g., "reject all documents with skew $> 2.0^\circ$"), ensuring the pre-flight check is both effective and aligned with business requirements.
+Works cited
+   1. PdfTable: A Unified Toolkit for Deep Learning-Based Table Extraction - arXiv, accessed November 5, 2025, https://arxiv.org/html/2409.05125v1
+   2. Distinction between handwritten and machine-printed text based on the bag of visual words model - PRImA Research Lab, accessed November 5, 2025, https://www.primaresearch.org/www/assets/papers/PR2013_Zagoris_BagOfVisualWords.pdf
+   3. A deep learning approach to document image quality assessment - ResearchGate, accessed November 5, 2025, https://www.researchgate.net/publication/283825969_A_deep_learning_approach_to_document_image_quality_assessment
+   4. [PDF] Document Image Quality Assessment: A Brief Survey | Semantic Scholar, accessed November 5, 2025, https://www.semanticscholar.org/paper/Document-Image-Quality-Assessment%3A-A-Brief-Survey-Ye-Doermann/0970c10b5af6c5bbaeedf5d696c3c355aaa97959
+   5. VQualA 2025 DIQA: Document Image Quality ... - CodaLab, accessed November 5, 2025, https://codalab.lisn.upsaclay.fr/competitions/23020
+   6. (PDF) A Document Image Dataset for Quality Assessment - ResearchGate, accessed November 5, 2025, https://www.researchgate.net/publication/349818385_A_Document_Image_Dataset_for_Quality_Assessment
+   7. rjchern/DIQA_CNN: Document Image Quality Assessment via Convolutional Neural Network - GitHub, accessed November 5, 2025, https://github.com/rjchern/DIQA_CNN
+   8. [Literature Review] DocIQ: A Benchmark Dataset and Feature Fusion Network for Document Image Quality Assessment - Moonlight | AI Colleague for Research Papers, accessed November 5, 2025, https://www.themoonlight.io/en/review/dociq-a-benchmark-dataset-and-feature-fusion-network-for-document-image-quality-assessment
+   9. DocIQ: A Benchmark Dataset and Feature Fusion Network for Document Image Quality Assessment - ChatPaper, accessed November 5, 2025, https://chatpaper.com/paper/190633
+   10. [2509.17012] DocIQ: A Benchmark Dataset and Feature Fusion Network for Document Image Quality Assessment - arXiv, accessed November 5, 2025, https://arxiv.org/abs/2509.17012
+   11. DocIQ: A Benchmark Dataset and Feature Fusion Network for Document Image Quality Assessment - arXiv, accessed November 5, 2025, https://arxiv.org/html/2509.17012v1
+   12. A dataset for quality assessment of camera captured document images - ResearchGate, accessed November 5, 2025, https://www.researchgate.net/publication/311810155_A_dataset_for_quality_assessment_of_camera_captured_document_images
+   13. A Dataset for Quality Assessment of Camera Captured Document Images - ResearchGate, accessed November 5, 2025, https://www.researchgate.net/publication/293080445_A_Dataset_for_Quality_Assessment_of_Camera_Captured_Document_Images
+   14. Document layout recognition dataset: PubLayNet - Kaggle, accessed November 5, 2025, https://www.kaggle.com/datasets/devashishprasad/documnet-layout-recognition-dataset-publaynet-t0
+   15. DocLayNet: A Large Human-Annotated Dataset for Document-Layout Analysis, accessed November 5, 2025, https://www.researchgate.net/publication/361051040_DocLayNet_A_Large_Human-Annotated_Dataset_for_Document-Layout_Analysis
+   16. [2206.01062] DocLayNet: A Large Human-Annotated Dataset for Document-Layout Analysis, accessed November 5, 2025, https://arxiv.org/abs/2206.01062
+   17. DS4SD/DocLayNet: DocLayNet: A Large Human ... - GitHub, accessed November 5, 2025, https://github.com/DS4SD/DocLayNet
+   18. TableBank Dataset, accessed November 5, 2025, https://doc-analysis.github.io/tablebank-page/
+   19. TableBank: A Benchmark Dataset for Table Detection and Recognition - GitHub, accessed November 5, 2025, https://github.com/doc-analysis/TableBank
+   20. TableExtractNet: A Model of Automatic Detection and Recognition of Table Structures from Unstructured Documents - MDPI, accessed November 5, 2025, https://www.mdpi.com/2227-9709/11/4/77
+   21. cv-small-snails/Awesome-Table-Recognition: A curated list ... - GitHub, accessed November 5, 2025, https://github.com/cv-small-snails/Awesome-Table-Recognition
+   22. ICDAR 2021 Competition on Mathematical Formula Detection - ResearchGate, accessed November 5, 2025, https://www.researchgate.net/publication/354357305_ICDAR_2021_Competition_on_Mathematical_Formula_Detection
+   23. User Manual of Co-Reader, accessed November 5, 2025, https://www.icst.pku.edu.cn/cpdp/sjzy/
+   24. MaliParag/TFD-ICDAR2019: TDF-ICDAR 2019 Dataset for ... - GitHub, accessed November 5, 2025, https://github.com/MaliParag/TFD-ICDAR2019
+   25. Mathematical formula detection in document images: A new dataset and a new approach | Request PDF - ResearchGate, accessed November 5, 2025, https://www.researchgate.net/publication/376664696_Mathematical_formula_detection_in_document_images_A_new_dataset_and_a_new_approach
+   26. Handwritten and Printed Text Segmentation: A Signature Case Study, accessed November 5, 2025, https://arxiv.org/abs/2307.07887
+   27. Handwritten and Printed Document Classification using Image Processing & Machine Learning for Banking, Finance & Insurance Domains | by Utkarsh Kulshrestha | Analytics Vidhya | Medium, accessed November 5, 2025, https://medium.com/analytics-vidhya/handwritten-and-printed-document-classification-using-image-processing-machine-learning-for-f3d85b61c9a
+   28. Handwritten and Printed Text Segmentation: A Signature Case Study - CVF Open Access, accessed November 5, 2025, https://openaccess.thecvf.com/content/ICCV2023/papers/Gholamian_Handwritten_and_Printed_Text_Segmentation_A_Signature_Case_Study_ICCV_2023_paper.pdf
+   29. Advancements and Challenges in Handwritten Text Recognition: A ..., accessed November 5, 2025, https://pmc.ncbi.nlm.nih.gov/articles/PMC10817575/
+   30. ICDAR 2025 Competition on FEw-Shot Text line segmentation of ancient handwritten documents (FEST) - arXiv, accessed November 5, 2025, https://arxiv.org/html/2509.12965v1
+   31. a Sample handwritten document images from ICDAR 2013 Handwritten Segmentation Contest [53] - ResearchGate, accessed November 5, 2025, https://www.researchgate.net/figure/a-Sample-handwritten-document-images-from-ICDAR-2013-Handwritten-Segmentation-Contest_fig6_351772186
+   32. Jumpst3r/printed-hw-segmentation: Printed and handwritten text segmentation using fully convolutional networks and CRF post-processing - GitHub, accessed November 5, 2025, https://github.com/Jumpst3r/printed-hw-segmentation
+   33. Algorithms for document image skew estimation - Digital Scholarship@UNLV - University of Nevada, Las Vegas, accessed November 5, 2025, https://oasis.library.unlv.edu/cgi/viewcontent.cgi?article=4230&context=rtds
+   34. A Novel Adaptive Deskewing Algorithm for Document Images - PMC - PubMed Central, accessed November 5, 2025, https://pmc.ncbi.nlm.nih.gov/articles/PMC9610931/
+   35. A Document Skew Detection Method Using Fast Hough Transform, accessed November 5, 2025, https://arxiv.org/pdf/1912.02504
+   36. Voting-Based Document Image Skew Detection - MDPI, accessed November 5, 2025, https://www.mdpi.com/2076-3417/10/7/2236
+   37. Noisy and Rotated Scanned Documents - Kaggle, accessed November 5, 2025, https://www.kaggle.com/datasets/sthabile/noisy-and-rotated-scanned-documents
+   38. gandalf1819/Denoise-Noisy-Docs: Removal of stains from noisy docs using image processing, machine learning, neural nets and autoencoder - GitHub, accessed November 5, 2025, https://github.com/gandalf1819/Denoise-Noisy-Docs
+   39. Rotation Prediction (de-skewing text in images) - Kaggle, accessed November 5, 2025, https://www.kaggle.com/code/alibalapour/rotation-prediction-de-skewing-text-in-images
+   40. CNN to correct the Rotation of Noisy Scanned Pages - Kaggle, accessed November 5, 2025, https://www.kaggle.com/code/sthabile/cnn-to-correct-the-rotation-of-noisy-scanned-pages
+   41. DocCreator: A New Software for Creating Synthetic Ground-Truthed Document Images, accessed November 5, 2025, https://www.mdpi.com/2313-433X/3/4/62
+   42. DocCreator/DocCreator: DIAR software for synthetic ... - GitHub, accessed November 5, 2025, https://github.com/DocCreator/DocCreator
+   43. DocCreator, accessed November 5, 2025, https://doc-creator.labri.fr/
+   44. DocCreator: A New Software for Creating Synthetic Ground-Truthed Document Images, accessed November 5, 2025, https://www.researchgate.net/publication/321739775_DocCreator_A_New_Software_for_Creating_Synthetic_Ground-Truthed_Document_Images
+   45. Top 3 Synthetic Document Generators Benchmarked, accessed November 5, 2025, https://research.aimultiple.com/synthetic-document-generator/
