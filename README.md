@@ -1,9 +1,11 @@
 # Image Preprocessing Detector
 
-[![CI/CD Pipeline](https://github.com/username/image-preprocessing-detector/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/username/image-preprocessing-detector/actions)
+[![CI/CD Pipeline](https://github.com/williaby/image-preprocessing-detector/workflows/CI/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/williaby/image-preprocessing-detector/badge)](https://securityscorecards.dev/viewer/?uri=github.com/williaby/image-preprocessing-detector)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Intelligent image preprocessing detection system for RAG applications.** Automatically analyzes documents (PDFs, images) and detects required preprocessing steps before vector database ingestion.
 
@@ -227,7 +229,7 @@ poetry run pytest -n auto
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines (to be created).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for comprehensive contribution guidelines, development workflow, and code quality standards.
 
 ### Code Quality Standards
 

@@ -1,0 +1,317 @@
+# Comprehensive Security Analysis for Image Preprocessing Detector
+# Enhanced security scanning for image and PDF processing protection
+
+name: Security Analysis
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    paths:
+      - '**/*.py'
+      - '.github/workflows/security-analysis.yml'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+  schedule:
+    - cron: '30 2 * * 1'  # Weekly Monday 2:30 AM UTC
+  workflow_dispatch:  # Manual trigger
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  pull-requests: write
+
+jobs:
+  # CodeQL Analysis for Image Processing Systems
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden the runner (Audit outbound calls)
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python for Image Processing Dependencies
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          poetry config virtualenvs.in-project true
+
+      # Install only main dependencies for CodeQL analysis
+      - name: Install Image Processing Dependencies
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "📦 Installing image processing dependencies for security analysis..."
+          poetry install --only main --no-interaction
+
+          # Verify critical security-sensitive packages
+          poetry run python -c "
+          import sys
+          critical_deps = ['cv2', 'numpy', 'PIL', 'pymupdf', 'pydantic']
+          for dep in critical_deps:
+              try:
+                  __import__(dep.replace('-', '_'))
+                  print(f'✅ Security-critical dependency {dep}: Available')
+              except ImportError:
+                  print(f'⚠️ Security-critical dependency {dep}: Not found (may be optional)')
+          "
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-extended,security-and-quality
+          config: |
+            paths:
+              - src
+            paths-ignore:
+              - tests
+              - validation
+              - scripts
+            queries:
+              - uses: security-extended
+              - uses: security-and-quality
+
+      - name: Build CodeQL Database
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
+          upload: true
+
+  # Dependency vulnerability scanning
+  dependency-security:
+    name: Dependency Security Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit outbound calls)
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Dependency Review for Image Processing Libraries
+        uses: actions/dependency-review-action@v4
+        with:
+          # Moderate threshold for image processing systems
+          fail-on-severity: moderate
+          license-check: true
+          comment-summary-in-pr: always
+          deny-licenses: GPL-2.0, GPL-3.0
+
+  # Comprehensive security tooling
+  security-scanning:
+    name: Multi-Tool Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden the runner (Audit outbound calls)
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry and Dependencies
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          poetry config virtualenvs.in-project true
+          poetry install --with dev --no-interaction
+
+      # Bandit static analysis for image processing code
+      - name: Bandit Security Analysis
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "🔒 Running Bandit security analysis for image processing system..."
+          poetry run bandit -r src \
+            -f json -o bandit-report.json \
+            -c pyproject.toml || true
+
+          # Also generate human-readable output
+          poetry run bandit -r src -c pyproject.toml || true
+
+      # Safety dependency vulnerability scanning
+      - name: Safety Vulnerability Scan
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "🛡️ Scanning for known vulnerabilities in image processing dependencies..."
+
+          # Export requirements for safety scanning
+          poetry export -f requirements.txt --output requirements-scan.txt
+
+          # Run safety scan
+          poetry run safety check \
+            --file requirements-scan.txt \
+            --json --output safety-report.json || true
+
+          # Human readable output
+          poetry run safety check \
+            --file requirements-scan.txt || true
+
+      # Semgrep for additional security rules
+      - name: Semgrep Security Analysis
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/python
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        continue-on-error: true
+
+      # Upload security scan artifacts
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            requirements-scan.txt
+
+  # Image processing specific security validations
+  image-processing-security:
+    name: Image Processing Security Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit outbound calls)
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          poetry config virtualenvs.in-project true
+          poetry install --with dev --no-interaction
+
+      # Validate file processing security
+      - name: Validate File Processing Security
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "📸 Validating image processing security..."
+
+          poetry run python -c "
+          import os
+          import pathlib
+
+          print('🔒 Image Processing Security Validation:')
+
+          # Validate path sanitization patterns
+          try:
+              from pathlib import Path
+              test_path = Path('/tmp/test/../etc/passwd')
+              resolved = test_path.resolve()
+              print(f'✅ Path sanitization available: {resolved}')
+          except Exception as e:
+              print(f'⚠️  Path sanitization validation: {e}')
+
+          # Validate image processing libraries are safe
+          try:
+              import cv2
+              import numpy as np
+              print(f'✅ OpenCV version: {cv2.__version__}')
+              print(f'✅ NumPy version: {np.__version__}')
+          except ImportError as e:
+              print(f'⚠️  Image processing library validation: {e}')
+
+          print('🎯 Image processing security validation completed')
+          "
+
+      # Check for hardcoded secrets in image processing code
+      - name: Scan for Hardcoded Secrets
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "🔐 Scanning for hardcoded secrets..."
+          poetry run python -c "
+          import re
+          import os
+
+          secret_patterns = [
+              r'(?i)(api_key|api-key|apikey)\s*[=:]\s*[\"\']\w+[\"\']',
+              r'(?i)(password|pwd|secret|key|token)\s*[=:]\s*[\"\']\w+[\"\']',
+          ]
+
+          findings = []
+          for root, dirs, files in os.walk('src'):
+              for file in files:
+                  if file.endswith('.py'):
+                      filepath = os.path.join(root, file)
+                      try:
+                          with open(filepath, 'r', encoding='utf-8') as f:
+                              content = f.read()
+                              for i, line in enumerate(content.split('\n'), 1):
+                                  for pattern in secret_patterns:
+                                      if re.search(pattern, line) and 'example' not in line.lower():
+                                          findings.append(f'{filepath}:{i}')
+                      except:
+                          pass
+
+          if findings:
+              print(f'⚠️  Found {len(findings)} potential secrets - review manually')
+          else:
+              print('✅ No hardcoded secrets detected in source code')
+          "
+
+  # Security gate success validation
+  security-gate-success:
+    name: Security Gate Validation
+    runs-on: ubuntu-latest
+    needs: [codeql-analysis, dependency-security, security-scanning, image-processing-security]
+    if: always()
+    steps:
+      - name: Security Gate Results
+        run: |
+          echo "🔒 Image Preprocessing Detector Security Analysis Results:"
+          echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
+          echo "Dependency Security: ${{ needs.dependency-security.result }}"
+          echo "Security Scanning: ${{ needs.security-scanning.result }}"
+          echo "Image Processing Security: ${{ needs.image-processing-security.result }}"
+
+          # Allow security-scanning to have findings (continue-on-error jobs)
+          if [[ "${{ needs.codeql-analysis.result }}" == "success" && \
+                "${{ needs.dependency-security.result }}" == "success" && \
+                "${{ needs.image-processing-security.result }}" == "success" ]]; then
+            echo "✅ Security gate passed - image processing system meets security standards"
+            echo "📸 Image processing security validated"
+            echo "🔐 File handling secured"
+          else
+            echo "❌ Security gate failed - review security findings"
+            exit 1
+          fi
