@@ -16,13 +16,15 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   fuzzing:
     name: Build & Run Fuzzers
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload
     steps:
       - name: Harden the runner (Audit outbound calls)
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
@@ -34,6 +36,7 @@ jobs:
 
       - name: Build Fuzzers
         id: build
+        # Note: OSS-Fuzz actions use @master, cannot pin to SHA (maintained by Google)
         uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
         with:
           oss-fuzz-project-name: image-preprocessing-detector
@@ -41,6 +44,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Fuzzers
+        # Note: OSS-Fuzz actions use @master, cannot pin to SHA (maintained by Google)
         uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
         if: steps.build.outcome == 'success'
         with:
