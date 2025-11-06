@@ -184,6 +184,7 @@ poetry run pytest -n auto
 - **[ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md)**: Quick reference for architecture and design decisions
 - **[DECISION_MATRIX.md](DECISION_MATRIX.md)**: Critical decisions tracking and stakeholder requirements
 - **[ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
+- **[docs/WTD-Runbook.md](docs/WTD-Runbook.md)**: What The Diff integration guide for automated PR summaries
 
 ## Roadmap
 

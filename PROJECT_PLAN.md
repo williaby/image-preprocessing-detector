@@ -92,6 +92,36 @@ JSON Metadata for Downstream Processing
 4. Mathematical Formulas
 5. Non-Latin characters (post-detection script identification)
 6. Superscript/Footnotes (deferred to post-OCR)
+7. **Revision Markings** (Yale manuscripts: strikethrough, insertions, margin notes)
+
+**Handwriting Detection Methods (Phase 2)**
+
+**Approach A: Noteshrink-Based Classical CV** (Recommended for Phase 2)
+- **Algorithm**: K-means color clustering + HSV colorspace analysis
+- **Background Separation**: Identify dominant paper color via k-means (8 clusters)
+- **Ink Detection**: Pixels marked as foreground if:
+  - Value differs > 0.3 from background OR
+  - Saturation differs > 0.2 from background
+- **Optimization**: 5% pixel sampling (20x speedup) via systematic sampling
+- **Bit-Depth Reduction**: Convert 8-bit to 6-bit for noise-robust clustering
+- **Output**: Binary handwriting mask + confidence score
+- **Performance**: 10-20ms CPU (no GPU required)
+- **Source**: Adapted from mzucker/noteshrink (2016)
+- **Validation**: Tested on 56 handwriting samples (100% text detection, 38% skew rate)
+
+**Approach B: SignaTR6K-Based Segmentation** (Phase 2+)
+- **Dataset**: 6,257 annotated legal document crops (Thomson Reuters)
+- **Content**: Overlapping handwritten + printed text, signatures, stamps
+- **Format**: 256x256 crops with RGB pixel-wise segmentation masks
+- **Train/Val/Test**: 5,169 / 530 / 558 splits
+- **Model Options**: U-Net, DeepLabV3, or Mask R-CNN
+- **Use Case**: Precise pixel-level handwriting segmentation when classical methods insufficient
+- **Performance**: 5-15ms GPU (requires training infrastructure)
+
+**Approach C: Hybrid Strategy** (Recommended)
+- Phase 2: Noteshrink for fast binary detection
+- Phase 3+: SignaTR6K segmentation for precise localization if needed
+- Progressive enhancement as requirements evolve
 
 **Object Detection Model: YOLOv8n/s**
 - **Classes**: Table, Image, Handwriting, Formula
