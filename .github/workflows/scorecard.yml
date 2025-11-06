@@ -76,19 +76,3 @@ jobs:
           path: scorecard-results.sarif
           retention-days: 5
           if-no-files-found: error
-
-      - name: Display Scorecard Summary
-        if: always()
-        run: |
-          echo "📊 OpenSSF Scorecard Analysis Complete"
-          echo "View detailed results in the Security tab → Code Scanning"
-          echo ""
-          echo "🔍 Scorecard evaluates:"
-          echo "  - CI/CD security practices"
-          echo "  - Dependency management"
-          echo "  - Code review processes"
-          echo "  - Vulnerability disclosure"
-          echo "  - Supply chain security"
-          echo ""
-          echo "📈 Track progress at:"
-          echo "https://securityscorecards.dev/viewer/?uri=github.com/williaby/image-preprocessing-detector"
