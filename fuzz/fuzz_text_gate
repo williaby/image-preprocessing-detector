@@ -1,23 +1,8 @@
-#!/usr/bin/env python3
-"""ClusterFuzzLite fuzzing target wrapper for text detection gate.
+#!/bin/bash
+# ClusterFuzzLite fuzzing target wrapper for text detection gate
+# Executes the Python fuzzing harness with proper environment setup
 
-This wrapper imports and executes the actual Python fuzzing harness for ClusterFuzzLite/OSS-Fuzz.
-Fuzz targets must be executable files without .py extension for ClusterFuzzLite detection.
-"""
-import os
-import sys
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PYTHONPATH="${SCRIPT_DIR}/../src:${SCRIPT_DIR}:${PYTHONPATH}"
 
-# Add directories to Python path for imports
-fuzz_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(fuzz_dir, "..", "src"))
-sys.path.insert(0, fuzz_dir)
-
-# Import the fuzzing harness module
-import fuzz_text_gate  # noqa: E402
-
-# Expose TestOneInput for ClusterFuzzLite detection
-TestOneInput = fuzz_text_gate.TestOneInput  # noqa: F401
-
-# Execute main entry point
-if __name__ == "__main__":
-    fuzz_text_gate.main()
+exec python3 "${SCRIPT_DIR}/fuzz_text_gate.py" "$@"
