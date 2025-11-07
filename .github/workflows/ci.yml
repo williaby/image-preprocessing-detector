@@ -199,20 +199,7 @@ jobs:
         env:
           CI_ENVIRONMENT: true
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@f1b7348826d750ac29741abc9d1623d8da5dcd4f # v4.3.1
-        if: ${{ env.CODECOV_TOKEN != '' }} && !cancelled()
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: python-${{ matrix.python-version }}
-          name: Image Preprocessing Detector Coverage (Python ${{ matrix.python-version }})
-          verbose: true
-        continue-on-error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
+      # Note: Coverage upload moved to dedicated codecov.yml workflow
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
