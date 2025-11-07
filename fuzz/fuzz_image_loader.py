@@ -35,8 +35,10 @@ def TestOneInput(data: bytes) -> None:
         return
 
     try:
-        # Test image loading from bytes using PIL directly
-        # ImageLoader.load() requires a file path, so we use PIL.Image.open() with BytesIO
+        # DESIGN: Use PIL directly instead of ImageLoader for performance
+        # ImageLoader requires file paths (not bytes), which would force us to write
+        # each fuzz input to disk. Using PIL.Image.open() with BytesIO allows direct
+        # byte-based fuzzing without filesystem I/O overhead.
         image_bytes = BytesIO(data)
 
         # Try opening the image
