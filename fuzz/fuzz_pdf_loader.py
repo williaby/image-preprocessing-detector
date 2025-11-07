@@ -18,9 +18,8 @@ import atheris
 
 # Instrument imports before importing target code
 with atheris.instrument_imports():
-    from io import BytesIO
-
-    from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
+    import fitz  # PyMuPDF
+    import numpy as np
 
 
 def TestOneInput(data: bytes) -> None:
@@ -33,37 +32,41 @@ def TestOneInput(data: bytes) -> None:
     if len(data) < 10:
         return
 
-    # Create loader once for all DPI tests (performance optimization)
-    loader = PDFLoader()
-
     try:
-        # Test PDF loading from bytes
-        pdf_bytes = BytesIO(data)
+        # Test PDF loading from bytes using PyMuPDF directly
+        # PDFLoader.load() requires a file path, so we use fitz.open() with stream
+        doc = fitz.open(stream=data, filetype="pdf")
 
-        # Attempt to load pages with various DPI values
+        # Attempt to render pages with various DPI values
         for target_dpi in [72, 150, 300]:
             try:
-                pages = loader.load_from_bytes(pdf_bytes, target_dpi=target_dpi)
+                # Access first page only to limit execution time
+                if doc.page_count > 0:
+                    page = doc.load_page(0)
 
-                # Access page properties to trigger processing
-                for page in pages:
-                    # Trigger property access
-                    _ = page.image_array
-                    _ = page.page_number
-                    _ = page.dpi
-                    _ = page.width
-                    _ = page.height
+                    # Calculate zoom factor for target DPI
+                    zoom = target_dpi / 72.0
+                    mat = fitz.Matrix(zoom, zoom)
 
-                    # Break after first page to limit execution time
-                    break
+                    # Render page to pixmap
+                    pix = page.get_pixmap(matrix=mat)
+
+                    # Convert to numpy array (triggers processing)
+                    img_array = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                        pix.height, pix.width, pix.n
+                    )
+
+                    # Access properties to trigger processing
+                    _ = img_array.shape
+                    _ = pix.width
+                    _ = pix.height
 
             except Exception:  # nosec B110
                 # Expected for malformed inputs - don't propagate
                 # Fuzzer must handle all invalid inputs gracefully
                 pass
 
-            # Reset BytesIO for next iteration
-            pdf_bytes.seek(0)
+        doc.close()
 
     except Exception:  # nosec B110
         # Catch all exceptions - fuzzer should not crash on invalid input

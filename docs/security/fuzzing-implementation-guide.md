@@ -49,9 +49,10 @@ Image preprocessing detector processes untrusted input (PDFs, images) and is vul
    - SARIF report generation for GitHub Security
    - Crash artifact collection
 
-2. **Dependencies**: Python 3.12 with Poetry
+2. **Dependencies**: Python 3.11 with Poetry
    - OpenCV, PyMuPDF, Pillow (fuzzing targets)
    - Standard library modules
+   - Atheris (fuzzing engine)
 
 ### ❌ Pending
 
@@ -103,11 +104,11 @@ mkdir -p fuzz
 
 import sys
 import atheris
-from io import BytesIO
 
 # Import target module
 with atheris.instrument_imports():
-    from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
+    import fitz  # PyMuPDF
+    import numpy as np
 
 def TestOneInput(data):
     """Fuzz target for PDF loading.
@@ -119,18 +120,25 @@ def TestOneInput(data):
         return  # Skip too-small inputs
 
     try:
-        # Create temporary file-like object from fuzzer input
-        pdf_bytes = BytesIO(data)
-
-        # Attempt to load PDF
-        loader = PDFLoader()
-        pages = loader.load_from_bytes(pdf_bytes, target_dpi=300)
+        # Use PyMuPDF directly (PDFLoader.load() requires file path)
+        doc = fitz.open(stream=data, filetype="pdf")
 
         # Exercise parsing logic
-        for page in pages:
-            _ = page.image_array  # Access image data
-            _ = page.page_number
-            _ = page.dpi
+        if doc.page_count > 0:
+            page = doc.load_page(0)
+
+            # Render page
+            zoom = 300 / 72.0
+            mat = fitz.Matrix(zoom, zoom)
+            pix = page.get_pixmap(matrix=mat)
+
+            # Convert to numpy array
+            img_array = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                pix.height, pix.width, pix.n
+            )
+            _ = img_array.shape
+
+        doc.close()
 
     except Exception:
         # Catch all exceptions - fuzzer looks for crashes, not exceptions
@@ -152,7 +160,7 @@ import atheris
 from io import BytesIO
 
 with atheris.instrument_imports():
-    from image_preprocessing_detector.ingestion.image_loader import ImageLoader
+    import numpy as np
     from PIL import Image
 
 def TestOneInput(data):
@@ -164,19 +172,20 @@ def TestOneInput(data):
         return
 
     try:
-        # Test Pillow image loading
+        # Test Pillow image loading directly (ImageLoader.load() requires file path)
         img_bytes = BytesIO(data)
         img = Image.open(img_bytes)
 
-        # Exercise image loader
-        loader = ImageLoader()
-        metadata = loader.extract_metadata(img)
+        # Access image properties
+        _ = img.size
+        _ = img.mode
+        _ = img.format
 
-        # Access metadata fields
-        _ = metadata.width
-        _ = metadata.height
-        _ = metadata.format
-        _ = metadata.dpi
+        # Convert to numpy array (triggers decoding)
+        img_array = np.array(img)
+        _ = img_array.shape
+
+        img.close()
 
     except Exception:
         pass

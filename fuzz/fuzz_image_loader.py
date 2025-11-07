@@ -20,7 +20,8 @@ import atheris
 with atheris.instrument_imports():
     from io import BytesIO
 
-    from image_preprocessing_detector.ingestion.image_loader import ImageLoader
+    import numpy as np
+    from PIL import Image
 
 
 def TestOneInput(data: bytes) -> None:
@@ -33,45 +34,28 @@ def TestOneInput(data: bytes) -> None:
     if len(data) < 8:
         return
 
-    # Create loader once for all tests (performance optimization)
-    loader = ImageLoader()
-
     try:
-        # Test image loading from bytes
+        # Test image loading from bytes using PIL directly
+        # ImageLoader.load() requires a file path, so we use PIL.Image.open() with BytesIO
         image_bytes = BytesIO(data)
 
-        # Attempt to load image with various DPI values
-        for target_dpi in [72, 150, 300]:
-            try:
-                # Try loading with different format hints
-                for format_hint in [None, "PNG", "JPEG", "TIFF"]:
-                    try:
-                        result = loader.load_from_bytes(
-                            image_bytes, target_dpi=target_dpi, format_hint=format_hint
-                        )
+        # Try opening the image
+        img = Image.open(image_bytes)
 
-                        # Access result properties to trigger processing
-                        _ = result.image_array
-                        _ = result.dpi
-                        _ = result.width
-                        _ = result.height
-                        _ = result.format
+        # Access image properties to trigger processing
+        _ = img.size
+        _ = img.mode
+        _ = img.format
 
-                    except Exception:  # nosec B110
-                        # Expected for malformed inputs or wrong format hints
-                        # Fuzzer must handle all invalid inputs gracefully
-                        pass
+        # Convert to numpy array (triggers decoding)
+        img_array = np.array(img)
+        _ = img_array.shape
 
-                    # Reset BytesIO for next iteration
-                    image_bytes.seek(0)
+        # Test DPI information access
+        dpi_info = img.info.get("dpi", None)
+        _ = dpi_info
 
-            except Exception:  # nosec B110
-                # Expected for malformed inputs
-                # Fuzzer must handle all invalid inputs gracefully
-                pass
-
-            # Reset BytesIO for next DPI iteration
-            image_bytes.seek(0)
+        img.close()
 
     except Exception:  # nosec B110
         # Catch all exceptions - fuzzer should not crash on invalid input

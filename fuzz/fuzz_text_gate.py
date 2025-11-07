@@ -47,12 +47,11 @@ def TestOneInput(data: bytes) -> None:
 
             try:
                 # Grayscale (single channel)
-                if len(data) >= size:
-                    image_data = np.frombuffer(data[:size], dtype=np.uint8).reshape(
-                        height, width
-                    )
+                image_data = np.frombuffer(data[:size], dtype=np.uint8).reshape(
+                    height, width
+                )
 
-                    _ = gate.has_text(image_data)
+                _ = gate.detect(image_data)
 
             except Exception:  # nosec B110
                 # Expected for malformed inputs
@@ -67,7 +66,7 @@ def TestOneInput(data: bytes) -> None:
                         height, width, 3
                     )
 
-                    _ = gate.has_text(image_data)
+                    _ = gate.detect(image_data)
 
             except Exception:  # nosec B110
                 # Expected for malformed inputs
@@ -82,7 +81,7 @@ def TestOneInput(data: bytes) -> None:
                         data[:rgba_size], dtype=np.uint8
                     ).reshape(height, width, 4)
 
-                    _ = gate.has_text(image_data)
+                    _ = gate.detect(image_data)
 
             except Exception:  # nosec B110
                 # Expected for malformed inputs
