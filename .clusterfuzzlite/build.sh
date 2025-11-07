@@ -2,6 +2,12 @@
 # ClusterFuzzLite build script for Image Preprocessing Detector
 # Installs dependencies and prepares fuzzing harnesses
 
+echo "=== ClusterFuzzLite Build Debug ==="
+echo "SRC: $SRC"
+echo "OUT: $OUT"
+echo "WORK: $WORK"
+echo "===================================="
+
 # Install Poetry
 pip3 install poetry
 
@@ -14,11 +20,13 @@ poetry install --without dev --no-interaction
 pip3 install atheris
 
 # Copy fuzzing harnesses to output directory
-cp fuzz/*.py $OUT/
+echo "Copying fuzzing harnesses from fuzz/ to $OUT/"
+cp -v fuzz/fuzz_*.py $OUT/
 
 # Make fuzzing harnesses executable (required for ClusterFuzzLite to recognize them as targets)
-chmod +x $OUT/*.py
+chmod +x $OUT/fuzz_*.py
 
-echo "Fuzzing build complete!"
+echo "=== Fuzzing Build Complete ==="
 echo "Fuzzing harnesses in $OUT:"
-ls -la $OUT/*.py
+ls -la $OUT/
+echo "================================"
