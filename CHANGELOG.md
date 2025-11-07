@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - No known vulnerabilities (OpenSSF Scorecard: 10/10 Vulnerabilities check)
 
 ### Changed
-- Updated Black from 23.12.1 to 25.9.0 (fixes CVE-2024-21503 ReDoS vulnerability)
+- Updated Black from 23.12.1 to >=24.3.0 (fixes CVE-2024-21503 ReDoS vulnerability)
 - Updated FastAPI from 0.100.1 to >=0.115.0 (fixes PVE-2024-64930 ReDoS vulnerability)
 
 ### Fixed

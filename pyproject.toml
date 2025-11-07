@@ -6,13 +6,14 @@ authors = [
     {name = "Byron Williams", email = "byronawilliams@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 license = {text = "MIT"}
 keywords = ["image-processing", "opencv", "document-analysis", "ocr-preprocessing", "rag"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
@@ -117,7 +118,7 @@ readme = "README.md"
 packages = [{include = "image_preprocessing_detector", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 opencv-python = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
@@ -222,7 +223,7 @@ exclude = [
 
 # MyPy Configuration
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

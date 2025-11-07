@@ -57,15 +57,15 @@ Image preprocessing detector processes untrusted input (PDFs, images) and is vul
 ### ❌ Pending
 
 1. **OSS-Fuzz Registration**: Project not registered with Google OSS-Fuzz
-2. **Fuzzing Harnesses**: No fuzz targets written yet
+2. **Fuzzing Harnesses**: Implemented (`fuzz_pdf_loader.py`, `fuzz_image_loader.py`, `fuzz_text_gate.py`)
 3. **Project Configuration**: Missing project.yaml and Dockerfile
 4. **Build Integration**: Need to configure fuzzing build
 
 ### Current Scorecard Impact
 
-**Fuzzing Score**: 0/10 (workflow exists but not functional)
+**Fuzzing Score**: 5-8/10 (ClusterFuzzLite operational, OSS-Fuzz pending)
 
-**After Implementation**: 10/10 (fully operational fuzzing)
+**After OSS-Fuzz Implementation**: 10/10 (fully operational continuous fuzzing)
 
 ---
 
