@@ -1,0 +1,178 @@
+# Codecov Configuration for Image Preprocessing Detector
+# Intelligent detection system for RAG applications - multi-stage IQA pipeline
+
+# Security: Only read configuration from main branch
+codecov:
+  strict_yaml_branch: main
+  require_ci_to_pass: yes
+  max_report_age: 12h
+
+# Coverage targets and thresholds
+coverage:
+  precision: 2
+  round: down
+  range: 70..95
+
+  status:
+    project:
+      default:
+        # Current baseline: ~79%, targeting 80%+
+        target: 79%
+        threshold: 2%
+        if_ci_failed: error
+
+    patch:
+      default:
+        # New code should meet 80% target
+        target: 80%
+        threshold: 5%
+        if_ci_failed: error
+
+# Multi-flag tracking for test types
+flags:
+  unit:
+    # Unit tests should have higher coverage
+    carryforward: true
+    paths:
+      - src/image_preprocessing_detector/
+
+  integration:
+    # Integration tests may have lower coverage
+    carryforward: true
+    paths:
+      - src/image_preprocessing_detector/
+
+  python-3.12:
+    # CI workflow flag (already configured)
+    carryforward: true
+
+# Component-based coverage tracking
+component_management:
+  individual_components:
+    # Core ingestion module
+    - component_id: ingestion
+      name: PDF/Image Ingestion
+      paths:
+        - src/image_preprocessing_detector/ingestion/**
+
+    # IQA detection module
+    - component_id: detection
+      name: IQA Detection
+      paths:
+        - src/image_preprocessing_detector/detection/**
+
+    # Correction pipeline
+    - component_id: correction
+      name: Image Correction
+      paths:
+        - src/image_preprocessing_detector/correction/**
+
+    # Output generation
+    - component_id: output
+      name: JSON Output
+      paths:
+        - src/image_preprocessing_detector/output/**
+
+    # Shared utilities
+    - component_id: utils
+      name: Utilities
+      paths:
+        - src/image_preprocessing_detector/utils/**
+
+# Paths to ignore from coverage
+ignore:
+  # Test directories
+  - "tests/**"
+  - "**/*_test.py"
+  - "**/test_*.py"
+
+  # Validation scripts (not production code)
+  - "validation/**"
+
+  # Python cache and compiled files
+  - "**/__pycache__/**"
+  - "**/*.pyc"
+  - "**/*.pyo"
+  - "**/*.pyd"
+  - "**/*.so"
+  - "**/*.dll"
+  - "**/*.dylib"
+
+  # Virtual environments
+  - ".env/**"
+  - ".venv/**"
+  - "env/**"
+  - "venv/**"
+  - "ENV/**"
+  - "env.bak/**"
+  - "venv.bak/**"
+
+  # IDE and editor files
+  - ".vscode/**"
+  - ".idea/**"
+  - "*.swp"
+  - "*.swo"
+  - "*~"
+  - ".DS_Store"
+
+  # Build and distribution
+  - "dist/**"
+  - "build/**"
+  - "*.egg-info/**"
+  - ".eggs/**"
+  - "*.egg"
+  - "wheels/**"
+
+  # Documentation
+  - "docs/**"
+  - "*.md"
+  - "*.rst"
+
+  # Configuration files
+  - "*.toml"
+  - "*.cfg"
+  - "*.ini"
+  - "*.yaml"
+  - "*.yml"
+
+  # Security and secrets
+  - ".secrets*"
+  - ".age"
+  - ".sops.*"
+  - "*.key"
+  - "*.pem"
+
+  # Dependency files
+  - "poetry.lock"
+  - "requirements*.txt"
+  - "Pipfile.lock"
+
+  # Git and CI
+  - ".git/**"
+  - ".github/**"
+  - ".gitignore"
+  - ".gitattributes"
+
+  # Logs and temporary files
+  - "logs/**"
+  - "*.log"
+  - ".pytest_cache/**"
+  - ".mypy_cache/**"
+  - ".ruff_cache/**"
+  - "htmlcov/**"
+  - ".coverage*"
+  - "coverage.xml"
+
+  # Temporary cleanup directory
+  - "tmp_cleanup/**"
+
+# Pull request comment configuration
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true
+  require_base: yes
+  require_head: yes
+
+github_checks:
+  annotations: true
