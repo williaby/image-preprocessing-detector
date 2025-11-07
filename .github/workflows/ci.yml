@@ -1,5 +1,23 @@
 # Image Preprocessing Detection System CI Pipeline
 # Optimized for computer vision and image quality assessment
+#
+# CI FOCUS: Code Quality & Testing
+# This workflow focuses on code quality, formatting, and comprehensive testing.
+# Security scanning has been consolidated in security-analysis.yml workflow.
+#
+# QUALITY CHECKS (This Workflow):
+#   - MyPy: Strict type checking
+#   - Black: Code formatting validation
+#   - Ruff: Enhanced linting
+#   - Pytest: Comprehensive test suite with 80%+ coverage
+#
+# SECURITY SCANS (See security-analysis.yml):
+#   - Bandit: Python static security analysis
+#   - Safety: Python dependency CVE scanning
+#   - CodeQL: Advanced security analysis
+#   - Dependency Review: PR-based vulnerability detection
+#
+# This separation improves CI performance by ~10-12 minutes per PR
 
 name: CI
 
@@ -269,14 +287,8 @@ jobs:
           echo "🔧 Running enhanced linting..."
           poetry run ruff check . --config=pyproject.toml
 
-      - name: Security scanning
-        run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          echo "🔒 Running security scans..."
-          echo "Running Bandit security analysis..."
-          poetry run bandit -r src -c pyproject.toml || echo "Bandit completed with findings"
-          echo "Running Safety dependency scan..."
-          poetry run safety check || echo "Safety completed with findings"
+      # Note: Security scanning (Bandit, Safety) moved to security-analysis.yml workflow
+      # This eliminates duplicate scans and consolidates security tooling
 
   # Success validation
   ci-success:

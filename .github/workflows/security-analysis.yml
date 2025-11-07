@@ -1,5 +1,30 @@
 # Comprehensive Security Analysis for Image Preprocessing Detector
 # Enhanced security scanning for image and PDF processing protection
+#
+# CONSOLIDATION STRATEGY (Option 2: Aggressive Consolidation)
+# This workflow provides centralized security scanning, eliminating duplications:
+#
+# WORKFLOW SCANS (Centralized Here):
+#   - CodeQL: Python security-extended and quality queries
+#   - Dependency Review: PR-based dependency vulnerability detection
+#   - Bandit: Python static security analysis
+#   - Safety: Python dependency CVE scanning
+#   - Image Processing Security: Custom validation for file handling
+#
+# EXTERNAL GITHUB APPS (Complementary - No Duplication):
+#   - Semgrep Cloud Platform: Advanced SAST with better UI/tracking
+#   - GitGuardian: Secrets detection in commits
+#   - OpenSSF Scorecard: Supply chain security assessment
+#
+# REMOVED DUPLICATIONS:
+#   - Semgrep workflow step (now using Semgrep App)
+#   - Bandit/Safety from ci.yml (consolidated here)
+#   - CodeQL standalone check (using workflow version with custom queries)
+#
+# BENEFITS:
+#   - Saves ~10-12 minutes per PR
+#   - Single source of truth for security findings
+#   - Better separation: CI focuses on code quality, this workflow on security
 
 name: Security Analysis
 
@@ -173,17 +198,8 @@ jobs:
           poetry run safety check \
             --file requirements-scan.txt || true
 
-      # Semgrep for additional security rules
-      - name: Semgrep Security Analysis
-        uses: semgrep/semgrep-action@4c17daa5406c01371b1ece4dd2735f9ab2e0df66 # v1
-        with:
-          config: >-
-            p/security-audit
-            p/secrets
-            p/python
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-        continue-on-error: true
+      # Note: Semgrep scanning provided by Semgrep Cloud Platform GitHub App
+      # This eliminates duplicate scanning and provides better UI/tracking
 
       # Upload security scan artifacts
       - name: Upload Security Reports
