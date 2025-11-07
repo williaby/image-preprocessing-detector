@@ -23,14 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Signed commits with SSH for commit verification
 - Dependency scanning with Safety for vulnerability detection
-- Security policy (SECURITY.md) with 48-hour response time
+- Security policy (SECURITY.md) with 72-hour acknowledgment time
 - Token permissions scoped to job-level (principle of least privilege)
 - GitHub Actions dependencies pinned to SHA hashes
 - No known vulnerabilities (OpenSSF Scorecard: 10/10 Vulnerabilities check)
 
 ### Changed
 - Updated Black from 23.12.1 to 25.9.0 (fixes CVE-2024-21503 ReDoS vulnerability)
-- Updated FastAPI from 0.100.1 to 0.115.14 (fixes PVE-2024-64930 ReDoS vulnerability)
+- Updated FastAPI from 0.100.1 to >=0.115.0 (fixes PVE-2024-64930 ReDoS vulnerability)
 
 ### Fixed
 - PDF loader DPI estimation fallback handling

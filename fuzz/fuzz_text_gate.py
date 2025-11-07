@@ -33,6 +33,9 @@ def TestOneInput(data: bytes) -> None:
     if len(data) < min_size:
         return
 
+    # Create gate once for all tests (performance optimization)
+    gate = TextGate()
+
     try:
         # Try to interpret data as various image sizes and formats
         for width, height in [(10, 10), (50, 20), (100, 100)]:
@@ -49,7 +52,6 @@ def TestOneInput(data: bytes) -> None:
                         height, width
                     )
 
-                    gate = TextGate()
                     _ = gate.has_text(image_data)
 
             except Exception:  # nosec B110
@@ -65,7 +67,6 @@ def TestOneInput(data: bytes) -> None:
                         height, width, 3
                     )
 
-                    gate = TextGate()
                     _ = gate.has_text(image_data)
 
             except Exception:  # nosec B110
@@ -81,7 +82,6 @@ def TestOneInput(data: bytes) -> None:
                         data[:rgba_size], dtype=np.uint8
                     ).reshape(height, width, 4)
 
-                    gate = TextGate()
                     _ = gate.has_text(image_data)
 
             except Exception:  # nosec B110

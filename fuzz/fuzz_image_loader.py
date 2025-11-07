@@ -33,10 +33,12 @@ def TestOneInput(data: bytes) -> None:
     if len(data) < 8:
         return
 
+    # Create loader once for all tests (performance optimization)
+    loader = ImageLoader()
+
     try:
         # Test image loading from bytes
         image_bytes = BytesIO(data)
-        loader = ImageLoader()
 
         # Attempt to load image with various DPI values
         for target_dpi in [72, 150, 300]:

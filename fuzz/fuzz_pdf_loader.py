@@ -33,10 +33,12 @@ def TestOneInput(data: bytes) -> None:
     if len(data) < 10:
         return
 
+    # Create loader once for all DPI tests (performance optimization)
+    loader = PDFLoader()
+
     try:
         # Test PDF loading from bytes
         pdf_bytes = BytesIO(data)
-        loader = PDFLoader()
 
         # Attempt to load pages with various DPI values
         for target_dpi in [72, 150, 300]:

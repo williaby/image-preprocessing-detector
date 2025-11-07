@@ -44,7 +44,7 @@ repos:
           - types-pillow
           - types-python-dateutil
         args: ['--ignore-missing-imports', '--python-version=3.12']
-        exclude: '^(tests/.*|validation/.*)'
+        exclude: '^(tests/.*|validation/.*|fuzz/.*)'
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
