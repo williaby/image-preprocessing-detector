@@ -12,9 +12,8 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up Python 3.11 (required for Atheris compatibility)
-RUN apt-get update && apt-get install -y python3.11 python3.11-dev && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+# Note: Base image provides Python 3.8 which is compatible with Atheris
+# Atheris requires Python <= 3.11 (doesn't support PRECALL opcode in 3.12+)
 
 # Copy project source
 COPY . $SRC/image-preprocessing-detector
