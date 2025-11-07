@@ -2,6 +2,15 @@
 
 This directory contains fuzzing harnesses for ClusterFuzzLite, enabling continuous security testing of critical input processing code via GitHub Actions CI/CD.
 
+## Python Version Requirement
+
+**Important**: ClusterFuzzLite fuzzing uses **Python 3.11** due to Atheris compatibility constraints. Atheris native code does not support the PRECALL opcode changes introduced in Python 3.12.
+
+- **Main Project**: Python 3.12+ (see `pyproject.toml`)
+- **Fuzzing CI/CD**: Python 3.11 (see `.github/workflows/cifuzzy.yml`)
+
+This version constraint only affects the fuzzing workflow in CI/CD. Local development and main CI tests use Python 3.12.
+
 ## Overview
 
 Fuzzing is a dynamic testing technique that feeds random or malformed inputs to software to discover crashes, hangs, and security vulnerabilities. These harnesses use [Atheris](https://github.com/google/atheris), Google's Python fuzzing engine, and run automatically in CI/CD via ClusterFuzzLite.

@@ -37,7 +37,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
-          python-version: '3.12'
+          # Note: Using Python 3.11 instead of 3.12 due to Atheris compatibility
+          # Atheris native code doesn't support PRECALL opcode changes in Python 3.12
+          python-version: '3.11'
 
       - name: Install system dependencies
         run: |
@@ -62,6 +64,7 @@ jobs:
         # Note: ClusterFuzzLite actions use @master, cannot pin to SHA (maintained by Google)
         uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
         with:
+          oss-fuzz-project-name: image-preprocessing-detector
           language: python
           dry-run: false
 
@@ -70,6 +73,7 @@ jobs:
         uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
         if: steps.build.outcome == 'success'
         with:
+          oss-fuzz-project-name: image-preprocessing-detector
           fuzz-seconds: 600
           language: python
           output-sarif: true
