@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+"""ClusterFuzzLite fuzzing target wrapper for text detection gate.
+
+This wrapper executes the actual Python fuzzing harness for ClusterFuzzLite/OSS-Fuzz.
+Fuzz targets must be executable files without .py extension for ClusterFuzzLite detection.
+"""
+import os
+import sys
+
+# Add project to Python path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+# Execute the actual fuzzing harness
+# nosec B102 - exec() is intentional for fuzzing wrapper
+with open(os.path.join(os.path.dirname(__file__), "fuzz_text_gate.py")) as f:
+    exec(f.read())  # nosec B102
