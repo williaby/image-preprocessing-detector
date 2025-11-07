@@ -23,10 +23,26 @@ pip3 install atheris
 echo "Copying fuzzing harnesses from fuzz/ to $OUT/"
 cp -v fuzz/fuzz_*.py $OUT/
 
-# Make fuzzing harnesses executable (required for ClusterFuzzLite to recognize them as targets)
-chmod +x $OUT/fuzz_*.py
+# Create wrapper scripts without .py extension (required for ClusterFuzzLite target detection)
+# OSS-Fuzz/ClusterFuzzLite looks for executable files without .py extension
+for fuzzer in fuzz_pdf_loader fuzz_image_loader fuzz_text_gate; do
+    echo "Creating wrapper for $fuzzer"
+    cat > $OUT/$fuzzer <<EOF
+#!/usr/bin/env python3
+# ClusterFuzzLite wrapper for ${fuzzer}.py
+import sys
+import os
+
+# Add project to Python path
+sys.path.insert(0, '/src/image-preprocessing-detector/src')
+
+# Import and run the fuzzing harness
+exec(open('$OUT/${fuzzer}.py').read())
+EOF
+    chmod +x $OUT/$fuzzer
+done
 
 echo "=== Fuzzing Build Complete ==="
-echo "Fuzzing harnesses in $OUT:"
-ls -la $OUT/
+echo "Fuzzing targets in $OUT:"
+ls -la $OUT/ | grep -E "(fuzz_|^total|^d)"
 echo "================================"
