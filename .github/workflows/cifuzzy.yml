@@ -61,19 +61,17 @@ jobs:
 
       - name: Build Fuzzers
         id: build
-        # Note: ClusterFuzzLite actions use @master, cannot pin to SHA (maintained by Google)
-        uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
+        # Note: ClusterFuzzLite actions use @v1, cannot pin to SHA (maintained by Google)
+        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
         with:
-          oss-fuzz-project-name: image-preprocessing-detector
           language: python
           dry-run: false
 
       - name: Run Fuzzers
-        # Note: ClusterFuzzLite actions use @master, cannot pin to SHA (maintained by Google)
-        uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
+        # Note: ClusterFuzzLite actions use @v1, cannot pin to SHA (maintained by Google)
+        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
         if: steps.build.outcome == 'success'
         with:
-          oss-fuzz-project-name: image-preprocessing-detector
           fuzz-seconds: 600
           language: python
           output-sarif: true
