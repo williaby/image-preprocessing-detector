@@ -16,6 +16,9 @@ pip3 install atheris
 # Copy fuzzing harnesses to output directory
 cp fuzz/*.py $OUT/
 
+# Make fuzzing harnesses executable (required for ClusterFuzzLite to recognize them as targets)
+chmod +x $OUT/*.py
+
 echo "Fuzzing build complete!"
 echo "Fuzzing harnesses in $OUT:"
 ls -la $OUT/*.py
