@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 """ClusterFuzzLite fuzzing target wrapper for image loading.
 
-This wrapper executes the actual Python fuzzing harness for ClusterFuzzLite/OSS-Fuzz.
+This wrapper imports and executes the actual Python fuzzing harness for ClusterFuzzLite/OSS-Fuzz.
 Fuzz targets must be executable files without .py extension for ClusterFuzzLite detection.
 """
 import os
 import sys
 
-# Add project to Python path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+# Add directories to Python path for imports
+fuzz_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(fuzz_dir, "..", "src"))
+sys.path.insert(0, fuzz_dir)
 
-# Execute the actual fuzzing harness
-# nosec B102 - exec() is intentional for fuzzing wrapper
-with open(os.path.join(os.path.dirname(__file__), "fuzz_image_loader.py")) as f:
-    exec(f.read())  # nosec B102
+# Import the fuzzing harness module
+import fuzz_image_loader  # noqa: E402
+
+# Expose TestOneInput for ClusterFuzzLite detection
+TestOneInput = fuzz_image_loader.TestOneInput  # noqa: F401
+
+# Execute main entry point
+if __name__ == "__main__":
+    fuzz_image_loader.main()
