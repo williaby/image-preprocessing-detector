@@ -20,20 +20,27 @@ poetry install --without dev --no-interaction
 pip3 install atheris
 
 # Copy Python fuzzing harnesses to output directory
-# For Python fuzzing, the .py files themselves are the fuzz targets
 echo "Copying Python fuzzing harnesses from fuzz/ to $OUT/"
 cp -v fuzz/fuzz_pdf_loader.py $OUT/
 cp -v fuzz/fuzz_image_loader.py $OUT/
 cp -v fuzz/fuzz_text_gate.py $OUT/
 
-# Make Python files executable (they have #!/usr/bin/env python3 shebang)
-chmod +x $OUT/fuzz_pdf_loader.py $OUT/fuzz_image_loader.py $OUT/fuzz_text_gate.py
+# Create shell wrapper scripts for ClusterFuzzLite (without .py extension)
+# ClusterFuzzLite expects fuzz targets without extensions
+echo "Creating fuzz target wrappers in $OUT/"
+for target in fuzz_pdf_loader fuzz_image_loader fuzz_text_gate; do
+  cat > $OUT/$target <<WRAPPER_EOF
+#!/bin/bash
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+export PYTHONPATH="/src/image-preprocessing-detector/src:\${PYTHONPATH}"
+exec python3 "\${SCRIPT_DIR}/${target}.py" "\$@"
+WRAPPER_EOF
 
-# Set PYTHONPATH for imports
-export PYTHONPATH="${SRC}/image-preprocessing-detector/src:${PYTHONPATH:-}"
+  chmod +x $OUT/$target
+  echo "Created wrapper: $OUT/$target"
+done
 
 echo "=== Fuzzing Build Complete ==="
-echo "Python fuzz targets in $OUT:"
+echo "Fuzz targets in $OUT:"
 ls -la $OUT/ | grep -E "(fuzz_|^total|^d)"
-echo "PYTHONPATH: $PYTHONPATH"
 echo "================================"
