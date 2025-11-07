@@ -186,6 +186,9 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           echo "🛡️ Scanning for known vulnerabilities in image processing dependencies..."
 
+          # Install poetry-plugin-export (required for poetry export in Poetry 2.0+)
+          poetry self add poetry-plugin-export
+
           # Export requirements for safety scanning
           poetry export -f requirements.txt --output requirements-scan.txt
 

@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - Signed commits with SSH for commit verification
 - Dependency scanning with Safety for vulnerability detection
-- Security policy (SECURITY.md) with 72-hour acknowledgment time
+- Security policy (SECURITY.md) with 10-day acknowledgment time
 - Token permissions scoped to job-level (principle of least privilege)
 - GitHub Actions dependencies pinned to SHA hashes
 - No known vulnerabilities (OpenSSF Scorecard: 10/10 Vulnerabilities check)

@@ -46,7 +46,7 @@ Please provide as much information as possible to help us understand and resolve
 
 We are committed to addressing security issues promptly:
 
-- **Acknowledgment**: Within **72 hours** of receiving your report
+- **Acknowledgment**: Within **10 days** of receiving your report
 - **Initial Assessment**: Within **7 days** of acknowledgment
 - **Status Updates**: Every **14 days** until resolution
 - **Critical Issues**: Mitigation or fix within **90 days** of acknowledgment
