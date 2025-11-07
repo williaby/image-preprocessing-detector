@@ -34,31 +34,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Set up Python
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
-        with:
-          # Note: Using Python 3.11 instead of 3.12 due to Atheris compatibility
-          # Atheris native code doesn't support PRECALL opcode changes in Python 3.12
-          python-version: '3.11'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm lld libpoppler-cpp-dev poppler-utils
-
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Install project dependencies
-        run: |
-          poetry config virtualenvs.create false
-          poetry install --without dev --no-interaction
-
-      - name: Install Atheris
-        run: pip install atheris
-
       - name: Build Fuzzers
         id: build
         # Note: ClusterFuzzLite actions use @v1, cannot pin to SHA (maintained by Google)
