@@ -20,15 +20,6 @@ RUN apt-get update && apt-get install -y \
 COPY . $SRC/image-preprocessing-detector
 WORKDIR $SRC/image-preprocessing-detector
 
-# Install Poetry
-RUN pip3 install poetry
-
-# Install project dependencies
-RUN poetry config virtualenvs.create false && \
-    poetry install --without dev --no-interaction
-
-# Install Atheris fuzzing engine
-RUN pip3 install atheris
-
-# Copy fuzzing harnesses
-COPY fuzz/*.py $OUT/
+# Copy build script to expected location
+COPY .clusterfuzzlite/build.sh /src/build.sh
+RUN chmod +x /src/build.sh
