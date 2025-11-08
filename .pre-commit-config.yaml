@@ -28,8 +28,9 @@ repos:
         args: ['--line-length=88']
 
   # Python linting with Ruff (fast!)
+  # Version aligned with pyproject.toml constraint (>=0.9.0,<1.0.0)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.4
+    rev: v0.14.4  # Compatible with pyproject.toml ruff>=0.9.0,<1.0.0
     hooks:
       - id: ruff
         args: ['--fix', '--exit-non-zero-on-fix']

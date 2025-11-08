@@ -69,7 +69,7 @@ dev = [
 
     # Code Quality
     "black>=24.3.0",  # Updated to address CVE-2024-21503 (ReDoS vulnerability)
-    "ruff>=0.9.0",
+    "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",
 
     # Pre-commit

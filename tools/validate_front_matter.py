@@ -191,9 +191,10 @@ def validate_file(
         return {"file": str(path), "ok": False, "errors": errors, "fixed": fixed}
 
     # Check for redundant body H1 (but skip code blocks)
-    # Remove code blocks (both ``` and ~~~, with optional indentation) before checking for H1
+    # Remove code blocks (3+ backticks/tildes, with optional indentation) before checking for H1
+    # Pattern handles varying fence lengths (```, ````, ~~~~~, etc.)
     content_without_code = re.sub(
-        r"^\s*(```|~~~).*?^\s*\1", "", content, flags=re.DOTALL | re.MULTILINE
+        r"^\s*(`{3,}|~{3,}).*?^\s*\1", "", content, flags=re.DOTALL | re.MULTILINE
     )
     h1_match = H1_RE.search(content_without_code)
     if h1_match:

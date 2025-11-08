@@ -200,14 +200,19 @@ jobs:
           with open('sbom-runtime.json') as f:
               sbom = json.load(f)
 
-          forbidden_licenses = ['GPL-2.0', 'GPL-3.0', 'AGPL-3.0']
+          # Use precise SPDX license identifiers (exact match)
+          forbidden_licenses = [
+              'GPL-2.0-only', 'GPL-2.0-or-later',
+              'GPL-3.0-only', 'GPL-3.0-or-later',
+              'AGPL-3.0-only', 'AGPL-3.0-or-later'
+          ]
           issues = []
 
           for component in sbom.get('components', []):
               licenses = component.get('licenses', [])
               for lic in licenses:
                   lic_id = lic.get('license', {}).get('id', '')
-                  if any(forbidden in lic_id for forbidden in forbidden_licenses):
+                  if lic_id in forbidden_licenses:
                       issues.append(f\"{component['name']}: {lic_id}\")
 
           if issues:
