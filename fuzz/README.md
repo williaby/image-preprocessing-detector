@@ -124,11 +124,20 @@ These harnesses run automatically via GitHub Actions on every push and PR:
 ### Workflow Configuration
 
 The ClusterFuzzLite workflow (`.github/workflows/cifuzzy.yml`):
-- Installs Clang, LLVM, and dependencies
-- Builds fuzzing harnesses with Atheris
+- Uses OSS-Fuzz `compile_python_fuzzer` helper to build proper fuzz target executables
+- Builds fuzzing harnesses with Atheris in Docker container
 - Runs each fuzzer for 600 seconds (10 minutes)
 - Uploads crash artifacts if found
 - Submits SARIF reports to Security tab
+
+The build script (`.clusterfuzzlite/build.sh`) uses the OSS-Fuzz Python compilation helper:
+```bash
+compile_python_fuzzer fuzz fuzz_pdf_loader
+compile_python_fuzzer fuzz fuzz_image_loader
+compile_python_fuzzer fuzz fuzz_text_gate
+```
+
+This creates properly formatted executable fuzz targets that ClusterFuzzLite recognizes, eliminating the need for manual wrapper scripts.
 
 See [TESTING.md](./TESTING.md) for viewing results and troubleshooting.
 

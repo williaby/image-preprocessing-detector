@@ -1,6 +1,6 @@
 #!/bin/bash -eu
 # ClusterFuzzLite build script for Image Preprocessing Detector
-# Installs dependencies and prepares Python fuzzing harnesses
+# Uses OSS-Fuzz compile_python_fuzzer to create proper fuzz target executables
 
 echo "=== ClusterFuzzLite Build Debug ==="
 echo "SRC: $SRC"
@@ -16,16 +16,13 @@ cd $SRC/image-preprocessing-detector
 poetry config virtualenvs.create false
 poetry install --without dev --no-interaction
 
-# Install Atheris fuzzing engine
-pip3 install atheris
+# Use OSS-Fuzz helper to compile Python fuzz targets
+# This creates proper executables that ClusterFuzzLite recognizes
+echo "Compiling Python fuzz targets with compile_python_fuzzer..."
 
-# Copy Python fuzzing harnesses and wrappers to output directory
-echo "Copying Python fuzzing harnesses from fuzz/ to $OUT/"
-cp -v fuzz/fuzz_*.py $OUT/
-cp -v fuzz/fuzz_pdf_loader fuzz/fuzz_image_loader fuzz/fuzz_text_gate $OUT/
-
-# Ensure wrappers are executable
-chmod +x $OUT/fuzz_pdf_loader $OUT/fuzz_image_loader $OUT/fuzz_text_gate
+compile_python_fuzzer fuzz fuzz_pdf_loader
+compile_python_fuzzer fuzz fuzz_image_loader
+compile_python_fuzzer fuzz fuzz_text_gate
 
 echo "=== Fuzzing Build Complete ==="
 echo "Fuzz targets in $OUT:"
