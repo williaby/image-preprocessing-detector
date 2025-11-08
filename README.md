@@ -1,11 +1,19 @@
 # Image Preprocessing Detector
 
-[![CI/CD Pipeline](https://github.com/williaby/image-preprocessing-detector/workflows/CI/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions)
+<!-- Security & Quality (Interactive Validation) -->
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11445/badge)](https://www.bestpractices.dev/en/projects/11445)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/williaby/image-preprocessing-detector/badge)](https://securityscorecards.dev/viewer/?uri=github.com/williaby/image-preprocessing-detector)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![codecov](https://codecov.io/gh/williaby/image-preprocessing-detector/graph/badge.svg?token=eS2YJZ5BzM)](https://codecov.io/gh/williaby/image-preprocessing-detector)
+
+<!-- CI/CD Status (Real-time Health) -->
+[![CI Pipeline](https://github.com/williaby/image-preprocessing-detector/workflows/CI/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/ci.yml)
+[![Security Analysis](https://github.com/williaby/image-preprocessing-detector/workflows/Security%20Analysis/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/security-analysis.yml)
+[![ClusterFuzzLite](https://github.com/williaby/image-preprocessing-detector/workflows/ClusterFuzzLite/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/cifuzzy.yml)
+
+<!-- Project Info (Essential Metadata) -->
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 **Intelligent image preprocessing detection system for RAG applications.** Automatically analyzes documents (PDFs, images) and detects required preprocessing steps before vector database ingestion.
 
