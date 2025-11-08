@@ -67,7 +67,10 @@ Your project has strong foundations in several areas but needs targeted improvem
    ### Installation
    ```bash
    pip install image-preprocessing-detector
-   # or
+   ```
+
+   Or with Poetry:
+   ```bash
    poetry add image-preprocessing-detector
    ```
 
