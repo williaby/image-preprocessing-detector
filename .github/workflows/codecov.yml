@@ -39,7 +39,6 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@f1b7348826d750ac29741abc9d1623d8da5dcd4f # v4.3.1
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
@@ -48,8 +47,7 @@ jobs:
           name: Image Preprocessing Detector Coverage (Python 3.12)
           verbose: true
           commit_parent: ${{ github.event.workflow_run.head_sha }}
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        continue-on-error: true
 
       - name: Coverage upload status
         if: always()
