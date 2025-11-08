@@ -176,13 +176,9 @@ Your project has strong foundations in several areas but needs targeted improvem
    from image_preprocessing_detector.ingestion import process_pdf
    from image_preprocessing_detector.detection import detect_issues
 
-   # Process a PDF
    pages = process_pdf("document.pdf")
-
-   # Detect issues
    metadata = detect_issues(pages)
 
-   # Export to JSON
    with open("output.json", "w") as f:
        f.write(metadata.model_dump_json(indent=2))
    ```
