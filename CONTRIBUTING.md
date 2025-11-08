@@ -119,12 +119,44 @@ poetry run pre-commit run --all-files
 
 ## Code Quality Standards
 
+All contributions MUST meet these requirements:
+
 ### Formatting
 
-- **Line Length**: 88 characters (Black default)
+- **Tool**: Black (88 character line length)
 - **Indentation**: 4 spaces (no tabs)
 - **Imports**: Sorted with isort (integrated into Black)
 - **Quotes**: Double quotes for strings
+- **Verification**: `poetry run black src tests`
+
+### Linting
+
+- **Tool**: Ruff with project configuration
+- **Rules**: Comprehensive rule set (see `pyproject.toml`)
+- **Auto-fix**: `poetry run ruff check --fix src tests`
+- **Verification**: `poetry run ruff check src tests`
+
+### Type Checking
+
+- **Tool**: MyPy strict mode for `src/`
+- **Coverage**: All public functions must have type hints
+- **Verification**: `poetry run mypy src`
+
+### Security
+
+- **Tool**: Bandit security scanner
+- **Scope**: All production code in `src/`
+- **Verification**: `poetry run bandit -r src`
+
+### Pre-Commit Hooks
+
+Run before EVERY commit (automatically enforced):
+
+```bash
+poetry run pre-commit run --all-files
+```
+
+See `pyproject.toml` for complete configuration.
 
 ### Type Hints
 
@@ -169,6 +201,23 @@ def process_image(
 - **Dependency Security**: Run `poetry run safety check` before submitting PRs
 
 ## Testing Requirements
+
+### Testing Policy
+
+All new functionality MUST include corresponding tests:
+
+- **Unit tests**: Required for all new functions/classes
+- **Integration tests**: Required for new modules/workflows
+- **Coverage**: Must maintain ≥80% overall coverage
+- **Test types**: Use pytest markers (`@pytest.mark.unit`, `@pytest.mark.integration`)
+
+### Test Guidelines
+
+- Test both success and failure cases
+- Test edge cases and boundary conditions
+- Use descriptive test names: `test_<function>_<scenario>_<expected>`
+- Include docstrings explaining test purpose
+- Use fixtures for common setup
 
 ### Minimum Coverage
 
@@ -353,6 +402,17 @@ Reviewers will check:
 - **Compatibility**: Maintains backward compatibility (or documents breaking changes)
 
 ## Issue Guidelines
+
+### Issue Response Policy
+
+We aim to:
+
+- **Acknowledge all bug reports** within 7 days
+- **Respond to enhancement requests** within 14 days
+- **Triage severity** within 14 days of report
+- **Provide status updates** on open issues
+
+Note: Response times may vary based on maintainer availability. The project maintainer commits to acknowledging and triaging all issues in a timely manner.
 
 ### Reporting Bugs
 

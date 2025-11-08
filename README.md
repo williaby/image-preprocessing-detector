@@ -178,6 +178,44 @@ poetry run pytest --cov=src --cov-fail-under=80
 poetry run pytest -n auto
 ```
 
+## Reporting Issues
+
+### Bug Reports
+
+Found a bug? Please report it via GitHub Issues:
+
+1. **Check existing issues**: https://github.com/williaby/image-preprocessing-detector/issues
+2. **Create new issue**: https://github.com/williaby/image-preprocessing-detector/issues/new
+3. **Include**:
+   - Python version and OS
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Error messages and logs
+
+### Feature Requests
+
+Have an idea? We welcome enhancement proposals via GitHub Issues. Please describe:
+- Use case and motivation
+- Proposed solution (if any)
+- Alternatives considered
+
+### Security Vulnerabilities
+
+**Please do not report security vulnerabilities through public issues.**
+
+See [SECURITY.md](SECURITY.md) for responsible disclosure process.
+
+## Versioning
+
+This project uses [Semantic Versioning](https://semver.org/):
+- **MAJOR** version: Incompatible API changes
+- **MINOR** version: Backwards-compatible functionality additions
+- **PATCH** version: Backwards-compatible bug fixes
+
+Current version: **0.1.0** (pre-release, API may change)
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Documentation
 
 - **[PROJECT_PLAN.md](PROJECT_PLAN.md)**: Complete 50+ page implementation plan with phased roadmap
@@ -185,6 +223,8 @@ poetry run pytest -n auto
 - **[DECISION_MATRIX.md](DECISION_MATRIX.md)**: Critical decisions tracking and stakeholder requirements
 - **[ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
 - **[docs/WTD-Runbook.md](docs/WTD-Runbook.md)**: What The Diff integration guide for automated PR summaries
+- **[docs/api-reference.md](docs/api-reference.md)**: API and CLI reference documentation
+- **[SECURITY.md](SECURITY.md)**: Security policy and vulnerability reporting
 
 ## Roadmap
 
