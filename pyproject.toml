@@ -87,8 +87,8 @@ dev = [
 
 ml = [
     # Machine Learning Dependencies (install separately for Phase 2/3)
-    "torch>=2.1.0",  # Updated to address GHSA-887c-mr87-cxwp
-    "torchvision>=0.16.0",  # Compatible with torch 2.1.0
+    "torch>=2.6.0",  # Updated to address GHSA-53q9-r3pm-6pq6 (CRITICAL RCE)
+    "torchvision>=0.21.0",  # Compatible with torch 2.6.0
     "ultralytics>=8.0.0",
     "timm>=0.9.0",
     "albumentations>=1.3.0",
@@ -100,7 +100,7 @@ api = [
     "fastapi>=0.115.0",  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
     "uvicorn[standard]>=0.23.0",
     "python-multipart>=0.0.18",  # Updated to address CVE-2024-53981 and PVE-2024-99762
-    "starlette>=0.48.0",  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS)
+    "starlette>=0.49.1",  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS)
 ]
 
 [project.scripts]
@@ -166,8 +166,8 @@ nox = "^2025.10.16"
 optional = true
 
 [tool.poetry.group.ml.dependencies]
-torch = "^2.1.0"  # Updated to address GHSA-887c-mr87-cxwp (Improper Resource Shutdown)
-torchvision = "^0.16.0"  # Compatible with torch 2.1.0
+torch = "^2.6.0"  # Updated to address GHSA-53q9-r3pm-6pq6 (CRITICAL RCE) and other vulnerabilities
+torchvision = "^0.21.0"  # Compatible with torch 2.6.0
 ultralytics = "^8.0.0"
 timm = "^0.9.0"
 albumentations = "^1.3.0"
@@ -180,7 +180,7 @@ optional = true
 fastapi = "^0.120.1"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
 uvicorn = {extras = ["standard"], version = "^0.23.0"}
 python-multipart = "^0.0.18"  # Updated to address CVE-2024-53981 and PVE-2024-99762
-starlette = "^0.48.0"  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS via Range header)
+starlette = "^0.49.1"  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS via Range header)
 
 # Black Configuration
 [tool.black]
