@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     lld \
     libpoppler-cpp-dev \
     poppler-utils \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Note: Base image (gcr.io/oss-fuzz-base/base-builder-python) provides Python 3.11.13
