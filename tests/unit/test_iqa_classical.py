@@ -5,6 +5,7 @@ Unit tests for classical IQA detectors (skew, blur, contrast).
 import cv2
 import numpy as np
 import pytest
+
 from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetectionResult,
     BlurDetector,

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
 import pytest
+
 from image_preprocessing_detector.ingestion.pdf_loader import (
     PageImage,
     PDFLoader,

@@ -1,0 +1,204 @@
+# MkDocs Configuration for Image Preprocessing Detector
+# Documentation: https://www.mkdocs.org/user-guide/configuration/
+
+site_name: Image Preprocessing Detector
+site_description: Intelligent image preprocessing detection system for RAG applications
+site_author: Byron Williams
+site_url: https://williaby.github.io/image-preprocessing-detector
+repo_url: https://github.com/williaby/image-preprocessing-detector
+repo_name: williaby/image-preprocessing-detector
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 Byron Williams
+
+# Theme Configuration
+theme:
+  name: material
+  custom_dir: overrides
+  language: en
+
+  # Color Palette
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  # Features
+  features:
+    - navigation.instant      # Instant loading
+    - navigation.tracking     # Anchor tracking
+    - navigation.tabs         # Top-level navigation tabs
+    - navigation.sections     # Navigation sections
+    - navigation.expand       # Expand sections by default
+    - navigation.indexes      # Section index pages
+    - navigation.top          # Back to top button
+    - search.suggest          # Search suggestions
+    - search.highlight        # Highlight search results
+    - content.code.copy       # Copy code button
+    - content.code.annotate   # Code annotations
+
+  # Fonts
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+  # Icons
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+
+  - autorefs  # Automatic cross-references
+
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+            show_if_no_docstring: false
+            show_source: false
+            show_root_heading: true
+            show_root_toc_entry: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: alphabetical
+            group_by_category: true
+            show_category_heading: true
+            filters:
+              - "!^_"  # Hide private members
+            extensions:
+              - griffe_pydantic  # Render Pydantic constraints
+
+  - section-index  # Section index pages
+
+  - git-revision-date-localized:
+      enable_creation_date: true
+      fallback_to_build_date: true
+      type: date
+
+  - gen-files:
+      scripts:
+        - tools/gen_tools_catalog.py
+
+# Markdown Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Extra Configuration
+extra:
+  org_name: "Byron Williams"
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/williaby
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+
+# Navigation
+nav:
+  - Home: index.md
+
+  - User Guide:
+      - Overview: guides/overview.md
+      - Configuration: guides/configuration.md
+      - Image Quality Assessment: guides/iqa.md
+      - Document Layout Detection: guides/layout.md
+      - Correction Pipeline: guides/correction.md
+
+  - API Reference:
+      - Overview: api-reference.md
+      - Schema: api/schema.md
+      - Ingestion: api/ingestion.md
+      - Detection: api/detection.md
+      - Correction: api/correction.md
+      - Output: api/output.md
+
+  - Development:
+      - Architecture: development/architecture.md
+      - Testing: development/testing.md
+      - Code Quality: development/code-quality.md
+      - Contributing: development/contributing.md
+
+  - Project:
+      - Roadmap: project/roadmap.md
+      - Changelog: project/changelog.md
+      - License: project/license.md
+
+  - Security:
+      - CodeQL Scanning Guide: security/codeql-python-scanning-guide.md
+      - Fuzzing Implementation: security/fuzzing-implementation-guide.md
+
+  - Operational:
+      - OpenSSF Badge Response: badgeapp_response.md
+      - WhatTheDiff Runbook: WTD-Runbook.md
+
+  - Tools:
+      - Tools Catalog: tools/index.md
+
+# Validation
+# strict mode disabled to allow links to repo root files (PROJECT_PLAN.md, etc.)
+# These files are valid but outside docs/ directory
+strict: false

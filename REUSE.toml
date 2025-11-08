@@ -1,0 +1,94 @@
+# REUSE Software Bill of Materials
+# https://reuse.software/
+# This file provides centralized licensing information for the entire project
+# avoiding the need for SPDX headers in individual files.
+
+version = 1
+SPDX-PackageName = "image-preprocessing-detector"
+SPDX-PackageSupplier = "Byron Williams"
+SPDX-PackageDownloadLocation = "https://github.com/williaby/image-preprocessing-detector"
+
+# Source code (Python, tools, tests) - Apache-2.0
+[[annotations]]
+path = [
+    "src/**",
+    "tools/**",
+    "tests/**",
+    "validation/**",
+    "fuzz/**",
+    "*.py",
+    "noxfile.py",
+]
+SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Documentation - CC-BY-4.0
+[[annotations]]
+path = [
+    "docs/**",
+    "*.md",
+    "!LICENSES/**",  # Exclude license files themselves
+]
+SPDX-License-Identifier = "CC-BY-4.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Configuration files - CC0-1.0 (public domain dedication)
+[[annotations]]
+path = [
+    "*.toml",
+    "*.yml",
+    "*.yaml",
+    ".github/**",
+    ".gitignore",
+    ".gitattributes",
+    ".pre-commit-config.yaml",
+    ".readthedocs.yaml",
+    "mkdocs.yml",
+    "poetry.lock",  # Dependency lockfile for reproducible builds
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Data files and models - ODbL-1.0 (Open Database License)
+[[annotations]]
+path = [
+    "data/**",
+    "models/**",
+]
+SPDX-License-Identifier = "ODbL-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Build artifacts and generated files - excluded from licensing
+[[annotations]]
+path = [
+    "build/**",
+    "dist/**",
+    "site/**",
+    "*.egg-info/**",
+    "__pycache__/**",
+    ".venv/**",
+    "venv/**",
+    ".nox/**",
+    ".mypy_cache/**",
+    ".pytest_cache/**",
+    ".ruff_cache/**",
+    "*.pyc",
+    "*.pyo",
+]
+precedence = "override"
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Additional configuration and temporary files - CC0-1.0
+[[annotations]]
+path = [
+    ".claude/settings.local.json",
+    ".clusterfuzzlite/**",
+    "concept.txt",
+    "image_reference_sets.txt",
+    "overrides/**",
+    "renovate.json",
+    "validate_workflows.sh",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"

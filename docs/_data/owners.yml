@@ -1,0 +1,11 @@
+# Allowed owners for documentation front matter
+# Owners must be listed here to be valid
+# Format: owner_key: GitHub team or individual
+
+owners:
+  cv-team: "@williaby/cv-team"
+  ml-team: "@williaby/ml-team"
+  docs-team: "@williaby/docs-team"
+  platform-team: "@williaby/platform-team"
+  quality-team: "@williaby/quality-team"
+  core-maintainer: "@williaby"

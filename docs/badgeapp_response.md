@@ -1,4 +1,15 @@
-# OpenSSF Best Practices Badge - Application Review & Response Guide
+---
+schema_type: common
+title: "OpenSSF Best Practices Badge Response Guide"
+description: "Review and response guide for OpenSSF Best Practices Badge application"
+tags: [security, compliance, documentation]
+status: published
+owner: "quality-team"
+review_cycle_days: 90
+authors:
+  - name: "Byron Williams"
+purpose: "Document responses and evidence for OpenSSF Best Practices Badge criteria."
+---
 
 **Project**: image-preprocessing-detector
 **Review Date**: 2025-11-07
@@ -56,7 +67,10 @@ Your project has strong foundations in several areas but needs targeted improvem
    ### Installation
    ```bash
    pip install image-preprocessing-detector
-   # or
+   ```
+
+   Or with Poetry:
+   ```bash
    poetry add image-preprocessing-detector
    ```
 
@@ -162,13 +176,9 @@ Your project has strong foundations in several areas but needs targeted improvem
    from image_preprocessing_detector.ingestion import process_pdf
    from image_preprocessing_detector.detection import detect_issues
 
-   # Process a PDF
    pages = process_pdf("document.pdf")
-
-   # Detect issues
    metadata = detect_issues(pages)
 
-   # Export to JSON
    with open("output.json", "w") as f:
        f.write(metadata.model_dump_json(indent=2))
    ```
@@ -760,13 +770,8 @@ Your project has strong foundations in several areas but needs targeted improvem
 
    ### Running Tests
    ```bash
-   # All tests
    poetry run pytest -v
-
-   # With coverage
    poetry run pytest --cov=src --cov-report=html --cov-report=term-missing
-
-   # Specific markers
    poetry run pytest -v -m unit
    poetry run pytest -v -m integration
    ```

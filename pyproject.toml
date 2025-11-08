@@ -69,7 +69,7 @@ dev = [
 
     # Code Quality
     "black>=24.3.0",  # Updated to address CVE-2024-21503 (ReDoS vulnerability)
-    "ruff>=0.0.280",
+    "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",
 
     # Pre-commit
@@ -87,8 +87,8 @@ dev = [
 
 ml = [
     # Machine Learning Dependencies (install separately for Phase 2/3)
-    "torch>=2.0.0",
-    "torchvision>=0.15.0",
+    "torch>=2.9.0",  # Updated to address GHSA-887c-mr87-cxwp (CVE-2025-3730)
+    "torchvision>=0.24.0",  # Compatible with torch 2.9.0
     "ultralytics>=8.0.0",
     "timm>=0.9.0",
     "albumentations>=1.3.0",
@@ -99,7 +99,8 @@ api = [
     # API Dependencies (install for Phase 4)
     "fastapi>=0.115.0",  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
     "uvicorn[standard]>=0.23.0",
-    "python-multipart>=0.0.6",
+    "python-multipart>=0.0.18",  # Updated to address CVE-2024-53981 and PVE-2024-99762
+    "starlette>=0.49.1",  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS)
 ]
 
 [project.scripts]
@@ -118,7 +119,7 @@ readme = "README.md"
 packages = [{include = "image_preprocessing_detector", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.15"  # Constrained by triton dependency for torch 2.9.0
 opencv-python-headless = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
@@ -137,24 +138,36 @@ pytest-asyncio = "^0.21.0"
 pytest-xdist = "^3.3.0"
 hypothesis = "^6.82.0"
 black = ">=24.3.0"
-ruff = "^0.0.280"
+ruff = "^0.9.0"
 mypy = "^1.4.0"
 pre-commit = "^3.3.0"
-mkdocs = "^1.5.0"
-mkdocs-material = "^9.1.0"
-mkdocstrings = {extras = ["python"], version = "^0.22.0"}
+# Documentation
+mkdocs = "^1.6.0"
+mkdocs-material = "^9.5.0"
+mkdocstrings = {extras = ["python"], version = "^0.26.0"}
+griffe-pydantic = "^1.1.0"
+mkdocs-gen-files = "^0.5.0"
+mkdocs-section-index = "^0.3.0"
+mkdocs-autorefs = "^1.2.0"
+mkdocs-git-revision-date-localized-plugin = "^1.3.0"
+python-frontmatter = "^1.1.0"
+ruamel-yaml = "^0.18.0"
+pydocstyle = "^6.3.0"
+interrogate = "^1.7.0"
+# Development Tools
 jupyter = "^1.0.0"
 ipykernel = "^6.25.0"
 matplotlib = "^3.10.7"
 datasets = "^4.4.1"
 safety = "^3.7.0"
+nox = "^2025.10.16"
 
 [tool.poetry.group.ml]
 optional = true
 
 [tool.poetry.group.ml.dependencies]
-torch = "^2.0.0"
-torchvision = "^0.15.0"
+torch = "^2.9.0"  # Updated to address GHSA-887c-mr87-cxwp (CVE-2025-3730)
+torchvision = "^0.24.0"  # Compatible with torch 2.9.0
 ultralytics = "^8.0.0"
 timm = "^0.9.0"
 albumentations = "^1.3.0"
@@ -164,9 +177,10 @@ onnxruntime = "^1.15.0"
 optional = true
 
 [tool.poetry.group.api.dependencies]
-fastapi = "^0.115.0"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
+fastapi = "^0.120.1"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
 uvicorn = {extras = ["standard"], version = "^0.23.0"}
-python-multipart = "^0.0.6"
+python-multipart = "^0.0.18"  # Updated to address CVE-2024-53981 and PVE-2024-99762
+starlette = "^0.49.1"  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS via Range header)
 
 # Black Configuration
 [tool.black]
@@ -191,6 +205,17 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "dist",
+    "build",
+]
+
+[tool.ruff.lint]
 select = [
     "E",    # pycodestyle errors
     "W",    # pycodestyle warnings
@@ -207,17 +232,8 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
 ]
-exclude = [
-    ".git",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".venv",
-    "__pycache__",
-    "dist",
-    "build",
-]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports in __init__.py
 "tests/**/*.py" = ["ARG"]  # unused arguments in tests
 
@@ -290,3 +306,18 @@ exclude_lines = [
 ]
 precision = 2
 show_missing = true
+
+# Pydocstyle Configuration
+[tool.pydocstyle]
+convention = "google"
+match = "(?!(test_)).*\\.py"
+add-ignore = ["D105", "D107", "D212"]  # Ignore magic methods, __init__ docstrings, and D212 (Google style uses D213)
+
+# Interrogate Configuration (Docstring Coverage)
+[tool.interrogate]
+verbose = 1
+fail-under = 85
+exclude = ["tests", "docs", "build", "dist", "validation", "tmp_cleanup"]
+ignore-init-method = true
+ignore-init-module = true
+color = true

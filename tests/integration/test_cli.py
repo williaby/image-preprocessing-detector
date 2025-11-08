@@ -9,6 +9,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 from click.testing import CliRunner
+
 from image_preprocessing_detector.cli import cli
 
 

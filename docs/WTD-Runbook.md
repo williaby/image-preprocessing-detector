@@ -1,9 +1,18 @@
-# What The Diff PR Summaries Runbook
+---
+schema_type: common
+title: "What The Diff PR Summaries Runbook"
+description: "Operational runbook for What The Diff AI-powered PR summary integration"
+tags: [ci_cd, documentation, guide]
+status: published
+owner: "docs-team"
+review_cycle_days: 90
+authors:
+  - name: "Byron Williams"
+purpose: "Document the workflow and best practices for generating AI-powered PR summaries with What The Diff."
+---
 
 > **Project:** Image Preprocessing Detector
-> **Purpose:** Documentation for What The Diff AI-powered PR summary feature
 > **Last Updated:** 2025-11-06
-> **Status:** Active
 
 ---
 

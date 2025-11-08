@@ -4,6 +4,7 @@ Unit tests for text detection gate.
 
 import numpy as np
 import pytest
+
 from image_preprocessing_detector.detection.text_gate import (
     TextDetectionResult,
     TextGate,

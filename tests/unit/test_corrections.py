@@ -5,6 +5,7 @@ Unit tests for image correction operations.
 import cv2
 import numpy as np
 import pytest
+
 from image_preprocessing_detector.correction.corrections import (
     ContrastEnhancer,
     CorrectionResult,

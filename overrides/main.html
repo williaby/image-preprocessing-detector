@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{#
+  Global JSON-LD injection for all documentation pages.
+
+  This override injects Schema.org structured data into the <head> of each page
+  based on the page's front matter metadata. It supports different schema types:
+  - TechArticle: For common documentation pages
+  - SoftwareSourceCode: For script/tool pages
+
+  The JSON-LD includes:
+  - Git-based publication and modification dates
+  - Author information with ORCID identifiers
+  - Model and dataset metadata
+  - Keywords/tags for discoverability
+#}
+
+{% block extrahead %}
+  {{ super() }}
+
+  {% if page and page.meta and page.meta.title %}
+  {% set created = page.meta.git_created_date_localized or page.meta.git_created or None %}
+  {% set modified = page.meta.git_revision_date_localized or page.meta.git_revision_date or None %}
+
+  {# Script/Tool Pages - SoftwareSourceCode Schema #}
+  {% if page.meta.schema_type == "script" %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "name": {{ page.meta.name | tojson }},
+    "headline": {{ page.meta.title | tojson }},
+    "description": {{ (page.meta.description or page.meta.purpose) | tojson }},
+    {% if page.meta.tags %}"keywords": {{ page.meta.tags | tojson }},{% endif %}
+    {% if config.extra.org_name %}"publisher": {
+      "@type": "Organization",
+      "name": {{ config.extra.org_name | tojson }}
+    },{% endif %}
+    {% if page.meta.category %}"applicationCategory": {{ page.meta.category | tojson }},{% endif %}
+    {% if page.meta.dependencies %}"softwareRequirements": {{ page.meta.dependencies | tojson }},{% endif %}
+    {% if page.meta.usage %}"softwareHelp": {{ page.meta.usage | tojson }},{% endif %}
+    "programmingLanguage": "Python",
+    {% if config.repo_url %}"codeRepository": {{ config.repo_url | tojson }},{% endif %}
+    {% if page.meta.license or config.copyright %}"license": {{ (page.meta.license or "MIT") | tojson }},{% endif %}
+    {% if created %}"datePublished": {{ created | tojson }},{% endif %}
+    {% if modified %}"dateModified": {{ modified | tojson }}{% endif %}
+  }
+  </script>
+
+  {# Common Pages - TechArticle Schema #}
+  {% else %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": {{ page.meta.title | tojson }},
+    {% if page.meta.description %}"description": {{ page.meta.description | tojson }},{% endif %}
+    {% if not page.meta.description and page.meta.purpose %}"abstract": {{ page.meta.purpose | tojson }},{% endif %}
+    {% if page.meta.tags %}"about": {{ page.meta.tags | tojson }},{% endif %}
+    {% if config.extra.org_name %}"publisher": {
+      "@type": "Organization",
+      "name": {{ config.extra.org_name | tojson }}
+    },{% endif %}
+
+    {# Author Information with ORCID #}
+    {% if page.meta.authors %}
+    "author": [
+      {% for author in page.meta.authors %}
+      {
+        "@type": "Person",
+        "name": {{ author.name | tojson }}
+        {% if author.orcid %},
+        "sameAs": {{ ("https://orcid.org/" ~ author.orcid) | tojson }},
+        "identifier": {
+          "@type": "PropertyValue",
+          "propertyID": "ORCID",
+          "value": {{ author.orcid | tojson }}
+        }
+        {% endif %}
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ],
+    {% endif %}
+
+    {# Model Metadata #}
+    {% if page.meta.model %}
+    "isPartOf": {
+      "@type": "SoftwareSourceCode",
+      "name": {{ page.meta.model.id | tojson }},
+      {% if page.meta.model.task %}"applicationCategory": {{ page.meta.model.task | tojson }},{% endif %}
+      {% if page.meta.model.license %}"license": {{ page.meta.model.license | tojson }},{% endif %}
+      {% if page.meta.model.codeRepository %}"codeRepository": {{ page.meta.model.codeRepository | tojson }},{% endif %}
+      "programmingLanguage": "Python"
+      {% if page.meta.model.metrics %},
+      "softwareVersion": "1.0",
+      "applicationSubCategory": [
+        {% for metric in page.meta.model.metrics %}
+        {
+          "@type": "PropertyValue",
+          "propertyID": {{ metric.name | tojson }},
+          "value": {{ metric.value | tojson }}
+          {% if metric.dataset %},"measurementTechnique": {{ metric.dataset | tojson }}{% endif %}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ]
+      {% endif %}
+    },
+    {% endif %}
+
+    {# Dataset Metadata #}
+    {% if page.meta.dataset %}
+    "mentions": {
+      "@type": "Dataset",
+      "name": {{ page.meta.dataset.name | tojson }}
+      {% if page.meta.dataset.url %},"url": {{ page.meta.dataset.url | tojson }}{% endif %}
+      {% if page.meta.dataset.license %},"license": {{ page.meta.dataset.license | tojson }}{% endif %}
+    },
+    {% endif %}
+
+    {# Git-based Dates #}
+    {% if created %}"datePublished": {{ created | tojson }},{% endif %}
+    {% if modified %}"dateModified": {{ modified | tojson }},{% endif %}
+
+    {# Canonical URL #}
+    {% if config.site_url %}"url": {{ (config.site_url ~ "/" ~ page.url) | tojson }}{% endif %}
+  }
+  </script>
+  {% endif %}
+  {% endif %}
+{% endblock %}
