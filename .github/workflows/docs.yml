@@ -169,6 +169,7 @@ jobs:
           fail: false  # Don't fail on broken links (many external links may be temporary)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
       - name: Upload link check report
         if: always()
