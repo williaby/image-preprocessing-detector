@@ -33,13 +33,15 @@ Include:
 
 ## Response Timeline
 
-- **Acknowledgment**: Within 48 hours
-- **Initial Assessment**: Within 7 days
+- **Acknowledgment**: Within 7 days
+- **Initial Assessment**: Within 14 days
 - **Fix Timeline**:
-  - Critical: Within 7 days
-  - High: Within 30 days
+  - Critical: Within 30 days
+  - High: Within 60 days
   - Medium: Within 90 days
   - Low: Next release cycle
+
+**Note**: These are target timelines for a single-maintainer project. Actual response times may vary based on severity, complexity, and maintainer availability.
 
 ## Disclosure Policy
 

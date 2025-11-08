@@ -20,10 +20,11 @@ poetry run imgprep process INPUT [OPTIONS]
 
 **Options**:
 
-- `--output PATH`: Output JSON file path (default: stdout)
-- `--dpi INTEGER`: Override DPI for processing (default: 300)
-- `--blur-threshold FLOAT`: Blur detection threshold (default: 0.85)
-- `--skew-threshold FLOAT`: Skew detection threshold (default: 0.90)
+- `--output PATH`, `-o PATH`: Output JSON file path (required)
+- `--dry-run`: Detection only, skip corrections (flag)
+- `--blur-threshold FLOAT`: Blur detection threshold 0.0-1.0 (default: 0.8)
+- `--skew-threshold FLOAT`: Skew detection threshold 0.0-1.0 (default: 0.7)
+- `--contrast-threshold FLOAT`: Contrast detection threshold 0.0-1.0 (default: 0.7)
 - `--help`: Show help message
 
 **Examples**:
@@ -33,10 +34,10 @@ poetry run imgprep process INPUT [OPTIONS]
 poetry run imgprep process input.pdf --output result.json
 
 # Process with custom thresholds
-poetry run imgprep process input.pdf --blur-threshold 0.90 --skew-threshold 0.95
+poetry run imgprep process input.pdf --output result.json --blur-threshold 0.90 --skew-threshold 0.95
 
-# Output to stdout for piping
-poetry run imgprep process input.pdf | jq '.pages[0]'
+# Detection only (skip corrections)
+poetry run imgprep process input.pdf --output result.json --dry-run
 ```
 
 **Output Format**:
@@ -45,24 +46,39 @@ The command outputs JSON conforming to the DocumentMetadata schema. See [JSON Sc
 
 ### imgprep batch
 
-Batch process multiple documents (Phase 1+).
+Batch process multiple documents.
 
 **Usage**:
 
 ```bash
-poetry run imgprep batch INPUT_DIR [OPTIONS]
+poetry run imgprep batch INPUT_DIR OUTPUT_DIR [OPTIONS]
 ```
 
 **Arguments**:
 
-- `INPUT_DIR`: Directory containing input files
+- `INPUT_DIR`: Directory containing input PDF or image files
+- `OUTPUT_DIR`: Directory where results will be saved
 
 **Options**:
 
-- `--output-dir PATH`: Output directory for JSON files
-- `--pattern GLOB`: File pattern to match (default: `*.pdf`)
-- `--workers INT`: Number of parallel workers (default: auto)
+- `--dry-run`: Detection only, skip corrections (flag)
+- `--blur-threshold FLOAT`: Blur detection threshold 0.0-1.0 (default: 0.8)
+- `--skew-threshold FLOAT`: Skew detection threshold 0.0-1.0 (default: 0.7)
+- `--contrast-threshold FLOAT`: Contrast detection threshold 0.0-1.0 (default: 0.7)
 - `--help`: Show help message
+
+**Examples**:
+
+```bash
+# Process all PDFs and images in a directory
+poetry run imgprep batch input_dir/ output_dir/
+
+# Batch process with dry-run
+poetry run imgprep batch docs/ results/ --dry-run
+
+# Batch process with custom thresholds
+poetry run imgprep batch docs/ results/ --blur-threshold 0.9
+```
 
 ## Python API
 
@@ -83,6 +99,8 @@ poetry install
 
 ### Basic Usage
 
+Currently, the primary interface is the CLI. The Python API provides schema validation:
+
 ```python
 from image_preprocessing_detector.schema import DocumentMetadata
 from image_preprocessing_detector.utils import setup_logging, get_logger
@@ -91,15 +109,12 @@ from image_preprocessing_detector.utils import setup_logging, get_logger
 setup_logging(level="INFO", json_logs=False)
 logger = get_logger(__name__)
 
-# Process document (Phase 1+ implementation)
-# from image_preprocessing_detector.pipeline import process_document
-# metadata = process_document("document.pdf")
-# metadata.to_json_file("output.json")
-
-# Validate and load JSON schema
+# Use the CLI to generate output, then validate and load JSON
 metadata = DocumentMetadata.from_json_file("output.json")
 logger.info("Processed document", pages=metadata.num_pages)
 ```
+
+**Note**: Direct Python processing API (`process_document` function) is planned for a future release and is not yet available. Use the CLI for document processing.
 
 ### Schema Validation
 
@@ -270,75 +285,65 @@ logger.error("Processing failed", error=str(e))
 
 ## Error Handling
 
-### Common Exceptions
+The CLI provides clear error messages for common issues:
+
+- **File not found**: Clear message when input file doesn't exist
+- **Invalid format**: Warnings for unsupported file formats
+- **Processing errors**: Detailed error messages with suggestions
+
+Use the `--dry-run` flag to validate inputs without performing corrections.
+
+For Python API error handling, standard Python exceptions are raised:
 
 ```python
 from pathlib import Path
-from image_preprocessing_detector.exceptions import (
-    ProcessingError,
-    InvalidInputError,
-    UnsupportedFormatError,
-)
 
 try:
-    metadata = process_document("document.pdf")
+    # Validate JSON output from CLI
+    metadata = DocumentMetadata.from_json_file("output.json")
 except FileNotFoundError:
-    logger.error("Document not found")
-except InvalidInputError as e:
-    logger.error("Invalid input", error=str(e))
-except UnsupportedFormatError as e:
-    logger.error("Unsupported format", error=str(e))
-except ProcessingError as e:
-    logger.error("Processing failed", error=str(e))
+    logger.error("Output file not found")
+except Exception as e:
+    logger.error("Failed to load metadata", error=str(e))
 ```
 
 ## Performance Considerations
 
 ### Batch Processing
 
-For processing multiple documents, use batch processing for better performance:
+Use the CLI `batch` command to process multiple documents efficiently:
 
-```python
-from image_preprocessing_detector.pipeline import batch_process
+```bash
+# Process entire directory
+poetry run imgprep batch input_dir/ output_dir/
 
-results = batch_process(
-    input_dir="documents/",
-    output_dir="results/",
-    workers=4,              # Parallel workers
-    pattern="*.pdf",        # File pattern
-)
+# The batch command automatically:
+# - Finds all supported files (.pdf, .jpg, .jpeg, .png, .tiff)
+# - Processes them sequentially
+# - Saves results to individual JSON files in output directory
+```
+
+### Custom Thresholds
+
+Adjust detection sensitivity using CLI options:
+
+```bash
+# More sensitive blur detection (higher threshold = more strict)
+poetry run imgprep process input.pdf --output result.json --blur-threshold 0.9
+
+# Less sensitive skew detection (lower threshold = more lenient)
+poetry run imgprep process input.pdf --output result.json --skew-threshold 0.6
+
+# Combine multiple thresholds
+poetry run imgprep batch docs/ results/ \
+  --blur-threshold 0.9 \
+  --skew-threshold 0.8 \
+  --contrast-threshold 0.75
 ```
 
 ### GPU Acceleration
 
-ML-based detection (Phase 2+) supports GPU acceleration:
-
-```python
-from image_preprocessing_detector.pipeline import process_document
-
-metadata = process_document(
-    "document.pdf",
-    use_gpu=True,          # Enable GPU acceleration
-    batch_size=8,          # GPU batch size
-)
-```
-
-## Advanced Usage
-
-### Custom Thresholds
-
-```python
-from image_preprocessing_detector.config import ProcessingConfig
-
-config = ProcessingConfig(
-    blur_threshold=0.90,
-    skew_threshold=0.95,
-    contrast_threshold=0.85,
-    min_confidence=0.80,
-)
-
-metadata = process_document("document.pdf", config=config)
-```
+ML-based detection with GPU acceleration is planned for Phase 2+ and is not yet available.
 
 ### Transform History
 
@@ -358,20 +363,19 @@ has_deskew = any(
 
 ## Type Hints
 
-All public APIs include comprehensive type hints for IDE support:
+The schema module includes comprehensive type hints for IDE support:
 
 ```python
 from pathlib import Path
-from typing import Optional
-from image_preprocessing_detector.schema import DocumentMetadata
+from image_preprocessing_detector.schema import DocumentMetadata, PageMetadata
 
-def process_document(
-    input_path: Path,
-    output_path: Optional[Path] = None,
-    use_gpu: bool = False,
-) -> DocumentMetadata:
-    """Process a document and return metadata."""
-    ...
+# All Pydantic models include full type hints
+metadata: DocumentMetadata = DocumentMetadata.from_json_file("output.json")
+
+# Type-safe access to fields
+source_file: str = metadata.source_file
+num_pages: int = metadata.num_pages
+pages: list[PageMetadata] = metadata.pages
 ```
 
 ## Further Documentation

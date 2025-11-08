@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub issue templates for bugs and feature requests
 - Detailed contribution guidelines with coding standards
 
-## [0.1.0] - 2025-11-07
+## [0.1.0] - TBD
 
 ### Added
 - Initial project structure with Poetry package management
