@@ -125,3 +125,4 @@ validation/synthetic_images/
 validation/characteristic_curves/
 validation/doclaynet_validation_results.json
 validation/handwriting_samples_analysis.json
+sbom-*.json
