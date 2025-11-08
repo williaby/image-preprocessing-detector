@@ -1,4 +1,15 @@
-# OpenSSF Best Practices Badge - Application Review & Response Guide
+---
+schema_type: common
+title: "OpenSSF Best Practices Badge Response Guide"
+description: "Review and response guide for OpenSSF Best Practices Badge application"
+tags: [security, compliance, documentation]
+status: published
+owner: "quality-team"
+review_cycle_days: 90
+authors:
+  - name: "Byron Williams"
+purpose: "Document responses and evidence for OpenSSF Best Practices Badge criteria."
+---
 
 **Project**: image-preprocessing-detector
 **Review Date**: 2025-11-07

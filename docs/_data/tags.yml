@@ -1,0 +1,90 @@
+# Allowed tags for documentation front matter
+# Tags must be snake_case lowercase and listed here to be valid
+
+allowed:
+  # Core Technical Areas
+  - computer_vision
+  - image_processing
+  - machine_learning
+  - deep_learning
+
+  # Document Analysis
+  - document_analysis
+  - layout_detection
+  - ocr
+  - ocr_preprocessing
+  - pdf_processing
+
+  # Image Quality
+  - image_quality
+  - iqa
+  - preprocessing
+  - correction
+  - enhancement
+
+  # Specific Techniques
+  - classical_cv
+  - skew_detection
+  - blur_detection
+  - contrast_enhancement
+  - denoising
+  - binarization
+
+  # ML/DL Frameworks
+  - pytorch
+  - yolov8
+  - onnx
+  - mobilenet
+  - efficientnet
+
+  # RAG & Applications
+  - rag
+  - vector_database
+  - embedding
+  - retrieval
+
+  # Development & Tooling
+  - testing
+  - validation
+  - benchmarks
+  - performance
+  - optimization
+
+  # Documentation
+  - front_matter
+  - api_reference
+  - guide
+  - tutorial
+  - architecture
+  - documentation
+  - contributing
+  - development
+  - installation
+
+  # Infrastructure
+  - ci_cd
+  - build
+  - deployment
+  - monitoring
+
+  # Data & Datasets
+  - datasets
+  - data_augmentation
+  - synthetic_data
+
+  # Quality & Standards
+  - code_quality
+  - quality
+  - security
+  - compliance
+  - licensing
+  - license
+  - legal
+
+  # Project Management
+  - planning
+  - roadmap
+  - project_management
+  - changelog
+  - releases
+  - version_history

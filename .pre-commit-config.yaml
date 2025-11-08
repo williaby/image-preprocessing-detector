@@ -29,7 +29,7 @@ repos:
 
   # Python linting with Ruff (fast!)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.11
+    rev: v0.14.4
     hooks:
       - id: ruff
         args: ['--fix', '--exit-non-zero-on-fix']
@@ -59,6 +59,33 @@ repos:
     hooks:
       - id: yamllint
         args: ['-d', '{extends: default, rules: {line-length: {max: 120}}}']
+
+  # Documentation front matter validation
+  - repo: local
+    hooks:
+      - id: validate-front-matter
+        name: Validate documentation front matter
+        entry: python tools/validate_front_matter.py docs
+        language: system
+        files: ^docs/.*\.md$
+        pass_filenames: false
+
+  # Python docstring style with pydocstyle
+  - repo: https://github.com/PyCQA/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        additional_dependencies: ['toml']
+        args: ['--config=pyproject.toml']
+        exclude: '^(tests/.*|validation/.*|fuzz/.*)'
+
+  # Python docstring coverage with interrogate
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.7.0
+    hooks:
+      - id: interrogate
+        args: ['-v', '-c', 'pyproject.toml', 'src/']
+        pass_filenames: false
 
   # Security scanning with Bandit
   - repo: https://github.com/PyCQA/bandit

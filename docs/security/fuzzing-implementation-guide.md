@@ -1,4 +1,15 @@
-# Fuzzing Implementation Guide for Image Preprocessing Detector
+---
+schema_type: common
+title: "Fuzzing Implementation Guide"
+description: "Comprehensive guide for implementing fuzzing tests with ClusterFuzzLite and OSS-Fuzz"
+tags: [security, testing, ci_cd, guide]
+status: published
+owner: "quality-team"
+review_cycle_days: 90
+authors:
+  - name: "Byron Williams"
+purpose: "Document the fuzzing infrastructure, harness creation, and integration process for security testing."
+---
 
 **Project**: Image Preprocessing Detector
 **Purpose**: Implement comprehensive fuzzing for image/PDF processing security

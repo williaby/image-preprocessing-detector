@@ -69,7 +69,7 @@ dev = [
 
     # Code Quality
     "black>=24.3.0",  # Updated to address CVE-2024-21503 (ReDoS vulnerability)
-    "ruff>=0.0.280",
+    "ruff>=0.9.0",
     "mypy>=1.4.0",
 
     # Pre-commit
@@ -137,17 +137,29 @@ pytest-asyncio = "^0.21.0"
 pytest-xdist = "^3.3.0"
 hypothesis = "^6.82.0"
 black = ">=24.3.0"
-ruff = "^0.0.280"
+ruff = "^0.9.0"
 mypy = "^1.4.0"
 pre-commit = "^3.3.0"
-mkdocs = "^1.5.0"
-mkdocs-material = "^9.1.0"
-mkdocstrings = {extras = ["python"], version = "^0.22.0"}
+# Documentation
+mkdocs = "^1.6.0"
+mkdocs-material = "^9.5.0"
+mkdocstrings = {extras = ["python"], version = "^0.26.0"}
+griffe-pydantic = "^1.1.0"
+mkdocs-gen-files = "^0.5.0"
+mkdocs-section-index = "^0.3.0"
+mkdocs-autorefs = "^1.2.0"
+mkdocs-git-revision-date-localized-plugin = "^1.3.0"
+python-frontmatter = "^1.1.0"
+ruamel-yaml = "^0.18.0"
+pydocstyle = "^6.3.0"
+interrogate = "^1.7.0"
+# Development Tools
 jupyter = "^1.0.0"
 ipykernel = "^6.25.0"
 matplotlib = "^3.10.7"
 datasets = "^4.4.1"
 safety = "^3.7.0"
+nox = "^2025.10.16"
 
 [tool.poetry.group.ml]
 optional = true
@@ -191,6 +203,17 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "dist",
+    "build",
+]
+
+[tool.ruff.lint]
 select = [
     "E",    # pycodestyle errors
     "W",    # pycodestyle warnings
@@ -207,17 +230,8 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
 ]
-exclude = [
-    ".git",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".venv",
-    "__pycache__",
-    "dist",
-    "build",
-]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports in __init__.py
 "tests/**/*.py" = ["ARG"]  # unused arguments in tests
 
@@ -290,3 +304,18 @@ exclude_lines = [
 ]
 precision = 2
 show_missing = true
+
+# Pydocstyle Configuration
+[tool.pydocstyle]
+convention = "google"
+match = "(?!(test_)).*\\.py"
+add-ignore = ["D105", "D107", "D212"]  # Ignore magic methods, __init__ docstrings, and D212 (Google style uses D213)
+
+# Interrogate Configuration (Docstring Coverage)
+[tool.interrogate]
+verbose = 1
+fail-under = 85
+exclude = ["tests", "docs", "build", "dist", "validation", "tmp_cleanup"]
+ignore-init-method = true
+ignore-init-module = true
+color = true

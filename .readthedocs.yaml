@@ -1,0 +1,37 @@
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+# Build documentation in the docs/ directory with MkDocs
+mkdocs:
+  configuration: mkdocs.yml
+  fail_on_warning: false  # Warnings about repo root links are expected
+
+# Build configuration
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+  jobs:
+    # Run front matter validation before build
+    pre_build:
+      - python tools/validate_front_matter.py docs --fix
+      - python tools/validate_front_matter.py docs
+
+# Python configuration
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - dev  # Includes all documentation dependencies
+
+# Formats to build (PDF/EPUB disabled for MkDocs)
+formats: []
+
+# Submodules configuration
+submodules:
+  include: []
+  recursive: false

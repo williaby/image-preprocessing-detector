@@ -1,4 +1,15 @@
-# API Reference
+---
+schema_type: common
+title: "API Reference"
+description: "Complete API reference for Image Preprocessing Detector CLI and Python interfaces"
+tags: [api_reference, documentation, guide]
+status: published
+owner: "docs-team"
+review_cycle_days: 90
+authors:
+  - name: "Byron Williams"
+purpose: "Provide comprehensive API documentation for CLI commands, Python API, and JSON schema."
+---
 
 This document provides reference documentation for the Image Preprocessing Detector's external interface.
 

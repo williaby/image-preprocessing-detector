@@ -1,4 +1,15 @@
-# CodeQL Python Security Scanning Guide
+---
+schema_type: common
+title: "CodeQL Python Security Scanning Guide"
+description: "Implementation guide for CodeQL security scanning in Python projects"
+tags: [security, ci_cd, code_quality, guide]
+status: published
+owner: "quality-team"
+review_cycle_days: 90
+authors:
+  - name: "Byron Williams"
+purpose: "Guide developers through setting up, running, and interpreting CodeQL security scans."
+---
 
 **Image Preprocessing Detector - Security Analysis Documentation**
 
