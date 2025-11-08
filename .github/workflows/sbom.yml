@@ -89,7 +89,7 @@ jobs:
           name: sboms
 
       - name: Trivy SBOM scan (runtime)
-        uses: aquasecurity/trivy-action@5681af892cd0f4997658bcab5712571ec6e5a9ac # v0.30.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           scan-type: sbom
           scan-ref: sbom-runtime.json
@@ -99,7 +99,7 @@ jobs:
 
       - name: Trivy SBOM scan (runtime - detailed report)
         if: always()
-        uses: aquasecurity/trivy-action@5681af892cd0f4997658bcab5712571ec6e5a9ac # v0.30.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           scan-type: sbom
           scan-ref: sbom-runtime.json
@@ -124,7 +124,7 @@ jobs:
           name: sboms
 
       - name: Trivy SBOM scan (dev)
-        uses: aquasecurity/trivy-action@5681af892cd0f4997658bcab5712571ec6e5a9ac # v0.30.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           scan-type: sbom
           scan-ref: sbom-dev.json
@@ -134,7 +134,7 @@ jobs:
 
       - name: Trivy SBOM scan (dev - detailed report)
         if: always()
-        uses: aquasecurity/trivy-action@5681af892cd0f4997658bcab5712571ec6e5a9ac # v0.30.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           scan-type: sbom
           scan-ref: sbom-dev.json
@@ -159,7 +159,7 @@ jobs:
           name: sboms
 
       - name: Trivy SBOM scan (complete)
-        uses: aquasecurity/trivy-action@5681af892cd0f4997658bcab5712571ec6e5a9ac # v0.30.0
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
         with:
           scan-type: sbom
           scan-ref: sbom-complete.json
