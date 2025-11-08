@@ -515,12 +515,12 @@ Your project has strong foundations in several areas but needs targeted improvem
 
    ## Response Timeline
 
-   - **Acknowledgment**: Within 48 hours
-   - **Initial Assessment**: Within 7 days
+   - **Acknowledgment**: Within 7 days
+   - **Initial Assessment**: Within 14 days
    - **Fix Timeline**:
-     - Critical: Within 7 days
-     - High: Within 30 days
-     - Medium: Within 90 days
+     - Critical: Within 30 days
+     - High: Within 60 days
+     - Medium: Within 60 days
      - Low: Next release cycle
 
    ## Disclosure Policy
@@ -569,7 +569,8 @@ Your project has strong foundations in several areas but needs targeted improvem
 **What's Needed**: Policy commitment (already in SECURITY.md above)
 
 **Action Required**:
-- **Badge Response**: "Project commits to 48-hour acknowledgment and 14-day assessment for vulnerability reports. See SECURITY.md for complete timeline."
+
+- **Badge Response**: "Project commits to 7-day acknowledgment and 14-day assessment for vulnerability reports. See SECURITY.md for complete timeline. Acknowledgment timeline meets OpenSSF requirement of ≤14 days."
 - **Mark as**: Met ✅ (will be demonstrated when/if vulnerabilities are reported)
 
 ---
@@ -857,11 +858,14 @@ Your project has strong foundations in several areas but needs targeted improvem
 **Reality**: ✅ **YOU PASS THIS** (policy commitment)
 
 **Evidence**:
-- SECURITY.md commits to 7-day critical fix timeline
+
+- SECURITY.md commits to 30-day critical fix timeline (meets "rapidly" requirement)
+- 60-day timeline for medium/high severity (meets 60-day MUST requirement)
 - Automated security scanning in place
 
 **Action Required**:
-- **Response**: "Project commits to fixing critical vulnerabilities within 7 days (see SECURITY.md). Automated security scanning (Bandit, Safety) in CI/CD alerts maintainers immediately."
+
+- **Response**: "Project commits to fixing critical vulnerabilities within 30 days, medium/high within 60 days (see SECURITY.md). This meets OpenSSF 'rapidly' recommendation for critical and 60-day requirement for medium+ severity. Automated security scanning (Bandit, Safety, CodeQL) in CI/CD alerts maintainers immediately."
 - **Mark as**: Met ✅
 
 ---
