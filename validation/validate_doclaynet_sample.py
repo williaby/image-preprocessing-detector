@@ -9,6 +9,7 @@ import random
 from pathlib import Path
 
 import numpy as np
+
 from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
     ContrastDetector,

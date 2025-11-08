@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+
 from image_preprocessing_detector.correction.corrections import CorrectionResult
 from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetectionResult,

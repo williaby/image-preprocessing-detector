@@ -11,6 +11,7 @@ import cv2
 import fitz  # PyMuPDF
 import numpy as np
 import pytest
+
 from image_preprocessing_detector.correction.corrections import (
     correct_skew,
     enhance_contrast,

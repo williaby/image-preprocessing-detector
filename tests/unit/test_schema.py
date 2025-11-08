@@ -6,6 +6,8 @@ import json
 from datetime import datetime
 
 import pytest
+from pydantic import ValidationError
+
 from image_preprocessing_detector.schema import (
     DetectedIssue,
     DocumentElement,
@@ -17,7 +19,6 @@ from image_preprocessing_detector.schema import (
     ProcessingVersion,
     TransformHistory,
 )
-from pydantic import ValidationError
 
 
 class TestDetectedIssue:

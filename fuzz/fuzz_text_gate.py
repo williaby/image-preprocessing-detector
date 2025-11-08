@@ -19,6 +19,7 @@ import atheris
 # Instrument imports before importing target code
 with atheris.instrument_imports():
     import numpy as np
+
     from image_preprocessing_detector.detection.text_gate import TextGate
 
 
