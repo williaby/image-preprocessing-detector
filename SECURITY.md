@@ -2,153 +2,127 @@
 
 ## Supported Versions
 
-The Image Preprocessing Detector project follows [Semantic Versioning](https://semver.org/). We provide security updates for the following versions:
+Currently supported versions for security updates:
 
-| Version | Supported          | Notes                          |
-| ------- | ------------------ | ------------------------------ |
-| 0.1.x   | :white_check_mark: | Active development (Phase 1)   |
-| < 0.1.0 | :x:                | Pre-release, not supported     |
-
-As the project matures, we will extend support to multiple major versions. Users should upgrade to supported versions to receive security patches.
+| Version | Supported          |
+| ------- | ------------------ |
+| 0.1.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
-**IMPORTANT**: Please **DO NOT** open public GitHub issues for security vulnerabilities.
+**Please do not report security vulnerabilities through public GitHub issues.**
 
-### Reporting Channels
+Instead, please report them via:
 
-We accept security vulnerability reports through two confidential channels:
+### GitHub Private Vulnerability Reporting
 
-1. **GitHub Security Advisory** (Preferred)
-   - Navigate to the [Security tab](../../security/advisories) in this repository
-   - Click "Report a vulnerability"
-   - Fill out the confidential advisory form
+Use GitHub's private vulnerability reporting feature:
+https://github.com/williaby/image-preprocessing-detector/security/advisories/new
 
-2. **Encrypted Email**
-   - Email: `byronawilliams@gmail.com`
-   - For sensitive issues, encrypt with PGP key (available upon request)
+### Email
 
-### What to Include
+Alternatively, email security reports to: byronawilliams@gmail.com
 
-Please provide as much information as possible to help us understand and resolve the issue:
+Include:
+- Type of vulnerability
+- Full path to affected source file(s)
+- Location of affected code (tag/branch/commit)
+- Step-by-step instructions to reproduce
+- Proof-of-concept or exploit code (if possible)
+- Impact assessment
 
-- **Affected Component**: Which module or feature is vulnerable (e.g., PDF ingestion, image processing, CLI)
-- **Vulnerability Type**: (e.g., path traversal, arbitrary code execution, DoS, information disclosure)
-- **Affected Versions**: Version numbers where the vulnerability exists
-- **Description**: Clear explanation of the security issue
-- **Reproduction Steps**: Detailed steps to reproduce the vulnerability
-- **Proof of Concept**: Code, screenshots, or example files demonstrating the issue
-- **Impact Assessment**: Potential consequences and attack scenarios
-- **Suggested Fix**: If you have ideas for remediation (optional but appreciated)
-- **CVE ID**: If you've already obtained a CVE identifier (optional)
+## Response Timeline
 
-### Response Timeline
+- **Acknowledgment**: Within 7 days
+- **Initial Assessment**: Within 14 days
+- **Fix Timeline**:
+  - Critical: Within 30 days
+  - High: Within 60 days
+  - Medium: Within 60 days
+  - Low: Next release cycle
 
-We are committed to addressing security issues promptly:
+**Note**: These are target timelines for a single-maintainer project. Actual response times may vary based on severity, complexity, and maintainer availability.
 
-- **Acknowledgment**: Within **10 days** of receiving your report
-- **Initial Assessment**: Within **7 days** of acknowledgment
-- **Status Updates**: Every **14 days** until resolution
-- **Critical Issues**: Mitigation or fix within **90 days** of acknowledgment
-- **High/Medium Issues**: Fix within **120 days** of acknowledgment
-- **Low Issues**: Fix in next planned release or within **180 days**
+## Disclosure Policy
 
-### Disclosure Policy
+- Security advisories published after fix is available
+- CVE requested for significant vulnerabilities
+- Credit given to reporters (unless anonymity requested)
 
-We follow **coordinated disclosure**:
+## Security Update Process
 
-1. You report the vulnerability confidentially
-2. We acknowledge and investigate
-3. We develop and test a fix
-4. We release a security patch
-5. We publish a security advisory with credit to the reporter
-6. Public disclosure occurs **90 days after the patch release** or when exploits appear in the wild (whichever comes first)
-
-If you plan to publicly disclose the vulnerability, please give us reasonable advance notice (minimum 90 days) to develop and release a fix.
-
-## Security Measures
-
-The Image Preprocessing Detector implements multiple security layers:
-
-### Automated Security Scanning
-
-- **CodeQL Analysis**: Static analysis for security vulnerabilities ([security-analysis.yml](.github/workflows/security-analysis.yml))
-- **Dependency Scanning**: Safety and Bandit scans on all dependencies
-- **Semgrep Security Rules**: Custom security patterns for Python and image processing (GitHub App)
-- **Aikido Security**: Runtime security and dependency vulnerability monitoring (GitHub App)
-- **Container Scanning**: Trivy scans for container vulnerabilities (Phase 4)
-- **Secret Detection**: GitGuardian for leaked credentials (GitHub App)
-- **SBOM Generation**: Software Bill of Materials for supply chain transparency
-
-### Development Security Practices
-
-- **Pre-commit Hooks**: Bandit, Safety, and secret detection before commits ([.pre-commit-config.yaml](.pre-commit-config.yaml))
-- **Code Review**: All changes require review before merging (enforced via branch protection)
-- **Signed Commits**: GPG-signed commits for authenticity
-- **Minimal Permissions**: GitHub Actions workflows use least-privilege permissions
-- **Hardened Runners**: StepSecurity harden-runner for CI/CD supply chain security
-- **Dependency Pinning**: Poetry lock files and GitHub Actions SHA pinning
-
-### Image Processing Specific Security
-
-This project processes untrusted PDFs and images, which are high-risk inputs. We implement:
-
-- **Path Sanitization**: All file paths validated and resolved to prevent directory traversal
-- **File Type Validation**: Magic number verification for PDF/image formats
-- **Size Limits**: Maximum file size enforcement to prevent resource exhaustion
-- **Timeout Enforcement**: Processing timeouts to prevent denial of service
-- **Memory Limits**: Bounded memory allocation for image processing
-- **Input Validation**: Schema validation for all JSON inputs (Pydantic v2)
-- **Sandboxed Execution**: Isolated processing for untrusted documents (Phase 4)
-
-### Security Testing
-
-- **Unit Tests**: Security-focused test cases for input validation
-- **Integration Tests**: End-to-end security testing with malformed inputs
-- **Continuous Fuzzing**: ClusterFuzzLite with Atheris in CI/CD (Python 3.11)
-  - Fuzzes PDF loading, image processing, and text detection modules
-  - Runs for 600 seconds per push/PR with AddressSanitizer
-  - Results uploaded to GitHub Security tab via SARIF
-- **Penetration Testing**: External security audits (planned for Phase 4)
-
-## Known Security Limitations
-
-### Current Phase (Phase 1 - MVP)
-
-During early development phases, the following security features are **not yet implemented**:
-
-- **No Sandboxing**: PDF/image processing runs in the main process (planned for Phase 4)
-- **No Rate Limiting**: API rate limiting planned for Phase 4
-- **No RBAC**: Role-based access control planned for Phase 4 API
-
-**Note on Fuzzing**: ClusterFuzzLite continuous fuzzing is active in CI/CD, using Python 3.11 for Atheris compatibility. Main project uses Python 3.12.
-
-**Recommendation**: Do not use Phase 1 releases in production environments with untrusted inputs. Wait for Phase 4 (Production Hardening) for production deployments.
+1. Fix developed in private fork
+2. Fix tested and reviewed
+3. Security advisory published
+4. Patched version released
+5. Public disclosure with CVE (if applicable)
 
 ## Security Best Practices for Users
 
-If you're integrating the Image Preprocessing Detector into your application:
+- Keep dependencies updated: `poetry update`
+- Run security scans: `poetry run bandit -r src`
+- Check for known vulnerabilities: `poetry run safety check`
+- Review security advisories: https://github.com/williaby/image-preprocessing-detector/security/advisories
 
-1. **Run in Isolated Environment**: Use containers or VMs to isolate image processing
-2. **Validate Inputs**: Apply your own input validation before passing files to the detector
-3. **Set Resource Limits**: Use ulimit or container resource constraints
-4. **Monitor for Anomalies**: Track processing times and memory usage for unusual patterns
-5. **Keep Updated**: Regularly update to the latest version for security patches
-6. **Review Dependencies**: Audit the dependency tree for known vulnerabilities
-7. **Enable Logging**: Use structured logging to detect security events
+## Automated Security Tools
 
-## Security Contacts
+This project uses the following automated security tools:
 
-- **Primary Contact**: Byron Williams (<byronawilliams@gmail.com>)
-- **GitHub Team**: [@williaby/security](https://github.com/orgs/williaby/teams/security) (if organization team exists)
+| Tool | Purpose | Integration |
+|------|---------|-------------|
+| **Bandit** | Python security vulnerability scanning | Pre-commit hook + CI/CD |
+| **Safety** | Dependency vulnerability checking | Pre-commit hook + CI/CD |
+| **MyPy** | Static type checking (prevents type-related bugs) | Pre-commit hook + CI/CD |
+| **Pydantic v2** | Runtime data validation and type safety | Core dependency |
+| **Poetry** | Dependency lock file with cryptographic hashes | Build system |
+| **CodeQL** | Semantic code analysis for vulnerabilities | GitHub Actions CI/CD |
+| **Dependabot** | Automated dependency update PRs | GitHub native |
 
-## Security Hall of Fame
+All security tools run automatically on every commit via pre-commit hooks and in the CI/CD pipeline.
 
-We appreciate security researchers who responsibly disclose vulnerabilities. Contributors will be acknowledged here (with their permission):
+## Security Design Principles
 
-*No vulnerabilities reported yet - be the first!*
+This project follows secure development practices:
 
----
+### Input Validation
+- All file inputs validated for type and size
+- PDF parsing with size limits and timeouts
+- JSON schema validation via Pydantic v2
 
-**Last Updated**: 2025-11-06
-**Security Policy Version**: 1.1
+### Dependency Security
+- Regular dependency updates via Poetry
+- Automated vulnerability scanning (Safety, Bandit)
+- Minimal dependency footprint
+
+### Data Handling
+- No external network calls during processing
+- Temporary files cleaned up after use
+- No persistent storage of user data
+
+### Code Quality
+- Type safety via MyPy strict mode
+- Comprehensive test coverage (94%+)
+- Security-focused linting with Bandit
+
+## Common Vulnerability Mitigations
+
+### OWASP Top 10 Considerations
+
+1. **Injection**: All inputs validated via Pydantic schemas
+2. **Broken Authentication**: N/A (no auth system)
+3. **Sensitive Data Exposure**: No storage of sensitive data
+4. **XXE**: XML external entities disabled in PDF parsing
+5. **Broken Access Control**: N/A (local processing only)
+6. **Security Misconfiguration**: Strict linting and type checking
+7. **XSS**: N/A (no web interface)
+8. **Insecure Deserialization**: JSON only via Pydantic validation
+9. **Vulnerable Components**: Automated scanning via Safety
+10. **Insufficient Logging**: Structured logging with audit trail
+
+### Python-Specific Vulnerabilities
+
+- **Path Traversal**: All file paths validated
+- **Command Injection**: No shell command execution
+- **Pickle Deserialization**: Not used (JSON only)
+- **SQL Injection**: N/A (no database)
+- **Code Injection**: No `eval()` or `exec()` usage

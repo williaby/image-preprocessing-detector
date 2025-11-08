@@ -1,11 +1,19 @@
 # Image Preprocessing Detector
 
-[![CI/CD Pipeline](https://github.com/williaby/image-preprocessing-detector/workflows/CI/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions)
+<!-- Security & Quality (Interactive Validation) -->
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11445/badge)](https://www.bestpractices.dev/en/projects/11445)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/williaby/image-preprocessing-detector/badge)](https://securityscorecards.dev/viewer/?uri=github.com/williaby/image-preprocessing-detector)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![codecov](https://codecov.io/gh/williaby/image-preprocessing-detector/graph/badge.svg?token=eS2YJZ5BzM)](https://codecov.io/gh/williaby/image-preprocessing-detector)
+
+<!-- CI/CD Status (Real-time Health) -->
+[![CI Pipeline](https://github.com/williaby/image-preprocessing-detector/workflows/CI/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/ci.yml)
+[![Security Analysis](https://github.com/williaby/image-preprocessing-detector/workflows/Security%20Analysis/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/security-analysis.yml)
+[![ClusterFuzzLite](https://github.com/williaby/image-preprocessing-detector/workflows/ClusterFuzzLite/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/cifuzzy.yml)
+
+<!-- Project Info (Essential Metadata) -->
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 **Intelligent image preprocessing detection system for RAG applications.** Automatically analyzes documents (PDFs, images) and detects required preprocessing steps before vector database ingestion.
 
@@ -178,6 +186,44 @@ poetry run pytest --cov=src --cov-fail-under=80
 poetry run pytest -n auto
 ```
 
+## Reporting Issues
+
+### Bug Reports
+
+Found a bug? Please report it via GitHub Issues:
+
+1. **Check existing issues**: https://github.com/williaby/image-preprocessing-detector/issues
+2. **Create new issue**: https://github.com/williaby/image-preprocessing-detector/issues/new
+3. **Include**:
+   - Python version and OS
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Error messages and logs
+
+### Feature Requests
+
+Have an idea? We welcome enhancement proposals via GitHub Issues. Please describe:
+- Use case and motivation
+- Proposed solution (if any)
+- Alternatives considered
+
+### Security Vulnerabilities
+
+**Please do not report security vulnerabilities through public issues.**
+
+See [SECURITY.md](SECURITY.md) for responsible disclosure process.
+
+## Versioning
+
+This project uses [Semantic Versioning](https://semver.org/):
+- **MAJOR** version: Incompatible API changes
+- **MINOR** version: Backwards-compatible functionality additions
+- **PATCH** version: Backwards-compatible bug fixes
+
+Current version: **0.1.0** (pre-release, API may change)
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Documentation
 
 - **[PROJECT_PLAN.md](PROJECT_PLAN.md)**: Complete 50+ page implementation plan with phased roadmap
@@ -185,6 +231,8 @@ poetry run pytest -n auto
 - **[DECISION_MATRIX.md](DECISION_MATRIX.md)**: Critical decisions tracking and stakeholder requirements
 - **[ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
 - **[docs/WTD-Runbook.md](docs/WTD-Runbook.md)**: What The Diff integration guide for automated PR summaries
+- **[docs/api-reference.md](docs/api-reference.md)**: API and CLI reference documentation
+- **[SECURITY.md](SECURITY.md)**: Security policy and vulnerability reporting
 
 ## Roadmap
 
