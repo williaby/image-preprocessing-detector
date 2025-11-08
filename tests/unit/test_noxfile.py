@@ -342,7 +342,7 @@ class TestSbomSession:
         calls = session.run.call_args_list
         runtime_call = [c for c in calls if "sbom-runtime.json" in str(c)]
         assert len(runtime_call) == 1
-        assert "--exclude-dev" in str(runtime_call[0])
+        assert "--no-dev" in str(runtime_call[0])
 
     def test_sbom_generates_dev_sbom(self):
         """Test that sbom session generates development SBOM."""
