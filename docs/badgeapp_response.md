@@ -770,13 +770,8 @@ Your project has strong foundations in several areas but needs targeted improvem
 
    ### Running Tests
    ```bash
-   # All tests
    poetry run pytest -v
-
-   # With coverage
    poetry run pytest --cov=src --cov-report=html --cov-report=term-missing
-
-   # Specific markers
    poetry run pytest -v -m unit
    poetry run pytest -v -m integration
    ```
