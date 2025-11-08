@@ -38,7 +38,7 @@ Include:
 - **Fix Timeline**:
   - Critical: Within 30 days
   - High: Within 60 days
-  - Medium: Within 90 days
+  - Medium: Within 60 days
   - Low: Next release cycle
 
 **Note**: These are target timelines for a single-maintainer project. Actual response times may vary based on severity, complexity, and maintainer availability.
@@ -63,6 +63,22 @@ Include:
 - Run security scans: `poetry run bandit -r src`
 - Check for known vulnerabilities: `poetry run safety check`
 - Review security advisories: https://github.com/williaby/image-preprocessing-detector/security/advisories
+
+## Automated Security Tools
+
+This project uses the following automated security tools:
+
+| Tool | Purpose | Integration |
+|------|---------|-------------|
+| **Bandit** | Python security vulnerability scanning | Pre-commit hook + CI/CD |
+| **Safety** | Dependency vulnerability checking | Pre-commit hook + CI/CD |
+| **MyPy** | Static type checking (prevents type-related bugs) | Pre-commit hook + CI/CD |
+| **Pydantic v2** | Runtime data validation and type safety | Core dependency |
+| **Poetry** | Dependency lock file with cryptographic hashes | Build system |
+| **CodeQL** | Semantic code analysis for vulnerabilities | GitHub Actions CI/CD |
+| **Dependabot** | Automated dependency update PRs | GitHub native |
+
+All security tools run automatically on every commit via pre-commit hooks and in the CI/CD pipeline.
 
 ## Security Design Principles
 
