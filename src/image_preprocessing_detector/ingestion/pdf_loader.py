@@ -217,8 +217,9 @@ class PDFLoader:
                     estimated_dpi = (
                         (img_width / width_inches) if width_inches > 0 else 72.0
                     )
-        except Exception:
-            pass  # Fallback to default
+        except Exception:  # nosec B110
+            # Legitimate fallback: DPI estimation is optional, defaults to 72.0 if metadata extraction fails
+            pass
 
         return estimated_dpi
 

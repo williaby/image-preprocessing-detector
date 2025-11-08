@@ -63,7 +63,7 @@ See [ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md) for detailed architecture
 
 ```bash
 # Clone repository
-git clone https://github.com/username/image-preprocessing-detector.git
+git clone https://github.com/williaby/image-preprocessing-detector.git
 cd image-preprocessing-detector
 
 # Install with Poetry

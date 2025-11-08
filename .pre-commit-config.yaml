@@ -21,10 +21,10 @@ repos:
 
   # Python code formatting with Black
   - repo: https://github.com/psf/black
-    rev: 23.12.1
+    rev: 25.9.0
     hooks:
       - id: black
-        language_version: python3.12
+        language_version: python3.11
         args: ['--line-length=88']
 
   # Python linting with Ruff (fast!)
@@ -43,8 +43,8 @@ repos:
           - pydantic>=2.0.0
           - types-pillow
           - types-python-dateutil
-        args: ['--ignore-missing-imports', '--python-version=3.12']
-        exclude: 'tests/.*'
+        args: ['--ignore-missing-imports', '--python-version=3.11']
+        exclude: '^(tests/.*|validation/.*|fuzz/.*)'
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli

@@ -1,7 +1,7 @@
-# CIFuzz (OSS-Fuzz) for Image Preprocessing Detector
-# Fuzzing for image/PDF processing security vulnerabilities
+# ClusterFuzzLite for Image Preprocessing Detector
+# Continuous fuzzing for image/PDF processing security vulnerabilities
 
-name: CIFuzz
+name: ClusterFuzzLite
 
 on:
   push:
@@ -16,13 +16,15 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   fuzzing:
     name: Build & Run Fuzzers
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload
     steps:
       - name: Harden the runner (Audit outbound calls)
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
@@ -34,19 +36,21 @@ jobs:
 
       - name: Build Fuzzers
         id: build
-        uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
+        # Note: ClusterFuzzLite actions use @v1, cannot pin to SHA (maintained by Google)
+        uses: google/clusterfuzzlite/actions/build_fuzzers@v1
         with:
-          oss-fuzz-project-name: image-preprocessing-detector
           language: python
-        continue-on-error: true
+          dry-run: false
 
       - name: Run Fuzzers
-        uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
+        # Note: ClusterFuzzLite actions use @v1, cannot pin to SHA (maintained by Google)
+        uses: google/clusterfuzzlite/actions/run_fuzzers@v1
         if: steps.build.outcome == 'success'
         with:
           fuzz-seconds: 600
           language: python
           output-sarif: true
+          sanitizer: address
 
       - name: Upload Crash Artifacts
         if: failure() && steps.build.outcome == 'success'
@@ -66,16 +70,17 @@ jobs:
       - name: Fuzzing Summary
         if: always()
         run: |
-          echo "🔍 CIFuzz Fuzzing Analysis Complete"
+          echo "🔍 ClusterFuzzLite Fuzzing Analysis Complete"
           echo "Build Status: ${{ steps.build.outcome }}"
           if [[ "${{ steps.build.outcome }}" == "success" ]]; then
             echo "✅ Fuzzers built and executed for 600 seconds"
             echo "📸 Image/PDF processing modules tested for edge cases"
             echo "🔐 Security vulnerabilities detection active"
+            echo "📊 Fuzzing harnesses: fuzz_pdf_loader, fuzz_image_loader, fuzz_text_gate"
           else
-            echo "⚠️  Fuzzer build skipped - project not yet registered with OSS-Fuzz"
-            echo "ℹ️  To enable fuzzing:"
-            echo "   1. Register project at https://github.com/google/oss-fuzz"
-            echo "   2. Create fuzzing harnesses in /fuzz directory"
-            echo "   3. Add project.yaml and Dockerfile for OSS-Fuzz integration"
+            echo "⚠️  Fuzzer build failed"
+            echo "ℹ️  Check logs above for build errors"
+            echo "   1. Ensure Clang and LLVM are installed"
+            echo "   2. Verify fuzzing harnesses in /fuzz directory"
+            echo "   3. Check Atheris installation succeeded"
           fi

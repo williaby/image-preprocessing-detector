@@ -46,7 +46,7 @@ Please provide as much information as possible to help us understand and resolve
 
 We are committed to addressing security issues promptly:
 
-- **Acknowledgment**: Within **72 hours** of receiving your report
+- **Acknowledgment**: Within **10 days** of receiving your report
 - **Initial Assessment**: Within **7 days** of acknowledgment
 - **Status Updates**: Every **14 days** until resolution
 - **Critical Issues**: Mitigation or fix within **90 days** of acknowledgment
@@ -74,9 +74,10 @@ The Image Preprocessing Detector implements multiple security layers:
 
 - **CodeQL Analysis**: Static analysis for security vulnerabilities ([security-analysis.yml](.github/workflows/security-analysis.yml))
 - **Dependency Scanning**: Safety and Bandit scans on all dependencies
-- **Semgrep Security Rules**: Custom security patterns for Python and image processing
+- **Semgrep Security Rules**: Custom security patterns for Python and image processing (GitHub App)
+- **Aikido Security**: Runtime security and dependency vulnerability monitoring (GitHub App)
 - **Container Scanning**: Trivy scans for container vulnerabilities (Phase 4)
-- **Secret Detection**: GitGuardian for leaked credentials
+- **Secret Detection**: GitGuardian for leaked credentials (GitHub App)
 - **SBOM Generation**: Software Bill of Materials for supply chain transparency
 
 ### Development Security Practices
@@ -104,7 +105,10 @@ This project processes untrusted PDFs and images, which are high-risk inputs. We
 
 - **Unit Tests**: Security-focused test cases for input validation
 - **Integration Tests**: End-to-end security testing with malformed inputs
-- **Fuzzing**: Property-based testing with Hypothesis (Phase 2+)
+- **Continuous Fuzzing**: ClusterFuzzLite with Atheris in CI/CD (Python 3.11)
+  - Fuzzes PDF loading, image processing, and text detection modules
+  - Runs for 600 seconds per push/PR with AddressSanitizer
+  - Results uploaded to GitHub Security tab via SARIF
 - **Penetration Testing**: External security audits (planned for Phase 4)
 
 ## Known Security Limitations
@@ -114,9 +118,10 @@ This project processes untrusted PDFs and images, which are high-risk inputs. We
 During early development phases, the following security features are **not yet implemented**:
 
 - **No Sandboxing**: PDF/image processing runs in the main process (planned for Phase 4)
-- **Limited Fuzzing**: Comprehensive fuzzing planned for Phase 2-3
 - **No Rate Limiting**: API rate limiting planned for Phase 4
 - **No RBAC**: Role-based access control planned for Phase 4 API
+
+**Note on Fuzzing**: ClusterFuzzLite continuous fuzzing is active in CI/CD, using Python 3.11 for Atheris compatibility. Main project uses Python 3.12.
 
 **Recommendation**: Do not use Phase 1 releases in production environments with untrusted inputs. Wait for Phase 4 (Production Hardening) for production deployments.
 
@@ -134,7 +139,7 @@ If you're integrating the Image Preprocessing Detector into your application:
 
 ## Security Contacts
 
-- **Primary Contact**: Byron Williams (byronawilliams@gmail.com)
+- **Primary Contact**: Byron Williams (<byronawilliams@gmail.com>)
 - **GitHub Team**: [@williaby/security](https://github.com/orgs/williaby/teams/security) (if organization team exists)
 
 ## Security Hall of Fame
@@ -145,5 +150,5 @@ We appreciate security researchers who responsibly disclose vulnerabilities. Con
 
 ---
 
-**Last Updated**: 2025-11-05
-**Security Policy Version**: 1.0
+**Last Updated**: 2025-11-06
+**Security Policy Version**: 1.1
