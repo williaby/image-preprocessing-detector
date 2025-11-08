@@ -20,9 +20,9 @@ poetry install --without dev --no-interaction
 # This creates proper executables that ClusterFuzzLite recognizes
 echo "Compiling Python fuzz targets with compile_python_fuzzer..."
 
-compile_python_fuzzer fuzz fuzz_pdf_loader
-compile_python_fuzzer fuzz fuzz_image_loader
-compile_python_fuzzer fuzz fuzz_text_gate
+compile_python_fuzzer fuzz/fuzz_pdf_loader.py
+compile_python_fuzzer fuzz/fuzz_image_loader.py
+compile_python_fuzzer fuzz/fuzz_text_gate.py
 
 echo "=== Fuzzing Build Complete ==="
 echo "Fuzz targets in $OUT:"
