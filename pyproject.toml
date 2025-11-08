@@ -68,7 +68,7 @@ dev = [
     "hypothesis>=6.82.0",
 
     # Code Quality
-    "black>=23.7.0",
+    "black>=24.3.0",  # Updated to address CVE-2024-21503 (ReDoS vulnerability)
     "ruff>=0.0.280",
     "mypy>=1.4.0",
 

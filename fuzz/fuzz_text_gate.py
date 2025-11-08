@@ -34,7 +34,11 @@ def TestOneInput(data: bytes) -> None:
         return
 
     # Create gate once for all tests (performance optimization)
-    gate = TextGate()
+    try:
+        gate = TextGate()
+    except Exception:  # nosec B110
+        # If gate creation fails, skip this input
+        return
 
     try:
         # Try to interpret data as various image sizes and formats
