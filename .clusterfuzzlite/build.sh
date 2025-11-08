@@ -8,6 +8,22 @@ echo "OUT: $OUT"
 echo "WORK: $WORK"
 echo "===================================="
 
+# Verify Python version compatibility with Atheris (3.8-3.11)
+PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+PYTHON_MAJOR=$(python3 -c 'import sys; print(sys.version_info.major)')
+PYTHON_MINOR=$(python3 -c 'import sys; print(sys.version_info.minor)')
+
+echo "Python version: $PYTHON_VERSION"
+
+if [ "$PYTHON_MAJOR" -ne 3 ] || [ "$PYTHON_MINOR" -lt 8 ] || [ "$PYTHON_MINOR" -gt 11 ]; then
+    echo "ERROR: Python $PYTHON_VERSION is not compatible with Atheris"
+    echo "Atheris requires Python 3.8-3.11 (not 3.12+ due to PRECALL opcode changes)"
+    echo "Base image should provide Python 3.11.13"
+    exit 1
+fi
+
+echo "Python version $PYTHON_VERSION is compatible with Atheris"
+
 # Install Poetry
 pip3 install poetry
 
