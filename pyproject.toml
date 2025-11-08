@@ -176,7 +176,7 @@ onnxruntime = "^1.15.0"
 optional = true
 
 [tool.poetry.group.api.dependencies]
-fastapi = "^0.115.0"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
+fastapi = "^0.120.1"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
 uvicorn = {extras = ["standard"], version = "^0.23.0"}
 python-multipart = "^0.0.6"
 
