@@ -187,7 +187,7 @@ jobs:
           echo "🛡️ Scanning for known vulnerabilities in image processing dependencies..."
 
           # Install poetry-plugin-export (required for poetry export in Poetry 2.0+)
-          poetry self add poetry-plugin-export
+          poetry self add poetry-plugin-export==1.8.0
 
           # Export requirements for safety scanning
           poetry export -f requirements.txt --output requirements-scan.txt
