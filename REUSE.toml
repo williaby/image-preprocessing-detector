@@ -44,6 +44,7 @@ path = [
     ".pre-commit-config.yaml",
     ".readthedocs.yaml",
     "mkdocs.yml",
+    "poetry.lock",  # Dependency lockfile for reproducible builds
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
