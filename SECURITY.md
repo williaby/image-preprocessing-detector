@@ -21,8 +21,7 @@ https://github.com/williaby/image-preprocessing-detector/security/advisories/new
 
 ### Email
 
-Alternatively, email security reports to: security@example.com
-<!-- TODO: Update with actual security contact email -->
+Alternatively, email security reports to: byronawilliams@gmail.com
 
 Include:
 - Type of vulnerability
