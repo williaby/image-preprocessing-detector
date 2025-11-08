@@ -99,7 +99,8 @@ api = [
     # API Dependencies (install for Phase 4)
     "fastapi>=0.115.0",  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
     "uvicorn[standard]>=0.23.0",
-    "python-multipart>=0.0.6",
+    "python-multipart>=0.0.18",  # Updated to address CVE-2024-53981 and PVE-2024-99762
+    "starlette>=0.47.2",  # Updated to address CVE-2025-54121 (DoS vulnerability)
 ]
 
 [project.scripts]
@@ -178,7 +179,8 @@ optional = true
 [tool.poetry.group.api.dependencies]
 fastapi = "^0.120.1"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
 uvicorn = {extras = ["standard"], version = "^0.23.0"}
-python-multipart = "^0.0.6"
+python-multipart = "^0.0.18"  # Updated to address CVE-2024-53981 and PVE-2024-99762
+starlette = "^0.47.2"  # Updated to address CVE-2025-54121 (DoS vulnerability)
 
 # Black Configuration
 [tool.black]
