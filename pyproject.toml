@@ -20,7 +20,7 @@ classifiers = [
 
 dependencies = [
     # Core Image Processing
-    "opencv-python>=4.8.0",
+    "opencv-python-headless>=4.8.0",
     "pillow>=10.0.0",
     "numpy>=1.24.0",
 
@@ -119,7 +119,7 @@ packages = [{include = "image_preprocessing_detector", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-opencv-python = "^4.8.0"
+opencv-python-headless = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
 pymupdf = "^1.23.0"
