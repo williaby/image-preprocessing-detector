@@ -41,12 +41,12 @@ def confidence_scores(draw: Any) -> float:
 
 
 @composite
-def bounding_boxes(draw: Any) -> list[float]:
+def bounding_boxes(draw: Any) -> list[int]:
     """Generate valid COCO-format bounding boxes [x, y, width, height]."""
-    x = draw(st.floats(min_value=0.0, max_value=1000.0, allow_nan=False))
-    y = draw(st.floats(min_value=0.0, max_value=1000.0, allow_nan=False))
-    width = draw(st.floats(min_value=1.0, max_value=500.0, allow_nan=False))
-    height = draw(st.floats(min_value=1.0, max_value=500.0, allow_nan=False))
+    x = draw(st.integers(min_value=0, max_value=1000))
+    y = draw(st.integers(min_value=0, max_value=1000))
+    width = draw(st.integers(min_value=1, max_value=500))
+    height = draw(st.integers(min_value=1, max_value=500))
     return [x, y, width, height]
 
 
@@ -68,12 +68,14 @@ def detected_issues(draw: Any) -> DetectedIssue:
 @composite
 def document_elements(draw: Any) -> DocumentElement:
     """Generate valid DocumentElement instances."""
+    element_id = draw(st.text(min_size=1, max_size=50))
     category = draw(st.sampled_from(list(ElementCategory)))
     bbox = draw(bounding_boxes())
     confidence = draw(confidence_scores())
     quality_issues = draw(st.lists(detected_issues(), max_size=3))
 
     return DocumentElement(
+        id=element_id,
         category=category,
         bbox=bbox,
         confidence=confidence,
@@ -173,24 +175,28 @@ class TestPropertyBasedValidation:
     ) -> None:
         """Property: PageMetadata can contain any number of valid elements."""
         page = PageMetadata(
-            page_number=1,
-            width=1000.0,
-            height=1200.0,
+            page_index=0,
+            width_px=1000,
+            height_px=1200,
+            dpi_input=300,
+            dpi_effective=300,
             elements=elements,
         )
 
         assert len(page.elements) == len(elements)
-        assert page.page_number == 1
+        assert page.page_index == 0
 
-    @given(st.integers(min_value=1, max_value=1000))
-    def test_page_number_must_be_positive(self, page_num: int) -> None:
-        """Property: Page numbers must be positive integers."""
+    @given(st.integers(min_value=0, max_value=999))
+    def test_page_index_must_be_non_negative(self, page_idx: int) -> None:
+        """Property: Page indices must be non-negative integers."""
         page = PageMetadata(
-            page_number=page_num,
-            width=1000.0,
-            height=1200.0,
+            page_index=page_idx,
+            width_px=1000,
+            height_px=1200,
+            dpi_input=300,
+            dpi_effective=300,
         )
-        assert page.page_number > 0
+        assert page.page_index >= 0
 
 
 class TestPropertyBasedTransformations:
@@ -204,29 +210,33 @@ class TestPropertyBasedTransformations:
         self, angle: float, confidence: float
     ) -> None:
         """Property: Transform history should record skew corrections."""
+        now = datetime.now(UTC)
         transform = TransformHistory(
-            operation="deskew",
-            parameters={"angle": angle},
-            confidence=confidence,
-            timestamp=datetime.now(UTC).isoformat(),
+            action="deskew",
+            params={"angle": angle, "confidence": confidence},
+            started_at=now,
+            finished_at=now,
+            status="success",
         )
 
-        assert transform.operation == "deskew"
-        assert transform.parameters["angle"] == angle
-        assert 0.0 <= transform.confidence <= 1.0
+        assert transform.action == "deskew"
+        assert transform.params["angle"] == angle
+        assert transform.status == "success"
 
     @given(
         st.lists(
             st.builds(
                 TransformHistory,
-                operation=st.sampled_from(["deskew", "denoise", "contrast", "sharpen"]),
-                parameters=st.dictionaries(
+                action=st.sampled_from(["deskew", "denoise", "contrast", "sharpen"]),
+                params=st.dictionaries(
                     st.text(min_size=1, max_size=10),
                     st.floats(allow_nan=False),
-                    min_size=1,
+                    min_size=0,
+                    max_size=3,
                 ),
-                confidence=confidence_scores(),
-                timestamp=st.just(datetime.now(UTC).isoformat()),
+                started_at=st.datetimes(min_value=datetime(2020, 1, 1)),  # noqa: DTZ001
+                finished_at=st.datetimes(min_value=datetime(2020, 1, 1)),  # noqa: DTZ001
+                status=st.sampled_from(["success", "failed", "skipped"]),
             ),
             max_size=5,
         )
@@ -235,10 +245,19 @@ class TestPropertyBasedTransformations:
         self, transforms: list[TransformHistory]
     ) -> None:
         """Property: Document metadata can track multiple transforms."""
-        page = PageMetadata(page_number=1, width=1000.0, height=1200.0)
+        page = PageMetadata(
+            page_index=0,
+            width_px=1000,
+            height_px=1200,
+            dpi_input=300,
+            dpi_effective=300,
+        )
         doc = DocumentMetadata(
             document_id="test-doc",
-            processing_version=ProcessingVersion.MVP_CLASSICAL,
+            file_name="test.pdf",
+            source_mime="application/pdf",
+            num_pages=1,
+            processing_version=ProcessingVersion(pipeline_version="test-v1.0"),
             pages=[page],
         )
 
@@ -252,35 +271,49 @@ class TestPropertyBasedTransformations:
 class TestPropertyBasedEdgeCases:
     """Property-based tests for boundary conditions and edge cases."""
 
-    @given(st.floats(allow_nan=False, allow_infinity=False))
-    def test_page_dimensions_must_be_positive(self, dimension: float) -> None:
+    @given(st.integers(min_value=-100, max_value=5000))
+    def test_page_dimensions_must_be_positive(self, dimension: int) -> None:
         """Property: Page dimensions must be positive."""
         if dimension <= 0:
             with pytest.raises(ValidationError):
                 PageMetadata(
-                    page_number=1,
-                    width=dimension,
-                    height=1000.0,
+                    page_index=0,
+                    width_px=dimension,
+                    height_px=1000,
+                    dpi_input=300,
+                    dpi_effective=300,
                 )
         else:
             page = PageMetadata(
-                page_number=1,
-                width=dimension,
-                height=1000.0,
+                page_index=0,
+                width_px=dimension,
+                height_px=1000,
+                dpi_input=300,
+                dpi_effective=300,
             )
-            assert page.width > 0
+            assert page.width_px > 0
 
     @given(
         st.text(min_size=1, max_size=100),
-        st.sampled_from(list(ProcessingVersion)),
+        st.text(min_size=1, max_size=20),
     )
     def test_document_metadata_requires_id_and_version(
-        self, doc_id: str, version: ProcessingVersion
+        self, doc_id: str, pipeline_version: str
     ) -> None:
         """Property: Document metadata requires ID and version."""
-        page = PageMetadata(page_number=1, width=1000.0, height=1200.0)
+        page = PageMetadata(
+            page_index=0,
+            width_px=1000,
+            height_px=1200,
+            dpi_input=300,
+            dpi_effective=300,
+        )
+        version = ProcessingVersion(pipeline_version=pipeline_version)
         doc = DocumentMetadata(
             document_id=doc_id,
+            file_name="test.pdf",
+            source_mime="application/pdf",
+            num_pages=1,
             processing_version=version,
             pages=[page],
         )
@@ -293,9 +326,11 @@ class TestPropertyBasedEdgeCases:
         st.lists(
             st.builds(
                 PageMetadata,
-                page_number=st.integers(min_value=1, max_value=1000),
-                width=st.floats(min_value=1.0, max_value=5000.0, allow_nan=False),
-                height=st.floats(min_value=1.0, max_value=5000.0, allow_nan=False),
+                page_index=st.integers(min_value=0, max_value=999),
+                width_px=st.integers(min_value=100, max_value=5000),
+                height_px=st.integers(min_value=100, max_value=5000),
+                dpi_input=st.integers(min_value=72, max_value=600),
+                dpi_effective=st.integers(min_value=72, max_value=600),
             ),
             min_size=1,
             max_size=100,
@@ -305,12 +340,15 @@ class TestPropertyBasedEdgeCases:
         """Property: Documents can have arbitrary number of pages."""
         doc = DocumentMetadata(
             document_id="multi-page-doc",
-            processing_version=ProcessingVersion.MVP_CLASSICAL,
+            file_name="test.pdf",
+            source_mime="application/pdf",
+            num_pages=len(pages),
+            processing_version=ProcessingVersion(pipeline_version="test-v1.0"),
             pages=pages,
         )
 
         assert len(doc.pages) == len(pages)
-        assert all(p.page_number > 0 for p in doc.pages)
+        assert all(p.page_index >= 0 for p in doc.pages)
 
 
 # Example of how to use Hypothesis with existing code
