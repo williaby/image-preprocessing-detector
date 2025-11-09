@@ -1,0 +1,10 @@
+# ClusterFuzzLite project configuration for Image Preprocessing Detector
+# Python fuzzing with Atheris
+
+homepage: "https://github.com/williaby/image-preprocessing-detector"
+language: python
+primary_contact: "byron.williams@example.com"
+sanitizers:
+  - address
+fuzzing_engines:
+  - libfuzzer
