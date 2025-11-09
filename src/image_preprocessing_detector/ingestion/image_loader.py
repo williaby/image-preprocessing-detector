@@ -5,6 +5,7 @@ Handles DPI extraction, color space conversion, and metadata detection.
 """
 
 from pathlib import Path
+from typing import ClassVar
 
 import cv2
 import numpy as np
@@ -70,7 +71,15 @@ class ImageLoader:
     Uses PIL for metadata extraction and OpenCV for image loading.
     """
 
-    SUPPORTED_FORMATS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}
+    SUPPORTED_FORMATS: ClassVar[set[str]] = {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".tiff",
+        ".tif",
+        ".bmp",
+        ".webp",
+    }
 
     def __init__(self, target_dpi: int = 300, ensure_bgr: bool = True) -> None:
         """
@@ -244,6 +253,7 @@ def load_image(
 
 
 # Example usage
+# ruff: noqa: T201
 if __name__ == "__main__":  # pragma: no cover
     import sys
 
@@ -264,9 +274,9 @@ if __name__ == "__main__":  # pragma: no cover
     loader = ImageLoader()
     img, metadata = loader.load(image_path)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Image Metadata for: {image_path}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Dimensions:  {metadata.width}x{metadata.height} pixels")
     print(f"Format:      {metadata.format}")
     print(f"Color Mode:  {metadata.color_mode}")
@@ -276,4 +286,4 @@ if __name__ == "__main__":  # pragma: no cover
     print(f"EXIF Data:   {'Yes' if metadata.has_exif else 'No'}")
     print(f"Upscaling:   {'Needed' if metadata.needs_upscaling else 'Not needed'}")
     print(f"Array Shape: {img.shape}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")

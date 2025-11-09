@@ -236,7 +236,7 @@ class SkewDetector:
 
             for angle in angles_to_test:
                 # Rotate image
-                M = cv2.getRotationMatrix2D(center, angle, 1.0)
+                M = cv2.getRotationMatrix2D(center, angle, 1.0)  # noqa: N806  # fmt: skip
                 rotated = cv2.warpAffine(binary, M, (w, h), flags=cv2.INTER_CUBIC)
 
                 # Calculate horizontal projection
@@ -271,12 +271,11 @@ class SkewDetector:
         """
         if abs_angle >= self.threshold_high:
             return Severity.CRITICAL
-        elif abs_angle >= self.threshold_medium:
+        if abs_angle >= self.threshold_medium:
             return Severity.HIGH
-        elif abs_angle >= self.threshold_low:
+        if abs_angle >= self.threshold_low:
             return Severity.MEDIUM
-        else:
-            return Severity.LOW
+        return Severity.LOW
 
 
 @dataclass
@@ -424,8 +423,8 @@ class ContrastDetector:
         - Synthetic images have higher contrast (~0.50) than real-world
 
         Args:
-            threshold_critical: Critical contrast threshold (< 0.08 = very low, mean - 2σ)
-            threshold_high: High severity threshold (< 0.13 = low, mean - 1σ)
+            threshold_critical: Critical contrast threshold (< 0.08 = very low, mean - 2sigma)
+            threshold_high: High severity threshold (< 0.13 = low, mean - 1sigma)
             threshold_medium: Medium severity threshold (< 0.18 = slightly low, median)
         """
         self.threshold_critical = threshold_critical
@@ -541,7 +540,9 @@ def detect_blur(image: np.ndarray) -> BlurDetectionResult:
         >>> img = cv2.imread("photo.jpg")
         >>> result = detect_blur(img)
         >>> if result.is_blurred:
-        ...     print(f"Blur detected: score={result.score:.1f} ({result.severity.value})")
+        ...     print(
+        ...         f"Blur detected: score={result.score:.1f} ({result.severity.value})"
+        ...     )
     """
     detector = BlurDetector()
     return detector.detect(image)
@@ -561,7 +562,9 @@ def detect_contrast(image: np.ndarray) -> ContrastDetectionResult:
         >>> img = cv2.imread("scan.jpg")
         >>> result = detect_contrast(img)
         >>> if result.is_low_contrast:
-        ...     print(f"Low contrast: score={result.score:.2f} ({result.severity.value})")
+        ...     print(
+        ...         f"Low contrast: score={result.score:.2f} ({result.severity.value})"
+        ...     )
     """
     detector = ContrastDetector()
     return detector.detect(image)

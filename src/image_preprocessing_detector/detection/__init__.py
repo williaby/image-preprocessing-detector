@@ -24,19 +24,19 @@ from image_preprocessing_detector.detection.text_gate import (
 )
 
 __all__ = [
-    # Text gate
-    "TextGate",
-    "TextDetectionResult",
-    "detect_text",
+    "BlurDetectionResult",
+    "BlurDetector",
+    "ContrastDetectionResult",
+    "ContrastDetector",
+    "Severity",
+    "SkewDetectionResult",
     # Classical IQA
     "SkewDetector",
-    "SkewDetectionResult",
-    "BlurDetector",
-    "BlurDetectionResult",
-    "ContrastDetector",
-    "ContrastDetectionResult",
-    "Severity",
-    "detect_skew",
+    "TextDetectionResult",
+    # Text gate
+    "TextGate",
     "detect_blur",
     "detect_contrast",
+    "detect_skew",
+    "detect_text",
 ]

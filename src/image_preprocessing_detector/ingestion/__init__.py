@@ -17,10 +17,10 @@ from image_preprocessing_detector.ingestion.pdf_loader import (
 )
 
 __all__ = [
-    "PDFLoader",
-    "PageImage",
-    "load_pdf",
     "ImageLoader",
     "ImageMetadata",
+    "PDFLoader",
+    "PageImage",
     "load_image",
+    "load_pdf",
 ]

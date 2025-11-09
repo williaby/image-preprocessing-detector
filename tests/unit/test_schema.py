@@ -207,8 +207,8 @@ class TestTransformHistory:
 
     def test_valid_transform(self) -> None:
         """Test creating valid transform history entry."""
-        started = datetime.now()
-        finished = datetime.now()
+        started = datetime.now()  # noqa: DTZ005 (test fixture uses naive datetime)
+        finished = datetime.now()  # noqa: DTZ005 (test fixture uses naive datetime)
 
         transform = TransformHistory(
             action="deskew",

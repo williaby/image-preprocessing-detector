@@ -196,7 +196,7 @@ def scan(session: nox.Session) -> None:
         "run",
         "--rm",
         "--volume",
-        f"{pathlib.Path('.').absolute()}:/workspace",
+        f"{pathlib.Path().absolute()}:/workspace",
         "aquasec/trivy:latest",
         "sbom",
         f"/workspace/{sbom_file}",
