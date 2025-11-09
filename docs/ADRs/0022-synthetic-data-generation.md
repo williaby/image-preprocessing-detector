@@ -70,8 +70,7 @@ Phase 2 requires training a multi-label IQA CNN to detect image quality issues (
 - Apply 2-3 quality issues per image
 - Realistic edge cases
 - Training: Improves robustness
-
-### Albu mentations Pipeline Implementation
+### Albumentations Pipeline Implementation
 
 ```python
 import albumentations as A

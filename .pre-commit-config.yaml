@@ -60,7 +60,7 @@ repos:
     hooks:
       - id: validate-front-matter
         name: Validate documentation front matter
-        entry: python tools/validate_front_matter.py docs
+        entry: poetry run python tools/validate_front_matter.py docs
         language: system
         files: ^docs/.*\.md$
         pass_filenames: false
