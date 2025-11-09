@@ -127,7 +127,7 @@ readme = "README.md"
 packages = [{include = "image_preprocessing_detector", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.15"  # Constrained by triton dependency for torch 2.9.0
+python = ">=3.11,<3.15"  # ClusterFuzzLite requires Python 3.11 for Atheris compatibility
 opencv-python-headless = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
