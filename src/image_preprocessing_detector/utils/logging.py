@@ -2,9 +2,9 @@
 Structured logging configuration using structlog.
 
 Provides JSON-formatted logs for production with rich console output for development.
-"""
 
-# Note: Module named "logging" intentionally shadows stdlib for project-specific config
+Note: Module named "logging" intentionally shadows stdlib for project-specific config.
+"""
 
 import logging
 import sys

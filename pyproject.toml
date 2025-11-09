@@ -303,6 +303,7 @@ known-first-party = ["image_preprocessing_detector"]
 "fuzz/**/*.py" = ["D", "T20"]
 "validation/**/*.py" = ["D", "T20"]
 "noxfile.py" = ["D", "T20"]
+"src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
 
 # MyPy Configuration
 [tool.mypy]
