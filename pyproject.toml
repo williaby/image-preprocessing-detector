@@ -79,6 +79,7 @@ dev = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.1.0",
     "mkdocstrings[python]>=0.22.0",
+    "python-frontmatter>=1.1.0",
 
     # Jupyter (for exploration)
     "jupyter>=1.0.0",
