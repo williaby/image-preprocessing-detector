@@ -101,7 +101,7 @@ Click "Add branch protection rule" and configure:
 
 #### Protect Matching Branches
 ✅ **Require a pull request before merging**
-  - ✅ Require approvals: **1**
+  - ✅ Require approvals: **0** (solo developer - cannot approve own PRs)
   - ✅ Dismiss stale pull request approvals when new commits are pushed
   - ✅ Require review from Code Owners
 
