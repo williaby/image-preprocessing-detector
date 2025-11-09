@@ -1,18 +1,22 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-004: GitHub Actions Security Hardening"
-description: "Decision to implement least-privilege permissions and eliminate download-then-run patterns in workflows"
-tags: [adr, security, ci-cd, github-actions, openssf]
+description: "Decision to implement least-privilege permissions and eliminate download-then-run
+  patterns in workflows"
+tags:
+- adr
+- security
+- ci_cd
+- github_actions
+- openssf
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-01-08"
-updated: "2025-01-08"
-purpose: "Document the decision to harden GitHub Actions workflows following OpenSSF Scorecard recommendations."
+- name: "Byron Williams"
+purpose: "Document the decision to harden GitHub Actions workflows following OpenSSF
+  Scorecard recommendations."
 ---
 
-# ADR-004: GitHub Actions Security Hardening
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-01-08

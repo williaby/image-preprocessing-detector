@@ -1,16 +1,21 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-012: Defer Handwriting Detection to Phase 2"
-description: "Decision to defer specialized handwriting detection in favor of Phase 1 MVP with general text detection"
-tags: [adr, handwriting, phase-planning, mvp]
+description: "Decision to defer specialized handwriting detection in favor of Phase
+  1 MVP with general text detection"
+tags:
+- adr
+- handwriting
+- phase_planning
+- mvp
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to defer handwriting-specific detection to Phase 2 while validating Phase 1 detectors work on handwritten content"
+- name: "Byron Williams"
+purpose: "Document the decision to defer handwriting-specific detection to Phase 2
+  while validating Phase 1 detectors work on handwritten content."
 ---
 
-# ADR-012: Defer Handwriting Detection to Phase 2
 
 **Status**: Accepted
 **Date**: 2025-11-05

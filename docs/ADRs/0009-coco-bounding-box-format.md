@@ -1,18 +1,23 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-009: COCO Bounding Box Format Standardization"
-description: "Decision to use COCO format [x, y, width, height] for bounding boxes instead of corner format"
-tags: [adr, architecture, bounding-boxes, coco-format, interoperability, layout-detection]
+description: "Decision to use COCO format [x, y, width, height] for bounding boxes
+  instead of corner format"
+tags:
+- adr
+- architecture
+- bounding_boxes
+- coco_format
+- interoperability
+- layout_detection
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-01-15"
-updated: "2025-01-08"
-purpose: "Document the decision to standardize on COCO bounding box format for downstream compatibility."
+- name: "Byron Williams"
+purpose: "Document the decision to standardize on COCO bounding box format for downstream
+  compatibility."
 ---
 
-# ADR-009: COCO Bounding Box Format Standardization
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-01-15 (Phase 0 Schema Design)

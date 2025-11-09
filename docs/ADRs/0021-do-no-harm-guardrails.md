@@ -1,16 +1,22 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-021: Do-No-Harm Guardrails for Image Corrections"
-description: "Multi-level guardrails to prevent image quality degradation during preprocessing corrections"
-tags: [adr, corrections, guardrails, quality-assurance, safety]
+description: "Multi-level guardrails to prevent image quality degradation during preprocessing
+  corrections"
+tags:
+- adr
+- corrections
+- guardrails
+- quality_assurance
+- safety
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to implement multi-level guardrails that prevent corrections from degrading image quality"
+- name: "Byron Williams"
+purpose: "Document the decision to implement multi-level guardrails that prevent corrections
+  from degrading image quality."
 ---
 
-# ADR-021: Do-No-Harm Guardrails for Image Corrections
 
 **Status**: Accepted
 **Date**: 2025-11-04

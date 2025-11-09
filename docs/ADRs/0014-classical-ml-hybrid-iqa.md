@@ -1,16 +1,21 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-014: Classical CV + ML Hybrid for IQA"
-description: "Combine classical computer vision methods with lightweight CNN for image quality assessment"
-tags: [adr, iqa, machine-learning, computer-vision]
+description: "Combine classical computer vision methods with lightweight CNN for image
+  quality assessment"
+tags:
+- adr
+- iqa
+- machine_learning
+- computer_vision
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use a hybrid approach combining classical methods (Phase 1) with ML models (Phase 2)"
+- name: "Byron Williams"
+purpose: "Document the decision to use a hybrid approach combining classical methods
+  (Phase 1) with ML models (Phase 2)."
 ---
 
-# ADR-014: Classical CV + ML Hybrid for IQA
 
 **Status**: Accepted
 **Date**: 2025-01-15

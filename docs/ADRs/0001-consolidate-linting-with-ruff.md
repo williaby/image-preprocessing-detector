@@ -1,5 +1,5 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-001: Consolidate Python Linting with Ruff"
 description: "Decision to consolidate Black, pydocstyle, and partial Bandit functionality into Ruff"
 tags: [adr, tooling, linting, ruff, consolidation]
@@ -7,12 +7,9 @@ status: published
 owner: "core-maintainer"
 authors:
   - name: "Byron Williams"
-created: "2025-01-08"
-updated: "2025-01-08"
 purpose: "Document the decision to consolidate multiple Python linting tools into Ruff for better maintainability and performance."
 ---
 
-# ADR-001: Consolidate Python Linting with Ruff
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-01-08

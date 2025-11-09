@@ -1,16 +1,16 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-027: INT8 Quantization via ONNX/TensorRT"
 description: "Use INT8 quantization for 1.5-3× speedup with < 2% accuracy loss"
 tags: [adr, quantization, onnx, tensorrt, optimization, int8]
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use INT8 quantization for production deployment optimization"
+- name: "Byron Williams"
+purpose: "Document the decision to use INT8 quantization for production deployment
+  optimization."
 ---
 
-# ADR-027: INT8 Quantization via ONNX/TensorRT
 
 **Status**: Accepted
 **Date**: 2025-01-15

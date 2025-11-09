@@ -1,16 +1,17 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-020: CPU-First Deployment Strategy for Phase 1"
-description: "Deploy Phase 1 MVP with CPU-only operation, reserving GPU for Phase 2-3 ML models"
+description: "Deploy Phase 1 MVP with CPU-only operation, reserving GPU for Phase
+  2-3 ML models"
 tags: [adr, deployment, cpu, gpu, performance]
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to deploy Phase 1 with CPU-only operation and defer GPU infrastructure to Phase 2"
+- name: "Byron Williams"
+purpose: "Document the decision to deploy Phase 1 with CPU-only operation and defer
+  GPU infrastructure to Phase 2."
 ---
 
-# ADR-020: CPU-First Deployment Strategy for Phase 1
 
 **Status**: Accepted
 **Date**: 2025-11-04

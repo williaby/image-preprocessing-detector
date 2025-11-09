@@ -1,16 +1,23 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-023: Weak Supervision with BRISQUE/NIQE for IQA Labeling"
-description: "Use classical IQA metrics (BRISQUE/NIQE/PIQE) for automated weak supervision labeling"
-tags: [adr, weak-supervision, brisque, niqe, labeling, training]
+description: "Use classical IQA metrics (BRISQUE/NIQE/PIQE) for automated weak supervision
+  labeling"
+tags:
+- adr
+- weak_supervision
+- brisque
+- niqe
+- labeling
+- training
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use classical IQA metrics for automated labeling to reduce manual annotation cost"
+- name: "Byron Williams"
+purpose: "Document the decision to use classical IQA metrics for automated labeling
+  to reduce manual annotation cost."
 ---
 
-# ADR-023: Weak Supervision with BRISQUE/NIQE for IQA Labeling
 
 **Status**: Accepted
 **Date**: 2025-01-15

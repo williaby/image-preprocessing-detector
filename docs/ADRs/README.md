@@ -1,5 +1,5 @@
 ---
-schema_type: dev
+schema_type: common
 title: "Architecture Decision Records (ADRs)"
 description: "Index of all architecture decision records for the Image Preprocessing Detector"
 tags: [adr, architecture, decisions, documentation]
@@ -10,7 +10,6 @@ authors:
 purpose: "Track and document all significant architectural decisions with rationale and context."
 ---
 
-# Architecture Decision Records (ADRs)
 
 This directory contains Architecture Decision Records (ADRs) for the Image Preprocessing Detector project.
 

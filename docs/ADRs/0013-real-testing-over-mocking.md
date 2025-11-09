@@ -1,16 +1,21 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-013: Real Testing Over Mocking Strategy"
-description: "Prioritize real implementations and synthetic data over mocks for high-confidence test suite"
-tags: [adr, testing, quality-assurance, mocking]
+description: "Prioritize real implementations and synthetic data over mocks for high-confidence
+  test suite"
+tags:
+- adr
+- testing
+- quality_assurance
+- mocking
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to minimize mocking in favor of testing real implementations with synthetic data"
+- name: "Byron Williams"
+purpose: "Document the decision to minimize mocking in favor of testing real implementations
+  with synthetic data."
 ---
 
-# ADR-013: Real Testing Over Mocking Strategy
 
 **Status**: Accepted
 **Date**: 2025-11-05

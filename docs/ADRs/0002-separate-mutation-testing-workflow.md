@@ -1,18 +1,22 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-002: Separate Mutation Testing from Main CI"
-description: "Decision to run mutation testing on a separate schedule with threshold-based flagging"
-tags: [adr, testing, mutation-testing, ci-cd, performance]
+description: "Decision to run mutation testing on a separate schedule with threshold-based
+  flagging"
+tags:
+- adr
+- testing
+- mutation_testing
+- ci_cd
+- performance
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-01-08"
-updated: "2025-01-08"
-purpose: "Document the decision to separate mutation testing from the main CI pipeline for cost and performance optimization."
+- name: "Byron Williams"
+purpose: "Document the decision to separate mutation testing from the main CI pipeline
+  for cost and performance optimization."
 ---
 
-# ADR-002: Separate Mutation Testing from Main CI
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-01-08

@@ -1,16 +1,22 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-026: Transfer Learning from ImageNet/COCO"
-description: "Use ImageNet pre-training for IQA, COCO pre-training for YOLOv8 layout detection"
-tags: [adr, transfer-learning, imagenet, coco, pre-training]
+description: "Use ImageNet pre-training for IQA, COCO pre-training for YOLOv8 layout
+  detection"
+tags:
+- adr
+- transfer_learning
+- imagenet
+- coco
+- pre_training
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use pre-trained models for faster convergence and better accuracy"
+- name: "Byron Williams"
+purpose: "Document the decision to use pre-trained models for faster convergence and
+  better accuracy."
 ---
 
-# ADR-026: Transfer Learning from ImageNet/COCO
 
 **Status**: Accepted
 **Date**: 2025-01-15

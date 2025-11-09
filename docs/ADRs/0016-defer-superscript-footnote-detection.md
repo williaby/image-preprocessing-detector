@@ -1,16 +1,21 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-016: Defer Superscript/Footnote Detection to Post-OCR"
 description: "Defer superscript and footnote detection to post-OCR analysis phase"
-tags: [adr, ocr, footnotes, superscripts, text-analysis]
+tags:
+- adr
+- ocr
+- footnotes
+- superscripts
+- text_analysis
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to defer superscript/footnote detection until after OCR provides baseline and font size information"
+- name: "Byron Williams"
+purpose: "Document the decision to defer superscript/footnote detection until after
+  OCR provides baseline and font size information."
 ---
 
-# ADR-016: Defer Superscript/Footnote Detection to Post-OCR
 
 **Status**: Accepted
 **Date**: 2025-01-15

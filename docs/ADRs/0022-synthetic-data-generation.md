@@ -1,16 +1,22 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-022: Synthetic Data Generation with Albumentations for ML Training"
-description: "Use Albumentations for synthetic data generation to augment training dataset from 10k to 50k images"
-tags: [adr, synthetic-data, augmentation, albumentations, training]
+description: "Use Albumentations for synthetic data generation to augment training
+  dataset from 10k to 50k images"
+tags:
+- adr
+- synthetic_data
+- augmentation
+- albumentations
+- training
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use Albumentations for synthetic data generation to expand training dataset size"
+- name: "Byron Williams"
+purpose: "Document the decision to use Albumentations for synthetic data generation
+  to expand training dataset size."
 ---
 
-# ADR-022: Synthetic Data Generation with Albumentations for ML Training
 
 **Status**: Accepted
 **Date**: 2025-01-15

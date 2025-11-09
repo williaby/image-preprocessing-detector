@@ -93,7 +93,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install Poetry
-        uses: snok/install-poetry@45a07fb13736b3465f4a3f04d3ad26f8689a8b18 # v1.4.1
+        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
         with:
           version: ${{ env.POETRY_VERSION }}
           virtualenvs-create: true
@@ -192,7 +192,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install Poetry
-        uses: snok/install-poetry@45a07fb13736b3465f4a3f04d3ad26f8689a8b18 # v1.4.1
+        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
         with:
           version: ${{ env.POETRY_VERSION }}
           virtualenvs-create: true
@@ -271,7 +271,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install Poetry
-        uses: snok/install-poetry@45a07fb13736b3465f4a3f04d3ad26f8689a8b18 # v1.4.1
+        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
         with:
           version: ${{ env.POETRY_VERSION }}
           virtualenvs-create: true
@@ -375,6 +375,7 @@ jobs:
           # All jobs must be either success or skipped (not failed or cancelled)
           if is_acceptable "${{ needs.codeql-analysis.result }}" && \
              is_acceptable "${{ needs.dependency-security.result }}" && \
+             is_acceptable "${{ needs.security-scanning.result }}" && \
              is_acceptable "${{ needs.image-processing-security.result }}"; then
 
             if [[ "${{ needs.detect-changes.outputs.security_files }}" == "true" ]]; then

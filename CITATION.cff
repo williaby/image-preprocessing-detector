@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams
+# SPDX-License-Identifier: Apache-2.0
+
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software

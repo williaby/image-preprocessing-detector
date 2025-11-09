@@ -1,16 +1,21 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-025: MobileNetV3 vs EfficientNet for IQA Model Selection"
-description: "Select MobileNetV3-Small over EfficientNet-Lite0 for IQA multi-label classification"
-tags: [adr, mobilenetv3, efficientnet, iqa, model-selection]
+description: "Select MobileNetV3-Small over EfficientNet-Lite0 for IQA multi-label
+  classification"
+tags:
+- adr
+- mobilenetv3
+- efficientnet
+- iqa
+- model_selection
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the model architecture selection for Phase 2 IQA classifier"
+- name: "Byron Williams"
+purpose: "Document the model architecture selection for Phase 2 IQA classifier."
 ---
 
-# ADR-025: MobileNetV3 vs EfficientNet for IQA Model Selection
 
 **Status**: Accepted
 **Date**: 2025-01-15

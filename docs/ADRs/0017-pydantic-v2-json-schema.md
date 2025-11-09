@@ -1,16 +1,16 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-017: Pydantic v2 for JSON Schema Validation"
 description: "Use Pydantic v2 for type-safe JSON schema definition and validation"
 tags: [adr, pydantic, schema, validation, json]
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use Pydantic v2 for JSON schema validation and serialization"
+- name: "Byron Williams"
+purpose: "Document the decision to use Pydantic v2 for JSON schema validation and
+  serialization."
 ---
 
-# ADR-017: Pydantic v2 for JSON Schema Validation
 
 **Status**: Accepted
 **Date**: 2025-01-15

@@ -1,18 +1,23 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-006: Synthetic Validation Dataset Strategy"
-description: "Decision to use Microsoft Genalog for synthetic validation data instead of inaccessible academic datasets"
-tags: [adr, validation, testing, datasets, synthetic-data, quality-assurance]
+description: "Decision to use Microsoft Genalog for synthetic validation data instead
+  of inaccessible academic datasets"
+tags:
+- adr
+- validation
+- testing
+- datasets
+- synthetic_data
+- quality_assurance
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-11-05"
-updated: "2025-01-08"
-purpose: "Document the decision to pivot from academic datasets to synthetic data generation for validation of image quality assessment."
+- name: "Byron Williams"
+purpose: "Document the decision to pivot from academic datasets to synthetic data
+  generation for validation of image quality assessment."
 ---
 
-# ADR-006: Synthetic Validation Dataset Strategy
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-11-05

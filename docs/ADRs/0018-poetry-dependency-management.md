@@ -1,16 +1,16 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-018: Poetry for Dependency Management"
 description: "Use Poetry for deterministic builds and dependency management"
 tags: [adr, poetry, dependencies, packaging, tooling]
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use Poetry for Python dependency management and packaging"
+- name: "Byron Williams"
+purpose: "Document the decision to use Poetry for Python dependency management and
+  packaging."
 ---
 
-# ADR-018: Poetry for Dependency Management
 
 **Status**: Accepted
 **Date**: 2025-01-08

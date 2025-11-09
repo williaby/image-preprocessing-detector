@@ -1,18 +1,23 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-007: Hybrid IQA Approach for Embedded Images"
-description: "Decision to apply Image Quality Assessment to both pure images and embedded images within text documents"
-tags: [adr, architecture, iqa, image-quality, hybrid-approach, layout-detection]
+description: "Decision to apply Image Quality Assessment to both pure images and embedded
+  images within text documents"
+tags:
+- adr
+- architecture
+- iqa
+- image_quality
+- hybrid_approach
+- layout_detection
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-01-15"
-updated: "2025-01-08"
-purpose: "Document the critical architectural correction to support IQA on embedded images within text documents."
+- name: "Byron Williams"
+purpose: "Document the critical architectural correction to support IQA on embedded
+  images within text documents."
 ---
 
-# ADR-007: Hybrid IQA Approach for Embedded Images
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-01-15 (Phase 0 Architecture Correction)

@@ -1,18 +1,23 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-008: Multi-Stage Pipeline with Text Detection Fork"
-description: "Decision to use a modular multi-stage pipeline with text detection routing instead of a monolithic model"
-tags: [adr, architecture, pipeline, text-detection, modularity, performance]
+description: "Decision to use a modular multi-stage pipeline with text detection routing
+  instead of a monolithic model"
+tags:
+- adr
+- architecture
+- pipeline
+- text_detection
+- modularity
+- performance
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-01-15"
-updated: "2025-01-08"
-purpose: "Document the fundamental architectural pattern of the image preprocessing detection system."
+- name: "Byron Williams"
+purpose: "Document the fundamental architectural pattern of the image preprocessing
+  detection system."
 ---
 
-# ADR-008: Multi-Stage Pipeline with Text Detection Fork
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-01-15 (Phase 0 Architecture)

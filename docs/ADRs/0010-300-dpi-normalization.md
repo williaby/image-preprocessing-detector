@@ -1,18 +1,23 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-010: 300 DPI Normalization Strategy"
-description: "Decision to standardize all input documents to 300 DPI resolution for consistent pipeline processing"
-tags: [adr, architecture, dpi, normalization, ingestion, ocr-optimization]
+description: "Decision to standardize all input documents to 300 DPI resolution for
+  consistent pipeline processing"
+tags:
+- adr
+- architecture
+- dpi
+- normalization
+- ingestion
+- ocr_optimization
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-01-15"
-updated: "2025-01-08"
-purpose: "Document the decision to normalize all PDF and image inputs to a consistent 300 DPI resolution."
+- name: "Byron Williams"
+purpose: "Document the decision to normalize all PDF and image inputs to a consistent
+  300 DPI resolution."
 ---
 
-# ADR-010: 300 DPI Normalization Strategy
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-01-15 (Phase 0 Architecture)

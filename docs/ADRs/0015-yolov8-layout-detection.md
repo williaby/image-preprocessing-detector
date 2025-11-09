@@ -1,16 +1,20 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-015: YOLOv8 for Layout Detection"
 description: "Select YOLOv8 over Vision Transformers for document layout detection"
-tags: [adr, layout-detection, yolo, object-detection]
+tags:
+- adr
+- layout_detection
+- yolo
+- object_detection
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use YOLOv8 for document layout detection in Phase 3"
+- name: "Byron Williams"
+purpose: "Document the decision to use YOLOv8 for document layout detection in Phase
+  3."
 ---
 
-# ADR-015: YOLOv8 for Layout Detection
 
 **Status**: Accepted
 **Date**: 2025-01-15

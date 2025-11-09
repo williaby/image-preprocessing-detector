@@ -1,18 +1,23 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-005: MkDocs Documentation System with Front Matter Validation"
-description: "Decision to use MkDocs with Material theme and Pydantic-validated front matter for comprehensive documentation"
-tags: [adr, documentation, mkdocs, pydantic, validation, json-ld]
+description: "Decision to use MkDocs with Material theme and Pydantic-validated front
+  matter for comprehensive documentation"
+tags:
+- adr
+- documentation
+- mkdocs
+- pydantic
+- validation
+- json_ld
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-01-08"
-updated: "2025-01-08"
-purpose: "Document the decision to implement MkDocs with Material theme, front matter validation, and JSON-LD injection for comprehensive documentation."
+- name: "Byron Williams"
+purpose: "Document the decision to implement MkDocs with Material theme, front matter
+  validation, and JSON-LD injection for comprehensive documentation."
 ---
 
-# ADR-005: MkDocs Documentation System with Front Matter Validation
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-11-08 (Implementation), 2025-01-08 (ADR Documentation)

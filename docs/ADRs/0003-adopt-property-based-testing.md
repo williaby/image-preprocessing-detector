@@ -1,18 +1,22 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-003: Adopt Property-Based Testing with Hypothesis"
-description: "Decision to use Hypothesis for property-based testing to complement example-based tests"
-tags: [adr, testing, hypothesis, property-based-testing, quality]
+description: "Decision to use Hypothesis for property-based testing to complement
+  example-based tests"
+tags:
+- adr
+- testing
+- hypothesis
+- property_based_testing
+- quality
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-created: "2025-01-08"
-updated: "2025-01-08"
-purpose: "Document the decision to adopt property-based testing with Hypothesis for discovering edge cases and verifying invariants."
+- name: "Byron Williams"
+purpose: "Document the decision to adopt property-based testing with Hypothesis for
+  discovering edge cases and verifying invariants."
 ---
 
-# ADR-003: Adopt Property-Based Testing with Hypothesis
 
 **Status**: ✅ **Accepted**
 **Date**: 2025-01-08

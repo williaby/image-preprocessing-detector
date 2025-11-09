@@ -1,16 +1,22 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-024: Active Learning for Annotation Efficiency"
-description: "Use active learning to reduce manual annotation from 10k to 2k pages via uncertainty sampling"
-tags: [adr, active-learning, annotation, training, efficiency]
+description: "Use active learning to reduce manual annotation from 10k to 2k pages
+  via uncertainty sampling"
+tags:
+- adr
+- active_learning
+- annotation
+- training
+- efficiency
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use active learning to minimize manual annotation cost while maximizing model performance"
+- name: "Byron Williams"
+purpose: "Document the decision to use active learning to minimize manual annotation
+  cost while maximizing model performance."
 ---
 
-# ADR-024: Active Learning for Annotation Efficiency
 
 **Status**: Accepted
 **Date**: 2025-01-15

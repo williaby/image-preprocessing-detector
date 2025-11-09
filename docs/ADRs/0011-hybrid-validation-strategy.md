@@ -1,16 +1,21 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-011: Hybrid Validation Strategy for Threshold Calibration"
-description: "Combined synthetic and real-world validation for production-ready detector thresholds"
-tags: [adr, validation, testing, quality-assurance]
+description: "Combined synthetic and real-world validation for production-ready detector
+  thresholds"
+tags:
+- adr
+- validation
+- testing
+- quality_assurance
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use both synthetic and real-world validation datasets for detector threshold calibration"
+- name: "Byron Williams"
+purpose: "Document the decision to use both synthetic and real-world validation datasets
+  for detector threshold calibration."
 ---
 
-# ADR-011: Hybrid Validation Strategy for Threshold Calibration
 
 **Status**: Accepted
 **Date**: 2025-11-05

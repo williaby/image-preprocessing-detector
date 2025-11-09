@@ -1,16 +1,16 @@
 ---
-schema_type: dev
+schema_type: common
 title: "ADR-019: Structured Logging with structlog + rich"
 description: "Use structlog for structured logging with rich console output"
 tags: [adr, logging, structlog, rich, observability]
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use structlog + rich for structured logging with human-readable console output"
+- name: "Byron Williams"
+purpose: "Document the decision to use structlog + rich for structured logging with
+  human-readable console output."
 ---
 
-# ADR-019: Structured Logging with structlog + rich
 
 **Status**: Accepted
 **Date**: 2025-01-08
