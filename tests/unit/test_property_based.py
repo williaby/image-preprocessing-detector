@@ -42,12 +42,24 @@ def confidence_scores(draw: Any) -> float:
 
 
 @composite
-def bounding_boxes(draw: Any) -> list[int]:
+def bounding_boxes(draw: Any) -> list[float]:
     """Generate valid COCO-format bounding boxes [x, y, width, height]."""
-    x = draw(st.integers(min_value=0, max_value=1000))
-    y = draw(st.integers(min_value=0, max_value=1000))
-    width = draw(st.integers(min_value=1, max_value=500))
-    height = draw(st.integers(min_value=1, max_value=500))
+    x = draw(
+        st.floats(
+            min_value=0.0, max_value=1000.0, allow_nan=False, allow_infinity=False
+        )
+    )
+    y = draw(
+        st.floats(
+            min_value=0.0, max_value=1000.0, allow_nan=False, allow_infinity=False
+        )
+    )
+    width = draw(
+        st.floats(min_value=1.0, max_value=500.0, allow_nan=False, allow_infinity=False)
+    )
+    height = draw(
+        st.floats(min_value=1.0, max_value=500.0, allow_nan=False, allow_infinity=False)
+    )
     return [x, y, width, height]
 
 
