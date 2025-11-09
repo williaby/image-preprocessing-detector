@@ -234,8 +234,14 @@ class TestPropertyBasedTransformations:
                     min_size=0,
                     max_size=3,
                 ),
-                started_at=st.datetimes(min_value=datetime(2020, 1, 1)),  # noqa: DTZ001
-                finished_at=st.datetimes(min_value=datetime(2020, 1, 1)),  # noqa: DTZ001
+                started_at=st.datetimes(
+                    min_value=datetime(2020, 1, 1),  # noqa: DTZ001
+                    max_value=datetime(2023, 12, 31),  # noqa: DTZ001
+                ),
+                finished_at=st.datetimes(
+                    min_value=datetime(2024, 1, 1),  # noqa: DTZ001
+                    max_value=datetime(2025, 12, 31),  # noqa: DTZ001
+                ),
                 status=st.sampled_from(["success", "failed", "skipped"]),
             ),
             max_size=5,
@@ -361,8 +367,9 @@ class TestPropertyBasedIntegration:
     def test_quality_issues_serialization(self, issues: list[DetectedIssue]) -> None:
         """Property: Quality issues can be serialized to JSON."""
         element = DocumentElement(
-            category=ElementCategory.TEXT,
-            bbox=[0.0, 0.0, 100.0, 100.0],
+            id="test-element-1",
+            category=ElementCategory.TEXT_BLOCK,
+            bbox=[0, 0, 100, 100],
             confidence=0.9,
             quality_issues=issues,
         )
