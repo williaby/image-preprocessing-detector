@@ -15,6 +15,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
+## What Does This Do?
+
+**Prepares scanned documents and images for AI processing.** This tool automatically detects quality issues (blurriness, skew, poor contrast, noise) in PDFs and images, then identifies which preprocessing steps are needed to improve accuracy before feeding documents to AI systems.
+
+**Problem it solves**: Scanned documents and images often have quality issues that hurt AI accuracy. This tool detects those issues automatically, so you know exactly what corrections to apply before processing documents with AI/machine learning systems.
+
+---
+
 **Intelligent image preprocessing detection system for RAG applications.** Automatically analyzes documents (PDFs, images) and detects required preprocessing steps before vector database ingestion.
 
 ## Features
