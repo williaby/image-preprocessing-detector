@@ -9,16 +9,17 @@ on:
     types:
       - completed
 
-permissions:
-  contents: read
-  pull-requests: write
-  statuses: write
+permissions: read-all
 
 jobs:
   upload-coverage:
     name: Upload Coverage to Codecov
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      pull-requests: write  # Required for PR comments
+      statuses: write       # Required for commit status updates
 
     steps:
       - name: Harden the runner (Audit outbound calls)

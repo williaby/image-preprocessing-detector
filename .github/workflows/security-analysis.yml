@@ -40,11 +40,10 @@ on:
     - cron: '30 2 * * 1'  # Weekly Monday 2:30 AM UTC
   workflow_dispatch:  # Manual trigger
 
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-  pull-requests: write
+permissions: read-all
+
+env:
+  POETRY_VERSION: 2.1.2
 
 jobs:
   # Detect if security-relevant files changed in this PR
@@ -75,6 +74,10 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.security_files == 'true'
     timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload
+      actions: read
     steps:
       - name: Harden the runner (Audit outbound calls)
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
@@ -90,11 +93,12 @@ jobs:
           python-version: '3.12'
 
       - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.local/bin:$PATH"
-          poetry config virtualenvs.in-project true
+        uses: snok/install-poetry@45a07fb13736b3465f4a3f04d3ad26f8689a8b18 # v1.4.1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
       # Install only main dependencies for CodeQL analysis
       - name: Install Image Processing Dependencies
@@ -146,6 +150,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.security_files == 'true'
+    permissions:
+      contents: read
+      pull-requests: write  # Required for PR comments
     steps:
       - name: Harden the runner (Audit outbound calls)
         uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
@@ -184,12 +191,17 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Poetry and Dependencies
+      - name: Install Poetry
+        uses: snok/install-poetry@45a07fb13736b3465f4a3f04d3ad26f8689a8b18 # v1.4.1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install Dependencies
         run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
           export PATH="$HOME/.local/bin:$PATH"
-          poetry config virtualenvs.in-project true
           poetry install --with dev --no-interaction
 
       # Bandit static analysis for image processing code
@@ -258,12 +270,17 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install Poetry
+        uses: snok/install-poetry@45a07fb13736b3465f4a3f04d3ad26f8689a8b18 # v1.4.1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
       - name: Install Dependencies
         run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
           export PATH="$HOME/.local/bin:$PATH"
-          poetry config virtualenvs.in-project true
           poetry install --with dev --no-interaction
 
       # Validate file processing security
