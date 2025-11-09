@@ -52,10 +52,12 @@ jobs:
 
       - name: Coverage upload status
         if: always()
+        env:
+          GH_REPOSITORY: ${{ github.repository }}
         run: |
           if [ -f coverage.xml ]; then
             echo "✅ Coverage report uploaded successfully"
-            echo "📊 View coverage at: https://app.codecov.io/gh/${{ github.repository }}"
+            echo "📊 View coverage at: https://app.codecov.io/gh/${GH_REPOSITORY}"
           else
             echo "⚠️ Coverage report not found"
             echo "This may indicate the test suite did not run or failed"

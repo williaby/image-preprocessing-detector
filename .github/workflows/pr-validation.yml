@@ -123,11 +123,13 @@ jobs:
       # Check for dependency changes and validate requirements sync
       - name: Check dependency changes
         id: deps-changed
+        env:
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           export PATH="$HOME/.local/bin:$PATH"
 
           # Check if poetry.lock or pyproject.toml changed
-          BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          BASE_REF="origin/${PR_BASE_REF}"
           if git diff --name-only "$BASE_REF...HEAD" | grep -E "(poetry\.lock|pyproject\.toml)"; then
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "📦 Dependency files have changed in this PR"

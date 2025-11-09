@@ -49,6 +49,8 @@ jobs:
 
       - name: Run mutation testing
         id: mutmut
+        env:
+          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
         run: |
           echo "Running mutation testing with mutmut..."
           poetry run mutmut run --paths-to-mutate src/ || true
@@ -73,7 +75,7 @@ jobs:
           echo "- **Mutation Score**: ${SCORE_PERCENTAGE}%" >> $GITHUB_STEP_SUMMARY
           echo "- **Killed Mutations**: ${KILLED_MUTATIONS}/${TOTAL_MUTATIONS}" >> $GITHUB_STEP_SUMMARY
           echo "- **Survived Mutations**: ${MUTATION_SCORE}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Threshold**: ${{ inputs.mutation_threshold || '80' }}%" >> $GITHUB_STEP_SUMMARY
+          echo "- **Threshold**: ${THRESHOLD_INPUT}%" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload mutation testing report
         if: always()
@@ -86,9 +88,12 @@ jobs:
           retention-days: 90
 
       - name: Check mutation score threshold
+        env:
+          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
+          MUTATION_SCORE: ${{ steps.mutmut.outputs.mutation_score }}
         run: |
-          THRESHOLD=${{ inputs.mutation_threshold || '80' }}
-          SCORE=${{ steps.mutmut.outputs.mutation_score }}
+          THRESHOLD="${THRESHOLD_INPUT}"
+          SCORE="${MUTATION_SCORE}"
 
           echo "Mutation Score: ${SCORE}%"
           echo "Threshold: ${THRESHOLD}%"
@@ -105,13 +110,19 @@ jobs:
       - name: Comment on PR (if applicable)
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          MUTATION_SCORE: ${{ steps.mutmut.outputs.mutation_score }}
+          KILLED_MUTATIONS: ${{ steps.mutmut.outputs.killed }}
+          TOTAL_MUTATIONS: ${{ steps.mutmut.outputs.total }}
+          SURVIVED_MUTATIONS: ${{ steps.mutmut.outputs.survived }}
+          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
         with:
           script: |
-            const score = '${{ steps.mutmut.outputs.mutation_score }}';
-            const killed = '${{ steps.mutmut.outputs.killed }}';
-            const total = '${{ steps.mutmut.outputs.total }}';
-            const survived = '${{ steps.mutmut.outputs.survived }}';
-            const threshold = '${{ inputs.mutation_threshold || '80' }}';
+            const score = process.env.MUTATION_SCORE || '0';
+            const killed = process.env.KILLED_MUTATIONS || '0';
+            const total = process.env.TOTAL_MUTATIONS || '0';
+            const survived = process.env.SURVIVED_MUTATIONS || '0';
+            const threshold = process.env.THRESHOLD_INPUT || '80';
 
             const passed = parseInt(score) >= parseInt(threshold);
             const emoji = passed ? '✅' : '❌';
@@ -128,7 +139,7 @@ jobs:
               : '**Status**: Some mutations survived. Consider improving test coverage.'}
 
             [View detailed report in workflow artifacts](
-            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
             `;
 
             github.rest.issues.createComment({
