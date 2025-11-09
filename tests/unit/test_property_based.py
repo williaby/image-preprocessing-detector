@@ -11,6 +11,7 @@ These examples demonstrate:
 4. Boundary conditions (confidence scores, coordinates)
 """
 
+import math
 from datetime import UTC, datetime
 from typing import Any
 
@@ -104,7 +105,7 @@ class TestPropertyBasedValidation:
     def test_invalid_confidence_rejected(self, value: float) -> None:
         """Property: Values outside [0,1] should be rejected."""
         # Skip NaN and valid range
-        if value != value or 0.0 <= value <= 1.0:
+        if math.isnan(value) or 0.0 <= value <= 1.0:
             return
 
         # Values outside valid range should raise ValidationError
@@ -237,10 +238,12 @@ class TestPropertyBasedTransformations:
                 started_at=st.datetimes(
                     min_value=datetime(2020, 1, 1),  # noqa: DTZ001
                     max_value=datetime(2023, 12, 31),  # noqa: DTZ001
+                    timezones=st.just(UTC),
                 ),
                 finished_at=st.datetimes(
                     min_value=datetime(2024, 1, 1),  # noqa: DTZ001
                     max_value=datetime(2025, 12, 31),  # noqa: DTZ001
+                    timezones=st.just(UTC),
                 ),
                 status=st.sampled_from(["success", "failed", "skipped"]),
             ),
