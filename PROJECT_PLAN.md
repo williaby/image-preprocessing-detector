@@ -746,6 +746,186 @@ Mosaic, MixUp, HSV augmentation, flips, rotations
 
 ---
 
+### Phase 1B: PDF Resolution Pre-processing & DPI Upscaling (1-2 weeks)
+
+**Goals:**
+- Implement automatic DPI detection for PDF pages and images
+- Add upscaling capability for low-resolution documents (<300 DPI)
+- Seamlessly integrate with ingestion pipeline
+- Ensure OCR-ready quality for downstream processing
+
+**Background:**
+This phase incorporates proven upscaling technology from the data_ingestor project (Phase 1C), which achieved 100% test success rate and 310-360ms processing time. The implementation uses OpenCV-based upscaling algorithms optimized for document processing.
+
+**Tasks:**
+
+1. **DPI Detection Module** ([src/ingestion/pdf_resolution.py](src/ingestion/pdf_resolution.py))
+   - PyMuPDF-based DPI analysis for PDF pages
+   - Image metadata extraction for raster formats (PNG, JPEG, TIFF)
+   - Multi-page DPI analysis with per-page resolution reporting
+   - Edge case handling: zero bbox, no images, password-protected PDFs
+   - Confidence scoring for DPI measurements
+
+2. **PDF Upscaling Module** ([src/ingestion/pdf_upscaler.py](src/ingestion/pdf_upscaler.py))
+   - **OpenCV Upscaling Algorithms**:
+     - `lanczos` - Best quality (recommended for production)
+     - `bicubic` - Balanced speed/quality (development)
+     - `inter_linear` - Fastest (performance-critical workflows)
+     - `inter_cubic` - Alternative high-quality option
+     - `inter_area` - Downsampling (for oversized images)
+   - Page-by-page processing to minimize memory usage (<2GB)
+   - Temporary file management with automatic cleanup
+   - Error handling with graceful fallback to original
+   - File size tracking and optimization
+   - Progress logging for large documents
+
+3. **Pre-flight Analysis Orchestrator** ([src/ingestion/pdf_analyzer.py](src/ingestion/pdf_analyzer.py))
+   - Coordinate DPI detection and upscaling workflow
+   - Decision logic: When to upscale vs use original
+   - Metadata generation for upscaling operations
+   - Integration with document router
+   - Cleanup coordination for temporary files
+
+4. **Configuration Integration** ([src/core/config.py](src/core/config.py))
+   - Add 5 new settings:
+     - `enable_pdf_upscaling: bool = True`
+     - `pdf_min_dpi: int = 300`
+     - `pdf_target_dpi: int = 300`
+     - `pdf_upscale_algorithm: str = "lanczos"`
+     - `pdf_preserve_original_on_error: bool = True`
+   - Environment variable support
+   - Configuration validation
+
+5. **Pipeline Integration** ([src/ingestion/](src/ingestion/))
+   - Integrate PDFDocumentAnalyzer into ingestion pipeline
+   - Pre-flight analysis before image conversion
+   - Automatic upscaling for low-DPI documents
+   - Metadata tracking in DocumentMetadata schema
+   - Update `transform_history` with upscaling operations
+
+6. **Dependencies & Infrastructure**
+   - Add required dependencies to `pyproject.toml`:
+     - `opencv-python-headless = "^4.10.0"` (already present)
+     - `pillow = ">=10.1.0,<11.0.0"` (already present)
+     - `numpy = ">=1.26.1,<2.0.0"` (already present)
+   - Update environment configuration templates
+   - Add upscaling metrics to telemetry
+
+7. **Testing** ([tests/unit/](tests/unit/), [tests/integration/](tests/integration/))
+   - **Unit Tests** (26+ tests):
+     - Resolution detection (12 tests)
+       - Low-resolution detection
+       - High-resolution detection
+       - Multi-page analysis
+       - Edge cases (zero bbox, no images)
+       - Error handling
+     - Upscaling (14 tests)
+       - All 5 algorithms
+       - Success cases
+       - Error handling
+       - File size tracking
+       - Convenience functions
+   - **Integration Tests** (8+ tests):
+     - End-to-end upscaling workflow
+     - Pipeline integration
+     - Configuration respect
+     - Metadata accuracy
+     - Performance validation
+     - Cleanup verification
+
+8. **Validation Tools** ([scripts/validate_pdf_resolution.py](scripts/validate_pdf_resolution.py))
+   - Manual validation script for DPI detection
+   - Upscaling quality assessment
+   - Before/after comparison utilities
+   - Batch processing for test datasets
+
+**Deliverables:**
+- ✅ DPI detection module with 100% accuracy
+- ✅ PDF upscaling module with 5 algorithm options
+- ✅ Pre-flight analysis orchestrator
+- ✅ Configuration integration with environment variables
+- ✅ Pipeline integration with metadata tracking
+- ✅ Comprehensive test suite (26+ unit tests, 8+ integration tests)
+- ✅ Validation scripts for manual testing
+
+**Success Criteria:**
+- DPI detection accuracy: 100% on test PDFs
+- Upscaling quality: >10% OCR improvement (150→300 DPI = 100% improvement)
+- Processing time: <500ms per document (target: 310-360ms)
+- Memory usage: <2GB per worker (page-by-page processing)
+- Test coverage: 100% pass rate on all upscaling tests
+- No quality regression on high-resolution documents (correctly skipped)
+- Automatic cleanup: No orphaned temporary files
+
+**Performance Benchmarks** (Expected):
+| Metric | Target | Notes |
+|--------|--------|-------|
+| DPI Detection Accuracy | 100% | PyMuPDF metadata extraction |
+| Processing Time | <500ms | 310-360ms achieved in data_ingestor |
+| Memory Usage | <2GB | Page-by-page processing |
+| DPI Improvement | >10% | 150→300 DPI = 100% improvement |
+| Test Success Rate | 100% | All 34+ tests passing |
+| Cleanup Success Rate | 100% | No orphaned temp files |
+
+**Configuration Examples:**
+
+**Production Settings:**
+```python
+enable_pdf_upscaling = True
+pdf_min_dpi = 300                    # Standard OCR threshold
+pdf_target_dpi = 300                 # Match OCR requirements
+pdf_upscale_algorithm = "lanczos"    # Best quality
+pdf_preserve_original_on_error = True # Safety fallback
+```
+
+**Development Settings:**
+```python
+enable_pdf_upscaling = True
+pdf_min_dpi = 200                    # More lenient for testing
+pdf_target_dpi = 300
+pdf_upscale_algorithm = "bicubic"    # Faster for iteration
+pdf_preserve_original_on_error = True
+```
+
+**Performance-Critical Settings:**
+```python
+enable_pdf_upscaling = True
+pdf_min_dpi = 250                    # Slightly lower threshold
+pdf_target_dpi = 300
+pdf_upscale_algorithm = "inter_linear" # Fastest
+pdf_preserve_original_on_error = True
+```
+
+**Integration Notes:**
+
+**Source Code Reference:**
+All implementation code is available in the data_ingestor project:
+- `/home/byron/dev/data_ingestor/src/data_ingestor/utils/pdf_resolution.py` (196 lines)
+- `/home/byron/dev/data_ingestor/src/data_ingestor/utils/pdf_upscaler.py` (289 lines)
+- `/home/byron/dev/data_ingestor/src/data_ingestor/pipeline/pdf_analyzer.py` (242 lines)
+
+**Handoff Documentation:**
+See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integration guide.
+
+**Edge Cases Handled:**
+- ✅ Password-protected PDFs → Skip upscaling, use original
+- ✅ Corrupted PDFs → Graceful error, use original
+- ✅ PDFs with no images → Skip upscaling, use original
+- ✅ Very large PDFs (>500MB) → Page-by-page processing
+- ✅ High-resolution PDFs → Correctly skipped (no unnecessary processing)
+
+**Dependencies on Phase 1:**
+- Requires basic ingestion pipeline (PDF→image conversion)
+- Integrates with DocumentMetadata schema
+- Extends transform_history tracking
+
+**Enables Phase 2+:**
+- Ensures consistent 300 DPI input for IQA models
+- Improves OCR quality for downstream processing
+- Provides metadata for quality assessment validation
+
+---
+
 ### Phase 2: ML for Image Quality Assessment (3-4 weeks)
 
 **Goals:**

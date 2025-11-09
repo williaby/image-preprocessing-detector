@@ -176,13 +176,15 @@ poetry run safety check                     # Dependency vulnerability check
 
 ## Architecture - Big Picture
 
-### Pipeline Flow (Text Detection Fork)
+### Pipeline Flow (Text Detection Fork with DPI Upscaling)
 
-The system uses a **text detection gate** to route documents to specialized processing:
+The system uses a **text detection gate** to route documents to specialized processing, with **automatic DPI upscaling** (Phase 1B) for low-resolution inputs:
 
 ```
 PDF/Image Input
     ↓
+[Pre-flight Analysis] (src/ingestion/) - DPI detection & upscaling (Phase 1B)
+    ↓ (Auto-upscale if < 300 DPI)
 [Ingestion] (src/ingestion/) - Standardize to 300 DPI images
     ↓
 [Text Gate] (src/detection/text_gate.py) - Fast ensemble heuristics
@@ -195,6 +197,16 @@ Classical IQA  YOLOv8 Layout → Extract elements → Per-element IQA
     ↓              ↓
 [JSON Output] (src/output/) - COCO-aligned metadata
 ```
+
+**Phase 1B: DPI Upscaling (NEW)**
+- **Technology**: Proven implementation from data_ingestor project (Phase 1C)
+- **DPI Detection**: PyMuPDF-based automatic resolution analysis
+- **Upscaling Trigger**: Documents below 300 DPI are automatically upscaled
+- **Algorithm Options**: 5 OpenCV algorithms (lanczos, bicubic, inter_linear, inter_cubic, inter_area)
+- **Performance**: 310-360ms processing time, <2GB memory usage, page-by-page processing
+- **Quality**: 100% test success rate, 100% DPI improvement (e.g., 150→300 DPI)
+- **Safety**: Graceful fallback to original on errors, high-res documents correctly skipped
+- **Configuration**: 5 settings (enable_pdf_upscaling, pdf_min_dpi, pdf_target_dpi, pdf_upscale_algorithm, pdf_preserve_original_on_error)
 
 **Critical Design Decision**: Hybrid IQA approach required because:
 - Text documents contain embedded images (tables, figures, photos)
@@ -214,10 +226,15 @@ Classical IQA  YOLOv8 Layout → Extract elements → Per-element IQA
 - COCO-aligned bounding boxes (`[x, y, width, height]`) for LayoutParser integration
 - **Hybrid IQA**: `quality_issues` field in `DocumentElement` for per-element assessment
 
-**[ingestion/](src/image_preprocessing_detector/ingestion/)** (Phase 1)
-- PDF → standardized images (300 DPI)
-- Image normalization and validation
-- Multi-format support (PDF, PNG, JPEG, TIFF)
+**[ingestion/](src/image_preprocessing_detector/ingestion/)** (Phase 1 + Phase 1B)
+- **Phase 1B: DPI Upscaling**
+  - [pdf_resolution.py](src/image_preprocessing_detector/ingestion/pdf_resolution.py): DPI detection and analysis
+  - [pdf_upscaler.py](src/image_preprocessing_detector/ingestion/pdf_upscaler.py): OpenCV-based upscaling (5 algorithms)
+  - [pdf_analyzer.py](src/image_preprocessing_detector/ingestion/pdf_analyzer.py): Pre-flight analysis orchestration
+- **Phase 1: Basic Ingestion**
+  - PDF → standardized images (300 DPI)
+  - Image normalization and validation
+  - Multi-format support (PDF, PNG, JPEG, TIFF)
 
 **[detection/](src/image_preprocessing_detector/detection/)** (Phase 1-3)
 - [text_gate.py](src/image_preprocessing_detector/detection/text_gate.py): Fast text presence detection (ensemble: stroke density, connected components, edge density)
@@ -241,13 +258,14 @@ Classical IQA  YOLOv8 Layout → Extract elements → Per-element IQA
 
 ### Data Flow Pattern
 
-1. **Ingestion**: PyMuPDF extracts PDF pages → Pillow/OpenCV standardizes to 300 DPI
-2. **Text Gate**: Fast heuristics (< 10ms) → route to appropriate branch
-3. **Detection Branch**:
+1. **Pre-flight Analysis** (Phase 1B): DPI detection → automatic upscaling if <300 DPI
+2. **Ingestion**: PyMuPDF extracts PDF pages → Pillow/OpenCV standardizes to 300 DPI
+3. **Text Gate**: Fast heuristics (< 10ms) → route to appropriate branch
+4. **Detection Branch**:
    - No-text: Classical IQA on full page
    - Text: YOLOv8 layout → extract elements → IQA per-element
-4. **Correction**: Apply OpenCV transforms with confidence-based thresholds
-5. **Output**: Serialize to JSON with COCO-aligned metadata
+5. **Correction**: Apply OpenCV transforms with confidence-based thresholds
+6. **Output**: Serialize to JSON with COCO-aligned metadata (includes upscaling metadata)
 
 ## Project-Specific Standards
 
@@ -276,10 +294,17 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 
 - **Phase 0** (Weeks 1-3): Foundation & scaffolding (COMPLETE)
 - **Phase 1** (Weeks 4-7): MVP with classical methods (IN PROGRESS)
+- **Phase 1B** (Weeks 7-8): DPI detection & upscaling (PLANNED - before Phase 2)
 - **Phase 2** (Weeks 8-11): ML for image quality
 - **Phase 3** (Weeks 12-16): ML for document layout
 - **Phase 4** (Weeks 17-20): Production hardening
 - **Phase 5** (Ongoing): Continuous improvement
+
+**Phase 1B Integration Notes:**
+- Implements proven upscaling technology from data_ingestor project (Phase 1C)
+- Required for consistent 300 DPI input to downstream ML models
+- Source code available: `/home/byron/dev/data_ingestor/src/data_ingestor/utils/`
+- Handoff documentation: `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md`
 
 See [PROJECT_PLAN.md](PROJECT_PLAN.md) for complete 50+ page implementation roadmap.
 
