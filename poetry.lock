@@ -2149,7 +2149,6 @@ prompt_toolkit = ">=3.0.41,<3.1.0"
 pygments = ">=2.4.0"
 stack_data = "*"
 traitlets = ">=5.13.0"
-typing_extensions = {version = ">=4.6", markers = "python_version < \"3.12\""}
 
 [package.extras]
 all = ["ipython[doc,matplotlib,test,test-extra]"]
@@ -2486,7 +2485,6 @@ jupyter-events = ">=0.11.0"
 jupyter-server-terminals = ">=0.4.4"
 nbconvert = ">=6.4.4"
 nbformat = ">=5.3.0"
-overrides = {version = ">=5.0", markers = "python_version < \"3.12\""}
 packaging = ">=22.0"
 prometheus-client = ">=0.9"
 pywinpty = {version = ">=2.0.1", markers = "os_name == \"nt\""}
@@ -4047,10 +4045,7 @@ files = [
 ]
 
 [package.dependencies]
-numpy = [
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
-    {version = ">=1.23.5", markers = "python_version >= \"3.11\""},
-]
+numpy = {version = ">=1.26.0", markers = "python_version >= \"3.12\""}
 
 [[package]]
 name = "opencv-python-headless"
@@ -4070,23 +4065,7 @@ files = [
 ]
 
 [package.dependencies]
-numpy = [
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
-    {version = ">=1.23.5", markers = "python_version == \"3.11\""},
-]
-
-[[package]]
-name = "overrides"
-version = "7.7.0"
-description = "A decorator to automatically detect mismatch when overriding a method."
-optional = false
-python-versions = ">=3.6"
-groups = ["main", "dev"]
-markers = "python_version == \"3.11\""
-files = [
-    {file = "overrides-7.7.0-py3-none-any.whl", hash = "sha256:c7ed9d062f78b8e4c1a7b70bd8796b35ead4d9f510227ef9c5dc7626c60d7e49"},
-    {file = "overrides-7.7.0.tar.gz", hash = "sha256:55158fa3d93b98cc75299b1e67078ad9003ca27945c76162c1c0766d6f91820a"},
-]
+numpy = {version = ">=1.26.0", markers = "python_version >= \"3.12\""}
 
 [[package]]
 name = "packaging"
@@ -4182,10 +4161,7 @@ files = [
 ]
 
 [package.dependencies]
-numpy = [
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
-    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
-]
+numpy = {version = ">=1.26.0", markers = "python_version >= \"3.12\""}
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
 tzdata = ">=2022.7"
@@ -5872,7 +5848,7 @@ description = "C version of reader, parser and emitter for ruamel.yaml derived f
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_python_implementation == \"CPython\" and python_version < \"3.14\""
+markers = "python_version < \"3.14\" and platform_python_implementation == \"CPython\""
 files = [
     {file = "ruamel.yaml.clib-0.2.14-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f8b2acb0ffdd2ce8208accbec2dca4a06937d556fdcaefd6473ba1b5daa7e3c4"},
     {file = "ruamel.yaml.clib-0.2.14-cp310-cp310-macosx_13_0_arm64.whl", hash = "sha256:aef953f3b8bd0b50bd52a2e52fb54a6a2171a1889d8dea4a5959d46c6624c451"},
@@ -6160,7 +6136,6 @@ files = [
     {file = "setuptools-80.9.0-py3-none-any.whl", hash = "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922"},
     {file = "setuptools-80.9.0.tar.gz", hash = "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c"},
 ]
-markers = {ml = "python_version >= \"3.12\""}
 
 [package.extras]
 check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\"", "ruff (>=0.8.0) ; sys_platform != \"cygwin\""]
@@ -7737,5 +7712,5 @@ ml = ["albumentations", "onnxruntime", "timm", "torch", "torchvision", "ultralyt
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.11,<3.15"
-content-hash = "1112f46d45688373a212ad3f0b2af5dfc8f9b63adc7ffcd317cc8237d353a7f2"
+python-versions = ">=3.12,<3.15"
+content-hash = "f6805dc8651f3cf1bdcd03407fa9727ae4736b7f336de8c818b836d0be1993bd"

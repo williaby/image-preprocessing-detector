@@ -6,7 +6,7 @@ authors = [
     {name = "Byron Williams", email = "byronawilliams@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 keywords = ["image-processing", "opencv", "document-analysis", "ocr-preprocessing", "rag"]
 classifiers = [
@@ -119,7 +119,7 @@ readme = "README.md"
 packages = [{include = "image_preprocessing_detector", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.15"  # Constrained by triton dependency for torch 2.9.0
+python = ">=3.12,<3.15"  # Constrained by triton dependency for torch 2.9.0
 opencv-python-headless = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
@@ -239,7 +239,8 @@ ignore = [
 
 # MyPy Configuration
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
+mypy_path = "src"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -273,6 +274,7 @@ addopts = [
     "--cov=src/image_preprocessing_detector",
     "--cov-report=html",
     "--cov-report=term-missing:skip-covered",
+    "--cov-report=xml",
     "--cov-fail-under=80",
 ]
 markers = [
