@@ -80,6 +80,8 @@ Links to relevant documentation, discussions, or external resources.
 ### Validation & Quality Assurance
 
 - [ADR-006: Synthetic Validation Dataset Strategy](0006-synthetic-validation-dataset-strategy.md) - **Accepted** (2025-11-05)
+- [ADR-011: Hybrid Validation Strategy for Threshold Calibration](0011-hybrid-validation-strategy.md) - **Accepted** (2025-11-05)
+- [ADR-013: Real Testing Over Mocking Strategy](0013-real-testing-over-mocking.md) - **Accepted** (2025-11-05)
 
 ### System Architecture
 
@@ -87,6 +89,21 @@ Links to relevant documentation, discussions, or external resources.
 - [ADR-008: Multi-Stage Pipeline with Text Detection Fork](0008-multi-stage-pipeline-architecture.md) - **Accepted** (2025-01-15)
 - [ADR-009: COCO Bounding Box Format Standardization](0009-coco-bounding-box-format.md) - **Accepted** (2025-01-15)
 - [ADR-010: 300 DPI Normalization Strategy](0010-300-dpi-normalization.md) - **Accepted** (2025-01-15)
+- [ADR-014: Classical CV + ML Hybrid for IQA](0014-classical-ml-hybrid-iqa.md) - **Accepted** (2025-01-15)
+- [ADR-015: YOLOv8 for Layout Detection](0015-yolov8-layout-detection.md) - **Accepted** (2025-01-15)
+- [ADR-016: Defer Superscript/Footnote to Post-OCR](0016-defer-superscript-footnote-detection.md) - **Accepted** (2025-01-15)
+
+### Technology Stack
+
+- [ADR-017: Pydantic v2 for JSON Schema Validation](0017-pydantic-v2-json-schema.md) - **Accepted** (2025-01-15)
+- [ADR-018: Poetry for Dependency Management](0018-poetry-dependency-management.md) - **Accepted** (2025-01-08)
+- [ADR-019: Structured Logging with structlog + rich](0019-structured-logging.md) - **Accepted** (2025-01-08)
+
+### Phase Planning & Deployment
+
+- [ADR-012: Defer Handwriting Detection to Phase 2](0012-defer-handwriting-detection.md) - **Accepted** (2025-11-05)
+- [ADR-020: CPU-First Deployment Strategy for Phase 1](0020-cpu-first-deployment-strategy.md) - **Accepted** (2025-11-04)
+- [ADR-021: Do-No-Harm Guardrails for Image Corrections](0021-do-no-harm-guardrails.md) - **Accepted** (2025-11-04)
 
 ### Data & ML Models
 
