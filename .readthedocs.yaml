@@ -17,6 +17,7 @@ build:
   jobs:
     # Run front matter validation before build
     pre_build:
+      - export PYTHONPATH="${READTHEDOCS_VIRTUALENV_PATH}/lib/python3.12/site-packages:${PWD}:${PYTHONPATH}"
       - python tools/validate_front_matter.py docs --fix
       - python tools/validate_front_matter.py docs
 
