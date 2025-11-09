@@ -42,24 +42,12 @@ def confidence_scores(draw: Any) -> float:
 
 
 @composite
-def bounding_boxes(draw: Any) -> list[float]:
+def bounding_boxes(draw: Any) -> list[int]:
     """Generate valid COCO-format bounding boxes [x, y, width, height]."""
-    x = draw(
-        st.floats(
-            min_value=0.0, max_value=1000.0, allow_nan=False, allow_infinity=False
-        )
-    )
-    y = draw(
-        st.floats(
-            min_value=0.0, max_value=1000.0, allow_nan=False, allow_infinity=False
-        )
-    )
-    width = draw(
-        st.floats(min_value=1.0, max_value=500.0, allow_nan=False, allow_infinity=False)
-    )
-    height = draw(
-        st.floats(min_value=1.0, max_value=500.0, allow_nan=False, allow_infinity=False)
-    )
+    x = draw(st.integers(min_value=0, max_value=1000))
+    y = draw(st.integers(min_value=0, max_value=1000))
+    width = draw(st.integers(min_value=1, max_value=500))
+    height = draw(st.integers(min_value=1, max_value=500))
     return [x, y, width, height]
 
 
@@ -129,7 +117,7 @@ class TestPropertyBasedValidation:
             )
 
     @given(bounding_boxes())
-    def test_bounding_box_format_invariant(self, bbox: list[float]) -> None:
+    def test_bounding_box_format_invariant(self, bbox: list[int]) -> None:
         """Property: COCO bounding boxes must be [x, y, width, height]."""
         assert len(bbox) == 4
         x, y, width, height = bbox
