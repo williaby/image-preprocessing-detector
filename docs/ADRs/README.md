@@ -83,13 +83,10 @@ Links to relevant documentation, discussions, or external resources.
 
 ### System Architecture
 
-*(To be documented from existing ARCHITECTURE_SUMMARY.md and ARCHITECTURE_CORRECTION.md)*
-
-- **Pending**: Text Detection Gate Architecture (multi-stage pipeline fork)
-- **Pending**: Hybrid IQA Approach for Document Elements
-- **Pending**: COCO Bounding Box Format Standardization
-- **Pending**: 300 DPI Normalization Strategy
-- **Pending**: Multi-Stage Pipeline Architecture
+- [ADR-007: Hybrid IQA Approach for Embedded Images](0007-hybrid-iqa-approach.md) - **Accepted** (2025-01-15)
+- [ADR-008: Multi-Stage Pipeline with Text Detection Fork](0008-multi-stage-pipeline-architecture.md) - **Accepted** (2025-01-15)
+- [ADR-009: COCO Bounding Box Format Standardization](0009-coco-bounding-box-format.md) - **Accepted** (2025-01-15)
+- [ADR-010: 300 DPI Normalization Strategy](0010-300-dpi-normalization.md) - **Accepted** (2025-01-15)
 
 ### Data & ML Models
 
