@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams
+# SPDX-License-Identifier: MIT
+
 albucore==0.0.23 ; python_version >= "3.11" and python_version < "3.15" \
     --hash=sha256:57823982b954913b84a9e2cf71058c4577b02397a62c41885be2d9b295efa8ab \
     --hash=sha256:99274ac0c15a1a7d9a726df9d54d5ab70d9d0c189e2a935399dba3d4bafad415
