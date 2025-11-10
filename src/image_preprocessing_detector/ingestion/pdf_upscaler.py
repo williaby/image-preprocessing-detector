@@ -121,20 +121,16 @@ class PDFUpscaler:
                         mat = fitz.Matrix(self.target_dpi / 72, self.target_dpi / 72)
                         pix = page.get_pixmap(matrix=mat)
 
-                        # Convert to numpy array for OpenCV processing
+                        # Convert to numpy array and create PIL image
+                        # PyMuPDF's matrix transform already rendered at target DPI
                         img_data = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
                             pix.height, pix.width, pix.n
                         )
 
-                        # PyMuPDF's matrix transform already rendered at target DPI,
-                        # so no additional upscaling needed. The img_data is already
-                        # at the correct resolution.
-                        upscaled_img = img_data
-
-                        # Create new page with upscaled image
+                        # Create new page with rendered image
                         # #CRITICAL: Page Dimensions: Must match original page size
                         # #VERIFY: Preserve aspect ratio and page dimensions
-                        img_pil = Image.fromarray(upscaled_img)
+                        img_pil = Image.fromarray(img_data)
 
                         # Calculate page dimensions in points (72 points = 1 inch)
                         page_width = page.rect.width
