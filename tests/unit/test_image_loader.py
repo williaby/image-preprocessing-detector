@@ -179,7 +179,7 @@ class TestImageLoader:
         loader = ImageLoader()
 
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
-            img, metadata = loader.load(tmp.name)
+            _img, metadata = loader.load(tmp.name)
 
         assert metadata.dpi is None
         assert metadata.needs_upscaling is False  # Unknown DPI
@@ -206,7 +206,7 @@ class TestImageLoader:
         loader = ImageLoader()
 
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
-            img, metadata = loader.load(tmp.name)
+            _img, metadata = loader.load(tmp.name)
 
         assert metadata.dpi == 150.0
         assert metadata.needs_upscaling is True
@@ -241,7 +241,7 @@ class TestImageLoader:
             mock_bgr = np.zeros((600, 800, 3), dtype=np.uint8)
             mock_cvt.return_value = mock_bgr
 
-            img, metadata = loader.load(tmp.name)
+            img, _metadata = loader.load(tmp.name)
 
             # Should have called cvtColor to convert grayscale to BGR
             mock_cvt.assert_called_once()
@@ -277,7 +277,7 @@ class TestImageLoader:
             mock_bgr = np.zeros((600, 800, 3), dtype=np.uint8)
             mock_cvt.return_value = mock_bgr
 
-            img, metadata = loader.load(tmp.name)
+            img, _metadata = loader.load(tmp.name)
 
             # Should have called cvtColor to convert RGBA to BGR
             mock_cvt.assert_called_once()

@@ -96,7 +96,7 @@ class MetadataBuilder:
             dpi_input = int(page_data.dpi_input)
             dpi_effective = int(page_data.dpi_effective)
         else:
-            image, metadata = page_data
+            _image, metadata = page_data
             width = metadata.width
             height = metadata.height
             dpi_input = int(metadata.dpi or 72.0)
@@ -278,6 +278,7 @@ class MetadataBuilder:
             file_name=self.file_name,
             source_mime=source_mime,
             num_pages=len(self.pages),
+            upscaling=None,  # Phase 1B: No upscaling in legacy json_generator
             processing_version=proc_version,
             pages=self.pages,
         )
