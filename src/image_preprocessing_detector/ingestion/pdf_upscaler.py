@@ -230,6 +230,14 @@ class PDFUpscaler:
     ) -> np.ndarray:
         """Apply upscaling algorithm to image.
 
+        NOTE: This method is currently unused for PDF upscaling because PyMuPDF's
+        matrix transform (line 121) already renders at target DPI. However, this
+        method will be needed in Phase 2+ for standalone image upscaling (PNG,
+        JPEG, TIFF), where OpenCV/PIL interpolation is required for raster images.
+
+        Future refactoring: Extract to shared upscaling_algorithms.py utility
+        for use by both pdf_upscaler.py and image_upscaler.py.
+
         Args:
             img: Input image as numpy array
             target_width: Target width in pixels
