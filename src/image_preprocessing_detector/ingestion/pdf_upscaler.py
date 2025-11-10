@@ -9,7 +9,7 @@ import tempfile
 import time
 from enum import Enum
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import cv2
 import fitz  # PyMuPDF
@@ -108,89 +108,84 @@ class PDFUpscaler:
             doc = fitz.open(input_path)
             new_doc = fitz.open()  # Create new PDF
 
-            pages_processed = 0
+            try:
+                pages_processed = 0
 
-            for page_num in range(len(doc)):
-                try:
-                    page = doc[page_num]
+                for page_num in range(len(doc)):
+                    try:
+                        page = doc[page_num]
 
-                    # Render page to high-resolution pixmap
-                    # #ASSUME: Scaling Factor: Calculate from target DPI
-                    # #VERIFY: May need adjustment for very large or small pages
-                    mat = fitz.Matrix(self.target_dpi / 72, self.target_dpi / 72)
-                    pix = page.get_pixmap(matrix=mat)
+                        # Render page to high-resolution pixmap
+                        # #ASSUME: Scaling Factor: Calculate from target DPI
+                        # #VERIFY: May need adjustment for very large or small pages
+                        mat = fitz.Matrix(self.target_dpi / 72, self.target_dpi / 72)
+                        pix = page.get_pixmap(matrix=mat)
 
-                    # Convert to numpy array for OpenCV processing
-                    img_data = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
-                        pix.height, pix.width, pix.n
-                    )
-
-                    # Convert RGB to BGR for OpenCV (if needed)
-                    if pix.n == 3:  # RGB
-                        img_data = cast(
-                            np.ndarray, cv2.cvtColor(img_data, cv2.COLOR_RGB2BGR)
-                        )
-                    elif pix.n == 4:  # RGBA
-                        img_data = cast(
-                            np.ndarray, cv2.cvtColor(img_data, cv2.COLOR_RGBA2BGR)
+                        # Convert to numpy array for OpenCV processing
+                        img_data = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                            pix.height, pix.width, pix.n
                         )
 
-                    # Apply upscaling algorithm
-                    # #ASSUME: Algorithm Selection: Lanczos provides best quality
-                    # #VERIFY: Different algorithms may be better for different content
-                    upscaled_img = self._apply_upscaling(
-                        img_data, pix.width, pix.height
-                    )
+                        # PyMuPDF's matrix transform already rendered at target DPI,
+                        # so no additional upscaling needed. The img_data is already
+                        # at the correct resolution.
+                        upscaled_img = img_data
 
-                    # Convert back to RGB for PDF
-                    if upscaled_img.shape[2] == 3:
-                        upscaled_img = cv2.cvtColor(upscaled_img, cv2.COLOR_BGR2RGB)
+                        # Create new page with upscaled image
+                        # #CRITICAL: Page Dimensions: Must match original page size
+                        # #VERIFY: Preserve aspect ratio and page dimensions
+                        img_pil = Image.fromarray(upscaled_img)
 
-                    # Create new page with upscaled image
-                    # #CRITICAL: Page Dimensions: Must match original page size
-                    # #VERIFY: Preserve aspect ratio and page dimensions
-                    img_pil = Image.fromarray(upscaled_img)
+                        # Calculate page dimensions in points (72 points = 1 inch)
+                        page_width = page.rect.width
+                        page_height = page.rect.height
 
-                    # Calculate page dimensions in points (72 points = 1 inch)
-                    page_width = page.rect.width
-                    page_height = page.rect.height
-
-                    # Create new page with same dimensions
-                    new_page = new_doc.new_page(width=page_width, height=page_height)
-
-                    # Insert upscaled image
-                    # Create a temporary PNG to insert
-                    with tempfile.NamedTemporaryFile(
-                        suffix=".png", delete=False
-                    ) as tmp_img:
-                        img_pil.save(tmp_img.name, format="PNG")
-                        new_page.insert_image(
-                            new_page.rect,
-                            filename=tmp_img.name,
-                        )
-                        Path(tmp_img.name).unlink()  # Clean up temp file
-
-                    pages_processed += 1
-                    logger.debug(f"Upscaled page {page_num + 1}/{len(doc)}")
-
-                    # #CRITICAL: Memory Management: Release pixmap memory
-                    # #VERIFY: Monitor memory usage for large PDFs
-                    pix = None
-
-                except Exception as e:
-                    logger.error(f"Error upscaling page {page_num + 1}: {e}")
-                    # Copy original page if upscaling fails
-                    if self.preserve_original:
+                        # Create new page with same dimensions
                         new_page = new_doc.new_page(
-                            width=page.rect.width, height=page.rect.height
+                            width=page_width, height=page_height
                         )
-                        new_page.show_pdf_page(new_page.rect, doc, page_num)
-                        pages_processed += 1
 
-            # Save upscaled PDF
-            new_doc.save(output_path)
-            new_doc.close()
-            doc.close()
+                        # Insert upscaled image
+                        # Create a temporary PNG to insert
+                        with tempfile.NamedTemporaryFile(
+                            suffix=".png", delete=False
+                        ) as tmp_img:
+                            tmp_img_path = tmp_img.name
+                            img_pil.save(tmp_img_path, format="PNG")
+
+                        # Insert image after context manager exits to avoid race condition
+                        try:
+                            new_page.insert_image(
+                                new_page.rect,
+                                filename=tmp_img_path,
+                            )
+                        finally:
+                            # Clean up temp file
+                            Path(tmp_img_path).unlink(missing_ok=True)
+
+                        pages_processed += 1
+                        logger.debug(f"Upscaled page {page_num + 1}/{len(doc)}")
+
+                        # #CRITICAL: Memory Management: Release pixmap memory
+                        # #VERIFY: Monitor memory usage for large PDFs
+                        pix = None
+
+                    except Exception as e:
+                        logger.error(f"Error upscaling page {page_num + 1}: {e}")
+                        # Copy original page if upscaling fails
+                        if self.preserve_original:
+                            new_page = new_doc.new_page(
+                                width=page.rect.width, height=page.rect.height
+                            )
+                            new_page.show_pdf_page(new_page.rect, doc, page_num)
+                            pages_processed += 1
+
+                # Save upscaled PDF
+                new_doc.save(output_path)
+            finally:
+                # Ensure documents are always closed, even on exception
+                new_doc.close()
+                doc.close()
 
             after_size = output_path.stat().st_size
             processing_time = time.time() - start_time

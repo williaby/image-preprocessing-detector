@@ -280,7 +280,7 @@ jobs:
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           echo "🧹 Validating code formatting..."
-          poetry run ruff format --check --config=pyproject.toml
+          poetry run ruff format --check
 
       - name: Linting with enhanced rules
         run: |

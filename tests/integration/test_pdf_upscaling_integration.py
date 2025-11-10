@@ -56,7 +56,7 @@ def low_res_pdf(temp_dir: Path) -> Path:
         draw.text((50, 50), "Low Resolution Test PDF (150 DPI)", fill="black")
         draw.text((50, 100), "This PDF should be upscaled to 300 DPI", fill="black")
     except Exception:
-        # Fallback if font not available
+        # Fallback if font not available - test PDF can still be created without text
         pass
 
     # Save as JPEG with proper DPI metadata (more compatible than PNG)
@@ -102,6 +102,7 @@ def high_res_pdf(temp_dir: Path) -> Path:
         draw.text((100, 100), "High Resolution Test PDF (300 DPI)", fill="black")
         draw.text((100, 200), "This PDF should NOT be upscaled", fill="black")
     except Exception:
+        # Fallback if font not available - test PDF can still be created without text
         pass
 
     # Save as JPEG with proper DPI metadata

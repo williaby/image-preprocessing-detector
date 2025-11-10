@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-# ruff: noqa: F841
 """Unit tests for PDF upscaling."""
 
 from pathlib import Path
@@ -180,7 +179,7 @@ class TestPDFUpscaler:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
         mock_cv2.resize.return_value = np.zeros((200, 200, 3), dtype=np.uint8)
 
-        result = upscaler._apply_upscaling(img, 200, 200)
+        upscaler._apply_upscaling(img, 200, 200)
 
         mock_cv2.resize.assert_called_once()
         call_args = mock_cv2.resize.call_args
@@ -204,7 +203,7 @@ class TestPDFUpscaler:
         mock_cv2.cvtColor.return_value = img
         mock_np_array.return_value = np.zeros((200, 200, 3), dtype=np.uint8)
 
-        result = upscaler._apply_upscaling(img, 200, 200)
+        upscaler._apply_upscaling(img, 200, 200)
 
         # Verify PIL resize was called with Lanczos
         mock_pil_img.resize.assert_called_once()
@@ -217,7 +216,7 @@ class TestPDFUpscaler:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
         mock_cv2.resize.return_value = np.zeros((200, 200, 3), dtype=np.uint8)
 
-        result = upscaler._apply_upscaling(img, 200, 200)
+        upscaler._apply_upscaling(img, 200, 200)
 
         mock_cv2.resize.assert_called_once()
 
@@ -229,7 +228,7 @@ class TestPDFUpscaler:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
         mock_cv2.resize.return_value = np.zeros((200, 200, 3), dtype=np.uint8)
 
-        result = upscaler._apply_upscaling(img, 200, 200)
+        upscaler._apply_upscaling(img, 200, 200)
 
         mock_cv2.resize.assert_called_once()
 
@@ -241,7 +240,7 @@ class TestPDFUpscaler:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
         mock_cv2.resize.return_value = np.zeros((200, 200, 3), dtype=np.uint8)
 
-        result = upscaler._apply_upscaling(img, 200, 200)
+        upscaler._apply_upscaling(img, 200, 200)
 
         mock_cv2.resize.assert_called_once()
 
