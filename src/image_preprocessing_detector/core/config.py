@@ -20,10 +20,10 @@ class Settings:
         enable_pdf_upscaling: bool | None = None,
         pdf_min_dpi: int | None = None,
         pdf_target_dpi: int | None = None,
-        pdf_upscale_algorithm: Literal[
-            "lanczos", "bicubic", "inter_cubic", "inter_linear", "inter_area"
-        ]
-        | None = None,
+        pdf_upscale_algorithm: (
+            Literal["lanczos", "bicubic", "inter_cubic", "inter_linear", "inter_area"]
+            | None
+        ) = None,
         pdf_preserve_original_on_error: bool | None = None,
     ) -> None:
         """Initialize settings from environment variables or keyword arguments.

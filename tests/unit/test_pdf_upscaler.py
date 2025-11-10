@@ -186,9 +186,12 @@ class TestPDFUpscaler:
         call_args = mock_cv2.resize.call_args
         assert call_args[0][1] == (200, 200)  # Target dimensions
 
+    @patch("image_preprocessing_detector.ingestion.pdf_upscaler.np.array")
     @patch("image_preprocessing_detector.ingestion.pdf_upscaler.cv2")
     @patch("image_preprocessing_detector.ingestion.pdf_upscaler.Image")
-    def test_apply_upscaling_lanczos(self, mock_image: Mock, mock_cv2: Mock) -> None:
+    def test_apply_upscaling_lanczos(
+        self, mock_image: Mock, mock_cv2: Mock, mock_np_array: Mock
+    ) -> None:
         """Test Lanczos upscaling algorithm."""
         upscaler = PDFUpscaler(algorithm=UpscaleAlgorithm.LANCZOS)
 
@@ -199,7 +202,7 @@ class TestPDFUpscaler:
         mock_pil_img.resize.return_value = mock_pil_img
         mock_image.fromarray.return_value = mock_pil_img
         mock_cv2.cvtColor.return_value = img
-        np.array = lambda x: np.zeros((200, 200, 3), dtype=np.uint8)
+        mock_np_array.return_value = np.zeros((200, 200, 3), dtype=np.uint8)
 
         result = upscaler._apply_upscaling(img, 200, 200)
 
