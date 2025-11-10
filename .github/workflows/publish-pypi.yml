@@ -111,7 +111,7 @@ jobs:
           ls -lh dist/
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@76f52bc884f3f9f9fa780bd766dc0e18b656d72e # v1.12.4
+        uses: pypa/gh-action-pypi-publish@106e0b0b7c337fa67ed433972f777c6357f78598 # v1.13.0
         with:
           print-hash: true
           verbose: true
@@ -157,7 +157,7 @@ jobs:
           ls -lh dist/
 
       - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@76f52bc884f3f9f9fa780bd766dc0e18b656d72e # v1.12.4
+        uses: pypa/gh-action-pypi-publish@106e0b0b7c337fa67ed433972f777c6357f78598 # v1.13.0
         with:
           repository-url: https://test.pypi.org/legacy/
           print-hash: true
