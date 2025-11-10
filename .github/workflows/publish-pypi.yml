@@ -131,9 +131,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    environment:
-      name: test-release
-      url: https://test.pypi.org/project/image-preprocessing-detector/
+    # Environment removed for simplified TestPyPI testing
+    # Re-enable for production with environment protection rules
 
     permissions:
       contents: read
