@@ -163,23 +163,33 @@ Root metadata object for a processed document.
 
 **Fields**:
 
-- `source_file` (str): Path to source document
-- `num_pages` (int): Total number of pages
-- `processing_version` (str): Version of processing pipeline
-- `pages` (List[PageMetadata]): Per-page metadata
-- `created_at` (datetime): Processing timestamp
-- `transform_history` (List[TransformHistory]): Document-level transforms
+- `document_id` (str, required): Unique identifier for the document
+- `file_name` (str, required): Original filename
+- `source_mime` (str, required): Source MIME type (e.g., "application/pdf", "image/jpeg")
+- `num_pages` (int, required): Total number of pages (must be > 0)
+- `processing_version` (ProcessingVersion, required): Processing pipeline version information
+- `pages` (List[PageMetadata], required): Metadata for each page
 
 **Example**:
 
 ```json
 {
-  "source_file": "document.pdf",
+  "document_id": "doc_123",
+  "file_name": "document.pdf",
+  "source_mime": "application/pdf",
   "num_pages": 5,
-  "processing_version": "0.1.0",
-  "pages": [...],
-  "created_at": "2025-11-07T12:00:00Z",
-  "transform_history": []
+  "processing_version": {
+    "pipeline_version": "0.1.0",
+    "iqa_model_hash": null,
+    "layout_model_hash": null,
+    "thresholds": {
+      "blur": 0.8,
+      "skew": 0.7,
+      "contrast": 0.7
+    },
+    "timestamp": "2025-11-07T12:00:00Z"
+  },
+  "pages": [...]
 }
 ```
 
@@ -189,22 +199,30 @@ Metadata for a single page.
 
 **Fields**:
 
-- `page_number` (int): Page number (1-indexed)
-- `dpi` (int): Page DPI
-- `dimensions` (Tuple[int, int]): Page dimensions (width, height)
-- `detected_issues` (List[DetectedIssue]): Quality issues detected
-- `elements` (List[DocumentElement]): Document elements (tables, images, etc.)
-- `transform_history` (List[TransformHistory]): Page-level transforms
+- `page_index` (int, required): Zero-based page index (must be >= 0)
+- `width_px` (int, required): Page width in pixels (must be > 0)
+- `height_px` (int, required): Page height in pixels (must be > 0)
+- `dpi_input` (int, required): Input DPI of the page (must be > 0)
+- `dpi_effective` (int, required): Effective DPI after processing (must be > 0)
+- `detected_issues` (List[DetectedIssue], optional): Page-level quality issues detected
+- `planned_actions` (List[PlannedAction], optional): Planned correction actions
+- `elements` (List[DocumentElement], optional): Detected document elements (tables, images, etc.)
+- `languages` (List[LanguageInfo], optional): Detected languages/scripts
+- `transform_history` (List[TransformHistory], optional): History of transformations applied
 
 **Example**:
 
 ```json
 {
-  "page_number": 1,
-  "dpi": 300,
-  "dimensions": [2550, 3300],
+  "page_index": 0,
+  "width_px": 2550,
+  "height_px": 3300,
+  "dpi_input": 300,
+  "dpi_effective": 300,
   "detected_issues": [...],
+  "planned_actions": [...],
   "elements": [...],
+  "languages": [],
   "transform_history": []
 }
 ```
@@ -215,21 +233,19 @@ An image quality issue detected in the document.
 
 **Fields**:
 
-- `issue_type` (str): Issue type ("blur", "skew", "low_contrast", "noise", etc.)
-- `severity` (str): Severity level ("low", "medium", "high")
-- `confidence` (float): Detection confidence (0.0-1.0)
-- `location` (Optional[BoundingBox]): Issue location (COCO format: [x, y, width, height])
-- `metadata` (dict): Additional issue-specific metadata
+- `type` (IssueType, required): Issue type enum value ("noise", "blur", "skew", "perspective", "low_contrast", "orientation", "low_dpi")
+- `confidence` (float, required): Detection confidence (0.0-1.0, validated)
+- `severity` (IssueSeverity, required): Severity level enum value ("low", "medium", "high", "critical")
+- `metrics` (dict, optional): Additional metrics specific to the issue type
 
 **Example**:
 
 ```json
 {
-  "issue_type": "blur",
-  "severity": "high",
+  "type": "blur",
   "confidence": 0.92,
-  "location": [100, 200, 500, 600],
-  "metadata": {
+  "severity": "high",
+  "metrics": {
     "laplacian_variance": 45.2,
     "threshold": 100.0
   }
@@ -238,28 +254,36 @@ An image quality issue detected in the document.
 
 ### DocumentElement
 
-A document element (table, image, handwriting, formula).
+A document element (table, image, handwriting, formula, text block, figure).
 
 **Fields**:
 
-- `element_type` (str): Element type ("table", "image", "handwriting", "formula", "text")
-- `bbox` (BoundingBox): Bounding box (COCO format: [x, y, width, height])
-- `confidence` (float): Detection confidence (0.0-1.0)
-- `quality_issues` (List[DetectedIssue]): Per-element quality issues (hybrid IQA)
-- `metadata` (dict): Element-specific metadata
+- `id` (str, required): Unique identifier for this element
+- `category` (ElementCategory, required): Category enum value ("table", "image", "handwriting", "formula", "text_block", "figure")
+- `bbox` (List[int], required): Bounding box in COCO format [x, y, width, height] (exactly 4 non-negative integers)
+- `polygon` (List[List[int]], optional): Optional polygon points for irregular shapes
+- `confidence` (float, required): Detection confidence (0.0-1.0, validated)
+- `attributes` (dict, optional): Additional attributes (script, handwriting_prob, etc.)
+- `quality_issues` (List[DetectedIssue], optional): Quality issues specific to this element (for hybrid IQA on embedded images)
+- `needs_correction` (bool, optional): Whether this element requires quality correction (default: false)
+- `correction_applied` (dict, optional): Details of correction applied to this element
 
 **Example**:
 
 ```json
 {
-  "element_type": "table",
+  "id": "elem_001",
+  "category": "table",
   "bbox": [100, 200, 800, 600],
+  "polygon": null,
   "confidence": 0.95,
-  "quality_issues": [],
-  "metadata": {
+  "attributes": {
     "num_rows": 10,
     "num_cols": 5
-  }
+  },
+  "quality_issues": [],
+  "needs_correction": false,
+  "correction_applied": null
 }
 ```
 

@@ -9,15 +9,19 @@ on:
       - main
       - develop
 
-permissions:
-  contents: read
-  pull-requests: write
+permissions: read-all
+
+env:
+  POETRY_VERSION: 2.1.2
 
 jobs:
   validate-dependencies:
     name: Dependency & Standards Validation
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write  # Required for PR comments
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -27,16 +31,19 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: Install Poetry with Export Plugin
+      - name: Install Poetry
+        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install Poetry Export Plugin
         run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
           export PATH="$HOME/.local/bin:$PATH"
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
-
           # Install export plugin with retry logic
           for attempt in 1 2 3; do
             echo "🔧 Installing poetry-plugin-export (attempt $attempt/3)..."
@@ -116,11 +123,13 @@ jobs:
       # Check for dependency changes and validate requirements sync
       - name: Check dependency changes
         id: deps-changed
+        env:
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           export PATH="$HOME/.local/bin:$PATH"
 
           # Check if poetry.lock or pyproject.toml changed
-          BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          BASE_REF="origin/${PR_BASE_REF}"
           if git diff --name-only "$BASE_REF...HEAD" | grep -E "(poetry\.lock|pyproject\.toml)"; then
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "📦 Dependency files have changed in this PR"

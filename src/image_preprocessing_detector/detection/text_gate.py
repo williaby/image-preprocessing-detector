@@ -183,7 +183,7 @@ class TextGate:
         _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
         # Find connected components
-        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+        num_labels, _labels, stats, _ = cv2.connectedComponentsWithStats(
             binary, connectivity=8
         )
 
@@ -301,6 +301,7 @@ def detect_text(
 
 
 # Example usage
+# ruff: noqa: T201
 if __name__ == "__main__":  # pragma: no cover
     import sys
 
@@ -322,12 +323,12 @@ if __name__ == "__main__":  # pragma: no cover
     gate = TextGate()
     result = gate.detect(img)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Text Detection Results for: {image_path}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Has Text:         {'YES' if result.has_text else 'NO'}")
     print(f"Confidence:       {result.confidence:.2%}")
     print(f"Stroke Density:   {result.stroke_density:.4f}")
     print(f"Component Score:  {result.component_score:.4f}")
     print(f"Edge Score:       {result.edge_score:.4f}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")

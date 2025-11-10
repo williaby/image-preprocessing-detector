@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
+# ruff: noqa: N802, S110
 """Fuzzing harness for PDF loading functionality.
+
+Note: N802 (TestOneInput) and S110 (try-except-pass) violations are intentional.
+ClusterFuzzLite requires TestOneInput naming, and fuzzers must catch all exceptions
+without logging to avoid performance overhead during fuzzing.
 
 This fuzzer tests the PDFLoader for crashes, hangs, and unexpected behavior
 when processing malformed or adversarial PDF inputs.

@@ -4,6 +4,8 @@
 **Issue**: Original architecture had IQA only on no-text branch
 **Correction**: Documents with text often contain embedded images that need quality assessment
 
+**See**: [ADR-007: Hybrid IQA Approach for Embedded Images](docs/ADRs/0007-hybrid-iqa-approach.md)
+
 ---
 
 ## Updated Architecture

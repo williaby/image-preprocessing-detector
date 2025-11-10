@@ -76,7 +76,7 @@ class TestSkewDetector:
 
         # Rotate by +5 degrees
         center = (250, 250)
-        M = cv2.getRotationMatrix2D(center, -5, 1.0)  # Negative for clockwise
+        M = cv2.getRotationMatrix2D(center, -5, 1.0)  # noqa: N806  # fmt: skip
         rotated = cv2.warpAffine(img, M, (500, 500), borderValue=(255, 255, 255))
 
         detector = SkewDetector()
@@ -105,7 +105,7 @@ class TestSkewDetector:
 
         # Rotate by -5 degrees
         center = (250, 250)
-        M = cv2.getRotationMatrix2D(center, 5, 1.0)  # Positive for counter-clockwise
+        M = cv2.getRotationMatrix2D(center, 5, 1.0)  # noqa: N806  # fmt: skip
         rotated = cv2.warpAffine(img, M, (500, 500), borderValue=(255, 255, 255))
 
         detector = SkewDetector()

@@ -39,7 +39,6 @@ logger = get_logger(__name__)
 @click.version_option(version="1.0.0", prog_name="imgprep")
 def cli() -> None:
     """Image Preprocessing Detector - Detect and correct image quality issues."""
-    pass
 
 
 @cli.command()
