@@ -383,10 +383,17 @@ jobs:
         run: |
           echo "🔍 Analyzing OSV scan results for HIGH/CRITICAL vulnerabilities..."
 
-          # Check if results file exists
+          # Check if results file exists - fail if missing (indicates scan failure)
           if [ ! -f osv-results.json ]; then
-            echo "⚠️  No OSV results file found - scan may have failed"
-            exit 0  # Don't fail if no results (osv-scanner.toml may have excluded all)
+            echo "❌ ERROR: OSV results file not found - scan failed"
+            echo "This indicates a scan failure, not 'no vulnerabilities found'"
+            exit 1
+          fi
+
+          # Validate file is not empty
+          if [ ! -s osv-results.json ]; then
+            echo "❌ ERROR: OSV results file is empty - scan failed"
+            exit 1
           fi
 
           # Check for HIGH/CRITICAL vulnerabilities (respects osv-scanner.toml)
@@ -394,26 +401,89 @@ jobs:
           import json
           import sys
 
+          def extract_severity(vuln):
+              """Extract severity from OSV vulnerability with robust fallback handling."""
+              # Try direct 'severity' field first (most common)
+              severity = vuln.get('severity')
+              if severity:
+                  severity_str = severity if isinstance(severity, str) else str(severity)
+                  # Map MODERATE to MEDIUM for consistency
+                  return 'MEDIUM' if severity_str.upper() == 'MODERATE' else severity_str.upper()
+
+              # Try database_specific field (some OSV entries use this)
+              db_specific = vuln.get('database_specific', {})
+              if isinstance(db_specific, dict):
+                  severity = db_specific.get('severity')
+                  if severity:
+                      severity_str = severity if isinstance(severity, str) else str(severity)
+                      return 'MEDIUM' if severity_str.upper() == 'MODERATE' else severity_str.upper()
+
+              # Try severity list (some entries have multiple severities)
+              severities = vuln.get('severities', [])
+              if isinstance(severities, list) and severities:
+                  # Take the highest severity if multiple exist
+                  severity_levels = {'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'MODERATE': 2, 'LOW': 1, 'UNKNOWN': 0}
+                  max_severity = 'UNKNOWN'
+                  max_level = 0
+                  for sev_entry in severities:
+                      if isinstance(sev_entry, dict):
+                          sev = sev_entry.get('severity', '').upper()
+                      else:
+                          sev = str(sev_entry).upper()
+                      level = severity_levels.get(sev, 0)
+                      if level > max_level:
+                          max_level = level
+                          max_severity = sev
+                  return 'MEDIUM' if max_severity == 'MODERATE' else max_severity
+
+              return 'UNKNOWN'
+
           try:
               with open('osv-results.json', 'r') as f:
                   results = json.load(f)
 
+              # Validate OSV JSON structure
+              print('🔍 Validating OSV JSON structure...')
+              if not isinstance(results, dict):
+                  print(f'❌ ERROR: Expected dict, got {type(results).__name__}')
+                  sys.exit(1)
+
               # Extract vulnerabilities
               vulnerabilities = results.get('results', [])
+              print(f'📋 Found {len(vulnerabilities)} vulnerability groups in results')
 
               if not vulnerabilities:
                   print('✅ No vulnerabilities found (osv-scanner.toml exceptions applied)')
                   sys.exit(0)
 
-              # Count by severity
+              # Count by severity with robust parsing
               high_crit = []
               medium = []
               low = []
+              parse_errors = []
 
-              for vuln_group in vulnerabilities:
-                  for pkg in vuln_group.get('packages', []):
-                      for vuln in pkg.get('vulnerabilities', []):
-                          severity = vuln.get('severity', 'UNKNOWN').upper()
+              for idx, vuln_group in enumerate(vulnerabilities):
+                  if not isinstance(vuln_group, dict):
+                      parse_errors.append(f'Group {idx}: Expected dict, got {type(vuln_group).__name__}')
+                      continue
+
+                  packages = vuln_group.get('packages', [])
+                  for pkg_idx, pkg in enumerate(packages):
+                      if not isinstance(pkg, dict):
+                          parse_errors.append(
+                              f'Group {idx}, Pkg {pkg_idx}: Expected dict, got {type(pkg).__name__}'
+                          )
+                          continue
+
+                      for vuln_idx, vuln in enumerate(pkg.get('vulnerabilities', [])):
+                          if not isinstance(vuln, dict):
+                              parse_errors.append(
+                                  f'Group {idx}, Pkg {pkg_idx}, Vuln {vuln_idx}: '
+                                  f'Expected dict, got {type(vuln).__name__}'
+                              )
+                              continue
+
+                          severity = extract_severity(vuln)
                           vuln_id = vuln.get('id', 'UNKNOWN')
 
                           if severity in ['HIGH', 'CRITICAL']:
@@ -423,9 +493,15 @@ jobs:
                           else:
                               low.append(f"{vuln_id} ({severity})")
 
+              # Report any parsing errors (informational)
+              if parse_errors:
+                  print(f'\n⚠️  {len(parse_errors)} structure validation warnings:')
+                  for err in parse_errors[:3]:  # Show first 3
+                      print(f'   - {err}')
+
               # Report findings
               total = len(high_crit) + len(medium) + len(low)
-              print(f'📊 OSV Scanner Results: {total} total vulnerabilities found')
+              print(f'\n📊 OSV Scanner Results: {total} total vulnerabilities found')
 
               if high_crit:
                   print(f'❌ HIGH/CRITICAL: {len(high_crit)} vulnerabilities')
@@ -442,15 +518,14 @@ jobs:
 
               print('\n✅ No HIGH/CRITICAL vulnerabilities found')
 
-          except FileNotFoundError:
-              print('⚠️  OSV results file not found')
-              sys.exit(0)
           except json.JSONDecodeError as e:
-              print(f'⚠️  Error parsing OSV results: {e}')
-              sys.exit(0)
+              print(f'❌ ERROR: Invalid JSON in OSV results: {e}')
+              sys.exit(1)
           except Exception as e:
-              print(f'⚠️  Unexpected error: {e}')
-              sys.exit(0)
+              print(f'❌ ERROR: Unexpected error processing OSV results: {e}')
+              import traceback
+              traceback.print_exc()
+              sys.exit(1)
           EOF
 
       - name: Upload OSV Scanner Report

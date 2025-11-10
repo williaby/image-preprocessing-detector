@@ -209,7 +209,6 @@ osv-scanner --lockfile=poetry.lock --format=json --output=osv-local-results.json
 **Not Required**: CI runs osv-scanner automatically on all PRs and scheduled runs.
 
 **Alternative (without Go)**: Use GitHub Actions logs from `security-analysis.yml` → `OSV Vulnerability Scanner` job to review scan results.
-```
 
 ## Architecture - Big Picture
 
