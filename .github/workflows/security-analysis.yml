@@ -377,7 +377,7 @@ jobs:
             --lockfile=poetry.lock
             --format=json
             --output=osv-results.json
-        continue-on-error: true  # Don't fail on findings, we'll check severity
+        # continue-on-error: true  # Removed to ensure scan failures are not masked
 
       - name: Check OSV Results for HIGH/CRITICAL
         run: |
