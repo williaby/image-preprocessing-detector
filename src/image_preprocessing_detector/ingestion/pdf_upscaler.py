@@ -170,8 +170,8 @@ class PDFUpscaler:
                         del img_pil
                         del img_data
 
-                    except Exception as e:
-                        logger.error(f"Error upscaling page {page_num + 1}: {e}")
+                    except Exception:
+                        logger.exception(f"Error upscaling page {page_num + 1}")
                         # Copy original page if upscaling fails
                         if self.preserve_original:
                             new_page = new_doc.new_page(
@@ -207,12 +207,10 @@ class PDFUpscaler:
                 f"{before_size / 1024:.1f}KB -> {after_size / 1024:.1f}KB)"
             )
 
-            return result
-
         except Exception as e:
             processing_time = time.time() - start_time
             error_msg = f"PDF upscaling failed: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
 
             return {
                 "success": False,
@@ -224,6 +222,8 @@ class PDFUpscaler:
                 "pages_processed": 0,
                 "error_message": error_msg,
             }
+        else:
+            return result
 
     def _apply_upscaling(  # pragma: no cover
         self, img: np.ndarray, target_width: int, target_height: int

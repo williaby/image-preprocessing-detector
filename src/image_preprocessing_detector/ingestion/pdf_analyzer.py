@@ -163,7 +163,7 @@ class PDFDocumentAnalyzer:
                 pdf_path
             )
         except Exception as e:
-            logger.error(f"Resolution analysis failed: {e}")
+            logger.exception("Resolution analysis failed")
             # Return result indicating analysis failure
             return PDFPreflightResult(
                 needs_upscaling=False,
@@ -214,7 +214,7 @@ class PDFDocumentAnalyzer:
                     upscaled_path = None
 
             except Exception as e:
-                logger.error(f"Upscaling error: {e}, will use original PDF")
+                logger.exception("Upscaling error, will use original PDF")
                 upscaling_result = {"success": False, "error_message": str(e)}
                 upscaled_path = None
 
@@ -251,6 +251,6 @@ class PDFDocumentAnalyzer:
                 pdf_path
             )
             return bool(resolution_analysis.get("needs_upscaling", False))
-        except Exception as e:
-            logger.error(f"Quick resolution check failed: {e}")
+        except Exception:
+            logger.exception("Quick resolution check failed")
             return False

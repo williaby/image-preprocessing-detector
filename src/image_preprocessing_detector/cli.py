@@ -361,7 +361,7 @@ def batch(
 
             except Exception as e:
                 error_count += 1
-                logger.error(f"Failed to process {file_path}", error=str(e))
+                logger.exception(f"Failed to process {file_path}", error=str(e))
                 click.echo(f"  ✗ Error: {e}", err=True)
 
         # Summary

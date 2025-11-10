@@ -178,12 +178,12 @@ class PDFResolutionAnalyzer:
                 f"Needs upscaling: {needs_upscaling}"
             )
 
-            return result
-
         except Exception as e:
             error_msg = f"Error analyzing PDF resolution: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise
+        else:
+            return result
 
 
 def quick_resolution_check(pdf_path: str | Path, min_dpi: int = 300) -> bool:
@@ -200,6 +200,6 @@ def quick_resolution_check(pdf_path: str | Path, min_dpi: int = 300) -> bool:
     try:
         result = analyzer.analyze_pdf_resolution(pdf_path)
         return bool(result["needs_upscaling"])
-    except Exception as e:
-        logger.error(f"Quick resolution check failed: {e}")
+    except Exception:
+        logger.exception("Quick resolution check failed")
         return False

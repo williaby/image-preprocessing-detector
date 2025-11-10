@@ -144,7 +144,11 @@ if __name__ == "__main__":
     )
 
     # Example of structured error logging
-    try:
+    def _raise_example_error() -> None:
+        """Helper function to demonstrate error logging."""
         raise ValueError("Example error")
+
+    try:
+        _raise_example_error()
     except Exception:
         logger.exception("Unexpected error during processing")

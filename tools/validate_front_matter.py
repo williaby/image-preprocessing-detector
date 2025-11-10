@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# ruff: noqa: T201
 """Front matter validator with autofix capabilities.
 
 Note: T201 (print statement) is intentionally disabled for this CLI tool.

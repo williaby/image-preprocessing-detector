@@ -138,7 +138,7 @@ poetry run pytest -n auto
 
 ```bash
 # Format code (required before commit)
-poetry run black src tests
+poetry run ruff format src tests
 
 # Lint and auto-fix
 poetry run ruff check --fix src tests
@@ -309,7 +309,7 @@ Classical IQA  YOLOv8 Layout → Extract elements → Per-element IQA
 
 - **Minimum**: 80% enforced via `--cov-fail-under=80`
 - **MyPy**: Strict mode on `src/`, relaxed on `tests/`
-- **Pre-commit**: All hooks must pass before commit (Black, Ruff, MyPy, Bandit)
+- **Pre-commit**: All hooks must pass before commit (Ruff format, Ruff lint, MyPy, Bandit)
 
 ### Performance Targets (Phase 3+)
 
@@ -353,7 +353,7 @@ See [PROJECT_PLAN.md](PROJECT_PLAN.md) for complete 50+ page implementation road
 
 **Quality Gates**:
 1. All tests pass with 80%+ coverage
-2. Black, Ruff, MyPy checks pass
+2. Ruff format, Ruff lint, MyPy checks pass
 3. Bandit security scan passes
 4. Safety dependency scan passes
 
@@ -384,7 +384,7 @@ Before committing ANY changes, ensure:
 - [ ] **Reference Files**: Were temporary reference files created for complex tasks?
 - [ ] **Agent Validation**: Was all agent work reviewed and validated?
 - [ ] **Security Keys**: GPG and SSH keys present and validated
-- [ ] **Code Quality**: Black formatting, Ruff linting, MyPy type checking passed
+- [ ] **Code Quality**: Ruff formatting, Ruff linting, MyPy type checking passed
 - [ ] **Security Scans**: Bandit and Safety checks completed successfully
 - [ ] **Test Coverage**: All tests pass with minimum 80% coverage
 - [ ] **Configuration**: `.env` file properly configured with encrypted secrets (if applicable)
