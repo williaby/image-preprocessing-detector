@@ -210,6 +210,22 @@ class DocumentMetadata(BaseModel):
     file_name: str = Field(..., description="Original filename")
     source_mime: str = Field(..., description="Source MIME type")
     num_pages: int = Field(..., gt=0, description="Total number of pages")
+    upscaling: dict[str, Any] | None = Field(
+        None,
+        description="Phase 1B: DPI upscaling metadata (if performed)",
+        examples=[
+            {
+                "performed": True,
+                "upscaled_path": "/tmp/upscaled_doc.pdf",  # nosec B108  # noqa: S108
+                "original_dpi": 150,
+                "target_dpi": 300,
+                "algorithm": "lanczos",
+                "processing_time_ms": 345,
+                "file_size_before": 1024000,
+                "file_size_after": 2048000,
+            }
+        ],
+    )
     processing_version: ProcessingVersion = Field(
         ..., description="Version information"
     )
