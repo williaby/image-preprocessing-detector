@@ -1,27 +1,29 @@
-# Image Preprocessing Detector Code Owners
-# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# CODEOWNERS - Code Ownership and Review Requirements
+#
+# This file defines ownership for all files in the repository.
+# As a solo maintainer project, this documents ownership and enables
+# GitHub's code owner review requirement for OpenSSF compliance.
+#
+# Syntax: pattern @owner
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# Default owner for everything in the repo
+# Global ownership - all files default to primary maintainer
 * @williaby
 
-# GitHub Actions workflows require security team review
-/.github/workflows/ @williaby
-
-# Security-sensitive code requires careful review
-/src/image_preprocessing_detector/ingestion/ @williaby
-/src/image_preprocessing_detector/correction/ @williaby
-
-# Security policies and configurations
+# Critical security and configuration files - require explicit review
+/.github/workflows/* @williaby
 /SECURITY.md @williaby
-/.github/workflows/security-*.yml @williaby
-/.github/workflows/scorecard.yml @williaby
+/.env.example @williaby
+/pyproject.toml @williaby
+
+# Core source code
+/src/image_preprocessing_detector/ @williaby
+
+# Tests and quality assurance
+/tests/ @williaby
 /.pre-commit-config.yaml @williaby
 
-# Project configuration and dependencies
-/pyproject.toml @williaby
-/poetry.lock @williaby
-/renovate.json @williaby
-
-# Documentation (can be reviewed by broader team in future)
+# Documentation
 /docs/ @williaby
-*.md @williaby
+/README.md @williaby
+/CLAUDE.md @williaby
