@@ -174,6 +174,43 @@ poetry run bandit -r src                    # Python security analysis
 poetry run safety check                     # Dependency vulnerability check
 ```
 
+### OSV Scanner (Optional - Local Development)
+
+OpenSSF Scorecard uses osv-scanner for vulnerability detection. Install locally to test osv-scanner.toml exceptions before pushing:
+
+```bash
+# Install osv-scanner (requires Go 1.21+)
+go install github.com/google/osv-scanner/cmd/osv-scanner@latest
+
+# Verify installation
+osv-scanner --version
+
+# Run scan (automatically respects osv-scanner.toml exceptions)
+osv-scanner --lockfile=poetry.lock
+
+# Expected output: 0 vulnerabilities (all false positives documented in osv-scanner.toml)
+
+# Scan with detailed output
+osv-scanner --lockfile=poetry.lock --format=json --output=osv-local-results.json
+```
+
+**Key Features:**
+- **Automatic Exception Handling**: Reads `osv-scanner.toml` from repository root
+- **Multi-Ecosystem**: Supports Python, npm, Go, Rust (vs. Safety Python-only)
+- **OSV Database**: Same database used by OpenSSF Scorecard and Google
+- **CI Integration**: Runs automatically in `security-analysis.yml` workflow
+
+**When to Run Locally:**
+- After updating dependencies (`poetry add/update`)
+- Before creating PR with dependency changes
+- To verify `osv-scanner.toml` exceptions work correctly
+- When OpenSSF Scorecard reports new vulnerabilities
+
+**Not Required**: CI runs osv-scanner automatically on all PRs and scheduled runs.
+
+**Alternative (without Go)**: Use GitHub Actions logs from `security-analysis.yml` → `OSV Vulnerability Scanner` job to review scan results.
+```
+
 ## Architecture - Big Picture
 
 ### Pipeline Flow (Text Detection Fork with DPI Upscaling)

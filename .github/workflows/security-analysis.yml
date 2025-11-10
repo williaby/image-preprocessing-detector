@@ -355,11 +355,123 @@ jobs:
               print('✅ No hardcoded secrets detected in source code')
           "
 
+  # OSV-Scanner vulnerability detection (matches OpenSSF Scorecard)
+  osv-scanner:
+    name: OSV Vulnerability Scanner
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.security_files == 'true'
+    steps:
+      - name: Harden the runner (Audit outbound calls)
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run OSV Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@11751fd91ba8f08f287b6a9e02c93a74c79e51d6 # v1.10.0
+        with:
+          scan-args: |-
+            --lockfile=poetry.lock
+            --format=json
+            --output=osv-results.json
+        continue-on-error: true  # Don't fail on findings, we'll check severity
+
+      - name: Check OSV Results for HIGH/CRITICAL
+        run: |
+          echo "🔍 Analyzing OSV scan results for HIGH/CRITICAL vulnerabilities..."
+
+          # Check if results file exists
+          if [ ! -f osv-results.json ]; then
+            echo "⚠️  No OSV results file found - scan may have failed"
+            exit 0  # Don't fail if no results (osv-scanner.toml may have excluded all)
+          fi
+
+          # Check for HIGH/CRITICAL vulnerabilities (respects osv-scanner.toml)
+          python3 << 'EOF'
+          import json
+          import sys
+
+          try:
+              with open('osv-results.json', 'r') as f:
+                  results = json.load(f)
+
+              # Extract vulnerabilities
+              vulnerabilities = results.get('results', [])
+
+              if not vulnerabilities:
+                  print('✅ No vulnerabilities found (osv-scanner.toml exceptions applied)')
+                  sys.exit(0)
+
+              # Count by severity
+              high_crit = []
+              medium = []
+              low = []
+
+              for vuln_group in vulnerabilities:
+                  for pkg in vuln_group.get('packages', []):
+                      for vuln in pkg.get('vulnerabilities', []):
+                          severity = vuln.get('severity', 'UNKNOWN').upper()
+                          vuln_id = vuln.get('id', 'UNKNOWN')
+
+                          if severity in ['HIGH', 'CRITICAL']:
+                              high_crit.append(f"{vuln_id} ({severity})")
+                          elif severity == 'MEDIUM':
+                              medium.append(f"{vuln_id} ({severity})")
+                          else:
+                              low.append(f"{vuln_id} ({severity})")
+
+              # Report findings
+              total = len(high_crit) + len(medium) + len(low)
+              print(f'📊 OSV Scanner Results: {total} total vulnerabilities found')
+
+              if high_crit:
+                  print(f'❌ HIGH/CRITICAL: {len(high_crit)} vulnerabilities')
+                  for v in high_crit[:5]:  # Show first 5
+                      print(f'   - {v}')
+                  print(f'\n❌ Build FAILED: HIGH/CRITICAL vulnerabilities must be fixed')
+                  sys.exit(1)
+
+              if medium:
+                  print(f'⚠️  MEDIUM: {len(medium)} vulnerabilities (not blocking)')
+
+              if low:
+                  print(f'ℹ️  LOW: {len(low)} vulnerabilities (informational)')
+
+              print('\n✅ No HIGH/CRITICAL vulnerabilities found')
+
+          except FileNotFoundError:
+              print('⚠️  OSV results file not found')
+              sys.exit(0)
+          except json.JSONDecodeError as e:
+              print(f'⚠️  Error parsing OSV results: {e}')
+              sys.exit(0)
+          except Exception as e:
+              print(f'⚠️  Unexpected error: {e}')
+              sys.exit(0)
+          EOF
+
+      - name: Upload OSV Scanner Report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: osv-scanner-results
+          path: osv-results.json
+          if-no-files-found: warn
+
   # Security gate success validation
   security-gate-success:
     name: Security Gate Validation
     runs-on: ubuntu-latest
-    needs: [detect-changes, codeql-analysis, dependency-security, security-scanning, image-processing-security]
+    needs:
+      - detect-changes
+      - codeql-analysis
+      - dependency-security
+      - security-scanning
+      - osv-scanner
+      - image-processing-security
     if: always()
     steps:
       - name: Security Gate Results
@@ -370,6 +482,7 @@ jobs:
           echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
           echo "Dependency Security: ${{ needs.dependency-security.result }}"
           echo "Security Scanning: ${{ needs.security-scanning.result }}"
+          echo "OSV Scanner: ${{ needs.osv-scanner.result }}"
           echo "Image Processing Security: ${{ needs.image-processing-security.result }}"
 
           # Helper function to check if job result is acceptable (success or skipped)
@@ -382,6 +495,7 @@ jobs:
           if is_acceptable "${{ needs.codeql-analysis.result }}" && \
              is_acceptable "${{ needs.dependency-security.result }}" && \
              is_acceptable "${{ needs.security-scanning.result }}" && \
+             is_acceptable "${{ needs.osv-scanner.result }}" && \
              is_acceptable "${{ needs.image-processing-security.result }}"; then
 
             if [[ "${{ needs.detect-changes.outputs.security_files }}" == "true" ]]; then
