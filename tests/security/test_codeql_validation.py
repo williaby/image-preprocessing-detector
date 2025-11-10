@@ -51,9 +51,7 @@ class CodeQLValidationTests:
         jwt_secret = "my-super-secret-jwt-key-do-not-share"  # nosec
 
         # CodeQL should detect credential usage
-        connection_string = (
-            f"postgresql://admin:{database_password}@localhost/db"  # nosec
-        )
+        connection_string = f"postgresql://admin:{database_password}@localhost/db"  # nosec
         headers = {"Authorization": f"Bearer {api_key}"}  # nosec
 
     def test_sql_injection(self) -> None:

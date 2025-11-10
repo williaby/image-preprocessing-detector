@@ -9,7 +9,7 @@ import tempfile
 import time
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import cv2
 import fitz  # PyMuPDF
@@ -127,9 +127,13 @@ class PDFUpscaler:
 
                     # Convert RGB to BGR for OpenCV (if needed)
                     if pix.n == 3:  # RGB
-                        img_data = cv2.cvtColor(img_data, cv2.COLOR_RGB2BGR)
+                        img_data = cast(
+                            np.ndarray, cv2.cvtColor(img_data, cv2.COLOR_RGB2BGR)
+                        )
                     elif pix.n == 4:  # RGBA
-                        img_data = cv2.cvtColor(img_data, cv2.COLOR_RGBA2BGR)
+                        img_data = cast(
+                            np.ndarray, cv2.cvtColor(img_data, cv2.COLOR_RGBA2BGR)
+                        )
 
                     # Apply upscaling algorithm
                     # #ASSUME: Algorithm Selection: Lanczos provides best quality
