@@ -163,9 +163,12 @@ class PDFUpscaler:
                         pages_processed += 1
                         logger.debug(f"Upscaled page {page_num + 1}/{len(doc)}")
 
-                        # #CRITICAL: Memory Management: Release pixmap memory
+                        # #CRITICAL: Memory Management: Explicitly delete large objects
                         # #VERIFY: Monitor memory usage for large PDFs
-                        pix = None
+                        # Delete pixmap and PIL image to free memory immediately
+                        del pix
+                        del img_pil
+                        del img_data
 
                     except Exception as e:
                         logger.error(f"Error upscaling page {page_num + 1}: {e}")
