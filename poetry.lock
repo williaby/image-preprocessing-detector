@@ -8000,4 +8000,4 @@ ml = ["albumentations", "onnxruntime", "timm", "torch", "torchvision", "ultralyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.15"
-content-hash = "f2e0086b719e2b8bd3f884a8332c74d37f175efe41506131de29f22c6d3c9aa0"
+content-hash = "b4df23a555b7d6c2d22f3d9aeffe608279400c0c4ca8d8de276f26eb2e564be2"
