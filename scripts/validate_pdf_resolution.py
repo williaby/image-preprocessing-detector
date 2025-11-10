@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 #!/usr/bin/env python3
 # ruff: noqa: T201
 """Validation script for PDF resolution detection and upscaling.

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 # ruff: noqa: F841
 """Unit tests for PDF upscaling."""
 

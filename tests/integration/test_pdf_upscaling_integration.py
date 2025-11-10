@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 # ruff: noqa: T201
 """Integration tests for PDF resolution detection and upscaling (Phase 1c).
 
