@@ -57,7 +57,7 @@ PDF/Image Input → Ingestion (300 DPI) → Text Gate
 - **[Getting Started](guides/installation.md)**: Installation and setup instructions
 - **[User Guide](guides/overview.md)**: Comprehensive usage documentation
 - **[API Reference](api/index.md)**: Complete API documentation
-- **[Security](security/overview.md)**: Security policies and practices
+- **[Security](../SECURITY.md)**: Security policies and practices
 - **[Development](development/contributing.md)**: Contributing guidelines
 
 ## Documentation Sites
