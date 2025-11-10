@@ -1,29 +1,41 @@
-# CODEOWNERS - Code Ownership and Review Requirements
+# CODEOWNERS for Image Preprocessing Detector
+# This file defines code ownership for automated review assignment
+# and branch protection enforcement.
 #
-# This file defines ownership for all files in the repository.
-# As a solo maintainer project, this documents ownership and enables
-# GitHub's code owner review requirement for OpenSSF compliance.
-#
-# Syntax: pattern @owner
-# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Format: path/pattern @github-username
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# Global ownership - all files default to primary maintainer
-* @williaby
-
-# Critical security and configuration files - require explicit review
-/.github/workflows/* @williaby
-/SECURITY.md @williaby
-/.env.example @williaby
-/pyproject.toml @williaby
-
-# Core source code
-/src/image_preprocessing_detector/ @williaby
-
-# Tests and quality assurance
-/tests/ @williaby
-/.pre-commit-config.yaml @williaby
+# Default owner for all files
+*                          @williaby
 
 # Documentation
-/docs/ @williaby
-/README.md @williaby
-/CLAUDE.md @williaby
+/docs/**                   @williaby
+*.md                       @williaby
+
+# GitHub workflows and configuration
+/.github/workflows/**      @williaby
+/.github/**                @williaby
+
+# Source code
+/src/**                    @williaby
+
+# Tests
+/tests/**                  @williaby
+
+# Configuration files
+pyproject.toml             @williaby
+poetry.lock                @williaby
+.pre-commit-config.yaml    @williaby
+mkdocs.yml                 @williaby
+
+# Security and compliance
+SECURITY.md                @williaby
+LICENSE                    @williaby
+CITATION.cff               @williaby
+codemeta.json              @williaby
+.zenodo.json               @williaby
+
+# CI/CD and tooling
+/scripts/**                @williaby
+/tools/**                  @williaby
+noxfile.py                 @williaby
