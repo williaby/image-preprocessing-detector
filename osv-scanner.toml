@@ -1,0 +1,90 @@
+# OSV-Scanner Vulnerability Exceptions
+# OpenSSF Scorecard uses OSV-Scanner to detect vulnerabilities
+# This file documents false positives and vulnerabilities that don't affect this project
+#
+# Reference: https://google.github.io/osv-scanner/configuration/
+# Format: [[IgnoredVulns]] with id and reason fields
+
+# ============================================================================
+# py Library - CVE Withdrawn
+# ============================================================================
+
+[[IgnoredVulns]]
+id = "PYSEC-2022-42969"
+reason = "CVE-2022-42969 was WITHDRAWN on 2024-05-07 as not reproducible. Disputed by multiple third parties. Only affects SVN codepath not used in this project."
+
+[[IgnoredVulns]]
+id = "GHSA-w596-4wvx-j9j6"
+reason = "Same as PYSEC-2022-42969. CVE-2022-42969 withdrawn 2024-05-07. Not a valid vulnerability."
+
+# ============================================================================
+# Bleach - Outdated Vulnerability Data (Using 6.3.0, Vulnerable Range <=3.3.0)
+# ============================================================================
+
+[[IgnoredVulns]]
+id = "PYSEC-2020-28"
+reason = "Fixed in bleach 3.1.2 (March 2020). Current version: 6.3.0 (3 major versions ahead). Vulnerability does not apply."
+
+[[IgnoredVulns]]
+id = "GHSA-m6xf-fq7q-8743"
+reason = "Same as PYSEC-2020-28. CVE-2020-6816 affects bleach <=3.1.1. Current version: 6.3.0. Not vulnerable."
+
+[[IgnoredVulns]]
+id = "PYSEC-2020-27"
+reason = "Fixed in bleach 3.1.1 (February 2020). Current version: 6.3.0. Vulnerability does not apply."
+
+[[IgnoredVulns]]
+id = "GHSA-q65m-pv3f-wr5r"
+reason = "Same as PYSEC-2020-27. CVE-2020-6802 affects bleach <=3.1.0. Current version: 6.3.0. Not vulnerable."
+
+[[IgnoredVulns]]
+id = "PYSEC-2020-340"
+reason = "Fixed in bleach 3.1.4 (March 2020). Current version: 6.3.0. Vulnerability does not apply."
+
+[[IgnoredVulns]]
+id = "GHSA-vqhp-cxgc-6wmm"
+reason = "Same as PYSEC-2020-340. CVE-2020-6817 affects bleach <=3.1.3. Current version: 6.3.0. Not vulnerable."
+
+[[IgnoredVulns]]
+id = "PYSEC-2021-865"
+reason = "Fixed in bleach 3.3.0 (February 2021). Current version: 6.3.0. Vulnerability does not apply."
+
+[[IgnoredVulns]]
+id = "GHSA-vv2x-vrpj-qqpq"
+reason = "Same as PYSEC-2021-865. CVE-2021-23980 affects bleach <=3.2.3. Current version: 6.3.0. Not vulnerable."
+
+# ============================================================================
+# uvicorn - Outdated Vulnerability Data (Using 0.23.2, Vulnerable Range <0.11.7)
+# ============================================================================
+
+[[IgnoredVulns]]
+id = "PYSEC-2020-150"
+reason = "Fixed in uvicorn 0.11.7 (July 2020). Current version: 0.23.2 (12 minor versions ahead). Vulnerability does not apply."
+
+[[IgnoredVulns]]
+id = "GHSA-33c7-2mpw-hg34"
+reason = "Same as PYSEC-2020-150. CVE-2020-7694 affects uvicorn <0.11.7. Current version: 0.23.2. Not vulnerable."
+
+[[IgnoredVulns]]
+id = "PYSEC-2020-151"
+reason = "Fixed in uvicorn 0.11.7 (July 2020). Current version: 0.23.2. Vulnerability does not apply."
+
+[[IgnoredVulns]]
+id = "GHSA-f97h-2pfx-f59f"
+reason = "Same as PYSEC-2020-151. CVE-2020-7695 affects uvicorn <0.11.7. Current version: 0.23.2. Not vulnerable."
+
+# ============================================================================
+# Notes
+# ============================================================================
+# All vulnerabilities listed above are false positives due to:
+# 1. Withdrawn CVEs (PYSEC-2022-42969)
+# 2. Outdated vulnerability databases reporting issues in old package versions
+# 3. Current installed versions are significantly newer than vulnerable ranges
+#
+# Verification:
+# - bleach: Using 6.3.0, all reported vulnerabilities affect <=3.3.0
+# - uvicorn: Using 0.23.2, all reported vulnerabilities affect <0.11.7
+# - py: Using 1.11.0, reported vulnerability is disputed and withdrawn
+#
+# Last verified: 2025-11-09
+# Next review: 2026-01-09 (or when dependencies updated)

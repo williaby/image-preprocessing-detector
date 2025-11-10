@@ -149,7 +149,11 @@ jobs:
     name: Dependency Security Review
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.security_files == 'true'
+    # Skip on scheduled runs (no PR context available)
+    # GitHub Dependency Review Action requires base_ref/head_ref from pull_request events
+    if: |
+      github.event_name != 'schedule' &&
+      needs.detect-changes.outputs.security_files == 'true'
     permissions:
       contents: read
       pull-requests: write  # Required for PR comments
@@ -351,23 +355,213 @@ jobs:
               print('✅ No hardcoded secrets detected in source code')
           "
 
+  # OSV-Scanner vulnerability detection (matches OpenSSF Scorecard)
+  osv-scanner:
+    name: OSV Vulnerability Scanner
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.security_files == 'true'
+    steps:
+      - name: Harden the runner (Audit outbound calls)
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run OSV Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@9bb69575e74019c2ad085a1860787043adf47ccb # v2.2.4
+        with:
+          scan-args: |-
+            --lockfile=poetry.lock
+            --format=json
+            --output=osv-results.json
+        # continue-on-error: true  # Removed to ensure scan failures are not masked
+
+      - name: Check OSV Results for HIGH/CRITICAL
+        run: |
+          echo "🔍 Analyzing OSV scan results for HIGH/CRITICAL vulnerabilities..."
+
+          # Check if results file exists - fail if missing (indicates scan failure)
+          if [ ! -f osv-results.json ]; then
+            echo "❌ ERROR: OSV results file not found - scan failed"
+            echo "This indicates a scan failure, not 'no vulnerabilities found'"
+            exit 1
+          fi
+
+          # Validate file is not empty
+          if [ ! -s osv-results.json ]; then
+            echo "❌ ERROR: OSV results file is empty - scan failed"
+            exit 1
+          fi
+
+          # Check for HIGH/CRITICAL vulnerabilities (respects osv-scanner.toml)
+          python3 << 'EOF'
+          import json
+          import sys
+
+          def extract_severity(vuln):
+              """Extract severity from OSV vulnerability with robust fallback handling."""
+              # Try direct 'severity' field first (most common)
+              severity = vuln.get('severity')
+              if severity:
+                  severity_str = severity if isinstance(severity, str) else str(severity)
+                  # Map MODERATE to MEDIUM for consistency
+                  return 'MEDIUM' if severity_str.upper() == 'MODERATE' else severity_str.upper()
+
+              # Try database_specific field (some OSV entries use this)
+              db_specific = vuln.get('database_specific', {})
+              if isinstance(db_specific, dict):
+                  severity = db_specific.get('severity')
+                  if severity:
+                      severity_str = severity if isinstance(severity, str) else str(severity)
+                      return 'MEDIUM' if severity_str.upper() == 'MODERATE' else severity_str.upper()
+
+              # Try severity list (some entries have multiple severities)
+              severities = vuln.get('severities', [])
+              if isinstance(severities, list) and severities:
+                  # Take the highest severity if multiple exist
+                  severity_levels = {'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'MODERATE': 2, 'LOW': 1, 'UNKNOWN': 0}
+                  max_severity = 'UNKNOWN'
+                  max_level = 0
+                  for sev_entry in severities:
+                      if isinstance(sev_entry, dict):
+                          sev = sev_entry.get('severity', '').upper()
+                      else:
+                          sev = str(sev_entry).upper()
+                      level = severity_levels.get(sev, 0)
+                      if level > max_level:
+                          max_level = level
+                          max_severity = sev
+                  return 'MEDIUM' if max_severity == 'MODERATE' else max_severity
+
+              return 'UNKNOWN'
+
+          try:
+              with open('osv-results.json', 'r') as f:
+                  results = json.load(f)
+
+              # Validate OSV JSON structure
+              print('🔍 Validating OSV JSON structure...')
+              if not isinstance(results, dict):
+                  print(f'❌ ERROR: Expected dict, got {type(results).__name__}')
+                  sys.exit(1)
+
+              # Extract vulnerabilities
+              vulnerabilities = results.get('results', [])
+              print(f'📋 Found {len(vulnerabilities)} vulnerability groups in results')
+
+              if not vulnerabilities:
+                  print('✅ No vulnerabilities found (osv-scanner.toml exceptions applied)')
+                  sys.exit(0)
+
+              # Count by severity with robust parsing
+              high_crit = []
+              medium = []
+              low = []
+              parse_errors = []
+
+              for idx, vuln_group in enumerate(vulnerabilities):
+                  if not isinstance(vuln_group, dict):
+                      parse_errors.append(f'Group {idx}: Expected dict, got {type(vuln_group).__name__}')
+                      continue
+
+                  packages = vuln_group.get('packages', [])
+                  for pkg_idx, pkg in enumerate(packages):
+                      if not isinstance(pkg, dict):
+                          parse_errors.append(
+                              f'Group {idx}, Pkg {pkg_idx}: Expected dict, got {type(pkg).__name__}'
+                          )
+                          continue
+
+                      for vuln_idx, vuln in enumerate(pkg.get('vulnerabilities', [])):
+                          if not isinstance(vuln, dict):
+                              parse_errors.append(
+                                  f'Group {idx}, Pkg {pkg_idx}, Vuln {vuln_idx}: '
+                                  f'Expected dict, got {type(vuln).__name__}'
+                              )
+                              continue
+
+                          severity = extract_severity(vuln)
+                          vuln_id = vuln.get('id', 'UNKNOWN')
+
+                          if severity in ['HIGH', 'CRITICAL']:
+                              high_crit.append(f"{vuln_id} ({severity})")
+                          elif severity == 'MEDIUM':
+                              medium.append(f"{vuln_id} ({severity})")
+                          else:
+                              low.append(f"{vuln_id} ({severity})")
+
+              # Report any parsing errors (informational)
+              if parse_errors:
+                  print(f'\n⚠️  {len(parse_errors)} structure validation warnings:')
+                  for err in parse_errors[:3]:  # Show first 3
+                      print(f'   - {err}')
+
+              # Report findings
+              total = len(high_crit) + len(medium) + len(low)
+              print(f'\n📊 OSV Scanner Results: {total} total vulnerabilities found')
+
+              if high_crit:
+                  print(f'❌ HIGH/CRITICAL: {len(high_crit)} vulnerabilities')
+                  for v in high_crit[:5]:  # Show first 5
+                      print(f'   - {v}')
+                  print(f'\n❌ Build FAILED: HIGH/CRITICAL vulnerabilities must be fixed')
+                  sys.exit(1)
+
+              if medium:
+                  print(f'⚠️  MEDIUM: {len(medium)} vulnerabilities (not blocking)')
+
+              if low:
+                  print(f'ℹ️  LOW: {len(low)} vulnerabilities (informational)')
+
+              print('\n✅ No HIGH/CRITICAL vulnerabilities found')
+
+          except json.JSONDecodeError as e:
+              print(f'❌ ERROR: Invalid JSON in OSV results: {e}')
+              sys.exit(1)
+          except Exception as e:
+              print(f'❌ ERROR: Unexpected error processing OSV results: {e}')
+              import traceback
+              traceback.print_exc()
+              sys.exit(1)
+          EOF
+
+      - name: Upload OSV Scanner Report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: osv-scanner-results
+          path: osv-results.json
+          if-no-files-found: warn
+
   # Security gate success validation
   security-gate-success:
     name: Security Gate Validation
     runs-on: ubuntu-latest
-    needs: [detect-changes, codeql-analysis, dependency-security, security-scanning, image-processing-security]
+    needs:
+      - detect-changes
+      - codeql-analysis
+      - dependency-security
+      - security-scanning
+      - osv-scanner
+      - image-processing-security
     if: always()
     steps:
       - name: Security Gate Results
         run: |
           echo "🔒 Image Preprocessing Detector Security Analysis Results:"
+          echo "Event Type: ${{ github.event_name }}"
           echo "Security Files Changed: ${{ needs.detect-changes.outputs.security_files }}"
           echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
           echo "Dependency Security: ${{ needs.dependency-security.result }}"
           echo "Security Scanning: ${{ needs.security-scanning.result }}"
+          echo "OSV Scanner: ${{ needs.osv-scanner.result }}"
           echo "Image Processing Security: ${{ needs.image-processing-security.result }}"
 
           # Helper function to check if job result is acceptable (success or skipped)
+          # Note: dependency-security is skipped on scheduled runs (no PR context)
           is_acceptable() {
             [[ "$1" == "success" || "$1" == "skipped" ]]
           }
@@ -376,12 +570,18 @@ jobs:
           if is_acceptable "${{ needs.codeql-analysis.result }}" && \
              is_acceptable "${{ needs.dependency-security.result }}" && \
              is_acceptable "${{ needs.security-scanning.result }}" && \
+             is_acceptable "${{ needs.osv-scanner.result }}" && \
              is_acceptable "${{ needs.image-processing-security.result }}"; then
 
             if [[ "${{ needs.detect-changes.outputs.security_files }}" == "true" ]]; then
               echo "✅ Security gate passed - image processing system meets security standards"
               echo "📸 Image processing security validated"
               echo "🔐 File handling secured"
+
+              # Note if dependency review was skipped (scheduled runs only)
+              if [[ "${{ needs.dependency-security.result }}" == "skipped" ]]; then
+                echo "ℹ️  Dependency Review skipped (scheduled run - no PR context available)"
+              fi
             else
               echo "✅ Security gate passed - no security-relevant files changed"
               echo "📄 Documentation or configuration changes only"

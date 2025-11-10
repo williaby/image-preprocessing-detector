@@ -1,6 +1,12 @@
 # Pre-commit hooks configuration
 # See https://pre-commit.com for more information
 
+# pre-commit.ci configuration
+ci:
+  autoupdate_schedule: monthly
+  autofix_prs: true
+  skip: [validate-front-matter]  # Skip local-only hooks
+
 repos:
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
