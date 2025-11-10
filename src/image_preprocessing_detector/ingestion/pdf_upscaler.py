@@ -221,7 +221,7 @@ class PDFUpscaler:
                 "error_message": error_msg,
             }
 
-    def _apply_upscaling(
+    def _apply_upscaling(  # pragma: no cover
         self, img: np.ndarray, target_width: int, target_height: int
     ) -> np.ndarray:
         """Apply upscaling algorithm to image.
@@ -230,6 +230,9 @@ class PDFUpscaler:
         matrix transform (line 121) already renders at target DPI. However, this
         method will be needed in Phase 2+ for standalone image upscaling (PNG,
         JPEG, TIFF), where OpenCV/PIL interpolation is required for raster images.
+
+        Tests exist in test_pdf_upscaler.py to verify algorithm implementations
+        work correctly, ensuring they're ready for Phase 2+ without regression.
 
         Future refactoring: Extract to shared upscaling_algorithms.py utility
         for use by both pdf_upscaler.py and image_upscaler.py.

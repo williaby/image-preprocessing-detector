@@ -2,7 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Unit tests for PDF upscaling."""
+"""Unit tests for PDF upscaling.
+
+NOTE: The _apply_upscaling() method and its algorithm tests (test_apply_upscaling_*)
+are currently unused for PDF upscaling because PyMuPDF's matrix transform already
+renders at target DPI. However, these tests verify algorithm implementations work
+correctly for Phase 2+ when standalone image upscaling (PNG, JPEG, TIFF) is added.
+
+Keeping verified working code prevents regression and eliminates re-testing in Phase 2+.
+"""
 
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
