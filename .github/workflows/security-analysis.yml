@@ -371,7 +371,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Run OSV Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@11751fd91ba8f08f287b6a9e02c93a74c79e51d6 # v1.10.0
+        uses: google/osv-scanner-action/osv-scanner-action@9bb69575e74019c2ad085a1860787043adf47ccb # v2.2.4
         with:
           scan-args: |-
             --lockfile=poetry.lock
