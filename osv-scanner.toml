@@ -23,7 +23,7 @@ reason = "Same as PYSEC-2022-42969. CVE-2022-42969 withdrawn 2024-05-07. Not a v
 
 [[IgnoredVulns]]
 id = "PYSEC-2020-28"
-reason = "Fixed in bleach 3.1.2 (March 2020). Current version: 6.3.0 (7 major versions ahead). Vulnerability does not apply."
+reason = "Fixed in bleach 3.1.2 (March 2020). Current version: 6.3.0 (3 major versions ahead). Vulnerability does not apply."
 
 [[IgnoredVulns]]
 id = "GHSA-m6xf-fq7q-8743"
