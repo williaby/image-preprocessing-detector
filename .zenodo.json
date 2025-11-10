@@ -1,0 +1,28 @@
+{
+  "title": "Image Preprocessing Detector",
+  "upload_type": "software",
+  "description": "Intelligent image preprocessing detection system for RAG applications. Automatically analyzes documents (PDFs, images) and detects required preprocessing steps (e.g., skew/blur/contrast/orientation, tables/images/handwriting/formulas) before vector-database ingestion.",
+  "creators": [
+    {
+      "name": "Williams, Byron",
+      "orcid": "0009-0005-5244-6084",
+      "affiliation": "Oregon State Treasury"
+    }
+  ],
+  "access_right": "open",
+  "license": "MIT",
+  "language": "eng",
+  "keywords": ["RAG", "image quality assessment", "OCR preprocessing", "OpenCV", "Python"],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/williaby/image-preprocessing-detector",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://github.com/williaby/image-preprocessing-detector/releases",
+      "relation": "isAlternateIdentifier",
+      "scheme": "url"
+    }
+  ]
+}

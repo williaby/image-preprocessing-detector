@@ -1,0 +1,20 @@
+{
+  "@context": "https://doi.org/10.5063/SCHEMA/CODEMETA-2.0",
+  "@type": "SoftwareSourceCode",
+  "name": "Image Preprocessing Detector",
+  "description": "Intelligent image preprocessing detection for RAG pipelines; detects and records required fixes before ingestion (e.g., IQA, skew/blur, tables/images/handwriting/formulas).",
+  "codeRepository": "https://github.com/williaby/image-preprocessing-detector",
+  "issueTracker": "https://github.com/williaby/image-preprocessing-detector/issues",
+  "programmingLanguage": "Python",
+  "license": "https://spdx.org/licenses/MIT.html",
+  "author": [
+    {
+      "@type": "Person",
+      "@id": "https://orcid.org/0009-0005-5244-6084",
+      "givenName": "Byron",
+      "familyName": "Williams"
+    }
+  ],
+  "keywords": ["RAG", "image quality assessment", "OCR preprocessing", "OpenCV", "Python"],
+  "operatingSystem": "Linux, macOS, Windows"
+}

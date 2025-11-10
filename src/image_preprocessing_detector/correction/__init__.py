@@ -16,9 +16,9 @@ from image_preprocessing_detector.correction.corrections import (
 )
 
 __all__ = [
+    "ContrastEnhancer",
     "CorrectionResult",
     "DeskewCorrector",
-    "ContrastEnhancer",
     "Sharpener",
     "correct_skew",
     "enhance_contrast",

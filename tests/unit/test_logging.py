@@ -1,5 +1,8 @@
 """Tests for logging configuration."""
 
+# ruff: noqa: N803
+# Note: N803 (mock_basicConfig) follows unittest.mock naming convention
+
 import logging
 from unittest.mock import MagicMock, patch
 

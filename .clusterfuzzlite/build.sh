@@ -32,13 +32,26 @@ cd $SRC/image-preprocessing-detector
 poetry config virtualenvs.create false
 poetry install --without dev --no-interaction
 
+# Install Atheris for Python fuzzing
+pip3 install atheris
+
 # Use OSS-Fuzz helper to compile Python fuzz targets
 # This creates proper executables that ClusterFuzzLite recognizes
 echo "Compiling Python fuzz targets with compile_python_fuzzer..."
 
-compile_python_fuzzer fuzz/fuzz_pdf_loader.py
-compile_python_fuzzer fuzz/fuzz_image_loader.py
-compile_python_fuzzer fuzz/fuzz_text_gate.py
+# Check if compile_python_fuzzer exists
+if command -v compile_python_fuzzer &> /dev/null; then
+    compile_python_fuzzer fuzz/fuzz_pdf_loader.py
+    compile_python_fuzzer fuzz/fuzz_image_loader.py
+    compile_python_fuzzer fuzz/fuzz_text_gate.py
+else
+    echo "WARNING: compile_python_fuzzer not found, using alternative approach"
+    # Alternative: directly copy and make executable
+    cp fuzz/fuzz_pdf_loader.py $OUT/fuzz_pdf_loader
+    cp fuzz/fuzz_image_loader.py $OUT/fuzz_image_loader
+    cp fuzz/fuzz_text_gate.py $OUT/fuzz_text_gate
+    chmod +x $OUT/fuzz_*
+fi
 
 echo "=== Fuzzing Build Complete ==="
 echo "Fuzz targets in $OUT:"

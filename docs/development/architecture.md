@@ -16,6 +16,17 @@ Comprehensive architecture documentation for the Image Preprocessing Detector sy
 
 See the complete architecture documentation in [ARCHITECTURE_SUMMARY.md](../../ARCHITECTURE_SUMMARY.md).
 
+## Architecture Decision Records
+
+Key architectural decisions are documented in detail in the [ADR directory](../ADRs/):
+
+- [ADR-007: Hybrid IQA Approach for Embedded Images](../ADRs/0007-hybrid-iqa-approach.md)
+- [ADR-008: Multi-Stage Pipeline with Text Detection Fork](../ADRs/0008-multi-stage-pipeline-architecture.md)
+- [ADR-009: COCO Bounding Box Format Standardization](../ADRs/0009-coco-bounding-box-format.md)
+- [ADR-010: 300 DPI Normalization Strategy](../ADRs/0010-300-dpi-normalization.md)
+
+See the complete [ADR Index](../ADRs/README.md) for all architectural decisions.
+
 ## Key Design Decisions
 
 ### 1. Text Detection Gate
@@ -31,7 +42,9 @@ See the complete architecture documentation in [ARCHITECTURE_SUMMARY.md](../../A
 - Occasional misclassification vs. 10-50× speedup
 - Simple ensemble vs. deep learning accuracy
 
-**See**: [Text Gate Implementation](../../src/image_preprocessing_detector/detection/text_gate.py)
+**See**:
+- [ADR-008: Multi-Stage Pipeline Architecture](../ADRs/0008-multi-stage-pipeline-architecture.md)
+- [Text Gate Implementation](../../src/image_preprocessing_detector/detection/text_gate.py)
 
 ### 2. Hybrid IQA Approach
 
@@ -50,7 +63,9 @@ See the complete architecture documentation in [ARCHITECTURE_SUMMARY.md](../../A
 - Targeted corrections per element
 - Preserves high-quality regions
 
-**See**: [Architecture Correction](../../ARCHITECTURE_CORRECTION.md)
+**See**:
+- [ADR-007: Hybrid IQA Approach](../ADRs/0007-hybrid-iqa-approach.md)
+- [Architecture Correction](../../ARCHITECTURE_CORRECTION.md)
 
 ### 3. COCO Bounding Box Format
 
@@ -63,7 +78,9 @@ See the complete architecture documentation in [ARCHITECTURE_SUMMARY.md](../../A
 
 **Alternative**: Corner format `[x1, y1, x2, y2]` (rejected for incompatibility)
 
-**See**: [Schema API](../api/schema.md)
+**See**:
+- [ADR-009: COCO Bounding Box Format](../ADRs/0009-coco-bounding-box-format.md)
+- [Schema API](../api/schema.md)
 
 ### 4. 300 DPI Standardization
 
@@ -78,6 +95,10 @@ See the complete architecture documentation in [ARCHITECTURE_SUMMARY.md](../../A
 - May upsample low-resolution images
 - May downsample high-resolution scans
 - Consistent processing pipeline
+
+**See**:
+- [ADR-010: 300 DPI Normalization Strategy](../ADRs/0010-300-dpi-normalization.md)
+- [PDF Loader](../../src/image_preprocessing_detector/ingestion/pdf_loader.py)
 
 ### 5. Pydantic v2 for Schema
 
@@ -330,6 +351,7 @@ Input → Ingestion → Text Gate → Detection → Correction → Output
 
 ## References
 
+- [ADR Index](../ADRs/README.md) - Architecture decision records
 - [ARCHITECTURE_SUMMARY.md](../../ARCHITECTURE_SUMMARY.md) - Complete architecture
 - [ARCHITECTURE_CORRECTION.md](../../ARCHITECTURE_CORRECTION.md) - Hybrid IQA rationale
 - [PROJECT_PLAN.md](../../PROJECT_PLAN.md) - Detailed roadmap

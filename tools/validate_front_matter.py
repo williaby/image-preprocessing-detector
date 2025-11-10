@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
+# ruff: noqa: T201
 """Front matter validator with autofix capabilities.
+
+Note: T201 (print statement) is intentionally disabled for this CLI tool.
+This script outputs structured results to stdout/stderr, making print()
+the correct approach rather than logging.
 
 This script validates YAML front matter in Markdown documentation files using
 Pydantic models. It supports automatic fixing of common issues and enforces
@@ -149,7 +154,7 @@ def autofix_front_matter(path: Path) -> bool:
         out = StringIO()
         yrt.dump(data, out)
         new_yaml = out.getvalue().rstrip()
-        new_content = f"---\n{new_yaml}\n---\n{text[match.end():]}"
+        new_content = f"---\n{new_yaml}\n---\n{text[match.end() :]}"
         path.write_text(new_content, encoding="utf-8")
 
     return changed

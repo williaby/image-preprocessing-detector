@@ -13,6 +13,7 @@ allowed:
   - layout_detection
   - ocr
   - ocr_preprocessing
+  - ocr_optimization
   - pdf_processing
 
   # Image Quality
@@ -20,6 +21,7 @@ allowed:
   - iqa
   - preprocessing
   - correction
+  - corrections
   - enhancement
 
   # Specific Techniques
@@ -33,9 +35,27 @@ allowed:
   # ML/DL Frameworks
   - pytorch
   - yolov8
+  - yolo
   - onnx
   - mobilenet
+  - mobilenetv3
   - efficientnet
+  - tensorrt
+  - quantization
+  - int8
+
+  # Model Training & Optimization
+  - transfer_learning
+  - pre_training
+  - imagenet
+  - coco
+  - weak_supervision
+  - active_learning
+  - annotation
+  - labeling
+  - augmentation
+  - albumentations
+  - model_selection
 
   # RAG & Applications
   - rag
@@ -49,6 +69,17 @@ allowed:
   - benchmarks
   - performance
   - optimization
+  - tooling
+  - linting
+  - ruff
+  - consolidation
+  - poetry
+  - dependencies
+  - packaging
+  - mutation_testing
+  - property_based_testing
+  - hypothesis
+  - mocking
 
   # Documentation
   - front_matter
@@ -60,26 +91,39 @@ allowed:
   - contributing
   - development
   - installation
+  - adr
+  - decisions
+  - mkdocs
+  - pydantic
+  - json_ld
 
-  # Infrastructure
+  # Infrastructure & CI/CD
   - ci_cd
+  - github_actions
+  - openssf
   - build
   - deployment
   - monitoring
+  - observability
 
   # Data & Datasets
   - datasets
   - data_augmentation
   - synthetic_data
+  - brisque
+  - niqe
 
   # Quality & Standards
   - code_quality
   - quality
+  - quality_assurance
   - security
   - compliance
   - licensing
   - license
   - legal
+  - safety
+  - guardrails
 
   # Project Management
   - planning
@@ -88,3 +132,31 @@ allowed:
   - changelog
   - releases
   - version_history
+  - phase_planning
+  - mvp
+
+  # Technical Details
+  - bounding_boxes
+  - coco_format
+  - interoperability
+  - dpi
+  - normalization
+  - ingestion
+  - pipeline
+  - modularity
+  - text_detection
+  - handwriting
+  - footnotes
+  - superscripts
+  - text_analysis
+  - hybrid_approach
+  - cpu
+  - gpu
+  - json
+  - schema
+  - logging
+  - structlog
+  - rich
+  - efficiency
+  - training
+  - object_detection

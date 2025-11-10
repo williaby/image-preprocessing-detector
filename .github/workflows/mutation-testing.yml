@@ -1,0 +1,150 @@
+name: Mutation Testing
+
+# Separate schedule for mutation testing (expensive operation)
+# Runs weekly on Sundays at 2:00 AM UTC
+on:
+  schedule:
+    - cron: "0 2 * * 0"  # Weekly on Sunday at 2:00 AM UTC
+  workflow_dispatch:  # Allow manual triggers
+    inputs:
+      mutation_threshold:
+        description: 'Minimum mutation score threshold (0-100)'
+        required: false
+        default: '80'
+        type: string
+
+permissions: read-all
+
+jobs:
+  mutation-testing:
+    name: Run Mutation Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 120  # Mutation testing can be slow
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+        with:
+          version: 2.1.2
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}-mutation
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --with dev
+
+      - name: Run mutation testing
+        id: mutmut
+        env:
+          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
+        run: |
+          echo "Running mutation testing with mutmut..."
+          poetry run mutmut run --paths-to-mutate src/ || true
+
+          # Generate results report
+          poetry run mutmut results > mutation-results.txt
+          poetry run mutmut html
+
+          # Extract mutation score
+          MUTATION_SCORE=$(poetry run mutmut results | grep -oP 'Survived: \K\d+' || echo "0")
+          TOTAL_MUTATIONS=$(poetry run mutmut results | grep -oP 'Total: \K\d+' || echo "1")
+          KILLED_MUTATIONS=$((TOTAL_MUTATIONS - MUTATION_SCORE))
+          SCORE_PERCENTAGE=$((KILLED_MUTATIONS * 100 / TOTAL_MUTATIONS))
+
+          echo "mutation_score=${SCORE_PERCENTAGE}" >> $GITHUB_OUTPUT
+          echo "killed=${KILLED_MUTATIONS}" >> $GITHUB_OUTPUT
+          echo "total=${TOTAL_MUTATIONS}" >> $GITHUB_OUTPUT
+          echo "survived=${MUTATION_SCORE}" >> $GITHUB_OUTPUT
+
+          # Display summary
+          echo "## Mutation Testing Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mutation Score**: ${SCORE_PERCENTAGE}%" >> $GITHUB_STEP_SUMMARY
+          echo "- **Killed Mutations**: ${KILLED_MUTATIONS}/${TOTAL_MUTATIONS}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Survived Mutations**: ${MUTATION_SCORE}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Threshold**: ${THRESHOLD_INPUT}%" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload mutation testing report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mutation-testing-report
+          path: |
+            mutation-results.txt
+            html/
+          retention-days: 90
+
+      - name: Check mutation score threshold
+        env:
+          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
+          MUTATION_SCORE: ${{ steps.mutmut.outputs.mutation_score }}
+        run: |
+          THRESHOLD="${THRESHOLD_INPUT}"
+          SCORE="${MUTATION_SCORE}"
+
+          echo "Mutation Score: ${SCORE}%"
+          echo "Threshold: ${THRESHOLD}%"
+
+          if [ "${SCORE}" -lt "${THRESHOLD}" ]; then
+            echo "❌ Mutation score ${SCORE}% is below threshold ${THRESHOLD}%"
+            echo "Survived mutations indicate weak test coverage:"
+            cat mutation-results.txt
+            exit 1
+          else
+            echo "✅ Mutation score ${SCORE}% meets threshold ${THRESHOLD}%"
+          fi
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          MUTATION_SCORE: ${{ steps.mutmut.outputs.mutation_score }}
+          KILLED_MUTATIONS: ${{ steps.mutmut.outputs.killed }}
+          TOTAL_MUTATIONS: ${{ steps.mutmut.outputs.total }}
+          SURVIVED_MUTATIONS: ${{ steps.mutmut.outputs.survived }}
+          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
+        with:
+          script: |
+            const score = process.env.MUTATION_SCORE || '0';
+            const killed = process.env.KILLED_MUTATIONS || '0';
+            const total = process.env.TOTAL_MUTATIONS || '0';
+            const survived = process.env.SURVIVED_MUTATIONS || '0';
+            const threshold = process.env.THRESHOLD_INPUT || '80';
+
+            const passed = parseInt(score) >= parseInt(threshold);
+            const emoji = passed ? '✅' : '❌';
+
+            const body = `## ${emoji} Mutation Testing Results
+
+            - **Mutation Score**: ${score}%
+            - **Killed Mutations**: ${killed}/${total}
+            - **Survived Mutations**: ${survived}
+            - **Threshold**: ${threshold}%
+
+            ${passed
+              ? '**Status**: Tests are effective at catching mutations.'
+              : '**Status**: Some mutations survived. Consider improving test coverage.'}
+
+            [View detailed report in workflow artifacts](
+            https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

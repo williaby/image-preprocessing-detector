@@ -408,7 +408,7 @@ class TestCLICorrectionPaths:
 
         # Apply artificial skew
         center = (200, 200)
-        M = cv2.getRotationMatrix2D(center, -2.0, 1.0)
+        M = cv2.getRotationMatrix2D(center, -2.0, 1.0)  # noqa: N806 (OpenCV convention)
         img = cv2.warpAffine(img, M, (400, 400), borderValue=(255, 255, 255))
 
         cv2.imwrite(str(img_path), img)

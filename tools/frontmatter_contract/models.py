@@ -64,7 +64,7 @@ class ModelCard(BaseModel):
     id: str
     task: str | None = None
     license: str | None = None
-    codeRepository: str | None = None
+    codeRepository: str | None = None  # noqa: N815 (Schema.org field name)
     metrics: list[Metric] | None = None
 
 
@@ -116,7 +116,7 @@ class CommonFM(BaseModel):
     dataset: DatasetCard | None = None
 
     @field_validator("tags", mode="after")
-    def _tags(cls, v: list[str]) -> list[str]:
+    def _tags(cls, v: list[str]) -> list[str]:  # noqa: N805  # fmt: skip
         """Validate that all tags are snake_case lowercase."""
         bad = [t for t in v if not TAG.fullmatch(t)]
         if bad:
@@ -124,7 +124,7 @@ class CommonFM(BaseModel):
         return v
 
     @field_validator("purpose")
-    def _purpose_sentence(cls, v: str) -> str:
+    def _purpose_sentence(cls, v: str) -> str:  # noqa: N805  # fmt: skip
         """Validate that purpose ends with terminal punctuation."""
         if not v.strip().endswith((".", "!", "?")):
             raise ValueError("purpose must end with terminal punctuation")

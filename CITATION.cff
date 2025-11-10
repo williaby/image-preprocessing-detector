@@ -1,0 +1,28 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams
+# SPDX-License-Identifier: Apache-2.0
+
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: Image Preprocessing Detector
+abstract: >
+  Intelligent image preprocessing detection system for RAG applications.
+  Automatically analyzes documents (PDFs, images) and detects required
+  preprocessing steps (e.g., skew/blur/contrast/orientation, tables/images/
+  handwriting/formulas) before vector-database ingestion.
+authors:
+  - given-names: Byron
+    family-names: Williams
+    orcid: "https://orcid.org/0009-0005-5244-6084"
+license: MIT
+repository-code: "https://github.com/williaby/image-preprocessing-detector"
+keywords:
+  - RAG
+  - image quality assessment
+  - OCR preprocessing
+  - OpenCV
+  - Python
+# After first DOI mint:
+# identifiers:
+#   - type: doi
+#     value: 10.xxxx/zenodo.xxxxxxx

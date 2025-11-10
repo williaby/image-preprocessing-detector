@@ -72,6 +72,8 @@
 
 ## Key Architecture Decisions
 
+For detailed decision documentation, see the [Architecture Decision Records (ADRs)](docs/ADRs/README.md).
+
 ### 1. Why Multi-Stage Pipeline (Not Monolithic)?
 
 **Decision**: Modular pipeline with text detection fork
@@ -84,6 +86,8 @@
 - Better performance through specialized models
 
 **Trade-off**: More components to maintain vs. simpler single model
+
+**See**: [ADR-008: Multi-Stage Pipeline Architecture](docs/ADRs/0008-multi-stage-pipeline-architecture.md)
 
 ---
 
@@ -98,6 +102,8 @@
 - Improves accuracy by specializing detection logic
 
 **Implementation**: Ensemble of morphological analysis + EAST/DBNet-lite
+
+**See**: [ADR-008: Multi-Stage Pipeline Architecture](docs/ADRs/0008-multi-stage-pipeline-architecture.md)
 
 ---
 

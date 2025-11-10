@@ -14,9 +14,9 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Note: Base image (gcr.io/oss-fuzz-base/base-builder-python) provides Python 3.11.13
+# Note: Base image (gcr.io/oss-fuzz-base/base-builder-python) provides Python 3.10.14
 # This is compatible with Atheris (supports Python 3.8-3.11, not 3.12+ due to PRECALL opcode changes)
-# Project pyproject.toml updated to support Python 3.11+ for fuzzing compatibility
+# Project pyproject.toml updated to support Python 3.10+ for fuzzing compatibility
 
 # Copy project source
 COPY . $SRC/image-preprocessing-detector

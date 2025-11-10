@@ -6,7 +6,7 @@ authors = [
     {name = "Byron Williams", email = "byronawilliams@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.15"
 license = {text = "MIT"}
 keywords = ["image-processing", "opencv", "document-analysis", "ocr-preprocessing", "rag"]
 classifiers = [
@@ -79,7 +79,14 @@ dev = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.1.0",
     "mkdocstrings[python]>=0.22.0",
-    "python-frontmatter>=1.1.0",
+    "mkdocs-section-index>=0.3.0",
+    "mkdocs-git-revision-date-localized-plugin>=1.2.0",
+    "mkdocs-gen-files>=0.5.0",
+    "griffe-pydantic>=0.2.0",
+
+    # Front matter validation tools
+    "python-frontmatter>=1.1",
+    "ruamel.yaml>=0.18.0",
 
     # Jupyter (for exploration)
     "jupyter>=1.0.0",
@@ -120,7 +127,7 @@ readme = "README.md"
 packages = [{include = "image_preprocessing_detector", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.15"  # Constrained by triton dependency for torch 2.9.0
+python = ">=3.11,<3.15"  # ClusterFuzzLite requires Python 3.11 for Atheris compatibility
 opencv-python-headless = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
@@ -162,6 +169,7 @@ matplotlib = "^3.10.7"
 datasets = "^4.4.1"
 safety = "^3.7.0"
 nox = "^2025.10.16"
+mutmut = "^3.3.1"
 
 [tool.poetry.group.ml]
 optional = true
@@ -202,7 +210,9 @@ extend-exclude = '''
 )/
 '''
 
-# Ruff Configuration
+# Ruff Configuration - Consolidated Linting & Formatting
+# Replaces: Black (formatting), pydocstyle (docstrings), partial Bandit (security)
+# Keeps: MyPy (type checking), interrogate (coverage), Bandit (advanced security)
 [tool.ruff]
 line-length = 88
 target-version = "py312"
@@ -214,33 +224,91 @@ exclude = [
     "__pycache__",
     "dist",
     "build",
+    "validation",
+    "tmp_cleanup",
 ]
+
+# Enable Ruff formatter (Black-compatible)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
 
 [tool.ruff.lint]
 select = [
     "E",    # pycodestyle errors
     "W",    # pycodestyle warnings
-    "F",    # pyflakes
+    "F",    # Pyflakes
     "I",    # isort
     "B",    # flake8-bugbear
     "C4",   # flake8-comprehensions
     "UP",   # pyupgrade
     "ARG",  # flake8-unused-arguments
     "SIM",  # flake8-simplify
-]
-ignore = [
-    "E501",  # line too long (handled by black)
-    "B008",  # do not perform function calls in argument defaults
-    "C901",  # too complex
+    "D",    # pydocstyle - REPLACES pydocstyle hook
+    "S",    # flake8-bandit - SUPPLEMENTS Bandit
+    "T20",  # flake8-print
+    "PT",   # flake8-pytest-style
+    "RUF",  # Ruff-specific rules
+    "N",    # pep8-naming
+    "A",    # flake8-builtins
+    "DTZ",  # flake8-datetimez
+    "PIE",  # flake8-pie
+    "Q",    # flake8-quotes
+    "RET",  # flake8-return
+    "PTH",  # flake8-use-pathlib
 ]
 
+ignore = [
+    # Formatting (handled by Ruff formatter)
+    "E501",  # line too long
+    "W191",  # indentation contains tabs
+    "D206",  # indent with spaces
+    "Q000",  # bad quotes inline
+    "Q001",  # bad quotes multiline
+    "Q002",  # bad quotes docstring
+    "COM812", # missing trailing comma
+    "ISC001", # implicit string concatenation
+
+    # Complexity
+    "C901",  # too complex
+
+    # Docstring (Google style)
+    "D203",  # one-blank-line-before-class
+    "D212",  # multi-line-docstring-summary-first-line
+
+    # Practical exceptions
+    "B008",  # function calls in defaults (Pydantic/Click)
+    "S101",  # assert (pytest uses assert)
+    "D105",  # missing docstring in magic method
+    "D107",  # missing docstring in __init__
+    "PTH123", # open() pathlib (not always practical)
+]
+
+# Pydocstyle configuration
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# isort configuration
+[tool.ruff.lint.isort]
+known-first-party = ["image_preprocessing_detector"]
+
+# Per-file ignores
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]  # unused imports in __init__.py
-"tests/**/*.py" = ["ARG"]  # unused arguments in tests
+"__init__.py" = ["F401", "D104"]
+"tests/**/*.py" = ["ARG", "D", "S"]
+"fuzz/**/*.py" = ["D", "T20"]
+"validation/**/*.py" = ["D", "T20"]
+"noxfile.py" = ["D", "T20"]
+"src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
 
 # MyPy Configuration
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
+mypy_path = "src"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -274,6 +342,7 @@ addopts = [
     "--cov=src/image_preprocessing_detector",
     "--cov-report=html",
     "--cov-report=term-missing:skip-covered",
+    "--cov-report=xml",
     "--cov-fail-under=80",
 ]
 markers = [
@@ -322,3 +391,13 @@ exclude = ["tests", "docs", "build", "dist", "validation", "tmp_cleanup"]
 ignore-init-method = true
 ignore-init-module = true
 color = true
+
+# Mutation Testing Configuration (mutmut)
+[tool.mutmut]
+paths_to_mutate = "src/"
+backup = false
+runner = "poetry run pytest -x --assert=plain -o addopts=''"
+tests_dir = "tests/"
+# Mutation score threshold: percentage of mutations that must be killed
+# Score below 80% indicates weak test coverage
+dict_synonyms = "Struct, NamedStruct"

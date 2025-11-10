@@ -56,7 +56,7 @@ def iter_script_pages() -> list[dict[str, str]]:
                         "description": meta.get("description", ""),
                     }
                 )
-        except Exception:  # nosec B112
+        except Exception:  # nosec B112  # noqa: S112 (intentional skip on parse errors)
             # Skip files with parsing errors (intentional)
             continue
 

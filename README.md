@@ -1,19 +1,36 @@
 # Image Preprocessing Detector
 
-<!-- Security & Quality (Interactive Validation) -->
+## Security & Quality
+
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11445/badge)](https://www.bestpractices.dev/en/projects/11445)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/williaby/image-preprocessing-detector/badge)](https://securityscorecards.dev/viewer/?uri=github.com/williaby/image-preprocessing-detector)
 [![codecov](https://codecov.io/gh/williaby/image-preprocessing-detector/graph/badge.svg?token=eS2YJZ5BzM)](https://codecov.io/gh/williaby/image-preprocessing-detector)
+[![REUSE Compliance](https://github.com/williaby/image-preprocessing-detector/workflows/REUSE%20Compliance/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/reuse.yml)
 
-<!-- CI/CD Status (Real-time Health) -->
+## CI/CD Status
+
 [![CI Pipeline](https://github.com/williaby/image-preprocessing-detector/workflows/CI/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/ci.yml)
 [![Security Analysis](https://github.com/williaby/image-preprocessing-detector/workflows/Security%20Analysis/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/security-analysis.yml)
+[![Documentation](https://github.com/williaby/image-preprocessing-detector/workflows/Documentation/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/docs.yml)
 [![ClusterFuzzLite](https://github.com/williaby/image-preprocessing-detector/workflows/ClusterFuzzLite/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/cifuzzy.yml)
+[![SBOM & Security Scan](https://github.com/williaby/image-preprocessing-detector/workflows/SBOM%20%26%20Security%20Scan/badge.svg)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/sbom.yml)
 
-<!-- Project Info (Essential Metadata) -->
+## Project Info
+
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+
+---
+
+## What Does This Do?
+
+**Prepares scanned documents and images for AI processing.** This tool automatically detects quality issues (blurriness, skew, poor contrast, noise) in PDFs and images, then identifies which preprocessing steps are needed to improve accuracy before feeding documents to AI systems.
+
+**Problem it solves**: Scanned documents and images often have quality issues that hurt AI accuracy. This tool detects those issues automatically, so you know exactly what corrections to apply before processing documents with AI/machine learning systems.
+
+---
 
 **Intelligent image preprocessing detection system for RAG applications.** Automatically analyzes documents (PDFs, images) and detects required preprocessing steps before vector database ingestion.
 
