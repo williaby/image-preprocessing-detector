@@ -5,6 +5,7 @@
 """PDF upscaling utilities using OpenCV."""
 
 import logging
+import os
 import tempfile
 import time
 from enum import Enum
@@ -143,14 +144,14 @@ class PDFUpscaler:
 
                         # Insert upscaled image
                         # Create a temporary PNG to insert
-                        with tempfile.NamedTemporaryFile(
-                            suffix=".png", delete=False
-                        ) as tmp_img:
-                            tmp_img_path = tmp_img.name
+                        # Use mkstemp to avoid Windows file handle conflicts
+                        fd, tmp_img_path = tempfile.mkstemp(suffix=".png")
+                        try:
+                            # Close file descriptor before PIL saves
+                            os.close(fd)
                             img_pil.save(tmp_img_path, format="PNG")
 
-                        # Insert image after context manager exits to avoid race condition
-                        try:
+                            # Insert image
                             new_page.insert_image(
                                 new_page.rect,
                                 filename=tmp_img_path,

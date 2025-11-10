@@ -12,6 +12,7 @@ This module tests the end-to-end workflow of:
 4. Integration with DocumentRouter
 """
 
+import logging
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
@@ -24,6 +25,8 @@ from image_preprocessing_detector.ingestion.pdf_analyzer import PDFDocumentAnaly
 from image_preprocessing_detector.ingestion.pdf_resolution import (
     PDFResolutionAnalyzer,
 )
+
+logger = logging.getLogger(__name__)
 
 # DocumentRouter not yet implemented in this project - commenting out for Phase 1B
 # from image_preprocessing_detector.ingestion.router import DocumentRouter
@@ -57,7 +60,7 @@ def low_res_pdf(temp_dir: Path) -> Path:
         draw.text((50, 100), "This PDF should be upscaled to 300 DPI", fill="black")
     except Exception:
         # Fallback if font not available - test PDF can still be created without text
-        pass
+        logger.warning("Font unavailable, creating PDF without text")
 
     # Save as JPEG with proper DPI metadata (more compatible than PNG)
     temp_img_path = temp_dir / "temp_img.jpg"
@@ -103,7 +106,7 @@ def high_res_pdf(temp_dir: Path) -> Path:
         draw.text((100, 200), "This PDF should NOT be upscaled", fill="black")
     except Exception:
         # Fallback if font not available - test PDF can still be created without text
-        pass
+        logger.warning("Font unavailable, creating PDF without text")
 
     # Save as JPEG with proper DPI metadata
     temp_img_path = temp_dir / "temp_img.jpg"
