@@ -149,7 +149,11 @@ jobs:
     name: Dependency Security Review
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.security_files == 'true'
+    # Skip on scheduled runs (no PR context available)
+    # GitHub Dependency Review Action requires base_ref/head_ref from pull_request events
+    if: |
+      github.event_name != 'schedule' &&
+      needs.detect-changes.outputs.security_files == 'true'
     permissions:
       contents: read
       pull-requests: write  # Required for PR comments
@@ -361,6 +365,7 @@ jobs:
       - name: Security Gate Results
         run: |
           echo "🔒 Image Preprocessing Detector Security Analysis Results:"
+          echo "Event Type: ${{ github.event_name }}"
           echo "Security Files Changed: ${{ needs.detect-changes.outputs.security_files }}"
           echo "CodeQL Analysis: ${{ needs.codeql-analysis.result }}"
           echo "Dependency Security: ${{ needs.dependency-security.result }}"
@@ -368,6 +373,7 @@ jobs:
           echo "Image Processing Security: ${{ needs.image-processing-security.result }}"
 
           # Helper function to check if job result is acceptable (success or skipped)
+          # Note: dependency-security is skipped on scheduled runs (no PR context)
           is_acceptable() {
             [[ "$1" == "success" || "$1" == "skipped" ]]
           }
@@ -382,6 +388,11 @@ jobs:
               echo "✅ Security gate passed - image processing system meets security standards"
               echo "📸 Image processing security validated"
               echo "🔐 File handling secured"
+
+              # Note if dependency review was skipped (scheduled runs only)
+              if [[ "${{ needs.dependency-security.result }}" == "skipped" ]]; then
+                echo "ℹ️  Dependency Review skipped (scheduled run - no PR context available)"
+              fi
             else
               echo "✅ Security gate passed - no security-relevant files changed"
               echo "📄 Documentation or configuration changes only"
