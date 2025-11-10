@@ -85,9 +85,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    environment:
-      name: release
-      url: https://pypi.org/project/image-preprocessing-detector/
+    # Environment removed to match PyPI Trusted Publisher configuration
+    # Re-enable if you create 'release' environment with protection rules
 
     permissions:
       contents: read
