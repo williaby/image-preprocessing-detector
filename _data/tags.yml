@@ -1,0 +1,162 @@
+# Allowed tags for documentation front matter
+# Tags must be snake_case lowercase and listed here to be valid
+
+allowed:
+  # Core Technical Areas
+  - computer_vision
+  - image_processing
+  - machine_learning
+  - deep_learning
+
+  # Document Analysis
+  - document_analysis
+  - layout_detection
+  - ocr
+  - ocr_preprocessing
+  - ocr_optimization
+  - pdf_processing
+
+  # Image Quality
+  - image_quality
+  - iqa
+  - preprocessing
+  - correction
+  - corrections
+  - enhancement
+
+  # Specific Techniques
+  - classical_cv
+  - skew_detection
+  - blur_detection
+  - contrast_enhancement
+  - denoising
+  - binarization
+
+  # ML/DL Frameworks
+  - pytorch
+  - yolov8
+  - yolo
+  - onnx
+  - mobilenet
+  - mobilenetv3
+  - efficientnet
+  - tensorrt
+  - quantization
+  - int8
+
+  # Model Training & Optimization
+  - transfer_learning
+  - pre_training
+  - imagenet
+  - coco
+  - weak_supervision
+  - active_learning
+  - annotation
+  - labeling
+  - augmentation
+  - albumentations
+  - model_selection
+
+  # RAG & Applications
+  - rag
+  - vector_database
+  - embedding
+  - retrieval
+
+  # Development & Tooling
+  - testing
+  - validation
+  - benchmarks
+  - performance
+  - optimization
+  - tooling
+  - linting
+  - ruff
+  - consolidation
+  - poetry
+  - dependencies
+  - packaging
+  - mutation_testing
+  - property_based_testing
+  - hypothesis
+  - mocking
+
+  # Documentation
+  - front_matter
+  - api_reference
+  - guide
+  - tutorial
+  - architecture
+  - documentation
+  - contributing
+  - development
+  - installation
+  - adr
+  - decisions
+  - mkdocs
+  - pydantic
+  - json_ld
+
+  # Infrastructure & CI/CD
+  - ci_cd
+  - github_actions
+  - openssf
+  - build
+  - deployment
+  - monitoring
+  - observability
+
+  # Data & Datasets
+  - datasets
+  - data_augmentation
+  - synthetic_data
+  - brisque
+  - niqe
+
+  # Quality & Standards
+  - code_quality
+  - quality
+  - quality_assurance
+  - security
+  - compliance
+  - licensing
+  - license
+  - legal
+  - safety
+  - guardrails
+
+  # Project Management
+  - planning
+  - roadmap
+  - project_management
+  - changelog
+  - releases
+  - version_history
+  - phase_planning
+  - mvp
+
+  # Technical Details
+  - bounding_boxes
+  - coco_format
+  - interoperability
+  - dpi
+  - normalization
+  - ingestion
+  - pipeline
+  - modularity
+  - text_detection
+  - handwriting
+  - footnotes
+  - superscripts
+  - text_analysis
+  - hybrid_approach
+  - cpu
+  - gpu
+  - json
+  - schema
+  - logging
+  - structlog
+  - rich
+  - efficiency
+  - training
+  - object_detection
