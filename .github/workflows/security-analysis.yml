@@ -68,11 +68,13 @@ jobs:
               - 'poetry.lock'
 
   # CodeQL Analysis for Image Processing Systems
+  # Note: Always runs (even for docs-only changes) to satisfy repository rule requirements
   codeql-analysis:
     name: CodeQL Security Analysis
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.security_files == 'true'
+    # Removed conditional: if: needs.detect-changes.outputs.security_files == 'true'
+    # Repository rules require CodeQL results for all PRs
     timeout-minutes: 20
     permissions:
       contents: read

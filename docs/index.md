@@ -57,8 +57,15 @@ PDF/Image Input → Ingestion (300 DPI) → Text Gate
 - **[Getting Started](guides/installation.md)**: Installation and setup instructions
 - **[User Guide](guides/overview.md)**: Comprehensive usage documentation
 - **[API Reference](api/index.md)**: Complete API documentation
-- **[Tools](tools/index.md)**: Available scripts and utilities
+- **[Security](../SECURITY.md)**: Security policies and practices
 - **[Development](development/contributing.md)**: Contributing guidelines
+
+## Documentation Sites
+
+This documentation is available on:
+
+- **GitHub Pages**: [https://williaby.github.io/image-preprocessing-detector/](https://williaby.github.io/image-preprocessing-detector/)
+- **ReadTheDocs**: [https://image-preprocessing-detector.readthedocs.io/](https://image-preprocessing-detector.readthedocs.io/)
 
 ## Project Status
 
