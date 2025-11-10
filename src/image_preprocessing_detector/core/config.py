@@ -51,12 +51,22 @@ class Settings:
             if pdf_target_dpi is not None
             else self._get_int_env("IMAGE_PREP_PDF_TARGET_DPI", 300)
         )
+        # Define valid algorithms
+        valid_algorithms = (
+            "lanczos",
+            "bicubic",
+            "inter_cubic",
+            "inter_linear",
+            "inter_area",
+        )
         self.pdf_upscale_algorithm: Literal[
             "lanczos", "bicubic", "inter_cubic", "inter_linear", "inter_area"
         ] = (
             pdf_upscale_algorithm
             if pdf_upscale_algorithm is not None
-            else self._get_str_env("IMAGE_PREP_PDF_UPSCALE_ALGORITHM", "lanczos")  # type: ignore
+            else self._get_algorithm_env(
+                "IMAGE_PREP_PDF_UPSCALE_ALGORITHM", "lanczos", valid_algorithms
+            )  # type: ignore
         )
         self.pdf_preserve_original_on_error: bool = (
             pdf_preserve_original_on_error
@@ -108,3 +118,32 @@ class Settings:
             String value from environment or default
         """
         return os.getenv(key, default)
+
+    def _get_algorithm_env(
+        self, key: str, default: str, valid_algorithms: tuple[str, ...]
+    ) -> str:
+        """Get and validate upscaling algorithm from environment variable.
+
+        Args:
+            key: Environment variable key
+            default: Default value if not set or invalid
+            valid_algorithms: Tuple of valid algorithm names
+
+        Returns:
+            Valid algorithm string from environment or default
+        """
+        value = os.getenv(key)
+        if value is None:
+            return default
+        # Validate against allowed algorithms
+        if value in valid_algorithms:
+            return value
+        # Log warning for invalid value and use default
+        import logging
+
+        logging.warning(
+            f"Invalid algorithm '{value}' for {key}. "
+            f"Valid options: {', '.join(valid_algorithms)}. "
+            f"Using default: {default}"
+        )
+        return default
