@@ -94,7 +94,7 @@ class TestSettings:
             # Should fall back to default
             assert settings.pdf_upscale_algorithm == "lanczos"
 
-            # Should log warning (captured in stdout due to structlog configuration)
+            # Should log warning (captured by capsys from stderr due to structlog configuration)
             captured = capsys.readouterr()
             assert "Invalid algorithm 'invalid_algorithm'" in captured.out
             assert "Using default: lanczos" in captured.out
