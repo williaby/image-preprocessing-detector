@@ -101,8 +101,8 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --with dev
 
-      - name: Check docstring style (pydocstyle)
-        run: poetry run pydocstyle src/
+      - name: Check docstring style (Ruff)
+        run: poetry run ruff check src/
 
       - name: Check docstring coverage (interrogate)
         run: poetry run interrogate -v src/

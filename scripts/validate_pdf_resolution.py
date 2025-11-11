@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 #!/usr/bin/env python3
-# ruff: noqa: T201
 """Validation script for PDF resolution detection and upscaling.
 
 This script allows manual verification that the Phase 1c implementation:

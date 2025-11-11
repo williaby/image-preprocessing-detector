@@ -7,6 +7,10 @@
 import os
 from typing import Literal
 
+from image_preprocessing_detector.utils.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 class Settings:
     """Configuration settings for image preprocessing.
@@ -39,7 +43,7 @@ class Settings:
         self.enable_pdf_upscaling: bool = (
             enable_pdf_upscaling
             if enable_pdf_upscaling is not None
-            else self._get_bool_env("IMAGE_PREP_ENABLE_PDF_UPSCALING", True)
+            else self._get_bool_env("IMAGE_PREP_ENABLE_PDF_UPSCALING", default=True)
         )
         self.pdf_min_dpi: int = (
             pdf_min_dpi
@@ -71,7 +75,9 @@ class Settings:
         self.pdf_preserve_original_on_error: bool = (
             pdf_preserve_original_on_error
             if pdf_preserve_original_on_error is not None
-            else self._get_bool_env("IMAGE_PREP_PDF_PRESERVE_ORIGINAL_ON_ERROR", True)
+            else self._get_bool_env(
+                "IMAGE_PREP_PDF_PRESERVE_ORIGINAL_ON_ERROR", default=True
+            )
         )
 
     def _get_bool_env(self, key: str, default: bool) -> bool:
@@ -139,9 +145,7 @@ class Settings:
         if value in valid_algorithms:
             return value
         # Log warning for invalid value and use default
-        import logging
-
-        logging.warning(
+        logger.warning(
             f"Invalid algorithm '{value}' for {key}. "
             f"Valid options: {', '.join(valid_algorithms)}. "
             f"Using default: {default}"

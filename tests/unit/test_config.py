@@ -82,7 +82,7 @@ class TestSettings:
             assert settings.pdf_upscale_algorithm == "lanczos"
 
     def test_invalid_algorithm_falls_back_to_default(
-        self, caplog: pytest.LogCaptureFixture
+        self, capsys: pytest.CaptureFixture
     ) -> None:
         """Test that invalid algorithm from environment falls back to default."""
         with patch.dict(
@@ -94,9 +94,10 @@ class TestSettings:
             # Should fall back to default
             assert settings.pdf_upscale_algorithm == "lanczos"
 
-            # Should log warning
-            assert "Invalid algorithm 'invalid_algorithm'" in caplog.text
-            assert "Using default: lanczos" in caplog.text
+            # Should log warning (captured by capsys from stderr due to structlog configuration)
+            captured = capsys.readouterr()
+            assert "Invalid algorithm 'invalid_algorithm'" in captured.out
+            assert "Using default: lanczos" in captured.out
 
     def test_all_valid_algorithms(self) -> None:
         """Test that all valid algorithms are accepted."""

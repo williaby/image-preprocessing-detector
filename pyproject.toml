@@ -68,7 +68,6 @@ dev = [
     "hypothesis>=6.82.0",
 
     # Code Quality
-    "black>=24.3.0",  # Updated to address CVE-2024-21503 (ReDoS vulnerability)
     "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",
 
@@ -145,7 +144,6 @@ pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.21.0"
 pytest-xdist = "^3.3.0"
 hypothesis = "^6.82.0"
-black = ">=24.3.0"
 ruff = "^0.9.0"
 mypy = "^1.4.0"
 pre-commit = "^3.3.0"
@@ -160,7 +158,6 @@ mkdocs-autorefs = "^1.2.0"
 mkdocs-git-revision-date-localized-plugin = "^1.3.0"
 python-frontmatter = "^1.1.0"
 ruamel-yaml = "^0.18.0"
-pydocstyle = "^6.3.0"
 interrogate = "^1.7.0"
 # Development Tools
 jupyter = "^1.0.0"
@@ -190,25 +187,6 @@ fastapi = "^0.120.1"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
 uvicorn = {extras = ["standard"], version = "^0.23.0"}
 python-multipart = "^0.0.18"  # Updated to address CVE-2024-53981 and PVE-2024-99762
 starlette = "^0.49.1"  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS via Range header)
-
-# Black Configuration
-[tool.black]
-line-length = 88
-target-version = ["py312"]
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
 
 # Ruff Configuration - Consolidated Linting & Formatting
 # Replaces: Black (formatting), pydocstyle (docstrings), partial Bandit (security)
@@ -260,6 +238,13 @@ select = [
     "Q",    # flake8-quotes
     "RET",  # flake8-return
     "PTH",  # flake8-use-pathlib
+    "PERF", # Performance anti-patterns (inefficient loops, list comprehensions)
+    "FURB", # Refurb - modernization suggestions (pathlib usage)
+    "LOG",  # Logging best practices (proper formatting, level usage)
+    "TRY",  # Exception handling best practices
+    "ERA",  # Commented-out code detection (finds dead code)
+    "FBT",  # Boolean trap detection (avoid bool positional args)
+    "ASYNC",# Async/await best practices
 ]
 
 ignore = [
@@ -286,6 +271,11 @@ ignore = [
     "D105",  # missing docstring in magic method
     "D107",  # missing docstring in __init__
     "PTH123", # open() pathlib (not always practical)
+
+    # New rules - practical exceptions
+    "FBT001", # Boolean positional arg (OK for CLI tools like Click)
+    "FBT002", # Boolean default arg (OK for config)
+    "TRY003", # Long exception messages (OK for detailed errors)
 ]
 
 # Pydocstyle configuration
@@ -299,9 +289,11 @@ known-first-party = ["image_preprocessing_detector"]
 # Per-file ignores
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "D104"]
-"tests/**/*.py" = ["ARG", "D", "S"]
+"tests/**/*.py" = ["ARG", "D", "S", "ERA"]
 "fuzz/**/*.py" = ["D", "T20"]
-"validation/**/*.py" = ["D", "T20"]
+"validation/**/*.py" = ["D", "T20", "TRY"]
+"scripts/**/*.py" = ["D", "T20", "TRY"]
+"tools/**/*.py" = ["D", "T20", "TRY"]
 "noxfile.py" = ["D", "T20"]
 "src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
 
@@ -376,12 +368,6 @@ exclude_lines = [
 ]
 precision = 2
 show_missing = true
-
-# Pydocstyle Configuration
-[tool.pydocstyle]
-convention = "google"
-match = "(?!(test_)).*\\.py"
-add-ignore = ["D105", "D107", "D212"]  # Ignore magic methods, __init__ docstrings, and D212 (Google style uses D213)
 
 # Interrogate Configuration (Docstring Coverage)
 [tool.interrogate]
