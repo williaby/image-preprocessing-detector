@@ -1165,70 +1165,1262 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 
 ---
 
-### Phase 5: Monitoring, Drift Detection & Continuous Improvement (Ongoing)
+### Phase 5: Production Operations, Monitoring & Continuous Improvement (Ongoing)
+
+**Timeline**: Ongoing (starts Week 21)
+**Status**: 📋 PLANNED
 
 **Goals:**
-- Establish production monitoring and alerting
-- Implement drift detection for model degradation
-- Continuous model improvement via active learning
+- Establish comprehensive production monitoring, observability, and alerting infrastructure
+- Implement automated drift detection and model performance tracking
+- Build continuous improvement pipeline with data flywheel and active learning
+- Achieve operational excellence with SRE practices and incident response
+- Optimize costs and resource utilization while maintaining SLAs
+- Enable rapid experimentation with A/B testing and canary deployments
 
-**Tasks:**
+---
 
-1. **Telemetry & Logging** ([src/telemetry/](src/telemetry/))
-   - Log all predictions with confidence scores
-   - Track issue frequencies and correction outcomes
-   - Performance metrics: Latency (p50, p95, p99), throughput
-   - Error tracking: Sentry or equivalent
-   - Structured logging: JSON format with correlation IDs
+## Phase 5 Overview
 
-2. **Monitoring Dashboard** ([monitoring/](monitoring/))
-   - Grafana dashboards for real-time metrics
-   - Prometheus scraping for service metrics
-   - Alerts: Latency spikes, error rate increases, model drift
-   - Resource monitoring: GPU utilization, memory usage
+Phase 5 is the operational phase that ensures long-term system health, continuous improvement, and production excellence. Unlike earlier phases focused on building features, Phase 5 establishes the infrastructure and processes for maintaining and evolving the system over time.
 
-3. **Drift Detection** ([src/monitoring/drift.py](src/monitoring/drift.py))
-   - Feature distribution monitoring:
-     - Track image histogram statistics (mean, variance, entropy)
-     - Monitor confidence score distributions per issue/element type
-     - KL divergence between production and training distributions
-   - Model performance monitoring:
-     - Periodic evaluation on held-out change-detection set
-     - Track mAP, F1 scores over time
-   - Alerting:
-     - Trigger alert if KL divergence > threshold
-     - Alert if mAP drops > 5% from baseline
+### Phase 5 Sub-Phases
 
-4. **Continuous Improvement Pipeline** ([scripts/continuous_improvement/](scripts/continuous_improvement/))
-   - **Data Flywheel**:
-     - Collect production failures (low confidence, user-reported errors)
-     - Sample for manual review and re-annotation
-     - Add to training set (incremental learning)
-   - **Active Learning**:
-     - Weekly mining of high-uncertainty samples
-     - Annotate and retrain quarterly
-   - **Model Retraining**:
-     - Scheduled retraining: Quarterly with updated data
-     - A/B testing: Deploy new model to 10% traffic, compare metrics
-     - Rollout: Gradual rollout if A/B test passes
+```
+Phase 5A: Operational Foundation (Weeks 21-24)
+    → Monitoring, logging, alerting infrastructure
 
-5. **Periodic Calibration** ([scripts/calibration.py](scripts/calibration.py))
-   - Quarterly recalibration on fresh validation set
-   - Recompute confidence thresholds per issue type
-   - Update correction guardrail parameters
-   - Document threshold changes in version history
+Phase 5B: Intelligence & Automation (Weeks 25-32)
+    → Drift detection, data flywheel, MLOps automation
 
-**Deliverables:**
-- ✅ Production monitoring dashboard
-- ✅ Drift detection system with alerting
-- ✅ Continuous improvement scripts (data flywheel, active learning)
-- ✅ Quarterly retraining and recalibration schedule
+Phase 5C: Optimization & Scale (Weeks 33-40)
+    → Cost optimization, advanced features, scale testing
 
-**Success Criteria:**
-- Drift detection alerts within 1 week of distribution shift
-- Model performance degradation < 2% over 6 months
-- Active learning reduces annotation effort by > 50%
+Phase 5D: Ongoing Operations (Week 41+)
+    → Continuous monitoring, quarterly retraining, incident response
+```
+
+---
+
+## Phase 5A: Operational Foundation (Weeks 21-24, 4 weeks)
+
+### Objectives
+
+Establish core production infrastructure for monitoring, logging, and alerting.
+
+### Tasks
+
+#### 1. Observability Infrastructure ([monitoring/](monitoring/))
+
+**Prometheus Metrics Collection:**
+- Service-level metrics:
+  - Request rate, error rate, duration (RED metrics)
+  - p50, p95, p99, p999 latency histograms
+  - Throughput (pages/sec, requests/sec)
+  - Queue depth and processing backlog
+- Model-level metrics:
+  - Inference time per model (IQA, layout detection)
+  - Confidence score distributions
+  - Issue detection frequencies (blur, skew, noise, etc.)
+  - Element detection frequencies (tables, images, handwriting)
+- Resource metrics:
+  - GPU utilization, memory usage, temperature
+  - CPU utilization per worker
+  - Memory usage (RSS, heap, GPU VRAM)
+  - Disk I/O for temporary files
+- Business metrics:
+  - Pages processed per hour/day/month
+  - Processing cost per page
+  - Error recovery success rate
+
+**Grafana Dashboards:**
+- **Operations Dashboard**:
+  - Service health overview (uptime, error rate)
+  - Real-time latency and throughput
+  - Queue depth and worker status
+  - Resource utilization trends
+- **Model Performance Dashboard**:
+  - Confidence score distributions over time
+  - Issue/element detection frequency trends
+  - Per-model inference time trends
+  - Correction application rates
+- **Business Dashboard**:
+  - Processing volume and trends
+  - Cost per page metrics
+  - SLA compliance (latency, throughput)
+  - User-reported issues tracking
+
+**Alerting Rules:**
+```yaml
+# Example Prometheus alerting rules
+groups:
+  - name: preprocessing_service
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error rate above 5% for 5 minutes"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(request_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 latency above 500ms for 10 minutes"
+
+      - alert: GPUMemoryHigh
+        expr: gpu_memory_used_bytes / gpu_memory_total_bytes > 0.90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GPU memory usage above 90%"
+```
+
+**Implementation:**
+```bash
+# Monitoring stack deployment
+docker-compose -f monitoring/docker-compose.yml up -d
+  - Prometheus (metrics storage)
+  - Grafana (dashboards)
+  - AlertManager (alert routing)
+  - Node Exporter (system metrics)
+  - NVIDIA DCGM Exporter (GPU metrics)
+```
+
+---
+
+#### 2. Structured Logging Infrastructure ([src/telemetry/logging.py](src/telemetry/logging.py))
+
+**Log Collection Architecture:**
+```
+Application (structlog)
+    ↓ (JSON logs)
+Filebeat / Fluentd
+    ↓
+Loki / Elasticsearch
+    ↓
+Grafana / Kibana (visualization)
+```
+
+**Structured Log Format:**
+```json
+{
+  "timestamp": "2025-01-15T10:30:01.123Z",
+  "level": "INFO",
+  "logger": "preprocessing.detection.iqa",
+  "correlation_id": "req-abc123",
+  "document_id": "doc-xyz789",
+  "page_index": 2,
+  "event": "issue_detected",
+  "issue_type": "blur",
+  "confidence": 0.87,
+  "processing_time_ms": 45,
+  "model_version": "iqa-v1.2.0",
+  "worker_id": "worker-03",
+  "gpu_id": 0
+}
+```
+
+**Log Levels and Usage:**
+- **DEBUG**: Detailed tracing (disabled in production)
+- **INFO**: Normal operations (issue detected, correction applied)
+- **WARNING**: Recoverable issues (low confidence, fallback used)
+- **ERROR**: Processing failures (model error, IO error)
+- **CRITICAL**: Service failures (OOM, GPU crash)
+
+**Correlation ID Tracking:**
+- Generate unique ID per document/request
+- Propagate through entire pipeline
+- Enable end-to-end tracing across services
+
+**Log Retention:**
+- Hot storage: 7 days (fast queries)
+- Warm storage: 30 days (standard queries)
+- Cold storage: 1 year (compliance, long-term analysis)
+
+---
+
+#### 3. Distributed Tracing ([monitoring/tracing/](monitoring/tracing/))
+
+**Technology**: Jaeger or Grafana Tempo
+
+**Span Structure:**
+```
+Document Processing (root span)
+├── PDF Ingestion (10ms)
+├── Text Detection Gate (5ms)
+├── Layout Detection (25ms)
+│   ├── YOLOv8 Inference (20ms)
+│   └── Post-processing (5ms)
+├── IQA per Element (30ms)
+│   ├── Element 1 IQA (10ms)
+│   ├── Element 2 IQA (10ms)
+│   └── Element 3 IQA (10ms)
+├── Correction Pipeline (40ms)
+│   ├── Deskew (15ms)
+│   ├── CLAHE (10ms)
+│   └── Sharpening (15ms)
+└── JSON Output (5ms)
+
+Total: 115ms
+```
+
+**Tracing Benefits:**
+- Identify bottlenecks in pipeline
+- Track latency across distributed workers
+- Debug slow requests with detailed traces
+- Optimize resource allocation
+
+---
+
+#### 4. Error Tracking & Incident Management ([monitoring/errors/](monitoring/errors/))
+
+**Sentry Integration:**
+- Automatic error capture with stack traces
+- Error grouping and deduplication
+- User impact tracking (affected documents)
+- Release tracking (correlate errors with deployments)
+
+**Error Categories:**
+```python
+# Custom error contexts
+with sentry_sdk.push_scope() as scope:
+    scope.set_context("document", {
+        "id": doc_id,
+        "page_count": num_pages,
+        "source_dpi": dpi,
+        "file_size_mb": file_size
+    })
+    scope.set_context("model", {
+        "iqa_version": iqa_version,
+        "layout_version": layout_version,
+        "onnx_runtime_version": onnx_version
+    })
+    # Process document (errors auto-captured)
+```
+
+**On-Call Rotation:**
+- Set up PagerDuty or Opsgenie integration
+- Define escalation policies (critical → page immediately, warning → email)
+- Create runbooks for common incidents
+- Schedule on-call rotation (weekly or bi-weekly)
+
+---
+
+#### 5. Health Checks & Readiness Probes
+
+**Kubernetes Health Endpoints:**
+```python
+# FastAPI health check endpoints
+@app.get("/health")
+async def health():
+    """Liveness probe - is service running?"""
+    return {"status": "healthy", "timestamp": utcnow()}
+
+@app.get("/ready")
+async def ready():
+    """Readiness probe - can service handle requests?"""
+    checks = {
+        "models_loaded": check_models_loaded(),
+        "gpu_available": check_gpu_available(),
+        "disk_space": check_disk_space(),
+        "queue_healthy": check_queue_depth()
+    }
+    ready = all(checks.values())
+    status = "ready" if ready else "not_ready"
+    return {"status": status, "checks": checks}
+```
+
+**Health Check Criteria:**
+- All models loaded successfully
+- GPU accessible (if GPU deployment)
+- Sufficient disk space (> 10% free)
+- Queue depth below threshold (< 1000 pending)
+- Recent successful processing (within last 60s)
+
+---
+
+### Deliverables (Phase 5A)
+
+- ✅ Prometheus + Grafana monitoring stack deployed
+- ✅ 3 Grafana dashboards (Operations, Model Performance, Business)
+- ✅ Alerting rules configured and tested
+- ✅ Structured logging with Loki/Elasticsearch
+- ✅ Distributed tracing with Jaeger/Tempo
+- ✅ Sentry error tracking integrated
+- ✅ Health check endpoints implemented
+- ✅ On-call rotation and runbooks established
+
+### Success Criteria (Phase 5A)
+
+- Mean time to detection (MTTD) < 5 minutes for critical issues
+- Mean time to recovery (MTTR) < 30 minutes for service outages
+- 100% of critical alerts delivered within 2 minutes
+- Log query performance < 1 second for recent logs (7 days)
+- Distributed traces available for all requests
+- Dashboard load time < 2 seconds
+
+---
+
+## Phase 5B: Intelligence & Automation (Weeks 25-32, 8 weeks)
+
+### Objectives
+
+Implement automated drift detection, data flywheel, and MLOps pipeline for continuous improvement.
+
+### Tasks
+
+#### 1. Model Drift Detection ([src/monitoring/drift.py](src/monitoring/drift.py))
+
+**Feature Distribution Monitoring:**
+
+**Image Statistics Tracking:**
+```python
+# Track distribution of image properties
+image_features = {
+    "mean_brightness": np.mean(image),
+    "std_brightness": np.std(image),
+    "entropy": scipy.stats.entropy(histogram),
+    "edge_density": cv2.Canny(image).sum() / image.size,
+    "color_variance": np.var(image, axis=(0,1)),
+}
+
+# Compute KL divergence from training distribution
+kl_divergence = compute_kl(production_dist, training_dist)
+if kl_divergence > threshold:
+    alert("Feature drift detected", kl_divergence)
+```
+
+**Confidence Score Distribution Monitoring:**
+```python
+# Track confidence scores per issue type
+confidence_stats = {
+    "blur": {
+        "mean": 0.65,
+        "std": 0.20,
+        "p50": 0.68,
+        "p95": 0.92,
+        "distribution": histogram
+    }
+}
+
+# Alert if distribution shifts significantly
+if wasserstein_distance(current, baseline) > threshold:
+    alert("Confidence distribution drift", issue_type)
+```
+
+**Performance Metrics Tracking:**
+```python
+# Weekly evaluation on held-out change-detection set
+weekly_metrics = {
+    "iqa_map": 0.89,  # down from 0.91 baseline
+    "layout_map50": 0.84,  # stable
+    "json_accuracy": 0.86  # down from 0.88 baseline
+}
+
+# Alert if mAP drops > 5%
+if current_map < baseline_map * 0.95:
+    alert("Model performance degradation", current_map)
+```
+
+**Drift Detection Dashboard:**
+- Feature distribution plots (training vs production)
+- Confidence score trends over time
+- Performance metrics trend (weekly mAP, F1)
+- Drift alerts and resolution timeline
+
+---
+
+#### 2. Data Flywheel & Active Learning ([scripts/continuous_improvement/](scripts/continuous_improvement/))
+
+**Data Collection Pipeline:**
+```python
+# Automatic failure collection
+def collect_failures():
+    """Mine production data for labeling candidates"""
+    candidates = []
+
+    # Low confidence samples
+    low_conf = query_db("confidence < 0.70")
+    candidates.extend(sample(low_conf, 100))
+
+    # User-reported errors
+    user_errors = query_db("user_feedback = 'incorrect'")
+    candidates.extend(user_errors)
+
+    # High-uncertainty samples
+    high_uncertainty = query_db("entropy > threshold")
+    candidates.extend(sample(high_uncertainty, 100))
+
+    # Class imbalance (rare classes)
+    rare_classes = ["handwriting", "formula"]
+    for cls in rare_classes:
+        rare_samples = query_db(f"element_type = {cls}")
+        candidates.extend(sample(rare_samples, 50))
+
+    return candidates
+```
+
+**Active Learning Workflow:**
+```
+Week 1-4: Collect production failures (auto + manual reporting)
+    ↓
+Week 5: Mine high-value samples (500 candidates)
+    ↓
+Week 6: Human annotation (CVAT, 2 annotators for agreement)
+    ↓
+Week 7: Add to training set, trigger retraining pipeline
+    ↓
+Week 8: Evaluate new model, A/B test if passing
+    ↓
+Week 9-12: Gradual rollout, monitor metrics
+```
+
+**Annotation Interface:**
+- Use CVAT or Label Studio for annotation
+- Pre-populate with model predictions (faster annotation)
+- Inter-annotator agreement checks (Cohen's kappa > 0.80)
+- Quality control: 10% of annotations reviewed by expert
+
+**Training Set Versioning:**
+```bash
+# DVC for dataset versioning
+dvc add data/training_v1.2.dvc
+git commit -m "Training set v1.2: +500 handwriting samples"
+git tag training-v1.2
+dvc push
+```
+
+---
+
+#### 3. MLOps Automation ([mlops/](mlops/))
+
+**Automated Retraining Pipeline:**
+```yaml
+# GitHub Actions: Quarterly retraining
+name: Quarterly Model Retraining
+on:
+  schedule:
+    - cron: '0 0 1 */3 *'  # First day of quarter
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  retrain_iqa:
+    runs-on: [self-hosted, gpu]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download latest training data
+        run: dvc pull data/iqa_training.dvc
+
+      - name: Train IQA model
+        run: |
+          python scripts/train_iqa.py \
+            --config configs/iqa_retrain.yaml \
+            --output models/iqa/candidate
+
+      - name: Evaluate on validation set
+        run: |
+          python scripts/evaluate_iqa.py \
+            --model models/iqa/candidate \
+            --test-set data/iqa_validation \
+            --output eval_results.json
+
+      - name: Check acceptance criteria
+        run: |
+          python scripts/check_model_quality.py \
+            --results eval_results.json \
+            --min-map 0.88 \
+            --max-latency 200
+
+      - name: Trigger A/B test
+        if: success()
+        run: |
+          curl -X POST $AB_TEST_ENDPOINT \
+            -d '{"candidate": "models/iqa/candidate"}'
+```
+
+**Model Registry:**
+```python
+# MLflow model tracking
+import mlflow
+
+with mlflow.start_run():
+    # Log parameters
+    mlflow.log_params({
+        "architecture": "mobilenetv3",
+        "input_size": 224,
+        "batch_size": 32,
+        "learning_rate": 1e-3
+    })
+
+    # Train model
+    model = train_iqa(config)
+
+    # Log metrics
+    mlflow.log_metrics({
+        "val_map": 0.89,
+        "val_f1_blur": 0.91,
+        "val_f1_skew": 0.93,
+        "inference_time_ms": 45
+    })
+
+    # Log model
+    mlflow.pytorch.log_model(model, "iqa_model")
+    mlflow.log_artifact("configs/iqa.yaml")
+```
+
+**Model Versioning Strategy:**
+- Semantic versioning: v1.2.3 (major.minor.patch)
+- Major: Breaking changes (architecture, output format)
+- Minor: New features (additional classes, improved accuracy)
+- Patch: Bug fixes, calibration updates
+- Tag models in registry: production, staging, candidate
+
+---
+
+#### 4. A/B Testing Framework ([src/api/ab_testing.py](src/api/ab_testing.py))
+
+**Traffic Splitting:**
+```python
+# Route requests to model variants
+def get_model_variant(document_id):
+    """Assign document to model variant"""
+    hash_val = hash(document_id) % 100
+
+    # 10% to candidate model, 90% to production
+    if hash_val < 10:
+        return "candidate"
+    else:
+        return "production"
+
+# Process with assigned model
+variant = get_model_variant(document_id)
+result = process_document(document, model_variant=variant)
+
+# Log variant assignment
+log_event("ab_test_assignment", {
+    "document_id": document_id,
+    "variant": variant,
+    "timestamp": utcnow()
+})
+```
+
+**Metrics Comparison:**
+```python
+# Compare variants after 1 week
+ab_test_results = {
+    "production": {
+        "latency_p95": 145,
+        "error_rate": 0.008,
+        "user_reported_issues": 12
+    },
+    "candidate": {
+        "latency_p95": 138,  # 5% faster
+        "error_rate": 0.006,  # 25% fewer errors
+        "user_reported_issues": 7  # 42% fewer issues
+    }
+}
+
+# Statistical significance test
+p_value = ttest_ind(production_latencies, candidate_latencies)
+if p_value < 0.05 and candidate_better:
+    approve_rollout("candidate")
+```
+
+**Rollout Strategy:**
+```
+Week 1: 10% traffic to candidate (A/B test)
+    ↓ (Monitor metrics, check for regressions)
+Week 2: 25% traffic to candidate (if passing)
+    ↓
+Week 3: 50% traffic to candidate
+    ↓
+Week 4: 100% traffic to candidate (promote to production)
+    ↓
+Rollback plan: Instant rollback if error rate > 2x baseline
+```
+
+**Rollback Automation:**
+```python
+# Auto-rollback on critical issues
+def monitor_rollout():
+    while rollout_in_progress:
+        metrics = fetch_metrics(candidate_model)
+
+        # Check rollback conditions
+        if metrics.error_rate > baseline.error_rate * 2:
+            rollback("Error rate too high")
+        elif metrics.latency_p95 > baseline.latency_p95 * 1.5:
+            rollback("Latency too high")
+        elif metrics.user_issues > threshold:
+            rollback("User-reported issues")
+
+        sleep(60)  # Check every minute
+```
+
+---
+
+#### 5. Periodic Calibration ([scripts/calibration.py](scripts/calibration.py))
+
+**Quarterly Calibration Workflow:**
+```python
+# Recalibrate confidence thresholds
+def calibrate_thresholds(validation_set):
+    """Find optimal thresholds per issue type"""
+    optimal_thresholds = {}
+
+    for issue_type in ["blur", "skew", "contrast", "noise"]:
+        # Compute precision-recall curve
+        precisions, recalls, thresholds = precision_recall_curve(
+            y_true=validation_set[f"{issue_type}_label"],
+            y_score=validation_set[f"{issue_type}_confidence"]
+        )
+
+        # Find threshold that maximizes F1
+        f1_scores = 2 * (precisions * recalls) / (precisions + recalls)
+        optimal_idx = np.argmax(f1_scores)
+        optimal_thresholds[issue_type] = thresholds[optimal_idx]
+
+    return optimal_thresholds
+
+# Update production config
+update_config("thresholds.yaml", optimal_thresholds)
+deploy_config_update()
+```
+
+**Temperature Scaling:**
+```python
+# Recalibrate confidence scores
+def temperature_scaling(logits, temperature):
+    """Scale logits for better calibration"""
+    return logits / temperature
+
+# Find optimal temperature on validation set
+optimal_temp = find_optimal_temperature(validation_set)
+save_temperature("models/iqa/temperature.json", optimal_temp)
+```
+
+**Calibration Metrics:**
+- Expected Calibration Error (ECE) < 0.05
+- Reliability diagrams (confidence vs accuracy)
+- Brier score for probabilistic predictions
+
+---
+
+### Deliverables (Phase 5B)
+
+- ✅ Drift detection system with KL divergence, confidence monitoring
+- ✅ Data flywheel: automated failure collection, active learning pipeline
+- ✅ MLOps automation: scheduled retraining, model registry (MLflow)
+- ✅ A/B testing framework with traffic splitting and auto-rollback
+- ✅ Quarterly calibration scripts with threshold optimization
+- ✅ Dataset versioning with DVC
+- ✅ Model versioning with semantic versioning + registry
+
+### Success Criteria (Phase 5B)
+
+- Drift detection: Alert within 1 week of distribution shift (95% accuracy)
+- Active learning: Reduce annotation effort by > 50% (500 samples vs 1000+)
+- Model retraining: Automated quarterly retraining with < 5% manual intervention
+- A/B testing: 95% of rollouts complete without rollback
+- Calibration: ECE < 0.05 after quarterly recalibration
 - 95% of production failures resolved in next model version
+
+---
+
+## Phase 5C: Optimization & Scale (Weeks 33-40, 8 weeks)
+
+### Objectives
+
+Optimize costs, enhance performance, and prepare for scale (10x traffic growth).
+
+### Tasks
+
+#### 1. Cost Optimization ([scripts/cost_optimization/](scripts/cost_optimization/))
+
+**GPU Utilization Optimization:**
+```python
+# Maximize GPU batch processing
+def optimize_batch_size():
+    """Find optimal batch size for GPU memory"""
+    batch_sizes = [1, 2, 4, 8, 16, 32]
+    results = []
+
+    for batch_size in batch_sizes:
+        try:
+            latency, throughput, memory = benchmark_batch(batch_size)
+            cost_per_page = (gpu_cost_per_hour / 3600) / throughput
+            results.append({
+                "batch_size": batch_size,
+                "latency": latency,
+                "throughput": throughput,
+                "memory_gb": memory,
+                "cost_per_page": cost_per_page
+            })
+        except OOMError:
+            break
+
+    # Select batch size with best cost/performance
+    optimal = min(results, key=lambda x: x["cost_per_page"])
+    return optimal["batch_size"]
+```
+
+**Auto-scaling Policies:**
+```yaml
+# Kubernetes HPA (Horizontal Pod Autoscaler)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: preprocessing-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: preprocessing-service
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Pods
+      pods:
+        metric:
+          name: queue_depth
+        target:
+          type: AverageValue
+          averageValue: "500"  # Scale if queue > 500
+```
+
+**Cost Analysis Dashboard:**
+- Cost per page (GPU, CPU, storage, network)
+- Monthly cost trends
+- Resource utilization vs cost
+- Optimization opportunities (spot instances, reserved capacity)
+
+**Savings Opportunities:**
+```
+1. Spot instances: 60-70% cost reduction (trade-off: interruptions)
+2. Reserved capacity: 30-40% cost reduction (1-year commit)
+3. Batch processing: 2-4x throughput increase → lower cost/page
+4. Early exit optimization: 30-50% of pages skip expensive models
+5. Model quantization: CPU-only deployment for low-priority workloads
+```
+
+---
+
+#### 2. Performance Optimization ([scripts/performance/](scripts/performance/))
+
+**Latency Optimization:**
+```python
+# Profile and optimize hot paths
+import cProfile
+import pstats
+
+profiler = cProfile.Profile()
+profiler.enable()
+
+# Process document
+result = process_document(document)
+
+profiler.disable()
+stats = pstats.Stats(profiler)
+stats.sort_stats('cumulative')
+stats.print_stats(20)  # Top 20 slowest functions
+
+# Identify bottlenecks:
+# 1. YOLO inference (25ms) → Batch processing, INT8 quantization
+# 2. Image I/O (15ms) → In-memory processing, avoid disk writes
+# 3. JSON serialization (10ms) → Use orjson (faster than stdlib)
+```
+
+**Throughput Optimization:**
+```python
+# Async processing pipeline
+async def process_document_async(document):
+    """Parallel processing of independent stages"""
+    # Stage 1: Ingestion (can run in parallel for multi-page)
+    pages = await asyncio.gather(*[
+        ingest_page(page) for page in document.pages
+    ])
+
+    # Stage 2: Detection (batch inference)
+    detection_results = await batch_detect(pages)
+
+    # Stage 3: Correction (parallel per page)
+    corrected_pages = await asyncio.gather(*[
+        correct_page(page, results)
+        for page, results in zip(pages, detection_results)
+    ])
+
+    return corrected_pages
+```
+
+**Caching Strategy:**
+```python
+# Cache expensive operations
+@lru_cache(maxsize=10000)
+def detect_text_gate(image_hash):
+    """Cache text detection results"""
+    return text_gate_detector(image)
+
+# DPI detection caching
+dpi_cache = {}
+def get_dpi_cached(pdf_path):
+    if pdf_path not in dpi_cache:
+        dpi_cache[pdf_path] = detect_dpi(pdf_path)
+    return dpi_cache[pdf_path]
+```
+
+---
+
+#### 3. Scalability Testing ([tests/scale/](tests/scale/))
+
+**Load Testing:**
+```python
+# Locust load test
+from locust import HttpUser, task, between
+
+class PreprocessingUser(HttpUser):
+    wait_time = between(1, 3)
+
+    @task
+    def process_document(self):
+        with open("test_document.pdf", "rb") as f:
+            self.client.post("/process", files={"file": f})
+
+# Run load test
+# locust -f tests/scale/load_test.py --users 100 --spawn-rate 10
+```
+
+**Scale Targets:**
+- 10x current throughput (60 pages/sec → 600 pages/sec)
+- Sustained load: 100,000 pages/hour for 24 hours
+- Burst capacity: 200,000 pages/hour for 1 hour
+- Latency under load: p95 < 200ms (no degradation)
+
+**Chaos Engineering:**
+```bash
+# Test resilience with chaos experiments
+chaos-mesh apply -f experiments/gpu-failure.yaml   # Simulate GPU crash
+chaos-mesh apply -f experiments/network-delay.yaml # Network latency
+chaos-mesh apply -f experiments/pod-kill.yaml      # Random pod termination
+
+# Validate: System recovers within 5 minutes
+# Validate: No data loss during failures
+# Validate: Auto-scaling responds appropriately
+```
+
+---
+
+#### 4. Advanced Features
+
+**Multi-Region Deployment:**
+```
+Region: US-East (Primary)
+    → Serves North America traffic
+    → Primary model registry and training
+
+Region: EU-West (Secondary)
+    → Serves Europe traffic
+    → Model sync from US-East (hourly)
+
+Region: AP-Southeast (Secondary)
+    → Serves Asia-Pacific traffic
+    → Model sync from US-East (hourly)
+
+Benefits:
+- Lower latency (geographic proximity)
+- Regulatory compliance (data residency)
+- Disaster recovery (multi-region redundancy)
+```
+
+**Feature Flags:**
+```python
+# LaunchDarkly or custom feature flags
+def should_use_new_correction(document):
+    """Gradual rollout of new correction algorithm"""
+    if feature_flag("new_correction_v2").is_enabled(document.user_id):
+        return True
+    return False
+
+# Rollout strategy:
+# Week 1: 5% of users
+# Week 2: 20% of users
+# Week 3: 50% of users
+# Week 4: 100% of users
+```
+
+---
+
+#### 5. Documentation & Knowledge Management
+
+**Operational Runbooks:**
+- Incident Response Playbook
+- Model Deployment Guide
+- Rollback Procedures
+- Capacity Planning Guide
+- Cost Optimization Guide
+- Performance Tuning Guide
+
+**Quarterly Business Reviews (QBRs):**
+- System health overview
+- Key metrics trends (latency, throughput, costs)
+- Model performance evolution
+- Feature roadmap and prioritization
+- Resource planning and budgeting
+
+**Post-Incident Reviews (PIRs):**
+```markdown
+# Post-Incident Review: Latency Spike on 2025-03-15
+
+## Incident Summary
+- **Date**: 2025-03-15 14:30 UTC
+- **Duration**: 45 minutes
+- **Impact**: p95 latency increased from 150ms to 800ms
+- **Root Cause**: Memory leak in ONNX Runtime
+
+## Timeline
+- 14:30: Alert triggered (latency > 500ms)
+- 14:35: On-call engineer paged
+- 14:40: Investigation started
+- 14:55: Root cause identified (memory leak)
+- 15:05: Mitigation deployed (worker restart)
+- 15:15: Latency returned to normal
+
+## Action Items
+- [ ] Upgrade ONNX Runtime to v1.16.1 (fixes memory leak)
+- [ ] Add memory leak detection to monitoring
+- [ ] Implement automatic worker restart on high memory usage
+- [ ] Update runbook with memory leak troubleshooting
+```
+
+---
+
+### Deliverables (Phase 5C)
+
+- ✅ Cost optimization: GPU batch size tuning, auto-scaling policies
+- ✅ Performance optimization: 20% latency reduction, 2x throughput increase
+- ✅ Scalability testing: 10x load test passing, chaos engineering validated
+- ✅ Multi-region deployment (optional): 3 regions operational
+- ✅ Feature flags framework for gradual rollouts
+- ✅ Comprehensive operational runbooks (8+ documents)
+- ✅ Quarterly Business Review process established
+- ✅ Post-Incident Review template and process
+
+### Success Criteria (Phase 5C)
+
+- Cost per page reduced by > 30% from Phase 4 baseline
+- Latency p95 < 150ms under 10x load
+- System handles 10x traffic without degradation
+- Auto-scaling responds within 2 minutes of load spike
+- 100% of incidents have Post-Incident Reviews
+- Runbooks cover 90% of common operational scenarios
+
+---
+
+## Phase 5D: Ongoing Operations (Week 41+)
+
+### Objectives
+
+Sustain operational excellence through continuous monitoring, quarterly retraining, and iterative improvements.
+
+### Recurring Activities
+
+#### Weekly Activities
+
+**Monday: Weekly Planning**
+- Review previous week's metrics
+- Prioritize active learning candidates
+- Plan model experiments
+- Review incident reports
+
+**Wednesday: Model Performance Review**
+- Check drift detection alerts
+- Review confidence score distributions
+- Analyze user-reported issues
+- Identify retraining priorities
+
+**Friday: Retrospective**
+- Team retro: What went well, what to improve
+- Update documentation based on learnings
+- Share knowledge across team
+
+---
+
+#### Monthly Activities
+
+**Week 1: Active Learning Cycle**
+- Mine high-value samples from production
+- Annotate 100-200 samples
+- Add to training set
+
+**Week 2: Performance Analysis**
+- Deep dive on latency/throughput trends
+- Cost analysis and optimization opportunities
+- Capacity planning review
+
+**Week 3: Security & Compliance**
+- Dependency updates (Dependabot, Safety)
+- Security scanning (Bandit, CodeQL)
+- Compliance audit (data retention, PII handling)
+
+**Week 4: Knowledge Sharing**
+- Tech talk: New features, optimizations
+- Update documentation
+- Cross-team collaboration
+
+---
+
+#### Quarterly Activities
+
+**Q1: Model Retraining**
+- Retrain IQA and layout models with new data
+- A/B test candidate models
+- Gradual rollout to production
+
+**Q2: Calibration & Tuning**
+- Recalibrate confidence thresholds
+- Tune correction guardrails
+- Update configurations
+
+**Q3: Capacity Planning**
+- Forecast traffic growth
+- Plan infrastructure scaling
+- Budget for next quarter
+
+**Q4: Annual Review**
+- Year-in-review metrics
+- Roadmap planning for next year
+- Team retrospective
+
+---
+
+#### On-Call Responsibilities
+
+**Primary On-Call (24/7 rotation):**
+- Respond to critical alerts (< 15 min)
+- Triage and resolve incidents
+- Escalate to secondary if needed
+- Write Post-Incident Reviews
+
+**Secondary On-Call (backup):**
+- Provide support to primary
+- Review and approve rollbacks
+- Coordinate with engineering team
+
+**On-Call Runbook Topics:**
+- High error rate → Check logs, rollback recent deployment
+- High latency → Check GPU memory, restart workers
+- Model drift alert → Review drift metrics, plan retraining
+- GPU crash → Restart GPU workers, check DCGM logs
+- Disk full → Clean up temporary files, expand storage
+
+---
+
+### Key Performance Indicators (KPIs)
+
+**Service Health KPIs:**
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| **Uptime** | > 99.5% | Monthly uptime percentage |
+| **Error Rate** | < 0.5% | Failed requests / total requests |
+| **Latency p95** | < 150ms | 95th percentile response time |
+| **Throughput** | > 10 pages/sec | Pages processed per second |
+| **MTTD** | < 5 min | Mean time to detection (incidents) |
+| **MTTR** | < 30 min | Mean time to recovery (incidents) |
+
+**Model Performance KPIs:**
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| **IQA mAP** | > 0.88 | Weekly evaluation on test set |
+| **Layout mAP@.50** | > 0.82 | Weekly evaluation on test set |
+| **JSON Accuracy** | > 0.85 | End-to-end pipeline accuracy |
+| **Drift Detection** | < 1 week | Time to detect distribution shift |
+| **Model Degradation** | < 2% / 6mo | Performance loss over 6 months |
+
+**Operational Excellence KPIs:**
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| **Cost per Page** | < $0.01 | Monthly cost / pages processed |
+| **GPU Utilization** | 70-85% | Average GPU utilization |
+| **Active Learning Efficiency** | > 50% | Annotation reduction vs random |
+| **Rollback Rate** | < 5% | Deployments requiring rollback |
+| **Incident Rate** | < 2 / month | Critical incidents per month |
+
+---
+
+### Team Structure & Roles
+
+**Phase 5 Team Composition:**
+
+**Site Reliability Engineer (SRE)** - 1 FTE
+- Manage production infrastructure
+- Respond to incidents (on-call rotation)
+- Optimize performance and costs
+- Maintain monitoring and alerting
+- Write and update runbooks
+
+**ML Engineer** - 1 FTE
+- Monitor model performance
+- Manage retraining pipeline
+- Active learning and data curation
+- A/B testing and model deployment
+- Drift detection and calibration
+
+**Data Engineer** - 0.5 FTE (part-time)
+- Data pipeline maintenance
+- Dataset versioning and management
+- Active learning data collection
+- Data quality monitoring
+
+**Data Annotator** - 0.25 FTE (part-time)
+- Weekly active learning annotation
+- Quality control on production failures
+- Inter-annotator agreement checks
+
+**Product Manager** - 0.25 FTE (part-time)
+- Roadmap planning
+- Feature prioritization
+- Stakeholder communication
+- Quarterly business reviews
+
+---
+
+### Technology Stack (Phase 5)
+
+**Monitoring & Observability:**
+- Prometheus (metrics storage and querying)
+- Grafana (dashboards and visualization)
+- AlertManager (alert routing and silencing)
+- Loki or Elasticsearch (log aggregation)
+- Jaeger or Grafana Tempo (distributed tracing)
+- Node Exporter (system metrics)
+- NVIDIA DCGM Exporter (GPU metrics)
+
+**Error Tracking & Incident Management:**
+- Sentry (error tracking and release tracking)
+- PagerDuty or Opsgenie (on-call management)
+- Statuspage or Uptime Robot (public status page)
+
+**MLOps & Experimentation:**
+- MLflow (model registry and experiment tracking)
+- DVC (dataset versioning)
+- Weights & Biases (optional, experiment visualization)
+- Feature flags: LaunchDarkly or GrowthBook
+
+**CI/CD & Deployment:**
+- GitHub Actions (CI/CD pipelines)
+- ArgoCD or FluxCD (GitOps deployment)
+- Kubernetes (container orchestration)
+- Helm (Kubernetes package manager)
+
+**Data & Storage:**
+- PostgreSQL (metadata storage)
+- Redis (caching and job queues)
+- S3 or MinIO (model artifacts, datasets)
+- DVC remotes (dataset versioning storage)
+
+---
+
+### Long-Term Roadmap (Beyond Phase 5)
+
+**Phase 6: Advanced AI Features (Months 13-18)**
+- Vision Transformer models (DETR, DINO) for layout detection
+- Self-supervised learning for reduced annotation needs
+- Multi-modal fusion (text + image embeddings)
+- Zero-shot element classification
+
+**Phase 7: Enterprise Features (Months 19-24)**
+- Multi-tenancy and user management
+- Custom model training per tenant
+- SLA guarantees and premium tiers
+- Enterprise SSO and RBAC
+
+**Phase 8: Intelligence & Automation (Months 25-30)**
+- Reinforcement learning from human feedback (RLHF)
+- Automated hyperparameter tuning (AutoML)
+- Self-healing systems (auto-remediation)
+- Predictive scaling and cost optimization
+
+---
+
+## Phase 5 Summary
+
+### Total Deliverables
+
+**Phase 5A (Foundation):**
+- Monitoring stack, dashboards, alerting, logging, tracing, error tracking
+
+**Phase 5B (Intelligence):**
+- Drift detection, data flywheel, MLOps automation, A/B testing, calibration
+
+**Phase 5C (Optimization):**
+- Cost optimization, performance tuning, scalability testing, runbooks
+
+**Phase 5D (Ongoing):**
+- Continuous monitoring, quarterly retraining, operational excellence
+
+### Total Success Criteria
+
+- **Uptime**: > 99.5%
+- **Latency**: p95 < 150ms
+- **Cost**: < $0.01 per page
+- **Model Performance**: IQA mAP > 0.88, Layout mAP@.50 > 0.82
+- **Drift Detection**: < 1 week to alert
+- **MTTR**: < 30 minutes
+- **Active Learning**: > 50% annotation reduction
+- **Rollback Rate**: < 5%
+
+### Budget Estimate (Phase 5, Annual)
+
+| Category | Cost | Notes |
+|----------|------|-------|
+| **Team** | $300k-$400k | 3 FTEs (SRE, ML Eng, Data Eng + annotators) |
+| **Infrastructure** | $30k-$60k | Monitoring stack, logging, storage |
+| **Compute** | $36k-$72k | GPU workers, auto-scaling (from Phase 4) |
+| **Tools** | $10k-$20k | Sentry, PagerDuty, feature flags, MLflow |
+| **Annotation** | $6k-$12k | Active learning (500-1000 samples/quarter) |
+| **Total** | $382k-$564k | Annual operational cost |
+
+**Note**: Compute costs overlap with Phase 4 production infrastructure.
+
+---
+
+## Phase 5 Dependencies
+
+**Requires Completion:**
+- Phase 4: Production API, deployment, initial monitoring
+
+**Enables:**
+- Long-term operational excellence
+- Continuous model improvement
+- Cost optimization at scale
+- Rapid experimentation and iteration
+
+---
+
+## Conclusion: Phase 5 as Operational Excellence
+
+Phase 5 transforms the Image Preprocessing Detector from a deployed system to a **world-class production service** with:
+
+1. **Comprehensive Observability**: Full visibility into system health, model performance, and business metrics
+2. **Automated Intelligence**: Drift detection, active learning, and MLOps automation reduce manual toil
+3. **Cost Efficiency**: Optimization delivers 30%+ cost reduction while maintaining SLAs
+4. **Operational Maturity**: Runbooks, on-call processes, and incident response ensure reliability
+5. **Continuous Improvement**: Data flywheel and quarterly retraining keep models fresh and accurate
+
+**Key Philosophy**: Phase 5 is not a one-time project, but an **ongoing commitment** to operational excellence that ensures the system remains reliable, performant, and continuously improving over years of production use.
 
 ---
 
