@@ -189,7 +189,7 @@ python-multipart = "^0.0.18"  # Updated to address CVE-2024-53981 and PVE-2024-9
 starlette = "^0.49.1"  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS via Range header)
 
 # Ruff Configuration - Consolidated Linting & Formatting
-# Replaces: pydocstyle (docstrings), partial Bandit (security)
+# Replaces: Black (formatting), pydocstyle (docstrings), partial Bandit (security)
 # Keeps: MyPy (type checking), interrogate (coverage), Bandit (advanced security)
 [tool.ruff]
 line-length = 88
