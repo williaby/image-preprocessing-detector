@@ -151,10 +151,10 @@ jobs:
     name: Dependency Security Review
     runs-on: ubuntu-latest
     needs: detect-changes
-    # Skip on scheduled runs (no PR context available)
-    # GitHub Dependency Review Action requires base_ref/head_ref from pull_request events
+    # Only run on pull_request events (requires PR context for base_ref/head_ref)
+    # GitHub Dependency Review Action cannot run on schedule or workflow_dispatch events
     if: |
-      github.event_name != 'schedule' &&
+      github.event_name == 'pull_request' &&
       needs.detect-changes.outputs.security_files == 'true'
     permissions:
       contents: read
