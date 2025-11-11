@@ -25,7 +25,7 @@ fi
 echo "Python version $PYTHON_VERSION is compatible with Atheris"
 
 # Install Poetry
-pip3 install poetry
+pip3 install poetry==2.2.1
 
 # Install project dependencies (without dev dependencies)
 cd $SRC/image-preprocessing-detector
@@ -33,7 +33,7 @@ poetry config virtualenvs.create false
 poetry install --without dev --no-interaction
 
 # Install Atheris for Python fuzzing
-pip3 install atheris
+pip3 install atheris==2.3.0
 
 # Use OSS-Fuzz helper to compile Python fuzz targets
 # This creates proper executables that ClusterFuzzLite recognizes

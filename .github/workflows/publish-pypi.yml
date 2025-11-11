@@ -67,7 +67,7 @@ jobs:
 
       - name: Verify package metadata
         run: |
-          pip install twine
+          pip install twine==6.2.0
           twine check dist/*
 
       - name: Upload distribution artifacts
