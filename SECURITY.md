@@ -163,6 +163,10 @@ This project follows secure development practices:
 - Comprehensive test coverage (94%+)
 - Security-focused linting with Bandit
 
+## Cryptography
+
+This software library does **not** implement or invoke any cryptographic primitives or protocols, does not store or validate passwords, and does not generate, manage, or use cryptographic keys, nonces, or tokens. Any transport security (e.g., HTTPS used by hosting platforms or package registries) is provided by those platforms and is **outside** the scope of this project's code.
+
 ## Common Vulnerability Mitigations
 
 ### OWASP Top 10 Considerations
