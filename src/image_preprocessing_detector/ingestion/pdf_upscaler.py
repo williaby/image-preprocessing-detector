@@ -210,7 +210,7 @@ class PDFUpscaler:
         except Exception as e:
             processing_time = time.time() - start_time
             error_msg = f"PDF upscaling failed: {e}"
-            logger.exception(error_msg)
+            logger.exception("PDF upscaling failed")
 
             return {
                 "success": False,
