@@ -416,50 +416,156 @@ mAP@.50: > 0.82
 
 ### 12. Office Format Support (functional_requirements.md FR-1.2)
 
-**Discard** - Out of scope for current project.
+**Defer to Phase 5** - Preprocessing embedded images in office documents.
+
+**Decision:** ✅ **Add to Phase 5 with Docling Integration**
 
 **PR Text:**
 ```
 The system shall support:
-- Office: .doc, .docx, .xls, .xlsx  ← NOT IMPLEMENTED
+- Office: .doc, .docx, .xls, .xlsx
 ```
 
-**Rationale:**
-- PROJECT_PLAN does not include Office formats
-- No implementation exists in codebase
-- Would require new dependencies (python-docx, openpyxl, LlamaParse)
-- Significant scope expansion
+**Context from Project Owner:**
+- Downstream system uses **Docling** for office format ingestion
+- Office files contain embedded images that can have quality issues
+- Preprocessing embedded images improves Docling's OCR accuracy
 
-**Alternative:** Mark as "Future Enhancement" or "Out of Scope"
+**Fixable Issues in Office Documents:**
 
-**Recommended Replacement:**
+1. **Embedded Images with Quality Issues:**
+   - Low DPI (72 DPI screenshots embedded in Word docs)
+   - Blur (photos taken with phone cameras)
+   - Skew (scanned documents saved as Word docs)
+   - Noise (legacy scanned images embedded in documents)
+
+2. **Hybrid Documents:**
+   - Word docs containing scanned page images
+   - Same quality issues as scanned PDFs
+   - Common in legal/medical workflows
+
+3. **Complex Layouts:**
+   - Excel: Multi-sheet workbooks with charts and embedded images
+   - Word: Multi-column layouts, embedded tables, mixed text+images
+   - PowerPoint: Slide layouts with text boxes, images, diagrams
+
+**Phase 5 Implementation Approach:**
+
+```python
+# src/ingestion/office_preprocessor.py
+
+class OfficeDocumentPreprocessor:
+    """Preprocess embedded images in office documents before Docling parsing."""
+
+    def preprocess_docx(self, docx_path: Path) -> DocumentMetadata:
+        """
+        Extract and preprocess embedded images from Word documents.
+
+        Integration with Docling:
+        1. Use python-docx to extract all embedded images
+        2. For each image:
+           - Run DPI detection (may be 72 DPI screenshots)
+           - Run blur/skew/noise detection
+           - Apply corrections if needed
+        3. Save corrected images
+        4. Generate metadata with image quality scores
+        5. Pass corrected images to Docling for text extraction
+        """
+        from docx import Document
+
+        doc = Document(docx_path)
+        embedded_images = self._extract_images(doc)
+
+        # Run existing preprocessing pipeline on each image
+        processed_images = []
+        for idx, img_data in enumerate(embedded_images):
+            img = self._bytes_to_image(img_data)
+            page_metadata = self.preprocessing_pipeline.process(img)
+            corrected_img = self._apply_corrections(img, page_metadata)
+
+            processed_images.append({
+                "index": idx,
+                "corrected": corrected_img,
+                "metadata": page_metadata
+            })
+
+        return DocumentMetadata(
+            file_path=str(docx_path),
+            document_type="office_word",
+            embedded_images=processed_images
+        )
+```
+
+**Integration Pipeline:**
+```
+Office File (.docx, .xlsx, .pptx)
+    ↓
+[Image Preprocessing Detector] (Phase 5)
+    - Extract embedded images (python-docx, openpyxl)
+    - Detect quality issues (blur, DPI, skew, noise)
+    - Correct images (upscale, deskew, denoise)
+    - Generate metadata + corrected images
+    ↓
+[Docling] (Downstream)
+    - Parse document structure
+    - Extract text using corrected images (better OCR)
+    - Generate final output for RAG
+```
+
+**Benefits for Docling Integration:**
+- Improved OCR accuracy on upscaled images (72 DPI → 300 DPI)
+- Cleaner text extraction from deskewed images
+- Quality metadata for confidence scoring on embedded images
+- Consistent preprocessing across all document types (PDF + Office)
+
+**Phase 5 Timeline (Weeks 21-25):**
+- Week 21: Add office format parsers (python-docx, openpyxl, python-pptx)
+- Week 22: Implement embedded image extraction
+- Week 23: Integrate with existing preprocessing pipeline
+- Week 24: Test with Docling integration
+- Week 25: Production deployment and monitoring
+
+**Dependencies:**
+- `python-docx`: Word document parsing
+- `openpyxl`: Excel document parsing
+- `python-pptx`: PowerPoint parsing (optional)
+
+**Recommended FR-1.2 Update:**
 ```markdown
 ### FR-1.2: Supported File Formats
 
-**In-Scope (Phase 1-3):**
+**In-Scope (Phase 1-4):**
 - Images: .jpg, .jpeg, .png, .tiff, .bmp
 - PDFs: .pdf (all types: image-only, born-digital, hybrid)
 
-**Out-of-Scope (Future Consideration):**
-- Office: .doc, .docx, .xls, .xlsx
-- Other: .odt, .rtf, .epub
+**Phase 5 (Office Format Preprocessing):**
+- Office: .doc, .docx, .xls, .xlsx, .pptx
+- Scope: Preprocess embedded images only (not full document parsing)
+- Integration: Extract images → preprocess → pass to Docling
+
+**Out-of-Scope:**
+- Other: .odt, .rtf, .epub (no current demand)
+- Full office parsing (handled by Docling downstream)
 
 **Rationale:**
-Office formats require specialized parsers (python-docx, openpyxl) and
-have different processing requirements. May be added in Phase 5
-(Continuous Improvement) if demand exists.
+Office formats contain embedded images that benefit from preprocessing
+(DPI upscaling, deskewing, denoising). Preprocessing improves downstream
+Docling OCR accuracy. Full document parsing delegated to Docling.
 ```
 
 **Action Items:**
-- [ ] Remove Office formats from FR-1.2
-- [ ] Add to "Future Enhancements" section
-- [ ] Document as explicit scope limitation
+- [ ] Add Office format preprocessing to PROJECT_PLAN Phase 5
+- [ ] Update FR-1.2 with Phase 5 scope (embedded images only)
+- [ ] Document Docling integration architecture
+- [ ] Add implementation tasks for Week 21-25
 
 ---
 
 ### 13. PDF Portfolio Detection (functional_requirements.md FR-2.2)
 
-**Discard or Defer** - Rare edge case, minimal value.
+**Discard** - Out of scope permanently.
+
+**Decision:** ✅ **Ignore completely**
 
 **PR Text:**
 ```
@@ -467,29 +573,35 @@ FR-2.2: Identify PDF Portfolio files and flag as "Portfolio"
 ```
 
 **Rationale:**
-- PDF Portfolios are rare in modern workflows
-- Adobe deprecated this format
+- PDF Portfolios are rare in modern workflows (< 0.1% of documents)
+- Adobe deprecated this format in 2023
 - Low ROI for implementation effort
+- Project owner confirmed: ignore completely
 
 **Recommended Action:**
 ```markdown
 ### FR-2.2: PDF Portfolio Handling (Out of Scope)
 
-**Status:** Deferred to Phase 5 (if needed)
+**Status:** Permanently out of scope
 
 **Rationale:**
 PDF Portfolios (collection of embedded files) are deprecated by Adobe
-and rarely encountered in production RAG workflows. If encountered,
-the tool shall return an error: "PDF Portfolio format not supported."
+and rarely encountered in production RAG workflows. The tool shall NOT
+support portfolio detection or processing.
 
-**Future Implementation:**
-If demand exists, add portfolio detection using PyMuPDF's
-`doc.is_pdf` and `doc.embfile_count()` checks.
+**Error Handling:**
+If encountered, PyMuPDF will raise an exception during standard PDF loading.
+Return user-friendly error: "PDF Portfolio format not supported. Please
+extract individual files and process separately."
+
+**No Implementation Required:** Standard PyMuPDF error handling sufficient.
 ```
 
 **Action Items:**
-- [ ] Move FR-2.2 to "Out of Scope" section
-- [ ] Add error handling for portfolio detection
+- [x] Confirm out of scope (decision from project owner)
+- [ ] Remove FR-2.2 from functional requirements entirely
+- [ ] Document in "Out of Scope" section
+- [ ] No code changes required (PyMuPDF handles error naturally)
 
 ---
 
@@ -652,39 +764,53 @@ Remove FR-4.4 and add note to FR-4.2:
 
 **This reconciliation is complete when:**
 
-- [x] ADR-0028 (DQS) created and merged
+- [x] ADR-0028 (DQS) created and merged ✅
+- [x] Project owner decisions documented ✅
 - [ ] PROJECT_PLAN updated with strategic context from project_mandate.md
+- [ ] PROJECT_PLAN Phase 5 updated with Office format preprocessing
 - [ ] Research content extracted to docs/research/
 - [ ] Functional requirements v2 created with all updates:
-  - [ ] COCO bounding box format corrected
-  - [ ] Performance targets aligned (GPU/CPU)
+  - [ ] COCO bounding box format corrected (CRITICAL)
+  - [ ] Performance targets aligned (GPU/CPU split)
   - [ ] Correction thresholds updated (2° with guardrails)
-  - [ ] Office formats removed (out of scope)
+  - [ ] Office formats moved to Phase 5 (embedded image preprocessing)
+  - [ ] PDF Portfolio removed (permanently out of scope)
 - [ ] Schema updated with new fields (pdf_type, languages, dqs)
 - [ ] PRs 14-15 documents archived with "SUPERSEDED" notice
 - [ ] No conflicting documentation exists
 
 ---
 
-## 📞 QUESTIONS FOR PROJECT OWNER
+## ✅ DECISIONS FROM PROJECT OWNER
 
-Before proceeding with full reconciliation, clarify:
+**Date:** 2025-11-11
+**Status:** All decisions confirmed, proceed with reconciliation
 
-1. **Project Name:**
-   - Keep "Image Preprocessing Detector" (current) OR
-   - Change to "RAG Triage Tool" (PRs 14-15)?
+1. **Project Name:** ✅ **Keep "Image Preprocessing Detector"**
+   - Current name maintained across all documentation
+   - PRs 14-15 references to "RAG Triage Tool" should be updated
 
-2. **Office Format Support:**
-   - Permanently out of scope OR
-   - Defer to Phase 5 (future enhancement)?
+2. **Office Format Support:** ✅ **Defer to Phase 5 (with Docling integration)**
+   - **Context:** Downstream system uses Docling for office format ingestion
+   - **Scope:** Preprocess embedded images in office documents (.docx, .xlsx, .pptx)
+   - **Rationale:** Office files contain embedded images that benefit from:
+     - DPI upscaling (72 DPI screenshots → 300 DPI)
+     - Blur/skew/noise detection and correction
+     - Layout detection for document-containing images
+   - **Integration:** Extract images → preprocess → pass corrected images to Docling
+   - **Benefits:** Improved OCR accuracy on embedded images, quality metadata
+   - **Timeline:** Phase 5 implementation (Weeks 21-25)
+   - **See:** Updated section 12 below for implementation details
 
-3. **PDF Portfolio Handling:**
-   - Ignore completely OR
-   - Add basic error detection?
+3. **PDF Portfolio Handling:** ✅ **Ignore completely**
+   - Out of scope permanently
+   - Add basic error message: "PDF Portfolio format not supported"
+   - No detection or handling required
 
-4. **DQS Framework:**
-   - Implement in Phase 4 (recommended) OR
-   - Defer to Phase 5?
+4. **DQS Framework:** ✅ **Implement in Phase 4**
+   - ADR-0028 already created
+   - Implementation timeline: Phase 4, Weeks 17-20
+   - Routing logic for OCR vs. Vision pipeline selection
 
 ---
 
@@ -711,5 +837,5 @@ Before proceeding with full reconciliation, clarify:
 ---
 
 **Created:** 2025-11-11
-**Last Updated:** 2025-11-11
-**Status:** Ready for Implementation
+**Last Updated:** 2025-11-11 (Updated with project owner decisions)
+**Status:** Decisions Confirmed - Proceeding with Implementation

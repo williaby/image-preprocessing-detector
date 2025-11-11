@@ -1218,17 +1218,54 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
    - Update correction guardrail parameters
    - Document threshold changes in version history
 
+6. **Office Format Preprocessing** ([src/ingestion/office_preprocessor.py](src/ingestion/office_preprocessor.py))
+   - **Context**: Downstream system (Docling) handles full office document parsing
+   - **Scope**: Preprocess embedded images only (not full document parsing)
+   - **Implementation**:
+     - Extract embedded images from office documents (.docx, .xlsx, .pptx)
+     - Run existing preprocessing pipeline on extracted images:
+       - DPI detection and upscaling (72 DPI → 300 DPI screenshots)
+       - Blur/skew/noise detection and correction
+       - Quality metadata generation
+     - Pass corrected images to Docling for improved OCR accuracy
+   - **Supported Formats**:
+     - Word (.doc, .docx) - python-docx for image extraction
+     - Excel (.xls, .xlsx) - openpyxl for chart/image extraction
+     - PowerPoint (.pptx) - python-pptx for slide image extraction
+   - **Integration Pipeline**:
+     ```
+     Office File → [Image Preprocessing Detector]
+                   Extract images → Preprocess → Generate metadata
+                   ↓
+                   [Docling]
+                   Parse structure → Extract text (with corrected images) → RAG output
+     ```
+   - **Benefits**:
+     - Improved OCR accuracy on upscaled embedded images
+     - Cleaner text extraction from deskewed images
+     - Quality metadata for confidence scoring
+     - Consistent preprocessing across PDF + Office formats
+   - **Timeline**: Weeks 21-25
+     - Week 21: Add office format parsers (python-docx, openpyxl, python-pptx)
+     - Week 22: Implement embedded image extraction
+     - Week 23: Integrate with existing preprocessing pipeline
+     - Week 24: Test with Docling integration
+     - Week 25: Production deployment and monitoring
+
 **Deliverables:**
 - ✅ Production monitoring dashboard
 - ✅ Drift detection system with alerting
 - ✅ Continuous improvement scripts (data flywheel, active learning)
 - ✅ Quarterly retraining and recalibration schedule
+- ✅ Office format preprocessing module (embedded images only)
 
 **Success Criteria:**
 - Drift detection alerts within 1 week of distribution shift
 - Model performance degradation < 2% over 6 months
 - Active learning reduces annotation effort by > 50%
 - 95% of production failures resolved in next model version
+- Office format preprocessing improves embedded image OCR accuracy by > 15% (72 DPI → 300 DPI upscaling)
+- Successful Docling integration with corrected images
 
 ---
 
@@ -1243,6 +1280,11 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 - OpenCV 4.8+ (classical CV, image corrections)
 - Pillow (image manipulation)
 - pdf2image or PyMuPDF (PDF to image conversion)
+
+**Office Format Parsing (Phase 5):**
+- python-docx (Word document image extraction)
+- openpyxl (Excel chart/image extraction)
+- python-pptx (PowerPoint slide image extraction)
 
 **Deep Learning:**
 - PyTorch 2.0+ (model training and inference)
