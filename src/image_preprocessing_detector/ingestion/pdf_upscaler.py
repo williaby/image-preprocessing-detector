@@ -171,9 +171,7 @@ class PDFUpscaler:
                         del img_data
 
                     except Exception:
-                        logger.exception(
-                            "Error upscaling page", page_number=page_num + 1
-                        )  # type: ignore[call-arg]
+                        logger.exception("Error upscaling page %d", page_num + 1)
                         # Copy original page if upscaling fails
                         if self.preserve_original:
                             new_page = new_doc.new_page(
