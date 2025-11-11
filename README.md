@@ -9,12 +9,11 @@
 
 ## CI/CD Status
 
-[![CI Pipeline](https://github.com/williaby/image-preprocessing-detector/workflows/CI/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/ci.yml?query=branch%3Amain)
-[![Security Analysis](https://github.com/williaby/image-preprocessing-detector/workflows/Security%20Analysis/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/security-analysis.yml?query=branch%3Amain)
-[![CodeQL](https://github.com/williaby/image-preprocessing-detector/workflows/Security%20Analysis/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/security/code-scanning)
-[![Documentation](https://github.com/williaby/image-preprocessing-detector/workflows/Documentation/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/docs.yml?query=branch%3Amain)
-[![ClusterFuzzLite](https://github.com/williaby/image-preprocessing-detector/workflows/ClusterFuzzLite/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/cifuzzy.yml?query=branch%3Amain)
-[![SBOM & Security Scan](https://github.com/williaby/image-preprocessing-detector/workflows/SBOM%20%26%20Security%20Scan/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/sbom.yml?query=branch%3Amain)
+[![CI Pipeline](https://github.com/williaby/image-preprocessing-detector/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/ci.yml?query=branch%3Amain)
+[![Security Analysis](https://github.com/williaby/image-preprocessing-detector/actions/workflows/security-analysis.yml/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/security-analysis.yml?query=branch%3Amain)
+[![Documentation](https://github.com/williaby/image-preprocessing-detector/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/docs.yml?query=branch%3Amain)
+[![ClusterFuzzLite](https://github.com/williaby/image-preprocessing-detector/actions/workflows/cifuzzy.yml/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/cifuzzy.yml?query=branch%3Amain)
+[![SBOM & Security Scan](https://github.com/williaby/image-preprocessing-detector/actions/workflows/sbom.yml/badge.svg?branch=main)](https://github.com/williaby/image-preprocessing-detector/actions/workflows/sbom.yml?query=branch%3Amain)
 
 ## Project Info
 
