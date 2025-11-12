@@ -39,7 +39,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install cyclonedx-bom
-        run: pip install cyclonedx-bom==4.6.1
+        run: pip install cyclonedx-bom==4.6.1 --require-hashes --hash sha256:39600cb0fe9231285d9f6c234270e23200f9de28d63a2cc2c50d1f6fab75fe1b
 
       - name: Generate runtime SBOM (production dependencies)
         run: |
@@ -194,7 +194,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install license-checker
-        run: pip install cyclonedx-bom==4.6.1
+        run: pip install cyclonedx-bom==4.6.1 --require-hashes --hash sha256:39600cb0fe9231285d9f6c234270e23200f9de28d63a2cc2c50d1f6fab75fe1b
 
       - name: Check licenses in runtime SBOM
         run: |
