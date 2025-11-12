@@ -1,0 +1,192 @@
+name: Benchmark Results Auto-Update
+
+on:
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'benchmarks/**'
+      - 'src/**'
+
+permissions:
+  contents: write  # Allow workflow to commit results
+
+jobs:
+  run-benchmarks:
+    name: Run Benchmarks & Update README
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper git operations
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.7.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --with dev --no-interaction
+
+      - name: Run Synthetic IQA Benchmarks
+        run: |
+          mkdir -p reports
+
+          # Run all synthetic IQA suites
+          poetry run python -m benchmarks.runners.run_benchmark \
+            --suite synthetic-iqa-blur-full || echo "Blur benchmark skipped"
+
+          poetry run python -m benchmarks.runners.run_benchmark \
+            --suite synthetic-iqa-skew-full || echo "Skew benchmark skipped"
+
+          poetry run python -m benchmarks.runners.run_benchmark \
+            --suite synthetic-iqa-noise-full || echo "Noise benchmark skipped"
+
+          poetry run python -m benchmarks.runners.run_benchmark \
+            --suite synthetic-iqa-contrast-full || echo "Contrast benchmark skipped"
+
+          poetry run python -m benchmarks.runners.run_benchmark \
+            --suite synthetic-iqa-binarization-full || echo "Binarization benchmark skipped"
+
+      - name: Run Layout Benchmark (if DocLayNet available)
+        continue-on-error: true
+        run: |
+          if [ -d "$BENCHMARKS_DATA_DIR/doclaynet" ]; then
+            poetry run python -m benchmarks.runners.run_benchmark \
+              --suite doclaynet-layout-full
+          else
+            echo "⚠ DocLayNet dataset not available, skipping layout benchmark"
+          fi
+        env:
+          BENCHMARKS_DATA_DIR: ${{ github.workspace }}/data/benchmarks
+
+      - name: Update README with Results
+        run: |
+          poetry run python -m benchmarks.runners.update_readme
+
+          # Show diff for verification
+          git diff benchmarks/README.md || echo "No changes to README"
+
+      - name: Generate Benchmark Badges
+        run: |
+          # Create badges directory
+          mkdir -p .github/badges
+
+          # Generate badge data (will be used by shields.io endpoint)
+          poetry run python -m benchmarks.runners.generate_badges
+
+      - name: Commit and Push Results
+        if: github.event_name != 'pull_request'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Add results
+          git add reports/ benchmarks/README.md .github/badges/ || true
+
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          # Commit with detailed message
+          git commit -m "chore(benchmarks): Auto-update benchmark results
+
+          - Updated benchmark results from nightly run
+          - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          - Trigger: ${{ github.event_name }}
+
+          [skip ci]"
+
+          git push
+
+      - name: Upload Benchmark Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.run_number }}
+          path: reports/
+          retention-days: 30
+
+      - name: Create Summary
+        run: |
+          echo "## 📊 Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Date**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count completed suites
+          SUITES=$(find reports/ -name "results.json" | wc -l)
+          echo "**Completed Suites**: $SUITES" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # List suite directories
+          echo "### Completed Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for dir in reports/*/; do
+            suite=$(basename "$dir")
+            count=$(find "$dir" -name "results.json" | wc -l)
+            if [ $count -gt 0 ]; then
+              echo "- ✓ $suite" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📈 **View updated results**: [benchmarks/README.md](benchmarks/README.md#benchmark-results--comparisons)" >> $GITHUB_STEP_SUMMARY
+
+  smoke-tests:
+    name: Quick Smoke Tests (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies
+        run: poetry install --with dev --no-interaction
+
+      - name: Run Smoke Tests
+        run: |
+          poetry run python -m benchmarks.runners.run_smoke --all
+
+      - name: Upload Smoke Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results-${{ github.run_number }}
+          path: reports/
+          retention-days: 7
