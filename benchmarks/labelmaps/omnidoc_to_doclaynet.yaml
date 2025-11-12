@@ -1,0 +1,169 @@
+# OmniDocBench to DocLayNet Label Mapping
+# Maps OmniDocBench 19-category taxonomy to DocLayNet 11-category taxonomy
+# SPDX-License-Identifier: Apache-2.0
+
+version: "1.0"
+source: "OmniDocBench"
+target: "DocLayNet"
+mapping_date: "2025-11-12"
+
+# OmniDocBench taxonomy reference:
+# https://opendatalab.com/OmniDocBench
+# License: CC-BY-NC-4.0 (eval-only)
+
+# DocLayNet taxonomy reference:
+# https://arxiv.org/abs/2206.01062
+# License: CDLA-Permissive-2.0
+
+# ============================================================================
+# Direct Mappings (1:1)
+# ============================================================================
+
+direct:
+  title: Title
+  text_block: Text
+  figure: Picture
+  equation_isolated: Formula
+
+# ============================================================================
+# Many-to-One Mappings
+# ============================================================================
+
+many_to_one:
+  Caption:
+    - figure_caption
+    - table_caption
+    - equation_caption  # Not in spec, but may appear
+
+  Footnote:
+    - figure_footnote
+    - table_footnote
+
+  Page-Header:
+    - header
+
+  Page-Footer:
+    - footer
+    - page_number
+
+# ============================================================================
+# Ambiguous Mappings (requires heuristics or context)
+# ============================================================================
+
+ambiguous:
+  # Code blocks can be formatted as text or rendered as images
+  code_txt:
+    preferred: Text
+    alternative: Picture
+    heuristic: "If code is selectable text → Text; if screenshot → Picture"
+
+  code_txt_caption:
+    preferred: Caption
+    alternative: Text
+    heuristic: "Captions for code blocks"
+
+  # References/bibliography can be regular text or special section
+  reference:
+    preferred: Text
+    alternative: Text  # No separate category in DocLayNet
+    heuristic: "Always map to Text"
+
+# ============================================================================
+# Special Cases
+# ============================================================================
+
+special:
+  # Elements to ignore during evaluation
+  ignore:
+    - abandon  # OmniDocBench uses this for invalid/corrupted regions
+
+  # Elements not in OmniDocBench but present in DocLayNet
+  doclaynet_only:
+    - List-item  # DocLayNet has this; OmniDocBench treats as text_block
+    - Section-header  # DocLayNet distinction; OmniDocBench may use title
+    - Table  # OmniDocBench uses separate table schema
+
+# ============================================================================
+# Inverse Mapping (DocLayNet → OmniDocBench, for export)
+# ============================================================================
+
+inverse:
+  Caption: figure_caption  # Default to figure_caption
+  Footnote: figure_footnote  # Default to figure_footnote
+  Formula: equation_isolated
+  List-item: text_block  # No list category in OmniDocBench
+  Page-footer: page_number
+  Page-header: header
+  Picture: figure
+  Section-header: title  # Best approximation
+  Table: null  # Use OmniDocBench table schema
+  Text: text_block
+  Title: title
+
+# ============================================================================
+# Configuration for Adapters
+# ============================================================================
+
+adapter_config:
+  # When converting OmniDocBench → DocLayNet
+  omnidoc_to_doclaynet:
+    ignore_categories:
+      - abandon
+    merge_footnotes: true  # Combine figure/table footnotes
+    merge_captions: true  # Combine figure/table captions
+    code_as_text: true  # Default code blocks to Text
+
+  # When converting DocLayNet → OmniDocBench
+  doclaynet_to_omnidoc:
+    list_items_as_text: true
+    section_headers_as_titles: false  # Keep separate if possible
+    split_captions: false  # Don't try to split Caption into figure/table
+    split_footnotes: false
+
+# ============================================================================
+# Validation Rules
+# ============================================================================
+
+validation:
+  # Ensure no data loss during conversion
+  require_coverage: true  # All source categories must map
+  allow_ambiguous: true  # Ambiguous mappings are acceptable
+  log_ignored: true  # Log all ignored categories for audit
+
+  # Quality checks
+  check_bbox_overlap: true  # Warn if bboxes overlap after mapping
+  check_missing_categories: true  # Warn if expected categories missing
+
+# ============================================================================
+# Usage Examples
+# ============================================================================
+
+# In Python adapter code:
+#
+#   from benchmarks.labelmaps import load_labelmap
+#
+#   labelmap = load_labelmap("omnidoc_to_doclaynet")
+#   doclaynet_label = labelmap.convert(omnidoc_label)
+#
+#   # With context for ambiguous mappings:
+#   doclaynet_label = labelmap.convert(
+#       omnidoc_label="code_txt",
+#       context={"is_selectable": True}
+#   )  # → "Text"
+
+# ============================================================================
+# References
+# ============================================================================
+
+references:
+  - name: "OmniDocBench Paper"
+    url: "https://opendatalab.com/OmniDocBench"
+    license: "CC-BY-NC-4.0"
+
+  - name: "DocLayNet Paper"
+    url: "https://arxiv.org/abs/2206.01062"
+    license: "CDLA-Permissive-2.0"
+
+  - name: "COCO Format Specification"
+    url: "https://cocodataset.org/#format-data"
+    notes: "Both use COCO-style bounding boxes [x, y, width, height]"

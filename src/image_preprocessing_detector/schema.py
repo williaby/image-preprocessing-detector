@@ -92,6 +92,13 @@ class PlannedAction(BaseModel):
     reason: str = Field(..., description="Reason for this action")
 
 
+class ElementRelation(BaseModel):
+    """Represents a relationship between document elements (OmniDocBench)."""
+
+    type: str = Field(..., description="Relationship type (e.g., 'parent_son')")
+    target_id: str = Field(..., description="ID of the target element")
+
+
 class DocumentElement(BaseModel):
     """Represents a detected document element (table, image, etc.)."""
 
@@ -104,7 +111,15 @@ class DocumentElement(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Detection confidence")
     attributes: dict[str, Any] = Field(
         default_factory=dict,
-        description="Additional attributes (script, handwriting_prob, etc.)",
+        description=(
+            "Additional attributes (script, handwriting_prob, etc.). "
+            "OmniDocBench attributes: handwriting (bool), table_layout (str), "
+            "with_span (bool)"
+        ),
+    )
+    relations: list[ElementRelation] = Field(
+        default_factory=list,
+        description="OmniDocBench: Relationships to other elements (parent_son, etc.)",
     )
     quality_issues: list[DetectedIssue] = Field(
         default_factory=list,
@@ -159,6 +174,13 @@ class TransformHistory(BaseModel):
         return v
 
 
+class ReadingOrder(BaseModel):
+    """Represents reading order between elements (OmniDocBench)."""
+
+    anno_id: int = Field(..., description="ID of current annotation/element")
+    next_id: int = Field(..., description="ID of next element in reading order")
+
+
 class PageMetadata(BaseModel):
     """Metadata for a single page in the document."""
 
@@ -182,6 +204,17 @@ class PageMetadata(BaseModel):
     )
     transform_history: list[TransformHistory] = Field(
         default_factory=list, description="History of transformations applied"
+    )
+    attributes: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "OmniDocBench: Page-level attributes (data_source, language, layout, "
+            "watermark, fuzzy_scan, colorful_background)"
+        ),
+    )
+    reading_order: list[ReadingOrder] = Field(
+        default_factory=list,
+        description="OmniDocBench: Reading order graph between elements",
     )
 
 
