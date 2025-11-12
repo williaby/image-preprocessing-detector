@@ -103,6 +103,7 @@ Links to relevant documentation, discussions, or external resources.
 - [ADR-012: Defer Handwriting Detection to Phase 2](0012-defer-handwriting-detection.md) - **Accepted** (2025-11-05)
 - [ADR-020: CPU-First Deployment Strategy for Phase 1](0020-cpu-first-deployment-strategy.md) - **Accepted** (2025-11-04)
 - [ADR-021: Do-No-Harm Guardrails for Image Corrections](0021-do-no-harm-guardrails.md) - **Accepted** (2025-11-04)
+- [ADR-028: Document Quality Score (DQS) for Intelligent Pipeline Routing](0028-document-quality-score-routing.md) - **Accepted** (2025-11-11)
 
 ### Data & ML Models
 
