@@ -1,370 +1,542 @@
-# Automated Benchmark Results Updates
+# Benchmark Results Auto-Update System
 
-This document explains how the automated benchmark results system works and how to use it.
+This document explains the local-first benchmarking workflow and automated README updates.
 
-## Overview
+## Architecture Overview
 
-The benchmarking framework includes an automated update system that:
+**Key Design Decision**: Datasets are too large for GitHub (DocLayNet is 11GB), so benchmarks run **locally** and only results are committed to git.
 
-1. **Runs benchmarks** on a schedule (nightly) or manually
-2. **Updates README** with latest results automatically
-3. **Generates badges** showing current performance
-4. **Commits results** back to the repository
+```
+┌──────────────────┐
+│ Local Machine    │
+│ (with datasets)  │
+└────────┬─────────┘
+         │ 1. Run benchmarks
+         ▼
+┌──────────────────────┐
+│ reports/*.json       │  (5-50KB each - small!)
+│ - results.json       │
+│ - summary.md         │
+└────────┬─────────────┘
+         │ 2. Commit results
+         ▼
+┌──────────────────────┐
+│ GitHub Repository    │
+│ (git push)           │
+└────────┬─────────────┘
+         │ 3. Triggers CI
+         ▼
+┌──────────────────────┐
+│ GitHub Actions       │
+│ - Parse results      │
+│ - Update README      │
+│ - Generate badges    │
+│ - Commit & push      │
+└──────────────────────┘
+```
 
 ## Components
 
-### 1. Update Scripts
+### 1. Local Benchmark Execution
 
-#### `update_readme.py`
+**Location**: Your machine with datasets installed
 
-Parses latest benchmark results and updates the Quick Metrics Summary table in `benchmarks/README.md`.
+**Datasets** (gitignored in `data/benchmarks/`):
+- `synthetic_iqa/` - Auto-generated (364KB)
+- `doclaynet/` - Downloaded separately (11GB)
+- `pubmedqa/` - Downloaded separately (2GB)
+- `custom/` - Your own test datasets
 
-**Usage**:
+**Commands**:
 ```bash
-# Update README with latest results
-python -m benchmarks.runners.update_readme
-```
-
-**What it updates**:
-- Quick Metrics Summary table with current values
-- "Last Updated" timestamp
-- Status icons (✓, ✗, 🔄, ⏳)
-
-#### `generate_badges.py`
-
-Creates dynamic badge JSON files for shields.io integration.
-
-**Usage**:
-```bash
-# Generate badge JSON files
-python -m benchmarks.runners.generate_badges
-```
-
-**Output**:
-- `.github/badges/*.json` - Badge data files
-- Shields.io-compatible endpoint format
-- Color-coded based on performance vs targets
-
-#### `aggregate.py`
-
-Combines results from multiple benchmark runs into comparative reports.
-
-**Usage**:
-```bash
-# Generate CSV aggregate
-python -m benchmarks.runners.aggregate --format csv
-
-# Generate Markdown report
-python -m benchmarks.runners.aggregate --format markdown
-
-# Generate all formats
-python -m benchmarks.runners.aggregate --format all
-```
-
-**Outputs**:
-- `reports/aggregate.csv` - Cross-suite comparison
-- `reports/aggregate.md` - Human-readable report
-- `reports/aggregate.json` - Machine-readable data
-
-### 2. GitHub Actions Workflow
-
-**File**: `.github/workflows/benchmark-results.yml`
-
-**Triggers**:
-- **Schedule**: Nightly at 2 AM UTC
-- **Manual**: Via GitHub Actions UI (`workflow_dispatch`)
-- **Push**: On changes to `benchmarks/` or `src/`
-
-**Jobs**:
-
-#### `run-benchmarks`
-1. Runs all synthetic IQA benchmarks
-2. Runs DocLayNet layout benchmark (if data available)
-3. Updates README with results
-4. Generates badges
-5. Commits and pushes changes
-6. Uploads reports as artifacts
-
-#### `smoke-tests` (PRs only)
-1. Runs quick smoke tests
-2. Validates changes don't break benchmarks
-3. Completes in <10 minutes
-
-## How It Works
-
-### Automatic Flow (Nightly)
-
-```
-2 AM UTC (schedule trigger)
-    ↓
-GitHub Actions starts workflow
-    ↓
-Install dependencies (Poetry)
-    ↓
-Run synthetic IQA benchmarks (5 suites)
-    ↓
-Run layout benchmark (if data available)
-    ↓
-Parse results from reports/
-    ↓
-Update benchmarks/README.md
-    ↓
-Generate .github/badges/*.json
-    ↓
-Commit changes (skip ci)
-    ↓
-Push to main/develop
-    ↓
-Upload artifacts for 30 days
-```
-
-### Manual Flow
-
-You can also update results manually:
-
-```bash
-# 1. Run benchmarks
+# Run single benchmark suite
 poetry run python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full
 
-# 2. Update README
-poetry run python -m benchmarks.runners.update_readme
+# Run all IQA benchmarks
+for suite in blur skew noise contrast binarization; do
+  poetry run python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-${suite}-full
+done
 
-# 3. Generate badges
-poetry run python -m benchmarks.runners.generate_badges
+# Run DocLayNet layout benchmark (requires dataset)
+poetry run python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
+```
 
-# 4. Review changes
-git diff benchmarks/README.md
+**Output** (saved to `reports/`):
+```
+reports/
+├── synthetic-iqa-blur-full/
+│   └── 20251112_011202/
+│       ├── results.json     # 8KB - COMMIT THIS
+│       └── summary.md        # 2KB - COMMIT THIS
+├── synthetic-iqa-skew-full/
+│   └── 20251112_011338/
+│       ├── results.json
+│       └── summary.md
+└── doclaynet-layout-full/
+    └── 20251112_143022/
+        ├── results.json     # 45KB - COMMIT THIS
+        └── summary.md
+```
 
-# 5. Commit
-git add benchmarks/README.md .github/badges/
-git commit -m "docs: Update benchmark results"
+### 2. Committing Results
+
+Results are tiny JSON files (5-50KB) - safe to commit:
+
+```bash
+# Add new results
+git add reports/
+
+# Commit with descriptive message
+git commit -m "chore(benchmarks): Add IQA blur detection results
+
+- Correlation: 0.92 (target: ≥0.85) ✓
+- RMSE: 0.03 (target: ≤0.05) ✓
+- Dataset: synthetic_iqa (100 samples)
+- Runtime: 2.3s
+"
+
+# Push to trigger CI auto-update
 git push
 ```
 
-## Using Dynamic Badges
+### 3. CI Auto-Update (GitHub Actions)
 
-### In README
+**File**: `.github/workflows/benchmark-results.yml`
 
-Add badges to your README using shields.io endpoints:
+**Trigger**: Pushes to `reports/**/*.json` files
 
-```markdown
-![IQA Blur](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/williaby/image-preprocessing-detector/main/.github/badges/blur-correlation.json)
+**What it does**:
+1. Detects new results committed
+2. Runs `update_readme.py` to parse JSON
+3. Updates Quick Metrics Summary table
+4. Generates status badges
+5. Commits README changes (with `[skip ci]`)
+6. Pushes to main/develop
 
-![IQA PSNR](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/williaby/image-preprocessing-detector/main/.github/badges/psnr.json)
+**No datasets required** - CI only reads committed JSON files!
 
-![Benchmarks Summary](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/williaby/image-preprocessing-detector/main/.github/badges/summary.json)
+## Complete Workflow Example
+
+### Step 1: Run Benchmarks Locally
+
+```bash
+# Ensure datasets are present (gitignored)
+ls data/benchmarks/synthetic_iqa  # Should exist
+ls data/benchmarks/doclaynet       # If you have it
+
+# Run blur detection benchmark
+poetry run python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full
+
+# Output:
+# === Running Benchmark: synthetic-iqa-blur-full ===
+# Task: iqa
+# Dataset: synthetic_iqa
+# Split: test
+#
+# Loaded 100 samples
+# ...
+# ✓ Completed 100 samples
+#
+# Results saved to: reports/synthetic-iqa-blur-full/20251112_143022/
 ```
 
-### Badge Files
+### Step 2: Verify Results
 
-Located in `.github/badges/`:
+```bash
+# Check generated results
+cat reports/synthetic-iqa-blur-full/20251112_143022/summary.md
+
+# Verify JSON is valid
+cat reports/synthetic-iqa-blur-full/20251112_143022/results.json | jq .
+
+# Check file sizes (should be small)
+du -h reports/synthetic-iqa-blur-full/20251112_143022/
+# 8K   results.json
+# 2K   summary.md
+```
+
+### Step 3: Update README Locally (Optional)
+
+You can preview README changes before committing:
+
+```bash
+# Update README with latest results
+poetry run python -m benchmarks.runners.update_readme
+
+# Review changes
+git diff benchmarks/README.md
+
+# If satisfied, commit both results and README
+# If not, revert README and just commit results (CI will update)
+```
+
+### Step 4: Commit Results
+
+```bash
+# Stage results
+git add reports/synthetic-iqa-blur-full/
+
+# Commit with descriptive message
+git commit -m "chore(benchmarks): Add blur detection benchmark results
+
+**Results Summary**:
+- Blur Correlation: 0.92 (target ≥0.85) ✓
+- Blur RMSE: 0.03 (target ≤0.05) ✓
+- Samples: 100
+- Runtime: 2.3s
+
+**Dataset**: synthetic_iqa
+**Date**: 2025-11-12
+"
+
+# Push to remote
+git push
+```
+
+### Step 5: CI Auto-Updates README
+
+GitHub Actions will automatically:
+
+1. Detect the new `reports/**/*.json` file
+2. Parse aggregate metrics
+3. Update Quick Metrics Summary table
+4. Generate badges JSON files
+5. Commit and push README update
+
+Check workflow progress at:
+- GitHub → Actions → "Benchmark Results Auto-Update"
+
+## Update Scripts
+
+### `update_readme.py`
+
+Parses committed results and updates README tables.
+
+**Usage**:
+```bash
+# Update README from all results in reports/
+poetry run python -m benchmarks.runners.update_readme
+
+# Output:
+# === Updating README with Latest Benchmark Results ===
+#
+# Loading results from: /path/to/reports
+# ✓ Found results for 3 suites:
+#   - synthetic-iqa-blur-full: 100 samples
+#   - synthetic-iqa-skew-full: 100 samples
+#   - doclaynet-layout-full: 500 samples
+#
+# Updating README sections...
+# ✓ README updated: benchmarks/README.md
+```
+
+**What it updates**:
+- Quick Metrics Summary table (replaces "TBD" with actual values)
+- Status icons (✓ = pass, ✗ = fail, 🔄 = pending, ⏳ = not started)
+- Last Updated timestamp
+
+### `generate_badges.py`
+
+Creates shields.io endpoint JSON files.
+
+**Usage**:
+```bash
+# Generate all badges
+poetry run python -m benchmarks.runners.generate_badges
+
+# Output:
+# Created: .github/badges/blur-correlation.json
+# Created: .github/badges/blur-rmse.json
+# Created: .github/badges/skew-mae.json
+# ...
+```
+
+**Badge files** (`.github/badges/`):
 - `blur-correlation.json` - Blur correlation metric
-- `blur-rmse.json` - Blur RMSE metric
-- `skew-mae.json` - Skew MAE metric
-- `deskew-success-rate.json` - Deskew success rate
-- `snr-improvement.json` - SNR improvement
-- `psnr.json` - PSNR metric
-- `ssim.json` - SSIM metric
+- `blur-rmse.json` - Blur RMSE
+- `skew-mae.json` - Skew MAE
+- `deskew-success-rate.json` - Deskew success %
+- `snr-improvement.json` - SNR improvement (dB)
+- `psnr.json` - PSNR (dB)
+- `ssim.json` - SSIM
 - `f-measure.json` - Binarization F-measure
 - `mAP.json` - Layout detection mAP
 - `summary.json` - Overall pass rate
 
-### Badge Colors
-
-- **Bright Green**: Meets or exceeds target
-- **Yellow**: Within 80-100% of target
-- **Red**: Below 80% of target
-- **Light Grey**: No data available
-
-## Configuration
-
-### Environment Variables
-
-Set in GitHub repository settings → Secrets and variables → Actions:
-
-```bash
-BENCHMARKS_DATA_DIR=/path/to/datasets  # Optional: For DocLayNet, etc.
+**Using badges in README**:
+```markdown
+![Blur Correlation](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/williaby/image-preprocessing-detector/main/.github/badges/blur-correlation.json)
 ```
 
-### Workflow Permissions
+**Badge colors**:
+- 🟢 **Bright Green**: Meets or exceeds target
+- 🟡 **Yellow**: 80-99% of target
+- 🔴 **Red**: Below 80% of target
+- ⚪ **Light Grey**: No data
 
-The workflow requires `contents: write` permission to commit results. This is set in the workflow file.
+### `aggregate.py`
 
-### Skip CI
+Combines multiple runs for trend analysis.
 
-Commits from the automated workflow include `[skip ci]` to prevent infinite loops. This prevents the commit from triggering another workflow run.
+**Usage**:
+```bash
+# Generate CSV comparison
+poetry run python -m benchmarks.runners.aggregate --format csv
+
+# Generate Markdown report
+poetry run python -m benchmarks.runners.aggregate --format markdown
+
+# Generate all formats
+poetry run python -m benchmarks.runners.aggregate --format all
+```
+
+**Output**:
+- `reports/aggregate.csv` - Spreadsheet-friendly
+- `reports/aggregate.md` - Human-readable report
+- `reports/aggregate.json` - Machine-readable data
+
+## Why Local-First?
+
+### Problem: Datasets Too Large for Git
+
+```
+data/benchmarks/
+├── synthetic_iqa/      364 KB   ✓ Could fit in git, but regenerated anyway
+├── doclaynet/          11 GB    ✗ WAY too large for git
+├── pubmedqa/           2.1 GB   ✗ Too large
+└── custom_tests/       500 MB   ✗ Too large
+```
+
+**Git limits**:
+- GitHub warns at 50MB per file
+- GitHub blocks files >100MB
+- Repository gets slow >1GB total
+
+### Solution: Gitignore Datasets, Commit Results
+
+```
+.gitignore:
+data/benchmarks/        # Datasets stay local (11GB+)
+
+Git commits:
+reports/**/*.json       # Only results (5-50KB each)
+```
+
+**Benefits**:
+1. ✅ Repository stays small (<100MB)
+2. ✅ Fast clone times
+3. ✅ Works with GitHub free tier
+4. ✅ CI doesn't need datasets
+5. ✅ Results are version controlled
+6. ✅ README auto-updates from results
 
 ## Troubleshooting
 
-### Results not updating
+### Results not updating in README
+
+**Symptom**: Pushed results, but README still shows "TBD"
 
 **Check**:
-1. GitHub Actions workflow status
-2. Workflow logs for errors
-3. Reports directory exists with results
-
-**Debug**:
 ```bash
-# Manually run update
-poetry run python -m benchmarks.runners.update_readme
-
-# Check for results
+# 1. Verify results exist
 find reports/ -name "results.json"
 
-# Verify JSON format
-cat reports/synthetic-iqa-blur-full/*/results.json | jq .
+# 2. Check results match expected suite names
+cat benchmarks/runners/update_readme.py | grep "synthetic-iqa"
+
+# 3. Verify JSON format
+cat reports/synthetic-iqa-blur-full/*/results.json | jq '.aggregates'
+
+# 4. Check GitHub Actions logs
+# GitHub → Actions → "Benchmark Results Auto-Update" → View logs
 ```
 
-### Badges not showing
+**Common issues**:
+- Suite name mismatch (e.g., `smoke` vs `full`)
+- JSON format error
+- CI workflow disabled
+- Missing `aggregates` field in results
+
+### CI workflow not triggering
+
+**Symptom**: Pushed results, but no CI run
 
 **Check**:
-1. Badge JSON files exist in `.github/badges/`
-2. Files are committed to main branch
-3. URLs point to correct repository and branch
-
-**Debug**:
 ```bash
-# Verify badge files
+# 1. Verify path trigger matches
+cat .github/workflows/benchmark-results.yml | grep paths
+
+# 2. Check if results.json in right location
+git show HEAD:reports/synthetic-iqa-blur-full/.../results.json
+
+# 3. Verify workflow enabled
+# GitHub → Settings → Actions → General → Allow all actions
+```
+
+### Badges not updating
+
+**Symptom**: Shields.io badges show "invalid"
+
+**Check**:
+```bash
+# 1. Verify badge files exist
 ls -la .github/badges/
 
-# Test badge JSON
-cat .github/badges/summary.json
+# 2. Check JSON format
+cat .github/badges/blur-correlation.json | jq .
 
-# Check raw GitHub URL
-curl https://raw.githubusercontent.com/williaby/image-preprocessing-detector/main/.github/badges/summary.json
-```
+# 3. Test raw GitHub URL
+curl https://raw.githubusercontent.com/williaby/image-preprocessing-detector/main/.github/badges/blur-correlation.json
 
-### Commit permission denied
-
-**Check**:
-1. Workflow has `contents: write` permission
-2. GITHUB_TOKEN has correct scopes
-3. Branch protection rules don't block bot commits
-
-**Fix**:
-- Update workflow file permissions
-- Adjust branch protection rules to allow Actions bot
-
-## Advanced Usage
-
-### Custom Update Schedule
-
-Edit `.github/workflows/benchmark-results.yml`:
-
-```yaml
-on:
-  schedule:
-    - cron: '0 2 * * *'  # Every day at 2 AM
-    - cron: '0 14 * * 1'  # Every Monday at 2 PM
-```
-
-### Selective Benchmark Updates
-
-Modify workflow to run specific suites:
-
-```yaml
-- name: Run Custom Benchmarks
-  run: |
-    poetry run python -m benchmarks.runners.run_benchmark --suite my-suite
-    poetry run python -m benchmarks.runners.update_readme
-```
-
-### Multiple Repositories
-
-To use across multiple repositories:
-
-1. Copy `.github/workflows/benchmark-results.yml`
-2. Update `benchmarks/runners/generate_badges.py` with correct repo name
-3. Update badge URLs in README
-
-### Local Dashboard
-
-Serve results locally with Python:
-
-```bash
-# Generate aggregate report
-python -m benchmarks.runners.aggregate --format markdown
-
-# Serve with Python HTTP server
-cd reports/
-python -m http.server 8000
-
-# Open browser to http://localhost:8000/aggregate.md
+# 4. Clear shields.io cache (badges update every ~5 minutes)
 ```
 
 ## Best Practices
 
-### When to Manual Update
+### When to Run Benchmarks
 
-- After implementing new features
-- Before creating PRs
-- When testing new benchmarks
-- After fixing bugs that affect metrics
+**Regular intervals**:
+- Weekly for development tracking
+- Before major releases
+- After significant code changes
 
-### When to Let Automated Update
-
-- Regular nightly tracking
-- Long-term trend analysis
-- Continuous monitoring
-- Release validation
+**Ad-hoc**:
+- After fixing bugs
+- After adding features
+- When tuning hyperparameters
 
 ### Commit Message Format
 
-Manual commits should follow:
+```bash
+# Good commit messages:
+git commit -m "chore(benchmarks): Add skew detection results (v1.2.0)
+
+- MAE: 0.42° (target ≤0.5°) ✓
+- Success rate: 99.2% (target ≥99%) ✓
+- Improved from v1.1.0 (MAE was 0.58°)
+"
+
+# Bad commit messages:
+git commit -m "update results"              # Too vague
+git commit -m "benchmarks"                   # No context
+git commit -m "wip"                          # Unclear
 ```
-docs(benchmarks): Update benchmark results for [feature/fix]
 
-- [Metric 1]: X.XXX (was Y.YYY)
-- [Metric 2]: A.AAA (was B.BBB)
+### Dataset Organization
 
-Related: #123
-```
-
-### Reviewing Changes
-
-Always review README diff before merging automated PRs:
+Keep datasets organized locally:
 
 ```bash
-git diff benchmarks/README.md
+data/benchmarks/
+├── README.md              # Document where to download each dataset
+├── synthetic_iqa/         # Auto-generated, can delete/regenerate
+├── doclaynet/             # Downloaded once, keep cached
+│   ├── COCO/
+│   ├── PNG/
+│   └── PDF/
+├── pubmedqa/              # Downloaded once
+└── custom/                # Your test datasets
+    ├── medical_forms/
+    ├── invoices/
+    └── receipts/
+```
 
-# Check for unexpected changes
-# Verify metrics improved/stayed stable
-# Confirm formatting is correct
+### Multiple Machines
+
+If benchmarking on multiple machines:
+
+```bash
+# Machine 1 (laptop with doclaynet)
+poetry run python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
+git add reports/doclaynet-layout-full/
+git commit -m "chore(benchmarks): DocLayNet layout results from laptop"
+git push
+
+# Machine 2 (workstation with GPU)
+git pull  # Get latest results
+poetry run python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full
+git add reports/synthetic-iqa-blur-full/
+git commit -m "chore(benchmarks): IQA blur results from workstation"
+git push
+
+# README auto-updates with results from both machines!
 ```
 
 ## FAQ
 
-### Q: How often are results updated?
+### Q: Can I run benchmarks in CI?
 
-**A**: Automatically nightly at 2 AM UTC. Manual updates anytime.
+**A**: Not for large datasets. Synthetic IQA benchmarks could run in CI (auto-generated), but DocLayNet (11GB) is too large.
 
-### Q: Can I disable automated updates?
+### Q: Do I need to commit README changes manually?
 
-**A**: Yes, delete or disable `.github/workflows/benchmark-results.yml`.
+**A**: No! CI auto-updates README when you push results. You can update locally to preview, but it's optional.
 
-### Q: Do automated commits trigger CI?
+### Q: What if I accidentally commit datasets?
 
-**A**: No, they include `[skip ci]` to prevent recursion.
+**A**:
+```bash
+# Remove from git but keep locally
+git rm -r --cached data/benchmarks/doclaynet
+git commit -m "fix: Remove large dataset from git (use local only)"
 
-### Q: Where are old results stored?
+# Verify .gitignore includes:
+# data/benchmarks/
 
-**A**: In `reports/` directory and as GitHub Actions artifacts (30 days retention).
+git push
+```
 
-### Q: Can I compare results over time?
+### Q: Can I delete old results?
 
-**A**: Yes, use `aggregate.py` to generate historical comparison reports.
+**A**: Yes, but keep at least the latest run per suite for README updates.
 
-### Q: What if a benchmark fails?
+```bash
+# Keep only latest result per suite
+cd reports/synthetic-iqa-blur-full/
+ls -t | tail -n +2 | xargs rm -rf  # Keeps newest, deletes rest
+```
 
-**A**: Workflow continues with other benchmarks; failed results show as "no data".
+### Q: How do I share datasets with teammates?
+
+**A**: Document download instructions in `data/benchmarks/README.md`:
+
+```markdown
+# Benchmark Datasets
+
+## DocLayNet
+- **Size**: 11GB
+- **Download**: https://github.com/DS4SD/DocLayNet
+- **Setup**: Extract to `data/benchmarks/doclaynet/`
+
+## PubMedQA
+- **Size**: 2.1GB
+- **Download**: https://pubmedqa.github.io/
+- **Setup**: Extract to `data/benchmarks/pubmedqa/`
+```
+
+### Q: What if benchmark fails partway through?
+
+**A**: Results are saved incrementally. Partial results can still be committed.
+
+```bash
+# Check partial results
+cat reports/synthetic-iqa-blur-full/.../results.json | jq '.results | length'
+
+# Commit partial results if useful
+git add reports/
+git commit -m "chore(benchmarks): Partial blur results (50/100 samples)"
+```
 
 ## See Also
 
 - [README.md](README.md) - Main benchmarking documentation
 - [registry.yml](registry.yml) - Benchmark suite definitions
 - [LICENSES.md](LICENSES.md) - Dataset license information
+- [../CLAUDE.md](../CLAUDE.md) - Project development guidelines
 
 ---
 
 **Last Updated**: 2025-11-12
-**Maintainer**: Data Systems Lead
+**Architecture**: Local-first with CI auto-update
+**Datasets**: Gitignored (too large for GitHub)
+**Results**: Committed (small JSON files)
