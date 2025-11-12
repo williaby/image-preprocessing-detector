@@ -105,6 +105,7 @@ allowed:
   - deployment
   - monitoring
   - observability
+  - production
 
   # Data & Datasets
   - datasets
@@ -134,6 +135,12 @@ allowed:
   - version_history
   - phase_planning
   - mvp
+  - reconciliation
+  - pr_review
+  - requirements
+  - specifications
+  - functional
+  - non_functional
 
   # Technical Details
   - bounding_boxes
@@ -160,3 +167,6 @@ allowed:
   - efficiency
   - training
   - object_detection
+  - routing
+  - scoring
+  - pipeline_selection
