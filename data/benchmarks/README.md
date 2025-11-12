@@ -1,248 +1,135 @@
 # Benchmark Datasets
 
-This directory contains datasets used for benchmarking the RAG Triage Tool. Datasets are **gitignored** (too large for GitHub) and must be downloaded locally.
+This directory contains datasets used for benchmarking the Image Preprocessing Detector.
+
+**⚠️ All datasets are gitignored** (too large for GitHub) and must be downloaded locally.
 
 ## Quick Reference
 
-| Dataset | Size | Download | Use Case |
-|---------|------|----------|----------|
-| **Synthetic IQA** | 364KB | Auto-generated | Blur, skew, noise, contrast testing |
-| **DocLayNet** | 11GB | [GitHub](https://github.com/DS4SD/DocLayNet) | Layout detection (tables, figures, text blocks) |
-| **PubMedQA** | 2.1GB | [Website](https://pubmedqa.github.io/) | Medical document testing |
+| Dataset | Status | Size | Phase | Use Case |
+|---------|--------|------|-------|----------|
+| **Synthetic IQA** | ✅ Auto-generated | 364KB | 1 | Blur, skew, noise, contrast testing |
+| **DocLayNet** | ✅ Symlinked | 11GB | 1 | Layout detection (tables, figures, text blocks) |
+| **SignaTR6K** | ✅ Local | 2GB | ? | Handwriting detection |
+| **COCO-Text** | ✅ Extracted | 53MB | 2 | Text detection and recognition |
+| **OmniDocBench** | ⚠️ Manual | 1.2GB | 3 | Comprehensive document understanding |
+| **TableBank** | ⏸️ Manual | 400MB | 2 | Table detection |
+| **PubTabNet** | ⏸️ Manual | 500MB | 2 | Table structure recognition |
+| **FinTabNet** | ⏸️ Manual | 3GB | 2 | Financial table detection |
+| **WiLI-2018** | ⏸️ Manual | 800MB | 2 | Language identification |
+| **ICDAR MLT 2019** | ⏸️ Manual | 3GB | 2 | Multi-lingual text detection |
+
+**Total Space Required**: ~36GB (excluding symlinked DocLayNet)
 
 ## Installation
 
-### Synthetic IQA (Auto-Generated)
+**Complete installation guide**: See [docs/DATASET_INSTALLATION.md](../../docs/DATASET_INSTALLATION.md)
 
-No manual download needed! Automatically generated when running benchmarks:
+### Quick Setup
 
 ```bash
-poetry run python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full
+# 1. Verify doclaynet symlink
+ls -l doclaynet/
 
-# Creates: data/benchmarks/synthetic_iqa/
-# Contains: 100 synthetic images with controlled blur levels
-```
+# 2. Generate synthetic IQA (auto-generated on benchmark runs)
+cd ../..
+poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
 
-**Regenerate anytime**:
-```bash
-rm -rf data/benchmarks/synthetic_iqa
-# Re-run benchmark to regenerate
-```
+# 3. Install OmniDocBench (requires HuggingFace account)
+poetry run huggingface-cli login
+poetry run python -c "
+from datasets import load_dataset
+dataset = load_dataset('opendatalab/OmniDocBench')
+dataset.save_to_disk('data/benchmarks/omnidocbench')
+"
 
-### DocLayNet (Manual Download)
-
-**Size**: 11GB
-**License**: CC BY 4.0
-**Citation**: Required (see below)
-
-**Download**:
-```bash
-# Option 1: Using git clone
-git clone https://github.com/DS4SD/DocLayNet.git
-cd DocLayNet
-# Follow dataset download instructions in their README
-
-# Option 2: Direct download (recommended)
-# Visit: https://github.com/DS4SD/DocLayNet/releases
-# Download: DocLayNet_core.zip (11GB)
-
-# Extract to:
-mkdir -p data/benchmarks/doclaynet
-cd data/benchmarks/doclaynet
-unzip ~/Downloads/DocLayNet_core.zip
-
-# Expected structure:
-# data/benchmarks/doclaynet/
-# ├── COCO/
-# │   ├── train.json
-# │   └── val.json
-# ├── PNG/
-# │   ├── train/
-# │   └── val/
-# └── PDF/
-#     ├── train/
-#     └── val/
-```
-
-**Verify installation**:
-```bash
-ls data/benchmarks/doclaynet/COCO/val.json  # Should exist
-du -sh data/benchmarks/doclaynet            # Should be ~11GB
-```
-
-**Citation**:
-```bibtex
-@article{pfitzmann2022doclaynet,
-  title={DocLayNet: A Large Human-Annotated Dataset for Document-Layout Analysis},
-  author={Pfitzmann, Birgit and Auer, Christoph and Dolfi, Michele and Nassar, Ahmed S and Staar, Peter},
-  journal={arXiv preprint arXiv:2206.01062},
-  year={2022}
-}
-```
-
-### PubMedQA (Optional)
-
-**Size**: 2.1GB
-**License**: MIT
-**Use Case**: Medical document benchmarking
-
-**Download**:
-```bash
-# Visit: https://pubmedqa.github.io/
-# Download dataset and extract to:
-# data/benchmarks/pubmedqa/
+# 4. Download Phase 2 datasets (see full guide for details)
 ```
 
 ## Directory Structure
 
 ```
 data/benchmarks/
-├── README.md                    # This file
-├── synthetic_iqa/               # Auto-generated (gitignored)
+├── README.md                          # This file
+├── doclaynet/                         # ✅ Symlinked (11GB)
+│   ├── documents/
+│   └── ground_truth/
+├── signatr6k/                         # ✅ Present (verify)
+├── synthetic_iqa/                     # ✅ Auto-generated
 │   ├── blur/
 │   ├── skew/
 │   ├── noise/
 │   ├── contrast/
 │   └── binarization/
-├── doclaynet/                   # Manual download (gitignored)
-│   ├── COCO/
-│   ├── PNG/
-│   └── PDF/
-├── pubmedqa/                    # Optional (gitignored)
-└── custom/                      # Your custom test datasets (gitignored)
-    ├── medical_forms/
-    ├── invoices/
-    └── receipts/
+├── cocotext/                          # ✅ Extracted
+│   └── cocotext.v2.json
+├── omnidocbench/                      # ⏸️ Manual download
+├── tablebank/                         # ⏸️ Manual download
+├── pubtabnet/                         # ⏸️ Manual download
+├── fintabnet/                         # ⏸️ Manual download
+├── wili_2018/                         # ⏸️ Manual download
+└── icdar_mlt_2019/                    # ⏸️ Manual download
 ```
 
-## Gitignore
+## Gitignore Configuration
 
-**All datasets are gitignored** to keep repository small:
-
+**All datasets are gitignored** via rule in `.gitignore`:
 ```gitignore
-# From .gitignore:
+# Line 119
 data/benchmarks/
 ```
 
-Only **results** are committed (in `reports/` directory):
-- `reports/**/*.json` - Benchmark results (5-50KB each)
-- `reports/**/*.md` - Summary reports (2-10KB each)
+Only this README file is tracked in git (forced with `git add -f`).
 
-## Adding Custom Datasets
+## License Compliance
 
-You can add your own test datasets:
+### Must Cite in Publications
+- DocLayNet (CDLA-Permissive-2.0)
+- TableBank, COCO-Text (CC-BY-4.0)
+- PubTabNet, FinTabNet (CDLA-Permissive-2.0)
+- WiLI-2018 (CC-BY-SA-4.0)
+- OmniDocBench (CC-BY-NC-4.0)
 
-```bash
-# Create custom dataset directory
-mkdir -p data/benchmarks/custom/my_dataset
-
-# Add your test images/PDFs
-cp ~/test_images/*.pdf data/benchmarks/custom/my_dataset/
-
-# Create adapter in benchmarks/adapters/
-# See: benchmarks/adapters/base.py for BaseAdapter interface
-```
-
-## Dataset Licenses
-
-### Synthetic IQA
-- **License**: Public Domain (generated by this project)
-- **Attribution**: Not required
-
-### DocLayNet
-- **License**: CC BY 4.0
-- **Attribution**: Required (see citation above)
-- **Commercial use**: Allowed with attribution
-
-### PubMedQA
-- **License**: MIT
-- **Attribution**: Recommended
-- **Commercial use**: Allowed
+### Commercial Use Restrictions
+- ⚠️ **OmniDocBench**: Non-commercial evaluation only (CC-BY-NC-4.0)
+- ✅ All others: Commercial use allowed with attribution
 
 ## Troubleshooting
 
-### Benchmark fails with "Dataset not found"
-
-**Check dataset exists**:
+### Dataset not found error
 ```bash
-ls data/benchmarks/synthetic_iqa    # Should show: blur/, skew/, etc.
-ls data/benchmarks/doclaynet/COCO   # Should show: train.json, val.json
+# Check dataset exists
+ls -R doclaynet/ | head -20
+
+# Regenerate synthetic datasets
+rm -rf synthetic_iqa/
+poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
 ```
 
-**Fix for synthetic datasets**:
+### HuggingFace rate limit (429 error)
 ```bash
-# Let benchmark auto-generate (pass download=True)
-poetry run python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full
+# Login with HF account
+poetry run huggingface-cli login
 ```
 
-**Fix for manual datasets**:
+### Disk space full
 ```bash
-# Re-download and extract to correct location
-# Verify directory structure matches expected layout
-```
+# Check space
+df -h
 
-### DocLayNet annotations not loading
-
-**Check COCO JSON format**:
-```bash
-# Validate JSON
-cat data/benchmarks/doclaynet/COCO/val.json | jq . | head -50
-
-# Should contain:
-# - "images": [...]
-# - "annotations": [...]
-# - "categories": [...]
-```
-
-**Expected categories** (11 classes):
-- Caption
-- Footnote
-- Formula
-- List-item
-- Page-footer
-- Page-header
-- Picture
-- Section-header
-- Table
-- Text
-- Title
-
-### Disk space issues
-
-**Check dataset sizes**:
-```bash
-du -sh data/benchmarks/*
-# synthetic_iqa:  364K
-# doclaynet:      11G
-# pubmedqa:       2.1G
-```
-
-**Free up space**:
-```bash
-# Delete and regenerate synthetic datasets
-rm -rf data/benchmarks/synthetic_iqa
-
-# Keep only validation split for DocLayNet
-rm -rf data/benchmarks/doclaynet/PNG/train
-rm -rf data/benchmarks/doclaynet/PDF/train
-
-# Clean old results (keep latest only)
-cd reports/
-for suite in */; do
-  cd "$suite"
-  ls -t | tail -n +2 | xargs rm -rf  # Keep newest, delete rest
-  cd ..
-done
+# Remove optional datasets or old results
+rm -rf ../reports/*/$(ls -t ../reports/*/ | tail -n +2)
 ```
 
 ## See Also
 
-- [benchmarks/README.md](../../benchmarks/README.md) - Benchmarking framework overview
-- [benchmarks/AUTO_UPDATE.md](../../benchmarks/AUTO_UPDATE.md) - Auto-update workflow
-- [benchmarks/registry.yml](../../benchmarks/registry.yml) - Benchmark suite definitions
+- **[docs/DATASET_INSTALLATION.md](../../docs/DATASET_INSTALLATION.md)** - Complete installation guide
+- **[benchmarks/README.md](../../benchmarks/README.md)** - Benchmarking framework overview
+- **[benchmarks/registry.yml](../../benchmarks/registry.yml)** - Benchmark suite definitions
+- **[CITATIONS.md](../../CITATIONS.md)** - Complete citation information
 
 ---
 
-**Last Updated**: 2025-11-12
-**Datasets Gitignored**: Yes (too large for GitHub)
-**Results Committed**: Yes (small JSON files in reports/)
+**Last Updated**: 2025-11-11
+**Datasets Gitignored**: Yes (all except this README)
+**Results Committed**: Yes (small JSON files in `reports/`)
