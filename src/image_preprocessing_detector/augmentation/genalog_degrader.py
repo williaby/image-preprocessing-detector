@@ -13,17 +13,17 @@ Usage:
     >>> from image_preprocessing_detector.augmentation import (
     ...     DegradationConfig,
     ...     BlurConfig,
-    ...     SaltPepperConfig
+    ...     SaltPepperConfig,
     ... )
     >>> from image_preprocessing_detector.augmentation.genalog_degrader import (
-    ...     GenaloDeprotecter
+    ...     GenaloDeprotecter,
     ... )
     >>>
     >>> # Configure degradations
     >>> config = DegradationConfig(
     ...     blur=BlurConfig(enabled=True, kernel_size=5, sigma=1.5),
     ...     salt_pepper=SaltPepperConfig(enabled=True, amount=0.01),
-    ...     seed=42
+    ...     seed=42,
     ... )
     >>>
     >>> # Apply degradations (Phase 2 implementation)
@@ -217,7 +217,7 @@ class GenalogDegrader:
             ...     degradation_type="blur",
             ...     param_name="kernel_size",
             ...     param_range=(1, 11, 2),  # kernel_size: 1, 3, 5, 7, 9, 11
-            ...     output_dir=Path("data/sensitivity_analysis/blur")
+            ...     output_dir=Path("data/sensitivity_analysis/blur"),
             ... )
             >>> # Outputs: doc_blur_k1.jpg, doc_blur_k3.jpg, ..., doc_blur_k11.jpg
 

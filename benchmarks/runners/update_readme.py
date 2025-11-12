@@ -55,7 +55,9 @@ def load_latest_results(reports_dir: Path) -> dict[str, Any]:
                 results[suite_dir.name] = {
                     "timestamp": data.get("timestamp", "unknown"),
                     "aggregates": data.get("aggregates", {}),
-                    "num_samples": data.get("aggregates", {}).get("_meta", {}).get("num_samples", 0),
+                    "num_samples": data.get("aggregates", {})
+                    .get("_meta", {})
+                    .get("num_samples", 0),
                 }
 
     return results
@@ -75,19 +77,23 @@ def format_metric(value: float | None, metric_name: str) -> str:
         return "TBD"
 
     # Different formatting based on metric type
-    if "correlation" in metric_name.lower() or "f1" in metric_name.lower():
+    if (
+        "correlation" in metric_name.lower()
+        or "f1" in metric_name.lower()
+        or "rmse" in metric_name.lower()
+        or "mae" in metric_name.lower()
+    ):
         return f"{value:.3f}"
-    elif "rmse" in metric_name.lower() or "mae" in metric_name.lower():
-        return f"{value:.3f}"
-    elif "percentage" in metric_name.lower() or "rate" in metric_name.lower():
+    if "percentage" in metric_name.lower() or "rate" in metric_name.lower():
         return f"{value * 100:.1f}%"
-    elif "db" in metric_name.lower():
+    if "db" in metric_name.lower():
         return f"{value:.1f} dB"
-    else:
-        return f"{value:.2f}"
+    return f"{value:.2f}"
 
 
-def get_status_icon(value: float | None, target: float, lower_is_better: bool = False) -> str:
+def get_status_icon(
+    value: float | None, target: float, lower_is_better: bool = False
+) -> str:
     """Get status icon based on value vs target.
 
     Args:
@@ -103,8 +109,7 @@ def get_status_icon(value: float | None, target: float, lower_is_better: bool = 
 
     if lower_is_better:
         return "✓" if value <= target else "✗"
-    else:
-        return "✓" if value >= target else "✗"
+    return "✓" if value >= target else "✗"
 
 
 def update_quick_metrics_table(readme_content: str, results: dict[str, Any]) -> str:
@@ -120,17 +125,32 @@ def update_quick_metrics_table(readme_content: str, results: dict[str, Any]) -> 
     # Define metrics and their suite mappings
     metrics_map = {
         "IQA - Blur": {
-            "Correlation (Pearson r)": ("synthetic-iqa-blur-full", "blur_correlation", 0.85, False),
+            "Correlation (Pearson r)": (
+                "synthetic-iqa-blur-full",
+                "blur_correlation",
+                0.85,
+                False,
+            ),
             "RMSE": ("synthetic-iqa-blur-full", "blur_rmse", 0.05, True),
         },
         "IQA - Skew": {
             "MAE (degrees)": ("synthetic-iqa-skew-full", "skew_mae", 0.5, True),
         },
         "IQA - Deskew": {
-            "Success Rate": ("synthetic-iqa-skew-full", "deskew_success_rate", 0.99, False),
+            "Success Rate": (
+                "synthetic-iqa-skew-full",
+                "deskew_success_rate",
+                0.99,
+                False,
+            ),
         },
         "IQA - Noise": {
-            "SNR Improvement": ("synthetic-iqa-noise-full", "snr_improvement", 6.0, False),
+            "SNR Improvement": (
+                "synthetic-iqa-noise-full",
+                "snr_improvement",
+                6.0,
+                False,
+            ),
         },
         "IQA - Quality": {
             "PSNR": ("synthetic-iqa-noise-full", "psnr", 30.0, False),
@@ -163,7 +183,11 @@ def update_quick_metrics_table(readme_content: str, results: dict[str, Any]) -> 
             if target is None:
                 target_str = "—"
             elif "percentage" in metric_name.lower() or "rate" in metric_name.lower():
-                target_str = f"≥ {target * 100:.0f}%" if not lower_is_better else f"≤ {target * 100:.0f}%"
+                target_str = (
+                    f"≥ {target * 100:.0f}%"
+                    if not lower_is_better
+                    else f"≤ {target * 100:.0f}%"
+                )
             elif "degrees" in metric_name.lower():
                 target_str = f"≤ {target}°" if lower_is_better else f"≥ {target}°"
             elif "db" in metric_name.lower():
@@ -181,7 +205,9 @@ def update_quick_metrics_table(readme_content: str, results: dict[str, Any]) -> 
                 else:
                     status = "🔄"
             else:
-                status = get_status_icon(value, target, lower_is_better) if target else "—"
+                status = (
+                    get_status_icon(value, target, lower_is_better) if target else "—"
+                )
 
             new_rows.append(
                 f"| **{category}** | {metric_name} | {target_str} | {current_str} | {status} |"
@@ -267,7 +293,9 @@ def main() -> int:
 
     if not results:
         print("⚠ No benchmark results found. Run benchmarks first:")
-        print("  python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full")
+        print(
+            "  python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full"
+        )
         print("\nREADME will be updated with 'TBD' placeholders.")
     else:
         print(f"✓ Found results for {len(results)} suites:")
@@ -297,7 +325,9 @@ def main() -> int:
     print(f"\n✓ README updated: {readme_path}")
     print("\nNext steps:")
     print("  1. Review changes: git diff benchmarks/README.md")
-    print("  2. Commit: git add benchmarks/README.md && git commit -m 'docs: Update benchmark results'")
+    print(
+        "  2. Commit: git add benchmarks/README.md && git commit -m 'docs: Update benchmark results'"
+    )
 
     return 0
 

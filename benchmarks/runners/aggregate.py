@@ -55,13 +55,17 @@ def load_all_results(reports_dir: Path) -> list[dict[str, Any]]:
             with open(results_file) as f:
                 data = json.load(f)
 
-            all_results.append({
-                "suite_name": suite_name,
-                "timestamp": data.get("timestamp", timestamp_dir.name),
-                "task_type": data.get("task_type", "unknown"),
-                "num_samples": data.get("aggregates", {}).get("_meta", {}).get("num_samples", 0),
-                "aggregates": data.get("aggregates", {}),
-            })
+            all_results.append(
+                {
+                    "suite_name": suite_name,
+                    "timestamp": data.get("timestamp", timestamp_dir.name),
+                    "task_type": data.get("task_type", "unknown"),
+                    "num_samples": data.get("aggregates", {})
+                    .get("_meta", {})
+                    .get("num_samples", 0),
+                    "aggregates": data.get("aggregates", {}),
+                }
+            )
 
     # Sort by timestamp (descending)
     all_results.sort(key=lambda x: x["timestamp"], reverse=True)
@@ -184,10 +188,20 @@ def aggregate_to_markdown(results: list[dict[str, Any]], output_path: Path) -> N
                 if isinstance(mean, (int, float)):
                     mean = f"{mean:.3f}"
                     std = f"{std:.3f}" if isinstance(std, (int, float)) else std
-                    min_val = f"{min_val:.3f}" if isinstance(min_val, (int, float)) else min_val
-                    max_val = f"{max_val:.3f}" if isinstance(max_val, (int, float)) else max_val
+                    min_val = (
+                        f"{min_val:.3f}"
+                        if isinstance(min_val, (int, float))
+                        else min_val
+                    )
+                    max_val = (
+                        f"{max_val:.3f}"
+                        if isinstance(max_val, (int, float))
+                        else max_val
+                    )
 
-                lines.append(f"| {metric_name} | {mean} | {std} | {min_val} | {max_val} |")
+                lines.append(
+                    f"| {metric_name} | {mean} | {std} | {min_val} | {max_val} |"
+                )
 
         lines.append("")
 
@@ -204,7 +218,9 @@ def aggregate_to_markdown(results: list[dict[str, Any]], output_path: Path) -> N
 
                 # Get first 2 metrics as preview
                 key_metrics = []
-                for i, (metric_name, metric_data) in enumerate(hist_result["aggregates"].items()):
+                for i, (metric_name, metric_data) in enumerate(
+                    hist_result["aggregates"].items()
+                ):
                     if i >= 2 or metric_name == "_meta":
                         continue
                     if isinstance(metric_data, dict):
@@ -283,7 +299,9 @@ def main() -> int:
     if not results:
         print("✗ No benchmark results found")
         print("\nRun benchmarks first:")
-        print("  python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full")
+        print(
+            "  python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full"
+        )
         return 1
 
     print(f"✓ Found {len(results)} benchmark runs")

@@ -70,7 +70,9 @@ def create_badge_json(label: str, message: str, color: str) -> dict[str, Any]:
     }
 
 
-def get_color_for_metric(value: float, target: float, lower_is_better: bool = False) -> str:
+def get_color_for_metric(
+    value: float, target: float, lower_is_better: bool = False
+) -> str:
     """Determine badge color based on metric performance.
 
     Args:
@@ -84,17 +86,14 @@ def get_color_for_metric(value: float, target: float, lower_is_better: bool = Fa
     if lower_is_better:
         if value <= target:
             return "brightgreen"
-        elif value <= target * 1.2:
+        if value <= target * 1.2:
             return "yellow"
-        else:
-            return "red"
-    else:
-        if value >= target:
-            return "brightgreen"
-        elif value >= target * 0.8:
-            return "yellow"
-        else:
-            return "red"
+        return "red"
+    if value >= target:
+        return "brightgreen"
+    if value >= target * 0.8:
+        return "yellow"
+    return "red"
 
 
 def generate_badges(results: dict[str, Any], badges_dir: Path) -> None:
@@ -109,14 +108,42 @@ def generate_badges(results: dict[str, Any], badges_dir: Path) -> None:
     # Badge definitions: (suite, metric_key, label, target, lower_is_better, format)
     badge_defs = [
         # IQA Metrics
-        ("synthetic-iqa-blur-full", "blur_correlation", "IQA Blur r", 0.85, False, ".3f"),
+        (
+            "synthetic-iqa-blur-full",
+            "blur_correlation",
+            "IQA Blur r",
+            0.85,
+            False,
+            ".3f",
+        ),
         ("synthetic-iqa-blur-full", "blur_rmse", "IQA Blur RMSE", 0.05, True, ".3f"),
         ("synthetic-iqa-skew-full", "skew_mae", "IQA Skew MAE", 0.5, True, ".2f°"),
-        ("synthetic-iqa-skew-full", "deskew_success_rate", "Deskew Success", 0.99, False, ".1%"),
-        ("synthetic-iqa-noise-full", "snr_improvement", "SNR Improvement", 6.0, False, ".1f dB"),
+        (
+            "synthetic-iqa-skew-full",
+            "deskew_success_rate",
+            "Deskew Success",
+            0.99,
+            False,
+            ".1%",
+        ),
+        (
+            "synthetic-iqa-noise-full",
+            "snr_improvement",
+            "SNR Improvement",
+            6.0,
+            False,
+            ".1f dB",
+        ),
         ("synthetic-iqa-noise-full", "psnr", "PSNR", 30.0, False, ".1f dB"),
         ("synthetic-iqa-noise-full", "ssim", "SSIM", 0.9, False, ".3f"),
-        ("synthetic-iqa-binarization-full", "f_measure", "Binarization F1", 0.95, False, ".3f"),
+        (
+            "synthetic-iqa-binarization-full",
+            "f_measure",
+            "Binarization F1",
+            0.95,
+            False,
+            ".3f",
+        ),
         # Layout Detection
         ("doclaynet-layout-full", "mAP", "Layout mAP", 0.80, False, ".3f"),
     ]
@@ -160,9 +187,7 @@ def generate_badges(results: dict[str, Any], badges_dir: Path) -> None:
         # Format value
         if "%" in format_str:
             message = format_str.format(value * 100)
-        elif "°" in format_str:
-            message = format_str.format(value)
-        elif "dB" in format_str:
+        elif "°" in format_str or "dB" in format_str:
             message = format_str.format(value)
         else:
             message = format_str.format(value)
@@ -255,7 +280,7 @@ def main() -> int:
         markdown = f"![{name}]({url})"
         print(f"  {markdown}")
 
-    print(f"\n✓ Badges generated successfully")
+    print("\n✓ Badges generated successfully")
     return 0
 
 

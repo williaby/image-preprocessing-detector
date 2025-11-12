@@ -200,7 +200,9 @@ class BaseAdapter(ABC):
                 if not sample.image_path.exists():
                     missing.append(str(sample.image_path))
             except Exception as e:
-                raise RuntimeError(f"Integrity check failed for {sample_id}: {e}") from e
+                raise RuntimeError(
+                    f"Integrity check failed for {sample_id}: {e}"
+                ) from e
 
         if missing:
             raise RuntimeError(f"Missing images: {missing}")

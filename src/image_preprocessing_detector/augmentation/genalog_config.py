@@ -86,7 +86,9 @@ class BleedThroughConfig(BaseModel):
         offset_y: Vertical offset in pixels for reverse side alignment
 
     Example:
-        >>> config = BleedThroughConfig(enabled=True, alpha=0.3, offset_x=2, offset_y=-1)
+        >>> config = BleedThroughConfig(
+        ...     enabled=True, alpha=0.3, offset_x=2, offset_y=-1
+        ... )
         >>> # Simulates mild bleed-through with slight misalignment
     """
 
@@ -156,7 +158,7 @@ class MorphologicalConfig(BaseModel):
         ...     enabled=True,
         ...     operation=MorphologicalOperation.ERODE,
         ...     kernel_size=3,
-        ...     iterations=1
+        ...     iterations=1,
         ... )
         >>> # Simulates slight ink overflow with single erosion pass
     """
@@ -207,7 +209,7 @@ class DegradationConfig(BaseModel):
         >>> config = DegradationConfig(
         ...     blur=BlurConfig(enabled=True, kernel_size=5),
         ...     salt_pepper=SaltPepperConfig(enabled=True, amount=0.02),
-        ...     seed=42
+        ...     seed=42,
         ... )
         >>> # Applies blur + noise with reproducible results
 
@@ -246,7 +248,7 @@ class DegradationConfig(BaseModel):
         Example:
             >>> config = DegradationConfig(
             ...     blur=BlurConfig(enabled=True),
-            ...     salt_pepper=SaltPepperConfig(enabled=True)
+            ...     salt_pepper=SaltPepperConfig(enabled=True),
             ... )
             >>> config.get_enabled_degradations()
             ['blur', 'salt_pepper']

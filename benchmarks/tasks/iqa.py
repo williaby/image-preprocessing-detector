@@ -6,25 +6,19 @@ connecting detection modules to metrics and scoring.
 SPDX-License-Identifier: Apache-2.0
 """
 
-from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import cv2
 import numpy as np
 
-from image_preprocessing_detector.detection.iqa_classical import (
-    BlurDetector,
-    ContrastDetector,
-    Severity,
-    SkewDetector,
-    detect_blur,
-    detect_contrast,
-    detect_skew,
-)
 from image_preprocessing_detector.correction.corrections import (
     correct_skew,
     enhance_contrast,
-    sharpen_image,
+)
+from image_preprocessing_detector.detection.iqa_classical import (
+    BlurDetector,
+    ContrastDetector,
+    SkewDetector,
 )
 
 
@@ -83,7 +77,9 @@ def run_blur_benchmark(adapter: Any, scorer: Any) -> None:
         # Invert and normalize predicted scores to match sigma scale
         # Higher Laplacian variance = sharper = lower blur sigma
         max_score = np.max(pred_array) if np.max(pred_array) > 0 else 1.0
-        pred_normalized = 5.0 * (1.0 - pred_array / max_score)  # Scale to 0-5 sigma range
+        pred_normalized = 5.0 * (
+            1.0 - pred_array / max_score
+        )  # Scale to 0-5 sigma range
 
         try:
             corr = blur_correlation(pred_normalized, gt_array)
@@ -93,10 +89,13 @@ def run_blur_benchmark(adapter: Any, scorer: Any) -> None:
             print(f"  Blur RMSE: {rmse:.3f}")
 
             # Add aggregate metrics
-            scorer.add_result("_aggregate", {
-                "blur_correlation": corr,
-                "blur_rmse": rmse,
-            })
+            scorer.add_result(
+                "_aggregate",
+                {
+                    "blur_correlation": corr,
+                    "blur_rmse": rmse,
+                },
+            )
         except Exception as e:
             print(f"⚠ Failed to calculate correlation: {e}")
 
@@ -174,7 +173,15 @@ def run_skew_benchmark(adapter: Any, scorer: Any) -> None:
         try:
             mae = skew_mae(pred_array, gt_array)
             success_rate = deskew_success_rate(
-                np.array([m["corrected_angle"] for m in [scorer.results[i]["metrics"] for i in range(len(scorer.results))]]),
+                np.array(
+                    [
+                        m["corrected_angle"]
+                        for m in [
+                            scorer.results[i]["metrics"]
+                            for i in range(len(scorer.results))
+                        ]
+                    ]
+                ),
                 np.zeros_like(pred_array),  # Target is 0° after correction
                 threshold=0.5,
             )
@@ -183,10 +190,13 @@ def run_skew_benchmark(adapter: Any, scorer: Any) -> None:
             print(f"  Deskew Success Rate: {success_rate * 100:.1f}%")
 
             # Add aggregate metrics
-            scorer.add_result("_aggregate", {
-                "skew_mae": mae,
-                "deskew_success_rate": success_rate,
-            })
+            scorer.add_result(
+                "_aggregate",
+                {
+                    "skew_mae": mae,
+                    "deskew_success_rate": success_rate,
+                },
+            )
         except Exception as e:
             print(f"⚠ Failed to calculate skew metrics: {e}")
 
@@ -200,7 +210,7 @@ def run_noise_benchmark(adapter: Any, scorer: Any) -> None:
         adapter: Dataset adapter (SyntheticIQAAdapter with subset='noise')
         scorer: AggregateScorer for collecting results
     """
-    from benchmarks.metrics.image_metrics import psnr, snr_improvement, ssim
+    from benchmarks.metrics.image_metrics import psnr, ssim
 
     for sample in adapter:
         # Load noisy image
@@ -221,7 +231,9 @@ def run_noise_benchmark(adapter: Any, scorer: Any) -> None:
             # Apply denoising (using OpenCV's fastNlMeansDenoising)
             # Note: denoise_image not yet implemented in corrections module
             if len(noisy_image.shape) == 3:
-                denoised = cv2.fastNlMeansDenoisingColored(noisy_image, None, 10, 10, 7, 21)
+                denoised = cv2.fastNlMeansDenoisingColored(
+                    noisy_image, None, 10, 10, 7, 21
+                )
             else:
                 denoised = cv2.fastNlMeansDenoising(noisy_image, None, 10, 7, 21)
             denoise_metadata = {"method": "fastNlMeans", "h": 10}
@@ -325,10 +337,14 @@ def run_binarization_benchmark(adapter: Any, scorer: Any) -> None:
 
         try:
             # Apply Otsu's binarization
-            _, binary_pred = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            _, binary_pred = cv2.threshold(
+                image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+            )
 
             # Create ground truth binary (using optimal threshold)
-            _, binary_true = cv2.threshold(image, optimal_threshold, 255, cv2.THRESH_BINARY)
+            _, binary_true = cv2.threshold(
+                image, optimal_threshold, 255, cv2.THRESH_BINARY
+            )
 
             # Calculate metrics
             precision, recall, f_measure, ber = binarization_metrics(
@@ -351,7 +367,7 @@ def run_binarization_benchmark(adapter: Any, scorer: Any) -> None:
             print(f"⚠ Binarization benchmark failed for {sample.sample_id}: {e}")
 
 
-def run_iqa_benchmark(adapter: Any, suite_config: Dict[str, Any], scorer: Any) -> None:
+def run_iqa_benchmark(adapter: Any, suite_config: dict[str, Any], scorer: Any) -> None:
     """Main entry point for IQA benchmarking.
 
     Routes to specific benchmark based on suite subset.

@@ -3,6 +3,8 @@
 SPDX-License-Identifier: Apache-2.0
 """
 
+# Import adapters to register them
+from benchmarks.adapters import doclaynet_adapter, synthetic_iqa_adapter
 from benchmarks.adapters.base import (
     BaseAdapter,
     DatasetRegistry,
@@ -10,14 +12,11 @@ from benchmarks.adapters.base import (
     load_adapter,
 )
 
-# Import adapters to register them
-from benchmarks.adapters import doclaynet_adapter, synthetic_iqa_adapter
-
 __all__ = [
     "BaseAdapter",
     "DatasetRegistry",
     "PageSample",
-    "load_adapter",
     "doclaynet_adapter",
+    "load_adapter",
     "synthetic_iqa_adapter",
 ]

@@ -12,7 +12,6 @@ All metrics are deterministic and pure functions (no I/O).
 SPDX-License-Identifier: Apache-2.0
 """
 
-
 import numpy as np
 from numpy.typing import NDArray
 from scipy import stats
