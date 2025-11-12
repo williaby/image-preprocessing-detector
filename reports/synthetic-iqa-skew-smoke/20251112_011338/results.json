@@ -1,0 +1,193 @@
+{
+  "suite_name": "synthetic-iqa-skew-smoke",
+  "task_type": "iqa",
+  "timestamp": "2025-11-12T01:13:38.527917",
+  "results": [
+    {
+      "sample_id": "blur_sigma_0.50",
+      "metrics": {
+        "detected_angle": 0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": 0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "blur_sigma_0.00",
+      "metrics": {
+        "detected_angle": 0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": 0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "blur_sigma_2.50",
+      "metrics": {
+        "detected_angle": 0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": 0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "blur_sigma_1.00",
+      "metrics": {
+        "detected_angle": 0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": 0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "blur_sigma_5.00",
+      "metrics": {
+        "detected_angle": -0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": -0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "blur_sigma_2.00",
+      "metrics": {
+        "detected_angle": 0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": 0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "blur_sigma_4.00",
+      "metrics": {
+        "detected_angle": -0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": -0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "blur_sigma_3.00",
+      "metrics": {
+        "detected_angle": 0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": 0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "blur_sigma_1.50",
+      "metrics": {
+        "detected_angle": 0.0,
+        "ground_truth_angle": 0.0,
+        "corrected_angle": 0.0,
+        "is_skewed": false,
+        "confidence": 1.0,
+        "severity": "low",
+        "deskew_success": true
+      }
+    },
+    {
+      "sample_id": "_aggregate",
+      "metrics": {
+        "skew_mae": 0.0,
+        "deskew_success_rate": 1.0
+      }
+    }
+  ],
+  "aggregates": {
+    "detected_angle": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "median": 0.0,
+      "count": 9
+    },
+    "ground_truth_angle": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "median": 0.0,
+      "count": 9
+    },
+    "corrected_angle": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "median": 0.0,
+      "count": 9
+    },
+    "is_skewed": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "median": 0.0,
+      "count": 9
+    },
+    "confidence": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "median": 1.0,
+      "count": 9
+    },
+    "deskew_success": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "median": 1.0,
+      "count": 9
+    },
+    "skew_mae": {
+      "mean": 0.0,
+      "std": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "median": 0.0,
+      "count": 1
+    },
+    "deskew_success_rate": {
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "max": 1.0,
+      "median": 1.0,
+      "count": 1
+    },
+    "_meta": {
+      "suite_name": "synthetic-iqa-skew-smoke",
+      "task_type": "iqa",
+      "num_samples": 10
+    }
+  }
+}
