@@ -75,6 +75,7 @@ class DocLayNetAdapter(BaseAdapter):
                 "Page-wise splits inflate metrics by ~10-15 points. "
                 "Use doc-wise splits for benchmarking.",
                 UserWarning,
+                stacklevel=2,
             )
 
         # Load annotations
@@ -115,7 +116,7 @@ class DocLayNetAdapter(BaseAdapter):
             self.image_annotations[img_id].append(ann)
 
         # Extract sample IDs
-        self._sample_ids = [str(img_id) for img_id in self.image_info.keys()]
+        self._sample_ids = [str(img_id) for img_id in self.image_info]
 
         # Build category ID to name mapping
         self.category_names = {

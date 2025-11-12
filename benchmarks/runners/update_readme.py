@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0
 import json
 import re
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -233,7 +233,7 @@ def update_last_updated(readme_content: str) -> str:
     Returns:
         Updated README content
     """
-    now = datetime.now().strftime("%Y-%m-%d")
+    now = datetime.now(UTC).strftime("%Y-%m-%d")
     pattern = r"\*\*Last Updated\*\*: \d{4}-\d{2}-\d{2}"
     replacement = f"**Last Updated**: {now}"
 

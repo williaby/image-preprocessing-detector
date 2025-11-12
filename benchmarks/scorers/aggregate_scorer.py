@@ -5,6 +5,7 @@ Collects metrics from individual samples and computes aggregate statistics.
 SPDX-License-Identifier: Apache-2.0
 """
 
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -52,7 +53,7 @@ class AggregateScorer:
         for result in self.results:
             for metric_name, value in result["metrics"].items():
                 # Skip nested dicts (like per_class_AP)
-                if isinstance(value, (int, float, np.number)):
+                if isinstance(value, int | float | np.number):
                     if metric_name not in metric_values:
                         metric_values[metric_name] = []
                     metric_values[metric_name].append(float(value))
@@ -89,10 +90,7 @@ class AggregateScorer:
         """
         aggregates = self.compute_aggregates()
 
-        if "_meta" in aggregates:
-            meta = aggregates.pop("_meta")
-        else:
-            meta = {}
+        meta = aggregates.pop("_meta") if "_meta" in aggregates else {}
 
         lines = [
             f"# Benchmark Summary: {self.suite_name}",
@@ -157,7 +155,7 @@ class AggregateScorer:
                 {
                     "suite_name": self.suite_name,
                     "task_type": self.task_type,
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "results": self.results,
                     "aggregates": self.compute_aggregates(),
                 },

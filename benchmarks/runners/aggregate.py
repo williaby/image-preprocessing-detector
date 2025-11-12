@@ -14,7 +14,7 @@ import argparse
 import csv
 import json
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -90,7 +90,7 @@ def aggregate_to_csv(results: list[dict[str, Any]], output_path: Path) -> None:
         # Determine all metric names
         all_metrics = set()
         for result in results:
-            for metric_name in result["aggregates"].keys():
+            for metric_name in result["aggregates"]:
                 if metric_name != "_meta":
                     all_metrics.add(metric_name)
 
@@ -143,7 +143,7 @@ def aggregate_to_markdown(results: list[dict[str, Any]], output_path: Path) -> N
     lines = [
         "# Benchmark Aggregate Report",
         "",
-        f"**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}",
+        f"**Generated**: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}",
         f"**Total Runs**: {len(results)}",
         "",
     ]
@@ -254,7 +254,7 @@ def aggregate_to_json(results: list[dict[str, Any]], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     aggregate = {
-        "generated_at": datetime.now().isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "total_runs": len(results),
         "results": results,
     }

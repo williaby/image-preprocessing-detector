@@ -13,20 +13,20 @@ from numpy.typing import NDArray
 
 
 def bbox_iou(
-    bbox1: NDArray[np.float64], bbox2: NDArray[np.float64], format: str = "xywh"
+    bbox1: NDArray[np.float64], bbox2: NDArray[np.float64], bbox_format: str = "xywh"
 ) -> float:
     """Calculate IoU (Intersection over Union) between two bounding boxes.
 
     Args:
         bbox1: First bounding box [x, y, w, h] or [x1, y1, x2, y2]
         bbox2: Second bounding box [x, y, w, h] or [x1, y1, x2, y2]
-        format: Bbox format ('xywh' or 'xyxy')
+        bbox_format: Bbox format ('xywh' or 'xyxy')
 
     Returns:
         IoU value (0 to 1)
     """
     # Convert to xyxy format if needed
-    if format == "xywh":
+    if bbox_format == "xywh":
         x1_1, y1_1, w1, h1 = bbox1
         x2_1, y2_1 = x1_1 + w1, y1_1 + h1
 

@@ -155,7 +155,7 @@ class SyntheticIQAAdapter(BaseAdapter):
         """Generate images with varying blur levels."""
         from scipy.ndimage import gaussian_filter
 
-        for i, sigma in enumerate(self.params.blur_sigmas):
+        for _i, sigma in enumerate(self.params.blur_sigmas):
             sample_id = f"blur_sigma_{sigma:.2f}"
             image_path = self.output_dir / f"{sample_id}.png"
 
@@ -288,7 +288,7 @@ class SyntheticIQAAdapter(BaseAdapter):
     def _generate_binarization_samples(self) -> None:
         """Generate images for binarization testing."""
         # Generate samples with varying text/background contrasts
-        for i, threshold in enumerate(range(50, 200, 25)):
+        for _i, threshold in enumerate(range(50, 200, 25)):
             sample_id = f"binarization_threshold_{threshold}"
             image_path = self.output_dir / f"{sample_id}.png"
 

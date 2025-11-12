@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0
 import argparse
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -213,7 +213,7 @@ def run_benchmark(
         return {"error": f"Task type '{task_type}' not implemented"}
 
     # Save results
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     suite_output_dir = output_dir / suite_name / timestamp
     scorer.save_results(suite_output_dir)
 

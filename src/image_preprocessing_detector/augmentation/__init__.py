@@ -27,14 +27,12 @@ from image_preprocessing_detector.augmentation.genalog_degrader import (
 )
 
 __all__ = [
-    # Configuration classes
-    "DegradationConfig",
-    "BlurConfig",
     "BleedThroughConfig",
-    "SaltPepperConfig",
+    "BlurConfig",
+    "DegradationConfig",
+    "GenalogDegrader",
     "MorphologicalConfig",
     "MorphologicalOperation",
-    # Degrader classes and utilities
-    "GenalogDegrader",
+    "SaltPepperConfig",
     "create_default_degrader",
 ]
