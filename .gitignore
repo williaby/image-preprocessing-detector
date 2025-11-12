@@ -46,6 +46,7 @@ htmlcov/
 .hypothesis/
 .tox/
 coverage.xml
+junit.xml
 *.log
 
 # MyPy

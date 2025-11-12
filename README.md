@@ -181,8 +181,7 @@ image_detection/
 ├── pyproject.toml                 # Dependencies & tool config
 ├── README.md                      # This file
 ├── PROJECT_PLAN.md                # Complete implementation plan
-├── ARCHITECTURE_SUMMARY.md        # Architecture quick reference
-└── DECISION_MATRIX.md             # Critical decisions tracking
+└── ARCHITECTURE_SUMMARY.md        # Architecture quick reference
 ```
 
 ## Testing
@@ -245,8 +244,8 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 - **[PROJECT_PLAN.md](PROJECT_PLAN.md)**: Complete 50+ page implementation plan with phased roadmap
 - **[ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md)**: Quick reference for architecture and design decisions
-- **[DECISION_MATRIX.md](DECISION_MATRIX.md)**: Critical decisions tracking and stakeholder requirements
 - **[ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
+- **[docs/project/decision-matrix.md](docs/project/decision-matrix.md)**: Critical decisions tracking and stakeholder requirements
 - **[docs/WTD-Runbook.md](docs/WTD-Runbook.md)**: What The Diff integration guide for automated PR summaries
 - **[docs/api-reference.md](docs/api-reference.md)**: API and CLI reference documentation
 - **[SECURITY.md](SECURITY.md)**: Security policy and vulnerability reporting

@@ -100,7 +100,7 @@ ml = [
     "timm>=0.9.0",
     "albumentations>=1.3.0",
     "onnxruntime>=1.15.0",
-    "genalog>=0.1.0",  # Synthetic document degradation for IQA training data augmentation
+    # "genalog>=0.1.0",  # DISABLED: Conflicts with dev dependencies
 ]
 
 api = [
@@ -170,7 +170,7 @@ nox = "^2025.10.16"
 mutmut = "^3.3.1"
 pyyaml = "^6.0.3"
 scipy = "^1.16.3"
-scikit-image = "^0.25.2"
+scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
 
 [tool.poetry.group.ml]
 optional = true
@@ -182,7 +182,8 @@ ultralytics = "^8.0.0"
 timm = "^0.9.0"
 albumentations = "^1.3.0"
 onnxruntime = "^1.15.0"
-genalog = "^0.1.0"  # Synthetic document degradation for IQA training data augmentation
+# genalog = "^0.1.0"  # DISABLED: Conflicts with dev dependencies (requires matplotlib 3.2.1, scikit-image 0.16.2)
+# TODO: Replace with alternative synthetic degradation library or fork genalog with updated dependencies
 
 [tool.poetry.group.api]
 optional = true
