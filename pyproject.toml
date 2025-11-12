@@ -100,6 +100,7 @@ ml = [
     "timm>=0.9.0",
     "albumentations>=1.3.0",
     "onnxruntime>=1.15.0",
+    "genalog>=0.1.0",  # Synthetic document degradation for IQA training data augmentation
 ]
 
 api = [
@@ -178,6 +179,7 @@ ultralytics = "^8.0.0"
 timm = "^0.9.0"
 albumentations = "^1.3.0"
 onnxruntime = "^1.15.0"
+genalog = "^0.1.0"  # Synthetic document degradation for IQA training data augmentation
 
 [tool.poetry.group.api]
 optional = true

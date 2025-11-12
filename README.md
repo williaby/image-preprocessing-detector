@@ -321,15 +321,29 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Citation
 
+If you use this software in your research, please cite:
+
 ```bibtex
 @software{image_preprocessing_detector,
   title = {Image Preprocessing Detector for RAG Applications},
   author = {Byron Williams},
   year = {2025},
   version = {0.1.0},
-  url = {https://github.com/username/image-preprocessing-detector}
+  url = {https://github.com/williaby/image-preprocessing-detector}
 }
 ```
+
+### Datasets Used
+
+This project uses the following datasets:
+
+- **DocLayNet** (Pfitzmann et al., 2022) - Document layout analysis validation
+  [![License](https://img.shields.io/badge/License-CDLA--Permissive--2.0-blue.svg)](https://github.com/DS4SD/DocLayNet)
+
+- **Genalog** (Microsoft, 2021) - Synthetic document degradation
+  [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/microsoft/genalog)
+
+Full citations and dataset attributions available in [CITATIONS.md](CITATIONS.md).
 
 ## Acknowledgments
 
