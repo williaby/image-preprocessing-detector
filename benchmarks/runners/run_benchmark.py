@@ -100,43 +100,10 @@ def run_iqa_benchmark(
         adapter: Dataset adapter
         scorer: Result scorer
     """
-    subset = suite_config.get("subset", "blur")
-    print(f"Running IQA benchmark for subset: {subset}")
+    # Import and delegate to task plugin
+    from benchmarks.tasks.iqa import run_iqa_benchmark as run_iqa_task
 
-    for i, sample in enumerate(adapter):
-        print(f"  Processing sample {i + 1}/{len(adapter)}: {sample.sample_id}")
-
-        ground_truth = sample.metadata.get("ground_truth", {})
-
-        # Calculate metrics based on subset type
-        metrics = {}
-
-        if subset == "blur":
-            # For blur, we need to compare predicted blur levels
-            # This is a placeholder - actual implementation would use detection module
-            gt_sigma = ground_truth.get("blur_sigma", 0.0)
-            # Placeholder: assume perfect detection for now
-            predicted_sigma = gt_sigma
-            metrics["blur_sigma_gt"] = gt_sigma
-            metrics["blur_sigma_pred"] = predicted_sigma
-
-        elif subset == "skew":
-            # For skew, calculate angle error
-            gt_angle = ground_truth.get("skew_angle", 0.0)
-            # Placeholder: assume perfect detection
-            predicted_angle = gt_angle
-            metrics["skew_angle_gt"] = gt_angle
-            metrics["skew_angle_pred"] = predicted_angle
-            metrics["skew_mae"] = abs(predicted_angle - gt_angle)
-
-        elif subset == "noise":
-            # For noise, calculate SNR
-            gt_snr = ground_truth.get("snr_db", 0.0)
-            metrics["snr_db_gt"] = gt_snr
-
-        scorer.add_result(sample.sample_id, metrics)
-
-    print(f"✓ Completed {len(scorer)} samples")
+    run_iqa_task(adapter, suite_config, scorer)
 
 
 def run_layout_benchmark(
@@ -209,11 +176,14 @@ def run_benchmark(
     print(f"Loading dataset from: {dataset_dir}")
 
     try:
+        # Enable automatic generation for synthetic datasets
+        download = dataset_name == "synthetic_iqa"
+
         adapter = load_adapter(
             dataset_name,
             data_dir=dataset_dir,
             split=split,
-            download=False,
+            download=download,
         )
     except Exception as e:
         print(f"✗ Failed to load dataset: {e}")

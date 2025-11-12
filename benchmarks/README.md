@@ -376,16 +376,16 @@ python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-smoke
 
 | Category | Metric | Target | Current | Status |
 |----------|--------|--------|---------|--------|
-| **IQA - Blur** | Correlation (Pearson r) | ≥ 0.85 | TBD* | 🔄 |
-| **IQA - Blur** | RMSE | ≤ 0.05 | TBD* | 🔄 |
-| **IQA - Skew** | MAE (degrees) | ≤ 0.5° | TBD* | 🔄 |
-| **IQA - Deskew** | Success Rate | ≥ 99% | TBD* | 🔄 |
-| **IQA - Noise** | SNR Improvement | ≥ 6 dB | TBD* | 🔄 |
-| **IQA - Quality** | PSNR | ≥ 30 dB | TBD* | 🔄 |
-| **IQA - Quality** | SSIM | ≥ 0.9 | TBD* | 🔄 |
-| **IQA - Binarization** | F-measure | ≥ 0.95 | TBD* | 🔄 |
-| **Layout Detection** | mAP@[.5:.95] (DocLayNet) | ≥ 0.80 | TBD** | ⏳ |
-| **Layout Detection** | Per-class AP | — | TBD** | ⏳ |
+| **IQA - Blur** | Correlation (Pearson r) | ≥ 0.85 | TBD | 🔄 |
+| **IQA - Blur** | RMSE | ≤ 0.05 | TBD | 🔄 |
+| **IQA - Skew** | MAE (degrees) | ≤ 0.5° | TBD | 🔄 |
+| **IQA - Deskew** | Success Rate | ≥ 99% | TBD | 🔄 |
+| **IQA - Noise** | SNR Improvement | ≥ 6.0 | TBD | 🔄 |
+| **IQA - Quality** | PSNR | ≥ 30.0 | TBD | 🔄 |
+| **IQA - Quality** | SSIM | ≥ 0.9 | TBD | 🔄 |
+| **IQA - Binarization** | F-measure | ≥ 0.95 | TBD | 🔄 |
+| **Layout Detection** | mAP@[.5:.95] (DocLayNet) | ≥ 0.8 | TBD | ⏳ |
+| **Layout Detection** | Per-class AP | — | TBD | ⏳ |
 
 <sub>*Synthetic IQA benchmarks ready; awaiting Phase 1 detector integration</sub>
 <sub>**Requires YOLOv8 model training (Phase 2)</sub>

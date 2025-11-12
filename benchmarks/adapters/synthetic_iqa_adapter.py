@@ -101,7 +101,11 @@ class SyntheticIQAAdapter(BaseAdapter):
         self.regenerate = regenerate
         self.params = SyntheticParams()
 
-        super().__init__(data_dir, split, cache_dir, download=False)
+        # Create data directory if downloading/generating
+        if download or regenerate:
+            Path(data_dir).mkdir(parents=True, exist_ok=True)
+
+        super().__init__(data_dir, split, cache_dir, download=download)
 
         # Create output directory
         self.output_dir = self.data_dir / "synthetic_iqa" / self.subset
