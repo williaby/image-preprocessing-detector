@@ -6,6 +6,34 @@
 
 ---
 
+## ⚠️ Training Platform Update (2025-01-15)
+
+**This phase now uses Google Colab Pro for model training** instead of local or cloud GPU infrastructure.
+
+### Quick Links
+- **📓 Training Notebook**: [notebooks/colab/phase2_iqa_training.ipynb](../../../notebooks/colab/phase2_iqa_training.ipynb)
+- **📚 Complete Guide**: [COLAB_TRAINING_GUIDE.md](../../COLAB_TRAINING_GUIDE.md)
+- **⚙️ Configuration**: [configs/colab_phase2_iqa.yaml](../../../configs/colab_phase2_iqa.yaml)
+
+### Key Changes
+- **Platform**: Google Colab Pro ($10/month) + Google Drive ($2/month)
+- **GPU**: V100/P100/T4 (16GB VRAM) - no local GPU required
+- **Session Limit**: 12 hours with automatic checkpoint management
+- **Total Cost**: ~$12 for Phase 2 (vs $30-200 for cloud GPU hourly)
+- **Utilities**: Checkpoint manager, Google Drive sync ([scripts/](../../../scripts/))
+
+### Training Workflow
+1. Subscribe to Google Colab Pro ($10/month)
+2. Setup Google Drive structure (see [COLAB_TRAINING_GUIDE.md](../../COLAB_TRAINING_GUIDE.md))
+3. Upload dataset to Google Drive (~10GB)
+4. Open [phase2_iqa_training.ipynb](../../../notebooks/colab/phase2_iqa_training.ipynb) in Colab
+5. Run all cells - training auto-resumes across sessions
+6. Download trained ONNX model from Google Drive
+
+**Note**: The detailed plan below describes the training methodology and algorithms. For infrastructure setup, session management, and troubleshooting, refer to [COLAB_TRAINING_GUIDE.md](../../COLAB_TRAINING_GUIDE.md).
+
+---
+
 ## Executive Summary
 
 Phase 2 focuses on training and deploying machine learning models for improved image quality assessment (IQA). This phase will enhance the classical computer vision methods from Phase 1 with deep learning-based multi-label classification, improving detection accuracy for noise, blur, perspective distortion, and other quality issues.
@@ -1273,9 +1301,16 @@ class EnsembleDetector:
 - ✅ tensorboard (for training monitoring)
 
 ### Infrastructure
-- GPU for training: NVIDIA GPU with 8GB+ VRAM (RTX 3080, A4000, or cloud equivalent)
-- Cloud GPU option: ~$1.50/hr for V100/A10 (estimated $75 for 50 GPU-hours)
-- Storage: 50GB for datasets and models
+
+**⚠️ Updated for Google Colab Pro** (see [Training Platform Update](#️-training-platform-update-2025-01-15) above)
+
+- **Training Platform**: Google Colab Pro ($10/month)
+- **GPU**: V100/P100/T4 (16GB VRAM) - provided by Colab
+- **Storage**: Google Drive 100GB ($2/month) for datasets, checkpoints, models
+- **Session Management**: Automatic checkpoint/resume system for 12-hour limits
+- **Total Cost**: ~$12 for Phase 2 (vs $30-200 for cloud GPU hourly)
+
+**See [COLAB_TRAINING_GUIDE.md](../../COLAB_TRAINING_GUIDE.md) for complete setup instructions.**
 
 ### Phase 1/1B Completion
 - ✅ Phase 1 complete (classical methods, 89.75% coverage)
