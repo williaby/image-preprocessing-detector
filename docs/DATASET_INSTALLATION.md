@@ -9,18 +9,101 @@
 
 | Dataset | Status | Size | Phase | Notes |
 |---------|--------|------|-------|-------|
-| ✅ doclaynet | **Ready** (Symlinked) | 11GB | 1 | From data_ingestor project |
-| ✅ signatr6k | **Ready** (Local) | ~2GB | ? | Already present |
-| ✅ synthetic_iqa | **Auto-generated** | 364KB | 1 | Generated on benchmark runs |
-| ✅ cocotext | **Ready** (Extracted) | 53MB | 2 | Annotations only - images need COCO dataset |
-| ⚠️ omnidocbench | **Manual Required** | 1.2GB | 3 | Rate limited - needs HF account |
-| ⏸️ tablebank | **Manual Required** | 400MB | 2 | Not yet downloaded |
-| ⏸️ pubtabnet | **Manual Required** | 500MB-19GB | 2 | Not yet downloaded |
-| ⏸️ fintabnet | **Manual Required** | 3GB | 2 | Not yet downloaded |
-| ⏸️ wili_2018 | **Manual Required** | 800MB | 2 | Not yet downloaded |
-| ⏸️ icdar_mlt_2019 | **Manual Required** | 3GB | 2 | Not yet downloaded |
+| ✅ doclaynet | **Ready** (Symlinked) | 41GB | 1 | From data_ingestor project |
+| ✅ signatr6k | **Ready** (Local) | 116MB | ? | Already present |
+| ✅ synthetic_iqa | **Auto-generated** | 345KB | 1 | Generated on benchmark runs |
+| ✅ cocotext | **Ready** (Extracted) | 52MB | 2 | Annotations only - images need COCO dataset |
+| ✅ omnidocbench | **Automated Script** | 1.16GB | 3 | Rate-limit aware downloader |
+| ✅ wili_2018 | **Ready** (Extracted) | 129MB | 2 | Language identification dataset |
+| ⏸️ tablebank | **Automated Script** | 23.7GB | 2 | HuggingFace download available |
+| ⏸️ pubtabnet | **Automated Script** | 10.5GB | 2 | HuggingFace download available |
+| ⏸️ fintabnet | **Automated Script** | 3.2GB | 2 | HuggingFace download available |
 
-**Total Disk Space Required**: ~42GB (excluding symlinked doclaynet)
+**Total Disk Space Required**: ~80GB (excluding symlinked doclaynet)
+**Note**: ICDAR MLT 2019 removed - competition dataset requires registration, use COCO-Text or TextOCR instead
+
+---
+
+## Google Cloud Storage (GCS) Integration
+
+**Purpose**: Store and share training datasets, checkpoints, and models via Google Cloud Storage for Colab training
+
+### GCS Authentication
+
+The project includes a helper script for automatic GCS authentication using the service account stored in `.env`:
+
+**Quick Start**:
+```bash
+# One-time setup: Authenticate with GCS
+./scripts/auth_gcs.sh --cleanup
+
+# Or source it to keep credentials for the session
+source ./scripts/auth_gcs.sh
+```
+
+**What it does**:
+- ✅ Reads `GCP_SA_KEY` from `.env` file
+- ✅ Decodes base64-encoded service account JSON
+- ✅ Authenticates with `gcloud`
+- ✅ Sets project to `image-detection-478105`
+- ✅ Verifies access to `gs://image_detection_b/`
+- ✅ Exports environment variables (`GOOGLE_APPLICATION_CREDENTIALS`, `GCP_PROJECT`, `GCS_BUCKET`)
+
+**Manual Authentication** (if needed):
+```bash
+# Extract service account from .env
+export GCP_SA_KEY=$(grep "^GCP_SA_KEY=" .env | cut -d= -f2)
+echo "$GCP_SA_KEY" | base64 -d > /tmp/gcs-sa.json
+
+# Authenticate
+gcloud auth activate-service-account --key-file=/tmp/gcs-sa.json
+gcloud config set project image-detection-478105
+
+# Verify
+gsutil ls gs://image_detection_b/
+```
+
+### GCS Helper Scripts
+
+After authentication, use [scripts/gcs_helpers.sh](../scripts/gcs_helpers.sh) to manage datasets and models:
+
+```bash
+# List bucket contents
+./scripts/gcs_helpers.sh list
+
+# Show storage usage and costs
+./scripts/gcs_helpers.sh info
+
+# Upload training configs
+./scripts/gcs_helpers.sh upload-configs
+
+# Upload Phase 2 dataset (~10GB, 10-30 minutes)
+./scripts/gcs_helpers.sh upload-phase2
+
+# Download Phase 2 dataset from GCS
+./scripts/gcs_helpers.sh download-phase2
+
+# Sync checkpoints to GCS
+./scripts/gcs_helpers.sh sync-checkpoints phase2
+
+# Download checkpoints from GCS
+./scripts/gcs_helpers.sh download-checkpoints phase2
+
+# Upload final trained models
+./scripts/gcs_helpers.sh upload-models phase2
+```
+
+**Typical Workflow**:
+1. Prepare datasets locally (follow sections below)
+2. Authenticate with GCS: `./scripts/auth_gcs.sh`
+3. Upload datasets to GCS: `./scripts/gcs_helpers.sh upload-phase2`
+4. Train in Google Colab (uses GCS for data loading)
+5. Sync checkpoints: `./scripts/gcs_helpers.sh sync-checkpoints`
+6. Download final models: `./scripts/gcs_helpers.sh download-checkpoints`
+
+**See Also**:
+- [docs/PHASE2_QUICKSTART.md](PHASE2_QUICKSTART.md) - Google Colab training guide
+- [docs/setup/colab-storage-setup.md](setup/colab-storage-setup.md) - GCS configuration details
 
 ---
 
@@ -121,36 +204,53 @@ unzip val2014.zip
 ## ⚠️ Manual Installation Required
 
 ### 5. OmniDocBench (Phase 3 - Comprehensive Document Understanding)
-**Status**: ⚠️ **Rate Limited - Requires HuggingFace Account**
+**Status**: ✅ **Automated Download Available** (Requires HuggingFace Token)
 **Source**: https://huggingface.co/datasets/opendatalab/OmniDocBench
-**Size**: 1.2GB
+**Size**: 1.25 GB
 **License**: CC-BY-NC-4.0 (Evaluation only, non-commercial)
 
-**Issue**: Download was rate-limited by HuggingFace (HTTP 429). Need authenticated access.
-
-**Manual Installation**:
+**Automated Installation** (Recommended):
 ```bash
-# 1. Create/login to HuggingFace account at https://huggingface.co/join
+# Download using automated script with rate-limit handling
+poetry run python scripts/download_omnidocbench.py
 
-# 2. Get your access token from https://huggingface.co/settings/tokens
+# The script automatically:
+# - Reads HF_TOKEN from .env file
+# - Handles rate limiting (5,000 requests/5min for free tier)
+# - Implements retry logic with exponential backoff
+# - Tracks download progress
+# - Saves to data/benchmarks/omnidocbench
+```
 
-# 3. Login via CLI
-poetry run huggingface-cli login
-# Paste your token when prompted
+**HuggingFace Token Setup** (One-time):
+1. Create account at: https://huggingface.co/join
+2. Get token at: https://huggingface.co/settings/tokens (create "Read" token)
+3. Token already stored in `.env` as `HF_TOKEN`
+4. Verify: `grep HF_TOKEN .env` should show your token
 
-# 4. Download dataset
+**Rate Limits (Free Tier)**:
+- **5,000 requests per 5-minute window** (file downloads)
+- **PRO tier**: 12,000 requests/5min (~$9/month)
+- **Enterprise**: 50,000+ requests/5min
+- Script automatically handles rate limiting and retries
+
+**Manual Installation** (Alternative):
+```bash
+# Using HuggingFace CLI
+poetry run huggingface-cli login  # Paste token when prompted
 poetry run python -c "
 from datasets import load_dataset
-dataset = load_dataset('opendatalab/OmniDocBench')
+dataset = load_dataset('opendatalab/OmniDocBench', token=True)
 dataset.save_to_disk('data/benchmarks/omnidocbench')
-print('✓ OmniDocBench downloaded successfully')
 "
 ```
 
 **Dataset Info**:
-- 1,358 examples
-- High-quality document understanding annotations
-- Multiple document types
+- **1,358 PDF pages** with comprehensive annotations
+- **9 document types**: Academic papers, financial reports, newspapers, textbooks, etc.
+- **3 languages**: English, Simplified Chinese, mixed
+- **20,000+ block-level elements**: Paragraphs, titles, tables, figures, formulas
+- **80,000+ span-level elements**: Text lines, formulas, superscripts/subscripts
 - Evaluation-only license (non-commercial)
 
 **Citation**:
@@ -164,38 +264,45 @@ print('✓ OmniDocBench downloaded successfully')
 ```
 
 ### 6. TableBank (Phase 2 - Table Detection)
-**Source**: https://github.com/doc-analysis/TableBank
-**Size**: ~400MB
+**Status**: ✅ **Automated Download Available** (Requires HuggingFace Token)
+**Source**: https://huggingface.co/datasets/liminghao1630/TableBank
+**Size**: 23.7 GB (full dataset)
 **License**: CC-BY-4.0
 
-**Manual Installation**:
+**Automated Installation** (Recommended):
 ```bash
-# Download from GitHub releases
-cd data/benchmarks
-mkdir -p tablebank
-cd tablebank
+# Download using automated script
+poetry run python scripts/download_table_datasets.py --datasets tablebank
 
-# Download detection subset (Latex + Word)
-wget https://github.com/doc-analysis/TableBank/releases/download/v1.0/TableBank_data.zip
-
-# Extract
-unzip TableBank_data.zip
-
-# Expected structure:
-# data/benchmarks/tablebank/
-# ├── Latex/
-# │   ├── images/
-# │   └── annotations/
-# └── Word/
-#     ├── images/
-#     └── annotations/
+# The script automatically:
+# - Downloads 5-part zip file from HuggingFace
+# - Joins parts into single archive
+# - Verifies integrity
+# - Extracts contents
+# - Saves to data/benchmarks/tablebank
 ```
 
-**Alternative** (full dataset):
+**Dataset Info**:
+- **417,234 high-quality labeled tables**
+- **278,582 images** (78K Word + 200K LaTeX documents)
+- **Official splits**: Train (260K), Val (10K), Test (8K)
+- Table detection and structure recognition annotations
+
+**Alternative - Manual Download**:
 ```bash
-# Full dataset available at:
-# https://conversationhub.blob.core.windows.net/tablebank/TableBank_both.zip (862MB)
+# Using HuggingFace CLI
+huggingface-cli download liminghao1630/TableBank \
+  --repo-type dataset \
+  --local-dir data/benchmarks/tablebank
+
+# Join zip parts
+cd data/benchmarks/tablebank
+cat TableBank.zip.* > TableBank.zip
+unzip -q TableBank.zip
 ```
+
+**Note**: The original GitHub releases (400MB subset) are no longer available.
+The full dataset is now hosted on HuggingFace (23.7 GB).
 
 **Citation**:
 ```bibtex
@@ -208,22 +315,42 @@ unzip TableBank_data.zip
 ```
 
 ### 7. PubTabNet (Phase 2 - Table Structure Recognition)
-**Source**: https://github.com/ibm-aur-nlp/PubTabNet
-**Size**: 500MB (small subset) or 19GB (full dataset)
+**Status**: ✅ Automated Download Available
+**Source**: https://huggingface.co/datasets/ajimeno/PubTabNet
+**Size**: 10.5 GB (full dataset)
 **License**: CDLA-Permissive-2.0
 
-**Manual Installation** (small subset recommended):
+**Automated Installation** (recommended):
+```bash
+# Download PubTabNet using HuggingFace Hub
+poetry run python scripts/download_table_datasets.py --datasets pubtabnet
+
+# Or download all table datasets at once
+poetry run python scripts/download_table_datasets.py --all
+```
+
+**Dataset Details**:
+- **Images**: 568,454 scientific publication tables
+- **Format**: Single tar.gz archive
+- **Features**: HTML structure annotations for table structure recognition
+- **Splits**: Train (516,747), validation (51,707)
+- **Image Format**: PNG images with COCO-aligned JSON annotations
+
+**Manual Installation** (alternative):
 ```bash
 cd data/benchmarks
 mkdir -p pubtabnet
+
+# Download using HuggingFace CLI
+huggingface-cli download ajimeno/PubTabNet \
+  pubtabnet.tar.gz \
+  --repo-type dataset \
+  --local-dir pubtabnet \
+  --token $HF_TOKEN
+
+# Extract
 cd pubtabnet
-
-# Option 1: Small subset for development (500MB)
-wget https://dax-cdn.cdn.appdomain.cloud/dax-pubtabnet/2.0.0/pubtabnet.tar.gz
 tar -xzf pubtabnet.tar.gz
-
-# Option 2: Full dataset (19GB)
-# Visit: https://dax-cdn.cdn.appdomain.cloud/dax-pubtabnet/2.0.0/pubtabnet_full.tar.gz
 ```
 
 **Expected structure**:
@@ -248,32 +375,65 @@ data/benchmarks/pubtabnet/
 ```
 
 ### 8. FinTabNet (Phase 2 - Financial Table Detection)
-**Source**: https://developer.ibm.com/exchanges/data/all/fintabnet/
-**Size**: ~3GB
+**Status**: ✅ Automated Download Available
+**Source**: https://huggingface.co/datasets/bsmock/FinTabNet.c
+**Size**: 3.2 GB (corrected version)
 **License**: CDLA-Permissive-2.0
 
-**Manual Installation**:
+**Automated Installation** (recommended):
 ```bash
-# 1. Visit: https://developer.ibm.com/exchanges/data/all/fintabnet/
-# 2. Accept license terms
-# 3. Download dataset (requires IBM account)
+# Download FinTabNet using HuggingFace Hub
+poetry run python scripts/download_table_datasets.py --datasets fintabnet
 
-# Extract to:
-mkdir -p data/benchmarks/fintabnet
-cd data/benchmarks/fintabnet
-# Extract downloaded zip file here
+# Or download all table datasets at once
+poetry run python scripts/download_table_datasets.py --all
+```
+
+**Dataset Details**:
+- **Version**: FinTabNet.c (corrected version with fixes)
+- **Images**: Financial tables from annual reports
+- **Format**: Two tar.gz archives (PDF annotations + structure)
+- **Files**:
+  - `FinTabNet.c-PDF_Annotations.tar.gz` - PDF annotations
+  - `FinTabNet.c-Structure.tar.gz` - Table structure data
+- **Features**: Table detection and cell structure recognition for financial documents
+
+**Manual Installation** (alternative):
+```bash
+cd data/benchmarks
+mkdir -p fintabnet
+
+# Download using HuggingFace CLI
+huggingface-cli download bsmock/FinTabNet.c \
+  FinTabNet.c-PDF_Annotations.tar.gz \
+  --repo-type dataset \
+  --local-dir fintabnet \
+  --token $HF_TOKEN
+
+huggingface-cli download bsmock/FinTabNet.c \
+  FinTabNet.c-Structure.tar.gz \
+  --repo-type dataset \
+  --local-dir fintabnet \
+  --token $HF_TOKEN
+
+# Extract both archives
+cd fintabnet
+tar -xzf FinTabNet.c-PDF_Annotations.tar.gz
+tar -xzf FinTabNet.c-Structure.tar.gz
 ```
 
 **Expected structure**:
 ```
 data/benchmarks/fintabnet/
-├── FinTabNet_1.0.0_table_example_complete/
+├── FinTabNet.c-PDF_Annotations/
 │   ├── pdf/
 │   ├── images/
 │   └── annotations/
-└── FinTabNet_1.0.0_cell_example_complete/
+└── FinTabNet.c-Structure/
     └── ...
 ```
+
+**Note**: This is the corrected version (FinTabNet.c) which includes bug fixes from the original FinTabNet release. The original IBM Developer site version is no longer actively maintained.
 
 **Citation**:
 ```bibtex
@@ -322,46 +482,6 @@ unzip wili-2018.zip
   author={Thoma, Martin},
   booktitle={arXiv preprint arXiv:1801.07779},
   year={2018}
-}
-```
-
-### 10. ICDAR MLT 2019 (Phase 2 - Multi-lingual Text Detection)
-**Source**: https://rrc.cvc.uab.es/?ch=15
-**Size**: ~3GB
-**License**: Competition dataset (check terms)
-
-**Manual Installation**:
-```bash
-# 1. Register at: https://rrc.cvc.uab.es/?ch=15&com=introduction
-# 2. Download training and validation data
-# 3. Extract to:
-
-mkdir -p data/benchmarks/icdar_mlt_2019
-cd data/benchmarks/icdar_mlt_2019
-# Extract downloaded files here
-
-# Expected structure:
-# data/benchmarks/icdar_mlt_2019/
-# ├── train/
-# │   ├── images/
-# │   └── gt/
-# └── validation/
-#     ├── images/
-#     └── gt/
-```
-
-**Dataset Info**:
-- Multi-lingual text detection
-- 10 languages
-- Competition dataset from ICDAR 2019
-
-**Citation**:
-```bibtex
-@inproceedings{nayef2019icdar2019,
-  title={ICDAR2019 robust reading challenge on multi-lingual scene text detection and recognition—RRC-MLT-2019},
-  author={Nayef, Nibal and Yin, Fei and Bizid, Imen and Choi, Hyunsoo and Feng, Yongcai and Karatzas, Dimosthenis and Lyu, Ziyuan and Gomez, Lluis and others},
-  booktitle={2019 International Conference on Document Analysis and Recognition (ICDAR)},
-  year={2019}
 }
 ```
 
@@ -459,11 +579,15 @@ poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smo
 
 ### High-Priority Datasets (Phase 3):
 ```bash
-# OmniDocBench (requires HF account)
-poetry run huggingface-cli login
+# OmniDocBench (automated with rate-limit handling)
+# Token already configured in .env
+poetry run python scripts/download_omnidocbench.py
+
+# Alternative: Manual download with CLI
+poetry run huggingface-cli login  # Use token from .env: grep HF_TOKEN .env
 poetry run python -c "
 from datasets import load_dataset
-dataset = load_dataset('opendatalab/OmniDocBench')
+dataset = load_dataset('opendatalab/OmniDocBench', token=True)
 dataset.save_to_disk('data/benchmarks/omnidocbench')
 "
 ```
@@ -601,7 +725,8 @@ ls -l data/benchmarks/doclaynet
 ---
 
 **Next Steps**:
-1. Complete OmniDocBench download (requires HF account)
+
+1. **Download OmniDocBench**: `poetry run python scripts/download_omnidocbench.py` (automated)
 2. Download Phase 2 datasets (TableBank, PubTabNet, WiLI-2018)
 3. Verify all dataset structures
 4. Run smoke tests to validate setup

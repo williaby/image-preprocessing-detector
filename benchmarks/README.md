@@ -87,9 +87,11 @@ for sample in adapter:
 | `doclaynet` | 1 | DocLayNet | CDLA-Permissive-2.0 |
 | `docbank` | 2 | DocBank | CC-BY-4.0 |
 | `tablebank` | 2 | TableBank | CC-BY-4.0 |
+| `pubtabnet` | 2 | PubTabNet | CDLA-Permissive-2.0 |
+| `fintabnet` | 2 | FinTabNet | CDLA-Permissive-2.0 |
 | `cocotext` | 2 | COCO-Text | CC-BY-4.0 |
 | `wili_2018` | 2 | WiLI-2018 | CC-BY-SA-4.0 |
-| `omnidocbench` | 3 | OmniDocBench | CC-BY-NC-4.0 (eval-only) |
+| `omnidocbench` | 3 | OmniDocBench | CC-BY-NC-4.0 (non-commercial) |
 
 ## Metrics
 
@@ -158,6 +160,11 @@ export BENCHMARKS_CACHE_DIR=/tmp/benchmarks_cache
 export BENCHMARKS_OUTPUT_DIR=/reports
 export BENCHMARKS_SEED=42
 export HF_TOKEN=your_huggingface_token  # For gated datasets
+
+# GCS Integration (for Colab training)
+export GCP_SA_KEY=base64_encoded_service_account_json
+export GCP_PROJECT=image-detection-478105
+export GCS_BUCKET=gs://image_detection_b/
 ```
 
 ## Output Format
@@ -214,6 +221,34 @@ reports/
 | blur_correlation | 0.920 | 0.030 | 0.870 | 0.980 | 0.850 | ✓ PASS |
 | blur_rmse | 0.042 | 0.008 | 0.030 | 0.055 | 0.050 | ✓ PASS |
 ```
+
+## GCS Integration for Colab Training
+
+The project supports Google Cloud Storage for dataset sharing with Google Colab:
+
+### Setup
+```bash
+# Authenticate with GCS
+./scripts/auth_gcs.sh --cleanup
+
+# Upload datasets to GCS
+./scripts/gcs_helpers.sh upload-phase2
+
+# Download datasets from GCS (in Colab)
+./scripts/gcs_helpers.sh download-phase2
+```
+
+### Available Commands
+- `list` - List GCS bucket contents
+- `info` - Show storage usage and costs
+- `upload-configs` - Upload training configs
+- `upload-phase2` - Upload Phase 2 datasets (~10GB)
+- `download-phase2` - Download Phase 2 datasets from GCS
+- `sync-checkpoints phase2` - Sync model checkpoints to GCS
+- `download-checkpoints phase2` - Download checkpoints from GCS
+- `upload-models phase2` - Upload final trained models
+
+See [docs/DATASET_INSTALLATION.md](../docs/DATASET_INSTALLATION.md) for complete GCS setup guide.
 
 ## Phase Roadmap
 
@@ -334,23 +369,36 @@ poetry run pytest tests/benchmarks/ --cov=benchmarks --cov-report=html
 ### Dataset Not Found
 
 ```bash
-# Set data directory
+# Option 1: Download datasets locally
+poetry run python scripts/download_table_datasets.py --all
+poetry run python scripts/download_omnidocbench.py
+
+# Option 2: Set custom data directory
 export BENCHMARKS_DATA_DIR=/path/to/datasets
 
-# Or use --data-dir flag
+# Option 3: Use --data-dir flag
 python -m benchmarks.runners.run_benchmark \
     --suite my-suite \
     --data-dir /path/to/datasets
+
+# Option 4: Use GCS-stored datasets (Colab)
+# See docs/DATASET_INSTALLATION.md for GCS setup
 ```
 
 ### Missing Dependencies
 
 ```bash
+# Install with all dependencies (includes HuggingFace Hub)
+poetry install --with dev
+
 # Install with ML dependencies (Phase 2+)
 poetry install --with dev,ml
 
 # Check installed packages
 poetry show
+
+# Verify HuggingFace Hub available
+poetry run python -c "import huggingface_hub; print(huggingface_hub.__version__)"
 ```
 
 ### Synthetic Dataset Generation Fails

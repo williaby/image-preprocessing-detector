@@ -137,28 +137,33 @@ gsutil cp configs/colab_phase3_yolov8_gcs.yaml gs://image_detection_b/configs/
 
 **Step 4: Prepare and Upload Dataset**
 
-**Phase 2 Dataset Sources (Week 1 of Phase 2):**
+**Phase 2 Dataset Generation:**
+
+For complete dataset preparation instructions, see **[DATASET_PREPARATION.md](../DATASET_PREPARATION.md)**.
+
+**Quick summary:**
 
 ```bash
-# 1. Download base datasets (see docs/DATASET_INSTALLATION.md)
-#    - RVL-CDIP: 400k document images
-#    - DocBank: 500k document pages
-#    - Tobacco800: 1,290 scanned documents
+# 1. Generate synthetic augmented dataset with weak supervision labels
+poetry run python scripts/prepare_phase2_data.py \
+    --source-dirs data/raw/tobacco800 \
+    --output-dir datasets/iqa_phase2 \
+    --num-samples 50000 \
+    --preset medium
 
-# 2. Generate synthetic augmented dataset using data/augmentation.py
-#    (See Phase 2 Week 1 tasks in docs/project/phases/phase-2-plan.md)
+# 2. Upload dataset to GCS using helper script
+./scripts/gcs_helpers.sh upload-phase2
 
-# 3. Create weak supervision labels using data/weak_supervision.py
-#    (Generates labels.json for train/val/test splits)
-
-# 4. Upload complete dataset to GCS
-gsutil -m cp -r datasets/iqa_phase2/train gs://image_detection_b/datasets/iqa_phase2/
-gsutil -m cp -r datasets/iqa_phase2/val gs://image_detection_b/datasets/iqa_phase2/
-gsutil -m cp -r datasets/iqa_phase2/test gs://image_detection_b/datasets/iqa_phase2/
-
-# Verify upload (should show ~10GB)
+# 3. Verify upload (should show ~10GB)
 gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
 ```
+
+**Base Datasets** (download before generation):
+- **Tobacco800**: 1,290 scanned documents (~1GB, fastest)
+- **DocBank**: 500k document pages (~40GB)
+- **RVL-CDIP**: 400k document images (~50GB)
+
+See [DATASET_INSTALLATION.md](../DATASET_INSTALLATION.md) for download instructions.
 
 **Phase 3 Dataset Sources (Phase 3 Week 1):**
 
