@@ -96,6 +96,11 @@ logs/
 .env
 .env.local
 
+# GCS service account keys (base64 encoded)
+*.b64
+*.json.b64
+*service-account*.json
+
 # Documentation
 site/
 docs/_build/
@@ -120,6 +125,12 @@ Desktop.ini
 # Benchmark datasets (large) - added 2025-11-05
 data/benchmarks/
 data/SignaTR6K.zip
+
+# Root-level datasets directory (large training/test datasets)
+datasets/
+
+# Test fixtures (small samples for CI/CD) - allow in Git
+!data/test_fixtures/
 
 # Validation artifacts (large)
 validation/datasets/
