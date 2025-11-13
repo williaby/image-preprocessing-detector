@@ -292,6 +292,34 @@ TOTAL:          828K (0.8 MB - well under 50 MB target)
 **cocotext/** - Not yet extracted (dataset structure requires special handling)
 
 **omnidocbench/** - Not yet extracted (Arrow format requires special handling)
+
+**iqa_samples/** - Planned for Phase 2 Week 3 (~2 MB total):
+- `live/`: 3-5 LIVE dataset extracts with ground-truth quality scores (DMOS)
+  - Reference image (clean, DMOS=0.0)
+  - JPEG compression sample (DMOS~25)
+  - Gaussian blur sample (DMOS~45)
+  - White noise sample (DMOS~38)
+  - Low contrast sample (DMOS~52)
+- `synthetic/`: 2-3 generated variants for edge case testing
+  - Extreme blur (edge case detection)
+  - Combined defects (blur + noise)
+  - Rotated/skewed document (orientation testing)
+- `labels.json`: Ground-truth quality scores and defect labels
+
+See [tmp_cleanup/.tmp-test-fixtures-iqa-requirements-20251113.md](../../tmp_cleanup/.tmp-test-fixtures-iqa-requirements-20251113.md) for detailed requirements analysis.
+```
+
+### Projected Size After Phase 2
+
+```bash
+# Projected total after IQA fixtures added (Week 3):
+doclaynet/      432K (5 PDFs)
+tablebank/      324K (5 images)
+wili_2018/      52K (10 text files)
+iqa_samples/    2.0M (8 images + labels.json)  # NEW in Week 3
+  ├── live/     1.5M (5 LIVE extracts)
+  └── synthetic/ 500K (3 generated variants)
+TOTAL:          3.0M (well under 50 MB target)
 ```
 
 ---
@@ -307,13 +335,22 @@ All fixtures are extracted from permissively licensed datasets:
 | cocotext | CC BY 4.0 | ✅ Yes | ✅ Yes (with attribution) |
 | wili_2018 | Apache-2.0 | ✅ Yes | ✅ Yes |
 | omnidocbench | MIT | ✅ Yes | ✅ Yes |
+| **iqa_samples (LIVE)** | Academic/Research | ✅ Yes (with citation) | ⚠️ Research use only |
 
 **Attribution**: See LICENSE file and dataset source links in [DATASET_INSTALLATION.md](../../docs/DATASET_INSTALLATION.md)
+
+**IQA Fixtures Citation** (required for LIVE dataset):
+```
+Sheikh, H. R., Seshadrinathan, K., Moorthy, A. K., Wang, Z., Bovik, A. C., & Cormack, L. K. (2006).
+A statistical evaluation of recent full reference image quality assessment algorithms.
+IEEE Transactions on Image Processing, 15(11), 3440-3451.
+```
 
 ---
 
 ## Next Steps
 
+### Phase 1 (Completed)
 - [x] Create `scripts/extract_test_fixtures.py` automated extraction script
 - [x] Create `scripts/extract_wili_samples.py` for WiLI-2018 language extraction
 - [x] Extract representative samples from doclaynet, tablebank, wili_2018 (< 50 MB total)
@@ -321,6 +358,17 @@ All fixtures are extracted from permissively licensed datasets:
 - [x] Add pytest markers for `requires_full_dataset` and `real_data`
 - [x] Create `tests/conftest.py` with fixture paths and markers
 - [x] Create `tests/integration/test_real_fixtures.py` with 14 real data tests
+
+### Phase 2 Week 3 (Planned - IQA Fixtures)
+- [ ] Download LIVE, CSIQ, LIVE Challenge datasets (~5 GB)
+- [ ] Extract 5 LIVE samples with ground-truth DMOS scores (~1.5 MB)
+- [ ] Generate 3 synthetic IQA variants (extreme blur, combined defects, orientation) (~0.5 MB)
+- [ ] Create `iqa_samples/labels.json` with quality scores
+- [ ] Create `scripts/extract_iqa_fixtures.py` extraction script
+- [ ] Add IQA integration tests to `tests/integration/test_real_fixtures.py`
+- [ ] Update total fixtures size: 828 KB → 3.0 MB (still well under 50 MB)
+
+### Future Phases
 - [ ] Extract cocotext fixtures (requires handling nested directory structure)
 - [ ] Extract omnidocbench fixtures (requires Apache Arrow format handling)
 - [ ] Update CI configuration to use fixtures for integration tests
