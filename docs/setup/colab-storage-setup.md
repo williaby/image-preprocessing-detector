@@ -15,14 +15,108 @@ tags: [setup, google-colab, storage, phase-2]
 
 ## Overview
 
-This project uses **dual storage** for optimal workflow:
+This project supports **two storage options** for Colab training:
 
-1. **Google Drive**: Primary storage for Colab training (mounted natively)
-2. **Google Cloud Storage (GCS)**: Backup, archival, and production deployment
+1. **Google Cloud Storage (GCS)**: **RECOMMENDED** - Secure, isolated, project-specific storage
+2. **Google Drive**: Alternative option (requires full Drive access - see security warning below)
+
+### ⚠️ Security Warning: Google Drive Access
+
+When you mount Google Drive in Colab, it requests **full access to your entire personal Google Drive**. This means:
+
+- Colab can read/write **all your personal files**
+- No way to limit access to a specific folder
+- Shares access with all notebooks in the same session
+
+**Recommendation**: Use **Google Cloud Storage (GCS)** instead for better security isolation. You already have a GCS bucket set up (`gs://image_detection_b`), so this is the recommended approach.
 
 ---
 
-## Option 1: Google Drive Setup (Primary - Recommended for Training)
+## Option 1: Google Cloud Storage Setup (RECOMMENDED - Secure & Isolated)
+
+### Your GCS Configuration
+
+- **Project**: image-detection
+- **Project ID**: image-detection-478105
+- **Bucket**: `gs://image_detection_b`
+- **Security**: Bucket-level IAM control, no access to personal files
+
+### Why GCS is Better for This Use Case
+
+✅ **Security**: Only accesses your specific project bucket
+✅ **Isolation**: Completely separate from personal files
+✅ **Cost-Effective**: ~$0.50/month for 25GB (vs $2/month for Drive 100GB)
+✅ **Production-Ready**: Same storage used for deployment
+✅ **Audit Trail**: Full GCS access logging
+
+### GCS-Only Quick Start (5 Steps)
+
+**Step 1: Authenticate in Colab**
+
+```python
+# Run this at the start of your training notebook
+from google.colab import auth
+auth.authenticate_user()
+
+# Configure your project
+!gcloud config set project image-detection-478105
+
+# Verify bucket access
+!gsutil ls gs://image_detection_b
+```
+
+**Step 2: Create Bucket Structure**
+
+```bash
+# Create directory structure
+gsutil mkdir gs://image_detection_b/datasets/iqa_phase2/
+gsutil mkdir gs://image_detection_b/checkpoints/phase2_iqa/
+gsutil mkdir gs://image_detection_b/logs/phase2_iqa/
+gsutil mkdir gs://image_detection_b/models/phase2_iqa/
+gsutil mkdir gs://image_detection_b/configs/
+```
+
+**Step 3: Upload Configuration**
+
+```bash
+# Upload training config from your local machine
+gsutil cp configs/colab_phase2_iqa_gcs.yaml gs://image_detection_b/configs/
+```
+
+**Step 4: Upload Dataset** (when ready)
+
+```bash
+# Upload your Phase 2 dataset (~10GB)
+gsutil -m cp -r datasets/iqa_phase2/* gs://image_detection_b/datasets/iqa_phase2/
+
+# Verify upload
+gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
+```
+
+**Step 5: In Your Training Notebook**
+
+```python
+# Download config
+!gsutil cp gs://image_detection_b/configs/colab_phase2_iqa_gcs.yaml /content/config.yaml
+
+# Download dataset to local SSD (faster training)
+!gsutil -m cp -r gs://image_detection_b/datasets/iqa_phase2 /content/data_cache/
+
+# Train (checkpoints saved locally)
+# ... your training code ...
+
+# Upload checkpoints to GCS (run periodically or at end)
+!gsutil -m cp -r /content/checkpoints/* gs://image_detection_b/checkpoints/phase2_iqa/
+
+# Upload final model
+!gsutil cp /content/models/best_model.onnx gs://image_detection_b/models/phase2_iqa/
+```
+
+**That's it!** No Google Drive access needed. ✅
+
+---
+
+## Option 2: Google Drive Setup (Alternative - Requires Full Drive Access)
 
 ### 1. Subscribe to Google Drive Storage
 
