@@ -929,46 +929,76 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 ### Phase 2: ML for Image Quality Assessment (3-4 weeks)
 
 **Goals:**
-- Train and deploy multi-label IQA CNN
+- Train and deploy multi-label IQA CNN using **Google Colab Pro**
 - Improve detection accuracy for noise, blur, perspective
 - Replace or augment classical methods
 
+**Training Platform: Google Colab Pro** ⭐
+
+**Cost**: $10/month (Colab Pro) + $2/month (Google Drive 100GB) = $12/month
+**GPU**: V100 (16GB), P100 (16GB), or T4 (15GB)
+**Session Limit**: 12 hours (auto-checkpoint management)
+**Expected Training Time**: 15-20 hours (1-2 sessions)
+**Compute Units**: ~15-25 units (well within 100/month limit)
+
+**Advantages**:
+- ✅ No local GPU workstation required
+- ✅ Cost-effective ($12 vs $30-50 for cloud GPU hourly)
+- ✅ PyTorch, CUDA pre-installed
+- ✅ Google Drive integration for persistence
+- ✅ Automatic checkpoint resume across sessions
+
 **Tasks:**
 
-1. **Data Collection & Augmentation**
+1. **Colab Environment Setup** ([notebooks/colab/](notebooks/colab/))
+   - Create Google Colab Pro account ($10/month)
+   - Setup Google Drive structure (datasets, checkpoints, logs)
+   - Upload training configuration (`configs/colab_phase2_iqa.yaml`)
+   - Install Colab-specific dependencies (see `pyproject.toml[colab]`)
+
+2. **Data Collection & Augmentation** (on Colab or local)
    - Collect 10k clean document images
    - Build Albumentations augmentation pipeline
    - Generate 50k synthetic augmented images
    - Weak supervision: BRISQUE/NIQE scores for initial labels
    - Manual validation on 10k ambiguous samples
+   - Upload dataset to Google Drive (~10GB)
 
-2. **Model Training** ([models/iqa/](models/iqa/))
-   - Implement MobileNetV3-Small and EfficientNet-B0
-   - Training loop with early stopping, checkpointing
-   - Hyperparameter tuning (learning rate, batch size)
-   - Cross-validation on real-world validation set
+3. **Model Training** ([notebooks/colab/phase2_iqa_training.ipynb](notebooks/colab/phase2_iqa_training.ipynb))
+   - Open training notebook in Colab
+   - Runtime → Change runtime type → GPU (V100 recommended)
+   - Run all cells sequentially
+   - Training uses **CheckpointManager** for 12-hour session handling:
+     - Auto-saves every 5 epochs OR 30 minutes
+     - Stops at 11.5 hours to save checkpoint before session limit
+     - Auto-resumes from last checkpoint in new session
+   - Monitor training via embedded TensorBoard
+   - If session disconnects: Re-run notebook, auto-resumes
 
-3. **Model Evaluation**
+4. **Model Evaluation** ([notebooks/colab/model_evaluation.ipynb](notebooks/colab/model_evaluation.ipynb))
    - Compute per-class Precision, Recall, F1, ROC-AUC
    - Mean Average Precision (mAP)
    - Calibration: ECE, reliability diagrams
    - Confusion matrix analysis
+   - Run evaluation on Colab GPU (faster inference)
 
-4. **Model Optimization**
-   - Temperature scaling for calibration
-   - Threshold tuning per issue type (maximize F1)
-   - ONNX export for CPU inference
-   - Quantization: INT8 via ONNX Runtime
+5. **Model Export & Download**
+   - Export to ONNX format (automatic in training notebook)
+   - Model saved to Google Drive: `models/phase2_iqa/mobilenet_v3_small_best.onnx`
+   - Download to local machine for integration
+   - INT8 quantization via ONNX Runtime (local)
 
-5. **Integration** ([src/detection/iqa_ml.py](src/detection/iqa_ml.py))
-   - Load ONNX model in inference pipeline
+6. **Integration** ([src/detection/iqa_ml.py](src/detection/iqa_ml.py))
+   - Load ONNX model in inference pipeline (local development)
    - Ensemble with classical methods (voting or confidence-weighted)
    - A/B testing: Compare classical vs ML vs ensemble
    - Update confidence thresholds for correction pipeline
 
 **Deliverables:**
-- ✅ Trained IQA model (ONNX format)
-- ✅ Training dataset (50k images, versioned with DVC)
+- ✅ Trained IQA model (ONNX format, ~10MB)
+- ✅ Training dataset (50k images, hosted on Google Drive)
+- ✅ Training checkpoints (saved to Google Drive)
+- ✅ TensorBoard logs (loss curves, metrics)
 - ✅ Evaluation report with benchmark metrics
 - ✅ Integrated ML detection in pipeline
 
@@ -977,7 +1007,34 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 - Per-class F1 > 0.85 for all issues
 - ECE < 0.05 (well-calibrated)
 - JSON Accuracy > 0.75 (improvement from Phase 1)
+- Training completed within Colab Pro monthly limits (~25 compute units)
 - Latency < 200ms per page (CPU with ONNX)
+
+**Compute Resources & Costs (Updated for Colab):**
+
+**Training (Colab Pro)**:
+- Platform: Google Colab Pro ($10/month subscription)
+- GPU: V100 (16GB VRAM) or T4 (15GB VRAM)
+- Training time: 15-20 hours
+- Sessions: 1-2 sessions (12 hours each, auto-resume)
+- Compute units: ~15-25 units (out of 100/month)
+- **Cost**: $10/month subscription
+
+**Storage (Google Drive)**:
+- Dataset: ~10GB
+- Checkpoints: ~5GB
+- Logs: ~1GB
+- Models: ~100MB
+- **Total**: ~16GB
+- **Cost**: Google Drive 100GB plan ($1.99/month)
+
+**Total Phase 2 Cost**: $12/month (1 month sufficient)
+
+**Alternative Options**:
+- **Colab Free**: $0, but T4 only, no priority access, may need to wait for GPU
+- **Colab Pro+**: $50/month, A100 GPU, faster training (8-12 hours), overkill for Phase 2
+- **Local GPU**: $0 ongoing, requires $1500+ GPU workstation upfront
+- **AWS/GCP GPU**: $30-50 for 20 hours, more expensive than Colab Pro
 
 **Benchmark Results** (Expected):
 | Issue Type | F1-Score | Notes |
@@ -989,80 +1046,148 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 | Low Contrast | > 0.90 | Ensemble with histogram |
 | Orientation | > 0.93 | CNN handles rotations well |
 
+**Training Workflow Summary**:
+1. Setup Colab Pro + Google Drive (one-time, 30 min)
+2. Upload dataset to Google Drive (one-time, 2-4 hours)
+3. Open `phase2_iqa_training.ipynb` in Colab
+4. Run all cells → Training starts (12 hours)
+5. If interrupted: Re-run notebook → Auto-resumes (4-8 hours)
+6. Download ONNX model from Google Drive
+7. Integrate locally into pipeline
+
+**See [docs/COLAB_TRAINING_GUIDE.md](docs/COLAB_TRAINING_GUIDE.md) for detailed instructions.**
+
 ---
 
 ### Phase 3: ML for Document Layout Detection (4-5 weeks)
 
 **Goals:**
-- Train and deploy YOLOv8 object detector for document elements
+- Train and deploy YOLOv8 object detector for document elements using **Google Colab Pro**
 - Integrate with pipeline for text-detected documents
 - Achieve production-ready accuracy and performance
 
+**Training Platform: Google Colab Pro** ⭐
+
+**Cost**: $10/month (Colab Pro) × 2-3 months = $20-30
+**GPU**: V100 (16GB) or T4 (15GB)
+**Session Limit**: 12 hours (auto-checkpoint management)
+**Expected Training Time**: 50-80 hours (4-7 sessions over 5-7 days)
+**Compute Units**: ~50-80 units (requires 2 months subscription)
+
+**Important**: YOLOv8 requires 100+ epochs. Plan for **multi-session training**:
+- V100: 15-20 epochs/session → 5-7 sessions
+- T4: 10-15 epochs/session → 7-10 sessions
+- **Spread across 5-7 days** (1 session per day recommended)
+
 **Tasks:**
 
-1. **Dataset Preparation**
+1. **Dataset Preparation** (local or Colab)
    - Download and preprocess public datasets:
      - PubLayNet (360k pages)
      - DocLayNet (multi-domain)
      - ICDAR table/formula datasets
      - IAM/IIIT-HWS handwriting datasets
-   - Convert to YOLO format (class, x_center, y_center, width, height)
+   - Convert to **YOLO format** (class, x_center, y_center, width, height)
    - Data cleaning: Remove low-quality annotations
    - Class mapping: Consolidate to target classes (Table, Image, Handwriting, Formula)
+   - Upload to Google Drive (~40GB dataset)
 
 2. **Custom Annotation** ([data/custom_annotations/](data/custom_annotations/))
-   - Set up CVAT or Label Studio
+   - Set up CVAT or Label Studio (local)
    - Annotate 1000 handwriting examples (ambiguous cases)
    - Annotate 500 formula examples (domain-specific)
    - Annotate 500 multi-lingual documents (non-Latin scripts)
    - Quality control: Inter-annotator agreement checks
+   - Add to dataset and upload to Google Drive
 
-3. **Active Learning Pipeline** ([scripts/active_learning.py](scripts/active_learning.py))
-   - Train baseline model on public datasets
-   - Inference on unlabeled corpus
-   - Select high-uncertainty samples (low confidence, low mAP classes)
-   - Human annotate selected samples (500-1000)
-   - Retrain and iterate (3-4 cycles)
+3. **Colab Training Setup**
+   - Upload `configs/colab_phase3_yolov8.yaml` to Google Drive
+   - Create `dataset.yaml` (YOLO format, required)
+   - Verify dataset paths are correct
+   - Ensure ~50GB free space in Google Drive
 
-4. **Model Training** ([models/layout/](models/layout/))
-   - YOLOv8n and YOLOv8s training configurations
-   - Transfer learning from COCO-pretrained weights
-   - Class weighting for imbalance handling
-   - Hyperparameter tuning: NMS threshold, confidence threshold
-   - Model ensemble: Average predictions from multiple checkpoints
+4. **Model Training - Multi-Session** ([notebooks/colab/phase3_yolov8_training.ipynb](notebooks/colab/phase3_yolov8_training.ipynb))
+   - **Session 1** (Day 1):
+     - Open training notebook in Colab
+     - Runtime → GPU (V100 recommended)
+     - Run cells 1-7 → Training starts
+     - Trains for ~11.5 hours (15-20 epochs on V100)
+     - Auto-saves checkpoint at end of session
+   - **Sessions 2-7** (Days 2-7):
+     - Start new Colab session
+     - Re-run cells 1-7 → Auto-resumes from last epoch
+     - Repeat until epoch 100 reached
+   - **CheckpointManager** handles all resume logic automatically
+   - Monitor progress via TensorBoard (embedded in notebook)
 
-5. **Model Evaluation**
-   - mAP@.50 and mAP@.50-.95
+5. **Model Evaluation** (after training complete)
+   - Run validation on best checkpoint (Cell 8)
+   - Compute mAP@.50 and mAP@.50-.95
    - Per-class Average Precision
    - Precision/Recall curves
    - Inference time benchmarking
 
-6. **Model Optimization**
-   - ONNX export with dynamic shapes
-   - INT8 quantization via TensorRT
-   - Pruning for CPU deployment (optional)
-   - Batch inference support
+6. **Model Export & Download**
+   - Export to ONNX format (Cell 9)
+   - Model saved to Google Drive: `models/phase3_yolov8/yolov8n_best.onnx`
+   - Download to local machine
+   - INT8 quantization via TensorRT (optional, local)
 
 7. **Integration** ([src/detection/layout_detector.py](src/detection/layout_detector.py))
-   - Load YOLOv8 model (PyTorch or ONNX)
+   - Load ONNX model in inference pipeline
    - Bounding box post-processing: NMS, confidence filtering
    - Element metadata generation (attributes, confidence)
    - Rule-first fast filters: Pre-filter pages for YOLO triggering
    - Early exit on clean pages
 
+8. **Active Learning Pipeline** ([scripts/active_learning.py](scripts/active_learning.py)) (Optional)
+   - Run inference on unlabeled corpus (can use Colab for speed)
+   - Select high-uncertainty samples (low confidence, low mAP classes)
+   - Human annotate selected samples (500-1000)
+   - Retrain with augmented dataset (additional Colab sessions)
+
 **Deliverables:**
-- ✅ Trained YOLOv8 model (PyTorch + ONNX)
-- ✅ Document element dataset (300k+ images, versioned)
+- ✅ Trained YOLOv8 model (ONNX format, ~20MB)
+- ✅ Document element dataset (300k+ images, hosted on Google Drive)
+- ✅ Training checkpoints (saved to Google Drive, ~50GB)
+- ✅ TensorBoard logs (mAP curves, per-class metrics)
 - ✅ Evaluation report with per-class AP
 - ✅ Integrated layout detector in pipeline
-- ✅ Active learning scripts for continuous improvement
+- ✅ Active learning scripts for continuous improvement (optional)
 
 **Success Criteria:**
 - mAP@.50 > 0.82 on test set
 - Per-class AP > 0.70 for all classes (including rare classes)
+- Training completed within Colab Pro limits (~80 compute units over 2 months)
 - Inference time < 10ms GPU (YOLOv8n), < 70ms CPU (ONNX INT8)
 - JSON Accuracy > 0.85 (end-to-end pipeline)
 - Throughput > 6 pages/sec per GPU worker
+
+**Compute Resources & Costs (Updated for Colab):**
+
+**Training (Colab Pro - Multi-Month)**:
+- Platform: Google Colab Pro ($10/month)
+- GPU: V100 (16GB) or T4 (15GB)
+- Training time: 50-80 hours
+- Sessions: 5-7 sessions × 12 hours (spread over 5-7 days)
+- Compute units: ~50-80 units
+- **Duration**: 2 months (training + experimentation)
+- **Cost**: $10/month × 2 months = $20
+
+**Storage (Google Drive)**:
+- Dataset: ~40GB (YOLO format)
+- Checkpoints: ~10GB
+- Logs: ~2GB
+- Models: ~100MB
+- **Total**: ~52GB
+- **Cost**: Google Drive 100GB plan ($1.99/month × 2) = $4
+
+**Total Phase 3 Cost**: $20 (Colab) + $4 (Drive) = **$24 for 2 months**
+
+**Alternative Options**:
+- **Colab Pro+**: $50/month, A100 GPU, faster (30-40 hours), 2-3 sessions, more expensive
+- **AWS/GCP GPU**: $100-160 for 50-80 hours, significantly more expensive
+- **Local GPU**: $0 ongoing, but requires workstation
 
 **Benchmark Results** (Expected):
 | Element Type | AP@.50 | Notes |
@@ -1071,6 +1196,18 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 | Image | > 0.85 | Clear visual features |
 | Handwriting | > 0.75 | Challenging, improved with custom data |
 | Formula | > 0.78 | Rare class, active learning critical |
+
+**Training Workflow Summary (Multi-Session)**:
+1. Prepare dataset in YOLO format (~1 week, local)
+2. Upload dataset to Google Drive (~4-8 hours)
+3. **Day 1**: Open notebook, run training (12 hours) → Epoch 15-20
+4. **Day 2**: New session, re-run → Auto-resumes → Epoch 30-40
+5. **Day 3**: New session, re-run → Auto-resumes → Epoch 45-60
+6. **Day 4**: New session, re-run → Auto-resumes → Epoch 60-80
+7. **Day 5**: New session, re-run → Auto-resumes → Epoch 80-100 ✅
+8. Download ONNX model and integrate locally
+
+**See [docs/COLAB_TRAINING_GUIDE.md](docs/COLAB_TRAINING_GUIDE.md) for detailed multi-session instructions.**
 
 ---
 
