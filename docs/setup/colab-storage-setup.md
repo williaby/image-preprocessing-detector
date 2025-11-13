@@ -65,15 +65,64 @@ auth.authenticate_user()
 !gsutil ls gs://image_detection_b
 ```
 
-**Step 2: Create Bucket Structure**
+**Step 2: Understand Expected File Structure**
 
-```bash
-# Create directory structure
-gsutil mkdir gs://image_detection_b/datasets/iqa_phase2/
-gsutil mkdir gs://image_detection_b/checkpoints/phase2_iqa/
-gsutil mkdir gs://image_detection_b/logs/phase2_iqa/
-gsutil mkdir gs://image_detection_b/models/phase2_iqa/
-gsutil mkdir gs://image_detection_b/configs/
+GCS doesn't support empty directories - "folders" are created implicitly when you upload files with path prefixes. Here's the expected structure for each phase:
+
+**Phase 2: IQA Training**
+```
+gs://image_detection_b/
+├── configs/
+│   └── colab_phase2_iqa_gcs.yaml
+├── datasets/
+│   └── iqa_phase2/
+│       ├── train/
+│       │   ├── images/
+│       │   │   ├── img_000001.png
+│       │   │   ├── img_000002.png
+│       │   │   └── ... (35,000 images)
+│       │   └── labels.json
+│       ├── val/
+│       │   ├── images/
+│       │   │   └── ... (7,500 images)
+│       │   └── labels.json
+│       └── test/
+│           ├── images/
+│           │   └── ... (7,500 images)
+│           └── labels.json
+├── checkpoints/
+│   └── phase2_iqa/
+│       └── (created during training)
+├── logs/
+│   └── phase2_iqa/
+│       └── (created during training)
+└── models/
+    └── phase2_iqa/
+        └── (final models uploaded after training)
+```
+
+**Phase 3: Layout Detection**
+```
+gs://image_detection_b/
+├── configs/
+│   └── colab_phase3_yolov8_gcs.yaml
+├── datasets/
+│   └── layout_phase3/
+│       ├── train/
+│       │   ├── images/
+│       │   │   └── ... (200,000+ images)
+│       │   └── labels/  # YOLO format
+│       │       └── ... (.txt annotation files)
+│       ├── val/
+│       │   ├── images/
+│       │   └── labels/
+│       └── test/
+│           ├── images/
+│           └── labels/
+├── checkpoints/
+│   └── phase3_yolov8/
+└── models/
+    └── phase3_yolov8/
 ```
 
 **Step 3: Upload Configuration**
@@ -81,16 +130,55 @@ gsutil mkdir gs://image_detection_b/configs/
 ```bash
 # Upload training config from your local machine
 gsutil cp configs/colab_phase2_iqa_gcs.yaml gs://image_detection_b/configs/
+
+# For Phase 3 (later)
+gsutil cp configs/colab_phase3_yolov8_gcs.yaml gs://image_detection_b/configs/
 ```
 
-**Step 4: Upload Dataset** (when ready)
+**Step 4: Prepare and Upload Dataset**
+
+**Phase 2 Dataset Sources (Week 1 of Phase 2):**
 
 ```bash
-# Upload your Phase 2 dataset (~10GB)
-gsutil -m cp -r datasets/iqa_phase2/* gs://image_detection_b/datasets/iqa_phase2/
+# 1. Download base datasets (see docs/DATASET_INSTALLATION.md)
+#    - RVL-CDIP: 400k document images
+#    - DocBank: 500k document pages
+#    - Tobacco800: 1,290 scanned documents
 
-# Verify upload
+# 2. Generate synthetic augmented dataset using data/augmentation.py
+#    (See Phase 2 Week 1 tasks in docs/project/phases/phase-2-plan.md)
+
+# 3. Create weak supervision labels using data/weak_supervision.py
+#    (Generates labels.json for train/val/test splits)
+
+# 4. Upload complete dataset to GCS
+gsutil -m cp -r datasets/iqa_phase2/train gs://image_detection_b/datasets/iqa_phase2/
+gsutil -m cp -r datasets/iqa_phase2/val gs://image_detection_b/datasets/iqa_phase2/
+gsutil -m cp -r datasets/iqa_phase2/test gs://image_detection_b/datasets/iqa_phase2/
+
+# Verify upload (should show ~10GB)
 gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
+```
+
+**Phase 3 Dataset Sources (Phase 3 Week 1):**
+
+```bash
+# 1. Download annotated datasets:
+#    - PubLayNet: 360k annotated document pages
+#    - DocLayNet: 80k annotated documents
+#    - TableBank: 417k table images
+#    (See docs/DATASET_INSTALLATION.md for download instructions)
+
+# 2. Convert annotations to YOLO format
+#    (Use scripts from Phase 3)
+
+# 3. Upload to GCS
+gsutil -m cp -r datasets/layout_phase3/train gs://image_detection_b/datasets/layout_phase3/
+gsutil -m cp -r datasets/layout_phase3/val gs://image_detection_b/datasets/layout_phase3/
+gsutil -m cp -r datasets/layout_phase3/test gs://image_detection_b/datasets/layout_phase3/
+
+# Verify upload (should show ~40-50GB)
+gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
 ```
 
 **Step 5: In Your Training Notebook**
