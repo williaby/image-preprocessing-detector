@@ -314,22 +314,8 @@ suites:
     target:
       accuracy: 0.97
 
-  - name: icdar-mlt-script-full
-    phase: 2
-    task: script_identification
-    dataset: icdar_mlt_2019
-    metrics:
-      - recall
-      - precision
-      - f1
-    split: test
-    smoke_subset: null
-    target:
-      recall: 0.95
-    baseline:
-      recall: 0.95
-      source: "ICDAR MLT 2019 leaderboard"
-      paper: "https://rrc.cvc.uab.es/?ch=15"
+  # Note: ICDAR MLT 2019 removed (competition dataset requires registration)
+  # Use COCO-Text for text detection or TextOCR for scene text
 
 # ============================================================================
 # Phase 3: OmniDocBench End-to-End Evaluation
@@ -471,6 +457,14 @@ suites:
 #   BENCHMARKS_CACHE_DIR=/path/to/cache
 #   BENCHMARKS_OUTPUT_DIR=/reports
 #   HF_TOKEN=your_huggingface_token
+#   GCP_SA_KEY=base64_encoded_service_account  # For GCS integration
+#   GCP_PROJECT=image-detection-478105
+#   GCS_BUCKET=gs://image_detection_b/
+
+# Automated dataset downloads:
+#   poetry run python scripts/download_omnidocbench.py
+#   poetry run python scripts/download_table_datasets.py --all
+#   poetry run python scripts/validate_datasets.py
 
 # DocLayNet split notes:
 #   - Always use val_docwise (NOT val_pagewise)
@@ -478,6 +472,15 @@ suites:
 #   - Classes: 11 categories as defined above
 
 # OmniDocBench license: CC-BY-NC-4.0 (eval-only, no redistribution)
+
+# Dataset sources (HuggingFace):
+#   - TableBank: liminghao1630/TableBank (23.7 GB)
+#   - PubTabNet: ajimeno/PubTabNet (10.5 GB)
+#   - FinTabNet: bsmock/FinTabNet.c (3.2 GB, corrected version)
+#   - OmniDocBench: opendatalab/OmniDocBench (1.16 GB)
+
+# Removed datasets:
+#   - ICDAR MLT 2019: Competition dataset, use COCO-Text instead
 
 # Smoke test policy:
 #   - Run on PRs (fast feedback, <5 minutes)

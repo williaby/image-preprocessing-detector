@@ -1,0 +1,13 @@
+{
+  "dataset": "wili_2018",
+  "extracted_at": "2025-11-13",
+  "count": 1,
+  "files": [
+    {
+      "name": "en_1.txt",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/wili_2018/README.txt",
+      "size_mb": 0.0,
+      "criterion": "en"
+    }
+  ]
+}

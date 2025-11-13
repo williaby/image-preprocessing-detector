@@ -1,0 +1,37 @@
+{
+  "dataset": "tablebank",
+  "extracted_at": "2025-11-13",
+  "count": 5,
+  "files": [
+    {
+      "name": "simple_table_1.png",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/tablebank/TableBank/Recognition/images/1805.11825.table_0.png",
+      "size_mb": 0.0,
+      "criterion": "simple_table"
+    },
+    {
+      "name": "complex_table_2.png",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/tablebank/TableBank/Recognition/images/201705090844313158_1.png",
+      "size_mb": 0.04,
+      "criterion": "complex_table"
+    },
+    {
+      "name": "rotated_3.jpg",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/tablebank/TableBank/Detection/images/1504.07242_10.jpg",
+      "size_mb": 0.07,
+      "criterion": "rotated"
+    },
+    {
+      "name": "low_quality_4.jpg",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/tablebank/TableBank/Detection/images/1508.07327_7.jpg",
+      "size_mb": 0.13,
+      "criterion": "low_quality"
+    },
+    {
+      "name": "embedded_graphics_5.jpg",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/tablebank/TableBank/Detection/images/GAMKABERG-PAMP_draft-for-public-participation_21Nov2015_125.jpg",
+      "size_mb": 0.05,
+      "criterion": "embedded_graphics"
+    }
+  ]
+}

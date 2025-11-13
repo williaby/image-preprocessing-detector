@@ -159,7 +159,6 @@ class DocumentAugmentationPipeline:
                 alb.ImageCompression(
                     quality_lower=50,
                     quality_upper=95,
-                    compression_type=alb.ImageCompression.ImageCompressionType.JPEG,
                     p=compression_probability,
                 ),
                 # Downscale and upscale (simulates low-resolution scans)
@@ -185,7 +184,11 @@ class DocumentAugmentationPipeline:
 
         self._last_params: dict[str, Any] = {}
         if random_seed is not None:
-            alb.core.composition.set_random_seed(random_seed)
+            import random
+            import numpy as np
+
+            random.seed(random_seed)
+            np.random.seed(random_seed)
 
     def __call__(
         self,
@@ -218,7 +221,7 @@ class DocumentAugmentationPipeline:
                 for t in self.transform.transforms
                 if hasattr(t, "p") and t.p > 0
             ],
-            "main_augmentations": self.transform.get_params(),
+            "augmentation_applied": True,
         }
 
         # Optionally apply large rotation (90/180/270°)
@@ -226,9 +229,6 @@ class DocumentAugmentationPipeline:
             rotated = self.orientation_transform(image=augmented_image)
             augmented_image = rotated["image"]
             self._last_params["orientation_applied"] = True
-            self._last_params["orientation_params"] = (
-                self.orientation_transform.get_params()
-            )
         else:
             self._last_params["orientation_applied"] = False
 
