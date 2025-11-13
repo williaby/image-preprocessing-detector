@@ -72,6 +72,7 @@ data/test/*.jpeg
 data/test/*.png
 data/test/*.avif
 data/test/*.webp
+data/test/*.zip
 data/annotations/*.json
 *.dvc
 
