@@ -926,10 +926,14 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 
 ---
 
-### Phase 2: ML for Image Quality Assessment (3-4 weeks)
+### Phase 2: ML for Image Quality Assessment (4-5 weeks)
+
+**Updated**: 2025-01-13 - Extended by +1 week for DGQA calibration (see ADR-011)
 
 **Goals:**
 - Train and deploy multi-label IQA CNN using **Google Colab Pro**
+- Implement Domain-Generalized Quality Assessment (DGQA) for synthetic-to-real calibration
+- Deliver 3-dimension quality assessment (overall, sharpness, color fidelity) per FR-2.3
 - Improve detection accuracy for noise, blur, perspective
 - Replace or augment classical methods
 
@@ -1054,15 +1058,90 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 5. If interrupted: Re-run notebook → Auto-resumes (4-8 hours)
 6. Download ONNX model from Google Drive
 7. Integrate locally into pipeline
+8. **NEW**: DGQA calibration (Week 4-5) - see details below
 
 **See [docs/COLAB_TRAINING_GUIDE.md](docs/COLAB_TRAINING_GUIDE.md) for detailed instructions.**
 
 ---
 
-### Phase 3: ML for Document Layout Detection (4-5 weeks)
+#### Phase 2 Extension: DGQA Calibration (Week 4-5)
+
+**Added**: 2025-01-13 - Critical for addressing synthetic-to-real domain gap
+
+**Problem**: Models trained on synthetic data (50k TableBank samples with BRISQUE/NIQE labels) show **15-25% performance degradation** on real-world documents due to domain shift (scanning artifacts, compression, paper texture).
+
+**Solution**: Domain-Generalized Quality Assessment (DGQA) framework with adversarial domain adaptation
+
+**DGQA Timeline (1 week)**:
+
+**Week 4: Domain-Invariant Feature Learning**
+- **Stage 1 (Day 1-2)**: Implement adversarial domain adaptation
+  - Add domain discriminator to model architecture
+  - Implement gradient reversal layer
+  - Configure multi-objective loss (quality + domain)
+- **Stage 2 (Day 3-5)**: Train domain-invariant features
+  - Synthetic batch: quality supervision + domain label (synthetic=0)
+  - Real batch: no labels, only domain label (real=1)
+  - Feature extractor learns to fool domain discriminator
+  - **Goal**: Features capture quality, not domain-specific artifacts
+- **Expected Result**: Feature alignment between synthetic and real distributions
+
+**Week 5: Real-World Calibration & Validation**
+- **Stage 1 (Day 1-2)**: Real-world annotation
+  - **Option A**: Manual annotation (500-1000 samples, $500-3000 cost)
+    - Stratified sampling from DocLayNet
+    - 3-dimension scoring: overall, sharpness, color fidelity (1-5 Likert → 0.0-1.0)
+    - Inter-annotator agreement (2-3 annotators per image)
+  - **Option B**: Pseudo-labeling (zero cost fallback)
+    - Ensemble BRISQUE/NIQE/classical methods
+    - Performance: -3-5% vs. manual annotations
+- **Stage 2 (Day 3-4)**: Fine-tune on real-world data
+  - Freeze feature extractor (preserve domain-invariant features)
+  - Fine-tune quality head only (10 epochs)
+  - Use real-world manual or pseudo labels
+- **Stage 3 (Day 5-7)**: Validation
+  - Synthetic test set (10k samples): Pearson r > 0.75
+  - Real-world test set (200 samples): Pearson r > 0.75
+  - **Success Criterion**: Domain gap <5% (vs. 15-25% without DGQA)
+  - DIQA-5000 benchmark (when released): Pearson r > 0.80
+
+**DGQA Deliverables**:
+- ✅ Domain-invariant feature extractor (frozen for real-world calibration)
+- ✅ Calibrated quality head (fine-tuned on real-world data)
+- ✅ Real-world annotation dataset (500-1000 samples) or pseudo-labeled dataset
+- ✅ Validation report with domain gap analysis (<5% target)
+- ✅ Model ready for production (no false positive disasters like Phase 1 contrast issue)
+
+**DGQA Success Metrics**:
+| Metric | Target | Validation |
+|--------|--------|------------|
+| Synthetic performance | Pearson r > 0.75 | 10k synthetic test set |
+| Real-world performance | Pearson r > 0.75 | 200 real-world test set |
+| Domain gap | <5% | abs(synthetic_r - real_r) |
+| 3-dimension output | overall, sharpness, color_fidelity | FR-2.3 compliance |
+
+**Why +1 Week?**
+- Domain-invariant feature learning requires careful tuning (2-3 days)
+- Real-world annotation or pseudo-labeling setup (1-2 days)
+- Fine-tuning and validation with domain gap analysis (2-3 days)
+- **Alternative**: Skip DGQA and accept 15-25% performance degradation (NOT RECOMMENDED)
+
+**References**:
+- [ADR-011: DGQA Framework](docs/ADRs/0011-hybrid-validation-strategy.md#phase-2-extension-domain-generalized-quality-assessment-dgqa)
+- [FR-2.3: Learned Quality Assessment](docs/requirements/functional_requirements_v2.md#fr-23-learned-quality-assessment-phase-2)
+- [ADR-029: Dataset Strategy](docs/ADRs/0029-phase2-dataset-selection-strategy.md)
+
+---
+
+### Phase 3: ML for Document Layout Detection & Unified Preprocessing (7-8 weeks)
+
+**Updated**: 2025-01-13 - Extended by +3 weeks for DocRes, DLAFormer, Table Structure Recognition
 
 **Goals:**
 - Train and deploy YOLOv8 object detector for document elements using **Google Colab Pro**
+- **NEW**: Integrate DocRes unified preprocessing model (5 tasks: dewarp, deshadow, deblur, binarize, contrast)
+- **NEW**: Research DLAFormer unified layout analysis (dual-track with YOLOv8)
+- **NEW**: Implement table structure extraction (FR-4.11: PubTables-1M)
 - Integrate with pipeline for text-detected documents
 - Achieve production-ready accuracy and performance
 
@@ -1208,6 +1287,265 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 8. Download ONNX model and integrate locally
 
 **See [docs/COLAB_TRAINING_GUIDE.md](docs/COLAB_TRAINING_GUIDE.md) for detailed multi-session instructions.**
+
+---
+
+#### Phase 3 Extensions: DocRes, DLAFormer, Table Structure Recognition (+3 weeks)
+
+**Added**: 2025-01-13 - Critical Phase 3+ capabilities from research analysis
+
+**Breakdown**: Original Phase 3 (4-5 weeks) → Extended Phase 3 (7-8 weeks)
+- **Weeks 1-5**: YOLOv8 layout detection (original plan, see above)
+- **Week 6**: DocRes unified preprocessing integration
+- **Week 7**: DLAFormer research & dual-track setup
+- **Week 8**: Table structure extraction (FR-4.11) & final validation
+
+---
+
+##### Week 6: DocRes Unified Preprocessing Integration
+
+**Goal**: Replace separate preprocessing models with unified DocRes approach (ADR-032)
+
+**Problem**: Phase 3+ requires handling complex degradations (warping, shadows, severe blur) that classical methods can't fix. Original plan used separate models (DvD for dewarping, SynDocDS for shadows), but DocRes provides unified solution.
+
+**DocRes Overview**:
+- **Model**: Unified CNN with Dynamic Task-Specific Prompts (DTSPrompt)
+- **Tasks**: 5 unified tasks (dewarp, deshadow, deblur, binarize, contrast enhancement)
+- **Performance**: 1 model inference vs. 5 separate models (5x efficiency gain)
+- **Memory**: <2 GB VRAM (INT8 quantized ONNX)
+- **Latency**: <150ms/page for all 5 tasks (GPU)
+
+**Week 6 Tasks**:
+
+**Day 1-2: DocRes Model Integration**
+- Research DocRes paper (CVPR 2024) and implementation
+- Verify license and code availability
+- Download DocRes pretrained checkpoint (if available)
+- Integrate DTSPrompt task selection mechanism
+- Export to ONNX format for deployment
+
+**Day 3-4: Training Data Preparation**
+- Download DocSynth-300K (50 GB, 300k layouts, Apache-2.0)
+  - HuggingFace: `juliozhao/DocSynth300K`
+- Download SynDocDS (7k shadowed documents) for de-shadow fine-tuning
+- Download AnyPhotoDoc 6300 (dewarping benchmark)
+- Prepare Albumentations augmentation pipeline for 5 tasks
+
+**Day 5: Fine-Tuning (if needed)**
+- If DocRes pretrained available: Fine-tune on DocSynth-300K (optional)
+- If no pretrained: Train from scratch (requires +1 week, Colab Pro)
+- Validate on AnyPhotoDoc 6300 benchmark (MS-SSIM > 0.88 target)
+
+**Day 6-7: Dual-Track Integration**
+- Implement severity classifier (route simple → classical, complex → DocRes)
+- Add validation gate (compare classical vs. DocRes outputs)
+- Extend ADR-021 guardrails for DocRes outputs
+- Performance benchmarking (latency, memory, throughput)
+
+**DocRes Deliverables**:
+- ✅ DocRes ONNX model (INT8 quantized, <500 MB)
+- ✅ Severity classifier for routing (simple vs. complex degradations)
+- ✅ Dual-track preprocessing pipeline (classical fallback + DocRes)
+- ✅ Validation on AnyPhotoDoc 6300 (MS-SSIM > 0.88)
+- ✅ Performance report (latency <150ms/page, memory <2GB VRAM)
+
+**DocRes Success Metrics**:
+| Task | Metric | Target | Benchmark |
+|------|--------|--------|-----------|
+| Dewarping | MS-SSIM | > 0.88 | AnyPhotoDoc 6300 |
+| De-shadowing | PSNR | > 20 dB | SynDocDS test split |
+| Deblurring | Laplacian improvement | > 30% | DIQA-5000 sharpness |
+| Binarization | F-measure | > 0.92 | DIBCO (optional) |
+| Contrast | Histogram spread | > 120 | DIQA-5000 color fidelity |
+
+**References**:
+- [ADR-032: DocRes Unified Preprocessing](docs/ADRs/0032-docres-unified-preprocessing.md)
+- [ADR-029: Dataset Strategy - DocSynth-300K](docs/ADRs/0029-phase2-dataset-selection-strategy.md)
+
+---
+
+##### Week 7: Reading Order Prediction (FR-4.12) - **CRITICAL FOR RAG**
+
+**Goal**: Implement reading order prediction for document elements to enable accurate RAG retrieval and text extraction
+
+**Priority Elevation** (2025-01-13):
+- **Previous Plan**: DLAFormer research (optional)
+- **New Plan**: Reading order implementation (**CRITICAL** - elevated based on OHR-Bench findings)
+- **Rationale**: OHR-Bench research shows **5-29% RAG performance loss** from reading order errors
+- **Evidence**: Reading order errors impact RAG retrieval more than individual quality defects
+
+**Problem**: Multi-column layouts, tables, figures, and footnotes require correct sequential ordering for semantic understanding. Incorrect reading order destroys document meaning and causes catastrophic RAG retrieval failures.
+
+**OHR-Bench Critical Findings**:
+- **Reading Order Error (ROE)**: 5-29% RAG performance loss (CRITICAL bottleneck)
+- **NDCG@5 Gap**: 4.5% retrieval performance gap (0.74 best OCR vs. 0.773 ground truth)
+- **Impact**: Reading order errors > blur/skew/noise errors for RAG applications
+
+**Week 7 Tasks**:
+
+**Day 1-2: Reading Order Algorithm Design**
+- **Approach**: Graph-based spatial reasoning (FR-4.12)
+  - Construct spatial relationship graph (elements as nodes, spatial relationships as edges)
+  - Algorithm: Top-to-bottom, left-to-right with multi-column detection
+  - Handle special cases: footnotes, captions, sidebars, page numbers
+- Review ROOR dataset (if available): GitHub chongzhangFDU/ROOR-Datasets
+- Review DocSynth-300K reading order annotations (if available)
+- Design output schema (element sequence + confidence scores)
+
+**Day 3-4: Implementation**
+- Implement graph construction from YOLOv8 layout elements (FR-4.2)
+- Implement reading order algorithm:
+  - **Multi-column detection**: Analyze spatial clustering of Text blocks
+  - **Column flow**: Vertical ordering within columns, left-to-right across columns
+  - **Special elements**: Footnotes (bottom priority), captions (parent figure proximity)
+  - **Parasitic content**: Exclude headers/footers (FR-4.4)
+- Add reading_order field to JSON output schema
+- Unit tests for common layout patterns
+
+**Day 5: Dataset Integration & Validation**
+- Download ROOR dataset (if available, CC BY 4.0)
+- Download OHR-Bench dataset for ROE validation (HuggingFace: opendatalab/OHR-Bench)
+  - **Size**: ~10 GB (estimated), 8,500+ PDF pages
+  - **License**: CC-BY-4.0
+  - **Domains**: 7 domains (academic, legal, technical, etc.)
+- Prepare validation scripts for ROOR and OHR-Bench
+
+**Day 6-7: Benchmarking & Tuning**
+- **Benchmark 1**: ROOR dataset (if available)
+  - Metric: F1-score > 0.85 on pairwise reading order predictions
+  - Metric: Kendall's Tau > 0.80 (rank correlation)
+- **Benchmark 2**: OHR-Bench
+  - **Metric**: Reading Order Error (ROE) < 10% (target)
+  - **Critical**: Validate RAG retrieval impact (NDCG@5 > 0.77)
+- Tune algorithm parameters (column detection thresholds, spatial weights)
+- Document failure modes and edge cases
+
+**Reading Order Deliverables** (Phase 3 CRITICAL):
+- ✅ Graph-based reading order implementation (FR-4.12)
+- ✅ Integration with YOLOv8 layout pipeline
+- ✅ Validation on ROOR dataset (F1 > 0.85, Kendall's Tau > 0.80)
+- ✅ Validation on OHR-Bench (ROE < 10%, NDCG@5 > 0.77)
+- ✅ Reading order confidence scores in JSON output
+- ✅ Performance: < 50ms per page (graph construction + ordering)
+
+**Performance Targets**:
+- **Latency**: < 50ms per page (graph construction + ordering)
+- **Accuracy**: F1 > 0.85 on ROOR, ROE < 10% on OHR-Bench
+- **RAG Impact**: NDCG@5 > 0.77 (match or exceed ground truth retrieval)
+
+**Integration Points**:
+- **Input**: Layout elements from YOLOv8 (FR-4.2) with bounding boxes
+- **Output**: Ordered sequence in JSON (FR-4.12 schema)
+- **FR-4.4 Integration**: Exclude parasitic content (headers/footers) from reading order
+- **FR-7 Integration**: Reading order confidence feeds into Structural Complexity Score
+
+**Fallback Strategy**:
+- **If ROOR unavailable**: Use spatial heuristics + manual validation on OHR-Bench
+- **If OHR-Bench issues**: Use DocSynth-300K synthetic layouts for initial validation
+- **Learned model**: Defer to Phase 4+ if graph-based approach insufficient (< 0.85 F1)
+
+**DLAFormer Status** (Deferred):
+- **Previous Plan**: Week 7 DLAFormer research & dual-track setup
+- **New Status**: **DEFERRED to Phase 4-5** (optional exploration)
+- **Rationale**: Reading order is more critical than DLAFormer unified architecture
+- **Future**: DLAFormer may provide reading order + logical roles, but graph-based approach sufficient for Phase 3
+
+**References**:
+- [FR-4.12: Reading Order Prediction](docs/requirements/functional_requirements_v2.md) - **NEW**
+- [ADR-029: Dataset Strategy - ROOR elevated to Phase 3](docs/ADRs/0029-phase2-dataset-selection-strategy.md)
+- [ADR-031: Benchmarking Framework - OHR-Bench adapter](docs/ADRs/0031-comprehensive-benchmarking-framework.md)
+- Research: "OCR Hinders RAG: Evaluating the Cascading Impact of OCR on RAG" (OHR-Bench, arXiv 2024)
+- Research: ROOR dataset (GitHub: chongzhangFDU/ROOR-Datasets)
+- Research: DocSynth-300K (arXiv:2410.12628, 2024)
+
+---
+
+##### Week 8: Table Structure Extraction (FR-4.11) & Final Validation
+
+**Goal**: Implement table structure recognition using PubTables-1M dataset (FR-4.11)
+
+**Problem**: YOLOv8 detects table bounding boxes (FR-4.2) but doesn't extract internal structure (rows, columns, cells). FR-4.11 requires table structure extraction for downstream processing.
+
+**Approach**: Two-stage pipeline (detect → extract structure)
+
+**Week 8 Tasks**:
+
+**Day 1-2: Table Structure Dataset Preparation**
+- Download PubTables-1M (1M tables, ~25 GB, Apache-2.0)
+  - Source: GitHub microsoft/table-transformer
+- Extract structure annotations (rows, columns, cells, spanning cells)
+- Convert to training format (JSON or COCO-style)
+- Prepare train/val/test splits
+
+**Day 3-5: Table Structure Model Training**
+- **Approach A (Recommended)**: ClusterTabNet
+  - Cluster-based table structure recognition
+  - Lightweight, fast inference (<50ms/table)
+  - GriTS F1 > 0.85, TEDS > 0.90 (target metrics)
+- **Approach B (Alternative)**: Microsoft Table Transformer
+  - DETR-based transformer (heavier, slower)
+  - Higher accuracy potential but longer training
+- Train on PubTables-1M (Colab Pro, 1-2 sessions)
+- Validate on PubTables-1M test split
+
+**Day 6: Integration with YOLOv8 Pipeline**
+- Integrate table structure extraction after table detection
+- Two-stage pipeline:
+  1. YOLOv8 detects table bounding box (FR-4.2)
+  2. Table structure model extracts rows/columns/cells (FR-4.11)
+- Update JSON schema for table structure output
+- Performance optimization (batch processing, caching)
+
+**Day 7: Final Phase 3 Validation**
+- Run full benchmark suite (ADR-031 adapters)
+- Validate all Phase 3 deliverables:
+  - YOLOv8 layout detection: mAP@.50 > 0.82
+  - DocRes preprocessing: MS-SSIM > 0.88 (AnyPhotoDoc 6300)
+  - Table structure extraction: GriTS F1 > 0.85 (PubTables-1M)
+  - DLAFormer feasibility report (if completed)
+- Performance targets:
+  - Latency: <150ms/page (GPU, all components)
+  - Throughput: >6 pages/sec per GPU worker
+  - Memory: <4 GB VRAM (YOLOv8 + DocRes + Table Structure)
+- Generate Phase 3 completion report
+
+**Table Structure Deliverables**:
+- ✅ Trained table structure model (ONNX, ~50 MB)
+- ✅ PubTables-1M dataset (processed, hosted on Google Drive)
+- ✅ Two-stage pipeline integration (detection → structure extraction)
+- ✅ Validation report (GriTS F1 > 0.85, TEDS > 0.90)
+- ✅ Updated JSON schema for table structure output
+
+**Table Structure Success Metrics**:
+| Metric | Target | Notes |
+|--------|--------|-------|
+| GriTS F1 | > 0.85 | Grid Table Similarity (cell alignment) |
+| TEDS | > 0.90 | Tree Edit Distance-based Similarity |
+| Latency | < 50ms/table | GPU inference (single table) |
+| Accuracy (cells) | > 0.90 | Cell bounding box IoU > 0.5 |
+| Accuracy (spanning) | > 0.80 | Multi-cell span detection |
+
+**References**:
+- [FR-4.11: Table Structure Extraction](docs/requirements/functional_requirements_v2.md#fr-411-table-structure-extraction-phase-3)
+- [ADR-029: Dataset Strategy - PubTables-1M](docs/ADRs/0029-phase2-dataset-selection-strategy.md)
+- GitHub: microsoft/table-transformer
+
+---
+
+**Phase 3 Total Duration**: 7-8 weeks (4-5 weeks original + 3 weeks extensions)
+
+**Phase 3 Total Cost**:
+- Colab Pro: $10/month × 2-3 months = $20-30
+- Google Drive: $2/month × 2-3 months = $4-6
+- **Total**: $24-36 (includes YOLOv8 + DocRes + Table Structure training)
+
+**Phase 3 Completion Checklist**:
+- ✅ YOLOv8 layout detection (mAP@.50 > 0.82)
+- ✅ DocRes unified preprocessing (5 tasks, <150ms/page)
+- ✅ Table structure extraction (GriTS F1 > 0.85)
+- ⚠️ DLAFormer feasibility report (optional, may defer to Phase 4-5)
+- ✅ Full benchmark suite validation (ADR-031)
+- ✅ Performance targets met (latency, throughput, memory)
 
 ---
 
