@@ -56,12 +56,12 @@ DATASETS = {
         "description": "Synthetic layout detection training (300k samples)",
     },
     "pubtables1m": {
-        "source": "github",
-        "repo_url": "https://github.com/microsoft/table-transformer",
+        "source": "huggingface",
+        "repo_id": "bsmock/pubtables-1m",
         "local_dir": PROJECT_ROOT / "data/training/tables/pubtables1m",
         "size_gb": 25,
         "priority": 3,
-        "license": "MIT",
+        "license": "CDLA-Permissive-1.0",
         "description": "Table structure extraction (1M real-world tables)",
     },
     "iam": {
