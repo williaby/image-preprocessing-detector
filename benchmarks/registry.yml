@@ -466,6 +466,12 @@ suites:
 #   poetry run python scripts/download_table_datasets.py --all
 #   poetry run python scripts/validate_datasets.py
 
+# Test fixtures (for local dev and CI/CD):
+#   Location: data/test_fixtures/ (committed to repository)
+#   Size: 828KB (vs 88+ GB full datasets)
+#   Usage: pytest -v -m "not requires_full_dataset"
+#   Details: See data/test_fixtures/README.md
+
 # DocLayNet split notes:
 #   - Always use val_docwise (NOT val_pagewise)
 #   - Page-wise metrics inflate scores by ~10-15 points

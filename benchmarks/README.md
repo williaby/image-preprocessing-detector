@@ -364,24 +364,75 @@ poetry run pytest tests/benchmarks/test_image_metrics.py -v
 poetry run pytest tests/benchmarks/ --cov=benchmarks --cov-report=html
 ```
 
+## Testing with Fixtures
+
+For local development and CI/CD, use small test fixtures instead of full datasets:
+
+### Test Fixtures vs Full Datasets
+
+| Approach | Size | Use Case | Location |
+|----------|------|----------|----------|
+| **Test Fixtures** | 828KB | Local dev, CI/CD | `data/test_fixtures/` (committed) |
+| **Smoke Tests** | Varies | Quick validation | Dataset subsets (20-100 samples) |
+| **Full Benchmarks** | 88+ GB | Production validation | `data/benchmarks/` (gitignored) |
+
+### Available Test Fixtures
+
+```bash
+# Check what's available
+ls -lh data/test_fixtures/
+
+# Current fixtures:
+# - doclaynet/   432KB (5 PDFs)
+# - tablebank/   324KB (5 images)
+# - wili_2018/   52KB (10 text files)
+# - iqa_samples/ ~2MB (planned for Phase 2)
+```
+
+### Running Tests with Fixtures
+
+```bash
+# Unit tests (use synthetic data + fixtures)
+poetry run pytest tests/unit/ -v
+
+# Integration tests (use test fixtures)
+poetry run pytest tests/integration/ -v -m "not requires_full_dataset"
+
+# Smoke tests (use dataset subsets - requires downloads)
+poetry run python -m benchmarks.runners.run_smoke --all
+```
+
+### Benefits
+
+- ✅ **No dataset downloads**: Work offline with 828KB fixtures
+- ✅ **Fast CI/CD**: Tests complete in <5 minutes
+- ✅ **Reproducible**: Same fixtures across all environments
+- ✅ **Version controlled**: Fixtures committed to repository
+
+See [data/test_fixtures/README.md](../data/test_fixtures/README.md) for details.
+
 ## Troubleshooting
 
 ### Dataset Not Found
 
 ```bash
-# Option 1: Download datasets locally
+# Option 1: Use test fixtures (recommended for local dev)
+# No download needed - fixtures committed to repository
+poetry run pytest -v -m "not requires_full_dataset"
+
+# Option 2: Download datasets locally
 poetry run python scripts/download_table_datasets.py --all
 poetry run python scripts/download_omnidocbench.py
 
-# Option 2: Set custom data directory
+# Option 3: Set custom data directory
 export BENCHMARKS_DATA_DIR=/path/to/datasets
 
-# Option 3: Use --data-dir flag
+# Option 4: Use --data-dir flag
 python -m benchmarks.runners.run_benchmark \
     --suite my-suite \
     --data-dir /path/to/datasets
 
-# Option 4: Use GCS-stored datasets (Colab)
+# Option 5: Use GCS-stored datasets (Colab)
 # See docs/DATASET_INSTALLATION.md for GCS setup
 ```
 

@@ -61,19 +61,26 @@ dmypy.json
 .ipynb_checkpoints
 *.ipynb
 
-# Data (large files)
-data/iqa/*.jpg
-data/iqa/*.png
-data/layout/*.jpg
-data/layout/*.png
-data/test/*.pdf
-data/test/*.jpg
-data/test/*.jpeg
-data/test/*.png
-data/test/*.avif
-data/test/*.webp
-data/test/*.zip
-data/annotations/*.json
+# Data (large files stored in GCS)
+# Allow documentation and test fixtures
+!data/README.md
+!data/**/README.md
+!data/test_fixtures/
+
+# Exclude all data subdirectories (actual datasets)
+data/iqa/
+data/layout/
+data/test/
+data/annotations/
+data/augmented/
+data/benchmarks/
+data/downloads/
+data/labels/
+data/promptcraft/
+data/raw/
+data/training/
+
+# DVC tracking
 *.dvc
 
 # Models (large files)
@@ -122,15 +129,11 @@ Desktop.ini
 *~
 .directory
 
-# Benchmark datasets (large) - added 2025-11-05
-data/benchmarks/
-data/SignaTR6K.zip
-
 # Root-level datasets directory (large training/test datasets)
 datasets/
 
-# Test fixtures (small samples for CI/CD) - allow in Git
-!data/test_fixtures/
+# SignaTR6K dataset (large benchmark)
+data/SignaTR6K.zip
 
 # Validation artifacts (large)
 validation/datasets/

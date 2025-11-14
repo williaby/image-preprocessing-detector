@@ -286,6 +286,32 @@ poetry run python scripts/validate_datasets.py
 
 **HuggingFace Token Required**: Set `HF_TOKEN` in `.env` file (one-time setup)
 
+### Lightweight Alternative: Test Fixtures
+
+For local development and CI/CD testing **without downloading full datasets**:
+
+```bash
+# Test fixtures already committed to repository (828KB total)
+ls -lh data/test_fixtures/
+
+# Run integration tests with fixtures
+poetry run pytest -v -m "not requires_full_dataset"
+
+# Benefits:
+# - No downloads needed (828KB vs 88+ GB)
+# - Fast CI/CD (< 5 min vs 30+ min)
+# - Offline testing capability
+# - Reproducible across environments
+```
+
+**Available Fixtures**:
+- ✅ doclaynet (432KB, 5 PDFs)
+- ✅ tablebank (324KB, 5 images)
+- ✅ wili_2018 (52KB, 10 text files)
+- ⏸️ iqa_samples (~2MB, planned for Phase 2)
+
+See [data/test_fixtures/README.md](../data/test_fixtures/README.md) for details.
+
 ---
 
 ## Summary
