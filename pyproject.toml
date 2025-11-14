@@ -29,6 +29,9 @@ dependencies = [
     # CLI
     "click>=8.1.0",
 
+    # Serverless GPU Compute (Phase 2+)
+    "modal>=0.63.0",
+
     # Deep Learning (placeholder - will add specific versions after testing)
     # "torch>=2.0.0",
     # "torchvision>=0.15.0",
@@ -139,7 +142,10 @@ version = "0.1.0"
 description = "Intelligent image preprocessing detection system for RAG applications"
 authors = ["Byron Williams <byronawilliams@gmail.com>"]
 readme = "README.md"
-packages = [{include = "image_preprocessing_detector", from = "src"}]
+packages = [
+    {include = "image_preprocessing_detector", from = "src"},
+    {include = "benchmarks"}
+]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.15"  # ClusterFuzzLite requires Python 3.11 for Atheris compatibility

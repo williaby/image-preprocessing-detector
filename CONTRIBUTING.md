@@ -436,7 +436,7 @@ Use the feature request template and include:
 
 ## Development Phases
 
-The project is developed in phases (see [PROJECT_PLAN.md](PROJECT_PLAN.md)):
+The project is developed in phases (see [PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md)):
 
 - **Phase 0** (Weeks 1-3): Foundation & Scaffolding ✅ **COMPLETE**
 - **Phase 1** (Weeks 4-7): MVP with Classical Methods 🔄 **IN PROGRESS**

@@ -1,6 +1,20 @@
 # Benchmarking Framework
 
+> **What's Here**: Benchmark framework code (runners, adapters, metrics, configuration)
+> **Dataset Files**: See [data/benchmarks/](../data/benchmarks/) for actual dataset storage
+
 Comprehensive evaluation system for the Image Preprocessing Detector across Phases 1-3.
+
+## Directory Purpose
+
+**This directory (`benchmarks/`) contains benchmark infrastructure code:**
+
+- Python modules for running benchmarks (`runners/`, `adapters/`, `metrics/`)
+- Configuration registry (`registry.yml`) defining all benchmark suites
+- Result aggregation and reporting tools (`scorers/`, `reports/`)
+- Documentation for the benchmarking framework
+
+**For actual dataset files**, see [data/benchmarks/](../data/benchmarks/) (~101GB total: 59GB local + 42GB DocLayNet symlink, gitignored).
 
 ## Quick Start
 
@@ -20,7 +34,9 @@ python -m benchmarks.runners.run_smoke --all
 
 ## Architecture
 
-```
+**Framework Structure** (this directory):
+
+```text
 benchmarks/
 ├── registry.yml              # Central suite configuration
 ├── adapters/                 # Dataset adapters
@@ -37,6 +53,23 @@ benchmarks/
 │   └── run_smoke.py         # Fast CI smoke tests
 └── labelmaps/               # Label mappings
     └── omnidoc_to_doclaynet.yaml
+```
+
+**Dataset Storage** (separate location):
+
+```text
+data/benchmarks/             # Actual dataset files (~101GB total, gitignored)
+├── doclaynet/              # Layout detection (42GB, symlinked to data_ingestor)
+├── tablebank/              # Table detection (27GB)
+├── pubtabnet/              # Table structure (16GB)
+├── fintabnet/              # Financial tables (11GB)
+├── external_iqa/           # LIVE, CSIQ, LIVE Challenge (2GB)
+├── ohr-bench/              # RAG-specific OCR benchmark (1.8GB)
+├── omnidocbench/           # Multi-domain comprehensive (1.2GB)
+├── signatr6k/              # Handwriting detection (142MB)
+├── wili_2018/              # Language detection (129MB)
+├── cocotext/               # Text detection (53MB)
+└── synthetic_iqa/          # Auto-generated test images (372KB)
 ```
 
 ## Registry Configuration
@@ -622,7 +655,34 @@ For complete baseline references, see:
 - [COCO Evaluation](https://cocodataset.org/#detection-eval) - Detection metrics
 - [Marker GitHub](https://github.com/VikParuchuri/marker) - Open-source document AI
 - [Docling GitHub](https://github.com/DS4SD/docling) - IBM document processing
-- [Project Plan](../PROJECT_PLAN.md) - Full development roadmap
+- [Project Plan](../docs/planning/PROJECT_PLAN.md) - Full development roadmap
+
+## GCS Integration
+
+Benchmark datasets are **NOT uploaded to GCS** due to size (~101 GB) and cost constraints.
+
+**Rationale**:
+- Benchmarks run locally on development machines
+- Too expensive for cloud storage ($2.02/month at $0.020/GB/month)
+- Can re-download from original sources if needed
+
+**Training data GCS strategy**: See [docs/DATASET_LOCATIONS.md](../docs/DATASET_LOCATIONS.md#google-cloud-storage-gcs-paths) and [scripts/gcs_helpers.sh](../scripts/gcs_helpers.sh).
+
+## Related Documentation
+
+### Architecture Decisions
+- [ADR-031: Comprehensive Benchmarking Framework](../docs/ADRs/0031-comprehensive-benchmarking-framework.md) - Design rationale and architecture
+- [ADR-029: Three-Tier Dataset Strategy](../docs/ADRs/0029-phase2-dataset-selection-strategy.md) - Dataset organization (Storage Tiers)
+
+### Dataset Documentation
+- [docs/DATASET_LOCATIONS.md](../docs/DATASET_LOCATIONS.md) - Complete dataset inventory, sizes, and locations
+- [data/benchmarks/README.md](../data/benchmarks/README.md) - Dataset file storage details
+- [docs/reference/document-type-coverage.md](../docs/reference/document-type-coverage.md) - FR coverage matrix
+- [docs/reference/detection-taxonomy.md](../docs/reference/detection-taxonomy.md) - Complete detection taxonomy
+
+### Installation & Usage
+- [docs/guides/dataset-installation.md](../docs/guides/dataset-installation.md) - Dataset installation guide
+- [docs/references/CITATIONS.md](../docs/references/CITATIONS.md) - Citation information
 
 ## License
 

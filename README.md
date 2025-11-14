@@ -37,9 +37,18 @@
 ## Features
 
 - **Multi-Stage Pipeline Architecture**: Text detection gate routes documents to specialized processing paths
-- **Hybrid IQA**: Classical CV + ML for image quality assessment (noise, blur, skew, contrast, orientation)
-- **Document Element Detection**: YOLOv8-based detection of tables, images, handwriting, formulas
+- **Hybrid IQA**: Classical CV + ML for image quality assessment (30+ detection categories)
+  - Noise, blur, skew, contrast, orientation, perspective distortion
+  - Low resolution detection with automatic DPI upscaling (Phase 1B)
+  - 3-dimension quality assessment: overall, sharpness, color fidelity (Phase 2)
+- **Document Element Detection**: YOLOv8-based detection of tables, images, handwriting, formulas, margin annotations
+- **Unified Document Restoration** (Phase 3+): DocRes model for 5 preprocessing tasks
+  - Dewarping, de-shadowing, deblurring, binarization, contrast enhancement
+  - Dynamic task-specific prompts for runtime task selection
+- **Table Structure Extraction** (Phase 3): PubTables-1M dataset for cell-level structure recognition
+- **Reading Order Prediction** (Phase 4-5): Logical sequence prediction for complex layouts
 - **Quality Assessment per Element**: IQA on embedded images within text documents
+- **Comprehensive Benchmarking**: Registry-based evaluation across 9+ datasets with smoke tests and full validation
 - **Structured JSON Output**: COCO-aligned metadata with confidence scores and transform history
 - **Production-Ready**: Optimized for 50-150ms latency, 6+ pages/sec throughput per GPU worker
 
@@ -60,7 +69,7 @@ Classical CV   YOLOv8 Layout Detection
 [Corrections & JSON Output]
 ```
 
-See [ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md) for detailed architecture and [PROJECT_PLAN.md](PROJECT_PLAN.md) for complete implementation plan.
+See [ARCHITECTURE_SUMMARY.md](docs/architecture/ARCHITECTURE_SUMMARY.md) for detailed architecture and [PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md) for complete implementation plan.
 
 ## Project Status
 
@@ -242,55 +251,105 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## Documentation
 
-- **[PROJECT_PLAN.md](PROJECT_PLAN.md)**: Complete 50+ page implementation plan with phased roadmap
-- **[ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md)**: Quick reference for architecture and design decisions
-- **[ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
+### Core Documentation
+- **[PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md)**: Complete 114-page implementation plan with phased roadmap (Phases 1-5)
+- **[ARCHITECTURE_SUMMARY.md](docs/architecture/ARCHITECTURE_SUMMARY.md)**: Quick reference for architecture and design decisions
+- **[ARCHITECTURE_CORRECTION.md](docs/architecture/ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
+- **[DETECTION_TAXONOMY.md](docs/DETECTION_TAXONOMY.md)**: Complete taxonomy of 30+ detection categories with priority levels
+- **[DOCUMENT_TYPE_COVERAGE_MATRIX.md](docs/DOCUMENT_TYPE_COVERAGE_MATRIX.md)**: Document type support matrix across phases
+
+### Technical Guides
+- **[docs/ADRs/](docs/ADRs/)**: Architecture Decision Records
+  - [ADR-031: Comprehensive Benchmarking Framework](docs/ADRs/0031-comprehensive-benchmarking-framework.md)
+  - [ADR-032: DocRes Unified Preprocessing](docs/ADRs/0032-docres-unified-preprocessing.md)
+  - [ADR-029: Three-Tier Dataset Strategy](docs/ADRs/0029-phase2-dataset-selection-strategy.md)
+- **[docs/PUBLIC_DATASET_COVERAGE.md](docs/PUBLIC_DATASET_COVERAGE.md)**: Public dataset coverage analysis across phases
+- **[docs/infrastructure/HF_SPACES_VS_COLAB_PRO.md](docs/infrastructure/HF_SPACES_VS_COLAB_PRO.md)**: Training platform cost comparison
+- **[docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)**: Comprehensive testing approach with 80%+ coverage
+
+### Development
 - **[docs/project/decision-matrix.md](docs/project/decision-matrix.md)**: Critical decisions tracking and stakeholder requirements
 - **[docs/WTD-Runbook.md](docs/WTD-Runbook.md)**: What The Diff integration guide for automated PR summaries
 - **[docs/api-reference.md](docs/api-reference.md)**: API and CLI reference documentation
 - **[SECURITY.md](SECURITY.md)**: Security policy and vulnerability reporting
 
+### Research & References
+- **[docs/references/CITATIONS.md](docs/references/CITATIONS.md)**: Complete dataset and paper citations
+- **[docs/research/image_reference_sets.md](docs/research/image_reference_sets.md)**: Validation framework for pre-conversion document analysis
+
 ## Roadmap
 
-### Phase 1: MVP with Classical Methods (Weeks 4-7)
+### Phase 1: MVP with Classical Methods (Weeks 4-7) ✅
 - PDF ingestion and text detection gate
 - Classical IQA detectors (skew, blur, contrast)
 - Correction pipeline with guardrails
 - JSON output generation
 
-### Phase 2: ML for Image Quality (Weeks 8-11)
+### Phase 1B: DPI Detection & Upscaling (Weeks 7-8) 🚧
+- Automatic DPI detection and analysis
+- Multi-algorithm upscaling (5 OpenCV algorithms)
+- Pre-flight analysis orchestration
+- Graceful fallback and safety guardrails
+
+### Phase 2: ML for Image Quality (Weeks 8-12) - Extended +1 Week
+**Training Platform**: Google Colab Pro ($12/month)
 - IQA dataset generation (50k synthetic + real images)
 - Train MobileNetV3/EfficientNet multi-label classifier
+- **3-dimension quality assessment**: Overall, sharpness, color fidelity (FR-2.3)
+- **Domain-Generalized Quality Assessment (DGQA)**: Synthetic-to-real calibration
 - ONNX optimization for CPU inference
-- Integration with classical methods
+- Integration with classical methods (ensemble voting)
+- **Cost**: $12/month (Colab Pro + Google Drive 100GB)
 
-### Phase 3: ML for Document Layout (Weeks 12-16)
-- Document element dataset (PubLayNet + custom)
-- Train YOLOv8n/s for layout detection
-- Active learning for rare classes
+### Phase 3: ML for Document Layout & Unified Preprocessing (Weeks 12-20) - Extended +3 Weeks
+**Training Platform**: Google Colab Pro ($24 for 2 months)
+- Document element dataset (PubLayNet + DocLayNet + custom)
+- Train YOLOv8n/s for layout detection (multi-session training: 5-7 sessions)
+- **NEW: DocRes Unified Preprocessing** - 5 tasks in one model (dewarping, de-shadowing, deblurring, binarization, contrast)
+- **NEW: DLAFormer Research** - Unified layout analysis (dual-track with YOLOv8)
+- **NEW: Table Structure Extraction** - PubTables-1M for cell-level recognition (FR-4.11)
+- Active learning for rare classes (handwriting, formulas)
 - INT8 quantization for production
+- **Cost**: $24 for 2 months
 
-### Phase 4: Production Hardening (Weeks 17-20)
+### Phase 4: Production Hardening (Weeks 21-24)
 - FastAPI service with Docker
 - Performance optimization (batching, quantization)
 - Monitoring and telemetry
 - Comprehensive testing (80%+ coverage)
+- **Reading Order Prediction** (optional): Logical sequence prediction for complex layouts
 
-### Phase 5: Continuous Improvement (Ongoing)
+### Phase 5: Continuous Improvement (Weeks 25+)
+- Phase 5A: Operational Foundation (Weeks 21-24)
+- Phase 5B: Intelligence & Automation (Weeks 25-32)
+- Phase 5C: Optimization & Scale (Weeks 33-40)
+- Phase 5D: Ongoing Operations (Week 41+)
 - Drift detection and alerting
 - Active learning pipeline
 - Quarterly retraining and recalibration
 
 ## Performance Targets
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| IQA mAP | > 0.88 | Multi-label classification |
-| Layout mAP@.50 | > 0.82 | Object detection |
-| JSON Accuracy | > 0.85 | End-to-end pipeline |
-| Latency (GPU) | < 150ms/page | With T4 GPU |
-| Throughput | > 6 pages/sec | Per GPU worker |
-| Test Coverage | > 80% | Unit + integration |
+| Metric | Target | Phase | Notes |
+|--------|--------|-------|-------|
+| IQA mAP | > 0.88 | Phase 2 | Multi-label classification |
+| IQA ECE | < 0.05 | Phase 2 | Well-calibrated confidence scores |
+| Layout mAP@.50 | > 0.82 | Phase 3 | YOLOv8 object detection |
+| Table Structure TEDS | > 0.85 | Phase 3 | PubTables-1M benchmark |
+| Dewarping ED@10 | > 0.90 | Phase 3 | AnyPhotoDoc 6300 benchmark |
+| Reading Order Accuracy | > 0.85 | Phase 4-5 | Optional: ReadingBank benchmark |
+| JSON Accuracy | > 0.85 | Phase 3 | End-to-end pipeline |
+| Latency (GPU) | < 150ms/page | Phase 3 | With T4 GPU |
+| Latency (CPU) | < 500ms/page | Phase 3 | ONNX INT8 quantized |
+| Throughput | > 6 pages/sec | Phase 3 | Per GPU worker |
+| Test Coverage | > 80% | All Phases | Unit + integration |
+
+**Benchmark Datasets**:
+- **IQA**: DIQA-5000 (document-specific), LIVE/CSIQ (fallback)
+- **Layout Detection**: DocLayNet, PubLayNet, OmniDocBench
+- **Table Structure**: PubTables-1M, FinTabNet
+- **Preprocessing**: AnyPhotoDoc 6300 (dewarping), SynDocDS (shadow removal)
+- **Reading Order**: ReadingBank, OHR-Bench (optional Phase 4-5)
 
 ## Contributing
 
@@ -342,7 +401,7 @@ This project uses the following datasets:
 - **Genalog** (Microsoft, 2021) - Synthetic document degradation
   [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/microsoft/genalog)
 
-Full citations and dataset attributions available in [CITATIONS.md](CITATIONS.md).
+Full citations and dataset attributions available in [CITATIONS.md](docs/references/CITATIONS.md).
 
 ## Acknowledgments
 

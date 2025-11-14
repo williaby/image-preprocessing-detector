@@ -129,16 +129,17 @@ Desktop.ini
 *~
 .directory
 
-# Root-level datasets directory (large training/test datasets)
-datasets/
+# Training datasets (large files, managed by DVC or downloaded)
+data/training/
 
 # SignaTR6K dataset (large benchmark)
 data/SignaTR6K.zip
 
-# Validation artifacts (large)
+# Validation (experimental one-off scripts and artifacts)
+validation/*.py
+validation/*.sh
 validation/datasets/
 validation/synthetic_images/
 validation/characteristic_curves/
-validation/doclaynet_validation_results.json
-validation/handwriting_samples_analysis.json
+validation/*.json
 sbom-*.json
