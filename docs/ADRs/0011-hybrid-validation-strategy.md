@@ -24,7 +24,7 @@ purpose: "Document the decision to use both synthetic and real-world validation 
 - [ADR-006: Synthetic Validation Dataset Strategy](0006-synthetic-validation-dataset-strategy.md)
 - [ADR-029: Three-Tier Dataset Strategy](0029-phase2-dataset-selection-strategy.md)
 - [FR-2.3: Learned Quality Assessment](../requirements/functional_requirements_v2.md#fr-23-learned-quality-assessment-phase-2)
-- [validation/STAGE_3A_3B_COVERAGE_UPDATE.md](../../validation/STAGE_3A_3B_COVERAGE_UPDATE.md)
+- [Phase 1 Validation: Stage 3A/3B Coverage Update](../project/phases/phase-1-validation/STAGE_3A_3B_COVERAGE_UPDATE.md)
 - [Phase 1 Completion Summary](../../PHASE_1_COMPLETE.md)
 
 ## Context
@@ -217,7 +217,7 @@ final_validation = {
 ## References
 
 - [Synthetic Validation Dataset Strategy (ADR-006)](0006-synthetic-validation-dataset-strategy.md)
-- [Stage 3A/3B Coverage Update](../../validation/STAGE_3A_3B_COVERAGE_UPDATE.md)
+- [Phase 1 Validation: Stage 3A/3B Coverage Update](../project/phases/phase-1-validation/STAGE_3A_3B_COVERAGE_UPDATE.md)
 - [DocLayNet Dataset](https://github.com/DS4SD/DocLayNet)
 - [Microsoft Genalog](https://github.com/microsoft/genalog)
 - [Phase 1 Completion Summary](../../PHASE_1_COMPLETE.md)
@@ -527,7 +527,7 @@ assert domain_gap < 0.05  # DGQA success criterion
 
 **Phase 1 References:**
 - [Synthetic Validation Dataset Strategy (ADR-006)](0006-synthetic-validation-dataset-strategy.md)
-- [Stage 3A/3B Coverage Update](../../validation/STAGE_3A_3B_COVERAGE_UPDATE.md)
+- [Phase 1 Validation: Stage 3A/3B Coverage Update](../project/phases/phase-1-validation/STAGE_3A_3B_COVERAGE_UPDATE.md)
 - [DocLayNet Dataset](https://github.com/DS4SD/DocLayNet)
 - [Microsoft Genalog](https://github.com/microsoft/genalog)
 - [Phase 1 Completion Summary](../../PHASE_1_COMPLETE.md)
