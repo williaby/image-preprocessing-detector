@@ -118,6 +118,19 @@ upload_all_datasets() {
     # and empty directories (docbank, rvl-cdip, tobacco800)
 
     declare -A DATASETS
+
+    # Training datasets (Phase 2)
+    DATASETS[receipts_hitl]="${DATA_DIR}/training/receipts_hitl"
+    DATASETS[mobile_receipts_voxel51]="${DATA_DIR}/training/mobile_receipts_voxel51"
+    DATASETS[invoices_kaggle]="${DATA_DIR}/training/invoices_kaggle"
+
+    # Training datasets (Phase 3+)
+    DATASETS[docsynth300k]="${DATA_DIR}/training/layout/docsynth300k"
+    DATASETS[pubtables1m]="${DATA_DIR}/training/tables/pubtables1m"
+    DATASETS[iam_handwriting]="${DATA_DIR}/training/specialized/handwriting/iam"
+
+    # Benchmark datasets
+    DATASETS[funsd]="${DATA_DIR}/benchmarks/external_iqa/funsd"
     DATASETS[signatr6k]="${DATA_DIR}/benchmarks/signatr6k"
     DATASETS[synthetic_iqa]="${DATA_DIR}/benchmarks/synthetic_iqa"
     DATASETS[cocotext]="${DATA_DIR}/benchmarks/cocotext"
@@ -126,6 +139,9 @@ upload_all_datasets() {
     DATASETS[tablebank]="${DATA_DIR}/benchmarks/tablebank"
     DATASETS[pubtabnet]="${DATA_DIR}/benchmarks/pubtabnet"
     DATASETS[fintabnet]="${DATA_DIR}/benchmarks/fintabnet"
+
+    # Benchmark datasets (Phase 3+)
+    DATASETS[ohr_bench]="${DATA_DIR}/benchmarks/ohr-bench"
 
     # If specific dataset requested, filter
     if [ -n "$specific_dataset" ]; then
@@ -209,6 +225,19 @@ while [[ $# -gt 0 ]]; do
             echo "  --help              Show this help message"
             echo ""
             echo "Available datasets:"
+            echo ""
+            echo "Training datasets (Phase 2):"
+            echo "  - receipts_hitl           : HITL receipt OCR dataset (192 images, CC0 1.0)"
+            echo "  - mobile_receipts_voxel51 : Voxel51 scanned receipts (713 images, CC BY 4.0)"
+            echo "  - invoices_kaggle         : Kaggle invoice dataset (1,414 images, ODbL 1.0)"
+            echo ""
+            echo "Training datasets (Phase 3+):"
+            echo "  - docsynth300k       : DocSynth-300K layout detection (~113 GB, Research)"
+            echo "  - pubtables1m        : PubTables-1M table structure (~25 GB, MIT)"
+            echo "  - iam_handwriting    : IAM Handwriting dataset (~266 MB, MIT)"
+            echo ""
+            echo "Benchmark datasets:"
+            echo "  - funsd           : FUNSD government forms (199 images, MIT)"
             echo "  - signatr6k       : Signature detection dataset (~116 MB)"
             echo "  - synthetic_iqa   : Synthetic IQA dataset (~345 KB)"
             echo "  - cocotext        : COCO-Text annotations (~52 MB)"
@@ -217,6 +246,9 @@ while [[ $# -gt 0 ]]; do
             echo "  - tablebank       : TableBank table detection (~74 GB)"
             echo "  - pubtabnet       : PubTabNet table structure (~27 GB)"
             echo "  - fintabnet       : FinTabNet financial tables (~14 GB)"
+            echo ""
+            echo "Benchmark datasets (Phase 3+):"
+            echo "  - ohr_bench       : OHR-Bench RAG evaluation (~10 GB, CC-BY-4.0)"
             echo ""
             echo "Examples:"
             echo "  $0                          # Upload all datasets"
