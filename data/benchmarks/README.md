@@ -1,15 +1,29 @@
 # Benchmark Datasets
 
+> **What's Here**: Actual dataset files (images, PDFs, annotations) - ~101GB total (59GB local + 42GB DocLayNet symlink)
+> **Framework Code**: See [benchmarks/](../../benchmarks/) for benchmark runners and metrics
+
 This directory contains datasets used for benchmarking the Image Preprocessing Detector.
 
 **⚠️ All datasets are gitignored** (too large for GitHub) and must be downloaded locally.
+
+## Directory Purpose
+
+**This directory (`data/benchmarks/`) contains actual dataset files:**
+
+- Raw images, PDFs, and document scans
+- Ground truth annotations (COCO format, bounding boxes, labels)
+- Synthetic test data (auto-generated)
+- Dataset metadata and splits
+
+**For benchmark framework code** (runners, adapters, metrics), see [benchmarks/](../../benchmarks/).
 
 ## Quick Reference
 
 | Dataset | Status | Size | Phase | Use Case |
 |---------|--------|------|-------|----------|
 | **Synthetic IQA** | ✅ Auto-generated | 364KB | 1 | Blur, skew, noise, contrast testing |
-| **DocLayNet** | ✅ Symlinked | 11GB | 1 | Layout detection (tables, figures, text blocks) |
+| **DocLayNet** | ✅ Symlinked | 42GB | 1 | Layout detection (→ data_ingestor/data/benchmarks/doclaynet) |
 | **SignaTR6K** | ✅ Local | 2GB | ? | Handwriting detection |
 | **COCO-Text** | ✅ Extracted | 53MB | 2 | Text detection and recognition |
 | **OmniDocBench** | ⚠️ Manual | 1.2GB | 3 | Comprehensive document understanding |
@@ -121,12 +135,41 @@ df -h
 rm -rf ../reports/*/$(ls -t ../reports/*/ | tail -n +2)
 ```
 
+## Cloud Storage Strategy
+
+**This directory is LOCAL ONLY** - benchmarks are NOT uploaded to GCS due to size (~101 GB) and cost.
+
+**Rationale**:
+- Too large for cost-effective cloud storage ($2.02/month @ $0.020/GB/month)
+- Benchmarks run locally on development machines (not in Colab)
+- Can re-download from HuggingFace/external sources if needed
+
+**Training data GCS uploads**: Small datasets (<1 GB) uploaded selectively for Colab training. See [docs/DATASET_LOCATIONS.md](../../docs/DATASET_LOCATIONS.md#google-cloud-storage-gcs-paths).
+
+**GCS Helper Scripts**: [scripts/gcs_helpers.sh](../../scripts/gcs_helpers.sh) for selective uploads/downloads.
+
 ## See Also
 
-- **[docs/DATASET_INSTALLATION.md](../../docs/DATASET_INSTALLATION.md)** - Complete installation guide
-- **[benchmarks/README.md](../../benchmarks/README.md)** - Benchmarking framework overview
-- **[benchmarks/registry.yml](../../benchmarks/registry.yml)** - Benchmark suite definitions
-- **[CITATIONS.md](../../CITATIONS.md)** - Complete citation information
+### Benchmark Framework (Code)
+
+- **[benchmarks/README.md](../../benchmarks/README.md)** - Framework overview (runners, adapters, metrics)
+- **[benchmarks/registry.yml](../../benchmarks/registry.yml)** - Benchmark suite definitions and configuration
+
+### Architecture Decisions
+
+- **[ADR-029: Three-Tier Dataset Strategy](../../docs/ADRs/0029-phase2-dataset-selection-strategy.md)** - Storage organization (Storage Tiers)
+- **[ADR-031: Comprehensive Benchmarking Framework](../../docs/ADRs/0031-comprehensive-benchmarking-framework.md)** - Evaluation framework (Validation Levels)
+
+### Dataset Documentation
+
+- **[docs/DATASET_LOCATIONS.md](../../docs/DATASET_LOCATIONS.md)** - Complete dataset inventory, sizes, and GCS paths
+- **[docs/reference/document-type-coverage.md](../../docs/reference/document-type-coverage.md)** - FR coverage matrix
+- **[docs/reference/detection-taxonomy.md](../../docs/reference/detection-taxonomy.md)** - Complete detection taxonomy
+
+### Installation & Documentation
+
+- **[docs/guides/dataset-installation.md](../../docs/guides/dataset-installation.md)** - Complete dataset installation guide
+- **[docs/references/CITATIONS.md](../../docs/references/CITATIONS.md)** - Complete citation information for all datasets
 
 ---
 
