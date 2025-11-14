@@ -139,7 +139,7 @@ gsutil cp configs/colab_phase3_yolov8_gcs.yaml gs://image_detection_b/configs/
 
 **Phase 2 Dataset Generation:**
 
-For complete dataset preparation instructions, see **[DATASET_PREPARATION.md](../DATASET_PREPARATION.md)**.
+For complete dataset preparation instructions, see **[DATASET_PREPARATION.md](dataset-preparation.md)**.
 
 **Quick summary:**
 
@@ -163,7 +163,7 @@ gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
 - **DocBank**: 500k document pages (~40GB)
 - **RVL-CDIP**: 400k document images (~50GB)
 
-See [DATASET_INSTALLATION.md](../DATASET_INSTALLATION.md) for download instructions.
+See [DATASET_INSTALLATION.md](dataset-installation.md) for download instructions.
 
 **Phase 3 Dataset Sources (Phase 3 Week 1):**
 
@@ -172,7 +172,7 @@ See [DATASET_INSTALLATION.md](../DATASET_INSTALLATION.md) for download instructi
 #    - PubLayNet: 360k annotated document pages
 #    - DocLayNet: 80k annotated documents
 #    - TableBank: 417k table images
-#    (See docs/DATASET_INSTALLATION.md for download instructions)
+#    (See docs/guides/dataset-installation.md for download instructions)
 
 # 2. Convert annotations to YOLO format
 #    (Use scripts from Phase 3)
@@ -492,12 +492,12 @@ auth.authenticate_user()
 ## Next Steps
 
 1. **Setup Google Drive** following Option 1 above
-2. **Upload dataset** to Drive (see [DATASET_INSTALLATION.md](../DATASET_INSTALLATION.md))
+2. **Upload dataset** to Drive (see [DATASET_INSTALLATION.md](dataset-installation.md))
 3. **Open training notebook**: [notebooks/colab/phase2_iqa_training.ipynb](../../notebooks/colab/phase2_iqa_training.ipynb)
-4. **Start training** following [COLAB_TRAINING_GUIDE.md](../COLAB_TRAINING_GUIDE.md)
+4. **Start training** following [COLAB_TRAINING_GUIDE.md](colab-training.md)
 
 **Optional**: Setup GCS backup following Option 2 for production deployment.
 
 ---
 
-*For complete training instructions, see [COLAB_TRAINING_GUIDE.md](../COLAB_TRAINING_GUIDE.md)*
+*For complete training instructions, see [COLAB_TRAINING_GUIDE.md](colab-training.md)*
