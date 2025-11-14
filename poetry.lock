@@ -3487,6 +3487,34 @@ files = [
 ]
 
 [[package]]
+name = "kaggle"
+version = "1.7.4.5"
+description = "Access Kaggle resources anywhere"
+optional = false
+python-versions = ">=3.7"
+groups = ["dev"]
+files = [
+    {file = "kaggle-1.7.4.5-py3-none-any.whl", hash = "sha256:9732afb1c073f14acc7e49dfab98456f887d10b735bcd6348bc1340e92393882"},
+    {file = "kaggle-1.7.4.5.tar.gz", hash = "sha256:1d9821bd6a6a1470741c76d26495a18475b5a7bfe0c80b19191254b2735d41dd"},
+]
+
+[package.dependencies]
+bleach = "*"
+certifi = ">=14.05.14"
+charset-normalizer = "*"
+idna = "*"
+protobuf = "*"
+python-dateutil = ">=2.5.3"
+python-slugify = "*"
+requests = "*"
+setuptools = ">=21.0.0"
+six = ">=1.10"
+text-unidecode = "*"
+tqdm = "*"
+urllib3 = ">=1.15.1"
+webencodings = "*"
+
+[[package]]
 name = "kiwisolver"
 version = "1.4.9"
 description = "A fast implementation of the Cassowary constraint solver"
@@ -6013,7 +6041,7 @@ version = "6.33.0"
 description = ""
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "ml"]
+groups = ["main", "dev", "ml"]
 files = [
     {file = "protobuf-6.33.0-cp310-abi3-win32.whl", hash = "sha256:d6101ded078042a8f17959eccd9236fb7a9ca20d3b0098bbcb91533a5680d035"},
     {file = "protobuf-6.33.0-cp310-abi3-win_amd64.whl", hash = "sha256:9a031d10f703f03768f2743a1c403af050b6ae1f3480e9c140f39c45f81b13ee"},
@@ -6697,6 +6725,24 @@ files = [
     {file = "python_multipart-0.0.18-py3-none-any.whl", hash = "sha256:efe91480f485f6a361427a541db4796f9e1591afc0fb8e7a4ba06bfbc6708996"},
     {file = "python_multipart-0.0.18.tar.gz", hash = "sha256:7a68db60c8bfb82e460637fa4750727b45af1d5e2ed215593f917f64694d34fe"},
 ]
+
+[[package]]
+name = "python-slugify"
+version = "8.0.4"
+description = "A Python slugify application that also handles Unicode"
+optional = false
+python-versions = ">=3.7"
+groups = ["dev"]
+files = [
+    {file = "python-slugify-8.0.4.tar.gz", hash = "sha256:59202371d1d05b54a9e7720c5e038f928f45daaffe41dd10822f3907b937c856"},
+    {file = "python_slugify-8.0.4-py2.py3-none-any.whl", hash = "sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8"},
+]
+
+[package.dependencies]
+text-unidecode = ">=1.3"
+
+[package.extras]
+unidecode = ["Unidecode (>=1.1.1)"]
 
 [[package]]
 name = "pytz"
@@ -8425,6 +8471,18 @@ test = ["pre-commit", "pytest (>=7.0)", "pytest-timeout"]
 typing = ["mypy (>=1.6,<2.0)", "traitlets (>=5.11.1)"]
 
 [[package]]
+name = "text-unidecode"
+version = "1.3"
+description = "The most basic Text::Unidecode port"
+optional = false
+python-versions = "*"
+groups = ["dev"]
+files = [
+    {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
+    {file = "text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
+]
+
+[[package]]
 name = "textual"
 version = "6.2.1"
 description = "Modern Text User Interface framework"
@@ -9698,4 +9756,4 @@ ml = ["albumentations", "onnxruntime", "timm", "torch", "torchvision", "ultralyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.15"
-content-hash = "d298255fdb9216955c4d635477d3f8da87722b5b5cdc5bbadcf91986c68e352a"
+content-hash = "35bbfcbb0a09930b5ce561cb5fbb0c4d6e5b9eebdf2feb0dc64843029d6b19bd"
