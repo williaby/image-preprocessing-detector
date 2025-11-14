@@ -11,11 +11,12 @@ authors:
 purpose: "Specify detailed requirements for document preprocessing, quality assessment, and intelligent routing."
 ---
 
-> **Version:** 2.0
-> **Date:** 2025-11-11
+> **Version:** 2.2
+> **Date:** 2025-01-13 (Updated with OHR-Bench and Reading Order elevation)
 > **Status:** Active
-> **Supersedes:** PRs #14-15 functional_requirements.md
-> **Aligned with:** PROJECT_PLAN Phase 1-5, ADRs 0001-0028
+> **Supersedes:** PRs #14-15 functional_requirements.md, v2.0 (2025-11-11)
+> **Aligned with:** PROJECT_PLAN Phase 1-5, ADRs 0001-0032
+> **Changes**: Added FR-2.3 (Learned Quality Assessment), FR-4.8 (Handwriting Detection), FR-4.11 (Table Structure Extraction), FR-4.12 (Reading Order Prediction - **CRITICAL** for RAG)
 
 ---
 
@@ -128,6 +129,57 @@ The system shall identify office document types:
 
 **Scope:** Extract embedded images for preprocessing only
 
+#### FR-2.3: Learned Quality Assessment (Phase 2+)
+
+The system shall perform **document-specific quality assessment** using a learned (ML-based) model trained on document quality datasets to complement classical IQA methods.
+
+**3-Dimension Output** (aligns with DIQA-5000 benchmark):
+1. **Overall Quality Score** (0.0 - 1.0): Holistic document quality assessment
+2. **Sharpness Score** (0.0 - 1.0): Edge definition and blur assessment (complements FR-3.1)
+3. **Color Fidelity Score** (0.0 - 1.0): Contrast, brightness, and color balance assessment (complements FR-3.7)
+
+**Training Data:**
+- **Phase 2**: 50k synthetic samples from TableBank with weak supervision (BRISQUE/NIQE labels)
+- **Phase 3**: Augmented with DIQA-5000 (5,000 document images with ground-truth 3-dimension scores when released)
+- **Fallback**: LIVE/CSIQ natural image IQA datasets (validation only until DIQA-5000 releases)
+
+**Model Architecture:**
+- **Phase 2**: MobileNetV3-Small or EfficientNet-B0 (multi-label classification)
+- **Phase 3+**: Fine-tuned on DIQA-5000 for document-specific characteristics
+
+**Method:**
+- **Ensemble Approach**: Combine classical IQA (FR-3.x) with learned quality assessment
+- **Classical**: Fast heuristics (Laplacian variance, histogram analysis) - always runs
+- **Learned**: ML model inference (ONNX Runtime, INT8 quantized) - runs on flagged documents or all documents (configurable)
+
+**Output:**
+- Add `learned_quality` field to `PageMetadata` with 3-dimension scores
+- Integration with Document Quality Score (DQS) calculation (FR-5.1)
+
+**Validation:**
+- **Phase 2**: Pearson/Spearman correlation > 0.75 with LIVE/CSIQ ground-truth scores
+- **Phase 3**: Pearson/Spearman correlation > 0.80 with DIQA-5000 ground-truth scores
+- **Calibration**: DGQA (Domain-Generalized Quality Assessment) framework to address synthetic-to-real gap (ADR-011 update)
+
+**Performance Targets:**
+- **Latency**: < 50ms per page (GPU), < 200ms per page (CPU with ONNX INT8)
+- **Accuracy**: mAP > 0.88 on multi-label quality classification
+- **Calibration**: Expected Calibration Error (ECE) < 0.1
+
+**Rationale:**
+- Classical IQA methods (FR-3.1 - FR-3.12) are fast but limited to hand-crafted features
+- Document-specific quality assessment requires learned models trained on document characteristics
+- DIQA-5000 provides document-tailored benchmarks vs. LIVE/CSIQ natural images
+- 3-dimension output enables fine-grained quality analysis for routing decisions
+
+**Reference:**
+- ADR-0014: Classical-ML Hybrid IQA (ensemble approach)
+- ADR-0011: Hybrid Validation Strategy (synthetic + real-world calibration)
+- ADR-0029: Dataset Selection Strategy (DIQA-5000 integration)
+- Research: DocIQ/DIQA-5000 (arXiv:2509.17012, Sept 2025)
+
+**Implementation:** Phase 2 Week 2-4 (training), Phase 3+ (DIQA-5000 integration when released)
+
 ---
 
 ### FR-3: Image Quality Detection & Correction (Per-page)
@@ -221,6 +273,91 @@ The system shall calculate a **contrast_score** using histogram analysis:
 
 **Output:** Report score in JSON (0.0 - 1.0 normalized)
 
+#### FR-3.8: Binarization Quality Assessment (Phase 2)
+
+The system shall assess binarization quality to detect poor text/background separation.
+
+**Detection Method:**
+- Threshold analysis (Otsu, Sauvola, Niblack)
+- Bimodal histogram validation
+- Local variance analysis
+
+**Output:** Report binarization quality score in JSON (0.0 - 1.0 normalized)
+
+**Rationale:** Poor binarization causes complete OCR failure, especially on historical or degraded documents.
+
+**Priority:** P0 (Critical)
+
+**Reference:** Research: "Degraded Historical Document Binarization: A Review" (PMC 2021)
+
+#### FR-3.9: Illumination Uniformity Detection (Phase 2)
+
+The system shall detect uneven illumination (shadows, lighting gradients).
+
+**Detection Method:**
+- Local variance analysis across image regions
+- Shadow detection algorithms
+- Histogram analysis per quadrant
+
+**Output:** Report illumination uniformity score in JSON (0.0 - 1.0 normalized)
+
+**Rationale:** Uneven illumination causes OCR failures in shadowed regions.
+
+**Priority:** P0 (Critical)
+
+**Reference:** Research: "Robust Document Image Binarization Technique for Degraded Document Images" (IEEE 2013)
+
+#### FR-3.10: Bleed-Through Detection (Phase 3)
+
+The system shall detect bleed-through (ink from opposite side of page visible).
+
+**Detection Method:**
+- Dual-side image comparison (if available)
+- Frequency domain analysis (single-side fallback)
+- Color channel separation
+
+**Output:** Report bleed-through severity in JSON (0.0 - 1.0 normalized)
+
+**Rationale:** Bleed-through confuses OCR, treating reverse-side text as noise or false characters.
+
+**Priority:** P1 (High)
+
+**Reference:** Research: "Reduction of bleed-through in scanned manuscript documents" (Pattern Recognition 2011)
+
+#### FR-3.11: Warping/Curvature Detection (Phase 3)
+
+The system shall detect document warping and curvature (e.g., book spine curvature).
+
+**Detection Method:**
+- Line straightness analysis
+- Curve fitting algorithms
+- Hough transform for curved lines
+
+**Output:** Report warping severity in JSON (0.0 - 1.0 normalized)
+
+**Rationale:** Curved text lines cause OCR failures, especially on book scans and mobile captures.
+
+**Priority:** P1 (High)
+
+**Reference:** Research: "Straightening warped text lines using polynomial regression" (DAS 2016)
+
+#### FR-3.12: Perspective Distortion Detection (Phase 2)
+
+The system shall detect perspective distortion (trapezoidal shape from camera angle).
+
+**Detection Method:**
+- Corner detection
+- Parallel line analysis (should be parallel but aren't)
+- Homography estimation
+
+**Output:** Report perspective distortion score in JSON (0.0 - 1.0 normalized)
+
+**Rationale:** Mobile captures often have perspective distortion affecting OCR accuracy.
+
+**Priority:** P2 (Medium)
+
+**Reference:** Research: "Automatic Document Image Rectification Using Geometric Features" (ICDAR 2017)
+
 ---
 
 ### FR-4: Layout Analysis (Per-page)
@@ -288,6 +425,358 @@ The system shall detect and provide bounding boxes for the following layout clas
 
 **Note:** This supersedes PRs #14-15 which incorrectly specified `[x1, y1, x2, y2]` format.
 
+#### FR-4.4: Parasitic Content Detection (Phase 3)
+
+The system shall detect parasitic content (headers, footers, watermarks) that should not be included in RAG chunks.
+
+**Detection Method:**
+- Pattern matching across pages (repeated headers/footers)
+- Spatial analysis (consistently at page top/bottom)
+- Use Page-Header and Page-Footer classes from FR-4.2
+
+**Output:** Mark regions as `parasitic: true` in JSON
+
+**Rationale:** Headers/footers pollute RAG chunks with irrelevant content, degrading retrieval quality.
+
+**Priority:** P0 (Critical for RAG applications)
+
+**Document Types:** Academic papers, reports, legal documents, textbooks
+
+**RAG-Specific Validation (OHR-Bench Integration):**
+
+The system shall validate parasitic content detection and overall document quality using **OHR-Bench** RAG-specific metrics:
+
+**Validation Metrics:**
+1. **NDCG@5 (Retrieval Quality)**:
+   - **Target**: NDCG@5 > 0.77 (matches ground-truth performance)
+   - **Baseline**: Best OCR achieves 0.74, ground truth achieves 0.773
+   - **Gap**: 4.5% retrieval performance gap due to OCR errors
+   - **Use Case**: Measure impact of parasitic content removal on RAG retrieval accuracy
+
+2. **Reading Order Error (ROE)**:
+   - **Target**: ROE < 10% (reading order errors minimized)
+   - **Critical**: 5-29% RAG performance loss from reading order errors
+   - **Integration**: Validate FR-4.12 (Reading Order Prediction) effectiveness
+   - **Use Case**: Ensure correct element sequencing after parasitic content removal
+
+3. **Semantic Noise Impact**:
+   - **Measure**: Proportion of retrieved chunks containing parasitic content
+   - **Target**: < 5% of RAG chunks contain parasitic elements
+   - **Method**: OHR-Bench semantic noise analysis (parasitic content vs. relevant content)
+
+**DQS Routing Logic (RAG-Specific):**
+
+Integrate with FR-7 (Document Quality Score) for intelligent RAG pipeline routing:
+
+```python
+# RAG-specific routing decision
+if quality_score < 0.7:
+    routing_recommendation = "use_multimodal_retrieval"  # ColPali or similar VLM
+    rationale = "Low OCR quality (NDCG@5 < 0.74), multimodal retrieval recovers ~70% of accuracy loss"
+elif parasitic_content_ratio > 0.15:
+    routing_recommendation = "aggressive_filtering"
+    rationale = "High parasitic content (>15%), apply strict filtering before RAG ingestion"
+elif reading_order_confidence < 0.80:
+    routing_recommendation = "simple_chunking"
+    rationale = "Low reading order confidence, use spatial chunking instead of semantic"
+else:
+    routing_recommendation = "standard_ocr_rag"
+    rationale = "High quality document, standard OCR + semantic chunking"
+```
+
+**Output Extension:**
+```json
+{
+  "parasitic_content": {
+    "detected": true,
+    "regions": [
+      {"type": "page_header", "bounding_box": [0, 0, 800, 50], "confidence": 0.95},
+      {"type": "page_footer", "bounding_box": [0, 1100, 800, 50], "confidence": 0.92}
+    ],
+    "parasitic_ratio": 0.12,
+    "rag_impact": {
+      "ndcg_at_5_predicted": 0.76,
+      "roe_predicted": 0.08,
+      "routing_recommendation": "standard_ocr_rag"
+    }
+  }
+}
+```
+
+**Benchmark Integration:**
+- **Dataset**: OHR-Bench (HuggingFace: opendatalab/OHR-Bench)
+  - 8,500+ PDFs from 7 domains
+  - Ground-truth RAG retrieval annotations
+  - **License**: CC-BY-4.0
+- **Validation**: Compare parasitic content detection against OHR-Bench ground truth
+- **Metrics**: NDCG@5, ROE, semantic noise ratio
+
+**Performance Targets:**
+- **NDCG@5**: > 0.77 (match or exceed ground truth retrieval performance)
+- **ROE**: < 10% (reading order errors minimized)
+- **Parasitic Content Recall**: > 0.90 (detect 90%+ of headers/footers)
+- **Parasitic Content Precision**: > 0.85 (minimize false positives)
+
+**Critical Findings from OHR-Bench:**
+- **Retrieval Stage Impact**: RAG retrieval is more critical than generation (4.5% NDCG gap)
+- **Reading Order Priority**: Reading order errors (5-29% impact) > individual quality defects
+- **Multimodal Fallback**: Multimodal retrieval recovers ~70% of OCR accuracy loss for low-quality documents
+- **Semantic Noise**: Parasitic content (headers/footers) is a form of semantic noise impacting retrieval
+
+**Reference:**
+- Research: "OCR Hinders RAG: Evaluating the Cascading Impact of OCR on RAG" (OHR-Bench, arXiv 2024)
+- ADR-0029: Dataset Selection Strategy (OHR-Bench integration)
+- ADR-0031: Comprehensive Benchmarking Framework (OHR-Bench adapter)
+
+#### FR-4.5: Footnote Linking (Phase 3)
+
+The system shall link footnotes to their references in the main text.
+
+**Detection Method:**
+- Detect superscript numbers in text (reference markers)
+- Detect footnote regions (spatial proximity to page bottom)
+- Link superscript numbers to corresponding footnotes
+
+**Output:** Add `footnote_ref` property linking footnotes to reference locations
+
+**Rationale:** Footnotes disconnected from context lose semantic meaning in RAG applications.
+
+**Priority:** P1 (High for academic/research documents)
+
+**Document Types:** Academic papers, research reports, legal documents, historical manuscripts
+
+**Reference:** Research: "Footnote Detection and Recognition in Historical Documents" (ICDAR 2019)
+
+#### FR-4.6: Figure-Caption Linking (Phase 2)
+
+The system shall link figure captions to their parent figures.
+
+**Detection Method:**
+- Detect Caption class from FR-4.2
+- Detect Picture class from FR-4.2
+- Spatial proximity analysis (captions typically above/below figures)
+- Pattern matching ("Figure N", "Fig. N")
+
+**Output:** Add `caption_for` property linking captions to figures
+
+**Rationale:** Captions separated from figures lose context in RAG retrieval.
+
+**Priority:** P2 (Medium)
+
+**Document Types:** Academic papers, research reports, technical documentation, textbooks
+
+**Reference:** ADR-007 (Hybrid IQA Approach)
+
+#### FR-4.7: Vertical Text Orientation Detection (Phase 3)
+
+The system shall detect vertical text orientation (rotated text, Asian scripts).
+
+**Detection Method:**
+- Text orientation detection (0°, 90°, 180°, 270°)
+- Asian script detection (Chinese, Japanese, Korean - vertical writing)
+- Rotated labels in diagrams
+
+**Output:** Add `text_orientation` property (0, 90, 180, 270 degrees)
+
+**Rationale:** Vertical text requires rotation before OCR to avoid recognition failures.
+
+**Priority:** P2 (Medium for multi-lingual support)
+
+**Document Types:** Asian language documents, technical diagrams, mobile captures (rotated), posters
+
+**Reference:** ADR-008 (Multi-Stage Pipeline Architecture)
+
+#### FR-4.8: Handwriting Detection in Mixed Documents (Phase 2+)
+
+The system shall detect handwritten text regions distinct from printed text (see also FR-5.2).
+
+**Method:**
+- CNN classifier or texture analysis on Text regions (from FR-4.2)
+- Binary classification: "Printed" vs. "Handwritten"
+
+**Training Data:**
+- **Phase 2+**: IAM Handwriting Database (13,353 handwritten lines, HuggingFace: Teklia/IAM-line)
+- **Augmentation**: Mixed with printed text from TableBank/DocLayNet
+
+**Output:** Add `text_type: "handwritten"` property to Text layout elements
+
+**Accuracy Target:** **F1-score ≥ 0.95** (elevated from 0.90 based on Phase 3+ research)
+
+**Rationale:**
+- Handwritten regions require different OCR engines (e.g., Microsoft Azure Read API handwriting mode)
+- Critical for routing decisions in mixed documents (forms, annotations, historical manuscripts)
+
+**Document Types:** Forms, student assignments, historical manuscripts, annotated documents
+
+**Reference:**
+- ADR-0012: Defer Handwriting Detection to Phase 2
+- ADR-0029: Dataset Selection Strategy (IAM Handwriting integration)
+
+#### FR-4.11: Table Structure Extraction (Phase 3+)
+
+The system shall extract the internal structure of detected tables (rows, columns, cells) using a learned table structure recognition model.
+
+**Prerequisite:** Table bounding boxes from FR-4.2 (layout detection)
+
+**Method:** ClusterTabNet or similar deep learning approach
+- **Input**: Cropped table region from layout detection
+- **Output**: Table structure annotations (rows, columns, cells, spanning cells)
+- **Format**: COCO-aligned bounding boxes for cells + row/column metadata
+
+**Training Data:**
+- **Primary**: PubTables-1M (1 million real-world tables from PubMed, Apache-2.0)
+  - **Size**: ~25 GB
+  - **Annotations**: Row/column structure, cell bounding boxes, spanning cells
+  - **Source**: GitHub: microsoft/table-transformer
+- **Augmentation**: TableBank (417k tables, Apache-2.0) for additional layout diversity
+
+**Model Architecture:**
+- **Option 1**: ClusterTabNet (cluster-based table structure recognition)
+- **Option 2**: Table Transformer (Microsoft, DETR-based)
+- **Deployment**: ONNX Runtime (INT8 quantized) for CPU-first inference
+
+**Output Structure:**
+```json
+{
+  "table_id": "table_001",
+  "bounding_box": [120, 340, 450, 200],
+  "num_rows": 8,
+  "num_cols": 5,
+  "cells": [
+    {
+      "row": 0,
+      "col": 0,
+      "row_span": 1,
+      "col_span": 1,
+      "bounding_box": [125, 345, 85, 22],
+      "is_header": true
+    }
+  ]
+}
+```
+
+**Validation:**
+- **Benchmark**: PubTables-1M test split (held-out tables)
+- **Metrics**: GriTS (Grid Table Similarity) or TEDS (Tree Edit Distance-based Similarity)
+- **Target**: GriTS F1 > 0.85, TEDS > 0.90
+
+**Performance Targets:**
+- **Latency**: < 200ms per table (GPU), < 500ms per table (CPU with ONNX INT8)
+- **Accuracy**: GriTS F1 > 0.85 on complex tables (spanning cells, nested headers)
+
+**Rationale:**
+- Detecting table bounding boxes (FR-4.2) is insufficient for structured data extraction
+- RAG applications require structured table data (rows/columns) for semantic understanding
+- PubTables-1M provides large-scale real-world table structure annotations
+- ClusterTabNet approach handles complex tables (spanning cells, hierarchical headers)
+
+**Priority:** P1 (High for academic papers, business reports, technical documentation)
+
+**Document Types:** Academic papers, financial reports, technical specifications, scientific literature
+
+**Reference:**
+- ADR-0029: Dataset Selection Strategy (PubTables-1M integration)
+- Research: PubTables-1M (arXiv:2110.00061, 2021)
+- Research: ClusterTabNet (table structure recognition)
+
+**Implementation:** Phase 3 Week 8-12 (training and integration)
+
+**Note:** This requirement complements FR-4.2 (table detection) by adding structure extraction. The two-stage pipeline (detect → extract structure) enables efficient processing.
+
+#### FR-4.12: Reading Order Prediction (Phase 3)
+
+The system shall predict the sequential reading order for document elements in complex layouts (multi-column, tables, figures, footnotes) to enable accurate text extraction and RAG retrieval.
+
+**Prerequisite:** Layout element detection from FR-4.2 (bounding boxes for text, tables, figures, etc.)
+
+**Method:** Graph-based spatial reasoning
+- **Input**: Layout elements with bounding boxes from YOLOv8 detection
+- **Process**:
+  - Construct spatial relationship graph (elements as nodes, spatial relationships as edges)
+  - Apply reading order algorithm (top-to-bottom, left-to-right with multi-column handling)
+  - Handle special cases: footnotes, captions, sidebars, page numbers
+- **Output**: Ordered sequence of element IDs representing reading flow
+
+**Training Data:**
+- **Primary**: DocSynth-300K (300k synthetic layouts, HuggingFace: juliozhao/DocSynth300K)
+  - Contains diverse multi-column layouts with ground-truth reading order
+  - **Size**: 113 GB
+  - **License**: Not specified (assume research use, check arXiv:2410.12628)
+- **Validation**: ROOR dataset (Reading Order on OCR'd Text, GitHub: chongzhangFDU/ROOR-Datasets)
+  - Real-world reading order annotations
+  - **License**: CC BY 4.0
+- **Fallback**: Synthetic generation using DocLayNet + spatial heuristics if ROOR unavailable
+
+**Algorithm Options:**
+- **Option 1**: Graph-based heuristics (classical spatial reasoning) - Phase 3 Week 7
+- **Option 2**: Learned model (graph neural network or transformer) - Phase 4+ if needed
+- **Hybrid**: Classical for simple layouts, learned for complex (multi-column, tables)
+
+**Output Structure:**
+```json
+{
+  "reading_order": [
+    {"element_id": "text_001", "sequence": 1},
+    {"element_id": "text_002", "sequence": 2},
+    {"element_id": "table_001", "sequence": 3},
+    {"element_id": "caption_001", "sequence": 4, "parent_element": "table_001"}
+  ],
+  "layout_type": "multi_column",
+  "reading_order_confidence": 0.92
+}
+```
+
+**Validation:**
+- **Benchmark 1**: ROOR dataset (if available)
+  - **Metric**: F1-score > 0.85 on pairwise reading order predictions
+  - **Metric**: Kendall's Tau > 0.80 (rank correlation)
+- **Benchmark 2**: OHR-Bench (HuggingFace: opendatalab/OHR-Bench)
+  - **Metric**: Reading Order Error (ROE) < 10%
+  - **Critical**: OHR-Bench shows 5-29% RAG performance loss from reading order errors
+  - **Use Case**: Validate impact on RAG retrieval (NDCG@5 metric)
+
+**Performance Targets:**
+- **Latency**: < 50ms per page (graph construction + ordering)
+- **Accuracy**: F1 > 0.85 on ROOR, ROE < 10% on OHR-Bench
+- **Scalability**: Linear time complexity with number of elements (O(n log n))
+
+**Rationale:**
+- **Critical for RAG**: OHR-Bench research shows reading order errors cause **5-29% RAG performance loss**
+- **More impactful than quality**: Reading order errors impact RAG retrieval more than individual quality defects
+- **Multi-column handling**: Academic papers, newspapers, magazines require correct column flow
+- **Semantic coherence**: Incorrect reading order destroys document meaning for downstream processors
+
+**Priority:** P0 (Critical for RAG applications)
+
+**Document Types:**
+- Academic papers (2-column layouts)
+- Newspapers and magazines (multi-column)
+- Forms (complex spatial layouts)
+- Technical documentation (mixed layouts with figures/tables)
+- Historical documents (varied layouts)
+
+**Integration with FR-4.4 (Parasitic Content)**:
+- Parasitic content (headers, footers) excluded from reading order or marked with low priority
+- Page numbers and watermarks handled separately
+
+**Integration with FR-7 (Document Quality Score)**:
+- Reading order confidence feeds into Structural Complexity Score
+- Low confidence triggers fallback to simpler OCR strategies
+
+**Reference:**
+- ADR-0029: Dataset Selection Strategy (ROOR elevated to Phase 3 Critical, OHR-Bench integration)
+- ADR-0031: Comprehensive Benchmarking Framework (ROOR and OHR-Bench adapters)
+- Research: "OCR Hinders RAG: Evaluating the Cascading Impact of OCR on RAG" (OHR-Bench, arXiv 2024)
+- Research: DocSynth-300K (arXiv:2410.12628, 2024)
+
+**Implementation:** Phase 3 Week 7 (graph-based heuristics), Phase 4+ (learned model if needed)
+
+**Phase Elevation Rationale:**
+- **Previous Status**: Optional Phase 4-5 (not in core FR)
+- **New Status**: **Phase 3 Critical** (based on OHR-Bench research findings)
+- **Evidence**: 5-29% RAG performance loss from reading order errors justifies priority elevation
+- **Timeline Impact**: Implemented in Phase 3 Week 7 (prioritized over DLAFormer optional research)
+
 ---
 
 ### FR-5: Specialized Content Detection (Per-page)
@@ -330,11 +819,242 @@ The system shall identify all mathematical equations on a page by providing the 
 
 **Rationale:** Critical for OCR language pack selection and multi-script document handling
 
+**Document Types:** Multi-lingual documents, academic papers, international business documents
+
+#### FR-5.4: Watermark Detection (Phase 3)
+
+The system shall detect watermarks that may interfere with text extraction.
+
+**Detection Method:**
+- Frequency domain analysis (repeated patterns)
+- Transparency/opacity analysis
+- Pattern recognition (text vs image watermarks)
+
+**Output:** Add `watermark_detected: bool` and bounding boxes in JSON
+
+**Rationale:** Watermarks can confuse OCR (treating watermark text as document content) or require VLM processing for semantic interpretation.
+
+**Priority:** P1 (High for legal/business documents)
+
+**Document Types:** Legal documents, contracts, official certificates, business reports, security documents
+
+**Action:** Detect-only (flag for downstream VLM or specialized processing)
+
+**Reference:** DETECTION_TAXONOMY.md Section 1 (IQA Issues)
+
+#### FR-5.5: Stamp/Seal Detection (Phase 3)
+
+The system shall detect stamps and seals that may obscure text or require special handling.
+
+**Detection Method:**
+- Circle detection (Hough transform for circular seals)
+- Color analysis (stamps typically red, blue, or black ink)
+- Texture analysis (stamp patterns)
+
+**Output:** Add `stamp_detected: bool` and bounding boxes in JSON
+
+**Rationale:** Stamps can obscure underlying text or contain important metadata requiring VLM interpretation.
+
+**Priority:** P2 (Medium for official documents)
+
+**Document Types:** Government documents, contracts, historical archives, notarized documents, international shipping
+
+**Action:** Detect-only (flag region for preservation or VLM analysis)
+
+**Reference:** Research: "Automatic Detection and Recognition of Official Seals in Document Images" (ICDAR 2019)
+
+#### FR-5.6: Signature Detection (Phase 3)
+
+The system shall detect handwritten signatures.
+
+**Detection Method:**
+- Continuous stroke detection
+- Ink analysis (pen pressure, continuous vs disconnected strokes)
+- Spatial analysis (signatures typically at bottom of documents)
+
+**Output:** Add `signature_detected: bool` and bounding boxes in JSON
+
+**Rationale:** Signatures interfere with layout detection and require separate handling for legal/compliance purposes.
+
+**Priority:** P2 (Medium for legal/business documents)
+
+**Document Types:** Contracts, forms, legal documents, invoices, receipts, notarized documents
+
+**Action:** Detect-only (flag region for privacy/compliance or VLM verification)
+
+**Reference:** SignaTR6K dataset (benchmark for signature detection)
+
+#### FR-5.7: Margin Annotation Detection (Phase 3)
+
+The system shall detect margin annotations (handwritten notes, comments).
+
+**Detection Method:**
+- Edge detection (notes typically in margins)
+- Spatial isolation (not part of main text flow)
+- Handwriting detection (typically handwritten vs printed main text)
+
+**Output:** Add `margin_annotations: bool` and bounding boxes in JSON
+
+**Rationale:** Margin annotations should be separated from main text but preserved for historical/scholarly analysis.
+
+**Priority:** P2 (Medium for academic/historical documents)
+
+**Document Types:** Historical manuscripts, academic papers, annotated drafts, student assignments
+
+**Action:** Detect-only (separate from main text for distinct processing)
+
+**Reference:** DETECTION_TAXONOMY.md Section 3 (Specialized Content)
+
 ---
 
-### FR-6: Document Quality Score (DQS) - Phase 4
+### FR-6: Correction Methods
 
-#### FR-6.1: DQS Calculation
+#### FR-6.1: Blur Correction (Phase 1) - ✅ COMPLETE
+
+The system shall apply sharpening corrections to blurred images.
+
+**Method:**
+- Unsharp mask
+- Deconvolution (Wiener filter)
+
+**Guardrails:** Only apply if blur_score > threshold and correction improves quality metrics
+
+**Reference:** ADR-021 (Do-No-Harm Guardrails)
+
+#### FR-6.2: Skew Correction (Phase 1) - ✅ COMPLETE
+
+The system shall apply rotation correction to skewed documents.
+
+**Method:** Affine rotation transform
+
+**Guardrails:** See FR-3.2 (threshold-based correction)
+
+**Reference:** ADR-021 (Do-No-Harm Guardrails)
+
+#### FR-6.3: Noise Reduction (Phase 1) - ✅ COMPLETE
+
+The system shall apply denoising to noisy images.
+
+**Method:**
+- Bilateral filter
+- Non-Local Means (NLM)
+- BM3D (advanced)
+
+**Guardrails:** Only apply if noise_score > threshold
+
+**Reference:** ADR-021 (Do-No-Harm Guardrails)
+
+#### FR-6.4: Contrast Enhancement (Phase 1) - ✅ COMPLETE
+
+The system shall apply contrast enhancement to low-contrast images.
+
+**Method:**
+- CLAHE (Contrast Limited Adaptive Histogram Equalization)
+- Histogram equalization
+
+**Guardrails:** Only apply if contrast_score < threshold
+
+**Reference:** ADR-021 (Do-No-Harm Guardrails), ADR-011 (Hybrid Validation - Real-World Calibration)
+
+#### FR-6.5: DPI Upscaling (Phase 1B) - ✅ COMPLETE
+
+The system shall upscale low-resolution images to 300 DPI.
+
+**Method:** See FR-3.6 for algorithms and configuration
+
+**Guardrails:** Preserve original on error, skip if already high-resolution
+
+**Reference:** Phase 1B Implementation Summary, ADR-010 (300 DPI Normalization)
+
+#### FR-6.6: Binarization Correction (Phase 2)
+
+The system shall apply adaptive binarization to improve text/background separation.
+
+**Method:**
+- Otsu thresholding (global)
+- Sauvola thresholding (local adaptive)
+- Niblack thresholding (local adaptive)
+
+**Guardrails:** Compare before/after OCR confidence, only apply if improvement > 10%
+
+**Priority:** P0 (Critical for degraded documents)
+
+**Document Types:** Historical manuscripts, faded documents, photocopies, low-quality scans
+
+**Reference:** Research: "Degraded Historical Document Binarization: A Review" (PMC 2021)
+
+#### FR-6.7: Illumination Normalization (Phase 2)
+
+The system shall normalize uneven illumination.
+
+**Method:**
+- Illumination estimation (Gaussian smoothing)
+- Adaptive histogram equalization per region
+- Shadow removal algorithms
+
+**Guardrails:** Preserve original if normalization creates artifacts
+
+**Priority:** P0 (Critical for mobile captures)
+
+**Document Types:** Mobile captures, book scans, historical documents, poor lighting conditions
+
+**Reference:** Research: "Robust Document Image Binarization Technique for Degraded Document Images" (IEEE 2013)
+
+#### FR-6.8: Dewarping (Phase 3)
+
+The system shall correct document warping and curvature.
+
+**Method:**
+- Polynomial regression (classical)
+- DocUNet (deep learning - U-Net architecture)
+
+**Guardrails:** Apply only if warping_score > threshold, validate grid straightness
+
+**Priority:** P1 (High for book scans)
+
+**Document Types:** Book scans, bound documents, mobile captures at angles
+
+**Reference:** Research: "DocUNet: Document Image Unwarping via A Stacked U-Net" (CVPR 2018)
+
+#### FR-6.9: Perspective Correction (Phase 2)
+
+The system shall correct perspective distortion using homography transforms.
+
+**Method:**
+- Corner detection (document boundaries)
+- Homography matrix estimation
+- Perspective transform (warp to rectangle)
+
+**Guardrails:** Validate corner detection accuracy, preserve original if correction fails
+
+**Priority:** P2 (Medium for mobile captures)
+
+**Document Types:** Mobile captures, angled scans, desktop photography
+
+**Reference:** Research: "Automatic Document Image Rectification Using Geometric Features" (ICDAR 2017)
+
+#### FR-6.10: Bleed-Through Suppression (Phase 3)
+
+The system shall suppress bleed-through artifacts.
+
+**Method:**
+- Frequency domain filtering
+- Dual-side image subtraction (if available)
+- Color channel separation
+
+**Guardrails:** Apply only if bleed-through detected, preserve legibility
+
+**Priority:** P1 (High for historical documents)
+
+**Document Types:** Historical manuscripts, thin paper documents, double-sided printing
+
+**Reference:** Research: "Reduction of bleed-through in scanned manuscript documents" (Pattern Recognition 2011)
+
+---
+
+### FR-7: Document Quality Score (DQS) - Phase 4
+
+#### FR-7.1: DQS Calculation
 
 The system shall calculate a **Document Quality Score (DQS)** with two orthogonal axes:
 
@@ -350,7 +1070,7 @@ The system shall calculate a **Document Quality Score (DQS)** with two orthogona
 
 **Reference:** ADR-0028 (Document Quality Score for Intelligent Pipeline Routing)
 
-#### FR-6.2: Pipeline Routing Recommendation
+#### FR-7.2: Pipeline Routing Recommendation
 
 The system shall provide a **routing_recommendation** based on DQS:
 
