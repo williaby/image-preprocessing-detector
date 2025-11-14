@@ -1,20 +1,21 @@
 ---
 title: Phase 2 Quick Start Guide
-description: Fast-track setup for Phase 2 IQA training on Google Colab
-tags: [phase-2, quickstart, google-colab]
+description: Fast-track setup for Phase 2 IQA training on Modal
+tags: [phase-2, quickstart, modal]
 ---
 
 # Phase 2 Quick Start Guide
 
-**Get from zero to training in 60 minutes** (plus dataset download/upload time)
+**Get from zero to training in 30 minutes** (plus dataset download/upload time)
 
 ---
 
 ## Prerequisites Checklist
 
-- [ ] Google Colab Pro subscription ($10/month)
+- [ ] Modal account (free tier: $30/month credits)
 - [ ] GCP Project: `image-detection-478105`
 - [ ] GCS Bucket: `image_detection_b`
+- [ ] GCS service account key (for Modal secret)
 - [ ] Python 3.11+ installed locally
 - [ ] Poetry installed locally
 - [ ] gcloud CLI installed and authenticated
@@ -113,34 +114,77 @@ Expected output:
 
 ---
 
-## Step 5: Start Training in Colab (5 minutes setup)
+## Step 5: Setup Modal and Start Training (5 minutes setup)
 
-1. **Open training notebook**:
-   - [notebooks/colab/phase2_iqa_training.ipynb](../notebooks/colab/phase2_iqa_training.ipynb)
-
-2. **Upload to Google Colab**:
-   - Go to [colab.research.google.com](https://colab.research.google.com)
-   - Upload notebook or connect to GitHub
-
-3. **Run initial cells**:
-   ```python
-   # Cell 1: Authenticate
-   from google.colab import auth
-   auth.authenticate_user()
-   !gcloud config set project image-detection-478105
-
-   # Cell 2: Download dataset to Colab local SSD
-   !gsutil -m cp -r gs://image_detection_b/datasets/iqa_phase2 /content/data_cache/
-
-   # Cell 3: Download config
-   !gsutil cp gs://image_detection_b/configs/colab_phase2_iqa_gcs.yaml /content/config.yaml
+1. **Install Modal CLI**:
+   ```bash
+   poetry add modal
+   poetry install
    ```
 
-4. **Start training** (follow notebook)
+2. **Authenticate with Modal**:
+   ```bash
+   poetry run modal token new
+   # Opens browser for authentication
+   ```
+
+3. **Setup GCS credentials**:
+   ```bash
+   # Use helper script (auto-encodes to base64)
+   ./scripts/modal_helpers.sh setup-gcs-secret /path/to/gcp-service-account-key.json
+
+   # Or manually:
+   GCP_SA_KEY_B64=$(base64 -w 0 /path/to/key.json)
+   poetry run modal secret create gcs-credentials GCP_SA_KEY="$GCP_SA_KEY_B64"
+   ```
+
+4. **Test GPU access**:
+   ```bash
+   ./scripts/modal_helpers.sh test-gpu
+   # Should show: "✅ Hello from Modal GPU: Tesla T4"
+   ```
+
+5. **Start training**:
+   ```bash
+   ./scripts/modal_helpers.sh train-phase2
+   # Or manually:
+   poetry run modal run modal/train_phase2_iqa.py
+   ```
+
+6. **Monitor training**:
+   - Open Modal dashboard: https://modal.com/apps
+   - View logs, GPU utilization, costs in real-time
 
 ---
 
-## GCS Helper Commands
+## Helper Commands
+
+### Modal Commands
+
+```bash
+# Setup GCS credentials in Modal
+./scripts/modal_helpers.sh setup-gcs-secret /path/to/key.json
+
+# Test GPU access
+./scripts/modal_helpers.sh test-gpu
+
+# Start Phase 2 training
+./scripts/modal_helpers.sh train-phase2
+
+# Start Phase 3 training (later)
+./scripts/modal_helpers.sh train-phase3
+
+# Monitor training
+./scripts/modal_helpers.sh monitor
+
+# Check Modal usage and costs
+./scripts/modal_helpers.sh costs
+
+# List Modal secrets
+./scripts/modal_helpers.sh secrets
+```
+
+### GCS Commands
 
 ```bash
 # Upload configs
@@ -151,9 +195,6 @@ Expected output:
 
 # Download Phase 2 dataset (if needed locally)
 ./scripts/gcs_helpers.sh download-phase2
-
-# Sync checkpoints from Colab to GCS
-./scripts/gcs_helpers.sh sync-checkpoints phase2
 
 # Download checkpoints from GCS
 ./scripts/gcs_helpers.sh download-checkpoints phase2
@@ -197,16 +238,21 @@ gsutil ls gs://image_detection_b
 # Check internet speed (10 Mbps = 30-40 min, 100 Mbps = 15-20 min for 10GB)
 ```
 
-### Colab Training Issues
+### Modal Training Issues
 
 ```bash
-# Download dataset failed - check authentication
-from google.colab import auth
-auth.authenticate_user()
-!gcloud config get-value project  # Should show: image-detection-478105
+# Authentication failed
+poetry run modal token new
 
-# GPU not available - upgrade to Colab Pro
-!nvidia-smi  # Should show GPU info
+# GCS access failed - check secret
+poetry run modal secret list  # Should show: gcs-credentials
+poetry run modal run modal/test_gcs.py  # Test GCS access
+
+# Training failed - check logs
+poetry run modal logs --tail 100  # View recent logs
+
+# GPU allocation failed - check Modal dashboard
+# Visit: https://modal.com/apps
 ```
 
 ---
@@ -218,9 +264,9 @@ auth.authenticate_user()
 | Download Tobacco800 | 5-10 min | Depends on internet speed |
 | Generate dataset (50k) | 20-30 min | CPU-intensive |
 | Upload to GCS | 10-30 min | Depends on upload speed (100 Mbps ~15 min) |
-| Colab setup | 5 min | One-time authentication |
+| Modal setup | 5 min | One-time authentication + secret setup |
 | **Total setup time** | **40-75 min** | Plus training time |
-| Training (50 epochs) | 3-6 hours | With V100/T4 GPU |
+| Training (50 epochs) | 3-6 hours | With T4 GPU, no session timeouts |
 
 ---
 
@@ -228,9 +274,11 @@ auth.authenticate_user()
 
 | Service | Cost | Notes |
 |---------|------|-------|
-| Google Colab Pro | $10/month | 12-hour sessions, V100/T4 GPUs |
+| Modal (T4 GPU) | $0-3 | Free tier: $30/month credits, T4 @ $0.59/hr (~5-6 hours) |
 | GCS Storage (10GB) | $0.20/month | Standard storage |
-| **Total** | **~$10.20/month** | During active training |
+| **Total** | **~$0.20-3** | During active training |
+
+**Phase 2 Training Cost**: ~$3 (5 hours @ $0.59/hr) - covered by free tier!
 
 After training completes, you can delete the GCS dataset to save costs (~$0.20/month).
 
@@ -260,11 +308,12 @@ After training completes:
 
 ## Complete Documentation
 
-- **Dataset Preparation**: [DATASET_PREPARATION.md](guides/dataset-preparation.md)
-- **GCS Storage Setup**: [colab-storage-setup.md](guides/colab-storage.md)
-- **Colab Training Guide**: [COLAB_TRAINING_GUIDE.md](guides/colab-training.md)
-- **Phase 2 Plan**: [project/phases/phase-2-plan.md](project/phases/phase-2-plan.md)
+- **Dataset Preparation**: [dataset-preparation.md](guides/dataset-preparation.md)
+- **Modal Training Guide**: [modal-training.md](guides/modal-training.md)
+- **Modal Storage Setup**: [modal-storage.md](guides/modal-storage.md)
+- **Phase 2 Plan**: [phase-2-plan.md](project/phases/phase-2-plan.md)
+- **Architecture Decision**: [ADR-030 GCS + Modal Workflow](ADRs/0030-gcs-modal-training-workflow.md)
 
 ---
 
-*Last Updated: 2025-01-15*
+*Last Updated: 2025-11-14*

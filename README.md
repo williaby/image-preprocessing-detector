@@ -292,25 +292,25 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - Graceful fallback and safety guardrails
 
 ### Phase 2: ML for Image Quality (Weeks 8-12) - Extended +1 Week
-**Training Platform**: Google Colab Pro ($12/month)
+**Training Platform**: Modal serverless GPU (free tier: $30/month credits)
 - IQA dataset generation (50k synthetic + real images)
 - Train MobileNetV3/EfficientNet multi-label classifier
 - **3-dimension quality assessment**: Overall, sharpness, color fidelity (FR-2.3)
 - **Domain-Generalized Quality Assessment (DGQA)**: Synthetic-to-real calibration
 - ONNX optimization for CPU inference
 - Integration with classical methods (ensemble voting)
-- **Cost**: $12/month (Colab Pro + Google Drive 100GB)
+- **Cost**: $0-3 (T4 GPU @ $0.59/hr, ~5 hours - covered by free tier)
 
 ### Phase 3: ML for Document Layout & Unified Preprocessing (Weeks 12-20) - Extended +3 Weeks
-**Training Platform**: Google Colab Pro ($24 for 2 months)
+**Training Platform**: Modal serverless GPU (free tier: $30/month credits)
 - Document element dataset (PubLayNet + DocLayNet + custom)
-- Train YOLOv8n/s for layout detection (multi-session training: 5-7 sessions)
+- Train YOLOv8n/s for layout detection (no session timeouts - trains to completion)
 - **NEW: DocRes Unified Preprocessing** - 5 tasks in one model (dewarping, de-shadowing, deblurring, binarization, contrast)
 - **NEW: DLAFormer Research** - Unified layout analysis (dual-track with YOLOv8)
 - **NEW: Table Structure Extraction** - PubTables-1M for cell-level recognition (FR-4.11)
 - Active learning for rare classes (handwriting, formulas)
 - INT8 quantization for production
-- **Cost**: $24 for 2 months
+- **Cost**: $0-14 (A10 GPU @ $1.10/hr, ~50-80 hours - partially covered by free tier)
 
 ### Phase 4: Production Hardening (Weeks 21-24)
 - FastAPI service with Docker

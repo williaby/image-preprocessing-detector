@@ -143,3 +143,10 @@ validation/synthetic_images/
 validation/characteristic_curves/
 validation/*.json
 sbom-*.json
+
+# Modal
+.modal/
+__modal_cache__/
+modal_cache/
+*modal-token*
+.modal-token
