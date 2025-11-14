@@ -332,7 +332,9 @@ class DocLayNetAdapter(BaseAdapter):
 
 #### Component 3: Progressive Validation Strategy
 
-**Three-Tier Testing Pyramid**:
+> **Terminology Note**: This ADR uses **"Validation Level 1/2/3"** to describe the testing pyramid (Test Fixtures → Smoke Tests → Full Benchmarks). For dataset storage organization, see [ADR-029](0029-phase2-dataset-selection-strategy.md) which uses **"Storage Tier 1/2/3"** (Training/Benchmarks/Test Fixtures).
+
+**Three-Level Testing Pyramid**:
 
 ```
                     ┌─────────────────────┐
@@ -353,7 +355,7 @@ class DocLayNetAdapter(BaseAdapter):
                     └─────────────────────┘
 ```
 
-**Tier 1: Test Fixtures** (Local Development, CI Unit Tests)
+**Validation Level 1: Test Fixtures** (Local Development, CI Unit Tests)
 - **Purpose**: Offline development, fast iteration
 - **Size**: 828 KB total (committed to Git)
 - **Samples**: 5-10 representative samples per dataset
@@ -371,7 +373,7 @@ poetry run pytest -v -m "not requires_full_dataset"
 # Uses data/test_fixtures/ (828 KB committed)
 ```
 
-**Tier 2: Smoke Tests** (CI/CD, PR Validation)
+**Validation Level 2: Smoke Tests** (CI/CD, PR Validation)
 - **Purpose**: Fast regression detection on PRs
 - **Size**: Dataset subsets (20-100 samples per suite)
 - **Samples**: Representative subset with edge cases
@@ -389,7 +391,7 @@ python -m benchmarks.runners.run_smoke --all
 # Expected runtime: <5 minutes
 ```
 
-**Tier 3: Full Benchmarks** (Production Validation, Paper Baselines)
+**Validation Level 3: Full Benchmarks** (Production Validation, Paper Baselines)
 - **Purpose**: Comprehensive accuracy validation
 - **Size**: Full datasets (88+ GB total)
 - **Samples**: Complete test splits (hundreds to thousands)

@@ -112,7 +112,9 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) t
 
 ### Three-Tier Dataset Strategy
 
-#### Tier 1: Synthetic Training Data (50k samples, ~18 GB)
+> **Terminology Note**: This ADR uses **"Storage Tier 1/2/3"** to describe data organization (Training/Benchmarks/Test Fixtures). For benchmarking validation strategy, see [ADR-031](0031-comprehensive-benchmarking-framework.md) which uses **"Validation Level 1/2/3"** for the testing pyramid (Test Fixtures → Smoke Tests → Full Benchmarks).
+
+#### Storage Tier 1: Synthetic Training Data (50k samples, ~18 GB)
 
 **Source**: TableBank dataset (46.38 GB, Apache-2.0 license)
 **Generation**: Albumentations augmentation pipeline with document-specific transformations
@@ -196,7 +198,7 @@ datasets/iqa_phase2/
 - ⚠️ **Synthetic Artifacts**: Augmented images may not match real-world camera/scanner defects
 - ⚠️ **Limited Diversity**: TableBank is primarily printed documents (limited handwriting, diagrams)
 
-#### Tier 2: External Validation Data (~5 GB, 2,807 images)
+#### Storage Tier 2: External Validation Data (~5 GB, 2,807 images)
 
 **Datasets**:
 1. **LIVE IQA Database** (779 images, ~1 GB)
@@ -245,7 +247,7 @@ live_challenge = load_dataset("LIVE_Challenge", dataset_root="data/benchmarks/ex
 - ⚠️ **License Restrictions**: Research use only, not for commercial redistribution
 - ⚠️ **Overall Scores**: MOS/DMOS are overall quality, not multi-label defect classifications
 
-#### Tier 3: Test Fixtures (Small samples for CI/CD, ~2 MB)
+#### Storage Tier 3: Test Fixtures (Small samples for CI/CD, ~2 MB)
 
 **Purpose**: Enable CI/CD testing without downloading 88+ GB of full datasets
 
@@ -365,24 +367,23 @@ data/training/layout/
 
 **Note**: With DocRes adoption (ADR-020 update), SynDocDS becomes optional training data.
 
-##### 3. PubTables-1M (Table Structure Extraction)
-- **Source**: GitHub (microsoft/table-transformer)
-- **Size**: ~25 GB, 1 million real-world tables from PubMed papers
-- **License**: Apache-2.0 (commercial use permitted)
-- **Purpose**: Train ClusterTabNet table structure extraction (FR-4.11)
-- **Annotations**: Table structure (rows, columns, cells) + bounding boxes
-- **Integration Tier**: Tier 1 (Training)
-- **Download**: `git clone https://github.com/microsoft/table-transformer data/training/tables/pubtables1m/`
+##### 3. PubTables-1M (Table Structure Extraction) - **REPLACED BY PUBTABNET**
+- **Status**: ⚠️ **REMOVED** (2025-11-14) - Replaced by PubTabNet for storage optimization
+- **Original Size**: ~109 GB (14 .tar.gz archives, unextracted)
+- **Replacement**: PubTabNet (510k tables, 16GB, already extracted) - See Tier 2 Benchmarks
+- **Rationale**: Storage optimization (109GB savings) + PubTabNet proven sufficient for SOTA table structure models
+- **Decision**: ADR-029 Amendment (2025-11-14) - Use PubTabNet as primary training data for FR-4.11
+- **Fallback**: Re-download from HuggingFace `bsmock/pubtables-1m` if PubTabNet insufficient (Phase 3 Week 6-7)
+- **License**: CDLA-Permissive-1.0 (commercial use permitted)
 
-**Structure**:
-```
-data/training/tables/
-└── pubtables1m/
-    ├── train/
-    ├── val/
-    ├── test/
-    └── annotations/           # Table structure annotations
-```
+**Decision Details**:
+- **Academic Precedent**: TableFormer achieved 95.6% F1 with 460k tables (PubTabNet has 510k)
+- **Performance Target**: FR-4.11 requires F1 >85%, achievable with PubTabNet based on literature
+- **Test-First Strategy**: Train on PubTabNet (Phase 3 Week 1-5), re-download PubTables-1M only if F1 <85%
+- **Storage Impact**: Freed 109GB immediately, can re-download in 2-3 hours if needed
+- **Risk Assessment**: Low - PubTabNet same domain (PubMed scientific publications), proven annotations quality
+
+**See**: [tmp_cleanup/.tmp-pubtables-analysis-20251114.md](../../tmp_cleanup/.tmp-pubtables-analysis-20251114.md) for complete analysis
 
 ##### 4. IAM Handwriting Database (Handwriting Detection)
 - **Source**: HuggingFace (Teklia/IAM-line, Sept 2024 update)
@@ -949,7 +950,7 @@ def test_validation_correlation():
 - [OmniDocBench](https://huggingface.co/datasets/opendatalab/OmniDocBench) - Multi-domain comprehensive benchmark (Apache-2.0)
 
 **Internal**:
-- [docs/DATASET_PREPARATION.md](../DATASET_PREPARATION.md) - Dataset preparation workflow
+- [docs/guides/dataset-preparation.md](../guides/dataset-preparation.md) - Dataset preparation workflow
 - [docs/PHASE2_QUICKSTART.md](../PHASE2_QUICKSTART.md) - Phase 2 quick start guide
 - [docs/TESTING_STRATEGY.md](../TESTING_STRATEGY.md) - Testing strategy and test fixtures
 - [data/test_fixtures/README.md](../../data/test_fixtures/README.md) - Test fixtures documentation

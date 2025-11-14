@@ -118,4 +118,4 @@ Planned configuration options:
 ## See Also
 
 - [Quick Start](quick-start.md) - Getting started
-- [API Reference](../api-reference.md) - CLI documentation
+- [API Reference](../api/index.md) - CLI documentation

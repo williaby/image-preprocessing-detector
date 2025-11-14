@@ -44,7 +44,7 @@ This document provides proper citations for all datasets used or referenced in t
 
 ### Genalog
 
-**Status**: 🔨 **INFRASTRUCTURE READY** - Integrated for synthetic data generation (See `docs/GENALOG_INTEGRATION.md`)
+**Status**: 🔨 **INFRASTRUCTURE READY** - Integrated for synthetic data generation (See [GENALOG_INTEGRATION.md](../research/genalog-integration.md))
 
 **Citation**:
 ```bibtex
@@ -66,7 +66,7 @@ This document provides proper citations for all datasets used or referenced in t
 **Usage in Project**:
 - Synthetic document degradation for IQA training data augmentation
 - Infrastructure complete (Phase 2 Week 1)
-- See `src/image_preprocessing_detector/augmentation/` and `docs/GENALOG_INTEGRATION.md`
+- See `src/image_preprocessing_detector/augmentation/` and [GENALOG_INTEGRATION.md](../research/genalog-integration.md)
 
 **Required Attribution**:
 > This work uses Genalog, an open-source synthetic document generation library from Microsoft, available under the MIT License.
@@ -303,7 +303,7 @@ This project uses the following datasets:
 - **DocLayNet** (Pfitzmann et al., 2022) - Document layout analysis validation
 - **Genalog** (Microsoft, 2021) - Synthetic document degradation
 
-Full citations available in [CITATIONS.md](CITATIONS.md).
+Full citations available in [CITATIONS.md](../references/CITATIONS.md).
 ```
 
 ### License Compliance

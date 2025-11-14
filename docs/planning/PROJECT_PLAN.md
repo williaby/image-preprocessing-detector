@@ -1060,7 +1060,7 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 7. Integrate locally into pipeline
 8. **NEW**: DGQA calibration (Week 4-5) - see details below
 
-**See [docs/COLAB_TRAINING_GUIDE.md](docs/COLAB_TRAINING_GUIDE.md) for detailed instructions.**
+**See [docs/guides/colab-training.md](../guides/colab-training.md) for detailed instructions.**
 
 ---
 
@@ -1286,7 +1286,7 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 7. **Day 5**: New session, re-run → Auto-resumes → Epoch 80-100 ✅
 8. Download ONNX model and integrate locally
 
-**See [docs/COLAB_TRAINING_GUIDE.md](docs/COLAB_TRAINING_GUIDE.md) for detailed multi-session instructions.**
+**See [docs/guides/colab-training.md](../guides/colab-training.md) for detailed multi-session instructions.**
 
 ---
 

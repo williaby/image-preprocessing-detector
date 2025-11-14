@@ -6,31 +6,35 @@
 
 ---
 
-## ⚠️ Training Platform Update (2025-01-15)
+## ⚠️ Training Platform Update (2025-01-14)
 
-**This phase now uses Google Colab Pro for model training** instead of local or cloud GPU infrastructure.
+**This phase uses Modal serverless GPU platform for model training** - no session timeouts, production-ready workflow.
 
 ### Quick Links
-- **📓 Training Notebook**: [notebooks/colab/phase2_iqa_training.ipynb](../../../notebooks/colab/phase2_iqa_training.ipynb)
-- **📚 Complete Guide**: [COLAB_TRAINING_GUIDE.md](../../COLAB_TRAINING_GUIDE.md)
-- **⚙️ Configuration**: [configs/colab_phase2_iqa.yaml](../../../configs/colab_phase2_iqa.yaml)
+- **📓 Training Script**: [modal/train_phase2_iqa.py](../../../modal/train_phase2_iqa.py)
+- **📚 Complete Guide**: [MODAL_TRAINING_GUIDE.md](../../guides/modal-training.md)
+- **⚙️ Configuration**: [configs/modal_phase2_iqa.yaml](../../../configs/modal_phase2_iqa.yaml)
 
-### Key Changes
-- **Platform**: Google Colab Pro ($10/month) + Google Drive ($2/month)
-- **GPU**: V100/P100/T4 (16GB VRAM) - no local GPU required
-- **Session Limit**: 12 hours with automatic checkpoint management
-- **Total Cost**: ~$12 for Phase 2 (vs $30-200 for cloud GPU hourly)
-- **Utilities**: Checkpoint manager, Google Drive sync ([scripts/](../../../scripts/))
+### Key Features
+- **Platform**: Modal (serverless, pay-per-second)
+- **GPU**: T4 (16GB) at $0.5904/hour
+- **No Session Limits**: Train for days without interruption
+- **Free Tier**: $30/month covers most Phase 2 training
+- **Cold Start**: <1 second (vs 2-3 min for notebooks)
+- **Storage**: Existing GCS bucket (gs://image_detection_b)
 
 ### Training Workflow
-1. Subscribe to Google Colab Pro ($10/month)
-2. Setup Google Drive structure (see [COLAB_TRAINING_GUIDE.md](../../COLAB_TRAINING_GUIDE.md))
-3. Upload dataset to Google Drive (~10GB)
-4. Open [phase2_iqa_training.ipynb](../../../notebooks/colab/phase2_iqa_training.ipynb) in Colab
-5. Run all cells - training auto-resumes across sessions
-6. Download trained ONNX model from Google Drive
+1. Install Modal CLI: `poetry add modal`
+2. Authenticate: `modal token new`
+3. Upload dataset to GCS (use existing scripts)
+4. Configure training: `configs/modal_phase2_iqa.yaml`
+5. Run training: `modal run modal/train_phase2_iqa.py`
+6. Monitor via Modal dashboard
+7. Download trained ONNX model from GCS
 
-**Note**: The detailed plan below describes the training methodology and algorithms. For infrastructure setup, session management, and troubleshooting, refer to [COLAB_TRAINING_GUIDE.md](../../COLAB_TRAINING_GUIDE.md).
+**Cost Estimate**: $0-5 for Phase 2 (within $30 free tier)
+
+**Note**: The detailed plan below describes the training methodology and algorithms. For infrastructure setup and troubleshooting, refer to [MODAL_TRAINING_GUIDE.md](../../guides/modal-training.md).
 
 ---
 
@@ -1310,7 +1314,7 @@ class EnsembleDetector:
 - **Session Management**: Automatic checkpoint/resume system for 12-hour limits
 - **Total Cost**: ~$12 for Phase 2 (vs $30-200 for cloud GPU hourly)
 
-**See [COLAB_TRAINING_GUIDE.md](../../COLAB_TRAINING_GUIDE.md) for complete setup instructions.**
+**See [COLAB_TRAINING_GUIDE.md](../../guides/colab-training.md) for complete setup instructions.**
 
 ### Phase 1/1B Completion
 - ✅ Phase 1 complete (classical methods, 89.75% coverage)

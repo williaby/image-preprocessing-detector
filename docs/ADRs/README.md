@@ -104,6 +104,10 @@ Links to relevant documentation, discussions, or external resources.
 - [ADR-020: CPU-First Deployment Strategy for Phase 1](0020-cpu-first-deployment-strategy.md) - **Accepted** (2025-11-04)
 - [ADR-021: Do-No-Harm Guardrails for Image Corrections](0021-do-no-harm-guardrails.md) - **Accepted** (2025-11-04)
 - [ADR-028: Document Quality Score (DQS) for Intelligent Pipeline Routing](0028-document-quality-score-routing.md) - **Accepted** (2025-11-11)
+- [ADR-029: Three-Tier Dataset Strategy for Multi-Phase Training and Validation](0029-phase2-dataset-selection-strategy.md) - **Accepted** (2025-11-13 | Updated 2025-01-13)
+- [ADR-030: Google Cloud Storage and Colab Pro Training Workflow](0030-gcs-colab-training-workflow.md) - **Accepted** (2025-11-13)
+- [ADR-031: Comprehensive Benchmarking Framework for Multi-Dataset Evaluation](0031-comprehensive-benchmarking-framework.md) - **Accepted** (2025-11-13 | Updated 2025-01-13)
+- [ADR-032: DocRes Unified Document Restoration and Preprocessing](0032-docres-unified-preprocessing.md) - **Accepted** (2025-01-13)
 
 ### Data & ML Models
 

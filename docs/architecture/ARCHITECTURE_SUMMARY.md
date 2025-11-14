@@ -518,5 +518,5 @@ image_detection/
 
 ---
 
-*For complete details, see [PROJECT_PLAN.md](PROJECT_PLAN.md)*
+*For complete details, see [PROJECT_PLAN.md](../planning/PROJECT_PLAN.md)*
 *Generated via multi-model consensus (Gemini 2.5 Pro + GPT-5)*

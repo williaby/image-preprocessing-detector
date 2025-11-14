@@ -1,24 +1,25 @@
 ---
 schema_type: common
-title: "ADR-030: Google Cloud Storage and Colab Pro Training Workflow"
-description: "Decision to use GCS-first storage strategy with Google Colab Pro for Phase 2 IQA model training instead of Google Drive or local GPU training"
+title: "ADR-030: Google Cloud Storage and Modal Training Workflow"
+description: "Decision to use GCS-first storage strategy with Modal serverless GPU platform for Phase 2 IQA model training instead of Google Colab Pro, Google Drive, or local GPU training"
 tags:
   - adr
   - phase_2
   - infrastructure
   - training
   - gcs
-  - colab
+  - modal
+  - serverless
   - deployment
 status: published
 owner: "core-maintainer"
 authors:
   - name: "Byron Williams"
-purpose: "Document the decision to adopt a GCS-first storage workflow integrated with Google Colab Pro for ML training to address security, performance, and cost constraints compared to Google Drive and local GPU alternatives."
+purpose: "Document the decision to adopt a GCS-first storage workflow integrated with Modal serverless compute for ML training to address session timeouts, cost efficiency, and production workflow concerns."
 ---
 
 **Status**: ✅ **Accepted**
-**Date**: 2025-11-13 (Phase 2 Week 1)
+**Date**: 2025-01-14 (Phase 2 Week 1) - Updated from Colab to Modal
 **Deciders**: Byron Williams
 **Related**: ADR-0029 (Dataset Selection), ADR-0025 (MobileNetV3 vs EfficientNet), ADR-0027 (INT8 Quantization), ADR-0020 (CPU-First Deployment)
 
@@ -53,23 +54,26 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
 - **Networking**: Fast internet for GCS uploads (~50-100 Mbps)
 
 **Cloud Options**:
-1. **Google Colab** (Free Tier)
-   - GPU: T4 (16GB VRAM)
-   - Runtime: 12-hour limit, disconnects on inactivity
-   - Storage: 15 GB Google Drive quota (shared with Gmail)
-   - Cost: Free
+1. **Modal** (Serverless GPU)
+   - GPU: T4/A10/A100 (guaranteed access, multi-cloud)
+   - Runtime: No session limit (configurable timeout up to 72+ hours)
+   - Free Tier: $30/month compute credits (recurring)
+   - Cost: T4 $0.5904/hour, A10 $1.1016/hour (pay-per-second)
+   - Cold Start: <1 second
 
-2. **Google Colab Pro** ($10/month)
-   - GPU: T4/V100/A100 (priority access)
-   - Runtime: 24-hour limit, background execution
+2. **Google Colab Pro** ($10/month) - Rejected
+   - GPU: T4/V100/A100 (priority access, but queues possible)
+   - Runtime: 12-hour limit (requires checkpoint management)
    - Storage: 100 GB Google Drive quota
-   - Cost: $10/month
+   - Cost: $10/month flat fee
+   - Session Management: Manual checkpoint every 12 hours
 
-3. **AWS/GCP GPU Instances** (On-demand)
+3. **AWS/GCP GPU Instances** (On-demand) - Rejected
    - GPU: T4/V100/A100
    - Runtime: Unlimited
    - Storage: EBS/Persistent Disk (pay per GB)
    - Cost: $0.35-$3.00/hour (~$8-$72 for 24 hours)
+   - Cold Start: ~5 minutes
 
 **Storage Options**:
 1. **Google Drive**
@@ -108,7 +112,14 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
 
 ## Decision
 
-**Adopt a GCS-first storage strategy integrated with Google Colab Pro for ML training, replacing Google Drive for dataset storage and training workflows.**
+**Adopt a GCS-first storage strategy integrated with Modal serverless compute for ML training, replacing Google Colab Pro, Google Drive, and dedicated GPU instances.**
+
+**Key Reasons for Modal**:
+1. **No Session Timeouts**: Train for days without manual checkpoint interruption
+2. **Cost Effective**: $30/month free credits covers most Phase 2-3 training
+3. **Production Ready**: Container-based workflow from day 1
+4. **Guaranteed GPU**: Multi-cloud fallback, no queues
+5. **Pay-per-Second**: Only pay for actual compute time (scales to zero)
 
 ### Three-Component Architecture
 
@@ -207,67 +218,90 @@ gsutil du -sh gs://image-detection-datasets/
 - ✅ **Scalability**: Pay-as-you-go, no quota limits (vs. 100 GB Google Drive limit)
 - ✅ **Versioning**: Supports object versioning for dataset updates
 
-#### Component 3: Google Colab Pro (Training Environment)
+#### Component 3: Modal Serverless Compute (Training Environment)
 
-**Purpose**: GPU-accelerated training with T4/V100/A100 access
+**Purpose**: GPU-accelerated training with serverless autoscaling
 
-**Colab Notebook Structure**:
+**Modal Training Script Structure**:
 ```python
-# notebooks/phase2_training.ipynb
+# modal/train_phase2_iqa.py
 
-# [1] Authenticate with GCS
-from google.colab import auth
-auth.authenticate_user()
+import modal
 
-# [2] Download dataset from GCS
-!gsutil -m cp -r gs://image-detection-datasets/iqa_phase2 /content/datasets/
+# Define Modal application
+stub = modal.Stub("iqa-phase2-training")
 
-# [3] Install dependencies
-!pip install torch torchvision albumentations onnx onnxruntime
-
-# [4] Training configuration
-config = {
-    "model": "mobilenetv3_large",
-    "batch_size": 128,
-    "epochs": 50,
-    "lr": 1e-3,
-    "early_stopping_patience": 5,
-}
-
-# [5] Train model
-from src.training.iqa_trainer import IQATrainer
-
-trainer = IQATrainer(config)
-model = trainer.train(
-    train_dir="/content/datasets/iqa_phase2/train",
-    val_dir="/content/datasets/iqa_phase2/val"
+# Define container image with dependencies
+image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .pip_install("torch", "torchvision", "albumentations", "onnx", "google-cloud-storage")
 )
 
-# [6] Export to ONNX
-import torch.onnx
-torch.onnx.export(
-    model,
-    dummy_input,
-    "/content/models/phase2_iqa_v1.onnx",
-    opset_version=13
-)
+# GCS credentials secret
+gcs_secret = modal.Secret.from_name("gcs-credentials")
 
-# [7] Upload trained model to GCS
-!gsutil cp /content/models/phase2_iqa_v1.onnx gs://image-detection-datasets/models/
-!gsutil cp /content/models/phase2_iqa_v1.pth gs://image-detection-datasets/models/
+@stub.function(
+    image=image,
+    gpu="T4",          # or A10 for 50% faster
+    cpu=8.0,
+    memory=32768,
+    timeout=86400,      # 24 hours (no 12-hour limit!)
+    secrets=[gcs_secret],
+)
+def train_iqa():
+    """Main training function - runs to completion"""
+    from google.cloud import storage
+    import torch
+
+    # Download dataset from GCS
+    client = storage.Client()
+    bucket = client.bucket("image_detection_b")
+
+    # Download to local cache for fast training
+    download_dataset_from_gcs(bucket, "/tmp/data")
+
+    # Training configuration
+    config = {
+        "model": "mobilenetv3_small",
+        "batch_size": 128,
+        "epochs": 50,
+        "lr": 1e-3,
+    }
+
+    # Train model
+    model = train_model(config, "/tmp/data")
+
+    # Export to ONNX
+    torch.onnx.export(model, dummy_input, "/tmp/best_model.onnx", opset_version=13)
+
+    # Upload trained model to GCS
+    bucket.blob("models/phase2_iqa/best_model.onnx").upload_from_filename("/tmp/best_model.onnx")
+    bucket.blob("models/phase2_iqa/best_model.pth").upload_from_filename("/tmp/best_model.pth")
+
+@stub.local_entrypoint()
+def main():
+    train_iqa.remote()
 ```
 
-**Colab Pro Features**:
-- ✅ **Priority GPU Access**: T4 (16GB), V100 (16GB), A100 (40GB)
-- ✅ **24-Hour Runtime**: Sufficient for 50k dataset training (~24-48 hours)
-- ✅ **Background Execution**: Continues training when browser closed
-- ✅ **100 GB Storage**: Google Drive quota for intermediate artifacts
+**Run Training**:
+```bash
+# Single command - runs to completion (no session management!)
+modal run modal/train_phase2_iqa.py
+```
+
+**Modal Features**:
+- ✅ **Guaranteed GPU Access**: T4/A10/A100 (multi-cloud fallback)
+- ✅ **No Session Timeout**: Train for days without interruption
+- ✅ **Sub-Second Cold Start**: <1 second vs 2-3 minutes
+- ✅ **Auto-Scale to Zero**: Pay only for actual compute time
+- ✅ **Python-Native**: No YAML, define infrastructure in code
 
 **Cost Analysis**:
-- **Colab Pro**: $10/month
+- **Modal Free Tier**: $30/month compute credits (recurring)
+- **T4 GPU**: $0.5904/hour × 40 hours = $23.62 (covered by free tier!)
 - **GCS Storage**: $0.52/month (26 GB Standard)
-- **GCS Egress**: Free (Colab and GCS both in us-central1)
-- **Total**: ~$10.52/month (vs. $100-$200/month for dedicated GPU instance)
+- **GCS Egress**: Free (same region)
+- **Total**: ~$0.52/month for Phase 2 (vs. $10.52 Colab Pro, vs. $100-$200 dedicated GPU)
 
 ### Workflow Integration
 

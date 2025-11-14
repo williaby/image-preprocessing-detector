@@ -29,7 +29,7 @@ tags: [phase-2, quickstart, google-colab]
 # Create directory
 mkdir -p data/raw/tobacco800
 
-# Download Tobacco800 (see DATASET_INSTALLATION.md for actual URL)
+# Download Tobacco800 (see guides/dataset-installation.md for actual URL)
 cd data/raw/tobacco800
 # ... download and extract instructions ...
 cd ../../..
@@ -38,7 +38,7 @@ cd ../../..
 ls -lh data/raw/tobacco800/
 ```
 
-**Production option**: DocBank or RVL-CDIP (see [DATASET_INSTALLATION.md](DATASET_INSTALLATION.md))
+**Production option**: DocBank or RVL-CDIP (see [DATASET_INSTALLATION.md](guides/dataset-installation.md))
 
 ---
 
@@ -260,9 +260,9 @@ After training completes:
 
 ## Complete Documentation
 
-- **Dataset Preparation**: [DATASET_PREPARATION.md](DATASET_PREPARATION.md)
-- **GCS Storage Setup**: [setup/colab-storage-setup.md](setup/colab-storage-setup.md)
-- **Colab Training Guide**: [COLAB_TRAINING_GUIDE.md](COLAB_TRAINING_GUIDE.md)
+- **Dataset Preparation**: [DATASET_PREPARATION.md](guides/dataset-preparation.md)
+- **GCS Storage Setup**: [colab-storage-setup.md](guides/colab-storage.md)
+- **Colab Training Guide**: [COLAB_TRAINING_GUIDE.md](guides/colab-training.md)
 - **Phase 2 Plan**: [project/phases/phase-2-plan.md](project/phases/phase-2-plan.md)
 
 ---

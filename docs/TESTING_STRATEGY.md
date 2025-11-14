@@ -244,6 +244,7 @@ gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/tab
 ---
 
 **References**:
-- [DATASET_INSTALLATION.md](DATASET_INSTALLATION.md) - Full dataset download instructions
-- [PROJECT_PLAN.md](PROJECT_PLAN.md) - Phase-specific dataset requirements
+
+- [DATASET_INSTALLATION.md](guides/dataset-installation.md) - Full dataset download instructions
+- [PROJECT_PLAN.md](planning/PROJECT_PLAN.md) - Phase-specific dataset requirements
 - [.github/workflows/ci.yml](../.github/workflows/ci.yml) - CI/CD configuration

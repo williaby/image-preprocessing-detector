@@ -70,9 +70,16 @@ The system shall accept a single file input via:
 
 **Phase 5 (Office Format Preprocessing):**
 - **Office**: .doc, .docx, .xls, .xlsx, .pptx
-- **Scope**: Preprocess embedded images only (not full document parsing)
-- **Integration**: Extract images → preprocess → pass to Docling
-- **Rationale**: Office formats contain embedded images that benefit from preprocessing (DPI upscaling, deskewing, denoising). Full document parsing delegated to Docling.
+- **Processing Workflow**:
+  1. **Extract Embedded Images**: Use python-docx/openpyxl/python-pptx to extract all embedded images from office documents
+  2. **Preprocess Images**: Apply standard image preprocessing pipeline to each extracted image:
+     - Ingestion & standardization (FR-1.1, FR-3.4-FR-3.6)
+     - Quality detection (FR-3.1-FR-3.14)
+     - Corrections with guardrails (FR-6.1-FR-6.10, FR-3.8)
+  3. **Generate Metadata**: Create JSON metadata for each extracted image with quality issues and corrections
+  4. **Handoff to Docling**: Pass preprocessed images and metadata to Docling for full document parsing
+- **Scope**: This system handles **embedded image preprocessing only**. Full document parsing (text extraction, table structure, layout analysis of office formats) is delegated to Docling.
+- **Rationale**: Office documents contain embedded images (charts, diagrams, photos, scanned inserts) that benefit from quality assessment and correction (DPI upscaling, deskewing, denoising, contrast enhancement). Text and structure parsing is better handled by specialized office document processors (Docling, which supports .docx, .xlsx, .pptx natively).
 
 **Out-of-Scope:**
 - **PDF Portfolios**: Deprecated by Adobe, rarely encountered
@@ -96,6 +103,41 @@ The system shall gracefully handle and log errors for:
 - Corrupted files that cannot be opened → Return error JSON
 - Password-protected or encrypted files → Return error JSON
 - PDF Portfolio files → Return error: "PDF Portfolio format not supported"
+
+#### FR-1.5: Command-Line Interface
+
+The system shall provide a command-line interface (CLI) for document processing.
+
+**Commands:**
+- `imgprep process <file>`: Process single document
+- `imgprep batch <directory>`: Process directory of documents
+
+**Required Arguments:**
+- Input file path (single file) or directory path (batch mode)
+
+**Optional Arguments:**
+- `--output <path>`: Output JSON file path (default: `<input_name>.json`)
+- `--output-dir <path>`: Output directory for batch processing (default: `./results/`)
+- `--blur-threshold <float>`: Override default blur detection threshold
+- `--skew-threshold <float>`: Override default skew detection threshold
+- `--contrast-threshold <float>`: Override default contrast detection threshold
+- `--config <path>`: Path to configuration file (overrides default settings)
+
+**Output:**
+- JSON metadata file per document (conforming to `DocumentMetadata` schema from FR-1.3)
+- Processing logs to stdout/stderr (structured logging format)
+- Exit code 0 on success, non-zero on failure
+
+**Error Handling:**
+- Invalid file paths: Exit code 1, error message to stderr
+- Processing errors: In batch mode, continue with remaining files and log errors
+- Configuration errors: Exit code 2, validation message to stderr
+
+**Performance:**
+- Single file mode: Immediate processing and output
+- Batch mode: Process files sequentially with progress indicators
+
+**Reference:** [README.md](../../README.md) CLI Usage section
 
 ---
 
@@ -179,6 +221,44 @@ The system shall perform **document-specific quality assessment** using a learne
 - Research: DocIQ/DIQA-5000 (arXiv:2509.17012, Sept 2025)
 
 **Implementation:** Phase 2 Week 2-4 (training), Phase 3+ (DIQA-5000 integration when released)
+
+#### FR-2.4: Text Detection Gate (Phase 1)
+
+The system shall implement a Text Detection Gate as the first processing step after ingestion to route documents to specialized processing paths.
+
+**Purpose:** Determine whether a page contains text to route to appropriate processing:
+- **No text detected**: Route to Stage 3A (Full-page IQA only)
+- **Text detected**: Route to Stage 3B (Layout detection + Hybrid IQA on embedded images)
+
+**Method:** Ensemble approach requiring 2/3 consensus from:
+1. **Stroke Density Analysis**: Morphological operations to detect text-like stroke patterns
+2. **Connected Components Analysis**: Count and analyze text-like connected components
+3. **Edge Density Analysis**: Horizontal/vertical edge patterns characteristic of text lines
+
+**Performance Requirements:**
+- **Latency**: < 10ms per page (CPU), < 5ms per page (GPU)
+- **Accuracy**: Precision > 95%, Recall > 95% (validated on DocLayNet)
+
+**Output:**
+- Add `has_text: bool` field to `PageMetadata`
+- Add `text_detection_confidence: float` field (0.0 - 1.0)
+- Add `text_detection_method: str` field (indicates which methods voted positive)
+
+**Configuration:**
+- `text_detection_stroke_threshold`: Default 0.15 (configurable range: 0.10 - 0.25)
+- `text_detection_component_threshold`: Default 0.20 (configurable range: 0.15 - 0.30)
+- `text_detection_edge_threshold`: Default 0.18 (configurable range: 0.12 - 0.25)
+- `text_detection_consensus_votes`: Default 2 out of 3 (configurable: 1-3)
+
+**Rationale:** Different document types require different processing strategies. Pure images need IQA but not layout detection (saves 25-70ms CPU or 2-7ms GPU per page). Text documents need layout detection to identify embedded images for per-element IQA.
+
+**Priority:** P0 (Critical architectural component)
+
+**Document Types:** All document types (universal routing mechanism)
+
+**Reference:**
+- ADR-0008 (Multi-Stage Pipeline with Text Detection Fork)
+- [text_gate.py](../../src/image_preprocessing_detector/detection/text_gate.py) - Implementation
 
 ---
 
@@ -273,7 +353,59 @@ The system shall calculate a **contrast_score** using histogram analysis:
 
 **Output:** Report score in JSON (0.0 - 1.0 normalized)
 
-#### FR-3.8: Binarization Quality Assessment (Phase 2)
+#### FR-3.8: Do-No-Harm Guardrails for All Corrections (Phase 1)
+
+All image correction operations (FR-6.1 through FR-6.10) shall implement multi-tier guardrails to prevent quality degradation.
+
+**Three-Tier Guardrail System:**
+
+**Tier 1: Confidence Thresholds** (Pre-Correction)
+- Skip corrections with low confidence scores (below configurable threshold)
+- Reject extreme parameter values (e.g., skew angle > 45°, blur_score > 200)
+- Validate input parameters are within acceptable ranges
+- All thresholds configurable per-correction type
+
+**Tier 2: Parameter Limits** (During Correction)
+- Cap correction strength based on issue severity (LOW, MEDIUM, HIGH, CRITICAL)
+- Adaptive parameters scale with detected severity (e.g., CLAHE clip limit: 1.0 for LOW, 4.0 for CRITICAL)
+- Maximum strength limits to prevent over-correction (e.g., sharpening amount ≤ 2.0)
+- Severity-based thresholding documented per correction type
+
+**Tier 3: Quality Validation + Rollback** (Post-Correction)
+- Measure quality metrics (blur, contrast, noise) before and after correction
+- Compare corrected vs. original image quality
+- Rollback to original image if quality degrades (e.g., blur increases > 20%, contrast drops > 20%)
+- Log rollback reason in transform history for debugging
+
+**Implementation Requirements:**
+- All corrections (FR-6.1 through FR-6.10) must implement all three tiers
+- Confidence thresholds must be checked before applying correction
+- Severity-adaptive parameters must be used during correction
+- Post-correction quality validation must trigger rollback on degradation
+- All skipped/rolled-back corrections must be logged with reason
+
+**Output:**
+- Add `transform_history` field to `PageMetadata` with:
+  - `action: str` - Correction name (e.g., "deskew", "clahe_contrast_enhancement")
+  - `timestamp: datetime` - When correction was applied/skipped
+  - `parameters: Dict[str, Any]` - Actual parameters used
+  - `skipped: bool` - Whether correction was skipped
+  - `skip_reason: Optional[str]` - Reason if skipped (e.g., "Low confidence", "Quality degradation detected")
+
+**Validation Target:**
+- Zero quality degradation on validation set (Phase 1: 328 images)
+- 100% correction coverage: All detected issues either corrected or safely skipped
+- No false corrections: Conservative thresholds prevent over-correction
+
+**Rationale:** Prevents corrections from degrading image quality on already-good images, false detections, or miscalibrated parameters. Multi-tier approach provides defense-in-depth against quality loss.
+
+**Priority:** P0 (Critical for production safety)
+
+**Reference:**
+- ADR-0021 (Do-No-Harm Guardrails for Image Corrections)
+- [corrections.py](../../src/image_preprocessing_detector/correction/corrections.py) - Implementation (455 lines)
+
+#### FR-3.9: Binarization Quality Assessment (Phase 2)
 
 The system shall assess binarization quality to detect poor text/background separation.
 
@@ -290,7 +422,7 @@ The system shall assess binarization quality to detect poor text/background sepa
 
 **Reference:** Research: "Degraded Historical Document Binarization: A Review" (PMC 2021)
 
-#### FR-3.9: Illumination Uniformity Detection (Phase 2)
+#### FR-3.10: Illumination Uniformity Detection (Phase 2)
 
 The system shall detect uneven illumination (shadows, lighting gradients).
 
@@ -307,7 +439,7 @@ The system shall detect uneven illumination (shadows, lighting gradients).
 
 **Reference:** Research: "Robust Document Image Binarization Technique for Degraded Document Images" (IEEE 2013)
 
-#### FR-3.10: Bleed-Through Detection (Phase 3)
+#### FR-3.11: Bleed-Through Detection (Phase 3)
 
 The system shall detect bleed-through (ink from opposite side of page visible).
 
@@ -324,7 +456,7 @@ The system shall detect bleed-through (ink from opposite side of page visible).
 
 **Reference:** Research: "Reduction of bleed-through in scanned manuscript documents" (Pattern Recognition 2011)
 
-#### FR-3.11: Warping/Curvature Detection (Phase 3)
+#### FR-3.12: Warping/Curvature Detection (Phase 3)
 
 The system shall detect document warping and curvature (e.g., book spine curvature).
 
@@ -341,7 +473,7 @@ The system shall detect document warping and curvature (e.g., book spine curvatu
 
 **Reference:** Research: "Straightening warped text lines using polynomial regression" (DAS 2016)
 
-#### FR-3.12: Perspective Distortion Detection (Phase 2)
+#### FR-3.13: Perspective Distortion Detection (Phase 2)
 
 The system shall detect perspective distortion (trapezoidal shape from camera angle).
 
@@ -357,6 +489,30 @@ The system shall detect perspective distortion (trapezoidal shape from camera an
 **Priority:** P2 (Medium)
 
 **Reference:** Research: "Automatic Document Image Rectification Using Geometric Features" (ICDAR 2017)
+
+#### FR-3.14: Hybrid IQA on Embedded Images (Phase 3)
+
+For documents containing text, the system shall perform Image Quality Assessment (FR-3.1 through FR-3.13) on each detected Picture or Figure element (from FR-4.2).
+
+**Method:**
+- After layout detection (FR-4.2), crop each Picture/Figure bounding box
+- Run IQA detectors (FR-3.1 through FR-3.13) on cropped image region
+- Store quality issues in `quality_issues` field of `DocumentElement`
+
+**Output:**
+- Add `quality_issues: List[DetectedIssue]` to each Picture/Figure element
+- Add `needs_correction: bool` flag based on confidence thresholds
+- Report per-element quality metrics in JSON output
+
+**Rationale:** Technical documents contain embedded images (figures, charts, photos, diagrams) that may have quality issues independent of the main document. Per-element assessment enables targeted corrections without affecting high-quality regions.
+
+**Priority:** P0 (Critical for technical documentation, academic papers)
+
+**Document Types:** Academic papers, technical manuals, reports, textbooks, scientific literature
+
+**Reference:**
+- ADR-0007 (Hybrid IQA Approach for Embedded Images)
+- [schema.py](../../src/image_preprocessing_detector/schema.py) - `quality_issues` field in DocumentElement
 
 ---
 
@@ -840,7 +996,7 @@ The system shall detect watermarks that may interfere with text extraction.
 
 **Action:** Detect-only (flag for downstream VLM or specialized processing)
 
-**Reference:** DETECTION_TAXONOMY.md Section 1 (IQA Issues)
+**Reference:** [DETECTION_TAXONOMY.md](../reference/detection-taxonomy.md) Section 1 (IQA Issues)
 
 #### FR-5.5: Stamp/Seal Detection (Phase 3)
 
@@ -903,7 +1059,7 @@ The system shall detect margin annotations (handwritten notes, comments).
 
 **Action:** Detect-only (separate from main text for distinct processing)
 
-**Reference:** DETECTION_TAXONOMY.md Section 3 (Specialized Content)
+**Reference:** [DETECTION_TAXONOMY.md](../reference/detection-taxonomy.md) Section 3 (Specialized Content)
 
 ---
 
@@ -1197,6 +1353,46 @@ The system shall log all processing errors (per FR-1.4) without crashing or term
 - Error messages must be user-friendly
 - Stack traces logged for debugging (not exposed to user)
 - Graceful degradation: partial results if possible
+
+#### NFR-2.6: IQA Validation on Handwritten Content
+
+All Image Quality Assessment detectors (FR-3.1 through FR-3.14) shall be validated on both printed and handwritten text to ensure robustness across content types.
+
+**Validation Requirements:**
+- Test dataset must include both printed and handwritten samples
+- Minimum 50 handwritten samples in validation set (Phase 1)
+- Separate metrics reported for printed vs. handwritten performance
+- Validation must include diverse handwriting types (cursive, print, mixed)
+
+**Acceptance Criteria:**
+- **Blur detection (FR-3.1)**: Accuracy > 90% on handwritten samples
+- **Skew detection (FR-3.2)**: Accuracy within ±0.5° on handwritten samples
+- **Contrast assessment (FR-3.7)**: Mean score difference < 0.05 between printed and handwritten
+- **Text gate (FR-2.4)**: Precision > 95%, Recall > 95% on handwritten samples
+- **All IQA detectors**: No systematic bias toward printed or handwritten content
+
+**Validation Datasets:**
+- **Manual samples**: Web-sourced handwriting images (minimum 6 samples, Phase 1)
+- **SignaTR6K**: Legal document handwriting dataset (minimum 50 samples, Phase 1)
+  - HuggingFace: Teklia/SignaTR6K (6,257 total samples available)
+  - License: CC BY 4.0
+- **IAM Handwriting Database**: For Phase 2+ ML validation (13,353 handwritten lines)
+  - HuggingFace: Teklia/IAM-line
+  - License: CC BY-SA 3.0
+
+**Content-Aware Thresholds (Phase 2):**
+- Handwritten documents may require adjusted thresholds (e.g., lower contrast threshold: 0.13 vs. 0.18 for printed)
+- Threshold calibration based on document type classification
+- Document type inference from text characteristics
+
+**Rationale:** Handwritten documents are common in real-world applications (forms, annotations, historical manuscripts, student assignments, legal documents). IQA detectors must work reliably on both printed and handwritten content to avoid processing failures and incorrect routing decisions.
+
+**Priority:** P0 (Critical for robust document processing)
+
+**Reference:**
+- ADR-0012 (Defer Handwriting Detection to Phase 2)
+- [validation/HANDWRITING_ANALYSIS_COMPLETE.md](../../validation/HANDWRITING_ANALYSIS_COMPLETE.md)
+- [validation/handwriting_samples_analysis.json](../../validation/handwriting_samples_analysis.json)
 
 ---
 
