@@ -17,9 +17,9 @@ purpose: "Document the decision to build a comprehensive, extensible benchmarkin
 ---
 
 **Status**: ✅ **Accepted**
-**Date**: 2025-11-13 (Phase 1 Complete)
+**Date**: 2025-11-13 (Phase 1 Complete) | **Updated**: 2025-01-13 (Phase 3+ Document-Specific Benchmarks)
 **Deciders**: Byron Williams
-**Related**: ADR-0013 (Real Testing Over Mocking), ADR-0029 (Dataset Selection), ADR-0006 (Synthetic Validation), ADR-0011 (Hybrid Validation)
+**Related**: ADR-0013 (Real Testing Over Mocking), ADR-0029 (Dataset Selection), ADR-0006 (Synthetic Validation), ADR-0011 (Hybrid Validation), ADR-0020 (Preprocessing Methods)
 
 ---
 
@@ -73,6 +73,54 @@ The Image Preprocessing Detector spans multiple phases (IQA, layout detection, e
 **4. External Benchmark Tools** (e.g., COCO API, HuggingFace Evaluate):
 - Pre-built evaluation for specific tasks
 - ❌ Not integrated with project, doesn't support hybrid validation, no test fixtures
+
+### Phase 3+ Document-Specific Benchmark Expansion (2025-01-13 Update)
+
+**Context**: Research analysis of Q4 2024 - Q4 2025 literature identified critical gaps in current benchmarking approach:
+
+**Problem 1: Natural Image IQA Benchmarks Inadequate for Documents**
+- **Current**: LIVE, CSIQ, LIVE Challenge are natural image datasets (landscapes, people, buildings)
+- **Gap**: Documents have unique defects (skew, warping, shadow, stamps, handwriting) not covered
+- **Impact**: Model trained on LIVE/CSIQ underperforms on real document quality issues
+
+**Problem 2: Missing Document-Specific Benchmarks**
+- **Preprocessing**: No benchmark for dewarping, shadow removal, binarization
+- **Reading Order**: No benchmark for logical sequence prediction (optional Phase 4-5 scope)
+- **Table Structure**: PubTabNet exists but not emphasized for structure extraction (FR-4.11)
+- **Comprehensive Evaluation**: OmniDocBench exists but not fully integrated
+
+**Solution: Expand Benchmark Registry with 4 Document-Specific Datasets**
+
+**New Benchmarks (Validated 2025-01-13)**:
+1. **DIQA-5000** (Document IQA): Replaces LIVE/CSIQ with document-specific quality assessment
+   - **Status**: ⚠️ Pending release (Sept 2025 arXiv paper, dataset not yet public)
+   - **Fallback**: Continue using LIVE/CSIQ until release
+   - **Priority**: **HIGH** - Critical for FR-2.3 (3-dimension quality assessment)
+
+2. **AnyPhotoDoc 6300** (Dewarping): Validates preprocessing accuracy
+   - **Status**: Available (Oct 2025 arXiv paper, contact authors)
+   - **Purpose**: Benchmark DocRes dewarping performance (ADR-020 update)
+   - **Priority**: **MEDIUM** - Validates Phase 3 preprocessing methods
+
+3. **ROOR** (Reading Order Recognition): Validates logical sequence prediction
+   - **Status**: ✅ Available (GitHub: chongzhangFDU/ROOR-Datasets)
+   - **Purpose**: Benchmark reading order prediction (optional Phase 4-5 capability)
+   - **Priority**: **LOW** - Optional scope expansion (not in core FR)
+
+4. **OmniDocBench** (Comprehensive): Already listed, **elevated to CRITICAL**
+   - **Status**: ✅ Available (HuggingFace: opendatalab/OmniDocBench)
+   - **Purpose**: **PRIMARY** multi-domain benchmark (replaces piecemeal benchmarks)
+   - **Priority**: **CRITICAL** - End-to-end validation standard
+
+**Impact on Benchmark Registry**:
+- **Add 4 new adapters**: `diqa5000`, `anyphotodoc6300`, `roor`, (omnidocbench already planned)
+- **Add 8+ new suites**: DIQA-5000 IQA variants, AnyPhotoDoc dewarping, ROOR sequence prediction, OmniDocBench multi-task
+- **Update baselines**: Replace LIVE/CSIQ natural image baselines with DIQA-5000 document baselines (when available)
+
+**Phased Integration**:
+- **Phase 2**: Continue using LIVE/CSIQ (fallback until DIQA-5000 releases)
+- **Phase 3**: Integrate AnyPhotoDoc 6300, elevate OmniDocBench to critical
+- **Phase 4-5**: Integrate DIQA-5000 (when released), consider ROOR if scope expanded
 
 ---
 
@@ -250,18 +298,31 @@ class DocLayNetAdapter(BaseAdapter):
         return {"train": 80863, "val_docwise": 6489, "test": 6480}
 ```
 
-**Available Adapters** (9 datasets):
-| Adapter | Phase | Dataset | Task | License |
-|---------|-------|---------|------|---------|
-| `synthetic_iqa` | 1 | Internal | IQA | CC0-1.0 |
-| `doclaynet` | 1 | DocLayNet | Layout | CDLA-Permissive-2.0 |
-| `live` | 2 | LIVE IQA | IQA Validation | Academic/Research |
-| `csiq` | 2 | CSIQ | IQA Validation | Academic/Research |
-| `tablebank` | 2 | TableBank | Table Detection | Apache-2.0 |
-| `cocotext` | 2 | COCO-Text | Text Detection | CC-BY-4.0 |
-| `wili_2018` | 2 | WiLI-2018 | Language ID | Apache-2.0 |
-| `omnidocbench` | 3 | OmniDocBench | End-to-End | MIT |
-| `test_fixtures` | All | Test Fixtures | All Tasks | MIT |
+**Available Adapters** (Phase 1-2: 9 datasets | Phase 3+: +5 datasets = 14 total):
+| Adapter | Phase | Dataset | Task | License | Status |
+|---------|-------|---------|------|---------|--------|
+| `synthetic_iqa` | 1 | Internal | IQA | CC0-1.0 | ✅ Implemented |
+| `doclaynet` | 1 | DocLayNet | Layout | CDLA-Permissive-2.0 | ✅ Implemented |
+| `live` | 2 | LIVE IQA | IQA Validation (Natural Images) | Academic/Research | ✅ Implemented |
+| `csiq` | 2 | CSIQ | IQA Validation (Natural Images) | Academic/Research | ✅ Implemented |
+| `tablebank` | 2 | TableBank | Table Detection | Apache-2.0 | ✅ Implemented |
+| `cocotext` | 2 | COCO-Text | Text Detection | CC-BY-4.0 | ✅ Implemented |
+| `wili_2018` | 2 | WiLI-2018 | Language ID | Apache-2.0 | ✅ Implemented |
+| `omnidocbench` | 3 | OmniDocBench | **Comprehensive (PRIMARY)** | Apache-2.0 | ⏳ Planned |
+| `test_fixtures` | All | Test Fixtures | All Tasks | MIT | ✅ Implemented |
+| **`diqa5000`** | **3** | **DIQA-5000** | **IQA (Documents)** | **TBD** | **⚠️ Pending Release** |
+| **`anyphotodoc6300`** | **3** | **AnyPhotoDoc 6300** | **Dewarping** | **Research** | **⏳ To Implement** |
+| **`pubtables1m`** | **3** | **PubTables-1M** | **Table Structure** | **Apache-2.0** | **⏳ To Implement** |
+| **`roor`** | **3** | **ROOR** | **Reading Order (FR-3.14)** | **CC BY 4.0** | **⏳ ELEVATED** |
+| **`ohr_bench`** | **4** | **OHR-Bench** | **RAG Evaluation (CRITICAL)** | **CC-BY-4.0** | **⏳ To Implement** |
+
+**Key Changes (Phase 3+ Expansion)**:
+- **DIQA-5000**: **Replaces** LIVE/CSIQ for document-specific IQA when released
+- **AnyPhotoDoc 6300**: **NEW** benchmark for dewarping validation (DocRes ADR-032)
+- **PubTables-1M**: **ELEVATED** from training-only to benchmark (table structure extraction FR-4.11)
+- **ROOR**: **ELEVATED** from Phase 4-5 optional to **Phase 3 critical** (reading order errors: 5-29% RAG impact)
+- **OHR-Bench**: **NEW CRITICAL** benchmark for RAG-specific evaluation (Phase 4, validates FR-4.4)
+- **OmniDocBench**: **ELEVATED** from "nice-to-have" to **CRITICAL** (comprehensive validation)
 
 **Advantages**:
 - ✅ **Unified Interface**: Same API for all datasets
@@ -768,12 +829,20 @@ def test_smoke_test_runtime():
 
 ## References
 
-**Datasets**:
+**Datasets (Phase 1-2)**:
 - [DocLayNet](https://arxiv.org/abs/2206.01062) - Layout detection benchmark
-- [OmniDocBench](https://arxiv.org/abs/2412.07626) - Comprehensive document AI benchmark
-- [LIVE IQA](https://live.ece.utexas.edu/research/quality/subjective.htm) - Image quality assessment
+- [LIVE IQA](https://live.ece.utexas.edu/research/quality/subjective.htm) - Natural image quality assessment
+- [CSIQ](https://qualinet.github.io/databases/image/csiq_image_database/) - Natural image IQA benchmark
 - [COCO-Text](https://arxiv.org/abs/1601.07140) - Text detection dataset
 - [WiLI-2018](https://arxiv.org/abs/1801.07779) - Language identification
+- [TableBank](https://github.com/doc-analysis/TableBank) - Table detection dataset
+
+**Datasets (Phase 3+ - NEW)**:
+- [DIQA-5000](https://arxiv.org/abs/2509.17012) - Document-specific IQA (⚠️ Pending release, Sept 2025)
+- [AnyPhotoDoc 6300](https://arxiv.org/abs/2410.12189) - Dewarping benchmark (DvD model)
+- [PubTables-1M](https://github.com/microsoft/table-transformer) - Table structure extraction
+- [ROOR](https://github.com/chongzhangFDU/ROOR-Datasets) - Reading order recognition (optional)
+- [OmniDocBench](https://arxiv.org/abs/2412.07626) - **PRIMARY** comprehensive document AI benchmark
 
 **Tools**:
 - [COCO Evaluation API](https://cocodataset.org/#detection-eval) - Detection metrics
@@ -791,5 +860,5 @@ def test_smoke_test_runtime():
 ---
 
 **Created**: 2025-11-13
-**Last Updated**: 2025-11-13
-**Next Review**: Phase 2 Complete (after ML model integration)
+**Last Updated**: 2025-01-13 (Phase 3+ document-specific benchmarks)
+**Next Review**: Phase 3 Week 1 (integrate new benchmark adapters)
