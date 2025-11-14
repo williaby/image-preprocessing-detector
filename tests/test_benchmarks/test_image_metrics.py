@@ -84,10 +84,12 @@ class TestSkewMetrics:
     def test_deskew_success_rate_partial_success(self) -> None:
         """Test success rate with partial success."""
         gt = np.array([0.0, 0.0, 0.0, 0.0])
-        corrected = np.array([0.3, 0.7, -0.4, 1.5])  # 3 success, 1 fail
+        corrected = np.array(
+            [0.3, 0.7, -0.4, 1.5]
+        )  # 2 success (0.3, -0.4), 2 fail (0.7, 1.5)
 
         success_rate = deskew_success_rate(corrected, gt, threshold=0.5)
-        assert success_rate == pytest.approx(0.75)
+        assert success_rate == pytest.approx(0.5)
 
 
 class TestNoiseMetrics:
