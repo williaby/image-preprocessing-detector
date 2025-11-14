@@ -720,7 +720,7 @@ ls -l data/benchmarks/doclaynet
 - [benchmarks/README.md](../benchmarks/README.md) - Benchmarking framework overview
 - [benchmarks/registry.yml](../benchmarks/registry.yml) - Benchmark suite definitions
 - [CITATIONS.md](../CITATIONS.md) - Complete citation information
-- [docs/PUBLIC_DATASET_COVERAGE.md](PUBLIC_DATASET_COVERAGE.md) - Dataset coverage analysis
+- [PUBLIC_DATASET_COVERAGE.md](../research/public-dataset-coverage.md) - Dataset coverage analysis
 
 ---
 

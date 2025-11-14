@@ -44,7 +44,7 @@ Download one or more base document datasets to use as source material:
 # Create base dataset directory
 mkdir -p data/raw/tobacco800
 
-# Download and extract (example - check DATASET_INSTALLATION.md for actual URLs)
+# Download and extract (example - check dataset-installation.md for actual URLs)
 cd data/raw/tobacco800
 wget https://example.com/tobacco800.tar.gz
 tar -xzf tobacco800.tar.gz
@@ -54,7 +54,7 @@ cd ../../..
 ls -lh data/raw/tobacco800/
 ```
 
-**For complete download instructions**, see [DATASET_INSTALLATION.md](DATASET_INSTALLATION.md).
+**For complete download instructions**, see [DATASET_INSTALLATION.md](dataset-installation.md).
 
 ### 2. Python Dependencies
 
@@ -455,7 +455,7 @@ After generating and uploading the dataset:
    - [notebooks/colab/phase2_iqa_training.ipynb](../notebooks/colab/phase2_iqa_training.ipynb)
 
 3. **Follow Training Guide**:
-   - [COLAB_TRAINING_GUIDE.md](COLAB_TRAINING_GUIDE.md)
+   - [COLAB_TRAINING_GUIDE.md](colab-training.md)
 
 ---
 
