@@ -288,17 +288,13 @@ class MetadataBuilder:
             thresholds={},
         )
 
-        # Phase 8 placeholder values (not yet implemented)
-        from image_preprocessing_detector.schema import (
-            DQSMetadata,
-            OCRRoutingStrategy,
-            PDFType,
-        )
-
-        placeholder_dqs = DQSMetadata(
-            degradation_score=0.5,
-            structural_complexity_score=0.5,
-        )
+        # Phase 8 fields: Set to None until Phase 6-8 implementations complete
+        # These will be populated by:
+        # - pdf_type: Phase 8 PDF classifier
+        # - pre_ocr_risk: Phase 8 risk scorer
+        # - dqs: Phase 8 DQS calculator
+        # - ocr_routing_recommendation: Phase 8 routing engine
+        # - page_layout_summary: Phase 6 layout-lite detector (already defaults to empty list)
 
         metadata = DocumentMetadata(
             document_id=self.document_id,
@@ -308,11 +304,12 @@ class MetadataBuilder:
             upscaling=self.upscaling_metadata,  # Phase 1B: Use upscaling metadata if set
             processing_version=proc_version,
             pages=self.pages,
-            # Phase 8 placeholders (not yet implemented)
-            pdf_type=PDFType.IMAGE_ONLY,
-            pre_ocr_risk=0.5,
-            dqs=placeholder_dqs,
-            ocr_routing_recommendation=OCRRoutingStrategy.OCR_ADVANCED,
+            # Phase 8 fields (optional until implementation)
+            pdf_type=None,
+            pre_ocr_risk=None,
+            dqs=None,
+            ocr_routing_recommendation=None,
+            # page_layout_summary defaults to empty list (will be populated in Phase 6)
         )
 
         logger.info(

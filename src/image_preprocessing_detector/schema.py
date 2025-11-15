@@ -312,9 +312,9 @@ class DocumentMetadata(BaseModel):
         ],
     )
 
-    # Phase 8: Routing Metadata (REQUIRED for Project B handoff)
-    pdf_type: PDFType = Field(
-        ...,
+    # Phase 8: Routing Metadata (Optional until Phase 8 implementation, then REQUIRED for Project B handoff)
+    pdf_type: PDFType | None = Field(
+        None,
         description="Phase 8: PDF type classification (image_only/born_digital/hybrid)",
     )
     languages: list[str] = Field(
@@ -324,17 +324,17 @@ class DocumentMetadata(BaseModel):
     has_non_latin: bool = Field(
         default=False, description="Phase 8: Document contains non-Latin scripts"
     )
-    pre_ocr_risk: float = Field(
-        ...,
+    pre_ocr_risk: float | None = Field(
+        None,
         ge=0.0,
         le=1.0,
         description="Phase 8: Pre-OCR processing risk score 0-1 (for routing decisions)",
     )
-    dqs: DQSMetadata = Field(
-        ..., description="Phase 8: Document Quality Score (degradation + complexity)"
+    dqs: DQSMetadata | None = Field(
+        None, description="Phase 8: Document Quality Score (degradation + complexity)"
     )
-    ocr_routing_recommendation: OCRRoutingStrategy = Field(
-        ...,
+    ocr_routing_recommendation: OCRRoutingStrategy | None = Field(
+        None,
         description="Phase 8: Recommended OCR strategy for Project B",
     )
     page_layout_summary: list[PageLayoutSummary] = Field(
