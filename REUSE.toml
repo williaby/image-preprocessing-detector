@@ -49,9 +49,9 @@ path = [
     ".readthedocs.yaml",
     "mkdocs.yml",
     "poetry.lock",  # Dependency lockfile for reproducible builds
-    "requirements.txt",  # Generated from poetry export
-    "requirements-dev.txt",  # Generated from poetry export
+    "requirements/**/*.txt",  # Generated from poetry export
     "benchmarks/labelmaps/**/*.yaml",  # Benchmark label mappings
+    ".zenodo.json",  # Zenodo metadata for DOI
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"

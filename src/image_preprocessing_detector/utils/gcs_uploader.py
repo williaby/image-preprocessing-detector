@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 #
-# SPDX-License-Identifier: MIT
 
 """GCS artifact uploader for model training runs.
 
