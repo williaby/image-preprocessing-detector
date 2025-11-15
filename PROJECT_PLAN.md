@@ -1022,51 +1022,481 @@ Albumentations pipeline (see Training Data Strategy)
 
 **Priority: HIGH - Core ML functionality**
 
-**Tasks:**
+**Duration**: 25 working days (5 weeks)
+**Total Sprints**: 38 sprints (~130 hours of implementation + training time)
 
-1. **Data Collection & Augmentation** (Week 10)
-   - Download OmniDocBench and OHR-Bench datasets
-   - Build Albumentations augmentation pipeline
-   - Generate 50k synthetic augmented images
-   - Weak supervision: BRISQUE/NIQE scores for initial labels
-   - Manual validation on 10k ambiguous samples
+---
 
-2. **Teacher Model Training - ResNet-50** (Weeks 11-12)
-   - Implement multi-head ResNet-50 architecture
-   - 5 heads: blur, noise, skew, illumination, artifacts
-   - Training loop with early stopping, checkpointing
-   - Hyperparameter tuning (learning rate, batch size)
-   - Cross-validation on OHR-Bench real-world validation set
+#### Week 10: Data Collection & Augmentation Pipeline
 
-3. **Student Model Training - ResNet-18** (Week 13)
-   - Implement multi-head ResNet-18 architecture (same heads as teacher)
-   - Knowledge distillation training loop
-   - Soft labels from teacher + hard labels from weak supervision
-   - Temperature-scaled KL divergence loss
-   - Hyperparameter tuning for distillation (alpha, temperature)
+**Milestone 10.1: Dataset Acquisition** (Day 16-17, 6 sprints)
 
-4. **Model Evaluation** (Week 13)
-   - Compute per-head Precision, Recall, F1, ROC-AUC
-   - Mean Average Precision (mAP)
-   - Calibration: ECE, reliability diagrams
-   - Student-teacher agreement: KL divergence
-   - Confusion matrix analysis
+- **Sprint 3.1.1**: Download and verify OmniDocBench dataset (4 hours)
+  - Download OmniDocBench from official repository
+  - Verify file integrity (checksums)
+  - Extract and organize dataset (train/val/test splits)
+  - Create dataset inventory (JSON manifest with counts, file sizes)
+  - Add unit test for dataset loader
 
-5. **Model Optimization** (Week 14)
-   - Temperature scaling for calibration
-   - Threshold tuning per head (maximize F1)
-   - ONNX export for both teacher and student
-   - INT8 quantization for student (ONNX Runtime)
-   - TensorRT optimization for GPU inference (optional)
+- **Sprint 3.1.2**: Download and verify OHR-Bench dataset (3 hours)
+  - Download OHR-Bench from official repository
+  - Verify file integrity
+  - Extract and organize dataset
+  - Document dataset structure
+  - Add unit test for dataset loader
 
-6. **Integration** (Week 14)
-   - Implement src/detection/iqa_ml.py
-   - Load ONNX models in inference pipeline
-   - Implement uncertainty gate for teacher escalation
-   - Classical IQA discrepancy checks
-   - Update DocumentMetadata schema with ml_iqa and teacher_iqa fields
+- **Sprint 3.1.3**: Download clean document datasets (DocBank, born-digital PDFs) (4 hours)
+  - Download DocBank subset (~5k clean pages)
+  - Collect born-digital PDFs (arXiv papers, ~2k pages)
+  - Render PDFs to high-DPI images (300 DPI)
+  - Create clean image baseline dataset
+  - Add dataset validation script
 
-**Deliverables:**
+- **Sprint 3.1.4**: Set up data versioning with DVC (3 hours)
+  - Initialize DVC in project
+  - Configure remote storage (S3 or local)
+  - Add datasets to DVC tracking
+  - Create `.dvc` files for version control
+  - Document DVC workflow in README
+
+- **Sprint 3.1.5**: Create dataset analysis notebook (2 hours)
+  - Jupyter notebook for dataset EDA
+  - Image resolution distribution
+  - Quality distribution (for OHR-Bench)
+  - Class balance analysis
+  - Document findings
+
+- **Sprint 3.1.6**: Implement weak supervision labeling (4 hours)
+  - Create `scripts/weak_supervision_labeling.py`
+  - Use BRISQUE/NIQE/PIQE for quality estimation
+  - Use Laplacian variance for blur
+  - Use histogram metrics for contrast
+  - Generate initial labels for clean images
+  - Save labels to JSON
+
+**Milestone 10.2: Augmentation Pipeline** (Day 18-19, 7 sprints)
+
+- **Sprint 3.2.1**: Set up Albumentations augmentation framework (2 hours)
+  - Install Albumentations
+  - Create `src/training/augmentation.py`
+  - Define base augmentation pipeline structure
+  - Add configuration for augmentation parameters
+  - Add unit tests
+
+- **Sprint 3.2.2**: Implement noise augmentations (3 hours)
+  - Add GaussNoiseTransform (configurable sigma)
+  - Add ISONoise (camera sensor noise)
+  - Add MultiplicativeNoise (Poisson)
+  - Tunable intensity levels (light/medium/heavy)
+  - Add augmentation visualization script
+
+- **Sprint 3.2.3**: Implement blur augmentations (3 hours)
+  - Add GaussianBlur (variable kernel sizes)
+  - Add MotionBlur (various angles)
+  - Add Defocus blur
+  - Tunable intensity levels
+  - Add visualization
+
+- **Sprint 3.2.4**: Implement contrast & illumination augmentations (3 hours)
+  - Add RandomBrightnessContrast
+  - Add CLAHE with variable clip limits
+  - Add uneven illumination gradients (vignetting)
+  - Add shadow simulation
+  - Add visualization
+
+- **Sprint 3.2.5**: Implement artifact augmentations (4 hours)
+  - Add JPEG compression artifacts (variable quality)
+  - Add halftone dithering patterns
+  - Add scan line artifacts
+  - Add paper texture overlay
+  - Add visualization
+
+- **Sprint 3.2.6**: Implement augmentation pipeline orchestrator (3 hours)
+  - Create `AugmentationPipeline` class
+  - Sequential vs compositional augmentation modes
+  - Configurable augmentation combinations
+  - Augmentation parameter sampling
+  - Add unit tests
+
+- **Sprint 3.2.7**: Generate 50k synthetic augmented dataset (4 hours - includes compute time)
+  - Script: `scripts/generate_augmented_dataset.py`
+  - Apply augmentations to clean images
+  - Generate labels from augmentation params
+  - Save augmented images + labels
+  - Create train/val/test splits (70/15/15)
+  - Document dataset statistics
+
+**Milestone 10.3: Manual Validation & Quality Control** (Day 20, 5 sprints)
+
+- **Sprint 3.3.1**: Create manual validation interface (3 hours)
+  - Simple Tkinter or Streamlit UI
+  - Display image + predicted labels (from weak supervision)
+  - Allow annotator to correct labels
+  - Save corrections to JSON
+  - Track annotation progress
+
+- **Sprint 3.3.2**: Sample ambiguous cases for manual review (2 hours)
+  - Identify low-confidence weak supervision predictions
+  - Sample 2k images with uncertainty >threshold
+  - Prioritize edge cases (borderline blur, mild artifacts)
+  - Create annotation task list
+  - Document sampling strategy
+
+- **Sprint 3.3.3**: Manual annotation session 1 (4 hours - manual work)
+  - Annotate 1k images using validation UI
+  - Correct weak supervision labels
+  - Document annotation guidelines
+  - Track inter-annotator agreement (if multiple annotators)
+
+- **Sprint 3.3.4**: Manual annotation session 2 (4 hours - manual work)
+  - Annotate remaining 1k images
+  - Complete annotation task list
+  - Finalize corrected labels
+  - Merge with weak supervision labels
+
+- **Sprint 3.3.5**: Create final training dataset (2 hours)
+  - Merge augmented images with corrected labels
+  - Final train/val/test split
+  - Create PyTorch dataset class
+  - Add data loader with batching
+  - Verify dataset integrity (no label mismatches)
+
+---
+
+#### Weeks 11-12: Teacher Model Training (ResNet-50)
+
+**Milestone 11.1: Model Architecture Implementation** (Day 21-22, 6 sprints)
+
+- **Sprint 3.4.1**: Implement ResNet-50 backbone (3 hours)
+  - Create `src/models/resnet_teacher.py`
+  - Load pretrained ResNet-50 from torchvision
+  - Modify final layer for multi-head output
+  - Add forward pass logic
+  - Add unit test
+
+- **Sprint 3.4.2**: Implement multi-head architecture (4 hours)
+  - 5 parallel heads: blur, noise, skew, illumination, artifacts
+  - Each head: FC layer → BatchNorm → ReLU → Dropout → Output
+  - Output per head: binary classification (0/1) + confidence score
+  - Add head-specific loss functions
+  - Add unit test for each head
+
+- **Sprint 3.4.3**: Implement loss functions (3 hours)
+  - BCEWithLogitsLoss for binary classification
+  - MSELoss for regression scores (0-1 range)
+  - Weighted combination (config tunable)
+  - Per-head loss weighting (prioritize critical heads)
+  - Add unit test
+
+- **Sprint 3.4.4**: Implement training loop (4 hours)
+  - Create `src/training/teacher_trainer.py`
+  - Training loop with batching
+  - Optimizer: AdamW with weight decay
+  - Learning rate scheduler: Cosine annealing
+  - Gradient clipping
+  - Add logging (structlog)
+
+- **Sprint 3.4.5**: Implement validation & checkpointing (3 hours)
+  - Validation loop
+  - Per-epoch validation metrics (per-head F1, mAP)
+  - Early stopping (patience=5 epochs)
+  - Model checkpointing (save best model)
+  - Add checkpoint loading
+
+- **Sprint 3.4.6**: Configure hyperparameters (2 hours)
+  - Create `configs/teacher_training.yaml`
+  - Hyperparameters: batch_size=32, lr=1e-3, epochs=50
+  - Data augmentation params
+  - Early stopping config
+  - Device selection (GPU/CPU)
+
+**Milestone 11.2: Initial Training Run** (Day 23-25, 5 sprints + GPU time)
+
+- **Sprint 3.5.1**: Set up training environment (2 hours)
+  - Configure Modal workspace for GPU training (if using Modal)
+  - Test GPU availability and CUDA setup
+  - Verify dataset accessibility from training script
+  - Set up experiment tracking (MLflow or Weights & Biases)
+  - Document training setup
+
+- **Sprint 3.5.2**: Run initial training (baseline) (4 hours active + 24 hours GPU compute)
+  - Start training run with baseline hyperparameters
+  - Monitor training logs (loss, accuracy, GPU utilization)
+  - Track validation metrics per epoch
+  - Save training curves
+  - Document baseline performance
+
+- **Sprint 3.5.3**: Analyze initial training results (3 hours)
+  - Review training curves (loss, accuracy over epochs)
+  - Identify overfitting/underfitting signals
+  - Per-head performance analysis
+  - Confusion matrix per head
+  - Document findings and recommended adjustments
+
+- **Sprint 3.5.4**: Hyperparameter tuning experiment design (2 hours)
+  - Identify hyperparams to tune (lr, batch_size, weight decay)
+  - Define search space (grid search or Bayesian optimization)
+  - Create tuning script using Optuna or Ray Tune
+  - Configure parallel runs (if using Modal)
+  - Document tuning strategy
+
+- **Sprint 3.5.5**: Run hyperparameter tuning (8 hours active + 48 hours compute)
+  - Launch hyperparameter search
+  - Monitor tuning runs
+  - Track best configurations
+  - Save tuning results
+  - Select best hyperparameters
+
+**Milestone 11.3: Teacher Model Finalization** (Day 26-27, 6 sprints)
+
+- **Sprint 3.6.1**: Train final teacher model with best hyperparameters (4 hours active + 24 hours compute)
+  - Retrain with optimized hyperparameters
+  - Use full training set (no holdout for tuning)
+  - Monitor training to completion
+  - Save final model checkpoint
+  - Document final training run
+
+- **Sprint 3.6.2**: Evaluate teacher on OHR-Bench test set (3 hours)
+  - Load trained teacher model
+  - Run inference on OHR-Bench test set (real-world documents)
+  - Compute per-head metrics (Precision, Recall, F1, ROC-AUC)
+  - Compute overall mAP
+  - Generate evaluation report
+
+- **Sprint 3.6.3**: Calibration analysis (3 hours)
+  - Compute Expected Calibration Error (ECE)
+  - Generate reliability diagrams per head
+  - Identify miscalibrated heads
+  - Apply temperature scaling if needed
+  - Re-evaluate after calibration
+
+- **Sprint 3.6.4**: Export teacher to ONNX (2 hours)
+  - Export PyTorch model to ONNX format
+  - Verify ONNX model outputs match PyTorch
+  - Test ONNX Runtime inference
+  - Measure ONNX inference latency
+  - Document export process
+
+- **Sprint 3.6.5**: Register teacher model (2 hours)
+  - Save model to local model registry (`models/teacher/`)
+  - Version with git hash + timestamp
+  - Create model card (architecture, metrics, dataset)
+  - Optional: Register in MLflow or Weights & Biases
+  - Document model registration
+
+- **Sprint 3.6.6**: Generate teacher performance report (3 hours)
+  - Create `docs/reports/teacher_model_report.md`
+  - Include metrics (mAP, per-head F1, ECE)
+  - Include training curves and confusion matrices
+  - Latency benchmarks (GPU/CPU)
+  - Model size and deployment considerations
+  - Document known limitations
+
+---
+
+#### Week 13: Student Model Training & Evaluation
+
+**Milestone 13.1: Student Model Implementation** (Day 28-29, 6 sprints)
+
+- **Sprint 3.7.1**: Implement ResNet-18 student architecture (3 hours)
+  - Create `src/models/resnet_student.py`
+  - Load pretrained ResNet-18 from torchvision
+  - Same multi-head structure as teacher (5 heads)
+  - Smaller hidden dimensions (512 vs 2048)
+  - Add unit test
+
+- **Sprint 3.7.2**: Implement knowledge distillation loss (4 hours)
+  - KL divergence loss (student logits vs teacher logits)
+  - Temperature-scaled distillation (T=4.0)
+  - Hard label loss (student vs ground truth)
+  - Combined loss: alpha * distillation + (1-alpha) * hard_label
+  - Add unit test for loss function
+
+- **Sprint 3.7.3**: Implement student training loop (3 hours)
+  - Create `src/training/student_trainer.py`
+  - Load frozen teacher model for soft labels
+  - Training loop with distillation loss
+  - Optimizer: AdamW
+  - Learning rate scheduler: Cosine annealing
+  - Add logging
+
+- **Sprint 3.7.4**: Generate teacher soft labels for training set (2 hours)
+  - Run teacher inference on full training set
+  - Save teacher soft labels (logits) to disk
+  - Avoids recomputing teacher during student training
+  - Create soft label dataset
+  - Verify soft labels
+
+- **Sprint 3.7.5**: Configure student training hyperparameters (2 hours)
+  - Create `configs/student_training.yaml`
+  - Hyperparameters: batch_size=32, lr=1e-3, epochs=30
+  - Distillation alpha=0.7 (70% teacher, 30% hard labels)
+  - Temperature=4.0
+  - Early stopping config
+
+- **Sprint 3.7.6**: Hyperparameter search for distillation (4 hours active + 12 hours compute)
+  - Tune alpha (distillation weight) and temperature
+  - Grid search: alpha in [0.5, 0.7, 0.9], temp in [2, 4, 6]
+  - Track student-teacher agreement (KL divergence)
+  - Select best configuration
+  - Document findings
+
+**Milestone 13.2: Student Training & Evaluation** (Day 30-32, 7 sprints)
+
+- **Sprint 3.8.1**: Train student model (4 hours active + 12 hours compute)
+  - Train with best distillation hyperparameters
+  - Monitor student-teacher agreement
+  - Save checkpoints per epoch
+  - Track validation metrics
+  - Save final student model
+
+- **Sprint 3.8.2**: Evaluate student on test set (3 hours)
+  - Run inference on OHR-Bench test set
+  - Compute per-head metrics (Precision, Recall, F1, ROC-AUC)
+  - Compute overall mAP
+  - Compare with teacher metrics
+  - Generate evaluation report
+
+- **Sprint 3.8.3**: Compute student-teacher agreement (2 hours)
+  - KL divergence between student and teacher outputs
+  - Per-head agreement analysis
+  - Identify heads where student underperforms
+  - Document agreement metrics
+  - Target: KL divergence <0.15
+
+- **Sprint 3.8.4**: Calibration analysis for student (3 hours)
+  - Compute Expected Calibration Error (ECE)
+  - Generate reliability diagrams per head
+  - Apply temperature scaling if needed
+  - Re-evaluate after calibration
+  - Target: ECE <0.05
+
+- **Sprint 3.8.5**: Confusion matrix analysis (2 hours)
+  - Per-head confusion matrices
+  - Identify systematic errors (false positives/negatives)
+  - Compare student vs teacher error patterns
+  - Document error analysis
+  - Recommend improvements
+
+- **Sprint 3.8.6**: Latency benchmarking (2 hours)
+  - Benchmark student inference latency (CPU/GPU)
+  - Compare with teacher latency
+  - Test batch inference (1, 8, 16, 32 images)
+  - Measure throughput (images/sec)
+  - Document benchmarks
+
+- **Sprint 3.8.7**: Generate student performance report (3 hours)
+  - Create `docs/reports/student_model_report.md`
+  - Include metrics (mAP, per-head F1, ECE, KL divergence)
+  - Latency comparisons with teacher
+  - Model size comparison
+  - Deployment recommendations
+  - Document trade-offs
+
+---
+
+#### Week 14: Model Optimization & Integration
+
+**Milestone 14.1: Model Optimization** (Day 33-34, 6 sprints)
+
+- **Sprint 3.9.1**: Export student to ONNX (2 hours)
+  - Export PyTorch student to ONNX
+  - Verify ONNX outputs match PyTorch
+  - Test ONNX Runtime inference
+  - Measure ONNX latency
+  - Document export
+
+- **Sprint 3.9.2**: INT8 quantization for student (4 hours)
+  - Quantize student ONNX model to INT8
+  - Use ONNX Runtime quantization
+  - Calibration dataset (1k representative images)
+  - Verify quantized accuracy (target: <2% mAP drop)
+  - Measure quantized latency (target: 2-3x speedup on CPU)
+
+- **Sprint 3.9.3**: TensorRT optimization for GPU (optional) (3 hours)
+  - Convert ONNX to TensorRT engine
+  - FP16 precision for GPU
+  - Benchmark TensorRT latency
+  - Compare with ONNX Runtime
+  - Document TensorRT deployment
+
+- **Sprint 3.9.4**: Threshold tuning per head (3 hours)
+  - Optimize decision thresholds per head (maximize F1)
+  - Use validation set for threshold search
+  - Document optimal thresholds per head
+  - Save thresholds to config
+  - Re-evaluate with tuned thresholds
+
+- **Sprint 3.9.5**: Create model deployment package (2 hours)
+  - Package models: teacher.onnx, student.onnx, student_int8.onnx
+  - Include configs: thresholds, temperature scaling params
+  - Create model manifest (versions, metrics, checksums)
+  - Document deployment requirements
+  - Test loading from package
+
+- **Sprint 3.9.6**: Register optimized models (2 hours)
+  - Save optimized models to registry
+  - Version all model variants
+  - Create deployment guide
+  - Document model selection logic (GPU vs CPU)
+  - Update model cards
+
+**Milestone 14.2: Pipeline Integration** (Day 35-37, 7 sprints)
+
+- **Sprint 3.10.1**: Implement ML IQA module (4 hours)
+  - Create `src/detection/iqa_ml.py`
+  - MLIQADetector class
+  - Load ONNX models (student/teacher)
+  - Device selection logic (GPU/CPU)
+  - Run inference and return scores
+  - Add unit tests
+
+- **Sprint 3.10.2**: Implement uncertainty gate (3 hours)
+  - Add function: `should_escalate_to_teacher(student_output) -> bool`
+  - Check softmax entropy threshold
+  - Check confidence score thresholds per head
+  - Return escalation decision + reason
+  - Add unit tests
+
+- **Sprint 3.10.3**: Implement classical IQA discrepancy check (3 hours)
+  - Compare student IQA with classical IQA
+  - Compute per-head discrepancy
+  - Trigger teacher if discrepancy >threshold
+  - Log discrepancy reasons
+  - Add unit tests
+
+- **Sprint 3.10.4**: Integrate ML IQA into processing pipeline (4 hours)
+  - Update `src/ingestion/document_processor.py`
+  - Call MLIQADetector after classical IQA
+  - Run student inference by default
+  - Trigger teacher based on uncertainty gate + discrepancy
+  - Populate ml_iqa and teacher_iqa fields in PageMetadata
+  - Add integration test
+
+- **Sprint 3.10.5**: Update DocumentMetadata schema for ML IQA (2 hours)
+  - Add ml_iqa field (source, scores per head, confidences)
+  - Add teacher_iqa field (scores per head, escalation_reason)
+  - Ensure backward compatibility
+  - Update JSON schema export
+  - Add schema validation tests
+
+- **Sprint 3.10.6**: Create end-to-end integration test (3 hours)
+  - Test: PDF → ML IQA → JSON output
+  - Test cases: student-only, teacher escalation (high entropy), teacher escalation (discrepancy)
+  - Validate all ml_iqa fields populated
+  - Ensure teacher only runs when triggered
+  - 100% pass rate
+
+- **Sprint 3.10.7**: Performance benchmarking (2 hours)
+  - Measure latency impact of ML IQA
+  - Baseline: Phase 2 pipeline
+  - Compare: student-only vs student+teacher
+  - Target: <50ms overhead (student-only), <120ms (with teacher)
+  - Document results
+
+---
+
+**Phase 3 Deliverables:**
 - ✅ Trained ResNet-50 teacher model (PyTorch + ONNX)
 - ✅ Trained ResNet-18 student model (PyTorch + ONNX)
 - ✅ Training dataset (50k images, versioned with DVC)
@@ -1086,68 +1516,65 @@ Albumentations pipeline (see Training Data Strategy)
 
 **Priority: MEDIUM - Cost optimization and production readiness**
 
-**Tasks:**
+**Duration**: 15 working days (3 weeks)
+**Total Sprints**: 24 sprints (~82 hours of implementation work)
 
-1. **Device Probing Module** (Week 15)
-   - GPU availability detection (CUDA, memory, utilization)
-   - CPU characteristics (core count, current load)
-   - Modal GPU availability (quota, credentials, health check)
-   - Device selection logic: Local GPU → Local CPU → Modal GPU
+**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
 
-2. **Priority Rules Implementation** (Week 15)
-   - Student inference device priority
-   - Teacher inference device priority (BLOCK on CPU in production mode)
-   - Configuration options:
-     - `allow_modal_gpu`
-     - `max_local_gpu_utilization`
-     - `max_tolerable_cpu_latency_ms`
-     - `allow_teacher_on_cpu_for_debug`
-     - `modal_budget_per_run`
-   - Per-document and per-batch teacher usage limits
+---
 
-3. **Modal GPU Integration** (Week 16)
-   - Modal.com workspace setup
-   - Teacher model deployment to Modal
-   - Remote inference API
-   - Error handling and fallback logic
-   - Cost tracking and quota enforcement
+#### Week 15: Device Probing & Priority Rules (Day 38-41, 13 sprints)
 
-4. **Logging & Metrics** (Week 16)
-   - Device selection decision logging
-   - Teacher escalation reason tracking
-   - Cost tracking (Modal GPU usage)
-   - Performance metrics: latency per device type
-   - Teacher vs student performance comparison
+**Key Milestones**:
+- Device Probing Module (6 sprints): GPU/CPU/Modal detection and selection logic
+- Priority Rules Implementation (7 sprints): Student/teacher device priority, CPU blocking, budget enforcement
 
-5. **Performance Optimization** (Week 17)
-   - Profiling: cProfile on critical paths
-   - Bottleneck analysis: CPU vs GPU vs IO bounds
-   - Optimizations:
-     - Batch inference: Process multiple pages in parallel
-     - Async IO: Separate rasterization and inference queues
-     - Early exit: Skip heavy models on clean pages
-     - Cache: DPI detection, rendered images
-   - TensorRT INT8 quantization for GPU inference
+**Notable Sprints**:
+- Sprint 4.1.4: Implement device selection logic with priority: Local GPU → Local CPU → Modal GPU
+- Sprint 4.2.3: Implement teacher CPU blocking (production mode) - CRITICAL for cost control
+- Sprint 4.2.4-4.2.5: Per-document and per-batch teacher page limits
 
-6. **Worker Pool Architecture** (Week 17)
-   - Async worker pool design (optional: Celery or RQ)
-   - Work queue with backpressure handling
-   - Resource monitoring and caps (memory, GPU)
-   - Graceful degradation: Fallback to CPU if GPU unavailable
+#### Week 16: Modal GPU Integration & Metrics (Day 42-46, 13 sprints)
 
-**Deliverables:**
-- ✅ Device-priority execution system
+**Key Milestones**:
+- Modal GPU Integration (8 sprints): Deploy teacher to Modal, remote inference API, cost tracking
+- Logging & Metrics (5 sprints): Comprehensive device logging, performance metrics, dashboards
+
+**Notable Sprints**:
+- Sprint 4.3.2: Implement Modal teacher inference function (deploy to serverless GPU)
+- Sprint 4.3.5: Implement Modal cost tracking (estimate cost per invocation)
+- Sprint 4.4.4: Create performance dashboard (Streamlit) for real-time monitoring
+
+#### Week 17: Performance Optimization & Worker Pool (Day 47-52, 11 sprints)
+
+**Key Milestones**:
+- Performance Optimization (6 sprints): Profiling, batch inference, async IO, caching, TensorRT
+- Worker Pool Architecture (5 sprints): Async workers, task queue, resource caps, graceful degradation
+
+**Notable Sprints**:
+- Sprint 4.5.2: Implement batch inference for student (target: 2x speedup)
+- Sprint 4.5.6: TensorRT INT8 quantization for GPU (optional, advanced optimization)
+- Sprint 4.6.2: Implement task queue with Celery/RQ (optional, for production scale)
+
+---
+
+**Phase 4 Deliverables:**
+- ✅ Device-priority execution system (24 sprints)
 - ✅ Modal GPU integration (optional, configurable)
 - ✅ Cost tracking and quota enforcement
-- ✅ Performance optimization (batch inference, TensorRT)
+- ✅ Performance optimization (batch inference, async IO, caching, TensorRT)
 - ✅ Production-ready worker pool architecture
+- ✅ Comprehensive logging and metrics
+- ✅ Performance reports and dashboards
 
-**Success Criteria:**
+**Phase 4 Success Criteria:**
 - Device selection accuracy: 100% (follows priority rules)
 - Modal GPU usage: Within configured budget
 - Teacher CPU blocking: 100% in production mode
 - Latency p95: <150ms per page (GPU), <400ms (CPU)
 - Throughput: >6 pages/sec per GPU worker, >2 pages/sec per CPU worker
+- Performance improvement: >2x from batch inference
+- Test coverage: >80% for all new modules
 
 ---
 
@@ -1155,58 +1582,65 @@ Albumentations pipeline (see Training Data Strategy)
 
 **Priority: HIGH - Productionization**
 
-**Tasks:**
+**Duration**: 15 working days (3 weeks)
+**Total Sprints**: 22 sprints (~75 hours of implementation work)
 
-1. **Comprehensive Testing** (Week 18)
-   - Unit tests: 80%+ coverage (pytest)
-   - Integration tests: End-to-end pipeline tests
-   - Performance tests: Latency and throughput benchmarks
-   - Regression tests: JSON Accuracy on holdout set
-   - Device fallback tests: GPU unavailable scenarios
-   - Modal GPU integration tests
+**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
 
-2. **API Development** (Week 19)
-   - FastAPI service with endpoints:
-     - POST /process: Single file upload
-     - POST /batch: Batch file upload
-     - GET /status/{job_id}: Job status polling
-     - GET /result/{job_id}: Download JSON result
-   - Input validation: File size limits, format checks
-   - Authentication: API key-based auth (optional)
-   - Rate limiting: Per-user quotas
+---
 
-3. **Deployment** (Week 19)
-   - Dockerfile for service container
-   - Docker Compose for local development
-   - Kubernetes manifests for production (optional)
-   - Environment configuration (env vars for model paths, thresholds)
-   - Health checks and readiness probes
-   - Logging: Structured JSON logs
-   - Monitoring: Prometheus metrics (latency, throughput, errors)
+#### Week 18: Comprehensive Testing (Day 53-57, 15 sprints)
 
-4. **Documentation** (Week 20)
-   - API documentation: OpenAPI/Swagger
-   - Deployment guide: Docker and Kubernetes
-   - Model documentation: Architecture, training details, performance
-   - User guide: Example usage, output format explanation
-   - Architecture Decision Records (ADRs):
-     - ADR: Teacher-student architecture rationale
-     - ADR: Device-priority execution design
-     - ADR: Layout-lite vs full layout boundaries
-   - Integration guide for Project B handoff
+**Key Milestones**:
+- Unit Testing Expansion (6 sprints): Achieve 80%+ coverage across all modules
+- Integration Testing (5 sprints): End-to-end pipeline, device fallback, batch processing
+- Stress Testing (4 sprints): Large documents, concurrent batches, edge cases
 
-**Deliverables:**
-- ✅ Comprehensive test suite (80%+ coverage)
-- ✅ FastAPI service with Docker container
-- ✅ Production-ready deployment artifacts
+**Notable Sprints**:
+- Sprint 5.1.6: Achieve 80%+ overall test coverage - CRITICAL milestone
+- Sprint 5.2.1: End-to-end pipeline tests (all phases integrated, all schema fields validated)
+- Sprint 5.3.2: Concurrent batch stress test (10 concurrent jobs, 100 PDFs each)
+
+#### Week 19: API Development & Deployment (Day 58-62, 11 sprints)
+
+**Key Milestones**:
+- FastAPI Service (7 sprints): REST API with /process, /batch, /status, /result endpoints
+- Deployment Artifacts (4 sprints): Docker, Docker Compose, Kubernetes (optional), environment config
+
+**Notable Sprints**:
+- Sprint 5.4.2: Implement POST /process endpoint (single file upload with validation)
+- Sprint 5.4.3: Implement POST /batch endpoint (async job processing with job_id tracking)
+- Sprint 5.5.1: Create Dockerfile (multi-stage build, target: <2GB image size)
+
+#### Week 20: Documentation & Final Integration (Day 63-65, 7 sprints)
+
+**Key Milestones**:
+- Documentation (7 sprints): API reference, deployment guide, model docs, user guide, ADRs, Project B integration
+
+**Notable Sprints**:
+- Sprint 5.6.1: Write API documentation (OpenAPI/Swagger with examples)
+- Sprint 5.6.5: Create Architecture Decision Records (ADR-005: Modal GPU Integration)
+- Sprint 5.6.6: Write integration guide for Project B (handoff contract validation)
+
+---
+
+**Phase 5 Deliverables:**
+- ✅ Comprehensive test suite (80%+ coverage, 22 sprints)
+- ✅ FastAPI service with async endpoints
+- ✅ Docker container and Docker Compose
+- ✅ Kubernetes manifests (optional)
 - ✅ Complete documentation (API, deployment, models, integration)
+- ✅ Architecture Decision Records (5 ADRs)
+- ✅ Integration guide for Project B
 
-**Success Criteria:**
+**Phase 5 Success Criteria:**
 - Test coverage: >80%
 - All integration tests pass
+- All stress tests pass
 - Docker container: <2GB
 - API response time: <150ms p95 (GPU), <400ms (CPU)
 - Documentation: Complete and reviewed
+- Project B handoff: Schema 100% compliant
 
 ---
 
@@ -1214,63 +1648,108 @@ Albumentations pipeline (see Training Data Strategy)
 
 **Priority: MEDIUM - Long-term production stability**
 
-**Tasks:**
+**Initial Setup Duration**: 10 working days (2 weeks)
+**Total Sprints (Initial Setup)**: 15 sprints (~50 hours of initial setup)
+**Ongoing Operations**: Weekly/monthly/quarterly tasks (see below)
 
-1. **Telemetry & Logging**
-   - Log all predictions with confidence scores
-   - Track issue frequencies and correction outcomes
-   - Performance metrics: Latency (p50, p95, p99), throughput
-   - Error tracking: Sentry or equivalent
-   - Teacher usage tracking and cost analytics
+**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
 
-2. **Monitoring Dashboard**
-   - Grafana dashboards for real-time metrics
-   - Prometheus scraping for service metrics
-   - Alerts: Latency spikes, error rate increases, model drift
-   - Resource monitoring: GPU utilization, memory usage, Modal costs
+---
 
-3. **Drift Detection**
-   - Feature distribution monitoring:
-     - Track image histogram statistics (mean, variance, entropy)
-     - Monitor confidence score distributions per IQA head
-     - KL divergence between production and training distributions
-   - Model performance monitoring:
-     - Periodic evaluation on held-out change-detection set
-     - Track mAP, F1 scores over time
-   - Alerting:
-     - Trigger alert if KL divergence > threshold
-     - Alert if mAP drops >5% from baseline
+#### Initial Setup (Weeks 21-22, 15 sprints)
 
-4. **Continuous Improvement Pipeline**
-   - **Data Flywheel**:
-     - Collect production failures (low confidence, user-reported errors)
-     - Sample for manual review and re-annotation
-     - Add to training set (incremental learning)
-   - **Active Learning**:
-     - Weekly mining of high-uncertainty samples
-     - Annotate and retrain quarterly
-   - **Model Retraining**:
-     - Scheduled retraining: Quarterly with updated data
-     - A/B testing: Deploy new model to 10% traffic, compare metrics
-     - Rollout: Gradual rollout if A/B test passes
+**Week 21: Telemetry & Logging (5 sprints)**
 
-5. **Periodic Calibration**
-   - Quarterly recalibration on fresh OHR-Bench validation set
-   - Recompute confidence thresholds per IQA head
-   - Update correction guardrail parameters
-   - Document threshold changes in version history
+**Key Milestones**:
+- Structured logging framework with rotation
+- Prediction and correction outcome logging
+- Error tracking with Sentry (optional)
+- Log aggregation pipeline (optional ELK stack)
 
-**Deliverables:**
-- Production monitoring dashboard
-- Drift detection system with alerting
-- Continuous improvement scripts (data flywheel, active learning)
-- Quarterly retraining and recalibration schedule
+**Notable Sprints**:
+- Sprint 6.1.1: Set up structured logging framework (JSON logs, rotation policy)
+- Sprint 6.1.4: Set up error tracking with Sentry (optional)
+- Sprint 6.1.5: Create log aggregation pipeline with ELK (optional)
 
-**Success Criteria:**
+**Week 22: Monitoring Dashboard (5 sprints)**
+
+**Key Milestones**:
+- Prometheus metrics collection
+- Grafana dashboards (system, application, model, cost)
+- Alerting rules for latency, errors, drift, cost
+- Cost analytics dashboard
+
+**Notable Sprints**:
+- Sprint 6.2.1: Set up Prometheus metrics collection
+- Sprint 6.2.2: Create Grafana dashboards (4 dashboards: system, app, model, cost)
+- Sprint 6.2.3: Configure alerting rules (latency spikes, error rate, GPU failure, budget)
+
+**Week 23: Drift Detection (5 sprints)**
+
+**Key Milestones**:
+- Feature distribution monitoring (KL divergence tracking)
+- Model performance monitoring (mAP, F1 trends)
+- Drift alerting (distribution shift, performance degradation)
+- Drift analysis dashboard
+
+**Notable Sprints**:
+- Sprint 6.3.1: Implement feature distribution monitoring (histogram stats, confidence distributions)
+- Sprint 6.3.2: Implement model performance monitoring (periodic evaluation on change-detection set)
+- Sprint 6.3.3: Set up drift alerting (KL divergence >0.3, mAP drop >5%)
+
+---
+
+**Phase 6 Deliverables (Initial Setup):**
+- ✅ Structured logging framework with rotation
+- ✅ Prometheus metrics collection
+- ✅ Grafana dashboards (system, application, model, cost)
+- ✅ Alert rules for latency, errors, drift, cost
+- ✅ Drift detection system with monitoring
+- ✅ Comprehensive monitoring documentation
+
+**Phase 6 Success Criteria (Initial Setup):**
 - Drift detection alerts within 1 week of distribution shift
+- Alerting functional for latency spikes, errors, cost overruns
+- Dashboards provide real-time visibility into system health
+- Documentation complete for monitoring and drift detection
+
+---
+
+### Phase 6 Ongoing Operations
+
+After initial setup, ongoing operations include:
+
+**Weekly Tasks**:
+- Review drift metrics (KL divergence, confidence distributions)
+- Review cost analytics (Modal usage, teacher escalation trends)
+- Mine high-uncertainty samples for active learning
+
+**Monthly Tasks**:
+- Run model performance evaluation on change-detection set
+- Analyze error logs for systematic failures
+- Update alert thresholds if needed
+
+**Quarterly Tasks**:
+- Retrain models with production failures added to dataset
+- Recalibrate confidence thresholds per IQA head
+- Update documentation with lessons learned
+- A/B test new model versions (deploy to 10% traffic, compare metrics)
+
+**Annual Tasks**:
+- Major model architecture updates
+- Dataset refresh (add new public datasets like updated OmniDocBench)
+- Infrastructure upgrades (GPU hardware, cloud providers)
+
+**Continuous Improvement Pipeline:**
+1. **Data Flywheel**: Collect production failures → manual review → add to training set → retrain quarterly
+2. **Active Learning**: Weekly mining of high-uncertainty samples → annotate → add to dataset
+3. **Model Retraining**: Quarterly retraining with updated data → A/B test → gradual rollout
+
+**Long-term Success Criteria:**
 - Model performance degradation <2% over 6 months
 - Active learning reduces annotation effort by >50%
 - 95% of production failures resolved in next model version
+- Cost per page trends downward over time (via optimizations)
 
 ---
 
