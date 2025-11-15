@@ -327,6 +327,7 @@ convention = "google"
 # isort configuration
 [tool.ruff.lint.isort]
 known-first-party = ["image_preprocessing_detector"]
+known-local-folder = ["validation", "benchmarks"]
 
 # Per-file ignores
 [tool.ruff.lint.per-file-ignores]

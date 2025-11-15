@@ -11,7 +11,6 @@ from pathlib import Path
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from validation.synthetic_generator import SyntheticImageGenerator
 
 from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
@@ -19,6 +18,8 @@ from image_preprocessing_detector.detection.iqa_classical import (
     SkewDetector,
 )
 from image_preprocessing_detector.detection.text_gate import TextGate
+
+from validation.synthetic_generator import SyntheticImageGenerator
 
 
 class CharacteristicCurveAnalyzer:
