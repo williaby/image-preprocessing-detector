@@ -2,19 +2,27 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Phase 3 YOLOv8 Training on Modal.
+"""Phase 6 Layout-Lite Training on Modal - YOLOv8 Coarse Region Detection.
 
-Layout Detection (tables, images, handwriting, formulas).
+Coarse page-level layout attributes (NOT full semantic layout):
+- Coarse regions: text_block, table_block, figure_block (3 classes)
+- Page attributes: layout_type, has_tables, has_figures, etc.
+
+NOTE: Full DocLayNet-style semantic layout detection is Project B's responsibility.
+      This phase provides only coarse layout attributes for routing decisions.
 
 Usage:
-    modal run modal/train_phase3_yolov8.py
+    modal run modal/train_phase6_layout_lite.py
 
 Monitor:
     https://modal.com/apps
 """
-# bandit: noqa: B108
+# ruff: noqa: T201, S108, PTH101, PTH103
+# Justification: Modal training script uses print for progress logging and /tmp for container-local storage
+# mypy: ignore-errors
+# Justification: Modal training placeholder script with incomplete implementation
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 import modal
 

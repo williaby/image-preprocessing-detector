@@ -124,6 +124,7 @@ allowed:
   - legal
   - safety
   - guardrails
+  - deprecated
 
   # Project Management
   - planning

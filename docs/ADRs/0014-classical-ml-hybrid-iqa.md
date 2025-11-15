@@ -1,23 +1,31 @@
 ---
 schema_type: common
-title: "ADR-014: Classical CV + ML Hybrid for IQA"
+title: "ADR-014: Classical CV + ML Hybrid for IQA (DEPRECATED)"
 description: "Combine classical computer vision methods with lightweight CNN for image
-  quality assessment"
+  quality assessment. DEPRECATED: ML architecture changed to ResNet teacher-student."
 tags:
 - adr
 - iqa
 - machine_learning
 - computer_vision
+- deprecated
 status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
 purpose: "Document the decision to use a hybrid approach combining classical methods
-  (Phase 1) with ML models (Phase 2)."
+  (Phase 1) with ML models (Phase 2). DEPRECATED 2025-11-15."
 ---
 
+> **DEPRECATED (2025-11-15)**: This ADR's hybrid approach is retained but ML architecture changed.
+> **Hybrid Approach**: Still valid - Classical IQA + ML IQA combined
+> **ML Architecture Change**: MobileNetV3 → ResNet-50 teacher / ResNet-18 student with knowledge distillation
+> **Phase Renumbering**: Phase 1 → Phase 4 (Classical IQA), Phase 2 → Phase 2 (Teacher-Student ML IQA)
+> **Reference**: [docs/development/RAG Pipeline/project-a-project-plan.md](../development/RAG Pipeline/project-a-project-plan.md)
 
-**Status**: Accepted
+---
+
+**Status**: ~~Accepted~~ **DEPRECATED**
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
