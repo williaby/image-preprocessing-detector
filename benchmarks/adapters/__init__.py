@@ -1,10 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
-"""Dataset adapters for benchmarking framework.
-
-SPDX-License-Identifier: Apache-2.0
-"""
+"""Dataset adapters for benchmarking framework."""
 
 # Import adapters to register them
 from benchmarks.adapters import doclaynet_adapter, synthetic_iqa_adapter

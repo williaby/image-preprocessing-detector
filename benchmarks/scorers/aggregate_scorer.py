@@ -1,11 +1,7 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Aggregate scorer for combining results across samples.
 
 Collects metrics from individual samples and computes aggregate statistics.
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 from datetime import UTC

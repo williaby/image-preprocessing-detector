@@ -1,10 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
-"""Benchmark utilities.
-
-SPDX-License-Identifier: Apache-2.0
-"""
+"""Benchmark utilities."""
 
 from benchmarks.utils.logging_config import (
     get_benchmark_logger,

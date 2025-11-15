@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Image quality assessment metrics.
 
 Implements metrics for evaluating:
@@ -12,7 +9,6 @@ Implements metrics for evaluating:
 
 All metrics are deterministic and pure functions (no I/O).
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 import numpy as np

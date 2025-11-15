@@ -1,13 +1,22 @@
-# ADR-033: Delegate Semantic Document Features to OCR/Processing
-
-**Status:** Accepted
-**Date:** 2025-01-14
-**Deciders:** Byron Williams, Architecture Team
-**Related ADRs:**
-- [ADR-007: Hybrid IQA Approach](0007-hybrid-iqa-approach.md)
-- [ADR-008: Multi-Stage Pipeline Architecture](0008-multi-stage-pipeline-architecture.md)
-- [ADR-028: Document Quality Score for Routing](0028-document-quality-score-routing.md)
-
+---
+title: "ADR-033: Delegate Semantic Document Features to OCR/Processing"
+status: Accepted
+date: 2025-01-14
+deciders:
+  - Byron Williams
+  - Architecture Team
+tags:
+  - architecture
+  - scope
+  - boundaries
+  - ocr
+  - pipeline
+owner: byron_williams
+schema_type: knowledge
+related_adrs:
+  - 0007-hybrid-iqa-approach
+  - 0008-multi-stage-pipeline-architecture
+  - 0028-document-quality-score-routing
 ---
 
 ## Context

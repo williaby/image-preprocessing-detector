@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Main benchmark runner.
 
 Executes full benchmarks based on registry configuration.
@@ -9,7 +6,6 @@ Usage:
     python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
     python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-full
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 import argparse

@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """DocLayNet dataset adapter for layout detection benchmarking.
 
 DocLayNet: A Large Human-Annotated Dataset for Document-Layout Analysis
@@ -15,7 +12,6 @@ Dataset: https://github.com/DS4SD/DocLayNet
 IMPORTANT: Always use doc-wise splits (not page-wise) for benchmarking.
 Page-wise metrics inflate scores by ~10-15 points.
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 import json

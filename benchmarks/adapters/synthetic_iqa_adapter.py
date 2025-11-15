@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Synthetic IQA dataset adapter for controlled quality assessment testing.
 
 Generates synthetic images with known quality degradations for testing:
@@ -10,7 +7,6 @@ Generates synthetic images with known quality degradations for testing:
 - Contrast (low contrast, high contrast)
 - Binarization (synthetic text for thresholding tests)
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 import json

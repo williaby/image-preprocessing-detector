@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Smoke test runner for fast CI validation.
 
 Runs benchmark subsets for quick feedback in CI pipelines.
@@ -9,7 +6,6 @@ Usage:
     python -m benchmarks.runners.run_smoke --suite doclaynet-layout-smoke
     python -m benchmarks.runners.run_smoke --all
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 import argparse

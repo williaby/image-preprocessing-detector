@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Update README with latest benchmark results.
 
 Automatically updates the benchmark comparison tables in benchmarks/README.md
@@ -9,7 +6,6 @@ with the latest results from the reports/ directory.
 Usage:
     python -m benchmarks.runners.update_readme
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 import json

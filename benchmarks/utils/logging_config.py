@@ -1,11 +1,7 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Logging configuration for benchmarks framework.
 
 Provides consistent logging setup across all benchmark runners and tasks.
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 import logging

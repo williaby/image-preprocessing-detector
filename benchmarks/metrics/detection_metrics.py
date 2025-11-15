@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
-# SPDX-License-Identifier: MIT
-
 """Object detection metrics for layout analysis.
 
 Implements COCO-style evaluation metrics:
@@ -8,7 +5,6 @@ Implements COCO-style evaluation metrics:
 - Per-class AP
 - Precision, Recall, F1
 
-SPDX-License-Identifier: Apache-2.0
 """
 
 import numpy as np
