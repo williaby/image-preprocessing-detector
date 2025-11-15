@@ -124,6 +124,10 @@ upload_all_datasets() {
     DATASETS[mobile_receipts_voxel51]="${DATA_DIR}/training/mobile_receipts_voxel51"
     DATASETS[invoices_kaggle]="${DATA_DIR}/training/invoices_kaggle"
 
+    # Training datasets (Business documents)
+    DATASETS[nist_db2]="${DATA_DIR}/training/business_documents/sd02"
+    DATASETS[docile]="${DATA_DIR}/training/business_documents/docile"
+
     # Training datasets (Phase 3+)
     DATASETS[docsynth300k]="${DATA_DIR}/training/layout/docsynth300k"
     DATASETS[pubtables1m]="${DATA_DIR}/training/tables/pubtables1m"
@@ -230,6 +234,10 @@ while [[ $# -gt 0 ]]; do
             echo "  - receipts_hitl           : HITL receipt OCR dataset (192 images, CC0 1.0)"
             echo "  - mobile_receipts_voxel51 : Voxel51 scanned receipts (713 images, CC BY 4.0)"
             echo "  - invoices_kaggle         : Kaggle invoice dataset (1,414 images, ODbL 1.0)"
+            echo ""
+            echo "Training datasets (Business documents):"
+            echo "  - nist_db2                : NIST DB2 tax forms (5,590 images, ~935MB, Free)"
+            echo "  - docile                  : DocILE business documents (6,680 annotated, Research)"
             echo ""
             echo "Training datasets (Phase 3+):"
             echo "  - docsynth300k       : DocSynth-300K layout detection (~113 GB, Research)"

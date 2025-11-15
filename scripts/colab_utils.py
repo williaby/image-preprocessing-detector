@@ -8,7 +8,6 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 import torch
 
@@ -27,7 +26,7 @@ def is_colab_environment() -> bool:
         return False
 
 
-def get_gpu_info() -> Dict[str, any]:
+def get_gpu_info() -> dict[str, any]:
     """Get GPU information in Colab.
 
     Returns:
@@ -99,7 +98,7 @@ def print_environment_info() -> None:
 
     # GPU info
     gpu_info = get_gpu_info()
-    print(f"\n🎮 GPU Information:")
+    print("\n🎮 GPU Information:")
     print(f"   GPU Available: {gpu_info['gpu_available']}")
     if gpu_info["gpu_available"]:
         print(f"   GPU Name: {gpu_info['gpu_name']}")
@@ -110,7 +109,7 @@ def print_environment_info() -> None:
         print("   ⚠️  No GPU detected! Training will be VERY slow on CPU.")
 
     # Disk space
-    print(f"\n💾 Disk Space:")
+    print("\n💾 Disk Space:")
     total, used, free = get_disk_space("/content")
     print(f"   /content: {free:.1f} GB free (Total: {total:.1f} GB)")
 
@@ -124,7 +123,7 @@ def print_environment_info() -> None:
     print("=" * 60)
 
 
-def get_disk_space(path: str = "/content") -> Tuple[float, float, float]:
+def get_disk_space(path: str = "/content") -> tuple[float, float, float]:
     """Get disk space information.
 
     Args:
@@ -184,7 +183,7 @@ def clear_gpu_memory() -> None:
         print("🗑️  GPU memory cache cleared")
 
 
-def get_gpu_memory_usage() -> Dict[str, float]:
+def get_gpu_memory_usage() -> dict[str, float]:
     """Get current GPU memory usage.
 
     Returns:
@@ -215,7 +214,7 @@ def print_gpu_memory_usage() -> None:
         print(f"⚠️  {usage['error']}")
         return
 
-    print(f"📊 GPU Memory Usage:")
+    print("📊 GPU Memory Usage:")
     print(f"   Allocated: {usage['allocated_gb']:.2f} GB")
     print(f"   Reserved: {usage['reserved_gb']:.2f} GB")
     print(f"   Free: {usage['free_gb']:.2f} GB")
@@ -272,7 +271,7 @@ def download_from_url(url: str, output_path: str) -> Path:
     return output_path_obj
 
 
-def check_session_health() -> Dict[str, any]:
+def check_session_health() -> dict[str, any]:
     """Check Colab session health and resource availability.
 
     Returns:
@@ -329,7 +328,7 @@ def print_session_health() -> None:
 def setup_colab_training_environment(
     project_name: str = "image-preprocessing-detector",
     drive_mount: bool = True,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Complete Colab environment setup for training.
 
     Args:

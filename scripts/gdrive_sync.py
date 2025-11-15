@@ -7,7 +7,6 @@ for large files stored in Google Drive.
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Optional
 
 import gdown
 
@@ -60,7 +59,7 @@ def download_dataset(
     if not drive_path_obj.exists():
         raise FileNotFoundError(f"Dataset not found in Google Drive: {drive_path}")
 
-    print(f"📥 Downloading dataset from Google Drive...")
+    print("📥 Downloading dataset from Google Drive...")
     print(f"   Source: {drive_path}")
     print(f"   Destination: {local_path}")
 
@@ -90,17 +89,16 @@ def download_dataset(
         return local_path_obj
 
     # If it's a directory, copy recursively
-    elif drive_path_obj.is_dir():
+    if drive_path_obj.is_dir():
         print("   Detected directory")
         shutil.copytree(drive_path_obj, local_path_obj, dirs_exist_ok=True)
         print(f"   ✅ Directory copied: {local_path_obj}")
         return local_path_obj
 
     # Single file
-    else:
-        shutil.copy2(drive_path_obj, local_path_obj / drive_path_obj.name)
-        print(f"   ✅ File copied: {drive_path_obj.name}")
-        return local_path_obj / drive_path_obj.name
+    shutil.copy2(drive_path_obj, local_path_obj / drive_path_obj.name)
+    print(f"   ✅ File copied: {drive_path_obj.name}")
+    return local_path_obj / drive_path_obj.name
 
 
 def upload_model_artifacts(
@@ -121,7 +119,7 @@ def upload_model_artifacts(
     # Create Drive output directory
     drive_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"📤 Uploading model artifacts to Google Drive...")
+    print("📤 Uploading model artifacts to Google Drive...")
     print(f"   Source: {local_model_path}")
     print(f"   Destination: {drive_output_dir}")
 
@@ -217,7 +215,7 @@ def check_drive_space(mount_point: str = "/content/drive/MyDrive") -> dict:
     used_gb = stat.used / (1024**3)
     free_gb = stat.free / (1024**3)
 
-    print(f"💾 Google Drive Space:")
+    print("💾 Google Drive Space:")
     print(f"   Total: {total_gb:.2f} GB")
     print(f"   Used: {used_gb:.2f} GB")
     print(f"   Free: {free_gb:.2f} GB")

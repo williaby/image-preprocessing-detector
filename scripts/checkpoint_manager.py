@@ -14,9 +14,9 @@ Key Features:
 
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -55,8 +55,8 @@ class CheckpointManager:
         self.last_checkpoint_time = time.time()
 
         # Track best model for final export
-        self.best_metric_value: Optional[float] = None
-        self.best_model_path: Optional[Path] = None
+        self.best_metric_value: float | None = None
+        self.best_model_path: Path | None = None
 
     def should_save_checkpoint(self, epoch: int) -> bool:
         """Check if checkpoint should be saved based on time/epoch interval.
@@ -87,7 +87,7 @@ class CheckpointManager:
         hours_elapsed = (time.time() - self.session_start_time) / 3600
         return hours_elapsed >= self.max_session_hours
 
-    def get_session_status(self) -> Dict[str, Any]:
+    def get_session_status(self) -> dict[str, Any]:
         """Get current session timing information.
 
         Returns:
@@ -110,9 +110,9 @@ class CheckpointManager:
         model: nn.Module,
         optimizer: optim.Optimizer,
         epoch: int,
-        metrics: Dict[str, float],
-        scheduler: Optional[Any] = None,
-        extra_state: Optional[Dict[str, Any]] = None,
+        metrics: dict[str, float],
+        scheduler: Any | None = None,
+        extra_state: dict[str, Any] | None = None,
     ) -> Path:
         """Save training checkpoint.
 
@@ -189,10 +189,10 @@ class CheckpointManager:
     def load_checkpoint(
         self,
         model: nn.Module,
-        optimizer: Optional[optim.Optimizer] = None,
-        scheduler: Optional[Any] = None,
-        checkpoint_path: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        optimizer: optim.Optimizer | None = None,
+        scheduler: Any | None = None,
+        checkpoint_path: str | None = None,
+    ) -> dict[str, Any]:
         """Load checkpoint and resume training.
 
         Args:
@@ -251,7 +251,7 @@ class CheckpointManager:
         latest_path = self.checkpoint_dir / "checkpoint_latest.pt"
         return latest_path.exists()
 
-    def get_best_checkpoint_path(self) -> Optional[Path]:
+    def get_best_checkpoint_path(self) -> Path | None:
         """Get path to best checkpoint (lowest validation loss).
 
         Returns:
@@ -307,9 +307,9 @@ def train_with_checkpointing(
     checkpoint_manager: CheckpointManager,
     num_epochs: int,
     device: str = "cuda",
-    scheduler: Optional[Any] = None,
+    scheduler: Any | None = None,
     start_epoch: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Training loop with automatic checkpointing.
 
     Args:
@@ -328,7 +328,7 @@ def train_with_checkpointing(
         Dictionary with training history and final metrics
     """
     model = model.to(device)
-    history: Dict[str, list] = {"train_loss": [], "val_loss": [], "val_accuracy": []}
+    history: dict[str, list] = {"train_loss": [], "val_loss": [], "val_accuracy": []}
 
     for epoch in range(start_epoch, num_epochs):
         # Check session time before starting epoch
