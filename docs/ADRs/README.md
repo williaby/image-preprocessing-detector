@@ -114,9 +114,10 @@ Links to relevant documentation, discussions, or external resources.
 - [ADR-022: Synthetic Data Generation with Albumentations](0022-synthetic-data-generation.md) - **Accepted** (2025-01-15)
 - [ADR-023: Weak Supervision with BRISQUE/NIQE for IQA Labeling](0023-weak-supervision-brisque-niqe.md) - **Accepted** (2025-01-15)
 - [ADR-024: Active Learning for Annotation Efficiency](0024-active-learning-annotation.md) - **Accepted** (2025-01-15)
-- [ADR-025: MobileNetV3 vs EfficientNet for IQA Model Selection](0025-mobilenetv3-vs-efficientnet.md) - **Accepted** (2025-01-15)
+- [ADR-025: MobileNetV3 vs EfficientNet for IQA Model Selection](0025-mobilenetv3-vs-efficientnet.md) - **Superseded by ADR-034** (2025-01-15)
 - [ADR-026: Transfer Learning from ImageNet/COCO](0026-transfer-learning-imagenet-coco.md) - **Accepted** (2025-01-15)
 - [ADR-027: INT8 Quantization via ONNX/TensorRT](0027-int8-quantization-onnx.md) - **Accepted** (2025-01-15)
+- [ADR-034: ResNet18 for Phase 2 IQA Multi-Label Classification](0034-resnet18-phase2-iqa.md) - **Accepted** (2025-11-14)
 
 ## How to Create a New ADR
 

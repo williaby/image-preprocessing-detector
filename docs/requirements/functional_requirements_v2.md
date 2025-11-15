@@ -40,8 +40,18 @@ This document specifies the detailed functional and non-functional requirements 
 **Out-of-Scope:**
 - Full-page OCR or text extraction (beyond classification needs)
 - Downstream parsing logic (table-to-JSON, semantic chunking, vectorization)
+- **Semantic document structure** (table structure extraction, reading order prediction, footnote/caption linking)
 - PDF Portfolio files (deprecated format)
 - Full office document parsing (delegated to Docling)
+
+**Scope Boundary Clarification:**
+> "Preprocessing detects **WHERE** elements are (bounding boxes, quality issues). OCR/Processing determines **WHAT'S IN** elements (structure, text, relationships)."
+
+**Transferred to OCR/Processing Team:**
+- FR-4.11: Table Structure Extraction → See [OCR Team Handoff](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md)
+- FR-4.12: Reading Order Prediction → See [OCR Team Handoff](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md)
+- FR-4.5: Footnote Linking → See [OCR Team Handoff](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md)
+- FR-4.6: Figure-Caption Linking → See [OCR Team Handoff](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md)
 
 ### 1.3 Audience
 
@@ -684,38 +694,73 @@ else:
 - ADR-0029: Dataset Selection Strategy (OHR-Bench integration)
 - ADR-0031: Comprehensive Benchmarking Framework (OHR-Bench adapter)
 
-#### FR-4.5: Footnote Linking (Phase 3)
+#### FR-4.5: Footnote Detection (Phase 3)
 
-The system shall link footnotes to their references in the main text.
+**TRANSFERRED TO OCR TEAM:** Footnote linking (reference markers to footnote text) transferred to OCR/Processing.
+See [OCR Team Handoff](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md) for details.
+
+**Preprocessing Scope (Detection Only):**
+
+The system shall detect footnote regions and provide spatial metadata.
 
 **Detection Method:**
-- Detect superscript numbers in text (reference markers)
-- Detect footnote regions (spatial proximity to page bottom)
-- Link superscript numbers to corresponding footnotes
+- Detect footnote class from layout detection (FR-4.2)
+- Spatial analysis (proximity to page bottom)
+- Estimate footnote count per page
 
-**Output:** Add `footnote_ref` property linking footnotes to reference locations
+**Output:** Add footnote elements to detected_elements with metadata:
+```json
+{
+  "id": "footnote_001",
+  "category": "footnote",
+  "bbox": [50, 1100, 500, 80],
+  "confidence": 0.91,
+  "spatial_hints": {
+    "position": "page_bottom",
+    "estimated_count": 3
+  }
+}
+```
 
-**Rationale:** Footnotes disconnected from context lose semantic meaning in RAG applications.
+**Out-of-Scope:** OCR text extraction, superscript detection, reference marker linking
+
+**Rationale:** Footnote detection enables routing decisions. Footnote linking requires text content (OCR responsibility).
 
 **Priority:** P1 (High for academic/research documents)
 
 **Document Types:** Academic papers, research reports, legal documents, historical manuscripts
 
-**Reference:** Research: "Footnote Detection and Recognition in Historical Documents" (ICDAR 2019)
+#### FR-4.6: Figure-Caption Detection (Phase 2)
 
-#### FR-4.6: Figure-Caption Linking (Phase 2)
+**TRANSFERRED TO OCR TEAM:** Figure-caption linking (semantic association) transferred to OCR/Processing.
+See [OCR Team Handoff](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md) for details.
 
-The system shall link figure captions to their parent figures.
+**Preprocessing Scope (Detection Only):**
+
+The system shall detect Caption and Picture elements and provide spatial proximity hints.
 
 **Detection Method:**
-- Detect Caption class from FR-4.2
-- Detect Picture class from FR-4.2
-- Spatial proximity analysis (captions typically above/below figures)
-- Pattern matching ("Figure N", "Fig. N")
+- Detect Caption class from layout detection (FR-4.2)
+- Detect Picture class from layout detection (FR-4.2)
+- Spatial proximity analysis (identify nearest Picture to each Caption)
 
-**Output:** Add `caption_for` property linking captions to figures
+**Output:** Add spatial hints to Caption elements:
+```json
+{
+  "id": "caption_001",
+  "category": "caption",
+  "bbox": [100, 560, 400, 40],
+  "confidence": 0.92,
+  "spatial_hints": {
+    "nearest_picture": "picture_001",
+    "proximity": "below"
+  }
+}
+```
 
-**Rationale:** Captions separated from figures lose context in RAG retrieval.
+**Out-of-Scope:** OCR text extraction, pattern matching ("Figure N:"), semantic linking
+
+**Rationale:** Caption detection enables layout analysis. Caption linking requires text content (OCR responsibility).
 
 **Priority:** P2 (Medium)
 
@@ -768,170 +813,124 @@ The system shall detect handwritten text regions distinct from printed text (see
 - ADR-0012: Defer Handwriting Detection to Phase 2
 - ADR-0029: Dataset Selection Strategy (IAM Handwriting integration)
 
-#### FR-4.11: Table Structure Extraction (Phase 3+)
+#### FR-4.11: Table Quality Assessment (Phase 3)
 
-The system shall extract the internal structure of detected tables (rows, columns, cells) using a learned table structure recognition model.
+**TRANSFERRED TO OCR TEAM:** Table structure extraction (rows, columns, cells) transferred to OCR/Processing.
+See [OCR Team Handoff](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md) for details.
+
+**Preprocessing Scope (Quality Assessment Only):**
+
+The system shall assess table quality and provide complexity indicators to aid routing decisions.
 
 **Prerequisite:** Table bounding boxes from FR-4.2 (layout detection)
 
-**Method:** ClusterTabNet or similar deep learning approach
-- **Input**: Cropped table region from layout detection
-- **Output**: Table structure annotations (rows, columns, cells, spanning cells)
-- **Format**: COCO-aligned bounding boxes for cells + row/column metadata
+**Quality Assessment:**
+- Apply IQA detectors (FR-3.1 through FR-3.14) on table region
+- Assess table-specific quality: borders presence, cell alignment, contrast
+- Estimate structural complexity (row/column count, has spanning cells)
 
-**Training Data:**
-- **Primary**: PubTables-1M (1 million real-world tables from PubMed, Apache-2.0)
-  - **Size**: ~25 GB
-  - **Annotations**: Row/column structure, cell bounding boxes, spanning cells
-  - **Source**: GitHub: microsoft/table-transformer
-- **Augmentation**: TableBank (417k tables, Apache-2.0) for additional layout diversity
-
-**Model Architecture:**
-- **Option 1**: ClusterTabNet (cluster-based table structure recognition)
-- **Option 2**: Table Transformer (Microsoft, DETR-based)
-- **Deployment**: ONNX Runtime (INT8 quantized) for CPU-first inference
-
-**Output Structure:**
+**Output:** Table elements with quality and complexity metadata:
 ```json
 {
-  "table_id": "table_001",
-  "bounding_box": [120, 340, 450, 200],
-  "num_rows": 8,
-  "num_cols": 5,
-  "cells": [
-    {
-      "row": 0,
-      "col": 0,
-      "row_span": 1,
-      "col_span": 1,
-      "bounding_box": [125, 345, 85, 22],
-      "is_header": true
-    }
-  ]
+  "id": "table_001",
+  "category": "table",
+  "bbox": [120, 340, 450, 200],
+  "confidence": 0.94,
+  "quality_assessment": {
+    "blur_score": 0.87,
+    "contrast_score": 0.65,
+    "needs_correction": false
+  },
+  "complexity_indicators": {
+    "has_borders": true,
+    "estimated_rows": 8,
+    "estimated_columns": 5,
+    "complexity_score": 0.62
+  }
 }
 ```
 
-**Validation:**
-- **Benchmark**: PubTables-1M test split (held-out tables)
-- **Metrics**: GriTS (Grid Table Similarity) or TEDS (Tree Edit Distance-based Similarity)
-- **Target**: GriTS F1 > 0.85, TEDS > 0.90
+**Out-of-Scope:** Row/column structure extraction, cell-level bounding boxes, table-to-JSON conversion
 
-**Performance Targets:**
-- **Latency**: < 200ms per table (GPU), < 500ms per table (CPU with ONNX INT8)
-- **Accuracy**: GriTS F1 > 0.85 on complex tables (spanning cells, nested headers)
+**Rationale:** Table quality assessment enables routing (simple tables → fast OCR, complex → advanced). Structure extraction requires semantic understanding (OCR responsibility).
 
-**Rationale:**
-- Detecting table bounding boxes (FR-4.2) is insufficient for structured data extraction
-- RAG applications require structured table data (rows/columns) for semantic understanding
-- PubTables-1M provides large-scale real-world table structure annotations
-- ClusterTabNet approach handles complex tables (spanning cells, hierarchical headers)
-
-**Priority:** P1 (High for academic papers, business reports, technical documentation)
+**Priority:** P1 (High for documents with tables)
 
 **Document Types:** Academic papers, financial reports, technical specifications, scientific literature
 
-**Reference:**
-- ADR-0029: Dataset Selection Strategy (PubTables-1M integration)
-- Research: PubTables-1M (arXiv:2110.00061, 2021)
-- Research: ClusterTabNet (table structure recognition)
+**Reference:** ADR-0007 (Hybrid IQA Approach for Embedded Images)
 
-**Implementation:** Phase 3 Week 8-12 (training and integration)
+#### FR-4.12: Layout Spatial Hints (Phase 3)
 
-**Note:** This requirement complements FR-4.2 (table detection) by adding structure extraction. The two-stage pipeline (detect → extract structure) enables efficient processing.
+**TRANSFERRED TO OCR TEAM:** Reading order prediction (sequential element ordering) transferred to OCR/Processing.
+See [OCR Team Handoff](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md) for details.
 
-#### FR-4.12: Reading Order Prediction (Phase 3)
+**Preprocessing Scope (Spatial Hints Only):**
 
-The system shall predict the sequential reading order for document elements in complex layouts (multi-column, tables, figures, footnotes) to enable accurate text extraction and RAG retrieval.
+The system shall provide spatial layout hints to assist downstream reading order prediction.
 
 **Prerequisite:** Layout element detection from FR-4.2 (bounding boxes for text, tables, figures, etc.)
 
-**Method:** Graph-based spatial reasoning
-- **Input**: Layout elements with bounding boxes from YOLOv8 detection
-- **Process**:
-  - Construct spatial relationship graph (elements as nodes, spatial relationships as edges)
-  - Apply reading order algorithm (top-to-bottom, left-to-right with multi-column handling)
-  - Handle special cases: footnotes, captions, sidebars, page numbers
-- **Output**: Ordered sequence of element IDs representing reading flow
+**Spatial Analysis:**
+- Detect multi-column layouts (2-3 column detection)
+- Identify column membership for text blocks
+- Calculate vertical position within page (top, middle, bottom)
+- Identify spatial proximity between elements
 
-**Training Data:**
-- **Primary**: DocSynth-300K (300k synthetic layouts, HuggingFace: juliozhao/DocSynth300K)
-  - Contains diverse multi-column layouts with ground-truth reading order
-  - **Size**: 113 GB
-  - **License**: Not specified (assume research use, check arXiv:2410.12628)
-- **Validation**: ROOR dataset (Reading Order on OCR'd Text, GitHub: chongzhangFDU/ROOR-Datasets)
-  - Real-world reading order annotations
-  - **License**: CC BY 4.0
-- **Fallback**: Synthetic generation using DocLayNet + spatial heuristics if ROOR unavailable
-
-**Algorithm Options:**
-- **Option 1**: Graph-based heuristics (classical spatial reasoning) - Phase 3 Week 7
-- **Option 2**: Learned model (graph neural network or transformer) - Phase 4+ if needed
-- **Hybrid**: Classical for simple layouts, learned for complex (multi-column, tables)
-
-**Output Structure:**
+**Output:** Add spatial hints to detected elements:
 ```json
 {
-  "reading_order": [
-    {"element_id": "text_001", "sequence": 1},
-    {"element_id": "text_002", "sequence": 2},
-    {"element_id": "table_001", "sequence": 3},
-    {"element_id": "caption_001", "sequence": 4, "parent_element": "table_001"}
+  "detected_elements": [
+    {
+      "id": "text_001",
+      "category": "text",
+      "bbox": [50, 100, 200, 400],
+      "confidence": 0.95,
+      "spatial_hints": {
+        "column_index": 0,
+        "vertical_position": "top",
+        "is_multi_column": true,
+        "num_columns": 2
+      }
+    },
+    {
+      "id": "text_002",
+      "category": "text",
+      "bbox": [270, 100, 200, 400],
+      "confidence": 0.93,
+      "spatial_hints": {
+        "column_index": 1,
+        "vertical_position": "top",
+        "is_multi_column": true,
+        "num_columns": 2
+      }
+    }
   ],
-  "layout_type": "multi_column",
-  "reading_order_confidence": 0.92
+  "layout_analysis": {
+    "is_multi_column": true,
+    "num_columns": 2,
+    "layout_complexity": 0.68
+  }
 }
 ```
 
-**Validation:**
-- **Benchmark 1**: ROOR dataset (if available)
-  - **Metric**: F1-score > 0.85 on pairwise reading order predictions
-  - **Metric**: Kendall's Tau > 0.80 (rank correlation)
-- **Benchmark 2**: OHR-Bench (HuggingFace: opendatalab/OHR-Bench)
-  - **Metric**: Reading Order Error (ROE) < 10%
-  - **Critical**: OHR-Bench shows 5-29% RAG performance loss from reading order errors
-  - **Use Case**: Validate impact on RAG retrieval (NDCG@5 metric)
-
-**Performance Targets:**
-- **Latency**: < 50ms per page (graph construction + ordering)
-- **Accuracy**: F1 > 0.85 on ROOR, ROE < 10% on OHR-Bench
-- **Scalability**: Linear time complexity with number of elements (O(n log n))
+**Out-of-Scope:** Sequential ordering, reading flow prediction, semantic element relationships
 
 **Rationale:**
-- **Critical for RAG**: OHR-Bench research shows reading order errors cause **5-29% RAG performance loss**
-- **More impactful than quality**: Reading order errors impact RAG retrieval more than individual quality defects
-- **Multi-column handling**: Academic papers, newspapers, magazines require correct column flow
-- **Semantic coherence**: Incorrect reading order destroys document meaning for downstream processors
+- Spatial hints aid OCR team's reading order algorithm (multi-column detection is layout-based)
+- Reading order prediction requires semantic understanding and is critical for RAG (5-29% performance impact per OHR-Bench)
+- Preprocessing provides WHERE elements are; OCR determines HOW to read them sequentially
 
-**Priority:** P0 (Critical for RAG applications)
+**Priority:** P1 (High for multi-column documents)
 
 **Document Types:**
 - Academic papers (2-column layouts)
 - Newspapers and magazines (multi-column)
-- Forms (complex spatial layouts)
-- Technical documentation (mixed layouts with figures/tables)
-- Historical documents (varied layouts)
-
-**Integration with FR-4.4 (Parasitic Content)**:
-- Parasitic content (headers, footers) excluded from reading order or marked with low priority
-- Page numbers and watermarks handled separately
-
-**Integration with FR-7 (Document Quality Score)**:
-- Reading order confidence feeds into Structural Complexity Score
-- Low confidence triggers fallback to simpler OCR strategies
+- Technical documentation (mixed layouts)
 
 **Reference:**
-- ADR-0029: Dataset Selection Strategy (ROOR elevated to Phase 3 Critical, OHR-Bench integration)
-- ADR-0031: Comprehensive Benchmarking Framework (ROOR and OHR-Bench adapters)
+- ADR-0029: Dataset Selection Strategy (OHR-Bench RAG validation)
 - Research: "OCR Hinders RAG: Evaluating the Cascading Impact of OCR on RAG" (OHR-Bench, arXiv 2024)
-- Research: DocSynth-300K (arXiv:2410.12628, 2024)
-
-**Implementation:** Phase 3 Week 7 (graph-based heuristics), Phase 4+ (learned model if needed)
-
-**Phase Elevation Rationale:**
-- **Previous Status**: Optional Phase 4-5 (not in core FR)
-- **New Status**: **Phase 3 Critical** (based on OHR-Bench research findings)
-- **Evidence**: 5-29% RAG performance loss from reading order errors justifies priority elevation
-- **Timeline Impact**: Implemented in Phase 3 Week 7 (prioritized over DLAFormer optional research)
 
 ---
 
