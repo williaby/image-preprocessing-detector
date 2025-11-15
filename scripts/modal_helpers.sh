@@ -50,7 +50,8 @@ setup_gcs_secret() {
 
     echo -e "${YELLOW}Encoding service account key to base64...${NC}"
     # Encode to base64 (single line, no wrapping)
-    GCP_SA_KEY_B64=$(base64 -w 0 "$key_path")
+    # Portable approach: works on both GNU (Linux) and BSD (macOS) base64
+    GCP_SA_KEY_B64=$(base64 < "$key_path" | tr -d '\n')
 
     echo -e "${YELLOW}Creating Modal secret 'gcs-credentials' with GCP_SA_KEY...${NC}"
     modal secret create gcs-credentials \

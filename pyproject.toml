@@ -294,7 +294,7 @@ known-first-party = ["image_preprocessing_detector"]
 "validation/**/*.py" = ["D", "T20", "TRY"]
 "scripts/**/*.py" = ["D", "T20", "TRY"]
 "tools/**/*.py" = ["D", "T20", "TRY"]
-"modal/**/*.py" = ["D", "T20", "S", "ANN"]
+"modal/**/*.py" = ["D", "T20", "S", "ANN", "PTH"]
 "noxfile.py" = ["D", "T20"]
 "src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
 

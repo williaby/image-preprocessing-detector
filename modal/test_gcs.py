@@ -51,21 +51,26 @@ def test_gcs():
     with open(credentials_path, "w") as f:
         f.write(gcp_sa_key_json)
 
+    # Set restrictive permissions (owner-only read/write)
+    os.chmod(credentials_path, 0o600)
+
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
     print("✅ GCS credentials configured from base64 secret")
 
     # Test GCS access
     print("\n[2/3] Connecting to GCS bucket...")
+    # Use environment variable for bucket name (defaults to image_detection_b)
+    bucket_name = os.environ.get("GCS_BUCKET_NAME", "image_detection_b")
     try:
         client = storage.Client()
-        bucket = client.bucket("image_detection_b")
+        bucket = client.bucket(bucket_name)
 
         # List first 10 objects
         print("\n[3/3] Listing objects in bucket...")
         blobs = list(bucket.list_blobs(max_results=10))
 
         print("\n✅ GCS Access Verified!")
-        print("   Bucket: gs://image_detection_b")
+        print(f"   Bucket: gs://{bucket_name}")
         print(f"   Found {len(blobs)} objects (showing first 10):")
 
         for blob in blobs:

@@ -12,7 +12,6 @@ Usage:
 Monitor:
     https://modal.com/apps
 """
-# ruff: noqa: PTH103
 # bandit: noqa: B108
 
 import yaml
@@ -73,14 +72,19 @@ def train_iqa():
     with open(credentials_path, "w") as f:
         f.write(gcp_sa_key_json)
 
+    # Set restrictive permissions (owner-only read/write)
+    os.chmod(credentials_path, 0o600)
+
     # Set environment variable for GCS client
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
     print("✅ GCS credentials configured")
 
     # Load configuration from GCS
     print("\n[1/8] Loading configuration from GCS...")
+    # Use environment variable for bucket name (defaults to image_detection_b)
+    bucket_name = os.environ.get("GCS_BUCKET_NAME", "image_detection_b")
     client = storage.Client()
-    bucket = client.bucket("image_detection_b")
+    bucket = client.bucket(bucket_name)
 
     config_blob = bucket.blob("configs/modal_phase2_iqa.yaml")
     config_yaml = config_blob.download_as_text()
@@ -105,8 +109,13 @@ def train_iqa():
         "/tmp/data/val_labels.json"
     )
 
-    # TODO: Download all image files (implement batched parallel download)
-    print("TODO: Implement full dataset download (images)")
+    # NOTE: Image download implementation deferred to dataset preparation phase
+    # This infrastructure PR establishes Modal setup; full dataset download
+    # will be implemented when Phase 2 dataset generation is complete
+    # TODO: Implement batched parallel download of ~35k training images from GCS
+    print(
+        "⚠️  Image download not yet implemented - deferred to dataset preparation phase"
+    )
 
     # Create model
     print("\n[3/8] Creating model...")
@@ -135,12 +144,18 @@ def train_iqa():
         optimizer, T_max=config["training"]["epochs"]
     )
 
-    # TODO: Create data loaders
+    # NOTE: DataLoader implementation deferred to dataset preparation phase
+    # This infrastructure PR establishes Modal GPU setup and GCS integration
     print("\n[5/8] Creating data loaders...")
-    print("TODO: Implement PyTorch DataLoader with Albumentations augmentation")
+    print("⚠️  DataLoader not yet implemented - deferred to dataset preparation phase")
+    # TODO: Implement PyTorch DataLoader with:
+    #   - Albumentations augmentation pipeline
+    #   - Multi-label classification support
+    #   - Efficient batching for T4 GPU (batch_size=128)
 
-    # Training loop
-    print("\n[6/8] Starting training...")
+    # NOTE: Training loop implementation deferred to dataset preparation phase
+    # Placeholder below demonstrates training structure and checkpoint saving
+    print("\n[6/8] Starting training loop (placeholder)...")
     for epoch in range(config["training"]["epochs"]):
         print(f"\nEpoch {epoch + 1}/{config['training']['epochs']}")
 

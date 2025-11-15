@@ -12,7 +12,6 @@ Usage:
 Monitor:
     https://modal.com/apps
 """
-# ruff: noqa: PTH103
 # bandit: noqa: B108
 
 import yaml
@@ -68,14 +67,19 @@ def train_yolov8():
     with open(credentials_path, "w") as f:
         f.write(gcp_sa_key_json)
 
+    # Set restrictive permissions (owner-only read/write)
+    os.chmod(credentials_path, 0o600)
+
     # Set environment variable for GCS client
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
     print("✅ GCS credentials configured")
 
     # Load configuration from GCS
     print("\n[1/6] Loading configuration from GCS...")
+    # Use environment variable for bucket name (defaults to image_detection_b)
+    bucket_name = os.environ.get("GCS_BUCKET_NAME", "image_detection_b")
     client = storage.Client()
-    bucket = client.bucket("image_detection_b")
+    bucket = client.bucket(bucket_name)
 
     config_blob = bucket.blob("configs/modal_phase3_yolov8.yaml")
     config_yaml = config_blob.download_as_text()
@@ -92,12 +96,16 @@ def train_yolov8():
     dataset_yaml_blob = bucket.blob("datasets/layout_phase3/dataset.yaml")
     dataset_yaml_blob.download_to_filename("/tmp/data/dataset.yaml")
 
-    # Download dataset to local cache (you'll need to implement full download)
+    # NOTE: Dataset download implementation deferred to Phase 3 dataset preparation
+    # This infrastructure PR establishes Modal + GCS workflow
     print("\n[3/6] Downloading dataset from GCS to local cache...")
-    print("TODO: Implement full dataset download")
-    # Download train/val images and labels
-    # gsutil -m cp -r gs://image_detection_b/datasets/layout_phase3/train /tmp/data/
-    # gsutil -m cp -r gs://image_detection_b/datasets/layout_phase3/val /tmp/data/
+    print(
+        "⚠️  Dataset download not yet implemented - deferred to Phase 3 dataset preparation"
+    )
+    # TODO: Implement full dataset download (gsutil or google-cloud-storage client)
+    #   Example: gsutil -m cp -r gs://image_detection_b/datasets/layout_phase3/train /tmp/data/
+    #   Verify directories exist before training: /tmp/data/train, /tmp/data/val
+    # TODO: Add FileNotFoundError check to prevent silent failures
 
     # Initialize YOLOv8 model
     print("\n[4/6] Initializing YOLOv8 model...")

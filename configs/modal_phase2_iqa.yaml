@@ -6,7 +6,10 @@
 # Image Quality Assessment with MobileNetV3-Small
 
 model:
-  architecture: mobilenetv3_small  # or efficientnet_b0
+  # Architecture options:
+  #   - mobilenetv3_small: Fast inference on T4 GPU, recommended for production (default)
+  #   - efficientnet_b0: Higher accuracy but slower inference, use for benchmarking
+  architecture: mobilenetv3_small
   pretrained: true
   num_classes: 6  # noise, blur, skew, perspective, contrast, orientation
   input_size: 224
