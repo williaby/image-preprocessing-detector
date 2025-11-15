@@ -1,7 +1,7 @@
 # ClusterFuzzLite Dockerfile for Image Preprocessing Detector
 # Python fuzzing environment with Atheris and dependencies
 
-FROM gcr.io/oss-fuzz-base/base-builder-python
+FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:122afa48603810a0c6b495ab2e1cfdc5a88e4378ab051d3a83f666bd69b4eb0b
 
 # Install system dependencies for image/PDF processing
 RUN apt-get update && apt-get install -y \

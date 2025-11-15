@@ -556,8 +556,8 @@ if __name__ == "__main__":
 ## Resources
 
 ### Documentation
-- [PROJECT_PLAN.md](PROJECT_PLAN.md) - Complete implementation plan
-- [ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md) - Architecture reference
+- [PROJECT_PLAN.md](../../planning/PROJECT_PLAN.md) - Complete implementation plan
+- [ARCHITECTURE_SUMMARY.md](../../architecture/ARCHITECTURE_SUMMARY.md) - Architecture reference
 - [PHASE_0_COMPLETE.md](PHASE_0_COMPLETE.md) - Foundation summary
 
 ### Test Data

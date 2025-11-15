@@ -521,5 +521,5 @@ What annotation budget should we allocate for active learning iterations?
 
 ---
 
-*For complete project details, see [PROJECT_PLAN.md](PROJECT_PLAN.md)*
-*For architecture overview, see [ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md)*
+*For complete project details, see [PROJECT_PLAN.md](../planning/PROJECT_PLAN.md)*
+*For architecture overview, see [ARCHITECTURE_SUMMARY.md](../architecture/ARCHITECTURE_SUMMARY.md)*

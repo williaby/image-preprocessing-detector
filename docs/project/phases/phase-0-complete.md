@@ -215,10 +215,10 @@ Coverage: 79.38% (schema: 92.42%)
 
 **Files Created**:
 1. **[README.md](README.md)**: Project overview, quick start, development guide
-2. **[PROJECT_PLAN.md](PROJECT_PLAN.md)**: Complete 50+ page implementation plan
-3. **[ARCHITECTURE_SUMMARY.md](ARCHITECTURE_SUMMARY.md)**: Architecture quick reference
+2. **[PROJECT_PLAN.md](../../planning/PROJECT_PLAN.md)**: Complete 50+ page implementation plan
+3. **[ARCHITECTURE_SUMMARY.md](../../architecture/ARCHITECTURE_SUMMARY.md)**: Architecture quick reference
 4. **[DECISION_MATRIX.md](DECISION_MATRIX.md)**: Critical decisions tracking
-5. **[ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach
+5. **[ARCHITECTURE_CORRECTION.md](../../architecture/ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach
 6. **[PHASE_0_COMPLETE.md](PHASE_0_COMPLETE.md)**: This file
 
 **Documentation Standards**:
@@ -266,7 +266,7 @@ Coverage: 79.38% (schema: 92.42%)
 - Added `needs_correction` and `correction_applied` fields
 - Updated JSON schema to support per-element quality metadata
 
-**Documentation**: [ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)
+**Documentation**: [ARCHITECTURE_CORRECTION.md](../../architecture/ARCHITECTURE_CORRECTION.md)
 
 **Status**: ✅ Corrected and documented
 

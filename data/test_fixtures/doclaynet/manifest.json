@@ -1,0 +1,37 @@
+{
+  "dataset": "doclaynet",
+  "extracted_at": "2025-11-13",
+  "count": 5,
+  "files": [
+    {
+      "name": "simple_text_1.pdf",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/doclaynet/documents/pdf/91c46ad4a6f9216da5dd2fe2145b5f54faefcd53b2b87604b20ab77f4ed9e46f.pdf",
+      "size_mb": 0.02,
+      "criterion": "simple_text"
+    },
+    {
+      "name": "tables_figures_2.pdf",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/doclaynet/documents/pdf/6d57f40032719379093d29e710066ac518f24ef74f5a53ed971f3780d552cb7f.pdf",
+      "size_mb": 0.03,
+      "criterion": "tables_figures"
+    },
+    {
+      "name": "multi_column_3.pdf",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/doclaynet/documents/pdf/6da956a8a9ea4e8d092dbce304fccc59202eb75f9681093df50d3efc588a60c4.pdf",
+      "size_mb": 0.05,
+      "criterion": "multi_column"
+    },
+    {
+      "name": "skewed_4.pdf",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/doclaynet/documents/pdf/473f9e88ad76879533338363a627e6089049567de321280a0a01735bfd599047.pdf",
+      "size_mb": 0.23,
+      "criterion": "skewed"
+    },
+    {
+      "name": "low_contrast_5.pdf",
+      "source": "/home/byron/dev/image_detection/data/benchmarks/doclaynet/documents/pdf/661db34c7c7345999d10e519817c9183922dc175f60e55dee6854d212f6299d9.pdf",
+      "size_mb": 0.08,
+      "criterion": "low_contrast"
+    }
+  ]
+}
