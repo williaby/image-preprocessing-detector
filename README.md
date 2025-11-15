@@ -299,7 +299,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **Domain-Generalized Quality Assessment (DGQA)**: Synthetic-to-real calibration
 - ONNX optimization for CPU inference
 - Integration with classical methods (ensemble voting)
-- **Cost**: ~$3 (T4 GPU @ $0.59/hr, ~5 hours) - **Covered by $30/month free tier**
+- **Cost**: $0-3 (T4 GPU @ $0.59/hr, ~5 hours - covered by free tier)
 
 ### Phase 3: ML for Document Layout & Unified Preprocessing (Weeks 12-20) - Extended +3 Weeks
 **Training Platform**: Modal serverless GPU (free tier: $30/month credits)
@@ -310,7 +310,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **NEW: Table Structure Extraction** - PubTables-1M for cell-level recognition (FR-4.11)
 - Active learning for rare classes (handwriting, formulas)
 - INT8 quantization for production
-- **Cost**: ~$55-88 (A10 GPU @ $1.10/hr, 50-80 hours) - **Partially covered by free tier** (~$30 credits, $25-58 out-of-pocket)
+- **Cost**: $0-14 (A10 GPU @ $1.10/hr, ~50-80 hours - partially covered by free tier)
 
 ### Phase 4: Production Hardening (Weeks 21-24)
 - FastAPI service with Docker

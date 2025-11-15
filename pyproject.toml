@@ -20,7 +20,6 @@ classifiers = [
 
 dependencies = [
     # Core Image Processing
-    "opencv-python-headless>=4.8.0",
     "pillow>=10.0.0",
     "numpy>=1.24.0",
 
@@ -29,6 +28,9 @@ dependencies = [
 
     # CLI
     "click>=8.1.0",
+
+    # Serverless GPU Compute (Phase 2+)
+    "modal>=0.63.0",
 
     # Deep Learning (placeholder - will add specific versions after testing)
     # "torch>=2.0.0",
@@ -56,9 +58,9 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
     "rich>=13.5.0",
-
-    # Cloud Infrastructure
-    "modal>=0.60.0",
+    "opencv-python-headless (>=4.8.0,<5.0.0)",
+    "huggingface-hub[cli] (>=1.1.4,<2.0.0)",
+    "pytesseract (>=0.3.13,<0.4.0)",
 ]
 
 [project.optional-dependencies]
@@ -103,6 +105,7 @@ ml = [
     "timm>=0.9.0",
     "albumentations>=1.3.0",
     "onnxruntime>=1.15.0",
+    # "genalog>=0.1.0",  # DISABLED: Conflicts with dev dependencies
 ]
 
 api = [
@@ -111,6 +114,20 @@ api = [
     "uvicorn[standard]>=0.23.0",
     "python-multipart>=0.0.18",  # Updated to address CVE-2024-53981 and PVE-2024-99762
     "starlette>=0.49.1",  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS)
+]
+
+colab = [
+    # Google Colab Training Dependencies (Phase 2-3)
+    "torch>=2.9.0",
+    "torchvision>=0.24.0",
+    "ultralytics>=8.0.0",
+    "timm>=0.9.0",
+    "albumentations>=1.3.0",
+    "onnxruntime>=1.15.0",
+    "tensorboard>=2.12.0",  # Training monitoring
+    "pyyaml>=6.0",          # Config file parsing
+    "gdown>=4.7.0",         # Download from Google Drive
+    "onnx>=1.14.0",         # ONNX model verification
 ]
 
 [project.scripts]
@@ -126,7 +143,10 @@ version = "0.1.0"
 description = "Intelligent image preprocessing detection system for RAG applications"
 authors = ["Byron Williams <byronawilliams@gmail.com>"]
 readme = "README.md"
-packages = [{include = "image_preprocessing_detector", from = "src"}]
+packages = [
+    {include = "image_preprocessing_detector", from = "src"},
+    {include = "benchmarks"}
+]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.15"  # ClusterFuzzLite requires Python 3.11 for Atheris compatibility
@@ -170,6 +190,11 @@ datasets = "^4.4.1"
 safety = "^3.7.0"
 nox = "^2025.10.16"
 mutmut = "^3.3.1"
+pyyaml = "^6.0.3"
+scipy = "^1.16.3"
+scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
+dvc = {extras = ["ssh"], version = "^3.64.0"}
+kaggle = "^1.7.4.5"
 
 [tool.poetry.group.ml]
 optional = true
@@ -181,6 +206,12 @@ ultralytics = "^8.0.0"
 timm = "^0.9.0"
 albumentations = "^1.3.0"
 onnxruntime = "^1.15.0"
+# Phase 2: Training and Evaluation
+scikit-learn = "^1.3.0"  # Evaluation metrics (precision, recall, F1, ROC-AUC, calibration)
+tensorboard = "^2.14.0"  # Training monitoring and visualization
+dvc = "^3.30.0"  # Dataset versioning and management
+# genalog = "^0.1.0"  # DISABLED: Conflicts with dev dependencies (requires matplotlib 3.2.1, scikit-image 0.16.2)
+# TODO: Replace with alternative synthetic degradation library or fork genalog with updated dependencies
 
 [tool.poetry.group.api]
 optional = true
@@ -293,13 +324,15 @@ known-first-party = ["image_preprocessing_detector"]
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "D104"]
 "tests/**/*.py" = ["ARG", "D", "S", "ERA"]
+"tests/fixtures/phase1_validation/*.py" = ["D", "T20", "TRY", "RUF", "FBT", "RET", "N806", "PERF"]  # Phase 1 validation scripts - relaxed rules
 "fuzz/**/*.py" = ["D", "T20"]
 "validation/**/*.py" = ["D", "T20", "TRY"]
 "scripts/**/*.py" = ["D", "T20", "TRY"]
+"benchmarks/**/*.py" = ["D", "T20", "ARG", "TRY", "ERA", "SIM", "PERF", "RET", "B007", "F841", "RUF005", "RUF012", "E402", "UP038"]  # CLI tools with relaxed rules
 "tools/**/*.py" = ["D", "T20", "TRY"]
-"modal/**/*.py" = ["D", "T20", "S", "ANN", "PTH"]
 "noxfile.py" = ["D", "T20"]
 "src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
+"src/image_preprocessing_detector/augmentation/genalog_degrader.py" = ["ERA001"]  # Intentional Phase 2 implementation placeholders
 
 # MyPy Configuration
 [tool.mypy]
@@ -325,14 +358,16 @@ module = "tests.*"
 disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
-module = "modal.*"
+module = "data.*"
 disallow_untyped_defs = false
-ignore_errors = true
+check_untyped_defs = false
+disallow_any_generics = false
 
 # Pytest Configuration
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = ["tests"]
+pythonpath = [".", "src", "benchmarks"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -350,6 +385,9 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "benchmark: marks tests as benchmark tests (comprehensive performance tests)",
+    "requires_full_dataset: marks tests requiring full datasets (88+ GB, skip in CI)",
+    "real_data: marks tests using real test fixtures (not synthetic)",
 ]
 
 # Coverage Configuration
@@ -362,6 +400,8 @@ omit = [
     "*/__pycache__/*",
     "*/site-packages/*",
     "validation/*",  # Exclude standalone validation scripts
+    "benchmarks/*",  # Exclude benchmarking framework
+    "data/*",  # Exclude data processing scripts
 ]
 
 [tool.coverage.report]

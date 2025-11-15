@@ -176,16 +176,16 @@ def main():
     print()
     print("Detection Rates:")
     print(
-        f"  Text Detected:     {stats['text_detection_rate']*100:.1f}% ({issue_counts['has_text']}/{total})"
+        f"  Text Detected:     {stats['text_detection_rate'] * 100:.1f}% ({issue_counts['has_text']}/{total})"
     )
     print(
-        f"  Blur Detected:     {stats['blur_detection_rate']*100:.1f}% ({issue_counts['is_blurred']}/{total})"
+        f"  Blur Detected:     {stats['blur_detection_rate'] * 100:.1f}% ({issue_counts['is_blurred']}/{total})"
     )
     print(
-        f"  Low Contrast:      {stats['low_contrast_rate']*100:.1f}% ({issue_counts['is_low_contrast']}/{total})"
+        f"  Low Contrast:      {stats['low_contrast_rate'] * 100:.1f}% ({issue_counts['is_low_contrast']}/{total})"
     )
     print(
-        f"  Skew Detected:     {stats['skew_detection_rate']*100:.1f}% ({issue_counts['is_skewed']}/{total})"
+        f"  Skew Detected:     {stats['skew_detection_rate'] * 100:.1f}% ({issue_counts['is_skewed']}/{total})"
     )
     print()
     print(f"Results saved to: {output_file}")

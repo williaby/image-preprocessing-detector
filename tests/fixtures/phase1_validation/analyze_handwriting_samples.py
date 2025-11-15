@@ -283,10 +283,10 @@ def main():
     if signatr6k_data:
         stats = signatr6k_data["stats"]
         print(f"SignaTR6K Samples: {stats['samples_processed']}")
-        print(f"  Text Detected:     {stats['text_detection_rate']*100:.1f}%")
-        print(f"  Blur Detected:     {stats['blur_detection_rate']*100:.1f}%")
-        print(f"  Low Contrast:      {stats['low_contrast_rate']*100:.1f}%")
-        print(f"  Skew Detected:     {stats['skew_detection_rate']*100:.1f}%")
+        print(f"  Text Detected:     {stats['text_detection_rate'] * 100:.1f}%")
+        print(f"  Blur Detected:     {stats['blur_detection_rate'] * 100:.1f}%")
+        print(f"  Low Contrast:      {stats['low_contrast_rate'] * 100:.1f}%")
+        print(f"  Skew Detected:     {stats['skew_detection_rate'] * 100:.1f}%")
 
         # Quality distribution
         results = signatr6k_data["results"]

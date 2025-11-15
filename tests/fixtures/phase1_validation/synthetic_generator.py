@@ -35,7 +35,7 @@ class SyntheticImageGenerator:
         self,
         width: int = 2480,
         height: int = 3509,
-        dpi: int = 300,  # noqa: ARG002
+        dpi: int = 300,
         background_color: tuple[int, int, int] = (255, 255, 255),
         text_color: tuple[int, int, int] = (0, 0, 0),
     ) -> np.ndarray:

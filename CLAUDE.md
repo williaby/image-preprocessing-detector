@@ -248,7 +248,7 @@ Classical IQA  YOLOv8 Layout → Extract elements → Per-element IQA
 - Text documents contain embedded images (tables, figures, photos)
 - Each embedded image needs independent quality assessment
 - Layout detection (YOLOv8) identifies elements → IQA runs per-element
-- See [ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md) for detailed rationale
+- See [ARCHITECTURE_CORRECTION.md](docs/architecture/ARCHITECTURE_CORRECTION.md) for detailed rationale
 
 **Why Text Detection Gate?**
 - **Problem**: Mixed document types require different processing strategies
@@ -342,7 +342,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 - Source code available: `/home/byron/dev/data_ingestor/src/data_ingestor/utils/`
 - Handoff documentation: `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md`
 
-See [PROJECT_PLAN.md](PROJECT_PLAN.md) for complete 50+ page implementation roadmap.
+See [PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md) for complete 50+ page implementation roadmap.
 
 ## CI/CD Pipeline
 

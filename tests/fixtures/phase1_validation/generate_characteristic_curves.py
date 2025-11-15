@@ -11,6 +11,7 @@ from pathlib import Path
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from validation.synthetic_generator import SyntheticImageGenerator
 
 from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
@@ -18,7 +19,6 @@ from image_preprocessing_detector.detection.iqa_classical import (
     SkewDetector,
 )
 from image_preprocessing_detector.detection.text_gate import TextGate
-from validation.synthetic_generator import SyntheticImageGenerator
 
 
 class CharacteristicCurveAnalyzer:
@@ -398,14 +398,13 @@ def main():
     def convert_numpy_types(obj):
         if isinstance(obj, dict):
             return {k: convert_numpy_types(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [convert_numpy_types(item) for item in obj]
-        elif isinstance(obj, np.integer | np.floating):
+        if isinstance(obj, np.integer | np.floating):
             return obj.item()
-        elif isinstance(obj, np.ndarray):
+        if isinstance(obj, np.ndarray):
             return obj.tolist()
-        else:
-            return obj
+        return obj
 
     results = convert_numpy_types(results)
 

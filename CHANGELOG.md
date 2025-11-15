@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CONTRIBUTING guidelines with development workflow
 - PROJECT_PLAN with 50+ page implementation roadmap
 - ARCHITECTURE_SUMMARY with design decisions
-- DECISION_MATRIX for critical decisions tracking
+- DECISION_MATRIX for critical decisions tracking (now at docs/project/decision-matrix.md)
 - ARCHITECTURE_CORRECTION documenting hybrid IQA rationale
 
 ### Infrastructure
