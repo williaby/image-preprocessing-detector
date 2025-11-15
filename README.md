@@ -348,6 +348,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
   - [ADR-031: Comprehensive Benchmarking Framework](docs/ADRs/0031-comprehensive-benchmarking-framework.md)
   - [ADR-032: DocRes Unified Preprocessing](docs/ADRs/0032-docres-unified-preprocessing.md)
   - [ADR-029: Three-Tier Dataset Strategy](docs/ADRs/0029-phase2-dataset-selection-strategy.md)
+- **[docs/MODEL_STORAGE.md](docs/MODEL_STORAGE.md)**: Model artifact storage, versioning, and promotion workflow (GCS + HF Hub)
 - **[docs/PUBLIC_DATASET_COVERAGE.md](docs/PUBLIC_DATASET_COVERAGE.md)**: Public dataset coverage analysis across phases
 - **[docs/infrastructure/HF_SPACES_VS_COLAB_PRO.md](docs/infrastructure/HF_SPACES_VS_COLAB_PRO.md)**: Training platform cost comparison
 - **[docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)**: Comprehensive testing approach with 80%+ coverage
