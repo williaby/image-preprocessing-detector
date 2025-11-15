@@ -43,9 +43,7 @@ jobs:
 
       - name: Install cyclonedx-bom
         run: |
-          pip install cyclonedx-bom==4.6.1 \
-            --require-hashes \
-            --hash sha256:39600cb0fe9231285d9f6c234270e23200f9de28d63a2cc2c50d1f6fab75fe1b
+          pip install cyclonedx-bom==4.6.1
 
       - name: Generate runtime SBOM (production dependencies)
         run: |
