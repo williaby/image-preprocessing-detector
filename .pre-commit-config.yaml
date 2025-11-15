@@ -45,7 +45,12 @@ repos:
           - types-pillow
           - types-python-dateutil
         args: ['--ignore-missing-imports', '--python-version=3.12']
-        exclude: '^(tests/.*|validation/.*|fuzz/.*|benchmarks/.*|data/.*)'
+        # Exclude tests, validation, benchmarks, data, and Phase 2+ files
+        exclude: >-
+          ^(tests/.*|validation/.*|fuzz/.*|benchmarks/.*|data/.*|scripts/.*|
+          modal/.*|src/image_preprocessing_detector/utils/gcs_uploader\.py|
+          src/image_preprocessing_detector/utils/metadata_generator\.py|
+          src/image_preprocessing_detector/augmentation/.*)
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli

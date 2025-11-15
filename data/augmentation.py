@@ -185,6 +185,7 @@ class DocumentAugmentationPipeline:
         self._last_params: dict[str, Any] = {}
         if random_seed is not None:
             import random
+
             import numpy as np
 
             random.seed(random_seed)

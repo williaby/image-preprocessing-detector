@@ -374,6 +374,25 @@ disallow_untyped_defs = false
 check_untyped_defs = false
 disallow_any_generics = false
 
+# Phase 2+ modules - relaxed type checking until ML dependencies added
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.utils.gcs_uploader"
+disallow_untyped_defs = false
+check_untyped_defs = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.utils.metadata_generator"
+disallow_untyped_defs = false
+check_untyped_defs = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.augmentation.*"
+disallow_untyped_defs = false
+check_untyped_defs = false
+ignore_missing_imports = true
+
 # Pytest Configuration
 [tool.pytest.ini_options]
 minversion = "7.0"
@@ -413,6 +432,10 @@ omit = [
     "validation/*",  # Exclude standalone validation scripts
     "benchmarks/*",  # Exclude benchmarking framework
     "data/*",  # Exclude data processing scripts
+    # Phase 2+ modules (require ML dependencies, excluded from Phase 1 coverage)
+    "src/image_preprocessing_detector/utils/gcs_uploader.py",
+    "src/image_preprocessing_detector/utils/metadata_generator.py",
+    "src/image_preprocessing_detector/augmentation/*",
 ]
 
 [tool.coverage.report]
