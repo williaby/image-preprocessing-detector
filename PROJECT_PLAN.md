@@ -1,174 +1,198 @@
-# Image Preprocessing Detection System - Comprehensive Project Plan
+# Project A: Image Preprocessing & IQA Gateway - Project Plan
 
-**Project**: Custom OpenCV-based Image Preprocessing Detection for RAG Applications
-**Purpose**: Automated detection and correction of image quality issues and document elements before vector database ingestion
-**Target**: Multi-page PDFs and images for downstream processing (LayoutParser → Tesseract/Marker/Docling)
+**Project**: Project A - Image Preprocessing Detection & Quality Assessment for RAG Applications
+**Purpose**: Intelligent preprocessing gateway that analyzes documents, corrects quality issues, and provides routing metadata for downstream OCR/RAG processing
+**Position**: First stage in a 4-project RAG document processing pipeline (A → B → C → D)
+**Repository**: `image-preprocessing-detector`
 
 ---
 
 ## Executive Summary
 
-This project builds an intelligent image preprocessing pipeline that analyzes documents (PDFs, images) and automatically detects required preprocessing steps before RAG ingestion. The system uses a **multi-stage pipeline architecture** combining classical computer vision techniques with modern deep learning models to achieve high accuracy while maintaining production-grade performance.
+Project A serves as the **front-door gateway** for the RAG document processing pipeline. This project analyzes raw documents (PDFs, images), detects and corrects quality issues, performs lightweight layout classification, and generates routing metadata to guide downstream processing decisions.
 
-**Key Innovation**: Rather than a monolithic model, we employ a modular pipeline with a text-detection fork that routes images to specialized processing paths optimized for different document types.
+**Key Innovation**: Teacher-student ResNet architecture with device-priority execution (Local GPU → Local CPU → Modal GPU) that balances accuracy with cost efficiency. The system uses a lightweight "layout-lite" approach for structural analysis while deferring full semantic layout detection to Project B.
 
-**Expected Performance**: 6-15 pages/second per GPU worker, 50-150ms latency per page, with horizontal scalability to handle 1000s of pages/hour.
+**Pipeline Position**:
+```
+Project A (THIS REPO)    →    Project B           →    Project C        →    Project D
+image_detection                ocr-orchestrator         fusion-trust          vector-indexer
+─────────────────              ────────────────         ────────────          ──────────────
+• IQA & Corrections            • Layout Detection       • OCR Fusion          • Embeddings
+• Text Gate                    • Reading Order          • Hallucination Det   • Vector DB
+• DQS Calculation              • Multi-Engine OCR       • Trust Scoring       • Metadata
+• Routing Metadata             • Paragraph Segment      • RAG Chunking        • Indexing
+
+OUTPUT:                        OUTPUT:                  OUTPUT:               OUTPUT:
+DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Vector DB
++ Corrected Images                                      + RAGChunk.json       Entries
+```
+
+**Expected Performance**: 2-6 pages/second per worker (CPU/GPU respectively), <150ms latency per page (GPU), with horizontal scalability to handle thousands of pages/hour.
+
+---
+
+## Project Boundaries & Scope
+
+### ✅ IN SCOPE - What Project A Does
+
+**Core Responsibilities:**
+- File ingestion & page rasterization (PDF → standardized 300 DPI images)
+- **Classical IQA**: blur, skew, noise, DPI, contrast, illumination detection
+- **ML-based DIQA**: Teacher-student ResNet architecture (ResNet-50 teacher, ResNet-18 student)
+- **Selective teacher inference** triggered by:
+  - Document risk classification
+  - Student uncertainty thresholds
+  - Discrepancies between classical IQA and student output
+- **Guarded corrections**: deskew, binarize, upscale, denoise, CLAHE (with do-no-harm guardrails)
+- **Layout-lite classification**: Page-level structural analysis without full semantic layout
+  - `layout_type`: single / multi / three_column / complex
+  - Presence flags: `has_tables`, `has_figures`, `has_dense_math`, `has_handwriting`
+  - Page attributes: `fuzzy_scan`, `watermark`, `colorful_background`
+- **PDF type classification**: image_only / born_digital / hybrid
+- **Document Quality Score (DQS)**: Degradation score + structural complexity score
+- **Routing metadata**: `pre_ocr_risk`, `ocr_routing_recommendation` for Project B
+- **Device-priority execution**: Local GPU → Local CPU → Modal GPU
+
+### ❌ OUT OF SCOPE - What Project A Does NOT Do
+
+**Explicitly Deferred to Projects B-D:**
+- ❌ Full layout detection with precise bounding boxes (Project B)
+- ❌ Reading order estimation (Project B)
+- ❌ OCR of any type (Project B)
+- ❌ Table structure reconstruction (rows/columns/cells) (Project B)
+- ❌ Paragraph segmentation (Project B)
+- ❌ Multi-engine OCR fusion (Project C)
+- ❌ Trust scoring & hallucination detection (Project C)
+- ❌ RAG chunking (Project C)
+- ❌ Embeddings generation (Project D)
+- ❌ Vector database operations (Project D)
+
+**Critical Design Principle**: Project A must not re-implement capabilities owned by Projects B-D. This prevents scope creep and ensures clean separation of concerns.
 
 ---
 
 ## System Architecture
 
-### Overview: Multi-Stage Pipeline with Text Detection Fork
+### Multi-Stage Pipeline Overview
 
 ```
 Input (PDF/Image)
     ↓
 [1. Ingestion & Standardization]
-    ↓ (Convert to 300 DPI images)
-[2. Text Detection Gate]
-    ↓                    ↓
-[NO TEXT]           [TEXT DETECTED]
-    ↓                    ↓
-[3A. Image Quality   [3B. Document Element
-    Assessment]          Detection]
-    ↓                    ↓
-[4. Correction & Output Generation]
+    ↓ (Auto-upscale if < 300 DPI, render to 300 DPI images)
+[2. PDF Type Classification]
+    ↓ (Classify: image_only / born_digital / hybrid)
+[3. Text Detection Gate]
+    ↓                              ↓
+[NO TEXT]                     [TEXT DETECTED]
+    ↓                              ↓
+[4A. Classical IQA            [4B. Layout-Lite Detection]
+     Full page analysis]           Coarse structural analysis
+    ↓                              ↓
+[5. ML IQA: ResNet-18 Student (Primary)]
     ↓
-JSON Metadata for Downstream Processing
+[6. Uncertainty Gate: Trigger Teacher if needed]
+    ↓ (Selective)
+[7. ML IQA: ResNet-50 Teacher (High-risk cases only)]
+    ↓
+[8. Correction Pipeline with Guardrails]
+    ↓
+[9. DQS Calculation & Routing Recommendation]
+    ↓
+DocumentMetadata.json + Corrected Images → Project B
 ```
 
-### Stage Breakdown
+### Teacher-Student ResNet Architecture
 
-#### Stage 1: Ingestion & Standardization
-- **Input Formats**: PDF, JPG, PNG, TIFF, etc.
-- **Conversion**: PyMuPDF or pdf2image to convert PDFs → 300 DPI PNG images
-- **Multi-page Handling**: Process each page individually, aggregate results
-- **DPI Detection**: Check source DPI, flag if upscaling needed
-- **Performance**: 30-120ms/page (CPU-bound)
+**Training Phase:**
+```
+Raw Datasets (OmniDocBench, OHR-Bench, custom)
+   ↓
+[ResNet-50 Teacher Training]
+   ↓ (Multi-head IQA network: blur, noise, skew, illumination, artifacts)
+Teacher Weights
+   ↓
+[Knowledge Distillation → ResNet-18]
+   ↓
+Student Model (default inference) + Teacher Model (selective inference)
+   ↓
+Registered in local + Modal registries
+```
 
-#### Stage 2: Text Detection Gate
-- **Primary Detector**: Ensemble approach
-  - OpenCV EAST detector or DBNet-lite (lightweight)
-  - Morphological stroke-density heuristic as backup
-- **Decision Logic**:
-  - Text detected → Route to Path B (Document Element Detection)
-  - No text detected → Route to Path A (Image Quality Assessment)
-- **Risk Mitigation**: Calibrate on validation set with aggressive augmentations (low-ink, halftone, fax scans) to minimize false negatives
-- **Performance**: 3-8ms GPU / 20-40ms CPU
+**Runtime Phase:**
+```
+Incoming Document
+   ↓
+Preflight Checks (DPI, format, page count)
+   ↓
+Rendering (golden DPI: 300)
+   ↓
+[Primary IQA Pass → ResNet-18 Student]
+       ↓
+[Uncertainty Gate]
+   ├── Low uncertainty & no conflicts → accept student output
+   ├── High-risk doc (e.g., fuzzy scan, watermark) → escalate to teacher
+   ├── High softmax entropy → escalate to teacher
+   ├── Classical vs student discrepancy high → escalate to teacher
+       ↓
+[Teacher Pass (ResNet-50) - Device priority: Local GPU → Modal GPU → BLOCK]
+       ↓
+IQA Metrics Merged (student + teacher where available)
+       ↓
+Layout-Lite Detection (coarse structural analysis)
+       ↓
+Corrections (with guardrails)
+       ↓
+DQS + Routing Recommendation
+       ↓
+Output Package → Project B
+```
 
-#### Stage 3A: Image Quality Assessment (No-Text Branch)
+### Device-Priority Execution
 
-**Detection Categories:**
-1. Noise
-2. Blur
-3. Skew/Rotation
-4. Perspective Distortion
-5. Low Contrast
-6. Image Orientation
+**Device Selection Order:**
+1. **Local GPU** (if available and under utilization threshold)
+2. **Local CPU** (if latency acceptable for student inference)
+3. **Modal GPU** (if enabled, within quota, for teacher inference)
 
-**Detection Methods:**
+**Critical Constraints:**
+- **Student (ResNet-18)**: Can run on CPU or GPU
+  - CPU target: ≤40ms/page
+  - GPU target: ≤10ms/page
+- **Teacher (ResNet-50)**: MUST NOT run on CPU in production mode
+  - GPU target: ≤30ms/page for flagged pages
+  - If no GPU available → skip teacher inference (use student-only output)
+- **Modal GPU usage**: Optional, bounded by configuration (`modal_budget_per_run`)
 
-| Issue | Detection Method | Implementation |
-|-------|------------------|----------------|
-| Skew/Rotation | Classical CV | Hough Transform / Projection Profile |
-| Low Contrast | Classical CV | Histogram analysis |
-| Blur | Classical CV | Laplacian variance |
-| Noise | ML Model | Multi-label CNN |
-| Perspective | ML Model | Multi-label CNN |
-| Orientation | ML Model | Multi-label CNN |
+### Layout-Lite vs Full Layout Detection
 
-**ML Model**: Lightweight CNN (EfficientNet-B0 or MobileNetV3)
-- **Architecture**: Multi-label classifier
-- **Input**: 224x224 or 320x320 normalized image
-- **Output**: Confidence scores for each issue type
-- **Performance**: 1-3ms GPU / 8-15ms CPU
+**Layout-Lite (Project A - THIS REPO)**:
+- **Purpose**: Provide routing metadata for Project B
+- **Granularity**: Page-level classification
+- **Outputs**:
+  - `layout_type`: single / multi / three_column / complex
+  - `has_tables`, `has_figures`, `has_dense_math`, `has_handwriting`: boolean flags
+  - Page attributes: `fuzzy_scan`, `watermark`, `colorful_background`
+- **Method**: Lightweight YOLOv8-nano detector OR heuristics-based classification
+- **Performance**: <10ms GPU
 
-#### Stage 3B: Document Element Detection (Text Branch)
-
-**Detection Categories:**
-1. Tables
-2. Images/Figures
-3. Handwriting regions
-4. Mathematical Formulas
-5. Non-Latin characters (post-detection script identification)
-6. Superscript/Footnotes (deferred to post-OCR)
-7. **Revision Markings** (Yale manuscripts: strikethrough, insertions, margin notes)
-
-**Handwriting Detection Methods (Phase 2)**
-
-**Approach A: Noteshrink-Based Classical CV** (Recommended for Phase 2)
-- **Algorithm**: K-means color clustering + HSV colorspace analysis
-- **Background Separation**: Identify dominant paper color via k-means (8 clusters)
-- **Ink Detection**: Pixels marked as foreground if:
-  - Value differs > 0.3 from background OR
-  - Saturation differs > 0.2 from background
-- **Optimization**: 5% pixel sampling (20x speedup) via systematic sampling
-- **Bit-Depth Reduction**: Convert 8-bit to 6-bit for noise-robust clustering
-- **Output**: Binary handwriting mask + confidence score
-- **Performance**: 10-20ms CPU (no GPU required)
-- **Source**: Adapted from mzucker/noteshrink (2016)
-- **Validation**: Tested on 56 handwriting samples (100% text detection, 38% skew rate)
-
-**Approach B: SignaTR6K-Based Segmentation** (Phase 2+)
-- **Dataset**: 6,257 annotated legal document crops (Thomson Reuters)
-- **Content**: Overlapping handwritten + printed text, signatures, stamps
-- **Format**: 256x256 crops with RGB pixel-wise segmentation masks
-- **Train/Val/Test**: 5,169 / 530 / 558 splits
-- **Model Options**: U-Net, DeepLabV3, or Mask R-CNN
-- **Use Case**: Precise pixel-level handwriting segmentation when classical methods insufficient
-- **Performance**: 5-15ms GPU (requires training infrastructure)
-
-**Approach C: Hybrid Strategy** (Recommended)
-- Phase 2: Noteshrink for fast binary detection
-- Phase 3+: SignaTR6K segmentation for precise localization if needed
-- Progressive enhancement as requirements evolve
-
-**Object Detection Model: YOLOv8n/s**
-- **Classes**: Table, Image, Handwriting, Formula
-- **Input**: 640x640 image
-- **Output**: Bounding boxes with class labels and confidence scores
-- **Optimization**: INT8 quantization via ONNX/TensorRT (1.5-3x speedup)
-- **Performance**: 2-7ms GPU / 25-70ms CPU
-
-**Secondary Analysis (Heuristics)**
-- **Non-Latin Script**: Lightweight OCR pass on detected text blocks → character-set identification
-- **Superscript/Footnotes**: **Deferred to post-OCR** (analyze baseline shifts and font sizes from OCR output)
-
-**Optimization Strategy**: Rule-first fast filters
-- Propose "table-like" regions using connected components
-- Run YOLO only on complex pages or when filters trigger
-- Early exit on clean pages
-
-#### Stage 4: Correction & Output Generation
-
-**OpenCV Corrections Applied:**
-| Issue | Correction Method | OpenCV Function |
-|-------|-------------------|-----------------|
-| Skew | Deskewing | cv2.warpAffine |
-| Perspective | Perspective correction | cv2.warpPerspective |
-| Blur | Sharpening | cv2.filter2D (unsharp mask) |
-| Low Contrast | CLAHE | cv2.createCLAHE |
-| Noise | Denoising | cv2.fastNlMeansDenoisingColored |
-| Background | Normalization | cv2.morphologyEx |
-| Low DPI | Upsampling | cv2.dnn_superres (Real-ESRGAN-x2-lite) |
-
-**Correction Guardrails** (Do-No-Harm Principle):
-- Apply confidence thresholds before correction
-- Only deskew if angle > threshold AND variance improves
-- Only apply CLAHE if low-contrast metric < threshold
-- Track all corrections in transform_history for auditability
-
-**Output Format**: JSON metadata per page, aggregated for multi-page documents
+**Full Layout Detection (Project B - ocr-orchestrator)**:
+- **Purpose**: Semantic element detection with precise bounding boxes
+- **Granularity**: Element-level (text blocks, titles, captions, tables, figures, formulas, etc.)
+- **Outputs**: Precise bounding boxes, reading order, hierarchical structure
+- **Method**: YOLOv8-medium/large or transformer-based models (DETR, LayoutLMv3)
+- **Performance**: 20-50ms GPU
 
 ---
 
 ## Output JSON Schema
 
 ### Design Principles
-- **COCO-aligned** for bounding boxes (easy LayoutParser integration)
-- **Page-level diagnostics** for issue tracking
-- **Transform history** for reproducibility and debugging
-- **Compact and human-readable**
+- **COCO-aligned** for bounding boxes (compatibility with downstream processors)
+- **Versioned schema** for reproducibility (`schema_version` field)
+- **Routing metadata** for Project B decision-making
+- **Transform history** for auditability
 
 ### Schema Structure
 
@@ -178,98 +202,122 @@ JSON Metadata for Downstream Processing
   "file_name": "original_filename.pdf",
   "source_mime": "application/pdf",
   "num_pages": 5,
+  "pdf_type": "hybrid",
+  "languages": ["en", "es"],
+  "has_non_latin": false,
+  "pre_ocr_risk": 0.42,
+  "dqs": {
+    "degradation_score": 0.68,
+    "structural_complexity_score": 0.75
+  },
+  "ocr_routing_recommendation": "ocr_advanced",
   "processing_version": {
     "pipeline_version": "1.0.0",
-    "iqa_model_hash": "abc123...",
-    "layout_model_hash": "def456...",
+    "student_model_hash": "abc123...",
+    "teacher_model_hash": "def456...",
     "thresholds": {...},
     "timestamp": "2025-01-15T10:30:00Z"
   },
+  "upscaling": {
+    "applied": true,
+    "original_dpi": 150,
+    "target_dpi": 300,
+    "algorithm": "lanczos",
+    "processing_time_ms": 345
+  },
+  "teacher_usage": {
+    "pages_with_teacher": [0, 3],
+    "escalation_reasons": {
+      "0": "high_entropy",
+      "3": "classical_discrepancy"
+    },
+    "teacher_device": "modal_gpu",
+    "total_teacher_time_ms": 67
+  },
+  "page_layout_summary": [
+    {
+      "page_index": 0,
+      "layout_type": "multi",
+      "has_tables": true,
+      "has_figures": false,
+      "has_dense_math": false,
+      "has_handwriting": false,
+      "fuzzy_scan": true,
+      "watermark": false,
+      "colorful_background": false
+    }
+  ],
   "pages": [
     {
       "page_index": 0,
       "width_px": 2550,
       "height_px": 3300,
-      "dpi_input": 200,
+      "dpi_input": 150,
       "dpi_effective": 300,
-      "detected_issues": [
-        {
-          "type": "blur",
-          "confidence": 0.87,
-          "severity": "medium",
-          "metrics": {
-            "laplacian_variance": 125.4
-          }
-        },
-        {
-          "type": "skew",
-          "confidence": 0.92,
-          "severity": "high",
-          "metrics": {
-            "angle_degrees": -3.2
-          }
+      "text_gate_result": "text_detected",
+      "classical_iqa": {
+        "blur_score": 0.87,
+        "skew_angle_degrees": -3.2,
+        "noise_level": 0.45,
+        "contrast_score": 0.62,
+        "illumination_score": 0.78
+      },
+      "ml_iqa": {
+        "source": "student",
+        "blur_score": 0.89,
+        "noise_score": 0.48,
+        "skew_score": 0.92,
+        "illumination_score": 0.81,
+        "artifact_score": 0.35,
+        "confidence_scores": {
+          "blur": 0.94,
+          "noise": 0.88,
+          "skew": 0.96,
+          "illumination": 0.91,
+          "artifact": 0.79
         }
-      ],
-      "planned_actions": [
+      },
+      "teacher_iqa": {
+        "blur_score": 0.91,
+        "noise_score": 0.51,
+        "escalation_reason": "high_entropy"
+      },
+      "corrections_applied": [
         {
           "action": "deskew",
           "params": {"angle": -3.2},
           "confidence": 0.92,
-          "reason": "skew_detected"
+          "quality_improvement": 0.15,
+          "status": "success"
         },
         {
-          "action": "sharpen",
-          "params": {"kernel_size": 5, "alpha": 1.5},
-          "confidence": 0.87,
-          "reason": "blur_detected"
-        }
-      ],
-      "elements": [
-        {
-          "id": "elem_001",
-          "category": "table",
-          "bbox": [150, 400, 1200, 600],
-          "confidence": 0.94,
-          "attributes": {}
-        },
-        {
-          "id": "elem_002",
-          "category": "handwriting",
-          "bbox": [1500, 100, 300, 150],
-          "confidence": 0.78,
-          "attributes": {
-            "handwriting_prob": 0.78
-          }
-        },
-        {
-          "id": "elem_003",
-          "category": "formula",
-          "bbox": [200, 2800, 800, 150],
-          "confidence": 0.89,
-          "attributes": {
-            "formula_prob": 0.89
-          }
-        }
-      ],
-      "languages": [
-        {
-          "script": "Latin",
-          "confidence": 0.98
+          "action": "clahe",
+          "params": {"clip_limit": 2.0},
+          "confidence": 0.85,
+          "quality_improvement": 0.08,
+          "status": "success"
         }
       ],
       "transform_history": [
         {
-          "action": "deskew",
-          "params": {"angle": -3.2},
-          "started_at": "2025-01-15T10:30:01.123Z",
-          "finished_at": "2025-01-15T10:30:01.145Z",
+          "action": "upscale",
+          "params": {"dpi_from": 150, "dpi_to": 300, "algorithm": "lanczos"},
+          "started_at": "2025-01-15T10:30:01.000Z",
+          "finished_at": "2025-01-15T10:30:01.345Z",
           "status": "success"
         },
         {
-          "action": "sharpen",
-          "params": {"kernel_size": 5, "alpha": 1.5},
-          "started_at": "2025-01-15T10:30:01.150Z",
-          "finished_at": "2025-01-15T10:30:01.167Z",
+          "action": "deskew",
+          "params": {"angle": -3.2},
+          "started_at": "2025-01-15T10:30:01.500Z",
+          "finished_at": "2025-01-15T10:30:01.522Z",
+          "status": "success"
+        },
+        {
+          "action": "clahe",
+          "params": {"clip_limit": 2.0},
+          "started_at": "2025-01-15T10:30:01.530Z",
+          "finished_at": "2025-01-15T10:30:01.547Z",
           "status": "success"
         }
       ]
@@ -278,21 +326,20 @@ JSON Metadata for Downstream Processing
 }
 ```
 
-### Downstream Integration
+### New Schema Fields vs Original Plan
 
-**LayoutParser Handoff:**
-- Consumes `elements` array as bounding boxes
-- Receives corrected page image + metadata
-- Coordinates in pixel space, origin (0,0) top-left
+**Added for RAG Pipeline Integration:**
+- `pdf_type`: Classification of PDF origin (image_only / born_digital / hybrid)
+- `dqs`: Document Quality Score with degradation + structural complexity
+- `pre_ocr_risk`: Holistic risk score for OCR difficulty (0-1)
+- `ocr_routing_recommendation`: Routing decision for Project B (ocr_fast / ocr_advanced / vision_simple / vision_structured)
+- `page_layout_summary`: Layout-lite attributes per page
+- `teacher_usage`: Tracking of when/why teacher model was invoked
+- `teacher_iqa`: Teacher model outputs (when escalated)
 
-**Tesseract/Marker/Docling Integration:**
-- Use `elements` to define ROIs for targeted OCR
-- After OCR, persist hOCR/ALTO as separate artifacts
-- Maintain mapping back to `page_index` and `element.id`
-
-**Versioning & Reproducibility:**
-- `processing_version` tracks model versions and thresholds
-- `transform_history` provides full audit trail
+**Removed/Deferred to Project B:**
+- ~~`elements`~~: Per-element detection with precise bounding boxes → Project B responsibility
+- ~~`detected_issues`~~: Internal detail, not needed in handoff JSON
 
 ---
 
@@ -300,21 +347,21 @@ JSON Metadata for Downstream Processing
 
 ### Critical Principle: Minimize Manual Annotation Burden
 
-### Image Quality Assessment (IQA) Dataset
+### ML-based IQA (ResNet-50 Teacher + ResNet-18 Student)
 
-**Approach: Synthetic Data Generation + Weak Supervision**
+**Approach: Synthetic Data Generation + Weak Supervision + Knowledge Distillation**
 
 **Data Sources:**
 1. **Base Dataset**: Clean document images (10,000+ pages)
-   - Publicly available document datasets (RVL-CDIP, Tobacco800)
-   - Clean scanned documents from DocBank
+   - OmniDocBench: Multi-domain document dataset with quality annotations
+   - OHR-Bench: OCR-hard regions dataset with quality labels
+   - DocBank: Clean scanned documents
    - Born-digital PDFs rendered at high DPI
 
 2. **Synthetic Augmentation** (using Albumentations):
    - **Noise**: Gaussian noise, Poisson noise, salt-and-pepper
    - **Blur**: Gaussian blur, motion blur (various angles), defocus blur
    - **Low Contrast**: Histogram manipulation, brightness reduction
-   - **Perspective**: Random perspective transform, slight rotations
    - **Real-world Artifacts**:
      - JPEG compression artifacts (ringing, blockiness)
      - Halftone dithering patterns
@@ -329,233 +376,196 @@ JSON Metadata for Downstream Processing
    - Snorkel-style label models to combine signals
    - **Manual validation** only on ambiguous samples (10-20% of dataset)
 
+4. **Knowledge Distillation**:
+   - Train ResNet-50 teacher on all augmented data
+   - Use teacher predictions as soft labels for ResNet-18 student
+   - Combine with hard labels from weak supervision
+   - Temperature-scaled distillation loss
+
 **Target Dataset Size**: 50,000 images (80% synthetic augmentation, 20% real-world validation)
 
-**Validation/Test Split**: Real-world documents with genuine quality issues (manually curated, 2,000 pages)
+**Validation/Test Split**: Real-world documents with genuine quality issues (manually curated, 2,000 pages from OHR-Bench)
 
-### Document Element Detection Dataset
+### Layout-Lite Classification
 
-**Approach: Transfer Learning + Active Learning + Selective Annotation**
+**Approach: Transfer Learning from OmniDocBench + Heuristics**
 
 **Data Sources:**
+1. **OmniDocBench**: Page-level layout attributes already annotated
+   - `layout_type`: single / multi / complex
+   - Presence flags: `has_tables`, `has_figures`, `has_dense_math`, `has_handwriting`
+   - Page attributes: `fuzzy_scan`, `watermark`, `colorful_background`
 
-1. **Public Datasets** (Bootstrap training):
-   - **PubLayNet**: 360k+ layout-annotated pages (tables, figures, text)
-   - **DocLayNet**: Multi-domain layout dataset
-   - **ICDAR Competitions**: Table detection (ICDAR 2013, 2019), formula detection (CROHME)
-   - **PubTables-1M**: Table structure recognition
-   - **IAM Handwriting Database**: Handwriting samples
-   - **IIIT-HWS**: Scene text and handwriting
+2. **Heuristics-Based Initial Implementation**:
+   - **Single vs Multi-column**: Connected component analysis + projection profile
+   - **Table detection**: Grid-like structure detection (Hough lines)
+   - **Figure detection**: Large connected components with low text density
+   - **Handwriting detection**: Noteshrink-based K-means color clustering (Phase 2)
+   - **Math detection**: Defer to Project B (requires symbol recognition)
 
-2. **Custom Annotation** (Selective):
-   - **Handwriting vs Print**: 1,000 manually labeled examples (focus on ambiguous cases)
-   - **Mathematical Formulas**: 500 additional examples from domain-specific sources
-   - **Multi-lingual Documents**: 500 examples with non-Latin scripts
-   - **Tool**: CVAT or Label Studio
+3. **Optional: Lightweight YOLOv8-nano** (if heuristics insufficient):
+   - Classes: text_block, table_block, figure_block, background_noise
+   - Transfer learning from PubLayNet (coarse classes only)
+   - ~10k annotated pages sufficient for fine-tuning
 
-3. **Active Learning Pipeline**:
-   - Train initial model on public datasets
-   - Run inference on unlabeled corpus
-   - Select high-uncertainty samples (low confidence, class imbalance)
-   - Human annotate only selected samples
-   - Retrain and iterate (3-4 cycles)
+**Target Dataset Composition**: 10k-50k pages (depending on heuristics vs ML approach)
 
-4. **Semi-automatic Labeling**:
-   - Use PaddleOCR table detector to prelabel tables
-   - Use PubTables-1M model for initial bounding boxes
-   - Human correction on subset (validation only)
+### PDF Type Classification
 
-**Target Dataset Composition:**
-- 300k+ pages from public datasets
-- 3k custom-annotated pages (high-value, focused)
-- Active learning to identify annotation priorities
+**Approach: PyMuPDF-based heuristics (no ML needed)**
 
-**Class Distribution Target:**
-- Tables: 40%
-- Images/Figures: 30%
-- Handwriting: 15%
-- Mathematical Formulas: 10%
-- Mixed/Complex: 5%
+**Implementation:**
+- **Born-digital detection**: High proportion of extractable text, vector graphics
+- **Image-only detection**: No extractable text, only embedded images
+- **Hybrid detection**: Mix of extractable text and embedded images
 
-### Data Augmentation Strategy
-
-**Training-time Augmentation** (Albumentations):
-- Random crops, rotations (-5° to +5°)
-- Color jittering, brightness/contrast adjustments
-- Random shadows, paper texture overlays
-- Slight perspective distortions
-- Mixup / CutMix for robustness
-
-**Domain Randomization**:
-- Scanner noise patterns
-- Photocopy degradation
-- Camera capture artifacts (lighting, angle)
-- Compression artifacts (JPEG, PDF)
+**Target Accuracy**: 99.5% (heuristics-based, validated on DocBank + RVL-CDIP)
 
 ---
 
 ## Model Architecture & Training
 
-### Image Quality Assessment (IQA) Model
+### ML-based IQA: Teacher-Student ResNet
 
-**Architecture**: Multi-label Classification CNN
+**Teacher Model: ResNet-50**
+- **Architecture**: Multi-head IQA network
+  - Backbone: ResNet-50 (ImageNet pretrained)
+  - Heads: 5 parallel branches (blur, noise, skew, illumination, artifacts)
+  - Output: Per-head scores (0-1) + confidence estimates
 
-**Model Options** (ranked by efficiency):
-1. **MobileNetV3-Small** (preferred for CPU deployment)
-2. **EfficientNet-B0** (balanced GPU/CPU)
-3. **EfficientNet-B1** (higher accuracy if GPU-available)
+**Student Model: ResNet-18**
+- **Architecture**: Distilled multi-head IQA network
+  - Backbone: ResNet-18 (ImageNet pretrained)
+  - Same head structure as teacher
+  - Trained via knowledge distillation from teacher
 
 **Training Configuration:**
 ```python
-# Hyperparameters
-INPUT_SIZE = 224  # or 320 for better accuracy
+# Teacher Training (ResNet-50)
+INPUT_SIZE = 224
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-3 (with cosine annealing)
 OPTIMIZER = AdamW
 EPOCHS = 50 (with early stopping)
-LOSS = BCEWithLogitsLoss (multi-label)
+LOSS = Weighted combination:
+  - BCEWithLogitsLoss (multi-label classification)
+  - MSELoss (regression for continuous scores)
+
+# Student Training (ResNet-18) - Knowledge Distillation
+DISTILLATION_TEMPERATURE = 4.0
+LOSS = Combined:
+  - KL divergence loss (student logits vs teacher logits)
+  - Hard label loss (student vs ground truth)
+  - Alpha = 0.7 (weight for distillation loss)
 
 # Data Split
-TRAIN: 70% (35,000 images)
+TRAIN: 70% (35,000 images from OmniDocBench + synthetic)
 VALIDATION: 15% (7,500 images)
-TEST: 15% (7,500 images - real-world only)
+TEST: 15% (7,500 images - OHR-Bench real-world only)
 
 # Augmentation
 Albumentations pipeline (see Training Data Strategy)
 ```
 
-**Transfer Learning**:
-- Start with ImageNet-pretrained weights
-- Fine-tune all layers (after initial frozen epochs)
+**Optimization:**
+- **ONNX Export**: Both teacher and student for cross-platform deployment
+- **INT8 Quantization**: ONNX Runtime for CPU deployment (student only)
+- **TensorRT**: GPU inference acceleration (optional)
 
-**Calibration**:
-- Temperature scaling on validation set for confidence calibration
-- Threshold tuning per issue type (optimize F1-score)
+**Device-Priority Execution**:
+- **Student inference**:
+  1. Local GPU (if available, utilization <80%)
+  2. Local CPU (ONNX INT8)
+  3. Modal GPU (if enabled)
+- **Teacher inference** (selective):
+  1. Local GPU (if available)
+  2. Modal GPU (if enabled, within quota)
+  3. **BLOCK if no GPU** (production mode)
 
-**Output**: 6 binary predictions with confidence scores
-- Noise, Blur, Skew, Perspective, Low Contrast, Orientation
+### Layout-Lite Classification
 
-### Document Element Detection Model
+**Option 1: Heuristics-Based (Phase 1)**
+- Connected component analysis
+- Projection profile for column detection
+- Hough line detection for tables
+- No training required
 
-**Architecture**: YOLOv8n or YOLOv8s
-
-**Model Selection Criteria**:
-- **YOLOv8n**: Fastest, suitable for CPU deployment (3-5ms GPU)
-- **YOLOv8s**: More accurate, recommended if GPU-available (5-7ms GPU)
-
-**Training Configuration:**
-```python
-# Hyperparameters
-INPUT_SIZE = 640
-BATCH_SIZE = 16
-LEARNING_RATE = 1e-2 (with warmup)
-OPTIMIZER = SGD (momentum=0.937, weight_decay=5e-4)
-EPOCHS = 100 (with early stopping)
-LOSS = YOLOv8 default (box + classification + objectness)
-
-# Data Split
-TRAIN: 80% (~240k images)
-VALIDATION: 10% (~30k images)
-TEST: 10% (~30k images - domain-diverse)
-
-# Augmentation
-Mosaic, MixUp, HSV augmentation, flips, rotations
-```
-
-**Transfer Learning**:
-- Start with COCO-pretrained YOLOv8 weights
-- Fine-tune on document-specific dataset
-
-**Class Weights**:
-- Apply inverse frequency weighting to handle class imbalance
-- Oversample rare classes (handwriting, formulas)
-
-**Optimization**:
-- **Quantization**: INT8 via ONNX export + TensorRT
-- **Pruning**: Optional for extreme CPU deployment
-- **NMS Tuning**: Adjust IoU threshold for overlapping elements
-
-**Output**: Bounding boxes with class labels
-- Classes: Table, Image, Handwriting, Formula
+**Option 2: YOLOv8-nano (Phase 2+)**
+- **Model**: YOLOv8-nano (fastest variant)
+- **Classes**: text_block, table_block, figure_block (3 classes only)
+- **Input**: 640x640 image
+- **Training**: Transfer learning from COCO/PubLayNet
+- **Performance**: 3-5ms GPU, 25-40ms CPU
 
 ---
 
 ## Evaluation Metrics & Benchmarks
 
-### Image Quality Assessment (IQA) Evaluation
+### ML-based IQA Evaluation (ResNet-50 Teacher + ResNet-18 Student)
 
 **Primary Metrics:**
-1. **Per-Class Metrics**:
-   - Precision, Recall, F1-Score for each issue type
-   - ROC-AUC for each binary classification
+1. **Per-Head Metrics** (blur, noise, skew, illumination, artifacts):
+   - Precision, Recall, F1-Score for binary classification
+   - ROC-AUC for confidence calibration
+   - MAE (Mean Absolute Error) for regression scores
 
 2. **Overall Performance**:
-   - **Mean Average Precision (mAP)** across all labels
-   - **Subset Accuracy**: All labels correct for an image
+   - **Mean Average Precision (mAP)** across all heads
+   - **Student-Teacher Agreement**: KL divergence between outputs
 
 3. **Calibration**:
    - **Expected Calibration Error (ECE)**: Confidence vs accuracy alignment
-   - Reliability diagrams per issue type
-
-**Secondary Metrics:**
-- Confusion matrix analysis (identify common misclassifications)
-- False positive rate per issue (critical for avoiding over-correction)
+   - Reliability diagrams per head
 
 **Benchmark Targets:**
-- **Per-class F1-Score**: > 0.85 (acceptable), > 0.90 (target)
-- **mAP**: > 0.88
-- **ECE**: < 0.05 (well-calibrated)
+- **Teacher (ResNet-50)**:
+  - Per-head F1-Score: >0.90
+  - mAP: >0.92
+  - ECE: <0.03
+- **Student (ResNet-18)**:
+  - Per-head F1-Score: >0.85
+  - mAP: >0.88
+  - ECE: <0.05
+  - Teacher agreement: KL divergence <0.15
 
-**Test Set**: Real-world documents only (no synthetic)
+**Test Set**: OHR-Bench real-world documents only (no synthetic)
 
-### Document Element Detection Evaluation
+### Layout-Lite Evaluation
 
 **Primary Metrics:**
-1. **Object Detection Standard**:
-   - **mAP@.50**: Mean Average Precision at 50% IoU
-   - **mAP@.50-.95**: COCO primary metric (averaged across IoU thresholds)
+1. **Page-level Classification Accuracy**:
+   - `layout_type` accuracy: >0.90
+   - Presence flags (has_tables, has_figures, etc.): F1 >0.85 per flag
 
-2. **Per-Class Average Precision**:
-   - AP for Table, Image, Handwriting, Formula individually
-   - Ensures balanced performance across rare/common classes
+2. **Inference Time**:
+   - Heuristics: <5ms CPU
+   - YOLOv8-nano: <5ms GPU, <30ms CPU
 
-**Secondary Metrics:**
-- **Precision/Recall Curves**: Per class
-- **Confusion Matrix**: Misclassification analysis
-- **Inference Time**: Latency per image at batch size 1
-
-**Benchmark Targets:**
-- **mAP@.50**: > 0.75 (acceptable), > 0.82 (target)
-- **Per-Class AP**: > 0.70 for all classes (ensure rare class performance)
-- **Inference Time**: < 10ms GPU (YOLOv8n), < 25ms CPU
-
-**Test Set**: Domain-diverse documents (academic, legal, technical, handwritten notes)
+**Test Set**: OmniDocBench validation set (5,000 pages)
 
 ### End-to-End Pipeline Evaluation
 
-**Metric: JSON Accuracy**
-- Compare generated JSON against ground-truth JSON
-- **Scoring**:
-  - Issue detection: Precision, Recall, F1 per issue type
-  - Element detection: mAP with IoU matching
-  - Action planning: Precision (are planned actions correct?)
+**Metric: Routing Accuracy**
+- Compare `ocr_routing_recommendation` against ground-truth routing decisions
+- **Target**: >0.88 accuracy on routing decisions
 
-**Benchmark Target**:
-- **JSON Accuracy**: > 0.85 (at least 85% of pages have correct metadata)
+**DQS Correlation**:
+- Correlation between DQS and downstream OCR accuracy (Project B)
+- **Target**: Pearson correlation >0.75
 
 **Performance Metrics:**
 1. **Latency**:
-   - Target: < 150ms per page (GPU), < 400ms (CPU)
+   - Target: <150ms per page (GPU), <400ms (CPU)
    - Measured: p50, p95, p99 latencies
 
 2. **Throughput**:
-   - Target: > 6 pages/sec per GPU worker
-   - Horizontal scaling: Linear scalability to 100s of workers
+   - Target: >6 pages/sec per GPU worker
+   - Target: >2 pages/sec per CPU worker
 
 3. **Resource Usage**:
-   - GPU memory: < 2GB per worker
+   - GPU memory: <2GB per worker
    - CPU cores: 2-4 per worker
-   - RAM: < 4GB per worker
+   - RAM: <4GB per worker
 
 ---
 
@@ -563,672 +573,1183 @@ Mosaic, MixUp, HSV augmentation, flips, rotations
 
 ### Critical Production Risks
 
-#### 1. Text/No-Text Gating Errors
+#### 1. Teacher-Student Degradation
+**Risk**: Student model significantly underperforms teacher on edge cases
+**Impact**: HIGH - Missed quality issues on difficult documents
+**Mitigation**:
+- Uncertainty-based teacher escalation (high entropy → trigger teacher)
+- Classical IQA discrepancy checks (student disagrees with classical → trigger teacher)
+- Continuous monitoring of student-teacher agreement
+- Quarterly retraining with production failures
+
+#### 2. Device Availability & Cost Control
+**Risk**: Modal GPU costs spiral out of control OR teacher unavailable when needed
+**Impact**: MEDIUM-HIGH - Budget overruns or quality degradation
+**Mitigation**:
+- Strict Modal GPU budget caps (`modal_budget_per_run`)
+- Teacher usage tracking and alerting
+- Graceful degradation: Student-only output if teacher unavailable
+- Per-document teacher page limits
+
+#### 3. Text/No-Text Gating Errors
 **Risk**: False negatives on faint/stylized text → wrong processing path
-**Impact**: HIGH - Missed text detection leads to incorrect preprocessing
+**Impact**: HIGH - Missed layout-lite analysis for text documents
 **Mitigation**:
 - Ensemble gate: Morphological stroke-density + EAST/DBNet-lite
 - Calibrate on validation set with aggressive augmentations (low-ink, halftone, fax)
-- Add confidence threshold: If text gate is uncertain (0.4-0.6), run both paths and merge results
-- Monitoring: Track text-gate confidence distribution in production
+- If text gate uncertain (0.4-0.6 confidence) → run both paths and merge
 
-#### 2. Synthetic→Real Domain Gap
-**Risk**: IQA model trained on synthetic augmentations fails on real-world artifacts
+#### 4. Synthetic→Real Domain Gap
+**Risk**: ML models trained on synthetic augmentations fail on real-world artifacts
 **Impact**: HIGH - Over-correction or missed issues
 **Mitigation**:
-- Seed with real-world noisy documents (20% of training set)
-- Add artifact-specific augmentations: JPEG ringing, halftone, motion blur, uneven illumination
-- Legacy scanner color casts and copier patterns
-- Test on real-world holdout set exclusively
+- Seed with OHR-Bench real-world noisy documents (20% of training set)
+- Add artifact-specific augmentations: JPEG ringing, halftone, uneven illumination
+- Test on OHR-Bench holdout set exclusively
 - Active learning: Mine production failures, add to training set
 
-#### 3. Over-Correction Harm
-**Risk**: Deskew, CLAHE, denoising applied when not needed → degrades OCR accuracy
+#### 5. Over-Correction Harm
+**Risk**: Corrections applied when not needed → degrades OCR accuracy
 **Impact**: MEDIUM-HIGH - Downstream OCR failures
 **Mitigation**:
 - Confidence thresholds per correction (only apply if high confidence)
-- "Do-no-harm" guardrails: Measure image quality improvement before/after
-  - Only deskew if angle > 2° AND variance improves by > 5%
+- "Do-no-harm" guardrails: Measure quality improvement before/after
+  - Only deskew if angle >2° AND variance improves by >5%
   - Only apply CLAHE if low-contrast metric < threshold
 - A/B testing: Compare OCR accuracy with/without corrections on validation set
-- Preserve original images for rollback if needed
 
-#### 4. Multi-Model Maintenance & Drift
-**Risk**: Thresholds and models drift as document sources change
-**Impact**: MEDIUM - Gradual accuracy degradation
+#### 6. Scope Creep into Project B
+**Risk**: Layout-lite evolves into full layout detection, duplicating Project B
+**Impact**: MEDIUM - Architectural drift, maintenance burden
 **Mitigation**:
-- Telemetry: Log confidence scores, issue frequencies, correction outcomes
-- Periodic calibration: Recompute PR curves quarterly on fresh validation set
-- Drift detection: Monitor feature distributions (e.g., KL divergence on image histograms)
-- Scheduled reevaluation: Run against held-out change-detection set monthly
-- Versioning: Track model versions in JSON output for reproducibility
-
-#### 5. Throughput Bottlenecks
-**Risk**: PDF rasterization and YOLO inference dominate latency
-**Impact**: MEDIUM - Unable to meet throughput SLAs
-**Mitigation**:
-- Batch PDF rendering: PyMuPDF parallel processing
-- GPU acceleration: YOLOv8 INT8 quantization (1.5-3x speedup)
-- Async worker pool: Separate rasterization and inference queues
-- Early exit: Skip heavy models on "clean" pages (no issues detected by fast heuristics)
-- Horizontal scaling: Deploy multiple workers behind load balancer
-
-#### 6. Non-Latin Script Detection Dependency
-**Risk**: Script identification requires OCR, adds latency
-**Impact**: LOW-MEDIUM - Increased processing time for multi-lingual docs
-**Mitigation**:
-- Lightweight OCR: Tesseract OEM 0 fast mode on text blocks only
-- Alternative: Small CTC-based script classifier (< 5ms)
-- Defer to post-OCR: Let downstream OCR handle script ID if latency-critical
-- Cache: Detect script once per document, apply to all pages
-
-#### 7. Multi-Page Memory/IO Pressure
-**Risk**: Large PDFs (100+ pages) cause memory spikes
-**Impact**: MEDIUM - OOM crashes, system instability
-**Mitigation**:
-- Stream pages: Process one page at a time, don't load entire PDF
-- Avoid intermediate writes: Keep images in memory until final output
-- Cap concurrent pages: Limit worker pool size based on available memory
-- Resource monitoring: Alert on memory usage > 80%
+- Strict ADR on layout-lite boundaries (page-level only, no precise bounding boxes)
+- Regular architecture review with Project B team
+- Schema validation: Ensure DocumentMetadata.json stays within contract
 
 ---
 
 ## Implementation Roadmap
 
-### Phase 0: Foundation & Scaffolding (2-3 weeks)
+### Phase 0: Foundation & Scaffolding (Weeks 0-1) ✅ COMPLETE
 
-**Goals:**
-- Establish project structure, CI/CD, and evaluation framework
-- Define JSON schema and telemetry hooks
-- Create test harness for "JSON Accuracy" metric
+**Status**: Complete (based on git history: setup-optimized job, schema.py, CI/CD)
 
-**Tasks:**
-1. **Project Setup**
-   - Initialize repository with Poetry for dependency management
-   - Set up pre-commit hooks (Black, Ruff, MyPy, Markdownlint)
-   - Configure CI/CD pipeline (GitHub Actions or GitLab CI)
-   - Security: GPG key validation, dependency scanning (Safety, Bandit)
-
-2. **Data Infrastructure**
-   - Define JSON schema (see Output JSON Schema section)
-   - Implement JSON serialization/deserialization utilities
-   - Create ground-truth annotation tool for test set labeling
-   - Set up data versioning with DVC (Data Version Control)
-
-3. **Evaluation Framework**
-   - Implement "JSON Accuracy" metric computation
-   - Create test harness: Load ground-truth JSONs, compare with predictions
-   - Build evaluation dashboard (Streamlit or Gradio)
-   - Telemetry hooks: Log confidence scores, latencies, resource usage
-
-4. **Documentation**
-   - Architecture diagrams (Mermaid or draw.io)
-   - API documentation (Sphinx with autodoc)
-   - Dataset documentation (sources, licenses, statistics)
-
-**Deliverables:**
-- ✅ Repository with CI/CD pipeline
-- ✅ JSON schema v1.0 with validation tests
-- ✅ Evaluation framework with test harness
-- ✅ 500-page ground-truth test set (manually annotated)
-
-**Success Criteria:**
-- Test harness can compute JSON Accuracy on sample data
-- CI/CD pipeline passes all linting and security checks
+**Completed Deliverables:**
+- ✅ Repository with CI/CD pipeline (GitHub Actions)
+- ✅ JSON schema v1.0 with Pydantic v2 models
+- ✅ Pre-commit hooks (Ruff, MyPy, Bandit)
+- ✅ Poetry dependency management
+- ✅ Security scanning (Safety, Bandit)
 
 ---
 
-### Phase 1: MVP with Classical Methods (3-4 weeks)
+### Phase 1: MVP with Classical Methods (Weeks 2-5) ✅ MOSTLY COMPLETE
 
-**Goals:**
-- Implement functional pipeline with classical CV methods
-- Validate end-to-end workflow from PDF to JSON
-- Establish performance baseline
+**Status**: Mostly complete (classical IQA, text gate, corrections implemented)
 
-**Tasks:**
-
-1. **PDF/Image Ingestion** ([src/ingestion/](src/ingestion/))
+**Completed Tasks:**
+1. ✅ **PDF/Image Ingestion** (src/ingestion/)
    - File format detection and validation
    - PDF to image conversion (PyMuPDF)
-   - DPI detection and upscaling logic
    - Multi-page document handling
 
-2. **Text Detection Gate** ([src/detection/text_gate.py](src/detection/text_gate.py))
-   - Implement morphological stroke-density heuristic
-   - Integrate OpenCV EAST detector
+2. ✅ **Text Detection Gate** (src/detection/text_gate.py)
+   - Morphological stroke-density heuristic
    - Ensemble logic with confidence thresholding
-   - Calibration on validation set
 
-3. **Classical IQA Detectors** ([src/detection/iqa_classical.py](src/detection/iqa_classical.py))
-   - **Skew Detection**: Hough Transform / Projection Profile
-   - **Low Contrast**: Histogram analysis (variance, range)
-   - **Blur Detection**: Laplacian variance
-   - **Orientation**: Histogram of oriented gradients (HOG)
+3. ✅ **Classical IQA Detectors** (src/detection/iqa_classical.py)
+   - Skew Detection: Hough Transform
+   - Low Contrast: Histogram analysis
+   - Blur Detection: Laplacian variance
    - Confidence scoring per detector
 
-4. **Correction Pipeline** ([src/correction/](src/correction/))
-   - Deskew: cv2.warpAffine with rotation matrix
-   - CLAHE: cv2.createCLAHE on L channel (LAB color space)
-   - Sharpening: Unsharp mask (cv2.filter2D)
-   - Denoising: cv2.fastNlMeansDenoisingColored
-   - Background normalization: Morphological operations
-   - **Guardrails**: Confidence thresholds, do-no-harm checks
+4. ✅ **Correction Pipeline** (src/correction/)
+   - Deskew: cv2.warpAffine
+   - CLAHE: cv2.createCLAHE
+   - Guardrails: Confidence thresholds, do-no-harm checks
 
-5. **Output Generation** ([src/output/json_generator.py](src/output/json_generator.py))
-   - JSON schema implementation
-   - Per-page metadata aggregation
-   - Multi-page document assembly
-   - Transform history logging
-
-6. **CLI Tool** ([src/cli.py](src/cli.py))
-   - Command-line interface for single-file processing
-   - Batch processing support
-   - Output directory management
-
-**Deliverables:**
-- ✅ End-to-end pipeline: PDF → JSON output
-- ✅ Classical detectors with confidence scores
-- ✅ Correction pipeline with guardrails
-- ✅ CLI tool for testing
+**Remaining Tasks (Phase 1 Completion):**
+- 🔲 CLI tool for single-file and batch processing
+- 🔲 Output generation: DocumentMetadata.json serialization
+- 🔲 End-to-end integration test: PDF → JSON output
 
 **Success Criteria:**
 - Pipeline processes 100-page PDF without errors
-- JSON Accuracy > 0.60 on test set (baseline)
-- Latency < 500ms per page (CPU-only)
-
-**Benchmark Results** (Expected):
-| Metric | Target | Notes |
-|--------|--------|-------|
-| Skew Detection Accuracy | > 0.90 | Classical methods excel here |
-| Contrast Detection | > 0.85 | Histogram analysis reliable |
-| Blur Detection | > 0.75 | Laplacian variance has limitations |
-| Overall JSON Accuracy | > 0.60 | Baseline for ML improvement |
+- JSON Accuracy >0.60 on test set (baseline)
+- Latency <500ms per page (CPU-only)
 
 ---
 
-### Phase 1B: PDF Resolution Pre-processing & DPI Upscaling (1-2 weeks)
+### Phase 1B: PDF Resolution Pre-processing & DPI Upscaling (Week 6) ✅ COMPLETE
 
-**Goals:**
-- Implement automatic DPI detection for PDF pages and images
-- Add upscaling capability for low-resolution documents (<300 DPI)
-- Seamlessly integrate with ingestion pipeline
-- Ensure OCR-ready quality for downstream processing
+**Status**: Complete (PR #10 merged)
 
-**Background:**
-This phase incorporates proven upscaling technology from the data_ingestor project (Phase 1C), which achieved 100% test success rate and 310-360ms processing time. The implementation uses OpenCV-based upscaling algorithms optimized for document processing.
-
-**Tasks:**
-
-1. **DPI Detection Module** ([src/ingestion/pdf_resolution.py](src/ingestion/pdf_resolution.py))
-   - PyMuPDF-based DPI analysis for PDF pages
-   - Image metadata extraction for raster formats (PNG, JPEG, TIFF)
-   - Multi-page DPI analysis with per-page resolution reporting
-   - Edge case handling: zero bbox, no images, password-protected PDFs
-   - Confidence scoring for DPI measurements
-
-2. **PDF Upscaling Module** ([src/ingestion/pdf_upscaler.py](src/ingestion/pdf_upscaler.py))
-   - **OpenCV Upscaling Algorithms**:
-     - `lanczos` - Best quality (recommended for production)
-     - `bicubic` - Balanced speed/quality (development)
-     - `inter_linear` - Fastest (performance-critical workflows)
-     - `inter_cubic` - Alternative high-quality option
-     - `inter_area` - Downsampling (for oversized images)
-   - Page-by-page processing to minimize memory usage (<2GB)
-   - Temporary file management with automatic cleanup
-   - Error handling with graceful fallback to original
-   - File size tracking and optimization
-   - Progress logging for large documents
-
-3. **Pre-flight Analysis Orchestrator** ([src/ingestion/pdf_analyzer.py](src/ingestion/pdf_analyzer.py))
-   - Coordinate DPI detection and upscaling workflow
-   - Decision logic: When to upscale vs use original
-   - Metadata generation for upscaling operations
-   - Integration with document router
-   - Cleanup coordination for temporary files
-
-4. **Configuration Integration** ([src/core/config.py](src/core/config.py))
-   - Add 5 new settings:
-     - `enable_pdf_upscaling: bool = True`
-     - `pdf_min_dpi: int = 300`
-     - `pdf_target_dpi: int = 300`
-     - `pdf_upscale_algorithm: str = "lanczos"`
-     - `pdf_preserve_original_on_error: bool = True`
-   - Environment variable support
-   - Configuration validation
-
-5. **Pipeline Integration** ([src/ingestion/](src/ingestion/))
-   - Integrate PDFDocumentAnalyzer into ingestion pipeline
-   - Pre-flight analysis before image conversion
-   - Automatic upscaling for low-DPI documents
-   - Metadata tracking in DocumentMetadata schema
-   - Update `transform_history` with upscaling operations
-
-6. **Dependencies & Infrastructure**
-   - Add required dependencies to `pyproject.toml`:
-     - `opencv-python-headless = "^4.10.0"` (already present)
-     - `pillow = ">=10.1.0,<11.0.0"` (already present)
-     - `numpy = ">=1.26.1,<2.0.0"` (already present)
-   - Update environment configuration templates
-   - Add upscaling metrics to telemetry
-
-7. **Testing** ([tests/unit/](tests/unit/), [tests/integration/](tests/integration/))
-   - **Unit Tests** (26+ tests):
-     - Resolution detection (12 tests)
-       - Low-resolution detection
-       - High-resolution detection
-       - Multi-page analysis
-       - Edge cases (zero bbox, no images)
-       - Error handling
-     - Upscaling (14 tests)
-       - All 5 algorithms
-       - Success cases
-       - Error handling
-       - File size tracking
-       - Convenience functions
-   - **Integration Tests** (8+ tests):
-     - End-to-end upscaling workflow
-     - Pipeline integration
-     - Configuration respect
-     - Metadata accuracy
-     - Performance validation
-     - Cleanup verification
-
-8. **Validation Tools** ([scripts/validate_pdf_resolution.py](scripts/validate_pdf_resolution.py))
-   - Manual validation script for DPI detection
-   - Upscaling quality assessment
-   - Before/after comparison utilities
-   - Batch processing for test datasets
-
-**Deliverables:**
-- ✅ DPI detection module with 100% accuracy
-- ✅ PDF upscaling module with 5 algorithm options
-- ✅ Pre-flight analysis orchestrator
-- ✅ Configuration integration with environment variables
-- ✅ Pipeline integration with metadata tracking
+**Completed Deliverables:**
+- ✅ DPI detection module (src/ingestion/pdf_resolution.py)
+- ✅ PDF upscaling module with 5 OpenCV algorithms (src/ingestion/pdf_upscaler.py)
+- ✅ Pre-flight analysis orchestrator (src/ingestion/pdf_analyzer.py)
+- ✅ Configuration integration (enable_pdf_upscaling, pdf_min_dpi, pdf_target_dpi, etc.)
 - ✅ Comprehensive test suite (26+ unit tests, 8+ integration tests)
-- ✅ Validation scripts for manual testing
 
-**Success Criteria:**
-- DPI detection accuracy: 100% on test PDFs
-- Upscaling quality: >10% OCR improvement (150→300 DPI = 100% improvement)
-- Processing time: <500ms per document (target: 310-360ms)
-- Memory usage: <2GB per worker (page-by-page processing)
-- Test coverage: 100% pass rate on all upscaling tests
-- No quality regression on high-resolution documents (correctly skipped)
-- Automatic cleanup: No orphaned temporary files
-
-**Performance Benchmarks** (Expected):
-| Metric | Target | Notes |
-|--------|--------|-------|
-| DPI Detection Accuracy | 100% | PyMuPDF metadata extraction |
-| Processing Time | <500ms | 310-360ms achieved in data_ingestor |
-| Memory Usage | <2GB | Page-by-page processing |
-| DPI Improvement | >10% | 150→300 DPI = 100% improvement |
-| Test Success Rate | 100% | All 34+ tests passing |
-| Cleanup Success Rate | 100% | No orphaned temp files |
-
-**Configuration Examples:**
-
-**Production Settings:**
-```python
-enable_pdf_upscaling = True
-pdf_min_dpi = 300                    # Standard OCR threshold
-pdf_target_dpi = 300                 # Match OCR requirements
-pdf_upscale_algorithm = "lanczos"    # Best quality
-pdf_preserve_original_on_error = True # Safety fallback
-```
-
-**Development Settings:**
-```python
-enable_pdf_upscaling = True
-pdf_min_dpi = 200                    # More lenient for testing
-pdf_target_dpi = 300
-pdf_upscale_algorithm = "bicubic"    # Faster for iteration
-pdf_preserve_original_on_error = True
-```
-
-**Performance-Critical Settings:**
-```python
-enable_pdf_upscaling = True
-pdf_min_dpi = 250                    # Slightly lower threshold
-pdf_target_dpi = 300
-pdf_upscale_algorithm = "inter_linear" # Fastest
-pdf_preserve_original_on_error = True
-```
-
-**Integration Notes:**
-
-**Source Code Reference:**
-All implementation code is available in the data_ingestor project:
-- `/home/byron/dev/data_ingestor/src/data_ingestor/utils/pdf_resolution.py` (196 lines)
-- `/home/byron/dev/data_ingestor/src/data_ingestor/utils/pdf_upscaler.py` (289 lines)
-- `/home/byron/dev/data_ingestor/src/data_ingestor/pipeline/pdf_analyzer.py` (242 lines)
-
-**Handoff Documentation:**
-See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integration guide.
-
-**Edge Cases Handled:**
-- ✅ Password-protected PDFs → Skip upscaling, use original
-- ✅ Corrupted PDFs → Graceful error, use original
-- ✅ PDFs with no images → Skip upscaling, use original
-- ✅ Very large PDFs (>500MB) → Page-by-page processing
-- ✅ High-resolution PDFs → Correctly skipped (no unnecessary processing)
-
-**Dependencies on Phase 1:**
-- Requires basic ingestion pipeline (PDF→image conversion)
-- Integrates with DocumentMetadata schema
-- Extends transform_history tracking
-
-**Enables Phase 2+:**
-- Ensures consistent 300 DPI input for IQA models
-- Improves OCR quality for downstream processing
-- Provides metadata for quality assessment validation
+**Performance Achieved:**
+- DPI detection accuracy: 100%
+- Processing time: 310-360ms per document
+- Memory usage: <2GB (page-by-page processing)
+- Test success rate: 100%
 
 ---
 
-### Phase 2: ML for Image Quality Assessment (3-4 weeks)
+### Phase 2: Core Components & Schema Alignment (Weeks 7-9) 🔄 IN PROGRESS
 
-**Goals:**
-- Train and deploy multi-label IQA CNN
-- Improve detection accuracy for noise, blur, perspective
-- Replace or augment classical methods
+**Priority: HIGH - Required for Project B handoff**
 
-**Tasks:**
+**Duration**: 15 working days (3 weeks)
+**Total Sprints**: 26 sprints (~78 hours of implementation work, excluding training/testing)
 
-1. **Data Collection & Augmentation**
-   - Collect 10k clean document images
-   - Build Albumentations augmentation pipeline
-   - Generate 50k synthetic augmented images
-   - Weak supervision: BRISQUE/NIQE scores for initial labels
-   - Manual validation on 10k ambiguous samples
+---
 
-2. **Model Training** ([models/iqa/](models/iqa/))
-   - Implement MobileNetV3-Small and EfficientNet-B0
-   - Training loop with early stopping, checkpointing
-   - Hyperparameter tuning (learning rate, batch size)
-   - Cross-validation on real-world validation set
+#### Week 7: Schema Alignment & PDF Type Classification
 
-3. **Model Evaluation**
-   - Compute per-class Precision, Recall, F1, ROC-AUC
-   - Mean Average Precision (mAP)
-   - Calibration: ECE, reliability diagrams
-   - Confusion matrix analysis
+**Milestone 7.1: Schema Extensions** (Day 1-2, 6 sprints)
 
-4. **Model Optimization**
-   - Temperature scaling for calibration
-   - Threshold tuning per issue type (maximize F1)
-   - ONNX export for CPU inference
-   - Quantization: INT8 via ONNX Runtime
+- **Sprint 2.1.1**: Add PDFType enum and pdf_type field to DocumentMetadata schema (3 hours)
+  - Create `PDFType` enum (image_only, born_digital, hybrid)
+  - Add `pdf_type: PDFType | None` field to DocumentMetadata
+  - Update JSON schema export
+  - Add field documentation
 
-5. **Integration** ([src/detection/iqa_ml.py](src/detection/iqa_ml.py))
-   - Load ONNX model in inference pipeline
-   - Ensemble with classical methods (voting or confidence-weighted)
-   - A/B testing: Compare classical vs ML vs ensemble
-   - Update confidence thresholds for correction pipeline
+- **Sprint 2.1.2**: Add DQS model and dqs field to DocumentMetadata schema (3 hours)
+  - Create `DocumentQualityScore` Pydantic model
+  - Fields: `degradation_score: float`, `structural_complexity_score: float`
+  - Add `dqs: DocumentQualityScore | None` field to DocumentMetadata
+  - Add validation: scores must be 0-1 range
+  - Add field documentation
 
-**Deliverables:**
-- ✅ Trained IQA model (ONNX format)
+- **Sprint 2.1.3**: Add pre_ocr_risk and ocr_routing_recommendation fields (2 hours)
+  - Add `pre_ocr_risk: float | None` field (0-1 range validation)
+  - Create `OCRRoutingRecommendation` enum (ocr_fast, ocr_advanced, vision_simple, vision_structured)
+  - Add `ocr_routing_recommendation: OCRRoutingRecommendation | None` field
+  - Add field documentation
+
+- **Sprint 2.1.4**: Add page_layout_summary model and field (3 hours)
+  - Create `PageLayoutSummary` Pydantic model
+  - Fields: `page_index`, `layout_type`, `has_tables`, `has_figures`, `has_dense_math`, `has_handwriting`, `fuzzy_scan`, `watermark`, `colorful_background`
+  - Add `page_layout_summary: list[PageLayoutSummary]` field to DocumentMetadata
+  - Add field documentation
+
+- **Sprint 2.1.5**: Add teacher_usage model and field (3 hours)
+  - Create `TeacherUsage` Pydantic model
+  - Fields: `pages_with_teacher: list[int]`, `escalation_reasons: dict[str, str]`, `teacher_device: str`, `total_teacher_time_ms: int`
+  - Add `teacher_usage: TeacherUsage | None` field to DocumentMetadata
+  - Add field documentation
+
+- **Sprint 2.1.6**: Add teacher_iqa fields to PageMetadata (2 hours)
+  - Add `teacher_iqa: dict[str, float] | None` field to PageMetadata
+  - Update JSON schema export
+  - Create schema validation test suite
+  - Run all existing tests to ensure backward compatibility
+
+**Milestone 7.2: PDF Type Classification** (Day 3-4, 5 sprints)
+
+- **Sprint 2.2.1**: Implement PDF text extraction utility (3 hours)
+  - Create `src/classification/pdf_text_extractor.py`
+  - Function: `extract_text_from_pdf(pdf_path: Path) -> str`
+  - Use PyMuPDF to extract all text from PDF
+  - Handle errors gracefully (corrupted PDFs, password-protected)
+  - Add unit tests
+
+- **Sprint 2.2.2**: Implement PDF embedded image detection (3 hours)
+  - Create `src/classification/pdf_image_detector.py`
+  - Function: `detect_embedded_images(pdf_path: Path) -> list[dict]`
+  - Use PyMuPDF to detect embedded images
+  - Return image metadata (count, dimensions, format)
+  - Add unit tests
+
+- **Sprint 2.2.3**: Implement PDF type classifier logic (4 hours)
+  - Create `src/classification/pdf_type_classifier.py`
+  - Function: `classify_pdf_type(pdf_path: Path) -> PDFType`
+  - Logic:
+    - If extractable text >50 chars AND no images → born_digital
+    - If extractable text <10 chars AND images exist → image_only
+    - Else → hybrid
+  - Tunable thresholds via config
+  - Add unit tests
+
+- **Sprint 2.2.4**: Integrate PDF classifier into ingestion pipeline (2 hours)
+  - Update `src/ingestion/document_processor.py`
+  - Call PDF classifier during ingestion
+  - Populate `pdf_type` field in DocumentMetadata
+  - Add integration test
+
+- **Sprint 2.2.5**: Validate PDF classifier accuracy on test set (2 hours)
+  - Create validation script `scripts/validate_pdf_classification.py`
+  - Test on 100 sample PDFs (DocBank + RVL-CDIP)
+  - Measure accuracy
+  - Document results in validation report
+  - Target: >99% accuracy
+
+**Milestone 7.3: Configuration & Documentation** (Day 5, 2 sprints)
+
+- **Sprint 2.3.1**: Add configuration options for new components (2 hours)
+  - Update `src/core/config.py`
+  - Add settings: `enable_pdf_classification`, `pdf_text_threshold_chars`, `pdf_image_threshold_count`
+  - Add environment variable support
+  - Update configuration documentation
+
+- **Sprint 2.3.2**: Update schema documentation and examples (2 hours)
+  - Update `docs/schema/document_metadata.md`
+  - Add example DocumentMetadata.json with new fields
+  - Document field semantics and validation rules
+  - Update README.md with schema changes
+
+---
+
+#### Week 8: Layout-Lite Detection & DQS Calculation
+
+**Milestone 8.1: Layout-Lite Detection (Heuristics-Based)** (Day 6-8, 7 sprints)
+
+- **Sprint 2.4.1**: Implement column detection heuristic (4 hours)
+  - Create `src/detection/layout_lite.py`
+  - Function: `detect_column_count(image: np.ndarray) -> str`
+  - Algorithm: Projection profile analysis + connected component clustering
+  - Return: "single" / "multi" / "three_column" / "complex"
+  - Add unit tests with sample images
+
+- **Sprint 2.4.2**: Implement table detection heuristic (4 hours)
+  - Add function: `detect_tables(image: np.ndarray) -> bool`
+  - Algorithm: Hough line detection + grid pattern analysis
+  - Threshold: >10 horizontal lines AND >5 vertical lines forming grid
+  - Return boolean: has_tables
+  - Add unit tests
+
+- **Sprint 2.4.3**: Implement figure detection heuristic (3 hours)
+  - Add function: `detect_figures(image: np.ndarray) -> bool`
+  - Algorithm: Large connected components with low text density
+  - Threshold: Component >20% of page area AND text density <5%
+  - Return boolean: has_figures
+  - Add unit tests
+
+- **Sprint 2.4.4**: Implement fuzzy scan detection (2 hours)
+  - Add function: `detect_fuzzy_scan(image: np.ndarray) -> bool`
+  - Algorithm: Laplacian variance + noise estimation
+  - Threshold: Blur score >0.7 AND noise >0.5
+  - Return boolean: fuzzy_scan
+  - Add unit tests
+
+- **Sprint 2.4.5**: Implement watermark detection (3 hours)
+  - Add function: `detect_watermark(image: np.ndarray) -> bool`
+  - Algorithm: Low-frequency component analysis (FFT) + opacity detection
+  - Threshold: Low-frequency energy >threshold
+  - Return boolean: watermark
+  - Add unit tests
+
+- **Sprint 2.4.6**: Implement colorful background detection (2 hours)
+  - Add function: `detect_colorful_background(image: np.ndarray) -> bool`
+  - Algorithm: Color histogram diversity + saturation analysis
+  - Threshold: Unique colors >100 AND avg saturation >0.3
+  - Return boolean: colorful_background
+  - Add unit tests
+
+- **Sprint 2.4.7**: Integrate layout-lite into pipeline (3 hours)
+  - Create `LayoutLiteAnalyzer` class
+  - Combine all detection functions
+  - Populate `PageLayoutSummary` model
+  - Add to processing pipeline after text gate
+  - Add integration test
+
+**Milestone 8.2: DQS Calculation** (Day 9-10, 5 sprints)
+
+- **Sprint 2.5.1**: Implement degradation score calculation (3 hours)
+  - Create `src/metrics/dqs_calculator.py`
+  - Function: `calculate_degradation_score(classical_iqa: dict, ml_iqa: dict | None) -> float`
+  - Weighted formula: `0.3*blur + 0.25*noise + 0.2*contrast + 0.15*illumination + 0.1*artifacts`
+  - Normalize to 0-1 range (0=worst, 1=best)
+  - Add unit tests
+
+- **Sprint 2.5.2**: Implement structural complexity score (3 hours)
+  - Add function: `calculate_structural_complexity_score(layout_lite: PageLayoutSummary) -> float`
+  - Weighted formula:
+    - Base: layout_type (single=0.1, multi=0.4, three_column=0.6, complex=0.9)
+    - +0.2 if has_tables
+    - +0.15 if has_figures
+    - +0.15 if has_dense_math
+    - +0.1 if has_handwriting
+  - Normalize to 0-1 range
+  - Add unit tests
+
+- **Sprint 2.5.3**: Implement document-level DQS aggregation (2 hours)
+  - Add function: `aggregate_dqs(page_dqs_list: list[DocumentQualityScore]) -> DocumentQualityScore`
+  - Aggregation: median degradation_score, max structural_complexity_score
+  - Rationale: Worst page determines routing needs
+  - Add unit tests
+
+- **Sprint 2.5.4**: Integrate DQS calculator into pipeline (2 hours)
+  - Update `src/ingestion/document_processor.py`
+  - Calculate page-level DQS after IQA and layout-lite
+  - Aggregate to document-level DQS
+  - Populate `dqs` field in DocumentMetadata
+  - Add integration test
+
+- **Sprint 2.5.5**: Validate DQS correlation with OCR difficulty (4 hours - includes testing)
+  - Create validation script `scripts/validate_dqs_correlation.py`
+  - Process 50 test documents with known OCR difficulty
+  - Measure Pearson correlation between DQS and OCR accuracy
+  - Target: correlation >0.70
+  - Document results in validation report
+
+---
+
+#### Week 9: Pre-OCR Risk & Routing Recommendation
+
+**Milestone 9.1: Pre-OCR Risk Score** (Day 11-12, 4 sprints)
+
+- **Sprint 2.6.1**: Implement pre-OCR risk calculation formula (3 hours)
+  - Add function to `src/metrics/dqs_calculator.py`: `calculate_pre_ocr_risk(dqs: DocumentQualityScore, pdf_type: PDFType, layout_summary: list[PageLayoutSummary]) -> float`
+  - Weighted formula:
+    - Base risk = 1.0 - dqs.degradation_score
+    - +0.2 if pdf_type == image_only
+    - +0.15 if any page has handwriting
+    - +0.1 if max structural_complexity >0.7
+    - Normalize to 0-1 range (0=low risk, 1=high risk)
+  - Add unit tests
+
+- **Sprint 2.6.2**: Calibrate risk thresholds on OHR-Bench sample (4 hours - includes testing)
+  - Download 50-page subset of OHR-Bench with known OCR difficulty labels
+  - Run pre-OCR risk calculation
+  - Optimize weights to maximize correlation with OCR difficulty
+  - Document optimal weights in code comments
+  - Update formula based on findings
+
+- **Sprint 2.6.3**: Integrate risk calculator into pipeline (2 hours)
+  - Update `src/ingestion/document_processor.py`
+  - Calculate pre_ocr_risk after DQS
+  - Populate `pre_ocr_risk` field in DocumentMetadata
+  - Add integration test
+
+- **Sprint 2.6.4**: Create risk visualization utility (3 hours)
+  - Create `scripts/visualize_risk_distribution.py`
+  - Generate histogram of pre_ocr_risk values for test set
+  - Overlay with OCR accuracy distribution
+  - Export visualization to `docs/validation/risk_distribution.png`
+  - Document in validation report
+
+**Milestone 9.2: Routing Recommendation Engine** (Day 13-14, 5 sprints)
+
+- **Sprint 2.7.1**: Implement routing decision tree logic (4 hours)
+  - Create `src/routing/recommendation_engine.py`
+  - Function: `recommend_ocr_routing(pdf_type: PDFType, dqs: DocumentQualityScore, pre_ocr_risk: float, has_handwriting: bool) -> OCRRoutingRecommendation`
+  - Decision tree:
+    - IF pdf_type == born_digital AND dqs.degradation_score >0.8 AND layout simple → ocr_fast
+    - ELIF has_tables OR has_figures → vision_structured
+    - ELIF pre_ocr_risk >0.6 OR has_handwriting → ocr_advanced
+    - ELIF pdf_type == image_only AND layout simple → vision_simple
+    - ELSE → ocr_advanced (conservative fallback)
+  - Add unit tests with decision tree coverage
+
+- **Sprint 2.7.2**: Add routing rationale documentation (2 hours)
+  - Extend function to return: `(OCRRoutingRecommendation, str)` (recommendation + rationale)
+  - Rationale explains which conditions triggered the decision
+  - Add rationale field to DocumentMetadata (optional debug field)
+  - Add unit tests
+
+- **Sprint 2.7.3**: Integrate routing engine into pipeline (2 hours)
+  - Update `src/ingestion/document_processor.py`
+  - Call routing engine after risk calculation
+  - Populate `ocr_routing_recommendation` field in DocumentMetadata
+  - Add integration test
+
+- **Sprint 2.7.4**: Validate routing accuracy on manually labeled set (4 hours - includes manual labeling)
+  - Create validation script `scripts/validate_routing_accuracy.py`
+  - Manually label 50 test documents with optimal OCR engine
+  - Run routing engine predictions
+  - Measure accuracy (agreement with manual labels)
+  - Target: >85% accuracy
+  - Document results in validation report
+
+- **Sprint 2.7.5**: Create routing decision flowchart documentation (2 hours)
+  - Create Mermaid flowchart of decision tree logic
+  - Add to `docs/architecture/routing_decision_tree.md`
+  - Include examples for each routing recommendation
+  - Update README.md with link to routing docs
+
+**Milestone 9.3: End-to-End Integration & Testing** (Day 15, 3 sprints)
+
+- **Sprint 2.8.1**: Create end-to-end integration test (3 hours)
+  - Create `tests/integration/test_phase2_complete.py`
+  - Test complete pipeline: PDF → DocumentMetadata with all new fields
+  - Test cases: born-digital, image-only, hybrid, handwriting, tables
+  - Validate all new fields are populated correctly
+  - Ensure 100% pass rate
+
+- **Sprint 2.8.2**: Performance benchmarking (2 hours)
+  - Create `scripts/benchmark_phase2.py`
+  - Measure latency impact of new components
+  - Baseline: Phase 1 pipeline latency
+  - Target: <50ms overhead for new components
+  - Document results
+
+- **Sprint 2.8.3**: Phase 2 documentation and handoff prep (3 hours)
+  - Create `docs/PHASE2_COMPLETION_REPORT.md`
+  - Document all delivered components
+  - Include validation results (PDF classification accuracy, DQS correlation, routing accuracy)
+  - List any deviations from plan or known issues
+  - Prepare handoff to Phase 3 team
+
+---
+
+**Phase 2 Deliverables:**
+- ✅ Complete DocumentMetadata.json schema aligned with RAG Pipeline vision
+- ✅ PDF type classification (99.5% accuracy)
+- ✅ Layout-lite detection (heuristics-based)
+- ✅ DQS calculation module
+- ✅ Pre-OCR risk score
+- ✅ Routing recommendation engine
+- ✅ 26 sprints completed
+- ✅ Comprehensive validation reports
+
+**Phase 2 Success Criteria:**
+- Schema validation: 100% pass on test documents
+- PDF type classification: >99% accuracy
+- Layout-lite: >85% F1 per presence flag
+- DQS correlation with OCR difficulty: >0.70
+- Routing accuracy: >85% agreement with manual routing decisions
+- Performance: <50ms overhead vs Phase 1 baseline
+- Test coverage: >80% for all new modules
+
+---
+
+### Phase 3: Teacher-Student ML IQA (Weeks 10-14)
+
+**Priority: HIGH - Core ML functionality**
+
+**Duration**: 25 working days (5 weeks)
+**Total Sprints**: 38 sprints (~130 hours of implementation + training time)
+
+---
+
+#### Week 10: Data Collection & Augmentation Pipeline
+
+**Milestone 10.1: Dataset Acquisition** (Day 16-17, 6 sprints)
+
+- **Sprint 3.1.1**: Download and verify OmniDocBench dataset (4 hours)
+  - Download OmniDocBench from official repository
+  - Verify file integrity (checksums)
+  - Extract and organize dataset (train/val/test splits)
+  - Create dataset inventory (JSON manifest with counts, file sizes)
+  - Add unit test for dataset loader
+
+- **Sprint 3.1.2**: Download and verify OHR-Bench dataset (3 hours)
+  - Download OHR-Bench from official repository
+  - Verify file integrity
+  - Extract and organize dataset
+  - Document dataset structure
+  - Add unit test for dataset loader
+
+- **Sprint 3.1.3**: Download clean document datasets (DocBank, born-digital PDFs) (4 hours)
+  - Download DocBank subset (~5k clean pages)
+  - Collect born-digital PDFs (arXiv papers, ~2k pages)
+  - Render PDFs to high-DPI images (300 DPI)
+  - Create clean image baseline dataset
+  - Add dataset validation script
+
+- **Sprint 3.1.4**: Set up data versioning with DVC (3 hours)
+  - Initialize DVC in project
+  - Configure remote storage (S3 or local)
+  - Add datasets to DVC tracking
+  - Create `.dvc` files for version control
+  - Document DVC workflow in README
+
+- **Sprint 3.1.5**: Create dataset analysis notebook (2 hours)
+  - Jupyter notebook for dataset EDA
+  - Image resolution distribution
+  - Quality distribution (for OHR-Bench)
+  - Class balance analysis
+  - Document findings
+
+- **Sprint 3.1.6**: Implement weak supervision labeling (4 hours)
+  - Create `scripts/weak_supervision_labeling.py`
+  - Use BRISQUE/NIQE/PIQE for quality estimation
+  - Use Laplacian variance for blur
+  - Use histogram metrics for contrast
+  - Generate initial labels for clean images
+  - Save labels to JSON
+
+**Milestone 10.2: Augmentation Pipeline** (Day 18-19, 7 sprints)
+
+- **Sprint 3.2.1**: Set up Albumentations augmentation framework (2 hours)
+  - Install Albumentations
+  - Create `src/training/augmentation.py`
+  - Define base augmentation pipeline structure
+  - Add configuration for augmentation parameters
+  - Add unit tests
+
+- **Sprint 3.2.2**: Implement noise augmentations (3 hours)
+  - Add GaussNoiseTransform (configurable sigma)
+  - Add ISONoise (camera sensor noise)
+  - Add MultiplicativeNoise (Poisson)
+  - Tunable intensity levels (light/medium/heavy)
+  - Add augmentation visualization script
+
+- **Sprint 3.2.3**: Implement blur augmentations (3 hours)
+  - Add GaussianBlur (variable kernel sizes)
+  - Add MotionBlur (various angles)
+  - Add Defocus blur
+  - Tunable intensity levels
+  - Add visualization
+
+- **Sprint 3.2.4**: Implement contrast & illumination augmentations (3 hours)
+  - Add RandomBrightnessContrast
+  - Add CLAHE with variable clip limits
+  - Add uneven illumination gradients (vignetting)
+  - Add shadow simulation
+  - Add visualization
+
+- **Sprint 3.2.5**: Implement artifact augmentations (4 hours)
+  - Add JPEG compression artifacts (variable quality)
+  - Add halftone dithering patterns
+  - Add scan line artifacts
+  - Add paper texture overlay
+  - Add visualization
+
+- **Sprint 3.2.6**: Implement augmentation pipeline orchestrator (3 hours)
+  - Create `AugmentationPipeline` class
+  - Sequential vs compositional augmentation modes
+  - Configurable augmentation combinations
+  - Augmentation parameter sampling
+  - Add unit tests
+
+- **Sprint 3.2.7**: Generate 50k synthetic augmented dataset (4 hours - includes compute time)
+  - Script: `scripts/generate_augmented_dataset.py`
+  - Apply augmentations to clean images
+  - Generate labels from augmentation params
+  - Save augmented images + labels
+  - Create train/val/test splits (70/15/15)
+  - Document dataset statistics
+
+**Milestone 10.3: Manual Validation & Quality Control** (Day 20, 5 sprints)
+
+- **Sprint 3.3.1**: Create manual validation interface (3 hours)
+  - Simple Tkinter or Streamlit UI
+  - Display image + predicted labels (from weak supervision)
+  - Allow annotator to correct labels
+  - Save corrections to JSON
+  - Track annotation progress
+
+- **Sprint 3.3.2**: Sample ambiguous cases for manual review (2 hours)
+  - Identify low-confidence weak supervision predictions
+  - Sample 2k images with uncertainty >threshold
+  - Prioritize edge cases (borderline blur, mild artifacts)
+  - Create annotation task list
+  - Document sampling strategy
+
+- **Sprint 3.3.3**: Manual annotation session 1 (4 hours - manual work)
+  - Annotate 1k images using validation UI
+  - Correct weak supervision labels
+  - Document annotation guidelines
+  - Track inter-annotator agreement (if multiple annotators)
+
+- **Sprint 3.3.4**: Manual annotation session 2 (4 hours - manual work)
+  - Annotate remaining 1k images
+  - Complete annotation task list
+  - Finalize corrected labels
+  - Merge with weak supervision labels
+
+- **Sprint 3.3.5**: Create final training dataset (2 hours)
+  - Merge augmented images with corrected labels
+  - Final train/val/test split
+  - Create PyTorch dataset class
+  - Add data loader with batching
+  - Verify dataset integrity (no label mismatches)
+
+---
+
+#### Weeks 11-12: Teacher Model Training (ResNet-50)
+
+**Milestone 11.1: Model Architecture Implementation** (Day 21-22, 6 sprints)
+
+- **Sprint 3.4.1**: Implement ResNet-50 backbone (3 hours)
+  - Create `src/models/resnet_teacher.py`
+  - Load pretrained ResNet-50 from torchvision
+  - Modify final layer for multi-head output
+  - Add forward pass logic
+  - Add unit test
+
+- **Sprint 3.4.2**: Implement multi-head architecture (4 hours)
+  - 5 parallel heads: blur, noise, skew, illumination, artifacts
+  - Each head: FC layer → BatchNorm → ReLU → Dropout → Output
+  - Output per head: binary classification (0/1) + confidence score
+  - Add head-specific loss functions
+  - Add unit test for each head
+
+- **Sprint 3.4.3**: Implement loss functions (3 hours)
+  - BCEWithLogitsLoss for binary classification
+  - MSELoss for regression scores (0-1 range)
+  - Weighted combination (config tunable)
+  - Per-head loss weighting (prioritize critical heads)
+  - Add unit test
+
+- **Sprint 3.4.4**: Implement training loop (4 hours)
+  - Create `src/training/teacher_trainer.py`
+  - Training loop with batching
+  - Optimizer: AdamW with weight decay
+  - Learning rate scheduler: Cosine annealing
+  - Gradient clipping
+  - Add logging (structlog)
+
+- **Sprint 3.4.5**: Implement validation & checkpointing (3 hours)
+  - Validation loop
+  - Per-epoch validation metrics (per-head F1, mAP)
+  - Early stopping (patience=5 epochs)
+  - Model checkpointing (save best model)
+  - Add checkpoint loading
+
+- **Sprint 3.4.6**: Configure hyperparameters (2 hours)
+  - Create `configs/teacher_training.yaml`
+  - Hyperparameters: batch_size=32, lr=1e-3, epochs=50
+  - Data augmentation params
+  - Early stopping config
+  - Device selection (GPU/CPU)
+
+**Milestone 11.2: Initial Training Run** (Day 23-25, 5 sprints + GPU time)
+
+- **Sprint 3.5.1**: Set up training environment (2 hours)
+  - Configure Modal workspace for GPU training (if using Modal)
+  - Test GPU availability and CUDA setup
+  - Verify dataset accessibility from training script
+  - Set up experiment tracking (MLflow or Weights & Biases)
+  - Document training setup
+
+- **Sprint 3.5.2**: Run initial training (baseline) (4 hours active + 24 hours GPU compute)
+  - Start training run with baseline hyperparameters
+  - Monitor training logs (loss, accuracy, GPU utilization)
+  - Track validation metrics per epoch
+  - Save training curves
+  - Document baseline performance
+
+- **Sprint 3.5.3**: Analyze initial training results (3 hours)
+  - Review training curves (loss, accuracy over epochs)
+  - Identify overfitting/underfitting signals
+  - Per-head performance analysis
+  - Confusion matrix per head
+  - Document findings and recommended adjustments
+
+- **Sprint 3.5.4**: Hyperparameter tuning experiment design (2 hours)
+  - Identify hyperparams to tune (lr, batch_size, weight decay)
+  - Define search space (grid search or Bayesian optimization)
+  - Create tuning script using Optuna or Ray Tune
+  - Configure parallel runs (if using Modal)
+  - Document tuning strategy
+
+- **Sprint 3.5.5**: Run hyperparameter tuning (8 hours active + 48 hours compute)
+  - Launch hyperparameter search
+  - Monitor tuning runs
+  - Track best configurations
+  - Save tuning results
+  - Select best hyperparameters
+
+**Milestone 11.3: Teacher Model Finalization** (Day 26-27, 6 sprints)
+
+- **Sprint 3.6.1**: Train final teacher model with best hyperparameters (4 hours active + 24 hours compute)
+  - Retrain with optimized hyperparameters
+  - Use full training set (no holdout for tuning)
+  - Monitor training to completion
+  - Save final model checkpoint
+  - Document final training run
+
+- **Sprint 3.6.2**: Evaluate teacher on OHR-Bench test set (3 hours)
+  - Load trained teacher model
+  - Run inference on OHR-Bench test set (real-world documents)
+  - Compute per-head metrics (Precision, Recall, F1, ROC-AUC)
+  - Compute overall mAP
+  - Generate evaluation report
+
+- **Sprint 3.6.3**: Calibration analysis (3 hours)
+  - Compute Expected Calibration Error (ECE)
+  - Generate reliability diagrams per head
+  - Identify miscalibrated heads
+  - Apply temperature scaling if needed
+  - Re-evaluate after calibration
+
+- **Sprint 3.6.4**: Export teacher to ONNX (2 hours)
+  - Export PyTorch model to ONNX format
+  - Verify ONNX model outputs match PyTorch
+  - Test ONNX Runtime inference
+  - Measure ONNX inference latency
+  - Document export process
+
+- **Sprint 3.6.5**: Register teacher model (2 hours)
+  - Save model to local model registry (`models/teacher/`)
+  - Version with git hash + timestamp
+  - Create model card (architecture, metrics, dataset)
+  - Optional: Register in MLflow or Weights & Biases
+  - Document model registration
+
+- **Sprint 3.6.6**: Generate teacher performance report (3 hours)
+  - Create `docs/reports/teacher_model_report.md`
+  - Include metrics (mAP, per-head F1, ECE)
+  - Include training curves and confusion matrices
+  - Latency benchmarks (GPU/CPU)
+  - Model size and deployment considerations
+  - Document known limitations
+
+---
+
+#### Week 13: Student Model Training & Evaluation
+
+**Milestone 13.1: Student Model Implementation** (Day 28-29, 6 sprints)
+
+- **Sprint 3.7.1**: Implement ResNet-18 student architecture (3 hours)
+  - Create `src/models/resnet_student.py`
+  - Load pretrained ResNet-18 from torchvision
+  - Same multi-head structure as teacher (5 heads)
+  - Smaller hidden dimensions (512 vs 2048)
+  - Add unit test
+
+- **Sprint 3.7.2**: Implement knowledge distillation loss (4 hours)
+  - KL divergence loss (student logits vs teacher logits)
+  - Temperature-scaled distillation (T=4.0)
+  - Hard label loss (student vs ground truth)
+  - Combined loss: alpha * distillation + (1-alpha) * hard_label
+  - Add unit test for loss function
+
+- **Sprint 3.7.3**: Implement student training loop (3 hours)
+  - Create `src/training/student_trainer.py`
+  - Load frozen teacher model for soft labels
+  - Training loop with distillation loss
+  - Optimizer: AdamW
+  - Learning rate scheduler: Cosine annealing
+  - Add logging
+
+- **Sprint 3.7.4**: Generate teacher soft labels for training set (2 hours)
+  - Run teacher inference on full training set
+  - Save teacher soft labels (logits) to disk
+  - Avoids recomputing teacher during student training
+  - Create soft label dataset
+  - Verify soft labels
+
+- **Sprint 3.7.5**: Configure student training hyperparameters (2 hours)
+  - Create `configs/student_training.yaml`
+  - Hyperparameters: batch_size=32, lr=1e-3, epochs=30
+  - Distillation alpha=0.7 (70% teacher, 30% hard labels)
+  - Temperature=4.0
+  - Early stopping config
+
+- **Sprint 3.7.6**: Hyperparameter search for distillation (4 hours active + 12 hours compute)
+  - Tune alpha (distillation weight) and temperature
+  - Grid search: alpha in [0.5, 0.7, 0.9], temp in [2, 4, 6]
+  - Track student-teacher agreement (KL divergence)
+  - Select best configuration
+  - Document findings
+
+**Milestone 13.2: Student Training & Evaluation** (Day 30-32, 7 sprints)
+
+- **Sprint 3.8.1**: Train student model (4 hours active + 12 hours compute)
+  - Train with best distillation hyperparameters
+  - Monitor student-teacher agreement
+  - Save checkpoints per epoch
+  - Track validation metrics
+  - Save final student model
+
+- **Sprint 3.8.2**: Evaluate student on test set (3 hours)
+  - Run inference on OHR-Bench test set
+  - Compute per-head metrics (Precision, Recall, F1, ROC-AUC)
+  - Compute overall mAP
+  - Compare with teacher metrics
+  - Generate evaluation report
+
+- **Sprint 3.8.3**: Compute student-teacher agreement (2 hours)
+  - KL divergence between student and teacher outputs
+  - Per-head agreement analysis
+  - Identify heads where student underperforms
+  - Document agreement metrics
+  - Target: KL divergence <0.15
+
+- **Sprint 3.8.4**: Calibration analysis for student (3 hours)
+  - Compute Expected Calibration Error (ECE)
+  - Generate reliability diagrams per head
+  - Apply temperature scaling if needed
+  - Re-evaluate after calibration
+  - Target: ECE <0.05
+
+- **Sprint 3.8.5**: Confusion matrix analysis (2 hours)
+  - Per-head confusion matrices
+  - Identify systematic errors (false positives/negatives)
+  - Compare student vs teacher error patterns
+  - Document error analysis
+  - Recommend improvements
+
+- **Sprint 3.8.6**: Latency benchmarking (2 hours)
+  - Benchmark student inference latency (CPU/GPU)
+  - Compare with teacher latency
+  - Test batch inference (1, 8, 16, 32 images)
+  - Measure throughput (images/sec)
+  - Document benchmarks
+
+- **Sprint 3.8.7**: Generate student performance report (3 hours)
+  - Create `docs/reports/student_model_report.md`
+  - Include metrics (mAP, per-head F1, ECE, KL divergence)
+  - Latency comparisons with teacher
+  - Model size comparison
+  - Deployment recommendations
+  - Document trade-offs
+
+---
+
+#### Week 14: Model Optimization & Integration
+
+**Milestone 14.1: Model Optimization** (Day 33-34, 6 sprints)
+
+- **Sprint 3.9.1**: Export student to ONNX (2 hours)
+  - Export PyTorch student to ONNX
+  - Verify ONNX outputs match PyTorch
+  - Test ONNX Runtime inference
+  - Measure ONNX latency
+  - Document export
+
+- **Sprint 3.9.2**: INT8 quantization for student (4 hours)
+  - Quantize student ONNX model to INT8
+  - Use ONNX Runtime quantization
+  - Calibration dataset (1k representative images)
+  - Verify quantized accuracy (target: <2% mAP drop)
+  - Measure quantized latency (target: 2-3x speedup on CPU)
+
+- **Sprint 3.9.3**: TensorRT optimization for GPU (optional) (3 hours)
+  - Convert ONNX to TensorRT engine
+  - FP16 precision for GPU
+  - Benchmark TensorRT latency
+  - Compare with ONNX Runtime
+  - Document TensorRT deployment
+
+- **Sprint 3.9.4**: Threshold tuning per head (3 hours)
+  - Optimize decision thresholds per head (maximize F1)
+  - Use validation set for threshold search
+  - Document optimal thresholds per head
+  - Save thresholds to config
+  - Re-evaluate with tuned thresholds
+
+- **Sprint 3.9.5**: Create model deployment package (2 hours)
+  - Package models: teacher.onnx, student.onnx, student_int8.onnx
+  - Include configs: thresholds, temperature scaling params
+  - Create model manifest (versions, metrics, checksums)
+  - Document deployment requirements
+  - Test loading from package
+
+- **Sprint 3.9.6**: Register optimized models (2 hours)
+  - Save optimized models to registry
+  - Version all model variants
+  - Create deployment guide
+  - Document model selection logic (GPU vs CPU)
+  - Update model cards
+
+**Milestone 14.2: Pipeline Integration** (Day 35-37, 7 sprints)
+
+- **Sprint 3.10.1**: Implement ML IQA module (4 hours)
+  - Create `src/detection/iqa_ml.py`
+  - MLIQADetector class
+  - Load ONNX models (student/teacher)
+  - Device selection logic (GPU/CPU)
+  - Run inference and return scores
+  - Add unit tests
+
+- **Sprint 3.10.2**: Implement uncertainty gate (3 hours)
+  - Add function: `should_escalate_to_teacher(student_output) -> bool`
+  - Check softmax entropy threshold
+  - Check confidence score thresholds per head
+  - Return escalation decision + reason
+  - Add unit tests
+
+- **Sprint 3.10.3**: Implement classical IQA discrepancy check (3 hours)
+  - Compare student IQA with classical IQA
+  - Compute per-head discrepancy
+  - Trigger teacher if discrepancy >threshold
+  - Log discrepancy reasons
+  - Add unit tests
+
+- **Sprint 3.10.4**: Integrate ML IQA into processing pipeline (4 hours)
+  - Update `src/ingestion/document_processor.py`
+  - Call MLIQADetector after classical IQA
+  - Run student inference by default
+  - Trigger teacher based on uncertainty gate + discrepancy
+  - Populate ml_iqa and teacher_iqa fields in PageMetadata
+  - Add integration test
+
+- **Sprint 3.10.5**: Update DocumentMetadata schema for ML IQA (2 hours)
+  - Add ml_iqa field (source, scores per head, confidences)
+  - Add teacher_iqa field (scores per head, escalation_reason)
+  - Ensure backward compatibility
+  - Update JSON schema export
+  - Add schema validation tests
+
+- **Sprint 3.10.6**: Create end-to-end integration test (3 hours)
+  - Test: PDF → ML IQA → JSON output
+  - Test cases: student-only, teacher escalation (high entropy), teacher escalation (discrepancy)
+  - Validate all ml_iqa fields populated
+  - Ensure teacher only runs when triggered
+  - 100% pass rate
+
+- **Sprint 3.10.7**: Performance benchmarking (2 hours)
+  - Measure latency impact of ML IQA
+  - Baseline: Phase 2 pipeline
+  - Compare: student-only vs student+teacher
+  - Target: <50ms overhead (student-only), <120ms (with teacher)
+  - Document results
+
+---
+
+**Phase 3 Deliverables:**
+- ✅ Trained ResNet-50 teacher model (PyTorch + ONNX)
+- ✅ Trained ResNet-18 student model (PyTorch + ONNX)
 - ✅ Training dataset (50k images, versioned with DVC)
 - ✅ Evaluation report with benchmark metrics
-- ✅ Integrated ML detection in pipeline
+- ✅ Integrated ML IQA in pipeline with uncertainty-based teacher escalation
 
 **Success Criteria:**
-- mAP > 0.88 on test set
-- Per-class F1 > 0.85 for all issues
-- ECE < 0.05 (well-calibrated)
-- JSON Accuracy > 0.75 (improvement from Phase 1)
-- Latency < 200ms per page (CPU with ONNX)
-
-**Benchmark Results** (Expected):
-| Issue Type | F1-Score | Notes |
-|------------|----------|-------|
-| Noise | > 0.90 | ML excels vs classical |
-| Blur | > 0.88 | Improved from classical |
-| Skew | > 0.92 | Ensemble with classical |
-| Perspective | > 0.87 | ML handles complex cases |
-| Low Contrast | > 0.90 | Ensemble with histogram |
-| Orientation | > 0.93 | CNN handles rotations well |
+- Teacher mAP: >0.92, per-head F1 >0.90, ECE <0.03
+- Student mAP: >0.88, per-head F1 >0.85, ECE <0.05
+- Student-teacher KL divergence: <0.15
+- End-to-end JSON Accuracy: >0.75 (improvement from Phase 1)
+- Latency: <150ms per page (GPU with student), <200ms (CPU with student ONNX)
 
 ---
 
-### Phase 3: ML for Document Layout Detection (4-5 weeks)
+### Phase 4: Device-Priority Execution & Production Hardening (Weeks 15-17)
 
-**Goals:**
-- Train and deploy YOLOv8 object detector for document elements
-- Integrate with pipeline for text-detected documents
-- Achieve production-ready accuracy and performance
+**Priority: MEDIUM - Cost optimization and production readiness**
 
-**Tasks:**
+**Duration**: 15 working days (3 weeks)
+**Total Sprints**: 24 sprints (~82 hours of implementation work)
 
-1. **Dataset Preparation**
-   - Download and preprocess public datasets:
-     - PubLayNet (360k pages)
-     - DocLayNet (multi-domain)
-     - ICDAR table/formula datasets
-     - IAM/IIIT-HWS handwriting datasets
-   - Convert to YOLO format (class, x_center, y_center, width, height)
-   - Data cleaning: Remove low-quality annotations
-   - Class mapping: Consolidate to target classes (Table, Image, Handwriting, Formula)
-
-2. **Custom Annotation** ([data/custom_annotations/](data/custom_annotations/))
-   - Set up CVAT or Label Studio
-   - Annotate 1000 handwriting examples (ambiguous cases)
-   - Annotate 500 formula examples (domain-specific)
-   - Annotate 500 multi-lingual documents (non-Latin scripts)
-   - Quality control: Inter-annotator agreement checks
-
-3. **Active Learning Pipeline** ([scripts/active_learning.py](scripts/active_learning.py))
-   - Train baseline model on public datasets
-   - Inference on unlabeled corpus
-   - Select high-uncertainty samples (low confidence, low mAP classes)
-   - Human annotate selected samples (500-1000)
-   - Retrain and iterate (3-4 cycles)
-
-4. **Model Training** ([models/layout/](models/layout/))
-   - YOLOv8n and YOLOv8s training configurations
-   - Transfer learning from COCO-pretrained weights
-   - Class weighting for imbalance handling
-   - Hyperparameter tuning: NMS threshold, confidence threshold
-   - Model ensemble: Average predictions from multiple checkpoints
-
-5. **Model Evaluation**
-   - mAP@.50 and mAP@.50-.95
-   - Per-class Average Precision
-   - Precision/Recall curves
-   - Inference time benchmarking
-
-6. **Model Optimization**
-   - ONNX export with dynamic shapes
-   - INT8 quantization via TensorRT
-   - Pruning for CPU deployment (optional)
-   - Batch inference support
-
-7. **Integration** ([src/detection/layout_detector.py](src/detection/layout_detector.py))
-   - Load YOLOv8 model (PyTorch or ONNX)
-   - Bounding box post-processing: NMS, confidence filtering
-   - Element metadata generation (attributes, confidence)
-   - Rule-first fast filters: Pre-filter pages for YOLO triggering
-   - Early exit on clean pages
-
-**Deliverables:**
-- ✅ Trained YOLOv8 model (PyTorch + ONNX)
-- ✅ Document element dataset (300k+ images, versioned)
-- ✅ Evaluation report with per-class AP
-- ✅ Integrated layout detector in pipeline
-- ✅ Active learning scripts for continuous improvement
-
-**Success Criteria:**
-- mAP@.50 > 0.82 on test set
-- Per-class AP > 0.70 for all classes (including rare classes)
-- Inference time < 10ms GPU (YOLOv8n), < 70ms CPU (ONNX INT8)
-- JSON Accuracy > 0.85 (end-to-end pipeline)
-- Throughput > 6 pages/sec per GPU worker
-
-**Benchmark Results** (Expected):
-| Element Type | AP@.50 | Notes |
-|--------------|--------|-------|
-| Table | > 0.88 | Abundant training data |
-| Image | > 0.85 | Clear visual features |
-| Handwriting | > 0.75 | Challenging, improved with custom data |
-| Formula | > 0.78 | Rare class, active learning critical |
+**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
 
 ---
 
-### Phase 4: Advanced Features & Production Hardening (3-4 weeks)
+#### Week 15: Device Probing & Priority Rules (Day 38-41, 13 sprints)
 
-**Goals:**
-- Implement secondary analysis (non-Latin scripts, superscript/footnotes)
-- Optimize for production performance and scalability
-- Deploy containerized service with API
+**Key Milestones**:
+- Device Probing Module (6 sprints): GPU/CPU/Modal detection and selection logic
+- Priority Rules Implementation (7 sprints): Student/teacher device priority, CPU blocking, budget enforcement
 
-**Tasks:**
+**Notable Sprints**:
+- Sprint 4.1.4: Implement device selection logic with priority: Local GPU → Local CPU → Modal GPU
+- Sprint 4.2.3: Implement teacher CPU blocking (production mode) - CRITICAL for cost control
+- Sprint 4.2.4-4.2.5: Per-document and per-batch teacher page limits
 
-1. **Secondary Analysis** ([src/detection/](src/detection/))
-   - **Non-Latin Script Detection**:
-     - Integrate lightweight OCR (Tesseract fast mode)
-     - Character-set identification on text blocks
-     - Unicode range analysis (Latin vs CJK vs Arabic, etc.)
-   - **Superscript/Footnote Detection** (Post-OCR):
-     - Parse OCR output (hOCR or ALTO XML)
-     - Analyze baseline shifts and font sizes
-     - Flag superscript/subscript characters
-     - Identify footnote regions by position and size
+#### Week 16: Modal GPU Integration & Metrics (Day 42-46, 13 sprints)
 
-2. **Performance Optimization** ([src/optimization/](src/optimization/))
-   - **Profiling**: cProfile, line_profiler on critical paths
-   - **Bottleneck Analysis**: Identify CPU vs GPU vs IO bounds
-   - **Optimizations**:
-     - Batch inference: Process multiple pages in parallel
-     - Pinned memory: Zero-copy transfers for GPU
-     - Async IO: Separate rasterization and inference queues
-     - Early exit: Skip models on clean pages
-     - Cache: DPI detection, rendered images
-   - **Quantization**: TensorRT INT8 for YOLO and IQA models
+**Key Milestones**:
+- Modal GPU Integration (8 sprints): Deploy teacher to Modal, remote inference API, cost tracking
+- Logging & Metrics (5 sprints): Comprehensive device logging, performance metrics, dashboards
 
-3. **Worker Pool Architecture** ([src/workers/](src/workers/))
-   - Async worker pool with Celery or RQ
-   - Work queue with backpressure handling
-   - Resource monitoring and caps (memory, GPU)
-   - Graceful degradation: Fallback to CPU if GPU unavailable
+**Notable Sprints**:
+- Sprint 4.3.2: Implement Modal teacher inference function (deploy to serverless GPU)
+- Sprint 4.3.5: Implement Modal cost tracking (estimate cost per invocation)
+- Sprint 4.4.4: Create performance dashboard (Streamlit) for real-time monitoring
 
-4. **API Development** ([src/api/](src/api/))
-   - FastAPI service with endpoints:
-     - POST /process: Single file upload
-     - POST /batch: Batch file upload
-     - GET /status/{job_id}: Job status polling
-     - GET /result/{job_id}: Download JSON result
-   - Input validation: File size limits, format checks
-   - Authentication: API key-based auth
-   - Rate limiting: Per-user quotas
+#### Week 17: Performance Optimization & Worker Pool (Day 47-52, 11 sprints)
 
-5. **Deployment** ([docker/](docker/))
-   - Dockerfile for service container
-   - Docker Compose for local development
-   - Kubernetes manifests for production (optional)
-   - Environment configuration (env vars for model paths, thresholds)
-   - Health checks and readiness probes
-   - Logging: Structured JSON logs (Python logging)
-   - Monitoring: Prometheus metrics (latency, throughput, errors)
+**Key Milestones**:
+- Performance Optimization (6 sprints): Profiling, batch inference, async IO, caching, TensorRT
+- Worker Pool Architecture (5 sprints): Async workers, task queue, resource caps, graceful degradation
 
-6. **Testing** ([tests/](tests/))
-   - Unit tests: 80%+ coverage (pytest)
-   - Integration tests: End-to-end pipeline tests
-   - Performance tests: Latency and throughput benchmarks
-   - Regression tests: JSON Accuracy on holdout set
-
-7. **Documentation**
-   - API documentation: OpenAPI/Swagger
-   - Deployment guide: Docker and Kubernetes
-   - Model documentation: Architecture, training details, performance
-   - User guide: Example usage, output format explanation
-
-**Deliverables:**
-- ✅ Full-featured pipeline with secondary analysis
-- ✅ Optimized inference (batching, quantization, early exit)
-- ✅ FastAPI service with Docker container
-- ✅ Comprehensive test suite (80%+ coverage)
-- ✅ Production-ready documentation
-
-**Success Criteria:**
-- JSON Accuracy > 0.85 on diverse test set
-- Latency p95 < 150ms per page (GPU), < 400ms (CPU)
-- Throughput > 10 pages/sec per GPU worker (batch=4)
-- Test coverage > 80%
-- Container image < 2GB
-
-**Performance Benchmarks** (Expected):
-| Configuration | Latency (p95) | Throughput | Notes |
-|---------------|---------------|------------|-------|
-| GPU (T4) | 120ms | 12 pages/sec | YOLOv8n INT8, batch=4 |
-| GPU (A10) | 80ms | 18 pages/sec | YOLOv8s INT8, batch=8 |
-| CPU (8 cores) | 350ms | 3 pages/sec | ONNX INT8, single page |
+**Notable Sprints**:
+- Sprint 4.5.2: Implement batch inference for student (target: 2x speedup)
+- Sprint 4.5.6: TensorRT INT8 quantization for GPU (optional, advanced optimization)
+- Sprint 4.6.2: Implement task queue with Celery/RQ (optional, for production scale)
 
 ---
 
-### Phase 5: Monitoring, Drift Detection & Continuous Improvement (Ongoing)
+**Phase 4 Deliverables:**
+- ✅ Device-priority execution system (24 sprints)
+- ✅ Modal GPU integration (optional, configurable)
+- ✅ Cost tracking and quota enforcement
+- ✅ Performance optimization (batch inference, async IO, caching, TensorRT)
+- ✅ Production-ready worker pool architecture
+- ✅ Comprehensive logging and metrics
+- ✅ Performance reports and dashboards
 
-**Goals:**
-- Establish production monitoring and alerting
-- Implement drift detection for model degradation
-- Continuous model improvement via active learning
+**Phase 4 Success Criteria:**
+- Device selection accuracy: 100% (follows priority rules)
+- Modal GPU usage: Within configured budget
+- Teacher CPU blocking: 100% in production mode
+- Latency p95: <150ms per page (GPU), <400ms (CPU)
+- Throughput: >6 pages/sec per GPU worker, >2 pages/sec per CPU worker
+- Performance improvement: >2x from batch inference
+- Test coverage: >80% for all new modules
 
-**Tasks:**
+---
 
-1. **Telemetry & Logging** ([src/telemetry/](src/telemetry/))
-   - Log all predictions with confidence scores
-   - Track issue frequencies and correction outcomes
-   - Performance metrics: Latency (p50, p95, p99), throughput
-   - Error tracking: Sentry or equivalent
-   - Structured logging: JSON format with correlation IDs
+### Phase 5: Testing, Documentation & Deployment (Weeks 18-20)
 
-2. **Monitoring Dashboard** ([monitoring/](monitoring/))
-   - Grafana dashboards for real-time metrics
-   - Prometheus scraping for service metrics
-   - Alerts: Latency spikes, error rate increases, model drift
-   - Resource monitoring: GPU utilization, memory usage
+**Priority: HIGH - Productionization**
 
-3. **Drift Detection** ([src/monitoring/drift.py](src/monitoring/drift.py))
-   - Feature distribution monitoring:
-     - Track image histogram statistics (mean, variance, entropy)
-     - Monitor confidence score distributions per issue/element type
-     - KL divergence between production and training distributions
-   - Model performance monitoring:
-     - Periodic evaluation on held-out change-detection set
-     - Track mAP, F1 scores over time
-   - Alerting:
-     - Trigger alert if KL divergence > threshold
-     - Alert if mAP drops > 5% from baseline
+**Duration**: 15 working days (3 weeks)
+**Total Sprints**: 22 sprints (~75 hours of implementation work)
 
-4. **Continuous Improvement Pipeline** ([scripts/continuous_improvement/](scripts/continuous_improvement/))
-   - **Data Flywheel**:
-     - Collect production failures (low confidence, user-reported errors)
-     - Sample for manual review and re-annotation
-     - Add to training set (incremental learning)
-   - **Active Learning**:
-     - Weekly mining of high-uncertainty samples
-     - Annotate and retrain quarterly
-   - **Model Retraining**:
-     - Scheduled retraining: Quarterly with updated data
-     - A/B testing: Deploy new model to 10% traffic, compare metrics
-     - Rollout: Gradual rollout if A/B test passes
+**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
 
-5. **Periodic Calibration** ([scripts/calibration.py](scripts/calibration.py))
-   - Quarterly recalibration on fresh validation set
-   - Recompute confidence thresholds per issue type
-   - Update correction guardrail parameters
-   - Document threshold changes in version history
+---
 
-**Deliverables:**
-- ✅ Production monitoring dashboard
-- ✅ Drift detection system with alerting
-- ✅ Continuous improvement scripts (data flywheel, active learning)
-- ✅ Quarterly retraining and recalibration schedule
+#### Week 18: Comprehensive Testing (Day 53-57, 15 sprints)
 
-**Success Criteria:**
+**Key Milestones**:
+- Unit Testing Expansion (6 sprints): Achieve 80%+ coverage across all modules
+- Integration Testing (5 sprints): End-to-end pipeline, device fallback, batch processing
+- Stress Testing (4 sprints): Large documents, concurrent batches, edge cases
+
+**Notable Sprints**:
+- Sprint 5.1.6: Achieve 80%+ overall test coverage - CRITICAL milestone
+- Sprint 5.2.1: End-to-end pipeline tests (all phases integrated, all schema fields validated)
+- Sprint 5.3.2: Concurrent batch stress test (10 concurrent jobs, 100 PDFs each)
+
+#### Week 19: API Development & Deployment (Day 58-62, 11 sprints)
+
+**Key Milestones**:
+- FastAPI Service (7 sprints): REST API with /process, /batch, /status, /result endpoints
+- Deployment Artifacts (4 sprints): Docker, Docker Compose, Kubernetes (optional), environment config
+
+**Notable Sprints**:
+- Sprint 5.4.2: Implement POST /process endpoint (single file upload with validation)
+- Sprint 5.4.3: Implement POST /batch endpoint (async job processing with job_id tracking)
+- Sprint 5.5.1: Create Dockerfile (multi-stage build, target: <2GB image size)
+
+#### Week 20: Documentation & Final Integration (Day 63-65, 7 sprints)
+
+**Key Milestones**:
+- Documentation (7 sprints): API reference, deployment guide, model docs, user guide, ADRs, Project B integration
+
+**Notable Sprints**:
+- Sprint 5.6.1: Write API documentation (OpenAPI/Swagger with examples)
+- Sprint 5.6.5: Create Architecture Decision Records (ADR-005: Modal GPU Integration)
+- Sprint 5.6.6: Write integration guide for Project B (handoff contract validation)
+
+---
+
+**Phase 5 Deliverables:**
+- ✅ Comprehensive test suite (80%+ coverage, 22 sprints)
+- ✅ FastAPI service with async endpoints
+- ✅ Docker container and Docker Compose
+- ✅ Kubernetes manifests (optional)
+- ✅ Complete documentation (API, deployment, models, integration)
+- ✅ Architecture Decision Records (5 ADRs)
+- ✅ Integration guide for Project B
+
+**Phase 5 Success Criteria:**
+- Test coverage: >80%
+- All integration tests pass
+- All stress tests pass
+- Docker container: <2GB
+- API response time: <150ms p95 (GPU), <400ms (CPU)
+- Documentation: Complete and reviewed
+- Project B handoff: Schema 100% compliant
+
+---
+
+### Phase 6: Monitoring, Drift Detection & Continuous Improvement (Ongoing)
+
+**Priority: MEDIUM - Long-term production stability**
+
+**Initial Setup Duration**: 10 working days (2 weeks)
+**Total Sprints (Initial Setup)**: 15 sprints (~50 hours of initial setup)
+**Ongoing Operations**: Weekly/monthly/quarterly tasks (see below)
+
+**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
+
+---
+
+#### Initial Setup (Weeks 21-22, 15 sprints)
+
+**Week 21: Telemetry & Logging (5 sprints)**
+
+**Key Milestones**:
+- Structured logging framework with rotation
+- Prediction and correction outcome logging
+- Error tracking with Sentry (optional)
+- Log aggregation pipeline (optional ELK stack)
+
+**Notable Sprints**:
+- Sprint 6.1.1: Set up structured logging framework (JSON logs, rotation policy)
+- Sprint 6.1.4: Set up error tracking with Sentry (optional)
+- Sprint 6.1.5: Create log aggregation pipeline with ELK (optional)
+
+**Week 22: Monitoring Dashboard (5 sprints)**
+
+**Key Milestones**:
+- Prometheus metrics collection
+- Grafana dashboards (system, application, model, cost)
+- Alerting rules for latency, errors, drift, cost
+- Cost analytics dashboard
+
+**Notable Sprints**:
+- Sprint 6.2.1: Set up Prometheus metrics collection
+- Sprint 6.2.2: Create Grafana dashboards (4 dashboards: system, app, model, cost)
+- Sprint 6.2.3: Configure alerting rules (latency spikes, error rate, GPU failure, budget)
+
+**Week 23: Drift Detection (5 sprints)**
+
+**Key Milestones**:
+- Feature distribution monitoring (KL divergence tracking)
+- Model performance monitoring (mAP, F1 trends)
+- Drift alerting (distribution shift, performance degradation)
+- Drift analysis dashboard
+
+**Notable Sprints**:
+- Sprint 6.3.1: Implement feature distribution monitoring (histogram stats, confidence distributions)
+- Sprint 6.3.2: Implement model performance monitoring (periodic evaluation on change-detection set)
+- Sprint 6.3.3: Set up drift alerting (KL divergence >0.3, mAP drop >5%)
+
+---
+
+**Phase 6 Deliverables (Initial Setup):**
+- ✅ Structured logging framework with rotation
+- ✅ Prometheus metrics collection
+- ✅ Grafana dashboards (system, application, model, cost)
+- ✅ Alert rules for latency, errors, drift, cost
+- ✅ Drift detection system with monitoring
+- ✅ Comprehensive monitoring documentation
+
+**Phase 6 Success Criteria (Initial Setup):**
 - Drift detection alerts within 1 week of distribution shift
-- Model performance degradation < 2% over 6 months
-- Active learning reduces annotation effort by > 50%
+- Alerting functional for latency spikes, errors, cost overruns
+- Dashboards provide real-time visibility into system health
+- Documentation complete for monitoring and drift detection
+
+---
+
+### Phase 6 Ongoing Operations
+
+After initial setup, ongoing operations include:
+
+**Weekly Tasks**:
+- Review drift metrics (KL divergence, confidence distributions)
+- Review cost analytics (Modal usage, teacher escalation trends)
+- Mine high-uncertainty samples for active learning
+
+**Monthly Tasks**:
+- Run model performance evaluation on change-detection set
+- Analyze error logs for systematic failures
+- Update alert thresholds if needed
+
+**Quarterly Tasks**:
+- Retrain models with production failures added to dataset
+- Recalibrate confidence thresholds per IQA head
+- Update documentation with lessons learned
+- A/B test new model versions (deploy to 10% traffic, compare metrics)
+
+**Annual Tasks**:
+- Major model architecture updates
+- Dataset refresh (add new public datasets like updated OmniDocBench)
+- Infrastructure upgrades (GPU hardware, cloud providers)
+
+**Continuous Improvement Pipeline:**
+1. **Data Flywheel**: Collect production failures → manual review → add to training set → retrain quarterly
+2. **Active Learning**: Weekly mining of high-uncertainty samples → annotate → add to dataset
+3. **Model Retraining**: Quarterly retraining with updated data → A/B test → gradual rollout
+
+**Long-term Success Criteria:**
+- Model performance degradation <2% over 6 months
+- Active learning reduces annotation effort by >50%
 - 95% of production failures resolved in next model version
+- Cost per page trends downward over time (via optimizations)
 
 ---
 
@@ -1242,60 +1763,60 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 **Computer Vision:**
 - OpenCV 4.8+ (classical CV, image corrections)
 - Pillow (image manipulation)
-- pdf2image or PyMuPDF (PDF to image conversion)
+- PyMuPDF (PDF to image conversion, text extraction)
 
 **Deep Learning:**
 - PyTorch 2.0+ (model training and inference)
-- Ultralytics YOLOv8 (object detection)
-- torchvision (image transforms, pretrained models)
-- timm (EfficientNet, MobileNet via PyTorch Image Models)
+- torchvision (image transforms, pretrained ResNet models)
+- ONNX Runtime (cross-platform inference, INT8 quantization)
+- TensorRT (NVIDIA GPU acceleration, optional)
 
 **Data Augmentation:**
 - Albumentations (fast, GPU-accelerated augmentations)
 
-**Inference Optimization:**
-- ONNX Runtime (cross-platform inference)
-- TensorRT (NVIDIA GPU acceleration, INT8 quantization)
-
-**OCR (Secondary Analysis):**
-- Tesseract OCR (lightweight script detection)
+**OCR (Secondary Analysis - Minimal Use):**
+- Tesseract OCR (lightweight script detection, if needed)
 - pytesseract (Python wrapper)
 
 **API & Web Service:**
 - FastAPI (async API framework)
 - Uvicorn (ASGI server)
-- Pydantic (data validation)
+- Pydantic v2 (data validation and schema)
 
-**Task Queue:**
+**Task Queue (Optional):**
 - Celery or RQ (async worker pool)
 - Redis (message broker)
 
 **Monitoring & Logging:**
 - Prometheus (metrics collection)
 - Grafana (visualization)
-- Sentry (error tracking)
-- structlog (structured logging)
+- Sentry (error tracking, optional)
+- structlog + rich (structured logging with console output)
 
 **Testing:**
 - pytest (unit and integration tests)
 - pytest-cov (code coverage)
-- hypothesis (property-based testing)
+- hypothesis (property-based testing, optional)
 
 **Development Tools:**
 - Poetry (dependency management)
-- Black (code formatting, 88 chars)
-- Ruff (fast linting)
+- Ruff (fast linting and formatting)
 - MyPy (static type checking)
 - Pre-commit (automated checks)
+- Bandit (security scanning)
+- Safety (dependency vulnerability scanning)
 
 **Data Versioning:**
-- DVC (Data Version Control)
-- Git LFS (large file storage)
+- DVC (Data Version Control, optional)
+- Git LFS (large file storage, optional)
 
 **Containerization:**
 - Docker (service containerization)
 - Docker Compose (local development)
 - Kubernetes (production orchestration, optional)
+
+**Remote GPU (Optional):**
+- Modal.com (serverless GPU for teacher inference)
 
 ### System Requirements
 
@@ -1322,266 +1843,186 @@ See `/home/byron/dev/data_ingestor/docs/PHASE1C_HANDOFF.md` for complete integra
 
 ---
 
-## Key Decisions & Open Questions
-
-### Critical Decisions Needed Before Implementation
-
-**1. Throughput and Hardware Budget**
-- **Question**: What is the target throughput (pages/hour)?
-- **Options**:
-  - Low: < 10k pages/hour → CPU-only deployment feasible
-  - Medium: 10k-100k pages/hour → 5-10 GPU workers
-  - High: > 100k pages/hour → 20+ GPU workers with auto-scaling
-- **Decision Needed**: Define target throughput to size infrastructure
-
-**2. Detection Priorities (v1 Scope)**
-- **Question**: Which element classes are must-have for v1?
-- **Options**:
-  - Minimal: Tables, Images only (simpler, faster deployment)
-  - Standard: Tables, Images, Handwriting (balanced)
-  - Full: Tables, Images, Handwriting, Formulas (complex, higher cost)
-- **Decision Needed**: Prioritize classes based on downstream requirements
-
-**3. Superscript/Footnote Detection Timing**
-- **Question**: Is superscript/footnote detection a v1 requirement or post-OCR v2?
-- **Options**:
-  - v1 Pre-OCR: More complex, less accurate, add latency
-  - v2 Post-OCR: Simpler, more accurate, deferred to downstream
-- **Recommendation**: **Defer to post-OCR (v2)** for higher accuracy and simpler v1
-- **Decision Needed**: Confirm with downstream team (LayoutParser/Tesseract)
-
-**4. Language/Script Coverage**
-- **Question**: Expected script coverage (Latin-only vs multi-script)?
-- **Options**:
-  - Latin-only: Simpler, no pre-OCR script ID needed
-  - Multi-script: Requires script detection, more training data
-- **Decision Needed**: Define language requirements based on document sources
-
-**5. PDF Source Mix**
-- **Question**: Mix of vector PDFs vs scanned images? Camera captures expected?
-- **Implications**:
-  - Vector PDFs: Clean rasterization, fewer quality issues
-  - Scanned images: More quality issues, perspective correction needed
-  - Camera captures: Perspective, lighting, blur challenges
-- **Decision Needed**: Understand document source distribution for training data strategy
-
-**6. Precision vs Recall Balance**
-- **Question**: Preferred balance for issue detection?
-- **Options**:
-  - High Precision: Avoid false positives (minimize unnecessary corrections)
-  - High Recall: Flag more issues (ensure no issues missed)
-- **Recommendation**: **Favor Precision** to avoid over-correction harm
-- **Decision Needed**: Define acceptable precision/recall trade-offs per issue type
-
-**7. Downstream Integration Format**
-- **Question**: Does LayoutParser require specific metadata format?
-- **Decision Needed**: Validate JSON schema with downstream teams
-
-**8. Deployment Environment**
-- **Question**: On-premise, cloud (AWS/GCP/Azure), or hybrid?
-- **Implications**:
-  - Cloud: Auto-scaling, managed services, higher cost
-  - On-premise: Fixed capacity, lower variable cost, more management
-- **Decision Needed**: Define deployment target for infrastructure planning
-
----
-
-## Resource Requirements & Budget
-
-### Team Composition (Recommended)
-
-**Phase 0-2 (Foundation + Classical + IQA ML)**: 2-3 people, 8-10 weeks
-- 1x ML Engineer (model training, data augmentation)
-- 1x Software Engineer (pipeline, API, infrastructure)
-- 1x Data Annotator (part-time, validation set labeling)
-
-**Phase 3 (Layout Detection)**: 3-4 people, 4-5 weeks
-- 1x ML Engineer (YOLOv8 training, optimization)
-- 1x Software Engineer (integration, optimization)
-- 1-2x Data Annotators (custom annotation, active learning)
-
-**Phase 4 (Production Hardening)**: 2-3 people, 3-4 weeks
-- 1x ML Engineer (optimization, quantization)
-- 1x DevOps Engineer (containerization, deployment, monitoring)
-- 1x Software Engineer (API, testing, documentation)
-
-**Phase 5 (Ongoing)**: 1-2 people, ongoing
-- 1x ML Engineer (monitoring, retraining, improvements)
-- 1x Data Annotator (part-time, continuous labeling)
-
-**Total Team-Weeks**: ~60-80 team-weeks over 5-6 months
-
-### Compute Resources & Costs
-
-**Development (4-5 months):**
-- 1x GPU Workstation: $5,000 one-time (or cloud equivalent)
-- Cloud GPU (training): ~$1.50/hr for V100/A10
-  - IQA training: ~50 GPU-hours = $75
-  - YOLOv8 training: ~100 GPU-hours = $150
-  - Active learning iterations: ~50 GPU-hours = $75
-  - **Total**: ~$300 for training compute
-
-**Production (Monthly, per worker):**
-- **GPU Worker** (T4): $0.35/hr × 730 hrs = $255/month
-- **CPU Worker** (8 cores): $0.15/hr × 730 hrs = $110/month
-
-**Example Scaling:**
-- 10 GPU workers: $2,550/month
-- 20 GPU workers: $5,100/month
-
-**Storage:**
-- Training datasets (300GB): $20/month (S3 or equivalent)
-- Model artifacts (10GB): $2/month
-
-**Total Estimated Budget:**
-- **Development**: $60k-$120k (team salaries, compute, tools)
-- **Production (Year 1)**: $30k-$60k (compute, storage, monitoring)
-
----
-
 ## Success Metrics & KPIs
 
 ### Model Performance KPIs
 
-**Image Quality Assessment:**
-- mAP > 0.88
-- Per-class F1 > 0.85 for all issues
-- ECE < 0.05 (calibration)
+**ML-based IQA (Teacher-Student):**
+- **Teacher (ResNet-50)**:
+  - mAP: >0.92
+  - Per-head F1: >0.90
+  - ECE: <0.03
+- **Student (ResNet-18)**:
+  - mAP: >0.88
+  - Per-head F1: >0.85
+  - ECE: <0.05
+  - Student-teacher KL divergence: <0.15
 
-**Document Element Detection:**
-- mAP@.50 > 0.82
-- Per-class AP > 0.70 for all classes
-- Inference time < 10ms GPU, < 70ms CPU
+**Layout-Lite Classification:**
+- `layout_type` accuracy: >0.90
+- Presence flags F1: >0.85 per flag
+- Inference time: <5ms GPU (YOLOv8-nano) or <5ms CPU (heuristics)
 
 **End-to-End Pipeline:**
-- JSON Accuracy > 0.85
-- Latency p95 < 150ms GPU, < 400ms CPU
-- Throughput > 6 pages/sec per GPU worker
+- JSON Accuracy: >0.85
+- Routing accuracy: >0.88
+- DQS correlation with OCR difficulty: >0.75
+- Latency p95: <150ms GPU, <400ms CPU
+- Throughput: >6 pages/sec per GPU worker, >2 pages/sec per CPU worker
 
 ### Operational KPIs
 
 **Reliability:**
-- Uptime > 99.5%
-- Error rate < 0.5%
-- Mean time to recovery (MTTR) < 1 hour
+- Uptime: >99.5%
+- Error rate: <0.5%
+- Mean time to recovery (MTTR): <1 hour
 
 **Performance:**
-- Latency p95 < 150ms (GPU) / < 400ms (CPU)
-- Throughput meets target SLA (define based on Decision #1)
+- Latency p95: <150ms (GPU) / <400ms (CPU)
+- Throughput: Meets target SLA (6 pages/sec GPU, 2 pages/sec CPU)
 - Resource utilization: GPU 70-85%, CPU 60-75%
 
 **Quality:**
-- User-reported issues < 5% of processed pages
-- False positive rate < 10% per issue type
-- False negative rate < 15% per issue type
+- User-reported issues: <5% of processed pages
+- False positive rate: <10% per issue type
+- False negative rate: <15% per issue type
+
+**Cost (Device-Priority Execution):**
+- Modal GPU usage: Within configured budget
+- Teacher escalation rate: <20% of documents (target: 10-15%)
+- Cost per page: <$0.01 (target: <$0.005)
 
 ### Business KPIs
 
 **Efficiency:**
-- Reduce manual preprocessing time by > 80%
-- Increase RAG ingestion throughput by > 5x
-- Reduce OCR error rate by > 30% (via quality improvements)
+- Reduce manual preprocessing time by >80%
+- Increase RAG ingestion throughput by >5x
+- Improve downstream OCR accuracy by >30% (via quality corrections)
 
-**Cost:**
-- Processing cost < $0.01 per page
-- Annotation cost < $0.05 per page (via weak supervision + active learning)
-
----
-
-## Risk Register Summary
-
-| Risk | Severity | Likelihood | Mitigation Priority | Status |
-|------|----------|------------|---------------------|--------|
-| Text/no-text gating errors | HIGH | MEDIUM | HIGH | Ensemble + calibration |
-| Synthetic→real domain gap | HIGH | MEDIUM | HIGH | Real-world seed data |
-| Over-correction harm | MED-HIGH | MEDIUM | HIGH | Guardrails + thresholds |
-| Model drift | MEDIUM | HIGH | MEDIUM | Monitoring + retraining |
-| Throughput bottlenecks | MEDIUM | MEDIUM | MEDIUM | Optimization + scaling |
-| Script detection latency | LOW-MED | LOW | LOW | Lightweight OCR |
-| Multi-page memory pressure | MEDIUM | LOW | MEDIUM | Streaming + caps |
+**Integration:**
+- Project B handoff: 100% schema compliance
+- Routing accuracy: >88% agreement with optimal OCR engine selection
 
 ---
 
-## Appendix: Alternative Architectures Considered
+## Related Documentation
 
-### 1. Unified Multi-Task Model
-**Approach**: Single backbone (EfficientNet) with multiple heads for IQA and layout detection
-**Pros**: Shared features, fewer models to maintain
-**Cons**: Complex training, loss balancing challenges, harder to debug
-**Decision**: **Rejected** - Modular pipeline easier to maintain and optimize independently
+### RAG Pipeline Architecture (docs/development/RAG Pipeline/)
+- **[RAG-pipeline-project-overview.md](docs/development/RAG Pipeline/RAG-pipeline-project-overview.md)**: Four-project architecture overview with responsibility boundaries
+- **[Project_A_F_NF.md](docs/development/RAG Pipeline/Project_A_F_NF.md)**: Functional and Non-Functional Requirements for Project A
+- **[project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md)**: Detailed 10-week implementation roadmap
+- **[PROJECT_ALIGNMENT_ANALYSIS.md](docs/development/RAG Pipeline/PROJECT_ALIGNMENT_ANALYSIS.md)**: Gap analysis and alignment roadmap
 
-### 2. Vision Transformer (ViT) for Layout
-**Approach**: Use DocLayNet-trained DETR/DINO for layout detection
-**Pros**: State-of-art accuracy on layout tasks
-**Cons**: Heavier inference (20-50ms GPU), more GPU memory (4-6GB), less mature ecosystem
-**Decision**: **Deferred to v2** - YOLOv8 provides better throughput for v1
+### Project-Specific Documentation
+- **[CLAUDE.md](CLAUDE.md)**: Project-specific guidance for Claude Code development
+- **[ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)**: Correction pipeline architecture and guardrails
+- **[schema.py](src/image_preprocessing_detector/schema.py)**: Pydantic v2 models for DocumentMetadata and related schemas
 
-### 3. PaddleOCR PP-Structure
-**Approach**: Use PaddleOCR's end-to-end document structure pipeline
-**Pros**: Mature, fast, good table detection
-**Cons**: Introduces Paddle dependency (rest is PyTorch), less flexibility
-**Decision**: **Consider for v2** if table detection underperforms
-
-### 4. Segment Anything (SAM) + Classifier
-**Approach**: SAM for region proposals, then classify regions
-**Pros**: Robust proposals, handles diverse element types
-**Cons**: Very heavy (50-100ms inference), overkill for throughput needs
-**Decision**: **Rejected** - Too slow for production requirements
+### External Benchmarks
+- **OmniDocBench**: Multi-domain document dataset with layout and quality annotations
+- **OHR-Bench**: OCR-hard regions benchmark for quality assessment validation
+- **PubLayNet**: Layout detection benchmark (for layout-lite validation)
 
 ---
 
-## Next Steps & Immediate Actions
+## Appendix: Key Architectural Decisions
 
-### Week 1: Kickoff & Planning
-1. ✅ Finalize key decisions (see Key Decisions section)
-2. ✅ Set up project repository with CI/CD
-3. ✅ Define ground-truth test set requirements (500 pages)
-4. ✅ Identify team members and assign roles
-5. ✅ Set up development environment (GPU workstations or cloud)
+### ADR-001: Teacher-Student ResNet Architecture
 
-### Week 2-3: Data & Evaluation Setup (Phase 0)
-1. Implement JSON schema and validation
-2. Build evaluation framework (JSON Accuracy metric)
-3. Begin ground-truth test set annotation (CVAT/Label Studio)
-4. Set up DVC for dataset versioning
-5. Create architecture diagrams and documentation
+**Decision**: Use ResNet-50 teacher + ResNet-18 student with knowledge distillation instead of single-model MobileNetV3/EfficientNet.
 
-### Week 4-7: MVP Implementation (Phase 1)
-1. Implement PDF ingestion and text detection gate
-2. Build classical IQA detectors (skew, contrast, blur)
-3. Implement correction pipeline with guardrails
-4. Create CLI tool for testing
-5. Evaluate baseline performance on test set
+**Rationale**:
+- **Accuracy-Cost Trade-off**: Teacher provides high-fidelity quality assessment on difficult cases; student provides fast, cost-effective inference on majority of documents
+- **Selective Escalation**: Teacher invoked only on high-risk documents (10-20% of corpus), reducing average cost
+- **Knowledge Distillation**: Student learns from teacher's soft labels, achieving near-teacher accuracy at fraction of computational cost
+- **Continuous Improvement**: Teacher can be retrained on hard samples without disrupting production (student remains default)
 
-### Week 8+: ML Model Development (Phase 2-3)
-1. Collect and augment IQA training data
-2. Train IQA CNN (MobileNetV3 or EfficientNet)
-3. Download and prepare layout detection datasets
-4. Train YOLOv8 on document elements
-5. Integrate ML models into pipeline
+**Alternatives Considered**:
+- Single MobileNetV3 model: Lower accuracy on edge cases, no escalation path
+- Single EfficientNet model: Higher GPU cost, less flexible cost control
+
+**Status**: Approved
+
+---
+
+### ADR-002: Device-Priority Execution
+
+**Decision**: Implement device-priority execution: Local GPU → Local CPU → Modal GPU, with teacher CPU blocking in production mode.
+
+**Rationale**:
+- **Cost Optimization**: Prefer free local resources before paid cloud GPU
+- **Latency Control**: Local GPU provides lowest latency for GPU-capable inference
+- **Safety**: Teacher CPU blocking prevents expensive, slow inference on CPU
+- **Flexibility**: Modal GPU provides burst capacity for high-load scenarios
+
+**Alternatives Considered**:
+- Always use local resources: No burst capacity for high-load scenarios
+- Always use Modal GPU: Higher baseline cost, network latency
+
+**Status**: Approved
+
+---
+
+### ADR-003: Layout-Lite vs Full Layout Detection
+
+**Decision**: Implement lightweight "layout-lite" page-level classification in Project A; defer full semantic layout detection to Project B.
+
+**Rationale**:
+- **Separation of Concerns**: Project A provides routing metadata; Project B handles semantic understanding
+- **Performance**: Layout-lite (heuristics or YOLOv8-nano) is 5-10x faster than full layout detection
+- **Avoid Duplication**: Prevents Project A from re-implementing Project B's core functionality
+- **Clear Boundaries**: Page-level attributes (has_tables, layout_type) vs element-level bounding boxes (Project B)
+
+**Alternatives Considered**:
+- Full layout detection in Project A: Violates separation of concerns, increases latency
+- No layout analysis in Project A: Missing critical routing metadata for Project B
+
+**Status**: Approved
+
+---
+
+### ADR-004: DQS and Routing Metadata
+
+**Decision**: Calculate Document Quality Score (DQS) and routing recommendation in Project A; hand off to Project B for OCR engine selection.
+
+**Rationale**:
+- **Single Source of Truth**: Project A analyzes quality once; Project B uses metadata for decisions
+- **Efficiency**: Avoids Project B re-running quality analysis
+- **Holistic Signal**: DQS combines degradation + structural complexity for comprehensive quality assessment
+- **Routing Optimization**: Explicit routing recommendation guides Project B to optimal OCR engine
+
+**Alternatives Considered**:
+- Project B calculates own routing: Duplicates work, potential inconsistency
+- No routing metadata: Project B must guess optimal OCR engine, lower accuracy
+
+**Status**: Approved
 
 ---
 
 ## Conclusion
 
-This project plan outlines a **phased, modular approach** to building a production-grade image preprocessing detection system. By combining classical computer vision with modern deep learning, we balance accuracy with performance while maintaining maintainability.
+Project A serves as the intelligent gateway for the RAG document processing pipeline, providing high-quality preprocessing, quality assessment, and routing metadata to downstream projects. The teacher-student ResNet architecture with device-priority execution balances accuracy with cost efficiency, while the layout-lite approach maintains clear separation of concerns with Project B.
 
 **Key Success Factors:**
-1. **Modular architecture** enables independent optimization of components
-2. **Synthetic data generation + weak supervision** minimizes annotation burden
-3. **Phased implementation** delivers value incrementally and reduces risk
-4. **Guardrails and calibration** prevent over-correction and maintain quality
-5. **Monitoring and drift detection** ensure long-term production stability
+1. **Teacher-Student Architecture**: High accuracy on difficult cases, cost-effective on routine documents
+2. **Device-Priority Execution**: Optimizes cost while maintaining performance SLAs
+3. **Layout-Lite Boundaries**: Prevents scope creep, maintains architectural integrity
+4. **Routing Metadata**: Enables Project B to make intelligent OCR engine decisions
+5. **Do-No-Harm Guardrails**: Ensures corrections improve quality without introducing artifacts
 
-**Expected Timeline**: 5-6 months from kickoff to production deployment
+**Expected Timeline**: 20 weeks from Phase 2 start to production deployment
 **Expected Outcomes**:
-- JSON Accuracy > 0.85
-- Throughput > 6 pages/sec per GPU worker
-- Scalable to 1000s of pages/hour
-- Reduces manual preprocessing time by > 80%
+- JSON Accuracy: >0.85
+- Throughput: >6 pages/sec per GPU worker
+- Routing Accuracy: >88%
+- Cost per page: <$0.01
+- Reduces manual preprocessing time by >80%
 
-**Next Step**: Finalize key decisions (see Key Decisions section) and proceed with Phase 0 foundation work.
+**Next Steps**:
+1. Complete Phase 1 remaining tasks (CLI tool, output generation)
+2. Begin Phase 2: Schema alignment and core components (PDF type, DQS, routing)
+3. Coordinate with Project B team on handoff contract validation
 
 ---
 
-*This project plan synthesized from multi-model expert analysis (Gemini 2.5 Pro + GPT-5) using the Zen MCP smart consensus framework.*
+*This project plan aligns with the RAG Pipeline architecture documented in `docs/development/RAG Pipeline/`. For detailed requirements, see `Project_A_F_NF.md`. For implementation roadmap, see `project-a-project-plan.md`.*
