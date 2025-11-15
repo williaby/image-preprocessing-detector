@@ -188,6 +188,19 @@ def train_iqa():
 
         scheduler.step()
 
+    # Save final checkpoint
+    print("\nSaving final checkpoint...")
+    final_checkpoint_path = "/tmp/final_checkpoint.pth"
+    torch.save(
+        {
+            "epoch": config["training"]["epochs"],
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "scheduler_state_dict": scheduler.state_dict(),
+        },
+        final_checkpoint_path,
+    )
+
     # Export to ONNX
     print("\n[7/8] Exporting model to ONNX...")
     model.eval()
@@ -214,7 +227,7 @@ def train_iqa():
     model_blob.upload_from_filename(onnx_path)
 
     checkpoint_blob = bucket.blob("models/phase2_iqa/best_model.pth")
-    checkpoint_blob.upload_from_filename("/tmp/checkpoint.pth")
+    checkpoint_blob.upload_from_filename(final_checkpoint_path)
 
     print("\n" + "=" * 60)
     print("✅ Training complete!")

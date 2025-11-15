@@ -53,9 +53,25 @@ setup_gcs_secret() {
     # Portable approach: works on both GNU (Linux) and BSD (macOS) base64
     GCP_SA_KEY_B64=$(base64 < "$key_path" | tr -d '\n')
 
+    # Verify base64 encoding succeeded and is not empty
+    if [ -z "$GCP_SA_KEY_B64" ]; then
+        echo -e "${RED}Error: Failed to encode service account key to base64${NC}"
+        echo "Check that the file is readable and contains valid JSON"
+        exit 1
+    fi
+
+    # Verify the encoded value looks like valid base64 (basic sanity check)
+    if ! echo "$GCP_SA_KEY_B64" | grep -qE '^[A-Za-z0-9+/=]+$'; then
+        echo -e "${RED}Error: Base64 encoding produced invalid characters${NC}"
+        exit 1
+    fi
+
     echo -e "${YELLOW}Creating Modal secret 'gcs-credentials' with GCP_SA_KEY...${NC}"
-    modal secret create gcs-credentials \
-        GCP_SA_KEY="$GCP_SA_KEY_B64"
+    if ! modal secret create gcs-credentials GCP_SA_KEY="$GCP_SA_KEY_B64"; then
+        echo -e "${RED}Error: Failed to create Modal secret${NC}"
+        echo "Check that you are authenticated with Modal (modal token new)"
+        exit 1
+    fi
 
     echo -e "${GREEN}✅ GCS secret created successfully (base64 format)${NC}"
     echo -e "${GREEN}   Secret name: gcs-credentials${NC}"

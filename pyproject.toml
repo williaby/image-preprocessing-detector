@@ -56,6 +56,9 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
     "rich>=13.5.0",
+
+    # Cloud Infrastructure
+    "modal>=0.60.0",
 ]
 
 [project.optional-dependencies]

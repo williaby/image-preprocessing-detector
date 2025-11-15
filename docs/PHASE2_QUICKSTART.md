@@ -47,20 +47,22 @@ ls -lh data/raw/tobacco800/
 
 ## Step 2: Generate Synthetic Dataset (20-30 minutes)
 
+**⚠️ NOTE**: Dataset generation script is planned but not yet implemented. This step will be available when Phase 2 dataset preparation is complete.
+
 ```bash
 # Install dependencies
 poetry install --with dev
 
-# Generate 50k augmented samples
-poetry run python scripts/prepare_phase2_data.py \
-    --source-dirs data/raw/tobacco800 \
-    --output-dir datasets/iqa_phase2 \
-    --num-samples 50000 \
-    --preset medium
+# TODO: Generate 50k augmented samples (script not yet implemented)
+# poetry run python scripts/prepare_phase2_data.py \
+#     --source-dirs data/raw/tobacco800 \
+#     --output-dir datasets/iqa_phase2 \
+#     --num-samples 50000 \
+#     --preset medium
 
-# Verify output
-du -sh datasets/iqa_phase2/  # Should show ~10GB
-find datasets/iqa_phase2/train/images -name "*.png" | wc -l  # Should show 35000
+# Verify output (when script is available)
+# du -sh datasets/iqa_phase2/  # Should show ~10GB
+# find datasets/iqa_phase2/train/images -name "*.png" | wc -l  # Should show 35000
 ```
 
 **Output structure:**

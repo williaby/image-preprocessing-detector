@@ -83,7 +83,7 @@ def test_gcs():
 
         return {
             "success": True,
-            "bucket": "image_detection_b",
+            "bucket": bucket_name,
             "objects_found": len(blobs),
         }
 
