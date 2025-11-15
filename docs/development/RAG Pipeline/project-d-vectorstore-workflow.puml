@@ -1,0 +1,41 @@
+@startuml ProjectD_Embedding_VectorStore
+
+title Project D – Embedding, Indexing & RAG Vector Store Integration
+
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultTextAlignment left
+
+start
+
+:Receive NormalizedTextDocument,\nRAGChunkSet, TrustMetrics\n(from Project C);
+
+:Determine target collection /\nindex and namespace\n(based on project/app config);
+
+partition "Chunk filtering & routing" {
+  :Filter or down-weight chunks\nwith low trust_score or\nhigh hallucination_risk\n(if policy requires);
+
+  :Optionally split or merge\nchunks for app-specific\nsize constraints;
+}
+
+partition "Embedding generation" {
+  :Select embedding model\nbased on:\n- document domain/type\n- multilingual needs\n- model policy;
+
+  :Generate embeddings for\naccepted chunks\n(batch processing);
+
+  :Attach embedding metadata:\n- chunk_id\n- document_id\n- page_range\n- section hierarchy\n- trust scores\n- OCR engine provenance;
+}
+
+partition "Vector store operations" {
+  :Write embeddings + metadata\ninto configured vector DB\n(e.g., pgvector, Milvus,\nWeaviate, etc.);
+
+  :Update any secondary indices\n(e.g., keyword index,\nsection-level catalog);
+
+  :Record ingestion statistics\nfor monitoring:\n#chunks, avg trust,\npages processed;
+}
+
+:Emit ingestion result:\n- collection / index ID\n- document handle\n- summary statistics;
+
+stop
+
+@enduml

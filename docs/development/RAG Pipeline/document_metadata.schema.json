@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema#",
+  "$id": "https://example.com/schemas/document_metadata.schema.json",
+  "title": "DocumentMetadata",
+  "type": "object",
+  "description": "Preprocessing & IQA metadata emitted by Project A.",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of this schema, e.g., '1.0.0'."
+    },
+    "document_id": {
+      "type": "string",
+      "description": "Stable identifier for the logical document (UUID or similar)."
+    },
+    "source_path": {
+      "type": "string",
+      "description": "Original file path or URI used at ingestion time."
+    },
+    "source_mime_type": {
+      "type": "string",
+      "description": "Detected MIME type of the original file, e.g. 'application/pdf'."
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when Project A ingested this document."
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "image",
+        "pdf",
+        "office_word",
+        "office_excel",
+        "office_powerpoint"
+      ],
+      "description": "High-level document type classification."
+    },
+    "pdf_type": {
+      "type": ["string", "null"],
+      "enum": [
+        "image_only",
+        "born_digital",
+        "hybrid",
+        null
+      ],
+      "description": "PDF subtype classification per FR-2.1; null for non-PDFs."
+    },
+    "languages": {
+      "type": "array",
+      "description": "Detected language codes (BCP-47 / ISO 639-1).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "has_non_latin": {
+      "type": "boolean",
+      "description": "True if non-Latin scripts are present."
+    },
+    "page_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Total number of pages detected in the document."
+    },
+    "pre_ocr_risk": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Aggregated risk score that OCR will struggle, combining IQA, layout, and attributes."
+    },
+    "dqs": {
+      "type": "object",
+      "description": "Document Quality Score per FR-7 (degradation and structural complexity).",
+      "additionalProperties": false,
+      "properties": {
+        "degradation_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "structural_complexity_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "required": [
+        "degradation_score",
+        "structural_complexity_score"
+      ]
+    },
+    "ocr_routing_recommendation": {
+      "type": "string",
+      "enum": [
+        "ocr_fast",
+        "ocr_advanced",
+        "vision_simple",
+        "vision_structured"
+      ],
+      "description": "Recommended downstream pipeline profile based on DQS and pre_ocr_risk."
+    },
+    "page_layout_summary": {
+      "type": "array",
+      "description": "Per-page coarse layout & attribute summary produced by Project A.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page_index": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Zero-based page index."
+          },
+          "layout_type": {
+            "type": "string",
+            "enum": [
+              "single_column",
+              "multi_column",
+              "three_column",
+              "complex",
+              "unknown"
+            ],
+            "description": "Coarse layout classification informed by OmniDocBench-style attributes."
+          },
+          "has_tables": {
+            "type": "boolean"
+          },
+          "has_figures": {
+            "type": "boolean"
+          },
+          "has_dense_math": {
+            "type": "boolean"
+          },
+          "has_handwriting": {
+            "type": "boolean"
+          },
+          "page_attributes": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "fuzzy_scan": {
+                "type": "boolean"
+              },
+              "watermark": {
+                "type": "boolean"
+              },
+              "colorful_background": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "fuzzy_scan",
+              "watermark",
+              "colorful_background"
+            ]
+          }
+        },
+        "required": [
+          "page_index",
+          "layout_type",
+          "has_tables",
+          "has_figures",
+          "has_dense_math",
+          "has_handwriting",
+          "page_attributes"
+        ]
+      }
+    },
+    "pages": {
+      "type": "array",
+      "description": "Per-page IQA metrics and correction history.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "width_px": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height_px": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "dpi": {
+            "type": ["integer", "null"],
+            "minimum": 1,
+            "description": "Effective DPI after processing; null if unknown."
+          },
+          "has_text": {
+            "type": "boolean",
+            "description": "Result of the text detection gate."
+          },
+          "text_detection_confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "learned_quality": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "overall_quality": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "sharpness_score": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "color_fidelity_score": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            }
+          },
+          "iqa_metrics": {
+            "type": "object",
+            "description": "Classical IQA metrics (blur, contrast, noise, etc.).",
+            "additionalProperties": false,
+            "properties": {
+              "blur_score": { "type": "number" },
+              "contrast_score": { "type": "number" },
+              "noise_score": { "type": "number" },
+              "illumination_score": { "type": "number" },
+              "skew_angle_deg": { "type": "number" },
+              "perspective_score": { "type": "number" },
+              "warping_score": { "type": "number" },
+              "binarization_score": { "type": "number" },
+              "bleed_through_score": { "type": "number" }
+            }
+          },
+          "transform_history": {
+            "type": "array",
+            "description": "Record of corrections attempted/applied by Project A.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "description": "Name of the correction (e.g., 'deskew', 'clahe', 'denoise')."
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "parameters": {
+                  "type": "object",
+                  "description": "Actual parameter values used by the transform."
+                },
+                "skipped": {
+                  "type": "boolean"
+                },
+                "skip_reason": {
+                  "type": ["string", "null"]
+                }
+              },
+              "required": [
+                "action",
+                "timestamp",
+                "parameters",
+                "skipped"
+              ]
+            }
+          }
+        },
+        "required": [
+          "page_index",
+          "width_px",
+          "height_px",
+          "has_text",
+          "text_detection_confidence",
+          "iqa_metrics",
+          "transform_history"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "document_id",
+    "source_mime_type",
+    "ingested_at",
+    "document_type",
+    "page_count",
+    "pre_ocr_risk",
+    "dqs",
+    "ocr_routing_recommendation",
+    "page_layout_summary",
+    "pages"
+  ]
+}

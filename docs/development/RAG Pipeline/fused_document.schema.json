@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema#",
+  "$id": "https://example.com/schemas/fused_document.schema.json",
+  "title": "FusedDocument",
+  "type": "object",
+  "description": "Canonical fused textual representation with trust and noise metrics emitted by Project C.",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "document_id": {
+      "type": "string"
+    },
+    "source_ocr_document_id": {
+      "type": "string",
+      "description": "Identifier of the OCRDocument used as input."
+    },
+    "page_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "fusion_strategy": {
+      "type": "string",
+      "description": "Human-readable label of the fusion strategy used (e.g., 'marker_primary_deepseek_vote')."
+    },
+    "global_stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mean_chunk_trust": {
+          "type": "number"
+        },
+        "mean_semantic_noise_score": {
+          "type": "number"
+        },
+        "mean_formatting_noise_score": {
+          "type": "number"
+        }
+      }
+    },
+    "paragraphs": {
+      "type": "array",
+      "description": "Canonical fused paragraphs, aligned with or derived from Project B paragraphs.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "paragraph_id": {
+            "type": "string",
+            "description": "Identifier for this fused paragraph (may equal or differ from OCRDocument paragraph_id)."
+          },
+          "source_paragraph_ids": {
+            "type": "array",
+            "description": "List of paragraph IDs from OCRDocument that contributed to this fused text.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "page_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "heading_path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "structural_role": {
+            "type": "string",
+            "enum": [
+              "body_text",
+              "title",
+              "section_header",
+              "caption",
+              "footnote",
+              "table_context",
+              "figure_context",
+              "equation_context",
+              "other"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "description": "Canonical fused text for this paragraph."
+          },
+          "fusion_detail": {
+            "type": "object",
+            "description": "Optional explanation of how fusion was computed.",
+            "additionalProperties": false,
+            "properties": {
+              "engines_used": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disagreement_score": {
+                "type": "number",
+                "description": "Measure of divergence between engines for this paragraph."
+              },
+              "primary_engine": {
+                "type": "string"
+              }
+            }
+          },
+          "trust_metrics": {
+            "type": "object",
+            "description": "Trust and noise metrics at paragraph level.",
+            "additionalProperties": false,
+            "properties": {
+              "chunk_trust_score": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "semantic_noise_score": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "formatting_noise_score": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              },
+              "model_uncertainty": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0
+              }
+            },
+            "required": [
+              "chunk_trust_score",
+              "semantic_noise_score",
+              "formatting_noise_score"
+            ]
+          }
+        },
+        "required": [
+          "paragraph_id",
+          "source_paragraph_ids",
+          "page_index",
+          "structural_role",
+          "text",
+          "trust_metrics"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "document_id",
+    "source_ocr_document_id",
+    "page_count",
+    "fusion_strategy",
+    "paragraphs"
+  ]
+}
