@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Download IQA datasets with quality labels for validation."""
 
 from pathlib import Path

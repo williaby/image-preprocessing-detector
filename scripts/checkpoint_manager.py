@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Checkpoint management for Google Colab training with session limits.
 
 This module provides robust checkpoint saving/loading to handle Colab Pro's

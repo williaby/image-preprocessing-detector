@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 # Google Colab Training Configuration - Phase 2: IQA Model (GCS Storage)
 # Uses Google Cloud Storage bucket instead of Google Drive
 # Project: image-detection (ID: image-detection-478105)

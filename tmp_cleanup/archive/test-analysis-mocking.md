@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+SPDX-License-Identifier: MIT
+-->
+
 # Test Suite Analysis: Mocking vs. Real Testing
 
 **Date**: 2025-11-05

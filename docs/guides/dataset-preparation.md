@@ -1,6 +1,6 @@
 ---
 title: Phase 2 Dataset Preparation Guide
-description: Generate synthetic augmented dataset with weak supervision labels 
+description: Generate synthetic augmented dataset with weak supervision labels
   for IQA training
 tags:
 - phase_2

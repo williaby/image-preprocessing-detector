@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Phase 3 YOLOv8 Training on Modal.
 
 Layout Detection (tables, images, handwriting, formulas).
@@ -8,7 +11,6 @@ Usage:
 Monitor:
     https://modal.com/apps
 """
-# ruff: noqa: T201
 # bandit: noqa: B108
 
 import yaml

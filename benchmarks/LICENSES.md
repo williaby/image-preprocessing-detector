@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+SPDX-License-Identifier: MIT
+-->
+
 # Third-Party Dataset Licenses
 
 This document tracks licenses for all third-party datasets used in benchmarking.

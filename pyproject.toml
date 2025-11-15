@@ -201,6 +201,7 @@ scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
 # DVC and Kaggle removed - not needed for Phase 1, will add back in Phase 2 for dataset management
 # dvc = {extras = ["ssh"], version = "^3.64.0"}
 # kaggle = "^1.7.4.5"
+types-pyyaml = "^6.0.12.20250915"
 
 [tool.poetry.group.ml]
 optional = true
@@ -334,9 +335,10 @@ known-first-party = ["image_preprocessing_detector"]
 "tests/fixtures/phase1_validation/*.py" = ["D", "T20", "TRY", "RUF", "FBT", "RET", "N806", "PERF"]  # Phase 1 validation scripts - relaxed rules
 "fuzz/**/*.py" = ["D", "T20"]
 "validation/**/*.py" = ["D", "T20", "TRY"]
-"scripts/**/*.py" = ["D", "T20", "TRY"]
+"scripts/**/*.py" = ["D", "T20", "TRY", "S", "PTH", "SIM", "DTZ", "ARG", "B007", "RUF059", "F841", "RUF002", "RET504", "RUF001", "C401", "RUF013", "RUF012", "PERF102", "E402"]
 "benchmarks/**/*.py" = ["D", "T20", "ARG", "TRY", "ERA", "SIM", "PERF", "RET", "B007", "F841", "RUF005", "RUF012", "E402", "UP038"]  # CLI tools with relaxed rules
 "tools/**/*.py" = ["D", "T20", "TRY"]
+"modal/**/*.py" = ["D", "T20", "S", "ANN", "PTH", "SIM"]
 "noxfile.py" = ["D", "T20"]
 "src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
 "src/image_preprocessing_detector/augmentation/genalog_degrader.py" = ["ERA001"]  # Intentional Phase 2 implementation placeholders

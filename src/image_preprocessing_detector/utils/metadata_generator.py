@@ -27,9 +27,9 @@ import os
 import platform
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -122,7 +122,7 @@ def generate_commit_hash_file(output_dir: str, repo_path: str = ".") -> str:
     commit_hash = get_git_commit_hash(repo_path)
     branch = get_git_branch(repo_path)
     status = get_git_status(repo_path)
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     content = f"""commit: {commit_hash}
 branch: {branch}
@@ -140,7 +140,7 @@ timestamp: {timestamp}
 def generate_dataset_version_file(
     output_dir: str,
     dataset_version: str,
-    dataset_info: Optional[dict[str, Any]] = None,
+    dataset_info: dict[str, Any] | None = None,
 ) -> str:
     """Generate dataset_version.txt file.
 
@@ -202,7 +202,7 @@ def get_installed_packages() -> dict[str, str]:
     Returns:
         Dictionary of package names to versions
     """
-    packages = {}
+    packages: dict[str, str] = {}
 
     # Core ML packages
     try:
@@ -350,8 +350,8 @@ def generate_run_metadata(
     output_dir: str,
     config: dict[str, Any],
     dataset_version: str,
-    metrics: Optional[dict[str, Any]] = None,
-    dataset_info: Optional[dict[str, Any]] = None,
+    metrics: dict[str, Any] | None = None,
+    dataset_info: dict[str, Any] | None = None,
     repo_path: str = ".",
 ) -> dict[str, str]:
     """Generate all required metadata files for a training run.
@@ -395,22 +395,22 @@ def generate_run_metadata(
     print("📝 Generating training run metadata...")
 
     files["commit_hash"] = generate_commit_hash_file(output_dir, repo_path)
-    print(f"  ✅ Generated commit_hash.txt")
+    print("  ✅ Generated commit_hash.txt")
 
     files["dataset_version"] = generate_dataset_version_file(
         output_dir, dataset_version, dataset_info
     )
-    print(f"  ✅ Generated dataset_version.txt")
+    print("  ✅ Generated dataset_version.txt")
 
     files["env_info"] = generate_env_info_file(output_dir)
-    print(f"  ✅ Generated env_info.txt")
+    print("  ✅ Generated env_info.txt")
 
     files["training_config"] = generate_training_config_file(output_dir, config)
-    print(f"  ✅ Generated training_config.yaml")
+    print("  ✅ Generated training_config.yaml")
 
     if metrics:
         files["metrics"] = generate_metrics_file(output_dir, metrics)
-        print(f"  ✅ Generated metrics.json")
+        print("  ✅ Generated metrics.json")
 
     print(f"\n✅ Metadata generation complete: {len(files)} files created")
 
@@ -433,6 +433,6 @@ def generate_run_id(prefix: str = "run") -> str:
     """
     import secrets
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%MZ")
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%MZ")
     random_suffix = secrets.token_hex(3)
     return f"{timestamp}_{prefix}-{random_suffix}"

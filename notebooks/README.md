@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+SPDX-License-Identifier: MIT
+-->
+
 # notebooks/
 
 **Purpose**: Jupyter/Colab notebooks for interactive model training and experimentation (Phases 2-3).

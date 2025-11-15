@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # configs/
 
 **Purpose**: Training configuration files for Colab and local model training (Phases 2-3).

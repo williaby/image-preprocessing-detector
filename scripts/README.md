@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+SPDX-License-Identifier: MIT
+-->
+
 # scripts/
 
 **Purpose**: Operational utilities for datasets, training, deployment, and cloud operations.

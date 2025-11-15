@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 #!/usr/bin/env python3
 """
 Download and explore VidOre V3 Finance dataset.

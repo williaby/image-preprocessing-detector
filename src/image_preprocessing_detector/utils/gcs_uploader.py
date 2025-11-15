@@ -21,11 +21,12 @@ Usage:
     )
 """
 
-import os
+import logging
 from pathlib import Path
-from typing import Optional
 
 from google.cloud import storage
+
+logger = logging.getLogger(__name__)
 
 
 def upload_dir_to_gcs(
@@ -51,7 +52,8 @@ def upload_dir_to_gcs(
         ValueError: If local_dir doesn't exist
         google.cloud.exceptions.GoogleCloudError: If upload fails
     """
-    if not os.path.exists(local_dir):
+    local_path_obj = Path(local_dir)
+    if not local_path_obj.exists():
         raise ValueError(f"Local directory does not exist: {local_dir}")
 
     client = storage.Client()
@@ -59,26 +61,31 @@ def upload_dir_to_gcs(
 
     stats = {"files_uploaded": 0, "total_bytes": 0}
 
-    for root, _, files in os.walk(local_dir):
-        for file in files:
-            local_path = os.path.join(root, file)
-            rel_path = os.path.relpath(local_path, local_dir)
-            gcs_path = f"{gcs_prefix}/{rel_path}"
+    for file_path in local_path_obj.rglob("*"):
+        if not file_path.is_file():
+            continue
 
-            blob = bucket.blob(gcs_path)
-            blob.upload_from_filename(local_path)
+        rel_path = file_path.relative_to(local_path_obj)
+        gcs_path = f"{gcs_prefix}/{rel_path}"
 
-            file_size = os.path.getsize(local_path)
-            stats["files_uploaded"] += 1
-            stats["total_bytes"] += file_size
+        blob = bucket.blob(gcs_path)
+        blob.upload_from_filename(str(file_path))
 
-            if verbose:
-                size_mb = file_size / (1024 * 1024)
-                print(f"✅ Uploaded {rel_path:<40} ({size_mb:>6.2f} MB) → {gcs_path}")
+        file_size = file_path.stat().st_size
+        stats["files_uploaded"] += 1
+        stats["total_bytes"] += file_size
+
+        if verbose:
+            size_mb = file_size / (1024 * 1024)
+            logger.info(
+                f"✅ Uploaded {rel_path!s:<40} ({size_mb:>6.2f} MB) → {gcs_path}"
+            )
 
     if verbose:
         total_mb = stats["total_bytes"] / (1024 * 1024)
-        print(f"\n📦 Upload complete: {stats['files_uploaded']} files, {total_mb:.2f} MB")
+        logger.info(
+            f"\n📦 Upload complete: {stats['files_uploaded']} files, {total_mb:.2f} MB"
+        )
 
     return stats
 
@@ -113,7 +120,7 @@ def upload_run_to_gcs(
         ...     bucket_name="rag-pipeline-models",
         ...     project_name="image-preprocessing-detector",
         ...     model_name="resnet50_teacher",
-        ...     run_id="2025-11-15T01-20Z_run-abc123"
+        ...     run_id="2025-11-15T01-20Z_run-abc123",
         ... )
         >>> print(gcs_path)
         gs://rag-pipeline-models/image-preprocessing-detector/resnet50_teacher/runs/2025-11-15T01-20Z_run-abc123
@@ -122,13 +129,13 @@ def upload_run_to_gcs(
     gcs_prefix = f"{project_name}/{model_name}/runs/{run_id}"
 
     if verbose:
-        print("=" * 80)
-        print("📤 Uploading Training Run to GCS")
-        print("=" * 80)
-        print(f"Local directory:  {local_dir}")
-        print(f"GCS bucket:       gs://{bucket_name}")
-        print(f"GCS prefix:       {gcs_prefix}")
-        print()
+        logger.info("=" * 80)
+        logger.info("📤 Uploading Training Run to GCS")
+        logger.info("=" * 80)
+        logger.info(f"Local directory:  {local_dir}")
+        logger.info(f"GCS bucket:       gs://{bucket_name}")
+        logger.info(f"GCS prefix:       {gcs_prefix}")
+        logger.info("")
 
     # Upload directory
     stats = upload_dir_to_gcs(
@@ -141,20 +148,20 @@ def upload_run_to_gcs(
     gcs_path = f"gs://{bucket_name}/{gcs_prefix}"
 
     if verbose:
-        print()
-        print("=" * 80)
-        print("✅ Upload Complete!")
-        print("=" * 80)
-        print(f"GCS path: {gcs_path}")
-        print(f"Files:    {stats['files_uploaded']}")
-        print(f"Size:     {stats['total_bytes'] / (1024 * 1024):.2f} MB")
-        print()
-        print("📋 To list artifacts:")
-        print(f"   gsutil ls -lh {gcs_path}/")
-        print()
-        print("📥 To download:")
-        print(f"   gsutil -m cp -r {gcs_path} ./local_copy/")
-        print("=" * 80)
+        logger.info("")
+        logger.info("=" * 80)
+        logger.info("✅ Upload Complete!")
+        logger.info("=" * 80)
+        logger.info(f"GCS path: {gcs_path}")
+        logger.info(f"Files:    {stats['files_uploaded']}")
+        logger.info(f"Size:     {stats['total_bytes'] / (1024 * 1024):.2f} MB")
+        logger.info("")
+        logger.info("📋 To list artifacts:")
+        logger.info(f"   gsutil ls -lh {gcs_path}/")
+        logger.info("")
+        logger.info("📥 To download:")
+        logger.info(f"   gsutil -m cp -r {gcs_path} ./local_copy/")
+        logger.info("=" * 80)
 
     return gcs_path
 
@@ -202,7 +209,7 @@ def list_runs(
     bucket_name: str,
     project_name: str,
     model_name: str,
-    max_results: Optional[int] = None,
+    max_results: int | None = None,
 ) -> list[str]:
     """List all training runs for a model in GCS.
 
@@ -219,7 +226,7 @@ def list_runs(
         >>> runs = list_runs(
         ...     bucket_name="rag-pipeline-models",
         ...     project_name="image-preprocessing-detector",
-        ...     model_name="resnet50_teacher"
+        ...     model_name="resnet50_teacher",
         ... )
         >>> print(runs[0])
         2025-11-15T01-20Z_run-abc123
@@ -273,7 +280,7 @@ def download_run_from_gcs(
         ...     project_name="image-preprocessing-detector",
         ...     model_name="resnet50_teacher",
         ...     run_id="2025-11-15T01-20Z_run-abc123",
-        ...     local_dir="./downloads"
+        ...     local_dir="./downloads",
         ... )
     """
     client = storage.Client()

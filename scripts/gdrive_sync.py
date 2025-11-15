@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Google Drive synchronization utilities for Colab training.
 
 Handles dataset download/upload, model artifact management, and progress tracking

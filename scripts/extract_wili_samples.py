@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 #!/usr/bin/env python3
 """
 Extract language-specific text samples from WiLI-2018 dataset.

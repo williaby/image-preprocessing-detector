@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+SPDX-License-Identifier: MIT
+-->
+
 # Code Review: Image Preprocessing Detection System
 
 **To**: Development Team

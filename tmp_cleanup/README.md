@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+SPDX-License-Identifier: MIT
+-->
+
 # tmp_cleanup/
 
 **Purpose**: Temporary reference files to preserve context across conversation compactions (anti-compaction strategy).

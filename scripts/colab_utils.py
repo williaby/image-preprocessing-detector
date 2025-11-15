@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Google Colab-specific utilities and environment helpers.
 
 Provides GPU detection, memory management, session monitoring, and

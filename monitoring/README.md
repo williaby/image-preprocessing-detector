@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+SPDX-License-Identifier: MIT
+-->
+
 # monitoring/
 
 **Purpose**: Monitoring, telemetry, and observability configuration (Phase 4+ production deployment).

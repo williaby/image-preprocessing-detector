@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 #!/usr/bin/env python3
 """
 Download Phase 3+ datasets from HuggingFace and GitHub.
@@ -146,7 +149,7 @@ def download_from_github(repo_url: str, local_dir: Path, dry_run: bool = False) 
         cmd = ["git", "clone", repo_url, str(local_dir)]
 
         logger.info(f"Running: {' '.join(cmd)}")
-        result = subprocess.run(  # noqa: S603  # nosec B603 - Safe git clone, known args, no shell
+        result = subprocess.run(  # nosec B603 - Safe git clone, known args, no shell
             cmd, capture_output=True, text=True
         )
 
