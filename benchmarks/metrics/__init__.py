@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Metrics modules for benchmarking framework.
 
 SPDX-License-Identifier: Apache-2.0

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Base adapter interface for benchmark datasets.
 
 All dataset adapters must implement the BaseAdapter interface to ensure

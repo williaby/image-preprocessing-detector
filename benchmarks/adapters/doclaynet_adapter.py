@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """DocLayNet dataset adapter for layout detection benchmarking.
 
 DocLayNet: A Large Human-Annotated Dataset for Document-Layout Analysis

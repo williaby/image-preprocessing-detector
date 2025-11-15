@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Task plugins for benchmarking framework.
 
 Task plugins orchestrate detection modules, metrics, and scoring.

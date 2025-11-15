@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Generate dynamic badges for benchmark results.
 
 Creates badge JSON files that can be served via shields.io endpoint or

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Update README with latest benchmark results.
 
 Automatically updates the benchmark comparison tables in benchmarks/README.md

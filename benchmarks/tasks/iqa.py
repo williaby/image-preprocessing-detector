@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """IQA task plugin for benchmarking.
 
 Integrates classical IQA detectors with the benchmarking framework,

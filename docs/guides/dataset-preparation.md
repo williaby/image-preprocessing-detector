@@ -4,8 +4,6 @@ description: Generate synthetic augmented dataset with weak supervision labels f
 tags: [phase-2, dataset, augmentation, weak-supervision]
 ---
 
-# Phase 2 Dataset Preparation Guide
-
 **Last Updated**: 2025-01-15
 
 This guide explains how to prepare the Phase 2 IQA training dataset using synthetic augmentation and weak supervision labeling.

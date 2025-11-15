@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Aggregate benchmark results across multiple runs.
 
 Combines results from multiple benchmark suites and generates comparative

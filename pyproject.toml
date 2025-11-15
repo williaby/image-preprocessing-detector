@@ -60,7 +60,8 @@ dependencies = [
     "rich>=13.5.0",
     "opencv-python-headless (>=4.8.0,<5.0.0)",
     "huggingface-hub[cli] (>=1.1.4,<2.0.0)",
-    "pytesseract (>=0.3.13,<0.4.0)",
+    # pytesseract removed - not needed for Phase 1, will add back in Phase 2 for OCR analysis
+    # "pytesseract (>=0.3.13,<0.4.0)",
 ]
 
 [project.optional-dependencies]
@@ -197,8 +198,9 @@ mutmut = "^3.3.1"
 pyyaml = "^6.0.3"
 scipy = "^1.16.3"
 scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
-dvc = {extras = ["ssh"], version = "^3.64.0"}
-kaggle = "^1.7.4.5"
+# DVC and Kaggle removed - not needed for Phase 1, will add back in Phase 2 for dataset management
+# dvc = {extras = ["ssh"], version = "^3.64.0"}
+# kaggle = "^1.7.4.5"
 
 [tool.poetry.group.ml]
 optional = true
@@ -213,7 +215,8 @@ onnxruntime = "^1.15.0"
 # Phase 2: Training and Evaluation
 scikit-learn = "^1.3.0"  # Evaluation metrics (precision, recall, F1, ROC-AUC, calibration)
 tensorboard = "^2.14.0"  # Training monitoring and visualization
-dvc = "^3.30.0"  # Dataset versioning and management
+# DVC removed - not needed for Phase 1, will add back in Phase 2 for dataset management
+# dvc = "^3.30.0"  # Dataset versioning and management
 # genalog = "^0.1.0"  # DISABLED: Conflicts with dev dependencies (requires matplotlib 3.2.1, scikit-image 0.16.2)
 # TODO: Replace with alternative synthetic degradation library or fork genalog with updated dependencies
 
