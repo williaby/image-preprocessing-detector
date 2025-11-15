@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 """Modal Application Definition for Image Detection Project.
 
 Provides GPU training functions for Phase 2 (IQA) and Phase 3 (Layout Detection).
@@ -7,7 +11,6 @@ Usage:
     modal run modal/train_phase2_iqa.py      # Run Phase 2 training
     modal run modal/train_phase3_yolov8.py   # Run Phase 3 training
 """
-# ruff: noqa: T201
 
 import modal
 

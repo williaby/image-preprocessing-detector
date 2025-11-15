@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 """Phase 2 IQA Training on Modal.
 
 Multi-label CNN for Image Quality Assessment.
@@ -8,7 +12,7 @@ Usage:
 Monitor:
     https://modal.com/apps
 """
-# ruff: noqa: T201
+# ruff: noqa: PTH103
 # bandit: noqa: B108
 
 import yaml

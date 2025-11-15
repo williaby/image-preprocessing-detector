@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 """Test GCS Access from Modal.
 
 Verifies that Modal can access GCS bucket using base64-encoded credentials.
@@ -5,7 +9,6 @@ Verifies that Modal can access GCS bucket using base64-encoded credentials.
 Usage:
     modal run modal/test_gcs.py
 """
-# ruff: noqa: T201
 # bandit: noqa: B108
 
 import os

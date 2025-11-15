@@ -1,10 +1,12 @@
 ---
+schema_type: common
 title: Phase 2 Quick Start Guide
 description: Fast-track setup for Phase 2 IQA training on Modal
-tags: [phase-2, quickstart, modal]
+tags: [phase_planning, quickstart, modal, training, gpu]
+status: draft
+owner: docs-team
+purpose: Help users get started with Phase 2 training on Modal in 30 minutes.
 ---
-
-# Phase 2 Quick Start Guide
 
 **Get from zero to training in 30 minutes** (plus dataset download/upload time)
 

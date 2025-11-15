@@ -294,6 +294,7 @@ known-first-party = ["image_preprocessing_detector"]
 "validation/**/*.py" = ["D", "T20", "TRY"]
 "scripts/**/*.py" = ["D", "T20", "TRY"]
 "tools/**/*.py" = ["D", "T20", "TRY"]
+"modal/**/*.py" = ["D", "T20", "S", "ANN"]
 "noxfile.py" = ["D", "T20"]
 "src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
 
@@ -319,6 +320,11 @@ strict_optional = true
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "modal.*"
+disallow_untyped_defs = false
+ignore_errors = true
 
 # Pytest Configuration
 [tool.pytest.ini_options]
