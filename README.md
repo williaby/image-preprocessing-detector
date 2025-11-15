@@ -1,5 +1,6 @@
 # Image Preprocessing Detector
 
+
 ## Security & Quality
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11445/badge)](https://www.bestpractices.dev/en/projects/11445)
