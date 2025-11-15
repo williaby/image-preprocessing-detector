@@ -4,15 +4,25 @@
 
 """Phase 2 IQA Training on Modal - ResNet Teacher-Student Architecture.
 
-Teacher-student knowledge distillation for Image Quality Assessment:
-- Teacher: ResNet-50 (high-capacity, selective inference)
-- Student: ResNet-18 (production default, fast inference)
+Multi-label CNN for Image Quality Assessment (Project A - RAG Pipeline).
 
-Training Process:
-1. Train ResNet-50 teacher on full IQA dataset
-2. Distill knowledge to ResNet-18 student using soft labels
-3. Export both models (ONNX + TorchScript)
-4. Validate on OHR-Bench (document-specific IQA benchmark)
+This trains ML models to detect image quality issues (noise, blur, skew,
+perspective, low contrast, orientation) for use in Document Quality Score (DQS)
+calculation and pre-OCR risk assessment.
+
+**Architecture Context:**
+- Part of Project A (this repo) in the RAG Pipeline architecture
+- Outputs feed into DQS calculation and routing recommendations
+- NOT for layout detection (that's Project B - ocr-orchestrator)
+
+**Teacher-Student Knowledge Distillation:**
+- Teacher: ResNet-50 (high-capacity, selective inference on difficult cases)
+- Student: ResNet-18 (production default, fast inference)
+- Training Process:
+  1. Train ResNet-50 teacher on full IQA dataset
+  2. Distill knowledge to ResNet-18 student using soft labels
+  3. Export both models (ONNX + TorchScript)
+  4. Validate on OHR-Bench (document-specific IQA benchmark)
 
 Usage:
     modal run modal/train_phase2_iqa.py
@@ -85,7 +95,10 @@ def train_iqa():
     from google.cloud import storage
 
     print("=" * 60)
-    print("Phase 2 IQA Training - Modal")
+    print("Phase 2 IQA Training - Modal (Project A)")
+    print("=" * 60)
+    print("Training ML models for Image Quality Assessment")
+    print("Outputs will be used for DQS calculation and routing metadata")
     print("=" * 60)
 
     # Setup GCS credentials from base64-encoded secret
@@ -184,14 +197,23 @@ def train_iqa():
     # NOTE: Training loop implementation deferred to dataset preparation phase
     # Placeholder below demonstrates training structure and checkpoint saving
     print("\n[6/8] Starting training loop (placeholder)...")
+    print("TODO: Implement full training loop with:")
+    print("  - Multi-label classification (BCEWithLogitsLoss)")
+    print("  - Albumentations augmentation pipeline")
+    print("  - Per-class metrics (precision, recall, F1, ROC-AUC)")
+    print("  - Calibration (ECE < 0.05 target)")
+    print("  - Teacher-student training support (optional)")
+    print()
     for epoch in range(config["training"]["epochs"]):
         print(f"\nEpoch {epoch + 1}/{config['training']['epochs']}")
 
         # TODO: Implement training loop
-        # - Forward pass
-        # - Loss calculation
-        # - Backward pass
-        # - Optimizer step
+        # - Forward pass with mixed precision (AMP)
+        # - BCEWithLogitsLoss for multi-label classification
+        # - Backward pass with gradient clipping
+        # - Optimizer step (AdamW with cosine annealing)
+        # - Validation metrics (mAP, per-class F1)
+        # - Temperature scaling for calibration
 
         # Save checkpoint every 5 epochs
         if (epoch + 1) % config["monitoring"]["checkpoint_interval"] == 0:
@@ -264,6 +286,12 @@ def train_iqa():
     print(
         "Download with: gsutil cp gs://image_detection_b/models/phase2_iqa/best_model.onnx models/"
     )
+    print()
+    print("Next steps:")
+    print("1. Validate model metrics (mAP > 0.88, ECE < 0.05)")
+    print("2. Integrate with DQS calculation pipeline")
+    print("3. (Optional) Train student model for production optimization")
+    print("4. Deploy for pre-OCR risk assessment and routing")
 
 
 @stub.local_entrypoint()

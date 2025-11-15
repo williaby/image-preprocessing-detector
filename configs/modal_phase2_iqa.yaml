@@ -3,9 +3,19 @@
 # SPDX-License-Identifier: MIT
 
 # Modal Training Configuration - Phase 2 IQA
-# Image Quality Assessment with ResNet Teacher-Student Architecture
-# Teacher: ResNet-50 (high-capacity, selective inference)
-# Student: ResNet-18 (production default, fast inference)
+# Image Quality Assessment with ResNet Teacher-Student Architecture (Project A - RAG Pipeline)
+#
+# This config is for training ML models that detect image quality issues
+# for use in DQS calculation and pre-OCR risk assessment.
+#
+# Architecture:
+#   - Teacher: ResNet-50 (high-capacity, selective inference)
+#   - Student: ResNet-18 (production default, fast inference)
+#
+# Target Metrics:
+#   - mAP > 0.88 (multi-label classification)
+#   - Per-class F1 > 0.85
+#   - ECE < 0.05 (calibration)
 
 model:
   # Teacher-student architecture

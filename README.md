@@ -247,6 +247,37 @@ image_detection/
 └── ARCHITECTURE_SUMMARY.md        # Architecture quick reference
 ```
 
+## ML Model Training (Phase 2+)
+
+### IQA Training with Modal
+
+Train ML models for Image Quality Assessment using Modal's serverless GPU platform:
+
+```bash
+# Install Modal CLI
+poetry add modal && poetry install
+
+# Authenticate with Modal
+poetry run modal token new
+
+# Setup GCS credentials (one-time)
+./scripts/modal_helpers.sh setup-gcs-secret /path/to/gcp-service-account-key.json
+
+# Test GPU access
+./scripts/modal_helpers.sh test-gpu
+
+# Start Phase 2 IQA training (T4 GPU, ~3-6 hours)
+./scripts/modal_helpers.sh train-phase2
+
+# Monitor training at: https://modal.com/apps
+```
+
+**Training Cost**: ~$3 for 5 hours on T4 GPU - covered by Modal's $30/month free tier!
+
+See [PHASE2_QUICKSTART.md](docs/PHASE2_QUICKSTART.md) for complete training guide.
+
+**Note**: This trains IQA models only (Project A scope). Layout detection (YOLOv8) is handled by Project B (ocr-orchestrator) per RAG Pipeline architecture.
+
 ## Testing
 
 ```bash

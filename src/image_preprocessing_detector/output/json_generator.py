@@ -54,11 +54,26 @@ class MetadataBuilder:
         self.document_id = document_id
         self.file_name = file_name
         self.pages: list[PageMetadata] = []
+        self.upscaling_metadata: dict | None = None
 
         logger.info(
             "Metadata builder initialized",
             document_id=document_id,
             file_name=file_name,
+        )
+
+    def set_upscaling_metadata(self, upscaling_result: dict) -> None:
+        """
+        Set PDF upscaling metadata (Phase 1B).
+
+        Args:
+            upscaling_result: Upscaling result from PDFUpscaler
+        """
+        self.upscaling_metadata = upscaling_result
+        logger.info(
+            "Upscaling metadata added",
+            performed=upscaling_result.get("success", False),
+            processing_time=upscaling_result.get("processing_time_seconds"),
         )
 
     def add_page(
@@ -273,14 +288,31 @@ class MetadataBuilder:
             thresholds={},
         )
 
+        # Phase 8 placeholder values (not yet implemented)
+        from image_preprocessing_detector.schema import (
+            DQSMetadata,
+            OCRRoutingStrategy,
+            PDFType,
+        )
+
+        placeholder_dqs = DQSMetadata(
+            degradation_score=0.5,
+            structural_complexity_score=0.5,
+        )
+
         metadata = DocumentMetadata(
             document_id=self.document_id,
             file_name=self.file_name,
             source_mime=source_mime,
             num_pages=len(self.pages),
-            upscaling=None,  # Phase 1B: No upscaling in legacy json_generator
+            upscaling=self.upscaling_metadata,  # Phase 1B: Use upscaling metadata if set
             processing_version=proc_version,
             pages=self.pages,
+            # Phase 8 placeholders (not yet implemented)
+            pdf_type=PDFType.IMAGE_ONLY,
+            pre_ocr_risk=0.5,
+            dqs=placeholder_dqs,
+            ocr_routing_recommendation=OCRRoutingStrategy.OCR_ADVANCED,
         )
 
         logger.info(
