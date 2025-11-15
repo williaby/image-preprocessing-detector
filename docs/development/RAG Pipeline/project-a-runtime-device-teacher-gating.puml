@@ -1,0 +1,84 @@
+ @startuml
+title Project A – Runtime Device Selection & Teacher Gating
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+start
+
+:Incoming rendered page batch;
+
+partition "Device Discovery" {
+  :Detect local GPU\n(CUDA, memory, load);
+  :Check local CPU capacity\n(threads, load avg);
+  :Check Modal GPU availability\n(quota, network);
+}
+
+if (Local GPU available\nAND below load threshold?) then (yes)
+  :Set device = local_gpu;
+else (no)
+  if (Local CPU viable\n(latency within NFR bounds)?) then (yes)
+    :Set device = local_cpu;
+  else (no)
+    if (Modal GPU allowed\nand available?) then (yes)
+      :Set device = modal_gpu;
+    else (no)
+      :Set device = local_cpu\n(last-resort baseline);
+      note right
+        Even if slow, CPU-only
+        must still be able to
+        complete the pipeline.
+      end note
+    endif
+  endif
+endif
+
+partition "Primary IQA (Student)" {
+  :Run ResNet-18 student\non selected device;
+  :Compute uncertainty metrics\n- softmax entropy\n- top-2 margin\nper head;
+  :Compute discrepancy metrics\nvs classical IQA\n(blur, skew, etc.);
+}
+
+:Check document risk tags\n(e.g., regulatory, contracts,\ncanonical knowledge sets);
+
+if (High-risk doc\nOR high uncertainty\nOR high discrepancy?) then (yes)
+  if (Teacher fallback enabled\nin configuration?) then (yes)
+    partition "Teacher Escalation" {
+      :Select device for teacher\n(local GPU → Modal GPU\nCPU not allowed in prod);
+      if (Teacher device available\nAND within page/doc budgets?) then (yes)
+        :Run ResNet-50 teacher\non flagged pages only;
+        :Merge outputs\nTeacher overrides student\nfor those pages;
+      else (no)
+        note right
+          Teacher requested but skipped:
+          • No GPU path available, or
+          • Page/doc budget exceeded, or
+          • Remote quota hit
+          → Use student-only IQA
+        end note
+      endif
+    }
+  else (no)
+    note right
+      Teacher fallback disabled by config.
+      Student remains sole IQA source.
+    end note
+  endif
+else (no)
+  :Skip teacher;\nUse student-only IQA;
+endif
+
+:Pass final IQA metrics\n(student-only or teacher+student)\nto layout-lite + corrections\nand DQS/routing modules;
+
+stop
+
+@enduml

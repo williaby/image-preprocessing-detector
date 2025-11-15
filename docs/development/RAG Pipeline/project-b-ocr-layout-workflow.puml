@@ -1,0 +1,57 @@
+ @startuml ProjectB_OCR_Layout_RO
+
+title Project B – OCR, Layout Detection & Reading Order
+
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultTextAlignment left
+
+start
+
+:Receive DocumentMetadata\n(from Project A) +\noriginal/preprocessed file;
+
+if ("DocumentMetadata.error_state?") then (Yes)
+  :Return passthrough error\nas OCRDocument;
+  stop
+else (No)
+endif
+
+:Determine OCR strategy\nfrom:\n- pdf_type\n- DQS / IQA metrics\n- has_text flags\n- ocr_routing_recommendation;
+
+partition "Per-page routing" {
+  if ("Page has_text == false") then (Yes)
+    :Skip heavy OCR.\nFlag as image_only;\nPrepare page-level\nlayout stub;
+  else (No)
+    :Run primary OCR engine\n(e.g., Marker / Llama-4 Maverick)\nwith layout awareness;
+    :Run secondary OCR engine(s)\n(e.g., DeepSeek-OCR\nfor hard images);
+    :Optionally run fast OCR\n(Tesseract) as baseline;
+  endif
+}
+
+partition "Layout & structure" {
+  :Run layout detection model\n(YOLOv8 / OmniDocBench model)\nusing DocLayNet labels:\nText, Title, Section-Header,\nTable, Picture, Caption,\nPage-Header, Page-Footer, etc.;
+
+  :Attach text spans from OCR\ninto LayoutElements\n(using bounding box overlap);
+
+  :Run table structure model\n(PubTables-1M / ClusterTabNet)\nfor Table elements;
+
+  :Detect parasitic content\n(headers, footers, watermarks)\n& mark is_parasitic=true;
+
+  :Detect specialized regions:\n- Formula\n- Handwriting\n- Signatures / stamps\n- Margin notes;
+}
+
+partition "Reading order & links" {
+  :Compute reading_order sequence\nfrom layout graph\n(graph-based spatial reasoning);
+
+  :Link captions to figures;\nlink footnotes to markers;
+
+  :Attach page-level\nreading_order_confidence\nand layout_type\n(single vs multi-column);
+}
+
+:Assemble OCRDocument:\n- per-page LayoutElements\n- engine-wise text + confidence\n- reading_order chains\n- table structures\n- parasitic flags\n- specialized regions;
+
+:Emit OCRDocument\n(to Project C);
+
+stop
+
+@enduml
