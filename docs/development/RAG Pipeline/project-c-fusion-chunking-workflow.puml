@@ -1,0 +1,69 @@
+@startuml ProjectC_Fusion_Normalization_Chunking
+
+title Project C – OCR Fusion, Hallucination Filtering, Normalization & RAG Chunking
+
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultTextAlignment left
+
+start
+
+:Receive DocumentMetadata\n(Project A) + OCRDocument\n(Project B);
+
+partition "Per-element fusion" {
+  :For each LayoutElement:\ncollect text & confidences\nfrom all OCR engines\n(primary, secondary, fast,\nmath-ocr, handwriting-ocr);
+
+  :Align token sequences\n(word/character alignment);
+
+  :Apply fusion policy:\n- engine weights\n- majority agreement\n- domain-specialized engines\n(math, handwriting, tables);
+
+  :Compute fusion_confidence\nand fusion_divergence_score;
+}
+
+partition "Hallucination detection" {
+  if ("Cross-engine disagreement\n& low visual evidence?") then (Yes)
+    :Flag element as\nhallucination_candidate;
+
+    :Apply anomaly checks:\n- spatial mismatch\n- repetition patterns\n- unlikely headers/titles;
+
+    if ("Confirmed hallucination?") then (Yes)
+      :Remove or mask text;\ninsert placeholder if needed;
+    else (No)
+      :Keep fused text;
+    endif
+  else (No)
+    :Keep fused text;
+  endif
+}
+
+partition "Structural normalization" {
+  :Remove parasitic elements\n(headers, footers, page numbers)\nwhere policy allows;
+
+  :Normalize whitespace,\nUnicode (NFKC/NFC),\nline breaks & list markers;
+
+  :Normalize tables:\n- row/column ordering\n- cell text fusion\n- table text representation\n(e.g., Markdown / TSV);
+
+  :Normalize math blocks\n(LaTeX-like forms) using\nmath-ocr preference;
+
+  :Enforce consistent\ndocument reading sequence\n(using Project B reading_order\nwith minor corrections);
+}
+
+partition "Chunk building" {
+  :Segment fused text into chunks\nbased on:\n- section headers / titles\n- paragraph boundaries\n- table & caption boundaries\n- max token length;
+
+  :Assign chunk_type\n(paragraph, table_block,\nlist_block, caption, math_block,\nfootnote);
+
+  :Attach source_elements\n(LayoutElement IDs,\npage numbers, bboxes);
+}
+
+partition "Trust scoring" {
+  :Compute per-chunk metrics:\n- ocr_fusion_score\n- hallucination_risk\n- structural_alignment_score\n- page_IQA_risk\n(from DocumentMetadata);
+
+  :Roll up document-level\nTrustMetrics summary\n(#low-confidence chunks,\nper-page risk);
+}
+
+:Emit outputs:\n- NormalizedTextDocument\n- RAGChunkSet\n- TrustMetrics\n(to Project D);
+
+stop
+
+@enduml

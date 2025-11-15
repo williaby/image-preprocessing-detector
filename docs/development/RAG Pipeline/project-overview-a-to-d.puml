@@ -1,0 +1,29 @@
+@startuml Project_ABCDE_Overview
+
+title Project A–D End-to-End RAG Ingestion Overview
+
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultTextAlignment left
+
+rectangle "Project A\nPreprocessing & IQA" as A {
+}
+
+rectangle "Project B\nOCR & Layout/Reading-Order" as B {
+}
+
+rectangle "Project C\nOCR Fusion, Normalization,\nChunking & Trust Scoring" as C {
+}
+
+rectangle "Project D\nEmbedding & Vector Store\n(RAG Integration)" as D {
+}
+
+actor "Ingestion Client\n(Pipeline / User)" as Client
+
+Client --> A : Source file\n(PDF / image / Office)
+A --> B : DocumentMetadata +\nPreprocessed pages
+B --> C : OCRDocument\n(Layout + text + structure)
+C --> D : NormalizedTextDocument +\nRAGChunkSet + TrustMetrics
+D --> Client : Indexing summary /\nRAG-ready collection ID
+
+@enduml
