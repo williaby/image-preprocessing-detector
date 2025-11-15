@@ -1,29 +1,14 @@
-
+---
+schema_type: common
+title: "Training Data Targets"
+description: "Training data requirements and dataset readiness matrices for all projects"
+tags: [documentation, datasets, planning, training]
+status: published
+owner: "docs-team"
+purpose: "Define training data requirements and readiness criteria for Projects A, B, C, and D."
 ---
 
-# Project A – Preprocessing & Image Quality Assessment
-
-**Scope:** IQA metrics, classical corrections, minimal routing, pdf_type classification, text gate.
-
-```markdown
-## Project A – Data Readiness Matrix
-
-| Task / Capability                        | Target Train Set (Scale)                                            | Target Validation Set                        | Coverage Dimensions (Must Include)                                                                                     | Readiness Criteria (You’re Done When…)                                                                                   | Current Status (Fill In) |
-|-----------------------------------------|---------------------------------------------------------------------|----------------------------------------------|------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|--------------------------|
-| A1 – Classical IQA calibration          | ~10k–20k pages with IQA artifacts and severity labels (blur, noise, contrast, illumination, skew)       | 1k–2k pages                                   | Multiple doc genres; 3–4 severity bands (clean / mild / moderate / severe) for each artifact; both image & PDF scans   | Each artifact has ≥ 300–500 samples per severity band; metrics stable when increasing data from 50%→100%                 |                          |
-| A2 – Learned IQA (MobileNet/EffNet)     | 20k–50k pages with overall / sharpness / color fidelity labels (ordinal or continuous)                  | 2k–5k pages                                   | Academic, financial, legal, forms, historical, mobile captures; mix of resolutions and lighting                         | Correlation / RMSE plateaus with more data; good separation across quality bands; no single domain dominates              |                          |
-| A3 – Text Detection Gate (has_text)     | 10k+ pages labeled “text present vs no text” (page-level + masks for tricky pages)                      | 1k–2k pages                                   | Pure images, pages with sparse text, dense text docs, heavily graphical docs, noisy scans                              | Precision & recall > 95% on held-out; both text-heavy and text-light domains show no systemic bias                        |                          |
-| A4 – IQA thresholds for corrections     | Same pool as A1/A2, but with “improve/degrade/no change” labels for each correction (deskew, denoise…)  | 500–1k pages with manual quality comparison  | For each corrective operation: enough cases where it helps, hurts, and does nothing; variety of document types         | Guardrail rules reduce “degrades image” cases to near-zero on validation; rollback logic validated across artifact types  |                          |
-| A5 – PDF type: image/born-digital/hybrid| 5k–10k PDFs labeled at document or page level for pdf_type                                              | 1k PDFs                                       | Mix of scanned contracts, exported reports, academic PDFs, office exports, hybrid PDFs with screenshots & diagrams      | Overall accuracy ≥ 99% on validation; no catastrophic failures by domain (e.g., financial / legal docs)                   |                          |
-| A6 – Office embedded image extraction   | 1k–3k office docs (docx/xlsx/pptx) with ground-truth counts & types of embedded images                  | 200–500 docs                                  | Slides, reports, forms, spreadsheets; images with charts, photos, screenshots, scanned inserts                          | Extraction recall > 95% for images; no major class of image silently missed (e.g., chart objects in slides)               |                          |
-| A7 – Handwritten vs printed IQA behavior| 2k–5k pages with handwriting and printed text, IQA labels per region                                   | 500–1k pages                                  | Forms, notes, annotated documents, mixed pages; multiple handwriting styles & ink types                                 | IQA scores for handwritten vs printed show no systemic bias; blur/contrast/skew still meaningful on handwriting           |                          |
-| A8 – Mobile capture / camera scans      | 3k–5k pages from mobile-like photos, labeled for artifacts (perspective, illumination, blur, shadows)   | 500–1k pages                                  | Receipts, documents on desks, books, off-angle whiteboards; various devices & lighting                                 | Preprocessing decisions (perspective correction, illumination normalization) improve OCR proxy metrics on validation set   |                          |
-| A9 – DQS (degradation axis only)        | Derived from A1/A2, but with holistic degradation labels per page                                       | 2k pages                                      | All major genres; mixture of pristine → unusable pages; multiple raters for calibration                                 | Degradation score correlates strongly with downstream OCR quality proxy; stable across domains                            |                          |
-```
-
----
-
-# Project B – OCR Orchestration, Layout & Reading Order
+## Project B – OCR Orchestration, Layout & Reading Order
 
 **Scope:** Layout detection, table structure detection, reading order, parasitic content, handwriting vs print regions, language flags. OCR engines are mostly external but need **evaluation sets**.
 
@@ -44,30 +29,7 @@
 | B10 – Complex layouts (stress set)         | 500–1k “nightmare pages” specifically curated for stress-testing layout+RO                              | 200–300 pages                                    | Multi-column + nested tables + sidebars + equations + images; historical messy scans                                     | These pages are mostly “handled” (no total meltdown); qualitative review shows stable behavior                             |                          |
 ```
 
----
-
-# Project C – OCR Fusion, Hallucination Filtering, Normalization & Chunking
-
-**Scope:** Merge multiple OCR outputs, detect hallucinations, normalize structure, build RAG chunks, compute trust metrics.
-
-```markdown
-## Project C – Data Readiness Matrix
-
-| Task / Capability                             | Target Train Set (Scale)                                                | Target Validation Set                           | Coverage Dimensions (Must Include)                                                                                      | Readiness Criteria (You’re Done When…)                                                                                         | Current Status (Fill In) |
-|----------------------------------------------|-------------------------------------------------------------------------|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|--------------------------|
-| C1 – Multi-engine OCR alignment & fusion      | 5k–10k pages with **text from 2–3 OCR engines** + ground truth or high-confidence reference             | 1k–2k pages                                      | Same pages run through LLM-OCR, classical OCR, and maybe a third engine; various domains and quality conditions         | Fusion improves word/character accuracy over best single engine on validation; gains plateau as training data increases        |                          |
-| C2 – Hallucination detection (per element)    | 2k–5k pages with element-level labels: “aligned with image” vs “hallucinated / invented”                | 500–1k pages                                     | LLM-based OCR outputs on low-visibility regions, decorative areas, blank margins, etc.; some truly clean references     | High precision on hallucination flagging (few false positives); most egregious hallucinations on validation are caught         |                          |
-| C3 – Engine selection policies                | Same as C1, but annotated with “preferred engine per region” in ambiguous cases                         | 500–1k pages                                     | Math-heavy pages, handwriting-heavy pages, tables, clean vs noisy; cases where different engines shine                  | Learned/heuristic fusion chooses the right engine in most cases; ablation shows meaningful advantage over “always engine X”    |                          |
-| C4 – Text normalization rules (Unicode, spacing, lists) | 5k+ chunks (or paragraph-level units) with canonical normalized forms                                    | 1k–2k chunks                                     | Bullet/numbered lists, nested lists, headlines, inline math markers, table text; multiple languages                      | Normalization is idempotent and stable; no major class of tokens systematically mangled; downstream diff noise is low          |                          |
-| C5 – Structure-preserving table text export   | 5k–10k tables with both structured representation and “flattened” text representation                    | 1k–2k tables                                     | Financial tables, scientific tables, borderless tables; multi-header tables; varying number of rows/columns             | Flattened table text remains reversible back to structure with high fidelity or at least semantically consistent               |                          |
-| C6 – Chunking & segmentation                  | 5k–10k pages with gold-standard chunk boundaries (paragraphs, sections, table blocks, captions, footnotes)| 1k–2k pages                                     | Academic articles, legal documents, long reports, books; with complex hierarchy (titles, subheaders, nested sections)   | Chunk boundaries align with human judgment; average chunk length within target; RAG prototypes show good answer localization    |                          |
-| C7 – Trust scoring calibration                | Derived from C1–C6 + A/B metrics; labels for “high/medium/low” trust chunks                              | 1k–2k chunks                                     | Chunks with known OCR quality, agreement between engines, IQA scores, etc.; some explicitly degraded / adversarial docs | Trust scores correlate with actual answer reliability in downstream RAG tests; high-trust vs low-trust splits show clear metric deltas |                          |
-| C8 – Downstream RAG sanity set                | 200–500 documents with known Q&A pairs for RAG evaluation (using outputs of C)                           | Same docs used as evaluation corpus              | Coverage of major domains; varied layouts; varied quality levels                                                        | Changing C’s configuration (e.g., more aggressive hallucination filtering) causes predictable, measurable changes in RAG metrics |                          |
-```
-
----
-
-# Project D – Embedding & Vector Store Integration (RAG)
+## Project D – Embedding & Vector Store Integration (RAG)
 
 **Scope:** Use normalized chunks & trust metrics from C to create embeddings, index into vector DB, and validate retrieval performance.
 

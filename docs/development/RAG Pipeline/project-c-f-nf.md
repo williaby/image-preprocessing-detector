@@ -1,44 +1,17 @@
-# Project C Requirements Specification
+---
+schema_type: common
+title: "Project C Functional and Non-Functional Requirements"
+description: "Requirements specification for Project C OCR fusion and hallucination filtering"
+tags: [documentation, planning, architecture, ocr]
+status: published
+owner: "docs-team"
+purpose: "Define all functional and non-functional requirements for Project C multi-engine OCR fusion and trust scoring."
+---
 
 **OCR Fusion, Semantic Normalization & Hallucination Filtering Layer**
 **Version 1.0.0 – Draft**
 
----
-
-# 0. Executive Summary
-
-**Project C** is the intelligence layer that sits between “raw OCR output” and “RAG-ready text units.” It consumes:
-
-* **DocumentMetadata (Project A)**
-* **OCRDocument (Project B)**
-
-and produces:
-
-* **NormalizedTextDocument (structured text units)**
-* **RAGChunkSet (semantic chunk groups)**
-* **TrustMetrics (hallucination detection, cross-engine confidence, consistency scores)**
-
-Project C’s purpose:
-
-1. **Fuse OCR from multiple engines** (Marker, DeepSeek-OCR, Tesseract, math OCR, handwriting OCR).
-2. **Eliminate hallucinated text and remove parasitic or spurious regions**.
-3. **Normalize structure**:
-
-   * unify reading order
-   * correct block segmentation
-   * preserve hierarchy (titles → headers → paragraphs → tables → captions → footnotes)
-4. **Create stable RAG chunk candidates** (NOT embeddings).
-5. **Compute trust signals** so downstream systems know how reliable each chunk is.
-6. **Identify text requiring human review**, if applicable.
-7. **Output clean, logically grouped, RAG-ready text with metadata** to Project D.
-
-Project C does **not** run OCR, layout detection, image quality assessment, or embeddings.
-
-Its job is **cross-engine reconciliation, semantic correctness, structural consistency, and chunk-level trustworthiness.**
-
----
-
-# 1. Introduction
+## 1. Introduction
 
 ## 1.1 Purpose
 
@@ -75,43 +48,6 @@ Project C shall **not**:
 * embed text or write to vector DB (D)
 * perform advanced semantic classification unrelated to RAG
 * modify source images or re-render page content
-
----
-
-# 2. Inputs & Outputs
-
-## 2.1 Inputs
-
-### Input A: DocumentMetadata (From Project A)
-
-Key fields used:
-
-* `pdf_type`
-* `pre_ocr_risk`
-* `pages[i].layout_summary`
-* `pages[i].iqa_metrics`
-* `ocr_routing_recommendation`
-
-C uses this for:
-
-* weighting confidence
-* routing to fallback text strategies
-* determining expected text quantity per page
-
-### Input B: OCRDocument (From Project B)
-
-Key fields:
-
-* per-page `LayoutElement`s
-* bounding boxes
-* per-element `text`
-* per-element `text_confidence`
-* `reading_order`
-* `element_type`
-* table structures
-* links (caption→figure, footnote→ref)
-
----
 
 ## 2.2 Outputs
 
@@ -150,13 +86,7 @@ A separate trust report:
 * semantic consistency warnings
 * low-confidence blocks requiring review
 
----
-
-# 3. Functional Requirements
-
----
-
-# FR-C1: Multi-Engine OCR Fusion
+## FR-C1: Multi-Engine OCR Fusion
 
 Project C shall be able to combine OCR text from:
 
@@ -206,55 +136,7 @@ If engines disagree significantly:
 * optionally select the text from the engine better aligned with page type
 * if still ambiguous: request fallback semantic cleanup (LLM-assisted post-processing if allowed)
 
----
-
-# FR-C2: Hallucination Detection & Removal
-
-Project C shall detect hallucinations arising from:
-
-* LLM-based OCR engines (Marker/Llama-based)
-* misinterpreted image textures
-* watermark drift
-* misread math formulas (“cosy” vs “cos y”)
-* repeated lines not present in other engines
-
-### FR-C2.1 Hallucination Detection Methods
-
-1. **Cross-engine mismatch**
-
-   * strong disagreement across engines → high hallucination risk
-
-2. **Spatial mismatch**
-
-   * predicted text bounding box is empty or mostly whitespace → likely hallucination
-
-3. **Confidence coherence**
-
-   * confidence high from LLM OCR, but baseline OCR shows no text → suspicious
-
-4. **Visual density mismatch**
-
-   * low pixel density but high textual richness → likely model hallucination
-
-5. **Semantic anomaly detection**
-
-   * repeated phrases
-   * invented titles
-   * invented “chapter” or “section” markers
-   * unnatural language patterns not present elsewhere
-
-### FR-C2.2 Removal
-
-When hallucination is detected:
-
-* remove text
-* mark block as hallucinated
-* log event
-* create fallback placeholder: `"[[OCR_HALLUCINATION_REMOVED]]"` if needed
-
----
-
-# FR-C3: Structural Normalization
+## FR-C3: Structural Normalization
 
 ### FR-C3.1 Reading Order Preservation
 
@@ -300,45 +182,7 @@ C must:
 * embed caption text immediately after the figure representation in logical order
 * expose optional “figure summary text” (if LLM summarization is allowed in future version)
 
----
-
-# FR-C4: Semantic Segmentation & Chunking
-
-### FR-C4.1 Chunk Criteria
-
-Chunks are made using:
-
-* natural paragraph boundaries
-* structural boundaries: titles, section headers
-* table boundaries
-* logical groupings (figure + caption)
-* optional max token length
-
-### FR-C4.2 Chunk Types
-
-Valid chunk types:
-
-* `paragraph`
-* `section_header`
-* `title`
-* `list_block`
-* `table_block`
-* `figure_caption`
-* `math_block`
-* `footnote`
-
-### FR-C4.3 Chunk Boundaries
-
-C shall never:
-
-* merge content from different layout types (e.g., list + table)
-* combine paragraphs across section headers
-* include parasitic text
-* combine content across pages when the reading order indicates discontinuity
-
----
-
-# FR-C5: Trust Scoring & Quality Metrics
+## FR-C5: Trust Scoring & Quality Metrics
 
 Project C shall emit trust metrics including:
 
@@ -363,37 +207,7 @@ Project C shall emit trust metrics including:
 * pages with >20% low-confidence text
 * table recognition quality measure
 
----
-
-# FR-C6: Normalization & Cleanup
-
-### FR-C6.1 Unicode Normalization
-
-Normalize text to NFKC or NFC.
-
-### FR-C6.2 Whitespace & Newline Normalization
-
-* collapse multi-spaces
-* remove line break artifacts
-* preserve paragraph boundaries
-
-### FR-C6.3 Bullet/List Standardization
-
-Convert all list types into:
-
-* Markdown lists
-* or a structured array representation
-
-### FR-C6.4 Math Normalization
-
-For formulas:
-
-* remove OCR misinterpretations (e.g., l vs 1 vs |) using math-ocr priority
-* unify LaTeX-like representations
-
----
-
-# FR-C7: Errors, Fallbacks, and Degradation Modes
+## FR-C7: Errors, Fallbacks, and Degradation Modes
 
 ### FR-C7.1 Layout Failures
 
@@ -418,13 +232,7 @@ If block-level fusion fails:
 * fallback to highest-confidence engine
 * log with `block_fusion_fallback=true`
 
----
-
-# 4. Non-Functional Requirements (NFRs)
-
----
-
-# NFR-C1: Accuracy & Quality Targets
+## NFR-C1: Accuracy & Quality Targets
 
 ### OCR Fusion Quality
 
@@ -446,65 +254,18 @@ If block-level fusion fails:
 * ≤ **3%** chunks containing cross-page contamination
 * ≤ **5%** chunks containing parasitic text
 
----
-
-# NFR-C2: Performance
-
-Assuming GPU-accelerated environment (Modal / HF Inference):
-
-* Fusion + normalization per page: **≤ 50–150 ms**
-* Chunk assembly for 100 pages: **≤ 1.5 seconds**
-* Trust scoring per document: **≤ 300 ms**
-
----
-
-# NFR-C3: Scalability
+## NFR-C3: Scalability
 
 * Process up to **10,000 pages per hour** per worker
 * Scale horizontally with no shared state
 
----
-
-# NFR-C4: Observability
-
-C must log:
-
-* per-block fusion stats
-* hallucination detection results
-* chunk boundaries
-* trust score distributions
-
-Optionally generate:
-
-* debug traces
-* per-page HTML with visualization overlays
-
----
-
-# NFR-C5: Security
+## NFR-C5: Security
 
 * No LLM calls to external endpoints except approved OCR engines
 * No PII in logs
 * Document text stored only in ephemeral runtime unless configured otherwise
 
----
-
-# 5. System Architecture Requirements
-
-Project C comprises these modules:
-
-1. **fusion_engine**
-2. **hallucination_detector**
-3. **structure_normalizer**
-4. **chunk_builder**
-5. **trust_engine**
-6. **serializer**
-
-Each must be modular and unit-testable.
-
----
-
-# 6. Data & Training Requirements
+## 6. Data & Training Requirements
 
 ## C6.1 Datasets for Fusion Evaluation
 
@@ -520,17 +281,7 @@ Use:
 
 Use text segmentation datasets (Wiki-727K or custom RAG-oriented corpora).
 
----
-
-# 7. Deployment Requirements
-
-* C must be deployable as a containerized service behind a queue or API
-* Accept batch and single-document modes
-* Produce deterministic output for given inputs
-
----
-
-# 8. Roadmap
+## 8. Roadmap
 
 ### Phase C1 – Basic Fusion
 
@@ -551,17 +302,3 @@ Use text segmentation datasets (Wiki-727K or custom RAG-oriented corpora).
 
 * produce high-quality chunk sets
 * expose trust scores to D
-
----
-
-# 9. Acceptance Criteria
-
-Project C is complete when:
-
-* It can ingest any valid Project B output and always return a valid chunk set
-* Chunk-level trust scores reflect actual OCR reliability
-* Hallucinations are reliably detected and removed
-* Structure is correct for at least 90% of complex documents
-* RAG chunks do not contain contamination, duplication, hallucination, or parasitic text
-
----

@@ -1,4 +1,12 @@
-# Document Intelligence Program
+---
+schema_type: common
+title: "RAG Pipeline Project Overview"
+description: "Four-project architecture overview for document processing RAG pipeline"
+tags: [architecture, documentation, rag, pipeline]
+status: published
+owner: "docs-team"
+purpose: "Define the complete four-project RAG pipeline architecture with clear responsibility boundaries."
+---
 
 ## Updated Project Structure & Division of Responsibilities
 
@@ -6,27 +14,7 @@
 **Scope:** Applies to Project A, Project B, Project C, and Project D
 **Purpose:** Ensure project teams understand what they own, what they consume, and what they must not duplicate.
 
----
-
-# 1. End-to-End Pipeline Summary
-
-```
-Source Files
-   ↓
-(A) Preprocessing & IQA
-   ↓  Corrected images + DocumentMetadata
-(B) OCR & Structure Extraction
-   ↓  Paragraph-centric OCRDocument
-(C) Fusion, Trust & RAG Chunk Builder
-   ↓  FusedDocument + rag_chunks
-(D) Vector Indexing & Metadata Enrichment
-   ↓  Vector DB for RAG
-Downstream RAG Applications
-```
-
----
-
-# 2. Project A — Preprocessing, IQA & Coarse Layout
+## 2. Project A — Preprocessing, IQA & Coarse Layout
 
 ### Mission
 
@@ -69,55 +57,7 @@ Deliver clean, corrected, quality-scored page images with reliable metadata that
 * OCR of any type
 * Chunking or RAG logic
 
----
-
-# 3. Project B — OCR & Fine Structural Parsing
-
-### Mission
-
-Perform multi-engine OCR and full document layout analysis, producing paragraph-centric structured text aligned with headings and page geometry.
-
-### Inputs
-
-* Corrected page images
-* DocumentMetadata.json from Project A (including `pre_ocr_risk` + layout summary)
-
-### Outputs
-
-* **OCRDocument.json** containing:
-
-  * Full block-level layout (DocLayNet / DocLayout-YOLO)
-  * Reading order
-  * Paragraph objects derived from **Marker**
-  * Per-engine OCR text (Marker, DeepSeek-OCR, optional specialized engines)
-  * Headings, titles, captions
-  * Page/block/paragraph IDs and coordinates
-  * Table & math extraction hooks
-
-### Responsibilities (In Scope)
-
-* Profile selection based on A’s routing metadata
-
-  * heavy model for complex/multi-column pages
-  * math-aware OCR for dense equations
-  * dual-engine OCR for low-quality scans
-* Full layout detection (YOLO-based)
-* Reading order reconstruction
-* **Marker OCR as primary engine** with paragraph segmentation
-* DeepSeek-OCR as secondary engine for refinement / error detection
-* Table, figure, math, handwriting pipelines when needed
-* Produce **semantic paragraphs** aligned to layout and headings
-
-### Out of Scope (MUST NOT implement)
-
-* IQA or image corrections
-* Multi-engine fusion
-* Noise classification or trust scoring
-* Chunking logic for RAG (beyond paragraph segmentation)
-
----
-
-# 4. Project C — Fusion, Trust, Noise & RAG Chunking
+## 4. Project C — Fusion, Trust, Noise & RAG Chunking
 
 ### Mission
 
@@ -171,64 +111,7 @@ Determine the “ground-truth” text via multi-engine fusion, suppress noise, c
 * IQA/corrections
 * Embedding generation or vector DB logic
 
----
-
-# 5. Project D — RAG Indexing & Metadata Enrichment
-
-### Mission
-
-Transform trusted RAG chunks into embeddings with hierarchical metadata and upsert them into vector databases for downstream retrieval.
-
-### Inputs
-
-* FusedDocument.json from Project C
-* rag_chunks[] with trust/noise scores & structural metadata
-
-### Outputs
-
-* Vector DB entries
-* Metadata catalog entries
-* Optional full-text (BM25) indices
-* Ingestion report (success / skipped / quarantined)
-
-### Responsibilities (In Scope)
-
-* Apply project-specific acceptance policies:
-
-  * drop low-trust chunks
-  * quarantine noise-heavy sections
-  * route table/math chunks to special indexes
-* Embedding generation:
-
-  * Local models
-  * Modal GPU calls
-  * External API embeddings
-* Hierarchical metadata construction:
-
-  * heading_path
-  * paragraph_ids
-  * structural_role (body, caption, table_cell, figure_context)
-  * page_range
-  * document_type / pdf_type
-  * RAG_readiness_score
-  * OCR trust metrics
-* Vector DB operations:
-
-  * upsert
-  * namespace/collection creation
-  * metadata indexing
-  * optional BM25 sync
-
-### Out of Scope (MUST NOT implement)
-
-* OCR
-* Layout detection
-* Fusion or chunk segmentation
-* RAG application logic (chatbots, QA, etc.)
-
----
-
-# 6. Cross-Project Design Principles
+## 6. Cross-Project Design Principles
 
 ### 1. Immutable Interfaces
 
@@ -261,31 +144,7 @@ All teams benchmark their components with:
 
 Each project allows corrected “gold” inputs to feed training sets.
 
----
-
-# 7. Responsibility Matrix (RACI-style quick reference)
-
-| Task                          | A | B | C | D |
-| ----------------------------- | - | - | - | - |
-| Rasterize pages               | ✔ | — | — | — |
-| IQA / DIQA                    | ✔ | — | — | — |
-| Corrections (deskew, denoise) | ✔ | — | — | — |
-| Coarse layout classification  | ✔ | — | — | — |
-| Detailed layout detection     | — | ✔ | — | — |
-| Reading order                 | — | ✔ | — | — |
-| OCR (Marker, DeepSeek)        | — | ✔ | — | — |
-| Paragraph segmentation        | — | ✔ | — | — |
-| Multi-engine fusion           | — | — | ✔ | — |
-| Noise classification          | — | — | ✔ | — |
-| Trust scoring                 | — | — | ✔ | — |
-| RAG chunking                  | — | — | ✔ | — |
-| Embeddings                    | — | — | — | ✔ |
-| Vector indexing               | — | — | — | ✔ |
-| Metadata catalog              | — | — | — | ✔ |
-
----
-
-# 8. Repository Structure (Recommended)
+## 8. Repository Structure (Recommended)
 
 ```
 /docs/
@@ -303,19 +162,3 @@ Each project allows corrected “gold” inputs to feed training sets.
 README.md
 CHANGELOG.md
 ```
-
----
-
-# 9. Summary
-
-This unified reference defines:
-
-* **What each project owns**
-* **What each project must not duplicate**
-* **How structural information and paragraph segmentation propagate**
-* **Where accuracy, trust, and noise control happen**
-* **Where embeddings & indexing live**
-
-It ensures every team delivers its part cleanly while maintaining a high-precision end-to-end pipeline optimized for RAG.
-
----

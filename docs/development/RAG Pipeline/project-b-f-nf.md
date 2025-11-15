@@ -1,47 +1,17 @@
-# Project B Requirements Specification
+---
+schema_type: common
+title: "Project B Functional and Non-Functional Requirements"
+description: "Requirements specification for Project B OCR orchestration and layout detection"
+tags: [documentation, planning, architecture, ocr, layout_detection]
+status: published
+owner: "docs-team"
+purpose: "Define all functional and non-functional requirements for Project B OCR orchestration and document layout analysis."
+---
 
 **Layout, OCR & Structural Extraction Engine**
 **Version 1.0.0 – Draft**
 
----
-
-## 0. Executive Summary
-
-**Project B** is the **layout & OCR engine** in a four-project architecture:
-
-* **Project A**: pre-OCR IQA + corrections + routing
-* **Project B**: **detailed layout, OCR, and logical structure extraction**
-* **Project C**: multi-engine fusion, confidence modeling, hallucination filtering, RAG-ready text units
-* **Project D**: embedding + vector database ingestion + RAG plumbing
-
-Project B’s job is to:
-
-1. Take **cleaned images & DocumentMetadata** from Project A.
-2. Run **detailed layout detection** and build a **document element graph**: text blocks, tables, figures, headers, footers, formulas, etc.
-3. Predict **reading order** that respects multi-column layouts, tables, captions, footnotes.
-4. Run the **right OCR engine(s)** per region:
-
-   * base OCR via Marker (with Llama 4 Maverick)
-   * specialized OCR for math, handwriting, low-quality pages, etc.
-5. Produce a **structured OCRDocument** with:
-
-   * per-element text
-   * bounding boxes
-   * reading sequence
-   * region-level metadata and OCR confidence
-
-Project B **does not**:
-
-* do IQA or pixel-space corrections (that’s A)
-* compute DQS or pre-OCR risk (A)
-* decide final RAG chunks or embeddings (C/D)
-* decide semantic trust / hallucination filtering (C)
-
-It’s “just” the thing that understands the page as a set of objects and reads them. “Just,” in the sense that this is the part that actually hurts.
-
----
-
-# 1. Introduction
+## 1. Introduction
 
 ## 1.1 Purpose
 
@@ -91,66 +61,7 @@ Project B does **not**:
 * filter hallucinations or compute semantic trust scores (C)
 * create RAG-ready chunk sets or embeddings (C/D)
 
----
-
-# 2. Interfaces & Data Contracts
-
-## 2.1 Inputs from Project A
-
-Project B consumes:
-
-1. **Page Images**
-
-   * Rasterized pages at ≥ 300 DPI
-   * Formats: PNG or JPEG (lossless or high-quality lossy)
-   * One image per logical page
-
-2. **DocumentMetadata v1.0.0**
-   Key fields used by B include:
-
-   * `document_id: str`
-   * `page_count: int`
-   * `pages[i].has_text: bool`
-   * `pages[i].iqa_metrics` (skew, blur, DPI, etc.)
-   * `pages[i].layout_summary` (single/multi/complex, has_tables, has_figures, has_dense_math, has_handwriting, etc.)
-   * `pdf_type: Literal["image_only","born_digital","hybrid"]`
-   * `pre_ocr_risk: float`
-   * `ocr_routing_recommendation: Literal["ocr_fast","ocr_advanced","vision_simple","vision_structured"]`
-
-Project B must treat Project A’s metadata as **advisory but authoritative** for IQA: it should not attempt to redo quality scoring.
-
-## 2.2 Outputs to Project C
-
-Project B shall output a structured **OCRDocument** object (JSON or msgpack) with at least:
-
-* `document_id: str`
-* `source_document_metadata_version: str` (e.g. A schema version)
-* `pages: List[PageOCR]`
-
-Where each `PageOCR` includes:
-
-* `page_index: int`
-* `width_px: int` / `height_px: int`
-* `elements: List[LayoutElement]`
-* `reading_order: List[str]` (ordered list of `element_id`)
-
-Each `LayoutElement` includes:
-
-* `element_id: str` (stable within document)
-* `element_type: "text" | "table" | "figure" | "caption" | "page_header" | "page_footer" | "page_number" | "formula" | "footnote" | "signature" | "stamp" | "watermark" | "margin_note" | ...`
-* `bbox_coco: [x, y, width, height]` (page pixel coordinates)
-* `page_index: int`
-* `ocr_engine: str` (e.g. `"marker_llama4"`, `"deepseek_ocr"`, `"math_ocr"`, `"handwriting_ocr"`, `"tesseract"`…)
-* `text: Optional[str]` (for OCR’d regions)
-* `text_confidence: Optional[float]` (0–1)
-* `attributes: Dict[str, Any]` (e.g. `{"is_header_footer": true, "is_parasitic": true}`)
-* `links: Optional[List[ElementLink]]` (e.g. caption ↔ figure; footnote ↔ ref)
-
-For tables, an additional `table_structure` sub-object is required (see FR-B4.3).
-
----
-
-# 3. Functional Requirements
+## 3. Functional Requirements
 
 ## FR-B1: Layout Detection
 
@@ -199,27 +110,6 @@ The system shall:
 * normalize coordinates into consistent pixel coordinate space
 * snap bounding boxes slightly inward to avoid including adjacent text columns when possible
 
----
-
-## FR-B2: Parasitic Content & Page Role Detection
-
-### FR-B2.1 Header/Footer Detection
-
-Using layout detections, the system shall:
-
-* identify repeating **Page-Header** and **Page-Footer** patterns across pages
-* mark them as `attributes.is_parasitic = true`
-* identify and mark **page numbers** similarly
-
-### FR-B2.2 Semantic Noise Support for RAG (B-side responsibilities)
-
-Even though Project B does not do chunking, it must:
-
-* clearly flag parasitic elements so Project C can exclude them from semantic chunk sets by default
-* ensure that header/footer/page number text are available separately if needed (e.g. for citations) but never mixed with main body paragraphs in `reading_order`.
-
----
-
 ## FR-B3: Reading Order Prediction
 
 ### FR-B3.1 Element Graph Construction
@@ -260,49 +150,6 @@ For each page:
 * compute `reading_order_confidence ∈ [0, 1]` based on rule heuristics or optional learned model
 * expose this to Project C so that low-confidence layouts can be chunked via spatial fallback rather than semantic sequence.
 
----
-
-## FR-B4: Tables, Figures, and Structured Regions
-
-### FR-B4.1 Table Detection (Block-level)
-
-Block-level table detection is already covered by layout model (FR-B1).
-
-Each `element_type == "table"` must store:
-
-* bounding box
-* page index
-* detector confidence
-
-### FR-B4.2 Table Structure Extraction
-
-Project B shall perform **table structure recognition** inside each table region:
-
-* detect grid of rows and columns
-* detect spanning cells
-* differentiate header rows from body rows
-
-The result shall be stored in `table_structure`, including:
-
-* `num_rows`, `num_cols`
-* `cells: List[{row, col, row_span, col_span, bbox_coco, is_header}]`
-
-### FR-B4.3 Figure–Caption Linking
-
-Project B shall:
-
-* associate **Caption** elements with their **Picture/Figure** elements via `links`
-* use spatial proximity and pattern matching (e.g. “Figure 3”, “Fig. 3”).
-
-### FR-B4.4 Footnote Linking
-
-Project B shall:
-
-* detect footnote references inside main text spans (superscript numbers etc.)
-* link those references to Footnote elements using `links` (e.g. `{"type": "footnote_ref", "target_id": "footnote_007"}`).
-
----
-
 ## FR-B5: Specialized Region Detection
 
 Project B shall detect and tag:
@@ -331,66 +178,6 @@ Project B shall detect and tag:
 * Handwritten or printed notes in margins
 * Tagged as `element_type == "margin_note"`
 * Should **not** be treated as part of main reading order by default, but links may be created.
-
----
-
-## FR-B6: OCR Engine Orchestration
-
-### FR-B6.1 Engine Registry
-
-Project B shall maintain a configurable registry of OCR engines, e.g.:
-
-* `"marker_llama4"` – base OCR / layout-aware engine
-* `"deepseek_ocr"` – fallback / complex figure-heavy / low-quality pages
-* `"math_ocr"` – math formula OCR engine
-* `"handwriting_ocr"` – handwriting / signature engine
-* `"fast_ocr"` – simple engine (e.g. Tesseract) for fast paths
-
-### FR-B6.2 Routing Strategy (Per Page & Per Region)
-
-Using:
-
-* `ocr_routing_recommendation` from Project A
-* page-level attributes (has_tables, has_figures, has_dense_math, has_handwriting)
-* element types (text, formula, table, figure, caption, signature, etc.)
-
-Project B shall:
-
-* choose a **primary OCR engine** for each region
-* optionally route specific regions to specialized engines:
-
-  * formula regions → `"math_ocr"`
-  * handwriting / signatures → `"handwriting_ocr"`
-  * complex pictures → `"deepseek_ocr"` (for text in images)
-
-### FR-B6.3 OCR Outputs
-
-For each `LayoutElement` that contains readable text, B must:
-
-* call the chosen OCR engine
-* store:
-
-  * `text: str` (UTF-8)
-  * `text_confidence: float` (normalized, engine-specific mapping allowed)
-  * `ocr_engine: str`
-
-If OCR fails or is skipped:
-
-* `text = null` or empty
-* `text_confidence = 0.0`
-* `attributes.ocr_status = "skipped" | "failed"`
-
-### FR-B6.4 Minimal Pre-processing Responsibilities
-
-Project A owns IQA corrections; Project B is only allowed to:
-
-* scale/crop/normalize images to meet OCR engine’s input size requirements
-* convert color space (RGB ↔ grayscale)
-* apply very light binarization or thresholding where required by specific engines
-
-These must be deterministic and recorded as a thin transform layer (e.g. `ocr_preprocessing_steps`) in the element attributes.
-
----
 
 ## FR-B7: Logical Structure Assembly
 
@@ -426,20 +213,7 @@ Project B shall **not** attempt to:
 
 It only needs to output units and their structural relationships clearly enough for Project C to build RAG chunks and fusion.
 
----
-
-## FR-B8: Configurability & Model Swapping
-
-Project B must allow:
-
-* switching layout detection models via config (e.g., DocLayNet v1 vs v2)
-* switching OCR engines or endpoint URIs via config
-* enabling/disabling specialized detectors (math, watermark, signature, etc.) individually
-* specifying thresholds (confidence cutoffs, NMS thresholds, etc.) externally, not hard-coded.
-
----
-
-# 4. Non-Functional Requirements (NFRs)
+## 4. Non-Functional Requirements (NFRs)
 
 ## NFR-B1: Performance
 
@@ -527,47 +301,7 @@ Compared to baseline single-engine OCR on a standardized benchmark:
 * No page images or text snippets logged at INFO level; only hashed or redacted IDs in production.
 * Debug overlays must be explicitly enabled and kept out of default logs and metrics.
 
----
-
-# 5. System Architecture Requirements
-
-## 5.1 High-level Pipeline
-
-For each document:
-
-1. **Ingest** DocumentMetadata + page images from A.
-2. For each page:
-
-   * Run **layout detection**.
-   * Detect parasitic content (headers/footers/page numbers).
-   * Build **element graph**.
-   * Predict **reading order**.
-   * Detect special regions (math, watermarks, stamps, signatures, margin notes).
-   * For each region:
-
-     * Choose OCR engine via routing logic.
-     * Run OCR and capture text + confidence.
-3. Assemble **logical structure** across pages.
-4. Emit **OCRDocument** structure for Project C.
-
-## 5.2 Modular Components
-
-Core modules (preferably separable packages):
-
-* `layout_detector`
-* `parasitic_detector`
-* `reading_order`
-* `special_regions`
-* `ocr_router`
-* `ocr_client` (engine-agnostic)
-* `structure_builder`
-* `serializer` (to OCRDocument schema)
-
-Each must be swappable without altering upstream/downstream contracts.
-
----
-
-# 6. Data & Training Requirements
+## 6. Data & Training Requirements
 
 ## 6.1 Layout Model Training
 
@@ -600,33 +334,7 @@ Models or heuristics must generalize across languages and moderate variations in
 
 Training details live elsewhere; requirement is that model swapping and domain extension are possible with minimal code change.
 
----
-
-# 7. Deployment & Operations
-
-## 7.1 Containerization
-
-Project B shall be deployed as:
-
-* container image with:
-
-  * layout model weights
-  * OCR client configuration
-* environment variables or config files to:
-
-  * point to Modal/OCR services
-  * select models
-  * set thresholds
-
-## 7.2 Horizontal Scaling
-
-* Multiple instances should be able to process documents independently.
-* No shared mutable state; all coordination via queues / job system if needed.
-* Project B should accept a list of pages and return structured results without needing global external state.
-
----
-
-# 8. Phase Roadmap (Project B Only)
+## 8. Phase Roadmap (Project B Only)
 
 ### Phase B1 – Layout & Basic OCR
 
@@ -655,16 +363,3 @@ Project B shall be deployed as:
 * Performance tuning & batching
 * Robust fallback modes
 * Observability, logs, debug overlays
-
----
-
-# 9. Acceptance Criteria
-
-Project B is considered ready for integration with C when:
-
-* It can process representative corpora (technical reports, academic papers, financial documents, contracts) from Project A output without manual intervention.
-* Layout, reading order, and table structure metrics meet or exceed NFR-B2 targets.
-* OCR quality demonstrates measurable improvement over a naive “run single OCR on whole page” baseline on evaluation sets.
-* OCRDocument output is stable, schema-validated, and consumed cleanly by an integration harness simulating Project C.
-
----
