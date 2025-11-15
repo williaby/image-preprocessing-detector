@@ -1,13 +1,20 @@
 ---
 schema_type: common
 title: "ADR-029: Project A Scope Boundaries in RAG Pipeline"
-description: "Define clear boundaries between Project A (preprocessing/IQA) and downstream Projects B/C/D to prevent scope creep and architectural drift"
-tags: [adr, architecture, scope, boundaries, rag-pipeline]
+description: "Define clear boundaries between Project A (preprocessing/IQA) and downstream
+  Projects B/C/D to prevent scope creep and architectural drift"
+tags:
+- adr
+- architecture
+- scope
+- boundaries
+- rag_pipeline
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Establish explicit scope boundaries to prevent Project A from overlapping with OCR orchestration (B), fusion/trust (C), or vector indexing (D)."
+- name: "Byron Williams"
+purpose: "Establish explicit scope boundaries to prevent Project A from overlapping
+  with OCR orchestration (B), fusion/trust (C), or vector indexing (D)."
 ---
 
 **Status**: Accepted

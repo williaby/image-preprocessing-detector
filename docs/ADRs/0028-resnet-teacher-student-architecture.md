@@ -1,13 +1,21 @@
 ---
 schema_type: common
 title: "ADR-028: ResNet Teacher-Student Architecture for ML IQA"
-description: "Use ResNet-50 teacher and ResNet-18 student with selective escalation for robust, cost-effective image quality assessment"
-tags: [adr, ml, iqa, teacher-student, knowledge-distillation, resnet]
+description: "Use ResNet-50 teacher and ResNet-18 student with selective escalation
+  for robust, cost-effective image quality assessment"
+tags:
+- adr
+- ml
+- iqa
+- teacher_student
+- knowledge_distillation
+- resnet
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to use a two-tier teacher-student ML IQA strategy for balancing accuracy and inference cost."
+- name: "Byron Williams"
+purpose: "Document the decision to use a two-tier teacher-student ML IQA strategy
+  for balancing accuracy and inference cost."
 ---
 
 **Status**: Accepted

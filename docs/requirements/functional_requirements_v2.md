@@ -1,14 +1,21 @@
 ---
 schema_type: common
 title: "Functional Requirements v2.0"
-description: "Detailed functional and non-functional requirements for the Image Preprocessing Detector system"
-tags: [requirements, specifications, functional, non-functional, documentation]
+description: "Detailed functional and non-functional requirements for the Image Preprocessing
+  Detector system"
+tags:
+- requirements
+- specifications
+- functional
+- non_functional
+- documentation
 status: published
 owner: "docs-team"
 review_cycle_days: 90
 authors:
-  - name: "Byron Williams"
-purpose: "Specify detailed requirements for document preprocessing, quality assessment, and intelligent routing."
+- name: "Byron Williams"
+purpose: "Specify detailed requirements for document preprocessing, quality assessment,
+  and intelligent routing."
 ---
 
 > **Version:** 2.2

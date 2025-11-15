@@ -1,7 +1,8 @@
 ---
 schema_type: common
 title: "ADR-034: ResNet18 for Phase 2 IQA Multi-Label Classification"
-description: "Upgrade from MobileNetV3-Small to ResNet18 for improved document IQA performance with Modal GPU deployment"
+description: "Upgrade from MobileNetV3-Small to ResNet18 for improved document IQA
+  performance with Modal GPU deployment"
 tags:
 - adr
 - resnet18
@@ -12,7 +13,8 @@ status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-purpose: "Document the upgrade from MobileNetV3-Small to ResNet18 for Phase 2 IQA, enabled by Modal's unrestricted GPU training"
+purpose: "Document the upgrade from MobileNetV3-Small to ResNet18 for Phase 2 IQA,
+  enabled by Modal's unrestricted GPU training."
 ---
 
 **Status**: Accepted

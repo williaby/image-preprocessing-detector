@@ -1,13 +1,21 @@
 ---
 schema_type: common
 title: "ADR-030: Document Quality Score (DQS) Design"
-description: "Aggregate IQA metrics and layout complexity into a holistic document quality score for routing and risk assessment"
-tags: [adr, dqs, quality-score, routing, metrics, aggregation]
+description: "Aggregate IQA metrics and layout complexity into a holistic document
+  quality score for routing and risk assessment"
+tags:
+- adr
+- dqs
+- quality_score
+- routing
+- metrics
+- aggregation
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the decision to compute a two-component Document Quality Score combining degradation and structural complexity for downstream routing."
+- name: "Byron Williams"
+purpose: "Document the decision to compute a two-component Document Quality Score
+  combining degradation and structural complexity for downstream routing."
 ---
 
 **Status**: Accepted
