@@ -230,7 +230,9 @@ def validate_artifacts(artifact_dir: str, strict: bool = False) -> dict[str, Any
         with open(commit_hash_file) as f:
             commit_info = f.read()
         if "dirty" in commit_info:
-            message = "⚠️  WARNING: Model trained from dirty git state (uncommitted changes)"
+            message = (
+                "⚠️  WARNING: Model trained from dirty git state (uncommitted changes)"
+            )
             print(f"  {message}")
             results["warnings"].append(message)
         else:
@@ -302,16 +304,15 @@ def validate_artifacts(artifact_dir: str, strict: bool = False) -> dict[str, Any
                 print(f"  - {warning}")
             print()
             return results
-        else:
-            print("⚠️  VALIDATION PASSED WITH WARNINGS")
-            print()
-            print("Warnings:")
-            for warning in results["warnings"]:
-                print(f"  - {warning}")
-            print()
-            print("✅ All required artifacts present")
-            print("=" * 80)
-            return results
+        print("⚠️  VALIDATION PASSED WITH WARNINGS")
+        print()
+        print("Warnings:")
+        for warning in results["warnings"]:
+            print(f"  - {warning}")
+        print()
+        print("✅ All required artifacts present")
+        print("=" * 80)
+        return results
 
     print("✅ VALIDATION PASSED")
     print()

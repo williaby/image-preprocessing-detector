@@ -94,3 +94,15 @@ path = [
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Benchmark results and generated metadata files - CC0-1.0
+[[annotations]]
+path = [
+    "benchmarks/reports/**/*.json",
+    "benchmarks/reports/**/*.md",
+    "codemeta.json",
+    "benchmarks/LICENSES.md",
+    "benchmarks/registry.yml",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2024 Byron Williams"

@@ -49,7 +49,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from google.cloud import storage
@@ -142,10 +142,7 @@ def validate_artifacts(artifact_dir: str) -> dict[str, Any]:
         "env_info.txt",
     ]
 
-    missing_files = []
-    for file in required_files:
-        if not (path / file).exists():
-            missing_files.append(file)
+    missing_files = [file for file in required_files if not (path / file).exists()]
 
     if missing_files:
         print(f"❌ ERROR: Missing required files: {missing_files}")
@@ -246,7 +243,7 @@ def generate_model_card(
     model_name: str,
     version: str,
     metadata: dict[str, Any],
-    template: Optional[str] = None,
+    template: str | None = None,
 ) -> str:
     """Generate Hugging Face model card (README.md).
 
@@ -283,18 +280,18 @@ It provides image quality assessment and document preprocessing capabilities.
 ## Training Details
 
 ### Architecture
-- Model: {config.get('model', {}).get('architecture', 'N/A')}
-- Input size: {config.get('model', {}).get('input_size', 'N/A')}
-- Number of classes: {config.get('model', {}).get('num_classes', 'N/A')}
+- Model: {config.get("model", {}).get("architecture", "N/A")}
+- Input size: {config.get("model", {}).get("input_size", "N/A")}
+- Number of classes: {config.get("model", {}).get("num_classes", "N/A")}
 
 ### Training Configuration
-- Batch size: {config.get('training', {}).get('batch_size', 'N/A')}
-- Epochs: {config.get('training', {}).get('epochs', 'N/A')}
-- Learning rate: {config.get('training', {}).get('learning_rate', 'N/A')}
-- Optimizer: {config.get('training', {}).get('optimizer', 'Adam')}
+- Batch size: {config.get("training", {}).get("batch_size", "N/A")}
+- Epochs: {config.get("training", {}).get("epochs", "N/A")}
+- Learning rate: {config.get("training", {}).get("learning_rate", "N/A")}
+- Optimizer: {config.get("training", {}).get("optimizer", "Adam")}
 
 ### Dataset
-{metadata.get('dataset_version', 'N/A')}
+{metadata.get("dataset_version", "N/A")}
 
 ## Performance
 
@@ -308,10 +305,10 @@ Full metrics:
 ```
 
 ## Environment
-{metadata.get('env_info', 'N/A')}
+{metadata.get("env_info", "N/A")}
 
 ## Reproducibility
-{metadata.get('commit_info', 'N/A')}
+{metadata.get("commit_info", "N/A")}
 
 ## Usage
 
@@ -325,7 +322,7 @@ model.eval()
 
 # Prepare image
 transform = transforms.Compose([
-    transforms.Resize({config.get('model', {}).get('input_size', 224)}),
+    transforms.Resize({config.get("model", {}).get("input_size", 224)}),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
@@ -440,14 +437,14 @@ def push_to_huggingface(
         print(f"  ✅ Uploaded {filename}")
 
     # Upload README
-    print(f"  Uploading README.md...")
+    print("  Uploading README.md...")
     api.upload_file(
         path_or_fileobj=str(readme_path),
         path_in_repo="README.md",
         repo_id=hf_repo,
         token=token,
     )
-    print(f"  ✅ Uploaded README.md")
+    print("  ✅ Uploaded README.md")
 
     # Upload metadata files
     metadata_files = [

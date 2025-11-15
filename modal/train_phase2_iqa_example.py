@@ -33,6 +33,7 @@ After Training:
         --version v1.0.0
 """
 # bandit: noqa: B108
+# ruff: noqa: DTZ005
 
 import os
 from datetime import datetime
@@ -256,7 +257,9 @@ def train_iqa():
         scheduler.step()
 
     training_time = (datetime.now() - start_time).total_seconds()
-    print(f"\n✅ Training complete! Best accuracy: {best_val_acc:.3f} at epoch {best_epoch}")
+    print(
+        f"\n✅ Training complete! Best accuracy: {best_val_acc:.3f} at epoch {best_epoch}"
+    )
 
     # =========================================================================
     # STEP 7: Generate Metadata Files
@@ -308,7 +311,7 @@ def train_iqa():
         verbose=True,
     )
 
-    print(f"\n✅ Artifacts uploaded successfully!")
+    print("\n✅ Artifacts uploaded successfully!")
     print(f"GCS path: {gcs_path}")
 
     # =========================================================================
@@ -333,7 +336,6 @@ def train_iqa():
     )
 
     # Upload ONNX to GCS
-    from google.cloud import storage
 
     client = storage.Client()
     bucket = client.bucket("rag-pipeline-models")
@@ -342,7 +344,7 @@ def train_iqa():
     )
     blob.upload_from_filename(onnx_path)
 
-    print(f"✅ ONNX model exported and uploaded")
+    print("✅ ONNX model exported and uploaded")
 
     # =========================================================================
     # Summary
@@ -358,11 +360,11 @@ def train_iqa():
     print("📋 Next Steps:")
     print("   1. Review metrics in GCS")
     print("   2. Validate model performance")
-    print(f"   3. Promote to HF Hub: python scripts/promote_to_hf.py \\")
-    print(f"         --model resnet50_teacher \\")
+    print("   3. Promote to HF Hub: python scripts/promote_to_hf.py \\")
+    print("         --model resnet50_teacher \\")
     print(f"         --run-id {run_id} \\")
-    print(f"         --hf-repo williaby/doc-preproc-resnet50-teacher \\")
-    print(f"         --version v1.0.0")
+    print("         --hf-repo williaby/doc-preproc-resnet50-teacher \\")
+    print("         --version v1.0.0")
     print("=" * 80)
 
     return {

@@ -187,20 +187,21 @@ def upload_file_to_gcs(
         ValueError: If local_file doesn't exist
         google.cloud.exceptions.GoogleCloudError: If upload fails
     """
-    if not os.path.exists(local_file):
+    local_file_path = Path(local_file)
+    if not local_file_path.exists():
         raise ValueError(f"Local file does not exist: {local_file}")
 
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(gcs_path)
 
-    blob.upload_from_filename(local_file)
+    blob.upload_from_filename(str(local_file_path))
 
     full_path = f"gs://{bucket_name}/{gcs_path}"
 
     if verbose:
-        size_mb = os.path.getsize(local_file) / (1024 * 1024)
-        print(f"✅ Uploaded {local_file} ({size_mb:.2f} MB) → {full_path}")
+        size_mb = local_file_path.stat().st_size / (1024 * 1024)
+        logger.info(f"✅ Uploaded {local_file} ({size_mb:.2f} MB) → {full_path}")
 
     return full_path
 
@@ -290,8 +291,8 @@ def download_run_from_gcs(
     local_path = Path(local_dir) / run_id
 
     if verbose:
-        print(f"📥 Downloading run from gs://{bucket_name}/{gcs_prefix}")
-        print(f"   Local path: {local_path}")
+        logger.info(f"📥 Downloading run from gs://{bucket_name}/{gcs_prefix}")
+        logger.info(f"   Local path: {local_path}")
 
     # Create local directory
     local_path.mkdir(parents=True, exist_ok=True)
@@ -314,9 +315,9 @@ def download_run_from_gcs(
 
         if verbose:
             size_mb = blob.size / (1024 * 1024)
-            print(f"✅ Downloaded {rel_path:<40} ({size_mb:>6.2f} MB)")
+            logger.info(f"✅ Downloaded {rel_path:<40} ({size_mb:>6.2f} MB)")
 
     if verbose:
-        print(f"\n✅ Download complete: {files_downloaded} files → {local_path}")
+        logger.info(f"\n✅ Download complete: {files_downloaded} files → {local_path}")
 
     return str(local_path)
