@@ -160,3 +160,5 @@ allowed:
   - efficiency
   - training
   - object_detection
+  - modal
+  - quickstart

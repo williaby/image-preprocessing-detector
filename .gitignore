@@ -46,6 +46,7 @@ htmlcov/
 .hypothesis/
 .tox/
 coverage.xml
+junit.xml
 *.log
 
 # MyPy
@@ -102,6 +103,11 @@ logs/
 .env
 .env.local
 
+# GCS service account keys (base64 encoded)
+*.b64
+*.json.b64
+*service-account*.json
+
 # Documentation
 site/
 docs/_build/
@@ -123,14 +129,24 @@ Desktop.ini
 *~
 .directory
 
-# Benchmark datasets (large) - added 2025-11-05
-data/benchmarks/
+# Training datasets (large files, managed by DVC or downloaded)
+data/training/
+
+# SignaTR6K dataset (large benchmark)
 data/SignaTR6K.zip
 
-# Validation artifacts (large)
+# Validation (experimental one-off scripts and artifacts)
+validation/*.py
+validation/*.sh
 validation/datasets/
 validation/synthetic_images/
 validation/characteristic_curves/
-validation/doclaynet_validation_results.json
-validation/handwriting_samples_analysis.json
+validation/*.json
 sbom-*.json
+
+# Modal
+.modal/
+__modal_cache__/
+modal_cache/
+*modal-token*
+.modal-token

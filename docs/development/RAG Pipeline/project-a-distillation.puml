@@ -1,0 +1,53 @@
+ @startuml
+title Project A – Teacher → Student Distillation Workflow
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+start
+
+partition "Inputs" {
+  :Teacher model\nResNet-50 (trained IQA);
+  :Student model init\nResNet-18 (random or pre-trained);
+  :Distillation dataset\n(prepared DI pipeline);
+}
+
+partition "Teacher Pass (Offline or Batched)" {
+  :Run teacher forward passes\non distillation dataset\n(batched, GPU preferred);
+  :Collect teacher logits\nfor all IQA heads\n(blur, noise, skew,\nillumination, compression);
+  :Optionally store\nteacher predictions\nfor repeated reuse;
+}
+
+partition "Soft Target Construction" {
+  :Apply temperature scaling (T)\nsoftmax(teacher_logits / T);
+  :Construct soft labels\n(one per IQA head);
+  :Retain hard labels\n(ground truth IQA / class\nwhere available);
+}
+
+partition "Student Training Loop" {
+  :Define loss function:\nL = α * KL(teacher||student)\n  + β * CE(hard_labels, student);
+  :Train ResNet-18\non same inputs as teacher\nusing combined loss;
+  :Monitor metrics\n- distillation loss\n- accuracy vs hard labels\n- correlation vs teacher;
+}
+
+partition "Evaluation & Export" {
+  :Evaluate student on\nheld-out validation set;
+  :Compare student vs teacher\n- accuracy\n- calibration\n- correlation with IQA labels;
+  if (Student meets\nacceptance criteria?) then (yes)
+    :Export student to ONNX\nand register as\nprimary runtime IQA model;
+  else (no)
+    :Adjust α/β, temperature T,\nor architecture;\nrepeat training;
+  endif
+}
+
+stop
+
+@enduml

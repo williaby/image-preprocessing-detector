@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
+# Modal Training Configuration - Phase 2 IQA
+# Image Quality Assessment with MobileNetV3-Small
+
+model:
+  # Architecture options:
+  #   - mobilenetv3_small: Fast inference on T4 GPU, recommended for production (default)
+  #   - efficientnet_b0: Higher accuracy but slower inference, use for benchmarking
+  architecture: mobilenetv3_small
+  pretrained: true
+  num_classes: 6  # noise, blur, skew, perspective, contrast, orientation
+  input_size: 224
+  dropout: 0.2
+
+training:
+  batch_size: 128  # T4 16GB can handle this
+  epochs: 50
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: adam
+  scheduler: cosine
+  early_stopping_patience: 10
+  gradient_clip_norm: 1.0
+  mixed_precision: true  # AMP for faster training
+
+data:
+  dataset_path: gs://image_detection_b/datasets/iqa_phase2
+  num_workers: 4
+  pin_memory: true
+  augmentation_preset: medium  # light, medium, heavy
+
+storage:
+  checkpoint_path: gs://image_detection_b/checkpoints/phase2_iqa
+  output_path: gs://image_detection_b/models/phase2_iqa
+  log_path: gs://image_detection_b/logs/phase2_iqa
+
+modal:
+  gpu: T4  # T4, A10, or A100
+  cpu: 8.0  # cores
+  memory: 32768  # MB (32 GB)
+  timeout: 86400  # 24 hours
+  image_python_version: "3.12"
+
+monitoring:
+  tensorboard: true
+  log_interval: 100  # steps
+  checkpoint_interval: 5  # epochs

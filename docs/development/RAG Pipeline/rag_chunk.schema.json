@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema#",
+  "$id": "https://example.com/schemas/rag_chunk.schema.json",
+  "title": "RAGChunk",
+  "type": "object",
+  "description": "RAG-ready text chunk with trust and structural metadata, produced by Project C and consumed by Project D.",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "chunk_id": {
+      "type": "string",
+      "description": "Unique identifier for this chunk within the document or corpus."
+    },
+    "document_id": {
+      "type": "string",
+      "description": "ID of the document this chunk originates from."
+    },
+    "source_fused_document_id": {
+      "type": "string",
+      "description": "Identifier of the FusedDocument that produced this chunk."
+    },
+    "source_paragraph_ids": {
+      "type": "array",
+      "description": "List of fused paragraph_ids that were merged to form this chunk.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "text": {
+      "type": "string",
+      "description": "Text content of the chunk to be embedded."
+    },
+    "heading_path": {
+      "type": "array",
+      "description": "Hierarchy of headings/subheadings relevant to this chunk.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "page_range": {
+      "type": "array",
+      "description": "Inclusive [start_page, end_page] indices (zero-based).",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "structural_role": {
+      "type": "string",
+      "enum": [
+        "body_text",
+        "title",
+        "section_header",
+        "caption",
+        "footnote",
+        "table_context",
+        "figure_context",
+        "equation_context",
+        "metadata",
+        "other"
+      ]
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "trust_metrics": {
+      "type": "object",
+      "description": "Trust and noise scores at the chunk level (aggregated from paragraphs).",
+      "additionalProperties": false,
+      "properties": {
+        "chunk_trust_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "semantic_noise_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "formatting_noise_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "rag_readiness_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Overall measure combining quality, noise, and structural suitability for RAG."
+        }
+      },
+      "required": [
+        "chunk_trust_score",
+        "semantic_noise_score",
+        "formatting_noise_score",
+        "rag_readiness_score"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Fine-grained provenance for audits and debugging.",
+      "additionalProperties": false,
+      "properties": {
+        "source_file_path": {
+          "type": "string"
+        },
+        "source_mime_type": {
+          "type": "string"
+        },
+        "source_pipeline_run_id": {
+          "type": "string",
+          "description": "Identifier of the end-to-end run that produced this chunk."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "embedding": {
+      "type": ["array", "null"],
+      "description": "Optional embedding vector (Project D may populate this; Project C must not).",
+      "items": {
+        "type": "number"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Arbitrary additional metadata for downstream RAG systems (tenant IDs, tags, etc.)."
+    }
+  },
+  "required": [
+    "schema_version",
+    "chunk_id",
+    "document_id",
+    "source_fused_document_id",
+    "source_paragraph_ids",
+    "text",
+    "page_range",
+    "structural_role",
+    "trust_metrics"
+  ]
+}

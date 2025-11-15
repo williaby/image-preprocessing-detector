@@ -45,7 +45,7 @@ repos:
           - types-pillow
           - types-python-dateutil
         args: ['--ignore-missing-imports', '--python-version=3.12']
-        exclude: '^(tests/.*|validation/.*|fuzz/.*)'
+        exclude: '^(tests/.*|validation/.*|fuzz/.*|modal/.*)'
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -87,7 +87,7 @@ repos:
       - id: bandit
         args: ['-c', 'pyproject.toml']
         additional_dependencies: ['bandit[toml]']
-        exclude: 'tests/.*'
+        exclude: '^(tests/.*|modal/.*)'
 
   # Dependency scanning with Safety
   - repo: https://github.com/Lucas-C/pre-commit-hooks-safety

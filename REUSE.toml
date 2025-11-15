@@ -47,6 +47,7 @@ path = [
     "poetry.lock",  # Dependency lockfile for reproducible builds
     "requirements.txt",  # Generated from poetry export
     "requirements-dev.txt",  # Generated from poetry export
+    "requirements/**",  # All requirements files in requirements directory
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"

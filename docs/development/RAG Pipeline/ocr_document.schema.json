@@ -1,0 +1,248 @@
+ {
+  "$schema": "https://json-schema.org/draft/2020-12/schema#",
+  "$id": "https://example.com/schemas/ocr_document.schema.json",
+  "title": "OCRDocument",
+  "type": "object",
+  "description": "Structured layout and OCR output emitted by Project B.",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "document_id": {
+      "type": "string",
+      "description": "Stable identifier matching DocumentMetadata.document_id."
+    },
+    "source_document_metadata_id": {
+      "type": "string",
+      "description": "Identifier of the corresponding DocumentMetadata record (if persisted separately)."
+    },
+    "page_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "layout_model_name": {
+      "type": "string",
+      "description": "Identifier of the layout detection model used (e.g., 'doclayout_yolo_large_v1')."
+    },
+    "ocr_engines": {
+      "type": "array",
+      "description": "List of OCR engines participating in this run (e.g., Marker, DeepSeek-OCR).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "pages": {
+      "type": "array",
+      "description": "Per-page layout and OCR details.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "width_px": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height_px": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "layout_blocks": {
+            "type": "array",
+            "description": "DocLayNet-style blocks with class labels and bounding boxes.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "block_id": {
+                  "type": "string"
+                },
+                "class_label": {
+                  "type": "string",
+                  "enum": [
+                    "caption",
+                    "footnote",
+                    "formula",
+                    "list_item",
+                    "page_footer",
+                    "page_header",
+                    "picture",
+                    "section_header",
+                    "table",
+                    "text",
+                    "title",
+                    "handwriting",
+                    "revision_marking"
+                  ]
+                },
+                "bbox": {
+                  "type": "array",
+                  "description": "COCO format bounding box [x, y, width, height] in pixels.",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                "reading_order_index": {
+                  "type": "integer",
+                  "description": "Order of this block in the reading sequence for this page."
+                }
+              },
+              "required": [
+                "block_id",
+                "class_label",
+                "bbox",
+                "confidence",
+                "reading_order_index"
+              ]
+            }
+          },
+          "reading_order": {
+            "type": "array",
+            "description": "Ordered list of block_ids representing page reading flow.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "paragraphs": {
+            "type": "array",
+            "description": "Paragraph-level text segments produced primarily by Marker.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "paragraph_id": {
+                  "type": "string"
+                },
+                "page_index": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "layout_block_id": {
+                  "type": "string",
+                  "description": "ID of the primary layout block anchoring this paragraph."
+                },
+                "heading_path": {
+                  "type": "array",
+                  "description": "Hierarchy of headings/subheadings enclosing this paragraph.",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "structural_role": {
+                  "type": "string",
+                  "enum": [
+                    "body_text",
+                    "title",
+                    "section_header",
+                    "caption",
+                    "footnote",
+                    "table_context",
+                    "figure_context",
+                    "equation_context",
+                    "other"
+                  ]
+                },
+                "reading_order_index": {
+                  "type": "integer",
+                  "description": "Global reading order position for the paragraph within the document."
+                },
+                "ocr_engines": {
+                  "type": "object",
+                  "description": "Per-engine OCR outputs for this paragraph.",
+                  "additionalProperties": false,
+                  "properties": {
+                    "marker": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "text": {
+                          "type": "string"
+                        },
+                        "confidence": {
+                          "type": "number",
+                          "minimum": 0.0,
+                          "maximum": 1.0
+                        }
+                      },
+                      "required": [
+                        "text"
+                      ]
+                    },
+                    "deepseek_ocr": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "text": {
+                          "type": "string"
+                        },
+                        "confidence": {
+                          "type": "number",
+                          "minimum": 0.0,
+                          "maximum": 1.0
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "marker"
+                  ]
+                },
+                "languages": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "has_math": {
+                  "type": "boolean"
+                },
+                "has_table_ref": {
+                  "type": "boolean",
+                  "description": "True if the paragraph is a table or references tables strongly."
+                },
+                "has_handwriting": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "paragraph_id",
+                "page_index",
+                "layout_block_id",
+                "structural_role",
+                "reading_order_index",
+                "ocr_engines"
+              ]
+            }
+          }
+        },
+        "required": [
+          "page_index",
+          "width_px",
+          "height_px",
+          "layout_blocks",
+          "reading_order",
+          "paragraphs"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "document_id",
+    "page_count",
+    "layout_model_name",
+    "ocr_engines",
+    "pages"
+  ]
+}

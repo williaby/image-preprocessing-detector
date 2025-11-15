@@ -1,0 +1,75 @@
+ @startuml
+title Project A – Device Selection & IQA Execution Flow
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+start
+
+:Start IQA for document batch;
+
+partition "Device Discovery" {
+  :Probe local GPU\n(CUDA, memory, utilization);
+  :Probe local CPU\n(cores, load, throttling);
+  :Check Modal GPU\nquota & network reachability;
+}
+
+if (Local GPU available\nand under load threshold?) then (yes)
+  :Set primary_device = local_gpu;
+else (no)
+  if (Local CPU acceptable\n(latency within NFR bounds)?) then (yes)
+    :Set primary_device = local_cpu;
+  else (no)
+    if (Modal GPU allowed\nby config and available?) then (yes)
+      :Set primary_device = modal_gpu;
+    else (no)
+      :Set primary_device = local_cpu\n(last resort, slow path);
+      note right
+        Even if slow, pipeline
+        must still be able to run
+        in fully local CPU mode.
+      end note
+    endif
+  endif
+endif
+
+partition "Student Inference" {
+  :Run ResNet-18 student\non primary_device\nfor all pages;
+  :Compute per-page uncertainty\n(e.g., entropy, top-2 margin);
+  :Compute discrepancy vs\nclassical IQA metrics;
+}
+
+:Determine high-risk docs\nfrom metadata/tags;
+
+if (Any pages require\nteacher escalation?\n(high-risk OR high uncertainty\nOR large discrepancy)) then (yes)
+  if (Teacher fallback enabled\nin configuration?) then (yes)
+    partition "Teacher Device Selection" {
+      :Select teacher_device\n(local_gpu preferred,\nthen modal_gpu);
+      if (Teacher_device available\nand page/doc budgets not exceeded?) then (yes)
+        :Run ResNet-50 teacher\non flagged pages only;
+        :Merge IQA outputs\nTeacher overrides student\nfor those pages;
+      else (no)
+        :Skip teacher due to\nresource/budget limits;\nuse student-only IQA;
+      endif
+    }
+  else (no)
+    :Teacher fallback disabled;\nkeep student-only outputs;
+  endif
+else (no)
+  :No teacher escalation needed;\nkeep student-only outputs;
+endif
+
+:Return final IQA metrics\n(student-only or teacher-enhanced)\nto downstream layout-lite,\ncorrections, and DQS routing;
+
+stop
+
+@enduml

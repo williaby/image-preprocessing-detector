@@ -1,0 +1,47 @@
+ @startuml
+title Project A – Training Data Ingestion & Preparation (DI Pipeline)
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+start
+
+partition "Source Datasets" {
+  :Ingest document layout datasets\n(e.g., complex PDFs, scans,\ntech docs, forms);
+  :Ingest IQA-focused corpora\n(blurry, noisy, warped, low contrast);
+  :Ingest handwriting / forms sets\n(mixed printed + handwritten);
+}
+
+partition "Raw Normalization" {
+  :Standardize page images\n- render PDFs to images\n- normalize DPI (~300)\n- unify color space;
+  :Remove obviously invalid samples\n- zero-size pages\n- unreadable garbage\n- missing labels;
+}
+
+partition "Label & Target Construction" {
+  :Attach IQA labels\n- blur levels\n- noise severity\n- skew angle\n- illumination quality\n- compression artifacts;
+  :Attach auxiliary targets\n- handwritten vs printed\n- layout complexity bucket\n- semantic difficulty tags;
+}
+
+partition "Augmentation & Diversity" {
+  :Generate synthetic degradations\n- Gaussian / motion blur\n- noise injection\n- JPEG artifacts\n- shadows / lighting gradients\n- perspective warp / curvature;
+  :Balance difficulty buckets\n(across quality levels,\ncontent types, and layouts);
+  :Split into train / val / test\nwith stratification by\nlayout type + IQA grade;
+}
+
+partition "Teacher/Student Ready Sets" {
+  :Create teacher training sets\n(high resolution,\nfull label richness);
+  :Create student training sets\naligned with teacher inputs;
+  :Persist manifests\n(dataset versions,\nlicenses, splits,\nprovenance metadata);
+}
+
+stop
+
+@enduml
