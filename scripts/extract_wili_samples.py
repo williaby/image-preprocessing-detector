@@ -89,7 +89,9 @@ def extract_language_samples(
 
     # Read files line by line (they're large)
     with open(x_file, encoding="utf-8") as xf, open(y_file, encoding="utf-8") as yf:
-        for line_num, (text_line, label_line) in enumerate(zip(xf, yf, strict=False), 1):
+        for line_num, (text_line, label_line) in enumerate(
+            zip(xf, yf, strict=False), 1
+        ):
             label = label_line.strip()
 
             # Check if this is a target language

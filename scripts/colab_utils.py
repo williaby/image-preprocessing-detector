@@ -47,7 +47,11 @@ def get_gpu_info() -> dict[str, any]:
         # Try to get more detailed info from nvidia-smi
         try:
             result = subprocess.run(
-                ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
+                [
+                    "nvidia-smi",
+                    "--query-gpu=name,memory.total",
+                    "--format=csv,noheader",
+                ],
                 capture_output=True,
                 text=True,
                 check=False,
@@ -312,7 +316,9 @@ def print_session_health() -> None:
     print("=" * 60)
 
     status_icon = "✅" if health["healthy"] else "⚠️"
-    print(f"{status_icon} Overall Status: {'Healthy' if health['healthy'] else 'Issues Detected'}")
+    print(
+        f"{status_icon} Overall Status: {'Healthy' if health['healthy'] else 'Issues Detected'}"
+    )
 
     print(f"\n   GPU Available: {'✅' if health['gpu_available'] else '❌'}")
     if "gpu_memory_usage" in health:

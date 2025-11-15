@@ -219,7 +219,7 @@ def check_drive_space(mount_point: str = "/content/drive/MyDrive") -> dict:
     print(f"   Total: {total_gb:.2f} GB")
     print(f"   Used: {used_gb:.2f} GB")
     print(f"   Free: {free_gb:.2f} GB")
-    print(f"   Usage: {(used_gb/total_gb)*100:.1f}%")
+    print(f"   Usage: {(used_gb / total_gb) * 100:.1f}%")
 
     return {
         "total_gb": total_gb,

@@ -128,7 +128,9 @@ class CheckpointManager:
             Path to saved checkpoint
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        checkpoint_path = self.checkpoint_dir / f"checkpoint_epoch{epoch:03d}_{timestamp}.pt"
+        checkpoint_path = (
+            self.checkpoint_dir / f"checkpoint_epoch{epoch:03d}_{timestamp}.pt"
+        )
 
         checkpoint = {
             "epoch": epoch,
@@ -154,7 +156,9 @@ class CheckpointManager:
         torch.save(checkpoint, latest_path)
 
         # Save metadata JSON for easy inspection
-        metadata_path = self.checkpoint_dir / f"checkpoint_epoch{epoch:03d}_{timestamp}.json"
+        metadata_path = (
+            self.checkpoint_dir / f"checkpoint_epoch{epoch:03d}_{timestamp}.json"
+        )
         with open(metadata_path, "w") as f:
             json.dump(
                 {
@@ -389,7 +393,7 @@ def train_with_checkpointing(
         history["val_accuracy"].append(val_accuracy)
 
         print(
-            f"Epoch {epoch+1}/{num_epochs}: "
+            f"Epoch {epoch + 1}/{num_epochs}: "
             f"Train Loss: {avg_train_loss:.4f}, "
             f"Val Loss: {avg_val_loss:.4f}, "
             f"Val Acc: {val_accuracy:.2f}%"

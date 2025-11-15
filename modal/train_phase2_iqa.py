@@ -132,10 +132,10 @@ def train_iqa():
     model = model.to(device)
 
     num_params = sum(p.numel() for p in model.parameters())
-    print(f"✅ ResNet18 loaded")
+    print("✅ ResNet18 loaded")
     print(f"   Parameters: {num_params:,} (11.7M)")
-    print(f"   Pretrained: ImageNet1K_V1")
-    print(f"   Output: 6-class multi-label")
+    print("   Pretrained: ImageNet1K_V1")
+    print("   Output: 6-class multi-label")
 
     # Create optimizer - AdamW for ResNet18
     print("\n[4/8] Setting up optimizer and scheduler...")
@@ -148,12 +148,10 @@ def train_iqa():
     )
 
     # Cosine annealing with warmup
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=30, eta_min=1e-6
-    )
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=30, eta_min=1e-6)
 
-    print(f"✅ Optimizer: AdamW (lr=5e-5, weight_decay=1e-4)")
-    print(f"✅ Scheduler: CosineAnnealingLR (30 epochs)")
+    print("✅ Optimizer: AdamW (lr=5e-5, weight_decay=1e-4)")
+    print("✅ Scheduler: CosineAnnealingLR (30 epochs)")
 
     # TODO: Create data loaders
     print("\n[5/8] Creating data loaders...")
