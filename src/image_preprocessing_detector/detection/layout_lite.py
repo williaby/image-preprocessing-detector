@@ -308,13 +308,14 @@ def detect_tables(
     for line in lines:
         x1, y1, x2, y2 = line[0]
 
-        # Handle perfectly vertical lines (avoid division by zero)
-        if x2 - x1 == 0:
-            vertical_lines.append(line[0])
-            continue
+        # Calculate angle from horizontal using arctan2 (handles all cases)
+        # arctan2 returns angle in range [-180, 180], we want [0, 90]
+        dx, dy = x2 - x1, y2 - y1
+        angle = abs(np.degrees(np.arctan2(dy, dx)))
 
-        # Calculate angle for non-vertical lines
-        angle = abs(np.degrees(np.arctan((y2 - y1) / (x2 - x1))))
+        # Normalize to [0, 90] range (acute angle from horizontal)
+        if angle > 90:
+            angle = 180 - angle
 
         # Classify as horizontal (0°), vertical (90°), or diagonal
         if angle < angle_threshold:
