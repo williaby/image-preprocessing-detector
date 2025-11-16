@@ -24,7 +24,6 @@ Options:
 
 import argparse
 import logging
-import subprocess  # nosec B404 - Safe subprocess usage with list args, no shell=True
 import sys
 from pathlib import Path
 from typing import Any, cast
@@ -125,7 +124,7 @@ def download_from_huggingface(
 
 def download_from_github(repo_url: str, local_dir: Path, dry_run: bool = False) -> bool:
     """
-    Download dataset from GitHub using git clone.
+    Download dataset from GitHub using GitPython library.
 
     Args:
         repo_url: GitHub repository URL (must be https://github.com/...)
@@ -138,7 +137,6 @@ def download_from_github(repo_url: str, local_dir: Path, dry_run: bool = False) 
     Raises:
         ValueError: If repo_url is not a valid GitHub HTTPS URL
     """
-    import shlex
     from urllib.parse import urlparse
 
     logger.info(f"Cloning {repo_url} to {local_dir}")
@@ -158,24 +156,18 @@ def download_from_github(repo_url: str, local_dir: Path, dry_run: bool = False) 
         return True
 
     try:
+        # Import GitPython library
+        import git
+
         # Create parent directory
         local_dir.parent.mkdir(parents=True, exist_ok=True)
 
-        # Git clone command with validated arguments
-        # Using list form (not shell=True) provides protection, but we validate for defense in depth
-        cmd = ["git", "clone", "--", repo_url, str(local_dir)]
+        # Clone repository using GitPython (no subprocess, pure Python implementation)
+        logger.info(f"Cloning repository to {local_dir}")
+        git.Repo.clone_from(repo_url, str(local_dir))
 
-        logger.info(f"Running: {' '.join(shlex.quote(arg) for arg in cmd)}")
-        # nosec B603 - Validated GitHub HTTPS URL, list args, no shell
-        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
-        # Validated: URL scheme checked to be HTTPS, domain verified as github.com, list args, no shell
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec
-
-        if result.returncode == 0:
-            logger.info(f"✅ Successfully cloned {repo_url}")
-            return True
-        logger.error(f"❌ Git clone failed: {result.stderr}")
-        return False
+        logger.info(f"✅ Successfully cloned {repo_url}")
+        return True
 
     except Exception as e:
         logger.error(f"❌ Failed to clone {repo_url}: {e}")

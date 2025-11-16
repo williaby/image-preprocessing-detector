@@ -41,7 +41,6 @@ HuggingFace Rate Limits (Free Tier):
 import argparse
 import logging
 import os
-import subprocess  # nosec B404 - Safe subprocess usage with list args, no shell=True
 import sys
 from pathlib import Path
 
@@ -177,17 +176,22 @@ def join_zip_parts(output_dir: Path, dataset_name: str) -> bool:
         logger.info(f"✓ Created joined zip: {output_zip}")
         logger.info(f"Size: {output_zip.stat().st_size / (1024**3):.2f} GB")
 
-        # Verify zip integrity
+        # Verify zip integrity using Python's zipfile module
         logger.info("Verifying zip integrity...")
-        result = subprocess.run(  # nosec B607,B603 - unzip with validated path
-            ["unzip", "-t", str(output_zip)], capture_output=True, text=True
-        )
+        import zipfile
 
-        if result.returncode == 0:
-            logger.info("✓ Zip integrity verified")
-            return True
-        logger.error(f"Zip verification failed: {result.stderr}")
-        return False
+        try:
+            with zipfile.ZipFile(output_zip, "r") as zip_ref:
+                # testzip() returns None if all files are OK, or the name of the first bad file
+                bad_file = zip_ref.testzip()
+                if bad_file is None:
+                    logger.info("✓ Zip integrity verified")
+                    return True
+                logger.error(f"Zip verification failed: corrupted file {bad_file}")
+                return False
+        except Exception as e:
+            logger.error(f"Zip verification failed: {e}")
+            return False
 
     except Exception as e:
         logger.error(f"Error joining zip parts: {e}")
@@ -196,7 +200,7 @@ def join_zip_parts(output_dir: Path, dataset_name: str) -> bool:
 
 def extract_archive(archive_path: Path, extract_dir: Path) -> bool:
     """
-    Extract tar.gz or zip archive.
+    Extract tar.gz or zip archive using Python's built-in libraries.
 
     Args:
         archive_path: Path to archive file (must exist and be within project)
@@ -208,7 +212,8 @@ def extract_archive(archive_path: Path, extract_dir: Path) -> bool:
     Raises:
         ValueError: If paths are invalid or potentially unsafe
     """
-    import shlex
+    import tarfile
+    import zipfile
 
     try:
         # Resolve paths to prevent directory traversal attacks
@@ -230,28 +235,23 @@ def extract_archive(archive_path: Path, extract_dir: Path) -> bool:
         logger.info(f"Extracting: {archive_path.name}")
         extract_dir.mkdir(parents=True, exist_ok=True)
 
-        # Build command based on archive type
+        # Extract based on archive type using Python's built-in libraries
         if archive_path.suffix == ".gz" or archive_path.name.endswith(".tar.gz"):
-            # Use -- to separate options from filenames for safety
-            cmd = ["tar", "-xzf", str(archive_path), "-C", str(extract_dir)]
+            with tarfile.open(archive_path, "r:gz") as tar:
+                # Security: filter="data" prevents path traversal attacks (Python 3.12+)
+                # nosec B202 - Using filter="data" for safe extraction
+                tar.extractall(path=extract_dir, filter="data")  # nosec
+            logger.info(f"✓ Extracted tar.gz to: {extract_dir}")
         elif archive_path.suffix == ".zip":
-            # Use -- to separate options from filenames for safety
-            cmd = ["unzip", "-q", str(archive_path), "-d", str(extract_dir)]
+            with zipfile.ZipFile(archive_path, "r") as zip_ref:
+                # nosec B202 - Extracting from validated archive path (resolved, exists, is_file checks)
+                zip_ref.extractall(extract_dir)  # nosec
+            logger.info(f"✓ Extracted zip to: {extract_dir}")
         else:
             logger.error(f"Unknown archive type: {archive_path.suffix}")
             return False
 
-        logger.info(f"Running: {' '.join(shlex.quote(arg) for arg in cmd)}")
-        # nosec B603 - Validated paths, list args, no shell
-        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
-        # Validated: Path resolved and verified with exists() and is_file(), list args, no shell
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec
-
-        if result.returncode == 0:
-            logger.info(f"✓ Extracted to: {extract_dir}")
-            return True
-        logger.error(f"Extraction failed: {result.stderr}")
-        return False
+        return True
 
     except Exception as e:
         logger.error(f"Error extracting archive: {e}")
