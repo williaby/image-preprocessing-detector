@@ -20,9 +20,8 @@ from image_preprocessing_detector.metrics.dqs_calculator import (
 )
 from image_preprocessing_detector.schema import (
     DocumentMetadata,
-    DocumentQualityScore,
+    DQSMetadata,
     LayoutType,
-    PageAttributes,
     PageLayoutSummary,
     PageMetadata,
     PDFType,
@@ -130,7 +129,10 @@ class DocumentProcessor:
             pdf_type=pdf_type,
             pre_ocr_risk=pre_ocr_risk,
             dqs=dqs,
+            ocr_routing_recommendation=None,  # Phase 8: Will be populated by routing engine
             page_layout_summary=page_layout_summary,
+            upscaling=None,  # Phase 4: No upscaling in this placeholder
+            teacher_usage=None,  # Phase 2: No teacher model usage yet
             processing_version=processing_version,
             pages=pages,
         )
@@ -187,12 +189,11 @@ class DocumentProcessor:
                 height_px=3300,
                 dpi_input=300,
                 dpi_effective=300,
+                teacher_iqa=None,  # Phase 2: No teacher model yet
             )
         ]
 
-    def _calculate_document_dqs(
-        self, pages: list[PageMetadata]
-    ) -> DocumentQualityScore:
+    def _calculate_document_dqs(self, pages: list[PageMetadata]) -> DQSMetadata:
         """Calculate Document Quality Score from page-level IQA metrics.
 
         TODO: Extract actual IQA metrics from pages
@@ -243,18 +244,16 @@ class DocumentProcessor:
         for i, _page in enumerate(pages):
             # Placeholder: Assume simple single-column layout
             summary = PageLayoutSummary(
-                page_index=i,
+                page_number=i + 1,  # 1-based page numbering
                 layout_type=LayoutType.SINGLE_COLUMN,
                 has_tables=False,
                 has_figures=False,
                 has_dense_math=False,
                 has_handwriting=False,
-                page_attributes=PageAttributes(
-                    fuzzy_scan=False,
-                    watermark=False,
-                    colorful_background=False,
-                ),
-                structural_complexity=0.3,  # Simple layout
+                fuzzy_scan=False,  # Direct attributes, not nested
+                watermark=False,
+                colorful_background=False,
+                complexity_score=0.3,  # Simple layout
             )
             summaries.append(summary)
 

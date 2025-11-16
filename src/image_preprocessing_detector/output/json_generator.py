@@ -228,6 +228,7 @@ class MetadataBuilder:
             height_px=height,
             dpi_input=dpi_input,
             dpi_effective=dpi_effective,
+            teacher_iqa=None,  # Phase 2: Will be populated by teacher model if used
             detected_issues=detected_issues,
             planned_actions=planned_actions,
             elements=elements or [],
@@ -303,6 +304,7 @@ class MetadataBuilder:
             pre_ocr_risk=None,
             dqs=None,
             ocr_routing_recommendation=None,
+            teacher_usage=None,  # Phase 2: Will be populated if teacher model is used
             # page_layout_summary defaults to empty list (will be populated in Phase 6)
         )
 

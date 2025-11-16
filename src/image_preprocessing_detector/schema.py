@@ -322,6 +322,11 @@ class TeacherUsage(BaseModel):
     )
 
 
+# Type aliases for backward compatibility and clearer naming
+DocumentQualityScore = DQSMetadata  # Alias for routing module
+OCRRoutingRecommendation = OCRRoutingStrategy  # Alias for routing module
+
+
 class DocumentMetadata(BaseModel):
     """Complete metadata for a processed document.
 

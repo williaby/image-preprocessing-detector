@@ -17,6 +17,7 @@ from image_preprocessing_detector.schema import (
     DQSMetadata,
     LayoutType,
     PageLayoutSummary,
+    PDFType,
 )
 from image_preprocessing_detector.utils import get_logger
 
@@ -367,3 +368,131 @@ def normalize_classical_iqa(
         "illumination_score": illumination_normalized,
         "artifacts_score": artifacts_normalized,
     }
+
+
+def calculate_dqs(
+    blur_scores: list[float],
+    contrast_scores: list[float],
+    noise_scores: list[float],
+    _skew_angles: list[float],
+    layout_complexities: list[float],
+) -> DQSMetadata:
+    """Calculate Document Quality Score from page-level metrics.
+
+    Aggregates IQA metrics across all pages to produce document-level DQS.
+
+    Args:
+        blur_scores: List of blur scores per page (0-1, 1=sharp)
+        contrast_scores: List of contrast scores per page (0-1, 1=good)
+        noise_scores: List of noise scores per page (0-1, 1=clean)
+        _skew_angles: List of skew angles per page (degrees, unused in current implementation)
+        layout_complexities: List of layout complexity scores per page (0-1)
+
+    Returns:
+        DQSMetadata with aggregated degradation and complexity scores
+
+    Example:
+        >>> dqs = calculate_dqs(
+        ...     blur_scores=[0.8, 0.7],
+        ...     contrast_scores=[0.9, 0.85],
+        ...     noise_scores=[0.75, 0.8],
+        ...     skew_angles=[1.0, 0.5],
+        ...     layout_complexities=[0.3, 0.4],
+        ... )
+        >>> assert 0.0 <= dqs.degradation_score <= 1.0
+    """
+    import numpy as np
+
+    # Aggregate degradation score: median of weighted IQA metrics
+    num_pages = len(blur_scores)
+    degradation_scores = []
+
+    for i in range(num_pages):
+        # Weight: 40% blur, 30% noise, 30% contrast
+        page_degradation = (
+            0.4 * blur_scores[i] + 0.3 * noise_scores[i] + 0.3 * contrast_scores[i]
+        )
+        degradation_scores.append(page_degradation)
+
+    aggregated_degradation = float(np.median(degradation_scores))
+
+    # Aggregate complexity: max complexity across all pages
+    aggregated_complexity = float(np.max(layout_complexities))
+
+    logger.debug(
+        "Calculated DQS from page metrics",
+        num_pages=num_pages,
+        degradation_score=aggregated_degradation,
+        structural_complexity_score=aggregated_complexity,
+    )
+
+    return DQSMetadata(
+        degradation_score=aggregated_degradation,
+        structural_complexity_score=aggregated_complexity,
+    )
+
+
+def calculate_pre_ocr_risk(
+    dqs: DQSMetadata,
+    pdf_type: PDFType | None,
+    page_layout_summary: list[PageLayoutSummary],
+) -> float:
+    """Calculate pre-OCR processing risk score.
+
+    Risk score combines degradation quality, structural complexity, and document type
+    to predict OCR difficulty (0=low risk, 1=high risk).
+
+    Formula:
+    - Base risk from degradation: (1 - degradation_score) * 0.4
+    - Complexity contribution: complexity_score * 0.3
+    - PDF type penalty: +0.2 for image_only, +0.0 for born_digital
+    - Layout features: +0.1 if has_handwriting
+
+    Args:
+        dqs: Document Quality Score
+        pdf_type: PDF classification (image_only/born_digital/hybrid)
+        page_layout_summary: Per-page layout analysis
+
+    Returns:
+        Pre-OCR risk score (0-1, where 0=low risk, 1=high risk)
+
+    Example:
+        >>> dqs = DQSMetadata(degradation_score=0.7, structural_complexity_score=0.5)
+        >>> risk = calculate_pre_ocr_risk(dqs, PDFType.HYBRID, [])
+        >>> assert 0.0 <= risk <= 1.0
+    """
+    # Base risk from degradation (inverse: low quality = high risk)
+    degradation_risk = (1.0 - dqs.degradation_score) * 0.4
+
+    # Complexity contribution
+    complexity_risk = dqs.structural_complexity_score * 0.3
+
+    # PDF type penalty
+    pdf_type_penalty = 0.0
+    if pdf_type == PDFType.IMAGE_ONLY:
+        pdf_type_penalty = 0.2
+    elif pdf_type == PDFType.HYBRID:
+        pdf_type_penalty = 0.1
+
+    # Layout feature penalties
+    has_handwriting = any(page.has_handwriting for page in page_layout_summary)
+    handwriting_penalty = 0.1 if has_handwriting else 0.0
+
+    # Aggregate risk
+    total_risk = (
+        degradation_risk + complexity_risk + pdf_type_penalty + handwriting_penalty
+    )
+
+    # Clamp to [0, 1]
+    total_risk = max(0.0, min(1.0, total_risk))
+
+    logger.debug(
+        "Calculated pre-OCR risk",
+        degradation_risk=degradation_risk,
+        complexity_risk=complexity_risk,
+        pdf_type_penalty=pdf_type_penalty,
+        handwriting_penalty=handwriting_penalty,
+        total_risk=total_risk,
+    )
+
+    return float(total_risk)

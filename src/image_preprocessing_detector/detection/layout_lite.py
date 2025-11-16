@@ -499,7 +499,7 @@ def detect_fuzzy_scan(
 
     # Normalize blur score (inverse: lower variance = more blur)
     # Typical range: sharp images have variance >500, blurry <100
-    blur_score = 1.0 - min(1.0, laplacian_var / 500.0)
+    blur_score = float(1.0 - min(1.0, laplacian_var / 500.0))
 
     # Estimate noise using high-frequency components
     # Apply high-pass filter (difference from Gaussian blur)
@@ -507,7 +507,7 @@ def detect_fuzzy_scan(
     noise_image = cv2.absdiff(gray, blurred)
 
     # Calculate noise metric as standard deviation of noise image
-    noise_std = np.std(noise_image)
+    noise_std = float(np.std(noise_image))
 
     # Normalize noise score
     # Typical range: clean images have std <10, noisy >30
@@ -590,7 +590,7 @@ def detect_watermark(
 
     # Calculate opacity score from intensity variations
     # Watermarks typically have semi-transparent, uniform intensity
-    gray_std = np.std(gray)
+    gray_std = float(np.std(gray))
     opacity_score = 1.0 - min(1.0, gray_std / 50.0)  # Normalize
 
     # Detection logic: high low-frequency energy indicates watermark
