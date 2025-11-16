@@ -1,4 +1,6 @@
-# Image Preprocessing Detector
+# Project A - Document Preprocessing & IQA Gateway
+
+**Part of the Four-Project RAG Document Pipeline**
 
 ## Security & Quality
 
@@ -26,64 +28,116 @@
 
 ## What Does This Do?
 
-**Prepares scanned documents and images for AI processing.** This tool automatically detects quality issues (blurriness, skew, poor contrast, noise) in PDFs and images, then identifies which preprocessing steps are needed to improve accuracy before feeding documents to AI systems.
+**Project A** is the **front door** for the four-project RAG document pipeline. It prepares raw documents (PDFs, images) for intelligent OCR processing by:
 
-**Problem it solves**: Scanned documents and images often have quality issues that hurt AI accuracy. This tool detects those issues automatically, so you know exactly what corrections to apply before processing documents with AI/machine learning systems.
+1. **Assessing Quality**: Classical + ML-based image quality assessment (IQA)
+2. **Applying Corrections**: Deskew, denoise, enhance (with safety guardrails)
+3. **Calculating DQS**: Document Quality Score for routing decisions
+4. **Classifying Layout**: Coarse page-level attributes (not full semantic layout)
+5. **Routing Recommendations**: Tells Project B which OCR strategy to use
 
----
+**Four-Project RAG Pipeline**:
+```
+Project A (This) → Project B (OCR) → Project C (Fusion) → Project D (Vector Search)
+Preprocessing      Layout & Reading   Multi-Engine        Embeddings &
+& IQA Gateway      Order Detection    Fusion & Trust      Retrieval
+```
 
-**Intelligent image preprocessing detection system for RAG applications.** Automatically analyzes documents (PDFs, images) and detects required preprocessing steps before vector database ingestion.
+**Problem it solves**: Poor-quality scans break OCR. Project A detects and fixes quality issues, then provides routing intelligence so downstream projects can optimize processing strategies.
 
 ## Features
 
 - **Multi-Stage Pipeline Architecture**: Text detection gate routes documents to specialized processing paths
-- **Hybrid IQA**: Classical CV + ML for image quality assessment (30+ detection categories)
-  - Noise, blur, skew, contrast, orientation, perspective distortion
-  - Low resolution detection with automatic DPI upscaling (Phase 1B)
-  - 3-dimension quality assessment: overall, sharpness, color fidelity (Phase 2)
-- **Document Element Detection**: YOLOv8-based detection of tables, images, handwriting, formulas, margin annotations
-- **Unified Document Restoration** (Phase 3+): DocRes model for 5 preprocessing tasks
-  - Dewarping, de-shadowing, deblurring, binarization, contrast enhancement
-  - Dynamic task-specific prompts for runtime task selection
-- **Table Structure Extraction** (Phase 3): PubTables-1M dataset for cell-level structure recognition
-- **Reading Order Prediction** (Phase 4-5): Logical sequence prediction for complex layouts
-- **Quality Assessment per Element**: IQA on embedded images within text documents
-- **Comprehensive Benchmarking**: Registry-based evaluation across 9+ datasets with smoke tests and full validation
-- **Structured JSON Output**: COCO-aligned metadata with confidence scores and transform history
-- **Production-Ready**: Optimized for 50-150ms latency, 6+ pages/sec throughput per GPU worker
+- **Teacher-Student ML IQA** (Phase 2):
+  - ResNet-50 teacher for difficult/high-risk documents
+  - ResNet-18 student for fast production inference
+  - Selective teacher inference based on uncertainty and discrepancy
+  - Device-priority execution: Local GPU → CPU → Modal GPU
+- **Classical IQA** (Phase 4): Traditional computer vision quality assessment
+  - Blur (Laplacian), noise (wavelet), skew (Hough), lighting, JPEG blockiness
+  - Student vs classical discrepancy detection for teacher escalation
+- **DPI Upscaling** (Phase 4): Automatic resolution normalization
+  - 5 OpenCV algorithms (lanczos, bicubic, inter_linear, inter_cubic, inter_area)
+  - Automatic detection and upscaling for documents <300 DPI
+  - Proven technology from data_ingestor project
+- **Layout-Lite Detection** (Phase 6): Coarse page-level attributes
+  - Page types: single/multi/three_column/complex
+  - Attributes: has_tables, has_figures, has_dense_math, has_handwriting
+  - Page quality: fuzzy_scan, watermark, colorful_background
+  - **NOT full semantic layout** (Project B responsibility)
+- **Document Quality Score** (Phase 8): Holistic quality assessment
+  - Degradation score (0-1) from IQA metrics
+  - Structural complexity score (0-1) from layout-lite
+  - Pre-OCR risk scoring
+- **OCR Routing Recommendations** (Phase 8): Intelligent strategy selection
+  - 4 routing strategies: ocr_fast, ocr_advanced, vision_simple, vision_structured
+  - Based on DQS, PDF type (image_only/born_digital/hybrid), and complexity
+- **PDF Type Classification** (Phase 8): Automatic document categorization
+- **Structured JSON Output**: DocumentMetadata.json with routing metadata + corrected images
+- **Production-Ready**: <150ms/page latency (GPU), <400ms/page (CPU), ≥6 pages/sec throughput
 
 ## Architecture Overview
 
+### Four-Project RAG Pipeline
+
 ```
-PDF/Image Input
-    ↓
-[Ingestion & Standardization]
-    ↓
-[Text Detection Gate]
-    ↓              ↓
-[NO TEXT]      [TEXT DETECTED]
-    ↓              ↓
-Classical CV   YOLOv8 Layout Detection
-+ ML (IQA)     + Hybrid IQA on Images
-    ↓              ↓
-[Corrections & JSON Output]
+┌───────────────────────────────────────────────────────────────────┐
+│                    RAG DOCUMENT PIPELINE                           │
+└───────────────────────────────────────────────────────────────────┘
+
+Project A (THIS REPO)     →    Project B          →    Project C         →    Project D
+Preprocessing & IQA              OCR Orchestration       Fusion & Trust         Vector Indexing
+─────────────────────           ─────────────────       ──────────────         ───────────────
+• IQA & Corrections             • Full Layout           • Multi-Engine         • Embeddings
+• Text Gate                     • Reading Order           Fusion               • Vector DB
+• DQS Calculation               • Table Structure       • Trust Scoring        • Retrieval
+• Routing Metadata              • Multi-Engine OCR      • RAG Chunking         • Search
+
+OUTPUT:                         OUTPUT:                 OUTPUT:                OUTPUT:
+DocumentMetadata.json           OCRDocument.json        FusedDocument.json     Vector DB Entries
++ Corrected Images
 ```
 
-See [ARCHITECTURE_SUMMARY.md](docs/architecture/ARCHITECTURE_SUMMARY.md) for detailed architecture and [PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md) for complete implementation plan.
+### Project A Internal Pipeline
+
+```
+PDF/Image Input → DPI Upscaling → Ingestion → PDF Type Classification → Text Gate
+                                                                             ↓
+                                                           ┌─────────────────┴─────────────────┐
+                                                           ↓                                   ↓
+                                                       [NO TEXT]                          [TEXT DETECTED]
+                                                           ↓                                   ↓
+                                                    Classical IQA                      Layout-Lite Classifier
+                                                           +                                   +
+                                                    ML IQA (Student)                   ML IQA (Student/Teacher)
+                                                           ↓                                   ↓
+                                                        Corrections ← ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+                                                           ↓
+                                                    DQS Calculation
+                                                           ↓
+                                                  Routing Recommendation
+                                                           ↓
+                                                    JSON Output + Images
+                                                           ↓
+                                                    HANDOFF TO PROJECT B
+```
+
+See [docs/development/RAG Pipeline/RAG-pipeline-project-overview.md](docs/development/RAG Pipeline/RAG-pipeline-project-overview.md) for complete architecture and [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md) for detailed implementation plan.
 
 ## Project Status
 
-**Phase 0: Foundation & Scaffolding** (IN PROGRESS)
+**Phase 0: Project Setup** (Week 0-1) - **COMPLETE** ✅
 
 - [x] Project structure with Poetry (Python 3.12)
 - [x] JSON schema with Pydantic v2 validation
 - [x] Structured logging (structlog + rich)
-- [x] Pre-commit hooks (Black, Ruff, MyPy, Bandit)
+- [x] Pre-commit hooks (Ruff format, Ruff lint, MyPy, Bandit)
 - [x] CI/CD pipeline (GitHub Actions)
-- [ ] Evaluation framework
-- [ ] Ground-truth test set (500 pages)
+- [x] Modal workspace setup
+- [ ] GPU/CPU device probing utilities
+- [ ] Configuration system (YAML) with teacher fallback settings
 
-**Next**: Phase 1 - MVP with Classical Methods (Week 4-7)
+**Next**: Phase 2 - ResNet Teacher & Student ML IQA (Week 2-4)
 
 ## Quick Start
 
@@ -193,6 +247,37 @@ image_detection/
 └── ARCHITECTURE_SUMMARY.md        # Architecture quick reference
 ```
 
+## ML Model Training (Phase 2+)
+
+### IQA Training with Modal
+
+Train ML models for Image Quality Assessment using Modal's serverless GPU platform:
+
+```bash
+# Install Modal CLI
+poetry add modal && poetry install
+
+# Authenticate with Modal
+poetry run modal token new
+
+# Setup GCS credentials (one-time)
+./scripts/modal_helpers.sh setup-gcs-secret /path/to/gcp-service-account-key.json
+
+# Test GPU access
+./scripts/modal_helpers.sh test-gpu
+
+# Start Phase 2 IQA training (T4 GPU, ~3-6 hours)
+./scripts/modal_helpers.sh train-phase2
+
+# Monitor training at: https://modal.com/apps
+```
+
+**Training Cost**: ~$3 for 5 hours on T4 GPU - covered by Modal's $30/month free tier!
+
+See [PHASE2_QUICKSTART.md](docs/PHASE2_QUICKSTART.md) for complete training guide.
+
+**Note**: This trains IQA models only (Project A scope). Layout detection (YOLOv8) is handled by Project B (ocr-orchestrator) per RAG Pipeline architecture.
+
 ## Testing
 
 ```bash
@@ -263,6 +348,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
   - [ADR-031: Comprehensive Benchmarking Framework](docs/ADRs/0031-comprehensive-benchmarking-framework.md)
   - [ADR-032: DocRes Unified Preprocessing](docs/ADRs/0032-docres-unified-preprocessing.md)
   - [ADR-029: Three-Tier Dataset Strategy](docs/ADRs/0029-phase2-dataset-selection-strategy.md)
+- **[docs/MODEL_STORAGE.md](docs/MODEL_STORAGE.md)**: Model artifact storage, versioning, and promotion workflow (GCS + HF Hub)
 - **[docs/PUBLIC_DATASET_COVERAGE.md](docs/PUBLIC_DATASET_COVERAGE.md)**: Public dataset coverage analysis across phases
 - **[docs/infrastructure/HF_SPACES_VS_COLAB_PRO.md](docs/infrastructure/HF_SPACES_VS_COLAB_PRO.md)**: Training platform cost comparison
 - **[docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)**: Comprehensive testing approach with 80%+ coverage
@@ -279,77 +365,91 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## Roadmap
 
-### Phase 1: MVP with Classical Methods (Weeks 4-7) ✅
-- PDF ingestion and text detection gate
-- Classical IQA detectors (skew, blur, contrast)
-- Correction pipeline with guardrails
-- JSON output generation
+**NEW PHASE STRUCTURE** (aligned with RAG Pipeline architecture):
 
-### Phase 1B: DPI Detection & Upscaling (Weeks 7-8) 🚧
-- Automatic DPI detection and analysis
-- Multi-algorithm upscaling (5 OpenCV algorithms)
-- Pre-flight analysis orchestration
-- Graceful fallback and safety guardrails
+### Phase 0: Project Setup (Week 0-1) ✅ **COMPLETE**
+- Project skeleton with Poetry, Modal workspace setup
+- GPU/CPU device probing utilities
+- Configuration system (YAML) with teacher fallback settings
+- Logging/telemetry scaffolding
 
-### Phase 2: ML for Image Quality (Weeks 8-12) - Extended +1 Week
+### Phase 2: ResNet Teacher & Student ML IQA (Week 2-4) 🚧 **PLANNED**
 **Training Platform**: Modal serverless GPU (free tier: $30/month credits)
-- IQA dataset generation (50k synthetic + real images)
-- Train MobileNetV3/EfficientNet multi-label classifier
-- **3-dimension quality assessment**: Overall, sharpness, color fidelity (FR-2.3)
-- **Domain-Generalized Quality Assessment (DGQA)**: Synthetic-to-real calibration
-- ONNX optimization for CPU inference
-- Integration with classical methods (ensemble voting)
-- **Cost**: ~$3 (T4 GPU @ $0.59/hr, ~5 hours) - **Covered by $30/month free tier**
+- Multi-head ResNet-50 teacher architecture
+- Knowledge distillation to ResNet-18 student
+- Validation on OHR-Bench (document-specific IQA)
+- Export to ONNX + TorchScript
+- Model registry integration (local + Modal)
+- Selective teacher inference triggers (uncertainty, discrepancy, risk)
+- Device priority execution (Local GPU → CPU → Modal GPU)
+- **Cost**: ~$5-10 (Modal GPU training) - **Covered by $30/month free tier**
 
-### Phase 3: ML for Document Layout & Unified Preprocessing (Weeks 12-20) - Extended +3 Weeks
-**Training Platform**: Modal serverless GPU (free tier: $30/month credits)
-- Document element dataset (PubLayNet + DocLayNet + custom)
-- Train YOLOv8n/s for layout detection (no session timeouts - trains to completion)
-- **NEW: DocRes Unified Preprocessing** - 5 tasks in one model (dewarping, de-shadowing, deblurring, binarization, contrast)
-- **NEW: DLAFormer Research** - Unified layout analysis (dual-track with YOLOv8)
-- **NEW: Table Structure Extraction** - PubTables-1M for cell-level recognition (FR-4.11)
-- Active learning for rare classes (handwriting, formulas)
-- INT8 quantization for production
-- **Cost**: ~$55-88 (A10 GPU @ $1.10/hr, 50-80 hours) - **Partially covered by free tier** (~$30 credits, $25-58 out-of-pocket)
+### Phase 4: Classical IQA + DPI Upscaling (Week 5-6) 🚧 **PLANNED**
+- Laplacian blur, wavelet noise, Hough skew
+- Lighting metrics, JPEG blockiness detection
+- Student vs classical discrepancy threshold tuning
+- **DPI upscaling integration** (5 OpenCV algorithms)
+- Proven technology from data_ingestor project
+- Source: `/home/byron/dev/data_ingestor/src/data_ingestor/utils/`
 
-### Phase 4: Production Hardening (Weeks 21-24)
-- FastAPI service with Docker
-- Performance optimization (batching, quantization)
-- Monitoring and telemetry
-- Comprehensive testing (80%+ coverage)
-- **Reading Order Prediction** (optional): Logical sequence prediction for complex layouts
+### Phase 6: Layout-Lite Detection (Week 6-8) 🚧 **PLANNED**
+- YOLOv8-nano for coarse page attributes (text/table/figure blocks)
+- Handwriting presence classifier
+- Structural complexity scorer
+- OmniDocBench-style page attributes
+- **NOT full DocLayNet-style semantic layout** (Project B responsibility)
 
-### Phase 5: Continuous Improvement (Weeks 25+)
-- Phase 5A: Operational Foundation (Weeks 21-24)
-- Phase 5B: Intelligence & Automation (Weeks 25-32)
-- Phase 5C: Optimization & Scale (Weeks 33-40)
-- Phase 5D: Ongoing Operations (Week 41+)
-- Drift detection and alerting
-- Active learning pipeline
-- Quarterly retraining and recalibration
+### Phase 8: DQS & Routing (Week 9) 🚧 **PLANNED**
+- Document Quality Score calculation (degradation + complexity)
+- PDF type classification (image_only/born_digital/hybrid)
+- Pre-OCR risk scoring
+- Routing recommendation logic (4 strategies)
+- JSON schema output with complete routing metadata
+
+### Phase 10: Validation, Reporting, Documentation (Week 10) 🚧 **PLANNED**
+- End-to-end pipeline benchmarking
+- Teacher vs student performance analysis
+- Stress testing (large batches, cost tracking)
+- Documentation updates, PlantUML diagrams
+
+**REMOVED PHASES** (out of Project A scope):
+- ~~Phase 1/1B (old numbering)~~ → Absorbed into Phases 0 and 4
+- ~~Table Structure Extraction (PubTables-1M)~~ → Project B responsibility
+- ~~Reading Order Prediction (ReadingBank)~~ → Project B responsibility
+- ~~Full DocLayNet-style layout detection~~ → Project B responsibility
+- ~~DocRes Unified Preprocessing (dewarping, etc.)~~ → Out of scope
+- ~~DLAFormer Research~~ → Project B responsibility
 
 ## Performance Targets
 
-| Metric | Target | Phase | Notes |
-|--------|--------|-------|-------|
-| IQA mAP | > 0.88 | Phase 2 | Multi-label classification |
-| IQA ECE | < 0.05 | Phase 2 | Well-calibrated confidence scores |
-| Layout mAP@.50 | > 0.82 | Phase 3 | YOLOv8 object detection |
-| Table Structure TEDS | > 0.85 | Phase 3 | PubTables-1M benchmark |
-| Dewarping ED@10 | > 0.90 | Phase 3 | AnyPhotoDoc 6300 benchmark |
-| Reading Order Accuracy | > 0.85 | Phase 4-5 | Optional: ReadingBank benchmark |
-| JSON Accuracy | > 0.85 | Phase 3 | End-to-end pipeline |
-| Latency (GPU) | < 150ms/page | Phase 3 | With T4 GPU |
-| Latency (CPU) | < 500ms/page | Phase 3 | ONNX INT8 quantized |
-| Throughput | > 6 pages/sec | Phase 3 | Per GPU worker |
-| Test Coverage | > 80% | All Phases | Unit + integration |
+**ML IQA (Phase 2)**:
+
+| Metric | Target | Notes |
+|--------|--------|-------|
+| Student (ResNet-18) CPU | ≤40ms/page (target), ≤100ms (acceptable) | Production default |
+| Student (ResNet-18) GPU | ≤10ms/page (target), ≤25ms (acceptable) | Local GPU preferred |
+| Teacher (ResNet-50) GPU | ≤30ms/page | Flagged pages only |
+| IQA mAP | > 0.88 | Multi-label classification on OHR-Bench |
+
+**End-to-End Pipeline (Phase 10)**:
+
+| Metric | Target | Notes |
+|--------|--------|-------|
+| Latency (GPU) | <150ms/page | Full pipeline with GPU |
+| Latency (CPU) | <500ms/page | Full pipeline CPU-only |
+| Throughput (GPU) | ≥6 pages/sec/worker | With T4 GPU |
+| Throughput (CPU) | ≥2 pages/sec/worker | CPU-only mode |
+| Test Coverage | >80% | Unit + integration |
 
 **Benchmark Datasets**:
-- **IQA**: DIQA-5000 (document-specific), LIVE/CSIQ (fallback)
-- **Layout Detection**: DocLayNet, PubLayNet, OmniDocBench
-- **Table Structure**: PubTables-1M, FinTabNet
-- **Preprocessing**: AnyPhotoDoc 6300 (dewarping), SynDocDS (shadow removal)
-- **Reading Order**: ReadingBank, OHR-Bench (optional Phase 4-5)
+- **IQA**: OHR-Bench (document-specific), DIQA-5000 (fallback)
+- **Layout-Lite**: OmniDocBench (page attributes)
+
+**REMOVED METRICS** (out of Project A scope):
+- ~~Layout mAP@.50~~ → Project B (full layout detection)
+- ~~Table Structure TEDS~~ → Project B (table structure extraction)
+- ~~Dewarping ED@10~~ → Out of scope (DocRes removed)
+- ~~Reading Order Accuracy~~ → Project B (reading order prediction)
 
 ## Contributing
 

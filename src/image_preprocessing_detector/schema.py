@@ -44,6 +44,32 @@ class ElementCategory(str, Enum):
     FIGURE = "figure"
 
 
+class PDFType(str, Enum):
+    """PDF document type classification (Phase 8)."""
+
+    IMAGE_ONLY = "image_only"
+    BORN_DIGITAL = "born_digital"
+    HYBRID = "hybrid"
+
+
+class OCRRoutingStrategy(str, Enum):
+    """OCR routing recommendation strategies (Phase 8)."""
+
+    OCR_FAST = "ocr_fast"
+    OCR_ADVANCED = "ocr_advanced"
+    VISION_SIMPLE = "vision_simple"
+    VISION_STRUCTURED = "vision_structured"
+
+
+class LayoutType(str, Enum):
+    """Coarse page layout classification (Phase 6 - Layout-Lite)."""
+
+    SINGLE = "single"
+    MULTI = "multi"
+    THREE_COLUMN = "three_column"
+    COMPLEX = "complex"
+
+
 class ActionType(str, Enum):
     """Types of correction actions that can be applied."""
 
@@ -159,6 +185,59 @@ class TransformHistory(BaseModel):
         return v
 
 
+class DQSMetadata(BaseModel):
+    """Document Quality Score metadata (Phase 8).
+
+    Combines degradation (from IQA metrics) and structural complexity (from layout-lite)
+    to provide holistic quality assessment for routing decisions.
+    """
+
+    degradation_score: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="IQA degradation score 0-1 (0=pristine, 1=severely degraded)",
+    )
+    structural_complexity_score: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Layout complexity score 0-1 (0=simple, 1=very complex)",
+    )
+
+
+class PageLayoutSummary(BaseModel):
+    """Coarse page-level layout attributes (Phase 6 - Layout-Lite).
+
+    NOTE: This is NOT full semantic layout detection (which is Project B's responsibility).
+    This provides only coarse page attributes for routing decisions.
+    """
+
+    page_number: int = Field(..., ge=1, description="1-based page number")
+    layout_type: LayoutType = Field(..., description="Coarse layout classification")
+    has_tables: bool = Field(default=False, description="Page contains table blocks")
+    has_figures: bool = Field(default=False, description="Page contains figure blocks")
+    has_dense_math: bool = Field(
+        default=False, description="Page contains dense mathematical notation"
+    )
+    has_handwriting: bool = Field(
+        default=False, description="Page contains handwritten content"
+    )
+    fuzzy_scan: bool = Field(
+        default=False, description="Page is a low-quality fuzzy scan"
+    )
+    watermark: bool = Field(default=False, description="Page contains watermark")
+    colorful_background: bool = Field(
+        default=False, description="Page has colorful/patterned background"
+    )
+    complexity_score: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Structural complexity score 0-1 for routing",
+    )
+
+
 class PageMetadata(BaseModel):
     """Metadata for a single page in the document."""
 
@@ -204,15 +283,21 @@ class ProcessingVersion(BaseModel):
 
 
 class DocumentMetadata(BaseModel):
-    """Complete metadata for a processed document."""
+    """Complete metadata for a processed document.
+
+    This schema represents Project A's output, which serves as input to Project B
+    (OCR Orchestration) in the four-project RAG Pipeline.
+    """
 
     document_id: str = Field(..., description="Unique document identifier")
     file_name: str = Field(..., description="Original filename")
     source_mime: str = Field(..., description="Source MIME type")
     num_pages: int = Field(..., gt=0, description="Total number of pages")
+
+    # Phase 4: DPI Upscaling (optional - only if upscaling was performed)
     upscaling: dict[str, Any] | None = Field(
         None,
-        description="Phase 1B: DPI upscaling metadata (if performed)",
+        description="Phase 4: DPI upscaling metadata (if performed)",
         examples=[
             {
                 "performed": True,
@@ -226,6 +311,38 @@ class DocumentMetadata(BaseModel):
             }
         ],
     )
+
+    # Phase 8: Routing Metadata (Optional until Phase 8 implementation, then REQUIRED for Project B handoff)
+    pdf_type: PDFType | None = Field(
+        None,
+        description="Phase 8: PDF type classification (image_only/born_digital/hybrid)",
+    )
+    languages: list[str] = Field(
+        default_factory=list,
+        description="Phase 8: ISO 639-1 language codes detected in document",
+    )
+    has_non_latin: bool = Field(
+        default=False, description="Phase 8: Document contains non-Latin scripts"
+    )
+    pre_ocr_risk: float | None = Field(
+        None,
+        ge=0.0,
+        le=1.0,
+        description="Phase 8: Pre-OCR processing risk score 0-1 (for routing decisions)",
+    )
+    dqs: DQSMetadata | None = Field(
+        None, description="Phase 8: Document Quality Score (degradation + complexity)"
+    )
+    ocr_routing_recommendation: OCRRoutingStrategy | None = Field(
+        None,
+        description="Phase 8: Recommended OCR strategy for Project B",
+    )
+    page_layout_summary: list[PageLayoutSummary] = Field(
+        default_factory=list,
+        description="Phase 6: Per-page coarse layout attributes (layout-lite, NOT full semantic layout)",
+    )
+
+    # Existing fields
     processing_version: ProcessingVersion = Field(
         ..., description="Version information"
     )

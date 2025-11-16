@@ -16,6 +16,9 @@ path = [
     "tests/**",
     "validation/**",
     "fuzz/**",
+    "benchmarks/**/*.py",
+    "scripts/**/*.py",
+    "modal/**/*.py",
     "*.py",
     "noxfile.py",
 ]
@@ -27,7 +30,8 @@ SPDX-FileCopyrightText = "2025 Byron Williams"
 path = [
     "docs/**",
     "*.md",
-    "!LICENSES/**",  # Exclude license files themselves
+    "tmp_cleanup/**/*.md",  # Temporary reference files
+    "!LICENSES/*.txt",  # Exclude actual license text files
 ]
 SPDX-License-Identifier = "CC-BY-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
@@ -45,9 +49,9 @@ path = [
     ".readthedocs.yaml",
     "mkdocs.yml",
     "poetry.lock",  # Dependency lockfile for reproducible builds
-    "requirements.txt",  # Generated from poetry export
-    "requirements-dev.txt",  # Generated from poetry export
-    "requirements/**",  # All requirements files in requirements directory
+    "requirements/**/*.txt",  # Generated from poetry export
+    "benchmarks/labelmaps/**/*.yaml",  # Benchmark label mappings
+    ".zenodo.json",  # Zenodo metadata for DOI
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
@@ -92,6 +96,21 @@ path = [
     "overrides/**",
     "renovate.json",
     "validate_workflows.sh",
+    "scripts/**/*.sh",  # Shell scripts for automation
+    "tmp_cleanup/**/*.txt",  # Temporary text files
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Benchmark results and generated metadata files - CC0-1.0
+[[annotations]]
+path = [
+    "benchmarks/reports/**/*.json",
+    "benchmarks/reports/**/*.md",
+    "codemeta.json",
+    "benchmarks/LICENSES.md",
+    "benchmarks/registry.yml",
+    "notebooks/**/*.ipynb",  # Jupyter notebooks (Colab training examples)
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2024 Byron Williams"

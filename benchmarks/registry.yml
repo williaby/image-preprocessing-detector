@@ -1,0 +1,499 @@
+# Benchmarking Registry
+# Central configuration for all benchmark suites across Phases 1-3
+# Format: YAML 1.2
+# SPDX-License-Identifier: Apache-2.0
+
+version: "1.0"
+metadata:
+  created: "2025-11-12"
+  maintainer: "Data Systems Lead"
+  project: "Image Preprocessing Detector"
+
+defaults:
+  seed: 42
+  output_dir: "reports"
+  cache_dir: ".cache/benchmarks"
+  confidence_threshold: 0.5
+
+# ============================================================================
+# Phase 1: Classical IQA + Layout (DocLayNet)
+# ============================================================================
+
+suites:
+  # --------------------------------------------------------------------------
+  # Layout Detection (DocLayNet)
+  # --------------------------------------------------------------------------
+  - name: doclaynet-layout-full
+    phase: 1
+    task: layout
+    dataset: doclaynet
+    metrics:
+      - mAP
+      - mAP_50
+      - mAP_75
+      - per_class_AP
+    split: val_docwise
+    smoke_subset: null  # Full evaluation
+    target:
+      mAP: 0.80
+    baseline:
+      mAP: 0.72
+      source: "DocLayNet 2022 - Mask-R-CNN R50 (doc-wise)"
+      paper: "https://arxiv.org/abs/2206.01062"
+    classes:
+      - Caption
+      - Footnote
+      - Formula
+      - List-item
+      - Page-footer
+      - Page-header
+      - Picture
+      - Section-header
+      - Table
+      - Text
+      - Title
+
+  - name: doclaynet-layout-smoke
+    phase: 1
+    task: layout
+    dataset: doclaynet
+    metrics:
+      - mAP
+      - per_class_AP
+    split: val_docwise
+    smoke_subset: 50
+    target:
+      mAP: 0.75  # Slightly lower for subset
+    baseline:
+      mAP: 0.72
+      source: "DocLayNet 2022 - Mask-R-CNN R50 (doc-wise)"
+
+  # --------------------------------------------------------------------------
+  # Image Quality Assessment (Synthetic IQA)
+  # --------------------------------------------------------------------------
+  - name: synthetic-iqa-blur-full
+    phase: 1
+    task: iqa
+    dataset: synthetic_iqa
+    subset: blur
+    metrics:
+      - blur_correlation
+      - blur_rmse
+    split: test
+    smoke_subset: null
+    target:
+      correlation: 0.85
+      rmse: 0.05
+    baseline:
+      source: "Project requirement FR-3.1"
+
+  - name: synthetic-iqa-blur-smoke
+    phase: 1
+    task: iqa
+    dataset: synthetic_iqa
+    subset: blur
+    metrics:
+      - blur_correlation
+      - blur_rmse
+    split: test
+    smoke_subset: 20
+    target:
+      correlation: 0.85
+      rmse: 0.05
+
+  - name: synthetic-iqa-skew-full
+    phase: 1
+    task: iqa
+    dataset: synthetic_iqa
+    subset: skew
+    metrics:
+      - skew_mae
+      - deskew_success_rate
+    split: test
+    smoke_subset: null
+    target:
+      mae: 0.5  # degrees
+      success_rate: 0.99
+    baseline:
+      source: "Project requirement FR-3.3"
+
+  - name: synthetic-iqa-skew-smoke
+    phase: 1
+    task: iqa
+    dataset: synthetic_iqa
+    subset: skew
+    metrics:
+      - skew_mae
+      - deskew_success_rate
+    split: test
+    smoke_subset: 20
+    target:
+      mae: 0.5
+      success_rate: 0.99
+
+  - name: synthetic-iqa-noise-full
+    phase: 1
+    task: iqa
+    dataset: synthetic_iqa
+    subset: noise
+    metrics:
+      - snr_improvement
+      - psnr
+      - ssim
+    split: test
+    smoke_subset: null
+    target:
+      snr_improvement: 6.0  # dB
+      psnr: 30.0
+      ssim: 0.9
+    baseline:
+      source: "Project requirement FR-3.5, FR-3.6"
+
+  - name: synthetic-iqa-contrast-full
+    phase: 1
+    task: iqa
+    dataset: synthetic_iqa
+    subset: contrast
+    metrics:
+      - histogram_equalization_score
+      - contrast_enhancement_ratio
+    split: test
+    smoke_subset: null
+    target:
+      enhancement_ratio: 1.5
+    baseline:
+      source: "Classical CLAHE target"
+
+  - name: synthetic-iqa-binarization-full
+    phase: 1
+    task: iqa
+    dataset: synthetic_iqa
+    subset: binarization
+    metrics:
+      - f_measure
+      - precision
+      - recall
+    split: test
+    smoke_subset: null
+    target:
+      f_measure: 0.95
+    baseline:
+      source: "Project requirement FR-3.7"
+
+# ============================================================================
+# Phase 2: ML-based IQA + Table Detection
+# ============================================================================
+
+  # --------------------------------------------------------------------------
+  # Table Detection (FinTabNet, PubTabNet, TableBank)
+  # --------------------------------------------------------------------------
+  - name: fintabnet-table-detection-full
+    phase: 2
+    task: table_detection
+    dataset: fintabnet
+    metrics:
+      - detection_f1
+      - precision
+      - recall
+    split: test
+    smoke_subset: null
+    target:
+      f1: 0.90
+    baseline:
+      f1: 0.94
+      source: "ICDAR 2019 Table Detection (IoU=0.9)"
+      paper: "https://arxiv.org/abs/1908.04729"
+
+  - name: fintabnet-table-structure-full
+    phase: 2
+    task: table_structure
+    dataset: fintabnet
+    metrics:
+      - teds
+    split: test
+    smoke_subset: null
+    target:
+      teds: 0.88
+    baseline:
+      teds: 0.91
+      source: "GTE model finetuned on FinTabNet"
+      paper: "WACV 2021"
+
+  - name: pubtabnet-table-structure-full
+    phase: 2
+    task: table_structure
+    dataset: pubtabnet
+    metrics:
+      - teds
+    split: test
+    smoke_subset: null
+    target:
+      teds: 0.90
+    baseline:
+      teds: 0.93
+      source: "GTE baseline on PubTabNet"
+      paper: "WACV 2021"
+
+  - name: tablebank-detection-smoke
+    phase: 2
+    task: table_detection
+    dataset: tablebank
+    metrics:
+      - detection_f1
+    split: test
+    smoke_subset: 100
+    target:
+      f1: 0.85
+    baseline:
+      source: "TableBank paper baseline"
+
+# ============================================================================
+# Phase 2: Handwriting vs Printed Classification
+# ============================================================================
+
+  - name: cocotext-handwriting-full
+    phase: 2
+    task: handwriting_classification
+    dataset: cocotext
+    metrics:
+      - f1
+      - roc_auc
+      - precision
+      - recall
+    split: test
+    smoke_subset: null
+    target:
+      f1: 0.90
+      roc_auc: 0.95
+    baseline:
+      source: "COCO-Text dataset (printed/handwritten labels)"
+      paper: "https://arxiv.org/abs/1601.07140"
+
+  - name: cocotext-handwriting-smoke
+    phase: 2
+    task: handwriting_classification
+    dataset: cocotext
+    metrics:
+      - f1
+      - roc_auc
+    split: test
+    smoke_subset: 200
+    target:
+      f1: 0.88
+      roc_auc: 0.93
+
+# ============================================================================
+# Phase 2: Language and Script Detection
+# ============================================================================
+
+  - name: wili-langid-full
+    phase: 2
+    task: language_identification
+    dataset: wili_2018
+    metrics:
+      - accuracy
+      - macro_f1
+      - per_language_f1
+    split: test
+    smoke_subset: null
+    target:
+      accuracy: 0.98
+    baseline:
+      accuracy: 0.98
+      source: "fastText baseline on WiLI-2018"
+      paper: "https://arxiv.org/abs/1801.07779"
+
+  - name: wili-langid-smoke
+    phase: 2
+    task: language_identification
+    dataset: wili_2018
+    metrics:
+      - accuracy
+    split: test
+    smoke_subset: 500
+    target:
+      accuracy: 0.97
+
+  # Note: ICDAR MLT 2019 removed (competition dataset requires registration)
+  # Use COCO-Text for text detection or TextOCR for scene text
+
+# ============================================================================
+# Phase 3: OmniDocBench End-to-End Evaluation
+# ============================================================================
+
+  - name: omnidocbench-layout-full
+    phase: 3
+    task: omnidocbench_layout
+    dataset: omnidocbench
+    metrics:
+      - layout_map
+      - per_category_ap
+    split: val
+    smoke_subset: null
+    target:
+      map: 0.82
+    baseline:
+      source: "OmniDocBench baseline (Phase 3)"
+      paper: "https://opendatalab.com/OmniDocBench"
+
+  - name: omnidocbench-text-full
+    phase: 3
+    task: omnidocbench_text
+    dataset: omnidocbench
+    metrics:
+      - edit_distance
+      - normalized_edit_distance
+    split: val
+    smoke_subset: null
+    target:
+      normalized_edit_distance: 0.10  # Lower is better
+    baseline:
+      source: "OmniDocBench text baseline"
+
+  - name: omnidocbench-table-full
+    phase: 3
+    task: omnidocbench_table
+    dataset: omnidocbench
+    metrics:
+      - teds
+    split: val
+    smoke_subset: null
+    target:
+      teds: 0.90
+    baseline:
+      source: "OmniDocBench table baseline"
+
+  - name: omnidocbench-formula-full
+    phase: 3
+    task: omnidocbench_formula
+    dataset: omnidocbench
+    metrics:
+      - cdm  # Character Detection Metric
+      - bleu
+    split: val
+    smoke_subset: null
+    target:
+      cdm: 0.85
+    baseline:
+      source: "OmniDocBench formula baseline"
+
+  - name: omnidocbench-composite-full
+    phase: 3
+    task: omnidocbench_composite
+    dataset: omnidocbench
+    metrics:
+      - composite_score  # (1-Edit)*100 + TEDS + CDM / 3
+    split: val
+    smoke_subset: null
+    target:
+      composite_score: 85.0
+    baseline:
+      source: "OmniDocBench overall benchmark"
+
+  - name: omnidocbench-attribute-sliced
+    phase: 3
+    task: omnidocbench_composite
+    dataset: omnidocbench
+    metrics:
+      - composite_score
+    split: val
+    smoke_subset: null
+    filters:
+      - data_source  # academic, financial, etc.
+      - layout  # single_column, double_column
+      - language  # en, zh, etc.
+      - watermark  # true/false
+      - fuzzy_scan  # true/false
+      - colorful_background  # true/false
+    target:
+      composite_score: 82.0  # Slightly lower for filtered subsets
+    baseline:
+      source: "OmniDocBench per-attribute baselines"
+
+# ============================================================================
+# Phase 4: Production Throughput and Latency
+# ============================================================================
+
+  - name: throughput-benchmark-gpu
+    phase: 4
+    task: throughput
+    dataset: doclaynet
+    metrics:
+      - pages_per_second
+      - latency_p50
+      - latency_p95
+      - latency_p99
+    split: val_docwise
+    smoke_subset: 200
+    target:
+      pages_per_second: 6.0
+      latency_p95: 0.15  # 150ms
+    baseline:
+      source: "Project requirement (Phase 4)"
+      notes: "With T4 GPU"
+
+  - name: throughput-benchmark-cpu
+    phase: 4
+    task: throughput
+    dataset: doclaynet
+    metrics:
+      - pages_per_second
+      - latency_p50
+      - latency_p95
+    split: val_docwise
+    smoke_subset: 200
+    target:
+      pages_per_second: 0.5  # Much slower on CPU
+      latency_p95: 5.0  # 5 seconds
+    baseline:
+      source: "CPU fallback mode"
+
+# ============================================================================
+# Configuration Notes
+# ============================================================================
+
+# Dataset paths (configure via environment or .env):
+#   BENCHMARKS_DATA_DIR=/path/to/datasets
+#   BENCHMARKS_CACHE_DIR=/path/to/cache
+#   BENCHMARKS_OUTPUT_DIR=/reports
+#   HF_TOKEN=your_huggingface_token
+#   GCP_SA_KEY=base64_encoded_service_account  # For GCS integration
+#   GCP_PROJECT=image-detection-478105
+#   GCS_BUCKET=gs://image_detection_b/
+
+# Automated dataset downloads:
+#   poetry run python scripts/download_omnidocbench.py
+#   poetry run python scripts/download_table_datasets.py --all
+#   poetry run python scripts/validate_datasets.py
+
+# Test fixtures (for local dev and CI/CD):
+#   Location: data/test_fixtures/ (committed to repository)
+#   Size: 828KB (vs 88+ GB full datasets)
+#   Usage: pytest -v -m "not requires_full_dataset"
+#   Details: See data/test_fixtures/README.md
+
+# DocLayNet split notes:
+#   - Always use val_docwise (NOT val_pagewise)
+#   - Page-wise metrics inflate scores by ~10-15 points
+#   - Classes: 11 categories as defined above
+
+# OmniDocBench license: CC-BY-NC-4.0 (eval-only, no redistribution)
+
+# Dataset sources (HuggingFace):
+#   - TableBank: liminghao1630/TableBank (23.7 GB)
+#   - PubTabNet: ajimeno/PubTabNet (10.5 GB)
+#   - FinTabNet: bsmock/FinTabNet.c (3.2 GB, corrected version)
+#   - OmniDocBench: opendatalab/OmniDocBench (1.16 GB)
+
+# Removed datasets:
+#   - ICDAR MLT 2019: Competition dataset, use COCO-Text instead
+
+# Smoke test policy:
+#   - Run on PRs (fast feedback, <5 minutes)
+#   - Subset sizes chosen for statistical validity
+#   - Targets may be slightly relaxed for subsets
+
+# Full benchmark policy:
+#   - Run nightly on scheduled GitHub Actions
+#   - Store results in /reports with timestamps
+#   - Track regression with aggregate.csv over time

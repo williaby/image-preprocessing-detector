@@ -1,8 +1,8 @@
 ---
 schema_type: common
-title: "ADR-026: Transfer Learning from ImageNet/COCO"
+title: "ADR-026: Transfer Learning from ImageNet/COCO (UPDATED)"
 description: "Use ImageNet pre-training for IQA, COCO pre-training for YOLOv8 layout
-  detection"
+  detection. UPDATED: Model architectures changed to ResNet teacher-student."
 tags:
 - adr
 - transfer_learning
@@ -14,11 +14,18 @@ owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
 purpose: "Document the decision to use pre-trained models for faster convergence and
-  better accuracy."
+  better accuracy. UPDATED 2025-11-15."
 ---
 
+> **UPDATED (2025-11-15)**: Transfer learning principle retained but model architectures changed.
+> **IQA Models**: MobileNetV3 → ResNet-50 teacher + ResNet-18 student (both ImageNet pre-trained)
+> **Layout Detection**: YOLOv8 for layout-lite only (coarse page attributes, not full semantic layout)
+> **Transfer Learning**: Still using ImageNet (IQA) and COCO (layout-lite) pre-training
+> **Reference**: [docs/development/RAG Pipeline/project-a-project-plan.md](../development/RAG Pipeline/project-a-project-plan.md)
 
-**Status**: Accepted
+---
+
+**Status**: ~~Accepted~~ **UPDATED**
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:

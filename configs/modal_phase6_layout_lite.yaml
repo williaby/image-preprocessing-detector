@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
+# Modal Training Configuration - Phase 6 Layout-Lite Classification
+# Coarse page-level layout attributes (NOT full semantic layout detection)
+# Provides routing metadata: layout_type, has_tables, has_figures, complexity_score
+# NOTE: Full DocLayNet-style semantic layout is Project B's responsibility
+
+model:
+  # YOLOv8-nano for coarse block detection (NOT full semantic layout)
+  architecture: yolov8n  # Lightweight for layout-lite
+  num_classes: 3  # text_block, table_block, figure_block (coarse regions only)
+  input_size: 640
+  pretrained: true
+
+  # Layout-lite classification (page-level attributes)
+  page_attributes:
+    - layout_type  # single, multi, three_column, complex
+    - has_tables
+    - has_figures
+    - has_dense_math
+    - has_handwriting
+    - fuzzy_scan
+    - watermark
+    - colorful_background
+
+training:
+  batch_size: 32
+  epochs: 100
+  learning_rate: 0.001
+  warmup_epochs: 3
+  optimizer: adamw
+  weight_decay: 0.0005
+  mixed_precision: true
+
+data:
+  dataset_path: gs://image_detection_b/datasets/layout_lite_phase6
+  dataset_yaml: gs://image_detection_b/datasets/layout_lite_phase6/dataset.yaml
+  # NOTE: Use OmniDocBench-style annotations (page attributes, not full semantic layout)
+  num_workers: 8
+  cache_images: true
+
+storage:
+  checkpoint_path: gs://image_detection_b/checkpoints/phase6_layout_lite
+  output_path: gs://image_detection_b/models/phase6_layout_lite
+  log_path: gs://image_detection_b/logs/phase6_layout_lite
+
+modal:
+  gpu: A10  # A10 recommended (24GB) for YOLOv8
+  cpu: 16.0
+  memory: 65536  # 64GB
+  timeout: 259200  # 72 hours (3 days)
+  image_python_version: "3.12"
+
+monitoring:
+  tensorboard: true
+  save_period: 10  # epochs

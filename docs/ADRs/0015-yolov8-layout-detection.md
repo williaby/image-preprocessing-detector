@@ -1,22 +1,32 @@
 ---
 schema_type: common
-title: "ADR-015: YOLOv8 for Layout Detection"
-description: "Select YOLOv8 over Vision Transformers for document layout detection"
+title: "ADR-015: YOLOv8 for Layout Detection (DEPRECATED)"
+description: "Select YOLOv8 over Vision Transformers for document layout detection.
+  DEPRECATED: Full layout moved to Project B, only layout-lite in Project A."
 tags:
 - adr
 - layout_detection
 - yolo
 - object_detection
+- deprecated
 status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
 purpose: "Document the decision to use YOLOv8 for document layout detection in Phase
-  3."
+  3. DEPRECATED 2025-11-15."
 ---
 
+> **DEPRECATED (2025-11-15)**: Full semantic layout detection moved out of Project A scope.
+> **New Approach**: Layout-Lite (Phase 6) - Coarse page-level attributes only (layout_type, has_tables, has_figures, etc.)
+> **Full Layout Detection**: Moved to Project B (OCR Orchestration) in RAG Pipeline
+> **YOLOv8 Usage**: Repurposed for layout-lite coarse region detection (text_block, table_block, figure_block)
+> **Phase Renumbering**: Phase 3 → Phase 6 (Layout-Lite)
+> **Reference**: [docs/development/RAG Pipeline/project-a-project-plan.md](../development/RAG Pipeline/project-a-project-plan.md)
 
-**Status**: Accepted
+---
+
+**Status**: ~~Accepted~~ **DEPRECATED**
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:

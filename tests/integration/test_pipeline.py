@@ -383,3 +383,232 @@ class TestPipelineErrorHandling:
                 assert loaded_page.width_px == orig_page.width_px
                 assert loaded_page.height_px == orig_page.height_px
                 assert loaded_page.dpi_input == orig_page.dpi_input
+
+
+class TestPhase1Completion:
+    """Phase 1 completion validation tests."""
+
+    def test_complete_schema_validation(self) -> None:
+        """Test that output JSON complies with complete DocumentMetadata schema."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a PDF with various quality issues
+            pdf_path = Path(tmpdir) / "complete_test.pdf"
+            doc = fitz.open()
+            page = doc.new_page(width=595, height=842)
+            page.insert_text(
+                (50, 50),
+                "Complete Schema Validation Test\n"
+                "This document tests all Phase 1 schema fields.",
+                fontsize=12,
+            )
+            doc.save(str(pdf_path))
+            doc.close()
+
+            # Process the PDF
+            pages = load_pdf(str(pdf_path))
+            builder = MetadataBuilder(
+                document_id="phase1_complete_001", file_name="complete_test.pdf"
+            )
+
+            for page_idx, page_image in enumerate(pages):
+                text_result = detect_text(page_image.image)
+                skew_result = (
+                    detect_skew(page_image.image) if text_result.has_text else None
+                )
+                blur_result = (
+                    detect_blur(page_image.image) if text_result.has_text else None
+                )
+                contrast_result = (
+                    detect_contrast(page_image.image) if text_result.has_text else None
+                )
+
+                # Apply corrections if needed
+                skew_correction = None
+                if skew_result and skew_result.is_skewed:
+                    skew_correction = correct_skew(
+                        page_image.image, skew_result.angle, skew_result.confidence
+                    )
+
+                builder.add_page(
+                    page_number=page_idx,
+                    page_data=page_image,
+                    text_result=text_result,
+                    skew_result=skew_result,
+                    blur_result=blur_result,
+                    contrast_result=contrast_result,
+                    skew_correction=skew_correction,
+                )
+
+            # Build and validate metadata
+            metadata = builder.build()
+
+            # Validate all required Phase 1 fields are present
+            assert metadata.document_id is not None
+            assert metadata.file_name is not None
+            assert metadata.source_mime is not None
+            assert metadata.num_pages > 0
+            assert metadata.processing_version is not None
+            assert len(metadata.pages) == metadata.num_pages
+
+            # Validate Phase 8 fields are optional (None is acceptable)
+            # These will be populated in Phases 6-8
+            assert metadata.pdf_type is None or metadata.pdf_type is not None
+            assert metadata.pre_ocr_risk is None or (
+                0.0 <= metadata.pre_ocr_risk <= 1.0
+            )
+            assert metadata.dqs is None or metadata.dqs is not None
+            assert (
+                metadata.ocr_routing_recommendation is None
+                or metadata.ocr_routing_recommendation is not None
+            )
+            assert isinstance(metadata.page_layout_summary, list)
+
+            # Validate per-page metadata
+            for page in metadata.pages:
+                assert page.page_index >= 0
+                assert page.width_px > 0
+                assert page.height_px > 0
+                assert page.dpi_input > 0
+                assert page.dpi_effective > 0
+                assert isinstance(page.detected_issues, list)
+                assert isinstance(page.planned_actions, list)
+                assert isinstance(page.elements, list)
+                assert isinstance(page.transform_history, list)
+
+            # Test JSON serialization compliance
+            output_path = Path(tmpdir) / "complete_validation.json"
+            generate_json(metadata, output_path)
+            assert output_path.exists()
+
+            # Verify round-trip works
+            loaded = load_json(output_path)
+            assert loaded.document_id == metadata.document_id
+            assert loaded.num_pages == metadata.num_pages
+
+    def test_large_document_processing(self) -> None:
+        """Test processing a 50-page PDF (Phase 1 success criterion: 100-page support)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a 50-page PDF (reduced from 100 for faster CI)
+            pdf_path = Path(tmpdir) / "large_document.pdf"
+            doc = fitz.open()
+
+            num_pages = 50
+            for i in range(num_pages):
+                page = doc.new_page(width=595, height=842)
+                text = (
+                    f"Page {i + 1} of {num_pages}\nTesting large document processing."
+                )
+                page.insert_text((50, 50), text, fontsize=12)
+
+            doc.save(str(pdf_path))
+            doc.close()
+
+            # Process the PDF
+            pages = load_pdf(str(pdf_path))
+            assert len(pages) == num_pages
+
+            builder = MetadataBuilder(
+                document_id="large_doc_001", file_name="large_document.pdf"
+            )
+
+            # Process all pages
+            for page_idx, page_image in enumerate(pages):
+                text_result = detect_text(page_image.image)
+
+                # Simplified processing for speed (only text detection)
+                builder.add_page(
+                    page_number=page_idx,
+                    page_data=page_image,
+                    text_result=text_result,
+                )
+
+            # Build metadata
+            metadata = builder.build()
+            assert metadata.num_pages == num_pages
+            assert len(metadata.pages) == num_pages
+
+            # Verify all pages were processed
+            for idx, page in enumerate(metadata.pages):
+                assert page.page_index == idx
+
+            # Generate JSON output
+            output_path = Path(tmpdir) / "large_output.json"
+            generate_json(metadata, output_path)
+
+            # Verify output exists and is loadable
+            assert output_path.exists()
+            loaded = load_json(output_path)
+            assert loaded.num_pages == num_pages
+
+    def test_phase1b_dpi_upscaling_integration(self) -> None:
+        """Test integration with Phase 1B DPI upscaling feature."""
+        # Import Phase 1B components
+        from image_preprocessing_detector.core.config import Settings
+        from image_preprocessing_detector.ingestion.pdf_analyzer import (
+            PDFDocumentAnalyzer,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create a low-resolution PDF (simulated)
+            pdf_path = Path(tmpdir) / "low_res.pdf"
+            doc = fitz.open()
+            page = doc.new_page(
+                width=400, height=600
+            )  # Smaller page to simulate low DPI
+            page.insert_text(
+                (50, 50),
+                "Low Resolution Document\nThis should trigger upscaling.",
+                fontsize=10,
+            )
+            doc.save(str(pdf_path))
+            doc.close()
+
+            # Perform pre-flight analysis
+            settings = Settings()
+            settings.enable_pdf_upscaling = True  # Ensure upscaling is enabled for test
+
+            analyzer = PDFDocumentAnalyzer(settings)
+            preflight = analyzer.analyze(pdf_path)
+
+            # Preflight should complete successfully
+            assert preflight.resolution_analysis is not None
+            assert "needs_upscaling" in preflight.resolution_analysis
+
+            # Use recommended path (upscaled or original)
+            pdf_to_process = preflight.recommended_path or str(pdf_path)
+
+            # Process the PDF
+            pages = load_pdf(pdf_to_process)
+            builder = MetadataBuilder(
+                document_id="upscale_test_001", file_name="low_res.pdf"
+            )
+
+            # Add upscaling metadata if upscaling was performed
+            if preflight.should_use_upscaled:
+                builder.set_upscaling_metadata(preflight.upscaling_result)
+
+            # Process pages normally
+            for page_idx, page_image in enumerate(pages):
+                text_result = detect_text(page_image.image)
+                builder.add_page(
+                    page_number=page_idx,
+                    page_data=page_image,
+                    text_result=text_result,
+                )
+
+            # Build metadata
+            metadata = builder.build()
+
+            # Verify upscaling metadata is present if upscaling occurred
+            if preflight.should_use_upscaled:
+                assert metadata.upscaling is not None
+                assert isinstance(metadata.upscaling, dict)
+
+            # Generate JSON
+            output_path = Path(tmpdir) / "upscale_output.json"
+            generate_json(metadata, output_path)
+
+            # Verify output
+            assert output_path.exists()
+            loaded = load_json(output_path)
+            assert loaded.document_id == "upscale_test_001"

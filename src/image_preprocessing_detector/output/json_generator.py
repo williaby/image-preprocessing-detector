@@ -54,11 +54,26 @@ class MetadataBuilder:
         self.document_id = document_id
         self.file_name = file_name
         self.pages: list[PageMetadata] = []
+        self.upscaling_metadata: dict | None = None
 
         logger.info(
             "Metadata builder initialized",
             document_id=document_id,
             file_name=file_name,
+        )
+
+    def set_upscaling_metadata(self, upscaling_result: dict) -> None:
+        """
+        Set PDF upscaling metadata (Phase 1B).
+
+        Args:
+            upscaling_result: Upscaling result from PDFUpscaler
+        """
+        self.upscaling_metadata = upscaling_result
+        logger.info(
+            "Upscaling metadata added",
+            performed=upscaling_result.get("success", False),
+            processing_time=upscaling_result.get("processing_time_seconds"),
         )
 
     def add_page(
@@ -273,14 +288,28 @@ class MetadataBuilder:
             thresholds={},
         )
 
+        # Phase 8 fields: Set to None until Phase 6-8 implementations complete
+        # These will be populated by:
+        # - pdf_type: Phase 8 PDF classifier
+        # - pre_ocr_risk: Phase 8 risk scorer
+        # - dqs: Phase 8 DQS calculator
+        # - ocr_routing_recommendation: Phase 8 routing engine
+        # - page_layout_summary: Phase 6 layout-lite detector (already defaults to empty list)
+
         metadata = DocumentMetadata(
             document_id=self.document_id,
             file_name=self.file_name,
             source_mime=source_mime,
             num_pages=len(self.pages),
-            upscaling=None,  # Phase 1B: No upscaling in legacy json_generator
+            upscaling=self.upscaling_metadata,  # Phase 1B: Use upscaling metadata if set
             processing_version=proc_version,
             pages=self.pages,
+            # Phase 8 fields (optional until implementation)
+            pdf_type=None,
+            pre_ocr_risk=None,
+            dqs=None,
+            ocr_routing_recommendation=None,
+            # page_layout_summary defaults to empty list (will be populated in Phase 6)
         )
 
         logger.info(

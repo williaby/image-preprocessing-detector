@@ -11,6 +11,7 @@ allowed:
   # Document Analysis
   - document_analysis
   - layout_detection
+  - layout
   - ocr
   - ocr_preprocessing
   - ocr_optimization
@@ -23,6 +24,7 @@ allowed:
   - correction
   - corrections
   - enhancement
+  - restoration
 
   # Specific Techniques
   - classical_cv
@@ -40,6 +42,8 @@ allowed:
   - mobilenet
   - mobilenetv3
   - efficientnet
+  - resnet
+  - resnet18
   - tensorrt
   - quantization
   - int8
@@ -56,17 +60,31 @@ allowed:
   - augmentation
   - albumentations
   - model_selection
+  - teacher_student
+  - knowledge_distillation
+  - ml
 
   # RAG & Applications
   - rag
+  - rag_pipeline
   - vector_database
   - embedding
   - retrieval
+  - routing
+  - scoring
+  - pipeline_selection
+  - production
+  - dqs
+  - quality_score
+  - metrics
+  - aggregation
 
   # Development & Tooling
   - testing
   - validation
   - benchmarks
+  - benchmarking
+  - evaluation
   - performance
   - optimization
   - tooling
@@ -84,6 +102,9 @@ allowed:
   # Documentation
   - front_matter
   - api_reference
+  - reference
+  - taxonomy
+  - coverage
   - guide
   - tutorial
   - architecture
@@ -96,6 +117,15 @@ allowed:
   - mkdocs
   - pydantic
   - json_ld
+  - requirements
+  - specifications
+  - functional
+  - non_functional
+  - research
+  - analysis
+  - tools
+  - integration
+  - automation
 
   # Infrastructure & CI/CD
   - ci_cd
@@ -105,9 +135,13 @@ allowed:
   - deployment
   - monitoring
   - observability
+  - infrastructure
+  - gcs
+  - serverless
 
   # Data & Datasets
   - datasets
+  - dataset
   - data_augmentation
   - synthetic_data
   - brisque
@@ -124,6 +158,7 @@ allowed:
   - legal
   - safety
   - guardrails
+  - deprecated
 
   # Project Management
   - planning
@@ -133,7 +168,13 @@ allowed:
   - releases
   - version_history
   - phase_planning
+  - phase_2
+  - phase_3
+  - phase2
+  - phase3
   - mvp
+  - scope
+  - boundaries
 
   # Technical Details
   - bounding_boxes

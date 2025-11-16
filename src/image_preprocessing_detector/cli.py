@@ -10,6 +10,7 @@ from typing import Any
 
 import click
 
+from image_preprocessing_detector.core.config import Settings
 from image_preprocessing_detector.correction.corrections import (
     correct_skew,
     enhance_contrast,
@@ -25,6 +26,7 @@ from image_preprocessing_detector.ingestion.image_loader import (
     ImageMetadata,
     load_image,
 )
+from image_preprocessing_detector.ingestion.pdf_analyzer import PDFDocumentAnalyzer
 from image_preprocessing_detector.ingestion.pdf_loader import PageImage, load_pdf
 from image_preprocessing_detector.output.json_generator import (
     MetadataBuilder,
@@ -107,7 +109,29 @@ def process(
         # Load pages based on file type
         pages: list[Any]  # PageImage or tuple[np.ndarray, ImageMetadata]
         if suffix == ".pdf":
-            pages = load_pdf(str(input_path))
+            # Phase 1B: Perform pre-flight analysis for DPI upscaling
+            settings = Settings()
+            analyzer = PDFDocumentAnalyzer(settings)
+            preflight = analyzer.analyze(input_path)
+
+            logger.info(
+                "PDF pre-flight analysis complete",
+                needs_upscaling=preflight.needs_upscaling,
+                should_use_upscaled=preflight.should_use_upscaled,
+                processing_time=f"{preflight.processing_time:.2f}s",
+            )
+
+            # Use upscaled version if available, otherwise original
+            pdf_to_process = preflight.recommended_path or str(input_path)
+
+            # Add upscaling metadata to builder if upscaling was performed
+            if preflight.should_use_upscaled:
+                builder.set_upscaling_metadata(preflight.upscaling_result)
+                logger.info(f"Using upscaled PDF: {pdf_to_process}")
+            else:
+                logger.info("Using original PDF (upscaling not needed or disabled)")
+
+            pages = load_pdf(pdf_to_process)
             logger.info(f"Loaded {len(pages)} pages from PDF")
         elif suffix in {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}:
             img, img_meta = load_image(str(input_path))

@@ -1,0 +1,142 @@
+name: Benchmark Results Auto-Update
+
+# This workflow updates README.md from already-committed benchmark results.
+# Benchmarks must be run locally (datasets are too large for CI) and results
+# committed to the reports/ directory before this workflow runs.
+
+on:
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'reports/**/*.json'  # Trigger when new results are committed
+
+permissions:
+  contents: write  # Allow workflow to commit README updates
+
+jobs:
+  update-readme:
+    name: Update README from Committed Results
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for proper git operations
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.7.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --with dev --no-interaction
+
+      - name: Check for committed results
+        id: check-results
+        run: |
+          if [ -d "reports" ] && [ -n "$(find reports -name '*.json' 2>/dev/null)" ]; then
+            echo "results_found=true" >> $GITHUB_OUTPUT
+            echo "✓ Found committed benchmark results"
+            find reports -name "results.json" | head -10
+          else
+            echo "results_found=false" >> $GITHUB_OUTPUT
+            echo "⚠ No benchmark results found in reports/"
+            echo "Run benchmarks locally and commit results to reports/ directory"
+          fi
+
+      - name: Update README with Results
+        if: steps.check-results.outputs.results_found == 'true'
+        run: |
+          poetry run python -m benchmarks.runners.update_readme
+
+          # Show diff for verification
+          git diff benchmarks/README.md || echo "No changes to README"
+
+      - name: Generate Benchmark Badges
+        if: steps.check-results.outputs.results_found == 'true'
+        run: |
+          # Create badges directory
+          mkdir -p .github/badges
+
+          # Generate badge data (will be used by shields.io endpoint)
+          poetry run python -m benchmarks.runners.generate_badges
+
+      - name: Commit and Push README Updates
+        if: github.event_name != 'pull_request' && steps.check-results.outputs.results_found == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Add only README and badges (results already committed)
+          git add benchmarks/README.md .github/badges/ || true
+
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "✓ No changes to README (already up to date)"
+            exit 0
+          fi
+
+          # Commit with detailed message
+          git commit -m "docs(benchmarks): Auto-update README from committed results
+
+          - Updated benchmark metrics table
+          - Generated status badges
+          - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          - Trigger: ${{ github.event_name }}
+
+          [skip ci]"
+
+          git push
+
+      - name: Create Summary
+        if: steps.check-results.outputs.results_found == 'true'
+        run: |
+          echo "## 📊 Benchmark Results Auto-Update" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Update Date**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Count committed results
+          SUITES=$(find reports/ -name "results.json" 2>/dev/null | wc -l)
+          echo "**Committed Results**: $SUITES benchmark suites" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # List suite directories
+          echo "### Updated Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for dir in reports/*/; do
+            suite=$(basename "$dir")
+            latest=$(find "$dir" -name "results.json" | sort -r | head -1)
+            if [ -n "$latest" ]; then
+              timestamp=$(basename "$(dirname "$latest")")
+              echo "- ✓ **$suite** (latest: $timestamp)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📈 **View updated README**: [benchmarks/README.md](benchmarks/README.md#quick-metrics-summary)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ **Note**: Benchmarks are run locally (datasets too large for CI)." >> $GITHUB_STEP_SUMMARY
+          echo "This workflow only updates the README from committed results." >> $GITHUB_STEP_SUMMARY

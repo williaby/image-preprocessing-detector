@@ -91,6 +91,7 @@ Links to relevant documentation, discussions, or external resources.
 - [ADR-014: Classical CV + ML Hybrid for IQA](0014-classical-ml-hybrid-iqa.md) - **Accepted** (2025-01-15)
 - [ADR-015: YOLOv8 for Layout Detection](0015-yolov8-layout-detection.md) - **Accepted** (2025-01-15)
 - [ADR-016: Defer Superscript/Footnote to Post-OCR](0016-defer-superscript-footnote-detection.md) - **Accepted** (2025-01-15)
+- [ADR-029: Project A Scope Boundaries in RAG Pipeline](0029-project-a-scope-boundaries.md) - **Accepted** (2025-11-15)
 
 ### Technology Stack
 
@@ -112,6 +113,8 @@ Links to relevant documentation, discussions, or external resources.
 - [ADR-025: MobileNetV3 vs EfficientNet for IQA Model Selection](0025-mobilenetv3-vs-efficientnet.md) - **Accepted** (2025-01-15)
 - [ADR-026: Transfer Learning from ImageNet/COCO](0026-transfer-learning-imagenet-coco.md) - **Accepted** (2025-01-15)
 - [ADR-027: INT8 Quantization via ONNX/TensorRT](0027-int8-quantization-onnx.md) - **Accepted** (2025-01-15)
+- [ADR-028: ResNet Teacher-Student Architecture for ML IQA](0028-resnet-teacher-student-architecture.md) - **Accepted** (2025-11-15)
+- [ADR-030: Document Quality Score (DQS) Design](0030-document-quality-score-design.md) - **Accepted** (2025-11-15)
 
 ## How to Create a New ADR
 

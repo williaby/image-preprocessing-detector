@@ -1,23 +1,30 @@
 ---
 schema_type: common
-title: "ADR-025: MobileNetV3 vs EfficientNet for IQA Model Selection"
+title: "ADR-025: MobileNetV3 vs EfficientNet for IQA Model Selection (DEPRECATED)"
 description: "Select MobileNetV3-Small over EfficientNet-Lite0 for IQA multi-label
-  classification"
+  classification. DEPRECATED: Superseded by ResNet teacher-student architecture."
 tags:
 - adr
 - mobilenetv3
 - efficientnet
 - iqa
 - model_selection
+- deprecated
 status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-purpose: "Document the model architecture selection for Phase 2 IQA classifier."
+purpose: "Document the model architecture selection for Phase 2 IQA classifier. DEPRECATED 2025-11-15."
 ---
 
+> **DEPRECATED (2025-11-15)**: This ADR is superseded by the RAG Pipeline Phase 2 architecture.
+> **New Architecture**: ResNet-50 teacher / ResNet-18 student with knowledge distillation
+> **Rationale**: RAG Pipeline requires teacher-student approach with selective inference for cost control
+> **Reference**: [docs/development/RAG Pipeline/project-a-project-plan.md](../development/RAG Pipeline/project-a-project-plan.md)
 
-**Status**: Accepted
+---
+
+**Status**: ~~Accepted~~ **DEPRECATED**
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:

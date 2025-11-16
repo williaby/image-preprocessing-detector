@@ -1,18 +1,26 @@
 ---
 schema_type: common
-title: "ADR-027: INT8 Quantization via ONNX/TensorRT"
-description: "Use INT8 quantization for 1.5-3× speedup with < 2% accuracy loss"
+title: "ADR-027: INT8 Quantization via ONNX/TensorRT (UPDATED)"
+description: "Use INT8 quantization for 1.5-3× speedup with < 2% accuracy loss.
+  UPDATED: Model architectures changed to ResNet teacher-student."
 tags: [adr, quantization, onnx, tensorrt, optimization, int8]
 status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
 purpose: "Document the decision to use INT8 quantization for production deployment
-  optimization."
+  optimization. UPDATED 2025-11-15."
 ---
 
+> **UPDATED (2025-11-15)**: INT8 quantization principle retained but model architectures changed.
+> **IQA Models**: MobileNetV3 → ResNet-50 teacher + ResNet-18 student (both with ONNX INT8 quantization)
+> **Layout Detection**: YOLOv8 for layout-lite only (coarse page attributes)
+> **Quantization Strategy**: Still using ONNX Runtime (CPU) + TensorRT (GPU) for INT8 optimization
+> **Reference**: [docs/development/RAG Pipeline/project-a-project-plan.md](../development/RAG Pipeline/project-a-project-plan.md)
 
-**Status**: Accepted
+---
+
+**Status**: ~~Accepted~~ **UPDATED**
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:

@@ -1,0 +1,259 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
+# Google Colab Training Configuration - Phase 3: YOLOv8 Layout Detection
+# Optimized for Colab Pro (12-hour sessions, V100/P100/T4 GPUs)
+
+experiment:
+  name: "phase3_layout_yolov8n"
+  description: "YOLOv8 object detection for document element detection"
+  version: "1.0.0"
+
+platform:
+  type: "google_colab"
+  session_limit_hours: 12  # Colab Pro limit
+  auto_save_before_limit: 11.5  # Save checkpoint 30min before limit
+
+  # GPU configuration
+  gpu:
+    required: true
+    mixed_precision: true
+    compile_model: false
+
+# Google Drive paths
+paths:
+  drive_project_root: "/content/drive/MyDrive/image-preprocessing-detector"
+
+  # Dataset paths (YOLO format)
+  dataset_root: "/content/drive/MyDrive/datasets/layout_phase3"
+  dataset_yaml: "/content/drive/MyDrive/datasets/layout_phase3/dataset.yaml"
+  dataset_cache: "/content/data_cache"
+
+  # Output paths
+  checkpoints_dir: "/content/drive/MyDrive/checkpoints/phase3_yolov8"
+  logs_dir: "/content/drive/MyDrive/logs/phase3_yolov8"
+  models_output_dir: "/content/drive/MyDrive/models/phase3_yolov8"
+
+  local_work_dir: "/content/work"
+
+# Dataset configuration
+dataset:
+  name: "document_layout_300k"
+  format: "yolo"  # YOLOv8 format
+
+  # Data sources (will be combined)
+  sources:
+    - name: "publaynet"
+      samples: 240000
+      weight: 0.8
+    - name: "doclaynet"
+      samples: 30000
+      weight: 0.1
+    - name: "custom_annotations"
+      samples: 3000
+      weight: 0.1
+
+  # Element classes
+  classes:
+    0: "table"
+    1: "image"
+    2: "handwriting"
+    3: "formula"
+
+  # Class distribution target
+  class_weights:
+    table: 0.40
+    image: 0.30
+    handwriting: 0.15
+    formula: 0.15
+
+  # YOLO-specific settings
+  yolo:
+    image_size: 640  # YOLOv8 standard
+    stride: 32
+    rect: false  # Rectangular training
+    cache: false  # Cache images in RAM (set true if enough memory)
+    single_cls: false  # Multi-class detection
+
+# Model configuration
+model:
+  variant: "yolov8n"  # Options: yolov8n (nano), yolov8s (small), yolov8m (medium)
+
+  # Model sizes comparison:
+  # yolov8n: 3.2M params, fastest (2-3ms GPU), good for CPU deployment
+  # yolov8s: 11.2M params, balanced (5-7ms GPU), recommended
+  # yolov8m: 25.9M params, most accurate (8-12ms GPU), GPU only
+
+  # Pretrained weights
+  pretrained: "yolov8n.pt"  # COCO pretrained
+  freeze_layers: 0  # Number of layers to freeze (0 = fine-tune all)
+
+  # Architecture modifications
+  architecture:
+    depth_multiple: 0.33  # Model depth
+    width_multiple: 0.25  # Model width
+    max_channels: 1024
+
+# Training hyperparameters (YOLOv8 defaults optimized)
+training:
+  # Optimizer
+  optimizer: "SGD"  # YOLOv8 uses SGD
+  learning_rate: 0.01
+  momentum: 0.937
+  weight_decay: 0.0005
+
+  # Learning rate scheduler
+  scheduler:
+    type: "cosine"  # YOLOv8 uses cosine
+    warmup_epochs: 3
+    warmup_momentum: 0.8
+    warmup_bias_lr: 0.1
+
+  # Training parameters
+  batch_size: 16  # Adjust: T4=8, V100=16, A100=32
+  epochs: 100  # YOLOv8 typically needs 100+ epochs
+  early_stopping_patience: 50  # Be patient with object detection
+
+  # Loss weights (YOLOv8 defaults)
+  loss:
+    box: 7.5  # Box loss gain
+    cls: 0.5  # Classification loss gain
+    dfl: 1.5  # Distribution focal loss gain
+
+  # Image augmentation (YOLOv8 defaults)
+  augmentation:
+    hsv_h: 0.015  # HSV-Hue augmentation
+    hsv_s: 0.7    # HSV-Saturation
+    hsv_v: 0.4    # HSV-Value
+    degrees: 0.0  # Rotation (+/- deg)
+    translate: 0.1  # Translation (+/- fraction)
+    scale: 0.5    # Scale (+/- gain)
+    shear: 0.0    # Shear (+/- deg)
+    perspective: 0.0  # Perspective (+/- fraction)
+    flipud: 0.0   # Vertical flip probability
+    fliplr: 0.5   # Horizontal flip probability
+    mosaic: 1.0   # Mosaic augmentation probability
+    mixup: 0.0    # MixUp augmentation probability
+    copy_paste: 0.0  # Copy-paste augmentation probability
+
+  # Advanced training settings
+  amp: true  # Automatic mixed precision
+  close_mosaic: 10  # Disable mosaic last N epochs
+  label_smoothing: 0.0
+
+# Checkpoint management
+checkpointing:
+  save_interval_epochs: 10  # YOLOv8 training is longer
+  save_interval_minutes: 60  # Save every hour
+  keep_last_n: 3
+  save_best_only: false
+  auto_resume: true
+
+  # Checkpoint content
+  save_optimizer_state: true
+  save_training_history: true
+
+# Validation
+validation:
+  interval: 1  # Validate every epoch
+
+  # Metrics
+  metrics:
+    - "precision"
+    - "recall"
+    - "mAP50"      # mAP at IoU=0.50
+    - "mAP50-95"   # COCO primary metric
+
+  # Detection thresholds
+  conf_threshold: 0.001  # Confidence threshold
+  iou_threshold: 0.6     # NMS IoU threshold
+  max_det: 300          # Maximum detections per image
+
+  # Per-class metrics
+  per_class_metrics: true
+
+# Logging
+logging:
+  console_level: "INFO"
+  log_interval: 50
+
+  tensorboard:
+    enabled: true
+    log_images: true
+    log_interval: 100
+    max_images: 16  # Images to log per batch
+
+  wandb:
+    enabled: false
+    project: "image-preprocessing-detector"
+    tags: ["phase3", "yolov8", "layout-detection", "colab"]
+
+# Model export
+export:
+  # ONNX export
+  onnx:
+    enabled: true
+    opset_version: 12  # YOLOv8 compatible
+    simplify: true
+    dynamic: true
+
+  # TensorRT export (for GPU deployment)
+  tensorrt:
+    enabled: false  # Set true if deploying on NVIDIA GPU
+    half_precision: true
+    workspace: 4  # GB
+
+  # INT8 quantization
+  quantization:
+    enabled: true
+    calibration_images: 1000
+
+# NMS settings for inference
+nms:
+  conf_threshold: 0.25  # Confidence threshold
+  iou_threshold: 0.45   # IoU threshold for NMS
+  max_det: 300          # Maximum detections
+  multi_label: true     # Multi-label per box
+
+# Active learning (for continuous improvement)
+active_learning:
+  enabled: false  # Enable after initial training
+  uncertainty_threshold: 0.6
+  min_samples_per_class: 100
+  sample_strategy: "least_confident"
+
+# Resource monitoring
+monitoring:
+  gpu_memory:
+    log_interval: 100
+    alert_threshold: 90
+
+  session_time:
+    check_interval: 300
+    warn_threshold_hours: 11.0
+
+# Data pipeline settings
+data_pipeline:
+  num_workers: 2  # Colab CPU cores limited
+  pin_memory: true
+  persistent_workers: false  # Set true for faster dataloading
+
+# Reproducibility
+reproducibility:
+  seed: 42
+  deterministic: false
+  benchmark: true
+
+# Compute tracking
+compute_tracking:
+  enabled: true
+  log_estimates: true
+  target_budget: 100  # Monthly compute units
+
+# Post-processing optimization
+post_processing:
+  # Rule-first filtering (Phase 3 optimization)
+  enable_rule_filters: true
+  min_box_area: 100  # Minimum bounding box area
+  max_box_area: 1000000  # Maximum bounding box area
+  aspect_ratio_limits: [0.1, 10.0]  # Min/max aspect ratio
