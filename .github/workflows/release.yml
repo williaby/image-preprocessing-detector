@@ -28,6 +28,17 @@ jobs:
     permissions:
       contents: write  # Required for creating releases
       id-token: write  # Required for sigstore signing
+      actions: read    # Explicitly restrict other permissions
+      checks: read
+      deployments: read
+      discussions: read
+      issues: read
+      packages: read
+      pages: read
+      pull-requests: read
+      repository-projects: read
+      security-events: read
+      statuses: read
 
     steps:
       - name: Harden the runner (Audit outbound calls)
