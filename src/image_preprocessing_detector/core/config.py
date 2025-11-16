@@ -29,7 +29,8 @@ class Settings:
         ) = None,
         pdf_preserve_original_on_error: bool | None = None,
         enable_pdf_classification: bool | None = None,
-        pdf_text_threshold_chars: int | None = None,
+        pdf_text_min_threshold: int | None = None,
+        pdf_text_max_threshold: int | None = None,
         pdf_image_threshold_count: int | None = None,
     ) -> None:
         """Initialize settings from environment variables or keyword arguments.
@@ -41,7 +42,8 @@ class Settings:
             pdf_upscale_algorithm: Algorithm selection (overrides env var)
             pdf_preserve_original_on_error: Preserve original on error (overrides env var)
             enable_pdf_classification: Enable/disable PDF classification (overrides env var)
-            pdf_text_threshold_chars: Minimum character count for text-heavy classification (overrides env var)
+            pdf_text_min_threshold: Minimum character count for text detection (default: 10)
+            pdf_text_max_threshold: Minimum character count for born_digital classification (default: 50)
             pdf_image_threshold_count: Minimum image count for image-heavy classification (overrides env var)
         """
         # PDF Resolution Pre-processing (Phase 1B)
@@ -93,10 +95,15 @@ class Settings:
                 "IMAGE_PREP_ENABLE_PDF_CLASSIFICATION", default=True
             )
         )
-        self.pdf_text_threshold_chars: int = (
-            pdf_text_threshold_chars
-            if pdf_text_threshold_chars is not None
-            else self._get_int_env("IMAGE_PREP_PDF_TEXT_THRESHOLD_CHARS", 1000)
+        self.pdf_text_min_threshold: int = (
+            pdf_text_min_threshold
+            if pdf_text_min_threshold is not None
+            else self._get_int_env("IMAGE_PREP_PDF_TEXT_MIN_THRESHOLD", 10)
+        )
+        self.pdf_text_max_threshold: int = (
+            pdf_text_max_threshold
+            if pdf_text_max_threshold is not None
+            else self._get_int_env("IMAGE_PREP_PDF_TEXT_MAX_THRESHOLD", 50)
         )
         self.pdf_image_threshold_count: int = (
             pdf_image_threshold_count

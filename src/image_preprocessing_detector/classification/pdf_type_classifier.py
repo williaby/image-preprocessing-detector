@@ -66,13 +66,15 @@ def classify_pdf_type(
         settings = Settings()
 
     # Use provided thresholds or fall back to settings
-    # Note: pdf_text_threshold_chars from config represents the main text threshold
-    # We use a hardcoded min of 10 for basic text detection
-    min_threshold = text_min_threshold if text_min_threshold is not None else 10
+    min_threshold = (
+        text_min_threshold
+        if text_min_threshold is not None
+        else settings.pdf_text_min_threshold
+    )
     max_threshold = (
         text_max_threshold
         if text_max_threshold is not None
-        else settings.pdf_text_threshold_chars
+        else settings.pdf_text_max_threshold
     )
 
     logger.info(
