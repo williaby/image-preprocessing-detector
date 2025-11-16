@@ -926,8 +926,8 @@ Albumentations pipeline (see Training Data Strategy)
   - Download DocLayNet test set subset (500 pages)
   - Create validation script: `scripts/validate_yolov10_accuracy.py`
   - Run inference on test set
-  - Calculate mAP@.50 and per-class AP
-  - Target: mAP@.50 >0.82, per-class AP >0.70
+  - Calculate mAP@0.50 and per-class AP
+  - Target: mAP@0.50 >0.82, per-class AP >0.70
   - Document validation results
 
 - **Sprint 2.4.3**: Benchmark YOLOv10-doc inference latency (3 hours)
