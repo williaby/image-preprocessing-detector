@@ -1149,7 +1149,7 @@ Albumentations pipeline (see Training Data Strategy)
 **Phase 2 Success Criteria (UPDATED):**
 - Schema validation: 100% pass on test documents
 - PDF type classification: >99% accuracy
-- **YOLOv10-doc layout detection**: mAP@.50 >0.82, per-class AP >0.70
+- **YOLOv10-doc layout detection**: mAP@0.5 >0.82, per-class AP >0.70
 - **Layout element detection**: All 11 DocLayNet classes detected with COCO bounding boxes
 - **Page attributes derivation**: >90% accuracy on layout_type classification
 - DQS correlation with OCR difficulty: >0.70
