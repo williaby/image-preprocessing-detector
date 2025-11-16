@@ -401,7 +401,14 @@ class DatasetSufficiencyMeasurer:
                     logger.info(
                         f"DocSynth-300K: Found {len(parquet_files)} Parquet files with {docsynth_samples:,} samples"
                     )
+                except ImportError as e:
+                    logger.warning(
+                        f"PyArrow not installed, cannot read Parquet files: {e}"
+                    )
+                except (FileNotFoundError, PermissionError) as e:
+                    logger.warning(f"Cannot access Parquet files: {e}")
                 except Exception as e:
+                    # Catch pyarrow-specific errors (ArrowInvalid, etc.)
                     logger.warning(f"Error reading DocSynth-300K Parquet files: {e}")
             # Fallback: Check for HuggingFace dataset_info.json
             elif (docsynth_path / "dataset_info.json").exists():
@@ -982,7 +989,14 @@ class DatasetSufficiencyMeasurer:
                     logger.info(
                         f"DocSynth-300K: Found {len(parquet_files)} Parquet files with {docsynth_samples:,} samples"
                     )
+                except ImportError as e:
+                    logger.warning(
+                        f"PyArrow not installed, cannot read Parquet files: {e}"
+                    )
+                except (FileNotFoundError, PermissionError) as e:
+                    logger.warning(f"Cannot access Parquet files: {e}")
                 except Exception as e:
+                    # Catch pyarrow-specific errors (ArrowInvalid, etc.)
                     logger.warning(f"Error reading DocSynth-300K Parquet files: {e}")
             # Fallback: Check for HuggingFace dataset_info.json
             elif (docsynth_path / "dataset_info.json").exists():
