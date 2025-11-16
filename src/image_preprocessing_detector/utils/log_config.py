@@ -1,9 +1,8 @@
-"""
-Structured logging configuration using structlog.
+"""Structured logging configuration using structlog.
 
 Provides JSON-formatted logs for production with rich console output for development.
 
-Note: Module named "logging" intentionally shadows stdlib for project-specific config.
+Module renamed from 'logging' to 'log_config' to avoid shadowing Python's stdlib logging module.
 """
 
 import logging
@@ -23,8 +22,7 @@ def setup_logging(
     json_logs: bool = False,
     include_timestamp: bool = True,
 ) -> None:
-    """
-    Configure structured logging for the application.
+    """Configure structured logging for the application.
 
     Args:
         level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -84,8 +82,7 @@ def setup_logging(
 
 
 def get_logger(name: str) -> Any:
-    """
-    Get a structured logger instance.
+    """Get a structured logger instance.
 
     Args:
         name: Logger name (typically __name__ of the module)
@@ -104,8 +101,7 @@ def log_performance(
     success: bool = True,
     **context: Any,
 ) -> None:
-    """
-    Log performance metrics for an operation.
+    """Log performance metrics for an operation.
 
     Args:
         logger: Structlog logger instance

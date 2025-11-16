@@ -1,5 +1,4 @@
-"""
-JSON output generation and metadata export.
+"""JSON output generation and metadata export.
 
 Phase 1: Pydantic-based JSON schema output
 Phase 2-3: Additional output formats (COCO, LayoutParser)

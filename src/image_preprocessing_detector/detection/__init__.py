@@ -1,5 +1,4 @@
-"""
-Detection modules for image quality assessment and document analysis.
+"""Detection modules for image quality assessment and document analysis.
 
 Phase 1: Text gate and classical IQA methods
 Phase 2-3: ML-based detection (YOLOv8, PyTorch)

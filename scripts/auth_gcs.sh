@@ -3,14 +3,10 @@
 # Automatically authenticates with GCS using service account from .env file
 #
 # Usage:
-#   source scripts/auth_gcs.sh        # Authenticate (cleanup happens automatically)
-#   ./scripts/auth_gcs.sh             # Authenticate (cleanup happens on exit)
-#
-# Security: Temporary service account file is created with 600 permissions
-# and automatically removed on script exit.
+#   source scripts/auth_gcs.sh        # Authenticate and keep temp file
+#   ./scripts/auth_gcs.sh --cleanup   # Authenticate and cleanup on exit
 
-set -euo pipefail
-IFS=$'\n\t'
+set -e
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -21,6 +17,7 @@ NC='\033[0m' # No Color
 # Configuration
 PROJECT_ID="image-detection-478105"
 ENV_FILE="${ENV_FILE:-.env}"
+
 # Use mktemp for secure temporary file creation with restricted permissions
 TEMP_SA_FILE=$(mktemp "${TMPDIR:-/tmp}/gcs-sa.XXXXXX.json")
 chmod 600 "$TEMP_SA_FILE"  # Restrict to owner only
@@ -46,12 +43,9 @@ cleanup() {
     fi
 }
 
-# Always register cleanup on exit for security
-trap cleanup EXIT INT TERM
-
-# Note: --cleanup flag is now deprecated (cleanup always happens)
+# Register cleanup on exit if --cleanup flag is provided
 if [ "$1" == "--cleanup" ]; then
-    log_warn "Note: --cleanup flag is deprecated. Cleanup now happens automatically."
+    trap cleanup EXIT
 fi
 
 # Check if .env file exists
@@ -147,10 +141,8 @@ log_info "  GCP_PROJECT=$GCP_PROJECT"
 log_info "  GCS_BUCKET=$GCS_BUCKET"
 echo ""
 
-# Note about cleanup
+# If sourced, don't cleanup automatically
 if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
-    log_info "Script was sourced. Temp file will persist until shell exit."
-    log_info "To manually cleanup: cleanup"
-else
-    log_info "Temp file will be automatically removed on script exit."
+    log_info "Script was sourced. Use 'cleanup' function to remove temp file when done."
+    log_info "Or run: rm $TEMP_SA_FILE"
 fi

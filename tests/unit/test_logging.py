@@ -6,7 +6,7 @@
 import logging
 from unittest.mock import MagicMock, patch
 
-from image_preprocessing_detector.utils.logging import (
+from image_preprocessing_detector.utils.log_config import (
     get_logger,
     log_performance,
     setup_logging,
@@ -16,8 +16,8 @@ from image_preprocessing_detector.utils.logging import (
 class TestSetupLogging:
     """Test logging setup configuration."""
 
-    @patch("image_preprocessing_detector.utils.logging.logging.basicConfig")
-    @patch("image_preprocessing_detector.utils.logging.structlog.configure")
+    @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
+    @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_default(
         self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
     ) -> None:
@@ -31,8 +31,8 @@ class TestSetupLogging:
         # Verify structlog was configured
         assert mock_structlog_configure.called
 
-    @patch("image_preprocessing_detector.utils.logging.logging.basicConfig")
-    @patch("image_preprocessing_detector.utils.logging.structlog.configure")
+    @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
+    @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_debug_level(
         self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
     ) -> None:
@@ -42,8 +42,8 @@ class TestSetupLogging:
         # Verify DEBUG level was set
         assert mock_basicConfig.call_args[1]["level"] == logging.DEBUG
 
-    @patch("image_preprocessing_detector.utils.logging.logging.basicConfig")
-    @patch("image_preprocessing_detector.utils.logging.structlog.configure")
+    @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
+    @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_json_mode(
         self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
     ) -> None:
@@ -58,8 +58,8 @@ class TestSetupLogging:
         # Check that JSONRenderer is in processors
         assert any("JSONRenderer" in str(type(p)) for p in processors)
 
-    @patch("image_preprocessing_detector.utils.logging.logging.basicConfig")
-    @patch("image_preprocessing_detector.utils.logging.structlog.configure")
+    @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
+    @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_console_mode(
         self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
     ) -> None:
@@ -74,8 +74,8 @@ class TestSetupLogging:
         # Check that ConsoleRenderer is in processors
         assert any("ConsoleRenderer" in str(type(p)) for p in processors)
 
-    @patch("image_preprocessing_detector.utils.logging.logging.basicConfig")
-    @patch("image_preprocessing_detector.utils.logging.structlog.configure")
+    @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
+    @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_no_timestamp(
         self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
     ) -> None:

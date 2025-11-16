@@ -9,6 +9,7 @@ Usage:
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -184,11 +185,29 @@ def generate_badges(results: dict[str, Any], badges_dir: Path) -> None:
             continue
 
         # Format value
-        if "%" in format_str:
-            message = format_str.format(value * 100)
-        else:
-            # For all other formats (°, dB, or plain numbers), use value as-is
+        if "{" in format_str:
+            # Already a complete format string with placeholders
             message = format_str.format(value)
+        else:
+            # Build format string - split into spec and suffix
+            # e.g., ".1f dB" -> "{value:.1f} dB", ".2f°" -> "{value:.2f}°"
+            # Find the format spec part (everything up to first space or non-format char after type)
+            match = re.match(r"^([.\d]+[a-z%])", format_str, re.IGNORECASE)
+            if match:
+                spec = match.group(1)
+                suffix = format_str[len(spec) :]
+                # Handle percentage formatting (multiply by 100)
+                if "%" in spec:
+                    formatted_value = value * 100
+                    # Remove % from spec since we're adding it in suffix
+                    spec_without_pct = spec.replace("%", "f")
+                    message = f"{formatted_value:{spec_without_pct}}{suffix}%"
+                else:
+                    # For all other formats (°, dB, or plain numbers), use value as-is
+                    message = f"{value:{spec}}{suffix}"
+            else:
+                # Fallback for simple specs like ".3f"
+                message = f"{value:{format_str}}"
 
         # Determine color
         color = get_color_for_metric(value, target, lower_is_better)

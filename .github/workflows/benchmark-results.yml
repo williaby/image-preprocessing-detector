@@ -14,28 +14,30 @@ on:
       - 'reports/**/*.json'  # Trigger when new results are committed
 
 permissions:
-  contents: write  # Allow workflow to commit README updates
+  contents: read  # Default to read-only at workflow level
 
 jobs:
   update-readme:
     name: Update README from Committed Results
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write  # Job-level permission for committing README updates
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0  # Full history for proper git operations
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
           python-version: '3.11'
           cache: 'pip'
 
       - name: Install Poetry
-        uses: snok/install-poetry@v1
+        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
         with:
           version: 1.7.1
           virtualenvs-create: true
@@ -43,7 +45,7 @@ jobs:
 
       - name: Load cached venv
         id: cached-poetry-dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
@@ -134,7 +136,9 @@ jobs:
             fi
           done
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📈 **View updated README**: [benchmarks/README.md](benchmarks/README.md#quick-metrics-summary)" >> $GITHUB_STEP_SUMMARY
+          echo "📈 **View updated README**: " \
+            "[benchmarks/README.md](benchmarks/README.md#quick-metrics-summary)" \
+            >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

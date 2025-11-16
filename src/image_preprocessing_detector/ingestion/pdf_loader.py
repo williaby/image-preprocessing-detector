@@ -1,5 +1,4 @@
-"""
-PDF loading and conversion to images using PyMuPDF (fitz).
+"""PDF loading and conversion to images using PyMuPDF (fitz).
 
 Handles PDF to image conversion, DPI detection, and multi-page documents.
 """
@@ -18,8 +17,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class PageImage:
-    """
-    Represents a single page converted to an image.
+    """Represents a single page converted to an image.
 
     Attributes:
         page_number: Zero-based page index
@@ -41,8 +39,7 @@ class PageImage:
 
 
 class PDFLoader:
-    """
-    Loads PDF files and converts pages to images.
+    """Loads PDF files and converts pages to images.
 
     Uses PyMuPDF (fitz) for efficient PDF parsing and rendering.
     """
@@ -53,8 +50,7 @@ class PDFLoader:
         color_space: str = "RGB",
         alpha: bool = False,
     ) -> None:
-        """
-        Initialize PDF loader.
+        """Initialize PDF loader.
 
         Args:
             target_dpi: Target DPI for rendering (default: 300)
@@ -72,8 +68,7 @@ class PDFLoader:
         )
 
     def load(self, pdf_path: str | Path) -> Iterator[PageImage]:
-        """
-        Load PDF and yield pages as images.
+        """Load PDF and yield pages as images.
 
         Args:
             pdf_path: Path to PDF file
@@ -106,8 +101,7 @@ class PDFLoader:
             doc.close()
 
     def _render_page(self, doc: fitz.Document, page_num: int) -> PageImage:
-        """
-        Render a single PDF page to an image.
+        """Render a single PDF page to an image.
 
         Args:
             doc: PyMuPDF document object
@@ -167,8 +161,7 @@ class PDFLoader:
         )
 
     def _detect_page_dpi(self, page: fitz.Page) -> float:
-        """
-        Detect the effective DPI of a PDF page.
+        """Detect the effective DPI of a PDF page.
 
         Args:
             page: PyMuPDF page object
@@ -228,8 +221,7 @@ def load_pdf(
     pdf_path: str | Path,
     target_dpi: int = 300,
 ) -> list[PageImage]:
-    """
-    Convenience function to load a PDF and return all pages as a list.
+    """Convenience function to load a PDF and return all pages as a list.
 
     Args:
         pdf_path: Path to PDF file

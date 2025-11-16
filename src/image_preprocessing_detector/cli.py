@@ -1,5 +1,4 @@
-"""
-Command-line interface for Image Preprocessing Detector.
+"""Command-line interface for Image Preprocessing Detector.
 
 Provides commands for processing single files and batches of documents.
 """
@@ -83,8 +82,7 @@ def process(
     skew_threshold: float,
     contrast_threshold: float,
 ) -> None:
-    """
-    Process a single PDF or image file.
+    """Process a single PDF or image file.
 
     Examples:
         imgprep process input.pdf --output result.json
@@ -305,8 +303,7 @@ def batch(
     skew_threshold: float,
     contrast_threshold: float,
 ) -> None:
-    """
-    Process a directory of PDF and image files.
+    """Process a directory of PDF and image files.
 
     Examples:
         imgprep batch input_dir/ --output-dir results/

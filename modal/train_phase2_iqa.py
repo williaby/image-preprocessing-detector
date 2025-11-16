@@ -38,7 +38,6 @@ NOTE: This script placeholder needs full implementation for teacher-student trai
       Current implementation is for single-model training (legacy MobileNetV3).
       See configs/modal_phase2_iqa.yaml for updated architecture configuration.
 """
-# ruff: noqa: T201, S108, PTH101, PTH103
 # Justification: Modal training script uses print for progress logging and /tmp for container-local storage
 # mypy: ignore-errors
 # Justification: Modal training placeholder script with incomplete implementation

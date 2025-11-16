@@ -1,5 +1,4 @@
-"""
-JSON Schema for Image Preprocessing Detector Output.
+"""JSON Schema for Image Preprocessing Detector Output.
 
 Defines Pydantic models for structured metadata output including detected issues,
 document elements, planned actions, and transform history.
@@ -64,10 +63,11 @@ class OCRRoutingStrategy(str, Enum):
 class LayoutType(str, Enum):
     """Coarse page layout classification (Phase 6 - Layout-Lite)."""
 
-    SINGLE = "single"
-    MULTI = "multi"
+    SINGLE_COLUMN = "single_column"
+    MULTI_COLUMN = "multi_column"
     THREE_COLUMN = "three_column"
     COMPLEX = "complex"
+    UNKNOWN = "unknown"
 
 
 class ActionType(str, Enum):
@@ -247,6 +247,20 @@ class PageMetadata(BaseModel):
     dpi_input: int = Field(..., gt=0, description="Input DPI of the page")
     dpi_effective: int = Field(..., gt=0, description="Effective DPI after processing")
 
+    # Phase 2.1.6: Teacher IQA scores (Sprint 2.1.6)
+    teacher_iqa: dict[str, float] | None = Field(
+        None,
+        description="Teacher model IQA scores (ResNet-50) for high-risk pages",
+        examples=[
+            {
+                "blur_score": 0.85,
+                "noise_score": 0.72,
+                "contrast_score": 0.91,
+                "overall_quality": 0.83,
+            }
+        ],
+    )
+
     detected_issues: list[DetectedIssue] = Field(
         default_factory=list, description="Page-level quality issues detected"
     )
@@ -280,6 +294,37 @@ class ProcessingVersion(BaseModel):
     timestamp: datetime = Field(
         default_factory=datetime.now, description="Processing timestamp"
     )
+
+
+class TeacherUsage(BaseModel):
+    """Metadata for teacher model usage during processing (Sprint 2.1.5).
+
+    Tracks when and why the teacher model (more expensive/accurate) was invoked
+    for specific pages that failed initial processing with the student model.
+    """
+
+    pages_with_teacher: list[int] = Field(
+        default_factory=list,
+        description="List of page indices where teacher model was used",
+    )
+    escalation_reasons: dict[str, str] = Field(
+        default_factory=dict,
+        description="Mapping of page index to escalation reason (e.g., 'low_confidence', 'detection_failure')",
+    )
+    teacher_device: str | None = Field(
+        None,
+        description="Device used for teacher model inference (e.g., 'cuda:0', 'cpu', 'modal')",
+    )
+    total_teacher_time_ms: int = Field(
+        0,
+        ge=0,
+        description="Total time spent on teacher model inference in milliseconds",
+    )
+
+
+# Type aliases for backward compatibility and clearer naming
+DocumentQualityScore = DQSMetadata  # Alias for routing module
+OCRRoutingRecommendation = OCRRoutingStrategy  # Alias for routing module
 
 
 class DocumentMetadata(BaseModel):
@@ -340,6 +385,12 @@ class DocumentMetadata(BaseModel):
     page_layout_summary: list[PageLayoutSummary] = Field(
         default_factory=list,
         description="Phase 6: Per-page coarse layout attributes (layout-lite, NOT full semantic layout)",
+    )
+
+    # Phase 2.1.5: Teacher model usage tracking (Sprint 2.1.5)
+    teacher_usage: TeacherUsage | None = Field(
+        None,
+        description="Phase 2: Metadata for teacher model usage (tracks escalation from student to teacher model)",
     )
 
     # Existing fields

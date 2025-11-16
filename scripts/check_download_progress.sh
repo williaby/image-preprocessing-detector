@@ -4,8 +4,7 @@
 # Usage:
 #   ./scripts/check_download_progress.sh
 
-set -euo pipefail
-IFS=$'\n\t'
+set -e
 
 # Colors
 GREEN='\033[0;32m'

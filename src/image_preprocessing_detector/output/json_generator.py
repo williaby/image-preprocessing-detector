@@ -1,5 +1,4 @@
-"""
-JSON output generation for document metadata.
+"""JSON output generation for document metadata.
 
 Aggregates detection results and corrections into structured JSON output
 using Pydantic schema validation.
@@ -37,15 +36,13 @@ logger = get_logger(__name__)
 
 
 class MetadataBuilder:
-    """
-    Builds document metadata from detection and correction results.
+    """Builds document metadata from detection and correction results.
 
     Aggregates per-page results into a complete DocumentMetadata object.
     """
 
     def __init__(self, document_id: str, file_name: str) -> None:
-        """
-        Initialize metadata builder.
+        """Initialize metadata builder.
 
         Args:
             document_id: Unique document identifier
@@ -63,8 +60,7 @@ class MetadataBuilder:
         )
 
     def set_upscaling_metadata(self, upscaling_result: dict) -> None:
-        """
-        Set PDF upscaling metadata (Phase 1B).
+        """Set PDF upscaling metadata (Phase 1B).
 
         Args:
             upscaling_result: Upscaling result from PDFUpscaler
@@ -89,8 +85,7 @@ class MetadataBuilder:
         blur_correction: CorrectionResult | None = None,
         elements: list[DocumentElement] | None = None,
     ) -> None:
-        """
-        Add page metadata from detection and correction results.
+        """Add page metadata from detection and correction results.
 
         Args:
             page_number: Zero-based page index
@@ -233,6 +228,7 @@ class MetadataBuilder:
             height_px=height,
             dpi_input=dpi_input,
             dpi_effective=dpi_effective,
+            teacher_iqa=None,  # Phase 2: Will be populated by teacher model if used
             detected_issues=detected_issues,
             planned_actions=planned_actions,
             elements=elements or [],
@@ -250,8 +246,7 @@ class MetadataBuilder:
         )
 
     def build(self, processing_version: str = "1.0.0") -> DocumentMetadata:
-        """
-        Build final DocumentMetadata object.
+        """Build final DocumentMetadata object.
 
         Args:
             processing_version: Version of processing pipeline
@@ -309,6 +304,7 @@ class MetadataBuilder:
             pre_ocr_risk=None,
             dqs=None,
             ocr_routing_recommendation=None,
+            teacher_usage=None,  # Phase 2: Will be populated if teacher model is used
             # page_layout_summary defaults to empty list (will be populated in Phase 6)
         )
 
@@ -327,8 +323,7 @@ def generate_json(
     output_path: str | Path,
     pretty: bool = True,
 ) -> None:
-    """
-    Generate JSON output file from DocumentMetadata.
+    """Generate JSON output file from DocumentMetadata.
 
     Args:
         metadata: Complete document metadata
@@ -362,8 +357,7 @@ def generate_json(
 
 
 def load_json(input_path: str | Path) -> DocumentMetadata:
-    """
-    Load DocumentMetadata from JSON file.
+    """Load DocumentMetadata from JSON file.
 
     Args:
         input_path: Path to JSON file

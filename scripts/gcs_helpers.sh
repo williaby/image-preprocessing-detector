@@ -4,16 +4,11 @@
 # Bucket: gs://image_detection_b
 
 set -euo pipefail
-IFS=$'\n\t'
 
 # Configuration
 PROJECT_ID="image-detection-478105"
 BUCKET="gs://image_detection_b"
-
-# Dynamically determine project root (works regardless of where script is called from)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-LOCAL_ROOT="${LOCAL_ROOT:-$PROJECT_ROOT}"
+LOCAL_ROOT="/home/byron/dev/image_detection"
 
 # Colors for output
 GREEN='\033[0;32m'

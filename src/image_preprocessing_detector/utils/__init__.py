@@ -1,7 +1,24 @@
 """Utility modules for logging, telemetry, and common functions."""
 
 # Core utilities (Phase 0/1) - always available
-from image_preprocessing_detector.utils.logging import get_logger, setup_logging
+from image_preprocessing_detector.utils.datetime_compat import (
+    UTC,
+    MockDatetime,
+    aware_to_naive,
+    ensure_aware,
+    is_aware,
+    is_naive,
+    local_now,
+    mock_now,
+    naive_to_aware,
+    parse_iso,
+    safe_compare,
+    timestamp_now,
+    to_iso,
+    utc_from_timestamp,
+    utc_now,
+)
+from image_preprocessing_detector.utils.log_config import get_logger, setup_logging
 
 # Optional GCS utilities (Phase 2+) - require google-cloud-storage
 try:
@@ -35,8 +52,23 @@ except ImportError:
 
 # Build __all__ dynamically based on available imports
 __all__ = [
+    "UTC",
+    "MockDatetime",
+    "aware_to_naive",
+    "ensure_aware",
     "get_logger",
+    "is_aware",
+    "is_naive",
+    "local_now",
+    "mock_now",
+    "naive_to_aware",
+    "parse_iso",
+    "safe_compare",
     "setup_logging",
+    "timestamp_now",
+    "to_iso",
+    "utc_from_timestamp",
+    "utc_now",
 ]
 
 if _HAS_GCS:
