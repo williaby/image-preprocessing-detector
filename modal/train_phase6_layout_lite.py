@@ -17,7 +17,6 @@ Usage:
 Monitor:
     https://modal.com/apps
 """
-# ruff: noqa: T201, S108, PTH101, PTH103
 # Justification: Modal training script uses print for progress logging and /tmp for container-local storage
 # mypy: ignore-errors
 # Justification: Modal training placeholder script with incomplete implementation
@@ -70,17 +69,29 @@ def train_yolov8():
         raise ValueError("GCP_SA_KEY environment variable not found in Modal secret")
 
     # Decode base64 and write to temp file for GCS client
+    import tempfile
+
     gcp_sa_key_json = base64.b64decode(gcp_sa_key_b64).decode("utf-8")
-    credentials_path = "/tmp/gcp-sa-key.json"
-    with open(credentials_path, "w") as f:
+
+    # Use tempfile for credentials (Modal container is isolated/ephemeral, but use tempfile for security)
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, prefix="gcp-sa-key-"
+    ) as f:
+        credentials_path = f.name
         f.write(gcp_sa_key_json)
 
     # Set restrictive permissions (owner-only read/write)
-    os.chmod(credentials_path, 0o600)
+    os.chmod(credentials_path, 0o600)  # nosec B103 - Secure permissions for credentials file
 
     # Set environment variable for GCS client
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-    print("✅ GCS credentials configured")
+    print(f"✅ GCS credentials configured at {credentials_path}")
+
+    # Create temporary directories for data and runs
+    data_dir = tempfile.mkdtemp(prefix="yolo-data-")
+    runs_dir = tempfile.mkdtemp(prefix="yolo-runs-")
+    print(f"Data directory: {data_dir}")
+    print(f"Runs directory: {runs_dir}")
 
     # Load configuration from GCS
     print("\n[1/6] Loading configuration from GCS...")
@@ -99,10 +110,9 @@ def train_yolov8():
 
     # Download dataset.yaml from GCS
     print("\n[2/6] Downloading dataset.yaml from GCS...")
-    os.makedirs("/tmp/data", exist_ok=True)
 
     dataset_yaml_blob = bucket.blob("datasets/layout_phase3/dataset.yaml")
-    dataset_yaml_blob.download_to_filename("/tmp/data/dataset.yaml")
+    dataset_yaml_blob.download_to_filename(f"{data_dir}/dataset.yaml")
 
     # NOTE: Dataset download implementation deferred to Phase 3 dataset preparation
     # This infrastructure PR establishes Modal + GCS workflow
@@ -111,8 +121,8 @@ def train_yolov8():
         "⚠️  Dataset download not yet implemented - deferred to Phase 3 dataset preparation"
     )
     # TODO: Implement full dataset download (gsutil or google-cloud-storage client)
-    #   Example: gsutil -m cp -r gs://image_detection_b/datasets/layout_phase3/train /tmp/data/
-    #   Verify directories exist before training: /tmp/data/train, /tmp/data/val
+    #   Example: gsutil -m cp -r gs://image_detection_b/datasets/layout_phase3/train {data_dir}/
+    #   Verify directories exist before training: {data_dir}/train, {data_dir}/val
     # TODO: Add FileNotFoundError check to prevent silent failures
 
     # Initialize YOLOv8 model
@@ -127,7 +137,7 @@ def train_yolov8():
     print("This will run for 50-80 hours - no session timeouts!")
 
     results = model.train(
-        data="/tmp/data/dataset.yaml",
+        data=f"{data_dir}/dataset.yaml",
         epochs=config["training"]["epochs"],
         batch=config["training"]["batch_size"],
         imgsz=config["model"]["input_size"],
@@ -139,7 +149,7 @@ def train_yolov8():
         warmup_epochs=config["training"]["warmup_epochs"],
         amp=config["training"]["mixed_precision"],
         save_period=config["monitoring"]["save_period"],
-        project="/tmp/runs",
+        project=runs_dir,
         name="layout_detection",
     )
 
@@ -159,7 +169,8 @@ def train_yolov8():
 
     # Upload PyTorch checkpoint
     checkpoint_blob = bucket.blob("models/phase3_yolov8/best.pt")
-    checkpoint_blob.upload_from_filename("/tmp/runs/layout_detection/weights/best.pt")
+    checkpoint_path = f"{runs_dir}/layout_detection/weights/best.pt"
+    checkpoint_blob.upload_from_filename(checkpoint_path)
 
     print("\n" + "=" * 60)
     print("✅ YOLOv8 training complete!")

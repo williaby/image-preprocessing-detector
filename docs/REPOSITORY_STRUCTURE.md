@@ -1,4 +1,13 @@
-# Repository Structure Reference
+---
+schema_type: common
+title: "Repository Structure Reference"
+tags:
+  - architecture
+  - modularity
+status: published
+owner: docs-team
+purpose: Documentation for repository structure reference.
+---
 
 **Version**: 1.0
 **Last Updated**: 2025-11-13

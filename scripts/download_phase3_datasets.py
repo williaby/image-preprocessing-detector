@@ -128,14 +128,30 @@ def download_from_github(repo_url: str, local_dir: Path, dry_run: bool = False) 
     Download dataset from GitHub using git clone.
 
     Args:
-        repo_url: GitHub repository URL
+        repo_url: GitHub repository URL (must be https://github.com/...)
         local_dir: Local directory to save dataset
         dry_run: If True, only show what would be downloaded
 
     Returns:
         True if download successful, False otherwise
+
+    Raises:
+        ValueError: If repo_url is not a valid GitHub HTTPS URL
     """
+    import shlex
+    from urllib.parse import urlparse
+
     logger.info(f"Cloning {repo_url} to {local_dir}")
+
+    # Validate URL to prevent command injection
+    parsed = urlparse(repo_url)
+    if parsed.scheme != "https" or not parsed.netloc.endswith("github.com"):
+        msg = (
+            f"Invalid repository URL: {repo_url}. "
+            "Only https://github.com URLs are allowed."
+        )
+        logger.error(msg)
+        raise ValueError(msg)
 
     if dry_run:
         logger.info(f"[DRY RUN] Would git clone {repo_url} to {local_dir}")
@@ -145,12 +161,13 @@ def download_from_github(repo_url: str, local_dir: Path, dry_run: bool = False) 
         # Create parent directory
         local_dir.parent.mkdir(parents=True, exist_ok=True)
 
-        # Git clone command
-        cmd = ["git", "clone", repo_url, str(local_dir)]
+        # Git clone command with validated arguments
+        # Using list form (not shell=True) provides protection, but we validate for defense in depth
+        cmd = ["git", "clone", "--", repo_url, str(local_dir)]
 
-        logger.info(f"Running: {' '.join(cmd)}")
-        result = subprocess.run(  # nosec B603 - Safe git clone, known args, no shell
-            cmd, capture_output=True, text=True
+        logger.info(f"Running: {' '.join(shlex.quote(arg) for arg in cmd)}")
+        result = subprocess.run(  # nosec B603 - Validated GitHub HTTPS URL, list args, no shell
+            cmd, capture_output=True, text=True, check=False
         )
 
         if result.returncode == 0:

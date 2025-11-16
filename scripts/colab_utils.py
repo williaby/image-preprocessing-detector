@@ -8,7 +8,7 @@ Colab-specific optimizations for training workflows.
 """
 
 import os
-import subprocess
+import subprocess  # nosec B404 - subprocess used safely with hardcoded commands
 import sys
 from pathlib import Path
 
@@ -49,7 +49,7 @@ def get_gpu_info() -> dict[str, any]:
 
         # Try to get more detailed info from nvidia-smi
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B607,B603 - nvidia-smi is hardcoded, shell=False
                 [
                     "nvidia-smi",
                     "--query-gpu=name,memory.total",
@@ -63,7 +63,7 @@ def get_gpu_info() -> dict[str, any]:
                 gpu_name, gpu_memory = result.stdout.strip().split(", ")
                 info["gpu_name_detailed"] = gpu_name
                 info["gpu_memory_detailed"] = gpu_memory
-        except Exception:
+        except Exception:  # nosec B110 - graceful degradation for optional GPU info
             pass
 
     # Detect GPU tier for Colab
@@ -243,7 +243,7 @@ def install_packages(packages: list, quiet: bool = True) -> None:
         if quiet:
             cmd.append("-q")
 
-        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec B603
         if result.returncode == 0:
             print(f"   ✅ {package}")
         else:
@@ -254,25 +254,48 @@ def download_from_url(url: str, output_path: str) -> Path:
     """Download file from URL with progress bar.
 
     Args:
-        url: URL to download from
+        url: URL to download from (must be http or https)
         output_path: Local path to save file
 
     Returns:
         Path to downloaded file
+
+    Raises:
+        ValueError: If URL scheme is not http/https
     """
-    import urllib.request
+    from urllib.parse import urlparse
+
+    import requests
+
+    # Validate URL scheme to prevent file:// access
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        msg = f"Invalid URL scheme: {parsed.scheme}. Only http/https allowed."
+        raise ValueError(msg)
 
     output_path_obj = Path(output_path)
     output_path_obj.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"⬇️  Downloading from {url}")
 
-    def progress_hook(count, block_size, total_size):
-        percent = int(count * block_size * 100 / total_size)
-        sys.stdout.write(f"\r   Progress: {percent}%")
-        sys.stdout.flush()
+    # Use requests library for safer download with streaming
+    response = requests.get(url, stream=True, timeout=30)
+    response.raise_for_status()
 
-    urllib.request.urlretrieve(url, output_path_obj, reporthook=progress_hook)
+    total_size = int(response.headers.get("content-length", 0))
+    block_size = 8192
+    downloaded = 0
+
+    with open(output_path_obj, "wb") as f:
+        for chunk in response.iter_content(chunk_size=block_size):
+            if chunk:
+                f.write(chunk)
+                downloaded += len(chunk)
+                if total_size > 0:
+                    percent = int(downloaded * 100 / total_size)
+                    sys.stdout.write(f"\r   Progress: {percent}%")
+                    sys.stdout.flush()
+
     print(f"\n✅ Downloaded to: {output_path_obj}")
 
     return output_path_obj

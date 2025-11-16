@@ -1,4 +1,17 @@
-# Project A Functional and Non-Functional Requirements v2.0
+---
+schema_type: common
+title: "Project A Functional and Non-Functional Requirements v2.0"
+tags:
+  - rag_pipeline
+  - architecture
+  - requirements
+  - specifications
+  - functional
+  - non_functional
+status: published
+owner: cv-team
+purpose: Architecture documentation for project a functional and non-functional requirements v2.0.
+---
 
 **Project:** A – Image Preprocessing & IQA Gateway
 **Version:** 2.0 (COMPREHENSIVE RESTORATION)

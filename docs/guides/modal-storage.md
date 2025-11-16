@@ -1,4 +1,15 @@
-# Modal Storage Setup Guide
+---
+schema_type: common
+title: "Modal Storage Setup Guide"
+tags:
+  - guide
+  - modal
+  - infrastructure
+  - gcs
+status: published
+owner: docs-team
+purpose: Guide for modal storage setup guide.
+---
 
 **Project**: image-detection
 **GCP Project ID**: image-detection-478105

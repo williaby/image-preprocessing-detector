@@ -1,4 +1,14 @@
-# Dataset Citations and Attributions
+---
+schema_type: common
+title: "Dataset Citations and Attributions"
+tags:
+  - reference
+  - datasets
+  - research
+status: published
+owner: docs-team
+purpose: Reference documentation for dataset citations and attributions.
+---
 
 This document provides proper citations for all datasets used or referenced in the Image Preprocessing Detector project. **Researchers must cite the appropriate papers when using these datasets in publications or derivative works.**
 

@@ -1,4 +1,13 @@
-# Detection Taxonomy - Complete Classification of Document Quality Issues
+---
+schema_type: common
+title: "Detection Taxonomy - Complete Classification of Document Quality Issues"
+tags:
+  - reference
+  - taxonomy
+status: published
+owner: docs-team
+purpose: Reference documentation for detection taxonomy - complete classification of document quality issues.
+---
 
 **Version**: 3.0 (Research-Aligned)
 **Date**: 2025-11-13

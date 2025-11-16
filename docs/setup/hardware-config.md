@@ -1,4 +1,15 @@
-# Hardware Configuration - Phase 2 Training
+---
+schema_type: common
+title: "Hardware Configuration - Phase 2 Training"
+tags:
+  - installation
+  - training
+  - infrastructure
+  - gpu
+status: published
+owner: platform-team
+purpose: Setup guide for hardware configuration - phase 2 training.
+---
 
 **Generated**: 2025-11-12
 **Environment**: Development Machine (WSL2)

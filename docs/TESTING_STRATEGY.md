@@ -1,4 +1,15 @@
-# Testing Strategy - Dataset Storage and Test Fixtures
+---
+schema_type: common
+title: "Testing Strategy - Dataset Storage and Test Fixtures"
+tags:
+  - datasets
+  - testing
+  - infrastructure
+  - gcs
+status: published
+owner: docs-team
+purpose: Documentation for testing strategy - dataset storage and test fixtures.
+---
 
 **Last Updated**: 2025-11-13
 **Purpose**: Document dataset storage strategy and GitHub test fixtures for CI/CD

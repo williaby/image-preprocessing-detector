@@ -1,14 +1,24 @@
 """Weak supervision labeling system for IQA training.
 
 Automatically generates quality issue labels using reference-free image quality metrics:
-- BRISQUE: Blind/Referenceless Image Spatial Quality Evaluator
-- NIQE: Natural Image Quality Evaluator
+- BRISQUE: Blind/Referenceless Image Spatial Quality Evaluator (PLACEHOLDER)
+- NIQE: Natural Image Quality Evaluator (PLACEHOLDER)
 - Laplacian Variance: Blur detection
 - RMS Contrast: Low contrast detection
 - Hough Transform: Skew detection
 - Edge straightness: Perspective distortion
 
 Phase 2 - Week 1: Data Collection & Augmentation
+
+Known Limitations:
+    - BRISQUE: Currently uses simplified noise estimation placeholder.
+      Full implementation requires cv2.quality.QualityBRISQUE module.
+    - NIQE: Currently uses simplified gradient statistics placeholder.
+      Full implementation requires cv2.quality.QualityNIQE module.
+
+    These placeholders are functional for initial weak supervision but may impact
+    label quality. Consider upgrading to full cv2.quality implementations when
+    OpenCV version supports them (OpenCV 4.6+ with contrib modules).
 """
 
 from __future__ import annotations
@@ -197,9 +207,14 @@ class WeakSupervisionLabeler:
 
         Returns:
             BRISQUE score (lower is better)
+
+        Note:
+            This is a placeholder implementation using simplified noise estimation.
+            See module docstring "Known Limitations" for details on upgrading to
+            cv2.quality.QualityBRISQUE.
         """
-        # TODO: Implement BRISQUE using cv2.quality module or scikit-image
-        # For now, use placeholder based on noise estimation
+        # TODO: Implement BRISQUE using cv2.quality.QualityBRISQUE module
+        # Current placeholder uses simplified noise estimation (see module docstring)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # Estimate noise using Laplacian of Gaussian
@@ -220,9 +235,14 @@ class WeakSupervisionLabeler:
 
         Returns:
             NIQE score (lower is better)
+
+        Note:
+            This is a placeholder implementation using simplified gradient statistics.
+            See module docstring "Known Limitations" for details on upgrading to
+            cv2.quality.QualityNIQE.
         """
-        # TODO: Implement NIQE using cv2.quality module
-        # For now, use placeholder based on gradient statistics
+        # TODO: Implement NIQE using cv2.quality.QualityNIQE module (requires OpenCV 4.6+ contrib)
+        # Current placeholder uses simplified gradient statistics (see module docstring)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # Compute gradient magnitude

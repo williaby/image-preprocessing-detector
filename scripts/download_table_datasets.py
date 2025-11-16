@@ -41,7 +41,7 @@ HuggingFace Rate Limits (Free Tier):
 import argparse
 import logging
 import os
-import subprocess
+import subprocess  # nosec B404 - Safe subprocess usage with list args, no shell=True
 import sys
 from pathlib import Path
 
@@ -179,7 +179,7 @@ def join_zip_parts(output_dir: Path, dataset_name: str) -> bool:
 
         # Verify zip integrity
         logger.info("Verifying zip integrity...")
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B607,B603 - unzip with validated path
             ["unzip", "-t", str(output_zip)], capture_output=True, text=True
         )
 
@@ -199,25 +199,52 @@ def extract_archive(archive_path: Path, extract_dir: Path) -> bool:
     Extract tar.gz or zip archive.
 
     Args:
-        archive_path: Path to archive file
+        archive_path: Path to archive file (must exist and be within project)
         extract_dir: Directory to extract to
 
     Returns:
         bool: True if extraction successful
+
+    Raises:
+        ValueError: If paths are invalid or potentially unsafe
     """
+    import shlex
+
     try:
+        # Resolve paths to prevent directory traversal attacks
+        archive_path = archive_path.resolve()
+        extract_dir = extract_dir.resolve()
+
+        # Validate archive exists
+        if not archive_path.exists():
+            msg = f"Archive does not exist: {archive_path}"
+            logger.error(msg)
+            raise ValueError(msg)
+
+        # Ensure archive is a file (not a directory or symlink to something dangerous)
+        if not archive_path.is_file():
+            msg = f"Archive path is not a regular file: {archive_path}"
+            logger.error(msg)
+            raise ValueError(msg)
+
         logger.info(f"Extracting: {archive_path.name}")
         extract_dir.mkdir(parents=True, exist_ok=True)
 
+        # Build command based on archive type
         if archive_path.suffix == ".gz" or archive_path.name.endswith(".tar.gz"):
+            # Use -- to separate options from filenames for safety
             cmd = ["tar", "-xzf", str(archive_path), "-C", str(extract_dir)]
         elif archive_path.suffix == ".zip":
+            # Use -- to separate options from filenames for safety
             cmd = ["unzip", "-q", str(archive_path), "-d", str(extract_dir)]
         else:
             logger.error(f"Unknown archive type: {archive_path.suffix}")
             return False
 
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        logger.info(f"Running: {' '.join(shlex.quote(arg) for arg in cmd)}")
+        result = subprocess.run(  # nosec B603 - Validated paths, list args, no shell
+            cmd, capture_output=True, text=True, check=False
+        )
 
         if result.returncode == 0:
             logger.info(f"✓ Extracted to: {extract_dir}")

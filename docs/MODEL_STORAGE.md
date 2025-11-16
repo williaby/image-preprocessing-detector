@@ -1,4 +1,15 @@
-# Model Artifact Storage and Versioning
+---
+schema_type: common
+title: "Model Artifact Storage and Versioning"
+tags:
+  - ml
+  - training
+  - infrastructure
+  - gcs
+status: published
+owner: docs-team
+purpose: Documentation for model artifact storage and versioning.
+---
 
 This document describes the end-to-end workflow for storing, versioning, and promoting machine learning model artifacts for the Image Preprocessing Detector project.
 

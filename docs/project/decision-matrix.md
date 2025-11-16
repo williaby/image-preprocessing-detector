@@ -1,4 +1,13 @@
-# Critical Decision Matrix
+---
+schema_type: common
+title: "Critical Decision Matrix"
+tags:
+  - planning
+  - project_management
+status: published
+owner: core-maintainer
+purpose: Project planning documentation for critical decision matrix.
+---
 
 **Purpose**: Prioritize and track key architectural and implementation decisions before starting development.
 

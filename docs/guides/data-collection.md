@@ -1,4 +1,13 @@
-# Data Collection Strategy - Phase 2 Week 1
+---
+schema_type: common
+title: "Data Collection Strategy - Phase 2 Week 1"
+tags:
+  - guide
+  - datasets
+status: published
+owner: docs-team
+purpose: Guide for data collection strategy - phase 2 week 1.
+---
 
 **Objective**: Collect 10k+ clean document images and generate 50k augmented training dataset
 **Timeline**: Days 1-5 (Week 1 of Phase 2)

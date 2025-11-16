@@ -3,6 +3,7 @@
 
 """Download IQA datasets with quality labels for validation."""
 
+import sys
 from pathlib import Path
 
 print("=" * 60)
@@ -24,7 +25,7 @@ try:
 except ImportError as e:
     print(f"ERROR: Failed to import iqadataset: {e}")
     print("Please install: poetry run pip install iqadataset")
-    exit(1)
+    sys.exit(1)
 
 # Set download root
 root = Path("data/benchmarks/external_iqa/")

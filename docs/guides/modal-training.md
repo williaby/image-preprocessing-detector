@@ -1,4 +1,14 @@
-# Modal Training Guide - Phase 2 & 3
+---
+schema_type: common
+title: "Modal Training Guide - Phase 2 & 3"
+tags:
+  - guide
+  - modal
+  - training
+status: published
+owner: docs-team
+purpose: Guide for modal training guide - phase 2 & 3.
+---
 
 **Last Updated**: 2025-01-14
 **Target Platform**: Modal (Serverless GPU Compute)

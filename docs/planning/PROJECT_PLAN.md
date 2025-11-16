@@ -3,21 +3,24 @@ schema_type: planning
 title: "Project A: Image Preprocessing & IQA Gateway - Project Plan"
 description: "Comprehensive project plan for Project A with RAG Pipeline architecture,
   teacher-student ResNet IQA, and detailed sprint breakdowns for all 6 phases"
-tags: [planning, project_plan, rag_pipeline, teacher_student, resnet, iqa,
-    device_priority, sprint_breakdown]
+tags:
+  - planning
+  - rag_pipeline
+  - teacher_student
+  - resnet
+  - iqa
+  - roadmap
 status: published
-owner: "project-team"
+owner: core-maintainer
 authors:
-- name: "Byron Williams"
-- name: "Claude Code"
+  - name: "Byron Williams"
+  - name: "Claude Code"
 purpose: "Document the complete implementation roadmap for Project A from Phase 0
   foundation through Phase 6 continuous improvement, aligned with 4-project RAG Pipeline
   architecture."
-component: "project_a_preprocessing_gateway"
+component: "Strategy"
 source: "Merged from remote branch claude/update-root-project-plan-011NESKE9dRWrXSMWEqoDi9L"
 ---
-
-# Project A: Image Preprocessing & IQA Gateway - Project Plan
 
 **Project**: Project A - Image Preprocessing Detection & Quality Assessment for RAG Applications
 **Purpose**: Intelligent preprocessing gateway that analyzes documents, corrects quality issues, and provides routing metadata for downstream OCR/RAG processing
@@ -57,17 +60,20 @@ DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Ve
 
 **Core Responsibilities:**
 - File ingestion & page rasterization (PDF → standardized 300 DPI images)
-- **Classical IQA**: blur, skew, noise, DPI, contrast, illumination detection
+- **Classical IQA**: blur, skew, noise, DPI, contrast, illumination, binarization, bleed-through, warping, perspective detection
 - **ML-based DIQA**: Teacher-student ResNet architecture (ResNet-50 teacher, ResNet-18 student)
 - **Selective teacher inference** triggered by:
   - Document risk classification
   - Student uncertainty thresholds
   - Discrepancies between classical IQA and student output
-- **Guarded corrections**: deskew, binarize, upscale, denoise, CLAHE (with do-no-harm guardrails)
-- **Layout-lite classification**: Page-level structural analysis without full semantic layout
-  - `layout_type`: single / multi / three_column / complex
-  - Presence flags: `has_tables`, `has_figures`, `has_dense_math`, `has_handwriting`
-  - Page attributes: `fuzzy_scan`, `watermark`, `colorful_background`
+- **Guarded corrections**: deskew, binarize, upscale, denoise, CLAHE, dewarping, bleed-through suppression (with do-no-harm guardrails)
+- **Light layout detection (YOLOv10-doc, 11 DocLayNet classes)**: Detect all elements, assess per-element quality, calculate complexity
+  - Model: YOLOv10-doc (specifically trained on DocLayNet)
+  - Classes: All 11 DocLayNet classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title)
+  - Hybrid IQA: Per-element quality assessment on figures, tables, embedded images
+  - Spatial hints: Column detection, vertical position, proximity between elements
+  - **NOT full semantic layout** (no reading order, no element linking - that's Project B)
+- **Office document support**: Docling integration for embedded image extraction (.docx, .xlsx, .pptx)
 - **PDF type classification**: image_only / born_digital / hybrid
 - **Document Quality Score (DQS)**: Degradation score + structural complexity score
 - **Routing metadata**: `pre_ocr_risk`, `ocr_routing_recommendation` for Project B
@@ -102,12 +108,12 @@ Input (PDF/Image)
     ↓ (Auto-upscale if < 300 DPI, render to 300 DPI images)
 [2. PDF Type Classification]
     ↓ (Classify: image_only / born_digital / hybrid)
-[3. Text Detection Gate]
+[3. Text Detection Gate] (PENDING EVALUATION - see FR-2.4)
     ↓                              ↓
 [NO TEXT]                     [TEXT DETECTED]
     ↓                              ↓
-[4A. Classical IQA            [4B. Layout-Lite Detection]
-     Full page analysis]           Coarse structural analysis
+[4A. Classical IQA            [4B. Light Layout Detection (YOLOv10-doc)]
+     Full page analysis]           All 11 DocLayNet classes detection
     ↓                              ↓
 [5. ML IQA: ResNet-18 Student (Primary)]
     ↓
@@ -184,24 +190,69 @@ Output Package → Project B
   - If no GPU available → skip teacher inference (use student-only output)
 - **Modal GPU usage**: Optional, bounded by configuration (`modal_budget_per_run`)
 
-### Layout-Lite vs Full Layout Detection
+### Light Layout (Project A) vs Full Semantic Layout (Project B)
 
-**Layout-Lite (Project A - THIS REPO)**:
-- **Purpose**: Provide routing metadata for Project B
-- **Granularity**: Page-level classification
+**Light Layout Detection (Project A - THIS REPO)**:
+- **Purpose**: Element detection with bounding boxes, quality assessment, spatial hints
+- **Model**: **YOLOv10-doc** (specifically trained on DocLayNet, ONNX for production)
+- **Classes**: All 11 DocLayNet classes
+  - Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header
+  - Picture, Section-Header, Table, Text, Title
+- **Granularity**: Element-level detection (bounding boxes in COCO format)
 - **Outputs**:
-  - `layout_type`: single / multi / three_column / complex
-  - `has_tables`, `has_figures`, `has_dense_math`, `has_handwriting`: boolean flags
-  - Page attributes: `fuzzy_scan`, `watermark`, `colorful_background`
-- **Method**: Lightweight YOLOv8-nano detector OR heuristics-based classification
-- **Performance**: <10ms GPU
+  - Bounding boxes for all 11 classes (COCO format: [x, y, width, height])
+  - Hybrid IQA: Per-element quality scores (blur, noise, contrast for figures/tables/formulas)
+  - Spatial hints: Column membership, vertical position, proximity between elements
+  - Aggregated page attributes: element counts, presence flags, structural complexity score
+- **Scope Boundary**:
+  - ✅ Detect WHERE elements are (bounding boxes)
+  - ✅ Assess element quality (per-element IQA)
+  - ✅ Provide spatial hints (column detection, positions)
+  - ❌ Do NOT link captions to figures (Project B)
+  - ❌ Do NOT predict reading order (Project B)
+  - ❌ Do NOT extract table structure (Project B)
+- **Performance**: <25ms GPU (to be benchmarked)
+- **Rationale**: YOLOv10-doc provides better accuracy/speed than YOLOv8, specifically trained on DocLayNet
 
-**Full Layout Detection (Project B - ocr-orchestrator)**:
-- **Purpose**: Semantic element detection with precise bounding boxes
-- **Granularity**: Element-level (text blocks, titles, captions, tables, figures, formulas, etc.)
-- **Outputs**: Precise bounding boxes, reading order, hierarchical structure
-- **Method**: YOLOv8-medium/large or transformer-based models (DETR, LayoutLMv3)
-- **Performance**: 20-50ms GPU
+**Full Semantic Layout (Project B - ocr-orchestrator)**:
+- **Purpose**: Semantic understanding with reading order and element linking
+- **Input**: Receives YOLOv10-doc detections from Project A
+- **Additional Processing**:
+  - Reading order prediction (critical for RAG, 5-29% impact per OHR-Bench)
+  - Caption→Figure semantic linking
+  - Footnote reference linking
+  - Table structure extraction (rows, columns, cells via PubTables-1M)
+  - Hierarchical document structure
+- **Method**: Graph-based reading order prediction, PubTables-1M for table structure
+- **Performance**: Adds 30-70ms for reading order + table structure
+- **Rationale**: Semantic understanding requires OCR text, which Project A doesn't have
+
+### Office Document Support (NEW CAPABILITY)
+
+**Supported Formats**:
+- `.docx` - Word documents
+- `.xlsx` - Excel spreadsheets
+- `.pptx` - PowerPoint presentations
+
+**Project A Responsibility (Embedded Image Extraction)**:
+- Use Docling to extract all embedded images from office documents
+- Apply standard preprocessing pipeline to each extracted image:
+  - Ingestion & normalization (DPI detection, upscaling if needed)
+  - Quality detection (classical IQA + ML IQA)
+  - Corrections with do-no-harm guardrails
+  - Per-element metadata generation
+- Hand off preprocessed images + metadata to Project B
+
+**Project B Responsibility (Text & Structure Extraction)**:
+- Use Docling for native office text extraction
+- Parse tables, formatting, structure
+- Combine preprocessed images from Project A with extracted text
+- Generate unified document representation
+
+**Rationale**:
+- Office documents contain embedded images (charts, diagrams, photos) that benefit from IQA and correction
+- Separation of concerns: Project A owns image quality, Project B owns text/structure extraction
+- Docling has native .docx/.xlsx/.pptx support for both images and text
 
 ---
 
@@ -405,29 +456,32 @@ Output Package → Project B
 
 **Validation/Test Split**: Real-world documents with genuine quality issues (manually curated, 2,000 pages from OHR-Bench)
 
-### Layout-Lite Classification
+### Light Layout Detection (YOLOv10-doc)
 
-**Approach: Transfer Learning from OmniDocBench + Heuristics**
+**Approach: Use Pretrained YOLOv10-doc (DocLayNet-trained)**
 
-**Data Sources:**
-1. **OmniDocBench**: Page-level layout attributes already annotated
-   - `layout_type`: single / multi / complex
-   - Presence flags: `has_tables`, `has_figures`, `has_dense_math`, `has_handwriting`
-   - Page attributes: `fuzzy_scan`, `watermark`, `colorful_background`
+**Model Source:**
+- **YOLOv10-doc**: Pre-trained on DocLayNet dataset (specifically for document layout)
+- **Classes**: All 11 DocLayNet classes out-of-box
+  - Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header
+  - Picture, Section-Header, Table, Text, Title
+- **Format**: ONNX for production inference
+- **No custom training needed**: Model already trained on 80k+ DocLayNet pages
 
-2. **Heuristics-Based Initial Implementation**:
-   - **Single vs Multi-column**: Connected component analysis + projection profile
-   - **Table detection**: Grid-like structure detection (Hough lines)
-   - **Figure detection**: Large connected components with low text density
-   - **Handwriting detection**: Noteshrink-based K-means color clustering (Phase 2)
-   - **Math detection**: Defer to Project B (requires symbol recognition)
+**Project A Usage (Light Layout)**:
+- Detect all 11 classes with bounding boxes (COCO format)
+- Per-element quality assessment via hybrid IQA
+- Spatial hints calculation (column membership, vertical position)
+- Structural complexity scoring (aggregate element counts/types)
 
-3. **Optional: Lightweight YOLOv8-nano** (if heuristics insufficient):
-   - Classes: text_block, table_block, figure_block, background_noise
-   - Transfer learning from PubLayNet (coarse classes only)
-   - ~10k annotated pages sufficient for fine-tuning
+**Fine-tuning (Optional, if needed)**:
+- If project-specific documents have unique characteristics
+- Use transfer learning on 1-2k pages
+- Focus on rare classes or domain-specific content
 
-**Target Dataset Composition**: 10k-50k pages (depending on heuristics vs ML approach)
+**Target Accuracy** (Out-of-box YOLOv10-doc on DocLayNet):
+- mAP@.50: >0.82
+- Per-class AP: >0.70 for all 11 classes
 
 ### PDF Type Classification
 
@@ -439,6 +493,34 @@ Output Package → Project B
 - **Hybrid detection**: Mix of extractable text and embedded images
 
 **Target Accuracy**: 99.5% (heuristics-based, validated on DocBank + RVL-CDIP)
+
+### Text Detection Gate Evaluation (PENDING DECISION)
+
+**Status**: Prototype and benchmark before committing to implementation
+
+**Evaluation Methodology**:
+1. Benchmark YOLOv10-doc latency on pure images vs text documents
+2. Compare architectures:
+   - **With gate**: Text detection (ensemble) → conditional layout detection
+   - **Without gate**: Always run YOLOv10-doc layout detection
+3. Measure cost-benefit: Gate overhead + conditional savings vs always-layout overhead
+
+**Decision Criteria**:
+- **If YOLOv10-doc <20ms on all types** → **SKIP GATE** (not worth complexity)
+- **If YOLOv10-doc >50ms on pure images** → **IMPLEMENT GATE** (meaningful savings)
+- **If YOLOv10-doc 20-50ms** → **MARGINAL** (user decision based on complexity tolerance)
+
+**Test Datasets**:
+- 500 pages across 4 categories (pure images, text-light, text-dense, hybrid)
+- Measure: Gate latency, YOLOv10 latency, accuracy, total time saved
+
+**Benchmark Specification**: See [benchmarks/text_gate_evaluation.md](../../benchmarks/text_gate_evaluation.md)
+
+**Action Items**:
+- [ ] Acquire YOLOv10-doc pretrained model
+- [ ] Run benchmark on representative dataset
+- [ ] Document decision with empirical data
+- [ ] Update PROJECT_PLAN.md with final decision
 
 ---
 
@@ -501,20 +583,16 @@ Albumentations pipeline (see Training Data Strategy)
   2. Modal GPU (if enabled, within quota)
   3. **BLOCK if no GPU** (production mode)
 
-### Layout-Lite Classification
+### Light Layout Detection (YOLOv10-doc)
 
-**Option 1: Heuristics-Based (Phase 1)**
-- Connected component analysis
-- Projection profile for column detection
-- Hough line detection for tables
-- No training required
-
-**Option 2: YOLOv8-nano (Phase 2+)**
-- **Model**: YOLOv8-nano (fastest variant)
-- **Classes**: text_block, table_block, figure_block (3 classes only)
-- **Input**: 640x640 image
-- **Training**: Transfer learning from COCO/PubLayNet
-- **Performance**: 3-5ms GPU, 25-40ms CPU
+**Chosen Solution: YOLOv10-doc (DocLayNet-pretrained)**
+- **Model**: YOLOv10-doc (specifically trained on DocLayNet)
+- **Classes**: All 11 DocLayNet classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title)
+- **Input**: Variable size (maintains aspect ratio), optimized for document images
+- **Format**: ONNX for production inference
+- **Training**: Pre-trained on 80k+ DocLayNet pages (no custom training needed initially)
+- **Performance**: <25ms GPU target (to be benchmarked), optimized for document layout
+- **Rationale**: Better accuracy/speed tradeoff than YOLOv8, specifically designed for document understanding
 
 ---
 
@@ -549,18 +627,27 @@ Albumentations pipeline (see Training Data Strategy)
 
 **Test Set**: OHR-Bench real-world documents only (no synthetic)
 
-### Layout-Lite Evaluation
+### Light Layout Evaluation (YOLOv10-doc)
 
 **Primary Metrics:**
-1. **Page-level Classification Accuracy**:
-   - `layout_type` accuracy: >0.90
-   - Presence flags (has_tables, has_figures, etc.): F1 >0.85 per flag
+1. **Element Detection Accuracy**:
+   - mAP@.50 (COCO metric): >0.82 (target), >0.75 (acceptable)
+   - mAP@.50-.95: >0.70
+   - Per-class AP: >0.70 for all 11 classes (ensure rare class performance)
 
-2. **Inference Time**:
-   - Heuristics: <5ms CPU
-   - YOLOv8-nano: <5ms GPU, <30ms CPU
+2. **Hybrid IQA Accuracy**:
+   - Per-element quality correlation with ground truth: >0.80
+   - Element quality score vs full-page IQA agreement: >0.85
 
-**Test Set**: OmniDocBench validation set (5,000 pages)
+3. **Spatial Hints Accuracy**:
+   - Column detection accuracy: >0.90
+   - Vertical position classification: >0.85
+
+4. **Inference Time**:
+   - YOLOv10-doc GPU: <25ms (target), <40ms (acceptable)
+   - YOLOv10-doc CPU: <150ms (evaluate if worth supporting)
+
+**Test Set**: DocLayNet validation set (6,480 pages) + OmniDocBench subset (2,000 pages)
 
 ### End-to-End Pipeline Evaluation
 
@@ -1783,12 +1870,14 @@ After initial setup, ongoing operations include:
 - OpenCV 4.8+ (classical CV, image corrections)
 - Pillow (image manipulation)
 - PyMuPDF (PDF to image conversion, text extraction)
+- **Docling** (office document parsing for embedded image extraction)
 
 **Deep Learning:**
 - PyTorch 2.0+ (model training and inference)
 - torchvision (image transforms, pretrained ResNet models)
 - ONNX Runtime (cross-platform inference, INT8 quantization)
 - TensorRT (NVIDIA GPU acceleration, optional)
+- **YOLOv10-doc** (DocLayNet-trained layout detection model, ONNX format)
 
 **Data Augmentation:**
 - Albumentations (fast, GPU-accelerated augmentations)
@@ -1982,19 +2071,27 @@ After initial setup, ongoing operations include:
 
 ---
 
-### ADR-003: Layout-Lite vs Full Layout Detection
+### ADR-003: Light Layout (YOLOv10-doc) vs Full Semantic Layout (Project B)
 
-**Decision**: Implement lightweight "layout-lite" page-level classification in Project A; defer full semantic layout detection to Project B.
+**Decision**: Use YOLOv10-doc in Project A for element detection with bounding boxes, quality assessment, and spatial hints; defer semantic relationships and reading order to Project B.
 
 **Rationale**:
-- **Separation of Concerns**: Project A provides routing metadata; Project B handles semantic understanding
-- **Performance**: Layout-lite (heuristics or YOLOv8-nano) is 5-10x faster than full layout detection
-- **Avoid Duplication**: Prevents Project A from re-implementing Project B's core functionality
-- **Clear Boundaries**: Page-level attributes (has_tables, layout_type) vs element-level bounding boxes (Project B)
+- **Separation of Concerns**: Project A detects WHERE elements are and WHAT QUALITY they have; Project B determines HOW TO READ them and HOW THEY RELATE
+- **Model Choice**: YOLOv10-doc specifically trained on DocLayNet provides better accuracy/speed than YOLOv8
+  - Pre-trained on 80k+ DocLayNet pages (no custom training needed)
+  - Detects all 11 DocLayNet classes out-of-box
+  - Better architecture than YOLOv8 (improved speed/accuracy tradeoff)
+- **Performance**: YOLOv10-doc <25ms GPU (target) provides element detection fast enough for Project A needs
+- **Clear Boundaries**:
+  - ✅ Project A: Bounding boxes, per-element IQA, spatial hints, structural complexity
+  - ❌ Project A: Reading order, caption→figure linking, table structure (requires OCR text)
+- **Hybrid IQA**: Enables per-element quality assessment (critical for technical documents with embedded figures/charts)
 
 **Alternatives Considered**:
-- Full layout detection in Project A: Violates separation of concerns, increases latency
-- No layout analysis in Project A: Missing critical routing metadata for Project B
+- YOLOv8-nano with 4 lite blocks: Less accurate, missing specialized content detection (formulas, captions, footnotes)
+- Heuristics-based only: Insufficient accuracy for complex layouts, no bounding boxes
+- Full semantic layout in Project A: Violates separation of concerns, requires OCR text Project A doesn't have
+- No layout analysis in Project A: Missing critical routing metadata and hybrid IQA capability
 
 **Status**: Approved
 
@@ -2018,16 +2115,47 @@ After initial setup, ongoing operations include:
 
 ---
 
+### ADR-005: Office Document Support via Docling
+
+**Decision**: Use Docling for embedded image extraction from office documents (.docx, .xlsx, .pptx) in Project A; defer office text and structure extraction to Project B.
+
+**Rationale**:
+- **Comprehensive Support**: Office documents contain embedded images (charts, diagrams, photos) that benefit from IQA and correction
+- **Tool Selection**: Docling provides native support for both image extraction (Project A) and text/structure parsing (Project B)
+- **Separation of Concerns**:
+  - Project A: Extract embedded images → preprocess → quality assessment → corrections → hand off
+  - Project B: Parse office text, tables, formatting, structure → combine with preprocessed images
+- **Workflow Efficiency**: Single tool (Docling) used in both projects reduces integration complexity
+- **Image Quality**: Embedded images often have quality issues (low resolution, compression artifacts) that benefit from Project A's preprocessing
+
+**Alternatives Considered**:
+- python-docx/openpyxl/python-pptx: Basic image extraction only, no text structure parsing for Project B
+- Marker only: Excellent for PDFs, but no native office format support
+- Convert office to PDF first: Loses native structure information, introduces conversion artifacts
+- Skip office formats entirely: Misses significant document source (many business/academic documents in Office formats)
+
+**Implementation**:
+1. Project A: `Docling.extract_images(office_file)` → standard preprocessing pipeline per image
+2. Project B: `Docling.parse_document(office_file)` → text + structure + receive preprocessed images from Project A
+3. Unified output: Project B combines native text with preprocessed images
+
+**Status**: Approved
+
+---
+
 ## Conclusion
 
-Project A serves as the intelligent gateway for the RAG document processing pipeline, providing high-quality preprocessing, quality assessment, and routing metadata to downstream projects. The teacher-student ResNet architecture with device-priority execution balances accuracy with cost efficiency, while the layout-lite approach maintains clear separation of concerns with Project B.
+Project A serves as the intelligent gateway for the RAG document processing pipeline, providing high-quality preprocessing, comprehensive quality assessment, and routing metadata to downstream projects. The teacher-student ResNet architecture with device-priority execution balances accuracy with cost efficiency, while the light layout approach (YOLOv10-doc) provides complete element detection with clear separation of concerns from Project B.
 
 **Key Success Factors:**
 1. **Teacher-Student Architecture**: High accuracy on difficult cases, cost-effective on routine documents
 2. **Device-Priority Execution**: Optimizes cost while maintaining performance SLAs
-3. **Layout-Lite Boundaries**: Prevents scope creep, maintains architectural integrity
-4. **Routing Metadata**: Enables Project B to make intelligent OCR engine decisions
-5. **Do-No-Harm Guardrails**: Ensures corrections improve quality without introducing artifacts
+3. **YOLOv10-doc Light Layout**: All 11 DocLayNet classes detected with bounding boxes, enables hybrid IQA and spatial hints
+4. **Clear Boundaries**: Project A detects WHERE/WHAT QUALITY; Project B determines HOW TO READ/HOW ELEMENTS RELATE
+5. **Office Document Support**: Docling integration for embedded image extraction (.docx/.xlsx/.pptx)
+6. **Routing Metadata**: Enables Project B to make intelligent OCR engine decisions (DQS + complexity + pdf_type)
+7. **Do-No-Harm Guardrails**: Ensures corrections improve quality without introducing artifacts
+8. **Hybrid IQA**: Per-element quality assessment critical for technical documents with figures/charts/tables
 
 **Expected Timeline**: 20 weeks from Phase 2 start to production deployment
 **Expected Outcomes**:

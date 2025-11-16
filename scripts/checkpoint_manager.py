@@ -151,12 +151,14 @@ class CheckpointManager:
             checkpoint["extra_state"] = extra_state
 
         # Save checkpoint
-        torch.save(checkpoint, checkpoint_path)
+        # nosec B614 - torch.save uses pickle, but saving our own trusted model checkpoints
+        torch.save(checkpoint, checkpoint_path)  # nosec
         self.last_checkpoint_time = time.time()
 
         # Also save as "latest" for easy resuming
+        # nosec B614 - torch.save uses pickle, but saving our own trusted model checkpoints
         latest_path = self.checkpoint_dir / "checkpoint_latest.pt"
-        torch.save(checkpoint, latest_path)
+        torch.save(checkpoint, latest_path)  # nosec
 
         # Save metadata JSON for easy inspection
         metadata_path = (
@@ -185,7 +187,8 @@ class CheckpointManager:
                 self.best_metric_value = metric_value
                 self.best_model_path = checkpoint_path
                 best_path = self.checkpoint_dir / "checkpoint_best.pt"
-                torch.save(checkpoint, best_path)
+                # nosec B614 - torch.save uses pickle, but saving our own trusted model checkpoints
+                torch.save(checkpoint, best_path)  # nosec
                 print(f"   ⭐ New best model! Val loss: {metric_value:.4f}")
 
         # Cleanup old checkpoints
@@ -223,7 +226,9 @@ class CheckpointManager:
             raise FileNotFoundError(f"No checkpoint found at {checkpoint_path}")
 
         print(f"📂 Loading checkpoint: {checkpoint_path.name}")
-        checkpoint = torch.load(checkpoint_path, map_location="cpu")
+        # nosec B614 - torch.load uses pickle, but loading our own trusted checkpoints from local filesystem
+        # WARNING: Only load checkpoints from trusted sources (our own training runs)
+        checkpoint = torch.load(checkpoint_path, map_location="cpu")  # nosec
 
         # Load model state
         model.load_state_dict(checkpoint["model_state_dict"])

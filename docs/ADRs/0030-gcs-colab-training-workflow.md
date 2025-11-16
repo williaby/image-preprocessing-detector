@@ -1,6 +1,6 @@
 ---
 schema_type: common
-title: "ADR-030: Google Cloud Storage and Modal Training Workflow"
+title: "ADR-030: Google Cloud Storage and Modal Serverless GPU Training Workflow"
 description: "Decision to use GCS-first storage strategy with Modal serverless GPU platform for Phase 2 IQA model training instead of Google Colab Pro, Google Drive, or local GPU training"
 tags:
   - adr

@@ -1,9 +1,18 @@
+---
+schema_type: common
+title: "LICENSES/"
+tags:
+  - licensing
+  - legal
+status: published
+owner: core-maintainer
+purpose: Documentation for licenses/.
+---
+
 <!--
 SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
 SPDX-License-Identifier: CC0-1.0
 -->
-
-# LICENSES/
 
 **Purpose**: License text files for REUSE Specification compliance (FSFE REUSE).
 

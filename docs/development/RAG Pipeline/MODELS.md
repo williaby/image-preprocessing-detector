@@ -1,4 +1,15 @@
-# MODELS
+---
+schema_type: common
+title: "MODELS"
+tags:
+  - rag_pipeline
+  - architecture
+  - ml
+  - training
+status: published
+owner: cv-team
+purpose: Architecture documentation for models.
+---
 
 This document catalogs the models used across the four projects in the document
 pipeline:

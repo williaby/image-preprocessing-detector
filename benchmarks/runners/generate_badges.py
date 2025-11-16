@@ -186,9 +186,8 @@ def generate_badges(results: dict[str, Any], badges_dir: Path) -> None:
         # Format value
         if "%" in format_str:
             message = format_str.format(value * 100)
-        elif "°" in format_str or "dB" in format_str:
-            message = format_str.format(value)
         else:
+            # For all other formats (°, dB, or plain numbers), use value as-is
             message = format_str.format(value)
 
         # Determine color

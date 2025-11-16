@@ -1,4 +1,15 @@
 ---
+schema_type: common
+title: "Create base dataset directory"
+tags:
+  - datasets
+  - guide
+status: published
+owner: docs-team
+purpose: Guide for create base dataset directory.
+---
+
+---
 title: Phase 2 Dataset Preparation Guide
 description: Generate synthetic augmented dataset with weak supervision labels
   for IQA training
@@ -44,7 +55,7 @@ Download one or more base document datasets to use as source material:
 **Quick Start (Tobacco800):**
 
 ```bash
-# Create base dataset directory
+
 mkdir -p data/raw/tobacco800
 
 # Download and extract (example - check dataset-installation.md for actual URLs)

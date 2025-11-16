@@ -116,13 +116,20 @@ def train_iqa():
         raise ValueError("GCP_SA_KEY environment variable not found in Modal secret")
 
     # Decode and save credentials
+    import tempfile
+
     gcp_sa_key_json = base64.b64decode(gcp_sa_key_b64).decode("utf-8")
-    credentials_path = "/tmp/gcp-sa-key.json"
-    with open(credentials_path, "w") as f:
+
+    # Use tempfile for credentials (Modal container is isolated/ephemeral, but use tempfile for security)
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, prefix="gcp-sa-key-"
+    ) as f:
+        credentials_path = f.name
         f.write(gcp_sa_key_json)
-    os.chmod(credentials_path, 0o600)
+
+    os.chmod(credentials_path, 0o600)  # nosec B103 - Secure permissions for credentials file
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-    print("✅ GCS credentials configured")
+    print(f"✅ GCS credentials configured at {credentials_path}")
 
     # =========================================================================
     # STEP 2: Generate Run ID and Setup Output Directory
@@ -235,14 +242,16 @@ def train_iqa():
             best_epoch = epoch
 
             # Save best checkpoint
+            # nosec B614 - torch.save uses pickle, but saving our own trusted model
             checkpoint_path = f"{output_dir}/model_final.pth"
-            torch.save(model.state_dict(), checkpoint_path)
+            torch.save(model.state_dict(), checkpoint_path)  # nosec
             print(f"✅ Saved best model (acc: {val_acc:.3f})")
 
         # Save periodic checkpoints
         if (epoch + 1) % 20 == 0:
+            # nosec B614 - torch.save uses pickle, but saving our own trusted model
             checkpoint_path = f"{output_dir}/model_epoch_{epoch + 1}.pth"
-            torch.save(
+            torch.save(  # nosec
                 {
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),

@@ -1,4 +1,12 @@
-# Project Improvement Opportunities Analysis
+---
+schema_type: common
+title: "Project Improvement Opportunities Analysis"
+tags:
+  - documentation
+status: published
+owner: core-maintainer
+purpose: Project planning documentation for project improvement opportunities analysis.
+---
 
 **Project**: Image Preprocessing Detector
 **Analysis Date**: 2025-11-11

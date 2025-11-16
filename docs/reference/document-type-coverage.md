@@ -1,4 +1,12 @@
-# Document Type Coverage Matrix
+---
+schema_type: common
+title: "Document Type Coverage Matrix"
+tags:
+  - reference
+status: published
+owner: docs-team
+purpose: Reference documentation for document type coverage matrix.
+---
 
 **Version**: 2.1
 **Date**: 2025-11-14 (Updated with FR coverage completion)

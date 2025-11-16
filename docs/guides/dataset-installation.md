@@ -1,4 +1,14 @@
-# Benchmark Dataset Installation Guide
+---
+schema_type: common
+title: "Benchmark Dataset Installation Guide"
+tags:
+  - datasets
+  - guide
+  - installation
+status: published
+owner: docs-team
+purpose: Guide for benchmark dataset installation guide.
+---
 
 **Last Updated**: 2025-11-11
 **Purpose**: Complete guide for setting up all benchmark datasets for the Image Preprocessing Detector

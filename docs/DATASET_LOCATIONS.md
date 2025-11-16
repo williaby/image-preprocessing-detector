@@ -1,9 +1,18 @@
-# Dataset Locations Map
+---
+schema_type: common
+title: "Dataset Locations Map"
+tags:
+  - datasets
+status: published
+owner: docs-team
+purpose: Documentation for dataset locations map.
+---
 
 **Purpose**: Complete reference showing where each dataset is located in the repository, cloud storage, and external sources.
 
 **Last Updated**: 2025-11-14 (Verified with `du -sh`)
-**Total Local Storage**: ~130 GB (training) + ~101 GB (benchmarks: 59GB local + 42GB DocLayNet symlink) = **~231 GB actual**
+**Total Local Storage**: ~130 GB (training) + ~59 GB (benchmarks, excluding DocLayNet symlink) = **~189 GB actual**
+**Note**: DocLayNet (42GB) accessed via symlink from `/home/byron/dev/data_ingestor/data/doclaynet_extracted/` - symlink adds 0GB storage
 
 ---
 
