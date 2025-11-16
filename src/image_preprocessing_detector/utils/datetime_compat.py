@@ -109,10 +109,7 @@ def parse_iso(iso_string: str, assume_utc: bool = True) -> datetime:
     """
     try:
         # Handle timezone-aware ISO strings
-        if iso_string.endswith("Z"):
-            # Replace 'Z' with '+00:00' for proper parsing (Python 3.10 compat)
-            dt = datetime.fromisoformat(iso_string.replace("Z", "+00:00"))  # noqa: FURB162
-        elif "+" in iso_string or iso_string.count("-") > 2:
+        if "+" in iso_string or iso_string.count("-") > 2 or iso_string.endswith("Z"):
             # Has timezone offset
             dt = datetime.fromisoformat(iso_string)
         else:
