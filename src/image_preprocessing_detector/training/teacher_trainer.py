@@ -96,6 +96,7 @@ class TeacherTrainer:
         lr = config.get("learning_rate", 1e-3)
         weight_decay = config.get("weight_decay", 0.01)
 
+        self.optimizer: optim.AdamW | optim.Adam
         if optimizer_name == "adamw":
             self.optimizer = optim.AdamW(
                 self.model.parameters(), lr=lr, weight_decay=weight_decay
@@ -111,6 +112,7 @@ class TeacherTrainer:
         scheduler_config = config.get("scheduler", {})
         scheduler_type = scheduler_config.get("type", "cosine")
 
+        self.scheduler: CosineAnnealingLR | ReduceLROnPlateau | None
         if scheduler_type == "cosine":
             self.scheduler = CosineAnnealingLR(
                 self.optimizer,
@@ -175,6 +177,9 @@ class TeacherTrainer:
 
         start_time = time.time()
 
+        # Get issue types from model (type-safe access)
+        issue_types = getattr(self.model, "ISSUE_TYPES", [])
+
         for batch_idx, batch in enumerate(train_loader):
             # Move data to device
             images = batch["image"].to(self.device)
@@ -183,7 +188,7 @@ class TeacherTrainer:
                     "labels": batch["labels"][head_name].to(self.device),
                     "confidence": batch["confidence"][head_name].to(self.device),
                 }
-                for head_name in self.model.ISSUE_TYPES
+                for head_name in issue_types
             }
 
             # Forward pass with mixed precision
@@ -283,9 +288,12 @@ class TeacherTrainer:
         val_conf_loss = 0.0
         num_batches = 0
 
+        # Get issue types from model (type-safe access)
+        issue_types = getattr(self.model, "ISSUE_TYPES", [])
+
         # Per-head metrics
         per_head_metrics: dict[str, dict[str, float]] = {
-            head: {"loss": 0.0} for head in self.model.ISSUE_TYPES
+            head: {"loss": 0.0} for head in issue_types
         }
 
         for batch in val_loader:
@@ -295,7 +303,7 @@ class TeacherTrainer:
                     "labels": batch["labels"][head_name].to(self.device),
                     "confidence": batch["confidence"][head_name].to(self.device),
                 }
-                for head_name in self.model.ISSUE_TYPES
+                for head_name in issue_types
             }
 
             # Forward pass

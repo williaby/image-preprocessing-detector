@@ -10,6 +10,8 @@ The loss functions support multi-head architectures where each head predicts
 both a binary classification (issue present/absent) and a confidence score.
 """
 
+from __future__ import annotations
+
 from typing import Any
 
 import torch
@@ -79,7 +81,7 @@ class MultiHeadIQALoss(nn.Module):
         self,
         predictions: dict[str, dict[str, torch.Tensor]],
         targets: dict[str, dict[str, torch.Tensor]],
-    ) -> dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor | dict[str, torch.Tensor]]:
         """Compute the combined multi-head loss.
 
         Args:
@@ -101,8 +103,8 @@ class MultiHeadIQALoss(nn.Module):
                 - confidence_loss: Total confidence regression loss
                 - per_head_loss: Loss for each head
         """
-        total_classification_loss = 0.0
-        total_confidence_loss = 0.0
+        total_classification_loss = torch.tensor(0.0)
+        total_confidence_loss = torch.tensor(0.0)
         per_head_losses: dict[str, torch.Tensor] = {}
 
         # Compute loss for each head
