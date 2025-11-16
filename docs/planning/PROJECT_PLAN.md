@@ -2443,7 +2443,7 @@ Project A serves as the intelligent gateway for the RAG document processing pipe
 
 **Expected Outcomes**:
 - JSON Accuracy: >0.85
-- Layout Detection mAP@.50: >0.82 (YOLOv10-doc, all 11 DocLayNet classes)
+- Layout Detection mAP@0.5: >0.82 (YOLOv10-doc, all 11 DocLayNet classes)
 - Hybrid IQA correlation: >0.80 (per-element quality assessment)
 - Specialized content detection F1: >0.90 (formulas, watermarks, stamps, seals, signatures)
 - Throughput: >6 pages/sec per GPU worker
