@@ -28,6 +28,9 @@ class Settings:
             | None
         ) = None,
         pdf_preserve_original_on_error: bool | None = None,
+        enable_pdf_classification: bool | None = None,
+        pdf_text_threshold_chars: int | None = None,
+        pdf_image_threshold_count: int | None = None,
     ) -> None:
         """Initialize settings from environment variables or keyword arguments.
 
@@ -37,6 +40,9 @@ class Settings:
             pdf_target_dpi: Target DPI for upscaling (overrides env var)
             pdf_upscale_algorithm: Algorithm selection (overrides env var)
             pdf_preserve_original_on_error: Preserve original on error (overrides env var)
+            enable_pdf_classification: Enable/disable PDF classification (overrides env var)
+            pdf_text_threshold_chars: Minimum character count for text-heavy classification (overrides env var)
+            pdf_image_threshold_count: Minimum image count for image-heavy classification (overrides env var)
         """
         # PDF Resolution Pre-processing (Phase 1B)
         self.enable_pdf_upscaling: bool = (
@@ -77,6 +83,25 @@ class Settings:
             else self._get_bool_env(
                 "IMAGE_PREP_PDF_PRESERVE_ORIGINAL_ON_ERROR", default=True
             )
+        )
+
+        # PDF Classification Settings (Sprint 2.3.1)
+        self.enable_pdf_classification: bool = (
+            enable_pdf_classification
+            if enable_pdf_classification is not None
+            else self._get_bool_env(
+                "IMAGE_PREP_ENABLE_PDF_CLASSIFICATION", default=True
+            )
+        )
+        self.pdf_text_threshold_chars: int = (
+            pdf_text_threshold_chars
+            if pdf_text_threshold_chars is not None
+            else self._get_int_env("IMAGE_PREP_PDF_TEXT_THRESHOLD_CHARS", 1000)
+        )
+        self.pdf_image_threshold_count: int = (
+            pdf_image_threshold_count
+            if pdf_image_threshold_count is not None
+            else self._get_int_env("IMAGE_PREP_PDF_IMAGE_THRESHOLD_COUNT", 5)
         )
 
     def _get_bool_env(self, key: str, default: bool) -> bool:
