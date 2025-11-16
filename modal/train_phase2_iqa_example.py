@@ -124,8 +124,9 @@ def train_iqa():
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".json", delete=False, prefix="gcp-sa-key-"
     ) as f:
-        credentials_path = f.name
         f.write(gcp_sa_key_json)
+        f.flush()  # Ensure file is written before using f.name
+        credentials_path = f.name
 
     os.chmod(credentials_path, 0o600)  # nosec B103 - Secure permissions for credentials file
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path

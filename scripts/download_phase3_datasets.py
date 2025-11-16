@@ -166,9 +166,9 @@ def download_from_github(repo_url: str, local_dir: Path, dry_run: bool = False) 
         cmd = ["git", "clone", "--", repo_url, str(local_dir)]
 
         logger.info(f"Running: {' '.join(shlex.quote(arg) for arg in cmd)}")
-        result = subprocess.run(  # nosec B603 - Validated GitHub HTTPS URL, list args, no shell
-            cmd, capture_output=True, text=True, check=False
-        )
+        # nosec B603 - Validated GitHub HTTPS URL, list args, no shell
+        # deepcode ignore PT: URL validated to be HTTPS GitHub only, command uses list args
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec
 
         if result.returncode == 0:
             logger.info(f"✅ Successfully cloned {repo_url}")

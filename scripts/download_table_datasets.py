@@ -242,9 +242,9 @@ def extract_archive(archive_path: Path, extract_dir: Path) -> bool:
             return False
 
         logger.info(f"Running: {' '.join(shlex.quote(arg) for arg in cmd)}")
-        result = subprocess.run(  # nosec B603 - Validated paths, list args, no shell
-            cmd, capture_output=True, text=True, check=False
-        )
+        # nosec B603 - Validated paths, list args, no shell
+        # deepcode ignore PT: Path validated with resolve() and is_file() checks, command uses list args
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec
 
         if result.returncode == 0:
             logger.info(f"✓ Extracted to: {extract_dir}")
