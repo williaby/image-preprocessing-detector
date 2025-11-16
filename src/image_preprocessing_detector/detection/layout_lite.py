@@ -321,7 +321,7 @@ def detect_tables(
             horizontal_lines.append(line[0])
         elif angle > (90 - angle_threshold):
             vertical_lines.append(line[0])
-        # Lines between thresholds (10° - 80°) are diagonal - not classified
+        # else: ignore lines that are neither horizontal nor vertical
 
     num_horizontal = len(horizontal_lines)
     num_vertical = len(vertical_lines)
