@@ -6,9 +6,6 @@ them to standardized numpy arrays for processing.
 
 # NOTE: DocumentProcessor temporarily commented out due to missing dependencies
 # (calculate_dqs, calculate_pre_ocr_risk functions). Will be re-enabled in Phase 8/9.
-# from image_preprocessing_detector.ingestion.document_processor import (
-#     DocumentProcessor,  # noqa: ERA001
-# )
 from image_preprocessing_detector.ingestion.image_loader import (
     ImageLoader,
     ImageMetadata,

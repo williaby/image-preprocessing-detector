@@ -99,7 +99,7 @@ def calculate_degradation_score(
             raise ValueError(f"Missing required metric: {metric}")
 
         value = classical_iqa[metric]
-        if not isinstance(value, (int, float)):
+        if not isinstance(value, int | float):
             raise TypeError(f"Metric {metric} must be numeric, got {type(value)}")
 
         if not 0.0 <= value <= 1.0:

@@ -122,7 +122,7 @@ class DocumentProcessor:
         )
 
         # Assemble complete metadata
-        metadata = DocumentMetadata(
+        return DocumentMetadata(
             document_id=document_id,
             file_name=file_path.name,
             source_mime=source_mime,
@@ -134,8 +134,6 @@ class DocumentProcessor:
             processing_version=processing_version,
             pages=pages,
         )
-
-        return metadata
 
     def _get_mime_type(self, file_path: Path) -> str:
         """Determine MIME type from file extension."""
@@ -149,7 +147,7 @@ class DocumentProcessor:
         }
         return mime_map.get(file_path.suffix.lower(), "application/octet-stream")
 
-    def _classify_pdf_type(self, file_path: Path) -> PDFType | None:
+    def _classify_pdf_type(self, _file_path: Path) -> PDFType | None:
         """Classify PDF as image_only, born_digital, or hybrid.
 
         TODO: Implement actual PDF type classification
@@ -167,7 +165,7 @@ class DocumentProcessor:
         # TODO: Implement in Sprint 2.6.2+
         return PDFType.HYBRID  # Default assumption
 
-    def _generate_placeholder_pages(self, file_path: Path) -> list[PageMetadata]:
+    def _generate_placeholder_pages(self, _file_path: Path) -> list[PageMetadata]:
         """Generate placeholder page metadata.
 
         TODO: Replace with actual PDF/image loader integration
