@@ -1888,7 +1888,7 @@ Albumentations pipeline (see Training Data Strategy)
 - .pptx embedded image extraction (per-slide)
 - Unified office image extractor class with metadata
 
-**Milestone 7.3: Pipeline Integration** (1 sprint, ~5h)
+**Milestone 7.3: Pipeline Integration** (2 sprints, ~6h)
 - Integrate office document support into ingestion pipeline
 - Process each extracted image through standard pipeline
 - Generate PageMetadata per embedded image
