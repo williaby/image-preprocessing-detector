@@ -31,6 +31,7 @@ path = [
     "docs/**",
     "*.md",
     "tmp_cleanup/**/*.md",  # Temporary reference files
+    "benchmarks/*.md",  # Benchmark documentation (not reports)
     "!LICENSES/*.txt",  # Exclude actual license text files
 ]
 SPDX-License-Identifier = "CC-BY-4.0"

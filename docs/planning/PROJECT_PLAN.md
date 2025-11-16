@@ -910,60 +910,93 @@ Albumentations pipeline (see Training Data Strategy)
 
 ---
 
-#### Week 8: Layout-Lite Detection & DQS Calculation
+#### Week 8: YOLOv10-doc Light Layout Detection (UPDATED)
 
-**Milestone 8.1: Layout-Lite Detection (Heuristics-Based)** (Day 6-8, 7 sprints)
+**Milestone 8.1: YOLOv10-doc Model Acquisition & Validation** (Day 6, 3 sprints, ~10h)
 
-- **Sprint 2.4.1**: Implement column detection heuristic (4 hours)
-  - Create `src/detection/layout_lite.py`
-  - Function: `detect_column_count(image: np.ndarray) -> str`
-  - Algorithm: Projection profile analysis + connected component clustering
-  - Return: "single" / "multi" / "three_column" / "complex"
-  - Add unit tests with sample images
+- **Sprint 2.4.1**: Acquire YOLOv10-doc pretrained model (3 hours)
+  - Research YOLOv10-doc model sources (Hugging Face, official repo)
+  - Download YOLOv10-doc ONNX model (DocLayNet-pretrained)
+  - Verify model supports all 11 DocLayNet classes
+  - Create model versioning directory: `models/yolov10-doc/`
+  - Document model provenance and license
+  - Add model integrity check (SHA256)
 
-- **Sprint 2.4.2**: Implement table detection heuristic (4 hours)
-  - Add function: `detect_tables(image: np.ndarray) -> bool`
-  - Algorithm: Hough line detection + grid pattern analysis
-  - Threshold: >10 horizontal lines AND >5 vertical lines forming grid
-  - Return boolean: has_tables
+- **Sprint 2.4.2**: Validate YOLOv10-doc on DocLayNet test set (4 hours)
+  - Download DocLayNet test set subset (500 pages)
+  - Create validation script: `scripts/validate_yolov10_accuracy.py`
+  - Run inference on test set
+  - Calculate mAP@0.50 and per-class AP
+  - Target: mAP@0.50 >0.82, per-class AP >0.70
+  - Document validation results
+
+- **Sprint 2.4.3**: Benchmark YOLOv10-doc inference latency (3 hours)
+  - Create benchmark script: `scripts/benchmark_yolov10_latency.py`
+  - Benchmark GPU inference (T4, if available)
+  - Benchmark CPU inference
+  - Measure: p50, p95, p99 latencies
+  - Target: GPU <25ms, CPU <150ms
+  - Document results for text gate evaluation decision
+
+**Milestone 8.2: YOLOv10-doc Integration & COCO Format** (Day 7, 4 sprints, ~12h)
+
+- **Sprint 2.4.4**: Set up ONNX Runtime inference (3 hours)
+  - Install ONNX Runtime: `poetry add onnxruntime-gpu`
+  - Create `src/inference/onnx_runner.py`
+  - Function: `run_onnx_inference(model_path, input_image)`
+  - Device selection: GPU (if available) → CPU fallback
+  - Add unit tests with dummy ONNX model
+
+- **Sprint 2.4.5**: Implement YOLOv10-doc inference wrapper (3 hours)
+  - Create `src/detection/yolov10_wrapper.py`
+  - Class: `YOLOv10Detector`
+  - Method: `detect(image: np.ndarray) -> list[Detection]`
+  - NMS post-processing (confidence >0.5, IoU >0.45)
+  - Return all 11 DocLayNet classes
   - Add unit tests
 
-- **Sprint 2.4.3**: Implement figure detection heuristic (3 hours)
-  - Add function: `detect_figures(image: np.ndarray) -> bool`
-  - Algorithm: Large connected components with low text density
-  - Threshold: Component >20% of page area AND text density <5%
-  - Return boolean: has_figures
+- **Sprint 2.4.6**: Convert YOLO bbox to COCO format (3 hours)
+  - Add function: `yolo_to_coco(bbox_yolo, image_width, image_height) -> list[float]`
+  - Input: [x_center, y_center, w, h] (normalized 0-1)
+  - Output: [x, y, width, height] (absolute pixels, COCO format)
+  - Add bbox validation (within bounds, positive dimensions)
+  - Add unit tests with edge cases
+
+- **Sprint 2.4.7**: Populate DocumentElement schema with detections (3 hours)
+  - Update DocumentElement fields: element_type, bbox (COCO), confidence
+  - Map YOLOv10 class_id → DocLayNet ElementType enum
+  - Add validation: bbox within page dimensions
+  - Add integration test: Image → YOLOv10 → DocumentElement
+
+**Milestone 8.3: Page Attributes & Pipeline Integration** (Day 8, 3 sprints, ~9h)
+
+- **Sprint 2.4.8**: Derive layout_type from element distribution (3 hours)
+  - Create `src/detection/layout_attributes.py`
+  - Function: `derive_layout_type(elements: list[DocumentElement]) -> LayoutType`
+  - Algorithm: Analyze horizontal clustering of Text elements
+  - Return: LayoutType.SINGLE | MULTI | COMPLEX
+  - Add unit tests with synthetic layouts
+
+- **Sprint 2.4.9**: Derive presence flags (has_tables, has_figures, has_dense_math) (3 hours)
+  - Add function: `derive_presence_flags(elements: list[DocumentElement]) -> PresenceFlags`
+  - `has_tables: bool` = any Table elements detected
+  - `has_figures: bool` = any Picture elements detected
+  - `has_dense_math: bool` = >5 Formula elements OR >10% page area formulas
+  - Add to PageLayoutSummary model
   - Add unit tests
 
-- **Sprint 2.4.4**: Implement fuzzy scan detection (2 hours)
-  - Add function: `detect_fuzzy_scan(image: np.ndarray) -> bool`
-  - Algorithm: Laplacian variance + noise estimation
-  - Threshold: Blur score >0.7 AND noise >0.5
-  - Return boolean: fuzzy_scan
-  - Add unit tests
-
-- **Sprint 2.4.5**: Implement watermark detection (3 hours)
-  - Add function: `detect_watermark(image: np.ndarray) -> bool`
-  - Algorithm: Low-frequency component analysis (FFT) + opacity detection
-  - Threshold: Low-frequency energy >threshold
-  - Return boolean: watermark
-  - Add unit tests
-
-- **Sprint 2.4.6**: Implement colorful background detection (2 hours)
-  - Add function: `detect_colorful_background(image: np.ndarray) -> bool`
-  - Algorithm: Color histogram diversity + saturation analysis
-  - Threshold: Unique colors >100 AND avg saturation >0.3
-  - Return boolean: colorful_background
-  - Add unit tests
-
-- **Sprint 2.4.7**: Integrate layout-lite into pipeline (3 hours)
-  - Create `LayoutLiteAnalyzer` class
-  - Combine all detection functions
-  - Populate `PageLayoutSummary` model
-  - Add to processing pipeline after text gate
+- **Sprint 2.4.10**: Integrate YOLOv10-doc into pipeline (3 hours)
+  - Update `src/ingestion/document_processor.py`
+  - IF text_detected == True → Run YOLOv10-doc inference
+  - Populate DocumentElement list with all 11 classes
+  - Populate PageLayoutSummary with derived attributes
   - Add integration test
 
-**Milestone 8.2: DQS Calculation** (Day 9-10, 5 sprints)
+---
+
+#### Week 9: DQS Calculation & Routing Recommendation
+
+**Milestone 9.1: DQS Calculation** (Day 9-10, 5 sprints)
 
 - **Sprint 2.5.1**: Implement degradation score calculation (3 hours)
   - Create `src/metrics/dqs_calculator.py`
@@ -972,13 +1005,13 @@ Albumentations pipeline (see Training Data Strategy)
   - Normalize to 0-1 range (0=worst, 1=best)
   - Add unit tests
 
-- **Sprint 2.5.2**: Implement structural complexity score (3 hours)
-  - Add function: `calculate_structural_complexity_score(layout_lite: PageLayoutSummary) -> float`
-  - Weighted formula:
-    - Base: layout_type (single=0.1, multi=0.4, three_column=0.6, complex=0.9)
-    - +0.2 if has_tables
-    - +0.15 if has_figures
-    - +0.15 if has_dense_math
+- **Sprint 2.5.2**: Implement structural complexity score (3 hours) - **UPDATED**
+  - Add function: `calculate_structural_complexity_score(elements: list[DocumentElement]) -> float`
+  - Weighted formula (using YOLOv10-doc element counts):
+    - Base: layout_type (single=0.1, multi=0.4, complex=0.9)
+    - +0.2 if table_count >0
+    - +0.15 if figure_count >0 (Picture elements)
+    - +0.15 if formula_count >5 OR formula_density >0.1
     - +0.1 if has_handwriting
   - Normalize to 0-1 range
   - Add unit tests
@@ -1103,23 +1136,25 @@ Albumentations pipeline (see Training Data Strategy)
 
 ---
 
-**Phase 2 Deliverables:**
+**Phase 2 Deliverables (UPDATED):**
 - ✅ Complete DocumentMetadata.json schema aligned with RAG Pipeline vision
 - ✅ PDF type classification (99.5% accuracy)
-- ✅ Layout-lite detection (heuristics-based)
-- ✅ DQS calculation module
+- ✅ **YOLOv10-doc light layout detection** (all 11 DocLayNet classes)
+- ✅ DQS calculation module (updated with YOLOv10-doc element counts)
 - ✅ Pre-OCR risk score
 - ✅ Routing recommendation engine
-- ✅ 26 sprints completed
+- ✅ 29 sprints completed (+3 from YOLOv10-doc integration)
 - ✅ Comprehensive validation reports
 
-**Phase 2 Success Criteria:**
+**Phase 2 Success Criteria (UPDATED):**
 - Schema validation: 100% pass on test documents
 - PDF type classification: >99% accuracy
-- Layout-lite: >85% F1 per presence flag
+- **YOLOv10-doc layout detection**: mAP@0.5 >0.82, per-class AP >0.70
+- **Layout element detection**: All 11 DocLayNet classes detected with COCO bounding boxes
+- **Page attributes derivation**: >90% accuracy on layout_type classification
 - DQS correlation with OCR difficulty: >0.70
 - Routing accuracy: >85% agreement with manual routing decisions
-- Performance: <50ms overhead vs Phase 1 baseline
+- Performance: <50ms YOLOv10-doc overhead (GPU), <200ms (CPU)
 - Test coverage: >80% for all new modules
 
 ---
@@ -1742,6 +1777,246 @@ Albumentations pipeline (see Training Data Strategy)
 **Phase 5 Success Criteria:**
 - Test coverage: >80%
 - All integration tests pass
+- API latency: p95 <300ms for /process endpoint
+- Docker image size: <2GB
+- Documentation completeness: 100%
+
+---
+
+### Phase 6: Classical IQA Extensions (NEW - Weeks 21-23)
+
+**Priority: HIGH - Requirements v2.0 Alignment**
+
+**Duration**: 15 working days (3 weeks)
+**Total Sprints**: 35 sprints (~115 hours)
+
+**Purpose**: Extend classical IQA with comprehensive quality assessment capabilities restored in v2.0 requirements.
+
+#### Week 21: Binarization & Bleed-Through (Day 66-70, 10 sprints)
+
+**Milestone 6.1: Binarization Assessment** (4 sprints, ~12h)
+- Otsu binarization quality metric
+- Adaptive binarization assessment
+- Binarization confidence scoring
+- Pipeline integration
+
+**Milestone 6.2: Bleed-Through Detection** (3 sprints, ~9h)
+- Back-page visibility detection (dual-side + single-side fallback)
+- Bleed-through severity scoring
+- Pipeline integration with DetectedIssue schema
+
+**Milestone 6.3: Basic Corrections** (3 sprints, ~9h)
+- Adaptive binarization correction with guardrails
+- Bleed-through suppression algorithm
+- Integration into correction pipeline
+
+#### Week 22: Warping & Perspective (Day 71-75, 13 sprints)
+
+**Milestone 6.4: Warping & Curvature Detection** (5 sprints, ~16h)
+- Page warping detection (edge curvature analysis)
+- Spine curvature detection (book scans)
+- Warping severity scoring
+- Warping visualization utility
+- Pipeline integration
+
+**Milestone 6.5: Perspective Distortion** (3 sprints, ~10h)
+- Perspective distortion detection (corner-based)
+- Perspective correction confidence scoring
+- Pipeline integration
+
+**Milestone 6.6: Advanced Corrections** (5 sprints, ~17h)
+- Dewarping correction (polynomial + optional DocUNet)
+- Dewarping confidence thresholds & guardrails
+- Perspective correction algorithm
+- Do-no-harm validation suite
+- Performance benchmarking
+
+#### Week 23: Integration & Validation (Day 76-80, 12 sprints)
+
+**Milestone 6.7: End-to-End Integration** (7 sprints)
+- Integrate all new classical IQA detectors
+- Update DocumentMetadata schema with new fields
+- Comprehensive integration tests
+- Validation on historical document test set
+- Performance impact analysis
+
+**Milestone 6.8: Correction Validation** (5 sprints)
+- Validate all corrections with do-no-harm metrics
+- Before/after quality comparisons
+- Rollback accuracy validation
+- Edge case testing (degraded documents)
+- Correction effectiveness report
+
+**Phase 6 Deliverables:**
+- ✅ Binarization quality assessment & correction
+- ✅ Bleed-through detection & suppression
+- ✅ Warping/curvature detection & dewarping
+- ✅ Perspective distortion detection & correction
+- ✅ 35 sprints completed
+- ✅ Comprehensive validation reports
+- ✅ Updated schema with all new quality metrics
+
+**Success Criteria:**
+- Binarization assessment accuracy: >0.85 correlation with ground truth
+- Bleed-through detection: F1 >0.90
+- Warping detection: >85% accuracy on severity classification
+- Perspective detection: >90% accuracy on distorted documents
+- Correction effectiveness: >95% improvements, <1% degradations
+- Performance overhead: <30ms for all new detectors
+
+---
+
+### Phase 7: Office Document Support (NEW - Week 24)
+
+**Priority: MEDIUM - Requirements v2.0 Alignment**
+
+**Duration**: 5 working days (1 week)
+**Total Sprints**: 7 sprints (~23 hours)
+
+**Purpose**: Enable embedded image extraction from office documents (.docx, .xlsx, .pptx) using Docling.
+
+#### Week 24: Docling Integration (Day 81-85, 7 sprints)
+
+**Milestone 7.1: Docling Setup & Configuration** (2 sprints, ~5h)
+- Install and configure Docling library
+- Office document type detection (.docx/.xlsx/.pptx)
+- Configuration integration
+
+**Milestone 7.2: Embedded Image Extraction** (4 sprints, ~13h)
+- .docx embedded image extraction
+- .xlsx embedded image extraction (charts, logos)
+- .pptx embedded image extraction (per-slide)
+- Unified office image extractor class with metadata
+
+**Milestone 7.3: Pipeline Integration** (2 sprints, ~6h)
+- Integrate office document support into ingestion pipeline
+- Process each extracted image through standard pipeline
+- Generate PageMetadata per embedded image
+- Integration tests for all three office formats
+
+**Phase 7 Deliverables:**
+- ✅ Docling integration for .docx, .xlsx, .pptx
+- ✅ Embedded image extraction for all office formats
+- ✅ Standard preprocessing pipeline applied to extracted images
+- ✅ Office document integration tests
+- ✅ 7 sprints completed
+
+**Success Criteria:**
+- Office format detection: 100% accuracy
+- Image extraction completeness: 100% of embedded images
+- Pipeline compatibility: All extracted images processed successfully
+- Integration test pass rate: 100%
+
+---
+
+### Phase 8: Hybrid IQA & Specialized Content (NEW - Weeks 25-26)
+
+**Priority: HIGH - Requirements v2.0 Alignment**
+
+**Duration**: 10 working days (2 weeks)
+**Total Sprints**: 18 sprints (~58 hours)
+
+**Purpose**: Implement per-element quality assessment (hybrid IQA) and specialized content detection.
+
+#### Week 25: Hybrid IQA Implementation (Day 86-90, 10 sprints)
+
+**Milestone 8.1: Per-Element Quality Assessment** (8 sprints, ~26h)
+- Extract bounding box regions from YOLOv10-doc detections
+- Filter elements for hybrid IQA (Picture, Table, Formula)
+- Implement per-element ML IQA inference (batch processing)
+- Aggregate per-element quality scores
+- Populate quality_issues field in DocumentElement
+- Add per-element quality to DQS calculation
+- Create hybrid IQA validation suite
+- Benchmark hybrid IQA overhead
+
+**Milestone 8.2: Table Quality Assessment** (2 sprints, ~6h)
+- Implement table-specific quality metrics (grid clarity, cell sharpness)
+- Integrate table quality into hybrid IQA
+- Validation on table-heavy documents
+
+#### Week 26: Specialized Content Detection (Day 91-95, 8 sprints)
+
+**Milestone 8.3: Formula & Watermark Detection** (4 sprints, ~12h)
+- Formula detection via YOLOv10-doc Formula class
+- Formula density scoring
+- FFT-based watermark detection (classical CV)
+- Watermark opacity & coverage scoring
+
+**Milestone 8.4: Stamps, Seals & Signatures** (4 sprints, ~20h)
+- Circular Hough transform for seal detection
+- Color-based stamp detection (red/blue ink patterns)
+- Signature detection via stroke analysis
+- Margin annotation detection (edge proximity)
+- Confidence scoring for all specialized content
+- Integration into DocumentMetadata schema
+
+**Phase 8 Deliverables:**
+- ✅ Hybrid IQA: Per-element quality assessment on figures, tables, formulas
+- ✅ Table-specific quality metrics
+- ✅ Specialized content detection: formulas, watermarks, stamps, seals, signatures, margin annotations
+- ✅ Updated DQS calculation with hybrid IQA
+- ✅ 18 sprints completed
+- ✅ Comprehensive validation reports
+
+**Success Criteria:**
+- Hybrid IQA accuracy: >0.80 correlation with element-level ground truth
+- Table quality metrics: >0.85 correlation with table clarity
+- Specialized content detection F1: >0.90 for each type
+- Hybrid IQA overhead: <30ms per page (typical 5-10 elements)
+- Integration: 100% test pass rate
+
+---
+
+### Phase 9: Text Gate Evaluation & Spatial Hints (NEW - Week 27)
+
+**Priority: MEDIUM - Requirements v2.0 Alignment**
+
+**Duration**: 5 working days (1 week)
+**Total Sprints**: 10 sprints (~32 hours)
+
+**Purpose**: Evaluate text detection gate necessity and implement spatial hints for reading order.
+
+#### Week 27: Text Gate & Spatial Analysis (Day 96-100, 10 sprints)
+
+**Milestone 9.1: Text Detection Gate Evaluation** (4 sprints, ~14h)
+- Implement text detection gate benchmark harness
+- Benchmark YOLOv10-doc latency on pure images vs text documents
+- Compare architectures (with gate vs without gate)
+- Document decision criteria and recommendation
+- **Decision**: Implement gate if >30ms savings, skip if <15ms savings
+
+**Milestone 9.2: Spatial Hints Calculation** (6 sprints, ~18h)
+- Implement column membership assignment (clustering)
+- Implement vertical position classification (top/middle/bottom)
+- Implement element proximity calculation (pairwise distances)
+- Implement element adjacency graph (NetworkX)
+- Populate spatial hints in DocumentElement
+- Create spatial hints validation suite
+
+**Phase 9 Deliverables:**
+- ✅ Text detection gate evaluation with empirical benchmark results
+- ✅ Decision documented: Implement or skip gate based on criteria
+- ✅ Spatial hints: column membership, vertical position, element proximity
+- ✅ Adjacency graph for reading order hints (Project B)
+- ✅ 10 sprints completed
+
+**Success Criteria:**
+- Text gate decision: Based on empirical YOLOv10-doc latency data
+- Spatial hints accuracy: >90% column assignment, >85% vertical position
+- Proximity calculation correctness: 100% on validation set
+- Integration: 100% test pass rate
+
+---
+
+### Phase 10: Final Validation & Documentation (Weeks 28-29)
+
+**Priority: CRITICAL - Project Completion**
+
+**Duration**: 10 working days (2 weeks)
+**Total Sprints**: 15 sprints (~50 hours)
+
+**Purpose**: Comprehensive end-to-end validation, performance benchmarking, and documentation finalization.
 - All stress tests pass
 - Docker container: <2GB
 - API response time: <150ms p95 (GPU), <400ms (CPU)
@@ -2157,18 +2432,55 @@ Project A serves as the intelligent gateway for the RAG document processing pipe
 7. **Do-No-Harm Guardrails**: Ensures corrections improve quality without introducing artifacts
 8. **Hybrid IQA**: Per-element quality assessment critical for technical documents with figures/charts/tables
 
-**Expected Timeline**: 20 weeks from Phase 2 start to production deployment
+**Expected Timeline (UPDATED)**: 29 weeks from Phase 2 start to production deployment
+- **Core Pipeline** (Phases 0-5): 20 weeks
+- **v2.0 Extensions** (Phases 6-10): 9 additional weeks
+  - Phase 6: Classical IQA Extensions (3 weeks)
+  - Phase 7: Office Document Support (1 week)
+  - Phase 8: Hybrid IQA & Specialized Content (2 weeks)
+  - Phase 9: Text Gate Evaluation & Spatial Hints (1 week)
+  - Phase 10: Final Validation & Documentation (2 weeks)
+
 **Expected Outcomes**:
 - JSON Accuracy: >0.85
+- Layout Detection mAP@0.5: >0.82 (YOLOv10-doc, all 11 DocLayNet classes)
+- Hybrid IQA correlation: >0.80 (per-element quality assessment)
+- Specialized content detection F1: >0.90 (formulas, watermarks, stamps, seals, signatures)
 - Throughput: >6 pages/sec per GPU worker
 - Routing Accuracy: >88%
 - Cost per page: <$0.01
 - Reduces manual preprocessing time by >80%
 
+**Phase Roadmap Summary**:
+- **Phase 0** ✅: Foundation (Complete)
+- **Phase 1** ✅: MVP with Classical Methods (Mostly Complete)
+- **Phase 1B** ✅: PDF Resolution & DPI Upscaling (Complete)
+- **Phase 2** 🔄: Schema + PDF Classification + **YOLOv10-doc Layout** + DQS & Routing (In Progress, UPDATED)
+- **Phase 3**: Teacher-Student ML IQA Training (5 weeks)
+- **Phase 4**: Device-Priority Execution & Production Hardening (3 weeks)
+- **Phase 5**: Testing, Documentation & Deployment (3 weeks)
+- **Phase 6** 📋: Classical IQA Extensions (3 weeks, NEW)
+- **Phase 7** 📋: Office Document Support (1 week, NEW)
+- **Phase 8** 📋: Hybrid IQA & Specialized Content (2 weeks, NEW)
+- **Phase 9** 📋: Text Gate Evaluation & Spatial Hints (1 week, NEW)
+- **Phase 10** 📋: Final Validation & Documentation (2 weeks, NEW)
+
 **Next Steps**:
-1. Complete Phase 1 remaining tasks (CLI tool, output generation)
-2. Begin Phase 2: Schema alignment and core components (PDF type, DQS, routing)
-3. Coordinate with Project B team on handoff contract validation
+1. Complete Phase 2 with YOLOv10-doc integration (Week 8-9 sprints updated)
+2. Begin Phase 3: Teacher-Student ML IQA training
+3. Execute Phases 6-10 to fully align with Project_A_F_NF.md v2.0 requirements
+4. Coordinate with Project B team on handoff contract validation
+
+**Requirements Alignment**:
+- ✅ All 11 DocLayNet classes detected (FR-4.1, 4.2)
+- ✅ YOLOv10-doc model (not YOLOv8) (FR-4.1)
+- ✅ COCO bounding box format (FR-4.3)
+- ✅ Hybrid IQA on embedded images (FR-3.14)
+- ✅ Office document support (.docx, .xlsx, .pptx) (FR-1.2, ADR-005)
+- ✅ Comprehensive classical IQA (binarization, bleed-through, warping, perspective) (FR-3.9-3.13)
+- ✅ Specialized content detection (formulas, watermarks, stamps, seals, signatures) (FR-5.1, 5.4-5.7)
+- ✅ Spatial hints for reading order (FR-4.12)
+- ✅ Text detection gate evaluation (FR-2.4, Phase 9)
 
 ---
 
