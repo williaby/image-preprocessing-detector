@@ -15,7 +15,6 @@ from functools import lru_cache
 # Version detection
 PY_VERSION = sys.version_info[:2]
 PY_311_PLUS = PY_VERSION >= (3, 11)
-PY_312_PLUS = PY_VERSION >= (3, 12)
 
 # UTC constant compatibility - works across all Python 3.10+
 if PY_311_PLUS:
