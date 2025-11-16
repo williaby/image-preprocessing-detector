@@ -196,8 +196,15 @@ def generate_badges(results: dict[str, Any], badges_dir: Path) -> None:
             if match:
                 spec = match.group(1)
                 suffix = format_str[len(spec) :]
-                # Don't add space unless suffix already starts with one
-                message = f"{value:{spec}}{suffix}"
+                # Handle percentage formatting (multiply by 100)
+                if "%" in spec:
+                    formatted_value = value * 100
+                    # Remove % from spec since we're adding it in suffix
+                    spec_without_pct = spec.replace("%", "f")
+                    message = f"{formatted_value:{spec_without_pct}}{suffix}%"
+                else:
+                    # For all other formats (°, dB, or plain numbers), use value as-is
+                    message = f"{value:{spec}}{suffix}"
             else:
                 # Fallback for simple specs like ".3f"
                 message = f"{value:{format_str}}"

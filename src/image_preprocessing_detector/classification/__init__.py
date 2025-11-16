@@ -1,5 +1,4 @@
-"""
-PDF classification module for detecting document types.
+"""PDF classification module for detecting document types.
 
 This module provides utilities for classifying PDFs into different types
 (born_digital, image_only, hybrid) based on text content and embedded images.

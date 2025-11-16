@@ -1,5 +1,4 @@
-"""
-PDF text extraction utility using PyMuPDF (fitz).
+"""PDF text extraction utility using PyMuPDF (fitz).
 
 Extracts all text content from PDF files for classification purposes.
 """
@@ -18,8 +17,7 @@ class PDFTextExtractionError(Exception):
 
 
 def extract_text_from_pdf(pdf_path: Path | str) -> str:
-    """
-    Extract all text content from a PDF file.
+    """Extract all text content from a PDF file.
 
     Uses PyMuPDF (fitz) to extract text from all pages of the PDF.
     Handles errors gracefully for corrupted or password-protected PDFs.

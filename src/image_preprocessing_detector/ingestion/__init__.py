@@ -1,5 +1,4 @@
-"""
-PDF and image ingestion modules.
+"""PDF and image ingestion modules.
 
 Handles loading documents from various formats (PDF, images) and converting
 them to standardized numpy arrays for processing.

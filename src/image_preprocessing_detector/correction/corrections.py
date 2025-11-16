@@ -1,5 +1,4 @@
-"""
-Image correction operations with guardrails.
+"""Image correction operations with guardrails.
 
 Implements corrections for detected image quality issues:
 - Deskew (rotation correction)
@@ -22,8 +21,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class CorrectionResult:
-    """
-    Result of a correction operation.
+    """Result of a correction operation.
 
     Attributes:
         corrected_image: The corrected image
@@ -39,8 +37,7 @@ class CorrectionResult:
 
 
 class DeskewCorrector:
-    """
-    Corrects image skew using rotation.
+    """Corrects image skew using rotation.
 
     Includes guardrails to prevent over-correction and quality degradation.
     """
@@ -51,8 +48,7 @@ class DeskewCorrector:
         max_angle: float = 45.0,
         border_value: int = 255,
     ) -> None:
-        """
-        Initialize deskew corrector.
+        """Initialize deskew corrector.
 
         Args:
             min_angle: Minimum angle to correct (< 0.5° skipped)
@@ -72,8 +68,7 @@ class DeskewCorrector:
     def correct(
         self, image: np.ndarray, angle: float, confidence: float = 1.0
     ) -> CorrectionResult:
-        """
-        Apply deskew correction.
+        """Apply deskew correction.
 
         Args:
             image: Input image (BGR format)
@@ -177,8 +172,7 @@ class DeskewCorrector:
 
 
 class ContrastEnhancer:
-    """
-    Enhances image contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization).
+    """Enhances image contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization).
 
     Includes guardrails to prevent over-enhancement.
     """
@@ -189,8 +183,7 @@ class ContrastEnhancer:
         tile_grid_size: tuple[int, int] = (8, 8),
         min_score: float = 0.4,
     ) -> None:
-        """
-        Initialize contrast enhancer.
+        """Initialize contrast enhancer.
 
         Args:
             clip_limit: CLAHE clip limit (higher = more contrast)
@@ -210,8 +203,7 @@ class ContrastEnhancer:
     def correct(
         self, image: np.ndarray, score: float, severity: Severity
     ) -> CorrectionResult:
-        """
-        Apply contrast enhancement.
+        """Apply contrast enhancement.
 
         Args:
             image: Input image (BGR format)
@@ -280,8 +272,7 @@ class ContrastEnhancer:
 
 
 class Sharpener:
-    """
-    Sharpens blurred images using unsharp mask.
+    """Sharpens blurred images using unsharp mask.
 
     Includes guardrails to prevent over-sharpening and noise amplification.
     """
@@ -293,8 +284,7 @@ class Sharpener:
         sigma: float = 1.0,
         min_blur_score: float = 200.0,
     ) -> None:
-        """
-        Initialize sharpener.
+        """Initialize sharpener.
 
         Args:
             amount: Sharpening strength (0.0-2.0)
@@ -316,8 +306,7 @@ class Sharpener:
     def correct(
         self, image: np.ndarray, blur_score: float, severity: Severity
     ) -> CorrectionResult:
-        """
-        Apply sharpening correction.
+        """Apply sharpening correction.
 
         Args:
             image: Input image (BGR format)
@@ -387,8 +376,7 @@ class Sharpener:
 def correct_skew(
     image: np.ndarray, angle: float, confidence: float = 1.0
 ) -> CorrectionResult:
-    """
-    Convenience function for deskew correction.
+    """Convenience function for deskew correction.
 
     Args:
         image: Input image (BGR format)
@@ -411,8 +399,7 @@ def correct_skew(
 def enhance_contrast(
     image: np.ndarray, score: float, severity: Severity
 ) -> CorrectionResult:
-    """
-    Convenience function for contrast enhancement.
+    """Convenience function for contrast enhancement.
 
     Args:
         image: Input image (BGR format)
@@ -435,8 +422,7 @@ def enhance_contrast(
 def sharpen_image(
     image: np.ndarray, blur_score: float, severity: Severity
 ) -> CorrectionResult:
-    """
-    Convenience function for sharpening.
+    """Convenience function for sharpening.
 
     Args:
         image: Input image (BGR format)

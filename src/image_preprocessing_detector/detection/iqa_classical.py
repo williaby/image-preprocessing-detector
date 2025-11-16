@@ -1,5 +1,4 @@
-"""
-Classical image quality assessment (IQA) detectors.
+"""Classical image quality assessment (IQA) detectors.
 
 Implements fast classical computer vision methods for detecting image quality issues:
 - Skew detection (Hough Transform + Projection Profile)
@@ -29,8 +28,7 @@ class Severity(str, Enum):
 
 @dataclass
 class SkewDetectionResult:
-    """
-    Result of skew detection analysis.
+    """Result of skew detection analysis.
 
     Attributes:
         is_skewed: Whether significant skew is detected
@@ -48,8 +46,7 @@ class SkewDetectionResult:
 
 
 class SkewDetector:
-    """
-    Detects page skew using Hough Transform and projection profile analysis.
+    """Detects page skew using Hough Transform and projection profile analysis.
 
     Optimized for document images with text or structured content.
     """
@@ -62,8 +59,7 @@ class SkewDetector:
         min_line_length: int = 100,
         max_line_gap: int = 10,
     ) -> None:
-        """
-        Initialize skew detector.
+        """Initialize skew detector.
 
         Args:
             threshold_low: Low severity threshold in degrees (default: 0.5°)
@@ -86,8 +82,7 @@ class SkewDetector:
         )
 
     def detect(self, image: np.ndarray) -> SkewDetectionResult:
-        """
-        Detect skew in an image using ensemble of methods.
+        """Detect skew in an image using ensemble of methods.
 
         Args:
             image: Input image (BGR format, from OpenCV)
@@ -152,8 +147,7 @@ class SkewDetector:
         )
 
     def _detect_hough(self, gray: np.ndarray) -> tuple[float, float]:
-        """
-        Detect skew using Hough Line Transform.
+        """Detect skew using Hough Line Transform.
 
         Args:
             gray: Grayscale image
@@ -211,8 +205,7 @@ class SkewDetector:
             return 0.0, 0.0
 
     def _detect_projection(self, gray: np.ndarray) -> tuple[float, float]:
-        """
-        Detect skew using horizontal projection profile.
+        """Detect skew using horizontal projection profile.
 
         Args:
             gray: Grayscale image
@@ -260,8 +253,7 @@ class SkewDetector:
             return 0.0, 0.0
 
     def _compute_severity(self, abs_angle: float) -> Severity:
-        """
-        Compute severity based on absolute skew angle.
+        """Compute severity based on absolute skew angle.
 
         Args:
             abs_angle: Absolute value of skew angle
@@ -280,8 +272,7 @@ class SkewDetector:
 
 @dataclass
 class BlurDetectionResult:
-    """
-    Result of blur detection analysis.
+    """Result of blur detection analysis.
 
     Attributes:
         is_blurred: Whether significant blur is detected
@@ -297,8 +288,7 @@ class BlurDetectionResult:
 
 
 class BlurDetector:
-    """
-    Detects image blur using Laplacian variance.
+    """Detects image blur using Laplacian variance.
 
     Higher variance indicates sharper images (more high-frequency content).
     """
@@ -309,8 +299,7 @@ class BlurDetector:
         threshold_high: float = 100.0,
         threshold_medium: float = 200.0,
     ) -> None:
-        """
-        Initialize blur detector.
+        """Initialize blur detector.
 
         Args:
             threshold_critical: Critical blur threshold (< 50 = severe blur)
@@ -329,8 +318,7 @@ class BlurDetector:
         )
 
     def detect(self, image: np.ndarray) -> BlurDetectionResult:
-        """
-        Detect blur using Laplacian variance.
+        """Detect blur using Laplacian variance.
 
         Args:
             image: Input image (BGR format)
@@ -386,8 +374,7 @@ class BlurDetector:
 
 @dataclass
 class ContrastDetectionResult:
-    """
-    Result of contrast detection analysis.
+    """Result of contrast detection analysis.
 
     Attributes:
         is_low_contrast: Whether low contrast is detected
@@ -403,8 +390,7 @@ class ContrastDetectionResult:
 
 
 class ContrastDetector:
-    """
-    Detects low contrast using histogram analysis.
+    """Detects low contrast using histogram analysis.
 
     Analyzes distribution of pixel intensities to determine contrast quality.
     """
@@ -415,8 +401,7 @@ class ContrastDetector:
         threshold_high: float = 0.13,
         threshold_medium: float = 0.18,
     ) -> None:
-        """
-        Initialize contrast detector.
+        """Initialize contrast detector.
 
         Thresholds calibrated on real-world DocLayNet documents:
         - Mean contrast: 0.18, Median: 0.18, Std: 0.047
@@ -439,8 +424,7 @@ class ContrastDetector:
         )
 
     def detect(self, image: np.ndarray) -> ContrastDetectionResult:
-        """
-        Detect low contrast using histogram analysis.
+        """Detect low contrast using histogram analysis.
 
         Args:
             image: Input image (BGR format)
@@ -507,8 +491,7 @@ class ContrastDetector:
 
 # Convenience functions
 def detect_skew(image: np.ndarray) -> SkewDetectionResult:
-    """
-    Convenience function for skew detection.
+    """Convenience function for skew detection.
 
     Args:
         image: Input image (BGR format)
@@ -527,8 +510,7 @@ def detect_skew(image: np.ndarray) -> SkewDetectionResult:
 
 
 def detect_blur(image: np.ndarray) -> BlurDetectionResult:
-    """
-    Convenience function for blur detection.
+    """Convenience function for blur detection.
 
     Args:
         image: Input image (BGR format)
@@ -549,8 +531,7 @@ def detect_blur(image: np.ndarray) -> BlurDetectionResult:
 
 
 def detect_contrast(image: np.ndarray) -> ContrastDetectionResult:
-    """
-    Convenience function for contrast detection.
+    """Convenience function for contrast detection.
 
     Args:
         image: Input image (BGR format)

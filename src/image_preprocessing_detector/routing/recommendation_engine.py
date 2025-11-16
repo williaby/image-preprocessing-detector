@@ -1,5 +1,4 @@
-"""
-OCR Routing Recommendation Engine.
+"""OCR Routing Recommendation Engine.
 
 Implements decision tree logic to recommend optimal OCR engine routing based on:
 - PDF type classification
@@ -24,8 +23,7 @@ def recommend_ocr_routing(
     pre_ocr_risk: float,
     page_layout_summary: list[PageLayoutSummary],
 ) -> tuple[OCRRoutingRecommendation, str]:
-    """
-    Recommend optimal OCR engine routing strategy.
+    """Recommend optimal OCR engine routing strategy.
 
     Decision tree logic (in evaluation order):
     1. IF has_tables OR has_figures → vision_structured

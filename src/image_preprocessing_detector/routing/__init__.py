@@ -1,5 +1,4 @@
-"""
-OCR routing recommendation engine for RAG Pipeline.
+"""OCR routing recommendation engine for RAG Pipeline.
 
 Analyzes document characteristics and recommends optimal OCR engine routing.
 """

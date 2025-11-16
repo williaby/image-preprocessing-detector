@@ -1,5 +1,4 @@
-"""
-Image correction operations with guardrails.
+"""Image correction operations with guardrails.
 
 Phase 1: Classical corrections (deskew, CLAHE, sharpening)
 Phase 2-3: ML-based enhancements

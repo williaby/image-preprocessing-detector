@@ -1,5 +1,4 @@
-"""
-Document Quality Score (DQS) Calculator.
+"""Document Quality Score (DQS) Calculator.
 
 Calculates degradation and structural complexity scores for routing decisions
 in the RAG pipeline (Project A → Project B handoff).
@@ -54,8 +53,7 @@ def calculate_degradation_score(
     classical_iqa: dict[str, Any],
     ml_iqa: dict[str, Any] | None = None,
 ) -> float:
-    """
-    Calculate degradation score from IQA metrics.
+    """Calculate degradation score from IQA metrics.
 
     Weighted formula: 0.3*blur + 0.25*noise + 0.2*contrast + 0.15*illumination + 0.1*artifacts
     All input metrics should be normalized to 0-1 range where 1=best quality.
@@ -155,8 +153,7 @@ def calculate_degradation_score(
 def calculate_structural_complexity_score(
     layout_summary: PageLayoutSummary,
 ) -> float:
-    """
-    Calculate structural complexity score from layout metadata.
+    """Calculate structural complexity score from layout metadata.
 
     Base score from layout_type:
     - single_column: 0.1
@@ -242,8 +239,7 @@ def calculate_structural_complexity_score(
 def aggregate_dqs(
     page_dqs_list: list[DQSMetadata],
 ) -> DQSMetadata:
-    """
-    Aggregate page-level DQS scores to document-level.
+    """Aggregate page-level DQS scores to document-level.
 
     Aggregation strategy:
     - degradation_score: median (representative of typical page quality)
@@ -309,8 +305,7 @@ def normalize_classical_iqa(
     illumination_score: float | None = None,
     artifacts_score: float | None = None,
 ) -> dict[str, Any]:
-    """
-    Normalize classical IQA results into DQS-compatible format.
+    """Normalize classical IQA results into DQS-compatible format.
 
     Converts raw detector outputs into normalized 0-1 scores where 1=best quality.
     Uses sensible defaults for missing metrics.

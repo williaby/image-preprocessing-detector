@@ -1,5 +1,4 @@
-"""
-Direct image loading for JPG, PNG, TIFF, and other formats.
+"""Direct image loading for JPG, PNG, TIFF, and other formats.
 
 Handles DPI extraction, color space conversion, and metadata detection.
 """
@@ -17,8 +16,7 @@ logger = get_logger(__name__)
 
 
 class ImageMetadata:
-    """
-    Metadata extracted from an image file.
+    """Metadata extracted from an image file.
 
     Attributes:
         width: Image width in pixels
@@ -65,8 +63,7 @@ class ImageMetadata:
 
 
 class ImageLoader:
-    """
-    Loads images from various formats (JPG, PNG, TIFF, etc.).
+    """Loads images from various formats (JPG, PNG, TIFF, etc.).
 
     Uses PIL for metadata extraction and OpenCV for image loading.
     """
@@ -82,8 +79,7 @@ class ImageLoader:
     }
 
     def __init__(self, target_dpi: int = 300, ensure_bgr: bool = True) -> None:
-        """
-        Initialize image loader.
+        """Initialize image loader.
 
         Args:
             target_dpi: Target DPI for quality assessment (default: 300)
@@ -95,8 +91,7 @@ class ImageLoader:
         logger.info("Image loader initialized", target_dpi=target_dpi)
 
     def load(self, image_path: str | Path) -> tuple[np.ndarray, ImageMetadata]:
-        """
-        Load image and extract metadata.
+        """Load image and extract metadata.
 
         Args:
             image_path: Path to image file
@@ -155,8 +150,7 @@ class ImageLoader:
         return img, metadata
 
     def _extract_metadata(self, image_path: Path) -> ImageMetadata:
-        """
-        Extract metadata from image using PIL.
+        """Extract metadata from image using PIL.
 
         Args:
             image_path: Path to image file
@@ -217,8 +211,7 @@ class ImageLoader:
 
     @classmethod
     def is_supported(cls, file_path: str | Path) -> bool:
-        """
-        Check if file format is supported.
+        """Check if file format is supported.
 
         Args:
             file_path: Path to check
@@ -232,8 +225,7 @@ class ImageLoader:
 def load_image(
     image_path: str | Path, target_dpi: int = 300
 ) -> tuple[np.ndarray, ImageMetadata]:
-    """
-    Convenience function to load an image.
+    """Convenience function to load an image.
 
     Args:
         image_path: Path to image file

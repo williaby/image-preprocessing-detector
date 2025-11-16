@@ -1,5 +1,4 @@
-"""
-PDF embedded image detection utility using PyMuPDF (fitz).
+"""PDF embedded image detection utility using PyMuPDF (fitz).
 
 Detects and extracts metadata about embedded images in PDF files.
 """
@@ -18,8 +17,7 @@ class PDFImageDetectionError(Exception):
 
 
 def detect_embedded_images(pdf_path: Path | str) -> list[dict]:
-    """
-    Detect embedded images in a PDF file.
+    """Detect embedded images in a PDF file.
 
     Uses PyMuPDF (fitz) to detect embedded images and extract metadata.
     Returns information about each embedded image including dimensions,

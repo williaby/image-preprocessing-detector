@@ -1,5 +1,4 @@
-"""
-Document Processor - High-level orchestration for document analysis pipeline.
+"""Document Processor - High-level orchestration for document analysis pipeline.
 
 This module coordinates the complete document analysis workflow:
 1. Load document (PDF or image)
@@ -32,16 +31,14 @@ from image_preprocessing_detector.schema import (
 
 
 class DocumentProcessor:
-    """
-    Orchestrates the complete document analysis pipeline.
+    """Orchestrates the complete document analysis pipeline.
 
     Coordinates document loading, quality analysis, layout detection,
     and metadata generation for RAG pipeline integration.
     """
 
     def __init__(self, pipeline_version: str = "0.1.0") -> None:
-        """
-        Initialize the document processor.
+        """Initialize the document processor.
 
         Args:
             pipeline_version: Version identifier for this processing pipeline
@@ -53,8 +50,7 @@ class DocumentProcessor:
         file_path: str | Path,
         document_id: str | None = None,
     ) -> DocumentMetadata:
-        """
-        Process a document and generate comprehensive metadata.
+        """Process a document and generate comprehensive metadata.
 
         This is the main entry point for document processing. It orchestrates
         all analysis stages and returns complete DocumentMetadata.
@@ -154,8 +150,7 @@ class DocumentProcessor:
         return mime_map.get(file_path.suffix.lower(), "application/octet-stream")
 
     def _classify_pdf_type(self, file_path: Path) -> PDFType | None:
-        """
-        Classify PDF as image_only, born_digital, or hybrid.
+        """Classify PDF as image_only, born_digital, or hybrid.
 
         TODO: Implement actual PDF type classification
         - Use PyMuPDF to extract text
@@ -173,8 +168,7 @@ class DocumentProcessor:
         return PDFType.HYBRID  # Default assumption
 
     def _generate_placeholder_pages(self, file_path: Path) -> list[PageMetadata]:
-        """
-        Generate placeholder page metadata.
+        """Generate placeholder page metadata.
 
         TODO: Replace with actual PDF/image loader integration
         - Use pdf_loader.py for PDFs
@@ -201,8 +195,7 @@ class DocumentProcessor:
     def _calculate_document_dqs(
         self, pages: list[PageMetadata]
     ) -> DocumentQualityScore:
-        """
-        Calculate Document Quality Score from page-level IQA metrics.
+        """Calculate Document Quality Score from page-level IQA metrics.
 
         TODO: Extract actual IQA metrics from pages
         - Currently uses placeholder values
@@ -236,8 +229,7 @@ class DocumentProcessor:
     def _generate_layout_summary(
         self, pages: list[PageMetadata]
     ) -> list[PageLayoutSummary]:
-        """
-        Generate per-page layout summaries.
+        """Generate per-page layout summaries.
 
         TODO: Integrate with YOLOv8 layout detection (Phase 3)
         - Currently generates placeholder summaries
@@ -276,8 +268,7 @@ def process_document(
     document_id: str | None = None,
     pipeline_version: str = "0.1.0",
 ) -> DocumentMetadata:
-    """
-    Convenience function to process a document.
+    """Convenience function to process a document.
 
     Args:
         file_path: Path to document file (PDF or image)

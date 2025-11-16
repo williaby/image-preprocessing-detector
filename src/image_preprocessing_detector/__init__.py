@@ -1,5 +1,4 @@
-"""
-Image Preprocessing Detector for RAG Applications.
+"""Image Preprocessing Detector for RAG Applications.
 
 An intelligent image preprocessing pipeline that analyzes documents (PDFs, images)
 and automatically detects required preprocessing steps before vector database ingestion.

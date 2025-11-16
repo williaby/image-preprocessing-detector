@@ -1,5 +1,4 @@
-"""
-PDF type classifier using text extraction and image detection.
+"""PDF type classifier using text extraction and image detection.
 
 Classifies PDFs into three types:
 - born_digital: Text-based PDFs with extractable text, no embedded images
@@ -28,8 +27,7 @@ def classify_pdf_type(
     text_max_threshold: int | None = None,
     settings: Settings | None = None,
 ) -> PDFType:
-    """
-    Classify a PDF into one of three types based on content.
+    """Classify a PDF into one of three types based on content.
 
     Classification logic:
     - If text length > text_max_threshold AND image count == 0 → born_digital

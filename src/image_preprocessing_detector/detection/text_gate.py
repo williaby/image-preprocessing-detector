@@ -1,5 +1,4 @@
-"""
-Text detection gate for routing documents in the preprocessing pipeline.
+"""Text detection gate for routing documents in the preprocessing pipeline.
 
 Uses an ensemble of fast heuristics to determine if a document contains text:
 - Morphological stroke density
@@ -19,8 +18,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class TextDetectionResult:
-    """
-    Result of text detection analysis.
+    """Result of text detection analysis.
 
     Attributes:
         has_text: Whether text is detected in the image
@@ -38,8 +36,7 @@ class TextDetectionResult:
 
 
 class TextGate:
-    """
-    Text detection gate for document routing.
+    """Text detection gate for document routing.
 
     Uses ensemble of fast classical CV methods to detect text presence.
     Optimized for speed (< 50ms per page on CPU).
@@ -56,8 +53,7 @@ class TextGate:
         min_aspect_ratio: float = 0.1,
         max_aspect_ratio: float = 10.0,
     ) -> None:
-        """
-        Initialize text detection gate.
+        """Initialize text detection gate.
 
         Args:
             stroke_threshold: Minimum stroke density for text (default: 0.05)
@@ -85,8 +81,7 @@ class TextGate:
         )
 
     def detect(self, image: np.ndarray) -> TextDetectionResult:
-        """
-        Detect text presence in an image.
+        """Detect text presence in an image.
 
         Args:
             image: Input image (BGR format, from OpenCV)
@@ -143,8 +138,7 @@ class TextGate:
         )
 
     def _compute_stroke_density(self, gray: np.ndarray) -> float:
-        """
-        Compute morphological stroke density.
+        """Compute morphological stroke density.
 
         Text has high stroke density due to character edges and strokes.
 
@@ -168,8 +162,7 @@ class TextGate:
         return float(density)
 
     def _analyze_connected_components(self, gray: np.ndarray) -> float:
-        """
-        Analyze connected components for text-like structures.
+        """Analyze connected components for text-like structures.
 
         Text typically consists of many small components with specific aspect ratios.
 
@@ -216,8 +209,7 @@ class TextGate:
         return float(score)
 
     def _compute_edge_density(self, gray: np.ndarray) -> float:
-        """
-        Compute edge density using Canny edge detection.
+        """Compute edge density using Canny edge detection.
 
         Text regions have consistent edge patterns due to character boundaries.
 
@@ -241,8 +233,7 @@ class TextGate:
     def _compute_confidence(
         self, stroke_density: float, component_score: float, edge_score: float
     ) -> float:
-        """
-        Compute overall confidence using weighted average.
+        """Compute overall confidence using weighted average.
 
         Weights prioritize stroke density and component analysis over edge density.
 
@@ -275,8 +266,7 @@ def detect_text(
     stroke_threshold: float = 0.05,
     min_text_components: int = 10,
 ) -> TextDetectionResult:
-    """
-    Convenience function for text detection.
+    """Convenience function for text detection.
 
     Args:
         image: Input image (BGR format)

@@ -1,5 +1,4 @@
-"""
-JSON Schema for Image Preprocessing Detector Output.
+"""JSON Schema for Image Preprocessing Detector Output.
 
 Defines Pydantic models for structured metadata output including detected issues,
 document elements, planned actions, and transform history.

@@ -1,5 +1,4 @@
-"""
-Layout-Lite Detection - Heuristics-Based Document Layout Analysis.
+"""Layout-Lite Detection - Heuristics-Based Document Layout Analysis.
 
 Implements fast classical CV methods for detecting layout features:
 - Column detection (projection profile analysis)
@@ -23,8 +22,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class ColumnDetectionResult:
-    """
-    Result of column detection analysis.
+    """Result of column detection analysis.
 
     Attributes:
         column_type: "single" / "multi" / "three_column" / "complex"
@@ -41,8 +39,7 @@ class ColumnDetectionResult:
 
 @dataclass
 class TableDetectionResult:
-    """
-    Result of table detection analysis.
+    """Result of table detection analysis.
 
     Attributes:
         has_tables: Whether tables are detected
@@ -61,8 +58,7 @@ class TableDetectionResult:
 
 @dataclass
 class FigureDetectionResult:
-    """
-    Result of figure detection analysis.
+    """Result of figure detection analysis.
 
     Attributes:
         has_figures: Whether figures are detected
@@ -79,8 +75,7 @@ class FigureDetectionResult:
 
 @dataclass
 class FuzzyScanDetectionResult:
-    """
-    Result of fuzzy scan detection analysis.
+    """Result of fuzzy scan detection analysis.
 
     Attributes:
         fuzzy_scan: Whether fuzzy scan is detected
@@ -97,8 +92,7 @@ class FuzzyScanDetectionResult:
 
 @dataclass
 class WatermarkDetectionResult:
-    """
-    Result of watermark detection analysis.
+    """Result of watermark detection analysis.
 
     Attributes:
         watermark: Whether watermark is detected
@@ -115,8 +109,7 @@ class WatermarkDetectionResult:
 
 @dataclass
 class ColorfulBackgroundResult:
-    """
-    Result of colorful background detection analysis.
+    """Result of colorful background detection analysis.
 
     Attributes:
         colorful_background: Whether colorful background is detected
@@ -136,8 +129,7 @@ def detect_column_count(
     min_column_gap: int = 30,
     min_column_width: int = 100,
 ) -> ColumnDetectionResult:
-    """
-    Detect column layout using projection profile analysis + connected component clustering.
+    """Detect column layout using projection profile analysis + connected component clustering.
 
     Algorithm:
     1. Convert to grayscale and binarize
@@ -248,8 +240,7 @@ def detect_tables(
     min_vertical_lines: int = 5,
     grid_intersection_threshold: float = 0.3,
 ) -> TableDetectionResult:
-    """
-    Detect tables using Hough line detection + grid pattern analysis.
+    """Detect tables using Hough line detection + grid pattern analysis.
 
     Algorithm:
     1. Convert to grayscale and apply edge detection
@@ -317,17 +308,16 @@ def detect_tables(
     for line in lines:
         x1, y1, x2, y2 = line[0]
 
-        # Calculate angle
+        # Classify directly if vertical
         if x2 - x1 == 0:
-            angle = 90.0  # Vertical
+            vertical_lines.append(line[0])
         else:
             angle = abs(np.degrees(np.arctan((y2 - y1) / (x2 - x1))))
-
-        # Classify as horizontal (0°) or vertical (90°)
-        if angle < angle_threshold:
-            horizontal_lines.append(line[0])
-        elif angle > (90 - angle_threshold):
-            vertical_lines.append(line[0])
+            # Classify as horizontal (0°) or vertical (90°)
+            if angle < angle_threshold:
+                horizontal_lines.append(line[0])
+            elif angle > (90 - angle_threshold):
+                vertical_lines.append(line[0])
 
     num_horizontal = len(horizontal_lines)
     num_vertical = len(vertical_lines)
@@ -372,8 +362,7 @@ def detect_figures(
     min_figure_area_ratio: float = 0.20,
     max_text_density: float = 0.05,
 ) -> FigureDetectionResult:
-    """
-    Detect figures using large connected components with low text density.
+    """Detect figures using large connected components with low text density.
 
     Algorithm:
     1. Convert to grayscale and binarize
@@ -474,8 +463,7 @@ def detect_fuzzy_scan(
     blur_threshold: float = 0.7,
     noise_threshold: float = 0.5,
 ) -> FuzzyScanDetectionResult:
-    """
-    Detect fuzzy scans using Laplacian variance + noise estimation.
+    """Detect fuzzy scans using Laplacian variance + noise estimation.
 
     Algorithm:
     1. Calculate blur metric using Laplacian variance
@@ -550,8 +538,7 @@ def detect_watermark(
     image: np.ndarray,
     low_freq_threshold: float = 0.15,
 ) -> WatermarkDetectionResult:
-    """
-    Detect watermarks using low-frequency component analysis (FFT) + opacity detection.
+    """Detect watermarks using low-frequency component analysis (FFT) + opacity detection.
 
     Algorithm:
     1. Convert to grayscale
@@ -632,8 +619,7 @@ def detect_colorful_background(
     min_unique_colors: int = 100,
     min_avg_saturation: float = 0.3,
 ) -> ColorfulBackgroundResult:
-    """
-    Detect colorful backgrounds using color histogram diversity + saturation analysis.
+    """Detect colorful backgrounds using color histogram diversity + saturation analysis.
 
     Algorithm:
     1. Convert to HSV color space
@@ -715,8 +701,7 @@ def detect_colorful_background(
 
 
 class LayoutLiteAnalyzer:
-    """
-    Combines all layout-lite detection functions into unified analyzer.
+    """Combines all layout-lite detection functions into unified analyzer.
 
     Runs all heuristic-based detections and populates PageLayoutSummary model.
     Optimized for speed (< 100ms per page on CPU).
@@ -731,8 +716,7 @@ class LayoutLiteAnalyzer:
         enable_watermark_detection: bool = True,
         enable_colorful_bg_detection: bool = True,
     ) -> None:
-        """
-        Initialize layout-lite analyzer.
+        """Initialize layout-lite analyzer.
 
         Args:
             enable_column_detection: Enable column detection (default: True)
@@ -760,8 +744,7 @@ class LayoutLiteAnalyzer:
         )
 
     def analyze(self, image: np.ndarray) -> dict[str, Any]:
-        """
-        Run all enabled detections on an image.
+        """Run all enabled detections on an image.
 
         Args:
             image: Input image (BGR format, from OpenCV)
@@ -810,8 +793,7 @@ class LayoutLiteAnalyzer:
 
 # Convenience function for quick analysis
 def analyze_layout(image: np.ndarray) -> dict[str, Any]:
-    """
-    Convenience function for layout analysis with default settings.
+    """Convenience function for layout analysis with default settings.
 
     Args:
         image: Input image (BGR format, from OpenCV)

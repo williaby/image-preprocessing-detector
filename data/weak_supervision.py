@@ -253,6 +253,9 @@ class WeakSupervisionLabeler:
         # NIQE approximation based on gradient statistics
         mean_grad = gradient_mag.mean()
         std_grad = gradient_mag.std()
+        # Guard against division by zero for blank or near-uniform images
+        if mean_grad < 1e-8:
+            return 100.0
         return min(100.0, max(0.0, 50 - (std_grad / mean_grad) * 10))
 
     def _compute_laplacian_variance(self, image: NDArray[np.uint8]) -> float:

@@ -1,5 +1,4 @@
-"""
-Document Quality Score (DQS) calculation module.
+"""Document Quality Score (DQS) calculation module.
 
 Provides functions for calculating degradation scores and structural complexity
 scores for routing decisions in the RAG pipeline.
