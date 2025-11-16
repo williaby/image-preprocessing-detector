@@ -167,7 +167,8 @@ def download_from_github(repo_url: str, local_dir: Path, dry_run: bool = False) 
 
         logger.info(f"Running: {' '.join(shlex.quote(arg) for arg in cmd)}")
         # nosec B603 - Validated GitHub HTTPS URL, list args, no shell
-        # deepcode ignore PT: URL validated to be HTTPS GitHub only, command uses list args
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
+        # Validated: URL scheme checked to be HTTPS, domain verified as github.com, list args, no shell
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec
 
         if result.returncode == 0:

@@ -243,7 +243,8 @@ def extract_archive(archive_path: Path, extract_dir: Path) -> bool:
 
         logger.info(f"Running: {' '.join(shlex.quote(arg) for arg in cmd)}")
         # nosec B603 - Validated paths, list args, no shell
-        # deepcode ignore PT: Path validated with resolve() and is_file() checks, command uses list args
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
+        # Validated: Path resolved and verified with exists() and is_file(), list args, no shell
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)  # nosec
 
         if result.returncode == 0:
