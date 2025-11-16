@@ -1,10 +1,23 @@
 # SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
 # SPDX-License-Identifier: MIT
 
-"""Download IQA datasets with quality labels for validation."""
+"""Download IQA datasets with quality labels for validation.
+
+This script downloads three standard IQA benchmarks with ground-truth quality labels:
+- LIVE (779 images, ~1 GB)
+- CSIQ (866 images, ~2 GB)
+- LIVE Challenge (1,162 images, ~2 GB)
+
+Usage:
+    python scripts/download_iqa_datasets.py
+
+Requirements:
+    pip install iqadataset
+"""
 
 import sys
 from pathlib import Path
+from typing import Any
 
 print("=" * 60)
 print("IQA DATASET DOWNLOAD - PHASE 1 (VALIDATION)")
@@ -34,8 +47,14 @@ root.mkdir(parents=True, exist_ok=True)
 try:
     print("\n[1/3] Downloading LIVE dataset (779 images, ~1 GB)...")
     print("      Defects: JPEG compression, Gaussian blur, white noise, fastfading")
-    live = load_dataset("LIVE", dataset_root=str(root), download=True)
+    live: Any = load_dataset("LIVE", dataset_root=str(root), download=True)
     print(f"      ✓ LIVE: {len(live)} images downloaded")
+except (ConnectionError, TimeoutError) as e:
+    print(f"      ✗ LIVE download failed (network error): {e}")
+    print("      Check your internet connection and try again")
+except (FileNotFoundError, PermissionError) as e:
+    print(f"      ✗ LIVE download failed (file system error): {e}")
+    print(f"      Check permissions for: {root}")
 except Exception as e:
     print(f"      ✗ LIVE download failed: {e}")
     import traceback
@@ -45,8 +64,14 @@ except Exception as e:
 try:
     print("\n[2/3] Downloading CSIQ dataset (866 images, ~2 GB)...")
     print("      Defects: JPEG, JPEG2000, blur, contrast degradation, pink noise")
-    csiq = load_dataset("CSIQ", dataset_root=str(root), download=True)
+    csiq: Any = load_dataset("CSIQ", dataset_root=str(root), download=True)
     print(f"      ✓ CSIQ: {len(csiq)} images downloaded")
+except (ConnectionError, TimeoutError) as e:
+    print(f"      ✗ CSIQ download failed (network error): {e}")
+    print("      Check your internet connection and try again")
+except (FileNotFoundError, PermissionError) as e:
+    print(f"      ✗ CSIQ download failed (file system error): {e}")
+    print(f"      Check permissions for: {root}")
 except Exception as e:
     print(f"      ✗ CSIQ download failed: {e}")
     import traceback
@@ -56,10 +81,16 @@ except Exception as e:
 try:
     print("\n[3/3] Downloading LIVE Challenge dataset (1,162 images, ~2 GB)...")
     print("      Defects: Authentic camera captures (blur, noise, compression)")
-    live_challenge = load_dataset(
+    live_challenge: Any = load_dataset(
         "LIVE_Challenge", dataset_root=str(root), download=True
     )
     print(f"      ✓ LIVE Challenge: {len(live_challenge)} images downloaded")
+except (ConnectionError, TimeoutError) as e:
+    print(f"      ✗ LIVE Challenge download failed (network error): {e}")
+    print("      Check your internet connection and try again")
+except (FileNotFoundError, PermissionError) as e:
+    print(f"      ✗ LIVE Challenge download failed (file system error): {e}")
+    print(f"      Check permissions for: {root}")
 except Exception as e:
     print(f"      ✗ LIVE Challenge download failed: {e}")
     import traceback
