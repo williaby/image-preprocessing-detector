@@ -1,7 +1,7 @@
 """Utility modules for logging, telemetry, and common functions."""
 
 # Core utilities (Phase 0/1) - always available
-from image_preprocessing_detector.utils.logging import get_logger, setup_logging
+from image_preprocessing_detector.utils.log_config import get_logger, setup_logging
 
 # Optional GCS utilities (Phase 2+) - require google-cloud-storage
 try:

@@ -2,20 +2,16 @@
 
 Provides JSON-formatted logs for production with rich console output for development.
 
-Note: Module named "logging" intentionally shadows stdlib for project-specific config.
-Uses aliased import to avoid circular import detection by CodeQL.
+Module renamed from 'logging' to 'log_config' to avoid shadowing Python's stdlib logging module.
 """
 
-import logging as stdlib_logging  # Aliased to avoid circular import with CodeQL
+import logging
 import sys
 from typing import Any
 
 import structlog
 from rich.console import Console
 from rich.logging import RichHandler
-
-# Re-export stdlib logging as logging for internal use
-logging = stdlib_logging
 
 # Global console for rich output
 console = Console(stderr=True)

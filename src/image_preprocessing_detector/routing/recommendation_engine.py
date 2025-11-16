@@ -69,9 +69,9 @@ def recommend_ocr_routing(
 
     # Determine if layout is simple (single or multi-column, not complex)
     # Handle edge case: empty page_layout_summary is NOT simple
+    # UNKNOWN layout is treated conservatively as complex for routing safety
     is_simple_layout = len(page_layout_summary) > 0 and all(
-        page.layout_type
-        in (LayoutType.SINGLE_COLUMN, LayoutType.MULTI_COLUMN, LayoutType.UNKNOWN)
+        page.layout_type in (LayoutType.SINGLE_COLUMN, LayoutType.MULTI_COLUMN)
         for page in page_layout_summary
     )
 

@@ -3,7 +3,7 @@
 # Project: image-detection-478105
 # Bucket: gs://image_detection_b
 
-set -e
+set -euo pipefail
 
 # Configuration
 PROJECT_ID="image-detection-478105"

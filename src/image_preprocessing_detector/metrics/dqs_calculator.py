@@ -396,7 +396,7 @@ def calculate_dqs(
         ...     blur_scores=[0.8, 0.7],
         ...     contrast_scores=[0.9, 0.85],
         ...     noise_scores=[0.75, 0.8],
-        ...     skew_angles=[1.0, 0.5],
+        ...     _skew_angles=[1.0, 0.5],
         ...     layout_complexities=[0.3, 0.4],
         ... )
         >>> assert 0.0 <= dqs.degradation_score <= 1.0

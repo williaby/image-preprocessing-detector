@@ -6,7 +6,7 @@
 import os
 from typing import Literal
 
-from image_preprocessing_detector.utils.logging import get_logger
+from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
 
