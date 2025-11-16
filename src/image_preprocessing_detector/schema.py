@@ -64,10 +64,11 @@ class OCRRoutingStrategy(str, Enum):
 class LayoutType(str, Enum):
     """Coarse page layout classification (Phase 6 - Layout-Lite)."""
 
-    SINGLE = "single"
-    MULTI = "multi"
+    SINGLE_COLUMN = "single_column"
+    MULTI_COLUMN = "multi_column"
     THREE_COLUMN = "three_column"
     COMPLEX = "complex"
+    UNKNOWN = "unknown"
 
 
 class ActionType(str, Enum):
