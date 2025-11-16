@@ -19,6 +19,10 @@ from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
 
+# Figure detection constants
+MORPH_KERNEL_SIZE = (3, 3)  # Morphological gradient kernel for text stroke detection
+GRADIENT_THRESHOLD = 30  # Gradient intensity threshold for text pixel detection
+
 
 @dataclass
 class ColumnDetectionResult:
@@ -207,10 +211,10 @@ def detect_column_count(
 
     # Classify column type
     if num_columns <= 1:
-        column_type = "single"
+        column_type = "single_column"
         confidence = 0.9
     elif num_columns == 2:
-        column_type = "multi"
+        column_type = "multi_column"
         confidence = 0.85
     elif num_columns == 3:
         column_type = "three_column"
@@ -430,10 +434,10 @@ def detect_figures(
         # Calculate text density in this region
         # Use morphological gradient to detect text strokes
         region = gray[y : y + h, x : x + w]
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, MORPH_KERNEL_SIZE)
         gradient = cv2.morphologyEx(region, cv2.MORPH_GRADIENT, kernel)
 
-        text_pixels = np.count_nonzero(gradient > 30)
+        text_pixels = np.count_nonzero(gradient > GRADIENT_THRESHOLD)
         region_pixels = region.size
         text_density = text_pixels / region_pixels if region_pixels > 0 else 1.0
 
