@@ -15,7 +15,7 @@ from image_preprocessing_detector.detection.iqa_classical import (
     SkewDetectionResult,
 )
 from image_preprocessing_detector.schema import (
-    DocumentQualityScore,
+    DQSMetadata,
     LayoutType,
     PageLayoutSummary,
 )
@@ -240,8 +240,8 @@ def calculate_structural_complexity_score(
 
 
 def aggregate_dqs(
-    page_dqs_list: list[DocumentQualityScore],
-) -> DocumentQualityScore:
+    page_dqs_list: list[DQSMetadata],
+) -> DQSMetadata:
     """
     Aggregate page-level DQS scores to document-level.
 
@@ -253,25 +253,19 @@ def aggregate_dqs(
     and be aware of the typical quality level across all pages.
 
     Args:
-        page_dqs_list: List of DocumentQualityScore instances, one per page
+        page_dqs_list: List of DQSMetadata instances, one per page
 
     Returns:
-        Aggregated DocumentQualityScore for the entire document
+        Aggregated DQSMetadata for the entire document
 
     Raises:
         ValueError: If page_dqs_list is empty
 
     Example:
         >>> page_scores = [
-        ...     DocumentQualityScore(
-        ...         degradation_score=0.8, structural_complexity_score=0.3
-        ...     ),
-        ...     DocumentQualityScore(
-        ...         degradation_score=0.7, structural_complexity_score=0.6
-        ...     ),
-        ...     DocumentQualityScore(
-        ...         degradation_score=0.9, structural_complexity_score=0.4
-        ...     ),
+        ...     DQSMetadata(degradation_score=0.8, structural_complexity_score=0.3),
+        ...     DQSMetadata(degradation_score=0.7, structural_complexity_score=0.6),
+        ...     DQSMetadata(degradation_score=0.9, structural_complexity_score=0.4),
         ... ]
         >>> doc_score = aggregate_dqs(page_scores)
         >>> assert doc_score.degradation_score == 0.8  # median
@@ -301,7 +295,7 @@ def aggregate_dqs(
         complexity_median=float(np.median(complexity_scores)),
     )
 
-    return DocumentQualityScore(
+    return DQSMetadata(
         degradation_score=aggregated_degradation,
         structural_complexity_score=aggregated_complexity,
     )
