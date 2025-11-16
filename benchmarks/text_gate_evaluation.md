@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 Byron Williams
+
+SPDX-License-Identifier: CC-BY-4.0
+-->
+
 # Text Detection Gate vs YOLOv10-doc Benchmark
 
 **Purpose:** Determine if implementing a text detection gate (ensemble heuristics) provides meaningful performance benefits over always running YOLOv10-doc layout detection.
