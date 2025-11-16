@@ -1,4 +1,13 @@
-# OCR Team Handoff: Semantic Document Features
+---
+schema_type: common
+title: "OCR Team Handoff: Semantic Document Features"
+tags:
+  - documentation
+  - integration
+status: published
+owner: docs-team
+purpose: "Handoff documentation for OCR team: semantic document features delegation."
+---
 
 > **Handoff Date:** 2025-01-14
 > **From:** Image Preprocessing Detector Team
