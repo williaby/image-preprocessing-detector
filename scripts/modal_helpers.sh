@@ -6,7 +6,8 @@
 # Modal helper functions for image-detection project
 # Simplifies common Modal operations
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
 # Colors for output
 RED='\033[0;31m'
