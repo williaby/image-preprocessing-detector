@@ -221,7 +221,7 @@ class DocumentProcessor:
             blur_scores=blur_scores,
             contrast_scores=contrast_scores,
             noise_scores=noise_scores,
-            skew_angles=skew_angles,
+            _skew_angles=skew_angles,
             layout_complexities=layout_complexities,
         )
 
