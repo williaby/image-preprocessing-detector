@@ -1,0 +1,6 @@
+outs:
+- md5: 05bdef926019e535e95c3b758fb59bde.dir
+  size: 1842857150
+  nfiles: 25
+  hash: md5
+  path: ohr-bench
