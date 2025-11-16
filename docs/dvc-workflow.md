@@ -3,7 +3,7 @@ schema_type: common
 title: "DVC Workflow Guide"
 tags:
   - datasets
-  - versioning
+  - infrastructure
 status: published
 owner: docs-team
 purpose: DVC workflow guide for dataset versioning and management.
@@ -32,9 +32,57 @@ The following datasets are tracked with DVC:
 - **Purpose**: Phase 2 IQA training dataset with weak supervision labels
 
 ### Benchmarks
+
+#### OHR-Bench
+
 - **Location**: `data/benchmarks/ohr-bench/`
 - **DVC File**: `data/benchmarks/ohr-bench.dvc`
-- **Purpose**: OHR-Bench benchmark dataset for IQA evaluation
+- **Size**: ~1.8 GB
+- **Purpose**: RAG-specific OCR benchmark for IQA evaluation
+
+#### OmniDocBench (Phase 3)
+
+- **Location**: `data/benchmarks/omnidocbench/`
+- **DVC File**: `data/benchmarks/omnidocbench.dvc`
+- **Size**: ~1.2 GB
+- **Purpose**: Comprehensive document understanding evaluation
+
+#### TableBank (Phase 2)
+
+- **Location**: `data/benchmarks/tablebank/`
+- **DVC File**: `data/benchmarks/tablebank.dvc`
+- **Size**: ~400 MB to 27 GB (depends on version)
+- **Purpose**: Table detection benchmark
+
+#### PubTabNet (Phase 2)
+
+- **Location**: `data/benchmarks/pubtabnet/`
+- **DVC File**: `data/benchmarks/pubtabnet.dvc`
+- **Size**: ~500 MB to 16 GB (depends on version)
+- **Purpose**: Table structure recognition benchmark
+
+#### FinTabNet (Phase 2)
+
+- **Location**: `data/benchmarks/fintabnet/`
+- **DVC File**: `data/benchmarks/fintabnet.dvc`
+- **Size**: ~3 GB to 11 GB (depends on version)
+- **Purpose**: Financial table detection and structure
+
+#### WiLI-2018 (Phase 2)
+
+- **Location**: `data/benchmarks/wili_2018/`
+- **DVC File**: `data/benchmarks/wili_2018.dvc`
+- **Size**: ~800 MB
+- **Purpose**: Language identification (235 languages)
+
+#### ICDAR MLT 2019 (Phase 2)
+
+- **Location**: `data/benchmarks/icdar_mlt_2019/`
+- **DVC File**: `data/benchmarks/icdar_mlt_2019.dvc`
+- **Size**: ~3 GB
+- **Purpose**: Multi-lingual text detection
+
+**Note**: Synthetic IQA datasets (auto-generated) and DocLayNet (symlinked) are NOT tracked in DVC.
 
 ## Common Commands
 

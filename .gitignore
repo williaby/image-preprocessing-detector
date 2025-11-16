@@ -60,6 +60,7 @@ dmypy.json
 # Jupyter
 .ipynb_checkpoints
 *.ipynb
+!notebooks/*.ipynb
 
 # Data (large files stored in GCS)
 # Allow documentation and test fixtures
