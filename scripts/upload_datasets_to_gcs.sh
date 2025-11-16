@@ -6,7 +6,8 @@
 #   ./scripts/upload_datasets_to_gcs.sh --dry-run     # Show what would be uploaded
 #   ./scripts/upload_datasets_to_gcs.sh --dataset signatr6k  # Upload specific dataset
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
 # Colors for output
 GREEN='\033[0;32m'
