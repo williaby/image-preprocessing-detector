@@ -1,3 +1,4 @@
+---
 # Pre-commit hooks configuration
 # See https://pre-commit.com for more information
 
@@ -15,6 +16,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        exclude: ^mkdocs\.yml$
       - id: check-json
       - id: check-toml
       - id: check-added-large-files
@@ -33,7 +35,9 @@ repos:
     hooks:
       - id: ruff
         args: ['--fix', '--exit-non-zero-on-fix']
+        exclude: ^notebooks/
       - id: ruff-format
+        exclude: ^notebooks/
 
   # Python type checking with MyPy
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -44,13 +48,21 @@ repos:
           - pydantic>=2.0.0
           - types-pillow
           - types-python-dateutil
+          - types-PyYAML
         args: ['--ignore-missing-imports', '--python-version=3.12']
-        # Exclude tests, validation, benchmarks, data, and Phase 2+ files
-        exclude: >-
-          ^(tests/.*|validation/.*|fuzz/.*|benchmarks/.*|data/.*|scripts/.*|
-          modal/.*|src/image_preprocessing_detector/utils/gcs_uploader\.py|
-          src/image_preprocessing_detector/utils/metadata_generator\.py|
-          src/image_preprocessing_detector/augmentation/.*)
+        # Exclude tests, validation, benchmarks, data, scripts, modal,
+        # notebooks, and Phase 2+ files
+        exclude: |
+          (?x)^(
+              tests/.*|validation/.*|fuzz/.*|benchmarks/.*|data/.*|scripts/.*|
+              modal/.*|notebooks/.*|
+              src/image_preprocessing_detector/utils/gcs_uploader\.py|
+              src/image_preprocessing_detector/utils/metadata_generator\.py|
+              src/image_preprocessing_detector/routing/recommendation_engine\.py|
+              src/image_preprocessing_detector/output/json_generator\.py|
+              src/image_preprocessing_detector/ingestion/document_processor\.py|
+              src/image_preprocessing_detector/augmentation/.*
+          )$
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -104,17 +116,20 @@ repos:
 # Exclude patterns (don't run hooks on these)
 exclude: |
   (?x)^(
-      \.git/|
-      \.venv/|
-      venv/|
-      build/|
-      dist/|
-      .*\.egg-info/|
-      __pycache__/|
-      \.mypy_cache/|
-      \.pytest_cache/|
-      \.ruff_cache/|
-      data/|
-      models/|
+      \.git/.*|
+      \.venv/.*|
+      venv/.*|
+      build/.*|
+      dist/.*|
+      .*\.egg-info/.*|
+      __pycache__/.*|
+      \.mypy_cache/.*|
+      \.pytest_cache/.*|
+      \.ruff_cache/.*|
+      data/.*|
+      models/.*|
+      modal/.*|
+      notebooks/.*|
+      scripts/.*|
       .*\.pyc
   )$

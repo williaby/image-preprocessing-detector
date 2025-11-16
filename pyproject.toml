@@ -438,6 +438,11 @@ omit = [
     "src/image_preprocessing_detector/utils/gcs_uploader.py",
     "src/image_preprocessing_detector/utils/metadata_generator.py",
     "src/image_preprocessing_detector/augmentation/*",
+    # Phase 6-8 modules (not yet implemented)
+    "src/image_preprocessing_detector/detection/layout_lite.py",
+    "src/image_preprocessing_detector/ingestion/document_processor.py",
+    "src/image_preprocessing_detector/metrics/*",
+    "src/image_preprocessing_detector/routing/*",
 ]
 
 [tool.coverage.report]

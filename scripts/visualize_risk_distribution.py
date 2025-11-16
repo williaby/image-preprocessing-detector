@@ -196,7 +196,7 @@ def plot_risk_distribution(
         axes[1].set_title(
             "Pre-OCR Risk vs. OCR Accuracy", fontsize=14, fontweight="bold"
         )
-        axes[1].grid(True, alpha=0.3)
+        axes[1].grid(visible=True, alpha=0.3)
 
         # Add correlation coefficient
         if len(risk_scores) == len(ocr_accuracy):

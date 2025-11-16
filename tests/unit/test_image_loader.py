@@ -3,6 +3,7 @@ Unit tests for direct image loading.
 """
 
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
@@ -352,3 +353,94 @@ class TestLoadImageConvenience:
         assert img.shape == (600, 800, 3)
         assert metadata.width == 800
         assert metadata.height == 600
+
+
+class TestImageLoaderRealOperations:
+    """Test ImageLoader with real image operations (minimal mocking)."""
+
+    def test_load_rgba_image_real_conversion(self) -> None:
+        """Test RGBA to BGR conversion with real cv2 operations."""
+        from PIL import Image
+
+        # Create a real RGBA image in memory
+        rgba_img = Image.new("RGBA", (100, 100), color=(255, 0, 0, 128))
+
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            rgba_img.save(tmp.name)
+            tmp_path = tmp.name
+
+        try:
+            loader = ImageLoader()
+            img, metadata = loader.load(tmp_path)
+
+            # Image should be loaded as BGR (3 channels)
+            assert img.shape == (100, 100, 3)
+            assert img.ndim == 3
+            assert metadata.color_mode == "RGBA"
+            assert metadata.format == "PNG"
+        finally:
+            Path(tmp_path).unlink()
+
+    def test_load_image_with_exif_dpi(self) -> None:
+        """Test loading image with EXIF DPI tags."""
+        from PIL import Image
+
+        # Create an image with EXIF DPI
+        img = Image.new("RGB", (100, 100), color=(255, 0, 0))
+
+        # Create EXIF data with DPI tags (282=XResolution, 283=YResolution)
+        from PIL import Image as PILImage
+
+        exif = PILImage.Exif()
+        exif[282] = 300.0  # XResolution
+        exif[283] = 300.0  # YResolution
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            img.save(tmp.name, exif=exif)
+            tmp_path = tmp.name
+
+        try:
+            loader = ImageLoader()
+            _loaded_img, metadata = loader.load(tmp_path)
+
+            # Should extract DPI from EXIF
+            assert metadata.dpi_x == 300.0
+            assert metadata.dpi_y == 300.0
+            assert metadata.has_exif is True
+        finally:
+            Path(tmp_path).unlink()
+
+    def test_load_image_with_dpi_as_single_value(self) -> None:
+        """Test loading image with DPI as single int/float value."""
+        from PIL import Image
+
+        # Create an image
+        img = Image.new("RGB", (100, 100), color=(0, 255, 0))
+
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            # Save with DPI as single value (will be stored in info dict)
+            img.save(tmp.name, dpi=(150, 150))
+            tmp_path = tmp.name
+
+        try:
+            # Now mock the info dict to return a single int instead of tuple
+            from unittest.mock import patch
+
+            loader = ImageLoader()
+
+            with patch("PIL.Image.open") as mock_open:
+                # Create a mock PIL image with DPI as single int
+                mock_img = Image.new("RGB", (100, 100))
+                mock_img.info = {"dpi": 150}  # Single value, not tuple
+
+                # Use context manager properly
+                mock_open.return_value.__enter__.return_value = mock_img
+                mock_open.return_value.__exit__.return_value = None
+
+                _loaded_img, metadata = loader.load(tmp_path)
+
+                # Should handle DPI as single value
+                assert metadata.dpi_x == 150.0
+                assert metadata.dpi_y == 150.0
+        finally:
+            Path(tmp_path).unlink()

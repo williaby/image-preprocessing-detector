@@ -280,7 +280,7 @@ class TestPhase2HybridPipeline:
             # Insert image into PDF
             page.insert_image(
                 fitz.Rect(100, 200, 300, 400),
-                filename=str(img_path),  # fmt: skip
+                filename=str(img_path),
             )
 
             doc.save(str(pdf_path))
