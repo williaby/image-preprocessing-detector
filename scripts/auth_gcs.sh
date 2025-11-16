@@ -17,7 +17,10 @@ NC='\033[0m' # No Color
 # Configuration
 PROJECT_ID="image-detection-478105"
 ENV_FILE="${ENV_FILE:-.env}"
-TEMP_SA_FILE="${TEMP_SA_FILE:-/tmp/gcs-sa-${USER}.json}"
+
+# Use mktemp for secure temporary file creation with restricted permissions
+TEMP_SA_FILE=$(mktemp "${TMPDIR:-/tmp}/gcs-sa.XXXXXX.json")
+chmod 600 "$TEMP_SA_FILE"  # Restrict to owner only
 
 # Helper functions
 log_info() {
