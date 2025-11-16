@@ -11,7 +11,6 @@ This module coordinates the complete document analysis workflow:
 This is the main entry point for processing documents end-to-end.
 """
 
-from datetime import datetime
 from pathlib import Path
 
 from image_preprocessing_detector.metrics.dqs_calculator import (
@@ -27,6 +26,7 @@ from image_preprocessing_detector.schema import (
     PDFType,
     ProcessingVersion,
 )
+from image_preprocessing_detector.utils import utc_now
 
 
 class DocumentProcessor:
@@ -77,9 +77,7 @@ class DocumentProcessor:
 
         # Generate document ID if not provided
         if document_id is None:
-            document_id = (
-                f"doc_{file_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"  # noqa: DTZ005
-            )
+            document_id = f"doc_{file_path.stem}_{utc_now().strftime('%Y%m%d_%H%M%S')}"
 
         # Determine MIME type
         source_mime = self._get_mime_type(file_path)
@@ -117,7 +115,7 @@ class DocumentProcessor:
                 "contrast_threshold": 0.3,
                 "skew_threshold": 2.0,
             },
-            timestamp=datetime.now(),  # noqa: DTZ005
+            timestamp=utc_now(),
         )
 
         # Assemble complete metadata
