@@ -4,10 +4,10 @@
 Identifies low-confidence weak supervision predictions and samples images for manual validation.
 
 Usage:
-    python scripts/sample_ambiguous_cases.py \\
-        --input-dir data/weak_supervision_labels \\
-        --output-dir data/annotation_queue \\
-        --num-samples 2000 \\
+    python scripts/sample_ambiguous_cases.py \
+        --input-dir data/weak_supervision_labels \
+        --output-dir data/annotation_queue \
+        --num-samples 2000 \
         --confidence-threshold 0.85
 
 Sprint 3.3.2: Sample Ambiguous Cases (Milestone 10.3)

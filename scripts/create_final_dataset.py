@@ -4,12 +4,12 @@
 Merges weak supervision labels with manual corrections and creates train/val/test splits.
 
 Usage:
-    python scripts/create_final_dataset.py \\
-        --weak-supervision-dir data/weak_supervision_labels \\
-        --corrected-labels-dir data/corrected_labels \\
-        --output-dir data/final_training_dataset \\
-        --train-ratio 0.8 \\
-        --val-ratio 0.1 \\
+    python scripts/create_final_dataset.py \
+        --weak-supervision-dir data/weak_supervision_labels \
+        --corrected-labels-dir data/corrected_labels \
+        --output-dir data/final_training_dataset \
+        --train-ratio 0.8 \
+        --val-ratio 0.1 \
         --test-ratio 0.1
 
 Sprint 3.3.5: Create Final Training Dataset (Milestone 10.3)
