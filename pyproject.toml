@@ -247,6 +247,7 @@ exclude = [
     "build",
     "validation",
     "tmp_cleanup",
+    "notebooks",
 ]
 
 # Enable Ruff formatter (Black-compatible)

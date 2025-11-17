@@ -235,7 +235,7 @@ class IQADataset(Dataset):
             for issue, value in zip(QUALITY_ISSUES, labels, strict=False):
                 label_counts[issue] += value
 
-        statistics = {
+        return {
             "total_samples": total_samples,
             "label_counts": label_counts,
             "label_percentages": {
@@ -244,8 +244,6 @@ class IQADataset(Dataset):
             },
             "average_issues_per_image": sum(label_counts.values()) / total_samples,
         }
-
-        return statistics
 
 
 def create_data_loaders(
@@ -311,11 +309,11 @@ def create_data_loaders(
 
 
 if __name__ == "__main__":
-    # Example usage
+    # Example usage - CLI testing output
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python data/dataset.py <data_dir>")
+        print("Usage: python data/dataset.py <data_dir>")  # noqa: T201
         sys.exit(1)
 
     data_dir = sys.argv[1]
@@ -325,23 +323,23 @@ if __name__ == "__main__":
     val_dataset = IQADataset(data_dir, split="val")
     test_dataset = IQADataset(data_dir, split="test")
 
-    print("\nDataset Statistics:")
-    print(f"Train: {len(train_dataset)} samples")
-    print(f"Val: {len(val_dataset)} samples")
-    print(f"Test: {len(test_dataset)} samples")
+    print("\nDataset Statistics:")  # noqa: T201
+    print(f"Train: {len(train_dataset)} samples")  # noqa: T201
+    print(f"Val: {len(val_dataset)} samples")  # noqa: T201
+    print(f"Test: {len(test_dataset)} samples")  # noqa: T201
 
     # Print label distribution
-    print("\nTrain Label Distribution:")
+    print("\nTrain Label Distribution:")  # noqa: T201
     stats = train_dataset.get_label_statistics()
     for issue, percentage in stats["label_percentages"].items():
         count = stats["label_counts"][issue]
-        print(f"  {issue}: {count} ({percentage:.1f}%)")
+        print(f"  {issue}: {count} ({percentage:.1f}%)")  # noqa: T201
 
-    print(f"\nAverage issues per image: {stats['average_issues_per_image']:.2f}")
+    print(f"\nAverage issues per image: {stats['average_issues_per_image']:.2f}")  # noqa: T201
 
     # Test loading a sample
-    print("\nTesting data loading...")
+    print("\nTesting data loading...")  # noqa: T201
     image, labels = train_dataset[0]
-    print(f"Image shape: {image.shape}")
-    print(f"Labels shape: {labels.shape}")
-    print(f"Labels: {labels}")
+    print(f"Image shape: {image.shape}")  # noqa: T201
+    print(f"Labels shape: {labels.shape}")  # noqa: T201
+    print(f"Labels: {labels}")  # noqa: T201
