@@ -292,8 +292,12 @@ class TeacherTrainer:
         val_conf_loss = 0.0
         num_batches = 0
 
-        # Get issue types from model (type-safe access)
-        issue_types = getattr(self.model, "ISSUE_TYPES", [])
+        # Get issue types from model (type-safe access with validation)
+        if not hasattr(self.model, "ISSUE_TYPES"):
+            raise AttributeError(
+                f"Model of type {type(self.model).__name__} does not have required attribute 'ISSUE_TYPES'."
+            )
+        issue_types = cast(list[str], self.model.ISSUE_TYPES)
 
         # Per-head metrics
         per_head_metrics: dict[str, dict[str, float]] = {
