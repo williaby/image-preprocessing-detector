@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: image-preprocessing-detector
+Upstream-Contact: Byron Williams <byronawilliams@gmail.com>
+Source: https://github.com/williaby/image-preprocessing-detector
+
+# DVC configuration files
+Files: .dvc/* .dvcignore
+Copyright: 2025 Byron Williams
+License: Apache-2.0

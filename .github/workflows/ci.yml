@@ -99,13 +99,14 @@ jobs:
       - name: Install dependencies with image processing libraries
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          # Install main dependencies including opencv, numpy, pymupdf
-          poetry install --sync --no-interaction --with dev
+          # Install main dependencies including opencv, numpy, pymupdf, pytorch
+          poetry install --sync --no-interaction --with dev,ml
 
           # Verify image processing dependencies
           poetry run python -c "import cv2; print(f'OpenCV version: {cv2.__version__}')"
           poetry run python -c "import numpy; print(f'NumPy version: {numpy.__version__}')"
           poetry run python -c "import pymupdf; print(f'PyMuPDF version: {pymupdf.__version__}')"
+          poetry run python -c "import torch; print(f'PyTorch version: {torch.__version__}')"
 
       - name: Image processing dependency validation
         run: |
@@ -190,7 +191,7 @@ jobs:
       - name: Install dependencies
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          poetry install --sync --no-interaction --with dev
+          poetry install --sync --no-interaction --with dev,ml
 
       - name: Install system dependencies for image processing
         run: |
@@ -268,7 +269,7 @@ jobs:
       - name: Install dependencies
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          poetry install --sync --no-interaction --with dev
+          poetry install --sync --no-interaction --with dev,ml
 
       - name: Type checking with MyPy
         run: |
