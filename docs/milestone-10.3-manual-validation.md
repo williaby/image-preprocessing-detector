@@ -1,4 +1,16 @@
-# Milestone 10.3: Manual Validation & Quality Control
+---
+schema_type: planning
+title: "Milestone 10.3: Manual Validation & Quality Control"
+tags:
+  - phase_3
+  - planning
+  - validation
+  - annotation
+  - quality_assurance
+status: published
+owner: ml-team
+purpose: Manual validation pipeline implementation for Phase 3 layout detection training data preparation.
+---
 
 **Phase**: Phase 3 - Layout Detection Training Data Preparation
 **Duration**: 5 sprints (15 hours total, including 8 hours manual annotation)

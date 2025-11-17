@@ -176,6 +176,21 @@ jobs:
           license-check: true
           comment-summary-in-pr: always
           deny-licenses: GPL-2.0, GPL-3.0
+          # Allow DVC dev dependencies (not distributed with MIT-licensed package)
+          # - grandalf: GPL-3.0-or-later (DVC pipeline DAG visualization)
+          # - text-unidecode: Dual-licensed Artistic-1.0-Perl OR GPL-1.0/2.0
+          # - billiard: No license detected (multiprocessing, likely BSD/MIT)
+          # - dulwich: Apache-2.0 or GPL-2.0+ (Git impl, Apache preferred)
+          # - pygit2: GPL-2.0 with linking exception (libgit2 wrapper)
+          # - zc-lockfile: No license detected (Zope component, likely ZPL)
+          # See docs/security/LICENSE-EXCEPTIONS.md for detailed justification
+          allow-dependencies-licenses: >-
+            pkg:pypi/grandalf,
+            pkg:pypi/text-unidecode,
+            pkg:pypi/billiard,
+            pkg:pypi/dulwich,
+            pkg:pypi/pygit2,
+            pkg:pypi/zc-lockfile
 
   # Comprehensive security tooling
   security-scanning:
