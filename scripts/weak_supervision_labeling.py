@@ -13,19 +13,19 @@ Generates initial labels using image quality metrics:
 
 Usage:
     # Label all images in a directory
-    python scripts/weak_supervision_labeling.py \\
-        --input data/training/iqa_phase2/images \\
+    python scripts/weak_supervision_labeling.py \
+        --input data/training/iqa_phase2/images \
         --output data/training/iqa_phase2/labels
 
     # Label with specific metrics
-    python scripts/weak_supervision_labeling.py \\
-        --input data/training/iqa_phase2/images \\
-        --output data/training/iqa_phase2/labels \\
+    python scripts/weak_supervision_labeling.py \
+        --input data/training/iqa_phase2/images \
+        --output data/training/iqa_phase2/labels \
         --metrics brisque laplacian histogram
 
     # Dry run to see what would be labeled
-    python scripts/weak_supervision_labeling.py \\
-        --input data/training/iqa_phase2/images \\
+    python scripts/weak_supervision_labeling.py \
+        --input data/training/iqa_phase2/images \
         --dry-run
 """
 
@@ -37,7 +37,6 @@ from typing import Any
 
 import cv2
 import numpy as np
-from PIL import Image
 from tqdm import tqdm
 
 # Add src to path

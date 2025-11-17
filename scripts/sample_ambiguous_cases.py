@@ -28,6 +28,16 @@ from rich.table import Table
 
 console = Console()
 
+# Ambiguity detection thresholds (aligned with weak_supervision.py thresholds)
+# These define borderline ranges where predictions are most uncertain
+LAPLACIAN_BLUR_MIN = 80  # Lower bound for borderline blur (below = clearly blurry)
+LAPLACIAN_BLUR_MAX = 150  # Upper bound for borderline blur (above = clearly sharp)
+RMS_CONTRAST_MIN = 0.25  # Lower bound for borderline contrast
+RMS_CONTRAST_MAX = 0.35  # Upper bound for borderline contrast
+SKEW_ANGLE_MIN = 1.5  # Lower bound for borderline skew (degrees)
+SKEW_ANGLE_MAX = 3.0  # Upper bound for borderline skew (degrees)
+CONFIDENCE_VARIANCE_THRESHOLD = 0.15  # Threshold for mixed confidence detection
+
 
 def load_weak_supervision_labels(labels_path: Path) -> dict[str, Any]:
     """Load weak supervision labels from JSON file.
@@ -61,7 +71,6 @@ def calculate_uncertainty(labels_data: dict[str, Any]) -> float:
     # Extract confidence scores
     confidences = [label.get("confidence", 0.0) for label in labels.values()]
 
-    # Uncertainty = 1 - mean(confidence)
     # Images with low average confidence are uncertain
     mean_confidence = np.mean(confidences)
     uncertainty = 1.0 - mean_confidence
@@ -87,24 +96,24 @@ def calculate_edge_case_score(labels_data: dict[str, Any]) -> float:
 
     # Check if blur is borderline (Laplacian variance near threshold)
     laplacian_var = quality_scores.get("laplacian_variance", 0)
-    if 80 < laplacian_var < 150:  # Between blurry and sharp thresholds
+    if LAPLACIAN_BLUR_MIN < laplacian_var < LAPLACIAN_BLUR_MAX:
         edge_scores.append(1.0)
 
     # Check if contrast is borderline (RMS contrast near threshold)
     rms_contrast = quality_scores.get("rms_contrast", 0)
-    if 0.25 < rms_contrast < 0.35:  # Near low contrast threshold
+    if RMS_CONTRAST_MIN < rms_contrast < RMS_CONTRAST_MAX:
         edge_scores.append(1.0)
 
     # Check if skew is borderline (angle near threshold)
     skew_angle = quality_scores.get("skew_angle_degrees", 0)
-    if 1.5 < skew_angle < 3.0:  # Near acceptable threshold
+    if SKEW_ANGLE_MIN < skew_angle < SKEW_ANGLE_MAX:
         edge_scores.append(1.0)
 
     # Check for mixed confidence (some high, some low)
     confidences = [label.get("confidence", 0.0) for label in labels.values()]
     if confidences:
         confidence_std = np.std(confidences)
-        if confidence_std > 0.15:  # High variance in confidences
+        if confidence_std > CONFIDENCE_VARIANCE_THRESHOLD:
             edge_scores.append(confidence_std)
 
     if not edge_scores:

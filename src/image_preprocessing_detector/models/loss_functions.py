@@ -12,6 +12,7 @@ both a binary classification (issue present/absent) and a confidence score.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import torch
@@ -263,7 +264,7 @@ class WeightedMSELoss(nn.Module):
 
     def __init__(
         self,
-        weight_fn: callable | None = None,  # type: ignore[valid-type]
+        weight_fn: Callable[[torch.Tensor], torch.Tensor] | None = None,
         reduction: str = "mean",
     ) -> None:
         super().__init__()

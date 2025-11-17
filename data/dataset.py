@@ -127,8 +127,8 @@ class IQADataset(Dataset):
         image = cv2.imread(str(image_path))
 
         if image is None:
-            msg = f"Failed to load image: {image_path}"
-            raise RuntimeError(msg)
+            msg = f"Failed to load image at index {idx}: {image_path}"
+            raise IndexError(msg)
 
         # Convert BGR to RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -145,7 +145,7 @@ class IQADataset(Dataset):
         if self.transform is not None:
             # Handle albumentations transforms
             if (
-                hasattr(self.transform, "__call__")
+                callable(self.transform)
                 and "image" in self.transform.__code__.co_varnames
             ):
                 transformed = self.transform(image=image)

@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -459,7 +460,7 @@ def main() -> None:
 
     # Save metadata
     metadata = {
-        "creation_timestamp": "2025-11-16",
+        "creation_timestamp": datetime.now().isoformat(),
         "weak_supervision_dir": str(args.weak_supervision_dir),
         "corrected_labels_dir": str(args.corrected_labels_dir),
         "total_samples": len(merged_labels),

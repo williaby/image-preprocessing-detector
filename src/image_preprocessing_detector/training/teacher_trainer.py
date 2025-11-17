@@ -23,7 +23,7 @@ Usage:
 import logging
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import torch
 import torch.nn as nn
@@ -96,7 +96,7 @@ class TeacherTrainer:
         lr = config.get("learning_rate", 1e-3)
         weight_decay = config.get("weight_decay", 0.01)
 
-        self.optimizer: optim.AdamW | optim.Adam
+        self.optimizer: optim.Optimizer
         if optimizer_name == "adamw":
             self.optimizer = optim.AdamW(
                 self.model.parameters(), lr=lr, weight_decay=weight_decay
@@ -177,8 +177,12 @@ class TeacherTrainer:
 
         start_time = time.time()
 
-        # Get issue types from model (type-safe access)
-        issue_types = getattr(self.model, "ISSUE_TYPES", [])
+        # Get issue types from model (type-safe access with validation)
+        if not hasattr(self.model, "ISSUE_TYPES"):
+            raise AttributeError(
+                f"Model of type {type(self.model).__name__} does not have required attribute 'ISSUE_TYPES'."
+            )
+        issue_types = cast(list[str], self.model.ISSUE_TYPES)
 
         for batch_idx, batch in enumerate(train_loader):
             # Move data to device

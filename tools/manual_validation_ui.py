@@ -8,7 +8,7 @@ Usage:
 
 Features:
     - Display images with weak supervision predictions
-    - Correct binary labels for 6 quality issues
+    - Correct binary labels for 5 quality issues (blur, noise, skew, illumination, artifacts)
     - View confidence scores and quality metrics
     - Track annotation progress
     - Export corrections to JSON
@@ -26,24 +26,22 @@ import cv2
 import streamlit as st
 from PIL import Image
 
-# Quality issue types (from data/weak_supervision.py)
+# Quality issue types (aligned with ResNetTeacher.ISSUE_TYPES)
 QUALITY_ISSUES = [
-    "noise",
     "blur",
+    "noise",
     "skew",
-    "perspective",
-    "low_contrast",
-    "orientation",
+    "illumination",
+    "artifacts",
 ]
 
 # Issue descriptions for UI
 ISSUE_DESCRIPTIONS = {
-    "noise": "Image contains visible noise or grain",
     "blur": "Image is blurry or out of focus",
+    "noise": "Image contains visible noise or grain",
     "skew": "Image is skewed or rotated from horizontal",
-    "perspective": "Image has perspective distortion",
-    "low_contrast": "Image has low contrast or washed out appearance",
-    "orientation": "Image needs rotation (90/180/270°)",
+    "illumination": "Image has poor lighting or low contrast",
+    "artifacts": "Image contains compression artifacts or other distortions",
 }
 
 
