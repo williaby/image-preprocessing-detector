@@ -1,0 +1,6 @@
+outs:
+- md5: 24ce3e14ffc1c57558260dbf9d98fefc.dir
+  size: 1248434469
+  nfiles: 11
+  hash: md5
+  path: omnidocbench

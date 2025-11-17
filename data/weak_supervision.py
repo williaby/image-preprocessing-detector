@@ -107,13 +107,12 @@ class ImageQualityLabels:
 class WeakSupervisionLabeler:
     """Weak supervision labeling system using image quality metrics.
 
-    Generates labels for 6 quality issue types:
-    1. Noise
-    2. Blur
+    Generates labels for 5 quality issue types (aligned with ResNetTeacher model):
+    1. Blur
+    2. Noise
     3. Skew
-    4. Perspective
-    5. Low Contrast
-    6. Orientation
+    4. Illumination (poor lighting/low contrast)
+    5. Artifacts (compression artifacts, distortions)
 
     Example:
         >>> labeler = WeakSupervisionLabeler()
@@ -132,7 +131,11 @@ class WeakSupervisionLabeler:
             "laplacian": {"sharp": 200, "moderate": 100, "blurry": 50},
             "rms_contrast": {"good": 0.4, "low": 0.3, "very_low": 0.2},
             "skew_angle": {"acceptable": 2.0, "skewed": 5.0},  # degrees
-            "edge_straightness": {"straight": 5.0, "distorted": 10.0},  # degrees
+            "blockiness": {
+                "clean": 2.0,
+                "moderate": 5.0,
+                "severe": 10.0,
+            },  # JPEG artifacts
         }
 
     def label_image(
@@ -151,34 +154,25 @@ class WeakSupervisionLabeler:
         """
         labels = {}
 
-        # 1. Noise detection (using BRISQUE)
-        brisque_score = self._compute_brisque(image)
-        labels["noise"] = self._label_noise(brisque_score)
-
-        # 2. Blur detection (using Laplacian variance)
+        # 1. Blur detection (using Laplacian variance)
         laplacian_var = self._compute_laplacian_variance(image)
         labels["blur"] = self._label_blur(laplacian_var)
+
+        # 2. Noise detection (using BRISQUE)
+        brisque_score = self._compute_brisque(image)
+        labels["noise"] = self._label_noise(brisque_score)
 
         # 3. Skew detection (using Hough transform)
         skew_angle = self._detect_skew(image)
         labels["skew"] = self._label_skew(skew_angle)
 
-        # 4. Perspective distortion (using edge straightness)
-        edge_deviation = self._detect_perspective(image)
-        labels["perspective"] = self._label_perspective(edge_deviation)
-
-        # 5. Low contrast (using RMS contrast)
+        # 4. Illumination/low contrast (using RMS contrast)
         rms_contrast = self._compute_rms_contrast(image)
-        labels["low_contrast"] = self._label_low_contrast(rms_contrast)
+        labels["illumination"] = self._label_illumination(rms_contrast)
 
-        # 6. Orientation (heuristic: assume most images are upright in training)
-        # This will be labeled based on augmentation metadata, not image analysis
-        labels["orientation"] = QualityLabel(
-            value=0,
-            confidence=0.95,
-            source="heuristic_upright",
-            metadata={"note": "Labeled from augmentation metadata"},
-        )
+        # 5. Artifacts (using blockiness detection for JPEG artifacts)
+        blockiness = self._detect_blockiness(image)
+        labels["artifacts"] = self._label_artifacts(blockiness)
 
         # Compute quality scores
         quality_scores = {
@@ -187,7 +181,7 @@ class WeakSupervisionLabeler:
             "laplacian_variance": float(laplacian_var),
             "rms_contrast": float(rms_contrast),
             "skew_angle_degrees": float(skew_angle),
-            "edge_deviation_degrees": float(edge_deviation),
+            "blockiness": float(blockiness),
         }
 
         return ImageQualityLabels(
@@ -500,12 +494,80 @@ class WeakSupervisionLabeler:
             metadata={"edge_deviation_degrees": edge_deviation},
         )
 
-    def _label_low_contrast(self, rms_contrast: float) -> QualityLabel:
-        """Label low contrast based on RMS contrast."""
+    def _detect_blockiness(self, image: NDArray[np.uint8]) -> float:
+        """Detect blockiness artifacts (JPEG compression).
+
+        Measures discontinuities at 8x8 block boundaries, typical of JPEG compression.
+
+        Args:
+            image: Input image (H, W, C) in BGR format
+
+        Returns:
+            Blockiness score (higher = more artifacts)
+        """
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Compute horizontal and vertical differences at 8-pixel boundaries
+        h, w = gray.shape
+        blockiness_scores = []
+
+        # Horizontal blockiness (check vertical edges at x = 8, 16, 24, ...)
+        for x in range(8, w - 8, 8):
+            # Difference across block boundary
+            left = gray[:, x - 1].astype(np.float64)
+            right = gray[:, x].astype(np.float64)
+            diff = np.abs(left - right).mean()
+            blockiness_scores.append(diff)
+
+        # Vertical blockiness (check horizontal edges at y = 8, 16, 24, ...)
+        for y in range(8, h - 8, 8):
+            # Difference across block boundary
+            top = gray[y - 1, :].astype(np.float64)
+            bottom = gray[y, :].astype(np.float64)
+            diff = np.abs(top - bottom).mean()
+            blockiness_scores.append(diff)
+
+        if not blockiness_scores:
+            return 0.0
+
+        # Return mean blockiness across all boundaries
+        return float(np.mean(blockiness_scores))
+
+    def _label_artifacts(self, blockiness: float) -> QualityLabel:
+        """Label compression artifacts based on blockiness."""
+        thresholds = self.thresholds["blockiness"]
+
+        if blockiness < thresholds["clean"]:
+            # No significant artifacts
+            return QualityLabel(
+                value=0,
+                confidence=0.85,
+                source="blockiness",
+                metadata={"blockiness": blockiness},
+            )
+        if blockiness < thresholds["moderate"]:
+            # Moderate artifacts
+            return QualityLabel(
+                value=1,
+                confidence=0.70,
+                source="blockiness",
+                metadata={"blockiness": blockiness},
+            )
+        # Severe artifacts
+        return QualityLabel(
+            value=1,
+            confidence=0.90,
+            source="blockiness",
+            metadata={"blockiness": blockiness},
+        )
+
+    def _label_illumination(self, rms_contrast: float) -> QualityLabel:
+        """Label illumination issues (poor lighting/low contrast) based on RMS contrast."""
         thresholds = self.thresholds["rms_contrast"]
 
         if rms_contrast > thresholds["good"]:
-            # Good contrast
+            # Good contrast/illumination
             return QualityLabel(
                 value=0,
                 confidence=0.88,
@@ -513,14 +575,14 @@ class WeakSupervisionLabeler:
                 metadata={"rms_contrast": rms_contrast},
             )
         if rms_contrast > thresholds["low"]:
-            # Low contrast
+            # Poor illumination/low contrast
             return QualityLabel(
                 value=1,
                 confidence=0.75,
                 source="rms_contrast",
                 metadata={"rms_contrast": rms_contrast},
             )
-        # Very low contrast
+        # Very poor illumination/very low contrast
         return QualityLabel(
             value=1,
             confidence=0.90,

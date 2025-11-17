@@ -60,6 +60,7 @@ dmypy.json
 # Jupyter
 .ipynb_checkpoints
 *.ipynb
+!notebooks/*.ipynb
 
 # Data (large files stored in GCS)
 # Allow documentation and test fixtures
@@ -73,15 +74,17 @@ data/layout/
 data/test/
 data/annotations/
 data/augmented/
-data/benchmarks/
+data/benchmarks/*
+!data/benchmarks/*.dvc
 data/downloads/
 data/labels/
 data/promptcraft/
 data/raw/
-data/training/
+data/training/*
+!data/training/*.dvc
 
 # DVC tracking
-*.dvc
+# *.dvc  # Commented to allow .dvc tracking files
 
 # Models (large files)
 models/**/*.pth
@@ -130,7 +133,7 @@ Desktop.ini
 .directory
 
 # Training datasets (large files, managed by DVC or downloaded)
-data/training/
+# data/training/  # Commented - already covered above, and we need .dvc files
 
 # SignaTR6K dataset (large benchmark)
 data/SignaTR6K.zip
@@ -150,3 +153,5 @@ __modal_cache__/
 modal_cache/
 *modal-token*
 .modal-token
+!.dvc
+!data/**/*.dvc

@@ -97,6 +97,9 @@ dev = [
     # Jupyter (for exploration)
     "jupyter>=1.0.0",
     "ipykernel>=6.25.0",
+
+    # Manual validation UI (Milestone 10.3)
+    "streamlit>=1.28.0",
 ]
 
 ml = [
@@ -199,9 +202,8 @@ mutmut = "^3.3.1"
 pyyaml = "^6.0.3"
 scipy = "^1.16.3"
 scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
-# DVC and Kaggle removed - not needed for Phase 1, will add back in Phase 2 for dataset management
-# dvc = {extras = ["ssh"], version = "^3.64.0"}
-# kaggle = "^1.7.4.5"
+dvc = {extras = ["ssh"], version = "^3.64.0"}
+kaggle = "^1.7.4.5"
 types-pyyaml = "^6.0.12.20250915"
 
 [tool.poetry.group.ml]
@@ -217,8 +219,6 @@ onnxruntime = "^1.15.0"
 # Phase 2: Training and Evaluation
 scikit-learn = "^1.3.0"  # Evaluation metrics (precision, recall, F1, ROC-AUC, calibration)
 tensorboard = "^2.14.0"  # Training monitoring and visualization
-# DVC removed - not needed for Phase 1, will add back in Phase 2 for dataset management
-# dvc = "^3.30.0"  # Dataset versioning and management
 # genalog = "^0.1.0"  # DISABLED: Conflicts with dev dependencies (requires matplotlib 3.2.1, scikit-image 0.16.2)
 # TODO: Replace with alternative synthetic degradation library or fork genalog with updated dependencies
 
@@ -247,6 +247,7 @@ exclude = [
     "build",
     "validation",
     "tmp_cleanup",
+    "notebooks",
 ]
 
 # Enable Ruff formatter (Black-compatible)

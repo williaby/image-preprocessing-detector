@@ -1,0 +1,6 @@
+outs:
+- md5: 68708c885269ea0212e8f59f09008a96.dir
+  size: 27782115627
+  nfiles: 424089
+  hash: md5
+  path: tablebank

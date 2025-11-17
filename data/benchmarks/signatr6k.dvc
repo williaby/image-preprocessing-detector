@@ -1,0 +1,6 @@
+outs:
+- md5: 3d9106ae097e971e9d9509907b6292da.dir
+  size: 121954352
+  nfiles: 12514
+  hash: md5
+  path: signatr6k

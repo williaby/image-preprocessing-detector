@@ -1,0 +1,6 @@
+outs:
+- md5: c8ef7ea62e36daca8aa8f7642bc259be.dir
+  size: 18577306084
+  nfiles: 50003
+  hash: md5
+  path: iqa_phase2
