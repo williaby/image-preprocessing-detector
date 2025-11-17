@@ -50,6 +50,7 @@ class TestIQAHead:
     def test_head_different_batch_sizes(self) -> None:
         """Test head with different batch sizes."""
         head = IQAHead(in_features=2048)
+        head.eval()  # BatchNorm requires eval mode for batch_size=1
 
         for batch_size in [1, 4, 16, 32]:
             input_tensor = torch.randn(batch_size, 2048)
@@ -117,6 +118,7 @@ class TestResNetTeacher:
     def test_forward_pass_different_batch_sizes(self) -> None:
         """Test forward pass with different batch sizes."""
         model = ResNetTeacher(num_heads=5, pretrained=False)
+        model.eval()  # BatchNorm requires eval mode for batch_size=1
 
         for batch_size in [1, 2, 8, 16]:
             images = torch.randn(batch_size, 3, 224, 224)

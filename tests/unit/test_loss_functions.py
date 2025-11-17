@@ -225,7 +225,8 @@ class TestMultiHeadIQALoss:
 
         # Create predictions with gradient tracking
         logits = torch.randn(batch_size, 1, requires_grad=True)
-        confidence = torch.sigmoid(torch.randn(batch_size, 1, requires_grad=True))
+        confidence_logits = torch.randn(batch_size, 1, requires_grad=True)
+        confidence = torch.sigmoid(confidence_logits)
 
         predictions = {"blur": {"logits": logits, "confidence": confidence}}
 
@@ -242,9 +243,9 @@ class TestMultiHeadIQALoss:
         # Backward pass
         loss.backward()
 
-        # Check gradients exist
+        # Check gradients exist on leaf tensors
         assert logits.grad is not None
-        assert confidence.grad is not None
+        assert confidence_logits.grad is not None
 
 
 class TestFocalLoss:
