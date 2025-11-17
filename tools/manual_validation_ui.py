@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Manual Validation UI for IQA Label Correction.
 
-Streamlit-based interface for reviewing and correcting weak supervision labels.
+Streamlit application for reviewing and correcting weak supervision labels.
 
 Usage:
     streamlit run tools/manual_validation_ui.py -- --input-dir data/weak_supervision_labels
@@ -57,7 +57,8 @@ def load_weak_supervision_labels(labels_path: Path) -> dict[str, Any]:
         Dictionary with image_path, labels, and quality_scores
     """
     with open(labels_path) as f:
-        return json.load(f)
+        data: dict[str, Any] = json.load(f)
+        return data
 
 
 def load_image(image_path: str) -> Image.Image:
