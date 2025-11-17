@@ -63,6 +63,16 @@ jobs:
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Free up disk space early
+        run: |
+          echo "🧹 Freeing up disk space before dependency operations..."
+          # Remove unnecessary pre-installed software
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL 2>/dev/null || true
+          sudo apt-get clean
+          docker system prune -af 2>/dev/null || true
+          echo "📊 Disk space before caching/installation:"
+          df -h
+
       - name: Generate cache keys
         id: cache-key
         run: |
@@ -141,9 +151,8 @@ jobs:
       - name: Clean up disk space
         run: |
           echo "🧹 Cleaning up disk space..."
-          # Clear Python caches
+          # Clear only pip cache (preserve poetry cache for GitHub Actions caching)
           pip cache purge 2>/dev/null || true
-          poetry cache clear --all . -n 2>/dev/null || true
           # Remove unnecessary pre-installed software
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL 2>/dev/null || true
           sudo apt-get clean 2>/dev/null || true
