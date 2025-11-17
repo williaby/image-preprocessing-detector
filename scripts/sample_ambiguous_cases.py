@@ -150,9 +150,7 @@ def sample_ambiguous_cases(
     Returns:
         List of sampled label dictionaries with priority scores
     """
-    console.print(
-        "\n[bold cyan]Sampling Ambiguous Cases for Manual Review[/bold cyan]"
-    )
+    console.print("\n[bold cyan]Sampling Ambiguous Cases for Manual Review[/bold cyan]")
     console.print(f"Input: {input_dir}")
     console.print(f"Output: {output_dir}")
     console.print(f"Target samples: {num_samples}")

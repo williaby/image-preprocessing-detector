@@ -42,9 +42,7 @@ class TestMultiHeadIQALoss:
         head_names = ["blur", "noise", "skew"]
         head_weights = {"blur": 1.5, "noise": 1.0, "skew": 1.5}
 
-        loss_fn = MultiHeadIQALoss(
-            head_names=head_names, head_weights=head_weights
-        )
+        loss_fn = MultiHeadIQALoss(head_names=head_names, head_weights=head_weights)
 
         assert loss_fn.head_weights == head_weights
 
