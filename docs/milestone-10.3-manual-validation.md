@@ -10,6 +10,8 @@ tags:
 status: published
 owner: ml-team
 purpose: Manual validation pipeline implementation for Phase 3 layout detection training data preparation.
+component: "Development-Tools"
+source: "Merged from remote branch claude/manual-validation-ui-01AV9twGRW7Dva9YWkhoPEmL"
 ---
 
 **Phase**: Phase 3 - Layout Detection Training Data Preparation
