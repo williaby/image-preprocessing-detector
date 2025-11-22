@@ -11,7 +11,6 @@ Usage:
 import argparse
 import os
 import sys
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +19,8 @@ import yaml
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
 
 from benchmarks.adapters import load_adapter
 from benchmarks.scorers.aggregate_scorer import AggregateScorer
