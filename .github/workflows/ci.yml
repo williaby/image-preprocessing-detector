@@ -7,7 +7,8 @@
 # Security scanning has been consolidated in security-analysis.yml workflow.
 #
 # MULTI-VERSION TESTING (This Workflow):
-#   - Python 3.10, 3.11, 3.12, 3.13, 3.14 support via nox
+#   - Python 3.10, 3.11, 3.12, 3.13 support via nox (required to pass)
+#   - Python 3.14 experimental (allowed to fail - pyarrow upstream compatibility)
 #   - uv backend for 10-100x faster package installation
 #   - Isolated test environments per Python version
 #
@@ -237,6 +238,7 @@ jobs:
         continue-on-error: true
 
       # Run comprehensive test suite using nox for multi-version testing
+      # Python 3.14 is experimental - pyarrow doesn't support it yet (upstream issue)
       - name: Run image processing test suite (via nox)
         run: |
           export PATH="$HOME/.local/bin:$PATH"
@@ -253,6 +255,8 @@ jobs:
             --maxfail=10
         env:
           CI_ENVIRONMENT: true
+        # Python 3.14 is allowed to fail due to upstream dependency compatibility (pyarrow)
+        continue-on-error: ${{ matrix.python-version == '3.14' }}
 
       # Note: Coverage upload moved to dedicated codecov.yml workflow
       - name: Upload test artifacts
