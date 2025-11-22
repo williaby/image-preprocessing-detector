@@ -378,7 +378,9 @@ class TestMLIQADetector:
             # Validate uncertainty metrics
             assert isinstance(uncertainty, UncertaintyMetrics)
             assert 0.0 <= uncertainty.entropy <= 1.0  # Binary entropy max is 1.0
-            assert uncertainty.min_confidence == 0.55  # Lowest confidence
+            assert uncertainty.min_confidence == pytest.approx(
+                0.55
+            )  # Lowest confidence
             assert 0.0 <= uncertainty.mean_confidence <= 1.0
             assert len(uncertainty.head_confidences) == 5
 
@@ -790,8 +792,8 @@ class TestMLIQADetector:
             )
 
             # All discrepancies should be 0
-            assert discrepancy.blur_discrepancy == 0.0
-            assert discrepancy.contrast_discrepancy == 0.0
-            assert discrepancy.skew_discrepancy == 0.0
-            assert discrepancy.max_discrepancy == 0.0
-            assert discrepancy.mean_discrepancy == 0.0
+            assert discrepancy.blur_discrepancy == pytest.approx(0.0)
+            assert discrepancy.contrast_discrepancy == pytest.approx(0.0)
+            assert discrepancy.skew_discrepancy == pytest.approx(0.0)
+            assert discrepancy.max_discrepancy == pytest.approx(0.0)
+            assert discrepancy.mean_discrepancy == pytest.approx(0.0)

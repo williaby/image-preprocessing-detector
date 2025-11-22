@@ -39,7 +39,7 @@ def get_dataset_size(dataset_path: Path) -> Tuple[str, int]:
                 return f"{bytes_size:.1f} {unit}", bytes_size
             bytes_size /= 1024
         return f"{bytes_size:.1f} PB", int(bytes_size * 1024**5)
-    except Exception as e:
+    except Exception:
         return "Unknown", 0
 
 

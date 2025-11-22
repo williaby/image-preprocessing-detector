@@ -23,15 +23,15 @@ class TestDistillationLoss:
         """Test that loss can be instantiated with default parameters."""
         loss = DistillationLoss()
         assert loss is not None
-        assert loss.alpha == 0.7
-        assert loss.temperature == 4.0
+        assert loss.alpha == pytest.approx(0.7)
+        assert loss.temperature == pytest.approx(4.0)
         assert loss.reduction == "mean"
 
     def test_loss_instantiation_custom_params(self):
         """Test loss instantiation with custom parameters."""
         loss = DistillationLoss(alpha=0.5, temperature=3.0, reduction="sum")
-        assert loss.alpha == 0.5
-        assert loss.temperature == 3.0
+        assert loss.alpha == pytest.approx(0.5)
+        assert loss.temperature == pytest.approx(3.0)
         assert loss.reduction == "sum"
 
     def test_invalid_alpha(self):
@@ -297,7 +297,7 @@ class TestCalculateDistillationLoss:
         )
 
         # Check custom alpha
-        assert output["alpha"].item() == 0.5
+        assert output["alpha"].item() == pytest.approx(0.5)
 
     def test_functional_equivalence_to_module(self):
         """Test that functional interface produces same results as module."""
