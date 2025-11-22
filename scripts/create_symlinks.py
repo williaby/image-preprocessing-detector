@@ -18,7 +18,6 @@ Usage:
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Tuple
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -41,16 +40,13 @@ SYMLINK_MAPPINGS = [
     ("data/benchmarks/signatr6k", "benchmarks/signatr6k"),
     ("data/benchmarks/wili_2018", "benchmarks/wili_2018"),
     ("data/benchmarks/cocotext", "benchmarks/cocotext"),
-
     # Training datasets (Phase 2 IQA)
     ("data/training/iqa_phase2", "training/iqa_phase2"),
     ("data/training/iqa_phase2_100k", "training/iqa_phase2_100k"),
-
     # Training datasets (Real-world receipts & invoices)
     ("data/training/receipts_hitl", "training/receipts_hitl"),
     ("data/training/mobile_receipts_voxel51", "training/mobile_receipts_voxel51"),
     ("data/training/invoices_kaggle", "training/invoices_kaggle"),
-
     # Training datasets (Phase 3 - handwriting & layout)
     ("data/training/iam_handwriting", "training/iam_handwriting"),
     ("data/training/docsynth300k", "training/docsynth300k"),
@@ -58,7 +54,7 @@ SYMLINK_MAPPINGS = [
 ]
 
 
-def create_symlink(local_rel_path: str, nfs_rel_path: str) -> Tuple[bool, str]:
+def create_symlink(local_rel_path: str, nfs_rel_path: str) -> tuple[bool, str]:
     """
     Create a symlink from local to NFS.
 
@@ -76,8 +72,7 @@ def create_symlink(local_rel_path: str, nfs_rel_path: str) -> Tuple[bool, str]:
     if local_path.is_symlink():
         if local_path.readlink() == nfs_path:
             return (True, f"Symlink already correct: {local_path} → {nfs_path}")
-        else:
-            local_path.unlink()
+        local_path.unlink()
 
     # Remove existing local path if it's a directory (and empty)
     elif local_path.is_dir():
@@ -97,7 +92,7 @@ def create_symlink(local_rel_path: str, nfs_rel_path: str) -> Tuple[bool, str]:
         return (False, f"Failed to create symlink: {e}")
 
 
-def verify_symlinks() -> List[Tuple[str, str, bool, str]]:
+def verify_symlinks() -> list[tuple[str, str, bool, str]]:
     """
     Verify all symlinks are correctly configured.
 
@@ -117,7 +112,14 @@ def verify_symlinks() -> List[Tuple[str, str, bool, str]]:
         elif not local_path.is_symlink():
             results.append((local_rel, nfs_rel, False, "Local path is not a symlink"))
         elif local_path.readlink() != nfs_path:
-            results.append((local_rel, nfs_rel, False, f"Symlink points to wrong target: {local_path.readlink()}"))
+            results.append(
+                (
+                    local_rel,
+                    nfs_rel,
+                    False,
+                    f"Symlink points to wrong target: {local_path.readlink()}",
+                )
+            )
         else:
             results.append((local_rel, nfs_rel, True, "✅ Valid"))
 
@@ -128,9 +130,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Create symlinks from local data/ to NFS storage"
     )
-    parser.add_argument(
-        "--all", action="store_true", help="Create all symlinks"
-    )
+    parser.add_argument("--all", action="store_true", help="Create all symlinks")
     parser.add_argument(
         "--benchmarks-only", action="store_true", help="Create only benchmark symlinks"
     )
@@ -146,9 +146,9 @@ def main():
         sys.exit(1)
 
     if args.verify:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("Symlink Verification")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         results = verify_symlinks()
         valid_count = sum(1 for _, _, is_valid, _ in results if is_valid)
@@ -166,16 +166,18 @@ def main():
 
     # Determine which symlinks to create
     if args.benchmarks_only:
-        symlinks = [(l, n) for l, n in SYMLINK_MAPPINGS if l.startswith("data/benchmarks/")]
+        symlinks = [
+            (l, n) for l, n in SYMLINK_MAPPINGS if l.startswith("data/benchmarks/")
+        ]
     elif args.all:
         symlinks = SYMLINK_MAPPINGS
     else:
         parser.print_help()
         sys.exit(1)
 
-    print(f"\n{'='*80}")
-    print(f"Creating Symlinks")
-    print(f"{'='*80}\n")
+    print(f"\n{'=' * 80}")
+    print("Creating Symlinks")
+    print(f"{'=' * 80}\n")
     print(f"Symlinks to create: {len(symlinks)}\n")
 
     # Create symlinks
@@ -190,9 +192,9 @@ def main():
         else:
             fail_count += 1
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Summary: {success_count} successful, {fail_count} failed")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     return fail_count == 0
 

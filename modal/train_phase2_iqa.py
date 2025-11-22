@@ -92,6 +92,7 @@ image = (
     )
 )
 
+
 @stub.function(
     image=image,
     gpu="A10",  # A10 24GB - cost-optimized (~$1.10/hr), we only use ~6GB
@@ -188,7 +189,7 @@ def train_iqa():
 
     download_time = time.time() - download_start
     tar_size_gb = tar_local_path.stat().st_size / (1024**3)
-    print(f"✅ Downloaded {tar_size_gb:.2f} GB in {download_time/60:.1f} minutes")
+    print(f"✅ Downloaded {tar_size_gb:.2f} GB in {download_time / 60:.1f} minutes")
 
     # Extract tar.gz archive
     print("Extracting archive...")
@@ -198,19 +199,19 @@ def train_iqa():
         tar.extractall(path=dataset_dir.parent)
 
     extract_time = time.time() - extract_start
-    print(f"✅ Extracted in {extract_time/60:.1f} minutes")
+    print(f"✅ Extracted in {extract_time / 60:.1f} minutes")
 
     # Clean up tar.gz to save disk space
     tar_local_path.unlink()
     print("✅ Cleaned up tar.gz archive")
 
     total_time = time.time() - download_start
-    print(f"✅ Dataset ready in {total_time/60:.1f} minutes total")
+    print(f"✅ Dataset ready in {total_time / 60:.1f} minutes total")
 
     # Verify dataset structure
     dataset_dir = Path("/root/data/training/iqa_phase2_100k")
     images_dir = dataset_dir / "images"
-    metadata_file = dataset_dir / config['data']['metadata_file']
+    metadata_file = dataset_dir / config["data"]["metadata_file"]
 
     if not dataset_dir.exists():
         raise FileNotFoundError(f"Dataset directory not found: {dataset_dir}")
@@ -232,13 +233,15 @@ def train_iqa():
     print(f"Device: {device}")
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+        print(
+            f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB"
+        )
 
     # Create ResNet-50 teacher model
     model = ResNetTeacher(
-        num_heads=config['model']['num_classes'],
-        dropout=config['model']['dropout'],
-        pretrained=config['model']['pretrained'],
+        num_heads=config["model"]["num_classes"],
+        dropout=config["model"]["dropout"],
+        pretrained=config["model"]["pretrained"],
     )
     model = model.to(device)
 
@@ -267,19 +270,21 @@ def train_iqa():
     print(f"Loaded {len(samples):,} sample entries")
 
     # Create train/val/test splits based on config
-    train_ratio = config['data']['train_split']
-    val_ratio = config['data']['val_split']
-    _test_ratio = config['data']['test_split']  # Read but calculated via remainder
+    train_ratio = config["data"]["train_split"]
+    val_ratio = config["data"]["val_split"]
+    _test_ratio = config["data"]["test_split"]  # Read but calculated via remainder
 
     train_size = int(total_samples * train_ratio)
     val_size = int(total_samples * val_ratio)
     _test_size = total_samples - train_size - val_size
 
     train_samples = samples[:train_size]
-    val_samples = samples[train_size:train_size + val_size]
-    test_samples = samples[train_size + val_size:]
+    val_samples = samples[train_size : train_size + val_size]
+    test_samples = samples[train_size + val_size :]
 
-    print(f"Split: {len(train_samples):,} train / {len(val_samples):,} val / {len(test_samples):,} test")
+    print(
+        f"Split: {len(train_samples):,} train / {len(val_samples):,} val / {len(test_samples):,} test"
+    )
 
     # =========================================================================
     # STEP 5: Create DataLoaders
@@ -316,28 +321,39 @@ def train_iqa():
                 image = self.transform(image)
 
             # Extract labels (5 defect types: blur, noise, skew, illumination, artifacts)
-            labels = torch.tensor([
-                sample["labels"]["blur"],
-                sample["labels"]["noise"],
-                sample["labels"]["skew"],
-                sample["labels"]["illumination"],
-                sample["labels"]["artifacts"],
-            ], dtype=torch.float32)
+            labels = torch.tensor(
+                [
+                    sample["labels"]["blur"],
+                    sample["labels"]["noise"],
+                    sample["labels"]["skew"],
+                    sample["labels"]["illumination"],
+                    sample["labels"]["artifacts"],
+                ],
+                dtype=torch.float32,
+            )
 
             return image, labels
 
     # Create transforms
-    train_transform = tv_transforms.Compose([
-        tv_transforms.Resize((224, 224)),
-        tv_transforms.ToTensor(),
-        tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    train_transform = tv_transforms.Compose(
+        [
+            tv_transforms.Resize((224, 224)),
+            tv_transforms.ToTensor(),
+            tv_transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            ),
+        ]
+    )
 
-    val_transform = tv_transforms.Compose([
-        tv_transforms.Resize((224, 224)),
-        tv_transforms.ToTensor(),
-        tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    val_transform = tv_transforms.Compose(
+        [
+            tv_transforms.Resize((224, 224)),
+            tv_transforms.ToTensor(),
+            tv_transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            ),
+        ]
+    )
 
     # Create datasets
     train_dataset = IQA100KDataset(train_samples, images_dir, transform=train_transform)
@@ -379,19 +395,19 @@ def train_iqa():
     # Create data loaders
     train_loader = DataLoader(
         train_dataset,
-        batch_size=config['training']['batch_size'],
+        batch_size=config["training"]["batch_size"],
         shuffle=True,
-        num_workers=config['data']['num_workers'],
-        pin_memory=config['data']['pin_memory'],
+        num_workers=config["data"]["num_workers"],
+        pin_memory=config["data"]["pin_memory"],
         collate_fn=collate_fn,
     )
 
     val_loader = DataLoader(
         val_dataset,
-        batch_size=config['training']['batch_size'],
+        batch_size=config["training"]["batch_size"],
         shuffle=False,
-        num_workers=config['data']['num_workers'],
-        pin_memory=config['data']['pin_memory'],
+        num_workers=config["data"]["num_workers"],
+        pin_memory=config["data"]["pin_memory"],
         collate_fn=collate_fn,
     )
 
@@ -406,24 +422,24 @@ def train_iqa():
 
     # Prepare trainer configuration
     trainer_config = {
-        "batch_size": config['training']['batch_size'],
-        "epochs": config['training']['epochs'],
-        "learning_rate": config['training']['learning_rate'],
-        "weight_decay": config['training']['weight_decay'],
-        "optimizer": config['training']['optimizer'],
+        "batch_size": config["training"]["batch_size"],
+        "epochs": config["training"]["epochs"],
+        "learning_rate": config["training"]["learning_rate"],
+        "weight_decay": config["training"]["weight_decay"],
+        "optimizer": config["training"]["optimizer"],
         "scheduler": {
-            "type": config['training']['scheduler'],
+            "type": config["training"]["scheduler"],
         },
-        "gradient_clip_norm": config['training']['gradient_clip_norm'],
-        "early_stopping_patience": config['training']['early_stopping_patience'],
+        "gradient_clip_norm": config["training"]["gradient_clip_norm"],
+        "early_stopping_patience": config["training"]["early_stopping_patience"],
         "mixed_precision": {
-            "enabled": config['training']['mixed_precision'],
+            "enabled": config["training"]["mixed_precision"],
         },
         "checkpoint_dir": "/tmp/checkpoints",
         "log_dir": "/tmp/logs",
-        "save_interval_epochs": config['monitoring']['checkpoint_interval'],
+        "save_interval_epochs": config["monitoring"]["checkpoint_interval"],
         "keep_last_n": 3,
-        "log_interval": config['monitoring']['log_interval'],
+        "log_interval": config["monitoring"]["log_interval"],
     }
 
     trainer = TeacherTrainer(model, loss_fn, trainer_config, device=str(device))
@@ -434,19 +450,22 @@ def train_iqa():
     # =========================================================================
     print("\n[7/10] Starting training...")
     print(f"Training for {config['training']['epochs']} epochs...")
-    print(f"Checkpoint interval: every {config['monitoring']['checkpoint_interval']} epochs")
+    print(
+        f"Checkpoint interval: every {config['monitoring']['checkpoint_interval']} epochs"
+    )
     print("Monitor progress at: https://modal.com/apps")
     print()
 
     # Initialize GCS client for incremental checkpoint uploads
     from google.cloud import storage
+
     storage_client = storage.Client()
     gcs_bucket = storage_client.bucket("image_detection_b")
     checkpoint_dir = Path("/tmp/checkpoints")
-    checkpoint_interval = config['monitoring']['checkpoint_interval']
+    checkpoint_interval = config["monitoring"]["checkpoint_interval"]
 
     start_time = time.time()
-    total_epochs = config['training']['epochs']
+    total_epochs = config["training"]["epochs"]
 
     try:
         # Manual epoch loop for better progress visibility
@@ -454,9 +473,9 @@ def train_iqa():
             epoch_start = time.time()
 
             # Print epoch header
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"EPOCH {epoch + 1}/{total_epochs}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             # Run single epoch training
             train_metrics = trainer.train_epoch(train_loader)
@@ -472,11 +491,13 @@ def train_iqa():
             # Print epoch summary
             print(f"Train Loss: {train_metrics.get('loss', 0):.4f}")
             print(f"Val Loss: {val_metrics.get('loss', 0):.4f}")
-            print(f"Epoch Time: {epoch_time/60:.1f} min")
-            print(f"Elapsed: {elapsed/3600:.1f}h | Remaining: {remaining/3600:.1f}h")
+            print(f"Epoch Time: {epoch_time / 60:.1f} min")
+            print(
+                f"Elapsed: {elapsed / 3600:.1f}h | Remaining: {remaining / 3600:.1f}h"
+            )
 
             # Check for best model and save checkpoint
-            val_loss = val_metrics.get('loss', float('inf'))
+            val_loss = val_metrics.get("loss", float("inf"))
             if val_loss < trainer.best_val_loss:
                 trainer.best_val_loss = val_loss
                 print(f"✨ New best val_loss: {val_loss:.4f}")
@@ -485,27 +506,32 @@ def train_iqa():
             if (epoch + 1) % checkpoint_interval == 0:
                 checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{epoch + 1}.pth"
                 checkpoint_dir.mkdir(parents=True, exist_ok=True)
-                torch.save({
-                    'epoch': epoch + 1,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': trainer.optimizer.state_dict(),
-                    'val_loss': val_loss,
-                    'best_val_loss': trainer.best_val_loss,
-                }, checkpoint_path)
+                torch.save(
+                    {
+                        "epoch": epoch + 1,
+                        "model_state_dict": model.state_dict(),
+                        "optimizer_state_dict": trainer.optimizer.state_dict(),
+                        "val_loss": val_loss,
+                        "best_val_loss": trainer.best_val_loss,
+                    },
+                    checkpoint_path,
+                )
                 print(f"💾 Saved checkpoint: {checkpoint_path.name}")
 
                 # Upload to GCS immediately
                 blob = gcs_bucket.blob(f"checkpoints/phase2_iqa/{checkpoint_path.name}")
                 blob.upload_from_filename(str(checkpoint_path))
-                print(f"☁️  Uploaded to GCS: checkpoints/phase2_iqa/{checkpoint_path.name}")
+                print(
+                    f"☁️  Uploaded to GCS: checkpoints/phase2_iqa/{checkpoint_path.name}"
+                )
 
             # Early stopping check
-            if hasattr(trainer, 'early_stop') and trainer.early_stop:
+            if hasattr(trainer, "early_stop") and trainer.early_stop:
                 print(f"⚠️  Early stopping triggered at epoch {epoch + 1}")
                 break
 
         training_time = time.time() - start_time
-        print(f"\n✅ Training completed in {training_time/3600:.2f} hours")
+        print(f"\n✅ Training completed in {training_time / 3600:.2f} hours")
         print(f"Best validation loss: {trainer.best_val_loss:.4f}")
 
     except Exception as e:
@@ -519,12 +545,15 @@ def train_iqa():
 
     # Save final model
     final_checkpoint = checkpoint_dir / "checkpoint_final.pth"
-    torch.save({
-        'epoch': total_epochs,
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': trainer.optimizer.state_dict(),
-        'best_val_loss': trainer.best_val_loss,
-    }, final_checkpoint)
+    torch.save(
+        {
+            "epoch": total_epochs,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": trainer.optimizer.state_dict(),
+            "best_val_loss": trainer.best_val_loss,
+        },
+        final_checkpoint,
+    )
 
     blob = gcs_bucket.blob(f"checkpoints/phase2_iqa/{final_checkpoint.name}")
     blob.upload_from_filename(str(final_checkpoint))
@@ -537,7 +566,7 @@ def train_iqa():
 
     model.eval()
     dummy_input = torch.randn(
-        1, 3, config['model']['input_size'], config['model']['input_size']
+        1, 3, config["model"]["input_size"], config["model"]["input_size"]
     ).to(device)
 
     onnx_path = "/tmp/resnet50_teacher_baseline.onnx"
@@ -574,7 +603,9 @@ def train_iqa():
             "best_epoch": trainer.epoch,
         },
         "device": str(device),
-        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A",
+        "gpu_name": torch.cuda.get_device_name(0)
+        if torch.cuda.is_available()
+        else "N/A",
     }
 
     summary_path = "/tmp/training_summary.json"
@@ -591,14 +622,18 @@ def train_iqa():
     print("\n" + "=" * 80)
     print("✅ Sprint 3.5.2 Baseline Training Complete!")
     print("=" * 80)
-    print(f"Training time: {training_time/3600:.2f} hours")
+    print(f"Training time: {training_time / 3600:.2f} hours")
     print(f"Best validation loss: {trainer.best_val_loss:.4f}")
     print(f"Best epoch: {trainer.epoch}")
     print()
     print("Artifacts saved to GCS:")
     print(f"  - Checkpoints: gs://{bucket_name}/checkpoints/phase2_iqa/")
-    print(f"  - ONNX model: gs://{bucket_name}/models/phase2_iqa/resnet50_teacher_baseline.onnx")
-    print(f"  - Summary: gs://{bucket_name}/models/phase2_iqa/training_summary_baseline.json")
+    print(
+        f"  - ONNX model: gs://{bucket_name}/models/phase2_iqa/resnet50_teacher_baseline.onnx"
+    )
+    print(
+        f"  - Summary: gs://{bucket_name}/models/phase2_iqa/training_summary_baseline.json"
+    )
     print()
     print("Next steps (Sprint 3.5.3):")
     print("  1. Download and analyze training curves")

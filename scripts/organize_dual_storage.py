@@ -33,7 +33,6 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Literal
 
 # Configuration
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -136,9 +135,9 @@ def pull_from_gcs(dataset_name: str) -> bool:
     nfs_full_path = NFS_ROOT / dataset["nfs_path"]
     gcs_source = f"{GCS_BUCKET}/{dataset['gcs_path']}/"
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Downloading {dataset_name} from GCS to NFS")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Source: {gcs_source}")
     print(f"Target: {nfs_full_path}")
     print(f"Size: ~{dataset['size_gb']} GB")
@@ -184,9 +183,9 @@ def create_symlink(dataset_name: str) -> bool:
     local_path = PROJECT_ROOT / dataset["local_path"]
     nfs_full_path = NFS_ROOT / dataset["nfs_path"]
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Creating symlink for {dataset_name}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Local: {local_path}")
     print(f"NFS: {nfs_full_path}")
     print()
@@ -194,7 +193,9 @@ def create_symlink(dataset_name: str) -> bool:
     # Check if NFS path exists
     if not nfs_full_path.exists():
         print(f"❌ NFS path not found: {nfs_full_path}")
-        print(f"   Run: python scripts/organize_dual_storage.py pull-from-gcs {dataset_name}")
+        print(
+            f"   Run: python scripts/organize_dual_storage.py pull-from-gcs {dataset_name}"
+        )
         return False
 
     # Remove existing local path if it exists
@@ -204,7 +205,7 @@ def create_symlink(dataset_name: str) -> bool:
             local_path.unlink()
         else:
             print(f"❌ Local path exists and is not a symlink: {local_path}")
-            print(f"   Please move or remove it first")
+            print("   Please move or remove it first")
             return False
 
     # Create parent directory
@@ -226,9 +227,9 @@ def sync_to_gcs(dataset_name: str) -> bool:
     nfs_full_path = NFS_ROOT / dataset["nfs_path"]
     gcs_dest = f"{GCS_BUCKET}/{dataset['gcs_path']}/"
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Syncing {dataset_name} from NFS to GCS")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Source: {nfs_full_path}")
     print(f"Target: {gcs_dest}")
     print()
@@ -265,9 +266,9 @@ def sync_to_gcs(dataset_name: str) -> bool:
 
 def show_status():
     """Show storage status for all datasets."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("Dataset Storage Status")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     print(f"{'Dataset':<20} {'Local':<15} {'NFS':<15} {'GCS':<15} {'Size (GB)':<10}")
     print("-" * 80)
@@ -277,8 +278,10 @@ def show_status():
         nfs_full_path = NFS_ROOT / dataset["nfs_path"]
 
         # Check status
-        local_status = "✅ Symlink" if local_path.is_symlink() else (
-            "📁 Dir" if local_path.exists() else "❌ Missing"
+        local_status = (
+            "✅ Symlink"
+            if local_path.is_symlink()
+            else ("📁 Dir" if local_path.exists() else "❌ Missing")
         )
         nfs_status = "✅ Exists" if nfs_full_path.exists() else "❌ Missing"
         gcs_status = "⚠️ Unknown"  # Would require GCS API call
@@ -292,9 +295,9 @@ def show_status():
 
 def setup_all():
     """Setup complete dual storage for all datasets."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("Setting up dual storage for all datasets")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     if not check_prerequisites():
         return False
@@ -321,9 +324,9 @@ def setup_all():
         if nfs_full_path.exists():
             create_symlink(dataset)
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("✅ Dual storage setup complete!")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     show_status()
     return True

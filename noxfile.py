@@ -158,44 +158,27 @@ def sbom(session: nox.Session) -> None:
 
     This session generates Software Bill of Materials (SBOM) in CycloneDX format
     for runtime, development, and complete dependency sets.
+    Note: With UV, we use environment-based SBOM generation.
     """
     session.install("cyclonedx-bom==4.6.1")
 
-    # Generate runtime SBOM (production dependencies only)
+    # Generate SBOM from current environment (includes all installed dependencies)
     session.run(
         "cyclonedx-py",
-        "poetry",
-        "--of",
-        "json",
-        "-o",
-        "sbom-runtime.json",
-        "--no-dev",
-    )
-    session.log("Runtime SBOM generated: sbom-runtime.json")
-
-    # Generate development SBOM (dev dependencies only)
-    session.run(
-        "cyclonedx-py",
-        "poetry",
-        "--of",
-        "json",
-        "-o",
-        "sbom-dev.json",
-        "--only",
-        "dev",
-    )
-    session.log("Development SBOM generated: sbom-dev.json")
-
-    # Generate complete SBOM (all dependencies)
-    session.run(
-        "cyclonedx-py",
-        "poetry",
+        "environment",
         "--of",
         "json",
         "-o",
         "sbom-complete.json",
     )
     session.log("Complete SBOM generated: sbom-complete.json")
+
+    # Note: Runtime-only and dev-only SBOMs require manual dependency installation
+    # For runtime-only SBOM, run: uv sync --no-dev && nox -s sbom
+    # For dev-only SBOM, use separate virtual environment with only dev dependencies
+    session.log(
+        "For granular SBOMs, manage dependencies with UV before running this session"
+    )
 
 
 @nox.session(python="3.12")
@@ -208,7 +191,7 @@ def scan(session: nox.Session) -> None:
     """
     import pathlib
 
-    sbom_file = session.posargs[0] if session.posargs else "sbom-runtime.json"
+    sbom_file = session.posargs[0] if session.posargs else "sbom-complete.json"
 
     if not pathlib.Path(sbom_file).exists():
         session.error(f"SBOM file not found: {sbom_file}. Run 'nox -s sbom' first.")
@@ -240,10 +223,10 @@ def compliance(session: nox.Session) -> None:
     session.log("Running REUSE compliance check...")
     reuse(session)
 
-    session.log("Generating SBOMs...")
+    session.log("Generating SBOM...")
     sbom(session)
 
-    session.log("Scanning runtime SBOM for vulnerabilities...")
+    session.log("Scanning SBOM for vulnerabilities...")
     scan(session)
 
     session.log("All compliance checks completed successfully!")

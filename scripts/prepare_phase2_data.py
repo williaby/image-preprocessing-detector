@@ -75,7 +75,7 @@ def convert_pdf_to_images(pdf_path: Path) -> list[np.ndarray]:
         for page_num in range(len(doc)):
             page = doc[page_num]
             # Render at 300 DPI for quality
-            mat = fitz.Matrix(300/72, 300/72)
+            mat = fitz.Matrix(300 / 72, 300 / 72)
             pix = page.get_pixmap(matrix=mat)
 
             # Convert to numpy array

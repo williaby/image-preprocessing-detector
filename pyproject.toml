@@ -104,6 +104,34 @@ dev = [
 
     # Manual validation UI (Milestone 10.3)
     "streamlit>=1.28.0",
+
+    # Image metrics for benchmarking
+    "scikit-image>=0.25.2",
+    "scipy>=1.14.0",  # v1.14.x supports Python 3.10-3.12
+
+    # Safety for dependency scanning
+    "safety>=3.7.0",
+
+    # Nox for multi-version testing
+    "nox>=2025.10.16",
+    "uv>=0.5.0",  # Fast package manager for nox venv backend
+
+    # Mutation testing
+    "mutmut>=3.3.1",
+
+    # Type stubs
+    "types-pyyaml>=6.0.12",
+
+    # ONNX for model export validation
+    "onnx>=1.14.0",
+
+    # Matplotlib for visualization
+    "matplotlib>=3.10.0",
+
+    # Dataset management
+    "datasets>=4.4.1",
+    "dvc[ssh]>=3.64.0",
+    "kaggle>=1.7.4",
 ]
 
 ml = [
@@ -114,6 +142,7 @@ ml = [
     "timm>=0.9.0",
     "albumentations>=1.3.0",
     "onnxruntime>=1.15.0",
+    "tensorboard>=2.12.0",  # Training monitoring
     # "genalog>=0.1.0",  # DISABLED: Conflicts with dev dependencies
     # Model artifact storage and versioning
     "google-cloud-storage>=2.10.0",
@@ -147,95 +176,11 @@ colab = [
 imgprep = "image_preprocessing_detector.cli:cli"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry]
-name = "image-preprocessing-detector"
-version = "0.1.0"
-description = "Intelligent image preprocessing detection system for RAG applications"
-authors = ["Byron Williams <byronawilliams@gmail.com>"]
-readme = "README.md"
-packages = [
-    {include = "image_preprocessing_detector", from = "src"},
-    {include = "benchmarks"}
-]
-
-[tool.poetry.dependencies]
-python = ">=3.10,<3.15"  # Multi-version support for Python 3.10-3.14
-opencv-python-headless = "^4.8.0"
-pillow = "^10.0.0"
-numpy = "^1.24.0"
-pymupdf = "^1.23.0"
-click = "^8.1.0"
-pydantic = "^2.0.0"
-pydantic-settings = "^2.0.0"
-python-dotenv = "^1.0.0"
-structlog = "^23.1.0"
-rich = "^13.5.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-pytest-cov = "^4.1.0"
-pytest-asyncio = "^0.21.0"
-pytest-xdist = "^3.3.0"
-hypothesis = "^6.82.0"
-ruff = "^0.9.0"
-mypy = "^1.4.0"
-pre-commit = "^3.3.0"
-# Documentation
-mkdocs = "^1.6.0"
-mkdocs-material = "^9.5.0"
-mkdocstrings = {extras = ["python"], version = "^0.26.0"}
-griffe-pydantic = "^1.1.0"
-mkdocs-gen-files = "^0.5.0"
-mkdocs-section-index = "^0.3.0"
-mkdocs-autorefs = "^1.2.0"
-mkdocs-git-revision-date-localized-plugin = "^1.3.0"
-python-frontmatter = "^1.1.0"
-ruamel-yaml = "^0.18.0"
-interrogate = "^1.7.0"
-# Development Tools
-jupyter = "^1.0.0"
-ipykernel = "^6.25.0"
-matplotlib = "^3.10.7"
-datasets = "^4.4.1"
-safety = "^3.7.0"
-nox = "^2025.10.16"
-uv = "^0.9.6"  # Fast package manager for nox venv backend (CVE-2025-54368 fixed)
-mutmut = "^3.3.1"
-pyyaml = "^6.0.3"
-scipy = "^1.14.0"  # v1.14.x supports Python 3.10-3.12, v1.16+ requires Python 3.11+
-scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
-dvc = {extras = ["ssh"], version = "^3.64.0"}
-kaggle = "^1.7.4.5"
-types-pyyaml = "^6.0.12.20250915"
-onnx = "^1.17.0"  # CVE-2024-7776 fixed in 1.17.0
-
-[tool.poetry.group.ml]
-optional = true
-
-[tool.poetry.group.ml.dependencies]
-torch = "^2.9.0"  # Updated to address GHSA-887c-mr87-cxwp (CVE-2025-3730)
-torchvision = "^0.24.0"  # Compatible with torch 2.9.0
-ultralytics = "^8.0.0"
-timm = "^0.9.0"
-albumentations = "^1.3.0"
-onnxruntime = "^1.15.0"
-# Phase 2: Training and Evaluation
-scikit-learn = "^1.3.0"  # Evaluation metrics (precision, recall, F1, ROC-AUC, calibration)
-tensorboard = "^2.14.0"  # Training monitoring and visualization
-# genalog = "^0.1.0"  # DISABLED: Conflicts with dev dependencies (requires matplotlib 3.2.1, scikit-image 0.16.2)
-# TODO: Replace with alternative synthetic degradation library or fork genalog with updated dependencies
-
-[tool.poetry.group.api]
-optional = true
-
-[tool.poetry.group.api.dependencies]
-fastapi = "^0.120.1"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
-uvicorn = {extras = ["standard"], version = "^0.23.0"}
-python-multipart = "^0.0.18"  # Updated to address CVE-2024-53981 and PVE-2024-99762
-starlette = "^0.49.1"  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS via Range header)
+[tool.hatch.build.targets.wheel]
+packages = ["src/image_preprocessing_detector", "benchmarks"]
 
 # Ruff Configuration - Consolidated Linting & Formatting
 # Replaces: Black (formatting), pydocstyle (docstrings), partial Bandit (security)
@@ -484,7 +429,7 @@ color = true
 [tool.mutmut]
 paths_to_mutate = "src/"
 backup = false
-runner = "poetry run pytest -x --assert=plain -o addopts=''"
+runner = "uv run pytest -x --assert=plain -o addopts=''"
 tests_dir = "tests/"
 # Mutation score threshold: percentage of mutations that must be killed
 # Score below 80% indicates weak test coverage

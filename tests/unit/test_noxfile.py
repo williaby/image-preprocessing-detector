@@ -339,45 +339,30 @@ class TestSbomSession:
 
         session.install.assert_called_once_with("cyclonedx-bom==4.6.1")
 
-    def test_sbom_generates_runtime_sbom(self):
-        """Test that sbom session generates runtime SBOM."""
-        session = MagicMock()
-        noxfile.sbom(session)
-
-        calls = session.run.call_args_list
-        runtime_call = [c for c in calls if "sbom-runtime.json" in str(c)]
-        assert len(runtime_call) == 1
-        assert "--no-dev" in str(runtime_call[0])
-
-    def test_sbom_generates_dev_sbom(self):
-        """Test that sbom session generates development SBOM."""
-        session = MagicMock()
-        noxfile.sbom(session)
-
-        calls = session.run.call_args_list
-        dev_call = [c for c in calls if "sbom-dev.json" in str(c)]
-        assert len(dev_call) == 1
-        assert "--only" in str(dev_call[0])
-
     def test_sbom_generates_complete_sbom(self):
-        """Test that sbom session generates complete SBOM."""
+        """Test that sbom session generates complete SBOM from environment.
+
+        Note: UV migration simplified SBOM generation to a single complete
+        environment-based SBOM, replacing the separate runtime/dev/complete files.
+        """
         session = MagicMock()
         noxfile.sbom(session)
 
         calls = session.run.call_args_list
         complete_call = [c for c in calls if "sbom-complete.json" in str(c)]
         assert len(complete_call) == 1
+        # Verify it uses environment-based generation (UV approach)
+        assert "environment" in str(complete_call[0])
 
-    def test_sbom_logs_all_generations(self):
-        """Test that sbom session logs all SBOM generations."""
+    def test_sbom_logs_generation(self):
+        """Test that sbom session logs SBOM generation and UV note."""
         session = MagicMock()
         noxfile.sbom(session)
 
         log_calls = session.log.call_args_list
-        assert len(log_calls) == 3
-        assert "Runtime SBOM generated" in str(log_calls[0])
-        assert "Development SBOM generated" in str(log_calls[1])
-        assert "Complete SBOM generated" in str(log_calls[2])
+        assert len(log_calls) == 2
+        assert "Complete SBOM generated" in str(log_calls[0])
+        assert "granular SBOMs" in str(log_calls[1])
 
 
 class TestScanSession:
@@ -409,10 +394,10 @@ class TestScanSession:
         noxfile.scan(session)
 
         session.error.assert_called_once()
-        assert "sbom-runtime.json" in str(session.error.call_args)
+        assert "sbom-complete.json" in str(session.error.call_args)
 
     def test_scan_uses_default_sbom_file(self, monkeypatch):
-        """Test that scan session uses default SBOM file."""
+        """Test that scan session uses default SBOM file (sbom-complete.json for UV)."""
         import pathlib
 
         mock_exists = MagicMock(return_value=True)
@@ -423,7 +408,7 @@ class TestScanSession:
         noxfile.scan(session)
 
         args = session.run.call_args[0]
-        assert "/workspace/sbom-runtime.json" in str(args)
+        assert "/workspace/sbom-complete.json" in str(args)
 
     def test_scan_uses_custom_sbom_file(self, monkeypatch):
         """Test that scan session uses custom SBOM file from args."""
@@ -521,8 +506,8 @@ class TestComplianceSession:
         log_calls = session.log.call_args_list
         assert len(log_calls) == 4
         assert "REUSE compliance" in str(log_calls[0])
-        assert "Generating SBOMs" in str(log_calls[1])
-        assert "Scanning runtime SBOM" in str(log_calls[2])
+        assert "Generating SBOM" in str(log_calls[1])
+        assert "Scanning SBOM" in str(log_calls[2])
         assert "completed successfully" in str(log_calls[3])
 
 

@@ -60,7 +60,7 @@ def load_diqa5000_images(
 
     # Load CSV annotations
     images_data = []
-    with open(csv_path, "r") as f:
+    with open(csv_path) as f:
         reader = csv.DictReader(f)
         for row in reader:
             images_data.append(row)
@@ -130,9 +130,7 @@ def load_kadid10k_images(
     try:
         from iqadataset import KADID10K
     except ImportError:
-        print(
-            "Warning: iqadataset not installed. Run: pip install iqadataset"
-        )
+        print("Warning: iqadataset not installed. Run: pip install iqadataset")
         print("Skipping KADID-10k dataset.")
         return []
 
@@ -145,7 +143,9 @@ def load_kadid10k_images(
         return []
 
     loaded_images = []
-    for i, sample in enumerate(tqdm(dataset, desc="Loading KADID-10k", total=max_images)):
+    for i, sample in enumerate(
+        tqdm(dataset, desc="Loading KADID-10k", total=max_images)
+    ):
         if i >= max_images:
             break
 
@@ -169,7 +169,9 @@ def load_kadid10k_images(
         binary_labels = {
             "blur": 1 if 1 <= distortion_type <= 5 else 0,
             "noise": 1 if 6 <= distortion_type <= 10 else 0,
-            "artifacts": 1 if 11 <= distortion_type <= 15 or 21 <= distortion_type <= 25 else 0,
+            "artifacts": 1
+            if 11 <= distortion_type <= 15 or 21 <= distortion_type <= 25
+            else 0,
             "illumination": 1 if 16 <= distortion_type <= 20 else 0,
             "skew": 0,  # KADID-10k doesn't have geometric distortions
         }
@@ -286,7 +288,7 @@ def load_smartdoc_qa_images(
     Returns:
         List of (image, binary_labels, metadata) tuples
     """
-    print(f"\n📖 Loading SmartDoc-QA dataset...")
+    print("\n📖 Loading SmartDoc-QA dataset...")
 
     # Check if dataset is downloaded and extracted
     if not smartdoc_dir.exists():
@@ -323,7 +325,7 @@ def generate_augmented_dataset(
         val_ratio: Fraction for validation set
         test_ratio: Fraction for test set
     """
-    print(f"\n🎨 Generating augmented dataset...")
+    print("\n🎨 Generating augmented dataset...")
     print(f"Source images: {len(source_images)}")
     print(f"Augmentation multiplier: {augmentation_multiplier}x")
     print(f"Target samples: {num_samples}")
@@ -351,7 +353,7 @@ def generate_augmented_dataset(
         "test": shuffled_sources[val_end:],
     }
 
-    print(f"\nSource split:")
+    print("\nSource split:")
     print(f"  Train: {len(source_splits['train'])} images")
     print(f"  Val: {len(source_splits['val'])} images")
     print(f"  Test: {len(source_splits['test'])} images")
@@ -373,9 +375,9 @@ def generate_augmented_dataset(
         # Calculate augmentations needed per source image
         augs_per_source = int(augmentation_multiplier)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Generating {split.upper()} SET")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Target samples: {split_target}")
         print(f"Source images: {len(split_sources)}")
         print(f"Augmentations per source: {augs_per_source}")
@@ -428,7 +430,9 @@ def generate_augmented_dataset(
                         }
 
                         # Save metadata JSON
-                        metadata_path = split_dirs[split] / f"{split}_{sample_idx:06d}.json"
+                        metadata_path = (
+                            split_dirs[split] / f"{split}_{sample_idx:06d}.json"
+                        )
                         with open(metadata_path, "w") as f:
                             json.dump(sample_metadata, f, indent=2)
 
@@ -461,7 +465,7 @@ def generate_augmented_dataset(
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    print(f"\n✅ Dataset generation complete!")
+    print("\n✅ Dataset generation complete!")
     print(f"Output directory: {output_dir}")
     print(f"Summary saved to: {summary_path}")
 
@@ -590,12 +594,14 @@ def main() -> None:
     ohr_bench_dir = Path(args.ohr_bench_dir)
     output_dir = Path(args.output_dir)
 
-    print("="*60)
+    print("=" * 60)
     print("HYBRID PHASE 2 IQA DATASET GENERATION")
-    print("="*60)
-    print(f"\nDataset Sources:")
+    print("=" * 60)
+    print("\nDataset Sources:")
     print(f"  - DIQA-5000: {args.diqa5000_samples} images (ground-truth 3D MOS)")
-    print(f"  - SmartDoc-QA: {args.smartdoc_samples} images (ground-truth quality labels)")
+    print(
+        f"  - SmartDoc-QA: {args.smartdoc_samples} images (ground-truth quality labels)"
+    )
     print(f"  - OHR-Bench: {args.ohr_bench_samples} PDF pages (weak supervision)")
     if args.use_kadid10k:
         print(f"  - KADID-10k: {args.kadid10k_samples} images (ground-truth IQA)")
@@ -632,7 +638,9 @@ def main() -> None:
         )
         all_images.extend(smartdoc_images)
     else:
-        print(f"Info: SmartDoc-QA directory not found at {smartdoc_dir} (may be downloading)")
+        print(
+            f"Info: SmartDoc-QA directory not found at {smartdoc_dir} (may be downloading)"
+        )
 
     # 3. OHR-Bench
     if ohr_bench_dir.exists():
@@ -656,9 +664,9 @@ def main() -> None:
         print("Please check dataset paths and ensure datasets are downloaded.")
         sys.exit(1)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"TOTAL SOURCE IMAGES LOADED: {len(all_images)}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Generate augmented dataset
     generate_augmented_dataset(
@@ -673,12 +681,14 @@ def main() -> None:
     )
 
     print("\n✅ Dataset generation complete!")
-    print(f"\nNext steps:")
-    print(f"1. Upload to GCS:")
+    print("\nNext steps:")
+    print("1. Upload to GCS:")
     print(f"   gsutil -m rsync -r {output_dir}/ \\")
-    print(f"       gs://image_detection_b/image-preprocessing-detector/datasets/iqa_phase2/")
-    print(f"\n2. Start A100 training:")
-    print(f"   poetry run modal run modal/train_phase2_iqa.py")
+    print(
+        "       gs://image_detection_b/image-preprocessing-detector/datasets/iqa_phase2/"
+    )
+    print("\n2. Start A100 training:")
+    print("   poetry run modal run modal/train_phase2_iqa.py")
 
 
 if __name__ == "__main__":

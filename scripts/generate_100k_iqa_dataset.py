@@ -23,7 +23,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import cv2
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -53,10 +52,10 @@ class DatasetConfig:
 
     # Dataset composition (samples per source) - Using only available datasets
     COMPOSITION = {
-        "diqa_5000": 3_500,     # Use as-is (already augmented with 10 distortion types)
-        "tablebank": 45_500,    # Heavy augmentation (424K available)
-        "pubtabnet": 45_500,    # Heavy augmentation (500K available)
-        "funsd_plus": 5_500,    # Enhanced FUNSD+ (1,026 × 6 augmentation = 6,156 available)
+        "diqa_5000": 3_500,  # Use as-is (already augmented with 10 distortion types)
+        "tablebank": 45_500,  # Heavy augmentation (424K available)
+        "pubtabnet": 45_500,  # Heavy augmentation (500K available)
+        "funsd_plus": 5_500,  # Enhanced FUNSD+ (1,026 × 6 augmentation = 6,156 available)
         # Skipped: doclaynet (needs PDF conversion), docbank (empty), iam (empty)
     }
 
@@ -141,13 +140,23 @@ class DatasetConfig:
 
     # Dataset-specific augmentation strategies
     AUGMENTATION_STRATEGY = {
-        "diqa_5000": {"clean": 0.0, "light": 0.0, "medium": 0.0, "heavy": 0.0},  # Use as-is
+        "diqa_5000": {
+            "clean": 0.0,
+            "light": 0.0,
+            "medium": 0.0,
+            "heavy": 0.0,
+        },  # Use as-is
         "doclaynet": {"clean": 0.20, "light": 0.20, "medium": 0.40, "heavy": 0.20},
         "tablebank": {"clean": 0.30, "light": 0.30, "medium": 0.30, "heavy": 0.10},
         "pubtabnet": {"clean": 0.30, "light": 0.30, "medium": 0.30, "heavy": 0.10},
         "docbank": {"clean": 0.30, "light": 0.30, "medium": 0.30, "heavy": 0.10},
         "iam": {"clean": 0.50, "light": 0.50, "medium": 0.0, "heavy": 0.0},
-        "funsd_plus": {"clean": 0.20, "light": 0.30, "medium": 0.35, "heavy": 0.15},  # Varied augmentation for 5x multiplier
+        "funsd_plus": {
+            "clean": 0.20,
+            "light": 0.30,
+            "medium": 0.35,
+            "heavy": 0.15,
+        },  # Varied augmentation for 5x multiplier
     }
 
     # DPI upsampling targets per dataset
@@ -179,7 +188,9 @@ class AugmentationPipeline:
             "noise": A.OneOf(
                 [
                     A.GaussNoise(p=1.0),  # Use defaults
-                    A.ISONoise(color_shift=(0.01, 0.1), p=1.0),  # Removed intensity parameter
+                    A.ISONoise(
+                        color_shift=(0.01, 0.1), p=1.0
+                    ),  # Removed intensity parameter
                     A.MultiplicativeNoise(multiplier=(0.9, 1.1), p=1.0),
                 ],
                 p=1.0,
@@ -190,7 +201,9 @@ class AugmentationPipeline:
                     A.RandomBrightnessContrast(
                         brightness_limit=0.3, contrast_limit=0.3, p=1.0
                     ),
-                    A.RandomGamma(gamma_limit=(50, 150), p=1.0),  # Keep as-is (percentage values)
+                    A.RandomGamma(
+                        gamma_limit=(50, 150), p=1.0
+                    ),  # Keep as-is (percentage values)
                     A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=1.0),
                 ],
                 p=1.0,
@@ -276,7 +289,9 @@ class DatasetGenerator:
             )
 
         # DocLayNet (PDFs - will need to convert to images)
-        doclaynet_path = Path("/home/byron/dev/data_ingestor/data/benchmarks/doclaynet/documents")
+        doclaynet_path = Path(
+            "/home/byron/dev/data_ingestor/data/benchmarks/doclaynet/documents"
+        )
         if doclaynet_path.exists():
             all_files = sorted(doclaynet_path.glob("*.pdf"))
             # Skip DocLayNet for now - requires PDF->image conversion
@@ -292,8 +307,12 @@ class DatasetGenerator:
                 # Load HuggingFace Dataset
                 funsd_dataset = load_from_disk(str(funsd_plus_path))
                 # Calculate augmentation multiplier to reach target
-                augmentation_multiplier = max(1, self.config.COMPOSITION["funsd_plus"] // len(funsd_dataset))
-                print(f"  FUNSD+: {len(funsd_dataset)} base samples × {augmentation_multiplier} augmentation = {len(funsd_dataset) * augmentation_multiplier} samples")
+                augmentation_multiplier = max(
+                    1, self.config.COMPOSITION["funsd_plus"] // len(funsd_dataset)
+                )
+                print(
+                    f"  FUNSD+: {len(funsd_dataset)} base samples × {augmentation_multiplier} augmentation = {len(funsd_dataset) * augmentation_multiplier} samples"
+                )
                 # Repeat each index augmentation_multiplier times for multiple augmented versions
                 all_indices = list(range(len(funsd_dataset))) * augmentation_multiplier
                 # Shuffle to mix different augmentations
@@ -301,7 +320,9 @@ class DatasetGenerator:
                 # Limit to target composition
                 selected_indices = all_indices[: self.config.COMPOSITION["funsd_plus"]]
                 # Store as (dataset_object, index) tuples
-                datasets["funsd_plus"] = [(funsd_dataset, idx) for idx in selected_indices]
+                datasets["funsd_plus"] = [
+                    (funsd_dataset, idx) for idx in selected_indices
+                ]
             except Exception as e:
                 print(f"Warning: Could not load FUNSD+ dataset: {e}")
                 # Fallback to empty list if loading fails
@@ -310,7 +331,7 @@ class DatasetGenerator:
         # DocBank - Empty, skip
         # IAM - Empty, skip
 
-        print(f"\nLoaded datasets:")
+        print("\nLoaded datasets:")
         for name, files in datasets.items():
             print(f"  {name}: {len(files)} files")
 
@@ -318,9 +339,9 @@ class DatasetGenerator:
 
     def generate_dataset(self):
         """Generate complete 100K dataset."""
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("GENERATING 100K IQA TRAINING DATASET")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         # Load source datasets
         source_datasets = self.load_source_datasets()
@@ -339,7 +360,7 @@ class DatasetGenerator:
                         # FUNSD+ format: (dataset, index)
                         dataset_obj, idx = item
                         # Extract image from HuggingFace Dataset
-                        image = dataset_obj[idx]['image']
+                        image = dataset_obj[idx]["image"]
                         # Generate augmented sample with image directly
                         sample_metadata = self.generate_sample(
                             image, dataset_name, sample_id, is_pil_image=True
@@ -364,7 +385,11 @@ class DatasetGenerator:
         self.print_statistics(sample_id)
 
     def generate_sample(
-        self, source_path_or_image, dataset_name: str, sample_id: int, is_pil_image: bool = False
+        self,
+        source_path_or_image,
+        dataset_name: str,
+        sample_id: int,
+        is_pil_image: bool = False,
     ) -> dict[str, Any]:
         """Generate single augmented sample with full metadata tracking.
 
@@ -414,7 +439,8 @@ class DatasetGenerator:
         # 8. Track metadata
         # Determine source filename (Path object or HF dataset)
         source_filename = (
-            str(source_path_or_image.name) if not is_pil_image
+            str(source_path_or_image.name)
+            if not is_pil_image
             else f"{dataset_name}_{sample_id}.png"
         )
 
@@ -480,13 +506,13 @@ class DatasetGenerator:
         if rand < 0.05:  # 5% B&W
             image = image.convert("1")
             return "1", image
-        elif rand < 0.40:  # 35% grayscale (0.05 + 0.35)
+        if rand < 0.40:  # 35% grayscale (0.05 + 0.35)
             image = image.convert("L")
             return "L", image
-        else:  # 60% RGB
-            if image.mode != "RGB":
-                image = image.convert("RGB")
-            return "RGB", image
+        # 60% RGB
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        return "RGB", image
 
     def apply_orientation(self, image: Image.Image) -> tuple[str, Image.Image]:
         """Apply orientation transformation (20% landscape)."""
@@ -547,9 +573,7 @@ class DatasetGenerator:
         """Infer layout type from dataset."""
         layout_map = {
             "diqa_5000": "single_column",
-            "doclaynet": random.choice(
-                ["single_column", "multi_column", "complex"]
-            ),
+            "doclaynet": random.choice(["single_column", "multi_column", "complex"]),
             "tablebank": "single_column",
             "pubtabnet": "single_column",
             "docbank": random.choice(["single_column", "multi_column"]),
@@ -615,18 +639,16 @@ class DatasetGenerator:
 
     def print_statistics(self, total_samples: int):
         """Print final dataset statistics."""
-        print(f"\n{'='*80}")
-        print(f"DATASET GENERATION COMPLETE")
-        print(f"{'='*80}")
+        print(f"\n{'=' * 80}")
+        print("DATASET GENERATION COMPLETE")
+        print(f"{'=' * 80}")
         print(f"Total samples generated: {total_samples:,}")
         print(f"Output directory: {self.output_dir}")
         print(f"Estimated size: ~{total_samples * 0.5 / 1000:.1f} GB")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate 100K IQA training dataset"
-    )
+    parser = argparse.ArgumentParser(description="Generate 100K IQA training dataset")
     parser.add_argument(
         "--output-dir",
         type=Path,

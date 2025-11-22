@@ -83,7 +83,7 @@ repos:
     hooks:
       - id: validate-front-matter
         name: Validate documentation front matter
-        entry: poetry run python tools/validate_front_matter.py docs
+        entry: uv run python tools/validate_front_matter.py docs
         language: system
         files: ^docs/.*\.md$
         pass_filenames: false
@@ -106,12 +106,15 @@ repos:
         additional_dependencies: ['bandit[toml]']
         exclude: 'tests/.*'
 
-  # Dependency scanning with Safety
-  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-    rev: v1.3.3
+  # Dependency scanning with Safety (using local hook for UV compatibility)
+  - repo: local
     hooks:
-      - id: python-safety-dependencies-check
+      - id: safety-check
+        name: safety
+        entry: uv run safety check
+        language: system
         files: pyproject.toml
+        pass_filenames: false
 
 # Exclude patterns (don't run hooks on these)
 exclude: |
