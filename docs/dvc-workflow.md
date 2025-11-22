@@ -89,46 +89,46 @@ The following datasets are tracked with DVC:
 ### Pull Datasets
 ```bash
 # Pull all tracked datasets
-poetry run dvc pull
+uv run dvc pull
 
 # Pull specific dataset
-poetry run dvc pull data/training/iqa_phase2.dvc
-poetry run dvc pull data/benchmarks/ohr-bench.dvc
+uv run dvc pull data/training/iqa_phase2.dvc
+uv run dvc pull data/benchmarks/ohr-bench.dvc
 ```
 
 ### Add New Data to Tracking
 ```bash
 # Add a new dataset directory
-poetry run dvc add data/training/new_dataset
+uv run dvc add data/training/new_dataset
 
 # Commit the .dvc file to git
 git add data/training/new_dataset.dvc
 git commit -m "Add new dataset to DVC tracking"
 
 # Push data to remote storage
-poetry run dvc push
+uv run dvc push
 ```
 
 ### Update Existing Data
 ```bash
 # After modifying a tracked dataset
-poetry run dvc add data/training/iqa_phase2
+uv run dvc add data/training/iqa_phase2
 
 # Commit updated .dvc file
 git add data/training/iqa_phase2.dvc
 git commit -m "Update IQA training dataset"
 
 # Push updated data
-poetry run dvc push
+uv run dvc push
 ```
 
 ### Check Status
 ```bash
 # See which datasets have changed
-poetry run dvc status
+uv run dvc status
 
 # See data cache status
-poetry run dvc cache dir
+uv run dvc cache dir
 ```
 
 ### Remove Data Locally (Keep Tracking)
@@ -137,7 +137,7 @@ poetry run dvc cache dir
 rm -rf data/training/iqa_phase2
 
 # Restore from DVC cache
-poetry run dvc pull data/training/iqa_phase2.dvc
+uv run dvc pull data/training/iqa_phase2.dvc
 ```
 
 ## Remote Storage
@@ -153,24 +153,24 @@ For production or team collaboration, you can add cloud storage remotes:
 
 #### AWS S3
 ```bash
-poetry run dvc remote add -d s3remote s3://my-bucket/dvc-storage
-poetry run dvc remote modify s3remote region us-east-1
+uv run dvc remote add -d s3remote s3://my-bucket/dvc-storage
+uv run dvc remote modify s3remote region us-east-1
 ```
 
 #### Google Cloud Storage
 ```bash
-poetry run dvc remote add -d gcsremote gs://my-bucket/dvc-storage
-poetry run dvc remote modify gcsremote projectname my-project
+uv run dvc remote add -d gcsremote gs://my-bucket/dvc-storage
+uv run dvc remote modify gcsremote projectname my-project
 ```
 
 #### SSH/SFTP
 ```bash
-poetry run dvc remote add -d sshremote ssh://user@example.com/path/to/dvc-storage
+uv run dvc remote add -d sshremote ssh://user@example.com/path/to/dvc-storage
 ```
 
 ### List Remotes
 ```bash
-poetry run dvc remote list
+uv run dvc remote list
 ```
 
 ## CI/CD Integration
@@ -181,13 +181,13 @@ In CI pipelines, datasets can be pulled automatically:
 # Example GitHub Actions workflow
 steps:
   - name: Setup DVC
-    run: poetry install --with dev,ml
+    run: uv sync --extra dev --extra ml
 
   - name: Pull datasets
-    run: poetry run dvc pull
+    run: uv run dvc pull
 
   - name: Run tests
-    run: poetry run pytest
+    run: uv run pytest
 ```
 
 ## Best Practices
@@ -203,16 +203,16 @@ steps:
 ### Dataset Not Found
 ```bash
 # Pull from remote
-poetry run dvc pull data/training/iqa_phase2.dvc
+uv run dvc pull data/training/iqa_phase2.dvc
 ```
 
 ### Cache Issues
 ```bash
 # Verify cache
-poetry run dvc cache dir
+uv run dvc cache dir
 
 # Rebuild cache
-poetry run dvc cache rebuild
+uv run dvc cache rebuild
 ```
 
 ### Permission Errors
@@ -230,7 +230,7 @@ chmod -R u+w .dvc/cache
 ## References
 
 - [DVC Documentation](https://dvc.org/doc)
-- [DVC with Poetry](https://dvc.org/doc/install/poetry)
+- [DVC install guides](https://dvc.org/doc/install)
 - [DVC Remote Storage](https://dvc.org/doc/command-reference/remote)
 
 ---

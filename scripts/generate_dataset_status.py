@@ -31,13 +31,14 @@ def get_dataset_size(dataset_path: Path) -> tuple[str, int]:
             check=True,
         )
         bytes_size = int(result.stdout.split()[0])
+        size_for_display = float(bytes_size)
 
         # Convert to human readable
         for unit in ["B", "KB", "MB", "GB", "TB"]:
-            if bytes_size < 1024:
-                return f"{bytes_size:.1f} {unit}", bytes_size
-            bytes_size /= 1024
-        return f"{bytes_size:.1f} PB", int(bytes_size * 1024**5)
+            if size_for_display < 1024:
+                return f"{size_for_display:.1f} {unit}", bytes_size
+            size_for_display /= 1024
+        return f"{size_for_display:.1f} PB", bytes_size
     except Exception:
         return "Unknown", 0
 
@@ -62,8 +63,8 @@ def count_files(dataset_path: Path, extensions: list[str] = None) -> dict[str, i
             count = len([line for line in result.stdout.strip().split("\n") if line])
             if count > 0:
                 counts[ext] = count
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"Warning: failed counting *{ext} files in {dataset_path}: {exc}")
 
     # Total files
     try:

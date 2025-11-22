@@ -32,7 +32,7 @@ def main():
 
     # Create test configuration by modifying the main script
     cmd = [
-        "poetry",
+        "uv",
         "run",
         "python",
         str(PROJECT_ROOT / "scripts/generate_100k_iqa_dataset.py"),
@@ -48,7 +48,12 @@ def main():
         "\nNOTE: This is a test run. For full 100K generation, see README instructions.\n"
     )
 
-    subprocess.run(cmd)
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as exc:
+        print(f"\n❌ Test dataset generation failed: {exc}")
+        return
+    print("\n✅ Test dataset generation completed.")
 
 
 if __name__ == "__main__":

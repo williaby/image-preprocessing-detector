@@ -8,7 +8,7 @@
 # This script automates the entire workflow for creating the 100K IQA dataset.
 #
 # Duration: 8-12 hours (generation) + 30-90 minutes (upload)
-# Prerequisites: GCS credentials configured, poetry install --with ml
+# Prerequisites: GCS credentials configured, uv sync --extra ml
 #
 
 set -e  # Exit on error
@@ -54,7 +54,7 @@ echo "Duration: ~8-12 hours"
 echo "Output: data/training/iqa_phase2_100k/"
 echo ""
 
-if ! poetry run python scripts/generate_100k_iqa_dataset.py; then
+if ! uv run python scripts/generate_100k_iqa_dataset.py; then
     echo -e "${RED}Error: Dataset generation failed${NC}" >&2
     exit 1
 fi
@@ -151,7 +151,7 @@ echo ""
 echo "Next Steps:"
 echo "  1. Push Git commit: git push origin <branch>"
 echo "  2. Update training config: configs/modal_phase2_iqa.yaml"
-echo "  3. Run training: poetry run modal run modal/train_phase2_iqa.py"
+echo "  3. Run training: uv run modal run modal/train_phase2_iqa.py"
 echo ""
 echo "To download dataset in Modal/Colab:"
 echo "  dvc pull data/training/iqa_phase2_100k"

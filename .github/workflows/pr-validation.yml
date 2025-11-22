@@ -125,10 +125,10 @@ jobs:
 
           # Generate current requirements
           echo "Generating requirements.txt from uv.lock..."
-          uv export --format requirements-txt --no-hashes > requirements.txt
+          uv export --format requirements.txt --no-hashes > requirements.txt
 
           echo "Generating requirements-dev.txt from uv.lock..."
-          uv export --format requirements-txt --no-hashes --extra dev > requirements-dev.txt
+          uv export --format requirements.txt --no-hashes --extra dev > requirements-dev.txt
 
           # Check if generated files match committed files
           if ! git diff --exit-code requirements*.txt 2>/dev/null; then

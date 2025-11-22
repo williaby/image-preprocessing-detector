@@ -80,8 +80,8 @@ jobs:
       - name: Generate cache keys
         id: cache-key
         run: |
-          echo "uv-hash=${{ hashFiles('**/uv.lock') }}" >> $GITHUB_OUTPUT
-          echo "pyproject-hash=${{ hashFiles('**/pyproject.toml') }}" >> $GITHUB_OUTPUT
+          echo "uv-hash=${{ hashFiles('**/uv.lock') }}" >> "$GITHUB_OUTPUT"
+          echo "pyproject-hash=${{ hashFiles('**/pyproject.toml') }}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Python 3.12
         uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
@@ -91,7 +91,7 @@ jobs:
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       # Image processing optimized caching strategy
       - name: Cache UV dependencies

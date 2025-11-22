@@ -19,13 +19,13 @@ Comprehensive evaluation system for the Image Preprocessing Detector across Phas
 - Result aggregation and reporting tools (`scorers/`, `reports/`)
 - Documentation for the benchmarking framework
 
-**For actual dataset files**, see [data/benchmarks/](../data/benchmarks/) (~105GB total: 63GB local + 42GB DocLayNet symlink, gitignored).
+**For actual dataset files**, see [data/benchmarks/](../data/benchmarks/) (~98GB total: ~56GB local + 42GB DocLayNet symlink, gitignored).
 
 ## Quick Start
 
 ```bash
 # Install dependencies (if not already installed)
-poetry install --with dev
+uv sync --extra dev
 
 # Generate synthetic IQA test data
 python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-smoke
@@ -63,7 +63,7 @@ benchmarks/
 **Dataset Storage** (separate location):
 
 ```text
-data/benchmarks/             # Actual dataset files (~105GB total, gitignored)
+data/benchmarks/             # Actual dataset files (~98GB total, gitignored)
 ├── doclaynet/              # Layout detection (42GB, symlinked to data_ingestor)
 ├── tablebank/              # Table detection (27GB, 424K images)
 ├── pubtabnet/              # Table structure (14GB, 500K images)

@@ -11,7 +11,7 @@ purpose: Complete reference for dataset locations across NFS and GCS storage.
 **Purpose**: Complete reference showing where each dataset is located in NFS storage, local symlinks, and cloud backups.
 
 **Last Updated**: 2025-11-21 (Training datasets added)
-**Total Storage**: ~239GB (63GB benchmarks + 134GB training + 42GB DocLayNet symlink)
+**Total Storage**: ~232GB (~56GB benchmarks + 134GB training + 42GB DocLayNet symlink)
 **Datasets**: 12/12 benchmarks + 8/8 training datasets (100% complete)
 **Storage Strategy**: NFS primary + Local symlinks + GCS backup
 
@@ -21,8 +21,8 @@ purpose: Complete reference for dataset locations across NFS and GCS storage.
 
 | **Dataset** | **Size** | **NFS Location** | **Local Symlink** | **GCS Status** |
 |-------------|----------|------------------|-------------------|----------------|
-| **TableBank** | 27GB | `/mnt/unraid/.../tablebank` | `data/benchmarks/tablebank` | ⏳ Upload pending |
-| **PubTabNet** | 14GB | `/mnt/unraid/.../pubtabnet` | `data/benchmarks/pubtabnet` | ⏳ Upload pending |
+| **TableBank** | 27GB | `/mnt/unraid/.../tablebank` | `data/benchmarks/tablebank` | ✅ Already in GCS (source) |
+| **PubTabNet** | 14GB | `/mnt/unraid/.../pubtabnet` | `data/benchmarks/pubtabnet` | ✅ Already in GCS (source) |
 | **DIQA-5000** | 5.4GB | `/mnt/unraid/.../diqa-5000` | `data/benchmarks/diqa-5000` | ⏳ Upload pending |
 | **FUNSD+** | 500MB | `/mnt/unraid/.../funsd_plus` | `data/benchmarks/funsd_plus` | ⏳ Upload pending |
 | **DocLayNet** | 42GB* | `/home/byron/dev/data_ingestor/...` | `data/benchmarks/doclaynet` | ❌ Not uploaded |
@@ -48,7 +48,7 @@ _* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this p
 ```
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
 │  LOCAL (WSL)    │         │   NFS (Unraid)   │         │   GCS (Cloud)   │
-│  ~1 MB          │◄────────┤   ~105 GB        │────────►│   Backup        │
+│  ~1 MB          │◄────────┤   ~98 GB         │────────►│   Backup        │
 │                 │Symlinks │                  │ Upload  │                 │
 │ • Test Fixtures │         │ • Benchmarks     │         │ • Training Data │
 │ • Symlinks Only │         │ • Training Data  │         │ • Benchmarks    │
@@ -239,12 +239,12 @@ _* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this p
 | Category | Datasets | Total Size | GCS Status |
 |----------|----------|------------|------------|
 | **Document IQA** | DIQA-5000, OHR-Bench | 7.2GB | ⏳ Upload pending |
-| **Table Detection** | TableBank, PubTabNet, FinTabNet | 46.3GB | ⏳ Upload pending |
+| **Table Detection** | TableBank, PubTabNet, FinTabNet | 46.3GB | ✅ TableBank/PubTabNet in GCS; FinTabNet pending |
 | **Layout Detection** | DocLayNet (symlink), OmniDocBench | 43.2GB | ❌ DocLayNet not uploaded |
 | **Specialized** | FUNSD+, SignaTR6K, WiLI-2018, COCO-Text | 0.8GB | ⏳ Upload pending |
 | **Synthetic** | Synthetic IQA | 372KB | ❌ Not uploaded (regenerated) |
 
-**Benchmark Total**: ~105GB (63GB NFS + 42GB external symlink)
+**Benchmark Total**: ~98GB (~56GB NFS + 42GB external symlink)
 **Downloaded**: 12/12 datasets (100% complete)
 **NFS Storage**: `/mnt/unraid/training_data/image_detection/benchmarks/`
 
@@ -428,7 +428,7 @@ _* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this p
 
 **Primary Bucket**: `gs://image_detection_b/image-preprocessing-detector/`
 
-#### Benchmark Data (Upload Pending)
+#### Benchmark Data (GCS backup status)
 
 | Local Dataset | GCS Path | Size | Status |
 |--------------|----------|------|--------|
@@ -447,10 +447,9 @@ _* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this p
 | **100K IQA Training** | `gs://image_detection_b/.../datasets/iqa_phase2_100k/` | ~50GB | ⏳ Generation pending |
 
 **Next Steps**:
-1. ✅ Complete TableBank download (currently 61%)
+1. ⏳ Upload remaining benchmarks to GCS (DIQA-5000, FUNSD+, FinTabNet, etc.)
 2. ⏳ Generate 100K IQA training dataset
 3. ⏳ Upload to GCS for Modal training access
-4. ⏳ Upload remaining benchmarks for backup
 
 ---
 
@@ -484,7 +483,7 @@ gsutil du -sh gs://image_detection_b/
 **Mount Point**: `/mnt/unraid/training_data/image_detection/`
 **Capacity**: 100TB total (shared storage)
 **Network**: Gigabit ethernet (1 Gbps)
-**Current Usage**: ~105GB (benchmarks) + ~50GB future (training data) = ~155GB total
+**Current Usage**: ~98GB (benchmarks) + ~50GB future (training data) = ~148GB total
 
 **Mount Verification**:
 ```bash
@@ -506,13 +505,13 @@ ls -l data/benchmarks/
 
 ```bash
 # Create all symlinks
-poetry run python scripts/create_symlinks.py --all
+uv run python scripts/create_symlinks.py --all
 
 # Create benchmarks only
-poetry run python scripts/create_symlinks.py --benchmarks-only
+uv run python scripts/create_symlinks.py --benchmarks-only
 
 # Verify symlinks
-poetry run python scripts/create_symlinks.py --verify
+uv run python scripts/create_symlinks.py --verify
 ```
 
 **Symlink Mappings**:
@@ -541,13 +540,13 @@ SYMLINK_MAPPINGS = [
 
 ```bash
 # Download all datasets
-poetry run python scripts/download_all_datasets.py --all
+uv run python scripts/download_all_datasets.py --all
 
 # Download benchmarks only
-poetry run python scripts/download_all_datasets.py --benchmarks-only
+uv run python scripts/download_all_datasets.py --benchmarks-only
 
 # Download specific dataset
-poetry run python scripts/download_all_datasets.py --dataset tablebank
+uv run python scripts/download_all_datasets.py --dataset tablebank
 ```
 
 **Download Sources**:
@@ -571,8 +570,8 @@ data/training/                  # 0B (not created yet)
 
 **NFS (Unraid)**:
 ```bash
-/mnt/unraid/training_data/image_detection/benchmarks/  # ~63GB (11 datasets)
-  ├── tablebank/                # ~27GB (in progress)
+/mnt/unraid/training_data/image_detection/benchmarks/  # ~56GB (11 datasets)
+  ├── tablebank/                # ~27GB
   ├── pubtabnet/                # ~14GB
   ├── diqa-5000/                # 5.4GB
   ├── funsd_plus/               # 500MB
@@ -583,8 +582,9 @@ data/training/                  # 0B (not created yet)
   ├── wili_2018/                # 129MB
   └── cocotext/                 # 53MB
 
-/mnt/unraid/training_data/image_detection/training/   # ~0GB (not created yet)
-  └── iqa_phase2_100k/          # ~50GB (future)
+/mnt/unraid/training_data/image_detection/training/   # ~134GB (8 datasets downloaded)
+  └── iqa_phase2_100k/          # ~10GB current (regeneration to ~50GB planned)
+  # Additional training datasets stored alongside (receipts_hitl, docsynth300k, etc.)
 ```
 
 **External Symlinks**:
@@ -709,7 +709,7 @@ ls -lh /mnt/unraid/training_data/image_detection/benchmarks/
 
 ```bash
 # Check all symlinks
-poetry run python scripts/create_symlinks.py --verify
+uv run python scripts/create_symlinks.py --verify
 
 # Expected output:
 # ✅ data/benchmarks/tablebank → /mnt/unraid/.../tablebank (Valid)
@@ -717,7 +717,7 @@ poetry run python scripts/create_symlinks.py --verify
 # ...
 
 # Fix broken symlinks
-poetry run python scripts/create_symlinks.py --all
+uv run python scripts/create_symlinks.py --all
 ```
 
 ### 8.3 Disk Space Issues
@@ -759,7 +759,7 @@ du -sh data/
 
 **Created**: 2025-11-20 (Phase 2 dataset reorganization)
 **Status**: ✅ **12/12 Benchmarks Downloaded** - NFS dual storage complete
-**Storage**: 105GB (63GB NFS + 42GB external symlink)
+**Storage**: ~98GB (~56GB NFS + 42GB external symlink)
 **Local Footprint**: ~1.1MB (symlinks only)
 **Next Steps**: Generate 100K IQA training dataset, upload to GCS, launch Modal training
 **Next Review**: After 100K dataset generation complete

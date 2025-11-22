@@ -53,7 +53,7 @@ The following packages have GPL or unknown licenses but are approved for use bec
 
 - **Package**: `billiard@4.2.3`
 - **License**: Not detected by dependency scanner
-- **Actual License**: BSD (verified at https://github.com/celery/billiard/blob/master/LICENSE.txt)
+- **Actual License**: BSD (verified at <https://github.com/celery/billiard/blob/master/LICENSE.txt>)
 - **Source**: Transitive dependency of `dvc` (via `celery`)
 - **Purpose**: Multiprocessing library for Celery task queue
 - **Justification**:
@@ -139,14 +139,14 @@ To verify these packages are not distributed with the package:
 
 ```bash
 # Check production dependencies only
-poetry export -f requirements.txt --output requirements.txt --without-hashes
+uv pip compile pyproject.toml -o requirements.txt
 
 # Verify DVC and transitive deps are NOT in requirements.txt
 grep -E "grandalf|text-unidecode|billiard|dulwich|pygit2|zc-lockfile" requirements.txt
 # Should return: (no matches)
 
 # Check dev dependencies (where these appear)
-poetry export -f requirements.txt --output requirements-dev.txt --with dev --without-hashes
+uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
 grep -E "grandalf|text-unidecode|billiard|dulwich|pygit2|zc-lockfile" requirements-dev.txt
 # Should return: (matches found - expected)
 ```

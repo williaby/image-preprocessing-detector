@@ -19,7 +19,6 @@ Usage:
 
 import argparse
 import os
-import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -33,14 +32,13 @@ GCS_CREDENTIALS = PROJECT_ROOT / ".gcp/service-account.json"
 # Get HF token from environment
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 if not HF_TOKEN:
-    try:
-        with open(PROJECT_ROOT / ".env") as f:
+    env_path = PROJECT_ROOT / ".env"
+    if env_path.exists():
+        with env_path.open() as f:
             for line in f:
                 if line.startswith("HF_TOKEN="):
                     HF_TOKEN = line.strip().split("=", 1)[1]
                     break
-    except FileNotFoundError:
-        pass
 
 
 # Dataset definitions
@@ -200,9 +198,8 @@ def download_from_gcs(dataset_name: str, config: dict) -> bool:
     env = os.environ.copy()
     env["GOOGLE_APPLICATION_CREDENTIALS"] = str(GCS_CREDENTIALS)
 
-    # Sanitize paths to prevent command injection (defensive coding)
-    gcs_path = shlex.quote(config["gcs_path"])
-    nfs_path = shlex.quote(str(config["nfs_path"]) + "/")
+    gcs_path = config["gcs_path"]
+    nfs_path = str(config["nfs_path"]) + "/"
 
     cmd = [
         "gsutil",
@@ -257,7 +254,7 @@ if hasattr(dataset, 'keys'):
 
     try:
         result = subprocess.run(
-            ["poetry", "run", "python", "-c", script],
+            ["uv", "run", "python", "-c", script],
             check=True,
             capture_output=True,
             text=True,
@@ -288,8 +285,8 @@ def download_from_url(dataset_name: str, config: dict) -> bool:
     cmd = [
         "wget",
         "-O",
-        shlex.quote(str(output_file)),
-        shlex.quote(config["url"]),
+        str(output_file),
+        config["url"],
     ]
 
     try:
@@ -316,7 +313,7 @@ def download_dataset(dataset_name: str, config: dict) -> bool:
         return download_from_url(dataset_name, config)
     if source == "manual":
         print(f"⚠️ {dataset_name} requires manual download: {config.get('note', '')}")
-        return False
+        return True
     print(f"❌ Unknown source type: {source}")
     return False
 

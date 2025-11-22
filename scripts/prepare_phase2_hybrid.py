@@ -252,15 +252,23 @@ def load_ohr_bench_images(
 
                 # Apply weak supervision labeling
                 labels = weak_labeler.label_image(img, str(pdf_path))
+                binary_labels = {
+                    key: int(label.value) for key, label in labels.labels.items()
+                }
+                label_confidences = {
+                    key: float(label.confidence) for key, label in labels.labels.items()
+                }
 
                 metadata = {
                     "source": "ohr_bench",
                     "pdf_path": str(pdf_path.name),
                     "page_num": page_num,
                     "weak_supervision": True,
+                    "quality_scores": labels.quality_scores,
+                    "label_confidences": label_confidences,
                 }
 
-                loaded_images.append((img, labels, metadata))
+                loaded_images.append((img, binary_labels, metadata))
                 pages_extracted += 1
 
             doc.close()

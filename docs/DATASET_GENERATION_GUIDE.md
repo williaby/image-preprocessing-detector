@@ -38,10 +38,10 @@ ls -lh data/benchmarks/
 
 ```bash
 # Install ML dependencies
-poetry install --with ml
+uv sync --extra ml
 
 # Verify albumentations installed
-poetry run python -c "import albumentations; print(albumentations.__version__)"
+uv run python -c "import albumentations; print(albumentations.__version__)"
 ```
 
 ### 3. Configure GCS Credentials
@@ -62,7 +62,7 @@ gsutil ls gs://image_detection_b/
 
 ```bash
 # Generate complete 100K dataset
-poetry run python scripts/generate_100k_iqa_dataset.py
+uv run python scripts/generate_100k_iqa_dataset.py
 
 # Monitor progress (separate terminal)
 watch -n 5 'du -sh data/training/iqa_phase2_100k && \
@@ -81,7 +81,7 @@ First validate the pipeline with 1000 samples:
 
 ```bash
 # TODO: Add --test-mode flag to generation script
-poetry run python scripts/generate_100k_iqa_dataset.py \
+uv run python scripts/generate_100k_iqa_dataset.py \
   --output-dir data/training/iqa_phase2_test \
   --max-samples 1000
 ```
@@ -94,7 +94,7 @@ After generation, verify the 13-dimensional distribution matches targets:
 
 ```bash
 # Validate dataset
-poetry run python scripts/validate_dataset_distributions.py \
+uv run python scripts/validate_dataset_distributions.py \
   --dataset data/training/iqa_phase2_100k
 
 # Check metadata
@@ -265,7 +265,7 @@ data:
 
 ```bash
 # Start Modal training with new dataset
-poetry run modal run modal/train_phase2_iqa.py
+uv run modal run modal/train_phase2_iqa.py
 
 # Expected duration: 12-14 hours (with T4 GPU)
 # Expected cost: $7-14 (or free with $30/month tier)
@@ -279,7 +279,7 @@ poetry run modal run modal/train_phase2_iqa.py
 
 **Error: "albumentations not found"**
 ```bash
-poetry install --with ml
+uv sync --extra ml
 ```
 
 **Error: "Source dataset not found"**
@@ -337,7 +337,7 @@ When updating the dataset:
 ```bash
 # Update generation script
 # Regenerate dataset
-poetry run python scripts/generate_100k_iqa_dataset.py \
+uv run python scripts/generate_100k_iqa_dataset.py \
   --output-dir data/training/iqa_phase2_100k_v2
 
 # Add to DVC
