@@ -22,9 +22,12 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo "================================================================================"
+# Constants
+SEPARATOR="================================================================================"
+
+echo "$SEPARATOR"
 echo "100K IQA DATASET - COMPLETE WORKFLOW"
-echo "================================================================================"
+echo "$SEPARATOR"
 echo ""
 echo "This script will:"
 echo "  1. Generate 100K IQA training dataset (~8-12 hours)"
@@ -62,8 +65,8 @@ echo -e "${GREEN}[2/6] Validating Dataset Distribution...${NC}"
 echo ""
 
 # Check metadata exists
-if [ ! -f "data/training/iqa_phase2_100k/metadata.json" ]; then
-    echo -e "${RED}Error: metadata.json not found${NC}"
+if [[ ! -f "data/training/iqa_phase2_100k/metadata.json" ]]; then
+    echo -e "${RED}Error: metadata.json not found${NC}" >&2
     exit 1
 fi
 
@@ -77,7 +80,7 @@ echo -e "${GREEN}[3/6] Initializing DVC...${NC}"
 echo ""
 
 # Check if DVC already initialized
-if [ ! -d ".dvc" ]; then
+if [[ ! -d ".dvc" ]]; then
     echo "Initializing DVC..."
     dvc init
 
@@ -137,9 +140,9 @@ git commit -m "feat(dataset): add 100K IQA training dataset with 13-dimensional 
 
 # Final Summary
 echo ""
-echo "================================================================================"
+echo "$SEPARATOR"
 echo -e "${GREEN}WORKFLOW COMPLETE!${NC}"
-echo "================================================================================"
+echo "$SEPARATOR"
 echo ""
 echo "Dataset Location (local): data/training/iqa_phase2_100k/"
 echo "Dataset Location (GCS):   gs://image_detection_b/.../iqa_phase2_100k/"

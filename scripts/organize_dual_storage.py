@@ -29,7 +29,6 @@ Usage:
 
 import argparse
 import os
-import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -157,8 +156,8 @@ def pull_from_gcs(dataset_name: str) -> bool:
         "-m",
         "rsync",
         "-r",
-        shlex.quote(gcs_source),
-        shlex.quote(str(nfs_full_path) + "/"),
+        gcs_source,
+        str(nfs_full_path) + "/",
     ]
 
     print(f"Running: {' '.join(cmd)}")
@@ -248,8 +247,8 @@ def sync_to_gcs(dataset_name: str) -> bool:
         "-m",
         "rsync",
         "-r",
-        shlex.quote(str(nfs_full_path) + "/"),
-        shlex.quote(gcs_dest),
+        str(nfs_full_path) + "/",
+        gcs_dest,
     ]
 
     print(f"Running: {' '.join(cmd)}")

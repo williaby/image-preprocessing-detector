@@ -440,6 +440,10 @@ def generate_augmented_dataset(
 
         # Print statistics
         print(f"\n{split.upper()} SET ({samples_generated} samples):")
+        if samples_generated == 0:
+            print("  No samples generated for this split.")
+            continue
+
         print("  Issue frequencies:")
         for issue, count in sorted(issue_counts.items()):
             percentage = (count / samples_generated) * 100

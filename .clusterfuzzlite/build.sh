@@ -24,13 +24,13 @@ fi
 
 echo "Python version $PYTHON_VERSION is compatible with Atheris"
 
-# Install Poetry
-pip3 install poetry==2.2.1
+# Install UV (replaces Poetry for this project)
+pip3 install uv
 
 # Install project dependencies (without dev dependencies)
 cd $SRC/image-preprocessing-detector
-poetry config virtualenvs.create false
-poetry install --without dev --no-interaction
+uv pip install --system -e . --no-deps
+uv pip install --system -r <(uv export --no-dev --format requirements-txt)
 
 # Install Atheris for Python fuzzing
 pip3 install atheris==2.3.0

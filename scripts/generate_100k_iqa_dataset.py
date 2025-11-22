@@ -195,7 +195,7 @@ class AugmentationPipeline:
                 ],
                 p=1.0,
             ),
-            "skew": A.Rotate(limit=15, border_mode=0, p=1.0),  # 0 = BORDER_CONSTANT
+            "skew": A.Rotate(limit=15, border_mode=0, p=1.0),  # Use constant border fill
             "illumination": A.OneOf(
                 [
                     A.RandomBrightnessContrast(
