@@ -584,7 +584,7 @@ class TestPhase2SchemaValidation:
             degradation_score=0.2,  # 0=pristine, 1=degraded (inverted from quality)
             structural_complexity_score=complexity_score,
         )
-        assert dqs.degradation_score == 0.2
+        assert dqs.degradation_score == pytest.approx(0.2)
         assert 0.0 <= dqs.structural_complexity_score <= 1.0
 
     def test_schema_ocr_routing_recommendation(self) -> None:
@@ -686,10 +686,10 @@ class TestPhase2MLInference:
         # Verify detector configuration
         assert detector.device == Device.CPU
         assert detector.enable_modal_fallback is False
-        assert detector.entropy_threshold == 0.8
-        assert detector.min_confidence_threshold == 0.6
-        assert detector.mean_confidence_threshold == 0.7
-        assert detector.discrepancy_threshold == 0.3
+        assert detector.entropy_threshold == pytest.approx(0.8)
+        assert detector.min_confidence_threshold == pytest.approx(0.6)
+        assert detector.mean_confidence_threshold == pytest.approx(0.7)
+        assert detector.discrepancy_threshold == pytest.approx(0.3)
 
         # Test with actual models if available
         model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
@@ -750,7 +750,7 @@ class TestPhase2MLInference:
         assert 0.0 <= uncertainty.entropy <= 1.0
         assert 0.0 <= uncertainty.min_confidence <= 1.0
         assert 0.0 <= uncertainty.mean_confidence <= 1.0
-        assert uncertainty.min_confidence == 0.58  # contrast is lowest
+        assert uncertainty.min_confidence == pytest.approx(0.58)  # contrast is lowest
 
         # Test escalation decision (should escalate due to low min_confidence)
         decision = detector.should_escalate_to_teacher(mock_scores)

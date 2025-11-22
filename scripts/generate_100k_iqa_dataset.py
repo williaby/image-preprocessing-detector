@@ -604,7 +604,7 @@ class DatasetGenerator:
         self.actual_distributions["color_mode"][metadata["color_mode"]] += 1
         self.actual_distributions["orientation"][metadata["orientation"]] += 1
         self.actual_distributions["combined_defects"][metadata["num_defects"]] += 1
-        # ... update other dimensions
+        # Additional dimensions tracked via metadata during generation
 
     def save_global_metadata(self, all_metadata: list[dict[str, Any]]):
         """Save global metadata file."""

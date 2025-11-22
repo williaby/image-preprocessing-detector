@@ -37,8 +37,9 @@ echo ""
 echo -e "${YELLOW}WARNING: This will take 9-13 hours total and use ~45GB disk space.${NC}"
 echo ""
 
+ACCEPT_PATTERN='^(yes|y|Y|YES)$'
 read -p "Proceed with full workflow? (yes/no): " response
-if [[ ! "$response" =~ ^(yes|y|Y|YES)$ ]]; then
+if [[ ! "$response" =~ $ACCEPT_PATTERN ]]; then
     echo "Aborted."
     exit 0
 fi
@@ -50,10 +51,8 @@ echo "Duration: ~8-12 hours"
 echo "Output: data/training/iqa_phase2_100k/"
 echo ""
 
-poetry run python scripts/generate_100k_iqa_dataset.py
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Error: Dataset generation failed${NC}"
+if ! poetry run python scripts/generate_100k_iqa_dataset.py; then
+    echo -e "${RED}Error: Dataset generation failed${NC}" >&2
     exit 1
 fi
 
@@ -98,10 +97,8 @@ echo ""
 echo -e "${GREEN}[4/6] Adding Dataset to DVC...${NC}"
 echo ""
 
-dvc add data/training/iqa_phase2_100k
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Error: DVC add failed${NC}"
+if ! dvc add data/training/iqa_phase2_100k; then
+    echo -e "${RED}Error: DVC add failed${NC}" >&2
     exit 1
 fi
 
@@ -112,10 +109,8 @@ echo "Duration: ~30-90 minutes"
 echo "Destination: gs://image_detection_b/image-preprocessing-detector/datasets/iqa_phase2_100k/"
 echo ""
 
-dvc push data/training/iqa_phase2_100k
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Error: DVC push failed${NC}"
+if ! dvc push data/training/iqa_phase2_100k; then
+    echo -e "${RED}Error: DVC push failed${NC}" >&2
     exit 1
 fi
 

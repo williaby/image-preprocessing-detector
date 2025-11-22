@@ -22,7 +22,7 @@ class TestDistillationLoss:
     def test_loss_instantiation(self):
         """Test that loss can be instantiated with default parameters."""
         loss = DistillationLoss()
-        assert loss is not None
+        assert isinstance(loss, DistillationLoss)
         assert loss.alpha == pytest.approx(0.7)
         assert loss.temperature == pytest.approx(4.0)
         assert loss.reduction == "mean"
@@ -138,7 +138,7 @@ class TestDistillationLoss:
             assert torch.allclose(output["total"], expected_total, rtol=1e-5)
 
             # Check alpha in output
-            assert output["alpha"].item() == alpha
+            assert output["alpha"].item() == pytest.approx(alpha)
 
     def test_alpha_extremes(self):
         """Test behavior at alpha extremes (0.0 and 1.0)."""
