@@ -1,0 +1,67 @@
+# Student Model Distillation Training Configuration
+# ResNet-18 student trained via knowledge distillation from ResNet-50 teacher
+
+# Teacher model configuration
+teacher:
+  # Path to teacher checkpoint in GCS (relative to bucket)
+  # Using epoch 20 checkpoint which achieved best val_loss of 0.2694
+  checkpoint_path: checkpoints/phase2_iqa/checkpoint_epoch_20.pth
+  architecture: resnet50
+  num_heads: 5
+
+# Student model configuration
+student:
+  architecture: resnet18
+  num_heads: 5
+  hidden_features: 256  # Smaller than teacher's 512
+  dropout: 0.2
+
+# Knowledge distillation parameters
+distillation:
+  # Temperature for softening teacher predictions
+  # Higher T = softer distributions = more knowledge transfer
+  temperature: 4.0
+
+  # Balance between soft targets (teacher) and hard targets (ground truth)
+  # alpha=0.7 means 70% soft + 30% hard
+  alpha: 0.7
+
+  # Weight for confidence distillation (MSE from teacher's confidence)
+  confidence_weight: 0.3
+
+# Training configuration
+training:
+  batch_size: 128
+  epochs: 30  # Student typically needs fewer epochs than teacher
+  learning_rate: 0.001
+  weight_decay: 0.01
+  optimizer: adamw
+  gradient_clip_norm: 1.0
+  early_stopping_patience: 10
+  scheduler: cosine
+  min_lr: 0.000001
+  num_workers: 4
+
+# Dataset configuration
+dataset:
+  name: iqa_phase2_100k
+  gcs_path: image-preprocessing-detector/phase2/iqa_phase2_100k.tar.gz
+  train_split: 0.8
+  val_split: 0.2
+
+# Storage configuration
+storage:
+  bucket: image_detection_b
+  checkpoint_path: gs://image_detection_b/checkpoints/phase2_student
+  output_path: gs://image_detection_b/models/phase2_student
+
+# Monitoring and checkpointing
+monitoring:
+  checkpoint_interval: 5  # Save every 5 epochs
+  log_interval: 50  # Log every 50 batches
+  tensorboard: true
+
+# Modal configuration
+modal:
+  gpu: T4  # T4 16GB - sufficient for smaller ResNet-18 student (~50% cheaper than A10)
+  timeout_hours: 12  # 12 hours should be plenty for 30 epochs
