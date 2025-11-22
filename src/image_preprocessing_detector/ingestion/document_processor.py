@@ -187,6 +187,7 @@ class DocumentProcessor:
                 height_px=3300,
                 dpi_input=300,
                 dpi_effective=300,
+                ml_iqa=None,  # Phase 2: No student ML IQA yet
                 teacher_iqa=None,  # Phase 2: No teacher model yet
             )
         ]

@@ -228,7 +228,8 @@ class MetadataBuilder:
             height_px=height,
             dpi_input=dpi_input,
             dpi_effective=dpi_effective,
-            teacher_iqa=None,  # Phase 2: Will be populated by teacher model if used
+            ml_iqa=None,  # Phase 2: Will be populated by student ML IQA
+            teacher_iqa=None,  # Phase 2: Will be populated by teacher model if escalated
             detected_issues=detected_issues,
             planned_actions=planned_actions,
             elements=elements or [],

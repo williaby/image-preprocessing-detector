@@ -63,5 +63,5 @@ monitoring:
 
 # Modal configuration
 modal:
-  gpu: T4  # T4 16GB - sufficient for smaller ResNet-18 student (~50% cheaper than A10)
+  gpu: L4  # L4 24GB - better availability than T4, avoids preemption issues
   timeout_hours: 12  # 12 hours should be plenty for 30 epochs

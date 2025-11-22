@@ -130,15 +130,15 @@ class MultiHeadIQALoss(nn.Module):
             target = targets[head_name]
 
             # Classification loss (BCE on logits)
-            # Squeeze logits from [batch, 1] to [batch] to match labels shape
+            # Squeeze logits and labels from [batch, 1] to [batch]
             logits = pred["logits"].squeeze(-1)
-            labels = target["labels"].float()
+            labels = target["labels"].float().squeeze(-1)
             cls_loss = self.bce_loss(logits, labels)
 
             # Confidence regression loss (MSE on confidence scores)
             # Squeeze confidence from [batch, 1] to [batch] to match target shape
             pred_confidence = pred["confidence"].squeeze(-1)
-            target_confidence = target["confidence"].float()
+            target_confidence = target["confidence"].float().squeeze(-1)
             conf_loss = self.mse_loss(pred_confidence, target_confidence)
 
             # Apply reduction

@@ -74,7 +74,7 @@ image = (
 
 @stub.function(
     image=image,
-    gpu="T4",  # T4 16GB - sufficient for smaller ResNet-18 student (~50% cheaper than A10)
+    gpu="L4",  # L4 24GB - better availability than T4, avoids preemption issues
     timeout=86400,  # 24 hours max
     secrets=[modal.Secret.from_name("gcs-credentials")],
 )
