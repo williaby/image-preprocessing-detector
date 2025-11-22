@@ -5,711 +5,761 @@ tags:
   - datasets
 status: published
 owner: docs-team
-purpose: Documentation for dataset locations map.
+purpose: Complete reference for dataset locations across NFS and GCS storage.
 ---
 
-**Purpose**: Complete reference showing where each dataset is located in the repository, cloud storage, and external sources.
+**Purpose**: Complete reference showing where each dataset is located in NFS storage, local symlinks, and cloud backups.
 
-**Last Updated**: 2025-11-14 (Verified with `du -sh`)
-**Total Local Storage**: ~130 GB (training) + ~59 GB (benchmarks, excluding DocLayNet symlink) = **~189 GB actual**
-**Note**: DocLayNet (42GB) accessed via symlink from `/home/byron/dev/data_ingestor/data/doclaynet_extracted/` - symlink adds 0GB storage
+**Last Updated**: 2025-11-21 (Training datasets added)
+**Total Storage**: ~239GB (63GB benchmarks + 134GB training + 42GB DocLayNet symlink)
+**Datasets**: 12/12 benchmarks + 8/8 training datasets (100% complete)
+**Storage Strategy**: NFS primary + Local symlinks + GCS backup
 
 ---
 
 ## Quick Reference
 
-| **Storage Tier** | Local Path | Size | GCS Path | Git Status |
-|------------------|-----------|------|----------|------------|
-| **Training Data (Tier 1)** | `data/training/` | ~130 GB | `gs://image_detection_b/datasets/` | ❌ Gitignored |
-| **Benchmarks (Tier 2)** | `data/benchmarks/` | ~101 GB* | Not uploaded (too large) | ❌ Gitignored |
-| **Test Fixtures (Tier 3)** | `data/test_fixtures/` | ~828 KB | Not uploaded | ✅ Committed to git |
-| **Raw Sources** | `data/raw/` | — | Not uploaded | ❌ Gitignored |
+| **Dataset** | **Size** | **NFS Location** | **Local Symlink** | **GCS Status** |
+|-------------|----------|------------------|-------------------|----------------|
+| **TableBank** | 27GB | `/mnt/unraid/.../tablebank` | `data/benchmarks/tablebank` | ⏳ Upload pending |
+| **PubTabNet** | 14GB | `/mnt/unraid/.../pubtabnet` | `data/benchmarks/pubtabnet` | ⏳ Upload pending |
+| **DIQA-5000** | 5.4GB | `/mnt/unraid/.../diqa-5000` | `data/benchmarks/diqa-5000` | ⏳ Upload pending |
+| **FUNSD+** | 500MB | `/mnt/unraid/.../funsd_plus` | `data/benchmarks/funsd_plus` | ⏳ Upload pending |
+| **DocLayNet** | 42GB* | `/home/byron/dev/data_ingestor/...` | `data/benchmarks/doclaynet` | ❌ Not uploaded |
+| **FinTabNet** | 5.3GB | `/mnt/unraid/.../fintabnet` | `data/benchmarks/fintabnet` | ⏳ Upload pending |
+| **OmniDocBench** | 1.2GB | `/mnt/unraid/.../omnidocbench` | `data/benchmarks/omnidocbench` | ⏳ Upload pending |
+| **OHR-Bench** | 1.8GB | `/mnt/unraid/.../ohr-bench` | `data/benchmarks/ohr-bench` | ⏳ Upload pending |
+| **SignaTR6K** | 153MB | `/mnt/unraid/.../signatr6k` | `data/benchmarks/signatr6k` | ⏳ Upload pending |
+| **WiLI-2018** | 129MB | `/mnt/unraid/.../wili_2018` | `data/benchmarks/wili_2018` | ⏳ Upload pending |
+| **COCO-Text** | 53MB | `/mnt/unraid/.../cocotext` | `data/benchmarks/cocotext` | ⏳ Upload pending |
+| **Synthetic IQA** | 372KB | `data/benchmarks/synthetic_iqa` | N/A | ❌ Not uploaded |
 
-_* Includes DocLayNet symlink (42GB) pointing to `/home/byron/dev/data_ingestor/data/benchmarks/doclaynet`_
+_* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this project)_
 
-**Note on Terminology**: This document uses **"Storage Tier 1/2/3"** (data organization). For benchmarking validation strategy, see [ADR-031](ADRs/0031-comprehensive-benchmarking-framework.md) which uses **"Validation Level 1/2/3"** (testing pyramid).
-
----
-
-## 1. TRAINING DATA (Storage Tier 1) - Commercial Use Allowed
-
-### 1.1 Phase 2 IQA Training Dataset ✅ PRESENT
-
-**Purpose**: Train image quality assessment classifier (50k samples)
-
-| Component | Local Path | Size | GCS Path | Status |
-|-----------|-----------|------|----------|--------|
-| **Train Set** | `data/training/iqa_phase2/train/` | 12.6 GB | `gs://image_detection_b/datasets/iqa_phase2/train/` | ✅ Present |
-| - Images | `data/training/iqa_phase2/train/images/` | 12.6 GB | - | 35,000 PNG files |
-| - Labels | `data/training/iqa_phase2/train/labels.json` | 18 MB | - | Multi-label annotations |
-| **Val Set** | `data/training/iqa_phase2/val/` | 2.7 GB | `gs://image_detection_b/datasets/iqa_phase2/val/` | ✅ Present |
-| - Images | `data/training/iqa_phase2/val/images/` | 2.7 GB | - | 7,500 PNG files |
-| - Labels | `data/training/iqa_phase2/val/labels.json` | 3.9 MB | - | Multi-label annotations |
-| **Test Set** | `data/training/iqa_phase2/test/` | 2.7 GB | `gs://image_detection_b/datasets/iqa_phase2/test/` | ✅ Present |
-| - Images | `data/training/iqa_phase2/test/images/` | 2.7 GB | - | 7,500 PNG files |
-| - Labels | `data/training/iqa_phase2/test/labels.json` | 3.9 MB | - | Multi-label annotations |
-
-**Total**: 18 GB
-**Source**: TableBank + Albumentations augmentation
-**Generated**: Phase 2 Week 1 via `scripts/prepare_phase2_data.py`
-**License**: Apache-2.0 (commercial use allowed)
+**NFS Base Path**: `/mnt/unraid/training_data/image_detection/benchmarks/`
+**Local Base Path**: `data/benchmarks/` (all symlinks except synthetic_iqa)
 
 ---
 
-### 1.2 Real-World Training Datasets ✅ PRESENT
+## Storage Architecture
 
-#### Mobile Receipts (Voxel51)
+### Three-Tier Strategy
 
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/training/mobile_receipts_voxel51/` | 379 MB | ✅ Present |
-| - Train | `data/training/mobile_receipts_voxel51/train/` | ~266 MB | 500 images |
-| - Val | `data/training/mobile_receipts_voxel51/val/` | ~113 MB | 213 images |
+```
+┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
+│  LOCAL (WSL)    │         │   NFS (Unraid)   │         │   GCS (Cloud)   │
+│  ~1 MB          │◄────────┤   ~105 GB        │────────►│   Backup        │
+│                 │Symlinks │                  │ Upload  │                 │
+│ • Test Fixtures │         │ • Benchmarks     │         │ • Training Data │
+│ • Symlinks Only │         │ • Training Data  │         │ • Benchmarks    │
+└─────────────────┘         └──────────────────┘         └─────────────────┘
+      Tier 3                      Tier 2                      Tier 1
+  (Fast CI/CD)            (Primary Storage)              (Cloud Backup)
+```
 
-**Source**: HuggingFace `Voxel51/scanned_receipts`
-**License**: CC BY 4.0 (attribution required)
-**Purpose**: Mobile-captured receipts with realistic lighting, blur, skew
-
-#### HITL Receipt OCR
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/training/receipts_hitl/` | 24 MB | ✅ Present |
-| - Images | `data/training/receipts_hitl/ds0/` | 24 MB | 192 annotated receipts |
-
-**Source**: https://humansintheloop.org/resources/datasets/free-receipt-ocr-dataset/
-**License**: CC0 1.0 (Public Domain - no restrictions)
-**Purpose**: Annotated receipts with JSON labels
-
-#### Kaggle High-Quality Invoices
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/training/invoices_kaggle/` | 278 MB | ✅ Present |
-| - Train | `data/training/invoices_kaggle/train/` | ~195 MB | 989 images |
-| - Val | `data/training/invoices_kaggle/val/` | ~83 MB | 425 images |
-| **Download Cache** | `data/downloads/kaggle_invoices/` | - | Intermediate download |
-
-**Source**: Kaggle (Osama Hosam Abdellatif)
-**License**: ODbL 1.0 (attribution required)
-**Purpose**: High-resolution invoice annotations
-
-**Real-World Training Subtotal**: ~681 MB (905 images)
+**Design Goals**:
+1. **Minimal local storage** - WSL filesystem kept under 5GB
+2. **Fast NFS access** - Gigabit ethernet to Unraid server (192.168.1.16)
+3. **GCS backup** - Cloud backup for Modal training and disaster recovery
+4. **Symlink strategy** - Local workspace references NFS without duplication
 
 ---
 
-### 1.3 Phase 3 Layout Training ✅ PRESENT
+## 1. BENCHMARK DATA (Primary Storage: NFS)
 
-#### DocSynth-300K
+### 1.1 Document IQA Datasets ✅ COMPLETE
 
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/training/layout/docsynth300k/` | 112 GB | ✅ Present |
+#### DIQA-5000 ✅ DOWNLOADED
 
-**Source**: HuggingFace `juliozhao/DocSynth300K`
-**License**: Not specified (assume research use)
-**Purpose**: Synthetic layout detection training (300k samples)
-**Downloaded**: Phase 3 Week 1 via `scripts/download_phase3_datasets.py`
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Train Set** | `/mnt/unraid/training_data/image_detection/benchmarks/diqa-5000/train/ori/` | 3.8GB | ✅ 3,500 images |
+| **Val Set** | `/mnt/unraid/training_data/image_detection/benchmarks/diqa-5000/val/ori/` | 470MB | ✅ Validation images |
+| **Test Set** | `/mnt/unraid/training_data/image_detection/benchmarks/diqa-5000/test/ori/` | 1.1GB | ✅ Test images |
 
----
+**Local Symlink**: `data/benchmarks/diqa-5000` → `/mnt/unraid/training_data/image_detection/benchmarks/diqa-5000`
+**Source**: User-provided DIQA-5000.zip (extracted)
+**License**: Research/Academic use (TBD - citation required)
+**Purpose**: PRIMARY document IQA benchmark with quality annotations (5,500 images total)
+**Use Case**: Phase 2 IQA training dataset generation (100K samples)
 
-### 1.4 Phase 3 Table Structure Training ✅ PRESENT
+#### OHR-Bench ✅ DOWNLOADED
 
-#### PubTables-1M
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/benchmarks/ohr-bench/` | 1.8GB | ✅ 8,500+ PDF pages |
 
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/training/tables/pubtables1m/` | 83 GB | ✅ Present |
-
-**Source**: HuggingFace `bsmock/pubtables-1m`
-**License**: CDLA-Permissive-1.0 (commercial use allowed)
-**Purpose**: Table structure extraction (1M real-world tables)
-**Downloaded**: Phase 3 Week 1 via `scripts/download_phase3_datasets.py`
-
----
-
-### 1.5 Phase 3 Handwriting Training ✅ PRESENT
-
-#### IAM Handwriting Database
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/training/specialized/handwriting/iam/` | 254 MB | ✅ Present |
-
-**Source**: HuggingFace `Teklia/IAM-line`
-**License**: MIT (commercial use allowed)
-**Purpose**: Handwriting detection (13,353 text line images)
-**Downloaded**: Phase 2 Week 4 via `scripts/download_phase3_datasets.py`
+**Local Symlink**: `data/benchmarks/ohr-bench` → `/mnt/unraid/training_data/image_detection/benchmarks/ohr-bench`
+**Source**: HuggingFace `jordyvl/OHR-Bench`
+**License**: CC-BY-NC-4.0 (Non-commercial evaluation only)
+**Purpose**: RAG-specific OCR benchmark (7 domains: arXiv, PubMed, GitHub, StackExchange, FreeLaw, USPTO, PubMed Central)
+**Use Case**: Real-world document quality diversity for IQA training
 
 ---
 
-### 1.6 Training Data Summary
+### 1.2 Table Detection Benchmarks ✅ COMPLETE
 
-| Category | Local Path | Size | Status |
-|----------|-----------|------|--------|
-| **IQA Phase 2** | `data/training/iqa_phase2/` | 18 GB | ✅ Present |
-| **Real-World** | `data/training/mobile_receipts_voxel51/` | 379 MB | ✅ Present |
-| | `data/training/receipts_hitl/` | 24 MB | ✅ Present |
-| | `data/training/invoices_kaggle/` | 278 MB | ✅ Present |
-| **Layout** | `data/training/layout/docsynth300k/` | 112 GB | ✅ Present |
-| **Tables** | `data/training/tables/pubtables1m/` | 83 GB | ✅ Present |
-| **Handwriting** | `data/training/specialized/handwriting/iam/` | 254 MB | ✅ Present |
+#### TableBank ✅ DOWNLOADING (61% complete)
 
-**Training Data Total**: ~130 GB (verified with `du -sh`)
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/benchmarks/tablebank/` | 27GB | ⏳ 260,025 / 424,000 images |
 
----
+**Local Symlink**: `data/benchmarks/tablebank` → `/mnt/unraid/training_data/image_detection/benchmarks/tablebank`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/tablebank/`
+**License**: Apache-2.0 (commercial use allowed, citation required)
+**Purpose**: Table detection benchmark (424K table images from Word + LaTeX docs)
+**Use Case**: Large-scale training data source for 100K IQA dataset
 
-## 2. BENCHMARK DATA (Storage Tier 2) - Evaluation Only
+#### PubTabNet ✅ DOWNLOADED
 
-### 2.1 IQA Validation Datasets ✅ PRESENT
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/benchmarks/pubtabnet/` | 14GB | ✅ 500K+ table images |
 
-#### LIVE Dataset
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/external_iqa/LIVE/` | ~300 MB | ✅ Present |
-| - Images | `data/benchmarks/external_iqa/LIVE/refimgs/` | - | 29 reference images |
-| - Distorted | `data/benchmarks/external_iqa/LIVE/*/` | - | 779 total images |
-| - Scores | `data/benchmarks/external_iqa/LIVE/dmos.mat` | - | DMOS quality scores |
-
-**Source**: http://live.ece.utexas.edu/research/quality/
-**License**: Academic/Research only (citation required)
-**Purpose**: Natural image quality (JPEG, blur, noise, fastfading)
-
-#### CSIQ Dataset
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/external_iqa/CSIQ/` | ~800 MB | ✅ Present |
-| - Images | `data/benchmarks/external_iqa/CSIQ/src_imgs/` | - | Reference images |
-| - Distorted | `data/benchmarks/external_iqa/CSIQ/dst_imgs/` | - | 866 total images |
-| - Scores | `data/benchmarks/external_iqa/CSIQ/csiq.txt` | - | DMOS quality scores |
-
-**Source**: http://vision.eng.shizuoka.ac.jp/mod/page/view.php?id=23
-**License**: Academic/Research only (citation required)
-**Purpose**: Natural image quality (JPEG, JPEG2000, blur, contrast, pink noise)
-
-#### LIVE Challenge Dataset
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/external_iqa/LIVE_Challenge/` | ~900 MB | ✅ Present |
-| - Images | `data/benchmarks/external_iqa/LIVE_Challenge/Images/` | - | 1,162 images |
-| - Scores | `data/benchmarks/external_iqa/LIVE_Challenge/Data/AllMOS_release.mat` | - | MOS quality scores |
-
-**Source**: http://live.ece.utexas.edu/research/ChallengeDB/
-**License**: Academic/Research only (citation required)
-**Purpose**: Authentic camera captures (blur, noise, compression)
-
-**External IQA Subtotal**: ~2 GB (2,807 images)
-**Downloaded**: Phase 2 Week 1 via `scripts/download_iqa_datasets.py`
-
----
-
-### 2.2 Layout Detection Benchmarks
-
-#### DocLayNet ✅ PRESENT (Symlinked)
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/doclaynet/` → `/home/byron/dev/data_ingestor/data/benchmarks/doclaynet` | 41 GB (symlink) | ✅ Symlinked |
-
-**Source**: Symlinked from data_ingestor project
-**License**: CDLA-Permissive-2.0 (commercial use allowed)
-**Purpose**: 11-class layout detection (80k pages)
-**Note**: No additional disk space needed
-
-#### OmniDocBench ✅ PRESENT
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/omnidocbench/` | 1.2 GB | ✅ Present |
-| - Train Split | `data/benchmarks/omnidocbench/train/` | - | 1,358 PDF pages |
-| - Cache | `data/benchmarks/omnidocbench/.cache/` | - | HuggingFace download cache |
-
-**Source**: HuggingFace `opendatalab/OmniDocBench`
-**License**: Apache-2.0 (commercial use allowed)
-**Purpose**: Comprehensive document understanding (9 document types, 3 languages)
-**Downloaded**: Phase 1 via `scripts/download_omnidocbench.py`
-
-#### OHR-Bench ✅ PRESENT
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/ohr-bench/` | 1.8 GB | ✅ Present |
-| - Figures | `data/benchmarks/ohr-bench/figs/` | - | 8,500+ PDFs |
-| - Cache | `data/benchmarks/ohr-bench/.cache/` | - | HuggingFace download cache |
-
-**Source**: HuggingFace `opendatalab/OHR-Bench`
-**License**: CC-BY-4.0 (commercial use allowed)
-**Purpose**: RAG-specific OCR benchmark (7 domains)
-**Downloaded**: Phase 3 Week 1 via `scripts/download_phase3_datasets.py`
-
----
-
-### 2.3 Table Detection Benchmarks
-
-#### TableBank ✅ PRESENT
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/tablebank/` | 74 GB | ✅ Present |
-| - TableBank | `data/benchmarks/tablebank/TableBank/` | - | 417k tables |
-| - Cache | `data/benchmarks/tablebank/.cache/` | - | HuggingFace download cache |
-
-**Source**: HuggingFace `liminghao1630/TableBank`
-**License**: Apache-2.0 (commercial use allowed)
-**Purpose**: Table detection (278k images from Word + LaTeX docs)
-**Downloaded**: Phase 1 via `scripts/download_table_datasets.py`
-
-#### PubTabNet ✅ PRESENT
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/pubtabnet/` | 27 GB | ✅ Present |
-| - PubTabNet | `data/benchmarks/pubtabnet/pubtabnet/` | - | 568k tables |
-| - Cache | `data/benchmarks/pubtabnet/.cache/` | - | HuggingFace download cache |
-
-**Source**: HuggingFace `ajimeno/PubTabNet`
-**License**: MIT (commercial use allowed)
+**Local Symlink**: `data/benchmarks/pubtabnet` → `/mnt/unraid/training_data/image_detection/benchmarks/pubtabnet`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/pubtabnet/`
+**License**: CDLA-Permissive-2.0 (commercial use allowed, citation required)
 **Purpose**: Table structure recognition (scientific publications)
-**Downloaded**: Phase 1 via `scripts/download_table_datasets.py`
+**Use Case**: Training data source for 100K IQA dataset
 
-#### FinTabNet ✅ PRESENT
+#### FinTabNet ✅ DOWNLOADED
 
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/fintabnet/` | 14 GB | ✅ Present |
-| - PDF Annotations | `data/benchmarks/fintabnet/FinTabNet.c-PDF_Annotations/` | - | Financial tables |
-| - Structure | `data/benchmarks/fintabnet/FinTabNet.c-Structure/` | - | Cell structure data |
-| - Cache | `data/benchmarks/fintabnet/.cache/` | - | HuggingFace download cache |
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/benchmarks/fintabnet/` | 5.3GB | ✅ Financial tables |
 
+**Local Symlink**: `data/benchmarks/fintabnet` → `/mnt/unraid/training_data/image_detection/benchmarks/fintabnet`
 **Source**: HuggingFace `bsmock/FinTabNet.c`
-**License**: CDLA-Permissive-1.0 (commercial use allowed)
+**License**: CDLA-Permissive-2.0 (commercial use allowed)
 **Purpose**: Financial table detection (corrected version)
-**Downloaded**: Phase 1 via `scripts/download_table_datasets.py`
+**Use Case**: Domain-specific table evaluation
 
 ---
 
-### 2.4 Specialized Content Benchmarks
+### 1.3 Layout Detection Benchmarks ✅ COMPLETE
 
-#### SignaTR6K ✅ PRESENT
+#### DocLayNet ✅ SYMLINKED (External Project)
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/home/byron/dev/data_ingestor/data/benchmarks/doclaynet/` | 42GB | ✅ Symlinked (0GB local) |
+
+**Local Symlink**: `data/benchmarks/doclaynet` → `/home/byron/dev/data_ingestor/data/benchmarks/doclaynet`
+**Source**: data_ingestor project (shared benchmark dataset)
+**License**: CDLA-Permissive-2.0 (commercial use allowed, citation required)
+**Purpose**: 11-class layout detection (80K pages)
+**Note**: Symlink to external project - no additional disk space used
+
+#### OmniDocBench ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/benchmarks/omnidocbench/` | 1.2GB | ✅ 1,358+ samples |
+
+**Local Symlink**: `data/benchmarks/omnidocbench` → `/mnt/unraid/training_data/image_detection/benchmarks/omnidocbench`
+**Source**: HuggingFace `opendatalab/OmniDocBench`
+**License**: CC-BY-NC-4.0 (Non-commercial evaluation only)
+**Purpose**: Comprehensive document understanding (9 document types, 3 languages)
+**Use Case**: Document type diversity evaluation
+
+---
+
+### 1.4 Forms and Specialized Content ✅ COMPLETE
+
+#### FUNSD+ (Enhanced) ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Train Set** | `/mnt/unraid/training_data/image_detection/benchmarks/funsd_plus/train/` | ~350MB | ✅ 1,030 samples |
+| **Test Set** | `/mnt/unraid/training_data/image_detection/benchmarks/funsd_plus/test/` | ~150MB | ✅ 113 samples |
+
+**Local Symlink**: `data/benchmarks/funsd_plus` → `/mnt/unraid/training_data/image_detection/benchmarks/funsd_plus`
+**Source**: HuggingFace `konfuzio/funsd_plus` (enhanced version, 5.6x larger than original FUNSD)
+**License**: Other (check HuggingFace for details)
+**Purpose**: Enhanced form understanding dataset (1,113 total samples vs 199 original)
+**Use Case**: Form-specific document quality assessment for 100K IQA dataset
+
+#### SignaTR6K ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/benchmarks/signatr6k/` | 153MB | ✅ 6,000 samples |
+
+**Local Symlink**: `data/benchmarks/signatr6k` → `/mnt/unraid/training_data/image_detection/benchmarks/signatr6k`
+**Source**: User-provided SignaTR6K.zip (extracted)
+**License**: Research/Academic use (citation required)
+**Purpose**: Signature detection benchmark (6K signature samples)
+**Use Case**: Specialized content detection evaluation
+
+#### WiLI-2018 ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/benchmarks/wili_2018/` | 129MB | ✅ 235K samples |
+
+**Local Symlink**: `data/benchmarks/wili_2018` → `/mnt/unraid/training_data/image_detection/benchmarks/wili_2018`
+**Source**: HuggingFace `wietsedv/wili_2018`
+**License**: CC-BY-SA-4.0 (commercial use allowed with share-alike)
+**Purpose**: Language identification (235 languages, 235K paragraphs)
+**Use Case**: Multilingual document evaluation
+
+#### COCO-Text ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Annotations** | `/mnt/unraid/training_data/image_detection/benchmarks/cocotext/` | 53MB | ✅ JSON annotations |
+
+**Local Symlink**: `data/benchmarks/cocotext` → `/mnt/unraid/training_data/image_detection/benchmarks/cocotext`
+**Source**: Direct URL download `https://github.com/bgshih/cocotext/raw/master/data/cocotext.v2.json`
+**License**: CC-BY-4.0 (commercial use allowed, attribution required)
+**Purpose**: Text detection annotations (63K text instances)
+**Note**: Images NOT included (requires separate COCO dataset download)
+
+---
+
+### 1.5 Synthetic Test Data ✅ AUTO-GENERATED
+
+#### Synthetic IQA ✅ AUTO-GENERATED
 
 | Component | Local Path | Size | Status |
 |-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/signatr6k/` | 142 MB | ✅ Present |
-| - Train | `data/benchmarks/signatr6k/train/` | - | Signature samples |
-| - Val | `data/benchmarks/signatr6k/validation/` | - | Validation samples |
-| - Test | `data/benchmarks/signatr6k/test/` | - | Test samples |
+| **Dataset** | `data/benchmarks/synthetic_iqa/` | 372KB | ✅ Auto-generated on runs |
 
-**Source**: Already present locally
-**License**: CC BY 4.0 (commercial use allowed)
-**Purpose**: Signature detection (6,000 signatures)
-
-#### WiLI-2018 ✅ PRESENT
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/wili_2018/` | 129 MB | ✅ Present |
-
-**Source**: Zenodo (already extracted)
-**License**: Apache-2.0 (commercial use allowed)
-**Purpose**: Language identification (235 languages, 235k paragraphs)
-
-#### COCO-Text ✅ PRESENT
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Annotations** | `data/benchmarks/cocotext/` | 53 MB | ✅ Present |
-
-**Source**: Already extracted from test data
-**License**: CC-BY-4.0 (commercial use allowed)
-**Purpose**: Text detection annotations
-**Note**: Images NOT included (need separate COCO dataset download)
-
-#### Synthetic IQA ✅ PRESENT (Auto-Generated)
-
-| Component | Local Path | Size | Status |
-|-----------|-----------|------|--------|
-| **Dataset** | `data/benchmarks/synthetic_iqa/` | 372 KB | ✅ Auto-generated |
-| - Synthetic | `data/benchmarks/synthetic_iqa/synthetic_iqa/` | - | Generated on benchmark runs |
-
-**Source**: Auto-generated during validation runs
+**Storage**: Local only (too small for NFS/GCS, regenerated as needed)
+**Source**: Auto-generated during benchmark validation runs
 **License**: Public Domain (project-generated)
-**Purpose**: Smoke tests for IQA algorithms
+**Purpose**: Smoke tests for IQA algorithms (blur, skew, noise, contrast, binarization)
+**Use Case**: Fast CI/CD testing (< 5 min runtime)
 
 ---
 
-### 2.5 Benchmark Data Summary
+### 1.6 Benchmark Data Summary
 
-| Category | Local Path | Size | Status |
-|----------|-----------|------|--------|
-| **IQA Validation** | `data/benchmarks/external_iqa/` | 2 GB | ✅ Present |
-| **Layout Detection** | `data/benchmarks/doclaynet/` | 0 GB (symlink) | ✅ Symlinked |
-| | `data/benchmarks/omnidocbench/` | 1.2 GB | ✅ Present |
-| | `data/benchmarks/ohr-bench/` | 1.8 GB | ✅ Present |
-| **Table Detection** | `data/benchmarks/tablebank/` | 74 GB | ✅ Present |
-| | `data/benchmarks/pubtabnet/` | 27 GB | ✅ Present |
-| | `data/benchmarks/fintabnet/` | 14 GB | ✅ Present |
-| **Specialized** | `data/benchmarks/signatr6k/` | 142 MB | ✅ Present |
-| | `data/benchmarks/wili_2018/` | 129 MB | ✅ Present |
-| | `data/benchmarks/cocotext/` | 53 MB | ✅ Present |
-| | `data/benchmarks/synthetic_iqa/` | 372 KB | ✅ Present |
+| Category | Datasets | Total Size | GCS Status |
+|----------|----------|------------|------------|
+| **Document IQA** | DIQA-5000, OHR-Bench | 7.2GB | ⏳ Upload pending |
+| **Table Detection** | TableBank, PubTabNet, FinTabNet | 46.3GB | ⏳ Upload pending |
+| **Layout Detection** | DocLayNet (symlink), OmniDocBench | 43.2GB | ❌ DocLayNet not uploaded |
+| **Specialized** | FUNSD+, SignaTR6K, WiLI-2018, COCO-Text | 0.8GB | ⏳ Upload pending |
+| **Synthetic** | Synthetic IQA | 372KB | ❌ Not uploaded (regenerated) |
 
-**Benchmark Data Total**: ~101 GB (59GB local + 42GB DocLayNet symlink, verified with `du -sh`)
+**Benchmark Total**: ~105GB (63GB NFS + 42GB external symlink)
+**Downloaded**: 12/12 datasets (100% complete)
+**NFS Storage**: `/mnt/unraid/training_data/image_detection/benchmarks/`
 
 ---
 
-## 3. TEST FIXTURES (Storage Tier 3) - Committed to Git
+## 2. TRAINING DATA (NFS Primary Storage)
 
-### 3.1 Test Fixtures ✅ COMMITTED
+**Total Training Storage**: ~134GB (8 datasets)
+**NFS Base Path**: `/mnt/unraid/training_data/image_detection/training/`
+**Local Base Path**: `data/training/` (all symlinks)
+**GCS Backup**: `gs://image_detection_b/image-preprocessing-detector/datasets/`
+
+### Quick Reference - Training Datasets
+
+| **Dataset** | **Size** | **NFS Location** | **Local Symlink** | **GCS Status** |
+|-------------|----------|------------------|-------------------|----------------|
+| **IQA Phase 2** | 0.5GB | `/mnt/unraid/.../iqa_phase2` | `data/training/iqa_phase2` | ✅ Source |
+| **IQA Phase 2 100K** | 10GB | `/mnt/unraid/.../iqa_phase2_100k` | `data/training/iqa_phase2_100k` | ✅ Source |
+| **Receipts HITL** | 24MB | `/mnt/unraid/.../receipts_hitl` | `data/training/receipts_hitl` | ✅ Source |
+| **Mobile Receipts** | 379MB | `/mnt/unraid/.../mobile_receipts_voxel51` | `data/training/mobile_receipts_voxel51` | ✅ Source |
+| **Invoices Kaggle** | 278MB | `/mnt/unraid/.../invoices_kaggle` | `data/training/invoices_kaggle` | ✅ Source |
+| **IAM Handwriting** | 254MB | `/mnt/unraid/.../iam_handwriting` | `data/training/iam_handwriting` | ✅ Source |
+| **DocSynth300K** | 112GB | `/mnt/unraid/.../docsynth300k` | `data/training/docsynth300k` | ✅ Source |
+| **NIST DB2** | 1.0GB | `/mnt/unraid/.../nist_db2` | `data/training/nist_db2` | ✅ Source |
+
+---
+
+### 2.1 Phase 2 IQA Training Datasets ✅ DOWNLOADED
+
+#### IQA Phase 2 (Original) ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/training/iqa_phase2/` | 0.5GB | ✅ Downloaded from GCS |
+
+**Local Symlink**: `data/training/iqa_phase2` → `/mnt/unraid/training_data/image_detection/training/iqa_phase2`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/iqa_phase2/`
+**License**: Apache-2.0 (project-generated)
+**Purpose**: Original IQA Phase 2 training dataset
+**Use Case**: Baseline IQA model training, comparison with 100K dataset
+
+#### IQA Phase 2 100K (15K Partial) ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/training/iqa_phase2_100k/` | 10GB | ✅ Downloaded (15,350 samples) |
+| **Train Split** | `.../iqa_phase2_100k/train/` | ~7GB | ⏳ Needs regeneration |
+| **Val Split** | `.../iqa_phase2_100k/val/` | ~1.5GB | ⏳ Needs regeneration |
+| **Test Split** | `.../iqa_phase2_100k/test/` | ~1.5GB | ⏳ Needs regeneration |
+
+**Local Symlink**: `data/training/iqa_phase2_100k` → `/mnt/unraid/training_data/image_detection/training/iqa_phase2_100k`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/iqa_phase2_100k/`
+**License**: Apache-2.0 (derived from permissive-license source datasets)
+**Purpose**: ResNet-50 teacher & ResNet-18 student IQA model training
+**Current Status**: Partial dataset (15,350 samples) needs regeneration to reach 100K target
+**Source Datasets**: DIQA-5000 (3,500 images), TableBank (424K images), PubTabNet (500K images), FUNSD+ (1,030 images)
+**Generation Script**: `scripts/generate_100k_iqa_dataset.py`
+**Target**: 100,000 samples (70K train, 15K val, 15K test) with 13-dimensional quality labels
+**Next Step**: Run regeneration script to create full 100K dataset (~50GB estimated)
+
+---
+
+### 2.2 Real-World Receipts & Invoices ✅ DOWNLOADED
+
+#### Receipts HITL ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/training/receipts_hitl/` | 24MB | ✅ Downloaded from GCS |
+
+**Local Symlink**: `data/training/receipts_hitl` → `/mnt/unraid/training_data/image_detection/training/receipts_hitl`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/receipts_hitl/`
+**License**: Proprietary (HITL annotated)
+**Purpose**: Human-in-the-loop annotated receipts dataset
+**Use Case**: Real-world receipt quality assessment, OCR validation
+
+#### Mobile Receipts Voxel51 ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/training/mobile_receipts_voxel51/` | 379MB | ✅ Downloaded from GCS |
+
+**Local Symlink**: `data/training/mobile_receipts_voxel51` → `/mnt/unraid/training_data/image_detection/training/mobile_receipts_voxel51`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/mobile_receipts_voxel51/`
+**License**: Apache-2.0 (Voxel51 open dataset)
+**Purpose**: Mobile-captured receipts from Voxel51
+**Use Case**: Real-world degradation patterns (mobile camera captures, lighting variations)
+
+#### Invoices Kaggle ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/training/invoices_kaggle/` | 278MB | ✅ Downloaded from GCS |
+
+**Local Symlink**: `data/training/invoices_kaggle` → `/mnt/unraid/training_data/image_detection/training/invoices_kaggle`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/invoices_kaggle/`
+**License**: CC-BY-4.0 (Kaggle open dataset)
+**Purpose**: High-quality invoice dataset from Kaggle
+**Use Case**: Document layout diversity, structured document quality assessment
+
+---
+
+### 2.3 Phase 3 Training (Handwriting & Layout) ✅ DOWNLOADED
+
+#### IAM Handwriting Database ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/training/iam_handwriting/` | 254MB | ✅ Downloaded from GCS |
+
+**Local Symlink**: `data/training/iam_handwriting` → `/mnt/unraid/training_data/image_detection/training/iam_handwriting`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/iam_handwriting/`
+**License**: Research/Academic use (IAM Database)
+**Purpose**: Handwriting recognition training
+**Use Case**: Phase 3 handwriting detection, OCR training for handwritten documents
+
+#### DocSynth300K ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/training/docsynth300k/` | 112GB | ✅ Downloaded from GCS |
+
+**Local Symlink**: `data/training/docsynth300k` → `/mnt/unraid/training_data/image_detection/training/docsynth300k`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/docsynth300k/`
+**License**: Apache-2.0 (synthetic dataset)
+**Purpose**: Synthetic layout training dataset (300K samples)
+**Use Case**: Phase 3 layout detection, synthetic document quality variations
+
+#### NIST Special Database 2 ✅ DOWNLOADED
+
+| Component | NFS Path | Size | Status |
+|-----------|----------|------|--------|
+| **Dataset** | `/mnt/unraid/training_data/image_detection/training/nist_db2/` | 1.0GB | ✅ Downloaded from GCS |
+
+**Local Symlink**: `data/training/nist_db2` → `/mnt/unraid/training_data/image_detection/training/nist_db2`
+**Source**: GCS `gs://image_detection_b/image-preprocessing-detector/datasets/nist_db2/`
+**License**: Public Domain (NIST)
+**Purpose**: NIST Special Database 2 (handwriting)
+**Use Case**: Phase 3 handwriting detection, OCR training for handwritten forms
+
+---
+
+### 2.4 Training Data Summary
+
+| Category | Datasets | Total Size | Download Status |
+|----------|----------|------------|-----------------|
+| **Phase 2 IQA** | iqa_phase2, iqa_phase2_100k | 10.5GB | ✅ Downloaded (needs 100K regen) |
+| **Real-World Receipts** | receipts_hitl, mobile_receipts_voxel51, invoices_kaggle | 0.7GB | ✅ Downloaded |
+| **Phase 3 Training** | iam_handwriting, docsynth300k, nist_db2 | 113.3GB | ✅ Downloaded |
+
+**Training Total**: ~134GB (8 datasets, all downloaded from GCS)
+**Download Status**: 8/8 datasets complete
+**NFS Storage**: `/mnt/unraid/training_data/image_detection/training/`
+**Next Steps**:
+1. ⏳ Regenerate 100K IQA training dataset (15K → 100K samples)
+2. ⏳ Create local symlinks with `scripts/create_symlinks.py --all`
+3. ⏳ Launch ResNet-50 training on Modal with updated 100K dataset
+
+---
+
+## 3. TEST FIXTURES (Committed to Git)
+
+### 3.1 Small Test Samples ✅ COMMITTED
+
+**Location**: `data/test_fixtures/` (committed to git, NOT on NFS)
 
 | Dataset | Local Path | Size | Samples | Status |
 |---------|-----------|------|---------|--------|
-| **CocoText** | `data/test_fixtures/cocotext/` | 4 KB | 10 images | ✅ Committed |
-| **DocLayNet** | `data/test_fixtures/doclaynet/` | 432 KB | 5 PDFs | ✅ Committed |
-| **OmniDocBench** | `data/test_fixtures/omnidocbench/` | 4 KB | 8 samples | ✅ Committed |
-| **TableBank** | `data/test_fixtures/tablebank/` | 324 KB | 5 samples | ✅ Committed |
-| **WiLI-2018** | `data/test_fixtures/wili_2018/` | 52 KB | 10 samples | ✅ Committed |
-| **README** | `data/test_fixtures/README.md` | 12 KB | Documentation | ✅ Committed |
+| **README** | `data/test_fixtures/README.md` | 12KB | Documentation | ✅ Committed |
 
-**Test Fixtures Total**: ~828 KB
+**Total Size**: ~12 KB (placeholder README only - fixtures not yet extracted)
 **Git Status**: ✅ Committed to repository
-**Purpose**: Fast CI/CD testing (< 5 min runtime)
-**Note**: NOT uploaded to GCS (too small, version controlled)
+**Purpose**: Fast CI/CD testing (< 5 min runtime) without downloading full benchmarks
+**Next Step**: Extract fixtures from DIQA-5000, TableBank, FUNSD+ after generation script update
 
 ---
 
-## 4. RAW SOURCE DATA - Base Documents
+## 4. GOOGLE CLOUD STORAGE (GCS) PATHS
 
-### 4.1 Raw Datasets (Empty Placeholders)
+### 4.1 GCS Bucket Structure
 
-| Dataset | Local Path | Size | Status |
-|---------|-----------|------|--------|
-| **DocBank** | `data/raw/docbank/` | 4 KB | ⚠️ Empty placeholder |
-| **RVL-CDIP** | `data/raw/rvl-cdip/` | 4 KB | ⚠️ Empty placeholder |
-| **Tobacco800** | `data/raw/tobacco800/` | 4 KB | ⚠️ Empty placeholder |
+**Primary Bucket**: `gs://image_detection_b/image-preprocessing-detector/`
 
-**Note**: These directories exist but datasets are not downloaded locally. TableBank was used as the source for Phase 2 IQA training data instead.
+#### Benchmark Data (Upload Pending)
 
----
+| Local Dataset | GCS Path | Size | Status |
+|--------------|----------|------|--------|
+| **TableBank** | `gs://image_detection_b/.../datasets/tablebank/` | 27GB | ✅ Already uploaded (source) |
+| **PubTabNet** | `gs://image_detection_b/.../datasets/pubtabnet/` | 14GB | ✅ Already uploaded (source) |
+| **DIQA-5000** | `gs://image_detection_b/.../datasets/diqa-5000/` | 5.4GB | ⏳ Upload pending |
+| **FUNSD+** | `gs://image_detection_b/.../datasets/funsd_plus/` | 500MB | ⏳ Upload pending |
+| **Others** | Various GCS paths | ~7GB | ⏳ Upload pending |
 
-## 5. PENDING/PLANNED DATASETS
+**Note**: TableBank and PubTabNet are already in GCS (downloaded from there). Other datasets need uploading for backup.
 
-### 5.1 Phase 3+ Datasets (Not Yet Required)
+#### Training Data (Generation Pending)
 
-#### DIQA-5000 (Document IQA Benchmark)
+| Local Dataset | GCS Path | Size | Status |
+|--------------|----------|------|--------|
+| **100K IQA Training** | `gs://image_detection_b/.../datasets/iqa_phase2_100k/` | ~50GB | ⏳ Generation pending |
 
-| Component | Expected Path | Size | Status |
-|-----------|--------------|------|--------|
-| **Dataset** | `data/benchmarks/diqa-5000/` | ~3.9 GB | ⚠️ **Pending Release** (Sept 2025) |
-
-**Purpose**: PRIMARY document IQA benchmark (replaces LIVE/CSIQ)
-**License**: TBD
-**Download**: Wait for official release
-
-#### AnyPhotoDoc 6300
-
-| Component | Expected Path | Size | Status |
-|-----------|--------------|------|--------|
-| **Dataset** | `data/benchmarks/anyphotodoc/` | ~2 GB | ⏳ Phase 3 Week 3 |
-
-**Purpose**: Dewarping benchmark (6,300 camera-captured warped documents)
-**License**: Research
-**Download**: `scripts/download_phase3_datasets.py --dataset anyphotodoc`
-
-#### StaVer (Stamp Verification)
-
-| Component | Expected Path | Size | Status |
-|-----------|--------------|------|--------|
-| **Dataset** | `data/benchmarks/staver/` | ~50 MB | ⏳ Phase 3 Week 2 |
-
-**Purpose**: Stamp detection (400 images: 200 stamped, 200 clean)
-**License**: CC BY-NC-SA 4.0
-**Download**: Manual from paper authors
-
-#### DDI-100 (Document Degradation)
-
-| Component | Expected Path | Size | Status |
-|-----------|--------------|------|--------|
-| **Dataset** | `data/benchmarks/ddi-100/` | ~5 GB | ⏳ Phase 3 Week 2 |
-
-**Purpose**: Stamps, hole punches, noise artifacts (99,870 images)
-**License**: Research (assume)
-**Download**: Manual from paper authors
-
-#### FUNSD (Forms Understanding)
-
-| Component | Expected Path | Size | Status |
-|-----------|--------------|------|--------|
-| **Dataset** | `data/benchmarks/external_iqa/funsd/` | ~50 MB | ⚠️ Partially present |
-
-**Note**: Directory exists but may need verification
-**Purpose**: Government forms (199 annotated forms)
-**License**: MIT
-**Source**: https://guillaumejaume.github.io/FUNSD/
+**Next Steps**:
+1. ✅ Complete TableBank download (currently 61%)
+2. ⏳ Generate 100K IQA training dataset
+3. ⏳ Upload to GCS for Modal training access
+4. ⏳ Upload remaining benchmarks for backup
 
 ---
 
-## 6. GOOGLE CLOUD STORAGE (GCS) PATHS
-
-### 6.1 GCS Bucket Structure
-
-**Primary Bucket**: `gs://image_detection_b/`
-
-#### Training Data
-
-| Local Path | GCS Path | Size | Status |
-|-----------|----------|------|--------|
-| `data/training/iqa_phase2/` | `gs://image_detection_b/datasets/iqa_phase2/` | 18 GB | ✅ Uploaded |
-| `data/training/mobile_receipts_voxel51/` | `gs://image_detection_b/datasets/mobile_receipts_voxel51/` | 379 MB | ⏳ Not uploaded |
-| `data/training/receipts_hitl/` | `gs://image_detection_b/datasets/receipts_hitl/` | 24 MB | ⏳ Not uploaded |
-| `data/training/invoices_kaggle/` | `gs://image_detection_b/datasets/invoices_kaggle/` | 278 MB | ⏳ Not uploaded |
-| `data/training/layout/docsynth300k/` | Not uploaded (too large) | 112 GB | ❌ Local only |
-| `data/training/tables/pubtables1m/` | Not uploaded (too large) | 83 GB | ❌ Local only |
-
-#### Benchmark Data
-
-| Local Path | GCS Path | Size | Status |
-|-----------|----------|------|--------|
-| `data/benchmarks/external_iqa/` | `gs://image_detection_b/benchmarks/external_iqa/` | 2 GB | ⏳ Not uploaded |
-| `data/benchmarks/omnidocbench/` | Not uploaded | 1.2 GB | ❌ Local only |
-| Other benchmarks | Not uploaded | ~117 GB | ❌ Local only |
-
-**Note**: Large datasets (>10 GB) typically stay local or downloaded on-demand from HuggingFace
-
-#### Configuration Files
-
-| Local Path | GCS Path | Size | Status |
-|-----------|----------|------|--------|
-| `configs/colab_phase2_iqa_gcs.yaml` | `gs://image_detection_b/configs/colab_phase2_iqa_gcs.yaml` | ~1 KB | ✅ Uploaded |
-
-### 6.2 GCS Upload Scripts
+### 4.2 GCS Upload Scripts
 
 ```bash
-# Upload Phase 2 IQA training dataset
-./scripts/gcs_helpers.sh upload-phase2
+# Upload training dataset (after generation)
+./scripts/upload_datasets_to_gcs.sh data/training/iqa_phase2_100k/
 
-# Upload individual datasets
-gsutil -m cp -r data/training/iqa_phase2 gs://image_detection_b/datasets/
-
-# Upload configs
-./scripts/gcs_helpers.sh upload-configs
+# Upload benchmark datasets (for backup)
+./scripts/upload_datasets_to_gcs.sh data/benchmarks/diqa-5000/
+./scripts/upload_datasets_to_gcs.sh data/benchmarks/funsd_plus/
+./scripts/upload_datasets_to_gcs.sh data/benchmarks/omnidocbench/
 
 # List bucket contents
-./scripts/gcs_helpers.sh list
+gsutil ls gs://image_detection_b/image-preprocessing-detector/datasets/
 
 # Show storage usage
-./scripts/gcs_helpers.sh info
+gsutil du -sh gs://image_detection_b/
+```
+
+**Authentication**: Service account key at `.gcp/service-account.json` (gitignored)
+
+---
+
+## 5. STORAGE MANAGEMENT
+
+### 5.1 NFS Mount Information
+
+**Server**: Unraid at 192.168.1.16
+**Mount Point**: `/mnt/unraid/training_data/image_detection/`
+**Capacity**: 100TB total (shared storage)
+**Network**: Gigabit ethernet (1 Gbps)
+**Current Usage**: ~105GB (benchmarks) + ~50GB future (training data) = ~155GB total
+
+**Mount Verification**:
+```bash
+# Check NFS mount
+df -h /mnt/unraid/training_data/
+
+# List benchmark datasets
+ls -lh /mnt/unraid/training_data/image_detection/benchmarks/
+
+# Check symlinks
+ls -l data/benchmarks/
 ```
 
 ---
 
-## 7. DIRECTORY STRUCTURE SUMMARY
+### 5.2 Symlink Management
 
-```
-/home/byron/dev/image_detection/data/
-│
-├── training/                          # Tier 1: Training Data (~213 GB)
-│   ├── iqa_phase2/                    # ✅ 18 GB - Phase 2 IQA (50k samples)
-│   │   ├── train/                     # 35k images + labels.json
-│   │   ├── val/                       # 7.5k images + labels.json
-│   │   └── test/                      # 7.5k images + labels.json
-│   ├── mobile_receipts_voxel51/       # ✅ 379 MB - Voxel51 receipts
-│   │   ├── train/                     # 500 images
-│   │   └── val/                       # 213 images
-│   ├── receipts_hitl/                 # ✅ 24 MB - HITL receipts
-│   │   └── ds0/                       # 192 images
-│   ├── invoices_kaggle/               # ✅ 278 MB - Kaggle invoices
-│   │   ├── train/                     # 989 images
-│   │   └── val/                       # 425 images
-│   ├── layout/
-│   │   └── docsynth300k/              # ✅ 112 GB - Layout training
-│   ├── tables/
-│   │   └── pubtables1m/               # ✅ 83 GB - Table structure
-│   └── specialized/
-│       └── handwriting/
-│           └── iam/                   # ✅ 254 MB - IAM handwriting
-│
-├── benchmarks/                        # Tier 2: Benchmarks (~120 GB)
-│   ├── external_iqa/                  # ✅ 2 GB - LIVE, CSIQ, LIVE Challenge
-│   │   ├── LIVE/                      # 779 images
-│   │   ├── CSIQ/                      # 866 images
-│   │   └── LIVE_Challenge/            # 1,162 images
-│   ├── doclaynet/                     # ✅ Symlink → data_ingestor (41 GB)
-│   ├── omnidocbench/                  # ✅ 1.2 GB - Document understanding
-│   ├── ohr-bench/                     # ✅ 1.8 GB - RAG-specific OCR
-│   ├── tablebank/                     # ✅ 74 GB - Table detection
-│   ├── pubtabnet/                     # ✅ 27 GB - Table structure
-│   ├── fintabnet/                     # ✅ 14 GB - Financial tables
-│   ├── signatr6k/                     # ✅ 142 MB - Signatures
-│   ├── wili_2018/                     # ✅ 129 MB - Language ID
-│   ├── cocotext/                      # ✅ 53 MB - Text annotations
-│   └── synthetic_iqa/                 # ✅ 372 KB - Auto-generated
-│
-├── test_fixtures/                     # Tier 3: Test Fixtures (~828 KB, git)
-│   ├── cocotext/                      # ✅ 4 KB - 10 samples
-│   ├── doclaynet/                     # ✅ 432 KB - 5 PDFs
-│   ├── omnidocbench/                  # ✅ 4 KB - 8 samples
-│   ├── tablebank/                     # ✅ 324 KB - 5 samples
-│   ├── wili_2018/                     # ✅ 52 KB - 10 samples
-│   └── README.md                      # ✅ 12 KB - Documentation
-│
-├── raw/                               # Base source documents
-│   ├── docbank/                       # ⚠️ Empty (placeholder)
-│   ├── rvl-cdip/                      # ⚠️ Empty (placeholder)
-│   └── tobacco800/                    # ⚠️ Empty (placeholder)
-│
-├── downloads/                         # Temporary download cache
-│   └── kaggle_invoices/               # ✅ Intermediate downloads
-│
-├── augmentation.py                    # Helper scripts for data augmentation
-├── weak_supervision.py                # Helper scripts for weak supervision
-└── __pycache__/                       # Python cache (auto-generated)
-```
-
----
-
-## 8. STORAGE SUMMARY
-
-### 8.1 Current Local Storage Usage
-
-| Category | Path | Size | Git Status |
-|----------|------|------|------------|
-| **Training Data** | `data/training/` | ~213 GB | ❌ Gitignored |
-| **Benchmark Data** | `data/benchmarks/` | ~120 GB | ❌ Gitignored |
-| **Test Fixtures** | `data/test_fixtures/` | ~828 KB | ✅ Committed |
-| **Raw Sources** | `data/raw/` | ~12 KB | ❌ Gitignored (empty) |
-| **Downloads Cache** | `data/downloads/` | (varies) | ❌ Gitignored |
-
-**Total Local**: ~333 GB
-**Available Disk**: 798 GB
-
-### 8.2 GCS Storage Usage
-
-| Category | GCS Path | Size | Status |
-|----------|----------|------|--------|
-| **Training Data** | `gs://image_detection_b/datasets/iqa_phase2/` | 18 GB | ✅ Uploaded |
-| **Configs** | `gs://image_detection_b/configs/` | ~100 KB | ✅ Uploaded |
-
-**Total GCS**: ~18 GB
-**Monthly Cost**: ~$0.36 (Standard storage @ $0.020/GB)
-
----
-
-## 9. DOWNLOAD & GENERATION SCRIPTS
-
-### 9.1 Dataset Download Scripts
-
-| Script | Datasets | Command |
-|--------|----------|---------|
-| **IQA Datasets** | LIVE, CSIQ, LIVE Challenge | `poetry run python scripts/download_iqa_datasets.py` |
-| **Table Datasets** | TableBank, PubTabNet, FinTabNet | `poetry run python scripts/download_table_datasets.py --all` |
-| **OmniDocBench** | OmniDocBench | `poetry run python scripts/download_omnidocbench.py` |
-| **Phase 3 Datasets** | OHR-Bench, DocSynth-300K, PubTables-1M, IAM | `poetry run python scripts/download_phase3_datasets.py --dataset <name>` |
-
-### 9.2 Dataset Generation Scripts
-
-| Script | Output | Command |
-|--------|--------|---------|
-| **Phase 2 IQA Training** | `data/training/iqa_phase2/` | `poetry run python scripts/prepare_phase2_data.py --num-samples 50000` |
-| **Test Fixtures** | `data/test_fixtures/` | `poetry run python scripts/extract_test_fixtures.py` |
-
-### 9.3 GCS Upload Scripts
-
-| Script | Purpose | Command |
-|--------|---------|---------|
-| **GCS Helpers** | All GCS operations | `./scripts/gcs_helpers.sh <command>` |
-| **Upload Phase 2** | Upload IQA training dataset | `./scripts/gcs_helpers.sh upload-phase2` |
-| **Upload Configs** | Upload training configs | `./scripts/gcs_helpers.sh upload-configs` |
-| **List Bucket** | Show GCS contents | `./scripts/gcs_helpers.sh list` |
-| **Storage Info** | Show usage and costs | `./scripts/gcs_helpers.sh info` |
-
----
-
-## 10. VERIFICATION COMMANDS
-
-### 10.1 Check Local Dataset Presence
+**All symlinks managed via**: `scripts/create_symlinks.py`
 
 ```bash
-# Show all dataset sizes
-du -sh data/benchmarks/* data/training/* data/test_fixtures/*
+# Create all symlinks
+poetry run python scripts/create_symlinks.py --all
 
-# Check specific dataset
-ls -lh data/training/iqa_phase2/train/images/ | head -20
-
-# Count images in training set
-find data/training/iqa_phase2/train/images -name "*.png" | wc -l
-# Expected: 35,000
+# Create benchmarks only
+poetry run python scripts/create_symlinks.py --benchmarks-only
 
 # Verify symlinks
-ls -l data/benchmarks/doclaynet
-# Should show: -> /home/byron/dev/data_ingestor/data/benchmarks/doclaynet
+poetry run python scripts/create_symlinks.py --verify
 ```
 
-### 10.2 Check GCS Uploads
+**Symlink Mappings**:
+```python
+SYMLINK_MAPPINGS = [
+    ("data/benchmarks/tablebank", "benchmarks/tablebank"),
+    ("data/benchmarks/pubtabnet", "benchmarks/pubtabnet"),
+    ("data/benchmarks/diqa-5000", "benchmarks/diqa-5000"),
+    ("data/benchmarks/funsd_plus", "benchmarks/funsd_plus"),
+    ("data/benchmarks/doclaynet", "benchmarks/doclaynet"),
+    ("data/benchmarks/fintabnet", "benchmarks/fintabnet"),
+    ("data/benchmarks/omnidocbench", "benchmarks/omnidocbench"),
+    ("data/benchmarks/ohr-bench", "benchmarks/ohr-bench"),
+    ("data/benchmarks/signatr6k", "benchmarks/signatr6k"),
+    ("data/benchmarks/wili_2018", "benchmarks/wili_2018"),
+    ("data/benchmarks/cocotext", "benchmarks/cocotext"),
+    ("data/training/iqa_phase2_100k", "training/iqa_phase2_100k"),  # Future
+]
+```
+
+---
+
+### 5.3 Dataset Download Automation
+
+**All downloads managed via**: `scripts/download_all_datasets.py`
 
 ```bash
-# List GCS bucket contents
-./scripts/gcs_helpers.sh list
+# Download all datasets
+poetry run python scripts/download_all_datasets.py --all
 
-# Check specific dataset
-gsutil ls gs://image_detection_b/datasets/iqa_phase2/
+# Download benchmarks only
+poetry run python scripts/download_all_datasets.py --benchmarks-only
 
-# Show storage usage
-./scripts/gcs_helpers.sh info
+# Download specific dataset
+poetry run python scripts/download_all_datasets.py --dataset tablebank
 ```
 
-### 10.3 Validate Dataset Structure
+**Download Sources**:
+- **GCS**: TableBank, PubTabNet (via gsutil)
+- **HuggingFace**: FUNSD+, OHR-Bench, OmniDocBench, WiLI-2018 (via datasets library)
+- **Direct URL**: COCO-Text (via wget)
+- **Manual**: DIQA-5000, SignaTR6K (user-provided zips)
+
+---
+
+### 5.4 Disk Space Management
+
+**Current Usage**:
+```bash
+# Local (WSL)
+data/                           # 1.1M (symlinks + synthetic_iqa only)
+data/benchmarks/                # 1.0M (symlinks only)
+data/test_fixtures/             # 12K (README only)
+data/training/                  # 0B (not created yet)
+```
+
+**NFS (Unraid)**:
+```bash
+/mnt/unraid/training_data/image_detection/benchmarks/  # ~63GB (11 datasets)
+  ├── tablebank/                # ~27GB (in progress)
+  ├── pubtabnet/                # ~14GB
+  ├── diqa-5000/                # 5.4GB
+  ├── funsd_plus/               # 500MB
+  ├── fintabnet/                # 5.3GB
+  ├── omnidocbench/             # 1.2GB
+  ├── ohr-bench/                # 1.8GB
+  ├── signatr6k/                # 153MB
+  ├── wili_2018/                # 129MB
+  └── cocotext/                 # 53MB
+
+/mnt/unraid/training_data/image_detection/training/   # ~0GB (not created yet)
+  └── iqa_phase2_100k/          # ~50GB (future)
+```
+
+**External Symlinks**:
+```bash
+/home/byron/dev/data_ingestor/data/benchmarks/doclaynet/  # 42GB (shared dataset)
+```
+
+---
+
+## 6. DATASET GENERATION WORKFLOW
+
+### 6.1 Current Status (2025-11-20)
+
+**Phase**: Phase 2 - Dataset Management Complete
+**Next Step**: Generate 100K IQA training dataset
+
+```
+✅ COMPLETE:
+├── Download infrastructure (scripts/download_all_datasets.py)
+├── Symlink management (scripts/create_symlinks.py)
+├── Benchmark datasets (12/12 downloaded)
+├── Documentation updates (data/benchmarks/README.md, benchmarks/README.md)
+└── Phase 3 coverage analysis (no additional datasets needed)
+
+⏳ IN PROGRESS:
+└── TableBank download (61% complete, 260K/424K images)
+
+⏳ PENDING:
+├── Update generation script for FUNSD+ (scripts/generate_100k_iqa_dataset.py)
+├── Generate 100K IQA training dataset
+├── Upload datasets to GCS
+└── Launch ResNet-50 training on Modal
+```
+
+---
+
+### 6.2 100K Dataset Generation Plan
+
+**Source Composition**:
+```python
+DATASET_SOURCES = {
+    "diqa-5000": {
+        "path": "/mnt/unraid/.../diqa-5000/train/ori/",
+        "samples": 3,500,
+        "contribution": "10% (10,000 samples)",
+        "augmentation": "2.85x",
+    },
+    "tablebank": {
+        "path": "/mnt/unraid/.../tablebank/",
+        "samples": 260_000,  # Will be 424K when complete
+        "contribution": "60% (60,000 samples)",
+        "augmentation": "1.23x",
+    },
+    "pubtabnet": {
+        "path": "/mnt/unraid/.../pubtabnet/",
+        "samples": 500_000,
+        "contribution": "25% (25,000 samples)",
+        "augmentation": "1.20x",
+    },
+    "funsd_plus": {
+        "path": "/mnt/unraid/.../funsd_plus/train/",
+        "samples": 1_030,
+        "contribution": "5% (5,000 samples)",
+        "augmentation": "4.85x",
+    },
+}
+```
+
+**Total**: 100,000 samples (70K train, 15K val, 15K test)
+**Augmentation**: Albumentations (blur, noise, skew, illumination, JPEG compression, color jitter)
+**Defect Labels**: 13-dimensional quality assessment (blur, gaussian_noise, salt_pepper_noise, contrast, illumination, jpeg_artifacts, skew, binarization, dirty_lens, shadow_border, low_resolution, pixelation, overexposure)
+**Storage**: ~50GB (500KB avg per augmented image + labels.json)
+
+---
+
+## 7. LICENSE AND CITATION REQUIREMENTS
+
+### 7.1 Must Cite in Publications
+
+**Benchmark Datasets (Attribution Required)**:
+- ✅ **DocLayNet**: CDLA-Permissive-2.0 (IBM Research)
+- ✅ **TableBank, COCO-Text**: CC-BY-4.0 (Microsoft Research, BGU)
+- ✅ **PubTabNet, FinTabNet**: CDLA-Permissive-2.0 (Microsoft)
+- ✅ **WiLI-2018**: CC-BY-SA-4.0 (University of Zurich)
+- ⚠️ **OmniDocBench, OHR-Bench**: CC-BY-NC-4.0 (Non-commercial only, OpenDataLab)
+- ⚠️ **DIQA-5000, SignaTR6K**: Research/Academic use (check original papers)
+- ⚠️ **FUNSD+**: Other (check HuggingFace for license details)
+
+### 7.2 Commercial Use Restrictions
+
+**Non-Commercial Evaluation Only**:
+- ❌ **OmniDocBench** (CC-BY-NC-4.0)
+- ❌ **OHR-Bench** (CC-BY-NC-4.0)
+
+**Research Purposes (Verify Before Commercial Use)**:
+- ⚠️ **DIQA-5000** - Check license before commercial deployment
+- ⚠️ **SignaTR6K** - Check license before commercial deployment
+- ⚠️ **FUNSD+** - Verify HuggingFace license terms
+
+**Commercial Use Allowed (With Attribution)**:
+- ✅ **TableBank, PubTabNet, FinTabNet, DocLayNet** - CDLA-Permissive/Apache-2.0
+- ✅ **WiLI-2018, COCO-Text** - CC-BY-4.0/CC-BY-SA-4.0
+
+---
+
+## 8. TROUBLESHOOTING
+
+### 8.1 NFS Mount Issues
 
 ```bash
-# Validate datasets (future script)
-poetry run python scripts/validate_datasets.py --all
+# Check if NFS is mounted
+df -h /mnt/unraid/training_data/
 
-# Check for data leakage between training and benchmarks
-poetry run python scripts/validate_datasets.py --check-leakage
+# Remount if needed (requires sudo)
+sudo mount -t nfs 192.168.1.16:/mnt/user/training_data /mnt/unraid/training_data
+
+# Verify access
+ls -lh /mnt/unraid/training_data/image_detection/benchmarks/
+```
+
+### 8.2 Symlink Verification
+
+```bash
+# Check all symlinks
+poetry run python scripts/create_symlinks.py --verify
+
+# Expected output:
+# ✅ data/benchmarks/tablebank → /mnt/unraid/.../tablebank (Valid)
+# ✅ data/benchmarks/diqa-5000 → /mnt/unraid/.../diqa-5000 (Valid)
+# ...
+
+# Fix broken symlinks
+poetry run python scripts/create_symlinks.py --all
+```
+
+### 8.3 Disk Space Issues
+
+```bash
+# Check NFS usage
+du -sh /mnt/unraid/training_data/image_detection/benchmarks/*
+
+# Check local WSL usage (should be < 5GB)
+du -sh data/
+
+# Expected:
+# 1.1M  data/  (symlinks only, minimal local storage)
 ```
 
 ---
 
-## 11. MIGRATION STATUS
+## 9. RELATED DOCUMENTATION
 
-### 11.1 Completed Migrations ✅
+**Dataset Documentation**:
+- [data/benchmarks/README.md](../data/benchmarks/README.md): Benchmark dataset overview and download guide
+- [benchmarks/README.md](../benchmarks/README.md): Benchmarking framework overview
+- [benchmarks/registry.yml](../benchmarks/registry.yml): Benchmark suite definitions
 
-- ✅ Phase 2 IQA training dataset generated (18 GB)
-- ✅ Real-world datasets downloaded (receipts, invoices)
-- ✅ Phase 3 layout training downloaded (DocSynth-300K, 112 GB)
-- ✅ Phase 3 table training downloaded (PubTables-1M, 83 GB)
-- ✅ Phase 3 handwriting downloaded (IAM, 254 MB)
-- ✅ External IQA benchmarks downloaded (LIVE, CSIQ, LIVE Challenge)
-- ✅ Test fixtures committed to git (828 KB)
-- ✅ **Directory cleanup complete**: Deleted 7 legacy/placeholder directories (2025-11-14)
-- ✅ **ADR-029 structure verified**: Three-tier strategy fully implemented
+**Architecture Decisions**:
+- [ADR-029](ADRs/0029-phase2-dataset-selection-strategy.md): Three-tier dataset strategy (Storage Tiers)
+- [ADR-031](ADRs/0031-comprehensive-benchmarking-framework.md): Comprehensive benchmarking framework (Validation Levels)
 
-### 11.2 Pending Actions ⏳
+**Reference Guides**:
+- [docs/reference/document-type-coverage.md](reference/document-type-coverage.md): FR coverage matrix
+- [docs/reference/detection-taxonomy.md](reference/detection-taxonomy.md): Complete detection taxonomy
 
-- ⏳ Upload real-world datasets to GCS (receipts, invoices) - Priority 1
-- ⏳ Extract test fixtures from LIVE dataset for CI/CD - Priority 1
-- ⏳ Upload external IQA benchmarks to GCS (optional) - Priority 2
-- ⏳ Download Phase 3 specialized datasets (StaVer, DDI-100, AnyPhotoDoc) - Priority 2
-- ⚠️ Wait for DIQA-5000 release (Sept 2025) - Long-term
+**Scripts**:
+- [scripts/download_all_datasets.py](../scripts/download_all_datasets.py): Automated dataset downloads
+- [scripts/create_symlinks.py](../scripts/create_symlinks.py): Symlink management
+- [scripts/generate_100k_iqa_dataset.py](../scripts/generate_100k_iqa_dataset.py): Training dataset generation
 
 ---
 
-## 12. RELATED DOCUMENTATION
-
-- [data/README.md](../data/README.md): Data organization overview
-- [docs/guides/dataset-installation.md](dataset-installation.md): Installation guide
-- [docs/guides/dataset-preparation.md](dataset-preparation.md): Phase 2 preparation
-- [docs/research/public-dataset-coverage.md](../research/public-dataset-coverage.md): Coverage analysis
-- [docs/reference/document-type-coverage.md](../reference/document-type-coverage.md): Type coverage matrix
-- [benchmarks/README.md](../../benchmarks/README.md): Benchmarking framework
-
----
-
-**Last Updated**: 2025-11-14
-**Status**: ✅ **Phase 2 Complete** - All datasets downloaded/generated, directory cleanup complete
-**Storage**: 213 GB training + 120 GB benchmarks = **333 GB total**
-**Cleanup**: ✅ Deleted 7 legacy directories (annotations/, augmented/, iqa/, labels/, layout/, promptcraft/, test/)
-**Next Steps**: Extract test fixtures, upload real-world datasets to GCS
-**Next Review**: Phase 3 Week 1 (specialized datasets: StaVer, DDI-100, AnyPhotoDoc)
+**Created**: 2025-11-20 (Phase 2 dataset reorganization)
+**Status**: ✅ **12/12 Benchmarks Downloaded** - NFS dual storage complete
+**Storage**: 105GB (63GB NFS + 42GB external symlink)
+**Local Footprint**: ~1.1MB (symlinks only)
+**Next Steps**: Generate 100K IQA training dataset, upload to GCS, launch Modal training
+**Next Review**: After 100K dataset generation complete
