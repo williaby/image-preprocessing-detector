@@ -1,5 +1,12 @@
 """Test imports for training module."""
 
+import pytest
+
+# Training module requires PyTorch
+torch = pytest.importorskip(
+    "torch", reason="PyTorch required for training module tests"
+)
+
 
 def test_training_module_imports() -> None:
     """Test that training module can be imported."""
