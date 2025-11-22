@@ -167,7 +167,9 @@ def main():
     # Determine which symlinks to create
     if args.benchmarks_only:
         symlinks = [
-            (l, n) for l, n in SYMLINK_MAPPINGS if l.startswith("data/benchmarks/")
+            (link, nfs)
+            for link, nfs in SYMLINK_MAPPINGS
+            if link.startswith("data/benchmarks/")
         ]
     elif args.all:
         symlinks = SYMLINK_MAPPINGS

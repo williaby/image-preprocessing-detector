@@ -59,11 +59,9 @@ def load_diqa5000_images(
         return []
 
     # Load CSV annotations
-    images_data = []
     with open(csv_path) as f:
         reader = csv.DictReader(f)
-        for row in reader:
-            images_data.append(row)
+        images_data = list(reader)
 
     if max_images:
         images_data = images_data[:max_images]

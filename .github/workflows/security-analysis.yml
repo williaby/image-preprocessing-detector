@@ -43,7 +43,7 @@ on:
 permissions: read-all
 
 env:
-  POETRY_VERSION: 2.1.2
+  UV_SYSTEM_PYTHON: 1
 
 jobs:
   # Detect if security-relevant files changed in this PR
@@ -65,7 +65,7 @@ jobs:
               - '**/*.py'
               - '.github/workflows/security-analysis.yml'
               - 'pyproject.toml'
-              - 'poetry.lock'
+              - 'uv.lock'
 
   # CodeQL Analysis for Image Processing Systems
   # Note: Always runs (even for docs-only changes) to satisfy repository rule requirements
@@ -94,23 +94,20 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
         with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       # Install only main dependencies for CodeQL analysis
       - name: Install Image Processing Dependencies
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           echo "📦 Installing image processing dependencies for security analysis..."
-          poetry install --only main --no-interaction
+          uv sync --no-dev
 
           # Verify critical security-sensitive packages
-          poetry run python -c "
+          uv run python -c "
           import sys
           critical_deps = ['cv2', 'numpy', 'PIL', 'pymupdf', 'pydantic']
           for dep in critical_deps:
@@ -212,50 +209,42 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
         with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install Dependencies
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          poetry install --with dev --no-interaction
+          uv sync --extra dev
 
       # Bandit static analysis for image processing code
       - name: Bandit Security Analysis
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           echo "🔒 Running Bandit security analysis for image processing system..."
-          poetry run bandit -r src \
+          uv run bandit -r src \
             -f json -o bandit-report.json \
             -c pyproject.toml || true
 
           # Also generate human-readable output
-          poetry run bandit -r src -c pyproject.toml || true
+          uv run bandit -r src -c pyproject.toml || true
 
       # Safety dependency vulnerability scanning
       - name: Safety Vulnerability Scan
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           echo "🛡️ Scanning for known vulnerabilities in image processing dependencies..."
 
-          # Install poetry-plugin-export (required for poetry export in Poetry 2.0+)
-          poetry self add poetry-plugin-export==1.8.0
-
           # Export requirements for safety scanning
-          poetry export -f requirements.txt --output requirements-scan.txt
+          uv pip compile pyproject.toml -o requirements-scan.txt
 
           # Run safety scan
-          poetry run safety check \
+          uv run safety check \
             --file requirements-scan.txt \
             --json --output safety-report.json || true
 
           # Human readable output
-          poetry run safety check \
+          uv run safety check \
             --file requirements-scan.txt || true
 
       # Note: Semgrep scanning provided by Semgrep Cloud Platform GitHub App
@@ -291,26 +280,22 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
         with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install Dependencies
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
-          poetry install --with dev --no-interaction
+          uv sync --extra dev
 
       # Validate file processing security
       - name: Validate File Processing Security
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           echo "📸 Validating image processing security..."
 
-          poetry run python -c "
+          uv run python -c "
           import os
           import pathlib
 
@@ -340,9 +325,8 @@ jobs:
       # Check for hardcoded secrets in image processing code
       - name: Scan for Hardcoded Secrets
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           echo "🔐 Scanning for hardcoded secrets..."
-          poetry run python -c "
+          uv run python -c "
           import re
           import os
 
@@ -391,7 +375,7 @@ jobs:
         uses: google/osv-scanner-action/osv-scanner-action@9bb69575e74019c2ad085a1860787043adf47ccb # v2.2.4
         with:
           scan-args: |-
-            --lockfile=poetry.lock
+            --lockfile=uv.lock
             --format=json
             --output=osv-results.json
         # continue-on-error: true  # Removed to ensure scan failures are not masked

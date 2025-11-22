@@ -38,9 +38,9 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 try:
-    import albumentations as A
+    import albumentations as A  # noqa: N812 - standard ML convention
 except ImportError:
-    print("Error: albumentations not installed. Run: poetry install --with ml")
+    print("Error: albumentations not installed. Run: uv sync --extra ml")
     sys.exit(1)
 
 
@@ -55,7 +55,7 @@ class DatasetConfig:
         "diqa_5000": 3_500,  # Use as-is (already augmented with 10 distortion types)
         "tablebank": 45_500,  # Heavy augmentation (424K available)
         "pubtabnet": 45_500,  # Heavy augmentation (500K available)
-        "funsd_plus": 5_500,  # Enhanced FUNSD+ (1,026 × 6 augmentation = 6,156 available)
+        "funsd_plus": 5_500,  # Enhanced FUNSD+ (1,026 x 6 augmentation = 6,156 available)
         # Skipped: doclaynet (needs PDF conversion), docbank (empty), iam (empty)
     }
 
@@ -288,19 +288,10 @@ class DatasetGenerator:
                 all_files, min(self.config.COMPOSITION["pubtabnet"], len(all_files))
             )
 
-        # DocLayNet (PDFs - will need to convert to images)
-        doclaynet_path = Path(
-            "/home/byron/dev/data_ingestor/data/benchmarks/doclaynet/documents"
-        )
-        if doclaynet_path.exists():
-            all_files = sorted(doclaynet_path.glob("*.pdf"))
-            # Skip DocLayNet for now - requires PDF->image conversion
-            # datasets["doclaynet"] = random.sample(
-            #     all_files, min(self.config.COMPOSITION["doclaynet"], len(all_files))
-            # )
+        # DocLayNet skipped - requires PDF->image conversion (not yet implemented)
 
         # FUNSD+ (Enhanced - HuggingFace Datasets format)
-        # Apply 5x augmentation multiplier: 1,026 train samples × 5 = 5,130 samples
+        # Apply 5x augmentation multiplier: 1,026 train samples x 5 = 5,130 samples
         funsd_plus_path = PROJECT_ROOT / "data/benchmarks/funsd_plus/train"
         if funsd_plus_path.exists():
             try:
@@ -311,7 +302,7 @@ class DatasetGenerator:
                     1, self.config.COMPOSITION["funsd_plus"] // len(funsd_dataset)
                 )
                 print(
-                    f"  FUNSD+: {len(funsd_dataset)} base samples × {augmentation_multiplier} augmentation = {len(funsd_dataset) * augmentation_multiplier} samples"
+                    f"  FUNSD+: {len(funsd_dataset)} base samples x {augmentation_multiplier} augmentation = {len(funsd_dataset) * augmentation_multiplier} samples"
                 )
                 # Repeat each index augmentation_multiplier times for multiple augmented versions
                 all_indices = list(range(len(funsd_dataset))) * augmentation_multiplier
@@ -509,7 +500,7 @@ class DatasetGenerator:
         if rand < 0.40:  # 35% grayscale (0.05 + 0.35)
             image = image.convert("L")
             return "L", image
-        # 60% RGB
+        # Remaining 60 percent stays RGB
         if image.mode != "RGB":
             image = image.convert("RGB")
         return "RGB", image
