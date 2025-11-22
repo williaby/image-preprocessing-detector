@@ -27,8 +27,9 @@ env/
 ENV/
 .venv
 
-# Poetry
-# Note: poetry.lock IS committed for this application to ensure reproducible builds
+# UV Package Manager
+# Note: uv.lock IS committed for this application to ensure reproducible builds
+.python-version  # UV-managed Python version file
 
 # IDEs
 .vscode/

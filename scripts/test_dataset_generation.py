@@ -12,37 +12,44 @@ Duration: ~10-15 minutes
 """
 
 import subprocess
-import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
+
 def main():
-    print("="*80)
+    print("=" * 80)
     print("TEST DATASET GENERATION - 1000 Samples")
-    print("="*80)
+    print("=" * 80)
     print("\nThis will generate 1000 test samples to validate the pipeline.")
     print("Expected duration: 10-15 minutes")
     print("Output: data/training/iqa_phase2_test/")
 
     response = input("\nProceed? (yes/no): ")
-    if response.lower() not in ['yes', 'y']:
+    if response.lower() not in ["yes", "y"]:
         print("Aborted.")
         return
 
     # Create test configuration by modifying the main script
     cmd = [
-        "poetry", "run", "python",
+        "poetry",
+        "run",
+        "python",
         str(PROJECT_ROOT / "scripts/generate_100k_iqa_dataset.py"),
-        "--output-dir", str(PROJECT_ROOT / "data/training/iqa_phase2_test"),
-        "--seed", "42"
+        "--output-dir",
+        str(PROJECT_ROOT / "data/training/iqa_phase2_test"),
+        "--seed",
+        "42",
     ]
 
     # Note: Would need to modify main script to support --test-mode with 1000 samples
     print(f"\nRunning: {' '.join(cmd)}")
-    print("\nNOTE: This is a test run. For full 100K generation, see README instructions.\n")
+    print(
+        "\nNOTE: This is a test run. For full 100K generation, see README instructions.\n"
+    )
 
     subprocess.run(cmd)
+
 
 if __name__ == "__main__":
     main()

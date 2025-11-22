@@ -23,7 +23,6 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -74,7 +73,6 @@ BENCHMARK_DATASETS = {
         "size_gb": 0.5,
         "description": "FUNSD+ enhanced form understanding (1,113 samples)",
     },
-
     # Optional benchmark datasets
     "omnidocbench": {
         "source": "huggingface",
@@ -138,7 +136,6 @@ TRAINING_DATASETS = {
         "description": "100K IQA training dataset (15K partial)",
         "note": "Currently 15,350 samples, needs regeneration",
     },
-
     # Real-world receipts & invoices
     "receipts_hitl": {
         "source": "gcs",
@@ -161,7 +158,6 @@ TRAINING_DATASETS = {
         "size_gb": 0.278,
         "description": "High-quality invoice dataset from Kaggle",
     },
-
     # Phase 3 training datasets (handwriting & layout)
     "iam_handwriting": {
         "source": "gcs",
@@ -187,11 +183,11 @@ TRAINING_DATASETS = {
 }
 
 
-def download_from_gcs(dataset_name: str, config: Dict) -> bool:
+def download_from_gcs(dataset_name: str, config: dict) -> bool:
     """Download dataset from GCS to NFS."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Downloading {dataset_name} from GCS")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Source: {config['gcs_path']}")
     print(f"Target: {config['nfs_path']}")
     print(f"Size: ~{config['size_gb']} GB")
@@ -227,11 +223,11 @@ def download_from_gcs(dataset_name: str, config: Dict) -> bool:
         return False
 
 
-def download_from_huggingface(dataset_name: str, config: Dict) -> bool:
+def download_from_huggingface(dataset_name: str, config: dict) -> bool:
     """Download dataset from HuggingFace."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Downloading {dataset_name} from HuggingFace")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Dataset: {config['hf_dataset']}")
     print(f"Target: {config['nfs_path']}")
     print(f"Size: ~{config['size_gb']} GB")
@@ -247,11 +243,11 @@ from datasets import load_dataset
 
 os.environ["HF_TOKEN"] = "{HF_TOKEN}"
 
-print("Loading dataset {config['hf_dataset']}...")
-dataset = load_dataset("{config['hf_dataset']}")
+print("Loading dataset {config["hf_dataset"]}...")
+dataset = load_dataset("{config["hf_dataset"]}")
 
-print("Saving to {config['nfs_path']}...")
-dataset.save_to_disk("{config['nfs_path']}")
+print("Saving to {config["nfs_path"]}...")
+dataset.save_to_disk("{config["nfs_path"]}")
 
 print("✅ Download complete!")
 if hasattr(dataset, 'keys'):
@@ -275,11 +271,11 @@ if hasattr(dataset, 'keys'):
         return False
 
 
-def download_from_url(dataset_name: str, config: Dict) -> bool:
+def download_from_url(dataset_name: str, config: dict) -> bool:
     """Download dataset from direct URL."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Downloading {dataset_name} from URL")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"URL: {config['url']}")
     print(f"Target: {config['nfs_path']}")
     print()
@@ -305,34 +301,29 @@ def download_from_url(dataset_name: str, config: Dict) -> bool:
         return False
 
 
-def download_dataset(dataset_name: str, config: Dict) -> bool:
+def download_dataset(dataset_name: str, config: dict) -> bool:
     """Download a single dataset based on its source type."""
     source = config.get("source")
 
     if source == "local":
         print(f"✅ {dataset_name} already present locally")
         return True
-    elif source == "gcs":
+    if source == "gcs":
         return download_from_gcs(dataset_name, config)
-    elif source == "huggingface":
+    if source == "huggingface":
         return download_from_huggingface(dataset_name, config)
-    elif source == "url":
+    if source == "url":
         return download_from_url(dataset_name, config)
-    elif source == "manual":
+    if source == "manual":
         print(f"⚠️ {dataset_name} requires manual download: {config.get('note', '')}")
         return False
-    else:
-        print(f"❌ Unknown source type: {source}")
-        return False
+    print(f"❌ Unknown source type: {source}")
+    return False
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Download and organize all datasets"
-    )
-    parser.add_argument(
-        "--all", action="store_true", help="Download all datasets"
-    )
+    parser = argparse.ArgumentParser(description="Download and organize all datasets")
+    parser.add_argument("--all", action="store_true", help="Download all datasets")
     parser.add_argument(
         "--benchmarks-only",
         action="store_true",
@@ -371,7 +362,10 @@ def main():
             print(f"Available training: {', '.join(TRAINING_DATASETS.keys())}")
             sys.exit(1)
     elif args.required_only:
-        datasets_to_download = {k: BENCHMARK_DATASETS[k] for k in ["tablebank", "pubtabnet", "diqa-5000", "funsd_plus"]}
+        datasets_to_download = {
+            k: BENCHMARK_DATASETS[k]
+            for k in ["tablebank", "pubtabnet", "diqa-5000", "funsd_plus"]
+        }
     elif args.benchmarks_only:
         datasets_to_download = BENCHMARK_DATASETS
     elif args.training_only:
@@ -391,9 +385,9 @@ def main():
         print(f"❌ GCS credentials not found: {GCS_CREDENTIALS}")
         sys.exit(1)
 
-    print(f"\n{'='*80}")
-    print(f"Dataset Download Plan")
-    print(f"{'='*80}")
+    print(f"\n{'=' * 80}")
+    print("Dataset Download Plan")
+    print(f"{'=' * 80}")
     print(f"Datasets to download: {len(datasets_to_download)}")
     for name, config in datasets_to_download.items():
         print(f"  - {name}: {config['description']} (~{config['size_gb']} GB)")
@@ -406,9 +400,9 @@ def main():
         results[dataset_name] = success
 
     # Summary
-    print(f"\n{'='*80}")
-    print(f"Download Summary")
-    print(f"{'='*80}")
+    print(f"\n{'=' * 80}")
+    print("Download Summary")
+    print(f"{'=' * 80}")
     successful = sum(1 for v in results.values() if v)
     failed = sum(1 for v in results.values() if not v)
 

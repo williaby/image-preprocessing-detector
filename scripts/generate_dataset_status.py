@@ -15,14 +15,13 @@ Scans all datasets in NFS storage and generates:
 import json
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 NFS_ROOT = Path("/mnt/unraid/training_data/image_detection")
 GCS_BUCKET = "gs://image_detection_b/image-preprocessing-detector/datasets"
 GCS_CREDENTIALS = Path(__file__).parent.parent / ".gcp/service-account.json"
 
 
-def get_dataset_size(dataset_path: Path) -> Tuple[str, int]:
+def get_dataset_size(dataset_path: Path) -> tuple[str, int]:
     """Get size of dataset in human-readable and bytes."""
     try:
         result = subprocess.run(
@@ -43,7 +42,7 @@ def get_dataset_size(dataset_path: Path) -> Tuple[str, int]:
         return "Unknown", 0
 
 
-def count_files(dataset_path: Path, extensions: List[str] = None) -> Dict[str, int]:
+def count_files(dataset_path: Path, extensions: list[str] = None) -> dict[str, int]:
     """Count files by type in dataset."""
     if not dataset_path.exists():
         return {}
@@ -81,7 +80,7 @@ def count_files(dataset_path: Path, extensions: List[str] = None) -> Dict[str, i
     return counts
 
 
-def check_gcs_status(dataset_name: str) -> Tuple[bool, str]:
+def check_gcs_status(dataset_name: str) -> tuple[bool, str]:
     """Check if dataset exists in GCS."""
     gcs_path = f"{GCS_BUCKET}/{dataset_name}/"
 
@@ -105,8 +104,7 @@ def check_gcs_status(dataset_name: str) -> Tuple[bool, str]:
             )
             size = result.stdout.split()[0] if result.returncode == 0 else "Unknown"
             return True, size
-        else:
-            return False, "Not uploaded"
+        return False, "Not uploaded"
     except Exception:
         return False, "Unknown"
 
@@ -157,7 +155,9 @@ def main():
         data = datasets[name]
         size = data["size_human"]
         files = data["file_counts"].get("total", 0)
-        gcs_status = f"✅ {data['gcs_size']}" if data["gcs_exists"] else "❌ Not uploaded"
+        gcs_status = (
+            f"✅ {data['gcs_size']}" if data["gcs_exists"] else "❌ Not uploaded"
+        )
 
         print(f"{name:<20} {size:<15} {files:<10} {gcs_status:<20}")
 
