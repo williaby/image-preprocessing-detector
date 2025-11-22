@@ -30,12 +30,12 @@ pip3 install uv
 # Install project dependencies (without dev dependencies)
 cd $SRC/image-preprocessing-detector
 
-# Generate requirements without dev dependencies
-uv export --no-dev --format requirements-txt > /tmp/requirements.txt
+# Generate requirements without dev dependencies (no hashes for pip compatibility)
+uv export --no-dev --no-hashes --format requirements-txt > /tmp/requirements.txt
 
 # Pin NumPy to <2.0 for PyInstaller compatibility (NumPy 2.x has _core module issues)
-# Filter out numpy from requirements and install compatible version separately
-grep -v "^numpy" /tmp/requirements.txt > /tmp/requirements-no-numpy.txt
+# Filter out numpy and editable requirements from requirements
+grep -v "^numpy" /tmp/requirements.txt | grep -v "^-e " > /tmp/requirements-no-numpy.txt
 pip3 install "numpy>=1.26.0,<2.0.0"
 pip3 install -r /tmp/requirements-no-numpy.txt
 
