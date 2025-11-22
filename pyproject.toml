@@ -6,15 +6,18 @@ authors = [
     {name = "Byron Williams", email = "byronawilliams@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.10,<3.15"
 license = {text = "MIT"}
 keywords = ["image-processing", "opencv", "document-analysis", "ocr-preprocessing", "rag"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 
@@ -158,7 +161,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.15"  # ClusterFuzzLite requires Python 3.11 for Atheris compatibility
+python = ">=3.10,<3.15"  # Multi-version support for Python 3.10-3.14
 opencv-python-headless = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
@@ -198,9 +201,10 @@ matplotlib = "^3.10.7"
 datasets = "^4.4.1"
 safety = "^3.7.0"
 nox = "^2025.10.16"
+uv = "^0.5.0"  # Fast package manager for nox venv backend
 mutmut = "^3.3.1"
 pyyaml = "^6.0.3"
-scipy = "^1.16.3"
+scipy = "^1.14.0"  # v1.14.x supports Python 3.10-3.12, v1.16+ requires Python 3.11+
 scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
 dvc = {extras = ["ssh"], version = "^3.64.0"}
 kaggle = "^1.7.4.5"

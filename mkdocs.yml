@@ -161,42 +161,99 @@ extra:
 nav:
   - Home: index.md
 
-  - User Guide:
-      - Overview: guides/overview.md
+  # USER DOCUMENTATION
+  - Getting Started:
+      - Quick Start: guides/quick-start.md
+      - Installation: guides/installation.md
       - Configuration: guides/configuration.md
+
+  - User Guide:
+      - Overview: guides/index.md
+      - System Overview: guides/overview.md
       - Image Quality Assessment: guides/iqa.md
       - Document Layout Detection: guides/layout.md
       - Correction Pipeline: guides/correction.md
 
   - API Reference:
-      - Overview: api-reference.md
+      - Overview: api/index.md
       - Schema: api/schema.md
       - Ingestion: api/ingestion.md
       - Detection: api/detection.md
       - Correction: api/correction.md
       - Output: api/output.md
 
+  # DEVELOPER DOCUMENTATION
   - Development:
-      - Architecture: development/architecture.md
+      - Overview: development/index.md
+      - Contributing: development/contributing.md
       - Testing: development/testing.md
       - Code Quality: development/code-quality.md
-      - Contributing: development/contributing.md
+      - Licenses: development/licenses-directory.md
 
+  - Architecture & Design:
+      - System Architecture: development/architecture.md
+      - RAG Pipeline:
+          - Overview: development/RAG Pipeline/RAG-pipeline-project-overview.md
+          - Project A (This Project): development/RAG Pipeline/project-a-project-plan.md
+          - Project A F/NF Requirements: development/RAG Pipeline/Project_A_F_NF.md
+          - Project B (OCR): development/RAG Pipeline/project-b-f-nf.md
+          - Project C (Fusion): development/RAG Pipeline/project-c-f-nf.md
+          - Models Reference: development/RAG Pipeline/MODELS.md
+          - Training Data: development/RAG Pipeline/training-data-targets.md
+      - Architecture Decisions:
+          - ADR Index: ADRs/README.md
+          - ADR-001 Ruff Linting: ADRs/0001-consolidate-linting-with-ruff.md
+          - ADR-005 MkDocs System: ADRs/0005-mkdocs-documentation-system.md
+          - ADR-007 Hybrid IQA: ADRs/0007-hybrid-iqa-approach.md
+          - ADR-010 300 DPI Normalization: ADRs/0010-300-dpi-normalization.md
+          - ADR-014 Classical-ML Hybrid: ADRs/0014-classical-ml-hybrid-iqa.md
+          - ADR-015 YOLOv8 Layout: ADRs/0015-yolov8-layout-detection.md
+          - ADR-018 Poetry Dependencies: ADRs/0018-poetry-dependency-management.md
+          - ADR-020 CPU-First Deployment: ADRs/0020-cpu-first-deployment-strategy.md
+          - ADR-028 Document Quality Score: ADRs/0028-document-quality-score-routing.md
+          - ADR-029 Project A Scope: ADRs/0029-project-a-scope-boundaries.md
+          - ADR-032 DocRes Preprocessing: ADRs/0032-docres-unified-preprocessing.md
+          - ADR-033 Delegate Semantic to OCR: ADRs/0033-delegate-semantic-features-to-ocr.md
+          - ADR-034 ResNet18 Phase2 IQA: ADRs/0034-resnet18-phase2-iqa.md
+
+  # REFERENCE DOCUMENTATION
+  - Reference:
+      - Repository Structure: REPOSITORY_STRUCTURE.md
+      - Dataset Locations: DATASET_LOCATIONS.md
+      - Model Storage: MODEL_STORAGE.md
+      - Testing Strategy: TESTING_STRATEGY.md
+      - Detection Taxonomy: reference/detection-taxonomy.md
+      - Document Type Coverage: reference/document-type-coverage.md
+      - Citations: reference/CITATIONS.md
+      - Hardware Configuration: setup/hardware-config.md
+      - Functional Requirements: requirements/functional_requirements_v2.md
+
+  - Training & Data:
+      - Phase 2 Quick Start: PHASE2_QUICKSTART.md
+      - Data Collection: guides/data-collection.md
+      - Dataset Installation: guides/dataset-installation.md
+      - Dataset Preparation: guides/dataset-preparation.md
+      - Modal Training: guides/modal-training.md
+      - Modal Storage: guides/modal-storage.md
+
+  # PROJECT MANAGEMENT
   - Project:
       - Roadmap: project/roadmap.md
+      - Project Plan: planning/PROJECT_PLAN.md
+      - Decision Matrix: project/decision-matrix.md
+      - Improvement Opportunities: project/improvement-opportunities.md
       - Changelog: project/changelog.md
       - License: project/license.md
 
+  # OPERATIONAL & SECURITY
   - Security:
-      - CodeQL Scanning Guide: security/codeql-python-scanning-guide.md
+      - CodeQL Scanning: security/codeql-python-scanning-guide.md
       - Fuzzing Implementation: security/fuzzing-implementation-guide.md
 
-  - Operational:
-      - OpenSSF Badge Response: badgeapp_response.md
-      - WhatTheDiff Runbook: WTD-Runbook.md
-
-  - Tools:
-      - Tools Catalog: tools/index.md
+  - Tools & Runbooks:
+      - Tools Overview: tools/README.md
+      - WhatTheDiff Runbook: tools/wtd-runbook.md
+      - OCR Team Handoff: handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md
 
 # Validation
 # strict mode disabled to allow links to repo root files (PROJECT_PLAN.md, etc.)

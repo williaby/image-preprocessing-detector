@@ -26,11 +26,12 @@ import os
 import platform
 import subprocess
 import sys
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
 
 
 def get_git_commit_hash(repo_path: str = ".") -> str:

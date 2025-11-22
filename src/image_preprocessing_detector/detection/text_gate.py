@@ -15,6 +15,26 @@ from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
 
+# Detection thresholds and constants
+DEFAULT_STROKE_THRESHOLD = 0.05  # Minimum stroke density for text
+DEFAULT_MIN_TEXT_COMPONENTS = 10  # Minimum text-like components
+DEFAULT_EDGE_THRESHOLD_LOW = 50  # Canny low threshold
+DEFAULT_EDGE_THRESHOLD_HIGH = 150  # Canny high threshold
+DEFAULT_MIN_COMPONENT_AREA = 20  # Minimum component area in pixels
+DEFAULT_MAX_COMPONENT_AREA = 5000  # Maximum component area in pixels
+DEFAULT_MIN_ASPECT_RATIO = 0.1  # Minimum aspect ratio for text
+DEFAULT_MAX_ASPECT_RATIO = 10.0  # Maximum aspect ratio for text
+
+# Morphological gradient constants
+MORPH_GRADIENT_THRESHOLD = 30  # Moderate threshold for edge detection
+MORPH_KERNEL_SIZE = (3, 3)  # Kernel size for morphological operations
+COMPONENT_SCORE_MULTIPLIER = 2  # Multiplier for normalizing component score
+
+# Confidence weights for ensemble
+WEIGHT_STROKE = 0.4  # Weight for stroke density in confidence calculation
+WEIGHT_COMPONENT = 0.4  # Weight for component analysis in confidence calculation
+WEIGHT_EDGE = 0.2  # Weight for edge density in confidence calculation
+
 
 @dataclass
 class TextDetectionResult:
@@ -44,14 +64,14 @@ class TextGate:
 
     def __init__(
         self,
-        stroke_threshold: float = 0.05,
-        min_text_components: int = 10,
-        edge_threshold_low: int = 50,
-        edge_threshold_high: int = 150,
-        min_component_area: int = 20,
-        max_component_area: int = 5000,
-        min_aspect_ratio: float = 0.1,
-        max_aspect_ratio: float = 10.0,
+        stroke_threshold: float = DEFAULT_STROKE_THRESHOLD,
+        min_text_components: int = DEFAULT_MIN_TEXT_COMPONENTS,
+        edge_threshold_low: int = DEFAULT_EDGE_THRESHOLD_LOW,
+        edge_threshold_high: int = DEFAULT_EDGE_THRESHOLD_HIGH,
+        min_component_area: int = DEFAULT_MIN_COMPONENT_AREA,
+        max_component_area: int = DEFAULT_MAX_COMPONENT_AREA,
+        min_aspect_ratio: float = DEFAULT_MIN_ASPECT_RATIO,
+        max_aspect_ratio: float = DEFAULT_MAX_ASPECT_RATIO,
     ) -> None:
         """Initialize text detection gate.
 
@@ -149,12 +169,11 @@ class TextGate:
             Stroke density score (0.0-1.0)
         """
         # Apply morphological gradient to detect edges/strokes
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, MORPH_KERNEL_SIZE)
         gradient = cv2.morphologyEx(gray, cv2.MORPH_GRADIENT, kernel)
 
         # Threshold and count pixels
-        threshold = 30  # Moderate threshold for edge detection
-        stroke_pixels = np.count_nonzero(gradient > threshold)
+        stroke_pixels = np.count_nonzero(gradient > MORPH_GRADIENT_THRESHOLD)
         total_pixels = gradient.size
 
         density = stroke_pixels / total_pixels if total_pixels > 0 else 0.0
@@ -204,7 +223,11 @@ class TextGate:
 
         # Normalize score: sigmoid-like function
         # Score approaches 1.0 as component count exceeds min_text_components
-        score = min(1.0, text_component_count / (self.min_text_components * 2))
+        score = min(
+            1.0,
+            text_component_count
+            / (self.min_text_components * COMPONENT_SCORE_MULTIPLIER),
+        )
 
         return float(score)
 
@@ -246,16 +269,10 @@ class TextGate:
             Weighted confidence score (0.0-1.0)
         """
         # Weighted average: stroke and components are more reliable
-        weights = {
-            "stroke": 0.4,
-            "component": 0.4,
-            "edge": 0.2,
-        }
-
         confidence = (
-            weights["stroke"] * stroke_density
-            + weights["component"] * component_score
-            + weights["edge"] * edge_score
+            WEIGHT_STROKE * stroke_density
+            + WEIGHT_COMPONENT * component_score
+            + WEIGHT_EDGE * edge_score
         )
 
         return float(min(1.0, max(0.0, confidence)))
@@ -263,8 +280,8 @@ class TextGate:
 
 def detect_text(
     image: np.ndarray,
-    stroke_threshold: float = 0.05,
-    min_text_components: int = 10,
+    stroke_threshold: float = DEFAULT_STROKE_THRESHOLD,
+    min_text_components: int = DEFAULT_MIN_TEXT_COMPONENTS,
 ) -> TextDetectionResult:
     """Convenience function for text detection.
 

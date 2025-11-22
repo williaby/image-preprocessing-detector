@@ -113,7 +113,6 @@ def train_iqa():
     Expected runtime: 12-24 hours on T4 GPU
     Expected cost: ~$7-14 (or $0 with $30/month free tier)
     """
-    import base64
     import json
     import os
     import sys
@@ -123,12 +122,11 @@ def train_iqa():
     # Add source to Python path
     sys.path.insert(0, "/root")
 
-    import timm
     import torch
     from torch.utils.data import DataLoader
 
     # Import local modules
-    from image_preprocessing_detector.models import ResNetTeacher, MultiHeadIQALoss
+    from image_preprocessing_detector.models import MultiHeadIQALoss, ResNetTeacher
     from image_preprocessing_detector.training import TeacherTrainer
 
     print("=" * 80)
@@ -144,7 +142,7 @@ def train_iqa():
     # =========================================================================
     print("\n[1/10] Loading configuration...")
     config_path = "/root/configs/modal_phase2_iqa.yaml"
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         config = yaml.safe_load(f)
 
     print(f"✅ Loaded config from {config_path}")
@@ -161,6 +159,7 @@ def train_iqa():
     print("Using single tar.gz archive for fast download (avoids 100K file timeout)...")
 
     import tarfile
+
     from google.cloud import storage
 
     # Configure GCS credentials
@@ -258,7 +257,7 @@ def train_iqa():
     print("\n[4/10] Loading metadata and creating splits...")
 
     # Load metadata.json
-    with open(metadata_file, "r") as f:
+    with open(metadata_file) as f:
         metadata = json.load(f)
 
     total_samples = metadata["total_samples"]
@@ -270,11 +269,11 @@ def train_iqa():
     # Create train/val/test splits based on config
     train_ratio = config['data']['train_split']
     val_ratio = config['data']['val_split']
-    test_ratio = config['data']['test_split']
+    _test_ratio = config['data']['test_split']  # Read but calculated via remainder
 
     train_size = int(total_samples * train_ratio)
     val_size = int(total_samples * val_ratio)
-    test_size = total_samples - train_size - val_size
+    _test_size = total_samples - train_size - val_size
 
     train_samples = samples[:train_size]
     val_samples = samples[train_size:train_size + val_size]
@@ -288,10 +287,10 @@ def train_iqa():
     print("\n[5/10] Creating data loaders...")
 
     # Import required libraries for dataset
-    from PIL import Image
     import torch
+    import torchvision.transforms as tv_transforms
+    from PIL import Image
     from torch.utils.data import Dataset
-    import torchvision.transforms as T
 
     # Simple dataset class for pre-generated 100K dataset
     class IQA100KDataset(Dataset):
@@ -328,16 +327,16 @@ def train_iqa():
             return image, labels
 
     # Create transforms
-    train_transform = T.Compose([
-        T.Resize((224, 224)),
-        T.ToTensor(),
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    train_transform = tv_transforms.Compose([
+        tv_transforms.Resize((224, 224)),
+        tv_transforms.ToTensor(),
+        tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
-    val_transform = T.Compose([
-        T.Resize((224, 224)),
-        T.ToTensor(),
-        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    val_transform = tv_transforms.Compose([
+        tv_transforms.Resize((224, 224)),
+        tv_transforms.ToTensor(),
+        tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
     # Create datasets
@@ -362,7 +361,6 @@ def train_iqa():
         labels_batch = torch.stack(labels_list)
 
         # Convert to per-head format expected by TeacherTrainer
-        # ISSUE_TYPES: ["blur", "noise", "skew", "illumination", "artifacts"]
         issue_types = ["blur", "noise", "skew", "illumination", "artifacts"]
         batch_dict = {
             "image": images_batch,
@@ -530,7 +528,7 @@ def train_iqa():
 
     blob = gcs_bucket.blob(f"checkpoints/phase2_iqa/{final_checkpoint.name}")
     blob.upload_from_filename(str(final_checkpoint))
-    print(f"✅ Uploaded final checkpoint to GCS")
+    print("✅ Uploaded final checkpoint to GCS")
 
     # =========================================================================
     # STEP 9: Export Model to ONNX
@@ -620,7 +618,7 @@ def main():
     # Run training (will block until complete, but background bash keeps it alive)
     train_iqa.remote()
 
-    print(f"\n✅ Training job completed!")
+    print("\n✅ Training job completed!")
     print("Check Modal dashboard for final results: https://modal.com/apps")
 
 

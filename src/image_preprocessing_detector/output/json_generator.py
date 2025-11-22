@@ -4,7 +4,6 @@ Aggregates detection results and corrections into structured JSON output
 using Pydantic schema validation.
 """
 
-from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -31,6 +30,7 @@ from image_preprocessing_detector.schema import (
     TransformHistory,
 )
 from image_preprocessing_detector.utils import get_logger
+from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
 
 logger = get_logger(__name__)
 
