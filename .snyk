@@ -1,0 +1,20 @@
+# Snyk vulnerability ignore configuration
+# https://docs.snyk.io/snyk-cli/commands/ignore
+version: v1.25.0
+
+# Ignore policies for vulnerabilities
+ignore:
+  # ONNX Directory Traversal in save_external_data
+  # CVE-2025-51480 / SNYK-PYTHON-ONNX-10877916
+  # Severity: Medium (CVSS 6.8)
+  # Reason: No fix available yet. Vulnerability is in save_external_data function
+  #         which is not used in our inference pipeline. This project only loads
+  #         ONNX models for inference, it does not save models with external data.
+  # Track: https://nvd.nist.gov/vuln/detail/CVE-2025-51480
+  SNYK-PYTHON-ONNX-10877916:
+    - '*':
+        reason: >-
+          No fix available. Vulnerability in save_external_data function not used
+          in this project (inference only). Monitor for patched version.
+        expires: 2025-02-22T00:00:00.000Z
+        created: 2025-11-22T00:00:00.000Z

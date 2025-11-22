@@ -95,6 +95,7 @@ SPDX-FileCopyrightText = "2025 Byron Williams"
 path = [
     ".claude/settings.local.json",
     ".clusterfuzzlite/**",
+    ".snyk",  # Snyk vulnerability ignore configuration
     "concept.txt",
     "image_reference_sets.txt",
     "overrides/**",
