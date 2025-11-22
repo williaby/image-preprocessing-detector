@@ -242,7 +242,7 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           echo "🧪 Running image quality assessment tests on Python ${{ matrix.python-version }}..."
           echo "🔧 Using nox with uv backend for faster execution..."
-          poetry run nox -s tests-${{ matrix.python-version }} --force-venv-backend uv -- \
+          poetry run -- nox -s tests-${{ matrix.python-version }} --force-venv-backend uv -- \
             --cov=src \
             --cov-report=xml:coverage.xml \
             --cov-report=term-missing \
