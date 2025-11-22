@@ -47,6 +47,7 @@ from pathlib import Path
 from typing import Any
 
 import cv2
+import fitz  # PyMuPDF
 import numpy as np
 from tqdm import tqdm
 
@@ -58,21 +59,64 @@ from data.augmentation import DocumentAugmentationPipeline, create_augmentation_
 from data.weak_supervision import WeakSupervisionLabeler
 
 
+def convert_pdf_to_images(pdf_path: Path) -> list[np.ndarray]:
+    """Convert PDF pages to images using PyMuPDF.
+
+    Args:
+        pdf_path: Path to PDF file
+
+    Returns:
+        List of page images as numpy arrays (BGR format for OpenCV)
+    """
+    try:
+        doc = fitz.open(str(pdf_path))
+        images = []
+
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            # Render at 300 DPI for quality
+            mat = fitz.Matrix(300/72, 300/72)
+            pix = page.get_pixmap(matrix=mat)
+
+            # Convert to numpy array
+            img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                pix.height, pix.width, pix.n
+            )
+
+            # Convert RGB/RGBA to BGR (OpenCV format)
+            if pix.n == 3:  # RGB
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            elif pix.n == 4:  # RGBA
+                img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
+
+            images.append(img)
+
+        doc.close()
+        return images
+    except Exception as e:
+        print(f"Warning: Failed to convert {pdf_path}: {e}")
+        return []
+
+
 def collect_source_images(
     source_dirs: list[Path],
     max_images: int | None = None,
-) -> list[Path]:
-    """Collect all valid images from source directories.
+    include_pdfs: bool = True,
+) -> list[np.ndarray]:
+    """Collect and load all source images from directories (supports PDFs and images).
 
     Args:
-        source_dirs: List of directories containing source images
+        source_dirs: List of directories containing source images/PDFs
         max_images: Maximum number of images to collect (None = all)
+        include_pdfs: Whether to convert PDF files to images
 
     Returns:
-        List of image paths
+        List of loaded images as numpy arrays (BGR format)
     """
-    valid_extensions = {".png", ".jpg", ".jpeg", ".tiff", ".tif"}
-    image_paths = []
+    valid_image_extensions = {".png", ".jpg", ".jpeg", ".tiff", ".tif"}
+    pdf_extension = {".pdf"}
+
+    all_images = []
 
     for source_dir in source_dirs:
         if not source_dir.exists():
@@ -80,23 +124,46 @@ def collect_source_images(
             continue
 
         print(f"Scanning {source_dir}...")
-        for ext in valid_extensions:
+
+        # Collect image files
+        image_paths = []
+        for ext in valid_image_extensions:
             image_paths.extend(source_dir.rglob(f"*{ext}"))
 
-        if max_images and len(image_paths) >= max_images:
+        # Load images
+        for img_path in tqdm(image_paths, desc="Loading images", leave=False):
+            img = cv2.imread(str(img_path))
+            if img is not None:
+                all_images.append(img)
+                if max_images and len(all_images) >= max_images:
+                    break
+
+        # Collect and convert PDFs if enabled
+        if include_pdfs:
+            pdf_paths = list(source_dir.rglob("*.pdf"))
+            print(f"Found {len(pdf_paths)} PDF files to convert...")
+
+            for pdf_path in tqdm(pdf_paths, desc="Converting PDFs"):
+                pdf_images = convert_pdf_to_images(pdf_path)
+                all_images.extend(pdf_images)
+
+                if max_images and len(all_images) >= max_images:
+                    break
+
+        if max_images and len(all_images) >= max_images:
             break
 
     # Shuffle and limit
-    random.shuffle(image_paths)
+    random.shuffle(all_images)
     if max_images:
-        image_paths = image_paths[:max_images]
+        all_images = all_images[:max_images]
 
-    print(f"Found {len(image_paths)} source images")
-    return image_paths
+    print(f"Loaded {len(all_images)} source images (images + PDF pages)")
+    return all_images
 
 
 def generate_augmented_dataset(
-    source_images: list[Path],
+    source_images: list[np.ndarray],
     output_dir: Path,
     num_samples: int,
     augmentation_pipeline: DocumentAugmentationPipeline,
@@ -108,7 +175,7 @@ def generate_augmented_dataset(
     """Generate augmented dataset with weak supervision labels.
 
     Args:
-        source_images: List of source image paths
+        source_images: List of source images as numpy arrays (BGR format)
         output_dir: Output directory for dataset
         num_samples: Total number of samples to generate
         augmentation_pipeline: Configured augmentation pipeline
@@ -155,20 +222,10 @@ def generate_augmented_dataset(
 
         for i in tqdm(range(split_size), desc=f"{split_name} set"):
             # Select random source image (with replacement)
-            source_img_path = random.choice(source_images)
-
-            # Load image
-            image = cv2.imread(str(source_img_path))
-            if image is None:
-                print(f"Warning: Failed to load {source_img_path}")
-                continue
+            image = random.choice(source_images)
 
             # Apply augmentations
-            # 5% chance of orientation augmentation (90/180/270° rotation)
-            apply_orientation = random.random() < 0.05
-            augmented = augmentation_pipeline(
-                image, apply_orientation=apply_orientation
-            )
+            augmented = augmentation_pipeline(image)
 
             # Save augmented image
             output_filename = f"img_{sample_idx:06d}.png"
@@ -177,12 +234,6 @@ def generate_augmented_dataset(
 
             # Generate weak supervision labels
             labels = labeler.label_image(augmented, output_filename)
-
-            # Override orientation label if we applied orientation augmentation
-            if apply_orientation:
-                labels.labels["orientation"].value = 1
-                labels.labels["orientation"].confidence = 0.99
-                labels.labels["orientation"].source = "augmentation_metadata"
 
             # Add to split labels
             split_labels.append(labels.to_dict())
@@ -197,14 +248,13 @@ def generate_augmented_dataset(
         print(f"✓ Saved {split_size} samples to {split_dir}")
         print(f"✓ Saved labels to {labels_path}")
 
-        # Compute statistics
+        # Compute statistics (5 classes aligned with ResNetTeacher model)
         issue_counts = {
-            "noise": 0,
             "blur": 0,
+            "noise": 0,
             "skew": 0,
-            "perspective": 0,
-            "low_contrast": 0,
-            "orientation": 0,
+            "illumination": 0,
+            "artifacts": 0,
         }
 
         for label_dict in split_labels:
