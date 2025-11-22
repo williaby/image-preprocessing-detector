@@ -22,7 +22,7 @@ model:
   teacher_architecture: resnet50
   student_architecture: resnet18
   pretrained: true
-  num_classes: 6  # noise, blur, skew, perspective, contrast, orientation
+  num_classes: 5  # blur, noise, skew, illumination, artifacts
   input_size: 224
   dropout: 0.2
 
@@ -58,7 +58,17 @@ training:
   mixed_precision: true  # AMP for faster training
 
 data:
-  dataset_path: gs://image_detection_b/datasets/iqa_phase2
+  # 100K IQA Dataset with 13-dimensional distribution
+  dataset_path: data/training/iqa_phase2_100k
+  gcs_path: gs://image_detection_b/image-preprocessing-detector/phase2/iqa_phase2_100k
+  metadata_file: metadata.json
+
+  # Training splits (from pre-generated dataset)
+  train_split: 0.70  # 70,000 samples
+  val_split: 0.15    # 15,000 samples
+  test_split: 0.15   # 15,000 samples
+
+  # DataLoader settings
   num_workers: 4
   pin_memory: true
   augmentation_preset: medium  # light, medium, heavy
@@ -69,7 +79,7 @@ storage:
   log_path: gs://image_detection_b/logs/phase2_iqa
 
 modal:
-  gpu: T4  # T4, A10, or A100
+  gpu: A10  # A10 24GB - cost-optimized (using only ~6GB), $1.10/hr vs $2.10/hr
   cpu: 8.0  # cores
   memory: 32768  # MB (32 GB)
   timeout: 86400  # 24 hours
