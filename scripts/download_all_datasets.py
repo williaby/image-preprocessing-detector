@@ -19,6 +19,7 @@ Usage:
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -203,18 +204,22 @@ def download_from_gcs(dataset_name: str, config: Dict) -> bool:
     env = os.environ.copy()
     env["GOOGLE_APPLICATION_CREDENTIALS"] = str(GCS_CREDENTIALS)
 
+    # Sanitize paths to prevent command injection (defensive coding)
+    gcs_path = shlex.quote(config["gcs_path"])
+    nfs_path = shlex.quote(str(config["nfs_path"]) + "/")
+
     cmd = [
         "gsutil",
         "-m",
         "rsync",
         "-r",
-        config["gcs_path"],
-        str(config["nfs_path"]) + "/",
+        gcs_path,
+        nfs_path,
     ]
 
     print(f"Running: {' '.join(cmd)}")
     try:
-        subprocess.run(cmd, env=env, check=True)
+        subprocess.run(cmd, env=env, check=True)  # nosec B603
         print(f"\n✅ Successfully downloaded {dataset_name}")
         return True
     except subprocess.CalledProcessError as e:
@@ -282,12 +287,17 @@ def download_from_url(dataset_name: str, config: Dict) -> bool:
     # Create NFS directory
     config["nfs_path"].mkdir(parents=True, exist_ok=True)
 
-    # Download with wget
+    # Download with wget (sanitize paths for defensive coding)
     output_file = config["nfs_path"] / Path(config["url"]).name
-    cmd = ["wget", "-O", str(output_file), config["url"]]
+    cmd = [
+        "wget",
+        "-O",
+        shlex.quote(str(output_file)),
+        shlex.quote(config["url"]),
+    ]
 
     try:
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)  # nosec B603
         print(f"\n✅ Successfully downloaded {dataset_name}")
         return True
     except subprocess.CalledProcessError as e:

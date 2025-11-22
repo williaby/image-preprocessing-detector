@@ -20,20 +20,40 @@ class TestUtilsInitImports:
         assert "get_logger" in utils.__all__
         assert "setup_logging" in utils.__all__
 
-    def test_gcs_utilities_not_available_by_default(self) -> None:
-        """Test that GCS utilities are not available without google-cloud-storage."""
+    def test_gcs_utilities_conditional_availability(self) -> None:
+        """Test GCS utilities availability depends on google-cloud-storage.
+
+        When google-cloud-storage IS installed (ml extra), utilities are exported.
+        When google-cloud-storage is NOT installed, utilities are not exported.
+        """
         # Re-import to ensure fresh import
         if "image_preprocessing_detector.utils" in sys.modules:
             del sys.modules["image_preprocessing_detector.utils"]
 
         from image_preprocessing_detector import utils
 
-        # GCS utilities should not be in __all__ when not installed
-        assert "upload_file_to_gcs" not in utils.__all__
-        assert "upload_dir_to_gcs" not in utils.__all__
-        assert "upload_run_to_gcs" not in utils.__all__
-        assert "download_run_from_gcs" not in utils.__all__
-        assert "list_runs" not in utils.__all__
+        # Check if google-cloud-storage is installed
+        try:
+            import google.cloud.storage  # noqa: F401
+
+            gcs_available = True
+        except ImportError:
+            gcs_available = False
+
+        if gcs_available:
+            # GCS utilities should be in __all__ when google-cloud-storage is installed
+            assert "upload_file_to_gcs" in utils.__all__
+            assert "upload_dir_to_gcs" in utils.__all__
+            assert "upload_run_to_gcs" in utils.__all__
+            assert "download_run_from_gcs" in utils.__all__
+            assert "list_runs" in utils.__all__
+        else:
+            # GCS utilities should not be in __all__ when not installed
+            assert "upload_file_to_gcs" not in utils.__all__
+            assert "upload_dir_to_gcs" not in utils.__all__
+            assert "upload_run_to_gcs" not in utils.__all__
+            assert "download_run_from_gcs" not in utils.__all__
+            assert "list_runs" not in utils.__all__
 
     def test_metadata_utilities_available_in_dev_environment(self) -> None:
         """Test that metadata utilities are available in dev environment (yaml is installed)."""

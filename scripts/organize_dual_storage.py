@@ -29,6 +29,7 @@ Usage:
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -151,20 +152,21 @@ def pull_from_gcs(dataset_name: str) -> bool:
     env = os.environ.copy()
     env["GOOGLE_APPLICATION_CREDENTIALS"] = str(GCS_CREDENTIALS)
 
+    # Sanitize paths for defensive coding
     cmd = [
         "gsutil",
         "-m",
         "rsync",
         "-r",
-        gcs_source,
-        str(nfs_full_path) + "/",
+        shlex.quote(gcs_source),
+        shlex.quote(str(nfs_full_path) + "/"),
     ]
 
     print(f"Running: {' '.join(cmd)}")
     print()
 
     try:
-        subprocess.run(cmd, env=env, check=True)
+        subprocess.run(cmd, env=env, check=True)  # nosec B603
         print(f"\n✅ Successfully downloaded {dataset_name} to NFS")
         return True
     except subprocess.CalledProcessError as e:
@@ -239,20 +241,21 @@ def sync_to_gcs(dataset_name: str) -> bool:
     env = os.environ.copy()
     env["GOOGLE_APPLICATION_CREDENTIALS"] = str(GCS_CREDENTIALS)
 
+    # Sanitize paths for defensive coding
     cmd = [
         "gsutil",
         "-m",
         "rsync",
         "-r",
-        str(nfs_full_path) + "/",
-        gcs_dest,
+        shlex.quote(str(nfs_full_path) + "/"),
+        shlex.quote(gcs_dest),
     ]
 
     print(f"Running: {' '.join(cmd)}")
     print()
 
     try:
-        subprocess.run(cmd, env=env, check=True)
+        subprocess.run(cmd, env=env, check=True)  # nosec B603
         print(f"\n✅ Successfully synced {dataset_name} to GCS")
         return True
     except subprocess.CalledProcessError as e:
