@@ -4,8 +4,12 @@ Tests the deterministic metrics functions for IQA evaluation.
 
 """
 
-import numpy as np
 import pytest
+
+# Skip if scipy is not available (required by benchmarks.metrics.image_metrics)
+pytest.importorskip("scipy", reason="scipy required for image metrics tests")
+
+import numpy as np
 
 from benchmarks.metrics.image_metrics import (
     blur_correlation,

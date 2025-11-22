@@ -97,7 +97,9 @@ class SoftLabelGenerator:
         soft_labels: dict[int, torch.Tensor] = {}
         sample_id = 0
 
-        logger.info("Generating soft labels", total_samples=len(data_loader.dataset))
+        dataset = data_loader.dataset
+        total = len(dataset) if hasattr(dataset, "__len__") else 0
+        logger.info("Generating soft labels", total_samples=total)
 
         # Create progress bar if requested
         iterator = (

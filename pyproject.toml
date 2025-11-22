@@ -80,6 +80,7 @@ dev = [
     # Code Quality
     "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",
+    "types-pyyaml>=6.0.0",  # Type stubs for PyYAML
 
     # Pre-commit
     "pre-commit>=3.3.0",
@@ -201,7 +202,7 @@ matplotlib = "^3.10.7"
 datasets = "^4.4.1"
 safety = "^3.7.0"
 nox = "^2025.10.16"
-uv = "^0.5.0"  # Fast package manager for nox venv backend
+uv = "^0.9.6"  # Fast package manager for nox venv backend (CVE-2025-54368 fixed)
 mutmut = "^3.3.1"
 pyyaml = "^6.0.3"
 scipy = "^1.14.0"  # v1.14.x supports Python 3.10-3.12, v1.16+ requires Python 3.11+

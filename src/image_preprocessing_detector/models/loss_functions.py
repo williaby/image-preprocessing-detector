@@ -442,14 +442,15 @@ class DistillationLoss(nn.Module):
         kl_loss = self.kl_loss(student_soft, teacher_soft)
 
         # Scale by T^2 as per Hinton et al.
-        return kl_loss * (temp * temp)
+        scaled_loss: torch.Tensor = kl_loss * (temp * temp)
+        return scaled_loss
 
     def forward(
         self,
         student_predictions: dict[str, dict[str, torch.Tensor]],
         teacher_predictions: dict[str, dict[str, torch.Tensor]],
         targets: dict[str, dict[str, torch.Tensor]],
-    ) -> dict[str, torch.Tensor | dict[str, torch.Tensor]]:
+    ) -> dict[str, Any]:
         """Compute the combined distillation loss.
 
         Args:

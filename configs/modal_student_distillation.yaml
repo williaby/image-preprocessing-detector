@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams
+# SPDX-License-Identifier: MIT
+
 # Student Model Distillation Training Configuration
 # ResNet-18 student trained via knowledge distillation from ResNet-50 teacher
 

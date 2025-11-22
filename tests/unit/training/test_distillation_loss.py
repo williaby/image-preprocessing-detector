@@ -5,9 +5,12 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
-import torch
 
-from image_preprocessing_detector.training.distillation_loss import (
+torch = pytest.importorskip(
+    "torch", reason="PyTorch required for distillation loss tests"
+)
+
+from image_preprocessing_detector.training.distillation_loss import (  # noqa: E402
     DistillationLoss,
     calculate_distillation_loss,
 )

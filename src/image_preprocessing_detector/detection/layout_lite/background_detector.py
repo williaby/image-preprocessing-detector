@@ -94,8 +94,8 @@ def detect_colorful_background(
     )
 
     return ColorfulBackgroundResult(
-        colorful_background=colorful_background,
+        colorful_background=bool(colorful_background),
         confidence=confidence,
-        unique_colors=unique_colors,
-        avg_saturation=avg_saturation,
+        unique_colors=int(unique_colors),
+        avg_saturation=float(avg_saturation),
     )
