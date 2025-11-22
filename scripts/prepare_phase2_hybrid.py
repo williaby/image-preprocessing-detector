@@ -275,17 +275,18 @@ def load_ohr_bench_images(
 
 def load_smartdoc_qa_images(
     smartdoc_dir: Path,
-    max_images: int | None = None,
+    max_images: int | None = None,  # Reserved for implementation
 ) -> list[tuple[np.ndarray, dict[str, int], dict[str, Any]]]:
     """Load SmartDoc-QA dataset with quality labels.
 
     Args:
         smartdoc_dir: Path to SmartDoc-QA dataset
-        max_images: Maximum number of images to load (None = all)
+        max_images: Maximum number of images to load (reserved for implementation)
 
     Returns:
         List of (image, binary_labels, metadata) tuples
     """
+    del max_images  # Unused until implementation complete
     print("\n📖 Loading SmartDoc-QA dataset...")
 
     # Check if dataset is downloaded and extracted
@@ -294,8 +295,7 @@ def load_smartdoc_qa_images(
         print("Skipping SmartDoc-QA dataset.")
         return []
 
-    # TODO: Implement SmartDoc-QA loader after examining dataset structure
-    # For now, return empty list (will be implemented after download completes)
+    # SmartDoc-QA loader pending implementation (dataset extraction required)
     print("SmartDoc-QA loader not yet implemented (pending dataset extraction)")
     print("Skipping SmartDoc-QA for now.")
     return []
@@ -456,7 +456,7 @@ def generate_augmented_dataset(
             "val": {"ratio": val_ratio, "samples": int(num_samples * val_ratio)},
             "test": {"ratio": test_ratio, "samples": int(num_samples * test_ratio)},
         },
-        "datasets_used": list(set(meta["source"] for _, _, meta in source_images)),
+        "datasets_used": list({meta["source"] for _, _, meta in source_images}),
     }
 
     summary_path = output_dir / "dataset_summary.json"

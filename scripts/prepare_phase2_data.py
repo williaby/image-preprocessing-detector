@@ -114,7 +114,6 @@ def collect_source_images(
         List of loaded images as numpy arrays (BGR format)
     """
     valid_image_extensions = {".png", ".jpg", ".jpeg", ".tiff", ".tif"}
-    pdf_extension = {".pdf"}
 
     all_images = []
 

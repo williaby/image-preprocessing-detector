@@ -111,7 +111,8 @@ repos:
     hooks:
       - id: safety-check
         name: safety
-        entry: uv run safety check
+        # Ignore 51457: CVE-2022-42969 (py library) - disputed and withdrawn from NVD
+        entry: uv run safety check --ignore 51457
         language: system
         files: pyproject.toml
         pass_filenames: false

@@ -277,12 +277,13 @@ def show_status():
         local_path = PROJECT_ROOT / dataset["local_path"]
         nfs_full_path = NFS_ROOT / dataset["nfs_path"]
 
-        # Check status
-        local_status = (
-            "✅ Symlink"
-            if local_path.is_symlink()
-            else ("📁 Dir" if local_path.exists() else "❌ Missing")
-        )
+        # Check local storage status
+        if local_path.is_symlink():
+            local_status = "✅ Symlink"
+        elif local_path.exists():
+            local_status = "📁 Dir"
+        else:
+            local_status = "❌ Missing"
         nfs_status = "✅ Exists" if nfs_full_path.exists() else "❌ Missing"
         gcs_status = "⚠️ Unknown"  # Would require GCS API call
 

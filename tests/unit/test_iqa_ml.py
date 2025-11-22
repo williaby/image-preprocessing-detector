@@ -102,7 +102,8 @@ class TestMLIQADetector:
             detector = MLIQADetector()
 
             # Create synthetic image (500x500x3, BGR)
-            image = np.random.randint(0, 256, (500, 500, 3), dtype=np.uint8)
+            rng = np.random.default_rng()
+            image = rng.integers(0, 256, (500, 500, 3), dtype=np.uint8)
 
             preprocessed = detector._preprocess_image(image)
 
@@ -246,7 +247,8 @@ class TestMLIQADetector:
             detector = MLIQADetector(student_model_path="models/iqa/student.onnx")
 
             # Create test image
-            image = np.random.randint(0, 256, (500, 500, 3), dtype=np.uint8)
+            rng = np.random.default_rng()
+            image = rng.integers(0, 256, (500, 500, 3), dtype=np.uint8)
 
             # Run inference
             result = detector.run_student_inference(image)
@@ -314,7 +316,8 @@ class TestMLIQADetector:
             detector = MLIQADetector(teacher_model_path="models/iqa/teacher.onnx")
 
             # Create test image
-            image = np.random.randint(0, 256, (500, 500, 3), dtype=np.uint8)
+            rng = np.random.default_rng()
+            image = rng.integers(0, 256, (500, 500, 3), dtype=np.uint8)
 
             # Run inference
             result = detector.run_teacher_inference(image)

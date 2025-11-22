@@ -80,6 +80,7 @@ dev = [
     # Code Quality
     "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",
+    "interrogate>=1.7.0",  # Docstring coverage checker
     "types-pyyaml>=6.0.0",  # Type stubs for PyYAML
 
     # Pre-commit

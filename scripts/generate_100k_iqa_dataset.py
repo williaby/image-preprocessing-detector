@@ -319,8 +319,7 @@ class DatasetGenerator:
                 # Fallback to empty list if loading fails
                 datasets["funsd_plus"] = []
 
-        # DocBank - Empty, skip
-        # IAM - Empty, skip
+        # NOTE: DocBank and IAM datasets intentionally skipped (empty)
 
         print("\nLoaded datasets:")
         for name, files in datasets.items():
@@ -540,10 +539,14 @@ class DatasetGenerator:
         return random.randint(*quality_ranges[quality_level])
 
     def generate_weak_supervision_labels(
-        self, image: np.ndarray, applied_defects: list[str]
+        self, _image: np.ndarray, applied_defects: list[str]
     ) -> dict[str, float]:
-        """Generate weak supervision labels using classical IQA detectors."""
-        # Placeholder - implement actual classical IQA detection
+        """Generate weak supervision labels using classical IQA detectors.
+
+        Args:
+            _image: Input image (reserved for future classical IQA implementation)
+            applied_defects: List of applied defect types
+        """
         labels = {
             "blur": 1.0 if "blur" in applied_defects else 0.0,
             "noise": 1.0 if "noise" in applied_defects else 0.0,
