@@ -441,12 +441,17 @@ omit = [
     "validation/*",  # Exclude standalone validation scripts
     "benchmarks/*",  # Exclude benchmarking framework
     "data/*",  # Exclude data processing scripts
-    # Phase 2+ modules (require ML dependencies, excluded from Phase 1 coverage)
+    # Phase 2+ modules (require ML dependencies - PyTorch, excluded from base coverage)
     "src/image_preprocessing_detector/utils/gcs_uploader.py",
     "src/image_preprocessing_detector/utils/metadata_generator.py",
     "src/image_preprocessing_detector/augmentation/*",
-    # Phase 6-8 modules (not yet implemented)
+    "src/image_preprocessing_detector/models/*",  # ResNet teacher/student models require torch
+    "src/image_preprocessing_detector/training/*",  # Training requires torch
+    "src/image_preprocessing_detector/datasets/*",  # Dataset classes require torch
+    # Phase 6 modules (layout-lite detection, require torch)
     "src/image_preprocessing_detector/detection/layout_lite.py",
+    "src/image_preprocessing_detector/detection/layout_lite/*",
+    # Phase 8+ modules (not yet implemented)
     "src/image_preprocessing_detector/ingestion/document_processor.py",
     "src/image_preprocessing_detector/metrics/*",
     "src/image_preprocessing_detector/routing/*",
