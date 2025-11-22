@@ -2,45 +2,40 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Phase 2 IQA Training on Modal - ResNet Teacher-Student Architecture.
+"""Phase 2 IQA Training on Modal - ResNet Teacher Model on 100K Dataset.
 
 Multi-label CNN for Image Quality Assessment (Project A - RAG Pipeline).
 
-This trains ML models to detect image quality issues (noise, blur, skew,
-perspective, low contrast, orientation) for use in Document Quality Score (DQS)
-calculation and pre-OCR risk assessment.
+This trains the ResNet-50 teacher model to detect image quality issues (blur, noise,
+skew, illumination, artifacts) for use in Document Quality Score (DQS) calculation
+and pre-OCR risk assessment.
 
-**Architecture Context:**
-- Part of Project A (this repo) in the RAG Pipeline architecture
-- Outputs feed into DQS calculation and routing recommendations
-- NOT for layout detection (that's Project B - ocr-orchestrator)
+**100K Dataset Training**:
+- Train ResNet-50 teacher model on pre-generated 100K dataset
+- 13-dimensional balanced distribution across defect types, severity, DPI, etc.
+- 70K train / 15K val / 15K test split
+- 50 epochs, batch_size=128, Adam optimizer
+- Target metrics: mAP > 0.88, per-class F1 > 0.85
 
-**Teacher-Student Knowledge Distillation:**
-- Teacher: ResNet-50 (high-capacity, selective inference on difficult cases)
-- Student: ResNet-18 (production default, fast inference)
-- Training Process:
-  1. Train ResNet-50 teacher on full IQA dataset
-  2. Distill knowledge to ResNet-18 student using soft labels
-  3. Export both models (ONNX + TorchScript)
-  4. Validate on OHR-Bench (document-specific IQA benchmark)
+Dataset:
+    - Source: data/training/iqa_phase2_100k (tracked with DVC)
+    - Size: ~40-50 GB, 100,000 samples
+    - Format: images/ directory + metadata.json
+    - GCS: gs://image_detection_b/.../iqa_phase2_100k/
 
 Usage:
     modal run modal/train_phase2_iqa.py
 
 Monitor:
     https://modal.com/apps
+    modal app logs iqa-phase2-training --follow
 
 Models:
-    Teacher (ResNet-50): High accuracy, selective inference only
-    Student (ResNet-18): Production default, optimized for CPU/GPU
-
-NOTE: This script placeholder needs full implementation for teacher-student training.
-      Current implementation is for single-model training (legacy MobileNetV3).
-      See configs/modal_phase2_iqa.yaml for updated architecture configuration.
+    Teacher (ResNet-50): High-capacity model for 100K training
+    Student (ResNet-18): Future distillation (Sprint 3.7+)
 """
 # Justification: Modal training script uses print for progress logging and /tmp for container-local storage
 # mypy: ignore-errors
-# Justification: Modal training placeholder script with incomplete implementation
 
 import yaml  # type: ignore[import-untyped]
 
@@ -49,215 +44,503 @@ import modal
 # Create Modal app
 stub = modal.App("iqa-phase2-training")
 
-# Define container image
-image = modal.Image.debian_slim(python_version="3.12").pip_install(
-    "torch>=2.1.0",
-    "torchvision>=0.16.0",
-    "timm>=0.9.0",
-    "albumentations>=1.3.0",
-    "tensorboard>=2.14.0",
-    "scikit-learn>=1.3.0",
-    "pyyaml>=6.0",
-    "google-cloud-storage>=2.10.0",
-    "onnx>=1.14.0",
+# Define container image with source code and dependencies
+# Force rebuild: 2025-11-18-100K-Dataset-DVC-Integration
+image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .pip_install(
+        # Deep learning
+        "torch>=2.1.0",
+        "torchvision>=0.16.0",
+        "timm>=0.9.0",
+        # Data augmentation
+        "albumentations>=1.3.0",
+        # Image processing
+        "opencv-python-headless>=4.8.0",
+        "pillow>=10.0.0",
+        # Monitoring
+        "tensorboard>=2.14.0",
+        # ML utils
+        "scikit-learn>=1.3.0",
+        # Configuration
+        "pyyaml>=6.0",
+        # GCS integration (includes gsutil via gcloud SDK)
+        "google-cloud-storage>=2.10.0",
+        "gcsfs>=2023.1.0",  # For efficient GCS file operations
+        # Export
+        "onnx>=1.14.0",
+        "onnxscript>=0.1.0",  # Required for torch.onnx.export in PyTorch 2.x
+    )
+    # Copy source code into container (copy=True bakes into image layer)
+    .add_local_dir(
+        local_path="src/image_preprocessing_detector",
+        remote_path="/root/image_preprocessing_detector",
+        copy=True,
+    )
+    # Note: Dataset is downloaded directly from GCS at runtime (no DVC)
+    # Copy GCS credentials configuration
+    .add_local_file(
+        ".gcp/service-account.json",
+        "/root/.gcp/service-account.json",
+        copy=True,
+    )
+    # Copy config file into container
+    .add_local_file(
+        "configs/modal_phase2_iqa.yaml",  # Production: 50 epochs
+        "/root/configs/modal_phase2_iqa.yaml",
+        copy=True,
+    )
 )
-
-# GCS credentials
-gcs_secret = modal.Secret.from_name("gcs-credentials")
-
 
 @stub.function(
     image=image,
-    gpu="T4",
+    gpu="A10",  # A10 24GB - cost-optimized (~$1.10/hr), we only use ~6GB
     cpu=8.0,
-    memory=32768,
+    memory=32768,  # 32GB
     timeout=86400,  # 24 hours
-    secrets=[gcs_secret],
 )
 def train_iqa():
-    """Main training function - ResNet teacher-student with knowledge distillation.
+    """Main training function - ResNet-50 teacher on 100K dataset.
 
-    NOTE: Current implementation is placeholder - needs update for:
-    - ResNet-50 teacher training
-    - ResNet-18 student distillation
-    - Selective inference configuration
-    - Device priority logic
+    Implements complete training pipeline:
+    1. Pull 100K dataset from GCS via DVC (~40-50GB)
+    2. Load metadata and create train/val/test splits
+    3. Initialize ResNet-50 teacher model
+    4. Train with multi-label loss for 50 epochs
+    5. Save checkpoints to GCS every 5 epochs
+    6. Export final model to ONNX + TorchScript
 
-    TODO: Implement full teacher-student training loop (Phase 2 implementation).
+    Expected runtime: 12-24 hours on T4 GPU
+    Expected cost: ~$7-14 (or $0 with $30/month free tier)
     """
-    import base64
+    import json
     import os
+    import sys
+    import time
+    from pathlib import Path
 
-    import timm
+    # Add source to Python path
+    sys.path.insert(0, "/root")
+
     import torch
-    import torch.optim as optim
-    from google.cloud import storage
+    from torch.utils.data import DataLoader
 
-    print("=" * 60)
-    print("Phase 2 IQA Training - Modal (Project A)")
-    print("=" * 60)
-    print("Training ML models for Image Quality Assessment")
+    # Import local modules
+    from image_preprocessing_detector.models import MultiHeadIQALoss, ResNetTeacher
+    from image_preprocessing_detector.training import TeacherTrainer
+
+    print("=" * 80)
+    print("Phase 2 IQA Training - 100K Dataset with 13-Dimensional Distribution")
+    print("=" * 80)
+    print("Training ResNet-50 teacher model for Image Quality Assessment")
+    print("Dataset: 100K samples with balanced defect types, severity, DPI, etc.")
     print("Outputs will be used for DQS calculation and routing metadata")
-    print("=" * 60)
+    print("=" * 80)
 
-    # Setup GCS credentials from base64-encoded secret
-    print("\n[0/8] Setting up GCS credentials...")
-    gcp_sa_key_b64 = os.environ.get("GCP_SA_KEY")
-    if not gcp_sa_key_b64:
-        raise ValueError("GCP_SA_KEY environment variable not found in Modal secret")
+    # =========================================================================
+    # STEP 1: Load Configuration
+    # =========================================================================
+    print("\n[1/10] Loading configuration...")
+    config_path = "/root/configs/modal_phase2_iqa.yaml"
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
 
-    # Decode base64 and write to temp file for GCS client
-    gcp_sa_key_json = base64.b64decode(gcp_sa_key_b64).decode("utf-8")
-    credentials_path = "/tmp/gcp-sa-key.json"
-    with open(credentials_path, "w") as f:
-        f.write(gcp_sa_key_json)
-
-    # Set restrictive permissions (owner-only read/write)
-    os.chmod(credentials_path, 0o600)
-
-    # Set environment variable for GCS client
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-    print("✅ GCS credentials configured")
-
-    # Load configuration from GCS
-    print("\n[1/8] Loading configuration from GCS...")
-    # Use environment variable for bucket name (defaults to image_detection_b)
-    bucket_name = os.environ.get("GCS_BUCKET_NAME", "image_detection_b")
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-
-    config_blob = bucket.blob("configs/modal_phase2_iqa.yaml")
-    config_yaml = config_blob.download_as_text()
-    config = yaml.safe_load(config_yaml)
-
-    print(f"Model: {config['model']['architecture']}")
+    print(f"✅ Loaded config from {config_path}")
+    print(f"Teacher architecture: {config['model']['teacher_architecture']}")
     print(f"Batch size: {config['training']['batch_size']}")
     print(f"Epochs: {config['training']['epochs']}")
+    print(f"Learning rate: {config['training']['learning_rate']}")
 
-    # Download dataset to local cache (faster than GCS mounting)
-    print("\n[2/8] Downloading dataset from GCS to local cache...")
-    os.makedirs("/tmp/data", exist_ok=True)
+    # =========================================================================
+    # STEP 2: Download Dataset from GCS (tar.gz archive for fast download)
+    # =========================================================================
+    print("\n[2/10] Downloading 100K dataset from GCS...")
+    print("Dataset: ~9 GB tar.gz archive, 99,630 samples")
+    print("Using single tar.gz archive for fast download (avoids 100K file timeout)...")
 
-    # Download dataset files (example - you'll need to implement full download)
-    print("Downloading train/labels.json...")
-    bucket.blob("datasets/iqa_phase2/train/labels.json").download_to_filename(
-        "/tmp/data/train_labels.json"
-    )
+    import tarfile
 
-    print("Downloading validation labels...")
-    bucket.blob("datasets/iqa_phase2/val/labels.json").download_to_filename(
-        "/tmp/data/val_labels.json"
-    )
+    from google.cloud import storage
 
-    # NOTE: Image download implementation deferred to dataset preparation phase
-    # This infrastructure PR establishes Modal setup; full dataset download
-    # will be implemented when Phase 2 dataset generation is complete
-    # TODO: Implement batched parallel download of ~35k training images from GCS
-    print(
-        "⚠️  Image download not yet implemented - deferred to dataset preparation phase"
-    )
+    # Configure GCS credentials
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
 
-    # Create model
-    print("\n[3/8] Creating model...")
+    # Create dataset directory
+    dataset_dir = Path("/root/data/training/iqa_phase2_100k")
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+
+    # GCS tar.gz location
+    bucket_name = "image_detection_b"
+    tar_blob_name = "image-preprocessing-detector/phase2/iqa_phase2_100k.tar.gz"
+    tar_local_path = Path("/tmp/iqa_phase2_100k.tar.gz")
+
+    print(f"Source: gs://{bucket_name}/{tar_blob_name}")
+    print(f"Destination: {dataset_dir}")
+
+    download_start = time.time()
+
+    # Initialize GCS client and download tar.gz
+    print("Downloading tar.gz archive (~9 GB)...")
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(tar_blob_name)
+    blob.download_to_filename(str(tar_local_path))
+
+    download_time = time.time() - download_start
+    tar_size_gb = tar_local_path.stat().st_size / (1024**3)
+    print(f"✅ Downloaded {tar_size_gb:.2f} GB in {download_time/60:.1f} minutes")
+
+    # Extract tar.gz archive
+    print("Extracting archive...")
+    extract_start = time.time()
+    with tarfile.open(tar_local_path, "r:gz") as tar:
+        # Extract to parent directory (archive contains iqa_phase2_100k/ folder)
+        tar.extractall(path=dataset_dir.parent)
+
+    extract_time = time.time() - extract_start
+    print(f"✅ Extracted in {extract_time/60:.1f} minutes")
+
+    # Clean up tar.gz to save disk space
+    tar_local_path.unlink()
+    print("✅ Cleaned up tar.gz archive")
+
+    total_time = time.time() - download_start
+    print(f"✅ Dataset ready in {total_time/60:.1f} minutes total")
+
+    # Verify dataset structure
+    dataset_dir = Path("/root/data/training/iqa_phase2_100k")
+    images_dir = dataset_dir / "images"
+    metadata_file = dataset_dir / config['data']['metadata_file']
+
+    if not dataset_dir.exists():
+        raise FileNotFoundError(f"Dataset directory not found: {dataset_dir}")
+    if not images_dir.exists():
+        raise FileNotFoundError(f"Images directory not found: {images_dir}")
+    if not metadata_file.exists():
+        raise FileNotFoundError(f"Metadata file not found: {metadata_file}")
+
+    # Count images
+    num_images = len(list(images_dir.glob("*.jpg")))
+    print(f"✅ Dataset verified: {num_images:,} images found")
+    print(f"✅ Metadata file: {metadata_file}")
+
+    # =========================================================================
+    # STEP 3: Create Device and Model
+    # =========================================================================
+    print("\n[3/10] Creating model...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    print(f"Device: {device}")
+    if torch.cuda.is_available():
+        print(f"GPU: {torch.cuda.get_device_name(0)}")
+        print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
-    model = timm.create_model(
-        config["model"]["architecture"],
-        pretrained=config["model"]["pretrained"],
-        num_classes=config["model"]["num_classes"],
-        drop_rate=config["model"]["dropout"],
+    # Create ResNet-50 teacher model
+    model = ResNetTeacher(
+        num_heads=config['model']['num_classes'],
+        dropout=config['model']['dropout'],
+        pretrained=config['model']['pretrained'],
     )
     model = model.to(device)
 
-    print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+    num_params = sum(p.numel() for p in model.parameters())
+    print(f"Model parameters: {num_params:,}")
 
-    # Create optimizer
-    print("\n[4/8] Setting up optimizer and scheduler...")
-    optimizer = optim.Adam(
-        model.parameters(),
-        lr=config["training"]["learning_rate"],
-        weight_decay=config["training"]["weight_decay"],
+    # Create loss function
+    loss_fn = MultiHeadIQALoss(head_names=model.ISSUE_TYPES)
+    loss_fn = loss_fn.to(device)
+
+    print("✅ Model and loss function created")
+
+    # =========================================================================
+    # STEP 4: Load Metadata and Create Splits
+    # =========================================================================
+    print("\n[4/10] Loading metadata and creating splits...")
+
+    # Load metadata.json
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+
+    total_samples = metadata["total_samples"]
+    samples = metadata["samples"]
+
+    print(f"Total samples in metadata: {total_samples:,}")
+    print(f"Loaded {len(samples):,} sample entries")
+
+    # Create train/val/test splits based on config
+    train_ratio = config['data']['train_split']
+    val_ratio = config['data']['val_split']
+    _test_ratio = config['data']['test_split']  # Read but calculated via remainder
+
+    train_size = int(total_samples * train_ratio)
+    val_size = int(total_samples * val_ratio)
+    _test_size = total_samples - train_size - val_size
+
+    train_samples = samples[:train_size]
+    val_samples = samples[train_size:train_size + val_size]
+    test_samples = samples[train_size + val_size:]
+
+    print(f"Split: {len(train_samples):,} train / {len(val_samples):,} val / {len(test_samples):,} test")
+
+    # =========================================================================
+    # STEP 5: Create DataLoaders
+    # =========================================================================
+    print("\n[5/10] Creating data loaders...")
+
+    # Import required libraries for dataset
+    import torch
+    import torchvision.transforms as tv_transforms
+    from PIL import Image
+    from torch.utils.data import Dataset
+
+    # Simple dataset class for pre-generated 100K dataset
+    class IQA100KDataset(Dataset):
+        """Dataset for pre-generated 100K IQA samples with metadata."""
+
+        def __init__(self, samples, images_dir, transform=None):
+            self.samples = samples
+            self.images_dir = Path(images_dir)
+            self.transform = transform
+
+        def __len__(self):
+            return len(self.samples)
+
+        def __getitem__(self, idx):
+            sample = self.samples[idx]
+
+            # Load image
+            image_path = self.images_dir / sample["filename"]
+            image = Image.open(image_path).convert("RGB")
+
+            # Apply transforms
+            if self.transform:
+                image = self.transform(image)
+
+            # Extract labels (5 defect types: blur, noise, skew, illumination, artifacts)
+            labels = torch.tensor([
+                sample["labels"]["blur"],
+                sample["labels"]["noise"],
+                sample["labels"]["skew"],
+                sample["labels"]["illumination"],
+                sample["labels"]["artifacts"],
+            ], dtype=torch.float32)
+
+            return image, labels
+
+    # Create transforms
+    train_transform = tv_transforms.Compose([
+        tv_transforms.Resize((224, 224)),
+        tv_transforms.ToTensor(),
+        tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
+    val_transform = tv_transforms.Compose([
+        tv_transforms.Resize((224, 224)),
+        tv_transforms.ToTensor(),
+        tv_transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
+    # Create datasets
+    train_dataset = IQA100KDataset(train_samples, images_dir, transform=train_transform)
+    val_dataset = IQA100KDataset(val_samples, images_dir, transform=val_transform)
+
+    print(f"Train samples: {len(train_dataset):,}")
+    print(f"Val samples: {len(val_dataset):,}")
+
+    # Custom collate function to convert tuple format to dict format
+    def collate_fn(batch):
+        """Convert (image, labels) tuple format to TeacherTrainer dict format."""
+        images = []
+        labels_list = []
+
+        for image, labels in batch:
+            images.append(image)
+            labels_list.append(labels)
+
+        # Stack into batched tensors
+        images_batch = torch.stack(images)
+        labels_batch = torch.stack(labels_list)
+
+        # Convert to per-head format expected by TeacherTrainer
+        issue_types = ["blur", "noise", "skew", "illumination", "artifacts"]
+        batch_dict = {
+            "image": images_batch,
+            "labels": {},
+            "confidence": {},
+        }
+
+        # Split labels tensor into per-head format
+        for idx, head_name in enumerate(issue_types):
+            batch_dict["labels"][head_name] = labels_batch[:, idx]
+            # Use full confidence (1.0) for all labels
+            batch_dict["confidence"][head_name] = torch.ones_like(labels_batch[:, idx])
+
+        return batch_dict
+
+    # Create data loaders
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config['training']['batch_size'],
+        shuffle=True,
+        num_workers=config['data']['num_workers'],
+        pin_memory=config['data']['pin_memory'],
+        collate_fn=collate_fn,
     )
 
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=config["training"]["epochs"]
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config['training']['batch_size'],
+        shuffle=False,
+        num_workers=config['data']['num_workers'],
+        pin_memory=config['data']['pin_memory'],
+        collate_fn=collate_fn,
     )
 
-    # NOTE: DataLoader implementation deferred to dataset preparation phase
-    # This infrastructure PR establishes Modal GPU setup and GCS integration
-    print("\n[5/8] Creating data loaders...")
-    print("⚠️  DataLoader not yet implemented - deferred to dataset preparation phase")
-    # TODO: Implement PyTorch DataLoader with:
-    #   - Albumentations augmentation pipeline
-    #   - Multi-label classification support
-    #   - Efficient batching for T4 GPU (batch_size=128)
+    print(f"Train batches: {len(train_loader)}")
+    print(f"Val batches: {len(val_loader)}")
+    print("✅ Data loaders created")
 
-    # NOTE: Training loop implementation deferred to dataset preparation phase
-    # Placeholder below demonstrates training structure and checkpoint saving
-    print("\n[6/8] Starting training loop (placeholder)...")
-    print("TODO: Implement full training loop with:")
-    print("  - Multi-label classification (BCEWithLogitsLoss)")
-    print("  - Albumentations augmentation pipeline")
-    print("  - Per-class metrics (precision, recall, F1, ROC-AUC)")
-    print("  - Calibration (ECE < 0.05 target)")
-    print("  - Teacher-student training support (optional)")
-    print()
-    for epoch in range(config["training"]["epochs"]):
-        print(f"\nEpoch {epoch + 1}/{config['training']['epochs']}")
+    # =========================================================================
+    # STEP 6: Create Trainer
+    # =========================================================================
+    print("\n[6/10] Creating trainer...")
 
-        # TODO: Implement training loop
-        # - Forward pass with mixed precision (AMP)
-        # - BCEWithLogitsLoss for multi-label classification
-        # - Backward pass with gradient clipping
-        # - Optimizer step (AdamW with cosine annealing)
-        # - Validation metrics (mAP, per-class F1)
-        # - Temperature scaling for calibration
-
-        # Save checkpoint every 5 epochs
-        if (epoch + 1) % config["monitoring"]["checkpoint_interval"] == 0:
-            print(f"Saving checkpoint at epoch {epoch + 1}...")
-            checkpoint_path = f"/tmp/checkpoint_epoch_{epoch + 1}.pth"
-            torch.save(
-                {
-                    "epoch": epoch,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "scheduler_state_dict": scheduler.state_dict(),
-                },
-                checkpoint_path,
-            )
-
-            # Upload checkpoint to GCS
-            checkpoint_blob = bucket.blob(
-                f"checkpoints/phase2_iqa/checkpoint_epoch_{epoch + 1}.pth"
-            )
-            checkpoint_blob.upload_from_filename(checkpoint_path)
-            print("✅ Checkpoint uploaded to GCS")
-
-        scheduler.step()
-
-    # Save final checkpoint
-    print("\nSaving final checkpoint...")
-    final_checkpoint_path = "/tmp/final_checkpoint.pth"
-    torch.save(
-        {
-            "epoch": config["training"]["epochs"],
-            "model_state_dict": model.state_dict(),
-            "optimizer_state_dict": optimizer.state_dict(),
-            "scheduler_state_dict": scheduler.state_dict(),
+    # Prepare trainer configuration
+    trainer_config = {
+        "batch_size": config['training']['batch_size'],
+        "epochs": config['training']['epochs'],
+        "learning_rate": config['training']['learning_rate'],
+        "weight_decay": config['training']['weight_decay'],
+        "optimizer": config['training']['optimizer'],
+        "scheduler": {
+            "type": config['training']['scheduler'],
         },
-        final_checkpoint_path,
-    )
+        "gradient_clip_norm": config['training']['gradient_clip_norm'],
+        "early_stopping_patience": config['training']['early_stopping_patience'],
+        "mixed_precision": {
+            "enabled": config['training']['mixed_precision'],
+        },
+        "checkpoint_dir": "/tmp/checkpoints",
+        "log_dir": "/tmp/logs",
+        "save_interval_epochs": config['monitoring']['checkpoint_interval'],
+        "keep_last_n": 3,
+        "log_interval": config['monitoring']['log_interval'],
+    }
 
-    # Export to ONNX
-    print("\n[7/8] Exporting model to ONNX...")
+    trainer = TeacherTrainer(model, loss_fn, trainer_config, device=str(device))
+    print("✅ Trainer created")
+
+    # =========================================================================
+    # STEP 7: Run Training with Progress Logging
+    # =========================================================================
+    print("\n[7/10] Starting training...")
+    print(f"Training for {config['training']['epochs']} epochs...")
+    print(f"Checkpoint interval: every {config['monitoring']['checkpoint_interval']} epochs")
+    print("Monitor progress at: https://modal.com/apps")
+    print()
+
+    # Initialize GCS client for incremental checkpoint uploads
+    from google.cloud import storage
+    storage_client = storage.Client()
+    gcs_bucket = storage_client.bucket("image_detection_b")
+    checkpoint_dir = Path("/tmp/checkpoints")
+    checkpoint_interval = config['monitoring']['checkpoint_interval']
+
+    start_time = time.time()
+    total_epochs = config['training']['epochs']
+
+    try:
+        # Manual epoch loop for better progress visibility
+        for epoch in range(total_epochs):
+            epoch_start = time.time()
+
+            # Print epoch header
+            print(f"\n{'='*60}")
+            print(f"EPOCH {epoch + 1}/{total_epochs}")
+            print(f"{'='*60}")
+
+            # Run single epoch training
+            train_metrics = trainer.train_epoch(train_loader)
+            val_metrics = trainer.validate(val_loader)
+
+            # Update trainer state
+            trainer.epoch = epoch + 1
+
+            epoch_time = time.time() - epoch_start
+            elapsed = time.time() - start_time
+            remaining = (elapsed / (epoch + 1)) * (total_epochs - epoch - 1)
+
+            # Print epoch summary
+            print(f"Train Loss: {train_metrics.get('loss', 0):.4f}")
+            print(f"Val Loss: {val_metrics.get('loss', 0):.4f}")
+            print(f"Epoch Time: {epoch_time/60:.1f} min")
+            print(f"Elapsed: {elapsed/3600:.1f}h | Remaining: {remaining/3600:.1f}h")
+
+            # Check for best model and save checkpoint
+            val_loss = val_metrics.get('loss', float('inf'))
+            if val_loss < trainer.best_val_loss:
+                trainer.best_val_loss = val_loss
+                print(f"✨ New best val_loss: {val_loss:.4f}")
+
+            # Save and upload checkpoint at intervals
+            if (epoch + 1) % checkpoint_interval == 0:
+                checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{epoch + 1}.pth"
+                checkpoint_dir.mkdir(parents=True, exist_ok=True)
+                torch.save({
+                    'epoch': epoch + 1,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': trainer.optimizer.state_dict(),
+                    'val_loss': val_loss,
+                    'best_val_loss': trainer.best_val_loss,
+                }, checkpoint_path)
+                print(f"💾 Saved checkpoint: {checkpoint_path.name}")
+
+                # Upload to GCS immediately
+                blob = gcs_bucket.blob(f"checkpoints/phase2_iqa/{checkpoint_path.name}")
+                blob.upload_from_filename(str(checkpoint_path))
+                print(f"☁️  Uploaded to GCS: checkpoints/phase2_iqa/{checkpoint_path.name}")
+
+            # Early stopping check
+            if hasattr(trainer, 'early_stop') and trainer.early_stop:
+                print(f"⚠️  Early stopping triggered at epoch {epoch + 1}")
+                break
+
+        training_time = time.time() - start_time
+        print(f"\n✅ Training completed in {training_time/3600:.2f} hours")
+        print(f"Best validation loss: {trainer.best_val_loss:.4f}")
+
+    except Exception as e:
+        print(f"\n❌ Training failed at epoch {epoch + 1}: {e}")
+        raise
+
+    # =========================================================================
+    # STEP 8: Upload Final Checkpoints to GCS
+    # =========================================================================
+    print("\n[8/10] Uploading final checkpoints to GCS...")
+
+    # Save final model
+    final_checkpoint = checkpoint_dir / "checkpoint_final.pth"
+    torch.save({
+        'epoch': total_epochs,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': trainer.optimizer.state_dict(),
+        'best_val_loss': trainer.best_val_loss,
+    }, final_checkpoint)
+
+    blob = gcs_bucket.blob(f"checkpoints/phase2_iqa/{final_checkpoint.name}")
+    blob.upload_from_filename(str(final_checkpoint))
+    print("✅ Uploaded final checkpoint to GCS")
+
+    # =========================================================================
+    # STEP 9: Export Model to ONNX
+    # =========================================================================
+    print("\n[9/10] Exporting model to ONNX...")
+
     model.eval()
     dummy_input = torch.randn(
-        1, 3, config["model"]["input_size"], config["model"]["input_size"]
+        1, 3, config['model']['input_size'], config['model']['input_size']
     ).to(device)
 
-    onnx_path = "/tmp/best_model.onnx"
+    onnx_path = "/tmp/resnet50_teacher_baseline.onnx"
     torch.onnx.export(
         model,
         dummy_input,
@@ -268,42 +551,75 @@ def train_iqa():
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},
     )
 
-    print(f"ONNX model saved to {onnx_path}")
+    print(f"✅ ONNX model saved to {onnx_path}")
 
-    # Upload final model to GCS
-    print("\n[8/8] Uploading final model to GCS...")
-    model_blob = bucket.blob("models/phase2_iqa/best_model.onnx")
-    model_blob.upload_from_filename(onnx_path)
+    # Upload ONNX model to GCS
+    onnx_blob = gcs_bucket.blob("models/phase2_iqa/resnet50_teacher_baseline.onnx")
+    onnx_blob.upload_from_filename(onnx_path)
+    print("✅ ONNX model uploaded to GCS")
 
-    checkpoint_blob = bucket.blob("models/phase2_iqa/best_model.pth")
-    checkpoint_blob.upload_from_filename(final_checkpoint_path)
+    # =========================================================================
+    # STEP 10: Save Training Summary
+    # =========================================================================
+    print("\n[10/10] Saving training summary...")
 
-    print("\n" + "=" * 60)
-    print("✅ Training complete!")
-    print("=" * 60)
-    print("Model saved to: gs://image_detection_b/models/phase2_iqa/best_model.onnx")
-    print(
-        "Download with: gsutil cp gs://image_detection_b/models/phase2_iqa/best_model.onnx models/"
-    )
+    summary = {
+        "model": "ResNet-50 Teacher",
+        "sprint": "3.5.2",
+        "run_type": "baseline",
+        "config": config,
+        "training_time_hours": training_time / 3600,
+        "final_metrics": {
+            "best_val_loss": float(trainer.best_val_loss),
+            "best_epoch": trainer.epoch,
+        },
+        "device": str(device),
+        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "N/A",
+    }
+
+    summary_path = "/tmp/training_summary.json"
+    with open(summary_path, "w") as f:
+        json.dump(summary, f, indent=2)
+
+    summary_blob = gcs_bucket.blob("models/phase2_iqa/training_summary_baseline.json")
+    summary_blob.upload_from_filename(summary_path)
+    print("✅ Training summary saved to GCS")
+
+    # =========================================================================
+    # Final Report
+    # =========================================================================
+    print("\n" + "=" * 80)
+    print("✅ Sprint 3.5.2 Baseline Training Complete!")
+    print("=" * 80)
+    print(f"Training time: {training_time/3600:.2f} hours")
+    print(f"Best validation loss: {trainer.best_val_loss:.4f}")
+    print(f"Best epoch: {trainer.epoch}")
     print()
-    print("Next steps:")
-    print("1. Validate model metrics (mAP > 0.88, ECE < 0.05)")
-    print("2. Integrate with DQS calculation pipeline")
-    print("3. (Optional) Train student model for production optimization")
-    print("4. Deploy for pre-OCR risk assessment and routing")
+    print("Artifacts saved to GCS:")
+    print(f"  - Checkpoints: gs://{bucket_name}/checkpoints/phase2_iqa/")
+    print(f"  - ONNX model: gs://{bucket_name}/models/phase2_iqa/resnet50_teacher_baseline.onnx")
+    print(f"  - Summary: gs://{bucket_name}/models/phase2_iqa/training_summary_baseline.json")
+    print()
+    print("Next steps (Sprint 3.5.3):")
+    print("  1. Download and analyze training curves")
+    print("  2. Evaluate on test set")
+    print("  3. Identify areas for hyperparameter tuning")
+    print("=" * 80)
 
 
 @stub.local_entrypoint()
 def main():
     """Entry point when running via `modal run`."""
-    print("Starting Phase 2 IQA training on Modal...")
+    print("Starting Phase 2 IQA Baseline Training (Sprint 3.5.2)...")
     print("Monitor progress at: https://modal.com/apps")
+    print("Stream logs: modal app logs iqa-phase2-training --follow")
     print()
 
+    # Run training (will block until complete, but background bash keeps it alive)
     train_iqa.remote()
 
-    print("\n✅ Training job submitted successfully!")
-    print("Check Modal dashboard for progress: https://modal.com/apps")
+    print("\n✅ Training job completed!")
+    print("Check Modal dashboard for final results: https://modal.com/apps")
 
 
 if __name__ == "__main__":

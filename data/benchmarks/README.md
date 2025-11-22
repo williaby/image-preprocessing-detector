@@ -1,9 +1,9 @@
 # Benchmark Datasets
 
-> **What's Here**: Actual dataset files (images, PDFs, annotations) - ~101GB total (59GB local + 42GB DocLayNet symlink)
+> **What's Here**: Actual dataset files (images, PDFs, annotations) - ~105GB total (63GB local + 42GB DocLayNet symlink)
 > **Framework Code**: See [benchmarks/](../../benchmarks/) for benchmark runners and metrics
 
-This directory contains datasets used for benchmarking the Image Preprocessing Detector.
+This directory contains datasets used for benchmarking and training the Image Preprocessing Detector.
 
 **⚠️ All datasets are gitignored** (too large for GitHub) and must be downloaded locally.
 
@@ -24,65 +24,71 @@ This directory contains datasets used for benchmarking the Image Preprocessing D
 |---------|--------|------|-------|----------|
 | **Synthetic IQA** | ✅ Auto-generated | 364KB | 1 | Blur, skew, noise, contrast testing |
 | **DocLayNet** | ✅ Symlinked | 42GB | 1 | Layout detection (→ data_ingestor/data/benchmarks/doclaynet) |
-| **SignaTR6K** | ✅ Local | 2GB | ? | Handwriting detection |
-| **COCO-Text** | ✅ Extracted | 53MB | 2 | Text detection and recognition |
-| **OmniDocBench** | ⚠️ Manual | 1.2GB | 3 | Comprehensive document understanding |
-| **TableBank** | ⏸️ Manual | 400MB | 2 | Table detection |
-| **PubTabNet** | ⏸️ Manual | 500MB | 2 | Table structure recognition |
-| **FinTabNet** | ⏸️ Manual | 3GB | 2 | Financial table detection |
-| **WiLI-2018** | ⏸️ Manual | 800MB | 2 | Language identification |
-| **ICDAR MLT 2019** | ⏸️ Manual | 3GB | 2 | Multi-lingual text detection |
+| **SignaTR6K** | ✅ Downloaded | 153MB | 2 | Handwriting detection (6K samples) |
+| **COCO-Text** | ✅ Downloaded | 53MB | 2 | Text detection and recognition |
+| **DIQA-5000** | ✅ Downloaded | 5.4GB | 2 | Document IQA with quality annotations (5.5K images) |
+| **FUNSD+** | ✅ Downloaded | 500MB | 2 | Enhanced form understanding (1,113 samples) |
+| **OHR-Bench** | ✅ Downloaded | 1.8GB | 2 | OCR handwriting recognition benchmark (8.5K pages) |
+| **OmniDocBench** | ✅ Downloaded | 1.2GB | 3 | Comprehensive document understanding |
+| **TableBank** | ✅ Downloaded | 27GB | 2 | Table detection (424K images) |
+| **PubTabNet** | ✅ Downloaded | 14GB | 2 | Table structure recognition (500K images) |
+| **FinTabNet** | ✅ Downloaded | 5.3GB | 2 | Financial table detection |
+| **WiLI-2018** | ✅ Downloaded | 129MB | 2 | Language identification (235K samples) |
 
-**Total Space Required**: ~36GB (excluding symlinked DocLayNet)
+**Total Space Required**: ~63GB (excluding symlinked DocLayNet)
 
 ## Installation
 
 **Complete installation guide**: See [docs/DATASET_INSTALLATION.md](../../docs/DATASET_INSTALLATION.md)
 
-### Quick Setup
+### Quick Setup (Automated)
 
 ```bash
-# 1. Verify doclaynet symlink
-ls -l doclaynet/
+# Download all benchmark datasets (automated)
+poetry run python scripts/download_all_datasets.py --all
 
-# 2. Generate synthetic IQA (auto-generated on benchmark runs)
-cd ../..
+# Create local symlinks to NFS storage
+poetry run python scripts/create_symlinks.py --all
+
+# Verify installation
+poetry run python scripts/create_symlinks.py --verify
+
+# Generate synthetic IQA test data (auto-generated on benchmark runs)
 poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
-
-# 3. Install OmniDocBench (requires HuggingFace account)
-poetry run huggingface-cli login
-poetry run python -c "
-from datasets import load_dataset
-dataset = load_dataset('opendatalab/OmniDocBench')
-dataset.save_to_disk('data/benchmarks/omnidocbench')
-"
-
-# 4. Download Phase 2 datasets (see full guide for details)
 ```
+
+**Note**: All datasets are automatically downloaded to NFS storage at `/mnt/unraid/training_data/image_detection/benchmarks/` and symlinked to local `data/benchmarks/` for fast access.
 
 ## Directory Structure
 
 ```
 data/benchmarks/
 ├── README.md                          # This file
-├── doclaynet/                         # ✅ Symlinked (11GB)
+├── doclaynet/                         # ✅ Symlinked (42GB)
 │   ├── documents/
 │   └── ground_truth/
-├── signatr6k/                         # ✅ Present (verify)
-├── synthetic_iqa/                     # ✅ Auto-generated
+├── diqa-5000/                         # ✅ Downloaded (5.4GB)
+│   ├── train/ori/ (3.8GB)
+│   ├── val/ori/ (470MB)
+│   └── test/ori/ (1.1GB)
+├── funsd_plus/                        # ✅ Downloaded (500MB)
+│   ├── train/ (1,030 samples)
+│   └── test/ (113 samples)
+├── ohr-bench/                         # ✅ Downloaded (1.8GB)
+├── signatr6k/                         # ✅ Downloaded (153MB)
+├── synthetic_iqa/                     # ✅ Auto-generated (364KB)
 │   ├── blur/
 │   ├── skew/
 │   ├── noise/
 │   ├── contrast/
 │   └── binarization/
-├── cocotext/                          # ✅ Extracted
+├── cocotext/                          # ✅ Downloaded (53MB)
 │   └── cocotext.v2.json
-├── omnidocbench/                      # ⏸️ Manual download
-├── tablebank/                         # ⏸️ Manual download
-├── pubtabnet/                         # ⏸️ Manual download
-├── fintabnet/                         # ⏸️ Manual download
-├── wili_2018/                         # ⏸️ Manual download
-└── icdar_mlt_2019/                    # ⏸️ Manual download
+├── omnidocbench/                      # ✅ Downloaded (1.2GB)
+├── tablebank/                         # ✅ Downloaded (27GB, 424K images)
+├── pubtabnet/                         # ✅ Downloaded (14GB, 500K images)
+├── fintabnet/                         # ✅ Downloaded (5.3GB)
+└── wili_2018/                         # ✅ Downloaded (129MB)
 ```
 
 ## Gitignore Configuration
@@ -102,11 +108,14 @@ Only this README file is tracked in git (forced with `git add -f`).
 - TableBank, COCO-Text (CC-BY-4.0)
 - PubTabNet, FinTabNet (CDLA-Permissive-2.0)
 - WiLI-2018 (CC-BY-SA-4.0)
-- OmniDocBench (CC-BY-NC-4.0)
+- OmniDocBench, OHR-Bench (CC-BY-NC-4.0)
+- DIQA-5000, SignaTR6K (Research/Academic)
+- FUNSD+ (Other - check HuggingFace)
 
 ### Commercial Use Restrictions
-- ⚠️ **OmniDocBench**: Non-commercial evaluation only (CC-BY-NC-4.0)
-- ✅ All others: Commercial use allowed with attribution
+- ⚠️ **OmniDocBench, OHR-Bench**: Non-commercial evaluation only (CC-BY-NC-4.0)
+- ⚠️ **DIQA-5000, SignaTR6K, FUNSD+**: Research purposes (check licenses before commercial use)
+- ✅ **All others**: Commercial use allowed with attribution
 
 ## Troubleshooting
 
@@ -173,6 +182,7 @@ rm -rf ../reports/*/$(ls -t ../reports/*/ | tail -n +2)
 
 ---
 
-**Last Updated**: 2025-11-11
+**Last Updated**: 2025-11-20
 **Datasets Gitignored**: Yes (all except this README)
-**Results Committed**: Yes (small JSON files in `reports/`)
+**Datasets Downloaded**: 12/12 (100% complete)
+**Total Size**: ~105GB (63GB local + 42GB symlink)

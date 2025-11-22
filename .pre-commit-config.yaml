@@ -49,7 +49,7 @@ repos:
           - types-pillow
           - types-python-dateutil
           - types-PyYAML
-        args: ['--ignore-missing-imports', '--python-version=3.12']
+        args: ['--ignore-missing-imports', '--python-version=3.10']
         # Exclude tests, validation, benchmarks, data, scripts, modal,
         # notebooks, and Phase 2+ files
         exclude: |

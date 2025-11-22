@@ -9,6 +9,11 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, call
 
+import pytest
+
+# Skip if nox is not available (required to import noxfile.py)
+pytest.importorskip("nox", reason="nox required for noxfile tests")
+
 # Import noxfile module from root directory
 noxfile_path = Path(__file__).parent.parent.parent / "noxfile.py"
 spec = importlib.util.spec_from_file_location("noxfile", noxfile_path)

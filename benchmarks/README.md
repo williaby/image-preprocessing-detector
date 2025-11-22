@@ -19,7 +19,7 @@ Comprehensive evaluation system for the Image Preprocessing Detector across Phas
 - Result aggregation and reporting tools (`scorers/`, `reports/`)
 - Documentation for the benchmarking framework
 
-**For actual dataset files**, see [data/benchmarks/](../data/benchmarks/) (~101GB total: 59GB local + 42GB DocLayNet symlink, gitignored).
+**For actual dataset files**, see [data/benchmarks/](../data/benchmarks/) (~105GB total: 63GB local + 42GB DocLayNet symlink, gitignored).
 
 ## Quick Start
 
@@ -63,16 +63,17 @@ benchmarks/
 **Dataset Storage** (separate location):
 
 ```text
-data/benchmarks/             # Actual dataset files (~101GB total, gitignored)
+data/benchmarks/             # Actual dataset files (~105GB total, gitignored)
 ├── doclaynet/              # Layout detection (42GB, symlinked to data_ingestor)
-├── tablebank/              # Table detection (27GB)
-├── pubtabnet/              # Table structure (16GB)
-├── fintabnet/              # Financial tables (11GB)
-├── external_iqa/           # LIVE, CSIQ, LIVE Challenge (2GB)
-├── ohr-bench/              # RAG-specific OCR benchmark (1.8GB)
+├── tablebank/              # Table detection (27GB, 424K images)
+├── pubtabnet/              # Table structure (14GB, 500K images)
+├── diqa-5000/              # Document IQA (5.4GB, 5.5K images)
+├── fintabnet/              # Financial tables (5.3GB)
+├── ohr-bench/              # OCR handwriting benchmark (1.8GB, 8.5K pages)
 ├── omnidocbench/           # Multi-domain comprehensive (1.2GB)
-├── signatr6k/              # Handwriting detection (142MB)
-├── wili_2018/              # Language detection (129MB)
+├── funsd_plus/             # Enhanced form understanding (500MB, 1.1K samples)
+├── signatr6k/              # Handwriting detection (153MB, 6K samples)
+├── wili_2018/              # Language detection (129MB, 235K samples)
 ├── cocotext/               # Text detection (53MB)
 └── synthetic_iqa/          # Auto-generated test images (372KB)
 ```

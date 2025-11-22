@@ -104,8 +104,12 @@ class MultiHeadIQALoss(nn.Module):
                 - confidence_loss: Total confidence regression loss
                 - per_head_loss: Loss for each head
         """
-        total_classification_loss = torch.tensor(0.0)
-        total_confidence_loss = torch.tensor(0.0)
+        # Get device from first prediction tensor to ensure all tensors on same device
+        first_head = self.head_names[0]
+        device = predictions[first_head]["logits"].device
+
+        total_classification_loss = torch.tensor(0.0, device=device)
+        total_confidence_loss = torch.tensor(0.0, device=device)
         per_head_losses: dict[str, torch.Tensor] = {}
 
         # Compute loss for each head
@@ -126,13 +130,15 @@ class MultiHeadIQALoss(nn.Module):
             target = targets[head_name]
 
             # Classification loss (BCE on logits)
-            logits = pred["logits"]
-            labels = target["labels"].float()
+            # Squeeze logits and labels from [batch, 1] to [batch]
+            logits = pred["logits"].squeeze(-1)
+            labels = target["labels"].float().squeeze(-1)
             cls_loss = self.bce_loss(logits, labels)
 
             # Confidence regression loss (MSE on confidence scores)
-            pred_confidence = pred["confidence"]
-            target_confidence = target["confidence"].float()
+            # Squeeze confidence from [batch, 1] to [batch] to match target shape
+            pred_confidence = pred["confidence"].squeeze(-1)
+            target_confidence = target["confidence"].float().squeeze(-1)
             conf_loss = self.mse_loss(pred_confidence, target_confidence)
 
             # Apply reduction
@@ -327,3 +333,235 @@ def compute_class_weights(
         class_weights[head_name] = weight_tensor
 
     return class_weights
+
+
+class DistillationLoss(nn.Module):
+    """Knowledge Distillation Loss for training student model from teacher.
+
+    This loss function combines:
+    1. Soft-target loss (KL Divergence): Student learns from teacher's soft predictions
+    2. Hard-target loss (BCE): Student learns from ground truth labels
+    3. Confidence distillation (MSE): Student mimics teacher's confidence scores
+
+    The temperature parameter controls how much to soften the teacher's predictions.
+    Higher temperature = softer distributions = more knowledge transfer from
+    teacher's "dark knowledge" about class similarities.
+
+    Args:
+        head_names: List of head names (e.g., ["blur", "noise", "skew", ...])
+        temperature: Softening temperature for KL divergence (default: 3.0)
+        alpha: Weight for soft targets vs hard targets (default: 0.7)
+               alpha=0.7 means 70% soft (teacher) + 30% hard (ground truth)
+        confidence_weight: Weight for confidence distillation loss (default: 0.3)
+        head_weights: Optional per-head weights (default: equal weights)
+
+    Example:
+        >>> teacher_model.eval()  # Freeze teacher
+        >>> distill_loss = DistillationLoss(
+        ...     head_names=["blur", "noise", "skew", "illumination", "artifacts"],
+        ...     temperature=4.0,
+        ...     alpha=0.7,
+        ... )
+        >>> with torch.no_grad():
+        ...     teacher_preds = teacher_model(images)
+        >>> student_preds = student_model(images)
+        >>> loss = distill_loss(student_preds, teacher_preds, targets)
+
+    Reference:
+        Hinton et al. "Distilling the Knowledge in a Neural Network" (2015)
+    """
+
+    def __init__(
+        self,
+        head_names: list[str],
+        temperature: float = 3.0,
+        alpha: float = 0.7,
+        confidence_weight: float = 0.3,
+        head_weights: dict[str, float] | None = None,
+    ) -> None:
+        super().__init__()
+
+        self.head_names = head_names
+        self.temperature = temperature
+        self.alpha = alpha
+        self.confidence_weight = confidence_weight
+
+        # Validate alpha
+        if not 0.0 <= alpha <= 1.0:
+            raise ValueError(f"alpha must be between 0 and 1, got {alpha}")
+
+        # Set default head weights (equal for all heads)
+        if head_weights is None:
+            self.head_weights = dict.fromkeys(head_names, 1.0)
+        else:
+            missing_heads = set(head_names) - set(head_weights.keys())
+            if missing_heads:
+                raise ValueError(
+                    f"Missing weights for heads: {missing_heads}. "
+                    f"Provide weights for all heads: {head_names}"
+                )
+            self.head_weights = head_weights
+
+        # Loss functions
+        self.kl_loss = nn.KLDivLoss(reduction="batchmean")
+        self.bce_loss = nn.BCEWithLogitsLoss(reduction="mean")
+        self.mse_loss = nn.MSELoss(reduction="mean")
+
+    def _compute_soft_targets_loss(
+        self,
+        student_logits: torch.Tensor,
+        teacher_logits: torch.Tensor,
+    ) -> torch.Tensor:
+        """Compute KL divergence loss between soft predictions.
+
+        For binary classification, we create a 2-class distribution from logits:
+        [P(negative), P(positive)] and compute KL divergence.
+
+        Args:
+            student_logits: Student model logits (batch_size,)
+            teacher_logits: Teacher model logits (batch_size,)
+
+        Returns:
+            KL divergence loss scaled by T^2
+        """
+        temp = self.temperature
+
+        # Convert binary logits to 2-class log-probabilities for student
+        # P(pos) = sigmoid(logit), P(neg) = 1 - sigmoid(logit)
+        student_pos = torch.sigmoid(student_logits / temp)
+        student_neg = 1 - student_pos
+        student_soft = torch.log(torch.stack([student_neg, student_pos], dim=-1) + 1e-8)
+
+        # Convert binary logits to 2-class probabilities for teacher
+        teacher_pos = torch.sigmoid(teacher_logits / temp)
+        teacher_neg = 1 - teacher_pos
+        teacher_soft = torch.stack([teacher_neg, teacher_pos], dim=-1)
+
+        # KL divergence: KL(teacher || student)
+        # Note: KLDivLoss expects log-probs for input, probs for target
+        kl_loss = self.kl_loss(student_soft, teacher_soft)
+
+        # Scale by T^2 as per Hinton et al.
+        scaled_loss: torch.Tensor = kl_loss * (temp * temp)
+        return scaled_loss
+
+    def forward(
+        self,
+        student_predictions: dict[str, dict[str, torch.Tensor]],
+        teacher_predictions: dict[str, dict[str, torch.Tensor]],
+        targets: dict[str, dict[str, torch.Tensor]],
+    ) -> dict[str, Any]:
+        """Compute the combined distillation loss.
+
+        Args:
+            student_predictions: Student model predictions, dict mapping head names to:
+                {
+                    "logits": tensor of shape (batch_size, 1),
+                    "confidence": tensor of shape (batch_size, 1)
+                }
+            teacher_predictions: Teacher model predictions (same structure)
+            targets: Ground truth labels, dict mapping head names to:
+                {
+                    "labels": binary tensor of shape (batch_size,),
+                    "confidence": tensor of shape (batch_size,)
+                }
+
+        Returns:
+            Dictionary containing:
+                - total_loss: Combined weighted loss
+                - soft_loss: Total KL divergence loss (teacher → student)
+                - hard_loss: Total BCE loss (ground truth → student)
+                - confidence_loss: Total confidence MSE loss
+                - per_head_loss: Loss breakdown for each head
+        """
+        # Get device from first prediction tensor
+        first_head = self.head_names[0]
+        device = student_predictions[first_head]["logits"].device
+
+        total_soft_loss = torch.tensor(0.0, device=device)
+        total_hard_loss = torch.tensor(0.0, device=device)
+        total_conf_loss = torch.tensor(0.0, device=device)
+        per_head_losses: dict[str, dict[str, torch.Tensor]] = {}
+
+        for head_name in self.head_names:
+            # Validate inputs
+            if head_name not in student_predictions:
+                raise ValueError(f"Head '{head_name}' not in student predictions")
+            if head_name not in teacher_predictions:
+                raise ValueError(f"Head '{head_name}' not in teacher predictions")
+            if head_name not in targets:
+                raise ValueError(f"Head '{head_name}' not in targets")
+
+            # Get predictions and targets
+            student_pred = student_predictions[head_name]
+            teacher_pred = teacher_predictions[head_name]
+            target = targets[head_name]
+
+            # Extract tensors and squeeze to consistent shape
+            student_logits = student_pred["logits"].squeeze(-1)
+            teacher_logits = teacher_pred["logits"].squeeze(-1)
+            student_conf = student_pred["confidence"].squeeze(-1)
+            teacher_conf = teacher_pred["confidence"].squeeze(-1)
+            labels = target["labels"].float()
+
+            # 1. Soft-target loss (KL Divergence from teacher)
+            soft_loss = self._compute_soft_targets_loss(student_logits, teacher_logits)
+
+            # 2. Hard-target loss (BCE from ground truth)
+            hard_loss = self.bce_loss(student_logits, labels)
+
+            # 3. Confidence distillation (MSE from teacher's confidence)
+            conf_loss = self.mse_loss(student_conf, teacher_conf)
+
+            # Apply head weight
+            head_weight = self.head_weights[head_name]
+
+            # Store per-head losses
+            per_head_losses[head_name] = {
+                "soft_loss": soft_loss * head_weight,
+                "hard_loss": hard_loss * head_weight,
+                "confidence_loss": conf_loss * head_weight,
+            }
+
+            # Accumulate weighted losses
+            total_soft_loss += soft_loss * head_weight
+            total_hard_loss += hard_loss * head_weight
+            total_conf_loss += conf_loss * head_weight
+
+        # Normalize by number of heads
+        num_heads = len(self.head_names)
+        total_soft_loss = total_soft_loss / num_heads
+        total_hard_loss = total_hard_loss / num_heads
+        total_conf_loss = total_conf_loss / num_heads
+
+        # Combine losses:
+        # - alpha * soft_loss: Learn from teacher's soft predictions
+        # - (1 - alpha) * hard_loss: Learn from ground truth labels
+        # - confidence_weight * conf_loss: Mimic teacher's confidence
+        classification_loss = (
+            self.alpha * total_soft_loss + (1 - self.alpha) * total_hard_loss
+        )
+        total_loss = classification_loss + self.confidence_weight * total_conf_loss
+
+        return {
+            "total_loss": total_loss,
+            "soft_loss": total_soft_loss,
+            "hard_loss": total_hard_loss,
+            "confidence_loss": total_conf_loss,
+            "classification_loss": classification_loss,
+            "per_head_loss": per_head_losses,
+        }
+
+    def get_config(self) -> dict[str, Any]:
+        """Get loss function configuration.
+
+        Returns:
+            Dictionary containing configuration parameters
+        """
+        return {
+            "head_names": self.head_names,
+            "temperature": self.temperature,
+            "alpha": self.alpha,
+            "confidence_weight": self.confidence_weight,
+            "head_weights": self.head_weights,
+        }

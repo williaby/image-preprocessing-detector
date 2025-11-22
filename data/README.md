@@ -1,5 +1,12 @@
 # Data Directory Organization
 
+> **IMPORTANT**: This project now uses **NFS dual-storage** with local symlinks. See [docs/DATASET_LOCATIONS.md](../docs/DATASET_LOCATIONS.md) for authoritative storage locations.
+>
+> **Storage Strategy (Updated 2025-11-20)**:
+> - **Local**: Symlinks only (~1MB) - `data/benchmarks/*`, `data/training/*` → NFS
+> - **NFS Primary**: `/mnt/unraid/training_data/image_detection/` (~235GB) - All datasets
+> - **GCS Backup**: `gs://image_detection_b/` (287GB) - Training datasets + selective benchmarks
+>
 > **Reference**: This structure implements the three-tier dataset strategy defined in [ADR-029](../docs/ADRs/0029-phase2-dataset-selection-strategy.md).
 
 ## Purpose

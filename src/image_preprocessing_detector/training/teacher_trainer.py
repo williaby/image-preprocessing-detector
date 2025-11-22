@@ -28,7 +28,7 @@ from typing import Any, cast
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -89,7 +89,7 @@ class TeacherTrainer:
 
         # Mixed precision training
         self.use_amp = config.get("mixed_precision", {}).get("enabled", True)
-        self.scaler = GradScaler() if self.use_amp else None
+        self.scaler = GradScaler("cuda") if self.use_amp else None
 
         # Optimizer
         optimizer_name = config.get("optimizer", "adamw").lower()
@@ -197,7 +197,7 @@ class TeacherTrainer:
 
             # Forward pass with mixed precision
             if self.use_amp and self.scaler is not None:
-                with autocast():
+                with autocast("cuda"):
                     predictions = self.model(images)
                     loss_dict = self.loss_fn(predictions, targets)
                     loss = loss_dict["total_loss"]
@@ -316,7 +316,7 @@ class TeacherTrainer:
 
             # Forward pass
             if self.use_amp:
-                with autocast():
+                with autocast("cuda"):
                     predictions = self.model(images)
                     loss_dict = self.loss_fn(predictions, targets)
             else:

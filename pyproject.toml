@@ -6,15 +6,18 @@ authors = [
     {name = "Byron Williams", email = "byronawilliams@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.10,<3.15"
 license = {text = "MIT"}
 keywords = ["image-processing", "opencv", "document-analysis", "ocr-preprocessing", "rag"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 
@@ -77,6 +80,7 @@ dev = [
     # Code Quality
     "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",
+    "types-pyyaml>=6.0.0",  # Type stubs for PyYAML
 
     # Pre-commit
     "pre-commit>=3.3.0",
@@ -136,7 +140,7 @@ colab = [
     "tensorboard>=2.12.0",  # Training monitoring
     "pyyaml>=6.0",          # Config file parsing
     "gdown>=4.7.0",         # Download from Google Drive
-    "onnx>=1.14.0",         # ONNX model verification
+    "onnx>=1.17.0",         # ONNX model verification (CVE-2024-7776 fixed in 1.17.0)
 ]
 
 [project.scripts]
@@ -158,7 +162,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.15"  # ClusterFuzzLite requires Python 3.11 for Atheris compatibility
+python = ">=3.10,<3.15"  # Multi-version support for Python 3.10-3.14
 opencv-python-headless = "^4.8.0"
 pillow = "^10.0.0"
 numpy = "^1.24.0"
@@ -198,13 +202,15 @@ matplotlib = "^3.10.7"
 datasets = "^4.4.1"
 safety = "^3.7.0"
 nox = "^2025.10.16"
+uv = "^0.9.6"  # Fast package manager for nox venv backend (CVE-2025-54368 fixed)
 mutmut = "^3.3.1"
 pyyaml = "^6.0.3"
-scipy = "^1.16.3"
+scipy = "^1.14.0"  # v1.14.x supports Python 3.10-3.12, v1.16+ requires Python 3.11+
 scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
 dvc = {extras = ["ssh"], version = "^3.64.0"}
 kaggle = "^1.7.4.5"
 types-pyyaml = "^6.0.12.20250915"
+onnx = "^1.17.0"  # CVE-2024-7776 fixed in 1.17.0
 
 [tool.poetry.group.ml]
 optional = true
@@ -435,12 +441,17 @@ omit = [
     "validation/*",  # Exclude standalone validation scripts
     "benchmarks/*",  # Exclude benchmarking framework
     "data/*",  # Exclude data processing scripts
-    # Phase 2+ modules (require ML dependencies, excluded from Phase 1 coverage)
+    # Phase 2+ modules (require ML dependencies - PyTorch, excluded from base coverage)
     "src/image_preprocessing_detector/utils/gcs_uploader.py",
     "src/image_preprocessing_detector/utils/metadata_generator.py",
     "src/image_preprocessing_detector/augmentation/*",
-    # Phase 6-8 modules (not yet implemented)
+    "src/image_preprocessing_detector/models/*",  # ResNet teacher/student models require torch
+    "src/image_preprocessing_detector/training/*",  # Training requires torch
+    "src/image_preprocessing_detector/datasets/*",  # Dataset classes require torch
+    # Phase 6 modules (layout-lite detection, require torch)
     "src/image_preprocessing_detector/detection/layout_lite.py",
+    "src/image_preprocessing_detector/detection/layout_lite/*",
+    # Phase 8+ modules (not yet implemented)
     "src/image_preprocessing_detector/ingestion/document_processor.py",
     "src/image_preprocessing_detector/metrics/*",
     "src/image_preprocessing_detector/routing/*",

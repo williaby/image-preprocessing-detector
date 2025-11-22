@@ -11,9 +11,10 @@ Tests cover:
 """
 
 import pytest
-import torch
 
-from image_preprocessing_detector.models import IQAHead, ResNetTeacher
+torch = pytest.importorskip("torch", reason="PyTorch required for ResNet teacher tests")
+
+from image_preprocessing_detector.models import IQAHead, ResNetTeacher  # noqa: E402
 
 
 class TestIQAHead:
