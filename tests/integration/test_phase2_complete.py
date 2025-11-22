@@ -5,16 +5,19 @@ Tests the complete processing pipeline with Phase 2 features:
 - Born-digital PDFs
 - Image-only documents
 - Hybrid documents (text + embedded images)
-- Handwriting detection
-- Table detection
+- Handwriting detection (via Layout-Lite, Phase 6)
+- Table detection (via Layout-Lite, Phase 6)
 - Document quality scoring (DQS)
 - PDF classification
 - OCR routing recommendations
+- ML-based IQA with teacher-student ResNet architecture
 
-Note: Phase 2 ML components are not yet implemented (~25% complete).
-This test suite includes:
-1. Tests for implemented Phase 1 components (100% complete)
-2. Placeholder tests for Phase 2 ML features (skip until implemented)
+Phase 2 Status: ~100% COMPLETE (November 2025)
+- PDF type classification: IMPLEMENTED
+- DQS calculation: IMPLEMENTED
+- OCR routing recommendations: IMPLEMENTED
+- ML IQA detector (ResNet-18/50): IMPLEMENTED
+- Uncertainty & escalation logic: IMPLEMENTED
 """
 
 import tempfile
@@ -470,65 +473,352 @@ class TestPhase2SchemaValidation:
             assert isinstance(page.languages, list)
             assert isinstance(page.transform_history, list)
 
-    @pytest.mark.skip(reason="Phase 2: pdf_type field not yet implemented")
     def test_schema_pdf_type_classification(self) -> None:
         """
         Test pdf_type field in DocumentMetadata.
 
         Phase 2 feature: Classify PDFs as born_digital, image_only, or hybrid.
         """
-        # Placeholder for future implementation
-        # Expected: metadata.pdf_type in ["born_digital", "image_only", "hybrid"]
+        from image_preprocessing_detector.classification.pdf_type_classifier import (
+            classify_pdf_type,
+        )
+        from image_preprocessing_detector.schema import PDFType
 
-    @pytest.mark.skip(
-        reason="Phase 2: DQS (Document Quality Score) not yet implemented"
-    )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Test 1: Born-digital PDF (text only, no images)
+            bd_path = Path(tmpdir) / "born_digital.pdf"
+            doc = fitz.open()
+            page = doc.new_page(width=595, height=842)
+            page.insert_text(
+                (50, 50),
+                "This is a born-digital PDF with lots of text content. " * 10,
+                fontsize=12,
+            )
+            doc.save(str(bd_path))
+            doc.close()
+
+            pdf_type = classify_pdf_type(bd_path)
+            assert pdf_type == PDFType.BORN_DIGITAL
+
+            # Test 2: Image-only PDF (no extractable text)
+            img_only_path = Path(tmpdir) / "image_only.pdf"
+            doc = fitz.open()
+            page = doc.new_page(width=595, height=842)
+            # Create and embed an image (no text)
+            img_array = np.ones((200, 200, 3), dtype=np.uint8) * 128
+            cv2.rectangle(img_array, (50, 50), (150, 150), (255, 0, 0), -1)
+            img_path = Path(tmpdir) / "embed.png"
+            cv2.imwrite(str(img_path), img_array)
+            page.insert_image(fitz.Rect(100, 100, 400, 400), filename=str(img_path))
+            doc.save(str(img_only_path))
+            doc.close()
+
+            pdf_type = classify_pdf_type(img_only_path)
+            assert pdf_type == PDFType.IMAGE_ONLY
+
+            # Test 3: Hybrid PDF (text + embedded image)
+            hybrid_path = Path(tmpdir) / "hybrid.pdf"
+            doc = fitz.open()
+            page = doc.new_page(width=595, height=842)
+            page.insert_text(
+                (50, 50),
+                "Hybrid document with text and image content. " * 5,
+                fontsize=12,
+            )
+            page.insert_image(fitz.Rect(100, 200, 300, 400), filename=str(img_path))
+            doc.save(str(hybrid_path))
+            doc.close()
+
+            pdf_type = classify_pdf_type(hybrid_path)
+            assert pdf_type == PDFType.HYBRID
+
     def test_schema_document_quality_score(self) -> None:
         """
         Test DQS (Document Quality Score) field in DocumentMetadata.
 
         Phase 2 feature: Overall quality score with degradation and complexity.
         """
-        # Placeholder for future implementation
-        # Expected: metadata.dqs = {"overall": 0.85, "degradation": 0.15, "complexity": 0.5}
+        from image_preprocessing_detector.metrics.dqs_calculator import (
+            calculate_degradation_score,
+            calculate_structural_complexity_score,
+        )
+        from image_preprocessing_detector.schema import (
+            DQSMetadata,
+            LayoutType,
+            PageLayoutSummary,
+        )
 
-    @pytest.mark.skip(
-        reason="Phase 2: ocr_routing_recommendation field not yet implemented"
-    )
+        # Test degradation score calculation
+        classical_iqa = {
+            "blur_score": 0.85,
+            "noise_score": 0.78,
+            "contrast_score": 0.72,
+            "illumination_score": 0.90,
+            "artifacts_score": 0.95,
+        }
+        degradation_score = calculate_degradation_score(classical_iqa)
+        assert 0.0 <= degradation_score <= 1.0
+        # Expected: 0.3*0.85 + 0.25*0.78 + 0.2*0.72 + 0.15*0.90 + 0.1*0.95 = 0.8235
+        assert abs(degradation_score - 0.8235) < 0.01
+
+        # Test structural complexity calculation (takes single PageLayoutSummary, not list)
+        page_layout = PageLayoutSummary(
+            page_number=1,
+            layout_type=LayoutType.MULTI_COLUMN,
+            has_tables=True,
+            has_figures=False,
+            has_dense_math=False,
+            has_handwriting=False,
+            fuzzy_scan=False,
+            watermark=False,
+            colorful_background=False,
+            complexity_score=0.5,
+        )
+        complexity_score = calculate_structural_complexity_score(page_layout)
+        assert 0.0 <= complexity_score <= 1.0
+        # Expected: 0.4 (multi_column) + 0.2 (has_tables) = 0.6
+        assert abs(complexity_score - 0.6) < 0.01
+
+        # Test DQSMetadata creation
+        dqs = DQSMetadata(
+            degradation_score=0.2,  # 0=pristine, 1=degraded (inverted from quality)
+            structural_complexity_score=complexity_score,
+        )
+        assert dqs.degradation_score == 0.2
+        assert 0.0 <= dqs.structural_complexity_score <= 1.0
+
     def test_schema_ocr_routing_recommendation(self) -> None:
         """
         Test ocr_routing_recommendation field in DocumentMetadata.
 
         Phase 2 feature: Recommend OCR strategy based on quality.
         """
-        # Placeholder for future implementation
-        # Expected: metadata.ocr_routing_recommendation in ["ocr_fast", "ocr_advanced", "vision_simple", "vision_structured"]
+        from image_preprocessing_detector.routing.recommendation_engine import (
+            recommend_ocr_routing,
+        )
+        from image_preprocessing_detector.schema import (
+            DQSMetadata,
+            LayoutType,
+            OCRRoutingStrategy,
+            PageLayoutSummary,
+            PDFType,
+        )
+
+        # Test 1: Born-digital with good quality → ocr_fast
+        dqs_good = DQSMetadata(degradation_score=0.9, structural_complexity_score=0.2)
+        simple_layout = [
+            PageLayoutSummary(
+                page_number=1,
+                layout_type=LayoutType.SINGLE_COLUMN,
+                has_tables=False,
+                has_figures=False,
+                has_dense_math=False,
+                has_handwriting=False,
+                fuzzy_scan=False,
+                watermark=False,
+                colorful_background=False,
+                complexity_score=0.1,
+            )
+        ]
+        recommendation, rationale = recommend_ocr_routing(
+            PDFType.BORN_DIGITAL, dqs_good, 0.1, simple_layout
+        )
+        assert recommendation == OCRRoutingStrategy.OCR_FAST
+        assert "Born-digital" in rationale
+
+        # Test 2: Document with tables → vision_structured
+        layout_with_tables = [
+            PageLayoutSummary(
+                page_number=1,
+                layout_type=LayoutType.MULTI_COLUMN,
+                has_tables=True,
+                has_figures=False,
+                has_dense_math=False,
+                has_handwriting=False,
+                fuzzy_scan=False,
+                watermark=False,
+                colorful_background=False,
+                complexity_score=0.6,
+            )
+        ]
+        recommendation, rationale = recommend_ocr_routing(
+            PDFType.HYBRID, dqs_good, 0.3, layout_with_tables
+        )
+        assert recommendation == OCRRoutingStrategy.VISION_STRUCTURED
+        assert "tables" in rationale
+
+        # Test 3: High risk document → ocr_advanced
+        dqs_degraded = DQSMetadata(
+            degradation_score=0.4, structural_complexity_score=0.5
+        )
+        recommendation, rationale = recommend_ocr_routing(
+            PDFType.IMAGE_ONLY,
+            dqs_degraded,
+            0.7,
+            simple_layout,  # high risk
+        )
+        assert recommendation == OCRRoutingStrategy.OCR_ADVANCED
 
 
 class TestPhase2MLInference:
     """
     Test ML-based IQA inference (Phase 2 feature).
 
-    NOTE: ML inference code not yet implemented.
-    These are placeholder tests that will be skipped until implemented.
+    Uses teacher-student ResNet architecture with ONNX inference.
     """
 
-    @pytest.mark.skip(reason="Phase 2: ML IQA inference not yet implemented")
     def test_ml_iqa_inference(self) -> None:
-        """Test ML-based IQA detector (MobileNetV3/EfficientNet)."""
-        # Placeholder for future implementation
-        # Will test src/detection/iqa_ml.py when implemented
+        """Test ML-based IQA detector (ResNet-18 student, ResNet-50 teacher)."""
+        from image_preprocessing_detector.detection.iqa_ml import (
+            Device,
+            MLIQADetector,
+            ModelType,
+        )
 
-    @pytest.mark.skip(reason="Phase 2: ML IQA inference not yet implemented")
+        # Test detector initialization (without models - tests the class structure)
+        detector = MLIQADetector(
+            student_model_path=None,
+            teacher_model_path=None,
+            device=Device.CPU,
+            enable_modal_fallback=False,
+        )
+
+        # Verify detector configuration
+        assert detector.device == Device.CPU
+        assert detector.enable_modal_fallback is False
+        assert detector.entropy_threshold == 0.8
+        assert detector.min_confidence_threshold == 0.6
+        assert detector.mean_confidence_threshold == 0.7
+        assert detector.discrepancy_threshold == 0.3
+
+        # Test with actual models if available
+        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
+        student_path = model_dir / "resnet18_student.onnx"
+
+        if student_path.exists():
+            # Test student inference
+            detector_with_model = MLIQADetector(
+                student_model_path=student_path,
+                device=Device.CPU,
+            )
+
+            # Create test image
+            test_image = np.ones((224, 224, 3), dtype=np.uint8) * 128
+            cv2.rectangle(test_image, (50, 50), (174, 174), (200, 200, 200), -1)
+
+            scores = detector_with_model.run_student_inference(test_image)
+            assert scores.model_type == ModelType.STUDENT
+            assert 0.0 <= scores.blur_score <= 1.0
+            assert 0.0 <= scores.noise_score <= 1.0
+            assert 0.0 <= scores.contrast_score <= 1.0
+            assert 0.0 <= scores.overall_quality <= 1.0
+            assert scores.inference_time_ms > 0
+
     def test_ml_confidence_calibration(self) -> None:
-        """Test ML confidence score calibration."""
-        # Placeholder for future implementation
+        """Test ML confidence score calibration and uncertainty calculation."""
+        from image_preprocessing_detector.detection.iqa_ml import (
+            Device,
+            MLIQADetector,
+            MLIQAScores,
+            ModelType,
+        )
 
-    @pytest.mark.skip(reason="Phase 2: Hybrid IQA ensemble not yet implemented")
+        detector = MLIQADetector(device=Device.CPU)
+
+        # Create mock scores with varying confidences
+        mock_scores = MLIQAScores(
+            blur_score=0.85,
+            noise_score=0.72,
+            contrast_score=0.68,
+            skew_score=0.92,
+            compression_score=0.88,
+            overall_quality=0.81,
+            confidences={
+                "blur": 0.95,
+                "noise": 0.72,
+                "contrast": 0.58,  # Low confidence - should trigger escalation
+                "skew": 0.91,
+                "compression": 0.85,
+            },
+            model_type=ModelType.STUDENT,
+            device=Device.CPU,
+            inference_time_ms=15.5,
+        )
+
+        # Test uncertainty calculation
+        uncertainty = detector.calculate_uncertainty(mock_scores)
+        assert 0.0 <= uncertainty.entropy <= 1.0
+        assert 0.0 <= uncertainty.min_confidence <= 1.0
+        assert 0.0 <= uncertainty.mean_confidence <= 1.0
+        assert uncertainty.min_confidence == 0.58  # contrast is lowest
+
+        # Test escalation decision (should escalate due to low min_confidence)
+        decision = detector.should_escalate_to_teacher(mock_scores)
+        assert decision.should_escalate is True
+        assert "low_min_confidence" in decision.reason
+
     def test_hybrid_iqa_ensemble_voting(self) -> None:
-        """Test ensemble voting between classical and ML IQA."""
-        # Placeholder for future implementation
-        # Expected: Combine classical + ML results with confidence weighting
+        """Test ensemble voting between classical and ML IQA via discrepancy check."""
+        from image_preprocessing_detector.detection.iqa_ml import (
+            ClassicalIQAScores,
+            Device,
+            MLIQADetector,
+            MLIQAScores,
+            ModelType,
+        )
+
+        detector = MLIQADetector(device=Device.CPU)
+
+        # Create ML scores
+        ml_scores = MLIQAScores(
+            blur_score=0.85,
+            noise_score=0.75,
+            contrast_score=0.70,
+            skew_score=0.90,
+            compression_score=0.82,
+            overall_quality=0.80,
+            confidences={
+                "blur": 0.9,
+                "noise": 0.85,
+                "contrast": 0.8,
+                "skew": 0.95,
+                "compression": 0.88,
+            },
+            model_type=ModelType.STUDENT,
+            device=Device.CPU,
+            inference_time_ms=12.0,
+        )
+
+        # Create classical scores with small discrepancy (should NOT escalate)
+        classical_close = ClassicalIQAScores(
+            blur_score=0.82,  # 0.03 difference
+            contrast_score=0.72,  # 0.02 difference
+            skew_score=0.88,  # 0.02 difference
+        )
+
+        discrepancy = detector.calculate_discrepancy(ml_scores, classical_close)
+        assert discrepancy.max_discrepancy < detector.discrepancy_threshold
+        decision = detector.should_escalate_due_to_discrepancy(
+            ml_scores, classical_close
+        )
+        assert decision.should_escalate is False
+
+        # Create classical scores with large discrepancy (should escalate)
+        classical_divergent = ClassicalIQAScores(
+            blur_score=0.45,  # 0.40 difference - large!
+            contrast_score=0.68,
+            skew_score=0.85,
+        )
+
+        discrepancy_large = detector.calculate_discrepancy(
+            ml_scores, classical_divergent
+        )
+        assert discrepancy_large.blur_discrepancy >= detector.discrepancy_threshold
+        decision_escalate = detector.should_escalate_due_to_discrepancy(
+            ml_scores, classical_divergent
+        )
+        assert decision_escalate.should_escalate is True
+        assert "blur_discrepancy" in decision_escalate.reason
 
 
 class TestPhase2CorrectionsWithMLGuidance:
