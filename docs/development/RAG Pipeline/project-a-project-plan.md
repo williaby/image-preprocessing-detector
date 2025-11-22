@@ -96,29 +96,40 @@ Output Package → Project B
 
 * If teacher unavailable (no GPU locally or remote budget exceeded), pipeline MUST continue using student-only outputs.
 
-## PHASE 0 — Project Setup (Week 0–1)
+## PHASE 0 — Project Setup (Week 0–1) ✅ COMPLETE
 
-0.1 Project skeleton
-0.2 Modal workspace + credentials
-0.3 GPU/CPU device probing utilities
-0.4 Configuration system (YAML) including:
+0.1 ✅ Project skeleton (poetry, pre-commit, CI/CD)
+0.2 ✅ Modal workspace + credentials (gcs-credentials secret)
+0.3 ✅ GPU/CPU device probing utilities
+0.4 ✅ Configuration system (YAML) including:
 
 * teacher_fallback_enabled
 * uncertainty thresholds
 * discrepancy thresholds
 * max_pages_for_teacher
-0.5 Logging/telemetry scaffolding
+0.5 ✅ Logging/telemetry scaffolding (structlog + rich)
 
-## PHASE 2 — ResNet-50 Teacher Model Training (Week 2–4)
+## PHASE 2 — ResNet-50 Teacher & ResNet-18 Student Training (Week 2–4)
 
-2.1 Multi-head model architecture
-2.2 Loss functions for classification + regression
-2.3 Heavy augmentations for robustness
-2.4 Training loops for local GPU with fallback to Modal
-2.5 Validation on OHR-Bench
-2.6 Export teacher to ONNX + TorchScript
-2.7 Teacher accuracy/latency report
-2.8 Register in model registries
+### Teacher Training (COMPLETE ✅)
+
+2.1 ✅ Multi-head model architecture (ResNet-50, 5 IQA heads)
+2.2 ✅ Loss functions for classification + regression (MultiHeadIQALoss)
+2.3 ✅ Heavy augmentations for robustness (100K synthetic dataset)
+2.4 ✅ Training loops for Modal GPU (T4/A10)
+2.5 ✅ Best checkpoint: epoch 20, val_loss=0.2694
+2.6 ✅ Export teacher to ONNX (gs://image_detection_b/models/phase2_iqa/)
+2.7 Teacher accuracy/latency report (pending formal benchmark)
+2.8 Register in model registries (GCS complete, local pending)
+
+### Student Distillation (IN PROGRESS 🔄)
+
+2.9 ✅ ResNet-18 student architecture (12.5M params, 2.47x smaller)
+2.10 ✅ DistillationLoss (KL divergence + BCE, T=4.0, α=0.7)
+2.11 ✅ StudentTrainer with frozen teacher soft targets
+2.12 🔄 Student training on Modal T4 GPU (30 epochs, started 2025-11-22)
+2.13 ⬜ Export student to ONNX + TorchScript
+2.14 ⬜ Student vs teacher performance comparison
 
 ## PHASE 4 — Classical IQA (Week 5–6)
 
