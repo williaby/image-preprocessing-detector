@@ -54,6 +54,18 @@ id = "GHSA-vv2x-vrpj-qqpq"
 reason = "Same as PYSEC-2021-865. CVE-2021-23980 affects bleach <=3.2.3. Current version: 6.3.0. Not vulnerable."
 
 # ============================================================================
+# onnx - Path Traversal in download_model (Not Used in Project)
+# ============================================================================
+
+[[IgnoredVulns]]
+id = "GHSA-2c3p-fvgp-ph3r"
+reason = "CVE-2024-7776 affects onnx.download_model() with malicious tar files. Project uses GCS authenticated storage for models, not onnx.download_model(). Vulnerability not exploitable."
+
+[[IgnoredVulns]]
+id = "PYSEC-2024-76232"
+reason = "Same as GHSA-2c3p-fvgp-ph3r. CVE-2024-7776 path traversal in download_model. Not applicable - we use GCS model storage."
+
+# ============================================================================
 # uvicorn - Outdated Vulnerability Data (Using 0.23.2, Vulnerable Range <0.11.7)
 # ============================================================================
 
@@ -80,11 +92,13 @@ reason = "Same as PYSEC-2020-151. CVE-2020-7695 affects uvicorn <0.11.7. Current
 # 1. Withdrawn CVEs (PYSEC-2022-42969)
 # 2. Outdated vulnerability databases reporting issues in old package versions
 # 3. Current installed versions are significantly newer than vulnerable ranges
+# 4. Vulnerable code paths not used in this project (onnx.download_model)
 #
 # Verification:
 # - bleach: Using 6.3.0, all reported vulnerabilities affect <=3.3.0
 # - uvicorn: Using 0.23.2, all reported vulnerabilities affect <0.11.7
 # - py: Using 1.11.0, reported vulnerability is disputed and withdrawn
+# - onnx: Using 1.16.2, download_model not used - GCS model storage instead
 #
-# Last verified: 2025-11-09
-# Next review: 2026-01-09 (or when dependencies updated)
+# Last verified: 2025-11-21
+# Next review: 2026-01-21 (or when dependencies updated)

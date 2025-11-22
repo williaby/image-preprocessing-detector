@@ -205,6 +205,7 @@ scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
 dvc = {extras = ["ssh"], version = "^3.64.0"}
 kaggle = "^1.7.4.5"
 types-pyyaml = "^6.0.12.20250915"
+onnx = ">=1.14.0,<1.17.0"
 
 [tool.poetry.group.ml]
 optional = true

@@ -1,0 +1,108 @@
+# Environment files with secrets (triggers sandbox mode in 2.0.47+)
+.env
+.env.local
+.env.*.local
+
+# Critical: These directories contain 182GB total
+# DVC cache (137GB) - MUST be excluded
+.dvc
+.dvc/
+
+# Large data directories (38GB)
+data
+data/
+
+# Virtual environment (8.3GB)
+.venv
+.venv/
+venv/
+env/
+ENV/
+
+# Build and cache directories (155MB+ each)
+.mypy_cache
+.mypy_cache/
+.pytest_cache
+.pytest_cache/
+.ruff_cache
+.ruff_cache/
+.nox
+.nox/
+.hypothesis
+.hypothesis/
+.tox
+.tox/
+__pycache__
+__pycache__/
+
+# Logs and temporary files (143MB)
+logs
+logs/
+tmp
+tmp/
+tmp_cleanup
+tmp_cleanup/
+*.log
+*.tmp
+
+# Coverage and reports
+htmlcov
+htmlcov/
+.coverage
+coverage.xml
+site/
+docs/_build/
+
+# Git (93MB)
+.git
+.git/
+
+# IDE and editor files
+.idea
+.idea/
+.ipynb_checkpoints
+.ipynb_checkpoints/
+
+# Modal
+.modal
+.modal/
+__modal_cache__
+__modal_cache__/
+modal_cache
+modal_cache/
+
+# Large model files
+models/**/*.pth
+models/**/*.onnx
+models/**/*.pt
+models/**/*.safetensors
+
+# Python build artifacts
+build
+build/
+dist
+dist/
+*.egg-info
+*.egg-info/
+*.pyc
+*.pyo
+*.so
+
+# DVC tracking files (keep patterns explicit)
+*.dvc
+
+# Validation and experimental
+validation/datasets
+validation/datasets/
+validation/synthetic_images
+validation/synthetic_images/
+validation/characteristic_curves
+validation/characteristic_curves/
+
+# Service account keys and env files
+*service-account*.json
+*.b64
+
+# Datasets
+datasets
+datasets/
