@@ -148,9 +148,7 @@ class IQADataset(Dataset):
             if callable(self.transform):
                 if hasattr(self.transform, "__code__"):
                     is_albumentations = "image" in self.transform.__code__.co_varnames
-                elif hasattr(self.transform, "__call__") and hasattr(
-                    self.transform.__call__, "__code__"
-                ):
+                elif hasattr(self.transform.__call__, "__code__"):
                     is_albumentations = (
                         "image" in self.transform.__call__.__code__.co_varnames
                     )
