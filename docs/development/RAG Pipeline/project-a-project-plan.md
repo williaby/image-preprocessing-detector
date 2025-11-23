@@ -140,38 +140,51 @@ Output Package → Project B
 
 ## PHASE 4 — Classical IQA (Week 5–6)
 
-4.1 Laplacian-based blur
-4.2 Wavelet noise estimator
-4.3 Hough skew
-4.4 Lighting metrics
-4.5 JPEG blockiness
-4.6 Student vs classical discrepancy threshold tuning
+> **Detailed Sprint Breakdown**: See [phase-sprint-details.md](../phase-sprint-details.md#phase-4--classical-iqa-week-5-6)
+
+**Milestone 4.1**: Laplacian-based blur (2 sprints)
+**Milestone 4.2**: Wavelet noise estimator (2 sprints)
+**Milestone 4.3**: Hough skew (2 sprints)
+**Milestone 4.4**: Lighting metrics (2 sprints)
+**Milestone 4.5**: JPEG blockiness (2 sprints)
+**Milestone 4.6**: Student vs classical discrepancy threshold tuning (2 sprints)
 
 ## PHASE 6 — Layout-Lite Detection (Week 6–8)
 
-6.1 YOLOv8-nano detector (text block, table block, figures)
-6.2 Handwriting classifier
-6.3 Complexity scorer
-6.4 Integrated “structural features” API
+> **Detailed Sprint Breakdown**: See [phase-sprint-details.md](../phase-sprint-details.md#phase-6--layout-lite-detection-week-6-8)
+
+**Milestone 6.1**: YOLOv8-nano detector (4 sprints)
+  - 6.1.1 Model setup
+  - 6.1.2 Fine-tuning preparation
+  - 6.1.3 Fine-tuning execution
+  - 6.1.4 Integration
+
+**Milestone 6.2**: Handwriting classifier (2 sprints)
+**Milestone 6.3**: Complexity scorer (2 sprints)
+**Milestone 6.4**: Integrated "structural features" API (2 sprints)
 
 ## PHASE 8 — DQS & Routing (Week 9)
 
-8.1 DQS weighting tuned against OCR/RAG performance
-8.2 Per-page + per-document scoring
-8.3 Routing logic updates based on:
+> **Detailed Sprint Breakdown**: See [phase-sprint-details.md](../phase-sprint-details.md#phase-8--dqs--routing-week-9)
 
-* teacher results
-* layout-lite classifications
-* complexity flags
-  8.4 JSON schema output
+**Milestone 8.1**: DQS weighting tuned against OCR/RAG performance (2 sprints)
+**Milestone 8.2**: Per-page + per-document scoring (2 sprints)
+**Milestone 8.3**: Routing logic updates (2 sprints)
+  - Teacher results influence
+  - Layout-lite classifications
+  - Complexity flags
+
+**Milestone 8.4**: JSON schema output (2 sprints)
 
 ## PHASE 10 — Validation, Reporting, Documentation (Week 10)
 
-10.1 Benchmark full pipeline
-10.2 Teacher vs student end-to-end performance report
-10.3 Stress tests (large batches)
-10.4 Update PlantUML diagrams
-10.5 Final README + API reference
+> **Detailed Sprint Breakdown**: See [phase-sprint-details.md](../phase-sprint-details.md#phase-10--validation-reporting-documentation-week-10)
+
+**Milestone 10.1**: Benchmark full pipeline (2 sprints)
+**Milestone 10.2**: Teacher vs student end-to-end performance report (2 sprints)
+**Milestone 10.3**: Stress tests (large batches) (2 sprints)
+**Milestone 10.4**: Update PlantUML diagrams (1 sprint)
+**Milestone 10.5**: Final README + API reference (3 sprints)
 
 ## 8. Summary of the Teacher Policy
 
