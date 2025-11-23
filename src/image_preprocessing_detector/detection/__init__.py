@@ -8,14 +8,17 @@ Phase 6: Layout-lite detection (YOLOv8-nano)
 from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetectionResult,
     BlurDetector,
+    BlurMetrics,
     ContrastDetectionResult,
     ContrastDetector,
     Severity,
     SkewDetectionResult,
     SkewDetector,
+    compute_laplacian_variance,
     detect_blur,
     detect_contrast,
     detect_skew,
+    normalize_blur_score,
 )
 from image_preprocessing_detector.detection.iqa_ml import (
     ClassicalIQAScores,
@@ -40,6 +43,7 @@ from image_preprocessing_detector.detection.text_gate import (
 __all__ = [
     "BlurDetectionResult",
     "BlurDetector",
+    "BlurMetrics",
     "ClassicalIQAScores",
     "ContrastDetectionResult",
     "ContrastDetector",
@@ -55,12 +59,14 @@ __all__ = [
     "TextDetectionResult",
     "TextGate",
     "UncertaintyMetrics",
+    "compute_laplacian_variance",
     "detect_blur",
     "detect_contrast",
     "detect_skew",
     "detect_text",
     "discrepancy_metrics_to_dict",
     "ml_iqa_scores_to_dict",
+    "normalize_blur_score",
     "teacher_iqa_to_dict",
     "uncertainty_metrics_to_dict",
 ]

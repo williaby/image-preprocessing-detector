@@ -271,26 +271,106 @@ class SkewDetector:
 
 
 @dataclass
+class BlurMetrics:
+    """Detailed blur metrics for analysis.
+
+    Attributes:
+        laplacian_variance: Raw Laplacian variance score (higher = sharper)
+        blur_score: Normalized 0-1 score (0=very blurry, 1=very sharp)
+        local_variance_mean: Mean of local variance across image blocks
+        local_variance_std: Std dev of local variance (uniformity indicator)
+        edge_density: Proportion of edge pixels (0-1)
+    """
+
+    laplacian_variance: float
+    blur_score: float
+    local_variance_mean: float
+    local_variance_std: float
+    edge_density: float
+
+
+@dataclass
 class BlurDetectionResult:
     """Result of blur detection analysis.
 
     Attributes:
         is_blurred: Whether significant blur is detected
         score: Laplacian variance score (higher = sharper)
+        blur_score: Normalized 0-1 blur score (0=blurry, 1=sharp)
         confidence: Confidence score (0.0-1.0)
         severity: Issue severity level
+        metrics: Detailed blur metrics (optional)
     """
 
     is_blurred: bool
     score: float
+    blur_score: float
     confidence: float
     severity: Severity
+    metrics: BlurMetrics | None = None
+
+
+def normalize_blur_score(
+    variance: float,
+    min_variance: float = 10.0,
+    max_variance: float = 500.0,
+) -> float:
+    """Normalize Laplacian variance to 0-1 blur score.
+
+    Args:
+        variance: Raw Laplacian variance value
+        min_variance: Minimum expected variance (very blurry)
+        max_variance: Maximum expected variance (very sharp)
+
+    Returns:
+        Normalized score between 0 (very blurry) and 1 (very sharp)
+
+    Example:
+        >>> normalize_blur_score(50.0)  # Low variance = blurry
+        0.08
+        >>> normalize_blur_score(400.0)  # High variance = sharp
+        0.8
+    """
+    if variance <= min_variance:
+        return 0.0
+    if variance >= max_variance:
+        return 1.0
+
+    # Linear interpolation between min and max
+    normalized = (variance - min_variance) / (max_variance - min_variance)
+    return float(np.clip(normalized, 0.0, 1.0))
+
+
+def compute_laplacian_variance(image: np.ndarray) -> float:
+    """Compute Laplacian variance for blur detection.
+
+    Args:
+        image: Grayscale image (single channel)
+
+    Returns:
+        Laplacian variance (higher = sharper)
+
+    Example:
+        >>> import cv2
+        >>> gray = cv2.imread("image.jpg", cv2.IMREAD_GRAYSCALE)
+        >>> variance = compute_laplacian_variance(gray)
+    """
+    laplacian = cv2.Laplacian(image, cv2.CV_64F)
+    return float(laplacian.var())
 
 
 class BlurDetector:
-    """Detects image blur using Laplacian variance.
+    """Detects image blur using Laplacian variance with enhanced metrics.
 
     Higher variance indicates sharper images (more high-frequency content).
+
+    Attributes:
+        threshold_critical: Critical blur threshold (variance < 50)
+        threshold_high: High blur threshold (variance < 100)
+        threshold_medium: Medium blur threshold (variance < 200)
+        min_variance: Minimum variance for normalization
+        max_variance: Maximum variance for normalization
+        block_size: Block size for local variance analysis
     """
 
     def __init__(
@@ -298,6 +378,9 @@ class BlurDetector:
         threshold_critical: float = 50.0,
         threshold_high: float = 100.0,
         threshold_medium: float = 200.0,
+        min_variance: float = 10.0,
+        max_variance: float = 500.0,
+        block_size: int = 64,
     ) -> None:
         """Initialize blur detector.
 
@@ -305,10 +388,16 @@ class BlurDetector:
             threshold_critical: Critical blur threshold (< 50 = severe blur)
             threshold_high: High blur threshold (< 100 = noticeable blur)
             threshold_medium: Medium blur threshold (< 200 = slight blur)
+            min_variance: Minimum variance for normalization (default: 10.0)
+            max_variance: Maximum variance for normalization (default: 500.0)
+            block_size: Block size for local analysis (default: 64)
         """
         self.threshold_critical = threshold_critical
         self.threshold_high = threshold_high
         self.threshold_medium = threshold_medium
+        self.min_variance = min_variance
+        self.max_variance = max_variance
+        self.block_size = block_size
 
         logger.info(
             "Blur detector initialized",
@@ -317,11 +406,16 @@ class BlurDetector:
             threshold_medium=threshold_medium,
         )
 
-    def detect(self, image: np.ndarray) -> BlurDetectionResult:
+    def detect(
+        self,
+        image: np.ndarray,
+        compute_detailed_metrics: bool = False,
+    ) -> BlurDetectionResult:
         """Detect blur using Laplacian variance.
 
         Args:
-            image: Input image (BGR format)
+            image: Input image (BGR or grayscale format)
+            compute_detailed_metrics: Whether to compute detailed metrics
 
         Returns:
             BlurDetectionResult with score and severity
@@ -334,32 +428,35 @@ class BlurDetector:
 
         logger.debug("Running blur detection", image_shape=image.shape)
 
-        # Convert to grayscale
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Convert to grayscale if needed
+        gray = self._to_grayscale(image)
 
         # Compute Laplacian variance
-        laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-        variance = float(laplacian.var())
+        variance = compute_laplacian_variance(gray)
+
+        # Normalize to 0-1 score
+        blur_score = normalize_blur_score(
+            variance, self.min_variance, self.max_variance
+        )
 
         # Determine severity
-        if variance < self.threshold_critical:
-            severity = Severity.CRITICAL
-        elif variance < self.threshold_high:
-            severity = Severity.HIGH
-        elif variance < self.threshold_medium:
-            severity = Severity.MEDIUM
-        else:
-            severity = Severity.LOW
+        severity = self._compute_severity(variance)
 
         # Is blurred if below medium threshold
         is_blurred = variance < self.threshold_medium
 
-        # Confidence is always high for Laplacian variance (reliable metric)
-        confidence = 0.9
+        # Confidence based on image properties
+        confidence = self._compute_confidence(gray)
+
+        # Compute detailed metrics if requested
+        metrics = None
+        if compute_detailed_metrics:
+            metrics = self._compute_detailed_metrics(gray, variance, blur_score)
 
         logger.debug(
             "Blur detection complete",
             variance=variance,
+            blur_score=blur_score,
             is_blurred=is_blurred,
             severity=severity.value,
         )
@@ -367,8 +464,207 @@ class BlurDetector:
         return BlurDetectionResult(
             is_blurred=is_blurred,
             score=variance,
+            blur_score=blur_score,
             confidence=confidence,
             severity=severity,
+            metrics=metrics,
+        )
+
+    def detect_roi(
+        self,
+        image: np.ndarray,
+        bbox: tuple[int, int, int, int],
+    ) -> BlurDetectionResult:
+        """Detect blur in a specific region of interest.
+
+        Args:
+            image: Input image (BGR or grayscale format)
+            bbox: Region of interest as (x, y, width, height) in COCO format
+
+        Returns:
+            BlurDetectionResult for the specified region
+
+        Raises:
+            ValueError: If image or bbox is invalid
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        x, y, w, h = bbox
+        if w <= 0 or h <= 0:
+            raise ValueError(f"Invalid bbox dimensions: {bbox}")
+
+        # Extract ROI
+        if len(image.shape) == 3:
+            roi = image[y : y + h, x : x + w, :]
+        else:
+            roi = image[y : y + h, x : x + w]
+
+        if roi.size == 0:
+            raise ValueError(f"ROI is empty for bbox: {bbox}")
+
+        logger.debug("Running ROI blur detection", bbox=bbox, roi_shape=roi.shape)
+
+        return self.detect(roi)
+
+    def detect_blocks(
+        self,
+        image: np.ndarray,
+        block_size: int | None = None,
+    ) -> list[tuple[tuple[int, int, int, int], BlurDetectionResult]]:
+        """Detect blur in image blocks for spatial analysis.
+
+        Args:
+            image: Input image (BGR or grayscale format)
+            block_size: Size of blocks to analyze (default: self.block_size)
+
+        Returns:
+            List of (bbox, BlurDetectionResult) tuples for each block
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        block_size = block_size or self.block_size
+        gray = self._to_grayscale(image)
+        h, w = gray.shape[:2]
+
+        results = []
+        for y in range(0, h - block_size + 1, block_size):
+            for x in range(0, w - block_size + 1, block_size):
+                bbox = (x, y, block_size, block_size)
+                block = gray[y : y + block_size, x : x + block_size]
+
+                # Compute variance for this block
+                variance = compute_laplacian_variance(block)
+                blur_score = normalize_blur_score(
+                    variance, self.min_variance, self.max_variance
+                )
+                severity = self._compute_severity(variance)
+                is_blurred = variance < self.threshold_medium
+
+                result = BlurDetectionResult(
+                    is_blurred=is_blurred,
+                    score=variance,
+                    blur_score=blur_score,
+                    confidence=0.85,  # Slightly lower for block-level
+                    severity=severity,
+                )
+                results.append((bbox, result))
+
+        return results
+
+    def _to_grayscale(self, image: np.ndarray) -> np.ndarray:
+        """Convert image to grayscale if needed.
+
+        Args:
+            image: Input image (BGR or grayscale)
+
+        Returns:
+            Grayscale image
+        """
+        if len(image.shape) == 2:
+            return image
+        if len(image.shape) == 3:
+            if image.shape[2] == 1:
+                return image[:, :, 0]
+            if image.shape[2] == 3:
+                return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            if image.shape[2] == 4:
+                return cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+        raise ValueError(f"Unsupported image shape: {image.shape}")
+
+    def _compute_severity(self, variance: float) -> Severity:
+        """Compute severity based on Laplacian variance.
+
+        Args:
+            variance: Laplacian variance value
+
+        Returns:
+            Severity level
+        """
+        if variance < self.threshold_critical:
+            return Severity.CRITICAL
+        if variance < self.threshold_high:
+            return Severity.HIGH
+        if variance < self.threshold_medium:
+            return Severity.MEDIUM
+        return Severity.LOW
+
+    def _compute_confidence(
+        self,
+        gray: np.ndarray,
+    ) -> float:
+        """Compute confidence score for blur detection.
+
+        Higher confidence when image properties are suitable for blur analysis.
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Confidence score (0.0-1.0)
+        """
+        # Base confidence is high for Laplacian variance
+        base_confidence = 0.9
+
+        # Reduce confidence for very small images
+        h, w = gray.shape[:2]
+        if h < 100 or w < 100:
+            base_confidence *= 0.8
+
+        # Reduce confidence for uniform images (low variance in pixel values)
+        pixel_std = gray.std()
+        if pixel_std < 10:  # Very uniform image
+            base_confidence *= 0.7
+
+        return float(np.clip(base_confidence, 0.5, 1.0))
+
+    def _compute_detailed_metrics(
+        self,
+        gray: np.ndarray,
+        variance: float,
+        blur_score: float,
+    ) -> BlurMetrics:
+        """Compute detailed blur metrics.
+
+        Args:
+            gray: Grayscale image
+            variance: Global Laplacian variance
+            blur_score: Normalized blur score
+
+        Returns:
+            BlurMetrics with detailed measurements
+        """
+        h, w = gray.shape[:2]
+        block_size = min(self.block_size, h // 2, w // 2)
+        if block_size < 16:
+            block_size = min(h, w, 16)
+
+        # Compute local variances
+        local_variances = []
+        for y in range(0, h - block_size + 1, block_size):
+            for x in range(0, w - block_size + 1, block_size):
+                block = gray[y : y + block_size, x : x + block_size]
+                local_var = compute_laplacian_variance(block)
+                local_variances.append(local_var)
+
+        if local_variances:
+            local_variance_mean = float(np.mean(local_variances))
+            local_variance_std = float(np.std(local_variances))
+        else:
+            local_variance_mean = variance
+            local_variance_std = 0.0
+
+        # Compute edge density using Canny
+        edges = cv2.Canny(gray, 50, 150)
+        edge_density = float(np.count_nonzero(edges) / edges.size)
+
+        return BlurMetrics(
+            laplacian_variance=variance,
+            blur_score=blur_score,
+            local_variance_mean=local_variance_mean,
+            local_variance_std=local_variance_std,
+            edge_density=edge_density,
         )
 
 
