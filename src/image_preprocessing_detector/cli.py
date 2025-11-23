@@ -18,6 +18,7 @@ from image_preprocessing_detector.correction.corrections import (
 )
 from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
+    NoiseDetector,
     detect_blur,
     detect_contrast,
     detect_skew,
@@ -577,6 +578,187 @@ def blur_check(
 
     except Exception as e:
         logger.error("Blur check failed", error=str(e), exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command("noise-check")
+@click.argument("input_path", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--threshold-critical",
+    type=float,
+    default=20.0,
+    help="Critical noise threshold (sigma > 20 = severe noise)",
+)
+@click.option(
+    "--threshold-high",
+    type=float,
+    default=12.0,
+    help="High noise threshold (sigma > 12 = noticeable noise)",
+)
+@click.option(
+    "--threshold-medium",
+    type=float,
+    default=5.0,
+    help="Medium noise threshold (sigma > 5 = slight noise)",
+)
+@click.option(
+    "--wavelet",
+    type=click.Choice(["db1", "db2", "haar", "sym2", "sym4"]),
+    default="db1",
+    help="Wavelet family to use for decomposition",
+)
+@click.option(
+    "--detailed",
+    is_flag=True,
+    help="Show detailed noise metrics (SNR, noise type)",
+)
+@click.option(
+    "--json-output",
+    "-j",
+    type=click.Path(path_type=Path),
+    help="Output results to JSON file",
+)
+@click.option(
+    "--roi",
+    type=str,
+    help="Region of interest as 'x,y,width,height' (COCO format)",
+)
+def noise_check(
+    input_path: Path,
+    threshold_critical: float,
+    threshold_high: float,
+    threshold_medium: float,
+    wavelet: str,
+    detailed: bool,
+    json_output: Path | None,
+    roi: str | None,
+) -> None:
+    """Check noise levels in an image using wavelet-based MAD estimation.
+
+    Analyzes image noise using discrete wavelet transform and Median
+    Absolute Deviation (MAD) to estimate noise standard deviation.
+
+    Examples:
+        imgprep noise-check image.jpg
+        imgprep noise-check scan.png --detailed
+        imgprep noise-check photo.jpg --wavelet haar
+        imgprep noise-check document.jpg --json-output result.json
+    """
+    import json
+
+    import cv2
+
+    try:
+        # Load image
+        image = cv2.imread(str(input_path))
+        if image is None:
+            click.echo(f"Error: Could not load image: {input_path}", err=True)
+            sys.exit(1)
+
+        # Create detector with custom thresholds
+        detector = NoiseDetector(
+            threshold_critical=threshold_critical,
+            threshold_high=threshold_high,
+            threshold_medium=threshold_medium,
+            wavelet=wavelet,
+        )
+
+        # Parse ROI if provided
+        bbox = None
+        if roi:
+            parts = [x.strip() for x in roi.split(",")]
+            if len(parts) != 4:
+                click.echo("Error: Invalid ROI format: ROI must have 4 values", err=True)
+                click.echo("Expected format: 'x,y,width,height'", err=True)
+                sys.exit(1)
+            try:
+                bbox = tuple(int(x) for x in parts)
+            except ValueError:
+                click.echo("Error: Invalid ROI format: values must be integers", err=True)
+                click.echo("Expected format: 'x,y,width,height'", err=True)
+                sys.exit(1)
+
+        # Run detection
+        if bbox:
+            result = detector.detect_roi(image, bbox)  # type: ignore[arg-type]
+            click.echo(f"Analyzing ROI: x={bbox[0]}, y={bbox[1]}, w={bbox[2]}, h={bbox[3]}")
+        else:
+            result = detector.detect(image, compute_detailed_metrics=detailed)
+
+        # Prepare output
+        output_data = {
+            "file": str(input_path),
+            "is_noisy": result.is_noisy,
+            "severity": result.severity.value,
+            "noise_sigma": round(result.noise_sigma, 3),
+            "noise_score": round(result.noise_score, 3),
+            "confidence": round(result.confidence, 3),
+        }
+
+        if detailed and result.metrics:
+            output_data["metrics"] = {
+                "wavelet_detail_energy": round(result.metrics.wavelet_detail_energy, 4),
+                "snr_estimate_db": round(result.metrics.snr_estimate, 2),
+                "noise_type_hint": result.metrics.noise_type_hint,
+            }
+
+        if roi:
+            output_data["roi"] = bbox
+
+        # Output results
+        if json_output:
+            with open(json_output, "w") as f:
+                json.dump(output_data, f, indent=2)
+            click.echo(f"Results saved to: {json_output}")
+        else:
+            # Pretty print results
+            click.echo("\n" + "=" * 50)
+            click.echo("NOISE DETECTION RESULTS")
+            click.echo("=" * 50)
+            click.echo(f"File: {input_path.name}")
+            click.echo(f"Image size: {image.shape[1]}x{image.shape[0]}")
+            click.echo(f"Wavelet: {wavelet}")
+            click.echo("-" * 50)
+
+            # Severity indicator
+            severity_icons = {
+                "low": "✓ CLEAN",
+                "medium": "~ SLIGHT NOISE",
+                "high": "! NOISY",
+                "critical": "✗ SEVERELY NOISY",
+            }
+            severity_display = severity_icons.get(result.severity.value, result.severity.value)
+            click.echo(f"Status: {severity_display}")
+            click.echo(f"Noisy: {'Yes' if result.is_noisy else 'No'}")
+            click.echo(f"Severity: {result.severity.value.upper()}")
+            click.echo("-" * 50)
+            click.echo(f"Noise Sigma: {result.noise_sigma:.3f}")
+            click.echo(f"Noise Score (0-1): {result.noise_score:.3f}")
+            click.echo(f"Confidence: {result.confidence:.3f}")
+
+            if detailed and result.metrics:
+                click.echo("-" * 50)
+                click.echo("DETAILED METRICS:")
+                click.echo(f"  Wavelet Detail Energy: {result.metrics.wavelet_detail_energy:.4f}")
+                click.echo(f"  SNR Estimate: {result.metrics.snr_estimate:.2f} dB")
+                click.echo(f"  Noise Type Hint: {result.metrics.noise_type_hint}")
+
+            click.echo("=" * 50)
+
+            # Interpretation
+            click.echo("\nInterpretation:")
+            if result.noise_score >= 0.8:
+                click.echo("  Image is very clean with minimal noise.")
+            elif result.noise_score >= 0.5:
+                click.echo("  Image has acceptable noise levels for most use cases.")
+            elif result.noise_score >= 0.2:
+                click.echo("  Image shows noticeable noise. Consider denoising.")
+            else:
+                click.echo("  Image is heavily affected by noise. Denoising recommended.")
+
+    except Exception as e:
+        logger.error("Noise check failed", error=str(e), exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
