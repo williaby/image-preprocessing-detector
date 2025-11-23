@@ -185,7 +185,7 @@ jobs:
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Free up disk space
         run: |
@@ -270,7 +270,7 @@ jobs:
       - name: Install UV
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Free up disk space
         run: |

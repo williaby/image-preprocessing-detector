@@ -467,9 +467,11 @@ class StudentTrainer:
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
 
         logger.info(f"Loading checkpoint: {checkpoint_path}")
-        # nosemgrep: pickles-in-pytorch
-        # Security: Loading our own checkpoint; file source is validated by caller
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        # Security: Use weights_only=True to prevent arbitrary code execution
+        # Only loads tensors, dicts, lists, and primitive types
+        checkpoint = torch.load(
+            checkpoint_path, map_location=self.device, weights_only=True
+        )
 
         # Restore student model and optimizer state
         self.student.load_state_dict(checkpoint["student_state_dict"])

@@ -240,7 +240,7 @@ class SkewDetector:
 
                 if variance > max_variance:
                     max_variance = variance
-                    best_angle = float(angle)
+                    best_angle = float(angle)  # Convert numpy.floating to Python float
 
             # Normalize confidence based on variance magnitude
             # Higher variance = more text-like structure = higher confidence
