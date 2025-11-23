@@ -29,7 +29,7 @@ Usage:
 
 import argparse
 import os
-import subprocess
+import subprocess  # nosec B404 - subprocess used only with gsutil for GCS operations
 import sys
 from pathlib import Path
 
@@ -164,6 +164,9 @@ def pull_from_gcs(dataset_name: str) -> bool:
     print()
 
     try:
+        # nosemgrep: dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
+        # Security: gcs_path and nfs_path come from hardcoded DATASETS dictionary,
+        # not from user input. Dataset names are validated via argparse choices.
         subprocess.run(cmd, env=env, check=True)  # nosec B603
         print(f"\n✅ Successfully downloaded {dataset_name} to NFS")
         return True
@@ -255,6 +258,9 @@ def sync_to_gcs(dataset_name: str) -> bool:
     print()
 
     try:
+        # nosemgrep: dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
+        # Security: gcs_path and nfs_path come from hardcoded DATASETS dictionary,
+        # not from user input. Dataset names are validated via argparse choices.
         subprocess.run(cmd, env=env, check=True)  # nosec B603
         print(f"\n✅ Successfully synced {dataset_name} to GCS")
         return True

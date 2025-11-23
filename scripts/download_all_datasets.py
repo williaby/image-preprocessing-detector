@@ -19,7 +19,7 @@ Usage:
 
 import argparse
 import os
-import subprocess
+import subprocess  # nosec B404 - subprocess used only with gsutil/wget for dataset operations
 import sys
 from pathlib import Path
 
@@ -212,6 +212,9 @@ def download_from_gcs(dataset_name: str, config: dict) -> bool:
 
     print(f"Running: {' '.join(cmd)}")
     try:
+        # nosemgrep: dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
+        # Security: gcs_path and nfs_path come from hardcoded BENCHMARK_DATASETS/TRAINING_DATASETS
+        # dictionaries, not from user input. Dataset names are validated against these whitelists.
         subprocess.run(cmd, env=env, check=True)  # nosec B603
         print(f"\n✅ Successfully downloaded {dataset_name}")
         return True
@@ -290,6 +293,9 @@ def download_from_url(dataset_name: str, config: dict) -> bool:
     ]
 
     try:
+        # nosemgrep: dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
+        # Security: url comes from hardcoded BENCHMARK_DATASETS dictionary with explicit URLs,
+        # not from user input. Dataset names are validated against this whitelist.
         subprocess.run(cmd, check=True)  # nosec B603
         print(f"\n✅ Successfully downloaded {dataset_name}")
         return True

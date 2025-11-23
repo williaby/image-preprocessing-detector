@@ -13,7 +13,7 @@ Scans all datasets in NFS storage and generates:
 """
 
 import json
-import subprocess
+import subprocess  # nosec B404 - subprocess used only for du/find/gsutil with hardcoded commands
 from pathlib import Path
 
 NFS_ROOT = Path("/mnt/unraid/training_data/image_detection")
@@ -179,6 +179,8 @@ def main():
     print()
 
     # Save JSON report
+    # nosemgrep: gitlab.bandit.B108  # noqa: ERA001
+    # Security: /tmp is appropriate for temporary status report; script runs locally
     output_file = Path("/tmp/dataset_status_report.json")
     with open(output_file, "w") as f:
         json.dump(datasets, f, indent=2)

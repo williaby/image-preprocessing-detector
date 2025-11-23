@@ -11,7 +11,7 @@ generation pipeline works correctly before running the full 100K generation.
 Duration: ~10-15 minutes
 """
 
-import subprocess
+import subprocess  # nosec B404 - subprocess used to invoke generation script with hardcoded args
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent

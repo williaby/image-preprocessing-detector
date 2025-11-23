@@ -16,7 +16,7 @@ Duration: 8-12 hours (local CPU)
 
 import argparse
 import json
-import random
+import random  # nosec B311 - used for non-cryptographic dataset shuffling/sampling
 import sys
 from collections import defaultdict
 from datetime import datetime

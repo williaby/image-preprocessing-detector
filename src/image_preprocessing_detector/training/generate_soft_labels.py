@@ -167,6 +167,8 @@ class SoftLabelGenerator:
         self._verify_soft_labels(soft_labels)
 
         # Save to disk
+        # nosemgrep: pickles-in-pytorch
+        # Security: torch.save is standard for ML soft labels; we only load our own data
         torch.save(soft_labels, output_path)
 
         # Log file size
@@ -195,6 +197,8 @@ class SoftLabelGenerator:
 
         logger.info("Loading soft labels", path=str(input_path))
 
+        # nosemgrep: pickles-in-pytorch
+        # Security: Loading our own soft labels file; file source is validated by caller
         soft_labels: dict[int, torch.Tensor] = torch.load(input_path)
 
         # Verify loaded soft labels

@@ -350,6 +350,8 @@ def train_student():
 
     # Create and load teacher
     teacher = ResNetTeacher(num_heads=5, dropout=0.2)
+    # nosemgrep: pickles-in-pytorch
+    # Security: Loading our own checkpoint from GCS; file source is trusted
     teacher_checkpoint = torch.load(teacher_local_path, map_location=device)
     teacher.load_state_dict(teacher_checkpoint["model_state_dict"])
     teacher.eval()
@@ -484,6 +486,8 @@ def train_student():
                 checkpoint_path = (
                     checkpoint_dir / f"student_checkpoint_epoch_{epoch + 1}.pth"
                 )
+                # nosemgrep: pickles-in-pytorch
+                # Security: torch.save is standard for ML checkpoints; we only load our own checkpoints
                 torch.save(
                     {
                         "epoch": epoch + 1,
@@ -525,6 +529,8 @@ def train_student():
 
     final_epoch = max(getattr(trainer, "epoch", 0), epoch + 1 if epoch >= 0 else 0)
     final_checkpoint = checkpoint_dir / "student_final.pth"
+    # nosemgrep: pickles-in-pytorch
+    # Security: torch.save is standard for ML checkpoints; we only load our own checkpoints
     torch.save(
         {
             "epoch": final_epoch,

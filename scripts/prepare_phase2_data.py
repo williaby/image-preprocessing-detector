@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import random
+import random  # nosec B311 - used for non-cryptographic dataset shuffling/sampling
 import sys
 from pathlib import Path
 from typing import Any
