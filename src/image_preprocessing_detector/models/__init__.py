@@ -2,27 +2,76 @@
 
 This module contains deep learning models for document image quality assessment:
 - ResNet-50 Teacher Model: High-capacity model for difficult/high-risk cases
-- ResNet-18 Student Model: Fast production model (to be implemented)
+- ResNet-18 Student Model: Fast production model
 - Multi-head architectures for quality issue detection
 - Loss functions for training multi-head models
+- Model optimization utilities (ONNX export, INT8 quantization, TensorRT)
+- Model registry and deployment packaging
+
+Note:
+    PyTorch-based models (ResNetTeacher, ResNetStudent, loss functions) require
+    the 'ml' optional dependencies to be installed. Model optimization utilities
+    are available without PyTorch.
 """
 
-from image_preprocessing_detector.models.loss_functions import (
-    FocalLoss,
-    MultiHeadIQALoss,
-    WeightedMSELoss,
-    compute_class_weights,
-)
-from image_preprocessing_detector.models.resnet_teacher import (
-    IQAHead,
-    ResNetTeacher,
+# Model optimization utilities (no torch dependency)
+from image_preprocessing_detector.models.model_optimizer import (
+    BenchmarkResult,
+    CalibrationDataset,
+    ModelDeploymentPackage,
+    ModelManifest,
+    ModelOptimizer,
+    ModelRegistry,
+    ONNXExportConfig,
+    QuantizationConfig,
+    ThresholdConfig,
+    ThresholdTuner,
 )
 
 __all__ = [
-    "FocalLoss",
-    "IQAHead",
-    "MultiHeadIQALoss",
-    "ResNetTeacher",
-    "WeightedMSELoss",
-    "compute_class_weights",
+    # Model optimization (no torch required)
+    "BenchmarkResult",
+    "CalibrationDataset",
+    "ModelDeploymentPackage",
+    "ModelManifest",
+    "ModelOptimizer",
+    "ModelRegistry",
+    "ONNXExportConfig",
+    "QuantizationConfig",
+    "ThresholdConfig",
+    "ThresholdTuner",
 ]
+
+# PyTorch-dependent imports (optional)
+try:
+    from image_preprocessing_detector.models.loss_functions import (
+        FocalLoss,
+        MultiHeadIQALoss,
+        WeightedMSELoss,
+        compute_class_weights,
+    )
+    from image_preprocessing_detector.models.resnet_student import (
+        ResNetStudent,
+        StudentIQAHead,
+    )
+    from image_preprocessing_detector.models.resnet_teacher import (
+        IQAHead,
+        ResNetTeacher,
+    )
+
+    __all__.extend([
+        # Loss functions
+        "FocalLoss",
+        "MultiHeadIQALoss",
+        "WeightedMSELoss",
+        "compute_class_weights",
+        # Teacher model
+        "IQAHead",
+        "ResNetTeacher",
+        # Student model
+        "ResNetStudent",
+        "StudentIQAHead",
+    ])
+except ImportError:
+    # PyTorch not installed - ML models not available
+    pass
