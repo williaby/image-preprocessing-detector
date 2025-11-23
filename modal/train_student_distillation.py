@@ -164,8 +164,20 @@ def train_student():
     # Extract archive
     print("Extracting archive...")
     start_time = time.time()
+
+    def safe_extract(tar_file: tarfile.TarFile, target_dir: Path) -> None:
+        target_dir = target_dir.resolve()
+        for member in tar_file.getmembers():
+            member_path = (target_dir / member.name).resolve()
+            if not str(member_path).startswith(str(target_dir)):
+                raise RuntimeError(
+                    f"Unsafe path detected in archive member: {member.name}"
+                )
+        tar_file.extractall(path=target_dir)
+
     with tarfile.open(tar_path, "r:gz") as tar:
-        tar.extractall(path=dataset_path.parent)
+        safe_extract(tar, dataset_path.parent)
+
     extract_time = time.time() - start_time
     print(f"✅ Extracted in {extract_time:.1f}s")
 
@@ -422,7 +434,13 @@ def train_student():
 
     start_time = time.time()
     total_epochs = config["training"]["epochs"]
+    val_loss = float("inf")
 
+    if total_epochs < 1:
+        raise ValueError("training.epochs must be at least 1")
+
+    trainer.epoch = 0
+    epoch = -1
     try:
         for epoch in range(total_epochs):
             epoch_start = time.time()
@@ -496,7 +514,8 @@ def train_student():
         print(f"Best validation loss: {trainer.best_val_loss:.4f}")
 
     except Exception as e:
-        print(f"\n❌ Training failed at epoch {epoch + 1}: {e}")
+        failed_epoch = epoch + 1 if epoch >= 0 else 0
+        print(f"\n❌ Training failed at epoch {failed_epoch}: {e}")
         raise
 
     # =========================================================================
@@ -504,10 +523,11 @@ def train_student():
     # =========================================================================
     print("\n[9/10] Saving final checkpoint...")
 
+    final_epoch = max(getattr(trainer, "epoch", 0), epoch + 1 if epoch >= 0 else 0)
     final_checkpoint = checkpoint_dir / "student_final.pth"
     torch.save(
         {
-            "epoch": epoch + 1,
+            "epoch": final_epoch,
             "student_state_dict": student.state_dict(),
             "optimizer_state_dict": trainer.optimizer.state_dict(),
             "val_loss": val_loss,

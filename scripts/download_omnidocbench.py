@@ -137,7 +137,7 @@ def download_omnidocbench(
 
         from datasets import load_dataset
     except ImportError:
-        logger.error("Required packages not found. Install with: poetry install")
+        logger.error("Required packages not found. Install with: uv sync --extra ml")
         logger.error("Or: pip install datasets huggingface-hub")
         return False
 

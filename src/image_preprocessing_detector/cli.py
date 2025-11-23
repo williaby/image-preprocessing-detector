@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import click
+import numpy as np
 
 from image_preprocessing_detector.core.config import Settings
 from image_preprocessing_detector.correction.corrections import (
@@ -191,22 +192,14 @@ def process_single_file(
                     logger.info("Applied sharpening")
 
         # Add page to metadata builder
-        if page_image is not None:
+        page_data_arg: PageImage | tuple[np.ndarray, ImageMetadata] | None = page_image
+        if page_data_arg is None and img_metadata is not None:
+            page_data_arg = (image, img_metadata)
+
+        if page_data_arg is not None:
             builder.add_page(
                 page_number=page_idx,
-                page_data=page_image,
-                text_result=text_result,
-                skew_result=skew_result,
-                blur_result=blur_result,
-                contrast_result=contrast_result,
-                skew_correction=skew_correction,
-                contrast_correction=contrast_correction,
-                blur_correction=blur_correction,
-            )
-        elif img_metadata is not None:
-            builder.add_page(
-                page_number=page_idx,
-                page_data=(image, img_metadata),
+                page_data=page_data_arg,
                 text_result=text_result,
                 skew_result=skew_result,
                 blur_result=blur_result,

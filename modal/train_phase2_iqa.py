@@ -272,12 +272,13 @@ def train_iqa():
     # Create train/val/test splits based on config
     train_ratio = config["data"]["train_split"]
     val_ratio = config["data"]["val_split"]
-    _test_ratio = config["data"]["test_split"]  # Read but calculated via remainder
+    test_ratio = config["data"]["test_split"]
+
+    if not abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-6:
+        raise ValueError("Train/val/test splits must sum to 1.0")
 
     train_size = int(total_samples * train_ratio)
     val_size = int(total_samples * val_ratio)
-    _test_size = total_samples - train_size - val_size
-
     train_samples = samples[:train_size]
     val_samples = samples[train_size : train_size + val_size]
     test_samples = samples[train_size + val_size :]
@@ -386,9 +387,10 @@ def train_iqa():
 
         # Split labels tensor into per-head format
         for idx, head_name in enumerate(issue_types):
-            batch_dict["labels"][head_name] = labels_batch[:, idx]
+            head_labels = labels_batch[:, idx].unsqueeze(1)
+            batch_dict["labels"][head_name] = head_labels
             # Use full confidence (1.0) for all labels
-            batch_dict["confidence"][head_name] = torch.ones_like(labels_batch[:, idx])
+            batch_dict["confidence"][head_name] = torch.ones_like(head_labels)
 
         return batch_dict
 
@@ -467,6 +469,7 @@ def train_iqa():
     start_time = time.time()
     total_epochs = config["training"]["epochs"]
 
+    epoch = -1
     try:
         # Manual epoch loop for better progress visibility
         for epoch in range(total_epochs):
@@ -535,7 +538,8 @@ def train_iqa():
         print(f"Best validation loss: {trainer.best_val_loss:.4f}")
 
     except Exception as e:
-        print(f"\n❌ Training failed at epoch {epoch + 1}: {e}")
+        failed_epoch = epoch + 1 if epoch >= 0 else 0
+        print(f"\n❌ Training failed at epoch {failed_epoch}: {e}")
         raise
 
     # =========================================================================

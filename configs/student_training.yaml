@@ -74,7 +74,6 @@ distillation:
 
   # Whether to use pre-computed soft labels (recommended)
   use_precomputed_soft_labels: true
-  soft_labels_path: gs://image_detection_b/datasets/iqa_phase2/soft_labels/train_soft_labels.pt
 
 data:
   # Training dataset

@@ -502,6 +502,7 @@ class StudentTrainer:
         logger.info(f"Temperature: {self.loss_fn.temperature}")
         logger.info(f"Alpha (soft/hard balance): {self.loss_fn.alpha}")
 
+        epochs_run = 0
         for epoch in range(self.epoch, self.epochs):
             self.epoch = epoch
             logger.info(f"\n{'=' * 60}")
@@ -573,6 +574,8 @@ class StudentTrainer:
             if (epoch + 1) % self.save_interval_epochs == 0 or is_best:
                 self.save_checkpoint(epoch, val_metrics["loss"], is_best)
 
+            epochs_run = epoch + 1
+
             # Early stopping
             if self.patience_counter >= self.early_stopping_patience:
                 logger.info(
@@ -589,6 +592,6 @@ class StudentTrainer:
 
         return {
             "best_val_loss": self.best_val_loss,
-            "total_epochs": epoch + 1,
+            "total_epochs": epochs_run,
             "training_history": self.training_history,
         }

@@ -508,7 +508,18 @@ class MLIQADetector:
         Returns:
             UncertaintyMetrics with entropy and confidence measures
         """
-        confidences = scores.confidences
+        confidences = {
+            name: float(np.clip(value, 0.0, 1.0))
+            for name, value in scores.confidences.items()
+        }
+
+        if not confidences:
+            return UncertaintyMetrics(
+                entropy=0.0,
+                min_confidence=0.0,
+                mean_confidence=0.0,
+                head_confidences={},
+            )
 
         # Calculate entropy from confidences
         # Entropy = -sum(p * log(p)) for binary classification
@@ -526,8 +537,9 @@ class MLIQADetector:
             entropies.append(h)
 
         mean_entropy = float(np.mean(entropies))
-        min_confidence = float(np.min(list(confidences.values())))
-        mean_confidence = float(np.mean(list(confidences.values())))
+        confidence_values = np.fromiter(confidences.values(), dtype=float)
+        min_confidence = float(np.min(confidence_values))
+        mean_confidence = float(np.mean(confidence_values))
 
         return UncertaintyMetrics(
             entropy=mean_entropy,

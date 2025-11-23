@@ -30,7 +30,7 @@ from tqdm import tqdm
 try:
     from datasets import load_from_disk
 except ImportError:
-    print("Error: datasets library not installed. Run: poetry install --with ml")
+    print("Error: datasets library not installed. Run: uv sync --extra ml")
     sys.exit(1)
 
 # Add project root to path
@@ -401,7 +401,9 @@ class DatasetGenerator:
             image = image.convert("RGB")
 
         # 1. DPI upsampling (if needed)
-        target_dpi, current_dpi = self.apply_dpi_upsampling(image, dataset_name)
+        image, target_dpi, current_dpi = self.apply_dpi_upsampling(
+            image, dataset_name
+        )
 
         # 2. Orientation (20% landscape, 5% square) - BEFORE augmentation
         orientation, image = self.apply_orientation(image)
@@ -463,12 +465,12 @@ class DatasetGenerator:
 
     def apply_dpi_upsampling(
         self, image: Image.Image, dataset_name: str
-    ) -> tuple[int | None, int]:
+    ) -> tuple[Image.Image, int | None, int]:
         """Apply DPI upsampling if needed."""
         dpi_strategy = self.config.DPI_STRATEGY.get(dataset_name)
 
         if dpi_strategy is None:
-            return None, self.estimate_dpi(image)
+            return image, None, self.estimate_dpi(image)
 
         # Choose target DPI based on strategy
         target_dpi = random.choices(
@@ -487,7 +489,7 @@ class DatasetGenerator:
             )
             image = image.resize(new_size, Image.Resampling.LANCZOS)
 
-        return target_dpi, current_dpi
+        return image, target_dpi, current_dpi
 
     def apply_color_conversion(self, image: Image.Image) -> tuple[str, Image.Image]:
         """Apply color mode conversion (35% grayscale, 5% B&W)."""
@@ -505,14 +507,22 @@ class DatasetGenerator:
         return "RGB", image
 
     def apply_orientation(self, image: Image.Image) -> tuple[str, Image.Image]:
-        """Apply orientation transformation (20% landscape)."""
+        """Apply orientation transformation (20% landscape, 5% square)."""
         current_orientation = (
             "portrait" if image.size[0] < image.size[1] else "landscape"
         )
 
         rand = random.random()
 
-        if rand < 0.20 and current_orientation == "portrait":
+        if rand < 0.05:
+            # Center crop to square
+            min_side = min(image.size)
+            left = (image.width - min_side) // 2
+            top = (image.height - min_side) // 2
+            image = image.crop((left, top, left + min_side, top + min_side))
+            return "square", image
+
+        if rand < 0.25 and current_orientation == "portrait":
             # Rotate to landscape
             image = image.rotate(90, expand=True)
             return "landscape", image

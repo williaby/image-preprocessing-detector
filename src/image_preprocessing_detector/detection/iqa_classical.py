@@ -240,7 +240,7 @@ class SkewDetector:
 
                 if variance > max_variance:
                     max_variance = variance
-                    best_angle = angle
+                    best_angle = float(angle)
 
             # Normalize confidence based on variance magnitude
             # Higher variance = more text-like structure = higher confidence

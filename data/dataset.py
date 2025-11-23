@@ -144,10 +144,18 @@ class IQADataset(Dataset):
         # Apply transforms if provided
         if self.transform is not None:
             # Handle albumentations transforms
-            if (
-                callable(self.transform)
-                and "image" in self.transform.__code__.co_varnames
-            ):
+            is_albumentations = False
+            if callable(self.transform):
+                if hasattr(self.transform, "__code__"):
+                    is_albumentations = "image" in self.transform.__code__.co_varnames
+                elif hasattr(self.transform, "__call__") and hasattr(
+                    self.transform.__call__, "__code__"
+                ):
+                    is_albumentations = (
+                        "image" in self.transform.__call__.__code__.co_varnames
+                    )
+
+            if is_albumentations:
                 transformed = self.transform(image=image)
                 image = transformed["image"]
             else:
@@ -239,10 +247,12 @@ class IQADataset(Dataset):
             "total_samples": total_samples,
             "label_counts": label_counts,
             "label_percentages": {
-                issue: (count / total_samples) * 100
+                issue: (count / total_samples) * 100 if total_samples else 0.0
                 for issue, count in label_counts.items()
             },
-            "average_issues_per_image": sum(label_counts.values()) / total_samples,
+            "average_issues_per_image": (
+                sum(label_counts.values()) / total_samples if total_samples else 0.0
+            ),
         }
 
 
