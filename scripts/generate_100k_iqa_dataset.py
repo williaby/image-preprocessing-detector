@@ -195,7 +195,9 @@ class AugmentationPipeline:
                 ],
                 p=1.0,
             ),
-            "skew": A.Rotate(limit=15, border_mode=0, p=1.0),  # Use constant border fill
+            "skew": A.Rotate(
+                limit=15, border_mode=0, p=1.0
+            ),  # Use constant border fill
             "illumination": A.OneOf(
                 [
                     A.RandomBrightnessContrast(
@@ -401,9 +403,7 @@ class DatasetGenerator:
             image = image.convert("RGB")
 
         # 1. DPI upsampling (if needed)
-        image, target_dpi, current_dpi = self.apply_dpi_upsampling(
-            image, dataset_name
-        )
+        image, target_dpi, current_dpi = self.apply_dpi_upsampling(image, dataset_name)
 
         # 2. Orientation (20% landscape, 5% square) - BEFORE augmentation
         orientation, image = self.apply_orientation(image)
