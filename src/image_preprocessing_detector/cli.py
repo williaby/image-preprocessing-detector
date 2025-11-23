@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import click
+import numpy as np
 
 from image_preprocessing_detector.core.config import Settings
 from image_preprocessing_detector.correction.corrections import (
@@ -34,6 +35,185 @@ from image_preprocessing_detector.output.json_generator import (
 from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
+
+
+def process_single_file(
+    input_path: Path,
+    output: Path,
+    dry_run: bool,
+    blur_threshold: float,
+    skew_threshold: float,
+    contrast_threshold: float,
+) -> None:
+    """Process a single file with image preprocessing detection.
+
+    Args:
+        input_path: Path to input PDF or image file
+        output: Path to output JSON file
+        dry_run: If True, skip corrections (detection only)
+        blur_threshold: Blur detection threshold (0.0-1.0)
+        skew_threshold: Skew detection threshold (0.0-1.0)
+        contrast_threshold: Contrast detection threshold (0.0-1.0)
+
+    Raises:
+        ValueError: If file format is unsupported
+        Exception: If processing fails
+    """
+    logger.info(
+        "Processing file",
+        input_path=str(input_path),
+        output=str(output),
+        dry_run=dry_run,
+    )
+
+    # Determine document ID and file type
+    doc_id = input_path.stem
+    file_name = input_path.name
+    suffix = input_path.suffix.lower()
+
+    # Create metadata builder
+    builder = MetadataBuilder(document_id=doc_id, file_name=file_name)
+
+    # Load pages based on file type
+    pages: list[Any]  # PageImage or tuple[np.ndarray, ImageMetadata]
+    if suffix == ".pdf":
+        # Phase 1B: Perform pre-flight analysis for DPI upscaling
+        settings = Settings()
+        analyzer = PDFDocumentAnalyzer(settings)
+        preflight = analyzer.analyze(input_path)
+
+        logger.info(
+            "PDF pre-flight analysis complete",
+            needs_upscaling=preflight.needs_upscaling,
+            should_use_upscaled=preflight.should_use_upscaled,
+            processing_time=f"{preflight.processing_time:.2f}s",
+        )
+
+        # Use upscaled version if available, otherwise original
+        pdf_to_process = preflight.recommended_path or str(input_path)
+
+        # Add upscaling metadata to builder if upscaling was performed
+        if preflight.should_use_upscaled:
+            builder.set_upscaling_metadata(preflight.upscaling_result)
+            logger.info(f"Using upscaled PDF: {pdf_to_process}")
+        else:
+            logger.info("Using original PDF (upscaling not needed or disabled)")
+
+        pages = load_pdf(pdf_to_process)
+        logger.info(f"Loaded {len(pages)} pages from PDF")
+    elif suffix in {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}:
+        img, img_meta = load_image(str(input_path))
+        pages = [(img, img_meta)]
+        logger.info("Loaded single image")
+    else:
+        raise ValueError(f"Unsupported file format: {suffix}")
+
+    # Process each page
+    for page_idx, page_data in enumerate(pages):
+        page_image: PageImage | None
+        img_metadata: ImageMetadata | None
+
+        if isinstance(page_data, PageImage):
+            # PDF page
+            page_image = page_data
+            image = page_image.image
+            img_metadata = None
+        else:
+            # Direct image tuple
+            image, img_metadata = page_data
+            page_image = None
+
+        logger.info(f"Processing page {page_idx + 1}/{len(pages)}")
+
+        # Text detection gate
+        text_result = detect_text(image)
+        logger.debug(
+            f"Text detection: has_text={text_result.has_text}, "
+            f"confidence={text_result.confidence:.2f}"
+        )
+
+        # IQA detection
+        skew_result = None
+        blur_result = None
+        contrast_result = None
+
+        if text_result.has_text:
+            # Only run IQA on text-heavy pages
+            skew_result = detect_skew(image)
+            blur_result = detect_blur(image)
+            contrast_result = detect_contrast(image)
+
+            logger.debug(
+                f"IQA results: skew={skew_result.is_skewed}, "
+                f"blur={blur_result.is_blurred}, "
+                f"contrast={contrast_result.is_low_contrast}"
+            )
+
+        # Apply corrections (if not dry-run)
+        skew_correction = None
+        blur_correction = None
+        contrast_correction = None
+
+        if not dry_run and text_result.has_text:
+            if (
+                skew_result
+                and skew_result.is_skewed
+                and skew_result.confidence >= skew_threshold
+            ):
+                skew_correction = correct_skew(
+                    image, skew_result.angle, skew_result.confidence
+                )
+                if skew_correction.applied:
+                    image = skew_correction.corrected_image
+                    logger.info(f"Applied skew correction: {skew_result.angle:.2f}°")
+
+            if (
+                contrast_result
+                and contrast_result.is_low_contrast
+                and contrast_result.confidence >= contrast_threshold
+            ):
+                contrast_correction = enhance_contrast(
+                    image, contrast_result.score, contrast_result.severity
+                )
+                if contrast_correction.applied:
+                    image = contrast_correction.corrected_image
+                    logger.info("Applied contrast enhancement")
+
+            if (
+                blur_result
+                and blur_result.is_blurred
+                and blur_result.confidence >= blur_threshold
+            ):
+                blur_correction = sharpen_image(
+                    image, blur_result.score, blur_result.severity
+                )
+                if blur_correction.applied:
+                    image = blur_correction.corrected_image
+                    logger.info("Applied sharpening")
+
+        # Add page to metadata builder
+        page_data_arg: PageImage | tuple[np.ndarray, ImageMetadata] | None = page_image
+        if page_data_arg is None and img_metadata is not None:
+            page_data_arg = (image, img_metadata)
+
+        if page_data_arg is not None:
+            builder.add_page(
+                page_number=page_idx,
+                page_data=page_data_arg,
+                text_result=text_result,
+                skew_result=skew_result,
+                blur_result=blur_result,
+                contrast_result=contrast_result,
+                skew_correction=skew_correction,
+                contrast_correction=contrast_correction,
+                blur_correction=blur_correction,
+            )
+
+    # Build metadata and generate JSON
+    metadata = builder.build()
+    generate_json(metadata, output)
+
+    logger.info("Processing complete", output=str(output))
 
 
 @click.group()
@@ -89,173 +269,15 @@ def process(
         imgprep process image.jpg --output result.json --dry-run
     """
     try:
-        logger.info(
-            "Processing file",
-            input_path=str(input_path),
-            output=str(output),
+        process_single_file(
+            input_path=input_path,
+            output=output,
             dry_run=dry_run,
+            blur_threshold=blur_threshold,
+            skew_threshold=skew_threshold,
+            contrast_threshold=contrast_threshold,
         )
-
-        # Determine document ID and file type
-        doc_id = input_path.stem
-        file_name = input_path.name
-        suffix = input_path.suffix.lower()
-
-        # Create metadata builder
-        builder = MetadataBuilder(document_id=doc_id, file_name=file_name)
-
-        # Load pages based on file type
-        pages: list[Any]  # PageImage or tuple[np.ndarray, ImageMetadata]
-        if suffix == ".pdf":
-            # Phase 1B: Perform pre-flight analysis for DPI upscaling
-            settings = Settings()
-            analyzer = PDFDocumentAnalyzer(settings)
-            preflight = analyzer.analyze(input_path)
-
-            logger.info(
-                "PDF pre-flight analysis complete",
-                needs_upscaling=preflight.needs_upscaling,
-                should_use_upscaled=preflight.should_use_upscaled,
-                processing_time=f"{preflight.processing_time:.2f}s",
-            )
-
-            # Use upscaled version if available, otherwise original
-            pdf_to_process = preflight.recommended_path or str(input_path)
-
-            # Add upscaling metadata to builder if upscaling was performed
-            if preflight.should_use_upscaled:
-                builder.set_upscaling_metadata(preflight.upscaling_result)
-                logger.info(f"Using upscaled PDF: {pdf_to_process}")
-            else:
-                logger.info("Using original PDF (upscaling not needed or disabled)")
-
-            pages = load_pdf(pdf_to_process)
-            logger.info(f"Loaded {len(pages)} pages from PDF")
-        elif suffix in {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}:
-            img, img_meta = load_image(str(input_path))
-            pages = [(img, img_meta)]
-            logger.info("Loaded single image")
-        else:
-            click.echo(f"Error: Unsupported file format: {suffix}", err=True)
-            sys.exit(1)
-
-        # Process each page
-        for page_idx, page_data in enumerate(pages):
-            page_image: PageImage | None
-            img_metadata: ImageMetadata | None
-
-            if isinstance(page_data, PageImage):
-                # PDF page
-                page_image = page_data
-                image = page_image.image
-                img_metadata = None
-            else:
-                # Direct image tuple
-                image, img_metadata = page_data
-                page_image = None
-
-            logger.info(f"Processing page {page_idx + 1}/{len(pages)}")
-
-            # Text detection gate
-            text_result = detect_text(image)
-            logger.debug(
-                f"Text detection: has_text={text_result.has_text}, "
-                f"confidence={text_result.confidence:.2f}"
-            )
-
-            # IQA detection
-            skew_result = None
-            blur_result = None
-            contrast_result = None
-
-            if text_result.has_text:
-                # Only run IQA on text-heavy pages
-                skew_result = detect_skew(image)
-                blur_result = detect_blur(image)
-                contrast_result = detect_contrast(image)
-
-                logger.debug(
-                    f"IQA results: skew={skew_result.is_skewed}, "
-                    f"blur={blur_result.is_blurred}, "
-                    f"contrast={contrast_result.is_low_contrast}"
-                )
-
-            # Apply corrections (if not dry-run)
-            skew_correction = None
-            blur_correction = None
-            contrast_correction = None
-
-            if not dry_run and text_result.has_text:
-                if (
-                    skew_result
-                    and skew_result.is_skewed
-                    and skew_result.confidence >= skew_threshold
-                ):
-                    skew_correction = correct_skew(
-                        image, skew_result.angle, skew_result.confidence
-                    )
-                    if skew_correction.applied:
-                        image = skew_correction.corrected_image
-                        logger.info(
-                            f"Applied skew correction: {skew_result.angle:.2f}°"
-                        )
-
-                if (
-                    contrast_result
-                    and contrast_result.is_low_contrast
-                    and contrast_result.confidence >= contrast_threshold
-                ):
-                    contrast_correction = enhance_contrast(
-                        image, contrast_result.score, contrast_result.severity
-                    )
-                    if contrast_correction.applied:
-                        image = contrast_correction.corrected_image
-                        logger.info("Applied contrast enhancement")
-
-                if (
-                    blur_result
-                    and blur_result.is_blurred
-                    and blur_result.confidence >= blur_threshold
-                ):
-                    blur_correction = sharpen_image(
-                        image, blur_result.score, blur_result.severity
-                    )
-                    if blur_correction.applied:
-                        image = blur_correction.corrected_image
-                        logger.info("Applied sharpening")
-
-            # Add page to metadata builder
-            if page_image is not None:
-                builder.add_page(
-                    page_number=page_idx,
-                    page_data=page_image,
-                    text_result=text_result,
-                    skew_result=skew_result,
-                    blur_result=blur_result,
-                    contrast_result=contrast_result,
-                    skew_correction=skew_correction,
-                    contrast_correction=contrast_correction,
-                    blur_correction=blur_correction,
-                )
-            elif img_metadata is not None:
-                builder.add_page(
-                    page_number=page_idx,
-                    page_data=(image, img_metadata),
-                    text_result=text_result,
-                    skew_result=skew_result,
-                    blur_result=blur_result,
-                    contrast_result=contrast_result,
-                    skew_correction=skew_correction,
-                    contrast_correction=contrast_correction,
-                    blur_correction=blur_correction,
-                )
-
-        # Build metadata and generate JSON
-        metadata = builder.build()
-        generate_json(metadata, output)
-
         click.echo(f"✓ Processing complete: {output}")
-        logger.info("Processing complete", output=str(output))
 
     except Exception as e:
         logger.error("Processing failed", error=str(e), exc_info=True)
@@ -353,32 +375,18 @@ def batch(
 
                 click.echo(f"[{file_idx}/{len(files)}] Processing {file_path.name}...")
 
-                # Call process command logic (reuse the same code)
-                from click.testing import CliRunner
-
-                runner = CliRunner()
-                result = runner.invoke(
-                    process,
-                    [
-                        str(file_path),
-                        "--output",
-                        str(output_path),
-                        "--blur-threshold",
-                        str(blur_threshold),
-                        "--skew-threshold",
-                        str(skew_threshold),
-                        "--contrast-threshold",
-                        str(contrast_threshold),
-                    ]
-                    + (["--dry-run"] if dry_run else []),
+                # Process the file using shared logic
+                process_single_file(
+                    input_path=file_path,
+                    output=output_path,
+                    dry_run=dry_run,
+                    blur_threshold=blur_threshold,
+                    skew_threshold=skew_threshold,
+                    contrast_threshold=contrast_threshold,
                 )
 
-                if result.exit_code == 0:
-                    success_count += 1
-                    click.echo(f"  ✓ Success: {output_path.name}")
-                else:
-                    error_count += 1
-                    click.echo(f"  ✗ Failed: {result.exception}", err=True)
+                success_count += 1
+                click.echo(f"  ✓ Success: {output_path.name}")
 
             except Exception as e:
                 error_count += 1

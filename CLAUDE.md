@@ -183,6 +183,38 @@ poetry run safety check
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH poetry run python validation/validate_*.py
 ```
 
+### Modal & Training (Phase 2+)
+
+**Status**: ✅ Modal setup complete, ready for training runs
+
+**Quick Reference**: [docs/reference/MODAL_QUICK_REFERENCE.md](docs/reference/MODAL_QUICK_REFERENCE.md)
+
+```bash
+# Start training (ready to use)
+poetry run modal run modal/train_phase2_iqa.py      # Phase 2: ResNet IQA
+
+# Monitor training
+poetry run modal app logs image-detection --follow  # Stream logs
+open https://modal.com/apps                         # Dashboard
+
+# Cost tracking
+poetry run modal profile current                    # Check usage
+
+# Verify setup (optional)
+poetry run modal token current                      # Check authentication
+poetry run modal secret list | grep gcs-credentials # Check GCS credentials
+```
+
+**Key Training Details:**
+
+- **Model Architecture**: ResNet-50 teacher → ResNet-18 student (NOT MobileNetV3/EfficientNet)
+- **Dataset**: OHR-Bench via GCS (~18 GB)
+- **GPU**: T4 (16GB) or A10 (24GB)
+- **Duration**: 12-24 hours (continuous, no session timeouts)
+- **Cost**: ~$7-14 or $0 with $30/month free tier
+
+**Quick Reference includes**: Complete training workflow, monitoring, debugging, cost management, troubleshooting
+
 ### Security Requirements (MANDATORY)
 
 ```bash

@@ -12,7 +12,6 @@ These examples demonstrate:
 """
 
 import math
-from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -32,6 +31,7 @@ from image_preprocessing_detector.schema import (
     ProcessingVersion,
     TransformHistory,
 )
+from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
 
 
 # Custom Hypothesis strategies for domain-specific types
@@ -236,13 +236,13 @@ class TestPropertyBasedTransformations:
                     max_size=3,
                 ),
                 started_at=st.datetimes(
-                    min_value=datetime(2020, 1, 1),  # noqa: DTZ001
-                    max_value=datetime(2023, 12, 31),  # noqa: DTZ001
+                    min_value=datetime(2020, 1, 1),
+                    max_value=datetime(2023, 12, 31),
                     timezones=st.just(UTC),
                 ),
                 finished_at=st.datetimes(
-                    min_value=datetime(2024, 1, 1),  # noqa: DTZ001
-                    max_value=datetime(2025, 12, 31),  # noqa: DTZ001
+                    min_value=datetime(2024, 1, 1),
+                    max_value=datetime(2025, 12, 31),
                     timezones=st.just(UTC),
                 ),
                 status=st.sampled_from(["success", "failed", "skipped"]),

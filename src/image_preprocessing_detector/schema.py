@@ -247,16 +247,48 @@ class PageMetadata(BaseModel):
     dpi_input: int = Field(..., gt=0, description="Input DPI of the page")
     dpi_effective: int = Field(..., gt=0, description="Effective DPI after processing")
 
-    # Phase 2.1.6: Teacher IQA scores (Sprint 2.1.6)
-    teacher_iqa: dict[str, float] | None = Field(
+    # Phase 2: ML IQA scores (Milestone 14.2)
+    ml_iqa: dict[str, Any] | None = Field(
+        None,
+        description="Student model ML IQA scores (ResNet-18) - default inference",
+        examples=[
+            {
+                "source": "student",
+                "blur_score": 0.82,
+                "noise_score": 0.78,
+                "contrast_score": 0.85,
+                "skew_score": 0.91,
+                "compression_score": 0.87,
+                "overall_quality": 0.85,
+                "confidences": {
+                    "blur": 0.82,
+                    "noise": 0.78,
+                    "contrast": 0.85,
+                    "skew": 0.91,
+                    "compression": 0.87,
+                },
+                "device": "cuda",
+                "inference_time_ms": 15.3,
+            }
+        ],
+    )
+
+    # Phase 2: Teacher IQA scores (Milestone 14.2)
+    teacher_iqa: dict[str, Any] | None = Field(
         None,
         description="Teacher model IQA scores (ResNet-50) for high-risk pages",
         examples=[
             {
+                "source": "teacher",
                 "blur_score": 0.85,
                 "noise_score": 0.72,
                 "contrast_score": 0.91,
-                "overall_quality": 0.83,
+                "skew_score": 0.88,
+                "compression_score": 0.89,
+                "overall_quality": 0.86,
+                "escalation_reason": "high_entropy (0.850 >= 0.800); low_min_confidence (0.580 < 0.600)",
+                "device": "cuda",
+                "inference_time_ms": 28.7,
             }
         ],
     )

@@ -4,11 +4,18 @@ Collects metrics from individual samples and computes aggregate statistics.
 
 """
 
-from datetime import UTC
+import sys
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+# Add project root to path for imports
+project_root = Path(__file__).parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from image_preprocessing_detector.utils.datetime_compat import UTC
 
 
 class AggregateScorer:

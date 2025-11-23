@@ -24,13 +24,23 @@ fi
 
 echo "Python version $PYTHON_VERSION is compatible with Atheris"
 
-# Install Poetry
-pip3 install poetry==2.2.1
+# Install UV (replaces Poetry for this project)
+pip3 install uv
 
 # Install project dependencies (without dev dependencies)
 cd $SRC/image-preprocessing-detector
-poetry config virtualenvs.create false
-poetry install --without dev --no-interaction
+
+# Generate requirements without dev dependencies (no hashes for pip compatibility)
+uv export --no-dev --no-hashes --format requirements-txt > /tmp/requirements.txt
+
+# Pin NumPy to <2.0 for PyInstaller compatibility (NumPy 2.x has _core module issues)
+# Filter out numpy and editable requirements from requirements
+grep -v "^numpy" /tmp/requirements.txt | grep -v "^-e " > /tmp/requirements-no-numpy.txt
+pip3 install "numpy>=1.26.0,<2.0.0"
+pip3 install -r /tmp/requirements-no-numpy.txt
+
+# Install project in editable mode
+pip3 install -e . --no-deps
 
 # Install Atheris for Python fuzzing
 pip3 install atheris==2.3.0

@@ -1,0 +1,184 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
+# Student Training Configuration - Phase 2 IQA
+# ResNet-18 Student Model Training with Knowledge Distillation (Project A - RAG Pipeline)
+#
+# This config is for training the lightweight ResNet-18 student model using
+# knowledge distillation from the pre-trained ResNet-50 teacher model.
+#
+# Architecture:
+#   - Student: ResNet-18 (production default, fast inference)
+#   - Teacher: ResNet-50 (frozen, used for soft labels)
+#   - Knowledge Distillation: Temperature-scaled with soft + hard targets
+#
+# Target Metrics:
+#   - mAP > 0.88 (multi-label classification)
+#   - Per-class F1 > 0.85
+#   - ECE < 0.05 (calibration)
+#   - CPU inference: ≤40ms/page (target), ≤100ms (acceptable)
+#   - GPU inference: ≤10ms/page (target), ≤25ms (acceptable)
+
+model:
+  # Student architecture
+  architecture: resnet18
+  pretrained: true
+  num_classes: 6  # noise, blur, skew, perspective, contrast, orientation
+  input_size: 224
+  dropout: 0.2
+  hidden_dim: 512  # Smaller than teacher's 2048
+
+  # Teacher model (for soft label generation)
+  teacher_checkpoint: gs://image_detection_b/models/phase2_iqa/teacher_best.pt
+  teacher_architecture: resnet50
+
+training:
+  # Batch size (smaller than teacher for faster iteration)
+  batch_size: 32
+  epochs: 30
+
+  # Optimizer: AdamW
+  optimizer: adamw
+  learning_rate: 0.001  # 1e-3
+  weight_decay: 0.0001  # 1e-4
+
+  # Learning rate scheduler: Cosine annealing
+  scheduler: cosine
+
+  # Early stopping
+  early_stopping_patience: 10
+
+  # Gradient clipping
+  gradient_clip_norm: 1.0
+
+  # Mixed precision training (AMP)
+  mixed_precision: true
+
+  # Checkpointing
+  checkpoint_interval: 5  # Save checkpoint every 5 epochs
+  save_best_only: false  # Save both best and periodic checkpoints
+
+  # Logging
+  log_interval: 100  # Log every 100 steps
+  tensorboard: true
+
+# Knowledge distillation parameters
+distillation:
+  # Temperature for softening distributions
+  temperature: 4.0
+
+  # Alpha: weight for distillation loss (1-alpha for hard labels)
+  # 0.7 means 70% teacher knowledge, 30% ground truth
+  alpha: 0.7
+
+  # Whether to use pre-computed soft labels (recommended)
+  use_precomputed_soft_labels: true
+
+data:
+  # Training dataset
+  train_dataset_path: gs://image_detection_b/datasets/iqa_phase2/train
+  val_dataset_path: gs://image_detection_b/datasets/iqa_phase2/val
+
+  # Soft labels (teacher predictions on training set)
+  soft_labels_path: gs://image_detection_b/datasets/iqa_phase2/soft_labels/train_soft_labels.pt
+
+  # Data loading
+  num_workers: 4
+  pin_memory: true
+
+  # Data augmentation
+  augmentation_preset: medium  # light, medium, heavy
+
+  # Image preprocessing
+  normalize: true
+  mean: [0.485, 0.456, 0.406]  # ImageNet mean
+  std: [0.229, 0.224, 0.225]   # ImageNet std
+
+storage:
+  # Checkpoint storage
+  checkpoint_path: gs://image_detection_b/checkpoints/student_phase2
+
+  # Final model output
+  output_path: gs://image_detection_b/models/student_phase2
+
+  # TensorBoard logs
+  log_path: gs://image_detection_b/logs/student_phase2
+
+  # Local cache directory
+  cache_dir: .cache/student_phase2
+
+# Device priority execution
+device_priority:
+  - cuda:0  # Local GPU (first choice)
+  - cpu     # Local CPU (fallback)
+  - modal   # Modal GPU (requires budget, last resort)
+
+# Modal configuration (if using Modal for training)
+modal:
+  gpu: T4  # T4 is cost-effective for student training
+  cpu: 4.0  # cores (less than teacher training)
+  memory: 16384  # MB (16 GB, less than teacher)
+  timeout: 43200  # 12 hours
+  image_python_version: "3.12"
+
+# Monitoring and validation
+monitoring:
+  # TensorBoard configuration
+  tensorboard: true
+  tensorboard_update_freq: 100  # Update every 100 steps
+
+  # Metrics to track
+  track_metrics:
+    - train_loss
+    - val_loss
+    - soft_loss
+    - hard_loss
+    - learning_rate
+    - gradient_norm
+    - epoch_time
+    - mAP  # Multi-label mAP
+    - per_class_f1  # F1 for each quality issue
+
+  # Validation frequency
+  validate_every_n_epochs: 1
+
+  # Checkpoint best model based on
+  best_model_metric: val_loss  # or mAP
+  best_model_mode: min  # min for val_loss, max for mAP
+
+# Export configuration (after training)
+export:
+  # Export formats
+  formats:
+    - pytorch  # .pt checkpoint
+    - onnx     # ONNX for production inference
+    - torchscript  # TorchScript for deployment
+
+  # ONNX export settings
+  onnx:
+    opset_version: 17
+    dynamic_axes:
+      input: {0: 'batch_size'}
+      output: {0: 'batch_size'}
+    optimize: true
+
+  # TorchScript export settings
+  torchscript:
+    method: trace  # trace or script
+    optimize_for_inference: true
+
+# Performance targets (for validation)
+performance:
+  cpu_inference_target_ms: 40
+  cpu_inference_acceptable_ms: 100
+  gpu_inference_target_ms: 10
+  gpu_inference_acceptable_ms: 25
+
+  target_mAP: 0.88
+  target_per_class_f1: 0.85
+  target_ece: 0.05  # Expected Calibration Error
+
+# Reproducibility
+seed: 42
+deterministic: false  # Set to true for reproducible results (slower)

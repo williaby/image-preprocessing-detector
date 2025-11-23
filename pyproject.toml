@@ -6,15 +6,18 @@ authors = [
     {name = "Byron Williams", email = "byronawilliams@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.10,<3.15"
 license = {text = "MIT"}
 keywords = ["image-processing", "opencv", "document-analysis", "ocr-preprocessing", "rag"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
 
@@ -77,6 +80,8 @@ dev = [
     # Code Quality
     "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",
+    "interrogate>=1.7.0",  # Docstring coverage checker
+    "types-pyyaml>=6.0.0",  # Type stubs for PyYAML
 
     # Pre-commit
     "pre-commit>=3.3.0",
@@ -100,6 +105,34 @@ dev = [
 
     # Manual validation UI (Milestone 10.3)
     "streamlit>=1.28.0",
+
+    # Image metrics for benchmarking
+    "scikit-image>=0.25.2",
+    "scipy>=1.14.0",  # v1.14.x supports Python 3.10-3.12
+
+    # Safety for dependency scanning
+    "safety>=3.7.0",
+
+    # Nox for multi-version testing
+    "nox>=2025.10.16",
+    "uv>=0.5.0",  # Fast package manager for nox venv backend
+
+    # Mutation testing
+    "mutmut>=3.3.1",
+
+    # Type stubs
+    "types-pyyaml>=6.0.12",
+
+    # ONNX for model export validation
+    "onnx>=1.14.0",
+
+    # Matplotlib for visualization
+    "matplotlib>=3.10.0",
+
+    # Dataset management
+    "datasets>=4.4.1",
+    "dvc[ssh]>=3.64.0",
+    "kaggle>=1.7.4",
 ]
 
 ml = [
@@ -110,6 +143,7 @@ ml = [
     "timm>=0.9.0",
     "albumentations>=1.3.0",
     "onnxruntime>=1.15.0",
+    "tensorboard>=2.12.0",  # Training monitoring
     # "genalog>=0.1.0",  # DISABLED: Conflicts with dev dependencies
     # Model artifact storage and versioning
     "google-cloud-storage>=2.10.0",
@@ -136,100 +170,18 @@ colab = [
     "tensorboard>=2.12.0",  # Training monitoring
     "pyyaml>=6.0",          # Config file parsing
     "gdown>=4.7.0",         # Download from Google Drive
-    "onnx>=1.14.0",         # ONNX model verification
+    "onnx>=1.17.0",         # ONNX model verification (CVE-2024-7776 fixed in 1.17.0)
 ]
 
 [project.scripts]
 imgprep = "image_preprocessing_detector.cli:cli"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry]
-name = "image-preprocessing-detector"
-version = "0.1.0"
-description = "Intelligent image preprocessing detection system for RAG applications"
-authors = ["Byron Williams <byronawilliams@gmail.com>"]
-readme = "README.md"
-packages = [
-    {include = "image_preprocessing_detector", from = "src"},
-    {include = "benchmarks"}
-]
-
-[tool.poetry.dependencies]
-python = ">=3.11,<3.15"  # ClusterFuzzLite requires Python 3.11 for Atheris compatibility
-opencv-python-headless = "^4.8.0"
-pillow = "^10.0.0"
-numpy = "^1.24.0"
-pymupdf = "^1.23.0"
-click = "^8.1.0"
-pydantic = "^2.0.0"
-pydantic-settings = "^2.0.0"
-python-dotenv = "^1.0.0"
-structlog = "^23.1.0"
-rich = "^13.5.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-pytest-cov = "^4.1.0"
-pytest-asyncio = "^0.21.0"
-pytest-xdist = "^3.3.0"
-hypothesis = "^6.82.0"
-ruff = "^0.9.0"
-mypy = "^1.4.0"
-pre-commit = "^3.3.0"
-# Documentation
-mkdocs = "^1.6.0"
-mkdocs-material = "^9.5.0"
-mkdocstrings = {extras = ["python"], version = "^0.26.0"}
-griffe-pydantic = "^1.1.0"
-mkdocs-gen-files = "^0.5.0"
-mkdocs-section-index = "^0.3.0"
-mkdocs-autorefs = "^1.2.0"
-mkdocs-git-revision-date-localized-plugin = "^1.3.0"
-python-frontmatter = "^1.1.0"
-ruamel-yaml = "^0.18.0"
-interrogate = "^1.7.0"
-# Development Tools
-jupyter = "^1.0.0"
-ipykernel = "^6.25.0"
-matplotlib = "^3.10.7"
-datasets = "^4.4.1"
-safety = "^3.7.0"
-nox = "^2025.10.16"
-mutmut = "^3.3.1"
-pyyaml = "^6.0.3"
-scipy = "^1.16.3"
-scikit-image = "^0.25.2"  # Required for benchmarking framework (PSNR, SSIM)
-dvc = {extras = ["ssh"], version = "^3.64.0"}
-kaggle = "^1.7.4.5"
-types-pyyaml = "^6.0.12.20250915"
-
-[tool.poetry.group.ml]
-optional = true
-
-[tool.poetry.group.ml.dependencies]
-torch = "^2.9.0"  # Updated to address GHSA-887c-mr87-cxwp (CVE-2025-3730)
-torchvision = "^0.24.0"  # Compatible with torch 2.9.0
-ultralytics = "^8.0.0"
-timm = "^0.9.0"
-albumentations = "^1.3.0"
-onnxruntime = "^1.15.0"
-# Phase 2: Training and Evaluation
-scikit-learn = "^1.3.0"  # Evaluation metrics (precision, recall, F1, ROC-AUC, calibration)
-tensorboard = "^2.14.0"  # Training monitoring and visualization
-# genalog = "^0.1.0"  # DISABLED: Conflicts with dev dependencies (requires matplotlib 3.2.1, scikit-image 0.16.2)
-# TODO: Replace with alternative synthetic degradation library or fork genalog with updated dependencies
-
-[tool.poetry.group.api]
-optional = true
-
-[tool.poetry.group.api.dependencies]
-fastapi = "^0.120.1"  # Updated to address PVE-2024-64930 (ReDoS vulnerability)
-uvicorn = {extras = ["standard"], version = "^0.23.0"}
-python-multipart = "^0.0.18"  # Updated to address CVE-2024-53981 and PVE-2024-99762
-starlette = "^0.49.1"  # Updated to address GHSA-7f5h-v6xp-fcq8 (O(n^2) DoS via Range header)
+[tool.hatch.build.targets.wheel]
+packages = ["src/image_preprocessing_detector", "benchmarks"]
 
 # Ruff Configuration - Consolidated Linting & Formatting
 # Replaces: Black (formatting), pydocstyle (docstrings), partial Bandit (security)
@@ -338,7 +290,7 @@ known-local-folder = ["validation", "benchmarks"]
 "tests/fixtures/phase1_validation/*.py" = ["D", "T20", "TRY", "RUF", "FBT", "RET", "N806", "PERF"]  # Phase 1 validation scripts - relaxed rules
 "fuzz/**/*.py" = ["D", "T20"]
 "validation/**/*.py" = ["D", "T20", "TRY"]
-"scripts/**/*.py" = ["D", "T20", "TRY", "S", "PTH", "SIM", "DTZ", "ARG", "B007", "RUF059", "F841", "RUF002", "RET504", "RUF001", "C401", "RUF013", "RUF012", "PERF102", "E402"]
+"scripts/**/*.py" = ["D", "T20", "TRY", "S", "PTH", "SIM", "DTZ", "ARG", "B007", "RUF059", "F841", "RUF002", "RET504", "RUF001", "C401", "RUF013", "RUF012", "PERF102", "E402", "I001"]
 "benchmarks/**/*.py" = ["D", "T20", "ARG", "TRY", "ERA", "SIM", "PERF", "RET", "B007", "F841", "RUF005", "RUF012", "E402", "UP038"]  # CLI tools with relaxed rules
 "tools/**/*.py" = ["D", "T20", "TRY"]
 "modal/**/*.py" = ["D", "T20", "S", "ANN", "PTH", "SIM"]
@@ -435,12 +387,17 @@ omit = [
     "validation/*",  # Exclude standalone validation scripts
     "benchmarks/*",  # Exclude benchmarking framework
     "data/*",  # Exclude data processing scripts
-    # Phase 2+ modules (require ML dependencies, excluded from Phase 1 coverage)
+    # Phase 2+ modules (require ML dependencies - PyTorch, excluded from base coverage)
     "src/image_preprocessing_detector/utils/gcs_uploader.py",
     "src/image_preprocessing_detector/utils/metadata_generator.py",
     "src/image_preprocessing_detector/augmentation/*",
-    # Phase 6-8 modules (not yet implemented)
+    "src/image_preprocessing_detector/models/*",  # ResNet teacher/student models require torch
+    "src/image_preprocessing_detector/training/*",  # Training requires torch
+    "src/image_preprocessing_detector/datasets/*",  # Dataset classes require torch
+    # Phase 6 modules (layout-lite detection, require torch)
     "src/image_preprocessing_detector/detection/layout_lite.py",
+    "src/image_preprocessing_detector/detection/layout_lite/*",
+    # Phase 8+ modules (not yet implemented)
     "src/image_preprocessing_detector/ingestion/document_processor.py",
     "src/image_preprocessing_detector/metrics/*",
     "src/image_preprocessing_detector/routing/*",
@@ -473,7 +430,7 @@ color = true
 [tool.mutmut]
 paths_to_mutate = "src/"
 backup = false
-runner = "poetry run pytest -x --assert=plain -o addopts=''"
+runner = "uv run pytest -x --assert=plain -o addopts=''"
 tests_dir = "tests/"
 # Mutation score threshold: percentage of mutations that must be killed
 # Score below 80% indicates weak test coverage

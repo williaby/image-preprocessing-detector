@@ -214,6 +214,12 @@ def sample_ambiguous_cases(
     sampled = scored_labels[:num_samples]
     console.print(f"Sampled {len(sampled)} images for annotation\n")
 
+    if not sampled:
+        console.print(
+            "[red]No images met the sampling criteria; nothing to copy or summarize.[/red]"
+        )
+        return []
+
     # Display statistics
     table = Table(title="Sampling Statistics")
     table.add_column("Metric", style="cyan")

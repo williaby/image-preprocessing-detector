@@ -49,7 +49,7 @@ repos:
           - types-pillow
           - types-python-dateutil
           - types-PyYAML
-        args: ['--ignore-missing-imports', '--python-version=3.12']
+        args: ['--ignore-missing-imports', '--python-version=3.10']
         # Exclude tests, validation, benchmarks, data, scripts, modal,
         # notebooks, and Phase 2+ files
         exclude: |
@@ -83,7 +83,7 @@ repos:
     hooks:
       - id: validate-front-matter
         name: Validate documentation front matter
-        entry: poetry run python tools/validate_front_matter.py docs
+        entry: uv run python tools/validate_front_matter.py docs
         language: system
         files: ^docs/.*\.md$
         pass_filenames: false
@@ -106,12 +106,16 @@ repos:
         additional_dependencies: ['bandit[toml]']
         exclude: 'tests/.*'
 
-  # Dependency scanning with Safety
-  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-    rev: v1.3.3
+  # Dependency scanning with Safety (using local hook for UV compatibility)
+  - repo: local
     hooks:
-      - id: python-safety-dependencies-check
+      - id: safety-scan
+        name: safety
+        # Ignore 51457: CVE-2022-42969 (py library) - disputed and withdrawn from NVD
+        entry: uv run safety scan --full-report --path pyproject.toml --path uv.lock --ignore 51457
+        language: system
         files: pyproject.toml
+        pass_filenames: false
 
 # Exclude patterns (don't run hooks on these)
 exclude: |

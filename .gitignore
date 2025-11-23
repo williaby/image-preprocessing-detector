@@ -27,8 +27,9 @@ env/
 ENV/
 .venv
 
-# Poetry
-# Note: poetry.lock IS committed for this application to ensure reproducible builds
+# UV Package Manager
+# Note: uv.lock IS committed for this application to ensure reproducible builds
+.python-version  # UV-managed Python version file
 
 # IDEs
 .vscode/
@@ -68,6 +69,7 @@ dmypy.json
 !data/**/README.md
 !data/test_fixtures/
 
+
 # Exclude all data subdirectories (actual datasets)
 data/iqa/
 data/layout/
@@ -82,9 +84,13 @@ data/promptcraft/
 data/raw/
 data/training/*
 !data/training/*.dvc
+datasets/
 
 # DVC tracking
 # *.dvc  # Commented to allow .dvc tracking files
+.dvc/*  # Ignore DVC cache and internal files
+!.dvc/config  # Keep DVC config
+!.dvc/.gitignore  # Keep DVC's own gitignore
 
 # Models (large files)
 models/**/*.pth
@@ -95,7 +101,7 @@ models/**/*.safetensors
 
 # Temporary files
 tmp/
-tmp_cleanup/.tmp-*
+tmp_cleanup/
 *.tmp
 
 # Logs
@@ -153,5 +159,6 @@ __modal_cache__/
 modal_cache/
 *modal-token*
 .modal-token
-!.dvc
+# Keep lightweight DVC pointer files even though dataset contents are ignored
 !data/**/*.dvc
+tmp_comments.json

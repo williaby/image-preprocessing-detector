@@ -4,13 +4,13 @@ on:
   pull_request:
     paths:
       - "pyproject.toml"
-      - "poetry.lock"
+      - "uv.lock"
       - ".github/workflows/sbom.yml"
   push:
     branches: [main, develop]
     paths:
       - "pyproject.toml"
-      - "poetry.lock"
+      - "uv.lock"
   schedule:
     # Weekly scan every Monday at 8:00 AM UTC
     - cron: "0 8 * * 1"
@@ -31,12 +31,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
         with:
-          version: 2.1.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
@@ -45,39 +44,45 @@ jobs:
         run: |
           pip install cyclonedx-bom==4.6.1
 
+      - name: Export requirements for SBOM generation
+        run: |
+          # Export runtime dependencies (production)
+          uv pip compile pyproject.toml -o requirements-runtime.txt
+
+          # Export dev dependencies
+          uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
+
+          # Export all dependencies (including optional groups)
+          uv pip compile pyproject.toml --all-extras -o requirements-complete.txt
+
       - name: Generate runtime SBOM (production dependencies)
         run: |
-          cyclonedx-py poetry \
+          cyclonedx-py requirements \
             --of json \
             -o sbom-runtime.json \
-            --no-dev
+            requirements-runtime.txt
 
-      - name: Generate development SBOM (dev dependencies only)
+      - name: Generate development SBOM (dev dependencies)
         run: |
-          cyclonedx-py poetry \
+          cyclonedx-py requirements \
             --of json \
             -o sbom-dev.json \
-            --only dev
-
-      - name: Generate ML SBOM (ml dependencies only)
-        run: |
-          cyclonedx-py poetry \
-            --of json \
-            -o sbom-ml.json \
-            --only ml
-        continue-on-error: true  # ML group may not be installed
+            requirements-dev.txt
 
       - name: Generate complete SBOM (all dependencies)
         run: |
-          cyclonedx-py poetry \
+          cyclonedx-py requirements \
             --of json \
-            -o sbom-complete.json
+            -o sbom-complete.json \
+            requirements-complete.txt
 
       - name: Upload SBOM artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: sboms
-          path: sbom-*.json
+          path: |
+            sbom-*.json
+            requirements-*.txt
           retention-days: 90
 
   scan-runtime:

@@ -50,7 +50,10 @@ path = [
     ".readthedocs.yaml",
     "mkdocs.yml",
     "poetry.lock",  # Dependency lockfile for reproducible builds
+    "uv.lock",  # UV dependency lockfile for nox testing
     "requirements/**/*.txt",  # Generated from poetry export
+    "requirements.txt",  # Generated from uv export
+    "requirements-dev.txt",  # Generated from uv export
     "benchmarks/labelmaps/**/*.yaml",  # Benchmark label mappings
     ".zenodo.json",  # Zenodo metadata for DOI
     ".dvc/**",  # DVC configuration and metadata files
@@ -94,6 +97,7 @@ SPDX-FileCopyrightText = "2025 Byron Williams"
 path = [
     ".claude/settings.local.json",
     ".clusterfuzzlite/**",
+    ".snyk",  # Snyk vulnerability ignore configuration
     "concept.txt",
     "image_reference_sets.txt",
     "overrides/**",

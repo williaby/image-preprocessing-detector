@@ -24,13 +24,14 @@ Usage:
 import json
 import os
 import platform
-import subprocess
+import subprocess  # nosec B404 - subprocess used only with hardcoded commands
 import sys
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
 
 
 def get_git_commit_hash(repo_path: str = ".") -> str:
@@ -46,7 +47,7 @@ def get_git_commit_hash(repo_path: str = ".") -> str:
         RuntimeError: If not in a git repository or git command fails
     """
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 B607 - hardcoded git command
             ["git", "rev-parse", "HEAD"],
             cwd=repo_path,
             capture_output=True,
@@ -68,7 +69,7 @@ def get_git_branch(repo_path: str = ".") -> str:
         Branch name
     """
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 B607 - hardcoded git command
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
             cwd=repo_path,
             capture_output=True,
@@ -90,7 +91,7 @@ def get_git_status(repo_path: str = ".") -> str:
         "clean" or "dirty" (has uncommitted changes)
     """
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 B607 - hardcoded git command
             ["git", "status", "--porcelain"],
             cwd=repo_path,
             capture_output=True,
@@ -180,7 +181,7 @@ def get_cuda_version() -> str:
         CUDA version string or "N/A"
     """
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 B607 - hardcoded nvcc command
             ["nvcc", "--version"],
             capture_output=True,
             text=True,

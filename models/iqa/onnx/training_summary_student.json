@@ -1,0 +1,20 @@
+{
+  "model": "ResNetStudent",
+  "architecture": "resnet18",
+  "num_heads": 5,
+  "training": {
+    "epochs_completed": 30,
+    "best_val_loss": 0.13856439736600107,
+    "training_time_hours": 1.9361580893066195,
+    "teacher_checkpoint": "checkpoints/phase2_iqa/checkpoint_epoch_20.pth"
+  },
+  "distillation": {
+    "temperature": 4.0,
+    "alpha": 0.7
+  },
+  "compression": {
+    "teacher_params": 30812722,
+    "student_params": 12497482,
+    "ratio": 2.4655144132233997
+  }
+}

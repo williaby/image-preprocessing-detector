@@ -35,33 +35,24 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
         with:
-          version: 2.1.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}-docs
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --with dev
+        run: uv sync --extra dev
 
       - name: Autofix front matter
-        run: poetry run python tools/validate_front_matter.py docs --fix
+        run: uv run python tools/validate_front_matter.py docs --fix
 
       - name: Validate front matter (strict)
-        run: poetry run python tools/validate_front_matter.py docs
+        run: uv run python tools/validate_front_matter.py docs
 
       - name: Validate front matter (JSON report)
         if: always()
-        run: poetry run python tools/validate_front_matter.py docs --emit-json > front-matter-report.json
+        run: uv run python tools/validate_front_matter.py docs --emit-json > front-matter-report.json
 
       - name: Upload validation report
         if: always()
@@ -83,29 +74,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
         with:
-          version: 2.1.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}-docs
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --with dev
+        run: uv sync --extra dev
 
       - name: Check docstring style (Ruff)
-        run: poetry run ruff check src/
+        run: uv run ruff check src/
 
       - name: Check docstring coverage (interrogate)
-        run: poetry run interrogate -v src/
+        run: uv run interrogate -v src/
 
   build:
     name: Build Documentation
@@ -122,26 +104,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@76e04a911780d5b312d89783f7b1cd627778900a # v1.4.1
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
         with:
-          version: 2.1.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}-docs
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --with dev
+        run: uv sync --extra dev
 
       - name: Build MkDocs site (strict mode disabled)
-        run: poetry run mkdocs build --clean
+        run: uv run mkdocs build --clean
 
       - name: Upload site artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -21,8 +21,9 @@ from typing import Any
 
 import cv2
 import numpy as np
-from datasets import load_from_disk
 from tqdm import tqdm
+
+from datasets import load_from_disk
 
 # Setup logging
 logging.basicConfig(
