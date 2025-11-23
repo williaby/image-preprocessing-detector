@@ -52,6 +52,8 @@ path = [
     "poetry.lock",  # Dependency lockfile for reproducible builds
     "uv.lock",  # UV dependency lockfile for nox testing
     "requirements/**/*.txt",  # Generated from poetry export
+    "requirements.txt",  # Generated from uv export
+    "requirements-dev.txt",  # Generated from uv export
     "benchmarks/labelmaps/**/*.yaml",  # Benchmark label mappings
     ".zenodo.json",  # Zenodo metadata for DOI
     ".dvc/**",  # DVC configuration and metadata files
