@@ -7,8 +7,61 @@ Implements COCO-style evaluation metrics:
 
 """
 
+from dataclasses import dataclass
+
 import numpy as np
 from numpy.typing import NDArray
+
+
+@dataclass(frozen=True)
+class DetectionPredictions:
+    boxes: list[NDArray[np.float64]]
+    scores: list[float]
+    classes: list[int]
+
+    def filter_by_class(self, target_class: int) -> "DetectionPredictions":
+        mask = [cls == target_class for cls in self.classes]
+        return DetectionPredictions(
+            boxes=[box for box, keep in zip(self.boxes, mask, strict=True) if keep],
+            scores=[
+                score for score, keep in zip(self.scores, mask, strict=True) if keep
+            ],
+            classes=[target_class for keep in mask if keep],
+        )
+
+    def filter_by_score(self, score_threshold: float) -> "DetectionPredictions":
+        mask = [score >= score_threshold for score in self.scores]
+        return DetectionPredictions(
+            boxes=[box for box, keep in zip(self.boxes, mask, strict=True) if keep],
+            scores=[
+                score for score, keep in zip(self.scores, mask, strict=True) if keep
+            ],
+            classes=[cls for cls, keep in zip(self.classes, mask, strict=True) if keep],
+        )
+
+    def sorted_indices(self) -> NDArray[np.int64]:
+        if not self.scores:
+            return np.array([], dtype=np.int64)
+        return np.argsort(self.scores)[::-1]
+
+    def __len__(self) -> int:
+        return len(self.boxes)
+
+
+@dataclass(frozen=True)
+class GroundTruthDetections:
+    boxes: list[NDArray[np.float64]]
+    classes: list[int]
+
+    def filter_by_class(self, target_class: int) -> "GroundTruthDetections":
+        mask = [cls == target_class for cls in self.classes]
+        return GroundTruthDetections(
+            boxes=[box for box, keep in zip(self.boxes, mask, strict=True) if keep],
+            classes=[target_class for keep in mask if keep],
+        )
+
+    def __len__(self) -> int:
+        return len(self.boxes)
 
 
 def bbox_iou(
@@ -58,21 +111,15 @@ def bbox_iou(
 
 
 def match_detections(
-    pred_boxes: list[NDArray[np.float64]],
-    pred_scores: list[float],
-    pred_classes: list[int],
-    gt_boxes: list[NDArray[np.float64]],
-    gt_classes: list[int],
+    predictions: DetectionPredictions,
+    ground_truth: GroundTruthDetections,
     iou_threshold: float = 0.5,
 ) -> tuple[list[bool], list[bool]]:
     """Match predicted detections to ground truth boxes.
 
     Args:
-        pred_boxes: List of predicted bounding boxes
-        pred_scores: List of prediction scores
-        pred_classes: List of predicted class IDs
-        gt_boxes: List of ground truth bounding boxes
-        gt_classes: List of ground truth class IDs
+        predictions: Predicted boxes, scores, and classes
+        ground_truth: Ground truth boxes and classes
         iou_threshold: IoU threshold for matching
 
     Returns:
@@ -80,100 +127,93 @@ def match_detections(
         - tp_flags: Boolean list indicating true positives
         - matched_gt: Boolean list indicating which GT boxes were matched
     """
-    num_pred = len(pred_boxes)
-    num_gt = len(gt_boxes)
+    num_pred = len(predictions)
+    num_gt = len(ground_truth)
 
     if num_pred == 0 or num_gt == 0:
         return [False] * num_pred, [False] * num_gt
 
-    # Sort predictions by score (descending)
-    sorted_indices = np.argsort(pred_scores)[::-1]
+    sorted_indices = predictions.sorted_indices()
 
     tp_flags = [False] * num_pred
     matched_gt = [False] * num_gt
 
     for pred_idx in sorted_indices:
-        pred_box = pred_boxes[pred_idx]
-        pred_class = pred_classes[pred_idx]
-
-        best_iou = 0.0
-        best_gt_idx = -1
-
-        # Find best matching GT box
-        for gt_idx in range(num_gt):
-            if matched_gt[gt_idx]:
-                continue  # Already matched
-
-            if gt_classes[gt_idx] != pred_class:
-                continue  # Class mismatch
-
-            gt_box = gt_boxes[gt_idx]
-            iou = bbox_iou(pred_box, gt_box)
-
-            if iou > best_iou:
-                best_iou = iou
-                best_gt_idx = gt_idx
-
-        # Check if match is valid
-        if best_iou >= iou_threshold and best_gt_idx >= 0:
+        best_match = _best_match_for_prediction(
+            pred_idx, predictions, ground_truth, matched_gt, iou_threshold
+        )
+        if best_match is not None:
             tp_flags[pred_idx] = True
-            matched_gt[best_gt_idx] = True
+            matched_gt[best_match] = True
 
     return tp_flags, matched_gt
 
 
+def _best_match_for_prediction(
+    pred_idx: int,
+    predictions: DetectionPredictions,
+    ground_truth: GroundTruthDetections,
+    matched_gt: list[bool],
+    iou_threshold: float,
+) -> int | None:
+    pred_box = predictions.boxes[pred_idx]
+    pred_class = predictions.classes[pred_idx]
+
+    best_iou = 0.0
+    best_gt_idx: int | None = None
+
+    for gt_idx, (gt_box, gt_class, already_matched) in enumerate(
+        zip(ground_truth.boxes, ground_truth.classes, matched_gt, strict=True)
+    ):
+        if already_matched or gt_class != pred_class:
+            continue
+
+        iou = bbox_iou(pred_box, gt_box)
+        if iou > best_iou:
+            best_iou = iou
+            best_gt_idx = gt_idx
+
+    if best_iou < iou_threshold or best_gt_idx is None:
+        return None
+    return best_gt_idx
+
+
 def calculate_ap(
-    pred_boxes: list[NDArray[np.float64]],
-    pred_scores: list[float],
-    pred_classes: list[int],
-    gt_boxes: list[NDArray[np.float64]],
-    gt_classes: list[int],
+    predictions: DetectionPredictions,
+    ground_truth: GroundTruthDetections,
     target_class: int,
     iou_threshold: float = 0.5,
 ) -> float:
     """Calculate Average Precision for a single class.
 
     Args:
-        pred_boxes: List of predicted bounding boxes
-        pred_scores: List of prediction scores
-        pred_classes: List of predicted class IDs
-        gt_boxes: List of ground truth bounding boxes
-        gt_classes: List of ground truth class IDs
+        predictions: Predicted boxes, scores, and classes
+        ground_truth: Ground truth boxes and classes
         target_class: Class ID to calculate AP for
         iou_threshold: IoU threshold for matching
 
     Returns:
         Average Precision (0 to 1)
     """
-    # Filter predictions and GT for target class
-    pred_mask = np.array(pred_classes) == target_class
-    filtered_pred_boxes = [b for i, b in enumerate(pred_boxes) if pred_mask[i]]
-    filtered_pred_scores = [s for i, s in enumerate(pred_scores) if pred_mask[i]]
-    filtered_pred_classes = [target_class] * sum(pred_mask)
+    filtered_preds = predictions.filter_by_class(target_class)
+    filtered_gt = ground_truth.filter_by_class(target_class)
 
-    gt_mask = np.array(gt_classes) == target_class
-    filtered_gt_boxes = [b for i, b in enumerate(gt_boxes) if gt_mask[i]]
-    filtered_gt_classes = [target_class] * sum(gt_mask)
-
-    num_gt = len(filtered_gt_boxes)
+    num_gt = len(filtered_gt)
     if num_gt == 0:
         return 0.0  # No ground truth for this class
 
-    if len(filtered_pred_boxes) == 0:
+    if len(filtered_preds) == 0:
         return 0.0  # No predictions for this class
 
     # Match detections
     tp_flags, _ = match_detections(
-        filtered_pred_boxes,
-        filtered_pred_scores,
-        filtered_pred_classes,
-        filtered_gt_boxes,
-        filtered_gt_classes,
+        filtered_preds,
+        filtered_gt,
         iou_threshold,
     )
 
     # Sort by score
-    sorted_indices = np.argsort(filtered_pred_scores)[::-1]
+    sorted_indices = filtered_preds.sorted_indices()
     tp_sorted = [tp_flags[i] for i in sorted_indices]
 
     # Calculate cumulative TP and FP
@@ -196,7 +236,7 @@ def calculate_ap(
     ap = 0.0
     for recall_threshold in np.linspace(0, 1, 101):
         # Find precision at this recall level
-        indices = np.where(recalls >= recall_threshold)[0]
+        indices = np.nonzero(recalls >= recall_threshold)[0]
         if len(indices) > 0:
             ap += precisions[indices[0]]
 
@@ -206,22 +246,16 @@ def calculate_ap(
 
 
 def calculate_map(
-    pred_boxes: list[NDArray[np.float64]],
-    pred_scores: list[float],
-    pred_classes: list[int],
-    gt_boxes: list[NDArray[np.float64]],
-    gt_classes: list[int],
+    predictions: DetectionPredictions,
+    ground_truth: GroundTruthDetections,
     num_classes: int,
     iou_thresholds: list[float] | None = None,
 ) -> dict[str, float]:
     """Calculate mAP (mean Average Precision) across classes and IoU thresholds.
 
     Args:
-        pred_boxes: List of predicted bounding boxes
-        pred_scores: List of prediction scores
-        pred_classes: List of predicted class IDs
-        gt_boxes: List of ground truth bounding boxes
-        gt_classes: List of ground truth class IDs
+        predictions: Predicted boxes, scores, and classes
+        ground_truth: Ground truth boxes and classes
         num_classes: Total number of classes
         iou_thresholds: List of IoU thresholds (default: [0.5:0.95:0.05])
 
@@ -242,11 +276,8 @@ def calculate_map(
     for class_id in range(num_classes):
         for iou_idx, iou_thresh in enumerate(iou_thresholds):
             ap = calculate_ap(
-                pred_boxes,
-                pred_scores,
-                pred_classes,
-                gt_boxes,
-                gt_classes,
+                predictions,
+                ground_truth,
                 target_class=class_id,
                 iou_threshold=iou_thresh,
             )
@@ -277,22 +308,16 @@ def calculate_map(
 
 
 def precision_recall_f1(
-    pred_boxes: list[NDArray[np.float64]],
-    pred_scores: list[float],
-    pred_classes: list[int],
-    gt_boxes: list[NDArray[np.float64]],
-    gt_classes: list[int],
+    predictions: DetectionPredictions,
+    ground_truth: GroundTruthDetections,
     iou_threshold: float = 0.5,
     score_threshold: float = 0.5,
 ) -> dict[str, float]:
     """Calculate precision, recall, and F1 score.
 
     Args:
-        pred_boxes: List of predicted bounding boxes
-        pred_scores: List of prediction scores
-        pred_classes: List of predicted class IDs
-        gt_boxes: List of ground truth bounding boxes
-        gt_classes: List of ground truth class IDs
+        predictions: Predicted boxes, scores, and classes
+        ground_truth: Ground truth boxes and classes
         iou_threshold: IoU threshold for matching
         score_threshold: Score threshold for predictions
 
@@ -300,24 +325,18 @@ def precision_recall_f1(
         Dictionary with precision, recall, f1
     """
     # Filter predictions by score threshold
-    score_mask = np.array(pred_scores) >= score_threshold
-    filtered_pred_boxes = [b for i, b in enumerate(pred_boxes) if score_mask[i]]
-    filtered_pred_scores = [s for i, s in enumerate(pred_scores) if score_mask[i]]
-    filtered_pred_classes = [c for i, c in enumerate(pred_classes) if score_mask[i]]
+    filtered_preds = predictions.filter_by_score(score_threshold)
 
-    if len(filtered_pred_boxes) == 0:
+    if len(filtered_preds) == 0:
         return {"precision": 0.0, "recall": 0.0, "f1": 0.0}
 
-    if len(gt_boxes) == 0:
+    if len(ground_truth) == 0:
         return {"precision": 0.0, "recall": 0.0, "f1": 0.0}
 
     # Match detections
     tp_flags, matched_gt = match_detections(
-        filtered_pred_boxes,
-        filtered_pred_scores,
-        filtered_pred_classes,
-        gt_boxes,
-        gt_classes,
+        filtered_preds,
+        ground_truth,
         iou_threshold,
     )
 

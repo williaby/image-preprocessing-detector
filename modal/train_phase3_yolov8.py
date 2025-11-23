@@ -11,11 +11,11 @@ Usage:
 Monitor:
     https://modal.com/apps
 """
-# bandit: noqa: B108
-
-import yaml
+import tempfile
+from pathlib import Path
 
 import modal
+import yaml
 
 # Create Modal app
 stub = modal.App("layout-phase3-training")
@@ -32,6 +32,20 @@ image = modal.Image.debian_slim(python_version="3.12").pip_install(
 
 # GCS credentials
 gcs_secret = modal.Secret.from_name("gcs-credentials")
+
+
+def download_gcs_directory(bucket, prefix: str, destination: Path) -> None:
+    """Download all objects under a GCS prefix into a destination directory."""
+    destination.mkdir(parents=True, exist_ok=True)
+    for blob in bucket.list_blobs(prefix=prefix):
+        if blob.name.endswith("/"):
+            continue
+        if blob.name == prefix:
+            continue
+        relative_path = Path(blob.name).relative_to(prefix)
+        target_path = destination / relative_path
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        blob.download_to_filename(str(target_path))
 
 
 @stub.function(
@@ -54,6 +68,11 @@ def train_yolov8():
     print("Phase 3 YOLOv8 Layout Detection Training - Modal")
     print("=" * 60)
 
+    base_tmp_dir = Path(tempfile.gettempdir()) / "layout_phase3"
+    data_dir = base_tmp_dir / "data"
+    runs_dir = base_tmp_dir / "runs"
+    base_tmp_dir.mkdir(parents=True, exist_ok=True)
+
     # Setup GCS credentials from base64-encoded secret
     print("\n[0/6] Setting up GCS credentials...")
     gcp_sa_key_b64 = os.environ.get("GCP_SA_KEY")
@@ -62,12 +81,12 @@ def train_yolov8():
 
     # Decode base64 and write to temp file for GCS client
     gcp_sa_key_json = base64.b64decode(gcp_sa_key_b64).decode("utf-8")
-    credentials_path = "/tmp/gcp-sa-key.json"
+    credentials_path = base_tmp_dir / "gcp-sa-key.json"
     with open(credentials_path, "w") as f:
         f.write(gcp_sa_key_json)
 
     # Set environment variable for GCS client
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(credentials_path)
     print("✅ GCS credentials configured")
 
     # Load configuration from GCS
@@ -85,17 +104,15 @@ def train_yolov8():
 
     # Download dataset.yaml from GCS
     print("\n[2/6] Downloading dataset.yaml from GCS...")
-    os.makedirs("/tmp/data", exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
 
     dataset_yaml_blob = bucket.blob("datasets/layout_phase3/dataset.yaml")
-    dataset_yaml_blob.download_to_filename("/tmp/data/dataset.yaml")
+    dataset_yaml_blob.download_to_filename(str(data_dir / "dataset.yaml"))
 
     # Download dataset to local cache (you'll need to implement full download)
     print("\n[3/6] Downloading dataset from GCS to local cache...")
-    print("TODO: Implement full dataset download")
-    # Download train/val images and labels
-    # gsutil -m cp -r gs://image_detection_b/datasets/layout_phase3/train /tmp/data/
-    # gsutil -m cp -r gs://image_detection_b/datasets/layout_phase3/val /tmp/data/
+    download_gcs_directory(bucket, "datasets/layout_phase3/train", data_dir / "train")
+    download_gcs_directory(bucket, "datasets/layout_phase3/val", data_dir / "val")
 
     # Initialize YOLOv8 model
     print("\n[4/6] Initializing YOLOv8 model...")
@@ -109,7 +126,7 @@ def train_yolov8():
     print("This will run for 50-80 hours - no session timeouts!")
 
     results = model.train(
-        data="/tmp/data/dataset.yaml",
+        data=str(data_dir / "dataset.yaml"),
         epochs=config["training"]["epochs"],
         batch=config["training"]["batch_size"],
         imgsz=config["model"]["input_size"],
@@ -121,7 +138,7 @@ def train_yolov8():
         warmup_epochs=config["training"]["warmup_epochs"],
         amp=config["training"]["mixed_precision"],
         save_period=config["monitoring"]["save_period"],
-        project="/tmp/runs",
+        project=str(runs_dir),
         name="layout_detection",
     )
 
@@ -141,7 +158,9 @@ def train_yolov8():
 
     # Upload PyTorch checkpoint
     checkpoint_blob = bucket.blob("models/phase3_yolov8/best.pt")
-    checkpoint_blob.upload_from_filename("/tmp/runs/layout_detection/weights/best.pt")
+    checkpoint_blob.upload_from_filename(
+        runs_dir / "layout_detection/weights/best.pt"
+    )
 
     print("\n" + "=" * 60)
     print("✅ YOLOv8 training complete!")

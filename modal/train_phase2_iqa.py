@@ -37,9 +37,15 @@ Models:
 # Justification: Modal training script uses print for progress logging and /tmp for container-local storage
 # mypy: ignore-errors
 
-import yaml  # type: ignore[import-untyped]
+import json
+import os
+import tempfile
+import time
+from pathlib import Path
+from typing import Dict, Tuple
 
 import modal
+import yaml  # type: ignore[import-untyped]
 
 # Create Modal app
 stub = modal.App("iqa-phase2-training")
@@ -93,6 +99,330 @@ image = (
 )
 
 
+def load_training_config(config_path: Path) -> Dict:
+    """Load YAML training configuration."""
+    with open(config_path) as f:
+        return yaml.safe_load(f)
+
+
+def safe_extract_tar(tar_path: Path, extract_path: Path) -> None:
+    """Safely extract tar.gz archives with path traversal protection."""
+    import tarfile
+
+    def is_within_directory(directory: Path, target: Path) -> bool:
+        abs_directory = directory.resolve()
+        abs_target = target.resolve()
+        return str(abs_target).startswith(str(abs_directory))
+
+    with tarfile.open(tar_path, "r:gz") as tar:
+        members = tar.getmembers()
+        for member in members:
+            member_path = extract_path / member.name
+            if not is_within_directory(extract_path, member_path):
+                raise ValueError(f"Path traversal detected in archive: {member.name}")
+        tar.extractall(path=extract_path, members=members)
+
+
+def download_dataset(bucket_name: str, tar_blob_name: str, target_dir: Path) -> Path:
+    """Download dataset tarball from GCS to a secure temp location."""
+    import time
+
+    from google.cloud import storage
+
+    target_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp_file:
+        tar_local_path = Path(tmp_file.name)
+
+    print(f"Source: gs://{bucket_name}/{tar_blob_name}")
+    print(f"Destination: {target_dir}")
+
+    download_start = time.time()
+
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(tar_blob_name)
+    blob.download_to_filename(str(tar_local_path))
+
+    download_time = time.time() - download_start
+    tar_size_gb = tar_local_path.stat().st_size / (1024**3)
+    print(f"✅ Downloaded {tar_size_gb:.2f} GB in {download_time / 60:.1f} minutes")
+
+    return tar_local_path
+
+
+def prepare_dataset(config: Dict, bucket_name: str) -> Tuple[Path, Dict, Path]:
+    """Download, extract, and validate dataset; return paths and metadata."""
+    import json
+    import time
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
+
+    dataset_dir = Path("/root/data/training/iqa_phase2_100k")
+    tar_local_path = download_dataset(
+        bucket_name=bucket_name,
+        tar_blob_name="image-preprocessing-detector/phase2/iqa_phase2_100k.tar.gz",
+        target_dir=dataset_dir,
+    )
+
+    print("Extracting archive...")
+    extract_start = time.time()
+    extract_path = dataset_dir.parent
+    safe_extract_tar(tar_local_path, extract_path)
+    extract_time = time.time() - extract_start
+    print(f"✅ Extracted in {extract_time / 60:.1f} minutes")
+
+    tar_local_path.unlink(missing_ok=True)
+    print("✅ Cleaned up tar.gz archive")
+
+    metadata_file = dataset_dir / config["data"]["metadata_file"]
+    images_dir = dataset_dir / "images"
+
+    if not dataset_dir.exists():
+        raise FileNotFoundError(f"Dataset directory not found: {dataset_dir}")
+    if not images_dir.exists():
+        raise FileNotFoundError(f"Images directory not found: {images_dir}")
+    if not metadata_file.exists():
+        raise FileNotFoundError(f"Metadata file not found: {metadata_file}")
+
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+
+    total_samples = metadata["total_samples"]
+    num_images = len(list(images_dir.glob("*.jpg")))
+    print(f"✅ Dataset verified: {num_images:,} images found (metadata: {total_samples:,})")
+    print(f"✅ Metadata file: {metadata_file}")
+
+    return images_dir, metadata, metadata_file
+
+
+def split_samples(metadata: Dict, config: Dict):
+    """Split metadata samples into train/val/test."""
+    samples = metadata["samples"]
+    total_samples = metadata["total_samples"]
+
+    train_ratio = config["data"]["train_split"]
+    val_ratio = config["data"]["val_split"]
+    test_ratio = config["data"]["test_split"]
+
+    if abs(train_ratio + val_ratio + test_ratio - 1.0) >= 1e-6:
+        raise ValueError("Train/val/test splits must sum to 1.0")
+
+    train_size = int(total_samples * train_ratio)
+    val_size = int(total_samples * val_ratio)
+    train_samples = samples[:train_size]
+    val_samples = samples[train_size : train_size + val_size]
+    test_samples = samples[train_size + val_size :]
+
+    print(
+        f"Split: {len(train_samples):,} train / {len(val_samples):,} val / {len(test_samples):,} test"
+    )
+    return train_samples, val_samples, test_samples
+
+
+def build_dataloaders(train_samples, val_samples, images_dir: Path, config: Dict):
+    """Create train and validation dataloaders."""
+    import torch
+    import torchvision.transforms as tv_transforms
+    from PIL import Image
+    from torch.utils.data import DataLoader, Dataset
+
+    class IQA100KDataset(Dataset):
+        """Dataset for pre-generated 100K IQA samples with metadata."""
+
+        def __init__(self, samples, images_dir, transform=None):
+            self.samples = samples
+            self.images_dir = Path(images_dir)
+            self.transform = transform
+
+        def __len__(self):
+            return len(self.samples)
+
+        def __getitem__(self, idx):
+            sample = self.samples[idx]
+            image_path = self.images_dir / sample["filename"]
+            image = Image.open(image_path).convert("RGB")
+            if self.transform:
+                image = self.transform(image)
+            labels = torch.tensor(
+                [
+                    sample["labels"]["blur"],
+                    sample["labels"]["noise"],
+                    sample["labels"]["skew"],
+                    sample["labels"]["illumination"],
+                    sample["labels"]["artifacts"],
+                ],
+                dtype=torch.float32,
+            )
+            return image, labels
+
+    train_transform = tv_transforms.Compose(
+        [
+            tv_transforms.Resize((224, 224)),
+            tv_transforms.ToTensor(),
+            tv_transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            ),
+        ]
+    )
+
+    val_transform = tv_transforms.Compose(
+        [
+            tv_transforms.Resize((224, 224)),
+            tv_transforms.ToTensor(),
+            tv_transforms.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            ),
+        ]
+    )
+
+    train_dataset = IQA100KDataset(train_samples, images_dir, transform=train_transform)
+    val_dataset = IQA100KDataset(val_samples, images_dir, transform=val_transform)
+
+    def collate_fn(batch):
+        images = []
+        labels_list = []
+        for image, labels in batch:
+            images.append(image)
+            labels_list.append(labels)
+
+        images_batch = torch.stack(images)
+        labels_batch = torch.stack(labels_list)
+
+        issue_types = ["blur", "noise", "skew", "illumination", "artifacts"]
+        batch_dict = {
+            "image": images_batch,
+            "labels": {},
+            "confidence": {},
+        }
+
+        for idx, head_name in enumerate(issue_types):
+            head_labels = labels_batch[:, idx].unsqueeze(1)
+            batch_dict["labels"][head_name] = head_labels
+            batch_dict["confidence"][head_name] = torch.ones_like(head_labels)
+
+        return batch_dict
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config["training"]["batch_size"],
+        shuffle=True,
+        num_workers=config["data"]["num_workers"],
+        pin_memory=config["data"]["pin_memory"],
+        collate_fn=collate_fn,
+    )
+
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config["training"]["batch_size"],
+        shuffle=False,
+        num_workers=config["data"]["num_workers"],
+        pin_memory=config["data"]["pin_memory"],
+        collate_fn=collate_fn,
+    )
+
+    print(f"Train batches: {len(train_loader)}")
+    print(f"Val batches: {len(val_loader)}")
+    print("✅ Data loaders created")
+    return train_loader, val_loader
+
+
+def create_trainer(model, loss_fn, config: Dict, device: str, checkpoint_dir: Path):
+    """Instantiate trainer with configuration."""
+    from image_preprocessing_detector.training import TeacherTrainer
+
+    trainer_config = {
+        "batch_size": config["training"]["batch_size"],
+        "epochs": config["training"]["epochs"],
+        "learning_rate": config["training"]["learning_rate"],
+        "weight_decay": config["training"]["weight_decay"],
+        "optimizer": config["training"]["optimizer"],
+        "scheduler": {
+            "type": config["training"]["scheduler"],
+        },
+        "gradient_clip_norm": config["training"]["gradient_clip_norm"],
+        "early_stopping_patience": config["training"]["early_stopping_patience"],
+        "mixed_precision": {
+            "enabled": config["training"]["mixed_precision"],
+        },
+        "checkpoint_dir": str(checkpoint_dir),
+        "log_dir": str(checkpoint_dir / "logs"),
+        "save_interval_epochs": config["monitoring"]["checkpoint_interval"],
+        "keep_last_n": 3,
+        "log_interval": config["monitoring"]["log_interval"],
+    }
+    return TeacherTrainer(model, loss_fn, trainer_config, device=str(device))
+
+
+def run_training_loop(
+    trainer,
+    train_loader,
+    val_loader,
+    config: Dict,
+    checkpoint_dir: Path,
+    gcs_bucket,
+    model,
+    device,
+):
+    """Run epoch loop with checkpointing and uploads."""
+    import time
+    import torch
+
+    start_time = time.time()
+    total_epochs = config["training"]["epochs"]
+    checkpoint_interval = config["monitoring"]["checkpoint_interval"]
+
+    for epoch in range(total_epochs):
+        epoch_start = time.time()
+        print(f"\n{'=' * 60}")
+        print(f"EPOCH {epoch + 1}/{total_epochs}")
+        print(f"{'=' * 60}")
+
+        train_metrics = trainer.train_epoch(train_loader)
+        val_metrics = trainer.validate(val_loader)
+        trainer.epoch = epoch + 1
+
+        epoch_time = time.time() - epoch_start
+        elapsed = time.time() - start_time
+        remaining = (elapsed / (epoch + 1)) * (total_epochs - epoch - 1)
+
+        print(f"Train Loss: {train_metrics.get('loss', 0):.4f}")
+        print(f"Val Loss: {val_metrics.get('loss', 0):.4f}")
+        print(f"Epoch Time: {epoch_time / 60:.1f} min")
+        print(f"Elapsed: {elapsed / 3600:.1f}h | Remaining: {remaining / 3600:.1f}h")
+
+        val_loss = val_metrics.get("loss", float("inf"))
+        if val_loss < trainer.best_val_loss:
+            trainer.best_val_loss = val_loss
+            print(f"✨ New best val_loss: {val_loss:.4f}")
+
+        if (epoch + 1) % checkpoint_interval == 0:
+            checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{epoch + 1}.pth"
+            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": trainer.optimizer.state_dict(),
+                    "val_loss": val_loss,
+                    "best_val_loss": trainer.best_val_loss,
+                },
+                checkpoint_path,
+            )
+            print(f"💾 Saved checkpoint: {checkpoint_path.name}")
+            blob = gcs_bucket.blob(f"checkpoints/phase2_iqa/{checkpoint_path.name}")
+            blob.upload_from_filename(str(checkpoint_path))
+            print(f"☁️  Uploaded to GCS: checkpoints/phase2_iqa/{checkpoint_path.name}")
+
+        if hasattr(trainer, "early_stop") and trainer.early_stop:
+            print(f"⚠️  Early stopping triggered at epoch {epoch + 1}")
+            break
+
+    training_time = time.time() - start_time
+    print(f"\n✅ Training completed in {training_time / 3600:.2f} hours")
+    print(f"Best validation loss: {trainer.best_val_loss:.4f}")
+    return training_time
+
+
 @stub.function(
     image=image,
     gpu="A10",  # A10 24GB - cost-optimized (~$1.10/hr), we only use ~6GB
@@ -114,21 +444,14 @@ def train_iqa():
     Expected runtime: 12-24 hours on T4 GPU
     Expected cost: ~$7-14 (or $0 with $30/month free tier)
     """
-    import json
-    import os
     import sys
-    import time
-    from pathlib import Path
+    import torch
 
     # Add source to Python path
     sys.path.insert(0, "/root")
 
-    import torch
-    from torch.utils.data import DataLoader
-
     # Import local modules
     from image_preprocessing_detector.models import MultiHeadIQALoss, ResNetTeacher
-    from image_preprocessing_detector.training import TeacherTrainer
 
     print("=" * 80)
     print("Phase 2 IQA Training - 100K Dataset with 13-Dimensional Distribution")
@@ -142,10 +465,8 @@ def train_iqa():
     # STEP 1: Load Configuration
     # =========================================================================
     print("\n[1/10] Loading configuration...")
-    config_path = "/root/configs/modal_phase2_iqa.yaml"
-    with open(config_path) as f:
-        config = yaml.safe_load(f)
-
+    config_path = Path("/root/configs/modal_phase2_iqa.yaml")
+    config = load_training_config(config_path)
     print(f"✅ Loaded config from {config_path}")
     print(f"Teacher architecture: {config['model']['teacher_architecture']}")
     print(f"Batch size: {config['training']['batch_size']}")
@@ -158,89 +479,11 @@ def train_iqa():
     print("\n[2/10] Downloading 100K dataset from GCS...")
     print("Dataset: ~9 GB tar.gz archive, 99,630 samples")
     print("Using single tar.gz archive for fast download (avoids 100K file timeout)...")
-
-    import tarfile
-
-    from google.cloud import storage
-
-    # Configure GCS credentials
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
-
-    # Create dataset directory
-    dataset_dir = Path("/root/data/training/iqa_phase2_100k")
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    # GCS tar.gz location
-    bucket_name = "image_detection_b"
-    tar_blob_name = "image-preprocessing-detector/phase2/iqa_phase2_100k.tar.gz"
-    # nosemgrep: gitlab.bandit.B108  # noqa: ERA001
-    # Security: /tmp is safe in Modal's ephemeral container environment
-    tar_local_path = Path("/tmp/iqa_phase2_100k.tar.gz")
-
-    print(f"Source: gs://{bucket_name}/{tar_blob_name}")
-    print(f"Destination: {dataset_dir}")
-
     download_start = time.time()
-
-    # Initialize GCS client and download tar.gz
-    print("Downloading tar.gz archive (~9 GB)...")
-    client = storage.Client()
-    bucket = client.bucket(bucket_name)
-    blob = bucket.blob(tar_blob_name)
-    blob.download_to_filename(str(tar_local_path))
-
-    download_time = time.time() - download_start
-    tar_size_gb = tar_local_path.stat().st_size / (1024**3)
-    print(f"✅ Downloaded {tar_size_gb:.2f} GB in {download_time / 60:.1f} minutes")
-
-    # Extract tar.gz archive with path traversal protection
-    print("Extracting archive...")
-    extract_start = time.time()
-
-    def is_within_directory(directory: Path, target: Path) -> bool:
-        """Check if target path is within directory (prevents path traversal)."""
-        abs_directory = directory.resolve()
-        abs_target = target.resolve()
-        return str(abs_target).startswith(str(abs_directory))
-
-    with tarfile.open(tar_local_path, "r:gz") as tar:
-        # Security: Validate all archive members to prevent path traversal attacks
-        # Even though data source is trusted (our GCS bucket), defense-in-depth
-        extract_path = dataset_dir.parent
-        for member in tar.getmembers():
-            member_path = extract_path / member.name
-            if not is_within_directory(extract_path, member_path):
-                raise ValueError(f"Path traversal detected in archive: {member.name}")
-        # nosemgrep: tarfile-extractall-traversal  # noqa: ERA001
-        # Security: Archive members validated above to prevent path traversal
-        tar.extractall(path=extract_path)
-
-    extract_time = time.time() - extract_start
-    print(f"✅ Extracted in {extract_time / 60:.1f} minutes")
-
-    # Clean up tar.gz to save disk space
-    tar_local_path.unlink()
-    print("✅ Cleaned up tar.gz archive")
-
+    bucket_name = "image_detection_b"
+    images_dir, metadata, metadata_file = prepare_dataset(config, bucket_name)
     total_time = time.time() - download_start
     print(f"✅ Dataset ready in {total_time / 60:.1f} minutes total")
-
-    # Verify dataset structure
-    dataset_dir = Path("/root/data/training/iqa_phase2_100k")
-    images_dir = dataset_dir / "images"
-    metadata_file = dataset_dir / config["data"]["metadata_file"]
-
-    if not dataset_dir.exists():
-        raise FileNotFoundError(f"Dataset directory not found: {dataset_dir}")
-    if not images_dir.exists():
-        raise FileNotFoundError(f"Images directory not found: {images_dir}")
-    if not metadata_file.exists():
-        raise FileNotFoundError(f"Metadata file not found: {metadata_file}")
-
-    # Count images
-    num_images = len(list(images_dir.glob("*.jpg")))
-    print(f"✅ Dataset verified: {num_images:,} images found")
-    print(f"✅ Metadata file: {metadata_file}")
 
     # =========================================================================
     # STEP 3: Create Device and Model
@@ -275,193 +518,26 @@ def train_iqa():
     # STEP 4: Load Metadata and Create Splits
     # =========================================================================
     print("\n[4/10] Loading metadata and creating splits...")
-
-    # Load metadata.json
-    with open(metadata_file) as f:
-        metadata = json.load(f)
-
     total_samples = metadata["total_samples"]
-    samples = metadata["samples"]
-
     print(f"Total samples in metadata: {total_samples:,}")
-    print(f"Loaded {len(samples):,} sample entries")
+    print(f"Loaded {len(metadata['samples']):,} sample entries")
 
-    # Create train/val/test splits based on config
-    train_ratio = config["data"]["train_split"]
-    val_ratio = config["data"]["val_split"]
-    test_ratio = config["data"]["test_split"]
-
-    if not abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-6:
-        raise ValueError("Train/val/test splits must sum to 1.0")
-
-    train_size = int(total_samples * train_ratio)
-    val_size = int(total_samples * val_ratio)
-    train_samples = samples[:train_size]
-    val_samples = samples[train_size : train_size + val_size]
-    test_samples = samples[train_size + val_size :]
-
-    print(
-        f"Split: {len(train_samples):,} train / {len(val_samples):,} val / {len(test_samples):,} test"
-    )
+    train_samples, val_samples, _test_samples = split_samples(metadata, config)
 
     # =========================================================================
     # STEP 5: Create DataLoaders
     # =========================================================================
     print("\n[5/10] Creating data loaders...")
-
-    # Import required libraries for dataset
-    import torch
-    import torchvision.transforms as tv_transforms
-    from PIL import Image
-    from torch.utils.data import Dataset
-
-    # Simple dataset class for pre-generated 100K dataset
-    class IQA100KDataset(Dataset):
-        """Dataset for pre-generated 100K IQA samples with metadata."""
-
-        def __init__(self, samples, images_dir, transform=None):
-            self.samples = samples
-            self.images_dir = Path(images_dir)
-            self.transform = transform
-
-        def __len__(self):
-            return len(self.samples)
-
-        def __getitem__(self, idx):
-            sample = self.samples[idx]
-
-            # Load image
-            image_path = self.images_dir / sample["filename"]
-            image = Image.open(image_path).convert("RGB")
-
-            # Apply transforms
-            if self.transform:
-                image = self.transform(image)
-
-            # Extract labels (5 defect types: blur, noise, skew, illumination, artifacts)
-            labels = torch.tensor(
-                [
-                    sample["labels"]["blur"],
-                    sample["labels"]["noise"],
-                    sample["labels"]["skew"],
-                    sample["labels"]["illumination"],
-                    sample["labels"]["artifacts"],
-                ],
-                dtype=torch.float32,
-            )
-
-            return image, labels
-
-    # Create transforms
-    train_transform = tv_transforms.Compose(
-        [
-            tv_transforms.Resize((224, 224)),
-            tv_transforms.ToTensor(),
-            tv_transforms.Normalize(
-                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-            ),
-        ]
+    train_loader, val_loader = build_dataloaders(
+        train_samples, val_samples, images_dir, config
     )
-
-    val_transform = tv_transforms.Compose(
-        [
-            tv_transforms.Resize((224, 224)),
-            tv_transforms.ToTensor(),
-            tv_transforms.Normalize(
-                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-            ),
-        ]
-    )
-
-    # Create datasets
-    train_dataset = IQA100KDataset(train_samples, images_dir, transform=train_transform)
-    val_dataset = IQA100KDataset(val_samples, images_dir, transform=val_transform)
-
-    print(f"Train samples: {len(train_dataset):,}")
-    print(f"Val samples: {len(val_dataset):,}")
-
-    # Custom collate function to convert tuple format to dict format
-    def collate_fn(batch):
-        """Convert (image, labels) tuple format to TeacherTrainer dict format."""
-        images = []
-        labels_list = []
-
-        for image, labels in batch:
-            images.append(image)
-            labels_list.append(labels)
-
-        # Stack into batched tensors
-        images_batch = torch.stack(images)
-        labels_batch = torch.stack(labels_list)
-
-        # Convert to per-head format expected by TeacherTrainer
-        issue_types = ["blur", "noise", "skew", "illumination", "artifacts"]
-        batch_dict = {
-            "image": images_batch,
-            "labels": {},
-            "confidence": {},
-        }
-
-        # Split labels tensor into per-head format
-        for idx, head_name in enumerate(issue_types):
-            head_labels = labels_batch[:, idx].unsqueeze(1)
-            batch_dict["labels"][head_name] = head_labels
-            # Use full confidence (1.0) for all labels
-            batch_dict["confidence"][head_name] = torch.ones_like(head_labels)
-
-        return batch_dict
-
-    # Create data loaders
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=config["training"]["batch_size"],
-        shuffle=True,
-        num_workers=config["data"]["num_workers"],
-        pin_memory=config["data"]["pin_memory"],
-        collate_fn=collate_fn,
-    )
-
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=config["training"]["batch_size"],
-        shuffle=False,
-        num_workers=config["data"]["num_workers"],
-        pin_memory=config["data"]["pin_memory"],
-        collate_fn=collate_fn,
-    )
-
-    print(f"Train batches: {len(train_loader)}")
-    print(f"Val batches: {len(val_loader)}")
-    print("✅ Data loaders created")
 
     # =========================================================================
     # STEP 6: Create Trainer
     # =========================================================================
     print("\n[6/10] Creating trainer...")
-
-    # Prepare trainer configuration
-    trainer_config = {
-        "batch_size": config["training"]["batch_size"],
-        "epochs": config["training"]["epochs"],
-        "learning_rate": config["training"]["learning_rate"],
-        "weight_decay": config["training"]["weight_decay"],
-        "optimizer": config["training"]["optimizer"],
-        "scheduler": {
-            "type": config["training"]["scheduler"],
-        },
-        "gradient_clip_norm": config["training"]["gradient_clip_norm"],
-        "early_stopping_patience": config["training"]["early_stopping_patience"],
-        "mixed_precision": {
-            "enabled": config["training"]["mixed_precision"],
-        },
-        "checkpoint_dir": "/tmp/checkpoints",
-        "log_dir": "/tmp/logs",
-        "save_interval_epochs": config["monitoring"]["checkpoint_interval"],
-        "keep_last_n": 3,
-        "log_interval": config["monitoring"]["log_interval"],
-    }
-
-    trainer = TeacherTrainer(model, loss_fn, trainer_config, device=str(device))
+    checkpoint_dir = Path(tempfile.mkdtemp(prefix="iqa_checkpoints_"))
+    trainer = create_trainer(model, loss_fn, config, device, checkpoint_dir)
     print("✅ Trainer created")
 
     # =========================================================================
@@ -479,85 +555,22 @@ def train_iqa():
     from google.cloud import storage
 
     storage_client = storage.Client()
-    gcs_bucket = storage_client.bucket("image_detection_b")
-    # nosemgrep: gitlab.bandit.B108  # noqa: ERA001
-    # Security: /tmp is safe in Modal's ephemeral container environment
-    checkpoint_dir = Path("/tmp/checkpoints")
-    checkpoint_interval = config["monitoring"]["checkpoint_interval"]
+    gcs_bucket = storage_client.bucket(bucket_name)
 
-    start_time = time.time()
     total_epochs = config["training"]["epochs"]
 
     epoch = -1
     try:
-        # Manual epoch loop for better progress visibility
-        for epoch in range(total_epochs):
-            epoch_start = time.time()
-
-            # Print epoch header
-            print(f"\n{'=' * 60}")
-            print(f"EPOCH {epoch + 1}/{total_epochs}")
-            print(f"{'=' * 60}")
-
-            # Run single epoch training
-            train_metrics = trainer.train_epoch(train_loader)
-            val_metrics = trainer.validate(val_loader)
-
-            # Update trainer state
-            trainer.epoch = epoch + 1
-
-            epoch_time = time.time() - epoch_start
-            elapsed = time.time() - start_time
-            remaining = (elapsed / (epoch + 1)) * (total_epochs - epoch - 1)
-
-            # Print epoch summary
-            print(f"Train Loss: {train_metrics.get('loss', 0):.4f}")
-            print(f"Val Loss: {val_metrics.get('loss', 0):.4f}")
-            print(f"Epoch Time: {epoch_time / 60:.1f} min")
-            print(
-                f"Elapsed: {elapsed / 3600:.1f}h | Remaining: {remaining / 3600:.1f}h"
-            )
-
-            # Check for best model and save checkpoint
-            val_loss = val_metrics.get("loss", float("inf"))
-            if val_loss < trainer.best_val_loss:
-                trainer.best_val_loss = val_loss
-                print(f"✨ New best val_loss: {val_loss:.4f}")
-
-            # Save and upload checkpoint at intervals
-            if (epoch + 1) % checkpoint_interval == 0:
-                checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{epoch + 1}.pth"
-                checkpoint_dir.mkdir(parents=True, exist_ok=True)
-                # nosemgrep: pickles-in-pytorch
-                # Security: torch.save is standard for ML checkpoints; we only load our own checkpoints
-                torch.save(
-                    {
-                        "epoch": epoch + 1,
-                        "model_state_dict": model.state_dict(),
-                        "optimizer_state_dict": trainer.optimizer.state_dict(),
-                        "val_loss": val_loss,
-                        "best_val_loss": trainer.best_val_loss,
-                    },
-                    checkpoint_path,
-                )
-                print(f"💾 Saved checkpoint: {checkpoint_path.name}")
-
-                # Upload to GCS immediately
-                blob = gcs_bucket.blob(f"checkpoints/phase2_iqa/{checkpoint_path.name}")
-                blob.upload_from_filename(str(checkpoint_path))
-                print(
-                    f"☁️  Uploaded to GCS: checkpoints/phase2_iqa/{checkpoint_path.name}"
-                )
-
-            # Early stopping check
-            if hasattr(trainer, "early_stop") and trainer.early_stop:
-                print(f"⚠️  Early stopping triggered at epoch {epoch + 1}")
-                break
-
-        training_time = time.time() - start_time
-        print(f"\n✅ Training completed in {training_time / 3600:.2f} hours")
-        print(f"Best validation loss: {trainer.best_val_loss:.4f}")
-
+        training_time = run_training_loop(
+            trainer,
+            train_loader,
+            val_loader,
+            config,
+            checkpoint_dir,
+            gcs_bucket,
+            model,
+            device,
+        )
     except Exception as e:
         failed_epoch = epoch + 1 if epoch >= 0 else 0
         print(f"\n❌ Training failed at epoch {failed_epoch}: {e}")
@@ -596,13 +609,11 @@ def train_iqa():
         1, 3, config["model"]["input_size"], config["model"]["input_size"]
     ).to(device)
 
-    # nosemgrep: gitlab.bandit.B108  # noqa: ERA001
-    # Security: /tmp is safe in Modal's ephemeral container environment
-    onnx_path = "/tmp/resnet50_teacher_baseline.onnx"
+    onnx_path = checkpoint_dir / "resnet50_teacher_baseline.onnx"
     torch.onnx.export(
         model,
         dummy_input,
-        onnx_path,
+        str(onnx_path),
         opset_version=13,
         input_names=["input"],
         output_names=["output"],
@@ -612,8 +623,6 @@ def train_iqa():
     print(f"✅ ONNX model saved to {onnx_path}")
 
     # Upload ONNX model to GCS
-    # nosemgrep: gitlab.bandit.B108  # noqa: ERA001
-    # Security: /tmp is safe in Modal's ephemeral container environment
     onnx_blob = gcs_bucket.blob("models/phase2_iqa/resnet50_teacher_baseline.onnx")
     onnx_blob.upload_from_filename(onnx_path)
     print("✅ ONNX model uploaded to GCS")
@@ -639,15 +648,12 @@ def train_iqa():
         else "N/A",
     }
 
-    # nosemgrep: gitlab.bandit.B108, gitlab.bandit.B108-1, hardcoded-tmp-path
-    # Security: /tmp is safe in Modal's ephemeral container environment
-    summary_path = "/tmp/training_summary.json"
+    summary_path = checkpoint_dir / "training_summary.json"
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    # nosemgrep: gitlab.bandit.B108  # noqa: ERA001
     summary_blob = gcs_bucket.blob("models/phase2_iqa/training_summary_baseline.json")
-    summary_blob.upload_from_filename(summary_path)
+    summary_blob.upload_from_filename(str(summary_path))
     print("✅ Training summary saved to GCS")
 
     # =========================================================================

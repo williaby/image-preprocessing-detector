@@ -7,6 +7,7 @@ This module provides:
 - Shared fixtures for common test resources
 """
 
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -52,6 +53,104 @@ def pytest_configure(config):
         "markers",
         "real_data: Tests using real test fixtures (not synthetic)",
     )
+
+
+# ============================================================================
+# Optional Dependency Handling
+# ============================================================================
+
+CV2_AVAILABLE = importlib.util.find_spec("cv2") is not None
+TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
+
+_CV2_TEST_MODULES = {
+    "tests.integration.test_cli",
+    "tests.integration.test_pdf_upscaling_integration",
+    "tests.integration.test_phase2_complete",
+    "tests.integration.test_pipeline",
+    "tests.integration.test_real_fixtures",
+    "tests.unit.test_corrections",
+    "tests.unit.test_image_loader",
+    "tests.unit.test_iqa_classical",
+    "tests.unit.test_iqa_ml",
+    "tests.unit.test_json_generator",
+    "tests.unit.test_pdf_analyzer",
+    "tests.unit.test_pdf_loader",
+    "tests.unit.test_pdf_resolution",
+    "tests.unit.test_pdf_upscaler",
+    "tests.unit.test_text_gate",
+}
+
+_TORCH_TEST_MODULES = {
+    "tests.unit.test_loss_functions",
+    "tests.unit.test_resnet_teacher",
+}
+
+_CV2_TEST_PATH_SUFFIXES = {
+    "tests/integration/test_cli.py",
+    "tests/integration/test_pdf_upscaling_integration.py",
+    "tests/integration/test_phase2_complete.py",
+    "tests/integration/test_pipeline.py",
+    "tests/integration/test_real_fixtures.py",
+    "tests/unit/test_corrections.py",
+    "tests/unit/test_image_loader.py",
+    "tests/unit/test_iqa_classical.py",
+    "tests/unit/test_iqa_ml.py",
+    "tests/unit/test_json_generator.py",
+    "tests/unit/test_pdf_analyzer.py",
+    "tests/unit/test_pdf_loader.py",
+    "tests/unit/test_pdf_resolution.py",
+    "tests/unit/test_pdf_upscaler.py",
+    "tests/unit/test_text_gate.py",
+}
+
+_TORCH_TEST_PATH_SUFFIXES = {
+    "tests/unit/test_loss_functions.py",
+    "tests/unit/test_resnet_teacher.py",
+}
+
+
+def pytest_ignore_collect(
+    collection_path: Path, config, **kwargs
+):  # pragma: no cover - collection-time hook
+    """Skip collecting test modules that require missing optional dependencies."""
+    path = kwargs.get("path", collection_path)
+    path_str = str(path)
+
+    if not CV2_AVAILABLE and any(
+        path_str.endswith(suffix) for suffix in _CV2_TEST_PATH_SUFFIXES
+    ):
+        return True
+
+    return not TORCH_AVAILABLE and any(
+        path_str.endswith(suffix) for suffix in _TORCH_TEST_PATH_SUFFIXES
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """
+    Skip tests that rely on optional heavy dependencies when they are absent.
+
+    This keeps the base (non-ML) environment green while still running the tests
+    when contributors install the `ml` extras.
+    """
+
+    if not CV2_AVAILABLE:
+        skip_cv2 = pytest.mark.skip(
+            reason="OpenCV is not installed (optional dependency)"
+        )
+    if not TORCH_AVAILABLE:
+        skip_torch = pytest.mark.skip(
+            reason="PyTorch is not installed (install with `--with ml` extras)"
+        )
+
+    for item in items:
+        module_name = getattr(getattr(item, "module", None), "__name__", "")
+
+        if not CV2_AVAILABLE and module_name in _CV2_TEST_MODULES:
+            item.add_marker(skip_cv2)
+
+        if not TORCH_AVAILABLE and module_name in _TORCH_TEST_MODULES:
+            item.add_marker(skip_torch)
 
 
 # ============================================================================

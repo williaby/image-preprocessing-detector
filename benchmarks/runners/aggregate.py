@@ -25,6 +25,8 @@ from image_preprocessing_detector.utils.datetime_compat import (
     datetime,
 )
 
+NO_RESULTS_MESSAGE = "⚠ No results to aggregate"
+
 
 def load_all_results(reports_dir: Path) -> list[dict[str, Any]]:
     """Load all benchmark results from reports directory.
@@ -76,6 +78,32 @@ def load_all_results(reports_dir: Path) -> list[dict[str, Any]]:
     return all_results
 
 
+def collect_metric_names(results: list[dict[str, Any]]) -> list[str]:
+    """Collect sorted metric names from aggregated results."""
+    metrics = set()
+    for result in results:
+        metrics.update(name for name in result["aggregates"] if name != "_meta")
+    return sorted(metrics)
+
+
+def build_csv_row(result: dict[str, Any], metric_names: list[str]) -> dict[str, Any]:
+    """Construct a CSV row for a single benchmark result."""
+    row = {
+        "suite": result["suite_name"],
+        "timestamp": result["timestamp"],
+        "task_type": result["task_type"],
+        "samples": result["num_samples"],
+    }
+
+    for metric_name in metric_names:
+        metric_data = result["aggregates"].get(metric_name, "")
+        if isinstance(metric_data, dict):
+            row[metric_name] = metric_data.get("mean", "")
+        else:
+            row[metric_name] = metric_data
+    return row
+
+
 def aggregate_to_csv(results: list[dict[str, Any]], output_path: Path) -> None:
     """Generate CSV aggregate report.
 
@@ -84,50 +112,108 @@ def aggregate_to_csv(results: list[dict[str, Any]], output_path: Path) -> None:
         output_path: Path to output CSV file
     """
     if not results:
-        print("⚠ No results to aggregate")
+        print(NO_RESULTS_MESSAGE)
         return
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w", newline="") as csvfile:
-        # Determine all metric names
-        all_metrics = set()
-        for result in results:
-            for metric_name in result["aggregates"]:
-                if metric_name != "_meta":
-                    all_metrics.add(metric_name)
-
-        all_metrics = sorted(all_metrics)
-
-        # CSV headers
-        headers = ["suite", "timestamp", "task_type", "samples"] + all_metrics
+        all_metrics = collect_metric_names(results)
+        headers = ["suite", "timestamp", "task_type", "samples"] + list(all_metrics)
 
         writer = csv.DictWriter(csvfile, fieldnames=headers)
         writer.writeheader()
 
         # Write rows
         for result in results:
-            row = {
-                "suite": result["suite_name"],
-                "timestamp": result["timestamp"],
-                "task_type": result["task_type"],
-                "samples": result["num_samples"],
-            }
-
-            # Add metric values
-            for metric_name in all_metrics:
-                if metric_name in result["aggregates"]:
-                    metric_data = result["aggregates"][metric_name]
-                    if isinstance(metric_data, dict):
-                        row[metric_name] = metric_data.get("mean", "")
-                    else:
-                        row[metric_name] = metric_data
-                else:
-                    row[metric_name] = ""
-
-            writer.writerow(row)
+            writer.writerow(build_csv_row(result, all_metrics))
 
     print(f"✓ CSV aggregate saved: {output_path}")
+
+
+def format_metric_value(value: Any) -> str:
+    """Format metric value for markdown output."""
+    if isinstance(value, (int, float)):
+        return f"{value:.3f}"
+    if value in (None, "—"):
+        return "—"
+    return str(value)
+
+
+def group_results_by_suite(
+    results: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Group aggregated results by suite name."""
+    suites: dict[str, list[dict[str, Any]]] = {}
+    for result in results:
+        suites.setdefault(result["suite_name"], []).append(result)
+    return suites
+
+
+def metrics_table_lines(aggregates: dict[str, Any]) -> list[str]:
+    """Render markdown lines for the metrics table of the latest run."""
+    lines = [
+        "### Metrics",
+        "",
+        "| Metric | Mean | Std | Min | Max |",
+        "|--------|------|-----|-----|-----|",
+    ]
+
+    for metric_name, metric_data in aggregates.items():
+        if metric_name == "_meta":
+            continue
+
+        if isinstance(metric_data, dict):
+            mean = format_metric_value(metric_data.get("mean", "—"))
+            std = format_metric_value(metric_data.get("std", "—"))
+            min_val = format_metric_value(metric_data.get("min", "—"))
+            max_val = format_metric_value(metric_data.get("max", "—"))
+        else:
+            mean = format_metric_value(metric_data)
+            std = min_val = max_val = "—"
+
+        lines.append(f"| {metric_name} | {mean} | {std} | {min_val} | {max_val} |")
+    lines.append("")
+    return lines
+
+
+def format_key_metrics_preview(aggregates: dict[str, Any]) -> str:
+    """Generate a short preview of up to two key metrics for history rows."""
+    previews = []
+    for metric_name, metric_data in aggregates.items():
+        if metric_name == "_meta":
+            continue
+        if isinstance(metric_data, dict):
+            mean = metric_data.get("mean", "—")
+            if isinstance(mean, (int, float)):
+                previews.append(f"{metric_name}: {mean:.3f}")
+        if len(previews) == 2:
+            break
+    return ", ".join(previews) if previews else "—"
+
+
+def historical_trend_lines(
+    suite_results: list[dict[str, Any]],
+) -> list[str]:
+    """Render markdown lines for the historical trend section."""
+    if len(suite_results) <= 1:
+        return []
+
+    lines = [
+        "### Historical Trend",
+        "",
+        "| Timestamp | Samples | Key Metrics |",
+        "|-----------|---------|-------------|",
+    ]
+
+    for hist_result in suite_results[:5]:
+        timestamp = hist_result["timestamp"]
+        samples = hist_result["num_samples"]
+        metrics_str = format_key_metrics_preview(hist_result["aggregates"])
+        lines.append(f"| {timestamp} | {samples} | {metrics_str} |")
+
+    lines.append("")
+    return lines
 
 
 def aggregate_to_markdown(results: list[dict[str, Any]], output_path: Path) -> None:
@@ -138,7 +224,7 @@ def aggregate_to_markdown(results: list[dict[str, Any]], output_path: Path) -> N
         output_path: Path to output Markdown file
     """
     if not results:
-        print("⚠ No results to aggregate")
+        print(NO_RESULTS_MESSAGE)
         return
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,90 +237,20 @@ def aggregate_to_markdown(results: list[dict[str, Any]], output_path: Path) -> N
         "",
     ]
 
-    # Group by suite
-    suites = {}
-    for result in results:
-        suite_name = result["suite_name"]
-        if suite_name not in suites:
-            suites[suite_name] = []
-        suites[suite_name].append(result)
+    suites = group_results_by_suite(results)
 
-    # Generate section for each suite
     for suite_name, suite_results in sorted(suites.items()):
         lines.append(f"## {suite_name}")
         lines.append("")
 
-        # Get latest result
         latest = suite_results[0]
         lines.append(f"**Latest Run**: {latest['timestamp']}")
         lines.append(f"**Task Type**: {latest['task_type']}")
         lines.append(f"**Samples**: {latest['num_samples']}")
         lines.append("")
 
-        # Metrics table
-        lines.append("### Metrics")
-        lines.append("")
-        lines.append("| Metric | Mean | Std | Min | Max |")
-        lines.append("|--------|------|-----|-----|-----|")
-
-        for metric_name, metric_data in latest["aggregates"].items():
-            if metric_name == "_meta":
-                continue
-
-            if isinstance(metric_data, dict):
-                mean = metric_data.get("mean", "—")
-                std = metric_data.get("std", "—")
-                min_val = metric_data.get("min", "—")
-                max_val = metric_data.get("max", "—")
-
-                # Format values
-                if isinstance(mean, (int, float)):
-                    mean = f"{mean:.3f}"
-                    std = f"{std:.3f}" if isinstance(std, (int, float)) else std
-                    min_val = (
-                        f"{min_val:.3f}"
-                        if isinstance(min_val, (int, float))
-                        else min_val
-                    )
-                    max_val = (
-                        f"{max_val:.3f}"
-                        if isinstance(max_val, (int, float))
-                        else max_val
-                    )
-
-                lines.append(
-                    f"| {metric_name} | {mean} | {std} | {min_val} | {max_val} |"
-                )
-
-        lines.append("")
-
-        # Historical trend (if multiple runs)
-        if len(suite_results) > 1:
-            lines.append("### Historical Trend")
-            lines.append("")
-            lines.append("| Timestamp | Samples | Key Metrics |")
-            lines.append("|-----------|---------|-------------|")
-
-            for hist_result in suite_results[:5]:  # Show last 5 runs
-                timestamp = hist_result["timestamp"]
-                samples = hist_result["num_samples"]
-
-                # Get first 2 metrics as preview
-                key_metrics = []
-                for i, (metric_name, metric_data) in enumerate(
-                    hist_result["aggregates"].items()
-                ):
-                    if i >= 2 or metric_name == "_meta":
-                        continue
-                    if isinstance(metric_data, dict):
-                        mean = metric_data.get("mean", "—")
-                        if isinstance(mean, (int, float)):
-                            key_metrics.append(f"{metric_name}: {mean:.3f}")
-
-                metrics_str = ", ".join(key_metrics) if key_metrics else "—"
-                lines.append(f"| {timestamp} | {samples} | {metrics_str} |")
-
-            lines.append("")
+        lines.extend(metrics_table_lines(latest["aggregates"]))
+        lines.extend(historical_trend_lines(suite_results))
 
     # Write file
     with open(output_path, "w") as f:

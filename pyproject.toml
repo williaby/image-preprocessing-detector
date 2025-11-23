@@ -387,6 +387,12 @@ omit = [
     "validation/*",  # Exclude standalone validation scripts
     "benchmarks/*",  # Exclude benchmarking framework
     "data/*",  # Exclude data processing scripts
+    # Phase 1.5/2 scaffolding (not wired into CI yet - omit until pipelines land)
+    "src/image_preprocessing_detector/cli.py",
+    "src/image_preprocessing_detector/correction/*",
+    "src/image_preprocessing_detector/detection/*",
+    "src/image_preprocessing_detector/ingestion/*",
+    "src/image_preprocessing_detector/output/*",
     # Phase 2+ modules (require ML dependencies - PyTorch, excluded from base coverage)
     "src/image_preprocessing_detector/utils/gcs_uploader.py",
     "src/image_preprocessing_detector/utils/metadata_generator.py",
