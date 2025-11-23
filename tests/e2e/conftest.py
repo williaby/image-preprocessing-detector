@@ -104,3 +104,122 @@ def fixtures_dir():
 def sample_documents_dir(fixtures_dir):
     """Return path to sample documents directory."""
     return fixtures_dir / "sample_documents"
+
+
+# =============================================================================
+# Real Test Fixtures from data/test_fixtures/
+# =============================================================================
+
+
+@pytest.fixture
+def test_fixtures_dir():
+    """Return path to real test fixtures directory."""
+    return Path(__file__).parent.parent.parent / "data" / "test_fixtures"
+
+
+@pytest.fixture
+def doclaynet_fixtures_dir(test_fixtures_dir):
+    """Return path to DocLayNet PDF fixtures."""
+    return test_fixtures_dir / "doclaynet"
+
+
+@pytest.fixture
+def tablebank_fixtures_dir(test_fixtures_dir):
+    """Return path to TableBank image fixtures."""
+    return test_fixtures_dir / "tablebank"
+
+
+# Individual DocLayNet PDF fixtures
+@pytest.fixture
+def simple_text_pdf(doclaynet_fixtures_dir):
+    """Simple text-heavy PDF document."""
+    return doclaynet_fixtures_dir / "simple_text_1.pdf"
+
+
+@pytest.fixture
+def tables_figures_pdf(doclaynet_fixtures_dir):
+    """PDF with tables and figures."""
+    return doclaynet_fixtures_dir / "tables_figures_2.pdf"
+
+
+@pytest.fixture
+def multi_column_pdf(doclaynet_fixtures_dir):
+    """Multi-column layout PDF."""
+    return doclaynet_fixtures_dir / "multi_column_3.pdf"
+
+
+@pytest.fixture
+def skewed_pdf(doclaynet_fixtures_dir):
+    """Skewed/rotated PDF pages."""
+    return doclaynet_fixtures_dir / "skewed_4.pdf"
+
+
+@pytest.fixture
+def low_contrast_pdf(doclaynet_fixtures_dir):
+    """Low contrast PDF scans."""
+    return doclaynet_fixtures_dir / "low_contrast_5.pdf"
+
+
+# Individual TableBank image fixtures
+@pytest.fixture
+def simple_table_image(tablebank_fixtures_dir):
+    """Simple table image (PNG)."""
+    path = tablebank_fixtures_dir / "simple_table_1.png"
+    if path.exists():
+        return cv2.imread(str(path))
+    return None
+
+
+@pytest.fixture
+def complex_table_image(tablebank_fixtures_dir):
+    """Complex table with merged cells (PNG)."""
+    path = tablebank_fixtures_dir / "complex_table_2.png"
+    if path.exists():
+        return cv2.imread(str(path))
+    return None
+
+
+@pytest.fixture
+def rotated_table_image(tablebank_fixtures_dir):
+    """Rotated table image (JPG)."""
+    path = tablebank_fixtures_dir / "rotated_3.jpg"
+    if path.exists():
+        return cv2.imread(str(path))
+    return None
+
+
+@pytest.fixture
+def low_quality_table_image(tablebank_fixtures_dir):
+    """Low quality/blurry table image (JPG)."""
+    path = tablebank_fixtures_dir / "low_quality_4.jpg"
+    if path.exists():
+        return cv2.imread(str(path))
+    return None
+
+
+@pytest.fixture
+def embedded_graphics_table_image(tablebank_fixtures_dir):
+    """Table with embedded graphics (JPG)."""
+    path = tablebank_fixtures_dir / "embedded_graphics_5.jpg"
+    if path.exists():
+        return cv2.imread(str(path))
+    return None
+
+
+# Collection fixtures for iterating over all files
+@pytest.fixture
+def all_doclaynet_pdfs(doclaynet_fixtures_dir):
+    """Return list of all DocLayNet PDF fixture paths."""
+    if not doclaynet_fixtures_dir.exists():
+        return []
+    return list(doclaynet_fixtures_dir.glob("*.pdf"))
+
+
+@pytest.fixture
+def all_tablebank_images(tablebank_fixtures_dir):
+    """Return list of all TableBank image fixture paths."""
+    if not tablebank_fixtures_dir.exists():
+        return []
+    images = list(tablebank_fixtures_dir.glob("*.png"))
+    images.extend(tablebank_fixtures_dir.glob("*.jpg"))
+    return images
