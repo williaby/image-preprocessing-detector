@@ -255,28 +255,22 @@ def build_dataloaders(train_samples, val_samples, images_dir: Path, config: Dict
             )
             return image, labels
 
-    train_transform = tv_transforms.Compose(
+    # ImageNet normalization - shared between train and val
+    imagenet_normalize = tv_transforms.Normalize(
+        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+    )
+
+    base_transform = tv_transforms.Compose(
         [
             tv_transforms.Resize((224, 224)),
             tv_transforms.ToTensor(),
-            tv_transforms.Normalize(
-                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-            ),
+            imagenet_normalize,
         ]
     )
 
-    val_transform = tv_transforms.Compose(
-        [
-            tv_transforms.Resize((224, 224)),
-            tv_transforms.ToTensor(),
-            tv_transforms.Normalize(
-                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-            ),
-        ]
-    )
-
-    train_dataset = IQA100KDataset(train_samples, images_dir, transform=train_transform)
-    val_dataset = IQA100KDataset(val_samples, images_dir, transform=val_transform)
+    # Use same transform for both (no augmentation in this training setup)
+    train_dataset = IQA100KDataset(train_samples, images_dir, transform=base_transform)
+    val_dataset = IQA100KDataset(val_samples, images_dir, transform=base_transform)
 
     def collate_fn(batch):
         images = []

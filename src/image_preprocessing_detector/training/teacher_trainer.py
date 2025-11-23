@@ -33,6 +33,11 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
+from image_preprocessing_detector.training.checkpoint_utils import (
+    cleanup_old_checkpoints,
+    load_checkpoint_safe,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -389,16 +394,11 @@ class TeacherTrainer:
 
     def _cleanup_old_checkpoints(self) -> None:
         """Remove old checkpoints, keeping only the last N."""
-        checkpoints = sorted(
-            self.checkpoint_dir.glob("checkpoint_epoch_*.pt"),
-            key=lambda p: p.stat().st_mtime,
+        cleanup_old_checkpoints(
+            self.checkpoint_dir,
+            pattern="checkpoint_epoch_*.pt",
+            keep_last_n=self.keep_last_n,
         )
-
-        # Keep only the last N checkpoints
-        if len(checkpoints) > self.keep_last_n:
-            for checkpoint in checkpoints[: -self.keep_last_n]:
-                checkpoint.unlink()
-                logger.debug(f"Removed old checkpoint: {checkpoint}")
 
     def load_checkpoint(self, checkpoint_path: str | Path) -> None:
         """Load model checkpoint.
@@ -406,16 +406,7 @@ class TeacherTrainer:
         Args:
             checkpoint_path: Path to checkpoint file
         """
-        checkpoint_path = Path(checkpoint_path)
-        if not checkpoint_path.exists():
-            raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
-
-        logger.info(f"Loading checkpoint: {checkpoint_path}")
-        # Security: Use weights_only=True to prevent arbitrary code execution
-        # Only loads tensors, dicts, lists, and primitive types
-        checkpoint = torch.load(
-            checkpoint_path, map_location=self.device, weights_only=True
-        )
+        checkpoint = load_checkpoint_safe(checkpoint_path, device=self.device)
 
         # Restore model and optimizer state
         self.model.load_state_dict(checkpoint["model_state_dict"])

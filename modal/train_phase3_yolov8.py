@@ -13,6 +13,7 @@ Monitor:
 """
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import modal
 import yaml
@@ -34,7 +35,7 @@ image = modal.Image.debian_slim(python_version="3.12").pip_install(
 gcs_secret = modal.Secret.from_name("gcs-credentials")
 
 
-def download_gcs_directory(bucket, prefix: str, destination: Path) -> None:
+def download_gcs_directory(bucket: Any, prefix: str, destination: Path) -> None:
     """Download all objects under a GCS prefix into a destination directory."""
     destination.mkdir(parents=True, exist_ok=True)
     for blob in bucket.list_blobs(prefix=prefix):
@@ -56,7 +57,7 @@ def download_gcs_directory(bucket, prefix: str, destination: Path) -> None:
     timeout=259200,  # 72 hours (3 days)
     secrets=[gcs_secret],
 )
-def train_yolov8():
+def train_yolov8() -> None:
     """Main YOLOv8 training function - runs for days without interruption."""
     import base64
     import os
@@ -172,7 +173,7 @@ def train_yolov8():
 
 
 @stub.local_entrypoint()
-def main():
+def main() -> None:
     """Entry point when running via `modal run`."""
     print("Starting Phase 3 YOLOv8 training on Modal...")
     print("Monitor progress at: https://modal.com/apps")
