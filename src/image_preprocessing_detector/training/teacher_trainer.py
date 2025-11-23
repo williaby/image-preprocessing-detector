@@ -411,7 +411,11 @@ class TeacherTrainer:
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
 
         logger.info(f"Loading checkpoint: {checkpoint_path}")
-        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        # Security: Use weights_only=True to prevent arbitrary code execution
+        # Only loads tensors, dicts, lists, and primitive types
+        checkpoint = torch.load(
+            checkpoint_path, map_location=self.device, weights_only=True
+        )
 
         # Restore model and optimizer state
         self.model.load_state_dict(checkpoint["model_state_dict"])

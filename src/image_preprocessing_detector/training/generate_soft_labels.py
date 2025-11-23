@@ -197,9 +197,9 @@ class SoftLabelGenerator:
 
         logger.info("Loading soft labels", path=str(input_path))
 
-        # nosemgrep: pickles-in-pytorch
-        # Security: Loading our own soft labels file; file source is validated by caller
-        soft_labels: dict[int, torch.Tensor] = torch.load(input_path)
+        # Security: Use weights_only=True to prevent arbitrary code execution
+        # Only loads tensors, dicts, lists, and primitive types
+        soft_labels: dict[int, torch.Tensor] = torch.load(input_path, weights_only=True)
 
         # Verify loaded soft labels
         self._verify_soft_labels(soft_labels)
