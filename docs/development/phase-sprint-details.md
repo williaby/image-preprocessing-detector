@@ -1,14 +1,23 @@
 ---
 schema_type: common
-title: "Phase 4-10 Sprint Details"
-description: "Detailed sprint breakdowns for Phases 4, 6, 8, and 10"
-tags: [planning, phase_planning, development, roadmap]
-status: published
+title: "Phase 4-10 Sprint Details (RAG Pipeline Numbering)"
+description: "Detailed sprint breakdowns for Phases 4, 6, 8, and 10 - HISTORICAL REFERENCE"
+tags: [planning, phase_planning, development, roadmap, historical]
+status: archived
 owner: "docs-team"
-purpose: "Provide detailed sprint-level implementation tasks for remaining project phases."
+purpose: "Historical reference for sprint-level implementation tasks. Phase 4 is COMPLETE."
+last_updated: "2025-01-24"
 ---
 
-This document provides detailed sprint breakdowns for the remaining phases of Project A implementation. Each sprint includes specific tasks, dependencies, deliverables, and test requirements.
+> **IMPORTANT**: This document uses RAG Pipeline phase numbering and is now a **HISTORICAL REFERENCE**. For current project status and official phase numbering, see [docs/planning/PROJECT_PLAN.md](../planning/PROJECT_PLAN.md).
+>
+> **Phase Status**:
+> - **Phase 4 (Classical IQA)**: ✅ **COMPLETE** (January 2025) - Documented as Phase 1 + Phase 1C in PROJECT_PLAN.md
+> - **Phase 6 (Layout-Lite)**: ⬜ Not Started
+> - **Phase 8 (DQS & Routing)**: ⬜ In Progress (DQS calculation implementation)
+> - **Phase 10 (Validation)**: ⬜ Not Started
+
+This document provides detailed sprint breakdowns for Project A implementation phases. Each sprint includes specific tasks, dependencies, deliverables, and test requirements.
 
 > **Note**: Phase 5 is intentionally skipped in the project numbering to maintain alignment with the four-project RAG pipeline architecture naming conventions.
 

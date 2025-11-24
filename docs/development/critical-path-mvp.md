@@ -8,6 +8,8 @@ owner: "docs-team"
 purpose: "Identify minimum requirements and dependencies for MVP end-to-end testing."
 ---
 
+> **Note**: This document uses RAG Pipeline phase numbering ("Phase 4" = Classical IQA). For official phase numbering and complete project plan, see [docs/planning/PROJECT_PLAN.md](../planning/PROJECT_PLAN.md) which documents Classical IQA as Phase 1 (basic) and Phase 1C (enhanced).
+
 This document identifies the critical path to achieve MVP (Minimum Viable Product) that can perform end-to-end document processing with quality assessment and routing recommendations.
 
 ## MVP Definition
@@ -29,9 +31,10 @@ This document identifies the critical path to achieve MVP (Minimum Viable Produc
 │                        CRITICAL PATH TO MVP                             │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  Phase 0 ✅ ──► Phase 4.1 ✅ ──► Phase 4.6 ──► Phase 8.1 ──► Phase 8.4  │
-│  Foundation     Blur            Discrepancy     DQS           JSON       │
-│                 Detection       Tuning          Weighting     Output     │
+│  Phase 0 ✅ ──► Phase 4 ✅ ──► Phase 8.1 ⬜ ──► Phase 8.4 ⬜             │
+│  Foundation     Classical IQA   DQS Calc        JSON Output             │
+│                 (All 8          Implementation                          │
+│                 Detectors)                                               │
 │                                                                          │
 │         ┌──────────────────────────────────────────┐                    │
 │         │ PARALLEL TRACK (Enhancement, not MVP)    │                    │
@@ -54,16 +57,20 @@ This document identifies the critical path to achieve MVP (Minimum Viable Produc
 - **Dependencies**: Phase 0
 - **Deliverables**: ResNet-50 teacher, ResNet-18 student models
 
-### Phase 4: Classical IQA
+### Phase 4: Classical IQA (Phase 1/1C in PROJECT_PLAN.md)
 
 | Milestone | Status | Dependencies | MVP Critical |
 |-----------|--------|--------------|--------------|
 | 4.1 Blur Detection | ✅ Complete | Phase 0 | YES |
 | 4.2 Noise Estimation | ✅ Complete | Phase 0 | No (enhancement) |
-| 4.3 Skew Detection | ✅ Exists | Phase 0 | YES |
-| 4.4 Lighting Metrics | ⬜ Pending | Phase 0 | No (enhancement) |
-| 4.5 JPEG Blockiness | ⬜ Pending | Phase 0 | No (enhancement) |
-| 4.6 Discrepancy Tuning | ⬜ Pending | 4.1, 4.3, Phase 2 | YES |
+| 4.3 Skew Detection | ✅ Complete | Phase 0 | YES |
+| 4.4 Contrast Detection | ✅ Complete | Phase 0 | YES |
+| 4.5 Illumination Detection | ✅ Complete | Phase 0 | No (enhancement) |
+| 4.6 JPEG Blockiness | ✅ Complete | Phase 0 | No (enhancement) |
+| 4.7 Binarization Quality | ✅ Complete | Phase 0 | No (enhancement) |
+| 4.8 Bleed-Through Detection | ✅ Complete | Phase 0 | No (enhancement) |
+| 4.9 Discrepancy Tuning | ✅ Complete | 4.1-4.8, Phase 2 | YES |
+| 4.10 DQS Weight Calibration | ✅ Complete | 4.1-4.8 | YES |
 
 ### Phase 6: Layout-Lite Detection
 
@@ -98,42 +105,56 @@ This document identifies the critical path to achieve MVP (Minimum Viable Produc
 ### Required for MVP:
 1. **Phase 0**: ✅ Complete
 2. **Milestone 4.1**: ✅ Blur detection (complete)
-3. **Milestone 4.3**: ✅ Skew detection (existing)
-4. **Milestone 8.1**: DQS weighting (in progress)
-5. **Milestone 8.2**: Page/document scoring
-6. **Milestone 8.3**: Routing logic
-7. **Milestone 8.4**: JSON schema output
+3. **Milestone 4.3**: ✅ Skew detection (complete)
+4. **Milestone 4.4**: ✅ Contrast detection (complete)
+5. **Milestone 4.9**: ✅ Discrepancy tuning (complete)
+6. **Milestone 4.10**: ✅ DQS weight calibration (complete)
+7. **Milestone 8.1**: ⬜ DQS calculation implementation
+8. **Milestone 8.2**: ⬜ Page/document scoring
+9. **Milestone 8.3**: ⬜ Routing logic
+10. **Milestone 8.4**: ⬜ JSON schema output
 
-### Optional Enhancements (can defer):
-- Milestone 4.2: Noise estimation (complete but optional)
-- Milestone 4.4: Lighting metrics
-- Milestone 4.5: JPEG blockiness
-- Milestone 4.6: Discrepancy tuning (refines accuracy)
-- All of Phase 6: Layout-lite detection
+### Completed Enhancements:
+- Milestone 4.2: ✅ Noise estimation
+- Milestone 4.5: ✅ Illumination detection
+- Milestone 4.6: ✅ JPEG blockiness detection
+- Milestone 4.7: ✅ Binarization quality detection
+- Milestone 4.8: ✅ Bleed-through detection
+
+### Future Enhancements (can defer):
+- All of Phase 6: Layout-lite detection (optional for MVP)
 - All of Phase 10: Validation (post-MVP)
 
 ## Dependency Graph
 
 ```
-Phase 0 (Foundation)
+Phase 0 (Foundation) ✅
     │
-    ├───► Phase 2 (ML IQA)
+    ├───► Phase 2 (ML IQA) ✅
     │         │
-    │         └───► Milestone 4.6 (Discrepancy Tuning)
+    │         └───► Milestone 4.9 (Discrepancy Tuning) ✅
     │
-    ├───► Milestone 4.1 (Blur) ✅
-    │         │
-    ├───► Milestone 4.3 (Skew) ✅
-    │         │
-    │         └───┬───► Milestone 8.1 (DQS Weighting) ◄── CURRENT
-    │             │
-    │             └───► Milestone 8.2 (Page/Doc Scoring)
-    │                       │
-    │                       └───► Milestone 8.3 (Routing Logic)
-    │                                 │
-    │                                 └───► Milestone 8.4 (JSON Output)
-    │                                           │
-    │                                           └───► MVP COMPLETE
+    ├───► Phase 4: Classical IQA ✅ (All 8 detectors complete)
+    │         ├───► 4.1 Blur ✅
+    │         ├───► 4.2 Noise ✅
+    │         ├───► 4.3 Skew ✅
+    │         ├───► 4.4 Contrast ✅
+    │         ├───► 4.5 Illumination ✅
+    │         ├───► 4.6 JPEG Blockiness ✅
+    │         ├───► 4.7 Binarization ✅
+    │         ├───► 4.8 Bleed-Through ✅
+    │         ├───► 4.9 Discrepancy Tuning ✅
+    │         └───► 4.10 DQS Weight Calibration ✅
+    │                   │
+    │                   └───► Milestone 8.1 (DQS Implementation) ◄── CURRENT
+    │                             │
+    │                             └───► Milestone 8.2 (Page/Doc Scoring)
+    │                                       │
+    │                                       └───► Milestone 8.3 (Routing Logic)
+    │                                                 │
+    │                                                 └───► Milestone 8.4 (JSON Output)
+    │                                                           │
+    │                                                           └───► MVP COMPLETE
     │
     └───► Phase 6 (Layout-Lite) [OPTIONAL]
               │
@@ -154,11 +175,13 @@ Phase 0 (Foundation)
 
 **Prerequisites for first E2E test**:
 1. ✅ PDF/Image ingestion
-2. ✅ Basic IQA (blur, skew, contrast)
+2. ✅ All 8 Classical IQA detectors (blur, noise, skew, contrast, illumination, JPEG, binarization, bleed-through)
 3. ✅ Corrections pipeline
-4. ⬜ DQS calculation (Milestone 8.1-8.2)
-5. ⬜ Routing recommendation (Milestone 8.3)
-6. ⬜ JSON output with all fields (Milestone 8.4)
+4. ✅ DQS weight calibration
+5. ✅ Discrepancy analysis framework
+6. ⬜ DQS calculation implementation (Milestone 8.1-8.2)
+7. ⬜ Routing recommendation (Milestone 8.3)
+8. ⬜ JSON output with all fields (Milestone 8.4)
 
 **First benchmark test prerequisites**:
 - All of above for E2E
@@ -188,10 +211,21 @@ To achieve MVP fastest:
 
 ## Current Status
 
-- **Completed**: Phase 0, Phase 2 (mostly), Milestones 4.1, 4.2
-- **In Progress**: Milestone 8.1
-- **Remaining for MVP**: Milestones 8.2, 8.3, 8.4
+- **Completed**:
+  - Phase 0: Foundation ✅
+  - Phase 2: ML IQA (Teacher & Student models trained) ✅
+  - Phase 4: All Classical IQA detectors (4.1-4.10) ✅
+  - DPI Upscaling (Phase 1B in PROJECT_PLAN.md) ✅
+  - Discrepancy analysis framework ✅
+  - DQS weight calibration ✅
+
+- **In Progress**:
+  - Phase 8: DQS & Routing implementation
+  - Milestone 8.1: DQS calculation implementation
+
+- **Remaining for MVP**:
+  - Milestones 8.2, 8.3, 8.4 (estimated 6-8 days)
 
 ---
 
-*Last updated: 2025-11-23*
+*Last updated: 2025-01-24*

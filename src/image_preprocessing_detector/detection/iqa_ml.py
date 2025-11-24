@@ -109,38 +109,88 @@ class ClassicalIQAScores:
     """Classical IQA scores for comparison with ML IQA.
 
     Normalized to 0-1 scale where 1=good quality, 0=poor quality.
+    All scores are continuous [0.0, 1.0] to enable quantitative discrepancy analysis.
 
     Attributes:
         blur_score: Blur quality (from Laplacian variance, normalized)
         contrast_score: Contrast quality (from histogram analysis)
         skew_score: Skew quality (1 - normalized_angle)
-        has_noise: Whether noise is detected (boolean)
-        has_compression: Whether compression artifacts detected (boolean)
+        noise_score: Noise quality (0=noisy, 1=clean) - replaces has_noise boolean
+        illumination_score: Illumination quality (0=poor lighting, 1=good lighting)
+        compression_score: Compression artifact quality (0=artifacts, 1=clean) - replaces has_compression boolean
+        binarization_score: Binarization quality (0=poor, 1=good) - document-specific
+        bleed_through_score: Bleed-through quality (0=severe, 1=none) - document-specific
     """
 
+    # Core dimensions (required)
     blur_score: float
     contrast_score: float
     skew_score: float
-    has_noise: bool = False
-    has_compression: bool = False
+
+    # ML IQA aligned dimensions (optional with defaults for backward compatibility)
+    noise_score: float = 0.0
+    illumination_score: float = 0.0
+    compression_score: float = 0.0
+
+    # Document-specific dimensions (optional)
+    binarization_score: float = 0.0
+    bleed_through_score: float = 0.0
+
+    def __post_init__(self) -> None:
+        """Validate all scores are in [0.0, 1.0] range."""
+        score_fields = [
+            "blur_score",
+            "contrast_score",
+            "skew_score",
+            "noise_score",
+            "illumination_score",
+            "compression_score",
+            "binarization_score",
+            "bleed_through_score",
+        ]
+
+        for field_name in score_fields:
+            score = getattr(self, field_name)
+            if not (0.0 <= score <= 1.0):
+                msg = f"{field_name} must be in [0.0, 1.0], got {score}"
+                raise ValueError(msg)
 
 
 @dataclass
 class DiscrepancyMetrics:
     """Discrepancy metrics between student ML IQA and classical IQA.
 
+    All discrepancies are absolute differences in [0.0, 1.0] range.
+
     Attributes:
         blur_discrepancy: Absolute difference in blur scores
         contrast_discrepancy: Absolute difference in contrast scores
         skew_discrepancy: Absolute difference in skew scores
+        noise_discrepancy: Absolute difference in noise scores
+        illumination_discrepancy: Absolute difference in illumination scores
+        compression_discrepancy: Absolute difference in compression scores
+        binarization_discrepancy: Absolute difference in binarization scores
+        bleed_through_discrepancy: Absolute difference in bleed-through scores
         max_discrepancy: Maximum discrepancy across all metrics
         mean_discrepancy: Mean discrepancy across all metrics
         per_head_discrepancies: Per-head discrepancy values
     """
 
+    # Core dimensions
     blur_discrepancy: float
     contrast_discrepancy: float
     skew_discrepancy: float
+
+    # ML IQA aligned dimensions
+    noise_discrepancy: float
+    illumination_discrepancy: float
+    compression_discrepancy: float
+
+    # Document-specific dimensions
+    binarization_discrepancy: float
+    bleed_through_discrepancy: float
+
+    # Aggregate metrics
     max_discrepancy: float
     mean_discrepancy: float
     per_head_discrepancies: dict[str, float]
@@ -618,6 +668,9 @@ class MLIQADetector:
     ) -> DiscrepancyMetrics:
         """Calculate discrepancy between student ML IQA and classical IQA.
 
+        Computes absolute differences for all 8 quality dimensions to enable
+        comprehensive discrepancy analysis for teacher escalation decisions.
+
         Args:
             student_scores: Student model ML IQA scores
             classical_scores: Classical IQA scores (normalized to 0-1)
@@ -625,22 +678,43 @@ class MLIQADetector:
         Returns:
             DiscrepancyMetrics with per-head and aggregate discrepancies
         """
-        # Calculate per-head absolute differences
+        # Calculate per-head absolute differences (all 8 dimensions)
         blur_discrepancy = abs(student_scores.blur_score - classical_scores.blur_score)
         contrast_discrepancy = abs(
             student_scores.contrast_score - classical_scores.contrast_score
         )
         skew_discrepancy = abs(student_scores.skew_score - classical_scores.skew_score)
+        noise_discrepancy = abs(
+            student_scores.noise_score - classical_scores.noise_score
+        )
+        # Note: ML IQA doesn't have illumination head, so discrepancy with
+        # classical illumination is not directly comparable. Use 0.0 for now.
+        illumination_discrepancy = 0.0  # ML model doesn't predict illumination
+        compression_discrepancy = abs(
+            student_scores.compression_score - classical_scores.compression_score
+        )
+        # Note: Binarization and bleed-through are document-specific and not
+        # predicted by current ML IQA models. Use 0.0 for now.
+        binarization_discrepancy = 0.0  # ML model doesn't predict binarization
+        bleed_through_discrepancy = 0.0  # ML model doesn't predict bleed-through
 
-        # Aggregate metrics
-        discrepancies = [blur_discrepancy, contrast_discrepancy, skew_discrepancy]
-        max_discrepancy = float(np.max(discrepancies))
-        mean_discrepancy = float(np.mean(discrepancies))
+        # Aggregate metrics (only include dimensions predicted by ML model)
+        ml_predicted_discrepancies = [
+            blur_discrepancy,
+            contrast_discrepancy,
+            skew_discrepancy,
+            noise_discrepancy,
+            compression_discrepancy,
+        ]
+        max_discrepancy = float(np.max(ml_predicted_discrepancies))
+        mean_discrepancy = float(np.mean(ml_predicted_discrepancies))
 
         per_head_discrepancies = {
             "blur": blur_discrepancy,
             "contrast": contrast_discrepancy,
             "skew": skew_discrepancy,
+            "noise": noise_discrepancy,
+            "compression": compression_discrepancy,
         }
 
         logger.debug(
@@ -654,6 +728,11 @@ class MLIQADetector:
             blur_discrepancy=blur_discrepancy,
             contrast_discrepancy=contrast_discrepancy,
             skew_discrepancy=skew_discrepancy,
+            noise_discrepancy=noise_discrepancy,
+            illumination_discrepancy=illumination_discrepancy,
+            compression_discrepancy=compression_discrepancy,
+            binarization_discrepancy=binarization_discrepancy,
+            bleed_through_discrepancy=bleed_through_discrepancy,
             max_discrepancy=max_discrepancy,
             mean_discrepancy=mean_discrepancy,
             per_head_discrepancies=per_head_discrepancies,
@@ -666,6 +745,9 @@ class MLIQADetector:
     ) -> EscalationDecision:
         """Determine if student-classical discrepancy warrants teacher escalation.
 
+        Checks all 5 ML-predicted dimensions (blur, contrast, skew, noise, compression)
+        for discrepancies that exceed the threshold.
+
         Args:
             student_scores: Student model ML IQA scores
             classical_scores: Classical IQA scores
@@ -676,7 +758,7 @@ class MLIQADetector:
         # Calculate discrepancy
         discrepancy = self.calculate_discrepancy(student_scores, classical_scores)
 
-        # Check if any head exceeds discrepancy threshold
+        # Check if any ML-predicted head exceeds discrepancy threshold
         reasons = []
 
         if discrepancy.blur_discrepancy >= self.discrepancy_threshold:
@@ -692,6 +774,16 @@ class MLIQADetector:
         if discrepancy.skew_discrepancy >= self.discrepancy_threshold:
             reasons.append(
                 f"skew_discrepancy ({discrepancy.skew_discrepancy:.3f} >= {self.discrepancy_threshold})"
+            )
+
+        if discrepancy.noise_discrepancy >= self.discrepancy_threshold:
+            reasons.append(
+                f"noise_discrepancy ({discrepancy.noise_discrepancy:.3f} >= {self.discrepancy_threshold})"
+            )
+
+        if discrepancy.compression_discrepancy >= self.discrepancy_threshold:
+            reasons.append(
+                f"compression_discrepancy ({discrepancy.compression_discrepancy:.3f} >= {self.discrepancy_threshold})"
             )
 
         # Decide escalation
@@ -874,6 +966,11 @@ def discrepancy_metrics_to_dict(metrics: DiscrepancyMetrics) -> dict[str, Any]:
         "blur_discrepancy": round(metrics.blur_discrepancy, 4),
         "contrast_discrepancy": round(metrics.contrast_discrepancy, 4),
         "skew_discrepancy": round(metrics.skew_discrepancy, 4),
+        "noise_discrepancy": round(metrics.noise_discrepancy, 4),
+        "illumination_discrepancy": round(metrics.illumination_discrepancy, 4),
+        "compression_discrepancy": round(metrics.compression_discrepancy, 4),
+        "binarization_discrepancy": round(metrics.binarization_discrepancy, 4),
+        "bleed_through_discrepancy": round(metrics.bleed_through_discrepancy, 4),
         "max_discrepancy": round(metrics.max_discrepancy, 4),
         "mean_discrepancy": round(metrics.mean_discrepancy, 4),
         "per_head_discrepancies": {

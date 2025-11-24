@@ -68,14 +68,18 @@ class TestClassicalIQAScores:
     """Tests for ClassicalIQAScores dataclass."""
 
     def test_default_values(self):
-        """Test default values."""
+        """Test default values for optional score fields."""
         scores = ClassicalIQAScores(
             blur_score=0.8,
             contrast_score=0.75,
             skew_score=0.9,
         )
-        assert scores.has_noise is False
-        assert scores.has_compression is False
+        # Optional fields should default to 0.0
+        assert scores.noise_score == 0.0
+        assert scores.illumination_score == 0.0
+        assert scores.compression_score == 0.0
+        assert scores.binarization_score == 0.0
+        assert scores.bleed_through_score == 0.0
 
 
 class TestEscalationDecision:
@@ -231,12 +235,20 @@ class TestMLIQADetector:
             blur_score=0.85,
             contrast_score=0.9,  # 0.4 difference from ML
             skew_score=0.88,
+            noise_score=0.85,  # 0.05 difference from ML
+            compression_score=0.70,  # 0.05 difference from ML
         )
 
         discrepancy = detector.calculate_discrepancy(ml_scores, classical_scores)
 
+        # Check per-head discrepancies
         assert discrepancy.blur_discrepancy == pytest.approx(0.05, abs=0.01)
         assert discrepancy.contrast_discrepancy == pytest.approx(0.4, abs=0.01)
+        assert discrepancy.skew_discrepancy == pytest.approx(0.03, abs=0.01)
+        assert discrepancy.noise_discrepancy == pytest.approx(0.05, abs=0.01)
+        assert discrepancy.compression_discrepancy == pytest.approx(0.05, abs=0.01)
+
+        # Max discrepancy should be contrast (0.4)
         assert discrepancy.max_discrepancy == pytest.approx(0.4, abs=0.01)
 
     def test_should_escalate_due_to_discrepancy(self):
@@ -338,23 +350,38 @@ class TestSerializationUtilities:
         assert result["head_confidences"]["blur"] == 0.5568
 
     def test_discrepancy_metrics_to_dict(self):
-        """Test DiscrepancyMetrics serialization."""
+        """Test DiscrepancyMetrics serialization with all 8 dimensions."""
         metrics = DiscrepancyMetrics(
             blur_discrepancy=0.05123,
             contrast_discrepancy=0.40456,
             skew_discrepancy=0.03789,
+            noise_discrepancy=0.12345,
+            illumination_discrepancy=0.0,  # Not predicted by ML
+            compression_discrepancy=0.08901,
+            binarization_discrepancy=0.0,  # Not predicted by ML
+            bleed_through_discrepancy=0.0,  # Not predicted by ML
             max_discrepancy=0.40456,
             mean_discrepancy=0.16456,
             per_head_discrepancies={
                 "blur": 0.05123,
                 "contrast": 0.40456,
                 "skew": 0.03789,
+                "noise": 0.12345,
+                "compression": 0.08901,
             },
         )
 
         result = discrepancy_metrics_to_dict(metrics)
 
+        # Check all 8 dimensions are serialized
         assert result["blur_discrepancy"] == 0.0512
+        assert result["contrast_discrepancy"] == 0.4046
+        assert result["skew_discrepancy"] == 0.0379
+        assert result["noise_discrepancy"] == 0.1235
+        assert result["illumination_discrepancy"] == 0.0
+        assert result["compression_discrepancy"] == 0.089
+        assert result["binarization_discrepancy"] == 0.0
+        assert result["bleed_through_discrepancy"] == 0.0
         assert result["max_discrepancy"] == 0.4046
 
 
