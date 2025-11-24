@@ -1,5 +1,5 @@
 """
-Unit tests for classical IQA detectors (skew, blur, contrast, noise).
+Unit tests for classical IQA detectors (skew, blur, contrast, noise, illumination).
 """
 
 import cv2
@@ -11,6 +11,9 @@ from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
     ContrastDetectionResult,
     ContrastDetector,
+    IlluminationDetectionResult,
+    IlluminationDetector,
+    IlluminationType,
     NoiseDetectionResult,
     NoiseDetector,
     NoiseType,
@@ -19,6 +22,7 @@ from image_preprocessing_detector.detection.iqa_classical import (
     SkewDetector,
     detect_blur,
     detect_contrast,
+    detect_illumination,
     detect_noise,
     detect_skew,
 )
@@ -394,7 +398,11 @@ class TestNoiseDetector:
 
         # Should detect noise
         assert result.is_noisy is True
-        assert result.noise_type in [NoiseType.GAUSSIAN, NoiseType.SPECKLE, NoiseType.MIXED]
+        assert result.noise_type in [
+            NoiseType.GAUSSIAN,
+            NoiseType.SPECKLE,
+            NoiseType.MIXED,
+        ]
         assert result.score > 0.05
         assert result.sigma_estimate > 5.0  # Should detect significant noise
 
@@ -581,3 +589,262 @@ class TestNoiseTypeEnum:
         """Test NoiseType enum can be compared."""
         assert NoiseType.GAUSSIAN == NoiseType.GAUSSIAN
         assert NoiseType.SALT_PEPPER != NoiseType.GAUSSIAN
+
+
+class TestIlluminationDetector:
+    """Test IlluminationDetector class."""
+
+    def test_init_default_params(self) -> None:
+        """Test IlluminationDetector initialization with defaults."""
+        detector = IlluminationDetector()
+
+        assert detector.threshold_critical == 0.50
+        assert detector.threshold_high == 0.65
+        assert detector.threshold_medium == 0.80
+        assert detector.grid_size == 5
+        assert detector.shadow_percentile == 10.0
+        assert detector.hotspot_percentile == 95.0
+
+    def test_init_custom_params(self) -> None:
+        """Test IlluminationDetector initialization with custom parameters."""
+        detector = IlluminationDetector(
+            threshold_critical=0.40,
+            threshold_high=0.55,
+            threshold_medium=0.70,
+            grid_size=7,
+            shadow_percentile=5.0,
+            hotspot_percentile=98.0,
+        )
+
+        assert detector.threshold_critical == 0.40
+        assert detector.threshold_high == 0.55
+        assert detector.threshold_medium == 0.70
+        assert detector.grid_size == 7
+        assert detector.shadow_percentile == 5.0
+        assert detector.hotspot_percentile == 98.0
+
+    def test_detect_uniform_image(self) -> None:
+        """Test detection on uniformly lit image."""
+        # Create uniformly lit document-like image
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 200
+
+        # Add text-like content (consistent throughout)
+        for y in range(50, 450, 30):
+            for x in range(50, 450, 60):
+                img[y : y + 12, x : x + 40] = 50
+
+        detector = IlluminationDetector()
+        result = detector.detect(img)
+
+        # Should detect uniform illumination
+        assert result.has_issues is False
+        assert result.issue_type == IlluminationType.UNIFORM
+        assert result.severity == Severity.LOW
+        assert result.uniformity > 0.7
+        assert result.score > 0.75
+
+    def test_detect_vignetting(self) -> None:
+        """Test detection of vignetting (dark edges)."""
+        # Create image with vignetting effect
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 220
+
+        # Darken the edges significantly
+        edge_width = 75
+        img[:edge_width, :] = 80  # Top
+        img[-edge_width:, :] = 80  # Bottom
+        img[:, :edge_width] = 80  # Left
+        img[:, -edge_width:] = 80  # Right
+
+        detector = IlluminationDetector()
+        result = detector.detect(img)
+
+        # Should detect vignetting
+        assert result.vignetting_ratio < 0.8
+        # Vignetting causes dark edges, so ratio should be low
+        assert result.issue_type in [
+            IlluminationType.VIGNETTING,
+            IlluminationType.UNEVEN,
+        ]
+
+    def test_detect_shadows(self) -> None:
+        """Test detection of shadow regions."""
+        # Create image with shadow region
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 200
+
+        # Add large shadow region (dark area > 10% of image)
+        img[100:300, 100:300] = 30  # Dark shadow region
+
+        detector = IlluminationDetector()
+        result = detector.detect(img)
+
+        # Should detect shadows
+        assert result.shadow_ratio > 0.05
+        assert result.has_issues is True
+        assert result.issue_type in [IlluminationType.SHADOWS, IlluminationType.UNEVEN]
+
+    def test_detect_hotspots(self) -> None:
+        """Test detection of hotspot regions."""
+        # Create image with hotspot (overexposed area)
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+
+        # Add large hotspot region (bright area > 10% of image)
+        img[100:300, 100:300] = 250  # Bright hotspot region
+
+        detector = IlluminationDetector()
+        result = detector.detect(img)
+
+        # Should detect hotspots
+        assert result.hotspot_ratio > 0.05
+        assert result.has_issues is True
+        assert result.issue_type in [IlluminationType.HOTSPOTS, IlluminationType.UNEVEN]
+
+    def test_detect_uneven_illumination(self) -> None:
+        """Test detection of uneven illumination (gradient)."""
+        # Create image with horizontal brightness gradient
+        img = np.zeros((500, 500, 3), dtype=np.uint8)
+        for x in range(500):
+            brightness = int(50 + (x / 500) * 150)  # 50 to 200
+            img[:, x] = brightness
+
+        detector = IlluminationDetector()
+        result = detector.detect(img)
+
+        # Should detect uneven illumination
+        assert result.uniformity < 0.9
+        assert result.has_issues is True
+
+    def test_severity_levels(self) -> None:
+        """Test severity level assignment."""
+        detector = IlluminationDetector(
+            threshold_critical=0.50, threshold_high=0.65, threshold_medium=0.80
+        )
+
+        # Test internal severity computation
+        assert detector._compute_severity(0.40) == Severity.CRITICAL
+        assert detector._compute_severity(0.55) == Severity.HIGH
+        assert detector._compute_severity(0.75) == Severity.MEDIUM
+        assert detector._compute_severity(0.90) == Severity.LOW
+
+    def test_issue_type_classification(self) -> None:
+        """Test issue type classification logic."""
+        detector = IlluminationDetector()
+
+        # Test classification with different combinations
+        # Shadows take priority (ratio > 0.10)
+        assert (
+            detector._classify_issue(0.8, 0.90, 0.15, 0.05) == IlluminationType.SHADOWS
+        )
+        # Hotspots take priority over vignetting (ratio > 0.10)
+        assert (
+            detector._classify_issue(0.8, 0.70, 0.05, 0.15) == IlluminationType.HOTSPOTS
+        )
+        # Vignetting when no shadows/hotspots (ratio < 0.75)
+        assert (
+            detector._classify_issue(0.8, 0.70, 0.05, 0.05)
+            == IlluminationType.VIGNETTING
+        )
+        # Uneven (uniformity < 0.70, no other issues)
+        assert (
+            detector._classify_issue(0.60, 0.90, 0.05, 0.05) == IlluminationType.UNEVEN
+        )
+        # Uniform (all good)
+        assert (
+            detector._classify_issue(0.85, 0.90, 0.05, 0.05) == IlluminationType.UNIFORM
+        )
+
+    def test_detect_empty_image_raises(self) -> None:
+        """Test detection raises ValueError for empty image."""
+        detector = IlluminationDetector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            detector.detect(np.array([]))
+
+    def test_detect_none_image_raises(self) -> None:
+        """Test detection raises ValueError for None image."""
+        detector = IlluminationDetector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            detector.detect(None)  # type: ignore
+
+    def test_result_attributes(self) -> None:
+        """Test IlluminationDetectionResult has all required attributes."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 180
+
+        detector = IlluminationDetector()
+        result = detector.detect(img)
+
+        assert isinstance(result, IlluminationDetectionResult)
+        assert hasattr(result, "has_issues")
+        assert hasattr(result, "score")
+        assert hasattr(result, "issue_type")
+        assert hasattr(result, "confidence")
+        assert hasattr(result, "severity")
+        assert hasattr(result, "uniformity")
+        assert hasattr(result, "vignetting_ratio")
+        assert hasattr(result, "shadow_ratio")
+        assert hasattr(result, "hotspot_ratio")
+
+        # Check value ranges
+        assert 0.0 <= result.score <= 1.0
+        assert 0.0 <= result.confidence <= 1.0
+        assert 0.0 <= result.uniformity <= 1.0
+        assert 0.0 <= result.shadow_ratio <= 1.0
+        assert 0.0 <= result.hotspot_ratio <= 1.0
+        assert result.vignetting_ratio >= 0.0
+
+    def test_small_image_handling(self) -> None:
+        """Test handling of small images (edge case for grid analysis)."""
+        # Create very small image (grid cells would be too small)
+        img = np.ones((50, 50, 3), dtype=np.uint8) * 180
+
+        detector = IlluminationDetector()
+        result = detector.detect(img)
+
+        # Should handle gracefully and return valid result
+        assert isinstance(result, IlluminationDetectionResult)
+        assert result.uniformity == 1.0  # Falls back to uniform for small images
+
+    def test_large_image_subsampling(self) -> None:
+        """Test that large images are subsampled for performance."""
+        # Create large image
+        img = np.ones((2000, 2000, 3), dtype=np.uint8) * 180
+
+        detector = IlluminationDetector()
+        result = detector.detect(img)
+
+        # Should complete without error and return valid result
+        assert isinstance(result, IlluminationDetectionResult)
+        assert 0.0 <= result.score <= 1.0
+
+
+class TestIlluminationTypeEnum:
+    """Test IlluminationType enum."""
+
+    def test_illumination_type_values(self) -> None:
+        """Test IlluminationType enum values."""
+        assert IlluminationType.UNIFORM.value == "uniform"
+        assert IlluminationType.SHADOWS.value == "shadows"
+        assert IlluminationType.HOTSPOTS.value == "hotspots"
+        assert IlluminationType.VIGNETTING.value == "vignetting"
+        assert IlluminationType.UNEVEN.value == "uneven"
+
+    def test_illumination_type_comparison(self) -> None:
+        """Test IlluminationType enum can be compared."""
+        assert IlluminationType.UNIFORM == IlluminationType.UNIFORM
+        assert IlluminationType.SHADOWS != IlluminationType.HOTSPOTS
+
+
+class TestConvenienceFunctionsExtended:
+    """Extended tests for convenience functions including illumination."""
+
+    def test_detect_illumination_convenience(self) -> None:
+        """Test detect_illumination convenience function."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 180
+
+        result = detect_illumination(img)
+
+        assert isinstance(result, IlluminationDetectionResult)
+        assert hasattr(result, "score")
+        assert hasattr(result, "has_issues")
+        assert hasattr(result, "issue_type")
+        assert hasattr(result, "uniformity")

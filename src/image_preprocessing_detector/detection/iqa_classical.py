@@ -12,7 +12,6 @@ from enum import Enum
 
 import cv2
 import numpy as np
-from scipy import ndimage
 
 from image_preprocessing_detector.utils import get_logger
 
@@ -601,7 +600,10 @@ class NoiseDetector:
         severity = self._compute_severity(noise_score)
 
         # Determine if noisy based on thresholds
-        is_noisy = noise_score > self.threshold_medium or salt_pepper_ratio > self.salt_pepper_threshold
+        is_noisy = (
+            noise_score > self.threshold_medium
+            or salt_pepper_ratio > self.salt_pepper_threshold
+        )
 
         # Confidence based on image size and detection consistency
         confidence = self._compute_confidence(gray, noise_score, salt_pepper_ratio)
@@ -647,8 +649,9 @@ class NoiseDetector:
         if h > max_dim or w > max_dim:
             scale = min(max_dim / h, max_dim / w)
             new_h, new_w = int(h * scale), int(w * scale)
-            gray = cv2.resize(gray.astype(np.float32), (new_w, new_h),
-                             interpolation=cv2.INTER_AREA).astype(np.float64)
+            gray = cv2.resize(
+                gray.astype(np.float32), (new_w, new_h), interpolation=cv2.INTER_AREA
+            ).astype(np.float64)
 
         # Apply Laplacian as high-pass filter (approximates diagonal wavelet detail)
         # This captures high-frequency content which is dominated by noise
@@ -689,7 +692,9 @@ class NoiseDetector:
         if h > max_dim or w > max_dim:
             scale = min(max_dim / h, max_dim / w)
             new_h, new_w = int(h * scale), int(w * scale)
-            gray_uint8 = cv2.resize(gray_uint8, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            gray_uint8 = cv2.resize(
+                gray_uint8, (new_w, new_h), interpolation=cv2.INTER_AREA
+            )
 
         # Find pixels at extreme values (potential salt/pepper)
         # Use near-extreme thresholds to be more robust
@@ -701,8 +706,12 @@ class NoiseDetector:
         kernel = np.ones((3, 3), dtype=np.uint8)
 
         # Open the masks - connected regions will survive, isolated pixels won't
-        salt_opened = cv2.morphologyEx(salt_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel)
-        pepper_opened = cv2.morphologyEx(pepper_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel)
+        salt_opened = cv2.morphologyEx(
+            salt_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel
+        )
+        pepper_opened = cv2.morphologyEx(
+            pepper_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel
+        )
 
         # Isolated pixels = original mask - opened mask (what was removed by opening)
         salt_isolated = salt_mask.astype(np.uint8) - salt_opened
@@ -731,17 +740,15 @@ class NoiseDetector:
 
         if has_gaussian and has_salt_pepper:
             return NoiseType.MIXED
-        elif has_salt_pepper:
+        if has_salt_pepper:
             return NoiseType.SALT_PEPPER
-        elif has_gaussian:
+        if has_gaussian:
             # Distinguish between Gaussian and speckle based on score distribution
             # Speckle noise typically has higher variance in local regions
             if noise_score > self.threshold_high:
                 return NoiseType.GAUSSIAN
-            else:
-                return NoiseType.SPECKLE
-        else:
-            return NoiseType.CLEAN
+            return NoiseType.SPECKLE
+        return NoiseType.CLEAN
 
     def _compute_severity(self, noise_score: float) -> Severity:
         """Compute severity based on noise score.
@@ -768,6 +775,7 @@ class NoiseDetector:
         Confidence is higher for:
         - Larger images (more samples)
         - Clear noise patterns (not borderline cases)
+        - Consistent detection across noise types
 
         Args:
             gray: Grayscale image
@@ -781,7 +789,7 @@ class NoiseDetector:
         pixels = gray.size
         size_confidence = min(1.0, pixels / 250000)  # Full confidence at 500x500
 
-        # Detection clarity (not borderline)
+        # Detection clarity for Gaussian noise (not borderline)
         # If score is far from threshold, we're more confident
         threshold_distances = [
             abs(noise_score - self.threshold_medium),
@@ -791,9 +799,411 @@ class NoiseDetector:
         clarity = min(threshold_distances) * 10  # Scale up
         clarity_confidence = min(1.0, 0.5 + clarity)
 
-        # Combined confidence
-        confidence = 0.6 * size_confidence + 0.4 * clarity_confidence
+        # Salt-pepper detection clarity
+        sp_clarity = abs(salt_pepper_ratio - self.salt_pepper_threshold) * 50
+        sp_confidence = min(1.0, 0.5 + sp_clarity)
 
+        # Combined confidence (weight based on which type is more prominent)
+        if salt_pepper_ratio > noise_score:
+            confidence = 0.5 * size_confidence + 0.2 * clarity_confidence + 0.3 * sp_confidence
+        else:
+            confidence = 0.5 * size_confidence + 0.4 * clarity_confidence + 0.1 * sp_confidence
+
+        return float(min(0.95, max(0.5, confidence)))
+
+
+class IlluminationType(str, Enum):
+    """Types of illumination issues."""
+
+    UNIFORM = "uniform"
+    SHADOWS = "shadows"
+    HOTSPOTS = "hotspots"
+    VIGNETTING = "vignetting"
+    UNEVEN = "uneven"
+
+
+@dataclass
+class IlluminationDetectionResult:
+    """Result of illumination detection analysis.
+
+    Attributes:
+        has_issues: Whether illumination issues are detected
+        score: Illumination quality score (0.0-1.0, higher = better uniformity)
+        issue_type: Classified type of illumination issue
+        confidence: Confidence score (0.0-1.0)
+        severity: Issue severity level
+        uniformity: Regional intensity uniformity (0.0-1.0)
+        vignetting_ratio: Edge-to-center intensity ratio (1.0 = no vignetting)
+        shadow_ratio: Ratio of shadow pixels (0.0-1.0)
+        hotspot_ratio: Ratio of hotspot pixels (0.0-1.0)
+    """
+
+    has_issues: bool
+    score: float
+    issue_type: IlluminationType
+    confidence: float
+    severity: Severity
+    uniformity: float
+    vignetting_ratio: float
+    shadow_ratio: float
+    hotspot_ratio: float
+
+
+class IlluminationDetector:
+    """Detects illumination issues in document images.
+
+    Analyzes regional brightness variations to detect:
+    - Uneven illumination (different brightness across regions)
+    - Shadows (unexpectedly dark regions)
+    - Hotspots (overexposed regions)
+    - Vignetting (darkening towards edges)
+    """
+
+    def __init__(
+        self,
+        threshold_critical: float = 0.50,
+        threshold_high: float = 0.65,
+        threshold_medium: float = 0.80,
+        grid_size: int = 5,
+        shadow_percentile: float = 10.0,
+        hotspot_percentile: float = 95.0,
+    ) -> None:
+        """Initialize illumination detector.
+
+        Args:
+            threshold_critical: Critical uniformity threshold (< 0.50 = severe issues)
+            threshold_high: High severity threshold (< 0.65 = noticeable issues)
+            threshold_medium: Medium severity threshold (< 0.80 = slight issues)
+            grid_size: Grid divisions for regional analysis (default: 5x5)
+            shadow_percentile: Percentile for shadow detection (default: 10%)
+            hotspot_percentile: Percentile for hotspot detection (default: 95%)
+        """
+        self.threshold_critical = threshold_critical
+        self.threshold_high = threshold_high
+        self.threshold_medium = threshold_medium
+        self.grid_size = grid_size
+        self.shadow_percentile = shadow_percentile
+        self.hotspot_percentile = hotspot_percentile
+
+        logger.info(
+            "Illumination detector initialized",
+            threshold_critical=threshold_critical,
+            threshold_high=threshold_high,
+            threshold_medium=threshold_medium,
+            grid_size=grid_size,
+        )
+
+    def detect(self, image: np.ndarray) -> IlluminationDetectionResult:
+        """Detect illumination issues in an image.
+
+        Args:
+            image: Input image (BGR format)
+
+        Returns:
+            IlluminationDetectionResult with uniformity and issue details
+
+        Raises:
+            ValueError: If image is invalid or empty
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        logger.debug("Running illumination detection", image_shape=image.shape)
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # For large images, subsample for performance
+        h, w = gray.shape
+        max_dim = 500
+        if h > max_dim or w > max_dim:
+            scale = min(max_dim / h, max_dim / w)
+            new_h, new_w = int(h * scale), int(w * scale)
+            gray = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+        # Analyze regional uniformity
+        uniformity = self._compute_uniformity(gray)
+
+        # Detect vignetting
+        vignetting_ratio = self._detect_vignetting(gray)
+
+        # Detect shadows and hotspots
+        shadow_ratio, hotspot_ratio = self._detect_shadows_hotspots(gray)
+
+        # Compute overall score (higher = better)
+        score = self._compute_score(
+            uniformity, vignetting_ratio, shadow_ratio, hotspot_ratio
+        )
+
+        # Classify issue type
+        issue_type = self._classify_issue(
+            uniformity, vignetting_ratio, shadow_ratio, hotspot_ratio
+        )
+
+        # Determine severity
+        severity = self._compute_severity(score)
+
+        # Determine if there are issues
+        has_issues = score < self.threshold_medium
+
+        # Compute confidence
+        confidence = self._compute_confidence(gray, score)
+
+        logger.debug(
+            "Illumination detection complete",
+            score=score,
+            uniformity=uniformity,
+            vignetting_ratio=vignetting_ratio,
+            shadow_ratio=shadow_ratio,
+            hotspot_ratio=hotspot_ratio,
+            issue_type=issue_type.value,
+            severity=severity.value,
+            has_issues=has_issues,
+        )
+
+        return IlluminationDetectionResult(
+            has_issues=has_issues,
+            score=score,
+            issue_type=issue_type,
+            confidence=confidence,
+            severity=severity,
+            uniformity=uniformity,
+            vignetting_ratio=vignetting_ratio,
+            shadow_ratio=shadow_ratio,
+            hotspot_ratio=hotspot_ratio,
+        )
+
+    def _compute_uniformity(self, gray: np.ndarray) -> float:
+        """Compute regional intensity uniformity.
+
+        Divides image into grid and measures intensity variation.
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Uniformity score (0-1, higher = more uniform)
+        """
+        h, w = gray.shape
+        cell_h = h // self.grid_size
+        cell_w = w // self.grid_size
+
+        # Skip if image too small for grid
+        if cell_h < 10 or cell_w < 10:
+            return 1.0
+
+        # Compute mean intensity for each cell
+        means = []
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                y1, y2 = i * cell_h, (i + 1) * cell_h
+                x1, x2 = j * cell_w, (j + 1) * cell_w
+                cell = gray[y1:y2, x1:x2]
+                means.append(np.mean(cell))
+
+        means = np.array(means)
+
+        # Compute coefficient of variation (std/mean)
+        # Lower CV = more uniform
+        if np.mean(means) > 0:
+            cv = np.std(means) / np.mean(means)
+            # Convert to uniformity score (0-1, higher = better)
+            # CV of 0.3 or more is considered severe non-uniformity
+            uniformity = max(0.0, 1.0 - cv / 0.3)
+        else:
+            uniformity = 0.0
+
+        return float(uniformity)
+
+    def _detect_vignetting(self, gray: np.ndarray) -> float:
+        """Detect vignetting by comparing edge and center intensities.
+
+        Vignetting causes edges to be darker than center.
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Vignetting ratio (edge_mean / center_mean, <1.0 = vignetting)
+        """
+        h, w = gray.shape
+
+        # Define center region (middle 40%)
+        margin_y = int(h * 0.3)
+        margin_x = int(w * 0.3)
+        center = gray[margin_y : h - margin_y, margin_x : w - margin_x]
+
+        # Define edge regions (outer 15% on each side)
+        edge_width = int(min(h, w) * 0.15)
+        if edge_width < 5:
+            return 1.0
+
+        # Sample edges
+        top = gray[:edge_width, :]
+        bottom = gray[-edge_width:, :]
+        left = gray[:, :edge_width]
+        right = gray[:, -edge_width:]
+
+        # Compute means
+        center_mean = np.mean(center)
+        edge_mean = np.mean(
+            [np.mean(top), np.mean(bottom), np.mean(left), np.mean(right)]
+        )
+
+        # Avoid division by zero
+        if center_mean < 1:
+            return 1.0
+
+        ratio = edge_mean / center_mean
+        return float(ratio)
+
+    def _detect_shadows_hotspots(self, gray: np.ndarray) -> tuple[float, float]:
+        """Detect shadow and hotspot regions.
+
+        Shadows are unexpectedly dark regions (intensity < 50).
+        Hotspots are unexpectedly bright regions (intensity > 240).
+
+        Uses absolute thresholds suitable for document images where
+        shadows and hotspots represent scanning/lighting artifacts.
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Tuple of (shadow_ratio, hotspot_ratio)
+        """
+        # Use absolute thresholds for document images
+        # Shadows: very dark regions (< 50 intensity)
+        # Hotspots: very bright/saturated regions (> 240 intensity)
+        shadow_thresh = 50
+        hotspot_thresh = 240
+
+        # Adjust based on image characteristics
+        overall_mean = np.mean(gray)
+
+        # For dark documents (e.g., inverted), adjust shadow threshold
+        if overall_mean < 80:
+            shadow_thresh = 30  # Lower threshold for dark images
+        # For very bright documents, adjust hotspot threshold
+        if overall_mean > 220:
+            hotspot_thresh = 250  # Higher threshold for bright images
+
+        # Count shadow and hotspot pixels
+        shadow_pixels = np.sum(gray < shadow_thresh)
+        hotspot_pixels = np.sum(gray > hotspot_thresh)
+        total_pixels = gray.size
+
+        shadow_ratio = shadow_pixels / total_pixels
+        hotspot_ratio = hotspot_pixels / total_pixels
+
+        return float(shadow_ratio), float(hotspot_ratio)
+
+    def _compute_score(
+        self,
+        uniformity: float,
+        vignetting_ratio: float,
+        shadow_ratio: float,
+        hotspot_ratio: float,
+    ) -> float:
+        """Compute overall illumination quality score.
+
+        Args:
+            uniformity: Regional uniformity (0-1)
+            vignetting_ratio: Edge/center ratio
+            shadow_ratio: Shadow pixel ratio
+            hotspot_ratio: Hotspot pixel ratio
+
+        Returns:
+            Quality score (0-1, higher = better)
+        """
+        # Vignetting penalty (ratio < 0.8 means significant vignetting)
+        vignetting_score = min(1.0, vignetting_ratio / 0.8)
+
+        # Shadow/hotspot penalties (more than 5% is concerning)
+        shadow_score = max(0.0, 1.0 - shadow_ratio / 0.05)
+        hotspot_score = max(0.0, 1.0 - hotspot_ratio / 0.05)
+
+        # Weighted combination
+        score = (
+            0.40 * uniformity
+            + 0.25 * vignetting_score
+            + 0.20 * shadow_score
+            + 0.15 * hotspot_score
+        )
+
+        return float(max(0.0, min(1.0, score)))
+
+    def _classify_issue(
+        self,
+        uniformity: float,
+        vignetting_ratio: float,
+        shadow_ratio: float,
+        hotspot_ratio: float,
+    ) -> IlluminationType:
+        """Classify the primary illumination issue.
+
+        Args:
+            uniformity: Regional uniformity (0-1)
+            vignetting_ratio: Edge/center ratio
+            shadow_ratio: Shadow pixel ratio
+            hotspot_ratio: Hotspot pixel ratio
+
+        Returns:
+            Primary IlluminationType
+        """
+        # Check for specific issues in order of severity
+        # Prioritize shadows and hotspots (specific artifacts) over vignetting
+        if shadow_ratio > 0.10:
+            return IlluminationType.SHADOWS
+        if hotspot_ratio > 0.10:
+            return IlluminationType.HOTSPOTS
+        if vignetting_ratio < 0.75:
+            return IlluminationType.VIGNETTING
+        if uniformity < 0.70:
+            return IlluminationType.UNEVEN
+        return IlluminationType.UNIFORM
+
+    def _compute_severity(self, score: float) -> Severity:
+        """Compute severity based on illumination score.
+
+        Args:
+            score: Illumination quality score (0-1)
+
+        Returns:
+            Severity level
+        """
+        if score < self.threshold_critical:
+            return Severity.CRITICAL
+        if score < self.threshold_high:
+            return Severity.HIGH
+        if score < self.threshold_medium:
+            return Severity.MEDIUM
+        return Severity.LOW
+
+    def _compute_confidence(self, gray: np.ndarray, score: float) -> float:
+        """Compute confidence score for the detection.
+
+        Args:
+            gray: Grayscale image
+            score: Computed quality score
+
+        Returns:
+            Confidence score (0-1)
+        """
+        # Base confidence from image size
+        pixels = gray.size
+        size_confidence = min(1.0, pixels / 250000)
+
+        # Detection clarity
+        threshold_distances = [
+            abs(score - self.threshold_medium),
+            abs(score - self.threshold_high),
+            abs(score - self.threshold_critical),
+        ]
+        clarity = min(threshold_distances) * 5
+        clarity_confidence = min(1.0, 0.5 + clarity)
+
+        confidence = 0.6 * size_confidence + 0.4 * clarity_confidence
         return float(min(0.95, max(0.5, confidence)))
 
 
@@ -878,4 +1288,26 @@ def detect_noise(image: np.ndarray) -> NoiseDetectionResult:
         ...     )
     """
     detector = NoiseDetector()
+    return detector.detect(image)
+
+
+def detect_illumination(image: np.ndarray) -> IlluminationDetectionResult:
+    """Convenience function for illumination detection.
+
+    Args:
+        image: Input image (BGR format)
+
+    Returns:
+        IlluminationDetectionResult
+
+    Example:
+        >>> img = cv2.imread("scanned_page.jpg")
+        >>> result = detect_illumination(img)
+        >>> if result.has_issues:
+        ...     print(
+        ...         f"Illumination issue: {result.issue_type.value}, "
+        ...         f"score={result.score:.2f} ({result.severity.value})"
+        ...     )
+    """
+    detector = IlluminationDetector()
     return detector.detect(image)
