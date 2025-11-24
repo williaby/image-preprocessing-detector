@@ -2,10 +2,22 @@
 
 Phase 1: Text gate and classical IQA methods
 Phase 2-3: ML-based detection (DocLayout-YOLO, PyTorch)
+Phase 4.9: Discrepancy threshold tuning for ML-classical comparison
 
 Model configuration: configs/models/doclayout_yolo.yaml
 """
 
+from image_preprocessing_detector.detection.discrepancy import (
+    ClassicalScoreAdapter,
+    ClassicalScores,
+    DiscrepancyAnalyzer,
+    DiscrepancyResult,
+    DiscrepancyThresholds,
+    EscalationReason,
+    MLScores,
+    ThresholdConfig,
+    create_discrepancy_analyzer,
+)
 from image_preprocessing_detector.detection.iqa_classical import (
     BinarizationQualityDetector,
     BinarizationQualityResult,
@@ -43,6 +55,16 @@ from image_preprocessing_detector.detection.text_gate import (
 )
 
 __all__ = [
+    # Discrepancy threshold tuning (Phase 4.9)
+    "ClassicalScoreAdapter",
+    "ClassicalScores",
+    "DiscrepancyAnalyzer",
+    "DiscrepancyResult",
+    "DiscrepancyThresholds",
+    "EscalationReason",
+    "MLScores",
+    "ThresholdConfig",
+    "create_discrepancy_analyzer",
     # Classical IQA
     "BinarizationQualityDetector",
     "BinarizationQualityResult",
