@@ -46,7 +46,6 @@ from image_preprocessing_detector.detection.layout_lite.watermark_detector impor
     detect_watermark,
 )
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -185,7 +184,9 @@ def synthetic_colorful() -> np.ndarray:
 class TestTableDetector:
     """Tests for table detection using Hough lines."""
 
-    def test_detect_tables_on_simple_table(self, simple_table_image: np.ndarray) -> None:
+    def test_detect_tables_on_simple_table(
+        self, simple_table_image: np.ndarray
+    ) -> None:
         """Test table detection on simple table fixture."""
         result = detect_tables(simple_table_image)
 
@@ -254,7 +255,12 @@ class TestColumnDetector:
         result = detect_column_count(synthetic_single_column)
 
         assert isinstance(result, ColumnDetectionResult)
-        assert result.column_type in ["single_column", "multi_column", "three_column", "complex"]
+        assert result.column_type in [
+            "single_column",
+            "multi_column",
+            "three_column",
+            "complex",
+        ]
         assert 0.0 <= result.confidence <= 1.0
         assert result.num_columns >= 1
 
@@ -398,9 +404,7 @@ class TestBackgroundDetector:
         # Gradient should be detected as colorful
         assert result.colorful_background is True or result.avg_saturation > 0
 
-    def test_detect_white_background(
-        self, synthetic_single_column: np.ndarray
-    ) -> None:
+    def test_detect_white_background(self, synthetic_single_column: np.ndarray) -> None:
         """Test that white/gray background is not colorful."""
         result = detect_colorful_background(synthetic_single_column)
 
@@ -451,8 +455,9 @@ class TestLayoutLiteAnalyzer:
 
         assert isinstance(result, dict)
         # Should have results for all enabled detectors
-        assert "column_type" in result or "error" in result
-        assert "has_tables" in result or "error" in result
+        # Result keys are: column, table, figure, fuzzy_scan, watermark, colorful_background
+        assert "column" in result or "error" in result
+        assert "table" in result or "error" in result
 
     @pytest.mark.real_data
     def test_analyze_real_table_fixture(self, simple_table_image: np.ndarray) -> None:

@@ -833,6 +833,7 @@ class TestNormalizeClassicalIQA:
         blur_result = BlurDetectionResult(
             is_blurred=True,
             score=50.0,  # Low Laplacian variance
+            blur_score=0.25,  # Normalized blur score
             confidence=0.9,
             severity=Severity.HIGH,
         )
@@ -845,6 +846,7 @@ class TestNormalizeClassicalIQA:
         blur_result = BlurDetectionResult(
             is_blurred=False,
             score=300.0,  # High Laplacian variance
+            blur_score=1.0,  # Normalized blur score (capped)
             confidence=0.8,
             severity=Severity.LOW,
         )

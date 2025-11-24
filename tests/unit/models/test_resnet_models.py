@@ -9,7 +9,7 @@ Tests cover:
 - Error handling for invalid configurations
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 import torch
@@ -23,7 +23,6 @@ from image_preprocessing_detector.models.resnet_teacher import (
     IQAHead,
     ResNetTeacher,
 )
-
 
 # =============================================================================
 # IQAHead (Teacher) Tests
@@ -142,7 +141,7 @@ class TestResNetTeacher:
     def test_issue_types_constant(self) -> None:
         """Test ISSUE_TYPES class variable is correctly defined."""
         expected_types = ["blur", "noise", "skew", "illumination", "artifacts"]
-        assert ResNetTeacher.ISSUE_TYPES == expected_types
+        assert expected_types == ResNetTeacher.ISSUE_TYPES
 
     def test_initialization_default_non_pretrained(self) -> None:
         """Test model initializes with default parameters (non-pretrained for speed)."""
@@ -191,6 +190,7 @@ class TestResNetTeacher:
     def test_forward_pass_different_sizes(self) -> None:
         """Test forward pass with different input sizes."""
         model = ResNetTeacher(pretrained=False)
+        model.eval()  # BatchNorm requires batch size > 1 in training mode
 
         # Test different resolutions
         for size in [224, 256, 320]:
@@ -316,7 +316,7 @@ class TestResNetStudent:
 
     def test_invalid_num_heads_raises_error(self) -> None:
         """Test that invalid num_heads raises ValueError."""
-        with pytest.raises(ValueError, match="num_heads .* must match"):
+        with pytest.raises(ValueError, match=r"num_heads .* must match"):
             ResNetStudent(num_heads=3, pretrained=False)
 
     def test_forward_pass_shape(self) -> None:
@@ -336,6 +336,7 @@ class TestResNetStudent:
     def test_forward_pass_different_batch_sizes(self) -> None:
         """Test forward pass with different batch sizes."""
         model = ResNetStudent(pretrained=False)
+        model.eval()  # BatchNorm requires batch size > 1 in training mode
 
         for batch_size in [1, 2, 4, 8]:
             x = torch.randn(batch_size, 3, 224, 224)
@@ -471,6 +472,9 @@ class TestEdgeCases:
         """Test models work with batch size of 1."""
         teacher = ResNetTeacher(pretrained=False)
         student = ResNetStudent(pretrained=False)
+        # BatchNorm requires batch size > 1 in training mode
+        teacher.eval()
+        student.eval()
         x = torch.randn(1, 3, 224, 224)
 
         teacher_out = teacher(x)
@@ -490,7 +494,9 @@ class TestEdgeCases:
             out2 = model(x)
 
         for issue_type in ResNetStudent.ISSUE_TYPES:
-            assert torch.allclose(out1[issue_type]["logits"], out2[issue_type]["logits"])
+            assert torch.allclose(
+                out1[issue_type]["logits"], out2[issue_type]["logits"]
+            )
 
     def test_train_mode_with_dropout(self) -> None:
         """Test that train mode uses dropout (non-deterministic)."""
@@ -502,9 +508,9 @@ class TestEdgeCases:
         outputs = [model(x)["blur"]["logits"] for _ in range(3)]
 
         # At least some should differ (with high probability at dropout=0.5)
-        all_same = all(torch.allclose(outputs[0], o) for o in outputs[1:])
         # Note: This test might occasionally fail due to randomness
         # In practice, we just verify no errors occur
+        _ = all(torch.allclose(outputs[0], o) for o in outputs[1:])
 
 
 # =============================================================================
@@ -514,7 +520,7 @@ class TestEdgeCases:
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "model_class,pretrained",
+    ("model_class", "pretrained"),
     [
         (ResNetTeacher, False),
         (ResNetStudent, False),
@@ -529,7 +535,7 @@ def test_model_initialization(model_class: type, pretrained: bool) -> None:
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "batch_size,height,width",
+    ("batch_size", "height", "width"),
     [
         (1, 224, 224),
         (2, 256, 256),
@@ -540,6 +546,7 @@ def test_model_initialization(model_class: type, pretrained: bool) -> None:
 def test_various_input_sizes(batch_size: int, height: int, width: int) -> None:
     """Test models handle various input sizes."""
     model = ResNetStudent(pretrained=False)
+    model.eval()  # BatchNorm requires batch size > 1 in training mode
     x = torch.randn(batch_size, 3, height, width)
 
     output = model(x)
