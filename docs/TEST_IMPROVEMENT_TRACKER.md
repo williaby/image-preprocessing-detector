@@ -21,83 +21,47 @@
 
 ## Executive Summary
 
-### Overall Test Suite Score: 6/10 (revised down due to coverage gaps)
+### Overall Test Suite Score: 7/10 (revised based on actual CI run)
 
 | Category | Score | Status |
 |----------|-------|--------|
-| Quantity (test-to-code ratio) | 9/10 | ~1.2:1 ratio |
+| Quantity (test-to-code ratio) | 9/10 | ~1.2:1 ratio, 723 tests |
 | Organization | 9/10 | Well-structured |
 | Quality Patterns | 8/10 | Strong AAA, property-based |
-| **Coverage Config** | **4/10** | **79% of files excluded** |
+| **Coverage Config** | **7/10** | 89.72% with key modules covered |
 | Real Data Testing | 5/10 | Underutilized fixtures |
 | Edge Cases | 7/10 | Limited failure injection |
 
-### Key Metrics
+### Key Metrics (from full CI environment)
 
-- **Test functions (AST count)**: 543 across 32 files
-- **Tests collected by pytest**: 410 (missing deps: torch, scipy, nox)
-- **Test classes**: 117
-- **Shared fixtures**: 18
-- **Test LOC**: ~13,700
+- **Tests collected**: 723
+- **Tests passed**: 716 (7 skipped - Phase 3 features)
+- **Coverage**: 89.72% (2,249 statements)
 - **Source LOC**: ~11,300
-- **Real-data tests**: 14 (only in `test_real_fixtures.py`)
+- **Real-data tests**: 25 (test_real_fixtures.py in e2e + integration)
 
-### Test Collection Breakdown
+### Coverage by Module (actual CI run)
 
-| File | Tests | Status |
-|------|-------|--------|
-| `test_noxfile.py` | 47 | Skipped (nox not installed) |
-| `test_datetime_compat.py` | 47 | Runs |
-| `test_iqa_ml.py` | 29 | Runs |
-| `test_corrections.py` | 28 | Runs |
-| `test_iqa_classical.py` | 26 | Runs |
-| `test_phase2_complete.py` | 24 | Partial (Phase 3 skips) |
-| `test_loss_functions.py` | 21 | Skipped (torch) |
-| `test_resnet_teacher.py` | 20 | Skipped (torch) |
-| `test_distillation_loss.py` | 19 | Skipped (torch) |
-| `test_image_metrics.py` | 19 | Skipped (scipy) |
-| Other files | 263 | Mostly runs |
+| Module | Coverage | Status |
+|--------|----------|--------|
+| `detection/iqa_classical.py` | 81.24% | OK |
+| `detection/iqa_ml.py` | 83.90% | OK |
+| `detection/text_gate.py` | 97.98% | Excellent |
+| `ingestion/image_loader.py` | 97.22% | Excellent |
+| `ingestion/pdf_loader.py` | 91.49% | Good |
+| `ingestion/pdf_resolution.py` | 96.51% | Excellent |
+| `ingestion/pdf_upscaler.py` | 98.98% | Excellent |
+| `metrics/dqs_calculator.py` | 87.64% | Good |
+| `output/json_generator.py` | 98.25% | Excellent |
+| `schema.py` | 97.77% | Excellent |
+| `utils/datetime_compat.py` | 95.30% | Excellent |
+| `noxfile.py` | 62.60% | Needs work |
 
-### Critical Finding: Coverage Exclusions
+### Still Excluded from Coverage (needs tests)
 
-| Metric | Value | Issue |
-|--------|-------|-------|
-| Total source files | 57 | - |
-| Files in coverage | **12 (21%)** | Most code excluded |
-| Files excluded | **45 (79%)** | Major blind spot |
-| Reported coverage | 89.74% | **Misleading** |
-| Estimated true coverage | ~25-30% | Based on file ratio |
+The following modules are still excluded from coverage measurement and need tests:
 
----
-
-## Actual Coverage Analysis (2025-11-24)
-
-### Files INCLUDED in Coverage (12 files)
-
-| File | Stmts | Miss | Branch | Cover | Status |
-|------|-------|------|--------|-------|--------|
-| `__init__.py` | 5 | 0 | 0 | 100% | OK |
-| `classification/__init__.py` | 4 | 0 | 0 | 100% | OK |
-| `classification/pdf_image_detector.py` | 46 | 0 | 12 | 98% | OK |
-| `classification/pdf_text_extractor.py` | 42 | 0 | 10 | 100% | OK |
-| `classification/pdf_type_classifier.py` | 25 | 0 | 6 | 100% | OK |
-| `core/__init__.py` | 0 | 0 | 0 | 100% | OK |
-| `core/config.py` | 39 | 1 | 8 | 98% | OK |
-| `schema.py` | 169 | 2 | 10 | 98% | OK |
-| `utils/__init__.py` | 17 | 2 | 4 | 86% | OK |
-| `utils/datetime_compat.py` | 109 | 4 | 40 | 95% | OK |
-| `utils/log_config.py` | 19 | 0 | 2 | 100% | OK |
-| `utils/model_config.py` | 37 | 37 | 10 | **0%** | **NEEDS TESTS** |
-| **TOTAL** | **512** | **46** | **102** | **89.74%** | - |
-
-### Files EXCLUDED from Coverage (45 files) - **NO TEST VALIDATION**
-
-#### Detection Module (11 files) - Core functionality, ZERO coverage
-- `detection/__init__.py`
-- `detection/iqa_classical.py` - Classical IQA (551 LOC)
-- `detection/iqa_ml.py` - ML IQA (722 LOC)
-- `detection/text_gate.py` - Text detection (341 LOC)
-- `detection/layout_lite/__init__.py`
+#### layout_lite/ (9 files) - Phase 6 feature, NO tests
 - `detection/layout_lite/analyzer.py` - Layout analyzer (139 LOC)
 - `detection/layout_lite/table_detector.py` - Table detection (140 LOC)
 - `detection/layout_lite/figure_detector.py` - Figure detection (113 LOC)
@@ -108,45 +72,44 @@
 - `detection/layout_lite/layout_types.py` - Type definitions (78 LOC)
 - `detection/layout_lite/constants.py` - Constants (64 LOC)
 
-#### Ingestion Module (7 files) - PDF/image loading, ZERO coverage
-- `ingestion/__init__.py`
-- `ingestion/pdf_loader.py` - PDF loading (264 LOC)
-- `ingestion/image_loader.py` - Image loading (281 LOC)
-- `ingestion/pdf_upscaler.py` - DPI upscaling (326 LOC)
-- `ingestion/pdf_resolution.py` - Resolution analysis (204 LOC)
-- `ingestion/pdf_analyzer.py` - Pre-flight analysis (255 LOC)
-- `ingestion/document_processor.py` - Document processing (286 LOC)
-
-#### Correction Module (2 files) - Image corrections, ZERO coverage
-- `correction/__init__.py`
-- `correction/corrections.py` - Skew/contrast/blur fixes (442 LOC)
-
-#### Output Module (2 files) - JSON generation, ZERO coverage
-- `output/__init__.py`
-- `output/json_generator.py` - JSON output (391 LOC)
-
-#### Models Module (4 files) - ML models, ZERO coverage
-- `models/__init__.py`
-- `models/resnet_teacher.py` - Teacher model (293 LOC)
-- `models/resnet_student.py` - Student model (277 LOC)
-- `models/loss_functions.py` - Loss functions (329 LOC)
-
-#### Training Module (6 files) - Training pipelines, ZERO coverage
-- `training/__init__.py`
+#### Training Module (6 files) - Requires PyTorch
 - `training/teacher_trainer.py` - Teacher training (528 LOC)
 - `training/student_trainer.py` - Student training (597 LOC)
 - `training/distillation_loss.py` - Distillation (248 LOC)
 - `training/generate_soft_labels.py` - Label generation (304 LOC)
 - `training/checkpoint_utils.py` - Checkpointing
 
-#### Other Excluded (9 files)
-- `cli.py` - CLI interface (412 LOC)
+#### Other Excluded
+- `cli.py` - CLI interface (tested via integration but excluded from unit coverage)
 - `augmentation/genalog_config.py` - Augmentation config (297 LOC)
 - `augmentation/genalog_degrader.py` - Degradation (313 LOC)
-- `metrics/dqs_calculator.py` - DQS calculation (498 LOC)
 - `routing/recommendation_engine.py` - Routing logic
 - `utils/gcs_uploader.py` - GCS upload (322 LOC)
 - `utils/metadata_generator.py` - Metadata (438 LOC)
+
+---
+
+## Modules WITH Good Coverage (from CI)
+
+These modules are tested and have good coverage:
+
+| Module | Stmts | Miss | Coverage | Notes |
+|--------|-------|------|----------|-------|
+| `detection/iqa_classical.py` | 403 | 65 | 81.24% | Core IQA |
+| `detection/iqa_ml.py` | 261 | 34 | 83.90% | ML inference |
+| `detection/text_gate.py` | 87 | 1 | 97.98% | Text detection |
+| `ingestion/image_loader.py` | 82 | 0 | 97.22% | Image loading |
+| `ingestion/pdf_loader.py` | 78 | 4 | 91.49% | PDF loading |
+| `ingestion/pdf_resolution.py` | 72 | 3 | 96.51% | DPI analysis |
+| `ingestion/pdf_upscaler.py` | 88 | 0 | 98.98% | Upscaling |
+| `metrics/dqs_calculator.py` | 266 | 27 | 87.64% | Quality scores |
+| `output/json_generator.py` | 88 | 2 | 98.25% | JSON output |
+| `classification/pdf_image_detector.py` | 46 | 0 | 98.28% | PDF classification |
+| `core/config.py` | 39 | 1 | 97.87% | Configuration |
+| `schema.py` | 169 | 2 | 97.77% | Data models |
+| `utils/datetime_compat.py` | 109 | 4 | 95.30% | Date utilities |
+| `utils/model_config.py` | 37 | 1 | 95.74% | Model config |
+| **TOTAL** | **2,249** | **193** | **89.72%** | - |
 
 ---
 
