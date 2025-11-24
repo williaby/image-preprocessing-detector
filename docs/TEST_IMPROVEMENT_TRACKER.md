@@ -290,7 +290,7 @@ data/test_fixtures/           Total: ~828 KB
 - [x] Add parametrized tests using `@pytest.mark.parametrize` ✅ COMPLETED
 - [x] Add performance/latency benchmark tests ✅ COMPLETED
 - [x] Add snapshot tests for JSON output validation ✅ COMPLETED
-- [ ] Enable and run mutation testing regularly
+- [x] Enable and run mutation testing regularly ✅ COMPLETED (docs/development/MUTATION_TESTING.md)
 - [ ] Add chaos/fault-injection tests
 
 ---
@@ -374,10 +374,13 @@ data/test_fixtures/degraded_samples/
 - [x] `tests/unit/utils/test_metadata_generator.py` created (400+ lines, 25+ tests) (2025-11-24)
 - [x] `tests/unit/utils/test_gcs_uploader.py` created (350+ lines, 20+ tests) (2025-11-24)
 - [x] `tests/unit/output/test_json_snapshots.py` created (450+ lines, 25+ tests) (2025-11-24)
+- [x] `docs/development/MUTATION_TESTING.md` created - mutation testing guide (2025-11-24)
+- [x] `scripts/run_mutation_tests.sh` created - mutation testing runner (2025-11-24)
+- [x] `tests/integration/test_file_type_coverage.py` created (500+ lines, 30+ tests) (2025-11-24)
 
 ### In Progress
 
-- [x] Snapshot tests for JSON output validation ✅ COMPLETED
+(none)
 
 ### Blocked
 
@@ -413,3 +416,5 @@ data/test_fixtures/degraded_samples/
 | 2025-11-24 | Added metadata generator tests (25+ tests, 400+ lines) | Claude |
 | 2025-11-24 | Added GCS uploader tests with mocks (20+ tests, 350+ lines) | Claude |
 | 2025-11-24 | Added JSON snapshot tests for output validation (25+ tests, 450+ lines) | Claude |
+| 2025-11-24 | Added mutation testing guide and runner script | Claude |
+| 2025-11-24 | Added file type coverage tests (30+ tests, 500+ lines) - JPEG, PNG, TIFF, BMP, WEBP, PDF | Claude |
