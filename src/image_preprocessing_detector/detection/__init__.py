@@ -11,11 +11,15 @@ from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
     ContrastDetectionResult,
     ContrastDetector,
+    NoiseDetectionResult,
+    NoiseDetector,
+    NoiseType,
     Severity,
     SkewDetectionResult,
     SkewDetector,
     detect_blur,
     detect_contrast,
+    detect_noise,
     detect_skew,
 )
 from image_preprocessing_detector.detection.text_gate import (
@@ -25,19 +29,24 @@ from image_preprocessing_detector.detection.text_gate import (
 )
 
 __all__ = [
+    # Classical IQA
     "BlurDetectionResult",
     "BlurDetector",
     "ContrastDetectionResult",
     "ContrastDetector",
+    "NoiseDetectionResult",
+    "NoiseDetector",
+    "NoiseType",
     "Severity",
     "SkewDetectionResult",
-    # Classical IQA
     "SkewDetector",
-    "TextDetectionResult",
     # Text gate
+    "TextDetectionResult",
     "TextGate",
+    # Convenience functions
     "detect_blur",
     "detect_contrast",
+    "detect_noise",
     "detect_skew",
     "detect_text",
 ]

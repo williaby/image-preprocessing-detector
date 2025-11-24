@@ -4,6 +4,7 @@ Implements fast classical computer vision methods for detecting image quality is
 - Skew detection (Hough Transform + Projection Profile)
 - Blur detection (Laplacian variance)
 - Low contrast detection (Histogram analysis)
+- Noise detection (Wavelet-based estimation)
 """
 
 from dataclasses import dataclass
@@ -11,6 +12,7 @@ from enum import Enum
 
 import cv2
 import numpy as np
+from scipy import ndimage
 
 from image_preprocessing_detector.utils import get_logger
 
@@ -489,6 +491,312 @@ class ContrastDetector:
         )
 
 
+class NoiseType(str, Enum):
+    """Types of image noise."""
+
+    GAUSSIAN = "gaussian"
+    SALT_PEPPER = "salt_pepper"
+    SPECKLE = "speckle"
+    MIXED = "mixed"
+    CLEAN = "clean"
+
+
+@dataclass
+class NoiseDetectionResult:
+    """Result of noise detection analysis.
+
+    Attributes:
+        is_noisy: Whether significant noise is detected
+        score: Noise level score (0.0-1.0, higher = more noise)
+        noise_type: Classified type of noise
+        confidence: Confidence score (0.0-1.0)
+        severity: Issue severity level
+        sigma_estimate: Estimated noise standard deviation
+        salt_pepper_ratio: Ratio of salt-and-pepper pixels (0.0-1.0)
+    """
+
+    is_noisy: bool
+    score: float
+    noise_type: NoiseType
+    confidence: float
+    severity: Severity
+    sigma_estimate: float
+    salt_pepper_ratio: float
+
+
+class NoiseDetector:
+    """Detects image noise using wavelet-based estimation.
+
+    Uses Median Absolute Deviation (MAD) of high-frequency coefficients
+    to estimate noise level. Also detects salt-and-pepper noise patterns.
+
+    The wavelet-based approach is robust and works well for document images
+    where text edges should not be confused with noise.
+    """
+
+    # MAD normalization constant for Gaussian noise
+    MAD_CONSTANT = 0.6745
+
+    def __init__(
+        self,
+        threshold_critical: float = 0.15,
+        threshold_high: float = 0.10,
+        threshold_medium: float = 0.05,
+        salt_pepper_threshold: float = 0.01,
+    ) -> None:
+        """Initialize noise detector.
+
+        Args:
+            threshold_critical: Critical noise threshold (> 0.15 = severe noise)
+            threshold_high: High noise threshold (> 0.10 = noticeable noise)
+            threshold_medium: Medium noise threshold (> 0.05 = slight noise)
+            salt_pepper_threshold: Threshold for salt-and-pepper detection (> 1% pixels)
+        """
+        self.threshold_critical = threshold_critical
+        self.threshold_high = threshold_high
+        self.threshold_medium = threshold_medium
+        self.salt_pepper_threshold = salt_pepper_threshold
+
+        logger.info(
+            "Noise detector initialized",
+            threshold_critical=threshold_critical,
+            threshold_high=threshold_high,
+            threshold_medium=threshold_medium,
+            salt_pepper_threshold=salt_pepper_threshold,
+        )
+
+    def detect(self, image: np.ndarray) -> NoiseDetectionResult:
+        """Detect noise using wavelet-based estimation.
+
+        Args:
+            image: Input image (BGR format)
+
+        Returns:
+            NoiseDetectionResult with noise level and type
+
+        Raises:
+            ValueError: If image is invalid or empty
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        logger.debug("Running noise detection", image_shape=image.shape)
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float64)
+
+        # Estimate Gaussian noise using wavelet-based MAD
+        sigma_estimate = self._estimate_noise_sigma(gray)
+
+        # Normalize sigma to 0-1 score (assuming max reasonable sigma is ~50)
+        noise_score = min(1.0, sigma_estimate / 50.0)
+
+        # Detect salt-and-pepper noise
+        salt_pepper_ratio = self._detect_salt_pepper(gray)
+
+        # Classify noise type
+        noise_type = self._classify_noise_type(noise_score, salt_pepper_ratio)
+
+        # Determine severity based on noise score
+        severity = self._compute_severity(noise_score)
+
+        # Determine if noisy based on thresholds
+        is_noisy = noise_score > self.threshold_medium or salt_pepper_ratio > self.salt_pepper_threshold
+
+        # Confidence based on image size and detection consistency
+        confidence = self._compute_confidence(gray, noise_score, salt_pepper_ratio)
+
+        logger.debug(
+            "Noise detection complete",
+            noise_score=noise_score,
+            sigma_estimate=sigma_estimate,
+            salt_pepper_ratio=salt_pepper_ratio,
+            noise_type=noise_type.value,
+            severity=severity.value,
+            is_noisy=is_noisy,
+        )
+
+        return NoiseDetectionResult(
+            is_noisy=is_noisy,
+            score=noise_score,
+            noise_type=noise_type,
+            confidence=confidence,
+            severity=severity,
+            sigma_estimate=sigma_estimate,
+            salt_pepper_ratio=salt_pepper_ratio,
+        )
+
+    def _estimate_noise_sigma(self, gray: np.ndarray) -> float:
+        """Estimate noise standard deviation using wavelet-based MAD.
+
+        Uses a simple high-pass filter (approximating HH wavelet subband)
+        and computes the Median Absolute Deviation for robust estimation.
+
+        The formula is: sigma = median(|coefficients|) / 0.6745
+
+        Args:
+            gray: Grayscale image as float64
+
+        Returns:
+            Estimated noise standard deviation
+        """
+        # For large images, subsample to improve performance
+        # Noise estimation is statistical, so subsampling is acceptable
+        h, w = gray.shape
+        max_dim = 500
+        if h > max_dim or w > max_dim:
+            scale = min(max_dim / h, max_dim / w)
+            new_h, new_w = int(h * scale), int(w * scale)
+            gray = cv2.resize(gray.astype(np.float32), (new_w, new_h),
+                             interpolation=cv2.INTER_AREA).astype(np.float64)
+
+        # Apply Laplacian as high-pass filter (approximates diagonal wavelet detail)
+        # This captures high-frequency content which is dominated by noise
+        laplacian = cv2.Laplacian(gray, cv2.CV_64F)
+
+        # Compute Median Absolute Deviation (MAD)
+        # MAD = median(|X - median(X)|)
+        median_val = np.median(laplacian)
+        mad = np.median(np.abs(laplacian - median_val))
+
+        # Estimate sigma using MAD (robust to outliers like edges)
+        # For Gaussian noise: sigma = MAD / 0.6745
+        sigma = mad / self.MAD_CONSTANT
+
+        return float(sigma)
+
+    def _detect_salt_pepper(self, gray: np.ndarray) -> float:
+        """Detect salt-and-pepper noise by finding isolated extreme pixels.
+
+        Salt-and-pepper noise appears as isolated white (255) or black (0) pixels
+        that differ significantly from their neighbors.
+
+        Uses a fast morphological approach to detect truly isolated pixels,
+        excluding connected regions like text or graphics.
+
+        Args:
+            gray: Grayscale image as float64
+
+        Returns:
+            Ratio of salt-and-pepper pixels (0.0-1.0)
+        """
+        # Convert to uint8 for processing
+        gray_uint8 = gray.astype(np.uint8)
+
+        # For large images, subsample to improve performance
+        h, w = gray_uint8.shape
+        max_dim = 500
+        if h > max_dim or w > max_dim:
+            scale = min(max_dim / h, max_dim / w)
+            new_h, new_w = int(h * scale), int(w * scale)
+            gray_uint8 = cv2.resize(gray_uint8, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+        # Find pixels at extreme values (potential salt/pepper)
+        # Use near-extreme thresholds to be more robust
+        salt_mask = gray_uint8 >= 254
+        pepper_mask = gray_uint8 <= 1
+
+        # Use morphological opening to remove small isolated regions
+        # Opening = erosion followed by dilation - removes small objects
+        kernel = np.ones((3, 3), dtype=np.uint8)
+
+        # Open the masks - connected regions will survive, isolated pixels won't
+        salt_opened = cv2.morphologyEx(salt_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel)
+        pepper_opened = cv2.morphologyEx(pepper_mask.astype(np.uint8), cv2.MORPH_OPEN, kernel)
+
+        # Isolated pixels = original mask - opened mask (what was removed by opening)
+        salt_isolated = salt_mask.astype(np.uint8) - salt_opened
+        pepper_isolated = pepper_mask.astype(np.uint8) - pepper_opened
+
+        # Count isolated extreme pixels
+        total_pixels = gray_uint8.size
+        sp_pixels = np.sum(salt_isolated > 0) + np.sum(pepper_isolated > 0)
+
+        return float(sp_pixels / total_pixels)
+
+    def _classify_noise_type(
+        self, noise_score: float, salt_pepper_ratio: float
+    ) -> NoiseType:
+        """Classify the type of noise present in the image.
+
+        Args:
+            noise_score: Overall noise score (0-1)
+            salt_pepper_ratio: Ratio of salt-and-pepper pixels
+
+        Returns:
+            Classified NoiseType
+        """
+        has_gaussian = noise_score > self.threshold_medium
+        has_salt_pepper = salt_pepper_ratio > self.salt_pepper_threshold
+
+        if has_gaussian and has_salt_pepper:
+            return NoiseType.MIXED
+        elif has_salt_pepper:
+            return NoiseType.SALT_PEPPER
+        elif has_gaussian:
+            # Distinguish between Gaussian and speckle based on score distribution
+            # Speckle noise typically has higher variance in local regions
+            if noise_score > self.threshold_high:
+                return NoiseType.GAUSSIAN
+            else:
+                return NoiseType.SPECKLE
+        else:
+            return NoiseType.CLEAN
+
+    def _compute_severity(self, noise_score: float) -> Severity:
+        """Compute severity based on noise score.
+
+        Args:
+            noise_score: Noise score (0-1)
+
+        Returns:
+            Severity level
+        """
+        if noise_score >= self.threshold_critical:
+            return Severity.CRITICAL
+        if noise_score >= self.threshold_high:
+            return Severity.HIGH
+        if noise_score >= self.threshold_medium:
+            return Severity.MEDIUM
+        return Severity.LOW
+
+    def _compute_confidence(
+        self, gray: np.ndarray, noise_score: float, salt_pepper_ratio: float
+    ) -> float:
+        """Compute confidence score for the detection.
+
+        Confidence is higher for:
+        - Larger images (more samples)
+        - Clear noise patterns (not borderline cases)
+
+        Args:
+            gray: Grayscale image
+            noise_score: Computed noise score
+            salt_pepper_ratio: Computed salt-pepper ratio
+
+        Returns:
+            Confidence score (0-1)
+        """
+        # Base confidence from image size (more pixels = more reliable)
+        pixels = gray.size
+        size_confidence = min(1.0, pixels / 250000)  # Full confidence at 500x500
+
+        # Detection clarity (not borderline)
+        # If score is far from threshold, we're more confident
+        threshold_distances = [
+            abs(noise_score - self.threshold_medium),
+            abs(noise_score - self.threshold_high),
+            abs(noise_score - self.threshold_critical),
+        ]
+        clarity = min(threshold_distances) * 10  # Scale up
+        clarity_confidence = min(1.0, 0.5 + clarity)
+
+        # Combined confidence
+        confidence = 0.6 * size_confidence + 0.4 * clarity_confidence
+
+        return float(min(0.95, max(0.5, confidence)))
+
+
 # Convenience functions
 def detect_skew(image: np.ndarray) -> SkewDetectionResult:
     """Convenience function for skew detection.
@@ -548,4 +856,26 @@ def detect_contrast(image: np.ndarray) -> ContrastDetectionResult:
         ...     )
     """
     detector = ContrastDetector()
+    return detector.detect(image)
+
+
+def detect_noise(image: np.ndarray) -> NoiseDetectionResult:
+    """Convenience function for noise detection.
+
+    Args:
+        image: Input image (BGR format)
+
+    Returns:
+        NoiseDetectionResult
+
+    Example:
+        >>> img = cv2.imread("noisy_scan.jpg")
+        >>> result = detect_noise(img)
+        >>> if result.is_noisy:
+        ...     print(
+        ...         f"Noise detected: {result.noise_type.value}, "
+        ...         f"score={result.score:.2f} ({result.severity.value})"
+        ...     )
+    """
+    detector = NoiseDetector()
     return detector.detect(image)

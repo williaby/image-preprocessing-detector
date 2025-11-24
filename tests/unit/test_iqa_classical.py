@@ -1,5 +1,5 @@
 """
-Unit tests for classical IQA detectors (skew, blur, contrast).
+Unit tests for classical IQA detectors (skew, blur, contrast, noise).
 """
 
 import cv2
@@ -11,11 +11,15 @@ from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
     ContrastDetectionResult,
     ContrastDetector,
+    NoiseDetectionResult,
+    NoiseDetector,
+    NoiseType,
     Severity,
     SkewDetectionResult,
     SkewDetector,
     detect_blur,
     detect_contrast,
+    detect_noise,
     detect_skew,
 )
 
@@ -330,6 +334,170 @@ class TestContrastDetector:
             detector.detect(np.array([]))
 
 
+class TestNoiseDetector:
+    """Test NoiseDetector class."""
+
+    def test_init_default_params(self) -> None:
+        """Test NoiseDetector initialization with defaults."""
+        detector = NoiseDetector()
+
+        assert detector.threshold_critical == 0.15
+        assert detector.threshold_high == 0.10
+        assert detector.threshold_medium == 0.05
+        assert detector.salt_pepper_threshold == 0.01
+
+    def test_init_custom_params(self) -> None:
+        """Test NoiseDetector initialization with custom parameters."""
+        detector = NoiseDetector(
+            threshold_critical=0.20,
+            threshold_high=0.15,
+            threshold_medium=0.08,
+            salt_pepper_threshold=0.02,
+        )
+
+        assert detector.threshold_critical == 0.20
+        assert detector.threshold_high == 0.15
+        assert detector.threshold_medium == 0.08
+        assert detector.salt_pepper_threshold == 0.02
+
+    def test_detect_clean_image(self) -> None:
+        """Test detection on clean image without noise."""
+        # Create clean document-like image with sharp edges
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 255
+
+        # Add clean text-like rectangles
+        for y in range(50, 450, 30):
+            for x in range(20, 480, 40):
+                img[y : y + 15, x : x + 30] = 0
+
+        detector = NoiseDetector()
+        result = detector.detect(img)
+
+        # Should detect clean image (low noise score)
+        assert result.is_noisy is False
+        assert result.noise_type == NoiseType.CLEAN
+        assert result.severity == Severity.LOW
+        assert result.score < 0.05
+        assert result.salt_pepper_ratio < 0.01
+
+    def test_detect_gaussian_noise(self) -> None:
+        """Test detection on image with Gaussian noise."""
+        # Create clean image
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+
+        # Add Gaussian noise
+        noise = np.random.normal(0, 25, img.shape).astype(np.float32)
+        noisy = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+
+        detector = NoiseDetector()
+        result = detector.detect(noisy)
+
+        # Should detect noise
+        assert result.is_noisy is True
+        assert result.noise_type in [NoiseType.GAUSSIAN, NoiseType.SPECKLE, NoiseType.MIXED]
+        assert result.score > 0.05
+        assert result.sigma_estimate > 5.0  # Should detect significant noise
+
+    def test_detect_salt_pepper_noise(self) -> None:
+        """Test detection on image with salt-and-pepper noise."""
+        # Create clean gray image
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+
+        # Add salt-and-pepper noise (2% of pixels)
+        rng = np.random.default_rng(42)
+        salt_mask = rng.random((500, 500)) < 0.01
+        pepper_mask = rng.random((500, 500)) < 0.01
+
+        img[salt_mask] = 255
+        img[pepper_mask] = 0
+
+        detector = NoiseDetector()
+        result = detector.detect(img)
+
+        # Should detect salt-and-pepper noise
+        assert result.is_noisy is True
+        assert result.noise_type in [NoiseType.SALT_PEPPER, NoiseType.MIXED]
+        assert result.salt_pepper_ratio > 0.005  # Should detect some S&P
+
+    def test_detect_severe_noise(self) -> None:
+        """Test detection on severely noisy image."""
+        # Create image with severe Gaussian noise
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+
+        # Add severe Gaussian noise (sigma = 50)
+        noise = np.random.normal(0, 50, img.shape).astype(np.float32)
+        noisy = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+
+        detector = NoiseDetector()
+        result = detector.detect(noisy)
+
+        # Should detect severe noise
+        assert result.is_noisy is True
+        assert result.severity in [Severity.HIGH, Severity.CRITICAL]
+        assert result.score > 0.10
+
+    def test_severity_levels(self) -> None:
+        """Test severity level assignment."""
+        detector = NoiseDetector(
+            threshold_critical=0.15,
+            threshold_high=0.10,
+            threshold_medium=0.05,
+        )
+
+        # Test internal severity computation
+        assert detector._compute_severity(0.03) == Severity.LOW
+        assert detector._compute_severity(0.07) == Severity.MEDIUM
+        assert detector._compute_severity(0.12) == Severity.HIGH
+        assert detector._compute_severity(0.20) == Severity.CRITICAL
+
+    def test_noise_type_classification(self) -> None:
+        """Test noise type classification logic."""
+        detector = NoiseDetector()
+
+        # Test classification logic
+        assert detector._classify_noise_type(0.03, 0.005) == NoiseType.CLEAN
+        assert detector._classify_noise_type(0.12, 0.005) == NoiseType.GAUSSIAN
+        assert detector._classify_noise_type(0.07, 0.005) == NoiseType.SPECKLE
+        assert detector._classify_noise_type(0.03, 0.02) == NoiseType.SALT_PEPPER
+        assert detector._classify_noise_type(0.12, 0.02) == NoiseType.MIXED
+
+    def test_detect_empty_image_raises(self) -> None:
+        """Test detection raises ValueError for empty image."""
+        detector = NoiseDetector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            detector.detect(np.array([]))
+
+    def test_detect_none_image_raises(self) -> None:
+        """Test detection raises ValueError for None image."""
+        detector = NoiseDetector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            detector.detect(None)  # type: ignore
+
+    def test_result_attributes(self) -> None:
+        """Test NoiseDetectionResult has all required attributes."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+
+        detector = NoiseDetector()
+        result = detector.detect(img)
+
+        assert isinstance(result, NoiseDetectionResult)
+        assert hasattr(result, "is_noisy")
+        assert hasattr(result, "score")
+        assert hasattr(result, "noise_type")
+        assert hasattr(result, "confidence")
+        assert hasattr(result, "severity")
+        assert hasattr(result, "sigma_estimate")
+        assert hasattr(result, "salt_pepper_ratio")
+
+        # Check value ranges
+        assert 0.0 <= result.score <= 1.0
+        assert 0.0 <= result.confidence <= 1.0
+        assert 0.0 <= result.salt_pepper_ratio <= 1.0
+        assert result.sigma_estimate >= 0.0
+
+
 class TestConvenienceFunctions:
     """Test convenience functions."""
 
@@ -369,6 +537,18 @@ class TestConvenienceFunctions:
         assert hasattr(result, "score")
         assert hasattr(result, "is_low_contrast")
 
+    def test_detect_noise_convenience(self) -> None:
+        """Test detect_noise convenience function."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+
+        result = detect_noise(img)
+
+        assert isinstance(result, NoiseDetectionResult)
+        assert hasattr(result, "score")
+        assert hasattr(result, "is_noisy")
+        assert hasattr(result, "noise_type")
+        assert hasattr(result, "sigma_estimate")
+
 
 class TestSeverityEnum:
     """Test Severity enum."""
@@ -384,3 +564,20 @@ class TestSeverityEnum:
         """Test Severity enum can be compared."""
         assert Severity.LOW == Severity.LOW
         assert Severity.HIGH != Severity.LOW
+
+
+class TestNoiseTypeEnum:
+    """Test NoiseType enum."""
+
+    def test_noise_type_values(self) -> None:
+        """Test NoiseType enum values."""
+        assert NoiseType.GAUSSIAN.value == "gaussian"
+        assert NoiseType.SALT_PEPPER.value == "salt_pepper"
+        assert NoiseType.SPECKLE.value == "speckle"
+        assert NoiseType.MIXED.value == "mixed"
+        assert NoiseType.CLEAN.value == "clean"
+
+    def test_noise_type_comparison(self) -> None:
+        """Test NoiseType enum can be compared."""
+        assert NoiseType.GAUSSIAN == NoiseType.GAUSSIAN
+        assert NoiseType.SALT_PEPPER != NoiseType.GAUSSIAN
