@@ -11,7 +11,6 @@ Note: ML IQA (ResNet) benchmarks require PyTorch and are in separate tests.
 
 import time
 from pathlib import Path
-from typing import Generator
 
 import numpy as np
 import pytest
@@ -21,9 +20,8 @@ from image_preprocessing_detector.detection.iqa_classical import (
     detect_contrast,
     detect_skew,
 )
-from image_preprocessing_detector.detection.text_gate import detect_text_presence
+from image_preprocessing_detector.detection.text_gate import detect_text
 from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
-
 
 # =============================================================================
 # Benchmark Fixtures
@@ -42,7 +40,7 @@ def benchmark_image() -> np.ndarray:
 
     # Add some "text" lines (horizontal black lines)
     for y in range(100, 3200, 40):
-        image[y:y+2, 100:2450] = 0
+        image[y : y + 2, 100:2450] = 0
 
     return image
 
@@ -188,26 +186,22 @@ class TestTextGatePerformance:
         Target: <10ms per page for fast routing decisions
         """
         # Warm-up
-        _ = detect_text_presence(benchmark_image)
+        _ = detect_text(benchmark_image)
 
         num_runs = 20
         times = []
 
         for _ in range(num_runs):
             start = time.perf_counter()
-            _ = detect_text_presence(benchmark_image)
+            _ = detect_text(benchmark_image)
             elapsed = (time.perf_counter() - start) * 1000
             times.append(elapsed)
 
         avg_time = sum(times) / len(times)
         p95_time = sorted(times)[int(0.95 * len(times))]
 
-        assert avg_time < 10, (
-            f"Text gate too slow: avg={avg_time:.1f}ms (target <10ms)"
-        )
-        assert p95_time < 20, (
-            f"Text gate p95 too high: {p95_time:.1f}ms (target <20ms)"
-        )
+        assert avg_time < 10, f"Text gate too slow: avg={avg_time:.1f}ms (target <10ms)"
+        assert p95_time < 20, f"Text gate p95 too high: {p95_time:.1f}ms (target <20ms)"
 
 
 # =============================================================================
@@ -223,9 +217,7 @@ class TestThroughputPerformance:
     Target: ≥2 pages/sec/worker (CPU-only mode)
     """
 
-    def test_classical_iqa_throughput(
-        self, benchmark_images: list[np.ndarray]
-    ) -> None:
+    def test_classical_iqa_throughput(self, benchmark_images: list[np.ndarray]) -> None:
         """Benchmark classical IQA throughput.
 
         Target: Process ≥2 pages/second with all classical detectors
@@ -246,9 +238,7 @@ class TestThroughputPerformance:
             f"Throughput too low: {pages_per_second:.1f} pages/sec (target ≥2)"
         )
 
-    def test_text_gate_throughput(
-        self, benchmark_images: list[np.ndarray]
-    ) -> None:
+    def test_text_gate_throughput(self, benchmark_images: list[np.ndarray]) -> None:
         """Benchmark text gate throughput.
 
         Target: ≥100 pages/second (very fast routing)
@@ -258,7 +248,7 @@ class TestThroughputPerformance:
         start = time.perf_counter()
 
         for image in benchmark_images:
-            _ = detect_text_presence(image)
+            _ = detect_text(image)
 
         elapsed = time.perf_counter() - start
         pages_per_second = num_pages / elapsed
@@ -318,32 +308,24 @@ class TestMemoryUsage:
     These tests don't fail but provide memory usage information.
     """
 
-    def test_single_page_memory_footprint(
-        self, benchmark_image: np.ndarray
-    ) -> None:
+    def test_single_page_memory_footprint(self, benchmark_image: np.ndarray) -> None:
         """Measure memory footprint for single page processing.
 
         Reports memory usage without strict assertions.
         """
-        import sys
 
         # Measure image size
         image_size_mb = benchmark_image.nbytes / (1024 * 1024)
 
         # Process and measure results
-        blur_result = detect_blur(benchmark_image)
-        contrast_result = detect_contrast(benchmark_image)
-        skew_result = detect_skew(benchmark_image)
+        detect_blur(benchmark_image)
+        detect_contrast(benchmark_image)
+        detect_skew(benchmark_image)
 
         # Report sizes
-        print(f"\nMemory footprint:")
-        print(f"  Input image: {image_size_mb:.1f} MB")
-        print(f"  Image shape: {benchmark_image.shape}")
 
         # Basic sanity check: input image should be reasonable size
-        assert image_size_mb < 50, (
-            f"Benchmark image too large: {image_size_mb:.1f} MB"
-        )
+        assert image_size_mb < 50, f"Benchmark image too large: {image_size_mb:.1f} MB"
 
 
 # =============================================================================
@@ -370,14 +352,16 @@ class TestPerformanceRegression:
 
         avg = sum(times) / len(times)
         # 2x acceptable threshold for regression detection
-        assert avg < 100, f"REGRESSION: blur detection avg={avg:.1f}ms (threshold 100ms)"
+        assert avg < 100, (
+            f"REGRESSION: blur detection avg={avg:.1f}ms (threshold 100ms)"
+        )
 
     def test_no_severe_text_gate_regression(self, benchmark_image: np.ndarray) -> None:
         """Detect severe performance regression in text gate."""
         times = []
         for _ in range(10):
             start = time.perf_counter()
-            _ = detect_text_presence(benchmark_image)
+            _ = detect_text(benchmark_image)
             times.append((time.perf_counter() - start) * 1000)
 
         avg = sum(times) / len(times)
