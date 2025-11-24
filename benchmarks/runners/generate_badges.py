@@ -29,7 +29,7 @@ def load_latest_aggregates(reports_dir: Path) -> dict[str, Any]:
     Returns:
         Dictionary of suite -> aggregates
     """
-    results = {}
+    results: dict[str, Any] = {}
 
     if not reports_dir.exists():
         return results
@@ -85,23 +85,17 @@ def get_color_for_metric(
         Color name (green, yellow, red)
     """
     if lower_is_better:
-        color = (
-            "brightgreen"
-            if value <= target
-            else "yellow"
-            if value <= target * 1.2
-            else "red"
-        )
-    else:
-        color = (
-            "brightgreen"
-            if value >= target
-            else "yellow"
-            if value >= target * 0.8
-            else "red"
-        )
+        if value <= target:
+            return "brightgreen"
+        if value <= target * 1.2:
+            return "yellow"
+        return "red"
 
-    return color
+    if value >= target:
+        return "brightgreen"
+    if value >= target * 0.8:
+        return "yellow"
+    return "red"
 
 
 @dataclass(frozen=True)
@@ -216,8 +210,9 @@ def metric_value_from_aggregates(metric_data: Any) -> float | None:
     if metric_data is None:
         return None
     if isinstance(metric_data, dict):
-        return metric_data.get("mean")
-    return metric_data
+        mean_value = metric_data.get("mean")
+        return float(mean_value) if mean_value is not None else None
+    return float(metric_data)
 
 
 def format_metric_value(value: float, format_str: str) -> str:

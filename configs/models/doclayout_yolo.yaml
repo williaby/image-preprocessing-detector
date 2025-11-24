@@ -1,0 +1,101 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
+# =============================================================================
+# DocLayout-YOLO Model Configuration (Centralized)
+# =============================================================================
+#
+# This is the SINGLE SOURCE OF TRUTH for DocLayout-YOLO model configuration.
+# All training scripts and platform configs should reference this file.
+#
+# Reference: https://github.com/opendatalab/DocLayout-YOLO
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Active Model Selection
+# -----------------------------------------------------------------------------
+# Change this ONE value to switch models across all training pipelines
+active_model: docstructbench  # Options: docstructbench, d4la_scratch, d4la_pretrained
+
+# -----------------------------------------------------------------------------
+# Available Models
+# -----------------------------------------------------------------------------
+models:
+  docstructbench:
+    name: "DocStructBench"
+    description: "General-purpose document layout detection"
+    huggingface_id: "juliozhao/DocLayout-YOLO-DocStructBench"
+    recommended_image_size: 1024
+    confidence_threshold: 0.2
+    use_case: "General documents, mixed content types"
+    performance:
+      dataset: "DocStructBench"
+      pretrained: true
+
+  d4la_scratch:
+    name: "D4LA (from scratch)"
+    description: "D4LA trained from scratch without pre-training"
+    huggingface_id: "juliozhao/DocLayout-YOLO-D4LA-from_scratch"
+    recommended_image_size: 1600
+    confidence_threshold: 0.2
+    use_case: "When you want to avoid pre-training bias"
+    performance:
+      dataset: "D4LA"
+      pretrained: false
+      ap50: 81.7
+      map: 69.8
+
+  d4la_pretrained:
+    name: "D4LA (DocSynth300K pretrained)"
+    description: "Best performance - pre-trained on DocSynth300K synthetic data"
+    huggingface_id: "juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained"
+    recommended_image_size: 1600
+    confidence_threshold: 0.2
+    use_case: "Production use where accuracy is critical"
+    performance:
+      dataset: "D4LA"
+      pretrained: true
+      ap50: 82.4
+      map: 70.3
+
+# -----------------------------------------------------------------------------
+# Common Settings (apply to all models)
+# -----------------------------------------------------------------------------
+common:
+  # Architecture info
+  architecture: "YOLOv10"
+  architecture_features:
+    - "Global-to-Local Controllability module"
+    - "Document-specific optimizations"
+    - "Multi-scale detection"
+
+  # Package info
+  package: "doclayout-yolo"
+  import_statement: "from doclayout_yolo import YOLOv10"
+
+  # Default training settings (can be overridden in platform configs)
+  training_defaults:
+    batch_size: 16
+    epochs: 100
+    optimizer: "adamw"
+    learning_rate: 0.001
+    weight_decay: 0.0005
+    warmup_epochs: 3
+    mixed_precision: true
+
+  # Export formats
+  export:
+    onnx: true
+    tensorrt: false
+
+# -----------------------------------------------------------------------------
+# Helper: Get Active Model Config
+# -----------------------------------------------------------------------------
+# Usage in Python:
+#   import yaml
+#   with open("configs/models/doclayout_yolo.yaml") as f:
+#       config = yaml.safe_load(f)
+#   active = config["active_model"]
+#   model_config = config["models"][active]
+#   hf_id = model_config["huggingface_id"]
+# -----------------------------------------------------------------------------

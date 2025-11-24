@@ -327,17 +327,21 @@ class TestPhase2HandwritingDetection:
     """
     Test handwriting detection (Phase 2 feature).
 
-    NOTE: Handwriting detection requires YOLOv8 layout model (Phase 3).
+    NOTE: Handwriting detection requires DocLayout-YOLO layout model (Phase 3).
     These are placeholder tests that will be skipped until implemented.
     """
 
-    @pytest.mark.skip(reason="Phase 3: YOLOv8 layout detection not yet implemented")
+    @pytest.mark.skip(
+        reason="Phase 3: DocLayout-YOLO layout detection not yet implemented"
+    )
     def test_handwriting_detection(self) -> None:
         """Test detection of handwritten content."""
         # Placeholder for future implementation
-        # Will use YOLOv8 to detect ElementCategory.HANDWRITING
+        # Will use DocLayout-YOLO to detect ElementCategory.HANDWRITING
 
-    @pytest.mark.skip(reason="Phase 3: YOLOv8 layout detection not yet implemented")
+    @pytest.mark.skip(
+        reason="Phase 3: DocLayout-YOLO layout detection not yet implemented"
+    )
     def test_mixed_typed_and_handwritten(self) -> None:
         """Test document with both typed text and handwriting."""
         # Placeholder for future implementation
@@ -347,17 +351,21 @@ class TestPhase2TableDetection:
     """
     Test table detection (Phase 2 feature).
 
-    NOTE: Table detection requires YOLOv8 layout model (Phase 3).
+    NOTE: Table detection requires DocLayout-YOLO layout model (Phase 3).
     These are placeholder tests that will be skipped until implemented.
     """
 
-    @pytest.mark.skip(reason="Phase 3: YOLOv8 layout detection not yet implemented")
+    @pytest.mark.skip(
+        reason="Phase 3: DocLayout-YOLO layout detection not yet implemented"
+    )
     def test_table_detection(self) -> None:
         """Test detection of tabular data."""
         # Placeholder for future implementation
-        # Will use YOLOv8 to detect ElementCategory.TABLE
+        # Will use DocLayout-YOLO to detect ElementCategory.TABLE
 
-    @pytest.mark.skip(reason="Phase 3: YOLOv8 layout detection not yet implemented")
+    @pytest.mark.skip(
+        reason="Phase 3: DocLayout-YOLO layout detection not yet implemented"
+    )
     def test_table_with_quality_issues(self) -> None:
         """Test table detection with skewed or low-contrast tables."""
         # Placeholder for future implementation

@@ -204,7 +204,7 @@ class DocLayNetAdapter(BaseAdapter):
         }
 
     @property
-    def classes(self) -> list[str]:
+    def class_names(self) -> list[str]:
         """Return list of class names."""
         return self.CLASSES
 

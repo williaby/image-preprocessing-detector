@@ -37,7 +37,7 @@ def load_all_results(reports_dir: Path) -> list[dict[str, Any]]:
     Returns:
         List of result dictionaries
     """
-    all_results = []
+    all_results: list[dict[str, Any]] = []
 
     if not reports_dir.exists():
         return all_results
@@ -80,7 +80,7 @@ def load_all_results(reports_dir: Path) -> list[dict[str, Any]]:
 
 def collect_metric_names(results: list[dict[str, Any]]) -> list[str]:
     """Collect sorted metric names from aggregated results."""
-    metrics = set()
+    metrics: set[str] = set()
     for result in results:
         metrics.update(name for name in result["aggregates"] if name != "_meta")
     return sorted(metrics)
@@ -326,7 +326,7 @@ def main() -> int:
     print(f"✓ Found {len(results)} benchmark runs")
 
     # Group by suite
-    suites = {}
+    suites: dict[str, int] = {}
     for result in results:
         suite_name = result["suite_name"]
         suites[suite_name] = suites.get(suite_name, 0) + 1

@@ -493,8 +493,8 @@ def main() -> None:
     console.print("\n[bold]Next steps:[/bold]")
     console.print("1. Test dataset loading:")
     console.print(f"   [cyan]python data/dataset.py {args.output_dir}[/cyan]")
-    console.print("2. Train YOLOv8 model:")
-    console.print("   [cyan]modal run modal/train_phase3_yolov8.py[/cyan]\n")
+    console.print("2. Train DocLayout-YOLO model:")
+    console.print("   [cyan]modal run modal/train_phase3_doclayout_yolo.py[/cyan]\n")
 
 
 if __name__ == "__main__":

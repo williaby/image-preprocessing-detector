@@ -42,7 +42,7 @@ class DetectionPredictions:
     def sorted_indices(self) -> NDArray[np.int64]:
         if not self.scores:
             return np.array([], dtype=np.int64)
-        return np.argsort(self.scores)[::-1]
+        return np.argsort(np.array(self.scores), kind="stable")[::-1].astype(np.int64)
 
     def __len__(self) -> int:
         return len(self.boxes)
@@ -250,7 +250,7 @@ def calculate_map(
     ground_truth: GroundTruthDetections,
     num_classes: int,
     iou_thresholds: list[float] | None = None,
-) -> dict[str, float]:
+) -> dict[str, float | dict[str, float]]:
     """Calculate mAP (mean Average Precision) across classes and IoU thresholds.
 
     Args:

@@ -189,7 +189,9 @@ def prepare_dataset(config: Dict, bucket_name: str) -> Tuple[Path, Dict, Path]:
 
     total_samples = metadata["total_samples"]
     num_images = len(list(images_dir.glob("*.jpg")))
-    print(f"✅ Dataset verified: {num_images:,} images found (metadata: {total_samples:,})")
+    print(
+        f"✅ Dataset verified: {num_images:,} images found (metadata: {total_samples:,})"
+    )
     print(f"✅ Metadata file: {metadata_file}")
 
     return images_dir, metadata, metadata_file

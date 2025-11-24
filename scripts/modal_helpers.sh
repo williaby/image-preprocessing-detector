@@ -92,11 +92,11 @@ train_phase2() {
     poetry run modal run modal/train_phase2_iqa.py
 }
 
-# Run Phase 3 training
+# Run Phase 3 training (DocLayout-YOLO)
 train_phase3() {
-    echo -e "${YELLOW}Starting Phase 3 YOLOv8 training...${NC}"
+    echo -e "${YELLOW}Starting Phase 3 DocLayout-YOLO training...${NC}"
     echo "Monitor at: https://modal.com/apps"
-    poetry run modal run modal/train_phase3_yolov8.py
+    poetry run modal run modal/train_phase3_doclayout_yolo.py
 }
 
 # Monitor Modal app
@@ -165,7 +165,7 @@ case "${1:-}" in
         echo "  setup-gcs-secret <path>  - Setup GCS credentials in Modal"
         echo "  test-gpu                 - Test GPU access"
         echo "  train-phase2             - Run Phase 2 IQA training"
-        echo "  train-phase3             - Run Phase 3 YOLOv8 training"
+        echo "  train-phase3             - Run Phase 3 DocLayout-YOLO training"
         echo "  monitor                  - Open Modal dashboard"
         echo "  costs                    - Show Modal usage and costs"
         echo "  secrets                  - List Modal secrets"
