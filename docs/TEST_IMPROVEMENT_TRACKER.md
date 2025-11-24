@@ -34,12 +34,29 @@
 
 ### Key Metrics
 
-- **Test functions**: 543
+- **Test functions (AST count)**: 543 across 32 files
+- **Tests collected by pytest**: 410 (missing deps: torch, scipy, nox)
 - **Test classes**: 117
 - **Shared fixtures**: 18
 - **Test LOC**: ~13,700
 - **Source LOC**: ~11,300
 - **Real-data tests**: 14 (only in `test_real_fixtures.py`)
+
+### Test Collection Breakdown
+
+| File | Tests | Status |
+|------|-------|--------|
+| `test_noxfile.py` | 47 | Skipped (nox not installed) |
+| `test_datetime_compat.py` | 47 | Runs |
+| `test_iqa_ml.py` | 29 | Runs |
+| `test_corrections.py` | 28 | Runs |
+| `test_iqa_classical.py` | 26 | Runs |
+| `test_phase2_complete.py` | 24 | Partial (Phase 3 skips) |
+| `test_loss_functions.py` | 21 | Skipped (torch) |
+| `test_resnet_teacher.py` | 20 | Skipped (torch) |
+| `test_distillation_loss.py` | 19 | Skipped (torch) |
+| `test_image_metrics.py` | 19 | Skipped (scipy) |
+| Other files | 263 | Mostly runs |
 
 ### Critical Finding: Coverage Exclusions
 
