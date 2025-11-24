@@ -720,3 +720,163 @@ class MLIQADetector:
             reason=reason,
             uncertainty_metrics=uncertainty,
         )
+
+    def run_pipeline(
+        self,
+        image: np.ndarray,
+        classical_scores: ClassicalIQAScores | None = None,
+    ) -> tuple[MLIQAScores, MLIQAScores | None, str | None]:
+        """Run complete ML IQA pipeline with automatic teacher escalation.
+
+        This is the main entry point for ML IQA analysis. It:
+        1. Runs student inference
+        2. Checks uncertainty gate
+        3. Optionally checks classical IQA discrepancy
+        4. Escalates to teacher if needed
+        5. Returns final scores
+
+        Args:
+            image: Input image (BGR format)
+            classical_scores: Optional classical IQA scores for discrepancy check
+
+        Returns:
+            Tuple of (student_scores, teacher_scores_or_none, escalation_reason_or_none)
+
+        Example:
+            >>> detector = MLIQADetector(
+            ...     student_path="student.onnx", teacher_path="teacher.onnx"
+            ... )
+            >>> student, teacher, reason = detector.run_pipeline(image)
+            >>> if teacher is not None:
+            ...     print(f"Teacher used: {reason}")
+        """
+        # Run student inference
+        student_scores = self.run_student_inference(image)
+
+        # Check uncertainty gate
+        uncertainty_decision = self.should_escalate_to_teacher(student_scores)
+
+        # Check discrepancy if classical scores provided
+        discrepancy_decision = None
+        if classical_scores is not None and not uncertainty_decision.should_escalate:
+            discrepancy_decision = self.should_escalate_due_to_discrepancy(
+                student_scores, classical_scores
+            )
+
+        # Determine if we should escalate
+        should_escalate = uncertainty_decision.should_escalate
+        escalation_reason = uncertainty_decision.reason
+
+        if discrepancy_decision is not None and discrepancy_decision.should_escalate:
+            should_escalate = True
+            if escalation_reason:
+                escalation_reason = (
+                    f"{escalation_reason}; {discrepancy_decision.reason}"
+                )
+            else:
+                escalation_reason = discrepancy_decision.reason
+
+        # Run teacher if needed
+        teacher_scores = None
+        if should_escalate and self.teacher_model_path is not None:
+            try:
+                teacher_scores = self.run_teacher_inference(image)
+                logger.info(
+                    "Pipeline complete with teacher escalation",
+                    reason=escalation_reason,
+                    student_quality=f"{student_scores.overall_quality:.3f}",
+                    teacher_quality=f"{teacher_scores.overall_quality:.3f}",
+                )
+            except Exception as e:
+                logger.warning(
+                    "Teacher inference failed, using student scores",
+                    error=str(e),
+                )
+                escalation_reason = f"teacher_failed: {e}"
+        else:
+            logger.debug(
+                "Pipeline complete (student only)",
+                quality=f"{student_scores.overall_quality:.3f}",
+            )
+
+        return student_scores, teacher_scores, escalation_reason
+
+
+def ml_iqa_scores_to_dict(scores: MLIQAScores) -> dict[str, Any]:
+    """Convert MLIQAScores to dictionary for JSON serialization.
+
+    Args:
+        scores: MLIQAScores dataclass instance
+
+    Returns:
+        Dictionary suitable for JSON serialization
+    """
+    return {
+        "source": scores.model_type.value,
+        "blur_score": round(scores.blur_score, 4),
+        "noise_score": round(scores.noise_score, 4),
+        "contrast_score": round(scores.contrast_score, 4),
+        "skew_score": round(scores.skew_score, 4),
+        "compression_score": round(scores.compression_score, 4),
+        "overall_quality": round(scores.overall_quality, 4),
+        "confidences": {k: round(v, 4) for k, v in scores.confidences.items()},
+        "device": scores.device.value,
+        "inference_time_ms": round(scores.inference_time_ms, 2),
+    }
+
+
+def teacher_iqa_to_dict(
+    scores: MLIQAScores, escalation_reason: str | None
+) -> dict[str, Any]:
+    """Convert teacher MLIQAScores to dictionary with escalation reason.
+
+    Args:
+        scores: Teacher MLIQAScores dataclass instance
+        escalation_reason: Reason for teacher escalation
+
+    Returns:
+        Dictionary suitable for JSON serialization
+    """
+    result = ml_iqa_scores_to_dict(scores)
+    result["escalation_reason"] = escalation_reason
+    return result
+
+
+def uncertainty_metrics_to_dict(metrics: UncertaintyMetrics) -> dict[str, Any]:
+    """Convert UncertaintyMetrics to dictionary.
+
+    Args:
+        metrics: UncertaintyMetrics dataclass instance
+
+    Returns:
+        Dictionary suitable for JSON serialization
+    """
+    return {
+        "entropy": round(metrics.entropy, 4),
+        "min_confidence": round(metrics.min_confidence, 4),
+        "mean_confidence": round(metrics.mean_confidence, 4),
+        "head_confidences": {
+            k: round(v, 4) for k, v in metrics.head_confidences.items()
+        },
+    }
+
+
+def discrepancy_metrics_to_dict(metrics: DiscrepancyMetrics) -> dict[str, Any]:
+    """Convert DiscrepancyMetrics to dictionary.
+
+    Args:
+        metrics: DiscrepancyMetrics dataclass instance
+
+    Returns:
+        Dictionary suitable for JSON serialization
+    """
+    return {
+        "blur_discrepancy": round(metrics.blur_discrepancy, 4),
+        "contrast_discrepancy": round(metrics.contrast_discrepancy, 4),
+        "skew_discrepancy": round(metrics.skew_discrepancy, 4),
+        "max_discrepancy": round(metrics.max_discrepancy, 4),
+        "mean_discrepancy": round(metrics.mean_discrepancy, 4),
+        "per_head_discrepancies": {
+            k: round(v, 4) for k, v in metrics.per_head_discrepancies.items()
+        },
+    }

@@ -1,0 +1,188 @@
+@startuml
+title Project A – Training Workflow (High Level with Test Coverage)
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam note {
+  BackgroundColor #FFFFCC
+  BorderColor #999999
+  FontSize 9
+}
+
+|Data Preparation|
+start
+:Collect IQA datasets\n(LIVE, CSIQ, OHR-Bench);
+note right #Orange
+  **Tests:** None (external datasets)
+  **Status:** Manual validation only
+  **FR:** FR-2.3
+end note
+
+:Generate synthetic degradations\n(blur, noise, compression);
+note right #LightGreen
+  **Tests:**
+  • test_image_metrics.py (synthetic generation)
+  • tests/fixtures/phase1_validation/synthetic_generator.py
+  **FR:** FR-2.3
+end note
+
+:Create annotation labels\n(quality scores, defect types);
+note right #Orange
+  **Tests:** None (manual labeling)
+  **Status:** External process
+end note
+
+:Split train/val/test sets;
+note right #Orange
+  **Tests:** None
+  **Status:** External process
+end note
+
+|Teacher Training|
+:Initialize ResNet-50 backbone\n(ImageNet pretrained);
+note right #Orange
+  **Tests:**
+  • test_resnet_teacher.py (SKIPPED - PyTorch)
+  **FR:** FR-2.3
+  **Status:** Tests require PyTorch
+end note
+
+:Add multi-head IQA classifier\n(blur, noise, contrast, skew, compression);
+note right #Orange
+  **Tests:**
+  • test_resnet_teacher.py::TestIQAHead (SKIPPED)
+  • test_resnet_teacher.py::test_head_initialization
+  **FR:** FR-2.3
+end note
+
+:Train on labeled IQA data\n(Modal GPU: T4/A10);
+note right #Red
+  **Tests:** None (training infrastructure)
+  **Status:** Manual training runs
+  **Location:** modal/train_phase2_iqa.py
+end note
+
+:Validate on held-out set\n(target: mAP > 0.88);
+note right #Orange
+  **Tests:**
+  • test_phase2_complete.py::test_iqa_model_accuracy (SKIPPED)
+  **FR:** NFR-2.3
+end note
+
+if (Teacher passes\nvalidation?) then (yes)
+  :Export Teacher checkpoint;
+else (no)
+  :Tune hyperparameters;
+  :Retrain;
+endif
+
+|Knowledge Distillation|
+:Initialize ResNet-18 Student\n(random or pretrained);
+note right #Orange
+  **Tests:**
+  • test_iqa_ml.py::test_student_model_init
+  **FR:** FR-2.3
+end note
+
+:Run Teacher forward passes\n(collect soft targets);
+note right #Red
+  **Tests:** None (training process)
+  **Status:** Part of training script
+end note
+
+:Train Student with:\nL = α·KL(T||S) + β·CE(hard);
+note right #LightGreen
+  **Tests:**
+  • test_distillation_loss.py (SKIPPED - PyTorch)
+    - test_loss_instantiation
+    - test_loss_instantiation_custom_params
+    - test_forward_pass
+    - test_temperature_scaling
+    - test_alpha_weighting
+  **FR:** FR-2.3
+end note
+
+:Temperature scaling T=4.0;
+note right #LightGreen
+  **Tests:**
+  • test_distillation_loss.py::test_temperature_scaling
+end note
+
+if (Student meets\ncriteria?) then (yes)
+  :Export to ONNX;
+  note right #LightGreen
+    **Tests:**
+    • test_model_optimizer.py::test_onnx_export
+    • test_model_optimizer.py::test_optimization_*
+  end note
+
+  :Export to TorchScript;
+  note right #LightGreen
+    **Tests:**
+    • test_model_optimizer.py::test_torchscript_*
+  end note
+else (no)
+  :Adjust α, β, T;
+  :Retrain Student;
+endif
+
+|Deployment|
+:Register models in registry;
+note right #Red
+  **Tests:** None (deployment infrastructure)
+  **Status:** Manual process
+end note
+
+:Deploy Student as default;
+note right #Orange
+  **Tests:**
+  • test_iqa_ml.py::test_inference_*
+  **Status:** Integration tests partial
+end note
+
+:Keep Teacher for selective inference;
+note right #Orange
+  **Tests:**
+  • test_iqa_ml.py::test_teacher_fallback
+  **Status:** Partial
+end note
+
+stop
+
+legend right
+  |= Color |= Meaning |
+  | <#LightGreen> | Has unit tests |
+  | <#Orange> | Partial/SKIPPED tests |
+  | <#Red> | No automated tests |
+end legend
+
+note right
+  **Training Test Coverage Summary:**
+
+  **Covered (but SKIPPED without PyTorch):**
+  • test_resnet_teacher.py - Teacher model architecture
+  • test_loss_functions.py - Loss function implementations
+  • test_distillation_loss.py - KD loss calculations
+  • test_model_optimizer.py - ONNX/TorchScript export
+
+  **Not Covered (Manual/Infrastructure):**
+  • Dataset collection and preparation
+  • Training loop execution
+  • Hyperparameter tuning
+  • Model registry operations
+  • Deployment procedures
+
+  **Recommendation:**
+  Run tests with PyTorch installed to validate
+  training components:
+  ```
+  poetry install --with ml
+  poetry run pytest -v -m "not requires_full_dataset"
+  ```
+end note
+
+@enduml

@@ -369,7 +369,7 @@ class ClassicalScoreAdapter:
 
         # Invert noise score: higher noise score = lower quality
         # Noise score is typically 0-1 where higher = more noise
-        return float(np.clip(1.0 - result.score, 0.0, 1.0))
+        return float(np.clip(1.0 - result.noise_score, 0.0, 1.0))
 
     def convert_illumination(self, result: IlluminationDetectionResult) -> float:
         """Convert illumination detection result to normalized score.
@@ -479,7 +479,9 @@ class ClassicalScoreAdapter:
             scores.binarization_score = self.convert_binarization(binarization_result)
 
         if bleed_through_result is not None:
-            scores.bleed_through_score = self.convert_bleed_through(bleed_through_result)
+            scores.bleed_through_score = self.convert_bleed_through(
+                bleed_through_result
+            )
 
         return scores
 
@@ -611,8 +613,14 @@ class DiscrepancyAnalyzer:
         # Calculate aggregate metrics
         total_weight = sum(weights) if weights else 1.0
         weighted_mean = sum(weighted_discrepancies) / total_weight if weights else 0.0
-        max_discrepancy = max(per_head_discrepancies.values()) if per_head_discrepancies else 0.0
-        max_head = max(per_head_discrepancies, key=lambda k: per_head_discrepancies[k]) if per_head_discrepancies else ""
+        max_discrepancy = (
+            max(per_head_discrepancies.values()) if per_head_discrepancies else 0.0
+        )
+        max_head = (
+            max(per_head_discrepancies, key=lambda k: per_head_discrepancies[k])
+            if per_head_discrepancies
+            else ""
+        )
         num_exceeded = sum(per_head_exceeded.values())
 
         # Determine escalation
