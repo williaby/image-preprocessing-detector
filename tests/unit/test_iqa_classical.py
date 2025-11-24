@@ -558,10 +558,9 @@ class TestConvenienceFunctions:
         result = detect_noise(img)
 
         assert isinstance(result, NoiseDetectionResult)
-        assert hasattr(result, "score")
+        assert hasattr(result, "noise_score")
         assert hasattr(result, "is_noisy")
-        assert hasattr(result, "noise_type")
-        assert hasattr(result, "sigma_estimate")
+        assert hasattr(result, "noise_sigma")
 
 
 class TestSeverityEnum:
