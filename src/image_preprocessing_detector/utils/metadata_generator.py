@@ -188,9 +188,14 @@ def get_cuda_version() -> str:
             check=True,
         )
         # Extract version from output like "release 11.8, V11.8.89"
+        import re
+
         for line in result.stdout.split("\n"):
             if "release" in line.lower():
-                return line.split("release")[-1].split(",")[0].strip()
+                # Use regex to extract version number after "release"
+                match = re.search(r"release\s+([\d.]+)", line, re.IGNORECASE)
+                if match:
+                    return match.group(1)
         return "N/A"
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "N/A"

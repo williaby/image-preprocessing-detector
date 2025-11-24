@@ -3,6 +3,9 @@
 Calculates degradation and structural complexity scores for routing decisions
 in the RAG pipeline (Project A → Project B handoff).
 
+Phase 4.10: Updated with configurable weights and integration with new classical
+IQA detectors (illumination, JPEG blockiness, binarization, bleed-through).
+
 Milestone 8.1: DQS Weighting Optimization
 - DQSWeightConfig: Configurable weight dataclass
 - DQSCalibrator: Weight calibration and optimization framework
@@ -15,8 +18,12 @@ from typing import Any
 import numpy as np
 
 from image_preprocessing_detector.detection.iqa_classical import (
+    BinarizationQualityResult,
+    BleedThroughResult,
     BlurDetectionResult,
     ContrastDetectionResult,
+    IlluminationDetectionResult,
+    JPEGBlockinessResult,
     NoiseDetectionResult,
     SkewDetectionResult,
 )
@@ -1095,3 +1102,227 @@ def calculate_pre_ocr_risk(
     )
 
     return float(total_risk)
+
+
+# =============================================================================
+# Phase 4.10: Extended DQS with new classical IQA detectors
+# =============================================================================
+
+
+@dataclass
+class ExtendedIQAScores:
+    """Extended IQA scores from all classical detectors (Phase 4.10).
+
+    All scores normalized to 0-1 where 1=best quality.
+
+    Attributes:
+        blur_score: Blur quality (from BlurDetector)
+        noise_score: Noise quality (from NoiseDetector)
+        contrast_score: Contrast quality (from ContrastDetector)
+        illumination_score: Illumination quality (from IlluminationDetector)
+        compression_score: Compression quality (from JPEGBlockinessDetector)
+        binarization_score: Binarization quality (from BinarizationQualityDetector)
+        bleed_through_score: Bleed-through quality (from BleedThroughDetector)
+    """
+
+    blur_score: float = 1.0
+    noise_score: float = 1.0
+    contrast_score: float = 1.0
+    illumination_score: float = 1.0
+    compression_score: float = 1.0
+    binarization_score: float = 1.0
+    bleed_through_score: float = 1.0
+
+    def to_dict(self) -> dict[str, float]:
+        """Convert to dictionary."""
+        return {
+            "blur": self.blur_score,
+            "noise": self.noise_score,
+            "contrast": self.contrast_score,
+            "illumination": self.illumination_score,
+            "compression": self.compression_score,
+            "binarization": self.binarization_score,
+            "bleed_through": self.bleed_through_score,
+        }
+
+
+# Default weight configuration for extended IQA (Phase 4.10)
+DEFAULT_DQS_WEIGHTS = DQSWeightConfig()
+
+
+def normalize_extended_iqa(
+    blur_result: BlurDetectionResult | None = None,
+    noise_result: NoiseDetectionResult | None = None,
+    contrast_result: ContrastDetectionResult | None = None,
+    illumination_result: IlluminationDetectionResult | None = None,
+    compression_result: JPEGBlockinessResult | None = None,
+    binarization_result: BinarizationQualityResult | None = None,
+    bleed_through_result: BleedThroughResult | None = None,
+    _skew_result: SkewDetectionResult | None = None,  # Not used in DQS but accepted
+) -> ExtendedIQAScores:
+    """Normalize all classical detector outputs to ExtendedIQAScores.
+
+    Phase 4.10: Integrates all Phase 4 classical IQA detectors into a
+    unified score format for DQS calculation.
+
+    Args:
+        blur_result: BlurDetectionResult from BlurDetector
+        noise_result: NoiseDetectionResult from NoiseDetector
+        contrast_result: ContrastDetectionResult from ContrastDetector
+        illumination_result: IlluminationDetectionResult from IlluminationDetector
+        compression_result: JPEGBlockinessResult from JPEGBlockinessDetector
+        binarization_result: BinarizationQualityResult from BinarizationQualityDetector
+        bleed_through_result: BleedThroughResult from BleedThroughDetector
+        skew_result: SkewDetectionResult (not used in DQS, but accepted for API completeness)
+
+    Returns:
+        ExtendedIQAScores with all normalized scores
+
+    Example:
+        >>> from image_preprocessing_detector.detection import (
+        ...     detect_blur,
+        ...     detect_noise,
+        ...     detect_contrast,
+        ... )
+        >>> blur = detect_blur(image)
+        >>> noise = detect_noise(image)
+        >>> contrast = detect_contrast(image)
+        >>> scores = normalize_extended_iqa(
+        ...     blur_result=blur,
+        ...     noise_result=noise,
+        ...     contrast_result=contrast,
+        ... )
+        >>> dqs = calculate_extended_degradation_score(scores)
+    """
+    scores = ExtendedIQAScores()
+
+    # Blur: Normalize Laplacian variance (0-1000+ → 0-1)
+    if blur_result is not None:
+        if blur_result.is_blurred:
+            # Use severity-based quality
+            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
+            scores.blur_score = severity_map.get(blur_result.severity.value, 0.5)
+        else:
+            # Normalize raw score
+            scores.blur_score = min(1.0, blur_result.score / 500.0)
+
+    # Noise: Use noise_score from result (already 0-1 where 1=clean)
+    if noise_result is not None:
+        if noise_result.is_noisy:
+            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
+            scores.noise_score = severity_map.get(noise_result.severity.value, 0.5)
+        else:
+            scores.noise_score = noise_result.noise_score
+
+    # Contrast: Already 0-1 range
+    if contrast_result is not None:
+        if contrast_result.is_low_contrast:
+            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
+            scores.contrast_score = severity_map.get(
+                contrast_result.severity.value, 0.5
+            )
+        else:
+            scores.contrast_score = contrast_result.score
+
+    # Illumination: Use uniformity score
+    if illumination_result is not None:
+        if illumination_result.has_issues:
+            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
+            scores.illumination_score = severity_map.get(
+                illumination_result.severity.value, 0.5
+            )
+        else:
+            scores.illumination_score = illumination_result.uniformity
+
+    # Compression: Use compression_score (already 0-1)
+    if compression_result is not None:
+        if compression_result.has_artifacts:
+            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
+            scores.compression_score = severity_map.get(
+                compression_result.severity.value, 0.5
+            )
+        else:
+            scores.compression_score = compression_result.compression_score
+
+    # Binarization: Use binarization_score (already 0-1)
+    if binarization_result is not None:
+        scores.binarization_score = binarization_result.binarization_score
+
+    # Bleed-through: Invert severity (0=bleed-through, 1=clean)
+    if bleed_through_result is not None:
+        if bleed_through_result.bleed_through_detected:
+            scores.bleed_through_score = 1.0 - bleed_through_result.severity
+        else:
+            scores.bleed_through_score = 1.0
+
+    return scores
+
+
+def calculate_extended_degradation_score(
+    iqa_scores: ExtendedIQAScores,
+    weights: DQSWeightConfig | None = None,
+    ml_iqa: dict[str, Any] | None = None,
+) -> float:
+    """Calculate degradation score using extended IQA metrics and configurable weights.
+
+    Phase 4.10: Uses all Phase 4 classical IQA detectors with configurable weights.
+    Note: This function uses a simplified 5-weight model (blur, noise, contrast,
+    illumination, artifacts) where artifacts aggregate compression + binarization +
+    bleed-through scores.
+
+    Args:
+        iqa_scores: ExtendedIQAScores with all normalized IQA metrics
+        weights: DQSWeightConfig with calibrated weights (default: DEFAULT_DQS_WEIGHTS)
+        ml_iqa: Optional ML-based IQA metrics. If provided, blends with classical.
+
+    Returns:
+        Degradation score (0-1, where 0=worst degradation, 1=pristine quality)
+
+    Example:
+        >>> scores = ExtendedIQAScores(
+        ...     blur_score=0.8,
+        ...     noise_score=0.7,
+        ...     contrast_score=0.85,
+        ...     illumination_score=0.9,
+        ...     compression_score=0.95,
+        ...     binarization_score=0.88,
+        ...     bleed_through_score=1.0,
+        ... )
+        >>> dqs = calculate_extended_degradation_score(scores)
+        >>> assert 0.0 <= dqs <= 1.0
+    """
+    if weights is None:
+        weights = DEFAULT_DQS_WEIGHTS
+
+    # Aggregate extended artifact metrics into single artifacts_score
+    # Equal weight to each: compression, binarization, bleed-through
+    artifacts_score = (
+        iqa_scores.compression_score
+        + iqa_scores.binarization_score
+        + iqa_scores.bleed_through_score
+    ) / 3.0
+
+    # Use the standard 5-metric degradation calculation
+    classical_iqa_dict = {
+        "blur_score": iqa_scores.blur_score,
+        "noise_score": iqa_scores.noise_score,
+        "contrast_score": iqa_scores.contrast_score,
+        "illumination_score": iqa_scores.illumination_score,
+        "artifacts_score": artifacts_score,
+    }
+
+    # Reuse standard degradation score calculation
+    degradation_score = calculate_degradation_score(
+        classical_iqa=classical_iqa_dict,
+        ml_iqa=ml_iqa,
+        config=weights,
+    )
+
+    logger.debug(
+        "Extended degradation score calculated",
+        score=degradation_score,
+        input_scores=iqa_scores.to_dict(),
+        aggregated_artifacts=artifacts_score,
+    )
+
+    return float(degradation_score)
