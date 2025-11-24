@@ -261,9 +261,7 @@ class TestIQADetectionAccuracy:
     algorithms actually identify issues correctly on real-world samples.
     """
 
-    def test_skew_detection_accuracy_on_skewed_fixture(
-        self, skewed_pdf: Path
-    ) -> None:
+    def test_skew_detection_accuracy_on_skewed_fixture(self, skewed_pdf: Path) -> None:
         """Validate skew detection actually detects skew on known skewed PDF.
 
         The skewed_4.pdf fixture should have detectable skew. We validate:
@@ -372,17 +370,17 @@ class TestIQADetectionAccuracy:
 
             if skew_result.is_skewed:
                 assert skew_result.severity != Severity.CRITICAL, (
-                    f"Clean document incorrectly flagged with CRITICAL skew"
+                    "Clean document incorrectly flagged with CRITICAL skew"
                 )
 
             if blur_result.is_blurred:
                 assert blur_result.severity != Severity.CRITICAL, (
-                    f"Clean document incorrectly flagged with CRITICAL blur"
+                    "Clean document incorrectly flagged with CRITICAL blur"
                 )
 
             if contrast_result.is_low_contrast:
                 assert contrast_result.severity != Severity.CRITICAL, (
-                    f"Clean document incorrectly flagged with CRITICAL contrast"
+                    "Clean document incorrectly flagged with CRITICAL contrast"
                 )
 
 
@@ -414,9 +412,7 @@ class TestCorrectionEffectiveness:
 
             # Apply correction
             correction_result = corrector.correct(
-                page_img.image,
-                angle=before.angle,
-                confidence=before.confidence
+                page_img.image, angle=before.angle, confidence=before.confidence
             )
 
             if not correction_result.applied:
@@ -431,24 +427,21 @@ class TestCorrectionEffectiveness:
 
         # At least some corrections should improve the document
         # Note: Not all corrections may succeed depending on image content
-        assert improvements >= 0, (
-            "Deskew corrections did not improve any skewed pages"
-        )
+        assert improvements >= 0, "Deskew corrections did not improve any skewed pages"
 
-    def test_contrast_enhancement_improves_score(
-        self, low_contrast_pdf: Path
-    ) -> None:
+    def test_contrast_enhancement_improves_score(self, low_contrast_pdf: Path) -> None:
         """Validate contrast enhancement improves contrast score.
 
         CLAHE enhancement should improve low-contrast documents.
         """
-        from image_preprocessing_detector.correction.corrections import CLAHEEnhancer
+        from image_preprocessing_detector.correction.corrections import ContrastEnhancer
+        from image_preprocessing_detector.detection.iqa_classical import Severity
 
         pdf_loader = PDFLoader()
         pages = list(pdf_loader.load(low_contrast_pdf))
         assert len(pages) > 0
 
-        enhancer = CLAHEEnhancer()
+        enhancer = ContrastEnhancer()
         improvements = 0
 
         for page_img in pages:
@@ -458,8 +451,10 @@ class TestCorrectionEffectiveness:
             if not before.is_low_contrast:
                 continue  # Skip pages without low contrast
 
-            # Apply CLAHE enhancement
-            correction_result = enhancer.enhance(page_img.image)
+            # Apply CLAHE enhancement using ContrastEnhancer.correct()
+            correction_result = enhancer.correct(
+                page_img.image, before.score, Severity.MODERATE
+            )
 
             if not correction_result.applied:
                 continue
