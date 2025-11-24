@@ -427,3 +427,71 @@ data/test_fixtures/degraded_samples/
 | 2025-11-24 | Added JSON snapshot tests for output validation (25+ tests, 450+ lines) | Claude |
 | 2025-11-24 | Added mutation testing guide and runner script | Claude |
 | 2025-11-24 | Added file type coverage tests (30+ tests, 500+ lines) - JPEG, PNG, TIFF, BMP, WEBP, PDF | Claude |
+
+---
+
+## Recent Updates (2025-11-24)
+
+### New Test Fixtures Added ✅
+
+Added comprehensive test fixtures (18 files, 6.5 MB total) to enable IQA and layout testing without full datasets:
+
+#### 1. IQA Samples (2.3 MB)
+- **Location**: `data/test_fixtures/iqa_samples/`
+- **Files**: 6 images + labels.json with ground truth quality scores
+- **Purpose**: ML IQA model validation
+- **Tests Added**: 9 integration tests in `test_iqa_fixtures_integration.py`
+
+#### 2. Training Validation (1.8 MB)
+- **Location**: `data/test_fixtures/training_validation/`
+- **Files**: 5 images + manifest.json (clean → severe degradation spectrum)
+- **Purpose**: Training pipeline validation
+
+#### 3. Augmentation Input (728 KB)
+- **Location**: `data/test_fixtures/augmentation_input/`
+- **Files**: 3 pristine baseline images (text, table, form)
+- **Purpose**: Genalog augmentation testing
+
+#### 4. Layout Edge Cases (904 KB)
+- **Location**: `data/test_fixtures/layout_samples/`
+- **Files**: 4 samples (dense math, watermark, colorful background, handwriting mixed)
+- **Purpose**: Layout-lite edge case detection
+- **Tests Added**: 11 integration tests in `test_layout_fixtures_integration.py`
+
+### Test Infrastructure Updates ✅
+
+#### tests/conftest.py Enhancements
+Added fixture loaders for all new fixtures:
+- **Directory fixtures**: `iqa_samples_dir`, `training_validation_dir`, `augmentation_input_dir`, `layout_samples_dir`
+- **Collection fixtures**: `iqa_sample_images`, `iqa_labels`, `training_validation_images`, `augmentation_input_images`, `layout_edge_case_samples`
+- **Individual fixtures**: `reference_clean_image`, `blurry_image`, `noisy_image`, `watermarked_pdf`, `dense_math_pdf`, `handwriting_mixed_image`, `colorful_background_image`
+
+#### New Integration Tests
+- **test_iqa_fixtures_integration.py**: 9 tests validating IQA fixtures and ground truth labels
+- **test_layout_fixtures_integration.py**: 11 tests validating layout edge cases and metadata
+
+**Test Results**: ✅ All 20 new tests passing
+
+### Test Suite Metrics Update
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Total Tests | 723 | 743 | +20 |
+| Integration Tests | ~50 | ~70 | +20 |
+| Test Fixtures Size | 0.8 MB | 6.5 MB | +5.7 MB |
+| Fixture Categories | 3 | 7 | +4 |
+
+### Documentation Added
+- `docs/FIXTURE_ACQUISITION_PLAN.md` - Detailed acquisition guide
+- `docs/PRIORITY2_EDGE_CASES_OPTIONS.md` - Research findings for edge cases
+- Updated `data/test_fixtures/README.md` with complete inventory
+
+### Next Steps
+1. ✅ ~~Add fixture loaders to conftest.py~~ - COMPLETE
+2. ✅ ~~Create example integration tests~~ - COMPLETE
+3. **Create unit tests using new IQA fixtures** for:
+   - Classical IQA algorithms (blur, noise, contrast detection)
+   - ML IQA model inference validation
+   - Layout-lite edge case detection
+4. **Remove coverage exemptions** as modules gain test coverage
+5. **Update CI/CD** to leverage new fixtures in automated testing

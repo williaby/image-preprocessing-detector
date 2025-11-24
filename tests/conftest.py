@@ -194,6 +194,30 @@ def omnidocbench_fixtures_dir(fixtures_dir: Path) -> Path:
     return fixtures_dir / "omnidocbench"
 
 
+@pytest.fixture(scope="session")
+def iqa_samples_dir(fixtures_dir: Path) -> Path:
+    """Return path to IQA ground truth samples."""
+    return fixtures_dir / "iqa_samples"
+
+
+@pytest.fixture(scope="session")
+def training_validation_dir(fixtures_dir: Path) -> Path:
+    """Return path to training validation samples."""
+    return fixtures_dir / "training_validation"
+
+
+@pytest.fixture(scope="session")
+def augmentation_input_dir(fixtures_dir: Path) -> Path:
+    """Return path to augmentation input samples."""
+    return fixtures_dir / "augmentation_input"
+
+
+@pytest.fixture(scope="session")
+def layout_samples_dir(fixtures_dir: Path) -> Path:
+    """Return path to layout edge case samples."""
+    return fixtures_dir / "layout_samples"
+
+
 # ============================================================================
 # File Collection Fixtures
 # ============================================================================
@@ -258,6 +282,99 @@ def wili_text_samples(wili_fixtures_dir: Path) -> list[Path]:
 
     if not samples:
         pytest.skip("WiLI-2018 fixtures not available")
+    return samples
+
+
+@pytest.fixture(scope="session")
+def iqa_sample_images(iqa_samples_dir: Path) -> list[Path]:
+    """
+    Return list of IQA ground truth sample images.
+
+    These are carefully selected samples with known quality defects:
+    - Reference clean (pristine, DMOS=0.0)
+    - Gaussian blur (high blur)
+    - White noise (high noise)
+    - Low contrast (poor illumination)
+    - JPEG artifacts (compression artifacts)
+    - Combined defects (blur + noise + skew)
+    """
+    images = sorted(iqa_samples_dir.glob("*.png"))
+    if not images:
+        pytest.skip("IQA sample images not available")
+    return images
+
+
+@pytest.fixture(scope="session")
+def iqa_labels(iqa_samples_dir: Path) -> dict:
+    """
+    Return IQA ground truth labels.
+
+    Returns dictionary mapping filenames to quality scores:
+    - dmos: Overall quality score (0-100, higher = worse)
+    - blur: Blur level (0.0-1.0)
+    - noise: Noise level (0.0-1.0)
+    - illumination: Illumination issues (0.0-1.0)
+    - artifacts: Compression artifacts (0.0-1.0)
+    - skew: Skew/rotation (0.0-1.0)
+    """
+    import json
+
+    labels_file = iqa_samples_dir / "labels.json"
+    if not labels_file.exists():
+        pytest.skip("IQA labels.json not available")
+
+    with labels_file.open() as f:
+        return json.load(f)
+
+
+@pytest.fixture(scope="session")
+def training_validation_images(training_validation_dir: Path) -> list[Path]:
+    """
+    Return list of training validation sample images.
+
+    These represent a quality spectrum:
+    - 3 clean baseline samples
+    - 1 moderate degradation sample
+    - 1 severe degradation sample
+    """
+    images = sorted(training_validation_dir.glob("*.jpg"))
+    if not images:
+        pytest.skip("Training validation images not available")
+    return images
+
+
+@pytest.fixture(scope="session")
+def augmentation_input_images(augmentation_input_dir: Path) -> list[Path]:
+    """
+    Return list of clean augmentation input samples.
+
+    These are pristine baseline images for augmentation testing:
+    - Clean text page
+    - Clean table page
+    - Clean form page
+    """
+    images = sorted(augmentation_input_dir.glob("*.jpg"))
+    if not images:
+        pytest.skip("Augmentation input images not available")
+    return images
+
+
+@pytest.fixture(scope="session")
+def layout_edge_case_samples(layout_samples_dir: Path) -> list[Path]:
+    """
+    Return list of layout edge case samples (PDF + images).
+
+    These represent challenging layout scenarios:
+    - Dense math equations (PDF)
+    - Watermarked document (PDF)
+    - Colorful background (JPG)
+    - Handwriting mixed with printed text (JPG)
+    """
+    samples = []
+    samples.extend(sorted(layout_samples_dir.glob("*.pdf")))
+    samples.extend(sorted(layout_samples_dir.glob("*.jpg")))
+    if not samples:
+        pytest.skip("Layout edge case samples not available")
     return samples
 
 
@@ -331,6 +448,69 @@ def low_contrast_pdf(doclaynet_fixtures_dir: Path) -> Path:
     if not pdf.exists():
         pytest.skip("Low contrast PDF fixture not available")
     return pdf
+
+
+@pytest.fixture
+def reference_clean_image(iqa_samples_dir: Path) -> Path:
+    """Return pristine reference IQA image (DMOS=0.0)."""
+    img = iqa_samples_dir / "reference_clean.png"
+    if not img.exists():
+        pytest.skip("Reference clean IQA image not available")
+    return img
+
+
+@pytest.fixture
+def blurry_image(iqa_samples_dir: Path) -> Path:
+    """Return high blur IQA sample image."""
+    img = iqa_samples_dir / "gaussian_blur_high.png"
+    if not img.exists():
+        pytest.skip("Blurry IQA image not available")
+    return img
+
+
+@pytest.fixture
+def noisy_image(iqa_samples_dir: Path) -> Path:
+    """Return high noise IQA sample image."""
+    img = iqa_samples_dir / "white_noise_high.png"
+    if not img.exists():
+        pytest.skip("Noisy IQA image not available")
+    return img
+
+
+@pytest.fixture
+def watermarked_pdf(layout_samples_dir: Path) -> Path:
+    """Return watermarked document PDF fixture."""
+    pdf = layout_samples_dir / "watermarked_document.pdf"
+    if not pdf.exists():
+        pytest.skip("Watermarked PDF fixture not available")
+    return pdf
+
+
+@pytest.fixture
+def dense_math_pdf(layout_samples_dir: Path) -> Path:
+    """Return dense math equations PDF fixture."""
+    pdf = layout_samples_dir / "dense_math_page4.pdf"
+    if not pdf.exists():
+        pytest.skip("Dense math PDF fixture not available")
+    return pdf
+
+
+@pytest.fixture
+def handwriting_mixed_image(layout_samples_dir: Path) -> Path:
+    """Return handwriting mixed with printed text image fixture."""
+    img = layout_samples_dir / "handwriting_mixed.jpg"
+    if not img.exists():
+        pytest.skip("Handwriting mixed image fixture not available")
+    return img
+
+
+@pytest.fixture
+def colorful_background_image(layout_samples_dir: Path) -> Path:
+    """Return colorful background document image fixture."""
+    img = layout_samples_dir / "colorful_background.jpg"
+    if not img.exists():
+        pytest.skip("Colorful background image fixture not available")
+    return img
 
 
 # ============================================================================
