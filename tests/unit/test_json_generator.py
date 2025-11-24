@@ -134,6 +134,7 @@ class TestMetadataBuilder:
         blur_result = BlurDetectionResult(
             is_blurred=True,
             score=80.0,
+            blur_score=0.2,  # Normalized score (low = blurry)
             confidence=0.9,
             severity=Severity.HIGH,
         )
