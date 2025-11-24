@@ -1464,12 +1464,12 @@ class IlluminationDetector:
                 cell = gray[y1:y2, x1:x2]
                 means.append(np.mean(cell))
 
-        means = np.array(means)
+        means_array = np.array(means)
 
         # Compute coefficient of variation (std/mean)
         # Lower CV = more uniform
-        if np.mean(means) > 0:
-            cv = np.std(means) / np.mean(means)
+        if np.mean(means_array) > 0:
+            cv = np.std(means_array) / np.mean(means_array)
             # Convert to uniformity score (0-1, higher = better)
             # CV of 0.3 or more is considered severe non-uniformity
             uniformity = max(0.0, 1.0 - cv / 0.3)
