@@ -64,7 +64,13 @@ def cleanup_old_checkpoints(
         checkpoint_dir: Directory containing checkpoints
         pattern: Glob pattern to match checkpoint files (e.g., "checkpoint_epoch_*.pt")
         keep_last_n: Number of most recent checkpoints to keep
+
+    Raises:
+        ValueError: If keep_last_n is less than 1
     """
+    if keep_last_n < 1:
+        raise ValueError(f"keep_last_n must be >= 1, got {keep_last_n}")
+
     checkpoints = sorted(
         checkpoint_dir.glob(pattern),
         key=lambda p: p.stat().st_mtime,
