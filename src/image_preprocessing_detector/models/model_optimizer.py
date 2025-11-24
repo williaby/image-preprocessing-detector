@@ -40,8 +40,8 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
-    torch = None  # type: ignore[assignment]
-    nn = None  # type: ignore[assignment, misc]
+    torch = None
+    nn = None
 
 try:
     import onnx
@@ -50,8 +50,8 @@ try:
     HAS_ONNX = True
 except ImportError:
     HAS_ONNX = False
-    onnx = None  # type: ignore[assignment]
-    checker = None  # type: ignore[assignment]
+    onnx = None
+    checker = None
 
 try:
     import onnxruntime as ort
@@ -64,10 +64,10 @@ try:
     HAS_ORT = True
 except ImportError:
     HAS_ORT = False
-    ort = None  # type: ignore[assignment]
-    QuantType = None  # type: ignore[assignment]
-    quantize_static = None  # type: ignore[assignment]
-    CalibrationDataReader = object  # type: ignore[assignment, misc]
+    ort = None
+    QuantType = None
+    quantize_static = None
+    CalibrationDataReader = object
 
 
 @dataclass
@@ -447,7 +447,7 @@ class ModelOptimizer:
 
         torch.onnx.export(
             model,
-            dummy_input,
+            (dummy_input,),
             str(output_path),
             opset_version=config.opset_version,
             input_names=["input"],
@@ -1253,7 +1253,8 @@ class ModelRegistry:
         """Load registry from disk."""
         if self.registry_file.exists():
             with open(self.registry_file) as f:
-                return json.load(f)
+                data: dict[str, Any] = json.load(f)
+                return data
         return {"models": {}, "deployments": []}
 
     def _save_registry(self) -> None:
@@ -1311,7 +1312,9 @@ class ModelRegistry:
         if model_name not in self._registry["models"]:
             return None
 
-        versions = list(self._registry["models"][model_name]["versions"].keys())
+        versions: list[str] = list(
+            self._registry["models"][model_name]["versions"].keys()
+        )
         if not versions:
             return None
 
@@ -1340,7 +1343,10 @@ class ModelRegistry:
         if version is None:
             return None
 
-        return self._registry["models"][model_name]["versions"].get(version)
+        result: dict[str, Any] | None = self._registry["models"][model_name][
+            "versions"
+        ].get(version)
+        return result
 
     def list_models(self) -> list[dict[str, Any]]:
         """List all registered models.
@@ -1386,13 +1392,13 @@ class ModelRegistry:
         metrics1 = info1["manifest"]["metrics"]
         metrics2 = info2["manifest"]["metrics"]
 
-        comparison = {
+        comparison: dict[str, Any] = {
             "version1": version1,
             "version2": version2,
             "metrics_diff": {},
         }
 
-        all_metrics = set(metrics1.keys()) | set(metrics2.keys())
+        all_metrics: set[str] = set(metrics1.keys()) | set(metrics2.keys())
         for metric in all_metrics:
             v1 = metrics1.get(metric, 0.0)
             v2 = metrics2.get(metric, 0.0)
