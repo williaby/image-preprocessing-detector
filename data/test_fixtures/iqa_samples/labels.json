@@ -1,0 +1,56 @@
+{
+  "reference_clean.png": {
+    "dmos": 0.0,
+    "blur": 0.0,
+    "noise": 0.0,
+    "illumination": 0.0,
+    "artifacts": 0.0,
+    "skew": 0.0,
+    "description": "Pristine reference image, born_digital document"
+  },
+  "gaussian_blur_high.png": {
+    "dmos": 40.0,
+    "blur": 1.0,
+    "noise": 0.0,
+    "illumination": 0.0,
+    "artifacts": 1.0,
+    "skew": 0.0,
+    "description": "High blur with JPEG artifacts"
+  },
+  "white_noise_high.png": {
+    "dmos": 40.0,
+    "blur": 0.0,
+    "noise": 1.0,
+    "illumination": 0.0,
+    "artifacts": 0.0,
+    "skew": 1.0,
+    "description": "High noise with skew"
+  },
+  "contrast_low.png": {
+    "dmos": 20.0,
+    "blur": 0.0,
+    "noise": 0.0,
+    "illumination": 1.0,
+    "artifacts": 0.0,
+    "skew": 0.0,
+    "description": "Low contrast/poor illumination"
+  },
+  "jpeg_artifacts_high.png": {
+    "dmos": 20.0,
+    "blur": 0.0,
+    "noise": 0.0,
+    "illumination": 0.0,
+    "artifacts": 1.0,
+    "skew": 0.0,
+    "description": "High JPEG compression artifacts"
+  },
+  "combined_blur_noise.png": {
+    "dmos": 60.0,
+    "blur": 1.0,
+    "noise": 1.0,
+    "illumination": 0.0,
+    "artifacts": 0.0,
+    "skew": 1.0,
+    "description": "Combined defects: blur, noise, and skew"
+  }
+}
