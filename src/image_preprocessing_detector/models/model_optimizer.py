@@ -24,7 +24,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -33,25 +33,34 @@ from image_preprocessing_detector.utils import get_logger
 logger = get_logger(__name__)
 
 # Optional ML dependencies
-try:
+if TYPE_CHECKING:
+    import onnx
     import torch
     import torch.nn as nn
-
-    HAS_TORCH = True
-except ImportError:
-    HAS_TORCH = False
-    torch = None
-    nn = None
-
-try:
-    import onnx
     from onnx import checker
 
+    HAS_TORCH = True
     HAS_ONNX = True
-except ImportError:
-    HAS_ONNX = False
-    onnx = None
-    checker = None
+else:
+    try:
+        import torch
+        import torch.nn as nn
+
+        HAS_TORCH = True
+    except ImportError:
+        HAS_TORCH = False
+        torch: Any = None
+        nn: Any = None
+
+    try:
+        import onnx
+        from onnx import checker
+
+        HAS_ONNX = True
+    except ImportError:
+        HAS_ONNX = False
+        onnx: Any = None
+        checker: Any = None
 
 try:
     import onnxruntime as ort
