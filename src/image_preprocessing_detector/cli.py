@@ -489,20 +489,26 @@ def blur_check(
         if roi:
             parts = [x.strip() for x in roi.split(",")]
             if len(parts) != 4:
-                click.echo("Error: Invalid ROI format: ROI must have 4 values", err=True)
+                click.echo(
+                    "Error: Invalid ROI format: ROI must have 4 values", err=True
+                )
                 click.echo("Expected format: 'x,y,width,height'", err=True)
                 sys.exit(1)
             try:
                 bbox = tuple(int(x) for x in parts)
             except ValueError:
-                click.echo("Error: Invalid ROI format: values must be integers", err=True)
+                click.echo(
+                    "Error: Invalid ROI format: values must be integers", err=True
+                )
                 click.echo("Expected format: 'x,y,width,height'", err=True)
                 sys.exit(1)
 
         # Run detection
         if bbox:
             result = detector.detect_roi(image, bbox)  # type: ignore[arg-type]
-            click.echo(f"Analyzing ROI: x={bbox[0]}, y={bbox[1]}, w={bbox[2]}, h={bbox[3]}")
+            click.echo(
+                f"Analyzing ROI: x={bbox[0]}, y={bbox[1]}, w={bbox[2]}, h={bbox[3]}"
+            )
         else:
             result = detector.detect(image, compute_detailed_metrics=detailed)
 
@@ -547,7 +553,9 @@ def blur_check(
                 "high": "! BLURRED",
                 "critical": "✗ SEVERELY BLURRED",
             }
-            severity_display = severity_icons.get(result.severity.value, result.severity.value)
+            severity_display = severity_icons.get(
+                result.severity.value, result.severity.value
+            )
             click.echo(f"Status: {severity_display}")
             click.echo(f"Blurred: {'Yes' if result.is_blurred else 'No'}")
             click.echo(f"Severity: {result.severity.value.upper()}")
@@ -559,8 +567,12 @@ def blur_check(
             if detailed and result.metrics:
                 click.echo("-" * 50)
                 click.echo("DETAILED METRICS:")
-                click.echo(f"  Local Variance Mean: {result.metrics.local_variance_mean:.2f}")
-                click.echo(f"  Local Variance Std: {result.metrics.local_variance_std:.2f}")
+                click.echo(
+                    f"  Local Variance Mean: {result.metrics.local_variance_mean:.2f}"
+                )
+                click.echo(
+                    f"  Local Variance Std: {result.metrics.local_variance_std:.2f}"
+                )
                 click.echo(f"  Edge Density: {result.metrics.edge_density:.4f}")
 
             click.echo("=" * 50)
@@ -572,7 +584,9 @@ def blur_check(
             elif result.blur_score >= 0.5:
                 click.echo("  Image has acceptable sharpness for most use cases.")
             elif result.blur_score >= 0.2:
-                click.echo("  Image shows noticeable blur. Consider re-scanning or correction.")
+                click.echo(
+                    "  Image shows noticeable blur. Consider re-scanning or correction."
+                )
             else:
                 click.echo("  Image is heavily blurred. Re-acquisition recommended.")
 
@@ -669,20 +683,26 @@ def noise_check(
         if roi:
             parts = [x.strip() for x in roi.split(",")]
             if len(parts) != 4:
-                click.echo("Error: Invalid ROI format: ROI must have 4 values", err=True)
+                click.echo(
+                    "Error: Invalid ROI format: ROI must have 4 values", err=True
+                )
                 click.echo("Expected format: 'x,y,width,height'", err=True)
                 sys.exit(1)
             try:
                 bbox = tuple(int(x) for x in parts)
             except ValueError:
-                click.echo("Error: Invalid ROI format: values must be integers", err=True)
+                click.echo(
+                    "Error: Invalid ROI format: values must be integers", err=True
+                )
                 click.echo("Expected format: 'x,y,width,height'", err=True)
                 sys.exit(1)
 
         # Run detection
         if bbox:
             result = detector.detect_roi(image, bbox)  # type: ignore[arg-type]
-            click.echo(f"Analyzing ROI: x={bbox[0]}, y={bbox[1]}, w={bbox[2]}, h={bbox[3]}")
+            click.echo(
+                f"Analyzing ROI: x={bbox[0]}, y={bbox[1]}, w={bbox[2]}, h={bbox[3]}"
+            )
         else:
             result = detector.detect(image, compute_detailed_metrics=detailed)
 
@@ -728,7 +748,9 @@ def noise_check(
                 "high": "! NOISY",
                 "critical": "✗ SEVERELY NOISY",
             }
-            severity_display = severity_icons.get(result.severity.value, result.severity.value)
+            severity_display = severity_icons.get(
+                result.severity.value, result.severity.value
+            )
             click.echo(f"Status: {severity_display}")
             click.echo(f"Noisy: {'Yes' if result.is_noisy else 'No'}")
             click.echo(f"Severity: {result.severity.value.upper()}")
@@ -740,7 +762,9 @@ def noise_check(
             if detailed and result.metrics:
                 click.echo("-" * 50)
                 click.echo("DETAILED METRICS:")
-                click.echo(f"  Wavelet Detail Energy: {result.metrics.wavelet_detail_energy:.4f}")
+                click.echo(
+                    f"  Wavelet Detail Energy: {result.metrics.wavelet_detail_energy:.4f}"
+                )
                 click.echo(f"  SNR Estimate: {result.metrics.snr_estimate:.2f} dB")
                 click.echo(f"  Noise Type Hint: {result.metrics.noise_type_hint}")
 
@@ -755,7 +779,9 @@ def noise_check(
             elif result.noise_score >= 0.2:
                 click.echo("  Image shows noticeable noise. Consider denoising.")
             else:
-                click.echo("  Image is heavily affected by noise. Denoising recommended.")
+                click.echo(
+                    "  Image is heavily affected by noise. Denoising recommended."
+                )
 
     except Exception as e:
         logger.error("Noise check failed", error=str(e), exc_info=True)

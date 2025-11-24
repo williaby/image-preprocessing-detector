@@ -21,7 +21,6 @@ from image_preprocessing_detector.augmentation.genalog_degrader import (
     create_default_degrader,
 )
 
-
 # =============================================================================
 # GenalogDegrader Initialization Tests
 # =============================================================================
@@ -79,19 +78,25 @@ class TestGenalogDegraderApply:
         """Create a sample test image."""
         return np.zeros((100, 100, 3), dtype=np.uint8)
 
-    def test_apply_returns_copy(self, degrader: GenalogDegrader, sample_image: np.ndarray) -> None:
+    def test_apply_returns_copy(
+        self, degrader: GenalogDegrader, sample_image: np.ndarray
+    ) -> None:
         """Test that apply returns a copy, not the original."""
         result = degrader.apply(sample_image)
 
         assert result is not sample_image
         assert np.array_equal(result, sample_image)  # Currently returns unchanged copy
 
-    def test_apply_preserves_shape(self, degrader: GenalogDegrader, sample_image: np.ndarray) -> None:
+    def test_apply_preserves_shape(
+        self, degrader: GenalogDegrader, sample_image: np.ndarray
+    ) -> None:
         """Test that apply preserves image shape."""
         result = degrader.apply(sample_image)
         assert result.shape == sample_image.shape
 
-    def test_apply_preserves_dtype(self, degrader: GenalogDegrader, sample_image: np.ndarray) -> None:
+    def test_apply_preserves_dtype(
+        self, degrader: GenalogDegrader, sample_image: np.ndarray
+    ) -> None:
         """Test that apply preserves image dtype."""
         result = degrader.apply(sample_image)
         assert result.dtype == np.uint8
@@ -155,10 +160,7 @@ class TestGenalogDegraderApplyBatch:
 
     def test_batch_returns_list(self, degrader: GenalogDegrader) -> None:
         """Test that apply_batch returns a list."""
-        images = [
-            np.zeros((100, 100, 3), dtype=np.uint8)
-            for _ in range(3)
-        ]
+        images = [np.zeros((100, 100, 3), dtype=np.uint8) for _ in range(3)]
         results = degrader.apply_batch(images)
 
         assert isinstance(results, list)

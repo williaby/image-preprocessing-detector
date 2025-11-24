@@ -22,7 +22,6 @@ from image_preprocessing_detector.utils.gcs_uploader import (
     upload_run_to_gcs,
 )
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -373,8 +372,7 @@ class TestListRuns:
         """Test max_results limits the number of runs returned."""
         mock_blobs = MagicMock()
         mock_blobs.prefixes = [
-            f"project/model/runs/2025-11-{i:02d}T00-00Z_run-{i}/"
-            for i in range(1, 11)
+            f"project/model/runs/2025-11-{i:02d}T00-00Z_run-{i}/" for i in range(1, 11)
         ]
         mock_storage_client.bucket.return_value.list_blobs.return_value = mock_blobs
 
@@ -542,9 +540,13 @@ class TestDownloadRunFromGcs:
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "project,model,run_id",
+    ("project", "model", "run_id"),
     [
-        ("image-preprocessing-detector", "resnet50_teacher", "2025-11-15T01-20Z_run-abc"),
+        (
+            "image-preprocessing-detector",
+            "resnet50_teacher",
+            "2025-11-15T01-20Z_run-abc",
+        ),
         ("ocr-pipeline", "bert_base", "2025-01-01T00-00Z_run-xyz"),
         ("my-project", "my-model", "simple-run-id"),
     ],
@@ -578,7 +580,7 @@ def test_canonical_path_construction(
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "bucket_name,expected_prefix",
+    ("bucket_name", "expected_prefix"),
     [
         ("my-bucket", "gs://my-bucket/"),
         ("rag-pipeline-models", "gs://rag-pipeline-models/"),

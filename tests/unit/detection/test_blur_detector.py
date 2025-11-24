@@ -494,7 +494,10 @@ class TestBlurMetrics:
 
         assert result.metrics is not None
         # Local variance should be close to global for uniform pattern
-        assert abs(result.metrics.local_variance_mean - result.metrics.laplacian_variance) < result.metrics.laplacian_variance
+        assert (
+            abs(result.metrics.local_variance_mean - result.metrics.laplacian_variance)
+            < result.metrics.laplacian_variance
+        )
         # Edge density should be positive for checkerboard
         assert result.metrics.edge_density > 0
 

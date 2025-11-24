@@ -21,7 +21,6 @@ from image_preprocessing_detector.schema import (
     PDFType,
 )
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -217,10 +216,12 @@ class TestOCRFastRouting:
         assert "fast" in rationale.lower()
 
     def test_born_digital_with_multi_column_still_fast(
-        self, multi_column_layout: PageLayoutSummary, high_quality_dqs: DocumentQualityScore
+        self,
+        multi_column_layout: PageLayoutSummary,
+        high_quality_dqs: DocumentQualityScore,
     ) -> None:
         """Test that multi-column layout is still considered simple."""
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.BORN_DIGITAL,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.2,
@@ -233,7 +234,7 @@ class TestOCRFastRouting:
         self, simple_layout: PageLayoutSummary, low_quality_dqs: DocumentQualityScore
     ) -> None:
         """Test that low quality prevents OCR_FAST routing."""
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.BORN_DIGITAL,
             dqs=low_quality_dqs,
             pre_ocr_risk=0.2,
@@ -268,7 +269,9 @@ class TestOCRAdvancedRouting:
         assert "risk" in rationale.lower()
 
     def test_handwriting_triggers_advanced(
-        self, handwriting_layout: PageLayoutSummary, high_quality_dqs: DocumentQualityScore
+        self,
+        handwriting_layout: PageLayoutSummary,
+        high_quality_dqs: DocumentQualityScore,
     ) -> None:
         """Test that handwriting triggers OCR_ADVANCED."""
         recommendation, rationale = recommend_ocr_routing(
@@ -285,7 +288,7 @@ class TestOCRAdvancedRouting:
         self, simple_layout: PageLayoutSummary, high_quality_dqs: DocumentQualityScore
     ) -> None:
         """Test that exactly 0.6 risk does NOT trigger advanced (> not >=)."""
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.IMAGE_ONLY,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.6,  # Exactly at threshold, should NOT trigger
@@ -323,7 +326,7 @@ class TestVisionSimpleRouting:
         self, complex_layout: PageLayoutSummary, high_quality_dqs: DocumentQualityScore
     ) -> None:
         """Test that complex layout prevents VISION_SIMPLE routing."""
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.IMAGE_ONLY,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.3,
@@ -361,7 +364,7 @@ class TestConservativeFallback:
         self, simple_layout: PageLayoutSummary, high_quality_dqs: DocumentQualityScore
     ) -> None:
         """Test that None PDF type falls through to conservative fallback."""
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=None,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.3,
@@ -374,7 +377,7 @@ class TestConservativeFallback:
         self, high_quality_dqs: DocumentQualityScore
     ) -> None:
         """Test that empty page layout summary falls through to fallback."""
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.BORN_DIGITAL,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.3,
@@ -394,12 +397,14 @@ class TestMultiPageDocuments:
     """Tests for multi-page document routing."""
 
     def test_any_page_with_table_triggers_vision_structured(
-        self, simple_layout: PageLayoutSummary, table_layout: PageLayoutSummary,
-        high_quality_dqs: DocumentQualityScore
+        self,
+        simple_layout: PageLayoutSummary,
+        table_layout: PageLayoutSummary,
+        high_quality_dqs: DocumentQualityScore,
     ) -> None:
         """Test that any page with tables triggers VISION_STRUCTURED."""
         # First page simple, second page has table
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.BORN_DIGITAL,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.2,
@@ -409,11 +414,13 @@ class TestMultiPageDocuments:
         assert recommendation == OCRRoutingRecommendation.VISION_STRUCTURED
 
     def test_any_page_with_handwriting_triggers_advanced(
-        self, simple_layout: PageLayoutSummary, handwriting_layout: PageLayoutSummary,
-        high_quality_dqs: DocumentQualityScore
+        self,
+        simple_layout: PageLayoutSummary,
+        handwriting_layout: PageLayoutSummary,
+        high_quality_dqs: DocumentQualityScore,
     ) -> None:
         """Test that any page with handwriting triggers OCR_ADVANCED."""
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.IMAGE_ONLY,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.2,
@@ -423,11 +430,13 @@ class TestMultiPageDocuments:
         assert recommendation == OCRRoutingRecommendation.OCR_ADVANCED
 
     def test_mixed_layouts_not_considered_simple(
-        self, simple_layout: PageLayoutSummary, complex_layout: PageLayoutSummary,
-        high_quality_dqs: DocumentQualityScore
+        self,
+        simple_layout: PageLayoutSummary,
+        complex_layout: PageLayoutSummary,
+        high_quality_dqs: DocumentQualityScore,
     ) -> None:
         """Test that mixed simple/complex layouts are not considered simple."""
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.BORN_DIGITAL,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.2,
@@ -451,8 +460,13 @@ class TestEdgeCases:
         self, simple_layout: PageLayoutSummary, high_quality_dqs: DocumentQualityScore
     ) -> None:
         """Test that rationale is always a non-empty string."""
-        for pdf_type in [PDFType.BORN_DIGITAL, PDFType.IMAGE_ONLY, PDFType.HYBRID, None]:
-            recommendation, rationale = recommend_ocr_routing(
+        for pdf_type in [
+            PDFType.BORN_DIGITAL,
+            PDFType.IMAGE_ONLY,
+            PDFType.HYBRID,
+            None,
+        ]:
+            _recommendation, rationale = recommend_ocr_routing(
                 pdf_type=pdf_type,
                 dqs=high_quality_dqs,
                 pre_ocr_risk=0.3,
@@ -475,7 +489,7 @@ class TestEdgeCases:
             complexity_score=0.5,
         )
 
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _rationale = recommend_ocr_routing(
             pdf_type=PDFType.BORN_DIGITAL,
             dqs=high_quality_dqs,
             pre_ocr_risk=0.2,
@@ -493,7 +507,7 @@ class TestEdgeCases:
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "has_tables,has_figures,expected",
+    ("has_tables", "has_figures", "expected"),
     [
         (True, False, OCRRoutingRecommendation.VISION_STRUCTURED),
         (False, True, OCRRoutingRecommendation.VISION_STRUCTURED),
@@ -528,18 +542,54 @@ def test_vision_structured_triggers(
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "pdf_type,degradation_score,layout_type,pre_ocr_risk,expected",
+    ("pdf_type", "degradation_score", "layout_type", "pre_ocr_risk", "expected"),
     [
         # Rule 2: Born-digital + high quality + simple → OCR_FAST
-        (PDFType.BORN_DIGITAL, 0.9, LayoutType.SINGLE_COLUMN, 0.2, OCRRoutingRecommendation.OCR_FAST),
-        (PDFType.BORN_DIGITAL, 0.9, LayoutType.MULTI_COLUMN, 0.2, OCRRoutingRecommendation.OCR_FAST),
+        (
+            PDFType.BORN_DIGITAL,
+            0.9,
+            LayoutType.SINGLE_COLUMN,
+            0.2,
+            OCRRoutingRecommendation.OCR_FAST,
+        ),
+        (
+            PDFType.BORN_DIGITAL,
+            0.9,
+            LayoutType.MULTI_COLUMN,
+            0.2,
+            OCRRoutingRecommendation.OCR_FAST,
+        ),
         # Rule 3: High risk → OCR_ADVANCED
-        (PDFType.BORN_DIGITAL, 0.9, LayoutType.SINGLE_COLUMN, 0.7, OCRRoutingRecommendation.OCR_ADVANCED),
+        (
+            PDFType.BORN_DIGITAL,
+            0.9,
+            LayoutType.SINGLE_COLUMN,
+            0.7,
+            OCRRoutingRecommendation.OCR_ADVANCED,
+        ),
         # Rule 4: Image-only + simple → VISION_SIMPLE
-        (PDFType.IMAGE_ONLY, 0.9, LayoutType.SINGLE_COLUMN, 0.3, OCRRoutingRecommendation.VISION_SIMPLE),
+        (
+            PDFType.IMAGE_ONLY,
+            0.9,
+            LayoutType.SINGLE_COLUMN,
+            0.3,
+            OCRRoutingRecommendation.VISION_SIMPLE,
+        ),
         # Rule 5: Fallback cases
-        (PDFType.HYBRID, 0.9, LayoutType.SINGLE_COLUMN, 0.3, OCRRoutingRecommendation.OCR_ADVANCED),
-        (PDFType.IMAGE_ONLY, 0.9, LayoutType.COMPLEX, 0.3, OCRRoutingRecommendation.OCR_ADVANCED),
+        (
+            PDFType.HYBRID,
+            0.9,
+            LayoutType.SINGLE_COLUMN,
+            0.3,
+            OCRRoutingRecommendation.OCR_ADVANCED,
+        ),
+        (
+            PDFType.IMAGE_ONLY,
+            0.9,
+            LayoutType.COMPLEX,
+            0.3,
+            OCRRoutingRecommendation.OCR_ADVANCED,
+        ),
     ],
     ids=[
         "born_digital_high_quality_single",
