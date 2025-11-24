@@ -1493,6 +1493,380 @@ class JPEGBlockinessDetector:
         return float(min(0.95, max(0.5, confidence)))
 
 
+@dataclass
+class ProblemRegion:
+    """A region with binarization issues.
+
+    Attributes:
+        x: X coordinate of region (top-left)
+        y: Y coordinate of region (top-left)
+        width: Width of region
+        height: Height of region
+        issue: Type of issue (low_contrast, noisy, blurry)
+        severity: Severity of the issue
+    """
+
+    x: int
+    y: int
+    width: int
+    height: int
+    issue: str
+    severity: float
+
+
+@dataclass
+class BinarizationQualityResult:
+    """Result of binarization quality assessment.
+
+    Attributes:
+        binarization_score: Overall quality score (0.0-1.0, higher = better)
+        bimodality_score: Histogram bimodality (0.0-1.0, higher = clearer separation)
+        contrast_score: Local contrast score (0.0-1.0)
+        noise_score: Noise impact score (0.0-1.0, higher = less noise)
+        problem_regions: List of regions with binarization issues
+        confidence: Confidence score (0.0-1.0)
+        severity: Overall severity level
+        estimated_threshold: Estimated optimal Otsu threshold (0-255)
+    """
+
+    binarization_score: float
+    bimodality_score: float
+    contrast_score: float
+    noise_score: float
+    problem_regions: list[ProblemRegion]
+    confidence: float
+    severity: Severity
+    estimated_threshold: int
+
+
+class BinarizationQualityDetector:
+    """Assesses how well a document image would binarize.
+
+    Evaluates factors that affect binarization quality:
+    - Histogram bimodality (clear text/background separation)
+    - Local contrast in different regions
+    - Noise levels that interfere with thresholding
+    - Edge clarity for text boundaries
+
+    Identifies problem regions that may need special handling.
+    """
+
+    def __init__(
+        self,
+        threshold_critical: float = 0.40,
+        threshold_high: float = 0.55,
+        threshold_medium: float = 0.70,
+        grid_size: int = 4,
+        min_contrast: float = 0.15,
+    ) -> None:
+        """Initialize binarization quality detector.
+
+        Args:
+            threshold_critical: Critical quality threshold (< 0.40 = severe issues)
+            threshold_high: High severity threshold (< 0.55 = noticeable issues)
+            threshold_medium: Medium severity threshold (< 0.70 = slight issues)
+            grid_size: Grid divisions for regional analysis (default: 4x4)
+            min_contrast: Minimum contrast to consider region viable (default: 0.15)
+        """
+        self.threshold_critical = threshold_critical
+        self.threshold_high = threshold_high
+        self.threshold_medium = threshold_medium
+        self.grid_size = grid_size
+        self.min_contrast = min_contrast
+
+        logger.info(
+            "Binarization quality detector initialized",
+            threshold_critical=threshold_critical,
+            threshold_high=threshold_high,
+            threshold_medium=threshold_medium,
+            grid_size=grid_size,
+        )
+
+    def detect(self, image: np.ndarray) -> BinarizationQualityResult:
+        """Assess binarization quality of an image.
+
+        Args:
+            image: Input image (BGR format)
+
+        Returns:
+            BinarizationQualityResult with quality metrics
+
+        Raises:
+            ValueError: If image is invalid or empty
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        logger.debug("Running binarization quality detection", image_shape=image.shape)
+
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # For large images, subsample for performance
+        h, w = gray.shape
+        original_h, original_w = h, w
+        max_dim = 500
+        scale = 1.0
+        if h > max_dim or w > max_dim:
+            scale = min(max_dim / h, max_dim / w)
+            new_h, new_w = int(h * scale), int(w * scale)
+            gray = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            h, w = gray.shape
+
+        # Compute bimodality score (histogram analysis)
+        bimodality_score, estimated_threshold = self._compute_bimodality(gray)
+
+        # Compute local contrast score
+        contrast_score, problem_regions = self._analyze_local_contrast(
+            gray, scale, original_h, original_w
+        )
+
+        # Compute noise impact score
+        noise_score = self._compute_noise_impact(gray)
+
+        # Combined binarization score
+        binarization_score = (
+            0.40 * bimodality_score + 0.35 * contrast_score + 0.25 * noise_score
+        )
+
+        # Determine severity
+        severity = self._compute_severity(binarization_score)
+
+        # Compute confidence
+        confidence = self._compute_confidence(gray, binarization_score)
+
+        logger.debug(
+            "Binarization quality detection complete",
+            binarization_score=binarization_score,
+            bimodality_score=bimodality_score,
+            contrast_score=contrast_score,
+            noise_score=noise_score,
+            num_problem_regions=len(problem_regions),
+            severity=severity.value,
+        )
+
+        return BinarizationQualityResult(
+            binarization_score=binarization_score,
+            bimodality_score=bimodality_score,
+            contrast_score=contrast_score,
+            noise_score=noise_score,
+            problem_regions=problem_regions,
+            confidence=confidence,
+            severity=severity,
+            estimated_threshold=estimated_threshold,
+        )
+
+    def _compute_bimodality(self, gray: np.ndarray) -> tuple[float, int]:
+        """Compute histogram bimodality score.
+
+        A bimodal histogram indicates clear separation between text and background,
+        which is ideal for binarization.
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Tuple of (bimodality_score, estimated_threshold)
+        """
+        # Use Otsu's method to find optimal threshold
+        threshold, _ = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        threshold = int(threshold)
+
+        # Compute histogram
+        hist = cv2.calcHist([gray], [0], None, [256], [0, 256]).flatten()
+        total_pixels = hist.sum()
+        if total_pixels < 1:
+            return 0.0, threshold
+
+        hist = hist / total_pixels  # Normalize
+
+        # Calculate between-class variance using Otsu's method
+        # This measures how well separated the two classes are
+        # Use threshold + 1 to include threshold pixel in foreground
+        w0 = np.sum(hist[: threshold + 1])
+        w1 = np.sum(hist[threshold + 1 :])
+
+        # Handle edge cases
+        if w0 < 1e-6 or w1 < 1e-6:
+            # Try to find actual peaks in histogram
+            # This handles uniform or near-uniform images
+            # Check histogram spread
+            non_zero_bins = np.where(hist > 0.001)[0]
+            if len(non_zero_bins) > 0:
+                spread = non_zero_bins[-1] - non_zero_bins[0]
+                # Spread of 0 = uniform, spread of 255 = full range
+                return float(min(1.0, spread / 200.0)), threshold
+            return 0.0, threshold
+
+        # Compute class means
+        indices = np.arange(256)
+        mean0 = np.sum(indices[: threshold + 1] * hist[: threshold + 1]) / w0
+        mean1 = np.sum(indices[threshold + 1 :] * hist[threshold + 1 :]) / w1
+
+        # Between-class variance (Otsu's criterion)
+        between_var = w0 * w1 * (mean0 - mean1) ** 2
+
+        # Normalize to 0-1
+        # For clear document images, between_var can range from 0 to ~4000+
+        bimodality_score = min(1.0, between_var / 3000.0)
+
+        return float(bimodality_score), threshold
+
+    def _analyze_local_contrast(
+        self, gray: np.ndarray, scale: float, original_h: int, original_w: int
+    ) -> tuple[float, list[ProblemRegion]]:
+        """Analyze local contrast across image regions.
+
+        Args:
+            gray: Grayscale image (possibly subsampled)
+            scale: Scale factor used for subsampling
+            original_h: Original image height
+            original_w: Original image width
+
+        Returns:
+            Tuple of (contrast_score, problem_regions)
+        """
+        h, w = gray.shape
+        cell_h = h // self.grid_size
+        cell_w = w // self.grid_size
+
+        if cell_h < 10 or cell_w < 10:
+            return 1.0, []
+
+        problem_regions = []
+        contrast_scores = []
+
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                y1, y2 = i * cell_h, (i + 1) * cell_h
+                x1, x2 = j * cell_w, (j + 1) * cell_w
+                cell = gray[y1:y2, x1:x2]
+
+                # Compute local contrast (std / mean)
+                cell_mean = np.mean(cell)
+                cell_std = np.std(cell)
+
+                # Normalize contrast (cell_std / 255.0), handle zero mean
+                local_contrast = cell_std / 255.0 if cell_mean > 0 else 0.0
+
+                contrast_scores.append(local_contrast)
+
+                # Identify problem regions
+                if local_contrast < self.min_contrast:
+                    # Map coordinates back to original image
+                    orig_x = int(x1 / scale)
+                    orig_y = int(y1 / scale)
+                    orig_w = int(cell_w / scale)
+                    orig_h_cell = int(cell_h / scale)
+
+                    # Determine issue type
+                    if cell_std < 5:
+                        issue = "uniform"
+                    elif local_contrast < 0.05:
+                        issue = "low_contrast"
+                    else:
+                        issue = "marginal_contrast"
+
+                    severity = 1.0 - (local_contrast / self.min_contrast)
+
+                    problem_regions.append(
+                        ProblemRegion(
+                            x=orig_x,
+                            y=orig_y,
+                            width=min(orig_w, original_w - orig_x),
+                            height=min(orig_h_cell, original_h - orig_y),
+                            issue=issue,
+                            severity=float(min(1.0, severity)),
+                        )
+                    )
+
+        # Overall contrast score
+        if contrast_scores:
+            avg_contrast = np.mean(contrast_scores)
+            # Scale to 0-1 (typical good contrast is 0.15-0.30)
+            contrast_score = min(1.0, avg_contrast / 0.20)
+        else:
+            contrast_score = 0.5
+
+        return float(contrast_score), problem_regions
+
+    def _compute_noise_impact(self, gray: np.ndarray) -> float:
+        """Estimate how much noise would affect binarization.
+
+        Uses Laplacian variance to estimate noise/texture level.
+        High noise makes binarization difficult.
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Noise impact score (0-1, higher = less noise = better)
+        """
+        # Compute Laplacian
+        laplacian = cv2.Laplacian(gray, cv2.CV_64F)
+        lap_var = laplacian.var()
+
+        # Very high variance suggests noise or complex textures
+        # Very low variance suggests blur (also bad for binarization)
+        # Optimal is moderate variance (clear edges)
+
+        # Normalize: ideal variance is around 500-2000 for documents
+        if lap_var < 100:
+            # Too blurry
+            noise_score = lap_var / 100.0
+        elif lap_var > 5000:
+            # Too noisy/textured
+            noise_score = max(0.0, 1.0 - (lap_var - 5000) / 10000.0)
+        else:
+            # Good range
+            noise_score = 1.0
+
+        return float(max(0.0, min(1.0, noise_score)))
+
+    def _compute_severity(self, score: float) -> Severity:
+        """Compute severity based on binarization score.
+
+        Args:
+            score: Binarization quality score (0-1)
+
+        Returns:
+            Severity level
+        """
+        if score < self.threshold_critical:
+            return Severity.CRITICAL
+        if score < self.threshold_high:
+            return Severity.HIGH
+        if score < self.threshold_medium:
+            return Severity.MEDIUM
+        return Severity.LOW
+
+    def _compute_confidence(self, gray: np.ndarray, score: float) -> float:
+        """Compute confidence score for the detection.
+
+        Args:
+            gray: Grayscale image
+            score: Binarization quality score
+
+        Returns:
+            Confidence score (0-1)
+        """
+        # Size confidence
+        h, w = gray.shape
+        size_confidence = min(1.0, (h * w) / 250000)
+
+        # Detection clarity
+        threshold_distances = [
+            abs(score - self.threshold_medium),
+            abs(score - self.threshold_high),
+            abs(score - self.threshold_critical),
+        ]
+        clarity = min(threshold_distances) * 5
+        clarity_confidence = min(1.0, 0.5 + clarity)
+
+        confidence = 0.6 * size_confidence + 0.4 * clarity_confidence
+        return float(min(0.95, max(0.5, confidence)))
+
+
 # Convenience functions
 def detect_skew(image: np.ndarray) -> SkewDetectionResult:
     """Convenience function for skew detection.
@@ -1618,4 +1992,26 @@ def detect_jpeg_blockiness(image: np.ndarray) -> JPEGBlockinessResult:
         ...     )
     """
     detector = JPEGBlockinessDetector()
+    return detector.detect(image)
+
+
+def detect_binarization_quality(image: np.ndarray) -> BinarizationQualityResult:
+    """Convenience function for binarization quality assessment.
+
+    Args:
+        image: Input image (BGR format)
+
+    Returns:
+        BinarizationQualityResult
+
+    Example:
+        >>> img = cv2.imread("document.jpg")
+        >>> result = detect_binarization_quality(img)
+        >>> if result.binarization_score < 0.7:
+        ...     print(
+        ...         f"Binarization issues: score={result.binarization_score:.2f}, "
+        ...         f"problem regions: {len(result.problem_regions)}"
+        ...     )
+    """
+    detector = BinarizationQualityDetector()
     return detector.detect(image)

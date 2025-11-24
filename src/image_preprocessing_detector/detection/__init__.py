@@ -7,6 +7,8 @@ Model configuration: configs/models/doclayout_yolo.yaml
 """
 
 from image_preprocessing_detector.detection.iqa_classical import (
+    BinarizationQualityDetector,
+    BinarizationQualityResult,
     BlurDetectionResult,
     BlurDetector,
     ContrastDetectionResult,
@@ -19,9 +21,11 @@ from image_preprocessing_detector.detection.iqa_classical import (
     NoiseDetectionResult,
     NoiseDetector,
     NoiseType,
+    ProblemRegion,
     Severity,
     SkewDetectionResult,
     SkewDetector,
+    detect_binarization_quality,
     detect_blur,
     detect_contrast,
     detect_illumination,
@@ -37,6 +41,8 @@ from image_preprocessing_detector.detection.text_gate import (
 
 __all__ = [
     # Classical IQA
+    "BinarizationQualityDetector",
+    "BinarizationQualityResult",
     "BlurDetectionResult",
     "BlurDetector",
     "ContrastDetectionResult",
@@ -49,6 +55,7 @@ __all__ = [
     "NoiseDetectionResult",
     "NoiseDetector",
     "NoiseType",
+    "ProblemRegion",
     "Severity",
     "SkewDetectionResult",
     "SkewDetector",
@@ -56,6 +63,7 @@ __all__ = [
     "TextDetectionResult",
     "TextGate",
     # Convenience functions
+    "detect_binarization_quality",
     "detect_blur",
     "detect_contrast",
     "detect_illumination",

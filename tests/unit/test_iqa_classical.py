@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 
 from image_preprocessing_detector.detection.iqa_classical import (
+    BinarizationQualityDetector,
+    BinarizationQualityResult,
     BlurDetectionResult,
     BlurDetector,
     ContrastDetectionResult,
@@ -19,9 +21,11 @@ from image_preprocessing_detector.detection.iqa_classical import (
     NoiseDetectionResult,
     NoiseDetector,
     NoiseType,
+    ProblemRegion,
     Severity,
     SkewDetectionResult,
     SkewDetector,
+    detect_binarization_quality,
     detect_blur,
     detect_contrast,
     detect_illumination,
@@ -1040,3 +1044,221 @@ class TestJPEGBlockinessDetector:
         # Both h and v blockiness should be computed
         assert result.horizontal_blockiness >= 0.0
         assert result.vertical_blockiness >= 0.0
+
+
+class TestBinarizationQualityDetector:
+    """Test BinarizationQualityDetector class."""
+
+    def test_init_default_params(self) -> None:
+        """Test BinarizationQualityDetector initialization with defaults."""
+        detector = BinarizationQualityDetector()
+
+        assert detector.threshold_critical == 0.40
+        assert detector.threshold_high == 0.55
+        assert detector.threshold_medium == 0.70
+        assert detector.grid_size == 4
+        assert detector.min_contrast == 0.15
+
+    def test_init_custom_params(self) -> None:
+        """Test BinarizationQualityDetector initialization with custom parameters."""
+        detector = BinarizationQualityDetector(
+            threshold_critical=0.35,
+            threshold_high=0.50,
+            threshold_medium=0.65,
+            grid_size=6,
+            min_contrast=0.10,
+        )
+
+        assert detector.threshold_critical == 0.35
+        assert detector.threshold_high == 0.50
+        assert detector.threshold_medium == 0.65
+        assert detector.grid_size == 6
+        assert detector.min_contrast == 0.10
+
+    def test_detect_good_document(self) -> None:
+        """Test detection on document with good binarization potential."""
+        # Create document-like image: white background with black text
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 240  # White background
+
+        # Add text-like dark regions
+        for y in range(50, 450, 30):
+            for x in range(50, 450, 80):
+                img[y : y + 15, x : x + 60] = 30  # Dark text
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        # Good document should have high binarization score
+        assert result.binarization_score > 0.5
+        assert result.bimodality_score > 0.3
+        assert result.severity in [Severity.LOW, Severity.MEDIUM]
+        assert 0 <= result.estimated_threshold <= 255
+
+    def test_detect_uniform_image(self) -> None:
+        """Test detection on uniform (no contrast) image."""
+        # Create uniform gray image - worst case for binarization
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        # Uniform image has no bimodality, low contrast
+        assert result.bimodality_score < 0.3
+        assert result.contrast_score < 0.5
+        assert len(result.problem_regions) > 0  # Should identify problem regions
+
+    def test_detect_low_contrast(self) -> None:
+        """Test detection on low contrast image."""
+        # Create low contrast image
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+        # Add very slight variation
+        img[100:400, 100:400] = 140  # Barely visible difference
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        # Low contrast should be detected
+        assert result.contrast_score < 0.8
+        assert result.binarization_score < 0.9
+
+    def test_detect_noisy_image(self) -> None:
+        """Test detection on noisy image."""
+        # Create image with noise
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 200
+        noise = np.random.normal(0, 50, img.shape).astype(np.float32)
+        img = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        # Noisy image should have reduced noise score
+        # Note: noise_score is inverted (higher = less noise)
+        assert 0.0 <= result.noise_score <= 1.0
+        assert 0.0 <= result.binarization_score <= 1.0
+
+    def test_severity_levels(self) -> None:
+        """Test severity level assignment."""
+        detector = BinarizationQualityDetector(
+            threshold_critical=0.40, threshold_high=0.55, threshold_medium=0.70
+        )
+
+        # Test internal severity computation (note: lower score = worse)
+        assert detector._compute_severity(0.30) == Severity.CRITICAL
+        assert detector._compute_severity(0.50) == Severity.HIGH
+        assert detector._compute_severity(0.60) == Severity.MEDIUM
+        assert detector._compute_severity(0.80) == Severity.LOW
+
+    def test_detect_empty_image_raises(self) -> None:
+        """Test detection raises ValueError for empty image."""
+        detector = BinarizationQualityDetector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            detector.detect(np.array([]))
+
+    def test_detect_none_image_raises(self) -> None:
+        """Test detection raises ValueError for None image."""
+        detector = BinarizationQualityDetector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            detector.detect(None)  # type: ignore
+
+    def test_result_attributes(self) -> None:
+        """Test BinarizationQualityResult has all required attributes."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 180
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        assert isinstance(result, BinarizationQualityResult)
+        assert hasattr(result, "binarization_score")
+        assert hasattr(result, "bimodality_score")
+        assert hasattr(result, "contrast_score")
+        assert hasattr(result, "noise_score")
+        assert hasattr(result, "problem_regions")
+        assert hasattr(result, "confidence")
+        assert hasattr(result, "severity")
+        assert hasattr(result, "estimated_threshold")
+
+        # Check value ranges
+        assert 0.0 <= result.binarization_score <= 1.0
+        assert 0.0 <= result.bimodality_score <= 1.0
+        assert 0.0 <= result.contrast_score <= 1.0
+        assert 0.0 <= result.noise_score <= 1.0
+        assert 0.0 <= result.confidence <= 1.0
+        assert 0 <= result.estimated_threshold <= 255
+        assert isinstance(result.problem_regions, list)
+
+    def test_problem_region_attributes(self) -> None:
+        """Test ProblemRegion dataclass attributes."""
+        # Create uniform image to generate problem regions
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 128
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        # Should have problem regions for uniform image
+        if result.problem_regions:
+            region = result.problem_regions[0]
+            assert isinstance(region, ProblemRegion)
+            assert hasattr(region, "x")
+            assert hasattr(region, "y")
+            assert hasattr(region, "width")
+            assert hasattr(region, "height")
+            assert hasattr(region, "issue")
+            assert hasattr(region, "severity")
+            assert region.x >= 0
+            assert region.y >= 0
+            assert region.width > 0
+            assert region.height > 0
+            assert 0.0 <= region.severity <= 1.0
+
+    def test_small_image_handling(self) -> None:
+        """Test handling of small images."""
+        # Create small image
+        img = np.ones((50, 50, 3), dtype=np.uint8) * 180
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        # Should handle gracefully
+        assert isinstance(result, BinarizationQualityResult)
+        assert 0.0 <= result.binarization_score <= 1.0
+
+    def test_large_image_subsampling(self) -> None:
+        """Test that large images are subsampled for performance."""
+        # Create large image
+        img = np.ones((2000, 2000, 3), dtype=np.uint8) * 180
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        # Should complete without error
+        assert isinstance(result, BinarizationQualityResult)
+        assert 0.0 <= result.binarization_score <= 1.0
+
+    def test_bimodal_histogram(self) -> None:
+        """Test bimodality detection with clear bimodal histogram."""
+        # Create image with clear bimodal distribution
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 30  # Dark
+        img[::2, :] = 220  # Alternating light rows
+
+        detector = BinarizationQualityDetector()
+        result = detector.detect(img)
+
+        # Should detect bimodality
+        assert result.bimodality_score > 0.5
+
+
+class TestBinarizationConvenienceFunction:
+    """Test binarization quality convenience function."""
+
+    def test_detect_binarization_quality_convenience(self) -> None:
+        """Test detect_binarization_quality convenience function."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 180
+
+        result = detect_binarization_quality(img)
+
+        assert isinstance(result, BinarizationQualityResult)
+        assert hasattr(result, "binarization_score")
+        assert hasattr(result, "problem_regions")
+        assert hasattr(result, "estimated_threshold")
