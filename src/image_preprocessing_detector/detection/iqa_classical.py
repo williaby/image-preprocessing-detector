@@ -1867,6 +1867,349 @@ class BinarizationQualityDetector:
         return float(min(0.95, max(0.5, confidence)))
 
 
+@dataclass
+class BleedThroughResult:
+    """Result from bleed-through detection.
+
+    Attributes:
+        bleed_through_detected: Whether bleed-through is present
+        severity: Overall severity (0-1, higher = worse)
+        affected_ratio: Ratio of image area affected by bleed-through
+        affected_regions: List of ProblemRegion objects identifying affected areas
+        confidence: Detection confidence (0-1)
+        severity_level: Categorical severity level
+        background_uniformity: How uniform the background is (0-1, higher = more uniform)
+        bleed_intensity: Average intensity of detected bleed-through patterns
+    """
+
+    bleed_through_detected: bool
+    severity: float
+    affected_ratio: float
+    affected_regions: list[ProblemRegion]
+    confidence: float
+    severity_level: Severity
+    background_uniformity: float
+    bleed_intensity: float
+
+
+class BleedThroughDetector:
+    """Detector for bleed-through artifacts in scanned documents.
+
+    Bleed-through occurs when text or images from the reverse side (verso)
+    of a page show through to the front side (recto) during scanning.
+    This is common in thin paper or aggressive scan settings.
+
+    Detection approach:
+    1. Extract background regions (non-text areas)
+    2. Apply morphological operations to isolate faint patterns
+    3. Detect low-contrast, diffuse patterns characteristic of bleed-through
+    4. Distinguish from legitimate content using intensity and structure analysis
+
+    Attributes:
+        severity_threshold_low: Minimum severity for LOW rating
+        severity_threshold_medium: Minimum severity for MEDIUM rating
+        severity_threshold_high: Minimum severity for HIGH rating
+        min_region_size: Minimum pixels for a region to be considered
+        background_sample_ratio: Ratio of image to sample for background analysis
+
+    Example:
+        >>> detector = BleedThroughDetector()
+        >>> result = detector.detect(image)
+        >>> if result.bleed_through_detected:
+        ...     print(f"Bleed-through: {result.severity:.2f} severity")
+        ...     for region in result.affected_regions:
+        ...         print(f"  Region at ({region.x}, {region.y})")
+    """
+
+    def __init__(
+        self,
+        severity_threshold_low: float = 0.1,
+        severity_threshold_medium: float = 0.25,
+        severity_threshold_high: float = 0.5,
+        min_region_size: int = 100,
+        background_sample_ratio: float = 0.3,
+    ) -> None:
+        """Initialize bleed-through detector.
+
+        Args:
+            severity_threshold_low: Threshold for LOW severity (default: 0.1)
+            severity_threshold_medium: Threshold for MEDIUM severity (default: 0.25)
+            severity_threshold_high: Threshold for HIGH severity (default: 0.5)
+            min_region_size: Minimum region size in pixels (default: 100)
+            background_sample_ratio: Expected background ratio (default: 0.3)
+        """
+        self.severity_threshold_low = severity_threshold_low
+        self.severity_threshold_medium = severity_threshold_medium
+        self.severity_threshold_high = severity_threshold_high
+        self.min_region_size = min_region_size
+        self.background_sample_ratio = background_sample_ratio
+
+    def detect(self, image: np.ndarray) -> BleedThroughResult:
+        """Detect bleed-through artifacts in an image.
+
+        Args:
+            image: Input image (BGR or grayscale format)
+
+        Returns:
+            BleedThroughResult with detection details
+
+        Raises:
+            ValueError: If image is invalid or too small
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Image cannot be empty")
+
+        # Convert to grayscale
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image.copy()
+
+        h, w = gray.shape
+        if h < 16 or w < 16:
+            raise ValueError(f"Image too small: {w}x{h}, minimum 16x16")
+
+        # Subsample for performance (target < 15ms)
+        max_dim = 512
+        scale = 1.0
+        if max(h, w) > max_dim:
+            scale = max_dim / max(h, w)
+            new_h, new_w = int(h * scale), int(w * scale)
+            gray_small = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        else:
+            gray_small = gray
+
+        # Detect bleed-through patterns
+        (
+            bleed_mask,
+            bleed_intensity,
+            background_uniformity,
+        ) = self._detect_bleed_patterns(gray_small)
+
+        # Find affected regions
+        affected_regions = self._find_affected_regions(bleed_mask, scale)
+
+        # Calculate severity
+        affected_ratio = float(np.sum(bleed_mask > 0) / bleed_mask.size)
+        severity = self._calculate_severity(
+            affected_ratio, bleed_intensity, background_uniformity
+        )
+
+        # Determine if bleed-through is detected
+        bleed_detected = severity >= self.severity_threshold_low
+
+        # Get severity level
+        severity_level = self._get_severity_level(severity)
+
+        # Calculate confidence
+        confidence = self._compute_confidence(gray_small, severity, bleed_detected)
+
+        return BleedThroughResult(
+            bleed_through_detected=bleed_detected,
+            severity=severity,
+            affected_ratio=affected_ratio,
+            affected_regions=affected_regions,
+            confidence=confidence,
+            severity_level=severity_level,
+            background_uniformity=background_uniformity,
+            bleed_intensity=bleed_intensity,
+        )
+
+    def _detect_bleed_patterns(
+        self, gray: np.ndarray
+    ) -> tuple[np.ndarray, float, float]:
+        """Detect bleed-through patterns in the image.
+
+        Bleed-through appears as faint, diffuse patterns in background regions.
+        We detect this by:
+        1. Identifying background (light) regions
+        2. Looking for unexpected low-contrast patterns in those regions
+        3. Using morphological operations to isolate ghost text/images
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Tuple of (bleed_mask, bleed_intensity, background_uniformity)
+        """
+        # Apply Gaussian blur to reduce noise
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+        # Identify foreground (dark text) using Otsu's threshold
+        _, fg_mask = cv2.threshold(
+            blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+        )
+
+        # Background is the inverse
+        bg_mask = cv2.bitwise_not(fg_mask)
+
+        # Calculate background uniformity
+        bg_pixels = gray[bg_mask > 0]
+        if len(bg_pixels) > 0:
+            background_uniformity = 1.0 - (float(np.std(bg_pixels)) / 128.0)
+            background_uniformity = max(0.0, min(1.0, background_uniformity))
+        else:
+            background_uniformity = 1.0
+
+        # Apply morphological opening to remove foreground, keeping only faint patterns
+        # Use a larger kernel to suppress legitimate text
+        kernel_size = max(3, min(gray.shape) // 50)
+        kernel = cv2.getStructuringElement(
+            cv2.MORPH_ELLIPSE, (kernel_size, kernel_size)
+        )
+        opened = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel)
+
+        # Subtract opened from original to get fine structures
+        # This reveals faint patterns that were "underneath" the text
+        diff = cv2.absdiff(gray, opened)
+
+        # Focus on background regions only (where bleed-through appears)
+        bg_diff = cv2.bitwise_and(diff, diff, mask=bg_mask)
+
+        # Threshold to find significant bleed-through patterns
+        # Bleed-through is typically faint (10-50 intensity difference)
+        _, bleed_mask = cv2.threshold(bg_diff, 8, 255, cv2.THRESH_BINARY)
+
+        # Remove small noise with morphological opening
+        small_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        bleed_mask = cv2.morphologyEx(bleed_mask, cv2.MORPH_OPEN, small_kernel)
+
+        # Calculate bleed intensity (average intensity of detected patterns)
+        bleed_pixels = bg_diff[bleed_mask > 0]
+        bleed_intensity = float(np.mean(bleed_pixels)) / 255.0 if len(bleed_pixels) > 0 else 0.0
+
+        return bleed_mask, bleed_intensity, background_uniformity
+
+    def _find_affected_regions(
+        self, bleed_mask: np.ndarray, scale: float
+    ) -> list[ProblemRegion]:
+        """Find and characterize affected regions.
+
+        Args:
+            bleed_mask: Binary mask of bleed-through areas
+            scale: Scale factor used for subsampling
+
+        Returns:
+            List of ProblemRegion objects
+        """
+        regions: list[ProblemRegion] = []
+
+        # Find connected components
+        num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+            bleed_mask, connectivity=8
+        )
+
+        # Minimum area (accounting for scale)
+        min_area = self.min_region_size * (scale**2)
+
+        for i in range(1, num_labels):  # Skip background (label 0)
+            area = stats[i, cv2.CC_STAT_AREA]
+            if area < min_area:
+                continue
+
+            # Get bounding box and scale back to original size
+            x = int(stats[i, cv2.CC_STAT_LEFT] / scale)
+            y = int(stats[i, cv2.CC_STAT_TOP] / scale)
+            width = int(stats[i, cv2.CC_STAT_WIDTH] / scale)
+            height = int(stats[i, cv2.CC_STAT_HEIGHT] / scale)
+
+            # Calculate region severity based on coverage within bounding box
+            region_mask = labels == i
+            region_coverage = float(np.sum(region_mask)) / (
+                stats[i, cv2.CC_STAT_WIDTH] * stats[i, cv2.CC_STAT_HEIGHT]
+            )
+
+            regions.append(
+                ProblemRegion(
+                    x=x,
+                    y=y,
+                    width=max(1, width),
+                    height=max(1, height),
+                    issue="bleed_through",
+                    severity=min(1.0, region_coverage),
+                )
+            )
+
+        # Sort by severity (worst first)
+        regions.sort(key=lambda r: r.severity, reverse=True)
+
+        # Limit to top 10 regions
+        return regions[:10]
+
+    def _calculate_severity(
+        self, affected_ratio: float, bleed_intensity: float, background_uniformity: float
+    ) -> float:
+        """Calculate overall bleed-through severity.
+
+        Args:
+            affected_ratio: Ratio of image affected by bleed-through
+            bleed_intensity: Average intensity of bleed-through patterns
+            background_uniformity: How uniform the background is
+
+        Returns:
+            Severity score (0-1)
+        """
+        # Affected ratio is the primary factor
+        # More affected area = higher severity
+        ratio_score = min(1.0, affected_ratio * 5)  # 20% coverage = max severity
+
+        # Bleed intensity indicates how visible the bleed-through is
+        intensity_score = min(1.0, bleed_intensity * 4)  # 25% intensity = max
+
+        # Low background uniformity suggests bleed-through
+        uniformity_score = max(0.0, 1.0 - background_uniformity)
+
+        # Weighted combination
+        severity = 0.5 * ratio_score + 0.3 * intensity_score + 0.2 * uniformity_score
+
+        return float(max(0.0, min(1.0, severity)))
+
+    def _get_severity_level(self, severity: float) -> Severity:
+        """Convert severity score to categorical level.
+
+        Args:
+            severity: Numeric severity (0-1)
+
+        Returns:
+            Severity enum value
+        """
+        if severity >= self.severity_threshold_high:
+            return Severity.HIGH
+        if severity >= self.severity_threshold_medium:
+            return Severity.MEDIUM
+        # Return LOW for minimal or no bleed-through (no NONE in Severity enum)
+        return Severity.LOW
+
+    def _compute_confidence(
+        self, gray: np.ndarray, severity: float, detected: bool
+    ) -> float:
+        """Compute detection confidence.
+
+        Args:
+            gray: Grayscale image
+            severity: Calculated severity score
+            detected: Whether bleed-through was detected
+
+        Returns:
+            Confidence score (0-1)
+        """
+        # Size-based confidence
+        h, w = gray.shape
+        size_confidence = min(1.0, (h * w) / 100000)
+
+        # Severity clarity (how far from thresholds)
+        if detected:
+            # Higher severity = more confident in detection
+            clarity = min(1.0, severity / self.severity_threshold_high)
+        else:
+            # Lower severity = more confident in no-detection
+            clarity = 1.0 - (severity / self.severity_threshold_low) if self.severity_threshold_low > 0 else 1.0
+            clarity = max(0.0, min(1.0, clarity))
+
+        confidence = 0.5 * size_confidence + 0.5 * clarity
+        return float(min(0.95, max(0.5, confidence)))
+
+
 # Convenience functions
 def detect_skew(image: np.ndarray) -> SkewDetectionResult:
     """Convenience function for skew detection.
@@ -2014,4 +2357,29 @@ def detect_binarization_quality(image: np.ndarray) -> BinarizationQualityResult:
         ...     )
     """
     detector = BinarizationQualityDetector()
+    return detector.detect(image)
+
+
+def detect_bleed_through(image: np.ndarray) -> BleedThroughResult:
+    """Convenience function for bleed-through detection.
+
+    Detects text or images showing through from the verso (reverse) side
+    of a scanned document, common with thin paper or aggressive scanning.
+
+    Args:
+        image: Input image (BGR format)
+
+    Returns:
+        BleedThroughResult
+
+    Example:
+        >>> img = cv2.imread("scanned_page.jpg")
+        >>> result = detect_bleed_through(img)
+        >>> if result.bleed_through_detected:
+        ...     print(
+        ...         f"Bleed-through detected: severity={result.severity:.2f}, "
+        ...         f"affected regions: {len(result.affected_regions)}"
+        ...     )
+    """
+    detector = BleedThroughDetector()
     return detector.detect(image)

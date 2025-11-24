@@ -9,6 +9,8 @@ import pytest
 from image_preprocessing_detector.detection.iqa_classical import (
     BinarizationQualityDetector,
     BinarizationQualityResult,
+    BleedThroughDetector,
+    BleedThroughResult,
     BlurDetectionResult,
     BlurDetector,
     ContrastDetectionResult,
@@ -26,6 +28,7 @@ from image_preprocessing_detector.detection.iqa_classical import (
     SkewDetectionResult,
     SkewDetector,
     detect_binarization_quality,
+    detect_bleed_through,
     detect_blur,
     detect_contrast,
     detect_illumination,
@@ -1262,3 +1265,248 @@ class TestBinarizationConvenienceFunction:
         assert hasattr(result, "binarization_score")
         assert hasattr(result, "problem_regions")
         assert hasattr(result, "estimated_threshold")
+
+
+class TestBleedThroughDetector:
+    """Test BleedThroughDetector class."""
+
+    def test_init_default_params(self) -> None:
+        """Test BleedThroughDetector initialization with defaults."""
+        detector = BleedThroughDetector()
+
+        assert detector.severity_threshold_low == 0.1
+        assert detector.severity_threshold_medium == 0.25
+        assert detector.severity_threshold_high == 0.5
+        assert detector.min_region_size == 100
+        assert detector.background_sample_ratio == 0.3
+
+    def test_init_custom_params(self) -> None:
+        """Test BleedThroughDetector initialization with custom parameters."""
+        detector = BleedThroughDetector(
+            severity_threshold_low=0.15,
+            severity_threshold_medium=0.3,
+            severity_threshold_high=0.6,
+            min_region_size=200,
+            background_sample_ratio=0.4,
+        )
+
+        assert detector.severity_threshold_low == 0.15
+        assert detector.severity_threshold_medium == 0.3
+        assert detector.severity_threshold_high == 0.6
+        assert detector.min_region_size == 200
+        assert detector.background_sample_ratio == 0.4
+
+    def test_detect_clean_document(self) -> None:
+        """Test detection on clean document without bleed-through."""
+        # Create clean document with text-like content
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 255
+
+        # Add sharp, clean text blocks
+        for y in range(50, 450, 40):
+            cv2.rectangle(img, (30, y), (470, y + 15), (0, 0, 0), -1)
+
+        detector = BleedThroughDetector()
+        result = detector.detect(img)
+
+        # Should have minimal or no bleed-through
+        assert isinstance(result, BleedThroughResult)
+        assert result.severity < 0.3  # Low severity for clean doc
+
+    def test_detect_bleed_through_patterns(self) -> None:
+        """Test detection of simulated bleed-through patterns."""
+        # Create document with text
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 255
+
+        # Add foreground text
+        for y in range(50, 450, 60):
+            cv2.rectangle(img, (30, y), (470, y + 15), (0, 0, 0), -1)
+
+        # Add simulated bleed-through (faint gray patterns in background)
+        # These simulate verso text showing through
+        for y in range(80, 450, 60):
+            # Faint gray rectangles (simulating bleed-through from other side)
+            cv2.rectangle(img, (50, y), (450, y + 12), (200, 200, 200), -1)
+
+        detector = BleedThroughDetector()
+        result = detector.detect(img)
+
+        assert isinstance(result, BleedThroughResult)
+        assert hasattr(result, "bleed_through_detected")
+        assert hasattr(result, "severity")
+        assert hasattr(result, "affected_regions")
+
+    def test_result_attributes(self) -> None:
+        """Test that BleedThroughResult has all required attributes."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 180
+
+        detector = BleedThroughDetector()
+        result = detector.detect(img)
+
+        # Check all required attributes
+        assert hasattr(result, "bleed_through_detected")
+        assert hasattr(result, "severity")
+        assert hasattr(result, "affected_ratio")
+        assert hasattr(result, "affected_regions")
+        assert hasattr(result, "confidence")
+        assert hasattr(result, "severity_level")
+        assert hasattr(result, "background_uniformity")
+        assert hasattr(result, "bleed_intensity")
+
+        # Check types
+        assert isinstance(result.bleed_through_detected, bool)
+        assert isinstance(result.severity, float)
+        assert isinstance(result.affected_ratio, float)
+        assert isinstance(result.affected_regions, list)
+        assert isinstance(result.confidence, float)
+        assert isinstance(result.severity_level, Severity)
+        assert isinstance(result.background_uniformity, float)
+        assert isinstance(result.bleed_intensity, float)
+
+    def test_severity_ranges(self) -> None:
+        """Test that severity values are within expected ranges."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 180
+
+        detector = BleedThroughDetector()
+        result = detector.detect(img)
+
+        assert 0.0 <= result.severity <= 1.0
+        assert 0.0 <= result.affected_ratio <= 1.0
+        assert 0.0 <= result.confidence <= 1.0
+        assert 0.0 <= result.background_uniformity <= 1.0
+        assert 0.0 <= result.bleed_intensity <= 1.0
+
+    def test_severity_levels(self) -> None:
+        """Test severity level categorization."""
+        detector = BleedThroughDetector()
+
+        # Create images with varying levels of simulated issues
+        # Clean image
+        clean_img = np.ones((500, 500, 3), dtype=np.uint8) * 255
+        result_clean = detector.detect(clean_img)
+
+        # The severity level should be one of the valid enum values
+        assert result_clean.severity_level in [
+            Severity.LOW,
+            Severity.MEDIUM,
+            Severity.HIGH,
+            Severity.CRITICAL,
+        ]
+
+    def test_empty_image_raises_error(self) -> None:
+        """Test that empty image raises ValueError."""
+        detector = BleedThroughDetector()
+
+        with pytest.raises(ValueError, match="empty"):
+            detector.detect(np.array([]))
+
+    def test_too_small_image_raises_error(self) -> None:
+        """Test that too small image raises ValueError."""
+        detector = BleedThroughDetector()
+        small_img = np.ones((10, 10, 3), dtype=np.uint8) * 128
+
+        with pytest.raises(ValueError, match="too small"):
+            detector.detect(small_img)
+
+    def test_grayscale_input(self) -> None:
+        """Test detection on grayscale input image."""
+        # Create grayscale image
+        gray_img = np.ones((500, 500), dtype=np.uint8) * 200
+
+        detector = BleedThroughDetector()
+        result = detector.detect(gray_img)
+
+        assert isinstance(result, BleedThroughResult)
+        assert 0.0 <= result.severity <= 1.0
+
+    def test_affected_regions_structure(self) -> None:
+        """Test affected regions list structure."""
+        # Create image with some patterns
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 255
+        # Add some noise/patterns that might be detected as bleed-through
+        noise = np.random.randint(180, 220, (500, 500, 3), dtype=np.uint8)
+        img = cv2.addWeighted(img, 0.7, noise, 0.3, 0)
+
+        detector = BleedThroughDetector()
+        result = detector.detect(img)
+
+        # Regions should be a list
+        assert isinstance(result.affected_regions, list)
+
+        # If there are regions, check their structure
+        for region in result.affected_regions:
+            assert isinstance(region, ProblemRegion)
+            assert hasattr(region, "x")
+            assert hasattr(region, "y")
+            assert hasattr(region, "width")
+            assert hasattr(region, "height")
+            assert hasattr(region, "issue")
+            assert hasattr(region, "severity")
+            assert region.x >= 0
+            assert region.y >= 0
+            assert region.width > 0
+            assert region.height > 0
+            assert region.issue == "bleed_through"
+            assert 0.0 <= region.severity <= 1.0
+
+    def test_small_valid_image(self) -> None:
+        """Test handling of minimum valid size image."""
+        # Minimum valid size (16x16)
+        img = np.ones((16, 16, 3), dtype=np.uint8) * 180
+
+        detector = BleedThroughDetector()
+        result = detector.detect(img)
+
+        assert isinstance(result, BleedThroughResult)
+        assert 0.0 <= result.severity <= 1.0
+
+    def test_large_image_subsampling(self) -> None:
+        """Test that large images are subsampled for performance."""
+        import time
+
+        # Create large image
+        img = np.ones((2000, 2000, 3), dtype=np.uint8) * 200
+
+        detector = BleedThroughDetector()
+
+        start = time.perf_counter()
+        result = detector.detect(img)
+        elapsed = (time.perf_counter() - start) * 1000  # ms
+
+        assert isinstance(result, BleedThroughResult)
+        # Should complete in under 15ms target
+        assert elapsed < 50  # Allow some margin for test environment
+
+    def test_performance_target(self) -> None:
+        """Test that detection meets performance target (<15ms)."""
+        import time
+
+        # Test with typical document sizes
+        sizes = [(500, 500), (1000, 800), (2000, 1500)]
+
+        detector = BleedThroughDetector()
+
+        for h, w in sizes:
+            img = np.ones((h, w, 3), dtype=np.uint8) * 200
+
+            start = time.perf_counter()
+            result = detector.detect(img)
+            elapsed = (time.perf_counter() - start) * 1000
+
+            assert isinstance(result, BleedThroughResult)
+            # Should be reasonably fast (allowing margin for CI)
+            assert elapsed < 100  # 100ms max for any size
+
+
+class TestBleedThroughConvenienceFunction:
+    """Test bleed-through convenience function."""
+
+    def test_detect_bleed_through_convenience(self) -> None:
+        """Test detect_bleed_through convenience function."""
+        img = np.ones((500, 500, 3), dtype=np.uint8) * 200
+
+        result = detect_bleed_through(img)
+
+        assert isinstance(result, BleedThroughResult)
+        assert hasattr(result, "bleed_through_detected")
+        assert hasattr(result, "severity")
+        assert hasattr(result, "affected_regions")

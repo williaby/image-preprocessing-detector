@@ -9,6 +9,8 @@ Model configuration: configs/models/doclayout_yolo.yaml
 from image_preprocessing_detector.detection.iqa_classical import (
     BinarizationQualityDetector,
     BinarizationQualityResult,
+    BleedThroughDetector,
+    BleedThroughResult,
     BlurDetectionResult,
     BlurDetector,
     ContrastDetectionResult,
@@ -26,6 +28,7 @@ from image_preprocessing_detector.detection.iqa_classical import (
     SkewDetectionResult,
     SkewDetector,
     detect_binarization_quality,
+    detect_bleed_through,
     detect_blur,
     detect_contrast,
     detect_illumination,
@@ -43,6 +46,8 @@ __all__ = [
     # Classical IQA
     "BinarizationQualityDetector",
     "BinarizationQualityResult",
+    "BleedThroughDetector",
+    "BleedThroughResult",
     "BlurDetectionResult",
     "BlurDetector",
     "ContrastDetectionResult",
@@ -64,6 +69,7 @@ __all__ = [
     "TextGate",
     # Convenience functions
     "detect_binarization_quality",
+    "detect_bleed_through",
     "detect_blur",
     "detect_contrast",
     "detect_illumination",
