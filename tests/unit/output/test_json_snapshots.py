@@ -11,7 +11,6 @@ Tests cover:
 """
 
 import json
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -34,7 +33,6 @@ from image_preprocessing_detector.schema import (
     TransformHistory,
 )
 from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
-
 
 # =============================================================================
 # Test Data Factories
@@ -94,6 +92,7 @@ def create_full_document_metadata() -> DocumentMetadata:
         },
         page_layout_summary=[
             PageLayoutSummary(
+                page_number=1,
                 layout_type=LayoutType.MULTI_COLUMN,
                 has_tables=True,
                 has_figures=True,
@@ -102,7 +101,7 @@ def create_full_document_metadata() -> DocumentMetadata:
                 fuzzy_scan=False,
                 watermark=False,
                 colorful_background=False,
-                structural_complexity=0.65,
+                complexity_score=0.65,
             )
         ],
         teacher_usage={
@@ -155,11 +154,13 @@ def create_full_document_metadata() -> DocumentMetadata:
                 ],
                 elements=[
                     DocumentElement(
+                        id="elem_table_001",
                         category=ElementCategory.TABLE,
                         bbox=[100, 200, 400, 300],
                         confidence=0.92,
                     ),
                     DocumentElement(
+                        id="elem_figure_001",
                         category=ElementCategory.FIGURE,
                         bbox=[50, 600, 200, 150],
                         confidence=0.88,
@@ -279,6 +280,7 @@ class TestJsonSchemaStructure:
     def test_document_element_bbox_format(self) -> None:
         """Test document element bbox uses COCO format [x, y, width, height]."""
         element = DocumentElement(
+            id="elem_test_001",
             category=ElementCategory.TABLE,
             bbox=[100, 200, 300, 150],  # [x, y, width, height]
             confidence=0.9,
@@ -338,7 +340,8 @@ class TestFullDocumentSnapshot:
         assert summary["layout_type"] == "multi_column"
         assert summary["has_tables"] is True
         assert summary["has_figures"] is True
-        assert "structural_complexity" in summary
+        assert "page_number" in summary
+        assert "complexity_score" in summary
 
     def test_teacher_usage_structure(self) -> None:
         """Test teacher_usage has correct structure."""
@@ -361,7 +364,7 @@ class TestEnumSerialization:
     """Tests for enum serialization to JSON."""
 
     @pytest.mark.parametrize(
-        "issue_type,expected",
+        ("issue_type", "expected"),
         [
             (IssueType.NOISE, "noise"),
             (IssueType.BLUR, "blur"),
@@ -372,7 +375,9 @@ class TestEnumSerialization:
             (IssueType.LOW_DPI, "low_dpi"),
         ],
     )
-    def test_issue_type_serialization(self, issue_type: IssueType, expected: str) -> None:
+    def test_issue_type_serialization(
+        self, issue_type: IssueType, expected: str
+    ) -> None:
         """Test IssueType enum serializes correctly."""
         issue = DetectedIssue(
             type=issue_type,
@@ -383,7 +388,7 @@ class TestEnumSerialization:
         assert json_dict["type"] == expected
 
     @pytest.mark.parametrize(
-        "severity,expected",
+        ("severity", "expected"),
         [
             (IssueSeverity.LOW, "low"),
             (IssueSeverity.MEDIUM, "medium"),
@@ -404,7 +409,7 @@ class TestEnumSerialization:
         assert json_dict["severity"] == expected
 
     @pytest.mark.parametrize(
-        "action_type,expected",
+        ("action_type", "expected"),
         [
             (ActionType.DESKEW, "deskew"),
             (ActionType.PERSPECTIVE_CORRECTION, "perspective_correction"),
@@ -429,7 +434,7 @@ class TestEnumSerialization:
         assert json_dict["action"] == expected
 
     @pytest.mark.parametrize(
-        "pdf_type,expected",
+        ("pdf_type", "expected"),
         [
             (PDFType.IMAGE_ONLY, "image_only"),
             (PDFType.BORN_DIGITAL, "born_digital"),
@@ -444,7 +449,7 @@ class TestEnumSerialization:
         assert json_dict["pdf_type"] == expected
 
     @pytest.mark.parametrize(
-        "routing,expected",
+        ("routing", "expected"),
         [
             (OCRRoutingStrategy.OCR_FAST, "ocr_fast"),
             (OCRRoutingStrategy.OCR_ADVANCED, "ocr_advanced"),
@@ -492,7 +497,9 @@ class TestRoundTripSerialization:
         assert restored.pdf_type == original.pdf_type
         assert restored.pre_ocr_risk == original.pre_ocr_risk
         assert restored.dqs == original.dqs
-        assert restored.ocr_routing_recommendation == original.ocr_routing_recommendation
+        assert (
+            restored.ocr_routing_recommendation == original.ocr_routing_recommendation
+        )
 
     def test_detected_issues_round_trip(self) -> None:
         """Test detected issues survive round-trip."""
@@ -504,7 +511,7 @@ class TestRoundTripSerialization:
         restored_issues = restored.pages[0].detected_issues
 
         assert len(restored_issues) == len(original_issues)
-        for orig, rest in zip(original_issues, restored_issues):
+        for orig, rest in zip(original_issues, restored_issues, strict=True):
             assert rest.type == orig.type
             assert rest.severity == orig.severity
             assert rest.confidence == orig.confidence
@@ -519,7 +526,7 @@ class TestRoundTripSerialization:
         restored_transforms = restored.pages[0].transform_history
 
         assert len(restored_transforms) == len(original_transforms)
-        for orig, rest in zip(original_transforms, restored_transforms):
+        for orig, rest in zip(original_transforms, restored_transforms, strict=True):
             assert rest.action == orig.action
             assert rest.status == orig.status
 
@@ -539,7 +546,7 @@ class TestGoldenFileComparison:
         result = json_dict.copy()
 
         # Remove timestamp from processing_version
-        if "processing_version" in result and result["processing_version"]:
+        if result.get("processing_version"):
             pv = result["processing_version"].copy()
             pv.pop("timestamp", None)
             result["processing_version"] = pv
@@ -549,7 +556,7 @@ class TestGoldenFileComparison:
             pages = []
             for page in result["pages"]:
                 page_copy = page.copy()
-                if "transform_history" in page_copy and page_copy["transform_history"]:
+                if page_copy.get("transform_history"):
                     transforms = []
                     for t in page_copy["transform_history"]:
                         t_copy = t.copy()
@@ -628,7 +635,9 @@ class TestGoldenFileComparison:
                     # Check key is snake_case (lowercase with underscores)
                     if not all(c.islower() or c.isdigit() or c == "_" for c in key):
                         violations.append(f"{path}.{key}" if path else key)
-                    violations.extend(check_keys(value, f"{path}.{key}" if path else key))
+                    violations.extend(
+                        check_keys(value, f"{path}.{key}" if path else key)
+                    )
             elif isinstance(obj, list):
                 for i, item in enumerate(obj):
                     violations.extend(check_keys(item, f"{path}[{i}]"))
