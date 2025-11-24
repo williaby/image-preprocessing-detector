@@ -31,6 +31,7 @@ from image_preprocessing_detector.schema import (
     PDFType,
     PlannedAction,
     ProcessingVersion,
+    TeacherUsage,
     TransformHistory,
 )
 from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
@@ -105,11 +106,12 @@ def create_full_document_metadata() -> DocumentMetadata:
                 complexity_score=0.65,
             )
         ],
-        teacher_usage={
-            "triggered": True,
-            "reason": "high_uncertainty",
-            "pages": [0],
-        },
+        teacher_usage=TeacherUsage(
+            pages_with_teacher=[0],
+            escalation_reasons={"0": "high_uncertainty"},
+            teacher_device="cuda:0",
+            total_teacher_time_ms=150,
+        ),
         pages=[
             PageMetadata(
                 page_index=0,
@@ -352,9 +354,10 @@ class TestFullDocumentSnapshot:
         json_dict = json.loads(metadata.model_dump_json())
 
         teacher = json_dict["teacher_usage"]
-        assert teacher["triggered"] is True
-        assert teacher["reason"] == "high_uncertainty"
-        assert 0 in teacher["pages"]
+        assert 0 in teacher["pages_with_teacher"]
+        assert teacher["escalation_reasons"]["0"] == "high_uncertainty"
+        assert teacher["teacher_device"] == "cuda:0"
+        assert teacher["total_teacher_time_ms"] == 150
 
 
 # =============================================================================

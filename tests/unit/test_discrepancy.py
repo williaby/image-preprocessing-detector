@@ -20,7 +20,6 @@ from image_preprocessing_detector.detection.iqa_classical import (
     IlluminationType,
     JPEGBlockinessResult,
     NoiseDetectionResult,
-    NoiseType,
     Severity,
     SkewDetectionResult,
 )
@@ -153,6 +152,7 @@ class TestClassicalScoreAdapter:
         result = BlurDetectionResult(
             is_blurred=True,
             score=50.0,
+            blur_score=0.3,  # Low blur_score for blurry image
             severity=Severity.HIGH,
             confidence=0.9,
         )
@@ -167,6 +167,7 @@ class TestClassicalScoreAdapter:
         result = BlurDetectionResult(
             is_blurred=False,
             score=800.0,  # High Laplacian variance = sharp
+            blur_score=0.9,  # High blur_score for sharp image
             severity=Severity.LOW,
             confidence=0.9,
         )
@@ -195,14 +196,22 @@ class TestClassicalScoreAdapter:
 
         # No skew
         result = SkewDetectionResult(
-            is_skewed=False, angle=0.5, severity=Severity.LOW, confidence=0.9, method="hough"
+            is_skewed=False,
+            angle=0.5,
+            severity=Severity.LOW,
+            confidence=0.9,
+            method="hough",
         )
         score = adapter.convert_skew(result)
         assert score > 0.9  # Should be high for small angle
 
         # High skew
         result = SkewDetectionResult(
-            is_skewed=True, angle=8.0, severity=Severity.HIGH, confidence=0.9, method="hough"
+            is_skewed=True,
+            angle=8.0,
+            severity=Severity.HIGH,
+            confidence=0.9,
+            method="hough",
         )
         score = adapter.convert_skew(result)
         assert score < 0.3  # Should be low for large angle
@@ -212,10 +221,8 @@ class TestClassicalScoreAdapter:
         adapter = ClassicalScoreAdapter()
         result = NoiseDetectionResult(
             is_noisy=True,
-            score=0.8,
-            noise_type=NoiseType.GAUSSIAN,
-            sigma_estimate=25.0,
-            salt_pepper_ratio=0.0,
+            noise_sigma=25.0,
+            noise_score=0.3,  # Low score for noisy image
             severity=Severity.HIGH,
             confidence=0.88,
         )
@@ -263,7 +270,11 @@ class TestClassicalScoreAdapter:
         """Test converting only some detector results."""
         adapter = ClassicalScoreAdapter()
         blur_result = BlurDetectionResult(
-            is_blurred=False, score=500.0, severity=Severity.LOW, confidence=0.9
+            is_blurred=False,
+            score=500.0,
+            blur_score=0.8,
+            severity=Severity.LOW,
+            confidence=0.9,
         )
 
         scores = adapter.convert_to_scores(blur_result=blur_result)
@@ -291,9 +302,7 @@ class TestDiscrepancyAnalyzer:
     def test_analyze_no_discrepancy(self) -> None:
         """Test analysis when scores are similar."""
         analyzer = DiscrepancyAnalyzer()
-        ml_scores = MLScores(
-            blur_score=0.85, contrast_score=0.80, skew_score=0.90
-        )
+        ml_scores = MLScores(blur_score=0.85, contrast_score=0.80, skew_score=0.90)
         classical_scores = ClassicalScores(
             blur_score=0.87, contrast_score=0.82, skew_score=0.88
         )
@@ -321,9 +330,7 @@ class TestDiscrepancyAnalyzer:
     def test_analyze_multiple_discrepancies(self) -> None:
         """Test analysis when multiple heads have discrepancies."""
         analyzer = DiscrepancyAnalyzer()
-        ml_scores = MLScores(
-            blur_score=0.90, contrast_score=0.90, skew_score=0.90
-        )
+        ml_scores = MLScores(blur_score=0.90, contrast_score=0.90, skew_score=0.90)
         classical_scores = ClassicalScores(
             blur_score=0.50, contrast_score=0.50, skew_score=0.50
         )
@@ -409,13 +416,21 @@ class TestIntegration:
         """Test complete workflow from detector results to escalation decision."""
         # Simulate classical detector results
         blur_result = BlurDetectionResult(
-            is_blurred=False, score=600.0, severity=Severity.LOW, confidence=0.9
+            is_blurred=False,
+            score=600.0,
+            blur_score=0.85,
+            severity=Severity.LOW,
+            confidence=0.9,
         )
         contrast_result = ContrastDetectionResult(
             is_low_contrast=False, score=0.85, severity=Severity.LOW, confidence=0.9
         )
         skew_result = SkewDetectionResult(
-            is_skewed=False, angle=0.5, severity=Severity.LOW, confidence=0.95, method="hough"
+            is_skewed=False,
+            angle=0.5,
+            severity=Severity.LOW,
+            confidence=0.95,
+            method="hough",
         )
 
         # Convert to normalized scores
@@ -440,14 +455,27 @@ class TestIntegration:
         # Verify result structure
         assert isinstance(result, DiscrepancyResult)
         assert 0.0 <= result.max_discrepancy <= 1.0
-        assert result.max_discrepancy_head in ["blur", "contrast", "skew", "noise", "compression"]
+        assert result.max_discrepancy_head in [
+            "blur",
+            "contrast",
+            "skew",
+            "noise",
+            "compression",
+        ]
 
     def test_threshold_documentation_completeness(self) -> None:
         """Test that all heads have documentation."""
         analyzer = DiscrepancyAnalyzer()
         docs = analyzer.get_threshold_documentation()
 
-        expected_heads = ["blur", "contrast", "skew", "noise", "compression", "illumination"]
+        expected_heads = [
+            "blur",
+            "contrast",
+            "skew",
+            "noise",
+            "compression",
+            "illumination",
+        ]
         for head in expected_heads:
             assert head in docs
             assert "threshold" in docs[head]
