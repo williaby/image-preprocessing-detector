@@ -1,7 +1,7 @@
 ---
 title: Mutation Testing Guide
 description: Guide for running mutation tests to verify test suite quality
-schema_type: how-to
+schema_type: script
 ---
 
 ## Overview
