@@ -128,9 +128,9 @@ These modules are tested and have good coverage:
 
 - [ ] Many core modules excluded from coverage
 - [ ] Limited real-data test coverage
-- [ ] No performance/latency tests
-- [ ] layout_lite module has zero tests
-- [ ] Limited parametrized tests
+- [x] ~~No performance/latency tests~~ (tests/benchmark/test_performance.py added)
+- [x] ~~layout_lite module has zero tests~~ (test_layout_lite.py added)
+- [x] ~~Limited parametrized tests~~ (added to DQS and routing tests)
 - [ ] No snapshot/golden file tests
 
 ---
@@ -287,8 +287,8 @@ data/test_fixtures/           Total: ~828 KB
 
 ### Priority 6: Nice-to-have
 
-- [ ] Add parametrized tests using `@pytest.mark.parametrize`
-- [ ] Add performance/latency benchmark tests
+- [x] Add parametrized tests using `@pytest.mark.parametrize` ✅ COMPLETED
+- [x] Add performance/latency benchmark tests ✅ COMPLETED
 - [ ] Add snapshot tests for JSON output validation
 - [ ] Enable and run mutation testing regularly
 - [ ] Add chaos/fault-injection tests
@@ -368,16 +368,19 @@ data/test_fixtures/degraded_samples/
 - [x] `tests/integration/test_real_fixtures.py` enhanced with IQA validation (235 lines, 6 tests) (2025-11-24)
 - [x] `tests/unit/metrics/test_dqs_calculator.py` created (670 lines, 45+ tests) (2025-11-24)
 - [x] New fixtures added to conftest.py: low_quality_image, low_contrast_pdf (2025-11-24)
+- [x] `tests/benchmark/test_performance.py` created (300+ lines, 15+ tests) (2025-11-24)
+- [x] Added parametrized tests to test_dqs_calculator.py and test_recommendation_engine.py (2025-11-24)
+- [x] `tests/unit/models/test_resnet_models.py` created (500+ lines, 35+ tests) (2025-11-24)
+- [x] `tests/unit/utils/test_metadata_generator.py` created (400+ lines, 25+ tests) (2025-11-24)
+- [x] `tests/unit/utils/test_gcs_uploader.py` created (350+ lines, 20+ tests) (2025-11-24)
 
 ### In Progress
 
-- [ ] Performance benchmark tests
-- [ ] Parametrized tests
+- [ ] Snapshot tests for JSON output validation
 
 ### Blocked
 
 - [ ] `iqa_samples/` creation - Needs LIVE dataset download (see FIXTURE_ACQUISITION_TODO.md)
-- [ ] `resnet_student` tests - Needs iqa_samples fixtures
 - [ ] `layout_samples/` fixtures - Needs manual acquisition (see FIXTURE_ACQUISITION_TODO.md)
 
 ---
@@ -403,3 +406,8 @@ data/test_fixtures/degraded_samples/
 | 2025-11-24 | Added routing recommendation engine tests (20+ tests, 430 lines) | Claude |
 | 2025-11-24 | Added IQA validation tests to test_real_fixtures.py (6 tests, 235 lines) | Claude |
 | 2025-11-24 | Added DQS calculator unit tests (45+ tests, 670 lines) | Claude |
+| 2025-11-24 | Added performance benchmark tests (15+ tests, 300+ lines) | Claude |
+| 2025-11-24 | Added parametrized tests to DQS calculator and routing engine | Claude |
+| 2025-11-24 | Added ResNet model tests - teacher and student (35+ tests, 500+ lines) | Claude |
+| 2025-11-24 | Added metadata generator tests (25+ tests, 400+ lines) | Claude |
+| 2025-11-24 | Added GCS uploader tests with mocks (20+ tests, 350+ lines) | Claude |
