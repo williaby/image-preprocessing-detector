@@ -59,19 +59,18 @@ try:
         ResNetTeacher,
     )
 
-    __all__.extend([
-        # Loss functions
-        "FocalLoss",
-        "MultiHeadIQALoss",
-        "WeightedMSELoss",
-        "compute_class_weights",
-        # Teacher model
-        "IQAHead",
-        "ResNetTeacher",
-        # Student model
-        "ResNetStudent",
-        "StudentIQAHead",
-    ])
+    __all__.extend(
+        [
+            "FocalLoss",
+            "IQAHead",
+            "MultiHeadIQALoss",
+            "ResNetStudent",
+            "ResNetTeacher",
+            "StudentIQAHead",
+            "WeightedMSELoss",
+            "compute_class_weights",
+        ]
+    )
 except ImportError:
     # PyTorch not installed - ML models not available
     pass
