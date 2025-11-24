@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+
+# =============================================================================
+# Modal Training Configuration - Phase 3 DocLayout-YOLO
+# =============================================================================
+#
+# This is the PLATFORM-SPECIFIC config for Modal training.
+# Model selection is centralized in: configs/models/doclayout_yolo.yaml
+#
+# To change the DocLayout-YOLO model variant, edit the central config:
+#   active_model: docstructbench | d4la_scratch | d4la_pretrained
+#
+# Reference: https://github.com/opendatalab/DocLayout-YOLO
+# =============================================================================
+
+# Model settings (class count is task-specific, not model-specific)
+model:
+  num_classes: 4  # table, image, handwriting, formula
+  # NOTE: input_size and pretrained_model come from central config:
+  #       configs/models/doclayout_yolo.yaml
+
+training:
+  batch_size: 16  # Adjust based on GPU memory and input size
+  epochs: 100
+  learning_rate: 0.001
+  warmup_epochs: 3
+  optimizer: adamw
+  weight_decay: 0.0005
+  mixed_precision: true
+
+data:
+  dataset_path: gs://image_detection_b/datasets/layout_phase3
+  dataset_yaml: gs://image_detection_b/datasets/layout_phase3/dataset.yaml
+  num_workers: 8
+  cache_images: true
+
+storage:
+  checkpoint_path: gs://image_detection_b/checkpoints/phase3_doclayout_yolo
+  output_path: gs://image_detection_b/models/phase3_doclayout_yolo
+  log_path: gs://image_detection_b/logs/phase3_doclayout_yolo
+
+modal:
+  gpu: A10  # A10 recommended (24GB) for DocLayout-YOLO
+  cpu: 16.0
+  memory: 65536  # 64GB
+  timeout: 259200  # 72 hours (3 days)
+  image_python_version: "3.12"
+
+monitoring:
+  tensorboard: true
+  save_period: 10  # epochs

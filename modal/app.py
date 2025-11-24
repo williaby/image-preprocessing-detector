@@ -7,9 +7,9 @@
 Provides GPU training functions for Phase 2 (IQA) and Phase 3 (Layout Detection).
 
 Usage:
-    modal run modal/app.py::hello_gpu        # Test GPU access
-    modal run modal/train_phase2_iqa.py      # Run Phase 2 training
-    modal run modal/train_phase3_yolov8.py   # Run Phase 3 training
+    modal run modal/app.py::hello_gpu              # Test GPU access
+    modal run modal/train_phase2_iqa.py            # Run Phase 2 training
+    modal run modal/train_phase3_doclayout_yolo.py # Run Phase 3 training (DocLayout-YOLO)
 """
 
 import modal
@@ -22,7 +22,8 @@ ml_image = modal.Image.debian_slim(python_version="3.12").pip_install(
     "torch>=2.1.0",
     "torchvision>=0.16.0",
     "timm>=0.9.0",
-    "ultralytics>=8.0.0",  # YOLOv8
+    "doclayout-yolo",  # DocLayout-YOLO (YOLOv10-based for document layout)
+    "huggingface_hub",
     "albumentations>=1.3.0",
     "tensorboard>=2.14.0",
     "scikit-learn>=1.3.0",

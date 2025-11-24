@@ -46,7 +46,8 @@ upload_configs() {
     log_info "Uploading configuration files to GCS..."
 
     gsutil -m cp configs/colab_phase2_iqa_gcs.yaml "$BUCKET/configs/" || true
-    gsutil -m cp configs/colab_phase3_yolov8_gcs.yaml "$BUCKET/configs/" || true
+    gsutil -m cp configs/colab_phase3_doclayout_yolo.yaml "$BUCKET/configs/" || true
+    gsutil -m cp configs/models/doclayout_yolo.yaml "$BUCKET/configs/models/" || true
 
     log_info "✓ Configs uploaded"
 }

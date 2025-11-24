@@ -77,13 +77,11 @@ data/test/
 data/annotations/
 data/augmented/
 data/benchmarks/*
-!data/benchmarks/*.dvc
 data/downloads/
 data/labels/
 data/promptcraft/
 data/raw/
 data/training/*
-!data/training/*.dvc
 datasets/
 
 # DVC tracking

@@ -32,7 +32,7 @@ The goal is:
 | Layer       | Purpose                                      | Primary Models                              | Projects |
 |------------|----------------------------------------------|---------------------------------------------|----------|
 | IQA & CV   | Blur/skew/contrast/warp, doc quality routing | ResNet18 (student), ResNet50 (teacher), classical OpenCV | A |
-| Layout     | Layout detection for routing & OCR           | Document-specialized YOLO (YOLO-Doc / YOLOv10-doc), heuristics | A, B |
+| Layout     | Layout detection for routing & OCR           | DocLayout-YOLO (YOLOv10-based), heuristics | A, B |
 | OCR        | Text extraction & basic structure            | Marker, DeepSeek-OCR                        | B |
 | Math OCR   | Formula → LaTeX                              | Nougat / pix2tex (optional per domain)      | B |
 | LLM Helper | Cleanup, normalization, QA                   | Qwen3-4B-Instruct (via Unsloth)             | C |
@@ -131,10 +131,16 @@ appropriate OCR.
 **Purpose:** Cheap **high-level layout signals** in Project A to inform routing,
 without full structural extraction.
 
-- **Model:** `layout_router_yolo`
-  - Compact document-tuned detector (e.g., YOLO-Doc / YOLOv10-doc small variant).
-  - Classes: coarse categories like “dense text,” “multi-column,” “table-heavy,”
-    “image-heavy,” etc.
+- **Model:** `layout_router_doclayout_yolo`
+  - DocLayout-YOLO (YOLOv10-based) with document-specific optimizations.
+  - Pre-trained on DocStructBench for general document layout.
+  - Reference: <https://github.com/opendatalab/DocLayout-YOLO>
+  - Classes: coarse categories like "dense text," "multi-column," "table-heavy,"
+    "image-heavy," etc.
+- **Pre-trained Models (HuggingFace):**
+  - `juliozhao/DocLayout-YOLO-DocStructBench` (general, recommended)
+  - `juliozhao/DocLayout-YOLO-D4LA-from_scratch`
+  - `juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained` (best performance)
 - **Usage:**
   - Used only in A to:
     - Estimate structural complexity.
@@ -179,12 +185,21 @@ structure, and hierarchical text grouping.
 **Purpose:** Precise detection of document elements and reading-order building
 blocks.
 
-- **Model:** `yolo_doc_layout`
-  - Document-specialized YOLO variant (e.g., YOLO-Doc / YOLOv10-doc) trained on
-    DocLayNet-style labels and OmniDocBench-class data.
+- **Model:** `doclayout_yolo_full`
+  - DocLayout-YOLO (YOLOv10-based) with Global-to-Local Controllability module
+    for precise detection across varying scales.
+  - Reference: <https://github.com/opendatalab/DocLayout-YOLO>
+  - Fine-tuned on DocLayNet-style labels and OmniDocBench-class data.
   - Target classes:
     - Title, Section header, Text, List item, Caption, Picture, Table, Formula,
       Footnote, Page header, Page footer, etc.
+- **Pre-trained Models (HuggingFace):**
+  - `juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained` (recommended for
+    high accuracy, mAP 70.3)
+  - `juliozhao/DocLayout-YOLO-DocStructBench` (general purpose)
+- **Recommended Settings:**
+  - Image size: 1600 (D4LA models) or 1024 (DocStructBench)
+  - Confidence threshold: 0.2
 - **Outputs:**
   - COCO `[x, y, width, height]` bounding boxes.
   - Class labels + confidences per element.
@@ -364,8 +379,8 @@ apply:
      falling back to local CPU. No Modal calls for steady-state inference.
 
 2. **Project B**
-   - **Train:** Layout detector (`yolo_doc_layout`), optional table/math models,
-     on GPU (likely remote).
+   - **Train:** Layout detector (`doclayout_yolo_full`), optional table/math
+     models, on GPU (likely remote).
    - **Infer (prod):** Layout detector + OCR engines locally where possible;
      remote GPU only for heavy OCR variants if absolutely necessary.
 

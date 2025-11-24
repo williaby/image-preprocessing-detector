@@ -150,7 +150,7 @@ def pull_from_gcs(dataset_name: str) -> bool:
     env = os.environ.copy()
     env["GOOGLE_APPLICATION_CREDENTIALS"] = str(GCS_CREDENTIALS)
 
-    # Sanitize paths for defensive coding
+    # Build command as list (shell=False) - no shell escaping needed
     cmd = [
         "gsutil",
         "-m",
@@ -244,7 +244,7 @@ def sync_to_gcs(dataset_name: str) -> bool:
     env = os.environ.copy()
     env["GOOGLE_APPLICATION_CREDENTIALS"] = str(GCS_CREDENTIALS)
 
-    # Sanitize paths for defensive coding
+    # Build command as list (shell=False) - no shell escaping needed
     cmd = [
         "gsutil",
         "-m",

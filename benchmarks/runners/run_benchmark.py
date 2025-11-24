@@ -119,7 +119,7 @@ def run_layout_benchmark(
         scorer: Result scorer
     """
     print("Running layout detection benchmark")
-    print(f"  Classes: {len(adapter.classes)}")
+    print(f"  Classes: {len(adapter.class_names)}")
 
     # For now, this is a placeholder
     # Actual implementation would:

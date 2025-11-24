@@ -1,7 +1,9 @@
 """Detection modules for image quality assessment and document analysis.
 
 Phase 1: Text gate and classical IQA methods
-Phase 2-3: ML-based detection (YOLOv8, PyTorch)
+Phase 2-3: ML-based detection (DocLayout-YOLO, PyTorch)
+
+Model configuration: configs/models/doclayout_yolo.yaml
 """
 
 from image_preprocessing_detector.detection.iqa_classical import (

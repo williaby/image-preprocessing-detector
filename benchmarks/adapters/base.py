@@ -143,7 +143,7 @@ class BaseAdapter(ABC):
         return self._sample_ids
 
     @property
-    def classes(self) -> list[str]:
+    def class_names(self) -> list[str]:
         """List of class names (for classification/detection tasks).
 
         Returns:
@@ -154,7 +154,7 @@ class BaseAdapter(ABC):
     @property
     def num_classes(self) -> int:
         """Number of classes in the dataset."""
-        return len(self.classes)
+        return len(self.class_names)
 
     def get_subset(self, n: int, seed: int = 42) -> "BaseAdapter":
         """Create a subset adapter for smoke testing.
@@ -169,7 +169,9 @@ class BaseAdapter(ABC):
         import random
 
         random.seed(seed)
-        subset_ids = random.sample(self._sample_ids, min(n, len(self._sample_ids)))
+        subset_ids = random.sample(  # nosec B311 - benchmark sampling, not security
+            self._sample_ids, min(n, len(self._sample_ids))
+        )
 
         # Create a shallow copy with subset IDs
         adapter = self.__class__(

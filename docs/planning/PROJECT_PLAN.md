@@ -1701,42 +1701,99 @@ Albumentations pipeline (see Training Data Strategy)
 **Duration**: 15 working days (3 weeks)
 **Total Sprints**: 24 sprints (~82 hours of implementation work)
 
-**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
-
 ---
 
 #### Week 15: Device Probing & Priority Rules (Day 38-41, 13 sprints)
 
-**Key Milestones**:
-- Device Probing Module (6 sprints): GPU/CPU/Modal detection and selection logic
-- Priority Rules Implementation (7 sprints): Student/teacher device priority, CPU blocking, budget enforcement
-
-**Notable Sprints**:
-- Sprint 4.1.4: Implement device selection logic with priority: Local GPU → Local CPU → Modal GPU
-- Sprint 4.2.3: Implement teacher CPU blocking (production mode) - CRITICAL for cost control
-- Sprint 4.2.4-4.2.5: Per-document and per-batch teacher page limits
+- **Sprint 4.1.1**: Hardware probe utilities (3 hours)
+  - Add GPU/CPU detection with caching to avoid repeated probes.
+  - Detect Modal availability flag from env/config.
+  - Unit tests for probe outputs across simulated environments.
+- **Sprint 4.1.2**: Device policy configuration (3 hours)
+  - Extend `config.py` with device policy options and env overrides.
+  - CLI flags to force GPU/CPU/Modal or disable teacher entirely.
+  - Config validation plus documentation update.
+- **Sprint 4.1.3**: Student device selector (2 hours)
+  - Implement ONNX session selection: prefer GPU, fallback to CPU.
+  - Reuse sessions per device to avoid cold starts.
+  - Smoke tests for GPU-present and GPU-absent paths.
+- **Sprint 4.1.4**: Teacher device selector & priority (3 hours)
+  - Enforce Local GPU → Modal GPU → BLOCK CPU (prod default).
+  - Allow QA override to enable CPU for teacher with warning logs.
+  - Add decision rationale to `teacher_usage` metadata.
+- **Sprint 4.1.5**: Page-level teacher budget (2 hours)
+  - Add per-document and per-batch teacher page caps in config.
+  - Reject over-budget pages with escalation reason recorded.
+  - Unit tests for budget enforcement edge cases.
+- **Sprint 4.1.6**: Uncertainty/discrepancy gate wiring (2 hours)
+  - Connect existing gate outputs to device selector input.
+  - Thresholds pulled from config; add guard if thresholds unset.
+  - Regression test to ensure gate still routes student-only when low risk.
+- **Sprint 4.1.7**: Selection matrix tests (2 hours)
+  - Table-driven tests for availability combos (GPU/CPU/Modal), budgets, and modes.
+  - Validate expected device choice and rationale logging.
+  - Add snapshot logs for observability verification.
 
 #### Week 16: Modal GPU Integration & Metrics (Day 42-46, 13 sprints)
 
-**Key Milestones**:
-- Modal GPU Integration (8 sprints): Deploy teacher to Modal, remote inference API, cost tracking
-- Logging & Metrics (5 sprints): Comprehensive device logging, performance metrics, dashboards
-
-**Notable Sprints**:
-- Sprint 4.3.2: Implement Modal teacher inference function (deploy to serverless GPU)
-- Sprint 4.3.5: Implement Modal cost tracking (estimate cost per invocation)
-- Sprint 4.4.4: Create performance dashboard (Streamlit) for real-time monitoring
+- **Sprint 4.2.1**: Package teacher for Modal (3 hours)
+  - Build Modal image with teacher ONNX plus dependencies.
+  - Measure cold start time; document tuning flags.
+  - Smoke deploy to staging namespace.
+- **Sprint 4.2.2**: Serverless endpoint hardening (3 hours)
+  - Add auth, request size guardrails, timeouts, retries.
+  - Define response schema (scores, timing, device tag).
+  - Integration test via Modal client stub.
+- **Sprint 4.2.3**: Client stub with circuit breaker (2 hours)
+  - Implement exponential backoff, jitter, and failure cache.
+  - Fallback to student-only if breaker is open.
+  - Tests simulating Modal outage and slow responses.
+- **Sprint 4.2.4**: Cost estimator and budget guard (2 hours)
+  - Estimate per-call cost; project monthly spend.
+  - Block requests if budget exceeded; log budget breach reason.
+  - Unit tests with mocked pricing inputs.
+- **Sprint 4.2.5**: Structured logging for device choice (3 hours)
+  - Log chosen_device, fallback_reason, cost_estimate, and gate reason.
+  - Ensure logs are structured/JSON and redact PII.
+  - Add sampling controls for high-volume runs.
+- **Sprint 4.2.6**: Metrics export (2 hours)
+  - Prometheus counters/histograms for latency, failures, escalation rate, cost.
+  - CPU/GPU utilization hints if available.
+  - Metrics unit tests (label cardinality guard).
+- **Sprint 4.2.7**: Integration test matrix (3 hours)
+  - Validate flows: local GPU, forced CPU block, Modal fallback, Modal outage.
+  - Compare outputs to ensure parity between local and Modal teacher.
+  - Record results in Phase 4 report draft.
 
 #### Week 17: Performance Optimization & Worker Pool (Day 47-52, 11 sprints)
 
-**Key Milestones**:
-- Performance Optimization (6 sprints): Profiling, batch inference, async IO, caching, TensorRT
-- Worker Pool Architecture (5 sprints): Async workers, task queue, resource caps, graceful degradation
-
-**Notable Sprints**:
-- Sprint 4.5.2: Implement batch inference for student (target: 2x speedup)
-- Sprint 4.5.6: TensorRT INT8 quantization for GPU (optional, advanced optimization)
-- Sprint 4.6.2: Implement task queue with Celery/RQ (optional, for production scale)
+- **Sprint 4.3.1**: Student batch inference (3 hours)
+  - Add micro-batching with adaptive batch size.
+  - Benchmark vs single inference; target 2x throughput.
+  - Fail-safe to single inference if GPU memory low.
+- **Sprint 4.3.2**: Async IO and concurrency caps (2 hours)
+  - Async file read/render and IQA invocation.
+  - Concurrency controls to avoid CPU/GPU thrash.
+  - Integration test for parallel batch stability.
+- **Sprint 4.3.3**: Caching layer (3 hours)
+  - Cache rendered pages and preprocessed tensors.
+  - LRU eviction; config for cache size.
+  - Add cache hit/miss metrics.
+- **Sprint 4.3.4**: TensorRT INT8 path (3 hours)
+  - Optional TensorRT engine build for GPU; feature-flagged.
+  - Benchmark vs ONNXRuntime baseline; document gains/regressions.
+  - Skip gracefully on unsupported hardware.
+- **Sprint 4.3.5**: Worker pool plus queue integration (2 hours)
+  - Add task queue (Celery/RQ) option with per-queue device caps.
+  - Graceful degradation rules when queue length spikes.
+  - Health checks for workers.
+- **Sprint 4.3.6**: Latency benchmarking (2 hours)
+  - p95/p99 measurements for GPU/CPU/Modal with/without batching.
+  - Regression gate comparing to Phase 3 baseline.
+  - Publish table in Phase 4 report.
+- **Sprint 4.3.7**: Phase 4 report (2 hours)
+  - Summarize performance tables, budget usage, gating outcomes.
+  - List known gaps and follow-ups for Phase 5.
 
 ---
 
@@ -1769,42 +1826,86 @@ Albumentations pipeline (see Training Data Strategy)
 **Duration**: 15 working days (3 weeks)
 **Total Sprints**: 22 sprints (~75 hours of implementation work)
 
-**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
-
 ---
 
 #### Week 18: Comprehensive Testing (Day 53-57, 15 sprints)
 
-**Key Milestones**:
-- Unit Testing Expansion (6 sprints): Achieve 80%+ coverage across all modules
-- Integration Testing (5 sprints): End-to-end pipeline, device fallback, batch processing
-- Stress Testing (4 sprints): Large documents, concurrent batches, edge cases
-
-**Notable Sprints**:
-- Sprint 5.1.6: Achieve 80%+ overall test coverage - CRITICAL milestone
-- Sprint 5.2.1: End-to-end pipeline tests (all phases integrated, all schema fields validated)
-- Sprint 5.3.2: Concurrent batch stress test (10 concurrent jobs, 100 PDFs each)
+- **Sprint 5.1.1**: Unit test gap sweep (3 hours)
+  - Identify low-coverage modules; add focused unit tests.
+  - Include property-based tests for routing and DQS calculators.
+  - Update coverage report artifact.
+- **Sprint 5.1.2**: End-to-end integration test (3 hours)
+  - PDF→DocumentMetadata with Phase 4 device logic exercised.
+  - Cases: GPU available, GPU missing, Modal fallback, budget hit.
+  - Snapshot expected JSON outputs for regression.
+- **Sprint 5.1.3**: Modal outage simulation (2 hours)
+  - Simulate remote timeouts/failures; ensure student-only fallback.
+  - Assert correct error surfaces and logs.
+  - Add breaker-open scenario to tests.
+- **Sprint 5.1.4**: Batch-mode regression tests (2 hours)
+  - 10–100 page documents, mixed PDF types.
+  - Validate throughput targets and ensure no memory blowups.
+  - Record timing baselines.
+- **Sprint 5.1.5**: Golden-file JSON snapshots (2 hours)
+  - Freeze stable DocumentMetadata fields for key fixtures.
+  - Add drift detection guard in tests for schema output.
+  - Update fixtures in `data/test_fixtures/`.
+- **Sprint 5.1.6**: Coverage gate + report (2 hours)
+  - Ensure 80%+ overall coverage; set coverage threshold in CI.
+  - Publish HTML coverage report artifact.
 
 #### Week 19: API Development & Deployment (Day 58-62, 11 sprints)
 
-**Key Milestones**:
-- FastAPI Service (7 sprints): REST API with /process, /batch, /status, /result endpoints
-- Deployment Artifacts (4 sprints): Docker, Docker Compose, Kubernetes (optional), environment config
-
-**Notable Sprints**:
-- Sprint 5.4.2: Implement POST /process endpoint (single file upload with validation)
-- Sprint 5.4.3: Implement POST /batch endpoint (async job processing with job_id tracking)
-- Sprint 5.5.1: Create Dockerfile (multi-stage build, target: <2GB image size)
+- **Sprint 5.2.1**: FastAPI skeleton (3 hours)
+  - Health/ready/version endpoints; wiring to pipeline stub.
+  - Add CORS/config toggles for deployments.
+  - Basic app-level logging middleware.
+- **Sprint 5.2.2**: POST /process (3 hours)
+  - Single file upload; size/type validation.
+  - Async pipeline call; response contract with metadata summary and links.
+  - Error handling with structured codes.
+- **Sprint 5.2.3**: POST /batch + status/result (3 hours)
+  - Async job submission returning job_id.
+  - GET /status and GET /result with pagination for multi-file outputs.
+  - Persist job metadata; cleanup policy.
+- **Sprint 5.2.4**: Auth and rate limits (2 hours)
+  - API key header middleware; simple rate limiting for batch endpoints.
+  - Configurable allowlist for internal callers.
+  - Tests for auth failures and limit breaches.
+- **Sprint 5.2.5**: Docker + Compose (2 hours)
+  - Multi-stage Dockerfile (<2GB target), health checks.
+  - docker-compose with Redis/queue for local dev.
+  - Smoke test container locally.
+- **Sprint 5.2.6**: Optional K8s manifests (2 hours)
+  - GPU and CPU Deployments, HPAs, PodDisruptionBudgets.
+  - Example values file for secrets/config maps.
+  - Validate manifests with kubeval/kubectl dry-run.
 
 #### Week 20: Documentation & Final Integration (Day 63-65, 7 sprints)
 
-**Key Milestones**:
-- Documentation (7 sprints): API reference, deployment guide, model docs, user guide, ADRs, Project B integration
-
-**Notable Sprints**:
-- Sprint 5.6.1: Write API documentation (OpenAPI/Swagger with examples)
-- Sprint 5.6.5: Create Architecture Decision Records (ADR-005: Modal GPU Integration)
-- Sprint 5.6.6: Write integration guide for Project B (handoff contract validation)
+- **Sprint 5.3.1**: API documentation (3 hours)
+  - OpenAPI examples, error codes, device-behavior notes.
+  - Usage examples for /process and /batch.
+  - Add curl snippets and sample responses.
+- **Sprint 5.3.2**: Deployment guide (2 hours)
+  - Local, container, K8s, and Modal configuration paths.
+  - Env var matrix and secrets checklist.
+  - Troubleshooting section for cold starts and GPU detection.
+- **Sprint 5.3.3**: Model card updates (2 hours)
+  - Teacher/student latency, cost, accuracy, gating policy.
+  - Document when teacher CPU is blocked and why.
+  - Add calibration notes for thresholds.
+- **Sprint 5.3.4**: ADRs (2 hours)
+  - ADR-005: Modal GPU Integration.
+  - ADR-006: Device Priority enforcement and budgets.
+  - Include decision, alternatives, consequences.
+- **Sprint 5.3.5**: Project B handoff guide (2 hours)
+  - Contract checks for DocumentMetadata.json.
+  - Example payloads and schema validation steps.
+  - Checklist for integration testing with Project B.
+- **Sprint 5.3.6**: Release checklist & Phase 5 report (2 hours)
+  - Final validation steps, smoke tests, and rollback plan.
+  - Summarize testing, coverage, API readiness, and deployment status.
 
 ---
 
@@ -1838,50 +1939,78 @@ Albumentations pipeline (see Training Data Strategy)
 **Total Sprints (Initial Setup)**: 15 sprints (~50 hours of initial setup)
 **Ongoing Operations**: Weekly/monthly/quarterly tasks (see below)
 
-**Sprint details available in**: `tmp_cleanup/.tmp-phases-4-6-sprint-expansion-20251115.md`
-
 ---
 
 #### Initial Setup (Weeks 21-22, 15 sprints)
 
 **Week 21: Telemetry & Logging (5 sprints)**
 
-**Key Milestones**:
-- Structured logging framework with rotation
-- Prediction and correction outcome logging
-- Error tracking with Sentry (optional)
-- Log aggregation pipeline (optional ELK stack)
-
-**Notable Sprints**:
-- Sprint 6.1.1: Set up structured logging framework (JSON logs, rotation policy)
-- Sprint 6.1.4: Set up error tracking with Sentry (optional)
-- Sprint 6.1.5: Create log aggregation pipeline with ELK (optional)
+- **Sprint 6.1.1**: Structured logging framework (3 hours)
+  - JSON logs with rotation policy; correlation ids threaded through pipeline.
+  - Redaction for PII; config toggles for verbosity.
+  - Unit tests for log shape and redaction.
+- **Sprint 6.1.2**: Prediction/correction outcome logging (2 hours)
+  - Emit per-page outcomes (student/teacher device, corrections applied, gate reasons).
+  - Ensure sampling to control volume in batch mode.
+  - Add logging to `teacher_usage` context.
+- **Sprint 6.1.3**: Error taxonomy + Sentry hooks (2 hours)
+  - Define error codes/classes; map exceptions to codes.
+  - Optional Sentry integration (feature-flagged); breadcrumb context.
+  - Tests for disabled/enabled modes.
+- **Sprint 6.1.4**: Log aggregation pipeline option (2 hours)
+  - Document ELK/Vector setup; provide sample config.
+  - Local file-based aggregator fallback.
+  - Health checks for log shipping.
+- **Sprint 6.1.5**: Logging validation (2 hours)
+  - Integration test to verify logs emitted for happy path and failures.
+  - Snapshot log lines to guard against schema drift.
+  - Performance check to ensure minimal overhead.
 
 **Week 22: Monitoring Dashboard (5 sprints)**
 
-**Key Milestones**:
-- Prometheus metrics collection
-- Grafana dashboards (system, application, model, cost)
-- Alerting rules for latency, errors, drift, cost
-- Cost analytics dashboard
-
-**Notable Sprints**:
-- Sprint 6.2.1: Set up Prometheus metrics collection
-- Sprint 6.2.2: Create Grafana dashboards (4 dashboards: system, app, model, cost)
-- Sprint 6.2.3: Configure alerting rules (latency spikes, error rate, GPU failure, budget)
+- **Sprint 6.2.1**: Prometheus metrics export (3 hours)
+  - Metrics for latency, error rate, escalation rate, cost estimate, queue depth.
+  - Label cardinality guard; namespace per deployment.
+  - Unit tests for metrics exposure.
+- **Sprint 6.2.2**: Grafana dashboards (3 hours)
+  - System, application, model, and cost dashboards with saved views.
+  - Panels for p50/p95/p99 latency, error %, teacher escalation %, Modal spend.
+  - Annotate dashboards with deploy markers.
+- **Sprint 6.2.3**: Alert rules (2 hours)
+  - Alerts for latency spikes, error rate, GPU failure, Modal budget hit, drift flags.
+  - Include grouping to reduce noise; add runbooks references.
+  - Test alerts with synthetic metric pushes.
+- **Sprint 6.2.4**: Runbooks (2 hours)
+  - Quick actions for top alerts (restart worker, disable teacher, scale queue).
+  - Escalation policy and ownership.
+  - Store runbooks in docs/monitoring.
+- **Sprint 6.2.5**: Threshold tuning (2 hours)
+  - Load test to validate alert thresholds.
+  - Tune to reduce false positives; document final values.
+  - Capture baseline metrics snapshots.
 
 **Week 23: Drift Detection (5 sprints)**
 
-**Key Milestones**:
-- Feature distribution monitoring (KL divergence tracking)
-- Model performance monitoring (mAP, F1 trends)
-- Drift alerting (distribution shift, performance degradation)
-- Drift analysis dashboard
-
-**Notable Sprints**:
-- Sprint 6.3.1: Implement feature distribution monitoring (histogram stats, confidence distributions)
-- Sprint 6.3.2: Implement model performance monitoring (periodic evaluation on change-detection set)
-- Sprint 6.3.3: Set up drift alerting (KL divergence >0.3, mAP drop >5%)
+- **Sprint 6.3.1**: Feature distribution monitoring (3 hours)
+  - Histogram stats and KL/PSI on sampled traffic for key IQA outputs.
+  - Store reference distributions; rotate monthly.
+  - Tests for metric computation robustness.
+- **Sprint 6.3.2**: Model performance monitoring job (3 hours)
+  - Periodic evaluation on change-detection set; record mAP/F1 trends.
+  - Persist results to metrics store; add dashboard panel.
+  - CI hook to validate job config.
+- **Sprint 6.3.3**: Drift alerting (2 hours)
+  - Alert when KL >0.3 or mAP drop >5% vs baseline.
+  - Include recent samples in alert payload for triage.
+  - Dry-run mode to validate alerts without paging.
+- **Sprint 6.3.4**: Active learning loop stub (2 hours)
+  - Harvest high-entropy/low-agreement samples to `data/drift_samples/`.
+  - Metadata manifest for re-training pipeline.
+  - Privacy review checklist for harvested samples.
+- **Sprint 6.3.5**: Monitoring/drift documentation (2 hours)
+  - SOPs for weekly/monthly/quarterly tasks.
+  - Dashboard handbook and alert response flow.
+  - Add FAQ for common false positives.
 
 ---
 

@@ -11,6 +11,7 @@ Usage:
 import json
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +29,7 @@ def load_latest_aggregates(reports_dir: Path) -> dict[str, Any]:
     Returns:
         Dictionary of suite -> aggregates
     """
-    results = {}
+    results: dict[str, Any] = {}
 
     if not reports_dir.exists():
         return results
@@ -89,6 +90,7 @@ def get_color_for_metric(
         if value <= target * 1.2:
             return "yellow"
         return "red"
+
     if value >= target:
         return "brightgreen"
     if value >= target * 0.8:
@@ -96,133 +98,142 @@ def get_color_for_metric(
     return "red"
 
 
-def generate_badges(results: dict[str, Any], badges_dir: Path) -> None:
-    """Generate all badge JSON files.
+@dataclass(frozen=True)
+class BadgeDefinition:
+    suite: str
+    metric_key: str
+    label: str
+    target: float
+    lower_is_better: bool
+    format_str: str
 
-    Args:
-        results: Latest benchmark results
-        badges_dir: Directory to save badge JSON files
-    """
-    badges_dir.mkdir(parents=True, exist_ok=True)
 
-    # Badge definitions: (suite, metric_key, label, target, lower_is_better, format)
-    badge_defs = [
-        # IQA Metrics
-        (
-            "synthetic-iqa-blur-full",
-            "blur_correlation",
-            "IQA Blur r",
-            0.85,
-            False,
-            ".3f",
-        ),
-        ("synthetic-iqa-blur-full", "blur_rmse", "IQA Blur RMSE", 0.05, True, ".3f"),
-        ("synthetic-iqa-skew-full", "skew_mae", "IQA Skew MAE", 0.5, True, ".2f°"),
-        (
-            "synthetic-iqa-skew-full",
-            "deskew_success_rate",
-            "Deskew Success",
-            0.99,
-            False,
-            ".1%",
-        ),
-        (
-            "synthetic-iqa-noise-full",
-            "snr_improvement",
-            "SNR Improvement",
-            6.0,
-            False,
-            ".1f dB",
-        ),
-        ("synthetic-iqa-noise-full", "psnr", "PSNR", 30.0, False, ".1f dB"),
-        ("synthetic-iqa-noise-full", "ssim", "SSIM", 0.9, False, ".3f"),
-        (
-            "synthetic-iqa-binarization-full",
-            "f_measure",
-            "Binarization F1",
-            0.95,
-            False,
-            ".3f",
-        ),
-        # Layout Detection
-        ("doclaynet-layout-full", "mAP", "Layout mAP", 0.80, False, ".3f"),
-    ]
+BadgeResult = tuple[str, str, str]
+PLACEHOLDER_COLOR = "lightgrey"
+NO_DATA_MESSAGE = "no data"
+PENDING_MESSAGE = "pending"
 
-    created_badges = []
 
-    for suite, metric_key, label, target, lower_is_better, format_str in badge_defs:
-        if suite not in results:
-            # Create "pending" badge
-            badge = create_badge_json(label, "pending", "lightgrey")
-            badge_file = badges_dir / f"{metric_key.replace('_', '-')}.json"
-            with open(badge_file, "w") as f:
-                json.dump(badge, f, indent=2)
-            created_badges.append((label, "pending", "lightgrey"))
-            continue
+BADGE_DEFINITIONS: list[BadgeDefinition] = [
+    # IQA Metrics
+    BadgeDefinition(
+        suite="synthetic-iqa-blur-full",
+        metric_key="blur_correlation",
+        label="IQA Blur r",
+        target=0.85,
+        lower_is_better=False,
+        format_str=".3f",
+    ),
+    BadgeDefinition(
+        suite="synthetic-iqa-blur-full",
+        metric_key="blur_rmse",
+        label="IQA Blur RMSE",
+        target=0.05,
+        lower_is_better=True,
+        format_str=".3f",
+    ),
+    BadgeDefinition(
+        suite="synthetic-iqa-skew-full",
+        metric_key="skew_mae",
+        label="IQA Skew MAE",
+        target=0.5,
+        lower_is_better=True,
+        format_str=".2f°",
+    ),
+    BadgeDefinition(
+        suite="synthetic-iqa-skew-full",
+        metric_key="deskew_success_rate",
+        label="Deskew Success",
+        target=0.99,
+        lower_is_better=False,
+        format_str=".1%",
+    ),
+    BadgeDefinition(
+        suite="synthetic-iqa-noise-full",
+        metric_key="snr_improvement",
+        label="SNR Improvement",
+        target=6.0,
+        lower_is_better=False,
+        format_str=".1f dB",
+    ),
+    BadgeDefinition(
+        suite="synthetic-iqa-noise-full",
+        metric_key="psnr",
+        label="PSNR",
+        target=30.0,
+        lower_is_better=False,
+        format_str=".1f dB",
+    ),
+    BadgeDefinition(
+        suite="synthetic-iqa-noise-full",
+        metric_key="ssim",
+        label="SSIM",
+        target=0.9,
+        lower_is_better=False,
+        format_str=".3f",
+    ),
+    BadgeDefinition(
+        suite="synthetic-iqa-binarization-full",
+        metric_key="f_measure",
+        label="Binarization F1",
+        target=0.95,
+        lower_is_better=False,
+        format_str=".3f",
+    ),
+    # Layout Detection
+    BadgeDefinition(
+        suite="doclaynet-layout-full",
+        metric_key="mAP",
+        label="Layout mAP",
+        target=0.80,
+        lower_is_better=False,
+        format_str=".3f",
+    ),
+]
 
-        aggregates = results[suite]
-        if metric_key not in aggregates:
-            badge = create_badge_json(label, "no data", "lightgrey")
-            badge_file = badges_dir / f"{metric_key.replace('_', '-')}.json"
-            with open(badge_file, "w") as f:
-                json.dump(badge, f, indent=2)
-            created_badges.append((label, "no data", "lightgrey"))
-            continue
 
-        # Get metric value
-        metric_data = aggregates[metric_key]
-        if isinstance(metric_data, dict):
-            value = metric_data.get("mean")
-        else:
-            value = metric_data
+def save_badge_file(badges_dir: Path, metric_key: str, badge: dict[str, Any]) -> None:
+    badge_file = badges_dir / f"{metric_key.replace('_', '-')}.json"
+    with open(badge_file, "w") as f:
+        json.dump(badge, f, indent=2)
 
-        if value is None:
-            badge = create_badge_json(label, "no data", "lightgrey")
-            badge_file = badges_dir / f"{metric_key.replace('_', '-')}.json"
-            with open(badge_file, "w") as f:
-                json.dump(badge, f, indent=2)
-            created_badges.append((label, "no data", "lightgrey"))
-            continue
 
-        # Format value
-        if "{" in format_str:
-            # Already a complete format string with placeholders
-            message = format_str.format(value)
-        else:
-            # Build format string - split into spec and suffix
-            # e.g., ".1f dB" -> "{value:.1f} dB", ".2f°" -> "{value:.2f}°"
-            # Find the format spec part (everything up to first space or non-format char after type)
-            match = re.match(r"^([.\d]+[a-z%])", format_str, re.IGNORECASE)
-            if match:
-                spec = match.group(1)
-                suffix = format_str[len(spec) :]
-                # Handle percentage formatting (multiply by 100)
-                if "%" in spec:
-                    formatted_value = value * 100
-                    # Remove % from spec since we're adding it in suffix
-                    spec_without_pct = spec.replace("%", "f")
-                    message = f"{formatted_value:{spec_without_pct}}{suffix}%"
-                else:
-                    # For all other formats (°, dB, or plain numbers), use value as-is
-                    message = f"{value:{spec}}{suffix}"
-            else:
-                # Fallback for simple specs like ".3f"
-                message = f"{value:{format_str}}"
+def create_placeholder_badge(
+    badge_def: BadgeDefinition, badges_dir: Path, message: str
+) -> BadgeResult:
+    badge = create_badge_json(badge_def.label, message, PLACEHOLDER_COLOR)
+    save_badge_file(badges_dir, badge_def.metric_key, badge)
+    return badge_def.label, message, PLACEHOLDER_COLOR
 
-        # Determine color
-        color = get_color_for_metric(value, target, lower_is_better)
 
-        # Create badge
-        badge = create_badge_json(label, message, color)
-        badge_file = badges_dir / f"{metric_key.replace('_', '-')}.json"
+def metric_value_from_aggregates(metric_data: Any) -> float | None:
+    if metric_data is None:
+        return None
+    if isinstance(metric_data, dict):
+        mean_value = metric_data.get("mean")
+        return float(mean_value) if mean_value is not None else None
+    return float(metric_data)
 
-        with open(badge_file, "w") as f:
-            json.dump(badge, f, indent=2)
 
-        created_badges.append((label, message, color))
+def format_metric_value(value: float, format_str: str) -> str:
+    if "{" in format_str:
+        return format_str.format(value)
 
-    # Create summary badge (overall pass rate)
-    total_metrics = len(badge_defs)
+    match = re.match(r"^([.\d]+[a-z%])", format_str, re.IGNORECASE)
+    if match:
+        spec = match.group(1)
+        suffix = format_str[len(spec) :]
+        if "%" in spec:
+            formatted_value = value * 100
+            spec_without_pct = spec.replace("%", "f")
+            return f"{formatted_value:{spec_without_pct}}{suffix}%"
+        return f"{value:{spec}}{suffix}"
+
+    return f"{value:{format_str}}"
+
+
+def create_summary_badge(badges_dir: Path, created_badges: list[BadgeResult]) -> None:
+    total_metrics = len(BADGE_DEFINITIONS)
     passed_metrics = sum(1 for _, _, color in created_badges if color == "brightgreen")
     pass_rate = (passed_metrics / total_metrics * 100) if total_metrics > 0 else 0
 
@@ -236,9 +247,54 @@ def generate_badges(results: dict[str, Any], badges_dir: Path) -> None:
     summary_badge = create_badge_json(
         "Benchmarks", f"{passed_metrics}/{total_metrics} passing", summary_color
     )
-    with open(badges_dir / "summary.json", "w") as f:
-        json.dump(summary_badge, f, indent=2)
+    save_badge_file(badges_dir, "summary", summary_badge)
 
+
+def generate_badges(results: dict[str, Any], badges_dir: Path) -> list[BadgeResult]:
+    """Generate all badge JSON files.
+
+    Args:
+        results: Latest benchmark results
+        badges_dir: Directory to save badge JSON files
+    """
+    badges_dir.mkdir(parents=True, exist_ok=True)
+
+    created_badges = []
+
+    for badge_def in BADGE_DEFINITIONS:
+        if badge_def.suite not in results:
+            created_badges.append(
+                create_placeholder_badge(badge_def, badges_dir, PENDING_MESSAGE)
+            )
+            continue
+
+        aggregates = results[badge_def.suite]
+        if badge_def.metric_key not in aggregates:
+            created_badges.append(
+                create_placeholder_badge(badge_def, badges_dir, NO_DATA_MESSAGE)
+            )
+            continue
+
+        # Get metric value
+        value = metric_value_from_aggregates(aggregates[badge_def.metric_key])
+
+        if value is None:
+            created_badges.append(
+                create_placeholder_badge(badge_def, badges_dir, NO_DATA_MESSAGE)
+            )
+            continue
+
+        message = format_metric_value(value, badge_def.format_str)
+
+        color = get_color_for_metric(value, badge_def.target, badge_def.lower_is_better)
+
+        # Create badge
+        badge = create_badge_json(badge_def.label, message, color)
+        save_badge_file(badges_dir, badge_def.metric_key, badge)
+
+        created_badges.append((badge_def.label, message, color))
+
+    create_summary_badge(badges_dir, created_badges)
     return created_badges
 
 
@@ -252,7 +308,10 @@ def create_badge_urls(badges_dir: Path, repo_name: str) -> dict[str, str]:
     Returns:
         Dictionary mapping badge names to URLs
     """
-    base_url = f"https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/{repo_name}/main/.github/badges/"
+    base_url = (
+        "https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/"
+        f"{repo_name}/main/.github/badges/"
+    )
 
     badge_urls = {}
     for badge_file in badges_dir.glob("*.json"):
@@ -285,7 +344,8 @@ def main() -> int:
 
     print(f"\n✓ Generated {len(created)} badges:")
     for label, message, color in created:
-        icon = "✓" if color == "brightgreen" else "⚠" if color == "yellow" else "✗"
+        icon_map = {"brightgreen": "✓", "yellow": "⚠"}
+        icon = icon_map.get(color, "✗")
         print(f"  {icon} {label}: {message} ({color})")
 
     # Generate URLs (assuming williaby/image-preprocessing-detector)

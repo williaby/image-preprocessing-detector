@@ -1,12 +1,23 @@
 # SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
 # SPDX-License-Identifier: MIT
 
-# Google Colab Training Configuration - Phase 3: YOLOv8 Layout Detection
+# =============================================================================
+# Google Colab Training Configuration - Phase 3: DocLayout-YOLO Layout Detection
+# =============================================================================
+#
+# This is the PLATFORM-SPECIFIC config for Colab training.
+# Model selection is centralized in: configs/models/doclayout_yolo.yaml
+#
+# To change the DocLayout-YOLO model variant, edit the central config:
+#   active_model: docstructbench | d4la_scratch | d4la_pretrained
+#
 # Optimized for Colab Pro (12-hour sessions, V100/P100/T4 GPUs)
+# Reference: https://github.com/opendatalab/DocLayout-YOLO
+# =============================================================================
 
 experiment:
-  name: "phase3_layout_yolov8n"
-  description: "YOLOv8 object detection for document element detection"
+  name: "phase3_layout_doclayout_yolo"
+  description: "DocLayout-YOLO object detection for document element detection"
   version: "1.0.0"
 
 platform:
@@ -30,16 +41,16 @@ paths:
   dataset_cache: "/content/data_cache"
 
   # Output paths
-  checkpoints_dir: "/content/drive/MyDrive/checkpoints/phase3_yolov8"
-  logs_dir: "/content/drive/MyDrive/logs/phase3_yolov8"
-  models_output_dir: "/content/drive/MyDrive/models/phase3_yolov8"
+  checkpoints_dir: "/content/drive/MyDrive/checkpoints/phase3_doclayout_yolo"
+  logs_dir: "/content/drive/MyDrive/logs/phase3_doclayout_yolo"
+  models_output_dir: "/content/drive/MyDrive/models/phase3_doclayout_yolo"
 
   local_work_dir: "/content/work"
 
 # Dataset configuration
 dataset:
   name: "document_layout_300k"
-  format: "yolo"  # YOLOv8 format
+  format: "yolo"  # YOLO format compatible
 
   # Data sources (will be combined)
   sources:
@@ -67,9 +78,9 @@ dataset:
     handwriting: 0.15
     formula: 0.15
 
-  # YOLO-specific settings
-  yolo:
-    image_size: 640  # YOLOv8 standard
+  # DocLayout-YOLO specific settings
+  doclayout_yolo:
+    # NOTE: image_size comes from central config: configs/models/doclayout_yolo.yaml
     stride: 32
     rect: false  # Rectangular training
     cache: false  # Cache images in RAM (set true if enough memory)
@@ -77,50 +88,41 @@ dataset:
 
 # Model configuration
 model:
-  variant: "yolov8n"  # Options: yolov8n (nano), yolov8s (small), yolov8m (medium)
+  # NOTE: pretrained_model and image_size come from central config:
+  #       configs/models/doclayout_yolo.yaml
+  #
+  # To change model, edit central config's active_model:
+  #   docstructbench | d4la_scratch | d4la_pretrained
 
-  # Model sizes comparison:
-  # yolov8n: 3.2M params, fastest (2-3ms GPU), good for CPU deployment
-  # yolov8s: 11.2M params, balanced (5-7ms GPU), recommended
-  # yolov8m: 25.9M params, most accurate (8-12ms GPU), GPU only
-
-  # Pretrained weights
-  pretrained: "yolov8n.pt"  # COCO pretrained
   freeze_layers: 0  # Number of layers to freeze (0 = fine-tune all)
 
-  # Architecture modifications
-  architecture:
-    depth_multiple: 0.33  # Model depth
-    width_multiple: 0.25  # Model width
-    max_channels: 1024
-
-# Training hyperparameters (YOLOv8 defaults optimized)
+# Training hyperparameters
 training:
   # Optimizer
-  optimizer: "SGD"  # YOLOv8 uses SGD
-  learning_rate: 0.01
+  optimizer: "AdamW"  # DocLayout-YOLO uses AdamW
+  learning_rate: 0.001
   momentum: 0.937
   weight_decay: 0.0005
 
   # Learning rate scheduler
   scheduler:
-    type: "cosine"  # YOLOv8 uses cosine
+    type: "cosine"
     warmup_epochs: 3
     warmup_momentum: 0.8
     warmup_bias_lr: 0.1
 
   # Training parameters
-  batch_size: 16  # Adjust: T4=8, V100=16, A100=32
-  epochs: 100  # YOLOv8 typically needs 100+ epochs
-  early_stopping_patience: 50  # Be patient with object detection
+  batch_size: 8  # Reduced due to larger input size (1024 vs 640)
+  epochs: 100
+  early_stopping_patience: 50
 
-  # Loss weights (YOLOv8 defaults)
+  # Loss weights
   loss:
     box: 7.5  # Box loss gain
     cls: 0.5  # Classification loss gain
     dfl: 1.5  # Distribution focal loss gain
 
-  # Image augmentation (YOLOv8 defaults)
+  # Image augmentation
   augmentation:
     hsv_h: 0.015  # HSV-Hue augmentation
     hsv_s: 0.7    # HSV-Saturation
@@ -143,7 +145,7 @@ training:
 
 # Checkpoint management
 checkpointing:
-  save_interval_epochs: 10  # YOLOv8 training is longer
+  save_interval_epochs: 10
   save_interval_minutes: 60  # Save every hour
   keep_last_n: 3
   save_best_only: false
@@ -165,9 +167,9 @@ validation:
     - "mAP50-95"   # COCO primary metric
 
   # Detection thresholds
-  conf_threshold: 0.001  # Confidence threshold
-  iou_threshold: 0.6     # NMS IoU threshold
-  max_det: 300          # Maximum detections per image
+  conf_threshold: 0.2  # DocLayout-YOLO default confidence
+  iou_threshold: 0.6   # NMS IoU threshold
+  max_det: 300         # Maximum detections per image
 
   # Per-class metrics
   per_class_metrics: true
@@ -186,14 +188,14 @@ logging:
   wandb:
     enabled: false
     project: "image-preprocessing-detector"
-    tags: ["phase3", "yolov8", "layout-detection", "colab"]
+    tags: ["phase3", "doclayout-yolo", "layout-detection", "colab"]
 
 # Model export
 export:
   # ONNX export
   onnx:
     enabled: true
-    opset_version: 12  # YOLOv8 compatible
+    opset_version: 12
     simplify: true
     dynamic: true
 
@@ -210,7 +212,7 @@ export:
 
 # NMS settings for inference
 nms:
-  conf_threshold: 0.25  # Confidence threshold
+  conf_threshold: 0.2   # DocLayout-YOLO default
   iou_threshold: 0.45   # IoU threshold for NMS
   max_det: 300          # Maximum detections
   multi_label: true     # Multi-label per box

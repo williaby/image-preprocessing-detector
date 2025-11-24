@@ -109,7 +109,7 @@ class DocumentProcessor:
         processing_version = ProcessingVersion(
             pipeline_version=self.pipeline_version,
             iqa_model_hash=None,  # Phase 2+: Add ML model hash
-            layout_model_hash=None,  # Phase 3: Add YOLOv8 model hash
+            layout_model_hash=None,  # Phase 3: Add DocLayout-YOLO model hash
             thresholds={
                 "blur_threshold": 100.0,
                 "contrast_threshold": 0.3,
@@ -229,9 +229,10 @@ class DocumentProcessor:
     ) -> list[PageLayoutSummary]:
         """Generate per-page layout summaries.
 
-        TODO: Integrate with YOLOv8 layout detection (Phase 3)
+        TODO: Integrate with DocLayout-YOLO layout detection (Phase 3)
         - Currently generates placeholder summaries
         - Will use actual layout detection in Phase 3
+        - Model config: configs/models/doclayout_yolo.yaml
 
         Args:
             pages: List of page metadata
