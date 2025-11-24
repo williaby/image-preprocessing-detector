@@ -131,7 +131,7 @@ These modules are tested and have good coverage:
 - [x] ~~No performance/latency tests~~ (tests/benchmark/test_performance.py added)
 - [x] ~~layout_lite module has zero tests~~ (test_layout_lite.py added)
 - [x] ~~Limited parametrized tests~~ (added to DQS and routing tests)
-- [ ] No snapshot/golden file tests
+- [x] ~~No snapshot/golden file tests~~ (test_json_snapshots.py added)
 
 ---
 
@@ -289,7 +289,7 @@ data/test_fixtures/           Total: ~828 KB
 
 - [x] Add parametrized tests using `@pytest.mark.parametrize` ✅ COMPLETED
 - [x] Add performance/latency benchmark tests ✅ COMPLETED
-- [ ] Add snapshot tests for JSON output validation
+- [x] Add snapshot tests for JSON output validation ✅ COMPLETED
 - [ ] Enable and run mutation testing regularly
 - [ ] Add chaos/fault-injection tests
 
@@ -373,10 +373,11 @@ data/test_fixtures/degraded_samples/
 - [x] `tests/unit/models/test_resnet_models.py` created (500+ lines, 35+ tests) (2025-11-24)
 - [x] `tests/unit/utils/test_metadata_generator.py` created (400+ lines, 25+ tests) (2025-11-24)
 - [x] `tests/unit/utils/test_gcs_uploader.py` created (350+ lines, 20+ tests) (2025-11-24)
+- [x] `tests/unit/output/test_json_snapshots.py` created (450+ lines, 25+ tests) (2025-11-24)
 
 ### In Progress
 
-- [ ] Snapshot tests for JSON output validation
+- [x] Snapshot tests for JSON output validation ✅ COMPLETED
 
 ### Blocked
 
@@ -411,3 +412,4 @@ data/test_fixtures/degraded_samples/
 | 2025-11-24 | Added ResNet model tests - teacher and student (35+ tests, 500+ lines) | Claude |
 | 2025-11-24 | Added metadata generator tests (25+ tests, 400+ lines) | Claude |
 | 2025-11-24 | Added GCS uploader tests with mocks (20+ tests, 350+ lines) | Claude |
+| 2025-11-24 | Added JSON snapshot tests for output validation (25+ tests, 450+ lines) | Claude |
