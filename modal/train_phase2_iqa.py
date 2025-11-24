@@ -42,10 +42,10 @@ import os
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, Tuple
+
+import yaml  # type: ignore[import-untyped]
 
 import modal
-import yaml  # type: ignore[import-untyped]
 
 # Create Modal app
 stub = modal.App("iqa-phase2-training")
@@ -99,7 +99,7 @@ image = (
 )
 
 
-def load_training_config(config_path: Path) -> Dict:
+def load_training_config(config_path: Path) -> dict:
     """Load YAML training configuration."""
     with open(config_path) as f:
         return yaml.safe_load(f)
@@ -150,7 +150,7 @@ def download_dataset(bucket_name: str, tar_blob_name: str, target_dir: Path) -> 
     return tar_local_path
 
 
-def prepare_dataset(config: Dict, bucket_name: str) -> Tuple[Path, Dict, Path]:
+def prepare_dataset(config: dict, bucket_name: str) -> tuple[Path, dict, Path]:
     """Download, extract, and validate dataset; return paths and metadata."""
     import json
     import time
@@ -197,7 +197,7 @@ def prepare_dataset(config: Dict, bucket_name: str) -> Tuple[Path, Dict, Path]:
     return images_dir, metadata, metadata_file
 
 
-def split_samples(metadata: Dict, config: Dict):
+def split_samples(metadata: dict, config: dict):
     """Split metadata samples into train/val/test."""
     samples = metadata["samples"]
     total_samples = metadata["total_samples"]
@@ -221,7 +221,7 @@ def split_samples(metadata: Dict, config: Dict):
     return train_samples, val_samples, test_samples
 
 
-def build_dataloaders(train_samples, val_samples, images_dir: Path, config: Dict):
+def build_dataloaders(train_samples, val_samples, images_dir: Path, config: dict):
     """Create train and validation dataloaders."""
     import torch
     import torchvision.transforms as tv_transforms
@@ -322,7 +322,7 @@ def build_dataloaders(train_samples, val_samples, images_dir: Path, config: Dict
     return train_loader, val_loader
 
 
-def create_trainer(model, loss_fn, config: Dict, device: str, checkpoint_dir: Path):
+def create_trainer(model, loss_fn, config: dict, device: str, checkpoint_dir: Path):
     """Instantiate trainer with configuration."""
     from image_preprocessing_detector.training import TeacherTrainer
 
@@ -353,14 +353,15 @@ def run_training_loop(
     trainer,
     train_loader,
     val_loader,
-    config: Dict,
+    config: dict,
     checkpoint_dir: Path,
     gcs_bucket,
     model,
-    device,
+    _device,  # Reserved for future use
 ):
     """Run epoch loop with checkpointing and uploads."""
     import time
+
     import torch
 
     start_time = time.time()
@@ -441,6 +442,7 @@ def train_iqa():
     Expected cost: ~$7-14 (or $0 with $30/month free tier)
     """
     import sys
+
     import torch
 
     # Add source to Python path
@@ -477,7 +479,7 @@ def train_iqa():
     print("Using single tar.gz archive for fast download (avoids 100K file timeout)...")
     download_start = time.time()
     bucket_name = "image_detection_b"
-    images_dir, metadata, metadata_file = prepare_dataset(config, bucket_name)
+    images_dir, metadata, _metadata_file = prepare_dataset(config, bucket_name)
     total_time = time.time() - download_start
     print(f"✅ Dataset ready in {total_time / 60:.1f} minutes total")
 
