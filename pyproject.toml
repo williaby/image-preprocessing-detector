@@ -389,25 +389,21 @@ omit = [
     "validation/*",  # Exclude standalone validation scripts
     "benchmarks/*",  # Exclude benchmarking framework
     "data/*",  # Exclude data processing scripts
-    # Phase 1.5/2 scaffolding (not wired into CI yet - omit until pipelines land)
+    # CLI - tested via integration but excluded from unit coverage
     "src/image_preprocessing_detector/cli.py",
-    "src/image_preprocessing_detector/correction/*",
-    "src/image_preprocessing_detector/detection/*",
-    "src/image_preprocessing_detector/ingestion/*",
-    "src/image_preprocessing_detector/output/*",
-    # Phase 2+ modules (require ML dependencies - PyTorch, excluded from base coverage)
+    # Phase 6: layout_lite - needs tests (TODO: create tests using existing fixtures)
+    "src/image_preprocessing_detector/detection/layout_lite/*",
+    # Phase 8: document_processor - not yet implemented
+    "src/image_preprocessing_detector/ingestion/document_processor.py",
+    # Phase 2+ utilities (require GCS/cloud dependencies)
     "src/image_preprocessing_detector/utils/gcs_uploader.py",
     "src/image_preprocessing_detector/utils/metadata_generator.py",
+    # Augmentation (requires genalog, has dependency conflicts)
     "src/image_preprocessing_detector/augmentation/*",
-    "src/image_preprocessing_detector/models/*",  # ResNet teacher/student models require torch
-    "src/image_preprocessing_detector/training/*",  # Training requires torch
-    "src/image_preprocessing_detector/datasets/*",  # Dataset classes require torch
-    # Phase 6 modules (layout-lite detection, require torch)
-    "src/image_preprocessing_detector/detection/layout_lite.py",
-    "src/image_preprocessing_detector/detection/layout_lite/*",
-    # Phase 8+ modules (not yet implemented)
-    "src/image_preprocessing_detector/ingestion/document_processor.py",
-    "src/image_preprocessing_detector/metrics/*",
+    # Training modules (require PyTorch, tested separately with ml dependencies)
+    "src/image_preprocessing_detector/training/*",
+    "src/image_preprocessing_detector/datasets/*",
+    # Routing (Phase 8, needs implementation)
     "src/image_preprocessing_detector/routing/*",
 ]
 
