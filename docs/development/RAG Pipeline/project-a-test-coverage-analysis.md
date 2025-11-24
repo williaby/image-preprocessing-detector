@@ -1,10 +1,14 @@
 ---
+schema_type: common
 title: Project A - Test Coverage Analysis
-description: Map functional requirements to tests and identify coverage gaps
-schema_type: knowledge
+tags:
+  - testing
+  - coverage
+  - project-a
+status: published
+owner: docs-team
+purpose: Map functional requirements to tests and identify coverage gaps.
 ---
-
-**Purpose:** Map functional requirements to tests and identify coverage gaps.
 
 **Generated:** 2025-11-23
 

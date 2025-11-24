@@ -1,7 +1,13 @@
 ---
+schema_type: common
 title: Mutation Testing Guide
-description: Guide for running mutation tests to verify test suite quality
-schema_type: script
+tags:
+  - testing
+  - mutation-testing
+  - quality
+status: published
+owner: docs-team
+purpose: Guide for running mutation tests to verify test suite quality.
 ---
 
 ## Overview

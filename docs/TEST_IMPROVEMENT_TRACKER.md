@@ -1,13 +1,18 @@
 ---
+schema_type: common
 title: Test Improvement Tracker
-description: Track test coverage gaps, improvements, and real-data testing priorities
-schema_type: knowledge
+tags:
+  - testing
+  - coverage
+  - quality
+status: published
+owner: docs-team
+purpose: Track test coverage gaps, improvements, and real-data testing priorities.
 ---
 
 **Created**: 2025-11-24
 **Last Updated**: 2025-11-24
 **Status**: Active
-**Purpose**: Track test coverage gaps, improvements, and real-data testing priorities
 
 ---
 

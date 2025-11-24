@@ -1,12 +1,17 @@
 ---
+schema_type: common
 title: Test Fixture Acquisition TODO
-description: Track which samples need to be copied to data/test_fixtures/ for comprehensive testing
-schema_type: knowledge
+tags:
+  - testing
+  - fixtures
+  - datasets
+status: draft
+owner: docs-team
+purpose: Track which samples need to be copied to data/test_fixtures/ for comprehensive testing.
 ---
 
 **Created**: 2025-11-24
 **Status**: Manual action required
-**Purpose**: Track which samples need to be copied to `data/test_fixtures/` for comprehensive testing
 
 ---
 
