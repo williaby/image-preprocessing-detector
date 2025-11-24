@@ -67,7 +67,7 @@ def download_gcs_directory(bucket: Any, prefix: str, destination: Path) -> None:
     gpu="A10",  # A10 recommended (24GB) for DocLayout-YOLO
     cpu=16.0,
     memory=65536,
-    timeout=259200,  # 72 hours (3 days)
+    timeout=345600,  # 96 hours (4 days) to cover 50-80h training runs
     secrets=[gcs_secret],
 )
 def train_doclayout_yolo() -> None:
