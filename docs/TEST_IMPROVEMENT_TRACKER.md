@@ -231,14 +231,15 @@ data/test_fixtures/           Total: ~828 KB
   - [x] `TestLayoutLiteAnalyzer` - Full analyzer integration tests
   - [x] `TestLayoutLiteEdgeCases` - Edge cases (small/large images, all black/white)
 
-### Priority 2: High (Real-data IQA validation)
+### Priority 2: High (Real-data IQA validation) ✅ COMPLETED
 
-- [ ] **Enhance `tests/integration/test_real_fixtures.py`**
-  - [ ] `test_skew_detection_accuracy_on_skewed_fixture()` - Validate angle detection
-  - [ ] `test_contrast_detection_on_low_contrast_fixture()` - Validate severity
-  - [ ] `test_blur_detection_on_low_quality_fixture()` - Validate blur score
-  - [ ] `test_corrections_improve_skewed_pdf()` - Before/after comparison
-  - [ ] `test_corrections_improve_low_contrast()` - Before/after comparison
+- [x] **Enhanced `tests/integration/test_real_fixtures.py`** (+235 lines, 6 tests)
+  - [x] `test_skew_detection_accuracy_on_skewed_fixture()` - Validates angle detection on skewed_4.pdf
+  - [x] `test_contrast_detection_on_low_contrast_fixture()` - Validates on low_contrast_5.pdf
+  - [x] `test_blur_detection_on_low_quality_fixture()` - Validates blur on low_quality_4.jpg
+  - [x] `test_clean_document_not_flagged()` - False positive detection on simple_text_1.pdf
+  - [x] `test_deskew_correction_reduces_angle()` - Before/after deskew comparison
+  - [x] `test_contrast_enhancement_improves_score()` - Before/after CLAHE comparison
 
 ### Priority 3: Medium (New fixtures needed)
 
@@ -254,13 +255,15 @@ data/test_fixtures/           Total: ~828 KB
   - [ ] Find/create dense math formula sample
   - [ ] Find/create handwriting sample
 
-### Priority 4: Medium (Unit tests for routing) ✅ COMPLETED
+### Priority 4: Medium (Unit tests for DQS & routing) ✅ COMPLETED
 
-- [ ] **Create `tests/unit/test_dqs_calculator.py`**
-  - [ ] `test_degradation_score_calculation()`
-  - [ ] `test_structural_complexity_calculation()`
-  - [ ] `test_dqs_aggregation()`
-  - [ ] `test_edge_cases_and_boundaries()`
+- [x] **Created `tests/unit/metrics/test_dqs_calculator.py`** (~670 lines, 45+ tests)
+  - [x] `TestCalculateDegradationScore` - Weighted formula, validation, ML blending
+  - [x] `TestCalculateStructuralComplexityScore` - Layout types, feature weights
+  - [x] `TestAggregateDQS` - Page-to-document aggregation (median/max)
+  - [x] `TestNormalizeClassicalIQA` - Detector output normalization
+  - [x] `TestCalculatePreOCRRisk` - Risk scoring with penalties
+  - [x] `TestDQSEdgeCases` - Boundary conditions
 
 - [x] **Created `tests/unit/routing/test_recommendation_engine.py`** (~430 lines, 20+ tests)
   - [x] `TestVisionStructuredRouting` - Tables/figures → VISION_STRUCTURED
@@ -362,10 +365,14 @@ data/test_fixtures/degraded_samples/
 - [x] `tests/unit/augmentation/test_genalog_config.py` created (250 lines, 25 tests) (2025-11-24)
 - [x] `tests/unit/augmentation/test_genalog_degrader.py` created (200 lines, 15 tests) (2025-11-24)
 - [x] `tests/unit/routing/test_recommendation_engine.py` created (430 lines, 20+ tests) (2025-11-24)
+- [x] `tests/integration/test_real_fixtures.py` enhanced with IQA validation (235 lines, 6 tests) (2025-11-24)
+- [x] `tests/unit/metrics/test_dqs_calculator.py` created (670 lines, 45+ tests) (2025-11-24)
+- [x] New fixtures added to conftest.py: low_quality_image, low_contrast_pdf (2025-11-24)
 
 ### In Progress
 
-- [ ] None currently
+- [ ] Performance benchmark tests
+- [ ] Parametrized tests
 
 ### Blocked
 
@@ -394,3 +401,5 @@ data/test_fixtures/degraded_samples/
 | 2025-11-24 | Added layout_lite tests (35 tests, 512 lines) | Claude |
 | 2025-11-24 | Added augmentation tests (40 tests, 450 lines) | Claude |
 | 2025-11-24 | Added routing recommendation engine tests (20+ tests, 430 lines) | Claude |
+| 2025-11-24 | Added IQA validation tests to test_real_fixtures.py (6 tests, 235 lines) | Claude |
+| 2025-11-24 | Added DQS calculator unit tests (45+ tests, 670 lines) | Claude |

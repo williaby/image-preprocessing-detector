@@ -373,6 +373,7 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "benchmark: marks tests as benchmark tests (comprehensive performance tests)",
+    "performance: marks tests as performance/latency tests (run with '-m performance')",
     "requires_full_dataset: marks tests requiring full datasets (88+ GB, skip in CI)",
     "real_data: marks tests using real test fixtures (not synthetic)",
 ]

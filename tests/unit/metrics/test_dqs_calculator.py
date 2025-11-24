@@ -653,3 +653,141 @@ class TestDQSEdgeCases:
         # Should not raise, integers are valid
         score = calculate_degradation_score(iqa)
         assert 0.0 <= score <= 1.0
+
+
+# =============================================================================
+# Parametrized Tests for Comprehensive Coverage
+# =============================================================================
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "metric_name,weight",
+    [
+        ("blur", 0.30),
+        ("noise", 0.25),
+        ("contrast", 0.20),
+        ("illumination", 0.15),
+        ("artifacts", 0.10),
+    ],
+)
+def test_degradation_weight_contribution(metric_name: str, weight: float) -> None:
+    """Parametrized test for individual metric weight contributions.
+
+    Verifies each metric contributes its expected weight to the final score.
+    """
+    # Create IQA with only one metric at 1.0, rest at 0.0
+    iqa = {
+        "blur_score": 1.0 if metric_name == "blur" else 0.0,
+        "noise_score": 1.0 if metric_name == "noise" else 0.0,
+        "contrast_score": 1.0 if metric_name == "contrast" else 0.0,
+        "illumination_score": 1.0 if metric_name == "illumination" else 0.0,
+        "artifacts_score": 1.0 if metric_name == "artifacts" else 0.0,
+    }
+    score = calculate_degradation_score(iqa)
+    assert abs(score - weight) < 0.001, (
+        f"{metric_name} weight mismatch: expected {weight}, got {score}"
+    )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "layout_type,expected_base",
+    [
+        (LayoutType.SINGLE_COLUMN, 0.1),
+        (LayoutType.MULTI_COLUMN, 0.4),
+        (LayoutType.THREE_COLUMN, 0.6),
+        (LayoutType.COMPLEX, 0.9),
+        (LayoutType.UNKNOWN, 0.5),
+    ],
+)
+def test_layout_type_base_scores(layout_type: LayoutType, expected_base: float) -> None:
+    """Parametrized test for layout type base complexity scores."""
+    layout = PageLayoutSummary(
+        page_number=1,
+        layout_type=layout_type,
+        has_tables=False,
+        has_figures=False,
+        has_dense_math=False,
+        has_handwriting=False,
+        complexity_score=expected_base,
+    )
+    score = calculate_structural_complexity_score(layout)
+    assert abs(score - expected_base) < 0.001
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "feature,weight",
+    [
+        ("has_tables", 0.20),
+        ("has_figures", 0.15),
+        ("has_dense_math", 0.15),
+        ("has_handwriting", 0.10),
+    ],
+)
+def test_structural_feature_weights(feature: str, weight: float) -> None:
+    """Parametrized test for structural feature weight contributions."""
+    # Create layout with only one feature enabled
+    layout = PageLayoutSummary(
+        page_number=1,
+        layout_type=LayoutType.SINGLE_COLUMN,  # Base 0.1
+        has_tables=(feature == "has_tables"),
+        has_figures=(feature == "has_figures"),
+        has_dense_math=(feature == "has_dense_math"),
+        has_handwriting=(feature == "has_handwriting"),
+        complexity_score=0.1 + weight,
+    )
+    score = calculate_structural_complexity_score(layout)
+    expected = LAYOUT_COMPLEXITY_BASE[LayoutType.SINGLE_COLUMN] + weight
+    assert abs(score - expected) < 0.001
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "pdf_type,expected_penalty",
+    [
+        (PDFType.BORN_DIGITAL, 0.0),
+        (PDFType.IMAGE_ONLY, 0.2),
+        (PDFType.HYBRID, 0.1),
+        (None, 0.0),
+    ],
+)
+def test_pdf_type_risk_penalties(
+    pdf_type: PDFType | None, expected_penalty: float
+) -> None:
+    """Parametrized test for PDF type risk penalties."""
+    dqs = DQSMetadata(degradation_score=1.0, structural_complexity_score=0.0)
+    risk = calculate_pre_ocr_risk(dqs, pdf_type, [])
+    assert abs(risk - expected_penalty) < 0.001
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "degradation,complexity,pdf_type,expected_risk",
+    [
+        # Perfect quality, simple, born-digital -> 0.0
+        (1.0, 0.0, PDFType.BORN_DIGITAL, 0.0),
+        # Perfect quality, simple, image-only -> 0.2 penalty
+        (1.0, 0.0, PDFType.IMAGE_ONLY, 0.2),
+        # Poor quality (0.5), medium complexity (0.5), born-digital
+        # (1-0.5)*0.4 + 0.5*0.3 = 0.2 + 0.15 = 0.35
+        (0.5, 0.5, PDFType.BORN_DIGITAL, 0.35),
+        # Worst case: poor quality, high complexity, image-only
+        # (1-0.0)*0.4 + 1.0*0.3 + 0.2 = 0.4 + 0.3 + 0.2 = 0.9
+        (0.0, 1.0, PDFType.IMAGE_ONLY, 0.9),
+    ],
+)
+def test_pre_ocr_risk_scenarios(
+    degradation: float,
+    complexity: float,
+    pdf_type: PDFType,
+    expected_risk: float,
+) -> None:
+    """Parametrized test for various pre-OCR risk scenarios."""
+    dqs = DQSMetadata(
+        degradation_score=degradation,
+        structural_complexity_score=complexity,
+    )
+    risk = calculate_pre_ocr_risk(dqs, pdf_type, [])
+    assert abs(risk - expected_risk) < 0.01

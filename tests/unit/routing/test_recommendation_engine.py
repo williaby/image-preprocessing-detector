@@ -484,3 +484,165 @@ class TestEdgeCases:
 
         # UNKNOWN should not be treated as simple, so should fall through
         assert recommendation == OCRRoutingRecommendation.OCR_ADVANCED
+
+
+# =============================================================================
+# Parametrized Tests for Comprehensive Coverage
+# =============================================================================
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "has_tables,has_figures,expected",
+    [
+        (True, False, OCRRoutingRecommendation.VISION_STRUCTURED),
+        (False, True, OCRRoutingRecommendation.VISION_STRUCTURED),
+        (True, True, OCRRoutingRecommendation.VISION_STRUCTURED),
+    ],
+    ids=["tables_only", "figures_only", "tables_and_figures"],
+)
+def test_vision_structured_triggers(
+    has_tables: bool, has_figures: bool, expected: OCRRoutingRecommendation
+) -> None:
+    """Parametrized test for VISION_STRUCTURED routing triggers."""
+    layout = PageLayoutSummary(
+        page_number=1,
+        layout_type=LayoutType.SINGLE_COLUMN,
+        has_tables=has_tables,
+        has_figures=has_figures,
+        has_dense_math=False,
+        has_handwriting=False,
+        complexity_score=0.5,
+    )
+    dqs = DocumentQualityScore(degradation_score=0.9, structural_complexity_score=0.3)
+
+    recommendation, _ = recommend_ocr_routing(
+        pdf_type=PDFType.BORN_DIGITAL,
+        dqs=dqs,
+        pre_ocr_risk=0.2,
+        page_layout_summary=[layout],
+    )
+
+    assert recommendation == expected
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "pdf_type,degradation_score,layout_type,pre_ocr_risk,expected",
+    [
+        # Rule 2: Born-digital + high quality + simple → OCR_FAST
+        (PDFType.BORN_DIGITAL, 0.9, LayoutType.SINGLE_COLUMN, 0.2, OCRRoutingRecommendation.OCR_FAST),
+        (PDFType.BORN_DIGITAL, 0.9, LayoutType.MULTI_COLUMN, 0.2, OCRRoutingRecommendation.OCR_FAST),
+        # Rule 3: High risk → OCR_ADVANCED
+        (PDFType.BORN_DIGITAL, 0.9, LayoutType.SINGLE_COLUMN, 0.7, OCRRoutingRecommendation.OCR_ADVANCED),
+        # Rule 4: Image-only + simple → VISION_SIMPLE
+        (PDFType.IMAGE_ONLY, 0.9, LayoutType.SINGLE_COLUMN, 0.3, OCRRoutingRecommendation.VISION_SIMPLE),
+        # Rule 5: Fallback cases
+        (PDFType.HYBRID, 0.9, LayoutType.SINGLE_COLUMN, 0.3, OCRRoutingRecommendation.OCR_ADVANCED),
+        (PDFType.IMAGE_ONLY, 0.9, LayoutType.COMPLEX, 0.3, OCRRoutingRecommendation.OCR_ADVANCED),
+    ],
+    ids=[
+        "born_digital_high_quality_single",
+        "born_digital_high_quality_multi",
+        "high_risk_triggers_advanced",
+        "image_only_simple_vision",
+        "hybrid_falls_through",
+        "complex_layout_falls_through",
+    ],
+)
+def test_routing_decision_tree(
+    pdf_type: PDFType,
+    degradation_score: float,
+    layout_type: LayoutType,
+    pre_ocr_risk: float,
+    expected: OCRRoutingRecommendation,
+) -> None:
+    """Parametrized test covering all major routing decision tree paths."""
+    layout = PageLayoutSummary(
+        page_number=1,
+        layout_type=layout_type,
+        has_tables=False,
+        has_figures=False,
+        has_dense_math=False,
+        has_handwriting=False,
+        complexity_score=0.3,
+    )
+    dqs = DocumentQualityScore(
+        degradation_score=degradation_score,
+        structural_complexity_score=0.3,
+    )
+
+    recommendation, _ = recommend_ocr_routing(
+        pdf_type=pdf_type,
+        dqs=dqs,
+        pre_ocr_risk=pre_ocr_risk,
+        page_layout_summary=[layout],
+    )
+
+    assert recommendation == expected
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "layout_type",
+    [
+        LayoutType.SINGLE_COLUMN,
+        LayoutType.MULTI_COLUMN,
+    ],
+    ids=["single_column", "multi_column"],
+)
+def test_simple_layouts_for_ocr_fast(layout_type: LayoutType) -> None:
+    """Parametrized test that simple layout types qualify for OCR_FAST."""
+    layout = PageLayoutSummary(
+        page_number=1,
+        layout_type=layout_type,
+        has_tables=False,
+        has_figures=False,
+        has_dense_math=False,
+        has_handwriting=False,
+        complexity_score=0.2,
+    )
+    dqs = DocumentQualityScore(degradation_score=0.9, structural_complexity_score=0.2)
+
+    recommendation, _ = recommend_ocr_routing(
+        pdf_type=PDFType.BORN_DIGITAL,
+        dqs=dqs,
+        pre_ocr_risk=0.2,
+        page_layout_summary=[layout],
+    )
+
+    assert recommendation == OCRRoutingRecommendation.OCR_FAST
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "layout_type",
+    [
+        LayoutType.THREE_COLUMN,
+        LayoutType.COMPLEX,
+        LayoutType.UNKNOWN,
+    ],
+    ids=["three_column", "complex", "unknown"],
+)
+def test_complex_layouts_disqualify_ocr_fast(layout_type: LayoutType) -> None:
+    """Parametrized test that complex layout types don't qualify for OCR_FAST."""
+    layout = PageLayoutSummary(
+        page_number=1,
+        layout_type=layout_type,
+        has_tables=False,
+        has_figures=False,
+        has_dense_math=False,
+        has_handwriting=False,
+        complexity_score=0.6,
+    )
+    dqs = DocumentQualityScore(degradation_score=0.9, structural_complexity_score=0.2)
+
+    recommendation, _ = recommend_ocr_routing(
+        pdf_type=PDFType.BORN_DIGITAL,
+        dqs=dqs,
+        pre_ocr_risk=0.2,
+        page_layout_summary=[layout],
+    )
+
+    # Should fall through to OCR_ADVANCED (not OCR_FAST)
+    assert recommendation != OCRRoutingRecommendation.OCR_FAST
