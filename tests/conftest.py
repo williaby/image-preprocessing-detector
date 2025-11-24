@@ -314,6 +314,25 @@ def complex_table_image(tablebank_fixtures_dir: Path) -> Path:
     pytest.skip("Complex table image fixture not available")
 
 
+@pytest.fixture
+def low_quality_image(tablebank_fixtures_dir: Path) -> Path:
+    """Return low quality/blurry image fixture."""
+    for ext in ["jpg", "jpeg", "png"]:
+        img = tablebank_fixtures_dir / f"low_quality_4.{ext}"
+        if img.exists():
+            return img
+    pytest.skip("Low quality image fixture not available")
+
+
+@pytest.fixture
+def low_contrast_pdf(doclaynet_fixtures_dir: Path) -> Path:
+    """Return low contrast PDF fixture."""
+    pdf = doclaynet_fixtures_dir / "low_contrast_5.pdf"
+    if not pdf.exists():
+        pytest.skip("Low contrast PDF fixture not available")
+    return pdf
+
+
 # ============================================================================
 # Benchmark Dataset Fixtures (requires full datasets)
 # ============================================================================
