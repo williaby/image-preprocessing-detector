@@ -271,26 +271,106 @@ class SkewDetector:
 
 
 @dataclass
+class BlurMetrics:
+    """Detailed blur metrics for analysis.
+
+    Attributes:
+        laplacian_variance: Raw Laplacian variance score (higher = sharper)
+        blur_score: Normalized 0-1 score (0=very blurry, 1=very sharp)
+        local_variance_mean: Mean of local variance across image blocks
+        local_variance_std: Std dev of local variance (uniformity indicator)
+        edge_density: Proportion of edge pixels (0-1)
+    """
+
+    laplacian_variance: float
+    blur_score: float
+    local_variance_mean: float
+    local_variance_std: float
+    edge_density: float
+
+
+@dataclass
 class BlurDetectionResult:
     """Result of blur detection analysis.
 
     Attributes:
         is_blurred: Whether significant blur is detected
         score: Laplacian variance score (higher = sharper)
+        blur_score: Normalized 0-1 blur score (0=blurry, 1=sharp)
         confidence: Confidence score (0.0-1.0)
         severity: Issue severity level
+        metrics: Detailed blur metrics (optional)
     """
 
     is_blurred: bool
     score: float
+    blur_score: float
     confidence: float
     severity: Severity
+    metrics: BlurMetrics | None = None
+
+
+def normalize_blur_score(
+    variance: float,
+    min_variance: float = 10.0,
+    max_variance: float = 500.0,
+) -> float:
+    """Normalize Laplacian variance to 0-1 blur score.
+
+    Args:
+        variance: Raw Laplacian variance value
+        min_variance: Minimum expected variance (very blurry)
+        max_variance: Maximum expected variance (very sharp)
+
+    Returns:
+        Normalized score between 0 (very blurry) and 1 (very sharp)
+
+    Example:
+        >>> normalize_blur_score(50.0)  # Low variance = blurry
+        0.08
+        >>> normalize_blur_score(400.0)  # High variance = sharp
+        0.8
+    """
+    if variance <= min_variance:
+        return 0.0
+    if variance >= max_variance:
+        return 1.0
+
+    # Linear interpolation between min and max
+    normalized = (variance - min_variance) / (max_variance - min_variance)
+    return float(np.clip(normalized, 0.0, 1.0))
+
+
+def compute_laplacian_variance(image: np.ndarray) -> float:
+    """Compute Laplacian variance for blur detection.
+
+    Args:
+        image: Grayscale image (single channel)
+
+    Returns:
+        Laplacian variance (higher = sharper)
+
+    Example:
+        >>> import cv2
+        >>> gray = cv2.imread("image.jpg", cv2.IMREAD_GRAYSCALE)
+        >>> variance = compute_laplacian_variance(gray)
+    """
+    laplacian = cv2.Laplacian(image, cv2.CV_64F)
+    return float(laplacian.var())
 
 
 class BlurDetector:
-    """Detects image blur using Laplacian variance.
+    """Detects image blur using Laplacian variance with enhanced metrics.
 
     Higher variance indicates sharper images (more high-frequency content).
+
+    Attributes:
+        threshold_critical: Critical blur threshold (variance < 50)
+        threshold_high: High blur threshold (variance < 100)
+        threshold_medium: Medium blur threshold (variance < 200)
+        min_variance: Minimum variance for normalization
+        max_variance: Maximum variance for normalization
+        block_size: Block size for local variance analysis
     """
 
     def __init__(
@@ -298,6 +378,9 @@ class BlurDetector:
         threshold_critical: float = 50.0,
         threshold_high: float = 100.0,
         threshold_medium: float = 200.0,
+        min_variance: float = 10.0,
+        max_variance: float = 500.0,
+        block_size: int = 64,
     ) -> None:
         """Initialize blur detector.
 
@@ -305,10 +388,16 @@ class BlurDetector:
             threshold_critical: Critical blur threshold (< 50 = severe blur)
             threshold_high: High blur threshold (< 100 = noticeable blur)
             threshold_medium: Medium blur threshold (< 200 = slight blur)
+            min_variance: Minimum variance for normalization (default: 10.0)
+            max_variance: Maximum variance for normalization (default: 500.0)
+            block_size: Block size for local analysis (default: 64)
         """
         self.threshold_critical = threshold_critical
         self.threshold_high = threshold_high
         self.threshold_medium = threshold_medium
+        self.min_variance = min_variance
+        self.max_variance = max_variance
+        self.block_size = block_size
 
         logger.info(
             "Blur detector initialized",
@@ -317,11 +406,16 @@ class BlurDetector:
             threshold_medium=threshold_medium,
         )
 
-    def detect(self, image: np.ndarray) -> BlurDetectionResult:
+    def detect(
+        self,
+        image: np.ndarray,
+        compute_detailed_metrics: bool = False,
+    ) -> BlurDetectionResult:
         """Detect blur using Laplacian variance.
 
         Args:
-            image: Input image (BGR format)
+            image: Input image (BGR or grayscale format)
+            compute_detailed_metrics: Whether to compute detailed metrics
 
         Returns:
             BlurDetectionResult with score and severity
@@ -334,32 +428,35 @@ class BlurDetector:
 
         logger.debug("Running blur detection", image_shape=image.shape)
 
-        # Convert to grayscale
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Convert to grayscale if needed
+        gray = self._to_grayscale(image)
 
         # Compute Laplacian variance
-        laplacian = cv2.Laplacian(gray, cv2.CV_64F)
-        variance = float(laplacian.var())
+        variance = compute_laplacian_variance(gray)
+
+        # Normalize to 0-1 score
+        blur_score = normalize_blur_score(
+            variance, self.min_variance, self.max_variance
+        )
 
         # Determine severity
-        if variance < self.threshold_critical:
-            severity = Severity.CRITICAL
-        elif variance < self.threshold_high:
-            severity = Severity.HIGH
-        elif variance < self.threshold_medium:
-            severity = Severity.MEDIUM
-        else:
-            severity = Severity.LOW
+        severity = self._compute_severity(variance)
 
         # Is blurred if below medium threshold
         is_blurred = variance < self.threshold_medium
 
-        # Confidence is always high for Laplacian variance (reliable metric)
-        confidence = 0.9
+        # Confidence based on image properties
+        confidence = self._compute_confidence(gray)
+
+        # Compute detailed metrics if requested
+        metrics = None
+        if compute_detailed_metrics:
+            metrics = self._compute_detailed_metrics(gray, variance, blur_score)
 
         logger.debug(
             "Blur detection complete",
             variance=variance,
+            blur_score=blur_score,
             is_blurred=is_blurred,
             severity=severity.value,
         )
@@ -367,9 +464,626 @@ class BlurDetector:
         return BlurDetectionResult(
             is_blurred=is_blurred,
             score=variance,
+            blur_score=blur_score,
             confidence=confidence,
             severity=severity,
+            metrics=metrics,
         )
+
+    def detect_roi(
+        self,
+        image: np.ndarray,
+        bbox: tuple[int, int, int, int],
+    ) -> BlurDetectionResult:
+        """Detect blur in a specific region of interest.
+
+        Args:
+            image: Input image (BGR or grayscale format)
+            bbox: Region of interest as (x, y, width, height) in COCO format
+
+        Returns:
+            BlurDetectionResult for the specified region
+
+        Raises:
+            ValueError: If image or bbox is invalid
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        x, y, w, h = bbox
+        if w <= 0 or h <= 0:
+            raise ValueError(f"Invalid bbox dimensions: {bbox}")
+
+        # Extract ROI
+        if len(image.shape) == 3:
+            roi = image[y : y + h, x : x + w, :]
+        else:
+            roi = image[y : y + h, x : x + w]
+
+        if roi.size == 0:
+            raise ValueError(f"ROI is empty for bbox: {bbox}")
+
+        logger.debug("Running ROI blur detection", bbox=bbox, roi_shape=roi.shape)
+
+        return self.detect(roi)
+
+    def detect_blocks(
+        self,
+        image: np.ndarray,
+        block_size: int | None = None,
+    ) -> list[tuple[tuple[int, int, int, int], BlurDetectionResult]]:
+        """Detect blur in image blocks for spatial analysis.
+
+        Args:
+            image: Input image (BGR or grayscale format)
+            block_size: Size of blocks to analyze (default: self.block_size)
+
+        Returns:
+            List of (bbox, BlurDetectionResult) tuples for each block
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        block_size = block_size or self.block_size
+        gray = self._to_grayscale(image)
+        h, w = gray.shape[:2]
+
+        results = []
+        for y in range(0, h - block_size + 1, block_size):
+            for x in range(0, w - block_size + 1, block_size):
+                bbox = (x, y, block_size, block_size)
+                block = gray[y : y + block_size, x : x + block_size]
+
+                # Compute variance for this block
+                variance = compute_laplacian_variance(block)
+                blur_score = normalize_blur_score(
+                    variance, self.min_variance, self.max_variance
+                )
+                severity = self._compute_severity(variance)
+                is_blurred = variance < self.threshold_medium
+
+                result = BlurDetectionResult(
+                    is_blurred=is_blurred,
+                    score=variance,
+                    blur_score=blur_score,
+                    confidence=0.85,  # Slightly lower for block-level
+                    severity=severity,
+                )
+                results.append((bbox, result))
+
+        return results
+
+    def _to_grayscale(self, image: np.ndarray) -> np.ndarray:
+        """Convert image to grayscale if needed.
+
+        Args:
+            image: Input image (BGR or grayscale)
+
+        Returns:
+            Grayscale image
+        """
+        if len(image.shape) == 2:
+            return image
+        if len(image.shape) == 3:
+            if image.shape[2] == 1:
+                return image[:, :, 0]
+            if image.shape[2] == 3:
+                return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            if image.shape[2] == 4:
+                return cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+        raise ValueError(f"Unsupported image shape: {image.shape}")
+
+    def _compute_severity(self, variance: float) -> Severity:
+        """Compute severity based on Laplacian variance.
+
+        Args:
+            variance: Laplacian variance value
+
+        Returns:
+            Severity level
+        """
+        if variance < self.threshold_critical:
+            return Severity.CRITICAL
+        if variance < self.threshold_high:
+            return Severity.HIGH
+        if variance < self.threshold_medium:
+            return Severity.MEDIUM
+        return Severity.LOW
+
+    def _compute_confidence(
+        self,
+        gray: np.ndarray,
+    ) -> float:
+        """Compute confidence score for blur detection.
+
+        Higher confidence when image properties are suitable for blur analysis.
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Confidence score (0.0-1.0)
+        """
+        # Base confidence is high for Laplacian variance
+        base_confidence = 0.9
+
+        # Reduce confidence for very small images
+        h, w = gray.shape[:2]
+        if h < 100 or w < 100:
+            base_confidence *= 0.8
+
+        # Reduce confidence for uniform images (low variance in pixel values)
+        pixel_std = gray.std()
+        if pixel_std < 10:  # Very uniform image
+            base_confidence *= 0.7
+
+        return float(np.clip(base_confidence, 0.5, 1.0))
+
+    def _compute_detailed_metrics(
+        self,
+        gray: np.ndarray,
+        variance: float,
+        blur_score: float,
+    ) -> BlurMetrics:
+        """Compute detailed blur metrics.
+
+        Args:
+            gray: Grayscale image
+            variance: Global Laplacian variance
+            blur_score: Normalized blur score
+
+        Returns:
+            BlurMetrics with detailed measurements
+        """
+        h, w = gray.shape[:2]
+        block_size = min(self.block_size, h // 2, w // 2)
+        if block_size < 16:
+            block_size = min(h, w, 16)
+
+        # Compute local variances
+        local_variances = []
+        for y in range(0, h - block_size + 1, block_size):
+            for x in range(0, w - block_size + 1, block_size):
+                block = gray[y : y + block_size, x : x + block_size]
+                local_var = compute_laplacian_variance(block)
+                local_variances.append(local_var)
+
+        if local_variances:
+            local_variance_mean = float(np.mean(local_variances))
+            local_variance_std = float(np.std(local_variances))
+        else:
+            local_variance_mean = variance
+            local_variance_std = 0.0
+
+        # Compute edge density using Canny
+        edges = cv2.Canny(gray, 50, 150)
+        edge_density = float(np.count_nonzero(edges) / edges.size)
+
+        return BlurMetrics(
+            laplacian_variance=variance,
+            blur_score=blur_score,
+            local_variance_mean=local_variance_mean,
+            local_variance_std=local_variance_std,
+            edge_density=edge_density,
+        )
+
+
+@dataclass
+class NoiseMetrics:
+    """Detailed noise metrics for analysis.
+
+    Attributes:
+        noise_sigma: Estimated noise standard deviation
+        noise_score: Normalized 0-1 score (0=very noisy, 1=clean)
+        wavelet_detail_energy: Energy in wavelet detail coefficients
+        snr_estimate: Estimated signal-to-noise ratio (dB)
+        noise_type_hint: Suggested noise type (gaussian, salt_pepper, uniform)
+    """
+
+    noise_sigma: float
+    noise_score: float
+    wavelet_detail_energy: float
+    snr_estimate: float
+    noise_type_hint: str
+
+
+@dataclass
+class NoiseDetectionResult:
+    """Result of noise detection analysis.
+
+    Attributes:
+        is_noisy: Whether significant noise is detected
+        noise_sigma: Estimated noise standard deviation
+        noise_score: Normalized 0-1 score (0=noisy, 1=clean)
+        confidence: Confidence score (0.0-1.0)
+        severity: Issue severity level
+        metrics: Detailed noise metrics (optional)
+    """
+
+    is_noisy: bool
+    noise_sigma: float
+    noise_score: float
+    confidence: float
+    severity: Severity
+    metrics: NoiseMetrics | None = None
+
+
+def estimate_noise_mad(detail_coeffs: np.ndarray) -> float:
+    """Estimate noise sigma using Median Absolute Deviation (MAD).
+
+    The MAD estimator is robust to outliers and commonly used for
+    noise estimation in wavelet domain.
+
+    Args:
+        detail_coeffs: Wavelet detail coefficients (HH subband preferred)
+
+    Returns:
+        Estimated noise standard deviation
+
+    Note:
+        Uses the formula: sigma = MAD / 0.6745
+        where 0.6745 is the consistency constant for Gaussian noise
+    """
+    # Flatten coefficients
+    coeffs_flat = detail_coeffs.flatten()
+
+    # Compute MAD (Median Absolute Deviation)
+    median = np.median(np.abs(coeffs_flat))
+
+    # Convert MAD to sigma estimate
+    # 0.6745 is the consistency constant for Gaussian distribution
+    sigma = median / 0.6745
+
+    return float(sigma)
+
+
+def normalize_noise_score(
+    sigma: float,
+    min_sigma: float = 0.0,
+    max_sigma: float = 30.0,
+) -> float:
+    """Normalize noise sigma to 0-1 score (inverted: 0=noisy, 1=clean).
+
+    Args:
+        sigma: Estimated noise standard deviation
+        min_sigma: Minimum sigma (clean image)
+        max_sigma: Maximum sigma (very noisy)
+
+    Returns:
+        Normalized score between 0 (very noisy) and 1 (clean)
+    """
+    if sigma <= min_sigma:
+        return 1.0
+    if sigma >= max_sigma:
+        return 0.0
+
+    # Inverted linear interpolation (higher sigma = lower score)
+    normalized = 1.0 - (sigma - min_sigma) / (max_sigma - min_sigma)
+    return float(np.clip(normalized, 0.0, 1.0))
+
+
+class NoiseDetector:
+    """Detects image noise using wavelet-based estimation.
+
+    Uses discrete wavelet transform (DWT) and Median Absolute Deviation (MAD)
+    to estimate noise levels in images. This method is robust and commonly
+    used in image denoising algorithms.
+
+    Attributes:
+        threshold_critical: Critical noise threshold (sigma > 20)
+        threshold_high: High noise threshold (sigma > 12)
+        threshold_medium: Medium noise threshold (sigma > 5)
+        wavelet: Wavelet family to use (default: 'db1' Daubechies)
+        level: Decomposition level (default: 1)
+    """
+
+    def __init__(
+        self,
+        threshold_critical: float = 20.0,
+        threshold_high: float = 12.0,
+        threshold_medium: float = 5.0,
+        wavelet: str = "db1",
+        level: int = 1,
+        min_sigma: float = 0.0,
+        max_sigma: float = 30.0,
+    ) -> None:
+        """Initialize noise detector.
+
+        Args:
+            threshold_critical: Critical noise threshold (sigma > 20 = severe)
+            threshold_high: High noise threshold (sigma > 12 = noticeable)
+            threshold_medium: Medium noise threshold (sigma > 5 = slight)
+            wavelet: Wavelet family ('db1', 'haar', 'sym2', etc.)
+            level: Wavelet decomposition level (1-3 recommended)
+            min_sigma: Minimum sigma for score normalization
+            max_sigma: Maximum sigma for score normalization
+        """
+        self.threshold_critical = threshold_critical
+        self.threshold_high = threshold_high
+        self.threshold_medium = threshold_medium
+        self.wavelet = wavelet
+        self.level = level
+        self.min_sigma = min_sigma
+        self.max_sigma = max_sigma
+
+        logger.info(
+            "Noise detector initialized",
+            threshold_critical=threshold_critical,
+            threshold_high=threshold_high,
+            threshold_medium=threshold_medium,
+            wavelet=wavelet,
+        )
+
+    def detect(
+        self,
+        image: np.ndarray,
+        compute_detailed_metrics: bool = False,
+    ) -> NoiseDetectionResult:
+        """Detect noise using wavelet-based MAD estimation.
+
+        Args:
+            image: Input image (BGR or grayscale format)
+            compute_detailed_metrics: Whether to compute detailed metrics
+
+        Returns:
+            NoiseDetectionResult with sigma and severity
+
+        Raises:
+            ValueError: If image is invalid or empty
+        """
+        import pywt
+
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        logger.debug("Running noise detection", image_shape=image.shape)
+
+        # Convert to grayscale if needed
+        gray = self._to_grayscale(image)
+
+        # Perform wavelet decomposition
+        coeffs = pywt.wavedec2(gray, self.wavelet, level=self.level)
+
+        # Get detail coefficients (HH subband from first level)
+        # coeffs[0] is approximation, coeffs[1] is (LH, HL, HH) tuple
+        detail_hh = coeffs[1][2]  # HH (diagonal detail)
+
+        # Estimate noise using MAD
+        noise_sigma = estimate_noise_mad(detail_hh)
+
+        # Normalize to 0-1 score
+        noise_score = normalize_noise_score(noise_sigma, self.min_sigma, self.max_sigma)
+
+        # Determine severity
+        severity = self._compute_severity(noise_sigma)
+
+        # Is noisy if above medium threshold
+        is_noisy = noise_sigma > self.threshold_medium
+
+        # Compute confidence
+        confidence = self._compute_confidence(gray)
+
+        # Compute detailed metrics if requested
+        metrics = None
+        if compute_detailed_metrics:
+            metrics = self._compute_detailed_metrics(
+                gray, coeffs, noise_sigma, noise_score
+            )
+
+        logger.debug(
+            "Noise detection complete",
+            noise_sigma=noise_sigma,
+            noise_score=noise_score,
+            is_noisy=is_noisy,
+            severity=severity.value,
+        )
+
+        return NoiseDetectionResult(
+            is_noisy=is_noisy,
+            noise_sigma=noise_sigma,
+            noise_score=noise_score,
+            confidence=confidence,
+            severity=severity,
+            metrics=metrics,
+        )
+
+    def detect_roi(
+        self,
+        image: np.ndarray,
+        bbox: tuple[int, int, int, int],
+    ) -> NoiseDetectionResult:
+        """Detect noise in a specific region of interest.
+
+        Args:
+            image: Input image (BGR or grayscale format)
+            bbox: Region of interest as (x, y, width, height) in COCO format
+
+        Returns:
+            NoiseDetectionResult for the specified region
+
+        Raises:
+            ValueError: If image or bbox is invalid
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        x, y, w, h = bbox
+        if w <= 0 or h <= 0:
+            raise ValueError(f"Invalid bbox dimensions: {bbox}")
+
+        # Extract ROI
+        if len(image.shape) == 3:
+            roi = image[y : y + h, x : x + w, :]
+        else:
+            roi = image[y : y + h, x : x + w]
+
+        if roi.size == 0:
+            raise ValueError(f"ROI is empty for bbox: {bbox}")
+
+        logger.debug("Running ROI noise detection", bbox=bbox, roi_shape=roi.shape)
+
+        return self.detect(roi)
+
+    def _to_grayscale(self, image: np.ndarray) -> np.ndarray:
+        """Convert image to grayscale if needed."""
+        if len(image.shape) == 2:
+            return image.astype(np.float64)
+        if len(image.shape) == 3:
+            if image.shape[2] == 1:
+                return image[:, :, 0].astype(np.float64)
+            if image.shape[2] == 3:
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                return gray.astype(np.float64)
+            if image.shape[2] == 4:
+                gray = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+                return gray.astype(np.float64)
+        raise ValueError(f"Unsupported image shape: {image.shape}")
+
+    def _compute_severity(self, sigma: float) -> Severity:
+        """Compute severity based on noise sigma.
+
+        Args:
+            sigma: Estimated noise standard deviation
+
+        Returns:
+            Severity level
+        """
+        if sigma >= self.threshold_critical:
+            return Severity.CRITICAL
+        if sigma >= self.threshold_high:
+            return Severity.HIGH
+        if sigma >= self.threshold_medium:
+            return Severity.MEDIUM
+        return Severity.LOW
+
+    def _compute_confidence(
+        self,
+        gray: np.ndarray,
+    ) -> float:
+        """Compute confidence score for noise detection.
+
+        Args:
+            gray: Grayscale image
+
+        Returns:
+            Confidence score (0.0-1.0)
+        """
+        # Base confidence
+        base_confidence = 0.85
+
+        # Reduce confidence for very small images (wavelet needs space)
+        h, w = gray.shape[:2]
+        if h < 64 or w < 64:
+            base_confidence *= 0.7
+
+        # Reduce confidence for very uniform images
+        pixel_std = np.std(gray)
+        if pixel_std < 5:  # Very uniform
+            base_confidence *= 0.8
+
+        return float(np.clip(base_confidence, 0.5, 1.0))
+
+    def _compute_detailed_metrics(
+        self,
+        gray: np.ndarray,
+        coeffs: list,
+        noise_sigma: float,
+        noise_score: float,
+    ) -> NoiseMetrics:
+        """Compute detailed noise metrics.
+
+        Args:
+            gray: Grayscale image (float64)
+            coeffs: Wavelet coefficients from decomposition
+            noise_sigma: Estimated noise sigma
+            noise_score: Normalized noise score
+
+        Returns:
+            NoiseMetrics with detailed measurements
+        """
+        # Compute detail energy
+        detail_hh = coeffs[1][2]
+        detail_energy = float(np.sum(detail_hh**2) / detail_hh.size)
+
+        # Estimate SNR
+        signal_power = float(np.var(gray))
+        noise_power = noise_sigma**2 if noise_sigma > 0 else 1e-10
+        snr_db = 10 * np.log10(signal_power / noise_power) if noise_power > 0 else 100.0
+
+        # Guess noise type based on distribution
+        noise_type = self._estimate_noise_type(gray, noise_sigma)
+
+        return NoiseMetrics(
+            noise_sigma=noise_sigma,
+            noise_score=noise_score,
+            wavelet_detail_energy=detail_energy,
+            snr_estimate=float(snr_db),
+            noise_type_hint=noise_type,
+        )
+
+    def _estimate_noise_type(
+        self,
+        gray: np.ndarray,
+        sigma: float,
+    ) -> str:
+        """Estimate the type of noise present.
+
+        Args:
+            gray: Grayscale image
+            sigma: Estimated noise sigma
+
+        Returns:
+            Noise type hint: 'gaussian', 'salt_pepper', 'uniform', or 'mixed'
+        """
+        if sigma < 1.0:
+            return "clean"
+
+        # Check for salt-and-pepper noise (extreme values)
+        h, w = gray.shape[:2]
+        total_pixels = h * w
+
+        # Count extreme pixels
+        black_pixels = np.sum(gray < 5)
+        white_pixels = np.sum(gray > 250)
+        extreme_ratio = (black_pixels + white_pixels) / total_pixels
+
+        if extreme_ratio > 0.01:  # More than 1% extreme pixels
+            return "salt_pepper"
+
+        # Check distribution shape for Gaussian vs uniform
+        # Gaussian noise should have most values near mean
+        normalized = gray / 255.0
+        pixel_std = np.std(normalized)
+
+        # Kurtosis check (Gaussian ~ 3, uniform ~ 1.8)
+        mean_val = np.mean(normalized)
+        fourth_moment = np.mean((normalized - mean_val) ** 4)
+        kurtosis = fourth_moment / (pixel_std**4) if pixel_std > 0 else 3.0
+
+        if kurtosis > 2.5:
+            return "gaussian"
+        if kurtosis < 2.0:
+            return "uniform"
+        return "mixed"
+
+
+def detect_noise(image: np.ndarray) -> NoiseDetectionResult:
+    """Convenience function for noise detection.
+
+    Args:
+        image: Input image (BGR format)
+
+    Returns:
+        NoiseDetectionResult
+
+    Example:
+        >>> img = cv2.imread("scan.jpg")
+        >>> result = detect_noise(img)
+        >>> if result.is_noisy:
+        ...     print(f"Noise detected: sigma={result.noise_sigma:.2f}")
+    """
+    detector = NoiseDetector()
+    return detector.detect(image)
 
 
 @dataclass
