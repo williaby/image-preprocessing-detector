@@ -2,13 +2,11 @@
 schema_type: common
 title: "Phase 4-10 Sprint Details"
 description: "Detailed sprint breakdowns for Phases 4, 6, 8, and 10"
-tags: [planning, sprints, development, milestones]
+tags: [planning, phase_planning, development, roadmap]
 status: published
 owner: "docs-team"
-purpose: "Provide detailed sprint-level implementation tasks for remaining project phases"
+purpose: "Provide detailed sprint-level implementation tasks for remaining project phases."
 ---
-
-# Phase 4-10 Sprint Details
 
 This document provides detailed sprint breakdowns for the remaining phases of Project A implementation. Each sprint includes specific tasks, dependencies, deliverables, and test requirements.
 

@@ -3,8 +3,8 @@ schema_type: common
 title: Test Fixture Acquisition TODO
 tags:
   - testing
-  - fixtures
   - datasets
+  - validation
 status: draft
 owner: docs-team
 purpose: Track which samples need to be copied to data/test_fixtures/ for comprehensive testing.

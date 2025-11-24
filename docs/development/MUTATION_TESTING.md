@@ -3,7 +3,7 @@ schema_type: common
 title: Mutation Testing Guide
 tags:
   - testing
-  - mutation-testing
+  - mutation_testing
   - quality
 status: published
 owner: docs-team

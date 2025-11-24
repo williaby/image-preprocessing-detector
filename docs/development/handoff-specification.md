@@ -1,4 +1,14 @@
-# Project A → Project B Handoff Specification
+---
+schema_type: common
+title: Project A to Project B Handoff Specification
+tags:
+  - rag_pipeline
+  - integration
+  - specifications
+status: published
+owner: docs-team
+purpose: Define the handoff format between Project A (Preprocessing/IQA) and Project B (OCR).
+---
 
 This document defines the handoff format between Project A (Preprocessing & IQA) and Project B (OCR Orchestration).
 

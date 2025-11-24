@@ -4,7 +4,7 @@ title: Project A - Test Coverage Analysis
 tags:
   - testing
   - coverage
-  - project-a
+  - rag_pipeline
 status: published
 owner: docs-team
 purpose: Map functional requirements to tests and identify coverage gaps.

@@ -2,13 +2,11 @@
 schema_type: common
 title: "Critical Path to MVP"
 description: "Dependencies and critical path analysis for MVP delivery"
-tags: [planning, mvp, dependencies, critical-path]
+tags: [planning, mvp, dependencies, roadmap]
 status: published
 owner: "docs-team"
-purpose: "Identify minimum requirements and dependencies for MVP end-to-end testing"
+purpose: "Identify minimum requirements and dependencies for MVP end-to-end testing."
 ---
-
-# Critical Path to MVP
 
 This document identifies the critical path to achieve MVP (Minimum Viable Product) that can perform end-to-end document processing with quality assessment and routing recommendations.
 
