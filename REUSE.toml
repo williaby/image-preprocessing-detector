@@ -99,6 +99,7 @@ path = [
     ".clusterfuzzlite/**",
     ".qlty/**",  # Qlty linter configuration
     ".snyk",  # Snyk vulnerability ignore configuration
+    ".sonarlint/**",  # SonarLint IDE configuration
     "concept.txt",
     "image_reference_sets.txt",
     "overrides/**",

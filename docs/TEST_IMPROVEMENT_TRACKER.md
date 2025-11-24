@@ -1,4 +1,8 @@
-# Test Improvement Tracker
+---
+title: Test Improvement Tracker
+description: Track test coverage gaps, improvements, and real-data testing priorities
+schema_type: reference
+---
 
 **Created**: 2025-11-24
 **Last Updated**: 2025-11-24

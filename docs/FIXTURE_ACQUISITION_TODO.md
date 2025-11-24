@@ -1,4 +1,8 @@
-# Test Fixture Acquisition TODO
+---
+title: Test Fixture Acquisition TODO
+description: Track which samples need to be copied to data/test_fixtures/ for comprehensive testing
+schema_type: reference
+---
 
 **Created**: 2025-11-24
 **Status**: Manual action required

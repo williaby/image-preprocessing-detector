@@ -1,4 +1,8 @@
-# Project A - Test Coverage Analysis
+---
+title: Project A - Test Coverage Analysis
+description: Map functional requirements to tests and identify coverage gaps
+schema_type: reference
+---
 
 **Purpose:** Map functional requirements to tests and identify coverage gaps.
 
