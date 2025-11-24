@@ -1,4 +1,12 @@
-# Document Processing Workflow
+---
+schema_type: common
+title: "Document Processing Workflow"
+description: "How the image preprocessing detector processes files from input to output"
+tags: [guide, pipeline, image_processing]
+status: published
+owner: "docs-team"
+purpose: "Explain the document processing workflow from file input to output."
+---
 
 This guide explains how the image preprocessing detector processes files, from input to output.
 

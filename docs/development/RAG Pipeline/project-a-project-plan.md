@@ -6,7 +6,6 @@ tags: [planning, roadmap, development, project_management]
 status: published
 owner: "docs-team"
 purpose: "Provide phase-by-phase implementation plan for Project A preprocessing and IQA system."
-last_updated: "2025-11-24"
 ---
 
 ## 1. Overview
