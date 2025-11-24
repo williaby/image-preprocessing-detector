@@ -36,7 +36,6 @@ logger = get_logger(__name__)
 if TYPE_CHECKING:
     import onnx
     import torch
-    import torch.nn as nn
     from onnx import checker
 
     HAS_TORCH = True
@@ -44,13 +43,11 @@ if TYPE_CHECKING:
 else:
     try:
         import torch
-        import torch.nn as nn
 
         HAS_TORCH = True
     except ImportError:
         HAS_TORCH = False
         torch: Any = None
-        nn: Any = None
 
     try:
         import onnx

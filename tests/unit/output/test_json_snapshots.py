@@ -20,6 +20,7 @@ from image_preprocessing_detector.schema import (
     DetectedIssue,
     DocumentElement,
     DocumentMetadata,
+    DQSMetadata,
     ElementCategory,
     IssueSeverity,
     IssueType,
@@ -81,7 +82,7 @@ def create_full_document_metadata() -> DocumentMetadata:
         ),
         pdf_type=PDFType.HYBRID,
         pre_ocr_risk=0.35,
-        dqs=0.78,
+        dqs=DQSMetadata(degradation_score=0.72, structural_complexity_score=0.45),
         ocr_routing_recommendation=OCRRoutingStrategy.OCR_ADVANCED,
         upscaling={
             "success": True,
@@ -317,7 +318,9 @@ class TestFullDocumentSnapshot:
 
         assert json_dict["pdf_type"] == "hybrid"
         assert json_dict["pre_ocr_risk"] == 0.35
-        assert json_dict["dqs"] == 0.78
+        assert "dqs" in json_dict
+        assert json_dict["dqs"]["degradation_score"] == 0.72
+        assert json_dict["dqs"]["structural_complexity_score"] == 0.45
         assert json_dict["ocr_routing_recommendation"] == "ocr_advanced"
 
     def test_upscaling_metadata_structure(self) -> None:
