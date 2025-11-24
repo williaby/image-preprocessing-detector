@@ -20,7 +20,6 @@ from image_preprocessing_detector.augmentation.genalog_config import (
     SaltPepperConfig,
 )
 
-
 # =============================================================================
 # BlurConfig Tests
 # =============================================================================

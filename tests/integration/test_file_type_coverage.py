@@ -26,14 +26,17 @@ from image_preprocessing_detector.detection.iqa_classical import (
     detect_skew,
 )
 from image_preprocessing_detector.detection.text_gate import detect_text
-from image_preprocessing_detector.ingestion.image_loader import load_image
+from image_preprocessing_detector.ingestion.image_loader import (
+    ImageMetadata,
+    load_image,
+)
 from image_preprocessing_detector.ingestion.pdf_loader import load_pdf
 from image_preprocessing_detector.output.json_generator import (
     MetadataBuilder,
     generate_json,
     load_json,
 )
-
+from image_preprocessing_detector.schema import DocumentMetadata
 
 # =============================================================================
 # Helper Functions
@@ -71,11 +74,11 @@ def create_test_image(
 
 def run_full_pipeline(
     image: np.ndarray,
-    image_metadata: "ImageMetadata",
+    image_metadata: ImageMetadata,
     document_id: str,
     file_name: str,
     output_dir: Path,
-) -> "DocumentMetadata":
+) -> DocumentMetadata:
     """Run the full processing pipeline on an image.
 
     Args:
@@ -88,7 +91,6 @@ def run_full_pipeline(
     Returns:
         DocumentMetadata object
     """
-    from image_preprocessing_detector.ingestion.image_loader import ImageMetadata
 
     # Run detection
     text_result = detect_text(image)
@@ -161,7 +163,7 @@ class TestJPEGFormat:
                 jpeg_path = tmppath / f"test_q{quality}.jpg"
                 cv2.imwrite(str(jpeg_path), img, [cv2.IMWRITE_JPEG_QUALITY, quality])
 
-                image, metadata = load_image(str(jpeg_path))
+                image, _metadata = load_image(str(jpeg_path))
                 assert image is not None
 
                 # Low quality should still be processable
@@ -245,7 +247,7 @@ class TestPNGFormat:
             cv2.imwrite(str(png_path), img_rgba)
 
             # Should load successfully (converted to RGB)
-            image, metadata = load_image(str(png_path))
+            image, _metadata = load_image(str(png_path))
             assert image is not None
             # Image should be RGB (3 channels), not RGBA
             assert image.ndim == 3
@@ -308,7 +310,7 @@ class TestTIFFFormat:
             tif_path = tmppath / "test_document.tif"
             pil_img.save(str(tif_path), format="TIFF")
 
-            image, metadata = load_image(str(tif_path))
+            image, _metadata = load_image(str(tif_path))
             assert image is not None
 
     def test_tiff_full_pipeline_to_json(self) -> None:
@@ -546,7 +548,7 @@ class TestCrossFormatConsistency:
                 path = tmppath / f"test.{ext}"
                 pil_img.save(str(path), format=fmt, **params)
 
-                image, metadata = load_image(str(path))
+                image, _metadata = load_image(str(path))
                 blur_result = detect_blur(image)
                 results[ext] = {
                     "blur_score": blur_result.score,
@@ -605,7 +607,7 @@ class TestFileTypeErrors:
             empty_path = tmppath / "empty.png"
             empty_path.touch()
 
-            with pytest.raises(Exception):
+            with pytest.raises((ValueError, RuntimeError)):
                 load_image(str(empty_path))
 
 
@@ -616,7 +618,7 @@ class TestFileTypeErrors:
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "extension,mime_type",
+    ("extension", "mime_type"),
     [
         (".jpg", "image/jpeg"),
         (".jpeg", "image/jpeg"),
@@ -666,7 +668,7 @@ def test_file_extension_to_mime_mapping(extension: str, mime_type: str) -> None:
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    "width,height",
+    ("width", "height"),
     [
         (100, 100),  # Small
         (800, 600),  # Standard
@@ -683,7 +685,7 @@ def test_various_image_sizes(width: int, height: int) -> None:
         img_path = tmppath / "test.png"
         cv2.imwrite(str(img_path), img)
 
-        image, metadata = load_image(str(img_path))
+        image, _metadata = load_image(str(img_path))
 
         assert image.shape[1] == width
         assert image.shape[0] == height

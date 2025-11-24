@@ -31,7 +31,6 @@ from image_preprocessing_detector.utils.metadata_generator import (
     get_installed_packages,
 )
 
-
 # =============================================================================
 # Git Functions Tests
 # =============================================================================
@@ -57,14 +56,16 @@ class TestGetGitCommitHash:
 
     def test_raises_on_failure(self) -> None:
         """Test raises RuntimeError when git fails."""
-        with patch(
-            "subprocess.run",
-            side_effect=subprocess.CalledProcessError(
-                1, "git", stderr="fatal: not a git repository"
+        with (
+            patch(
+                "subprocess.run",
+                side_effect=subprocess.CalledProcessError(
+                    1, "git", stderr="fatal: not a git repository"
+                ),
             ),
+            pytest.raises(RuntimeError, match="Failed to get git commit hash"),
         ):
-            with pytest.raises(RuntimeError, match="Failed to get git commit hash"):
-                get_git_commit_hash("/not/a/repo")
+            get_git_commit_hash("/not/a/repo")
 
     def test_strips_whitespace(self) -> None:
         """Test strips trailing newlines/whitespace."""
@@ -566,7 +567,7 @@ class TestGenerateRunId:
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "git_status_output,expected",
+    ("git_status_output", "expected"),
     [
         ("", "clean"),
         (" M file.py\n", "dirty"),
@@ -587,7 +588,7 @@ def test_git_status_detection(git_status_output: str, expected: str) -> None:
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "nvcc_output,expected",
+    ("nvcc_output", "expected"),
     [
         ("release 11.8, V11.8.89", "11.8"),
         ("release 12.0, V12.0.76", "12.0"),
