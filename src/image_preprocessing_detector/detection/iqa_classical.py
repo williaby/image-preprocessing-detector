@@ -805,9 +805,13 @@ class NoiseDetector:
 
         # Combined confidence (weight based on which type is more prominent)
         if salt_pepper_ratio > noise_score:
-            confidence = 0.5 * size_confidence + 0.2 * clarity_confidence + 0.3 * sp_confidence
+            confidence = (
+                0.5 * size_confidence + 0.2 * clarity_confidence + 0.3 * sp_confidence
+            )
         else:
-            confidence = 0.5 * size_confidence + 0.4 * clarity_confidence + 0.1 * sp_confidence
+            confidence = (
+                0.5 * size_confidence + 0.4 * clarity_confidence + 0.1 * sp_confidence
+            )
 
         return float(min(0.95, max(0.5, confidence)))
 
@@ -1207,6 +1211,288 @@ class IlluminationDetector:
         return float(min(0.95, max(0.5, confidence)))
 
 
+@dataclass
+class JPEGBlockinessResult:
+    """Result of JPEG blockiness detection analysis.
+
+    Attributes:
+        has_artifacts: Whether significant JPEG blockiness is detected
+        blockiness_score: Blockiness metric (0.0-1.0, higher = more blocky)
+        compression_score: Quality score (0.0-1.0, higher = better quality)
+        estimated_quality: Estimated JPEG quality factor (1-100)
+        confidence: Confidence score (0.0-1.0)
+        severity: Issue severity level
+        horizontal_blockiness: Blockiness at horizontal block boundaries
+        vertical_blockiness: Blockiness at vertical block boundaries
+    """
+
+    has_artifacts: bool
+    blockiness_score: float
+    compression_score: float
+    estimated_quality: int
+    confidence: float
+    severity: Severity
+    horizontal_blockiness: float
+    vertical_blockiness: float
+
+
+class JPEGBlockinessDetector:
+    """Detects JPEG compression artifacts (blockiness) in images.
+
+    JPEG compression divides images into 8x8 pixel blocks and applies
+    DCT (Discrete Cosine Transform) to each block. At low quality settings,
+    this creates visible discontinuities at block boundaries.
+
+    This detector measures the difference between pixel gradients at
+    8x8 block boundaries versus within blocks. Higher ratio indicates
+    more visible compression artifacts.
+    """
+
+    BLOCK_SIZE = 8  # JPEG uses 8x8 DCT blocks
+
+    def __init__(
+        self,
+        threshold_critical: float = 0.25,
+        threshold_high: float = 0.15,
+        threshold_medium: float = 0.08,
+    ) -> None:
+        """Initialize JPEG blockiness detector.
+
+        Args:
+            threshold_critical: Critical blockiness threshold (> 0.25 = severe artifacts)
+            threshold_high: High severity threshold (> 0.15 = noticeable artifacts)
+            threshold_medium: Medium severity threshold (> 0.08 = slight artifacts)
+        """
+        self.threshold_critical = threshold_critical
+        self.threshold_high = threshold_high
+        self.threshold_medium = threshold_medium
+
+        logger.info(
+            "JPEG blockiness detector initialized",
+            threshold_critical=threshold_critical,
+            threshold_high=threshold_high,
+            threshold_medium=threshold_medium,
+        )
+
+    def detect(self, image: np.ndarray) -> JPEGBlockinessResult:
+        """Detect JPEG blockiness in an image.
+
+        Args:
+            image: Input image (BGR format)
+
+        Returns:
+            JPEGBlockinessResult with blockiness metrics
+
+        Raises:
+            ValueError: If image is invalid or empty
+        """
+        if image is None or image.size == 0:
+            raise ValueError("Invalid or empty image provided")
+
+        logger.debug("Running JPEG blockiness detection", image_shape=image.shape)
+
+        # Convert to grayscale first (single channel is faster to resize)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # For large images, subsample aggressively for performance
+        h, w = gray.shape
+        max_dim = 256
+        if h > max_dim or w > max_dim:
+            scale = min(max_dim / h, max_dim / w)
+            new_h, new_w = int(h * scale), int(w * scale)
+            # Round to nearest multiple of 8 for proper block alignment
+            new_h = (new_h // 8) * 8
+            new_w = (new_w // 8) * 8
+            if new_h < 24 or new_w < 24:
+                new_h, new_w = max(24, new_h), max(24, new_w)
+            gray = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+        gray = gray.astype(np.float64)
+
+        # Compute blockiness at horizontal and vertical boundaries
+        h_blockiness = self._compute_horizontal_blockiness(gray)
+        v_blockiness = self._compute_vertical_blockiness(gray)
+
+        # Combined blockiness score
+        blockiness_score = (h_blockiness + v_blockiness) / 2.0
+
+        # Normalize to 0-1 range (typical blockiness values are 0-0.5)
+        blockiness_score = min(1.0, blockiness_score / 0.5)
+
+        # Compression score (inverse of blockiness, higher = better)
+        compression_score = max(0.0, 1.0 - blockiness_score)
+
+        # Estimate JPEG quality from blockiness
+        estimated_quality = self._estimate_quality(blockiness_score)
+
+        # Determine severity
+        severity = self._compute_severity(blockiness_score)
+
+        # Determine if artifacts are significant
+        has_artifacts = blockiness_score > self.threshold_medium
+
+        # Compute confidence
+        confidence = self._compute_confidence(gray, blockiness_score)
+
+        logger.debug(
+            "JPEG blockiness detection complete",
+            blockiness_score=blockiness_score,
+            compression_score=compression_score,
+            estimated_quality=estimated_quality,
+            h_blockiness=h_blockiness,
+            v_blockiness=v_blockiness,
+            severity=severity.value,
+            has_artifacts=has_artifacts,
+        )
+
+        return JPEGBlockinessResult(
+            has_artifacts=has_artifacts,
+            blockiness_score=blockiness_score,
+            compression_score=compression_score,
+            estimated_quality=estimated_quality,
+            confidence=confidence,
+            severity=severity,
+            horizontal_blockiness=h_blockiness,
+            vertical_blockiness=v_blockiness,
+        )
+
+    def _compute_horizontal_blockiness(self, gray: np.ndarray) -> float:
+        """Compute blockiness at horizontal 8-pixel boundaries.
+
+        Measures the average absolute difference between pixels
+        at block boundaries versus within blocks.
+
+        Args:
+            gray: Grayscale image as float64
+
+        Returns:
+            Horizontal blockiness metric
+        """
+        _h, w = gray.shape
+
+        # Compute horizontal differences (column-wise)
+        h_diff = np.abs(np.diff(gray, axis=1))
+
+        # Separate boundary and inner differences
+        # Boundaries are at columns 7, 15, 23, ... (every 8th column)
+        boundary_cols = list(range(self.BLOCK_SIZE - 1, w - 1, self.BLOCK_SIZE))
+        all_cols = list(range(w - 1))
+        inner_cols = [c for c in all_cols if c not in boundary_cols]
+
+        if not boundary_cols or not inner_cols:
+            return 0.0
+
+        boundary_diff = np.mean(h_diff[:, boundary_cols])
+        inner_diff = np.mean(h_diff[:, inner_cols])
+
+        # Blockiness ratio: how much larger are boundary differences?
+        if inner_diff < 1e-6:
+            return 0.0
+
+        blockiness = max(0.0, (boundary_diff - inner_diff) / (inner_diff + 1e-6))
+        return float(blockiness)
+
+    def _compute_vertical_blockiness(self, gray: np.ndarray) -> float:
+        """Compute blockiness at vertical 8-pixel boundaries.
+
+        Args:
+            gray: Grayscale image as float64
+
+        Returns:
+            Vertical blockiness metric
+        """
+        h, _w = gray.shape
+
+        # Compute vertical differences (row-wise)
+        v_diff = np.abs(np.diff(gray, axis=0))
+
+        # Separate boundary and inner differences
+        # Boundaries are at rows 7, 15, 23, ... (every 8th row)
+        boundary_rows = list(range(self.BLOCK_SIZE - 1, h - 1, self.BLOCK_SIZE))
+        all_rows = list(range(h - 1))
+        inner_rows = [r for r in all_rows if r not in boundary_rows]
+
+        if not boundary_rows or not inner_rows:
+            return 0.0
+
+        boundary_diff = np.mean(v_diff[boundary_rows, :])
+        inner_diff = np.mean(v_diff[inner_rows, :])
+
+        # Blockiness ratio
+        if inner_diff < 1e-6:
+            return 0.0
+
+        blockiness = max(0.0, (boundary_diff - inner_diff) / (inner_diff + 1e-6))
+        return float(blockiness)
+
+    def _estimate_quality(self, blockiness_score: float) -> int:
+        """Estimate JPEG quality factor from blockiness score.
+
+        Uses empirical mapping based on typical JPEG compression behavior.
+
+        Args:
+            blockiness_score: Normalized blockiness (0-1)
+
+        Returns:
+            Estimated quality factor (1-100)
+        """
+        # Empirical mapping: higher blockiness = lower quality
+        # blockiness 0.0 -> quality ~95
+        # blockiness 0.5 -> quality ~50
+        # blockiness 1.0 -> quality ~5
+        if blockiness_score <= 0.0:
+            return 95
+        if blockiness_score >= 1.0:
+            return 5
+
+        # Exponential decay mapping
+        quality = int(95 * (1.0 - blockiness_score) ** 1.5 + 5)
+        return max(1, min(100, quality))
+
+    def _compute_severity(self, blockiness_score: float) -> Severity:
+        """Compute severity based on blockiness score.
+
+        Args:
+            blockiness_score: Normalized blockiness (0-1)
+
+        Returns:
+            Severity level
+        """
+        if blockiness_score >= self.threshold_critical:
+            return Severity.CRITICAL
+        if blockiness_score >= self.threshold_high:
+            return Severity.HIGH
+        if blockiness_score >= self.threshold_medium:
+            return Severity.MEDIUM
+        return Severity.LOW
+
+    def _compute_confidence(self, gray: np.ndarray, blockiness_score: float) -> float:
+        """Compute confidence score for the detection.
+
+        Args:
+            gray: Grayscale image
+            blockiness_score: Computed blockiness score
+
+        Returns:
+            Confidence score (0-1)
+        """
+        # Size confidence
+        h, w = gray.shape
+        size_confidence = min(1.0, (h * w) / 250000)
+
+        # Detection clarity (not borderline)
+        threshold_distances = [
+            abs(blockiness_score - self.threshold_medium),
+            abs(blockiness_score - self.threshold_high),
+            abs(blockiness_score - self.threshold_critical),
+        ]
+        clarity = min(threshold_distances) * 10
+        clarity_confidence = min(1.0, 0.5 + clarity)
+
+        confidence = 0.6 * size_confidence + 0.4 * clarity_confidence
+        return float(min(0.95, max(0.5, confidence)))
+
+
 # Convenience functions
 def detect_skew(image: np.ndarray) -> SkewDetectionResult:
     """Convenience function for skew detection.
@@ -1310,4 +1596,26 @@ def detect_illumination(image: np.ndarray) -> IlluminationDetectionResult:
         ...     )
     """
     detector = IlluminationDetector()
+    return detector.detect(image)
+
+
+def detect_jpeg_blockiness(image: np.ndarray) -> JPEGBlockinessResult:
+    """Convenience function for JPEG blockiness detection.
+
+    Args:
+        image: Input image (BGR format)
+
+    Returns:
+        JPEGBlockinessResult
+
+    Example:
+        >>> img = cv2.imread("compressed.jpg")
+        >>> result = detect_jpeg_blockiness(img)
+        >>> if result.has_artifacts:
+        ...     print(
+        ...         f"JPEG artifacts detected: quality~{result.estimated_quality}, "
+        ...         f"blockiness={result.blockiness_score:.2f} ({result.severity.value})"
+        ...     )
+    """
+    detector = JPEGBlockinessDetector()
     return detector.detect(image)

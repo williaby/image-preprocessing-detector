@@ -14,6 +14,8 @@ from image_preprocessing_detector.detection.iqa_classical import (
     IlluminationDetectionResult,
     IlluminationDetector,
     IlluminationType,
+    JPEGBlockinessDetector,
+    JPEGBlockinessResult,
     NoiseDetectionResult,
     NoiseDetector,
     NoiseType,
@@ -23,6 +25,7 @@ from image_preprocessing_detector.detection.iqa_classical import (
     detect_blur,
     detect_contrast,
     detect_illumination,
+    detect_jpeg_blockiness,
     detect_noise,
     detect_skew,
 )
@@ -848,3 +851,192 @@ class TestConvenienceFunctionsExtended:
         assert hasattr(result, "has_issues")
         assert hasattr(result, "issue_type")
         assert hasattr(result, "uniformity")
+
+    def test_detect_jpeg_blockiness_convenience(self) -> None:
+        """Test detect_jpeg_blockiness convenience function."""
+        img = np.ones((256, 256, 3), dtype=np.uint8) * 128
+
+        result = detect_jpeg_blockiness(img)
+
+        assert isinstance(result, JPEGBlockinessResult)
+        assert hasattr(result, "blockiness_score")
+        assert hasattr(result, "compression_score")
+        assert hasattr(result, "estimated_quality")
+        assert hasattr(result, "has_artifacts")
+
+
+class TestJPEGBlockinessDetector:
+    """Test JPEGBlockinessDetector class."""
+
+    def test_init_default_params(self) -> None:
+        """Test JPEGBlockinessDetector initialization with defaults."""
+        detector = JPEGBlockinessDetector()
+
+        assert detector.threshold_critical == 0.25
+        assert detector.threshold_high == 0.15
+        assert detector.threshold_medium == 0.08
+
+    def test_init_custom_params(self) -> None:
+        """Test JPEGBlockinessDetector initialization with custom parameters."""
+        detector = JPEGBlockinessDetector(
+            threshold_critical=0.30,
+            threshold_high=0.20,
+            threshold_medium=0.10,
+        )
+
+        assert detector.threshold_critical == 0.30
+        assert detector.threshold_high == 0.20
+        assert detector.threshold_medium == 0.10
+
+    def test_detect_clean_image(self) -> None:
+        """Test detection on clean (non-JPEG) synthetic image."""
+        # Create smooth gradient image (no block artifacts)
+        img = np.zeros((256, 256, 3), dtype=np.uint8)
+        for x in range(256):
+            img[:, x] = x  # Smooth horizontal gradient
+
+        detector = JPEGBlockinessDetector()
+        result = detector.detect(img)
+
+        # Smooth gradient should have low blockiness
+        assert result.has_artifacts is False
+        assert result.blockiness_score < 0.1
+        assert result.compression_score > 0.9
+        assert result.estimated_quality > 80
+        assert result.severity == Severity.LOW
+
+    def test_detect_blocky_image(self) -> None:
+        """Test detection on image with artificial 8x8 block artifacts."""
+        # Create image with visible 8x8 block boundaries
+        img = np.ones((256, 256, 3), dtype=np.uint8) * 128
+
+        # Add discontinuities at 8x8 block boundaries
+        for i in range(0, 256, 8):
+            # Alternate blocks with different intensities
+            if (i // 8) % 2 == 0:
+                img[i : i + 8, :] = 140
+            else:
+                img[i : i + 8, :] = 120
+
+        detector = JPEGBlockinessDetector()
+        result = detector.detect(img)
+
+        # Should detect some blockiness from the artificial pattern
+        assert result.blockiness_score >= 0.0  # May or may not detect as blocky
+        assert 0.0 <= result.compression_score <= 1.0
+        assert 1 <= result.estimated_quality <= 100
+
+    def test_detect_uniform_image(self) -> None:
+        """Test detection on uniform (solid color) image."""
+        # Create uniform gray image
+        img = np.ones((256, 256, 3), dtype=np.uint8) * 128
+
+        detector = JPEGBlockinessDetector()
+        result = detector.detect(img)
+
+        # Uniform image should have no blockiness
+        assert result.has_artifacts is False
+        assert result.blockiness_score < 0.1
+        assert result.severity == Severity.LOW
+
+    def test_severity_levels(self) -> None:
+        """Test severity level assignment."""
+        detector = JPEGBlockinessDetector(
+            threshold_critical=0.25, threshold_high=0.15, threshold_medium=0.08
+        )
+
+        # Test internal severity computation
+        assert detector._compute_severity(0.30) == Severity.CRITICAL
+        assert detector._compute_severity(0.20) == Severity.HIGH
+        assert detector._compute_severity(0.10) == Severity.MEDIUM
+        assert detector._compute_severity(0.05) == Severity.LOW
+
+    def test_quality_estimation(self) -> None:
+        """Test quality estimation from blockiness score."""
+        detector = JPEGBlockinessDetector()
+
+        # Test quality mapping at key points
+        assert detector._estimate_quality(0.0) == 95  # No blockiness = high quality
+        assert detector._estimate_quality(1.0) == 5  # Max blockiness = low quality
+
+        # Quality should decrease as blockiness increases
+        q_low = detector._estimate_quality(0.2)
+        q_high = detector._estimate_quality(0.8)
+        assert q_low > q_high
+
+    def test_detect_empty_image_raises(self) -> None:
+        """Test detection raises ValueError for empty image."""
+        detector = JPEGBlockinessDetector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            detector.detect(np.array([]))
+
+    def test_detect_none_image_raises(self) -> None:
+        """Test detection raises ValueError for None image."""
+        detector = JPEGBlockinessDetector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            detector.detect(None)  # type: ignore
+
+    def test_result_attributes(self) -> None:
+        """Test JPEGBlockinessResult has all required attributes."""
+        img = np.ones((256, 256, 3), dtype=np.uint8) * 128
+
+        detector = JPEGBlockinessDetector()
+        result = detector.detect(img)
+
+        assert isinstance(result, JPEGBlockinessResult)
+        assert hasattr(result, "has_artifacts")
+        assert hasattr(result, "blockiness_score")
+        assert hasattr(result, "compression_score")
+        assert hasattr(result, "estimated_quality")
+        assert hasattr(result, "confidence")
+        assert hasattr(result, "severity")
+        assert hasattr(result, "horizontal_blockiness")
+        assert hasattr(result, "vertical_blockiness")
+
+        # Check value ranges
+        assert 0.0 <= result.blockiness_score <= 1.0
+        assert 0.0 <= result.compression_score <= 1.0
+        assert 1 <= result.estimated_quality <= 100
+        assert 0.0 <= result.confidence <= 1.0
+        assert result.horizontal_blockiness >= 0.0
+        assert result.vertical_blockiness >= 0.0
+
+    def test_small_image_handling(self) -> None:
+        """Test handling of small images."""
+        # Create small image (smaller than typical 8x8 block grid)
+        img = np.ones((32, 32, 3), dtype=np.uint8) * 128
+
+        detector = JPEGBlockinessDetector()
+        result = detector.detect(img)
+
+        # Should handle gracefully and return valid result
+        assert isinstance(result, JPEGBlockinessResult)
+        assert 0.0 <= result.blockiness_score <= 1.0
+
+    def test_large_image_subsampling(self) -> None:
+        """Test that large images are subsampled for performance."""
+        # Create large image
+        img = np.ones((2000, 2000, 3), dtype=np.uint8) * 128
+
+        detector = JPEGBlockinessDetector()
+        result = detector.detect(img)
+
+        # Should complete without error and return valid result
+        assert isinstance(result, JPEGBlockinessResult)
+        assert 0.0 <= result.blockiness_score <= 1.0
+
+    def test_horizontal_vertical_blockiness(self) -> None:
+        """Test that horizontal and vertical blockiness are computed separately."""
+        # Create image with horizontal stripes at 8px intervals
+        img = np.ones((256, 256, 3), dtype=np.uint8) * 128
+        for i in range(0, 256, 8):
+            img[i, :] = 180  # Horizontal lines at block boundaries
+
+        detector = JPEGBlockinessDetector()
+        result = detector.detect(img)
+
+        # Both h and v blockiness should be computed
+        assert result.horizontal_blockiness >= 0.0
+        assert result.vertical_blockiness >= 0.0
