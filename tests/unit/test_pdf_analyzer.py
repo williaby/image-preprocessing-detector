@@ -35,7 +35,7 @@ class TestPDFPreflightResult:
         assert result_dict["resolution_analysis"]["min_dpi"] == 150
         assert result_dict["upscaled_path"] == "/tmp/upscaled.pdf"  # nosec B108
         assert result_dict["upscaling_result"]["success"] is True
-        assert result_dict["processing_time"] == 1.23
+        assert result_dict["processing_time"] == pytest.approx(1.23)
         assert result_dict["should_use_upscaled"] is True
         assert result_dict["recommended_path"] == "/tmp/upscaled.pdf"  # nosec B108
 

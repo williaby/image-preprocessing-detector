@@ -60,7 +60,6 @@ class SyntheticImageGenerator:
         y_position = 100
         line_height = 60
         margin_left = 150
-        width - 150
 
         # Title
         title_text = "SYNTHETIC DOCUMENT FOR IQA VALIDATION"
@@ -197,15 +196,16 @@ class SyntheticImageGenerator:
         noisy = image.copy()
         h, w = image.shape[:2]
         num_pixels = h * w
+        rng = np.random.default_rng(42)
 
         # Add salt noise (white pixels)
         num_salt = int(num_pixels * salt_amount)
-        salt_coords = [np.random.randint(0, i, num_salt) for i in (h, w)]
+        salt_coords = [rng.integers(0, i, num_salt) for i in (h, w)]
         noisy[salt_coords[0], salt_coords[1], :] = 255
 
         # Add pepper noise (black pixels)
         num_pepper = int(num_pixels * pepper_amount)
-        pepper_coords = [np.random.randint(0, i, num_pepper) for i in (h, w)]
+        pepper_coords = [rng.integers(0, i, num_pepper) for i in (h, w)]
         noisy[pepper_coords[0], pepper_coords[1], :] = 0
 
         return noisy, (salt_amount, pepper_amount)

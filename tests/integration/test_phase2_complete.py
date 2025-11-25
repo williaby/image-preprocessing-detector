@@ -95,7 +95,7 @@ class TestPhase2BornDigitalPipeline:
             builder.add_page(
                 page_number=0,
                 page_data=page_image,
-                text_result=text_result,
+                _text_result=text_result,
                 skew_result=skew_result,
                 blur_result=blur_result,
                 contrast_result=contrast_result,
@@ -158,7 +158,7 @@ class TestPhase2BornDigitalPipeline:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                     skew_result=skew_result,
                     blur_result=blur_result,
                     contrast_result=contrast_result,
@@ -179,7 +179,8 @@ class TestPhase2ImageOnlyPipeline:
         """Test image-only document (photograph with no text)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create synthetic photograph (no text patterns)
-            img = np.random.randint(0, 255, (800, 600, 3), dtype=np.uint8)
+            rng = np.random.default_rng(42)
+            img = rng.integers(0, 255, (800, 600, 3), dtype=np.uint8)
 
             # Add some structure (but no text)
             cv2.circle(img, (300, 400), 100, (255, 0, 0), -1)
@@ -204,7 +205,7 @@ class TestPhase2ImageOnlyPipeline:
             builder.add_page(
                 page_number=0,
                 page_data=(image, img_metadata),
-                text_result=text_result,
+                _text_result=text_result,
             )
 
             metadata = builder.build()
@@ -219,11 +220,12 @@ class TestPhase2ImageOnlyPipeline:
             img = np.ones((1000, 800, 3), dtype=np.uint8) * 128  # Low contrast
 
             # Add random noise
-            noise = np.random.randint(-30, 30, (1000, 800, 3), dtype=np.int16)
+            rng = np.random.default_rng(42)
+            noise = rng.integers(-30, 30, (1000, 800, 3), dtype=np.int16)
             img = np.clip(img.astype(np.int16) + noise, 0, 255).astype(np.uint8)
 
             # Apply blur
-            img = cv2.GaussianBlur(img, (15, 15), 0)
+            img = cv2.GaussianBlur(img, (15, 15), 0)  # type: ignore[assignment]
 
             img_path = Path(tmpdir) / "low_quality.jpg"
             cv2.imwrite(str(img_path), img)
@@ -244,7 +246,7 @@ class TestPhase2ImageOnlyPipeline:
             builder.add_page(
                 page_number=0,
                 page_data=(image, img_metadata),
-                text_result=text_result,
+                _text_result=text_result,
                 blur_result=blur_result,
                 contrast_result=contrast_result,
             )
@@ -308,7 +310,7 @@ class TestPhase2HybridPipeline:
             builder.add_page(
                 page_number=0,
                 page_data=page_image,
-                text_result=text_result,
+                _text_result=text_result,
                 skew_result=skew_result,
                 blur_result=blur_result,
                 contrast_result=contrast_result,
@@ -387,7 +389,7 @@ class TestPhase2SchemaValidation:
         )
 
         assert issue.type == IssueType.BLUR
-        assert issue.confidence == 0.85
+        assert issue.confidence == pytest.approx(0.85)
         assert issue.severity == IssueSeverity.MEDIUM
 
         # Invalid confidence (Pydantic v2 raises ValidationError)
@@ -409,9 +411,11 @@ class TestPhase2SchemaValidation:
             id="elem_001",
             category=ElementCategory.TABLE,
             bbox=[100, 200, 300, 400],  # [x, y, width, height]
+            polygon=None,
             confidence=0.92,
             attributes={"num_rows": 5, "num_cols": 3},
             quality_issues=[],
+            correction_applied=None,
         )
 
         assert element.category == ElementCategory.TABLE
@@ -423,7 +427,9 @@ class TestPhase2SchemaValidation:
                 id="elem_002",
                 category=ElementCategory.IMAGE,
                 bbox=[100, 200],  # Invalid - only 2 values
+                polygon=None,
                 confidence=0.8,
+                correction_applied=None,
             )
 
         # Invalid bbox (negative values)
@@ -432,7 +438,9 @@ class TestPhase2SchemaValidation:
                 id="elem_003",
                 category=ElementCategory.IMAGE,
                 bbox=[-100, 200, 300, 400],  # Invalid - negative x
+                polygon=None,
                 confidence=0.8,
+                correction_applied=None,
             )
 
     def test_schema_page_metadata_structure(self) -> None:
@@ -456,7 +464,7 @@ class TestPhase2SchemaValidation:
             builder.add_page(
                 page_number=0,
                 page_data=page_image,
-                text_result=text_result,
+                _text_result=text_result,
             )
 
             metadata = builder.build()
@@ -771,6 +779,7 @@ class TestPhase2MLInference:
         # Test escalation decision (should escalate due to low min_confidence)
         decision = detector.should_escalate_to_teacher(mock_scores)
         assert decision.should_escalate is True
+        assert decision.reason is not None
         assert "low_min_confidence" in decision.reason
 
     def test_hybrid_iqa_ensemble_voting(self) -> None:
@@ -838,6 +847,7 @@ class TestPhase2MLInference:
             ml_scores, classical_divergent
         )
         assert decision_escalate.should_escalate is True
+        assert decision_escalate.reason is not None
         assert "blur_discrepancy" in decision_escalate.reason
 
 
@@ -861,7 +871,7 @@ class TestPhase2CorrectionsWithMLGuidance:
             # Apply skew
             center = (400, 500)
             M = cv2.getRotationMatrix2D(center, -5, 1.0)  # noqa: N806  # fmt: skip
-            img = cv2.warpAffine(img, M, (800, 1000))
+            img = cv2.warpAffine(img, M, (800, 1000))  # type: ignore[assignment]
 
             img_path = Path(tmpdir) / "skewed.jpg"
             cv2.imwrite(str(img_path), img)
@@ -888,7 +898,7 @@ class TestPhase2CorrectionsWithMLGuidance:
             builder.add_page(
                 page_number=0,
                 page_data=(image, metadata),
-                text_result=text_result,
+                _text_result=text_result,
                 skew_result=skew_result,
                 skew_correction=skew_correction,
             )
@@ -966,7 +976,7 @@ class TestPhase2EndToEndIntegration:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                     skew_result=skew_result,
                     blur_result=blur_result,
                     contrast_result=contrast_result,
@@ -1018,7 +1028,8 @@ class TestPhase2EndToEndIntegration:
             test_cases.append(("born_digital", pdf_bd))
 
             # Image-only
-            img_only = np.random.randint(0, 255, (600, 800, 3), dtype=np.uint8)
+            rng = np.random.default_rng(42)
+            img_only = rng.integers(0, 255, (600, 800, 3), dtype=np.uint8)
             img_path = Path(tmpdir) / "image_only.jpg"
             cv2.imwrite(str(img_path), img_only)
             test_cases.append(("image_only", img_path))
@@ -1028,18 +1039,16 @@ class TestPhase2EndToEndIntegration:
                 if file_path.suffix == ".pdf":
                     pages = load_pdf(str(file_path))
                 else:
-                    image, metadata = load_image(str(file_path))
-                    pages = [(image, metadata)]
+                    image, metadata_img = load_image(str(file_path))
+                    pages = [(image, metadata_img)]  # type: ignore[list-item]
 
                 builder = MetadataBuilder(
                     document_id=f"{doc_type}_001", file_name=file_path.name
                 )
 
                 for page_idx, page_data in enumerate(pages):
-                    if isinstance(page_data, tuple):
-                        page_image = page_data
-                    else:
-                        page_image = page_data
+                    # page_data is either a tuple (image, metadata) or PageData object
+                    page_image = page_data  # type: ignore[assignment]
 
                     text_result = detect_text(
                         page_image.image
@@ -1050,9 +1059,9 @@ class TestPhase2EndToEndIntegration:
                     builder.add_page(
                         page_number=page_idx,
                         page_data=page_image,
-                        text_result=text_result,
+                        _text_result=text_result,
                     )
 
-                metadata = builder.build()
-                assert metadata.num_pages >= 1
-                assert metadata.document_id == f"{doc_type}_001"
+                result_metadata = builder.build()
+                assert result_metadata.num_pages >= 1
+                assert result_metadata.document_id == f"{doc_type}_001"

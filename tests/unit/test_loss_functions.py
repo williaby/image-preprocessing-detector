@@ -34,8 +34,8 @@ class TestMultiHeadIQALoss:
         )
 
         assert loss_fn.head_names == head_names
-        assert loss_fn.classification_weight == 1.0
-        assert loss_fn.confidence_weight == 0.5
+        assert loss_fn.classification_weight == pytest.approx(1.0)
+        assert loss_fn.confidence_weight == pytest.approx(0.5)
         assert len(loss_fn.head_weights) == 3
 
     def test_loss_with_custom_head_weights(self) -> None:
@@ -213,8 +213,8 @@ class TestMultiHeadIQALoss:
         config = loss_fn.get_config()
 
         assert config["head_names"] == head_names
-        assert config["classification_weight"] == 1.0
-        assert config["confidence_weight"] == 0.5
+        assert config["classification_weight"] == pytest.approx(1.0)
+        assert config["confidence_weight"] == pytest.approx(0.5)
         assert config["head_weights"] == head_weights
 
     def test_loss_gradients(self) -> None:
@@ -256,8 +256,8 @@ class TestFocalLoss:
         """Test focal loss initialization."""
         loss_fn = FocalLoss(alpha=0.25, gamma=2.0)
 
-        assert loss_fn.alpha == 0.25
-        assert loss_fn.gamma == 2.0
+        assert loss_fn.alpha == pytest.approx(0.25)
+        assert loss_fn.gamma == pytest.approx(2.0)
 
     def test_focal_loss_forward(self) -> None:
         """Test focal loss forward pass."""

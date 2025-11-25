@@ -179,7 +179,7 @@ class CharacteristicCurveAnalyzer:
 
     def _plot_blur_curve(self, results: dict) -> None:
         """Plot blur detector characteristic curve."""
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        _, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
         # Plot 1: Laplacian Variance vs. Kernel Size
         ax1.plot(
@@ -213,7 +213,7 @@ class CharacteristicCurveAnalyzer:
 
     def _plot_skew_curve(self, results: dict) -> None:
         """Plot skew detector characteristic curve."""
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        _, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
         # Plot 1: Detected Angle vs. True Angle
         ax1.plot(
@@ -257,7 +257,7 @@ class CharacteristicCurveAnalyzer:
 
     def _plot_contrast_curve(self, results: dict) -> None:
         """Plot contrast detector characteristic curve."""
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        _, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
         # Plot 1: RMS Contrast vs. Contrast Factor
         ax1.plot(

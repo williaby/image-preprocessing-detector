@@ -33,8 +33,8 @@ class TestImageMetadata:
 
         assert metadata.width == 1920
         assert metadata.height == 1080
-        assert metadata.dpi_x == 300.0
-        assert metadata.dpi_y == 300.0
+        assert metadata.dpi_x == pytest.approx(300.0)
+        assert metadata.dpi_y == pytest.approx(300.0)
         assert metadata.color_mode == "RGB"
         assert metadata.format == "JPEG"
         assert metadata.has_exif is True
@@ -43,7 +43,7 @@ class TestImageMetadata:
         """Test DPI property returns average."""
         metadata = ImageMetadata(width=100, height=100, dpi_x=300.0, dpi_y=400.0)
 
-        assert metadata.dpi == 350.0  # Average of 300 and 400
+        assert metadata.dpi == pytest.approx(350.0)  # Average of 300 and 400
 
     def test_dpi_property_with_none(self) -> None:
         """Test DPI property with missing values."""
@@ -53,11 +53,11 @@ class TestImageMetadata:
 
         # Only X
         metadata2 = ImageMetadata(width=100, height=100, dpi_x=300.0)
-        assert metadata2.dpi == 300.0
+        assert metadata2.dpi == pytest.approx(300.0)
 
         # Only Y
         metadata3 = ImageMetadata(width=100, height=100, dpi_y=300.0)
-        assert metadata3.dpi == 300.0
+        assert metadata3.dpi == pytest.approx(300.0)
 
     def test_needs_upscaling(self) -> None:
         """Test needs_upscaling property."""
@@ -154,7 +154,7 @@ class TestImageLoader:
         assert img.shape == (1080, 1920, 3)
         assert metadata.width == 1920
         assert metadata.height == 1080
-        assert metadata.dpi == 300.0
+        assert metadata.dpi == pytest.approx(300.0)
         assert metadata.format == "JPEG"
         assert metadata.has_exif is True
 
@@ -209,7 +209,7 @@ class TestImageLoader:
         with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
             _img, metadata = loader.load(tmp.name)
 
-        assert metadata.dpi == 150.0
+        assert metadata.dpi == pytest.approx(150.0)
         assert metadata.needs_upscaling is True
 
     @patch("image_preprocessing_detector.ingestion.image_loader.cv2.imread")
@@ -404,8 +404,8 @@ class TestImageLoaderRealOperations:
             _loaded_img, metadata = loader.load(tmp_path)
 
             # Should extract DPI from EXIF
-            assert metadata.dpi_x == 300.0
-            assert metadata.dpi_y == 300.0
+            assert metadata.dpi_x == pytest.approx(300.0)
+            assert metadata.dpi_y == pytest.approx(300.0)
             assert metadata.has_exif is True
         finally:
             Path(tmp_path).unlink()
@@ -440,7 +440,7 @@ class TestImageLoaderRealOperations:
                 _loaded_img, metadata = loader.load(tmp_path)
 
                 # Should handle DPI as single value
-                assert metadata.dpi_x == 150.0
-                assert metadata.dpi_y == 150.0
+                assert metadata.dpi_x == pytest.approx(150.0)
+                assert metadata.dpi_y == pytest.approx(150.0)
         finally:
             Path(tmp_path).unlink()

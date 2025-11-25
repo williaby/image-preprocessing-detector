@@ -157,7 +157,7 @@ class TestMLIQAEndToEnd:
             builder.add_page(
                 page_number=0,
                 page_data=page_image,
-                text_result=text_result,
+                _text_result=text_result,
                 skew_result=skew_result,
                 blur_result=blur_result,
                 contrast_result=contrast_result,
@@ -205,6 +205,7 @@ class TestMLIQAEndToEnd:
 
         # Run ML IQA
         student_scores = ml_detector.run_student_inference(img)
+        assert student_scores is not None, "Student inference should return scores"
 
         # Check uncertainty
         uncertainty = ml_detector.calculate_uncertainty(student_scores)
@@ -292,7 +293,8 @@ class TestMLIQAEndToEnd:
             pytest.skip("ML detector not available")
 
         # Create test image
-        img = np.random.randint(0, 255, (800, 600, 3), dtype=np.uint8)
+        rng = np.random.default_rng(42)
+        img = rng.integers(0, 255, (800, 600, 3), dtype=np.uint8)
 
         # Run student inference multiple times
         latencies = []

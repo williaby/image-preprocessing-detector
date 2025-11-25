@@ -100,7 +100,8 @@ class TestNoiseMetrics:
 
     def test_psnr_identical_images(self) -> None:
         """Test PSNR with identical images."""
-        img = np.random.randint(0, 255, (100, 100), dtype=np.uint8)
+        rng = np.random.default_rng(42)
+        img = rng.integers(0, 255, (100, 100), dtype=np.uint8)
 
         psnr_value = psnr(img, img)
         assert psnr_value == pytest.approx(float("inf"), abs=1e6)
@@ -117,7 +118,8 @@ class TestNoiseMetrics:
 
     def test_ssim_identical_images(self) -> None:
         """Test SSIM with identical images."""
-        img = np.random.randint(0, 255, (100, 100), dtype=np.uint8)
+        rng = np.random.default_rng(42)
+        img = rng.integers(0, 255, (100, 100), dtype=np.uint8)
 
         ssim_value = ssim(img, img)
         assert ssim_value == pytest.approx(1.0, abs=0.01)
@@ -195,8 +197,8 @@ class TestDetectionMetrics:
         """Test IoU with partial overlap."""
         from benchmarks.metrics.detection_metrics import bbox_iou
 
-        bbox1 = np.array([0, 0, 20, 20])  # Area = 400
-        bbox2 = np.array([10, 10, 20, 20])  # Area = 400
+        bbox1 = np.array([0, 0, 20, 20])  # area 400
+        bbox2 = np.array([10, 10, 20, 20])  # area 400
         # Intersection: 10x10 = 100
         # Union: 400 + 400 - 100 = 700
         # IoU = 100 / 700 ≈ 0.143

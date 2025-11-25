@@ -33,8 +33,8 @@ class TestPageImage:
         assert page.page_number == 0
         assert page.width == 100
         assert page.height == 100
-        assert page.dpi_input == 150.0
-        assert page.dpi_effective == 300.0
+        assert page.dpi_input == pytest.approx(150.0)
+        assert page.dpi_effective == pytest.approx(300.0)
         assert page.needs_upscaling is True
         assert page.image.shape == (100, 100, 3)
 
@@ -121,7 +121,7 @@ class TestPDFLoader:
         assert page.page_number == 0
         assert page.width == 2550
         assert page.height == 3300
-        assert page.dpi_effective == 300.0
+        assert page.dpi_effective == pytest.approx(300.0)
 
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_load_multi_page_pdf(self, mock_fitz: Mock) -> None:
@@ -172,7 +172,7 @@ class TestPDFLoader:
         mock_page.rect.height = 792.0
 
         # Mock low DPI image (150 DPI)
-        mock_page.get_images.return_value = [(1,)]  # xref=1
+        mock_page.get_images.return_value = [(1,)]  # single image reference
         mock_doc.extract_image.return_value = {
             "width": 1275,  # 8.5 inches * 150 DPI
             "height": 1650,  # 11 inches * 150 DPI
@@ -200,7 +200,7 @@ class TestPDFLoader:
 
         page = pages[0]
         assert page.needs_upscaling is True
-        assert page.dpi_input == 150.0
+        assert page.dpi_input == pytest.approx(150.0)
 
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_upscaling_not_needed_high_dpi(self, mock_fitz: Mock) -> None:
@@ -241,7 +241,7 @@ class TestPDFLoader:
 
         page = pages[0]
         assert page.needs_upscaling is False
-        assert page.dpi_input == 400.0
+        assert page.dpi_input == pytest.approx(400.0)
 
     @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
     def test_rgb_to_bgr_conversion(self, mock_fitz: Mock) -> None:

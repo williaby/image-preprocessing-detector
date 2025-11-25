@@ -78,7 +78,7 @@ class TestNoiseMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img_noisy, classical_scores
         )
 
@@ -96,12 +96,8 @@ class TestNoiseMLIQAIntegration:
 
         # Verify no escalation if agreement exists
         # (Escalation only happens if uncertainty is high or discrepancy exists)
-        # We don't assert teacher_scores is None because escalation might occur
+        # We don't assert _teacher_scores is None because escalation might occur
         # for other reasons (low confidence, etc.)
-
-        # Log results for analysis
-        if teacher_scores:
-            pass
 
     def test_noisy_image_discrepancy_triggers_teacher(
         self, ml_detector: MLIQADetector | None
@@ -169,13 +165,9 @@ class TestNoiseMLIQAIntegration:
             # So we don't strictly require "discrepancy" to be the only reason
             # Just verify that teacher ran when discrepancy was detected
             assert escalation_reason is not None
-        else:
-            # No discrepancy escalation - this is acceptable for subtle noise
-            pass
+        # else: No discrepancy escalation - acceptable for subtle noise
 
-        # Log results
-        if teacher_scores:
-            pass
+        # teacher_scores available for debugging if needed
 
 
 class TestIlluminationMLIQAIntegration:
@@ -302,9 +294,7 @@ class TestIlluminationMLIQAIntegration:
             )
             assert teacher_scores.model_type == ModelType.TEACHER
             assert escalation_reason is not None
-        else:
-            # No discrepancy escalation - acceptable for subtle illumination issues
-            pass
+        # else: No discrepancy escalation - acceptable for subtle illumination issues
 
 
 class TestJPEGBlockinessMLIQAIntegration:
@@ -446,9 +436,7 @@ class TestJPEGBlockinessMLIQAIntegration:
             )
             assert teacher_scores.model_type == ModelType.TEACHER
             assert escalation_reason is not None
-        else:
-            # No discrepancy escalation - acceptable for subtle artifacts
-            pass
+        # else: No discrepancy escalation - acceptable for subtle artifacts
 
 
 class TestBinarizationMLIQAIntegration:
@@ -510,14 +498,8 @@ class TestBinarizationMLIQAIntegration:
         # Validate student inference
         assert student_scores is not None
         assert student_scores.model_type == ModelType.STUDENT
-        # NOTE: Focus on workflow validation - binarization not in ML yet
-        # assert 0.0 <= student_scores.binarization_score <= 1.0
-
-        # Verify workflow correctness
-        # Note: ML may not have binarization-specific training
-        # Focus on workflow validation
-        # NOTE: MLIQAScores does not have binarization_score yet
-        # Focus on workflow validation
+        # TODO(ml): Add binarization_score validation when MLIQAScores supports it
+        # Verify workflow correctness - focus on overall quality for now
         assert student_scores.overall_quality >= 0.0, "Overall quality should be valid"
 
     def test_binarization_discrepancy_triggers_teacher(
@@ -585,9 +567,7 @@ class TestBinarizationMLIQAIntegration:
             )
             assert teacher_scores.model_type == ModelType.TEACHER
             assert escalation_reason is not None
-        else:
-            # No discrepancy escalation - acceptable
-            pass
+        # else: No discrepancy escalation - acceptable
 
 
 class TestBleedThroughMLIQAIntegration:
@@ -654,14 +634,8 @@ class TestBleedThroughMLIQAIntegration:
         # Validate student inference
         assert student_scores is not None
         assert student_scores.model_type == ModelType.STUDENT
-        # NOTE: Focus on workflow validation - bleed_through not in ML yet
-        # assert 0.0 <= student_scores.bleed_through_score <= 1.0
-
-        # Verify workflow correctness
-        # Note: ML may not have bleed-through-specific training
-        # Focus on workflow validation
-        # NOTE: MLIQAScores does not have bleed_through_score yet
-        # Focus on workflow validation
+        # TODO(ml): Add bleed_through_score validation when MLIQAScores supports it
+        # Verify workflow correctness - focus on overall quality for now
         assert student_scores.overall_quality >= 0.0, "Overall quality should be valid"
 
     def test_bleed_through_discrepancy_triggers_teacher(
@@ -731,9 +705,7 @@ class TestBleedThroughMLIQAIntegration:
             )
             assert teacher_scores.model_type == ModelType.TEACHER
             assert escalation_reason is not None
-        else:
-            # No discrepancy escalation - acceptable for subtle bleed-through
-            pass
+        # else: No discrepancy escalation - acceptable for subtle bleed-through
 
 
 class TestMultiDefectMLIQAIntegration:
@@ -932,12 +904,8 @@ class TestMultiDefectMLIQAIntegration:
         # Validate student inference
         assert student_scores is not None
         assert student_scores.model_type == ModelType.STUDENT
-
-        # Verify workflow correctness
-        # NOTE: Focus on workflow validation - binarization not in ML yet
-        # assert 0.0 <= student_scores.binarization_score <= 1.0
-        # NOTE: Focus on workflow validation - bleed_through not in ML yet
-        # assert 0.0 <= student_scores.bleed_through_score <= 1.0
+        # TODO(ml): Add binarization_score and bleed_through_score validation
+        # when MLIQAScores supports these dimensions
 
     def test_skew_multiple_degradations_combined(
         self, ml_detector: MLIQADetector | None

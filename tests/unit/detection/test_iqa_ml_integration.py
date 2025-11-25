@@ -44,7 +44,7 @@ class TestMLIQAScores:
             device=Device.CPU,
             inference_time_ms=25.5,
         )
-        assert scores.blur_score == 0.85
+        assert scores.blur_score == pytest.approx(0.85)
         assert scores.model_type == ModelType.STUDENT
         assert scores.device == Device.CPU
 
@@ -60,8 +60,8 @@ class TestUncertaintyMetrics:
             mean_confidence=0.72,
             head_confidences={"blur": 0.55, "noise": 0.89},
         )
-        assert metrics.entropy == 0.75
-        assert metrics.min_confidence == 0.55
+        assert metrics.entropy == pytest.approx(0.75)
+        assert metrics.min_confidence == pytest.approx(0.55)
 
 
 class TestClassicalIQAScores:
@@ -75,11 +75,11 @@ class TestClassicalIQAScores:
             skew_score=0.9,
         )
         # Optional fields should default to 0.0
-        assert scores.noise_score == 0.0
-        assert scores.illumination_score == 0.0
-        assert scores.compression_score == 0.0
-        assert scores.binarization_score == 0.0
-        assert scores.bleed_through_score == 0.0
+        assert scores.noise_score == pytest.approx(0.0)
+        assert scores.illumination_score == pytest.approx(0.0)
+        assert scores.compression_score == pytest.approx(0.0)
+        assert scores.binarization_score == pytest.approx(0.0)
+        assert scores.bleed_through_score == pytest.approx(0.0)
 
 
 class TestEscalationDecision:
@@ -105,10 +105,10 @@ class TestMLIQADetector:
     def test_init_defaults(self):
         """Test detector initialization with defaults."""
         detector = MLIQADetector()
-        assert detector.entropy_threshold == 0.8
-        assert detector.min_confidence_threshold == 0.6
-        assert detector.mean_confidence_threshold == 0.7
-        assert detector.discrepancy_threshold == 0.3
+        assert detector.entropy_threshold == pytest.approx(0.8)
+        assert detector.min_confidence_threshold == pytest.approx(0.6)
+        assert detector.mean_confidence_threshold == pytest.approx(0.7)
+        assert detector.discrepancy_threshold == pytest.approx(0.3)
 
     def test_init_custom_thresholds(self):
         """Test detector initialization with custom thresholds."""
@@ -117,9 +117,9 @@ class TestMLIQADetector:
             min_confidence_threshold=0.7,
             mean_confidence_threshold=0.8,
         )
-        assert detector.entropy_threshold == 0.9
-        assert detector.min_confidence_threshold == 0.7
-        assert detector.mean_confidence_threshold == 0.8
+        assert detector.entropy_threshold == pytest.approx(0.9)
+        assert detector.min_confidence_threshold == pytest.approx(0.7)
+        assert detector.mean_confidence_threshold == pytest.approx(0.8)
 
     def test_device_detection_cpu_fallback(self):
         """Test device detection falls back to CPU."""
@@ -151,7 +151,7 @@ class TestMLIQADetector:
 
         uncertainty = detector.calculate_uncertainty(scores)
 
-        assert uncertainty.min_confidence == 0.6
+        assert uncertainty.min_confidence == pytest.approx(0.6)
         assert 0.6 <= uncertainty.mean_confidence <= 1.0
         assert uncertainty.entropy >= 0.0
 
@@ -310,9 +310,13 @@ class TestSerializationUtilities:
         result = ml_iqa_scores_to_dict(scores)
 
         assert result["source"] == "student"
-        assert result["blur_score"] == 0.8512  # Rounded to 4 decimal places
+        assert result["blur_score"] == pytest.approx(
+            0.8512
+        )  # Rounded to 4 decimal places
         assert result["device"] == "cuda"
-        assert result["inference_time_ms"] == 15.35  # Rounded to 2 decimal places
+        assert result["inference_time_ms"] == pytest.approx(
+            15.35
+        )  # Rounded to 2 decimal places
 
     def test_teacher_iqa_to_dict(self):
         """Test teacher IQA serialization with escalation reason."""
@@ -345,9 +349,9 @@ class TestSerializationUtilities:
 
         result = uncertainty_metrics_to_dict(metrics)
 
-        assert result["entropy"] == 0.7512
-        assert result["min_confidence"] == 0.5568
-        assert result["head_confidences"]["blur"] == 0.5568
+        assert result["entropy"] == pytest.approx(0.7512)
+        assert result["min_confidence"] == pytest.approx(0.5568)
+        assert result["head_confidences"]["blur"] == pytest.approx(0.5568)
 
     def test_discrepancy_metrics_to_dict(self):
         """Test DiscrepancyMetrics serialization with all 8 dimensions."""
@@ -374,15 +378,15 @@ class TestSerializationUtilities:
         result = discrepancy_metrics_to_dict(metrics)
 
         # Check all 8 dimensions are serialized
-        assert result["blur_discrepancy"] == 0.0512
-        assert result["contrast_discrepancy"] == 0.4046
-        assert result["skew_discrepancy"] == 0.0379
-        assert result["noise_discrepancy"] == 0.1235
-        assert result["illumination_discrepancy"] == 0.0
-        assert result["compression_discrepancy"] == 0.089
-        assert result["binarization_discrepancy"] == 0.0
-        assert result["bleed_through_discrepancy"] == 0.0
-        assert result["max_discrepancy"] == 0.4046
+        assert result["blur_discrepancy"] == pytest.approx(0.0512)
+        assert result["contrast_discrepancy"] == pytest.approx(0.4046)
+        assert result["skew_discrepancy"] == pytest.approx(0.0379)
+        assert result["noise_discrepancy"] == pytest.approx(0.1235)
+        assert result["illumination_discrepancy"] == pytest.approx(0.0)
+        assert result["compression_discrepancy"] == pytest.approx(0.089)
+        assert result["binarization_discrepancy"] == pytest.approx(0.0)
+        assert result["bleed_through_discrepancy"] == pytest.approx(0.0)
+        assert result["max_discrepancy"] == pytest.approx(0.4046)
 
 
 class TestPipelineIntegration:
@@ -521,9 +525,9 @@ class TestEdgeCases:
 
         uncertainty = detector.calculate_uncertainty(scores)
 
-        assert uncertainty.entropy == 0.0
-        assert uncertainty.min_confidence == 0.0
-        assert uncertainty.mean_confidence == 0.0
+        assert uncertainty.entropy == pytest.approx(0.0)
+        assert uncertainty.min_confidence == pytest.approx(0.0)
+        assert uncertainty.mean_confidence == pytest.approx(0.0)
 
     def test_single_head_confidence(self):
         """Test uncertainty with single head confidence."""
@@ -543,8 +547,8 @@ class TestEdgeCases:
 
         uncertainty = detector.calculate_uncertainty(scores)
 
-        assert uncertainty.min_confidence == 0.85
-        assert uncertainty.mean_confidence == 0.85
+        assert uncertainty.min_confidence == pytest.approx(0.85)
+        assert uncertainty.mean_confidence == pytest.approx(0.85)
 
     def test_model_type_enum_values(self):
         """Test ModelType enum values."""

@@ -46,7 +46,7 @@ class TestBlurDetectionAccuracy:
 
         # Verify ground truth
         gt_blur = iqa_labels["reference_clean.png"]["blur"]
-        assert gt_blur == 0.0, "Ground truth should be 0.0 for reference"
+        assert gt_blur == pytest.approx(0.0), "Ground truth should be 0.0 for reference"
 
         # Validate detector result
         assert not result.is_blurred, (
@@ -67,7 +67,7 @@ class TestBlurDetectionAccuracy:
 
         # Verify ground truth
         gt_blur = iqa_labels["gaussian_blur_high.png"]["blur"]
-        assert gt_blur == 1.0, "Ground truth should be 1.0 for high blur"
+        assert gt_blur == pytest.approx(1.0), "Ground truth should be 1.0 for high blur"
 
         # Validate detector result
         assert result.is_blurred, (
@@ -108,11 +108,11 @@ class TestBlurDetectionAccuracy:
         assert gt_blur == expected_blur, "Ground truth mismatch"
 
         # Binary classification check
-        if expected_blur == 0.0:
+        if expected_blur == pytest.approx(0.0):
             assert not result.is_blurred or result.blur_score > 0.3, (
                 f"{image_name}: Should not show severe blur (score={result.blur_score})"
             )
-        else:  # expected_blur == 1.0
+        else:  # expected_blur == pytest.approx(1.0)
             assert result.is_blurred, (
                 f"{image_name}: High blur should be detected (score={result.blur_score})"
             )
@@ -133,7 +133,9 @@ class TestNoiseDetectionAccuracy:
         result = detector.detect(img)
 
         gt_noise = iqa_labels["reference_clean.png"]["noise"]
-        assert gt_noise == 0.0, "Ground truth should be 0.0 for reference"
+        assert gt_noise == pytest.approx(0.0), (
+            "Ground truth should be 0.0 for reference"
+        )
 
         assert not result.is_noisy, (
             f"Pristine image should not be noisy (score={result.score})"
@@ -154,7 +156,9 @@ class TestNoiseDetectionAccuracy:
         result = detector.detect(img)
 
         gt_noise = iqa_labels["white_noise_high.png"]["noise"]
-        assert gt_noise == 1.0, "Ground truth should be 1.0 for high noise"
+        assert gt_noise == pytest.approx(1.0), (
+            "Ground truth should be 1.0 for high noise"
+        )
 
         # Classical noise detection may not always trigger is_noisy flag
         # Check that score indicates some noise (>0.2 threshold)
@@ -195,12 +199,12 @@ class TestNoiseDetectionAccuracy:
         assert gt_noise == expected_noise, "Ground truth mismatch"
 
         # Binary classification check
-        if expected_noise == 0.0:
+        if expected_noise == pytest.approx(0.0):
             # Allow some tolerance for false positives
             assert not result.is_noisy or result.noise_score < 0.5, (
                 f"{image_name}: Should not show severe noise"
             )
-        else:  # expected_noise == 1.0
+        else:  # expected_noise == pytest.approx(1.0)
             # Classical noise detection may not reliably set is_noisy flag
             # Check for elevated score instead (>0.15 indicates some noise)
             assert result.noise_score > 0.15, (
@@ -223,7 +227,7 @@ class TestIlluminationDetectionAccuracy:
         result = detector.detect(img)
 
         gt_illumination = iqa_labels["reference_clean.png"]["illumination"]
-        assert gt_illumination == 0.0, "Ground truth should be 0.0"
+        assert gt_illumination == pytest.approx(0.0), "Ground truth should be 0.0"
 
         assert not result.has_issues, (
             f"Pristine image should have good illumination (score={result.score})"
@@ -240,7 +244,7 @@ class TestIlluminationDetectionAccuracy:
         result = detector.detect(img)
 
         gt_illumination = iqa_labels["contrast_low.png"]["illumination"]
-        assert gt_illumination == 1.0, "Ground truth should be 1.0"
+        assert gt_illumination == pytest.approx(1.0), "Ground truth should be 1.0"
 
         assert result.has_issues, (
             f"Low contrast image should have illumination issues (score={result.score})"
@@ -279,10 +283,10 @@ class TestIlluminationDetectionAccuracy:
         assert gt_illumination == expected_illumination, "Ground truth mismatch"
 
         # Binary classification check
-        if expected_illumination == 0.0:
+        if expected_illumination == pytest.approx(0.0):
             # Should not detect severe illumination issues
             pass  # Detector may still flag minor issues, use relaxed check
-        else:  # expected_illumination == 1.0
+        else:  # expected_illumination == pytest.approx(1.0)
             assert result.has_issues, (
                 f"{image_name}: Poor illumination should be detected"
             )
@@ -320,7 +324,9 @@ class TestContrastDetectionAccuracy:
         result = detector.detect(img)
 
         gt_illumination = iqa_labels["contrast_low.png"]["illumination"]
-        assert gt_illumination == 1.0, "Ground truth has illumination issue"
+        assert gt_illumination == pytest.approx(1.0), (
+            "Ground truth has illumination issue"
+        )
 
         # Low illumination typically correlates with low contrast
         assert result.is_low_contrast, (
@@ -343,7 +349,7 @@ class TestJPEGArtifactDetectionAccuracy:
         result = detector.detect(img)
 
         gt_artifacts = iqa_labels["reference_clean.png"]["artifacts"]
-        assert gt_artifacts == 0.0, "Ground truth should be 0.0"
+        assert gt_artifacts == pytest.approx(0.0), "Ground truth should be 0.0"
 
         # Pristine should have minimal blockiness
         assert result.blockiness_score < 0.5, (
@@ -370,7 +376,7 @@ class TestJPEGArtifactDetectionAccuracy:
         result = detector.detect(img)
 
         gt_artifacts = iqa_labels["jpeg_artifacts_high.png"]["artifacts"]
-        assert gt_artifacts == 1.0, "Ground truth should be 1.0"
+        assert gt_artifacts == pytest.approx(1.0), "Ground truth should be 1.0"
 
         # Check for elevated blockiness score (>0.15 indicates some artifacts)
         assert result.blockiness_score > 0.15, (
@@ -423,10 +429,10 @@ class TestJPEGArtifactDetectionAccuracy:
         assert gt_artifacts == expected_artifacts, "Ground truth mismatch"
 
         # Binary classification check (with tolerance for detector variability)
-        if expected_artifacts == 0.0:
+        if expected_artifacts == pytest.approx(0.0):
             # Should not show severe artifacts
             pass  # Relaxed check - some false positives acceptable
-        else:  # expected_artifacts == 1.0
+        else:  # expected_artifacts == pytest.approx(1.0)
             # Should detect artifacts (but may not always trigger has_blockiness)
             # Check score rather than boolean flag
             assert result.blockiness_score > 0.2, (
@@ -448,9 +454,9 @@ class TestCombinedDefectScenarios:
 
         # Ground truth verification
         gt_labels = iqa_labels["combined_blur_noise.png"]
-        assert gt_labels["blur"] == 1.0, "Should have blur"
-        assert gt_labels["noise"] == 1.0, "Should have noise"
-        assert gt_labels["skew"] == 1.0, "Should have skew"
+        assert gt_labels["blur"] == pytest.approx(1.0), "Should have blur"
+        assert gt_labels["noise"] == pytest.approx(1.0), "Should have noise"
+        assert gt_labels["skew"] == pytest.approx(1.0), "Should have skew"
 
         # Test blur detection
         blur_detector = BlurDetector()
@@ -529,8 +535,12 @@ class TestDetectorCorrelation:
 
         # Check that high GT blur → high detector blur score
         # Find samples with GT blur = 1.0
-        high_blur_indices = [i for i, gt in enumerate(gt_blur_labels) if gt == 1.0]
-        low_blur_indices = [i for i, gt in enumerate(gt_blur_labels) if gt == 0.0]
+        high_blur_indices = [
+            i for i, gt in enumerate(gt_blur_labels) if gt == pytest.approx(1.0)
+        ]
+        low_blur_indices = [
+            i for i, gt in enumerate(gt_blur_labels) if gt == pytest.approx(0.0)
+        ]
 
         assert len(high_blur_indices) > 0, "Should have high blur samples"
         assert len(low_blur_indices) > 0, "Should have low blur samples"
@@ -563,8 +573,12 @@ class TestDetectorCorrelation:
             gt_noise_labels.append(iqa_labels[img_path.name]["noise"])
 
         # Find high noise vs low noise samples
-        high_noise_indices = [i for i, gt in enumerate(gt_noise_labels) if gt == 1.0]
-        low_noise_indices = [i for i, gt in enumerate(gt_noise_labels) if gt == 0.0]
+        high_noise_indices = [
+            i for i, gt in enumerate(gt_noise_labels) if gt == pytest.approx(1.0)
+        ]
+        low_noise_indices = [
+            i for i, gt in enumerate(gt_noise_labels) if gt == pytest.approx(0.0)
+        ]
 
         assert len(high_noise_indices) > 0, "Should have high noise samples"
         assert len(low_noise_indices) > 0, "Should have low noise samples"

@@ -372,8 +372,8 @@ class TestGenerateMetricsFile:
         with open(result) as f:
             loaded = json.load(f)
 
-        assert loaded["final_train_loss"] == 0.15
-        assert loaded["val_accuracy"] == 0.92
+        assert loaded["final_train_loss"] == pytest.approx(0.15)
+        assert loaded["val_accuracy"] == pytest.approx(0.92)
 
     def test_handles_nested_metrics(self, tmp_path: Path) -> None:
         """Test handles nested metrics structures."""
@@ -387,8 +387,8 @@ class TestGenerateMetricsFile:
         with open(result) as f:
             loaded = json.load(f)
 
-        assert loaded["train"]["loss"] == 0.15
-        assert loaded["val"]["accuracy"] == 0.92
+        assert loaded["train"]["loss"] == pytest.approx(0.15)
+        assert loaded["val"]["accuracy"] == pytest.approx(0.92)
 
 
 # =============================================================================

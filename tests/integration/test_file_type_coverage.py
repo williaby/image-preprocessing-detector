@@ -103,7 +103,7 @@ def run_full_pipeline(
     builder.add_page(
         page_number=0,
         page_data=(image, image_metadata),
-        text_result=text_result,
+        _text_result=text_result,
         skew_result=skew_result,
         blur_result=blur_result,
         contrast_result=contrast_result,
@@ -506,7 +506,7 @@ class TestPDFFormat:
                 builder.add_page(
                     page_number=idx,
                     page_data=page_img,
-                    text_result=text_result,
+                    _text_result=text_result,
                 )
 
             metadata = builder.build()

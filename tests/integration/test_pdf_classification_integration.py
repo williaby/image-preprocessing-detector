@@ -13,12 +13,8 @@ from PIL import Image
 
 from image_preprocessing_detector.schema import PDFType
 
-# from image_preprocessing_detector.ingestion import (
-#     DocumentProcessor,
-#     process_pdf_document,
-# )
-
 # Stubs for undefined names (Phase 8/9 features not yet implemented)
+# TODO(phase8): Import DocumentProcessor, process_pdf_document when implemented
 DocumentProcessor = None  # type: ignore
 process_pdf_document = None  # type: ignore
 

@@ -52,12 +52,12 @@ class TestDQSWeightConfig:
         """Test default weight values."""
         config = DQSWeightConfig()
 
-        assert config.blur_weight == 0.30
-        assert config.noise_weight == 0.25
-        assert config.contrast_weight == 0.20
-        assert config.illumination_weight == 0.15
-        assert config.artifacts_weight == 0.10
-        assert config.ml_blend_ratio == 0.30
+        assert config.blur_weight == pytest.approx(0.30)
+        assert config.noise_weight == pytest.approx(0.25)
+        assert config.contrast_weight == pytest.approx(0.20)
+        assert config.illumination_weight == pytest.approx(0.15)
+        assert config.artifacts_weight == pytest.approx(0.10)
+        assert config.ml_blend_ratio == pytest.approx(0.30)
 
     def test_custom_initialization(self) -> None:
         """Test custom weight values."""
@@ -70,9 +70,9 @@ class TestDQSWeightConfig:
             ml_blend_ratio=0.50,
         )
 
-        assert config.blur_weight == 0.40
-        assert config.noise_weight == 0.30
-        assert config.ml_blend_ratio == 0.50
+        assert config.blur_weight == pytest.approx(0.40)
+        assert config.noise_weight == pytest.approx(0.30)
+        assert config.ml_blend_ratio == pytest.approx(0.50)
 
     def test_validate_success(self) -> None:
         """Test validation passes for valid config."""
@@ -122,8 +122,8 @@ class TestDQSWeightConfig:
         weights = config.get_normalized_degradation_weights()
 
         assert abs(sum(weights.values()) - 1.0) < 1e-9
-        assert weights["blur"] == 0.4
-        assert weights["noise"] == 0.3
+        assert weights["blur"] == pytest.approx(0.4)
+        assert weights["noise"] == pytest.approx(0.3)
 
     def test_get_normalized_degradation_weights_all_zero(self) -> None:
         """Test weight normalization with all zeros falls back to equal weights."""
@@ -138,7 +138,7 @@ class TestDQSWeightConfig:
         weights = config.get_normalized_degradation_weights()
 
         # Should fall back to equal weights
-        assert all(w == 0.2 for w in weights.values())
+        assert all(w == pytest.approx(0.2) for w in weights.values())
 
     def test_to_dict(self) -> None:
         """Test conversion to dictionary."""
@@ -151,8 +151,8 @@ class TestDQSWeightConfig:
         assert "structural_feature_weights" in data
         assert "risk_weights" in data
 
-        assert data["degradation_weights"]["blur"] == 0.30
-        assert data["ml_blend_ratio"] == 0.30
+        assert data["degradation_weights"]["blur"] == pytest.approx(0.30)
+        assert data["ml_blend_ratio"] == pytest.approx(0.30)
 
     def test_from_dict(self) -> None:
         """Test creation from dictionary."""
@@ -166,11 +166,11 @@ class TestDQSWeightConfig:
 
         config = DQSWeightConfig.from_dict(data)
 
-        assert config.blur_weight == 0.40
-        assert config.noise_weight == 0.35
-        assert config.ml_blend_ratio == 0.50
+        assert config.blur_weight == pytest.approx(0.40)
+        assert config.noise_weight == pytest.approx(0.35)
+        assert config.ml_blend_ratio == pytest.approx(0.50)
         # Unspecified values should remain default
-        assert config.contrast_weight == 0.20
+        assert config.contrast_weight == pytest.approx(0.20)
 
     def test_roundtrip_to_from_dict(self) -> None:
         """Test roundtrip conversion to/from dict."""
@@ -209,8 +209,8 @@ class TestCalibrationSample:
         )
 
         assert sample.sample_id == "test1"
-        assert sample.blur_score == 0.8
-        assert sample.ground_truth_quality == 0.82
+        assert sample.blur_score == pytest.approx(0.8)
+        assert sample.ground_truth_quality == pytest.approx(0.82)
         assert sample.metadata == {}
 
     def test_with_metadata(self) -> None:
@@ -279,7 +279,7 @@ class TestDQSCalibrator:
         calibrator = DQSCalibrator()
 
         assert calibrator.initial_config is not None
-        assert calibrator.learning_rate == 0.01
+        assert calibrator.learning_rate == pytest.approx(0.01)
         assert calibrator.max_iterations == 1000
 
     def test_initialization_custom(self) -> None:
@@ -291,8 +291,8 @@ class TestDQSCalibrator:
             max_iterations=500,
         )
 
-        assert calibrator.initial_config.blur_weight == 0.40
-        assert calibrator.learning_rate == 0.02
+        assert calibrator.initial_config.blur_weight == pytest.approx(0.40)
+        assert calibrator.learning_rate == pytest.approx(0.02)
         assert calibrator.max_iterations == 500
 
     def test_calibrate_empty_samples_raises(self) -> None:
@@ -362,9 +362,9 @@ class TestDQSCalibrator:
 
         metrics = calibrator.evaluate([])
 
-        assert metrics["mae"] == 0.0
-        assert metrics["rmse"] == 0.0
-        assert metrics["r_squared"] == 0.0
+        assert metrics["mae"] == pytest.approx(0.0)
+        assert metrics["rmse"] == pytest.approx(0.0)
+        assert metrics["r_squared"] == pytest.approx(0.0)
 
 
 # =============================================================================
@@ -401,12 +401,12 @@ class TestCalculateDegradationScore:
     def test_perfect_quality_returns_1(self, perfect_iqa: dict) -> None:
         """Test that perfect quality metrics return score of 1.0."""
         score = calculate_degradation_score(perfect_iqa)
-        assert score == 1.0
+        assert score == pytest.approx(1.0)
 
     def test_worst_quality_returns_0(self, poor_iqa: dict) -> None:
         """Test that worst quality metrics return score of 0.0."""
         score = calculate_degradation_score(poor_iqa)
-        assert score == 0.0
+        assert score == pytest.approx(0.0)
 
     def test_weighted_formula(self) -> None:
         """Test that weighted formula is correctly applied."""
@@ -420,7 +420,7 @@ class TestCalculateDegradationScore:
         }
         score = calculate_degradation_score(iqa)
         # All at 0.5, weighted sum should be 0.5
-        assert score == 0.5
+        assert score == pytest.approx(0.5)
 
     def test_blur_weight(self) -> None:
         """Test blur weight (0.30) contribution."""
@@ -695,7 +695,7 @@ class TestCalculateStructuralComplexityScore:
             complexity_score=1.0,  # Would exceed 1.0
         )
         score = calculate_structural_complexity_score(layout)
-        assert score == 1.0  # Capped at 1.0
+        assert score == pytest.approx(1.0)  # Capped at 1.0
 
     def test_cumulative_feature_weights(self) -> None:
         """Test multiple features add cumulatively."""
@@ -769,8 +769,8 @@ class TestAggregateDQS:
         """Test single page aggregation returns same values."""
         page = DQSMetadata(degradation_score=0.75, structural_complexity_score=0.4)
         result = aggregate_dqs([page])
-        assert result.degradation_score == 0.75
-        assert result.structural_complexity_score == 0.4
+        assert result.degradation_score == pytest.approx(0.75)
+        assert result.structural_complexity_score == pytest.approx(0.4)
 
     def test_median_degradation(self) -> None:
         """Test degradation uses median aggregation."""
@@ -781,7 +781,7 @@ class TestAggregateDQS:
         ]
         result = aggregate_dqs(pages)
         # Median of [0.6, 0.8, 0.7] = 0.7
-        assert result.degradation_score == 0.7
+        assert result.degradation_score == pytest.approx(0.7)
 
     def test_max_complexity(self) -> None:
         """Test complexity uses max aggregation."""
@@ -792,7 +792,7 @@ class TestAggregateDQS:
         ]
         result = aggregate_dqs(pages)
         # Max of [0.3, 0.6, 0.4] = 0.6
-        assert result.structural_complexity_score == 0.6
+        assert result.structural_complexity_score == pytest.approx(0.6)
 
     def test_empty_list_raises_error(self) -> None:
         """Test empty page list raises ValueError."""
@@ -807,7 +807,7 @@ class TestAggregateDQS:
         ]
         result = aggregate_dqs(pages)
         # Median of [0.6, 0.8] = 0.7
-        assert result.degradation_score == 0.7
+        assert result.degradation_score == pytest.approx(0.7)
 
 
 # =============================================================================
@@ -822,11 +822,11 @@ class TestNormalizeClassicalIQA:
     def test_defaults_when_no_inputs(self) -> None:
         """Test sensible defaults when no inputs provided."""
         result = normalize_classical_iqa()
-        assert result["blur_score"] == 0.8
-        assert result["noise_score"] == 0.85
-        assert result["contrast_score"] == 0.7
-        assert result["illumination_score"] == 0.9
-        assert result["artifacts_score"] == 0.95
+        assert result["blur_score"] == pytest.approx(0.8)
+        assert result["noise_score"] == pytest.approx(0.85)
+        assert result["contrast_score"] == pytest.approx(0.7)
+        assert result["illumination_score"] == pytest.approx(0.9)
+        assert result["artifacts_score"] == pytest.approx(0.95)
 
     def test_blur_normalization_low_score(self) -> None:
         """Test blur normalization for blurry image (low Laplacian)."""
@@ -838,7 +838,7 @@ class TestNormalizeClassicalIQA:
             severity=Severity.HIGH,
         )
         result = normalize_classical_iqa(blur_result=blur_result)
-        # 50/200 = 0.25
+        # Normalized score is 0.25 (from blur_score field)
         assert abs(result["blur_score"] - 0.25) < 0.001
 
     def test_blur_normalization_high_score(self) -> None:
@@ -852,7 +852,7 @@ class TestNormalizeClassicalIQA:
         )
         result = normalize_classical_iqa(blur_result=blur_result)
         # 300/200 capped at 1.0
-        assert result["blur_score"] == 1.0
+        assert result["blur_score"] == pytest.approx(1.0)
 
     def test_contrast_passed_through(self) -> None:
         """Test contrast score is passed through directly."""
@@ -863,7 +863,7 @@ class TestNormalizeClassicalIQA:
             severity=Severity.LOW,
         )
         result = normalize_classical_iqa(contrast_result=contrast_result)
-        assert result["contrast_score"] == 0.85
+        assert result["contrast_score"] == pytest.approx(0.85)
 
     def test_custom_scores_override_defaults(self) -> None:
         """Test custom scores override defaults."""
@@ -872,9 +872,9 @@ class TestNormalizeClassicalIQA:
             illumination_score=0.6,
             artifacts_score=0.7,
         )
-        assert result["noise_score"] == 0.5
-        assert result["illumination_score"] == 0.6
-        assert result["artifacts_score"] == 0.7
+        assert result["noise_score"] == pytest.approx(0.5)
+        assert result["illumination_score"] == pytest.approx(0.6)
+        assert result["artifacts_score"] == pytest.approx(0.7)
 
 
 class TestNormalizeClassicalIQAWithNoiseResult:
@@ -910,7 +910,7 @@ class TestNormalizeClassicalIQAWithNoiseResult:
         )
 
         assert abs(iqa["noise_score"] - 0.83) < 1e-6  # From noise_result
-        assert iqa["contrast_score"] == 0.75
+        assert iqa["contrast_score"] == pytest.approx(0.75)
 
     def test_noise_result_takes_precedence(self) -> None:
         """Test NoiseDetectionResult takes precedence over noise_score."""
@@ -943,17 +943,19 @@ class TestNormalizeClassicalIQAWithNoiseResult:
 
         iqa = normalize_classical_iqa(blur_result=blur_result)
 
-        assert iqa["blur_score"] == 0.75  # Should use blur_score, not score/200
+        assert iqa["blur_score"] == pytest.approx(
+            0.75
+        )  # Should use blur_score, not score/200
 
     def test_defaults_without_detectors(self) -> None:
         """Test default values when no detectors provided."""
         iqa = normalize_classical_iqa()
 
-        assert iqa["blur_score"] == 0.8  # Default
-        assert iqa["contrast_score"] == 0.7  # Default
-        assert iqa["noise_score"] == 0.85  # Default
-        assert iqa["illumination_score"] == 0.9  # Default
-        assert iqa["artifacts_score"] == 0.95  # Default
+        assert iqa["blur_score"] == pytest.approx(0.8)  # Default
+        assert iqa["contrast_score"] == pytest.approx(0.7)  # Default
+        assert iqa["noise_score"] == pytest.approx(0.85)  # Default
+        assert iqa["illumination_score"] == pytest.approx(0.9)  # Default
+        assert iqa["artifacts_score"] == pytest.approx(0.95)  # Default
 
 
 # =============================================================================
@@ -977,7 +979,7 @@ class TestCalculateDQS:
         # Degradation: 0.4*0.8 + 0.3*0.9 + 0.3*0.7 = 0.32 + 0.27 + 0.21 = 0.8
         expected_degradation = 0.4 * 0.8 + 0.3 * 0.9 + 0.3 * 0.7
         assert abs(result.degradation_score - expected_degradation) < 0.001
-        assert result.structural_complexity_score == 0.3
+        assert result.structural_complexity_score == pytest.approx(0.3)
 
     def test_multi_page_median_degradation(self) -> None:
         """Test multi-page uses median for degradation."""
@@ -989,7 +991,7 @@ class TestCalculateDQS:
             layout_complexities=[0.2, 0.4, 0.3],
         )
         # Max complexity = 0.4
-        assert result.structural_complexity_score == 0.4
+        assert result.structural_complexity_score == pytest.approx(0.4)
 
     def test_skew_angles_not_used(self) -> None:
         """Test skew angles don't affect DQS calculation."""
@@ -1024,14 +1026,14 @@ class TestCalculatePreOCRRisk:
         """Test perfect quality document has low risk."""
         dqs = DQSMetadata(degradation_score=1.0, structural_complexity_score=0.0)
         risk = calculate_pre_ocr_risk(dqs, PDFType.BORN_DIGITAL, [])
-        # (1-1.0)*0.4 + 0.0*0.3 + 0 = 0.0
-        assert risk == 0.0
+        # Perfect quality yields zero risk
+        assert risk == pytest.approx(0.0)
 
     def test_poor_quality_high_risk(self) -> None:
         """Test poor quality document has high risk."""
         dqs = DQSMetadata(degradation_score=0.0, structural_complexity_score=1.0)
         risk = calculate_pre_ocr_risk(dqs, PDFType.IMAGE_ONLY, [])
-        # (1-0.0)*0.4 + 1.0*0.3 + 0.2 = 0.4 + 0.3 + 0.2 = 0.9
+        # Poor quality plus image-only penalty yields 0.9 risk
         assert abs(risk - 0.9) < 0.001
 
     def test_image_only_penalty(self) -> None:
@@ -1128,7 +1130,7 @@ class TestCalculatePreOCRRiskWithConfig:
 
         risk = calculate_pre_ocr_risk(dqs, None, [], config=config)
 
-        # (1 - 0.5) * 0.5 + 0.5 * 0.5 = 0.25 + 0.25 = 0.5
+        # With equal 0.5 weights and 0.5 scores, risk is 0.5
         assert abs(risk - 0.5) < 1e-6
 
     def test_with_custom_pdf_type_penalties(self) -> None:
@@ -1189,7 +1191,7 @@ class TestDQSEdgeCases:
             "artifacts_score": 0.0,
         }
         score = calculate_degradation_score(iqa)
-        assert score == 0.0
+        assert score == pytest.approx(0.0)
 
     def test_boundary_scores_one(self) -> None:
         """Test boundary condition: all ones."""
@@ -1201,7 +1203,7 @@ class TestDQSEdgeCases:
             "artifacts_score": 1.0,
         }
         score = calculate_degradation_score(iqa)
-        assert score == 1.0
+        assert score == pytest.approx(1.0)
 
     def test_large_page_count_aggregation(self) -> None:
         """Test aggregation with many pages."""
@@ -1213,7 +1215,7 @@ class TestDQSEdgeCases:
         # Median of 0.01...1.0 = 0.505 (average of 0.50 and 0.51)
         assert 0.5 <= result.degradation_score <= 0.51
         # Max complexity = 1.0
-        assert result.structural_complexity_score == 1.0
+        assert result.structural_complexity_score == pytest.approx(1.0)
 
     def test_integer_metric_values(self) -> None:
         """Test integer values work correctly (not just floats)."""

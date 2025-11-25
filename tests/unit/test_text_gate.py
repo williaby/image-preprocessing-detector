@@ -26,10 +26,10 @@ class TestTextDetectionResult:
         )
 
         assert result.has_text
-        assert result.confidence == 0.85
-        assert result.stroke_density == 0.12
-        assert result.component_score == 0.75
-        assert result.edge_score == 0.08
+        assert result.confidence == pytest.approx(0.85)
+        assert result.stroke_density == pytest.approx(0.12)
+        assert result.component_score == pytest.approx(0.75)
+        assert result.edge_score == pytest.approx(0.08)
 
 
 class TestTextGate:
@@ -39,14 +39,14 @@ class TestTextGate:
         """Test TextGate initialization with defaults."""
         gate = TextGate()
 
-        assert gate.stroke_threshold == 0.05
+        assert gate.stroke_threshold == pytest.approx(0.05)
         assert gate.min_text_components == 10
         assert gate.edge_threshold_low == 50
         assert gate.edge_threshold_high == 150
         assert gate.min_component_area == 20
         assert gate.max_component_area == 5000
-        assert gate.min_aspect_ratio == 0.1
-        assert gate.max_aspect_ratio == 10.0
+        assert gate.min_aspect_ratio == pytest.approx(0.1)
+        assert gate.max_aspect_ratio == pytest.approx(10.0)
 
     def test_init_custom_params(self) -> None:
         """Test TextGate initialization with custom parameters."""
@@ -57,7 +57,7 @@ class TestTextGate:
             edge_threshold_high=200,
         )
 
-        assert gate.stroke_threshold == 0.10
+        assert gate.stroke_threshold == pytest.approx(0.10)
         assert gate.min_text_components == 20
         assert gate.edge_threshold_low == 100
         assert gate.edge_threshold_high == 200
@@ -66,13 +66,14 @@ class TestTextGate:
         """Test detection on text-heavy synthetic document."""
         # Create synthetic text-like image: white background with black text patterns
         img = np.ones((500, 500, 3), dtype=np.uint8) * 255  # White background
+        rng = np.random.default_rng(42)
 
         # Add horizontal text-like strokes (simulating lines of text)
         for y in range(50, 450, 30):  # Lines spaced 30 pixels apart
             # Random text-like segments
             for x in range(20, 480, 40):
-                width = np.random.randint(20, 35)
-                height = np.random.randint(8, 15)
+                width = rng.integers(20, 35)
+                height = rng.integers(8, 15)
                 img[y : y + height, x : x + width] = 0  # Black text
 
         gate = TextGate()
@@ -107,10 +108,11 @@ class TestTextGate:
         img = np.ones((800, 600, 3), dtype=np.uint8) * 255  # White background
 
         # Add text region (top half)
+        rng = np.random.default_rng(42)
         for y in range(50, 350, 25):
             for x in range(20, 580, 35):
-                width = np.random.randint(20, 30)
-                height = np.random.randint(8, 12)
+                width = rng.integers(20, 30)
+                height = rng.integers(8, 12)
                 img[y : y + height, x : x + width] = 0
 
         # Add image region (bottom half) - smooth gradient
