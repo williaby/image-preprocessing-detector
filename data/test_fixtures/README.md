@@ -4,7 +4,7 @@
 
 **Total Size Target**: < 50 MB (safe for GitHub commits)
 
-**Last Updated**: 2025-11-13
+**Last Updated**: 2025-11-24
 
 ---
 
@@ -12,15 +12,17 @@
 
 ```
 test_fixtures/
-├── doclaynet/          # 5-10 representative layout samples
-├── tablebank/          # 5-10 table detection samples
-├── cocotext/           # 5-10 text detection samples
-├── wili_2018/          # 10 language identification samples
-├── omnidocbench/       # 5-10 multi-task benchmark samples
-└── README.md           # This file
+├── doclaynet/               # 5 representative layout samples (432 KB)
+├── tablebank/               # 5 table detection samples (324 KB)
+├── wili_2018/               # 10 language identification samples (52 KB)
+├── iqa_samples/             # 6 IQA ground truth samples + labels.json (2.3 MB) ✅ NEW
+├── training_validation/     # 5 training validation samples + manifest.json (1.8 MB) ✅ NEW
+├── augmentation_input/      # 3 clean baseline samples (728 KB) ✅ NEW
+├── layout_samples/          # 4 layout edge case samples + manifest.json (904 KB) ✅ NEW
+└── README.md                # This file
 ```
 
-**Note**: `synthetic_iqa` fixtures not needed (auto-generated during benchmark runs)
+**Total Size**: 6.5 MB (well under 50 MB GitHub limit)
 
 ---
 
@@ -344,6 +346,89 @@ All fixtures are extracted from permissively licensed datasets:
 Sheikh, H. R., Seshadrinathan, K., Moorthy, A. K., Wang, Z., Bovik, A. C., & Cormack, L. K. (2006).
 A statistical evaluation of recent full reference image quality assessment algorithms.
 IEEE Transactions on Image Processing, 15(11), 3440-3451.
+```
+
+---
+
+## Newly Added Fixtures (2025-11-24)
+
+### iqa_samples/ ✅ NEW
+
+**Purpose**: IQA model validation with ground truth quality labels
+
+**Selected samples** (6 images + labels.json, 2.3 MB total):
+- `reference_clean.png` (206 KB) - Pristine reference, all defects = 0.0
+- `gaussian_blur_high.png` (316 KB) - High blur (1.0) + artifacts (1.0)
+- `white_noise_high.png` (605 KB) - High noise (1.0) + skew (1.0)
+- `contrast_low.png` (449 KB) - Low contrast/poor illumination (1.0)
+- `jpeg_artifacts_high.png` (237 KB) - High JPEG compression artifacts (1.0)
+- `combined_blur_noise.png` (509 KB) - Combined defects: blur, noise, skew (all 1.0)
+- `labels.json` (1.3 KB) - Ground truth DMOS and defect scores
+
+**Source**: iqa_phase2_100k training dataset (synthetic/genalog-generated)
+
+**License**: Derived from synthetic data (permissive)
+
+**Usage**: Validate ML IQA model predictions against known ground truth labels
+
+### training_validation/ ✅ NEW
+
+**Purpose**: Training pipeline validation samples
+
+**Selected samples** (5 images + manifest.json, 1.8 MB total):
+- `sample_000000.jpg` (406 KB) - Clean, high-quality baseline
+- `sample_000001.jpg` (261 KB) - Clean, high-quality baseline
+- `sample_000009.jpg` (318 KB) - Clean, high-quality baseline
+- `sample_000002.jpg` (449 KB) - Moderate degradation (illumination=1.0)
+- `sample_000003.jpg` (316 KB) - Severe degradation (blur=1.0, artifacts=1.0)
+- `manifest.json` (1.8 KB) - Sample metadata and quality labels
+
+**Source**: iqa_phase2_100k validation split
+
+**License**: Derived from synthetic data (permissive)
+
+**Usage**: Test training data loading and validation pipeline
+
+### augmentation_input/ ✅ NEW
+
+**Purpose**: Baseline samples for augmentation/degradation testing
+
+**Selected samples** (3 images, 728 KB total):
+- `clean_text_page.jpg` (406 KB) - Clean mixed layout document
+- `clean_table_page.jpg` (206 KB) - Clean table document
+- `clean_form_page.jpg` (112 KB) - Clean form document
+
+**Source**: iqa_phase2_100k dataset (pristine samples)
+
+**License**: Derived from synthetic data (permissive)
+
+**Usage**: Test genalog augmentation pipeline with clean baseline inputs
+
+### layout_samples/ ✅ NEW
+
+**Purpose**: Layout-lite edge case detection testing
+
+**Selected samples** (4 files + manifest.json, 904 KB total):
+- `dense_math_page4.pdf` (220 KB) - Scientific paper with dense equations, PDEs, matrices
+  - **Source**: arXiv 2409.13432 (CC-BY-4.0)
+  - **License**: CC-BY-4.0 with attribution
+- `watermarked_document.pdf` (51 KB) - Multi-column doc with "CONFIDENTIAL" watermark
+  - **Source**: Synthetic (from doclaynet/multi_column_3.pdf)
+  - **License**: Derived from CDLA-Permissive-1.0
+- `colorful_background.jpg` (443 KB) - Text doc with blue-to-purple gradient background
+  - **Source**: Synthetic (gradient overlay on clean_text_page.jpg)
+  - **License**: Derived from synthetic data
+- `handwriting_mixed.jpg` (177 KB) - Table doc with handwritten annotations
+  - **Source**: Synthetic (IAM handwriting composited over clean_table_page.jpg)
+  - **License**: Derived from IAM (academic use) + synthetic data
+- `manifest.json` (12 KB) - Sample metadata and expected attributes
+
+**Usage**: Test layout-lite classification for watermarks, colorful backgrounds, dense math, and handwriting detection
+
+**Attribution Required**:
+```
+Dense math sample from: "Dense cell-by-cell systems of PDEs: approximation,
+spectral analysis, and preconditioning" (arXiv:2409.13432) - CC-BY-4.0
 ```
 
 ---

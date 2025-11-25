@@ -41,7 +41,9 @@ import json
 import os
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import yaml  # type: ignore[import-untyped]
 
@@ -120,6 +122,7 @@ def safe_extract_tar(tar_path: Path, extract_path: Path) -> None:
             member_path = extract_path / member.name
             if not is_within_directory(extract_path, member_path):
                 raise ValueError(f"Path traversal detected in archive: {member.name}")
+        # nosec B202: Path traversal validation performed above via is_within_directory check
         tar.extractall(path=extract_path, members=members)
 
 
@@ -349,24 +352,28 @@ def create_trainer(model, loss_fn, config: dict, device: str, checkpoint_dir: Pa
     return TeacherTrainer(model, loss_fn, trainer_config, device=str(device))
 
 
-def run_training_loop(
-    trainer,
-    train_loader,
-    val_loader,
-    config: dict,
-    checkpoint_dir: Path,
-    gcs_bucket,
-    model,
-    _device,  # Reserved for future use
-):
+@dataclass
+class TrainingContext:
+    """Groups training loop parameters to reduce function signature complexity."""
+
+    trainer: Any  # TeacherTrainer instance
+    train_loader: Any  # DataLoader
+    val_loader: Any  # DataLoader
+    config: dict[str, Any]
+    checkpoint_dir: Path
+    gcs_bucket: Any  # GCS bucket client
+    model: Any  # PyTorch model
+
+
+def run_training_loop(ctx: TrainingContext) -> float:
     """Run epoch loop with checkpointing and uploads."""
     import time
 
     import torch
 
     start_time = time.time()
-    total_epochs = config["training"]["epochs"]
-    checkpoint_interval = config["monitoring"]["checkpoint_interval"]
+    total_epochs = ctx.config["training"]["epochs"]
+    checkpoint_interval = ctx.config["monitoring"]["checkpoint_interval"]
 
     for epoch in range(total_epochs):
         epoch_start = time.time()
@@ -374,9 +381,9 @@ def run_training_loop(
         print(f"EPOCH {epoch + 1}/{total_epochs}")
         print(f"{'=' * 60}")
 
-        train_metrics = trainer.train_epoch(train_loader)
-        val_metrics = trainer.validate(val_loader)
-        trainer.epoch = epoch + 1
+        train_metrics = ctx.trainer.train_epoch(ctx.train_loader)
+        val_metrics = ctx.trainer.validate(ctx.val_loader)
+        ctx.trainer.epoch = epoch + 1
 
         epoch_time = time.time() - epoch_start
         elapsed = time.time() - start_time
@@ -388,35 +395,35 @@ def run_training_loop(
         print(f"Elapsed: {elapsed / 3600:.1f}h | Remaining: {remaining / 3600:.1f}h")
 
         val_loss = val_metrics.get("loss", float("inf"))
-        if val_loss < trainer.best_val_loss:
-            trainer.best_val_loss = val_loss
+        if val_loss < ctx.trainer.best_val_loss:
+            ctx.trainer.best_val_loss = val_loss
             print(f"✨ New best val_loss: {val_loss:.4f}")
 
         if (epoch + 1) % checkpoint_interval == 0:
-            checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{epoch + 1}.pth"
-            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+            checkpoint_path = ctx.checkpoint_dir / f"checkpoint_epoch_{epoch + 1}.pth"
+            ctx.checkpoint_dir.mkdir(parents=True, exist_ok=True)
             torch.save(
                 {
                     "epoch": epoch + 1,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": trainer.optimizer.state_dict(),
+                    "model_state_dict": ctx.model.state_dict(),
+                    "optimizer_state_dict": ctx.trainer.optimizer.state_dict(),
                     "val_loss": val_loss,
-                    "best_val_loss": trainer.best_val_loss,
+                    "best_val_loss": ctx.trainer.best_val_loss,
                 },
                 checkpoint_path,
             )
             print(f"💾 Saved checkpoint: {checkpoint_path.name}")
-            blob = gcs_bucket.blob(f"checkpoints/phase2_iqa/{checkpoint_path.name}")
+            blob = ctx.gcs_bucket.blob(f"checkpoints/phase2_iqa/{checkpoint_path.name}")
             blob.upload_from_filename(str(checkpoint_path))
             print(f"☁️  Uploaded to GCS: checkpoints/phase2_iqa/{checkpoint_path.name}")
 
-        if hasattr(trainer, "early_stop") and trainer.early_stop:
+        if hasattr(ctx.trainer, "early_stop") and ctx.trainer.early_stop:
             print(f"⚠️  Early stopping triggered at epoch {epoch + 1}")
             break
 
     training_time = time.time() - start_time
     print(f"\n✅ Training completed in {training_time / 3600:.2f} hours")
-    print(f"Best validation loss: {trainer.best_val_loss:.4f}")
+    print(f"Best validation loss: {ctx.trainer.best_val_loss:.4f}")
     return training_time
 
 
@@ -559,16 +566,16 @@ def train_iqa():
 
     epoch = -1
     try:
-        training_time = run_training_loop(
-            trainer,
-            train_loader,
-            val_loader,
-            config,
-            checkpoint_dir,
-            gcs_bucket,
-            model,
-            device,
+        training_ctx = TrainingContext(
+            trainer=trainer,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            config=config,
+            checkpoint_dir=checkpoint_dir,
+            gcs_bucket=gcs_bucket,
+            model=model,
         )
+        training_time = run_training_loop(training_ctx)
     except Exception as e:
         failed_epoch = epoch + 1 if epoch >= 0 else 0
         print(f"\n❌ Training failed at epoch {failed_epoch}: {e}")

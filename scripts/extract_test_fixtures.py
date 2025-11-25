@@ -16,7 +16,7 @@ Usage:
 
 import argparse
 import json
-import random
+import random  # nosec B311 - used for non-cryptographic dataset sampling
 import shutil
 from pathlib import Path
 
@@ -107,9 +107,7 @@ def get_file_size_mb(path: Path) -> float:
     return path.stat().st_size / MB_TO_BYTES
 
 
-def find_files_by_extension(
-    directory: Path, extensions: list[str], max_depth: int = 5
-) -> list[Path]:
+def find_files_by_extension(directory: Path, extensions: list[str]) -> list[Path]:
     """Recursively find files with given extensions."""
     files = []
     for ext in extensions:
@@ -117,33 +115,120 @@ def find_files_by_extension(
     return files
 
 
+def _filter_files_by_size(
+    files: list[Path], max_individual_size_mb: float
+) -> list[tuple[Path, float]]:
+    """Filter and sort files by size.
+
+    Args:
+        files: List of file paths
+        max_individual_size_mb: Maximum size per file in MB
+
+    Returns:
+        List of (path, size_mb) tuples sorted by size
+    """
+    files_with_size = [(f, get_file_size_mb(f)) for f in files]
+    files_with_size.sort(key=lambda x: x[1])
+    return [(f, s) for f, s in files_with_size if s <= max_individual_size_mb]
+
+
+def _sample_from_quartiles(
+    files_with_size: list[tuple[Path, float]], count: int, max_size_mb: float
+) -> tuple[list[Path], float]:
+    """Sample one file from each size quartile for diversity.
+
+    Args:
+        files_with_size: List of (path, size_mb) tuples
+        count: Target number of files
+        max_size_mb: Maximum total size
+
+    Returns:
+        Tuple of (sampled_paths, total_size)
+    """
+    quartile_size = len(files_with_size) // 4 if len(files_with_size) >= 4 else 1
+    sampled: list[Path] = []
+    total_size = 0.0
+
+    for i in range(min(count, 4)):
+        start_idx = i * quartile_size
+        end_idx = (i + 1) * quartile_size if i < 3 else len(files_with_size)
+
+        if start_idx >= len(files_with_size):
+            break
+
+        quartile_files = files_with_size[start_idx:end_idx]
+        if not quartile_files:
+            continue
+
+        # nosec B311 - random used for non-cryptographic dataset sampling
+        file_path, file_size = random.choice(quartile_files)  # nosec B311
+        if total_size + file_size <= max_size_mb:
+            sampled.append(file_path)
+            total_size += file_size
+
+    return sampled, total_size
+
+
+def _fill_remaining_samples(
+    files_with_size: list[tuple[Path, float]],
+    sampled: list[Path],
+    count: int,
+    total_size: float,
+    max_size_mb: float,
+) -> tuple[list[Path], float]:
+    """Fill remaining slots with random samples.
+
+    Args:
+        files_with_size: List of (path, size_mb) tuples
+        sampled: Already sampled paths
+        count: Target total count
+        total_size: Current total size
+        max_size_mb: Maximum total size
+
+    Returns:
+        Tuple of (updated_sampled, updated_total_size)
+    """
+    remaining = [(f, s) for f, s in files_with_size if f not in sampled]
+
+    while len(sampled) < count and remaining:
+        # nosec B311 - random used for non-cryptographic dataset sampling
+        file_path, file_size = random.choice(remaining)  # nosec B311
+        if total_size + file_size > max_size_mb:
+            break
+        sampled.append(file_path)
+        total_size += file_size
+        remaining.remove((file_path, file_size))
+
+    return sampled, total_size
+
+
 def sample_diverse_files(
     files: list[Path],
     count: int,
     max_size_mb: float,
-    criteria: list[str] | None = None,
+    _criteria: list[str] | None = None,
 ) -> list[Path]:
-    """
-    Sample diverse files based on size distribution and optional criteria.
+    """Sample diverse files based on size distribution.
 
     Strategy:
     1. Sort files by size (prefer smaller files for fixtures)
     2. Sample from different size buckets for diversity
-    3. Apply optional criteria filtering (if supported)
-    4. Ensure total size < max_size_mb
+    3. Ensure total size < max_size_mb
+
+    Args:
+        files: List of candidate file paths
+        count: Number of files to sample
+        max_size_mb: Maximum total size in MB
+        _criteria: Optional filtering criteria (reserved for future use)
+
+    Returns:
+        List of sampled file paths
     """
     if not files:
         return []
 
-    # Sort by size
-    files_with_size = [(f, get_file_size_mb(f)) for f in files]
-    files_with_size.sort(key=lambda x: x[1])
-
-    # Filter out files that are too large individually
     max_individual_size_mb = max_size_mb / count
-    files_with_size = [
-        (f, s) for f, s in files_with_size if s <= max_individual_size_mb
-    ]
+    files_with_size = _filter_files_by_size(files, max_individual_size_mb)
 
     if not files_with_size:
         logger.warning(
@@ -153,37 +238,10 @@ def sample_diverse_files(
         )
         return []
 
-    # Sample from different size quartiles for diversity
-    quartiles = len(files_with_size) // 4 if len(files_with_size) >= 4 else 1
-    sampled = []
-    total_size = 0.0
-
-    # Try to get one from each quartile
-    for i in range(min(count, 4)):
-        start_idx = i * quartiles
-        end_idx = (i + 1) * quartiles if i < 3 else len(files_with_size)
-
-        if start_idx >= len(files_with_size):
-            break
-
-        quartile_files = files_with_size[start_idx:end_idx]
-        if quartile_files:
-            file_path, file_size = random.choice(quartile_files)
-            if total_size + file_size <= max_size_mb:
-                sampled.append(file_path)
-                total_size += file_size
-
-    # Fill remaining with random samples
-    remaining_files = [(f, s) for f, s in files_with_size if f not in sampled]
-    while len(sampled) < count and remaining_files:
-        file_path, file_size = random.choice(remaining_files)
-        if total_size + file_size <= max_size_mb:
-            sampled.append(file_path)
-            total_size += file_size
-            remaining_files.remove((file_path, file_size))
-        else:
-            # If we can't fit any more files, break
-            break
+    sampled, total_size = _sample_from_quartiles(files_with_size, count, max_size_mb)
+    sampled, total_size = _fill_remaining_samples(
+        files_with_size, sampled, count, total_size, max_size_mb
+    )
 
     logger.info(
         "sampled_files",

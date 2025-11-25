@@ -14,6 +14,7 @@ Scans all datasets in NFS storage and generates:
 
 import json
 import subprocess  # nosec B404 - subprocess used only for du/find/gsutil with hardcoded commands
+import tempfile
 from pathlib import Path
 
 NFS_ROOT = Path("/mnt/unraid/training_data/image_detection")
@@ -24,7 +25,8 @@ GCS_CREDENTIALS = Path(__file__).parent.parent / ".gcp/service-account.json"
 def get_dataset_size(dataset_path: Path) -> tuple[str, int]:
     """Get size of dataset in human-readable and bytes."""
     try:
-        result = subprocess.run(
+        # Security: subprocess used only with hardcoded commands, no user input
+        result = subprocess.run(  # nosec B603, B607
             ["du", "-sb", str(dataset_path)],
             capture_output=True,
             text=True,
@@ -55,7 +57,8 @@ def count_files(dataset_path: Path, extensions: list[str] = None) -> dict[str, i
 
     for ext in extensions:
         try:
-            result = subprocess.run(
+            # Security: subprocess used only with hardcoded commands, no user input
+            result = subprocess.run(  # nosec B603, B607
                 ["find", str(dataset_path), "-type", "f", "-name", f"*{ext}"],
                 capture_output=True,
                 text=True,
@@ -68,7 +71,8 @@ def count_files(dataset_path: Path, extensions: list[str] = None) -> dict[str, i
 
     # Total files
     try:
-        result = subprocess.run(
+        # Security: subprocess used only with hardcoded commands, no user input
+        result = subprocess.run(  # nosec B603, B607
             ["find", str(dataset_path), "-type", "f"],
             capture_output=True,
             text=True,
@@ -87,7 +91,8 @@ def check_gcs_status(dataset_name: str) -> tuple[bool, str]:
 
     try:
         env = {"GOOGLE_APPLICATION_CREDENTIALS": str(GCS_CREDENTIALS)}
-        result = subprocess.run(
+        # Security: subprocess used only with gsutil for GCS operations, no user input
+        result = subprocess.run(  # nosec B603, B607
             ["gsutil", "ls", "-d", gcs_path],
             capture_output=True,
             text=True,
@@ -96,8 +101,9 @@ def check_gcs_status(dataset_name: str) -> tuple[bool, str]:
         exists = result.returncode == 0
 
         if exists:
-            # Get size
-            result = subprocess.run(
+            # Get size from GCS
+            # Security: subprocess used only with gsutil for GCS operations, no user input
+            result = subprocess.run(  # nosec B603, B607
                 ["gsutil", "du", "-sh", gcs_path],
                 capture_output=True,
                 text=True,
@@ -178,10 +184,9 @@ def main():
     print(f"{'TOTAL':<20} {total_size_human:<15} {total_files:<10}")
     print()
 
-    # Save JSON report
-    # nosemgrep: gitlab.bandit.B108  # noqa: ERA001
-    # Security: /tmp is appropriate for temporary status report; script runs locally
-    output_file = Path("/tmp/dataset_status_report.json")
+    # Save JSON report to system temp directory
+    temp_dir = Path(tempfile.gettempdir())
+    output_file = temp_dir / "dataset_status_report.json"
     with open(output_file, "w") as f:
         json.dump(datasets, f, indent=2)
 

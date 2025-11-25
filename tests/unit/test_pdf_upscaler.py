@@ -137,7 +137,7 @@ class TestPDFUpscaler:
 
         # Mock temp file
         mock_temp = MagicMock()
-        mock_temp.name = "/tmp/fake.png"
+        mock_temp.name = "/tmp/fake.png"  # nosec B108 - test fixture mock path
         mock_tempfile.return_value.__enter__.return_value = mock_temp
 
         upscaler = PDFUpscaler(target_dpi=300)

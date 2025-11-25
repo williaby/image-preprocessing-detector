@@ -28,79 +28,66 @@ with atheris.instrument_imports():
     from image_preprocessing_detector.detection.text_gate import TextGate
 
 
-def TestOneInput(data: bytes) -> None:
+def _fuzz_image_format(
+    gate: TextGate, data: bytes, width: int, height: int, channels: int
+) -> None:
+    """Test a specific image format against the text gate.
+
+    Args:
+        gate: TextGate instance to test
+        data: Raw byte data to interpret as image
+        width: Image width
+        height: Image height
+        channels: Number of color channels (1=gray, 3=RGB, 4=RGBA)
+    """
+    size = width * height * channels
+    if len(data) < size:
+        return
+
+    try:
+        shape = (height, width) if channels == 1 else (height, width, channels)
+        image_data = np.frombuffer(data[:size], dtype=np.uint8).reshape(shape)
+        _ = gate.detect(image_data)
+    except Exception:  # nosec B110
+        # Expected for malformed inputs - fuzzer must handle gracefully
+        pass
+
+
+def _fuzz_all_formats(gate: TextGate, data: bytes, width: int, height: int) -> None:
+    """Test all image formats for a given dimension.
+
+    Args:
+        gate: TextGate instance to test
+        data: Raw byte data to interpret as image
+        width: Image width
+        height: Image height
+    """
+    for channels in (1, 3, 4):  # Grayscale, RGB, RGBA
+        _fuzz_image_format(gate, data, width, height, channels)
+
+
+def TestOneInput(data: bytes) -> None:  # nosonar
     """Fuzz target for text detection gate.
+
+    Note: Function name required by ClusterFuzzLite/atheris framework.
 
     Args:
         data: Arbitrary byte sequence to use as image data
     """
-    # Need at least enough data for a small image
     min_size = 100
     if len(data) < min_size:
         return
 
-    # Create gate once for all tests (performance optimization)
     try:
         gate = TextGate()
     except Exception:  # nosec B110
-        # If gate creation fails, skip this input
         return
 
     try:
-        # Try to interpret data as various image sizes and formats
         for width, height in [(10, 10), (50, 20), (100, 100)]:
-            size = width * height
-
-            # Check if we have enough data
-            if len(data) < size:
-                continue
-
-            try:
-                # Grayscale (single channel)
-                image_data = np.frombuffer(data[:size], dtype=np.uint8).reshape(
-                    height, width
-                )
-
-                _ = gate.detect(image_data)
-
-            except Exception:  # nosec B110
-                # Expected for malformed inputs
-                # Fuzzer must handle all invalid inputs gracefully
-                pass
-
-            # RGB (3 channels)
-            try:
-                rgb_size = size * 3
-                if len(data) >= rgb_size:
-                    image_data = np.frombuffer(data[:rgb_size], dtype=np.uint8).reshape(
-                        height, width, 3
-                    )
-
-                    _ = gate.detect(image_data)
-
-            except Exception:  # nosec B110
-                # Expected for malformed inputs
-                # Fuzzer must handle all invalid inputs gracefully
-                pass
-
-            # RGBA (4 channels)
-            try:
-                rgba_size = size * 4
-                if len(data) >= rgba_size:
-                    image_data = np.frombuffer(
-                        data[:rgba_size], dtype=np.uint8
-                    ).reshape(height, width, 4)
-
-                    _ = gate.detect(image_data)
-
-            except Exception:  # nosec B110
-                # Expected for malformed inputs
-                # Fuzzer must handle all invalid inputs gracefully
-                pass
-
+            _fuzz_all_formats(gate, data, width, height)
     except Exception:  # nosec B110
-        # Catch all exceptions - fuzzer should not crash on invalid input
-        # Fuzzing requires handling all edge cases without propagating exceptions
+        # Catch all - fuzzer should not crash on invalid input
         pass
 
 

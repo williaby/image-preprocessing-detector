@@ -14,6 +14,11 @@ from image_preprocessing_detector.detection.iqa_classical import (
     ContrastDetectionResult,
     SkewDetectionResult,
 )
+from image_preprocessing_detector.detection.iqa_ml import (
+    MLIQAScores,
+    ml_iqa_scores_to_dict,
+    teacher_iqa_to_dict,
+)
 from image_preprocessing_detector.detection.text_gate import TextDetectionResult
 from image_preprocessing_detector.ingestion.image_loader import ImageMetadata
 from image_preprocessing_detector.ingestion.pdf_loader import PageImage
@@ -84,6 +89,9 @@ class MetadataBuilder:
         contrast_correction: CorrectionResult | None = None,
         blur_correction: CorrectionResult | None = None,
         elements: list[DocumentElement] | None = None,
+        ml_iqa_student: MLIQAScores | None = None,
+        ml_iqa_teacher: MLIQAScores | None = None,
+        ml_iqa_escalation_reason: str | None = None,
     ) -> None:
         """Add page metadata from detection and correction results.
 
@@ -98,6 +106,9 @@ class MetadataBuilder:
             contrast_correction: Contrast correction result (optional)
             blur_correction: Blur correction result (optional)
             elements: Document elements (tables, images, etc.) (optional)
+            ml_iqa_student: Student ML IQA scores (Phase 2) (optional)
+            ml_iqa_teacher: Teacher ML IQA scores if escalated (Phase 2) (optional)
+            ml_iqa_escalation_reason: Reason for teacher escalation (Phase 2) (optional)
         """
         # Extract page dimensions and DPI
         if isinstance(page_data, PageImage):
@@ -221,6 +232,14 @@ class MetadataBuilder:
                 )
             )
 
+        # Convert ML IQA scores to dict format if provided
+        ml_iqa_dict = ml_iqa_scores_to_dict(ml_iqa_student) if ml_iqa_student else None
+        teacher_iqa_dict = (
+            teacher_iqa_to_dict(ml_iqa_teacher, ml_iqa_escalation_reason)
+            if ml_iqa_teacher
+            else None
+        )
+
         # Create page metadata
         page_metadata = PageMetadata(
             page_index=page_number,
@@ -228,8 +247,8 @@ class MetadataBuilder:
             height_px=height,
             dpi_input=dpi_input,
             dpi_effective=dpi_effective,
-            ml_iqa=None,  # Phase 2: Will be populated by student ML IQA
-            teacher_iqa=None,  # Phase 2: Will be populated by teacher model if escalated
+            ml_iqa=ml_iqa_dict,
+            teacher_iqa=teacher_iqa_dict,
             detected_issues=detected_issues,
             planned_actions=planned_actions,
             elements=elements or [],

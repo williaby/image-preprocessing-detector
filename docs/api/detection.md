@@ -43,21 +43,20 @@ The detection pipeline uses a **text detection gate** to route documents to spec
 ### Text Detection
 
 ```python
-from image_preprocessing_detector.detection import detect_text_presence
-import numpy as np
+from image_preprocessing_detector.detection.text_gate import detect_text
+import cv2
 
-# Load image (using ingestion module)
-from image_preprocessing_detector.ingestion import load_and_normalize_image
-image = load_and_normalize_image("document.jpg")
+# Load image
+image = cv2.imread("document.jpg")
 
-# Detect text
-has_text, confidence = detect_text_presence(image, threshold=0.5)
+# Detect text - returns TextDetectionResult
+result = detect_text(image)
 
-if has_text:
-    print(f"Text detected (confidence: {confidence:.2f})")
+if result.has_text:
+    print(f"Text detected (confidence: {result.confidence:.2f})")
     # Route to text-based processing
 else:
-    print(f"No text detected (confidence: {confidence:.2f})")
+    print(f"No text detected (confidence: {result.confidence:.2f})")
     # Route to image-only processing
 ```
 

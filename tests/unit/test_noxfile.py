@@ -561,3 +561,398 @@ class TestModuleAttributes:
         assert noxfile.sbom.__doc__ is not None
         assert noxfile.scan.__doc__ is not None
         assert noxfile.compliance.__doc__ is not None
+
+
+class TestTestsSession:
+    """Test the multi-version tests session."""
+
+    def test_tests_installs_dev_extras(self):
+        """Test that tests session installs project with dev extras."""
+        session = MagicMock()
+        session.posargs = []
+        noxfile.tests(session)
+
+        session.install.assert_called_once_with(".[dev]")
+
+    def test_tests_runs_pytest_with_coverage(self):
+        """Test that tests session runs pytest with coverage by default."""
+        session = MagicMock()
+        session.posargs = []
+        noxfile.tests(session)
+
+        session.run.assert_called_once_with(
+            "pytest", "-v", "--cov=src", "--cov-report=term-missing"
+        )
+
+    def test_tests_uses_custom_args(self):
+        """Test that tests session uses custom arguments when provided."""
+        session = MagicMock()
+        session.posargs = ["-k", "test_schema"]
+        noxfile.tests(session)
+
+        session.run.assert_called_once_with("pytest", "-k", "test_schema")
+
+    def test_tests_session_workflow(self):
+        """Test complete tests session workflow."""
+        session = MagicMock()
+        session.posargs = []
+        noxfile.tests(session)
+
+        assert session.install.call_count == 1
+        assert session.run.call_count == 1
+
+
+class TestTestsNoCovSession:
+    """Test the tests_no_cov session."""
+
+    def test_tests_no_cov_installs_dev_extras(self):
+        """Test that tests_no_cov session installs project with dev extras."""
+        session = MagicMock()
+        session.posargs = []
+        noxfile.tests_no_cov(session)
+
+        session.install.assert_called_once_with(".[dev]")
+
+    def test_tests_no_cov_runs_pytest_without_coverage(self):
+        """Test that tests_no_cov session runs pytest without coverage."""
+        session = MagicMock()
+        session.posargs = []
+        noxfile.tests_no_cov(session)
+
+        session.run.assert_called_once_with("pytest", "-v", "-x")
+
+    def test_tests_no_cov_uses_custom_args(self):
+        """Test that tests_no_cov session uses custom arguments."""
+        session = MagicMock()
+        session.posargs = ["-k", "test_fast"]
+        noxfile.tests_no_cov(session)
+
+        session.run.assert_called_once_with("pytest", "-k", "test_fast")
+
+
+class TestTypeCheckSession:
+    """Test the type checking session."""
+
+    def test_type_check_installs_dev_extras(self):
+        """Test that type_check session installs project with dev extras."""
+        session = MagicMock()
+        noxfile.type_check(session)
+
+        session.install.assert_called_once_with(".[dev]")
+
+    def test_type_check_runs_mypy(self):
+        """Test that type_check session runs mypy on src directory."""
+        session = MagicMock()
+        noxfile.type_check(session)
+
+        session.run.assert_called_once_with("mypy", "src")
+
+
+class TestLintSession:
+    """Test the linting session."""
+
+    def test_lint_installs_dev_extras(self):
+        """Test that lint session installs project with dev extras."""
+        session = MagicMock()
+        noxfile.lint(session)
+
+        session.install.assert_called_once_with(".[dev]")
+
+    def test_lint_runs_ruff(self):
+        """Test that lint session runs ruff on src and tests directories."""
+        session = MagicMock()
+        noxfile.lint(session)
+
+        session.run.assert_called_once_with("ruff", "check", "src", "tests")
+
+
+class TestTestsMlSession:
+    """Test the ML tests session."""
+
+    def test_tests_ml_installs_dev_and_ml_extras(self):
+        """Test that tests_ml session installs project with dev and ml extras."""
+        session = MagicMock()
+        noxfile.tests_ml(session)
+
+        session.install.assert_called_once_with(".[dev,ml]")
+
+    def test_tests_ml_runs_pytest_excluding_slow_tests(self):
+        """Test that tests_ml session runs pytest excluding slow tests."""
+        session = MagicMock()
+        noxfile.tests_ml(session)
+
+        session.run.assert_called_once_with("pytest", "-v", "-m", "not slow")
+
+
+class TestTestsOpencvCompatSession:
+    """Test the OpenCV compatibility tests session."""
+
+    def test_tests_opencv_compat_installs_specific_opencv_version(self):
+        """Test that tests_opencv_compat installs specific OpenCV version."""
+        session = MagicMock()
+        noxfile.tests_opencv_compat(session, opencv="4.8.0")
+
+        # Verify OpenCV is installed before project dev extras
+        calls = session.install.call_args_list
+        assert len(calls) == 2
+        assert calls[0][0] == ("opencv-python-headless==4.8.0",)
+        assert calls[1][0] == (".[dev]",)
+
+    def test_tests_opencv_compat_runs_integration_tests(self):
+        """Test that tests_opencv_compat runs integration tests."""
+        session = MagicMock()
+        noxfile.tests_opencv_compat(session, opencv="4.9.0")
+
+        session.run.assert_called_once_with("pytest", "-v", "-m", "integration")
+
+    def test_tests_opencv_compat_with_different_versions(self):
+        """Test tests_opencv_compat with different OpenCV versions."""
+        for opencv_version in ["4.8.0", "4.9.0", "4.10.0"]:
+            session = MagicMock()
+            noxfile.tests_opencv_compat(session, opencv=opencv_version)
+
+            # Verify correct OpenCV version is installed
+            install_calls = session.install.call_args_list
+            assert install_calls[0][0] == (f"opencv-python-headless=={opencv_version}",)
+
+
+class TestQualitySession:
+    """Test the quality checks session."""
+
+    def test_quality_installs_dev_extras(self):
+        """Test that quality session installs project with dev extras."""
+        session = MagicMock()
+        noxfile.quality(session)
+
+        session.install.assert_called_once_with(".[dev]")
+
+    def test_quality_runs_ruff_format_check(self):
+        """Test that quality session runs ruff format check."""
+        session = MagicMock()
+        noxfile.quality(session)
+
+        run_calls = session.run.call_args_list
+        format_call = [c for c in run_calls if "format" in str(c)]
+        assert len(format_call) == 1
+        assert format_call[0][0] == ("ruff", "format", "--check", "src", "tests")
+
+    def test_quality_runs_ruff_lint(self):
+        """Test that quality session runs ruff lint."""
+        session = MagicMock()
+        noxfile.quality(session)
+
+        run_calls = session.run.call_args_list
+        lint_call = [c for c in run_calls if c[0] == ("ruff", "check", "src", "tests")]
+        assert len(lint_call) == 1
+
+    def test_quality_runs_mypy(self):
+        """Test that quality session runs mypy type checking."""
+        session = MagicMock()
+        noxfile.quality(session)
+
+        run_calls = session.run.call_args_list
+        mypy_call = [c for c in run_calls if c[0] == ("mypy", "src")]
+        assert len(mypy_call) == 1
+
+    def test_quality_runs_pytest_with_coverage_threshold(self):
+        """Test that quality session runs pytest with coverage threshold."""
+        session = MagicMock()
+        noxfile.quality(session)
+
+        run_calls = session.run.call_args_list
+        pytest_call = [
+            c
+            for c in run_calls
+            if "pytest" in str(c) and "--cov-fail-under=80" in str(c)
+        ]
+        assert len(pytest_call) == 1
+
+    def test_quality_logs_progress(self):
+        """Test that quality session logs progress messages."""
+        session = MagicMock()
+        noxfile.quality(session)
+
+        log_calls = session.log.call_args_list
+        assert len(log_calls) >= 5  # At least 5 log messages
+        # Check for key log messages
+        log_messages = [str(call) for call in log_calls]
+        assert any("ruff format" in msg for msg in log_messages)
+        assert any("ruff lint" in msg for msg in log_messages)
+        assert any("mypy" in msg for msg in log_messages)
+        assert any("tests" in msg for msg in log_messages)
+
+    def test_quality_session_execution_order(self):
+        """Test that quality session executes checks in correct order."""
+        session = MagicMock()
+        noxfile.quality(session)
+
+        # Get all method calls in order
+        method_calls = session.method_calls
+
+        # Find indices of key operations
+        install_idx = next(i for i, c in enumerate(method_calls) if c[0] == "install")
+        run_indices = [i for i, c in enumerate(method_calls) if c[0] == "run"]
+
+        # Verify install happens first
+        assert install_idx < min(run_indices)
+
+        # Verify all run calls happen after install
+        assert all(idx > install_idx for idx in run_indices)
+
+
+class TestCiSession:
+    """Test the CI validation session."""
+
+    def test_ci_notifies_tests_for_available_python_versions(self, monkeypatch):
+        """Test that ci session notifies tests for available Python versions."""
+        session = MagicMock()
+
+        # Mock py_version_available to return True for all versions
+        monkeypatch.setattr(noxfile, "py_version_available", lambda s, v: True)
+
+        noxfile.ci(session)
+
+        # Verify notify was called for each Python version
+        notify_calls = session.notify.call_args_list
+        # Should have tests-X.Y and type_check-X.Y for each version, plus quality
+        expected_notifications = len(noxfile.PYTHON_VERSIONS) * 2 + 1
+        assert len(notify_calls) == expected_notifications
+
+    def test_ci_skips_unavailable_python_versions(self, monkeypatch):
+        """Test that ci session skips unavailable Python versions."""
+        session = MagicMock()
+
+        # Mock py_version_available to return False for all versions
+        monkeypatch.setattr(noxfile, "py_version_available", lambda s, v: False)
+
+        noxfile.ci(session)
+
+        # Should only notify quality session
+        notify_calls = session.notify.call_args_list
+        assert len(notify_calls) == 1
+        assert notify_calls[0][0] == ("quality",)
+
+    def test_ci_warns_about_unavailable_versions(self, monkeypatch):
+        """Test that ci session warns about unavailable Python versions."""
+        session = MagicMock()
+
+        # Mock py_version_available to return False
+        monkeypatch.setattr(noxfile, "py_version_available", lambda s, v: False)
+
+        noxfile.ci(session)
+
+        # Should have warnings for each unavailable version
+        warn_calls = session.warn.call_args_list
+        assert len(warn_calls) == len(noxfile.PYTHON_VERSIONS)
+        for warn_call in warn_calls:
+            assert "not available" in str(warn_call)
+
+    def test_ci_notifies_quality_session(self, monkeypatch):
+        """Test that ci session always notifies quality session."""
+        session = MagicMock()
+
+        # Mock py_version_available to return True
+        monkeypatch.setattr(noxfile, "py_version_available", lambda s, v: True)
+
+        noxfile.ci(session)
+
+        notify_calls = session.notify.call_args_list
+        quality_calls = [c for c in notify_calls if c[0] == ("quality",)]
+        assert len(quality_calls) == 1
+
+    def test_ci_logs_start_message(self, monkeypatch):
+        """Test that ci session logs start message."""
+        session = MagicMock()
+
+        # Mock py_version_available to avoid unnecessary notifications
+        monkeypatch.setattr(noxfile, "py_version_available", lambda s, v: False)
+
+        noxfile.ci(session)
+
+        log_calls = session.log.call_args_list
+        assert len(log_calls) >= 1
+        assert "CI validation" in str(log_calls[0])
+
+
+class TestPyVersionAvailableHelper:
+    """Test the py_version_available helper function."""
+
+    def test_py_version_available_returns_true_for_available_version(self):
+        """Test that py_version_available returns True when version is available."""
+        session = MagicMock()
+        session.run = MagicMock()  # Simulate successful run
+
+        result = noxfile.py_version_available(session, "3.12")
+
+        assert result is True
+        session.run.assert_called_once_with(
+            "python3.12", "--version", silent=True, external=True
+        )
+
+    def test_py_version_available_returns_false_for_unavailable_version(self):
+        """Test that py_version_available returns False when version is unavailable."""
+        session = MagicMock()
+        session.run = MagicMock(side_effect=Exception("Not found"))
+
+        result = noxfile.py_version_available(session, "3.99")
+
+        assert result is False
+
+    def test_py_version_available_handles_different_exceptions(self):
+        """Test that py_version_available handles different exception types."""
+        session = MagicMock()
+
+        # Test various exception types
+        for exception in [
+            FileNotFoundError("Not found"),
+            RuntimeError("Failed"),
+            ValueError("Invalid"),
+        ]:
+            session.run = MagicMock(side_effect=exception)
+            result = noxfile.py_version_available(session, "3.10")
+            assert result is False
+
+    def test_py_version_available_passes_correct_args(self):
+        """Test that py_version_available passes correct arguments to session.run."""
+        session = MagicMock()
+
+        noxfile.py_version_available(session, "3.11")
+
+        # Verify correct arguments were passed
+        session.run.assert_called_once()
+        call_args = session.run.call_args
+        assert call_args[0] == ("python3.11", "--version")
+        assert call_args[1]["silent"] is True
+        assert call_args[1]["external"] is True
+
+
+class TestPythonVersionsConstant:
+    """Test the PYTHON_VERSIONS constant."""
+
+    def test_python_versions_is_list(self):
+        """Test that PYTHON_VERSIONS is a list."""
+        assert isinstance(noxfile.PYTHON_VERSIONS, list)
+
+    def test_python_versions_contains_valid_versions(self):
+        """Test that PYTHON_VERSIONS contains valid version strings."""
+        for version in noxfile.PYTHON_VERSIONS:
+            assert isinstance(version, str)
+            # Version format should be X.Y
+            parts = version.split(".")
+            assert len(parts) == 2
+            assert all(part.isdigit() for part in parts)
+
+    def test_python_versions_includes_expected_versions(self):
+        """Test that PYTHON_VERSIONS includes expected Python versions."""
+        # According to noxfile, should support 3.10-3.14
+        expected_versions = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        assert expected_versions == noxfile.PYTHON_VERSIONS
+
+
+class TestNoxOptions:
+    """Test nox options configuration."""
+
+    def test_default_venv_backend_configured(self):
+        """Test that default venv backend is configured."""
+        assert hasattr(noxfile.nox.options, "default_venv_backend")
+        assert noxfile.nox.options.default_venv_backend == "uv|virtualenv"

@@ -5,7 +5,7 @@ to characterize image quality and validate detector performance on handwritten c
 """
 
 import json
-import random
+import random  # nosec B311 - used for non-cryptographic test data sampling
 from pathlib import Path
 
 import cv2

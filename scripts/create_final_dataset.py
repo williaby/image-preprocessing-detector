@@ -256,6 +256,52 @@ def calculate_label_distribution(samples: list[dict[str, Any]]) -> dict[str, Any
     }
 
 
+def _check_dataset_overlaps(
+    train_samples: list[dict],
+    val_samples: list[dict],
+    test_samples: list[dict],
+) -> list[str]:
+    """Check for overlapping images between dataset splits.
+
+    Returns:
+        List of error messages for any overlaps found.
+    """
+    train_images = {s["image_path"] for s in train_samples}
+    val_images = {s["image_path"] for s in val_samples}
+    test_images = {s["image_path"] for s in test_samples}
+
+    overlaps = [
+        ("Train-Val", train_images & val_images),
+        ("Train-Test", train_images & test_images),
+        ("Val-Test", val_images & test_images),
+    ]
+
+    return [
+        f"  {name} overlap: {len(overlap)} images"
+        for name, overlap in overlaps
+        if overlap
+    ]
+
+
+def _check_missing_files(samples: list[dict]) -> tuple[list[str], list[str]]:
+    """Check that all image and label files exist.
+
+    Returns:
+        Tuple of (missing_images, missing_labels) lists.
+    """
+    missing_images = [
+        str(Path(s["image_path"]))
+        for s in samples
+        if not Path(s["image_path"]).exists()
+    ]
+    missing_labels = [
+        str(Path(s["label_path"]))
+        for s in samples
+        if not Path(s["label_path"]).exists()
+    ]
+    return missing_images, missing_labels
+
+
 def verify_dataset_integrity(
     train_samples: list[dict],
     val_samples: list[dict],
@@ -274,38 +320,16 @@ def verify_dataset_integrity(
     console.print("\n[bold cyan]Verifying Dataset Integrity[/bold cyan]")
 
     # Check for overlaps
-    train_images = {s["image_path"] for s in train_samples}
-    val_images = {s["image_path"] for s in val_samples}
-    test_images = {s["image_path"] for s in test_samples}
-
-    train_val_overlap = train_images & val_images
-    train_test_overlap = train_images & test_images
-    val_test_overlap = val_images & test_images
-
-    if train_val_overlap or train_test_overlap or val_test_overlap:
+    overlap_errors = _check_dataset_overlaps(train_samples, val_samples, test_samples)
+    if overlap_errors:
         console.print("[red]❌ Dataset integrity check FAILED:[/red]")
-        if train_val_overlap:
-            console.print(f"  Train-Val overlap: {len(train_val_overlap)} images")
-        if train_test_overlap:
-            console.print(f"  Train-Test overlap: {len(train_test_overlap)} images")
-        if val_test_overlap:
-            console.print(f"  Val-Test overlap: {len(val_test_overlap)} images")
+        for error in overlap_errors:
+            console.print(error)
         return False
 
-    # Check that all images exist
+    # Check that all files exist
     all_samples = train_samples + val_samples + test_samples
-    missing_images = []
-    missing_labels = []
-
-    for sample in all_samples:
-        image_path = Path(sample["image_path"])
-        label_path = Path(sample["label_path"])
-
-        if not image_path.exists():
-            missing_images.append(str(image_path))
-
-        if not label_path.exists():
-            missing_labels.append(str(label_path))
+    missing_images, missing_labels = _check_missing_files(all_samples)
 
     if missing_images or missing_labels:
         console.print("[red]❌ Dataset integrity check FAILED:[/red]")

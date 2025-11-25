@@ -1,0 +1,19 @@
+{
+  "model": "resnet18_student.onnx",
+  "device": "Modal L4 GPU",
+  "num_images": 50,
+  "single_inference": {
+    "mean": 1.4984387199998395,
+    "median": 1.463893999999577,
+    "std": 0.2549112460437264,
+    "min": 1.1922139999995807,
+    "max": 2.11183199999887,
+    "p50": 1.463893999999577,
+    "p95": 2.0371190000005868,
+    "p99": 2.0981311099994038
+  },
+  "target_validation": {
+    "acceptable_25ms": true,
+    "ideal_10ms": true
+  }
+}

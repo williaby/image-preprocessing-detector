@@ -85,6 +85,64 @@ class AggregateScorer:
 
         return aggregates
 
+    def _is_lower_better(self, metric_name: str) -> bool:
+        """Check if lower values are better for the given metric.
+
+        Args:
+            metric_name: Name of the metric
+
+        Returns:
+            True if lower values indicate better performance
+        """
+        lower_better_indicators = ("rmse", "mae", "error", "ber")
+        return any(x in metric_name.lower() for x in lower_better_indicators)
+
+    def _evaluate_target(
+        self, metric_name: str, mean: float, target: float | None
+    ) -> tuple[str, str]:
+        """Evaluate a metric against its target.
+
+        Args:
+            metric_name: Name of the metric
+            mean: Mean value of the metric
+            target: Target value (or None if no target)
+
+        Returns:
+            Tuple of (target_str, status_str)
+        """
+        if target is None:
+            return "—", "—"
+
+        lower_is_better = self._is_lower_better(metric_name)
+        passed = mean <= target if lower_is_better else mean >= target
+        status = "✓ PASS" if passed else "✗ FAIL"
+        return f"{target:.3f}", status
+
+    def _format_metric_row(
+        self,
+        metric_name: str,
+        stats: dict[str, Any],
+        targets: dict[str, float] | None,
+    ) -> str:
+        """Format a single metric row for the summary table.
+
+        Args:
+            metric_name: Name of the metric
+            stats: Statistics dictionary with mean, std, min, max
+            targets: Optional targets dictionary
+
+        Returns:
+            Formatted table row string
+        """
+        mean = stats["mean"]
+        target = targets.get(metric_name) if targets else None
+        target_str, status = self._evaluate_target(metric_name, mean, target)
+
+        return (
+            f"| {metric_name} | {mean:.3f} | {stats['std']:.3f} | "
+            f"{stats['min']:.3f} | {stats['max']:.3f} | {target_str} | {status} |"
+        )
+
     def generate_summary(self, targets: dict[str, float] | None = None) -> str:
         """Generate human-readable summary.
 
@@ -95,8 +153,7 @@ class AggregateScorer:
             Markdown-formatted summary
         """
         aggregates = self.compute_aggregates()
-
-        meta = aggregates.pop("_meta") if "_meta" in aggregates else {}
+        meta = aggregates.pop("_meta", {})
 
         lines = [
             f"# Benchmark Summary: {self.suite_name}",
@@ -111,34 +168,8 @@ class AggregateScorer:
         ]
 
         for metric_name, stats in aggregates.items():
-            if not isinstance(stats, dict):
-                continue
-
-            mean = stats["mean"]
-            std = stats["std"]
-            min_val = stats["min"]
-            max_val = stats["max"]
-
-            # Check against target
-            target = targets.get(metric_name) if targets else None
-            if target is not None:
-                # Determine if lower or higher is better based on metric name
-                lower_is_better = any(
-                    x in metric_name.lower() for x in ["rmse", "mae", "error", "ber"]
-                )
-                if lower_is_better:
-                    status = "✓ PASS" if mean <= target else "✗ FAIL"
-                else:
-                    status = "✓ PASS" if mean >= target else "✗ FAIL"
-                target_str = f"{target:.3f}"
-            else:
-                status = "—"
-                target_str = "—"
-
-            lines.append(
-                f"| {metric_name} | {mean:.3f} | {std:.3f} | {min_val:.3f} | "
-                f"{max_val:.3f} | {target_str} | {status} |"
-            )
+            if isinstance(stats, dict):
+                lines.append(self._format_metric_row(metric_name, stats, targets))
 
         return "\n".join(lines)
 

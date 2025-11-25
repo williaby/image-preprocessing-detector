@@ -1,0 +1,85 @@
+{
+  "dataset": "layout_edge_cases_synthetic",
+  "created": "2025-11-24",
+  "count": 4,
+  "purpose": "Edge case samples for layout-lite detection testing",
+  "generation_method": "synthetic_and_curated",
+  "files": [
+    {
+      "name": "dense_math_page4.pdf",
+      "source": "arXiv paper 2409.13432 (CC-BY-4.0)",
+      "source_url": "https://arxiv.org/abs/2409.13432",
+      "size_kb": 220,
+      "format": "PDF",
+      "edge_case": "dense_math_equations",
+      "description": "Page 4 from 'Dense cell-by-cell systems of PDEs' paper with extensive mathematical notation including PDEs, matrices, and equations",
+      "license": "CC-BY-4.0",
+      "expected_attributes": {
+        "has_dense_math": true,
+        "layout_complexity": "high",
+        "text_density": "mixed"
+      }
+    },
+    {
+      "name": "watermarked_document.pdf",
+      "source": "Synthetic (from doclaynet/multi_column_3.pdf)",
+      "size_kb": 51,
+      "format": "PDF",
+      "edge_case": "watermark",
+      "description": "Multi-column document with 'CONFIDENTIAL' and 'TEST DOCUMENT' watermarks added synthetically using PyMuPDF",
+      "license": "Derived from CDLA-Permissive-1.0",
+      "expected_attributes": {
+        "watermark": true,
+        "layout_type": "multi_column",
+        "text_density": "medium"
+      }
+    },
+    {
+      "name": "colorful_background.jpg",
+      "source": "Synthetic (from augmentation_input/clean_text_page.jpg)",
+      "size_kb": 443,
+      "format": "JPEG",
+      "edge_case": "colorful_background",
+      "description": "Clean text document with blue-to-purple vertical gradient background overlay (30% gradient, 70% original) using PIL",
+      "license": "Derived from synthetic data",
+      "expected_attributes": {
+        "colorful_background": true,
+        "gradient": "blue_to_purple",
+        "layout_type": "single_column",
+        "text_density": "medium"
+      }
+    },
+    {
+      "name": "handwriting_mixed.jpg",
+      "source": "Synthetic (IAM validation sample composited over clean_table_page.jpg)",
+      "size_kb": 177,
+      "format": "JPEG",
+      "edge_case": "handwriting_mixed",
+      "description": "Printed table document with handwritten annotations in blue pen color composited from IAM handwriting dataset samples",
+      "license": "Derived from IAM (academic use) + synthetic data",
+      "expected_attributes": {
+        "has_handwriting": true,
+        "has_tables": true,
+        "layout_type": "mixed",
+        "text_density": "medium"
+      }
+    }
+  ],
+  "total_size_kb": 891,
+  "notes": [
+    "All samples are synthetically generated or curated from permissively licensed sources",
+    "Watermarked document derived from DocLayNet (CDLA-Permissive-1.0)",
+    "Dense math paper from arXiv under CC-BY-4.0 license with attribution",
+    "Handwriting samples from IAM dataset (academic use) composited over synthetic data",
+    "These edge cases complement existing DocLayNet fixtures for comprehensive layout testing"
+  ],
+  "usage": {
+    "test_target": "layout-lite detection (Phase 6)",
+    "test_cases": [
+      "Watermark detection accuracy",
+      "Background complexity classification",
+      "Dense math content identification",
+      "Handwriting presence detection"
+    ]
+  }
+}

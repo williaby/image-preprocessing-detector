@@ -41,7 +41,7 @@ def download_docbank(output_dir: Path, use_cache: bool = True) -> None:
 
     try:
         # Download dataset from HuggingFace
-        snapshot_download(
+        snapshot_download(  # nosec B615 - trusted dataset source, consider revision pinning
             repo_id="liminghao1630/DocBank",
             repo_type="dataset",
             local_dir=str(output_dir),

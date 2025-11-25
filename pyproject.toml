@@ -65,7 +65,9 @@ dependencies = [
     "huggingface-hub[cli] (>=1.1.4,<2.0.0)",
     # pytesseract removed - not needed for Phase 1, will add back in Phase 2 for OCR analysis
     # "pytesseract (>=0.3.13,<0.4.0)",
-    "gitpython (>=3.1.45,<4.0.0)"
+    "gitpython (>=3.1.45,<4.0.0)",
+    "pywavelets (>=1.4.0)",
+    "onnxruntime-gpu (>=1.23.2,<2.0.0)"
 ]
 
 [project.optional-dependencies]
@@ -302,6 +304,10 @@ known-local-folder = ["validation", "benchmarks"]
 "src/image_preprocessing_detector/utils/gcs_uploader.py" = ["T20", "F821"]  # GCS utilities with relaxed print rules
 "src/image_preprocessing_detector/utils/metadata_generator.py" = ["T20", "S", "PTH", "UP038", "TRY"]  # Metadata generator with relaxed rules
 
+# Bandit Configuration (Security Linting)
+[tool.bandit]
+skips = ["B101"]  # Skip assert_used - standard pytest practice, not a security issue
+
 # MyPy Configuration
 [tool.mypy]
 python_version = "3.12"
@@ -373,6 +379,7 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "benchmark: marks tests as benchmark tests (comprehensive performance tests)",
+    "performance: marks tests as performance/latency tests (run with '-m performance')",
     "requires_full_dataset: marks tests requiring full datasets (88+ GB, skip in CI)",
     "real_data: marks tests using real test fixtures (not synthetic)",
 ]
@@ -389,25 +396,21 @@ omit = [
     "validation/*",  # Exclude standalone validation scripts
     "benchmarks/*",  # Exclude benchmarking framework
     "data/*",  # Exclude data processing scripts
-    # Phase 1.5/2 scaffolding (not wired into CI yet - omit until pipelines land)
+    # CLI - tested via integration but excluded from unit coverage
     "src/image_preprocessing_detector/cli.py",
-    "src/image_preprocessing_detector/correction/*",
-    "src/image_preprocessing_detector/detection/*",
-    "src/image_preprocessing_detector/ingestion/*",
-    "src/image_preprocessing_detector/output/*",
-    # Phase 2+ modules (require ML dependencies - PyTorch, excluded from base coverage)
+    # Phase 6: layout_lite - needs tests (TODO: create tests using existing fixtures)
+    "src/image_preprocessing_detector/detection/layout_lite/*",
+    # Phase 8: document_processor - not yet implemented
+    "src/image_preprocessing_detector/ingestion/document_processor.py",
+    # Phase 2+ utilities (require GCS/cloud dependencies)
     "src/image_preprocessing_detector/utils/gcs_uploader.py",
     "src/image_preprocessing_detector/utils/metadata_generator.py",
+    # Augmentation (requires genalog, has dependency conflicts)
     "src/image_preprocessing_detector/augmentation/*",
-    "src/image_preprocessing_detector/models/*",  # ResNet teacher/student models require torch
-    "src/image_preprocessing_detector/training/*",  # Training requires torch
-    "src/image_preprocessing_detector/datasets/*",  # Dataset classes require torch
-    # Phase 6 modules (layout-lite detection, require torch)
-    "src/image_preprocessing_detector/detection/layout_lite.py",
-    "src/image_preprocessing_detector/detection/layout_lite/*",
-    # Phase 8+ modules (not yet implemented)
-    "src/image_preprocessing_detector/ingestion/document_processor.py",
-    "src/image_preprocessing_detector/metrics/*",
+    # Training modules (require PyTorch, tested separately with ml dependencies)
+    "src/image_preprocessing_detector/training/*",
+    "src/image_preprocessing_detector/datasets/*",
+    # Routing (Phase 8, needs implementation)
     "src/image_preprocessing_detector/routing/*",
 ]
 
@@ -443,3 +446,6 @@ tests_dir = "tests/"
 # Mutation score threshold: percentage of mutations that must be killed
 # Score below 80% indicates weak test coverage
 dict_synonyms = "Struct, NamedStruct"
+
+[tool.poetry.group.dev.dependencies]
+scikit-learn = "^1.7.2"

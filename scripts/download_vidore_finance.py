@@ -20,6 +20,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Dataset identifier constant
+VIDORE_DATASET_ID = "vidore/vidore_v3_finance_en"
+
 
 def main():
     """Download VidOre V3 Finance dataset."""
@@ -30,15 +33,15 @@ def main():
 
     # Download corpus (document pages with images)
     logger.info("Loading corpus config (2,940 pages)...")
-    corpus = load_dataset(
-        "vidore/vidore_v3_finance_en", "corpus", split="test", streaming=False
+    corpus = load_dataset(  # nosec B615 - trusted dataset source, consider revision pinning
+        VIDORE_DATASET_ID, "corpus", split="test", streaming=False
     )
     logger.info(f"✓ Corpus loaded: {len(corpus)} pages")
 
     # Download documents metadata
     logger.info("Loading documents_metadata config...")
-    metadata = load_dataset(
-        "vidore/vidore_v3_finance_en",
+    metadata = load_dataset(  # nosec B615 - trusted dataset source, consider revision pinning
+        VIDORE_DATASET_ID,
         "documents_metadata",
         split="test",
         streaming=False,
@@ -47,8 +50,8 @@ def main():
 
     # Download qrels (has bounding boxes!)
     logger.info("Loading qrels config (with bounding boxes)...")
-    qrels = load_dataset(
-        "vidore/vidore_v3_finance_en", "qrels", split="test", streaming=False
+    qrels = load_dataset(  # nosec B615 - trusted dataset source, consider revision pinning
+        VIDORE_DATASET_ID, "qrels", split="test", streaming=False
     )
     logger.info(f"✓ Qrels loaded: {len(qrels)} relevance judgments")
 

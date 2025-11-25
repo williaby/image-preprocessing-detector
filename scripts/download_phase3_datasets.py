@@ -106,7 +106,7 @@ def download_from_huggingface(
 
         # Download dataset
         logger.info(f"Starting download from HuggingFace: {repo_id}")
-        snapshot_download(
+        snapshot_download(  # nosec B615 - trusted dataset source, consider revision pinning
             repo_id=repo_id,
             repo_type="dataset",
             local_dir=str(local_dir),

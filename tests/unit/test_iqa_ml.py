@@ -662,6 +662,8 @@ class TestMLIQADetector:
                 blur_score=0.90,  # 0.05 difference
                 contrast_score=0.65,  # 0.10 difference
                 skew_score=0.95,  # 0.05 difference
+                noise_score=0.78,  # 0.02 difference
+                compression_score=0.86,  # 0.02 difference
             )
 
             discrepancy = detector.calculate_discrepancy(
@@ -673,6 +675,8 @@ class TestMLIQADetector:
             assert abs(discrepancy.blur_discrepancy - 0.05) < 0.01
             assert abs(discrepancy.contrast_discrepancy - 0.10) < 0.01
             assert abs(discrepancy.skew_discrepancy - 0.05) < 0.01
+            assert abs(discrepancy.noise_discrepancy - 0.02) < 0.01
+            assert abs(discrepancy.compression_discrepancy - 0.02) < 0.01
             assert abs(discrepancy.max_discrepancy - 0.10) < 0.01  # Max is contrast
             assert 0.0 <= discrepancy.mean_discrepancy <= 1.0
 
@@ -749,6 +753,8 @@ class TestMLIQADetector:
                 blur_score=0.82,  # 0.03 difference (ok)
                 contrast_score=0.80,  # 0.02 difference (ok)
                 skew_score=0.90,  # 0.02 difference (ok)
+                noise_score=0.78,  # 0.02 difference (ok)
+                compression_score=0.84,  # 0.02 difference (ok)
             )
 
             decision = detector.should_escalate_due_to_discrepancy(
@@ -788,6 +794,8 @@ class TestMLIQADetector:
                 blur_score=0.80,
                 contrast_score=0.85,
                 skew_score=0.90,
+                noise_score=0.75,
+                compression_score=0.88,
             )
 
             discrepancy = detector.calculate_discrepancy(
@@ -798,5 +806,7 @@ class TestMLIQADetector:
             assert discrepancy.blur_discrepancy == pytest.approx(0.0)
             assert discrepancy.contrast_discrepancy == pytest.approx(0.0)
             assert discrepancy.skew_discrepancy == pytest.approx(0.0)
+            assert discrepancy.noise_discrepancy == pytest.approx(0.0)
+            assert discrepancy.compression_discrepancy == pytest.approx(0.0)
             assert discrepancy.max_discrepancy == pytest.approx(0.0)
             assert discrepancy.mean_discrepancy == pytest.approx(0.0)

@@ -67,6 +67,17 @@ name = "actionlint"
 [[plugin]]
 name = "bandit"
 
+# Exclude Bandit from running on test files (matches pre-commit config)
+[[exclude]]
+plugins = ["bandit"]
+file_patterns = ["tests/**", "**/test_*.py", "**/*_test.py"]
+
+# Ignore B101 (assert_used) - standard pytest practice, not a security issue
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B101"]
+set.ignored = true
+
 [[plugin]]
 name = "hadolint"
 

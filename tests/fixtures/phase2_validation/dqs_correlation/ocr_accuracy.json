@@ -1,0 +1,252 @@
+{
+  "dqs_doc_000.png": {
+    "character_accuracy": 0.9618941253006955,
+    "word_accuracy": 0.9121931874866915,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_001.png": {
+    "character_accuracy": 0.9622152097727744,
+    "word_accuracy": 0.9404083006415982,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_002.png": {
+    "character_accuracy": 0.9884043510973719,
+    "word_accuracy": 0.9399766450876106,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_003.png": {
+    "character_accuracy": 0.958311516232942,
+    "word_accuracy": 0.9303721324742418,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_004.png": {
+    "character_accuracy": 0.9532474986186793,
+    "word_accuracy": 0.9280330921688863,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_005.png": {
+    "character_accuracy": 0.9530025947560467,
+    "word_accuracy": 0.9207470675762458,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_006.png": {
+    "character_accuracy": 0.9775748454313907,
+    "word_accuracy": 0.9488370667604599,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_007.png": {
+    "character_accuracy": 0.959259049382241,
+    "word_accuracy": 0.9181694226394296,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_008.png": {
+    "character_accuracy": 0.9681612530562818,
+    "word_accuracy": 0.9204439217218053,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_009.png": {
+    "character_accuracy": 0.9815131210658692,
+    "word_accuracy": 0.9416776297802681,
+    "source_degradation": "clean"
+  },
+  "dqs_doc_010.png": {
+    "character_accuracy": 0.890050268766827,
+    "word_accuracy": 0.8666069796929956,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_011.png": {
+    "character_accuracy": 0.7837214175399035,
+    "word_accuracy": 0.7364690741835254,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_012.png": {
+    "character_accuracy": 0.873994673947509,
+    "word_accuracy": 0.8522055327620935,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_013.png": {
+    "character_accuracy": 0.8688942849348618,
+    "word_accuracy": 0.8357196814746496,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_014.png": {
+    "character_accuracy": 0.8203046955414243,
+    "word_accuracy": 0.7793126849921528,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_015.png": {
+    "character_accuracy": 0.8914014361116062,
+    "word_accuracy": 0.8582686702044582,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_016.png": {
+    "character_accuracy": 0.8397054993061656,
+    "word_accuracy": 0.7976694816075971,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_017.png": {
+    "character_accuracy": 0.8405570461418866,
+    "word_accuracy": 0.817817239542957,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_018.png": {
+    "character_accuracy": 0.8942866653289255,
+    "word_accuracy": 0.844299492822602,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_019.png": {
+    "character_accuracy": 0.8508422376454859,
+    "word_accuracy": 0.8135548281074035,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_020.png": {
+    "character_accuracy": 0.8644663506257558,
+    "word_accuracy": 0.8303513259282068,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_021.png": {
+    "character_accuracy": 0.847726423415053,
+    "word_accuracy": 0.8222817489983593,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_022.png": {
+    "character_accuracy": 0.8377994437916781,
+    "word_accuracy": 0.788727786709707,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_023.png": {
+    "character_accuracy": 0.8205015592440528,
+    "word_accuracy": 0.7905023074341,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_024.png": {
+    "character_accuracy": 0.8505200264281778,
+    "word_accuracy": 0.8206259165208089,
+    "source_degradation": "moderate"
+  },
+  "dqs_doc_025.png": {
+    "character_accuracy": 0.6081021021950297,
+    "word_accuracy": 0.5682245960852869,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_026.png": {
+    "character_accuracy": 0.520135676444097,
+    "word_accuracy": 0.4836327781749435,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_027.png": {
+    "character_accuracy": 0.5364477725805188,
+    "word_accuracy": 0.5088758070522525,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_028.png": {
+    "character_accuracy": 0.4347764804292874,
+    "word_accuracy": 0.40265122871926506,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_029.png": {
+    "character_accuracy": 0.5543788756987316,
+    "word_accuracy": 0.5146490641042377,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_030.png": {
+    "character_accuracy": 0.5627780783071585,
+    "word_accuracy": 0.5411519557458567,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_031.png": {
+    "character_accuracy": 0.5555318177382187,
+    "word_accuracy": 0.5128385231165515,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_032.png": {
+    "character_accuracy": 0.5876226226435026,
+    "word_accuracy": 0.5660742693879122,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_033.png": {
+    "character_accuracy": 0.48011687148187976,
+    "word_accuracy": 0.4322866886565463,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_034.png": {
+    "character_accuracy": 0.5314348285217134,
+    "word_accuracy": 0.4968934746132135,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_035.png": {
+    "character_accuracy": 0.408660832732499,
+    "word_accuracy": 0.37039468272004006,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_036.png": {
+    "character_accuracy": 0.47178923869829514,
+    "word_accuracy": 0.4424667345464951,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_037.png": {
+    "character_accuracy": 0.4041023393398182,
+    "word_accuracy": 0.3813060633013725,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_038.png": {
+    "character_accuracy": 0.6976771418185659,
+    "word_accuracy": 0.6638337049932024,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_039.png": {
+    "character_accuracy": 0.4352398447268673,
+    "word_accuracy": 0.4106207109940174,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_040.png": {
+    "character_accuracy": 0.6797959179802313,
+    "word_accuracy": 0.644529757528146,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_041.png": {
+    "character_accuracy": 0.48202746901398225,
+    "word_accuracy": 0.44755248170524653,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_042.png": {
+    "character_accuracy": 0.5416659345710223,
+    "word_accuracy": 0.5051279822646082,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_043.png": {
+    "character_accuracy": 0.515075803974145,
+    "word_accuracy": 0.4798285772263582,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_044.png": {
+    "character_accuracy": 0.6637978765439427,
+    "word_accuracy": 0.6355104544592816,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_045.png": {
+    "character_accuracy": 0.637001854600934,
+    "word_accuracy": 0.606805597307505,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_046.png": {
+    "character_accuracy": 0.6363152217292882,
+    "word_accuracy": 0.5916987375337208,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_047.png": {
+    "character_accuracy": 0.484851694984848,
+    "word_accuracy": 0.4397274173066553,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_048.png": {
+    "character_accuracy": 0.5739770151650212,
+    "word_accuracy": 0.5392878047653502,
+    "source_degradation": "heavy"
+  },
+  "dqs_doc_049.png": {
+    "character_accuracy": 0.44457862551483673,
+    "word_accuracy": 0.41004838394828513,
+    "source_degradation": "heavy"
+  }
+}

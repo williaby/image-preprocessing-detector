@@ -43,6 +43,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 # Setup logging
 logging.basicConfig(
@@ -124,7 +125,8 @@ def download_file_with_hf_cli(
         logger.info(f"Downloading: {filename}")
 
         # Use huggingface_hub Python API
-        downloaded_path = hf_hub_download(
+        # nosec B615 - trusted dataset, consider revision pinning
+        hf_hub_download(
             repo_id=repo_id,
             filename=filename,
             repo_type="dataset",
@@ -258,11 +260,100 @@ def extract_archive(archive_path: Path, extract_dir: Path) -> bool:
         return False
 
 
+def _download_all_files(
+    config: dict[str, Any], output_dir: Path, hf_token: str
+) -> bool:
+    """Download all files for a dataset.
+
+    Args:
+        config: Dataset configuration dictionary
+        output_dir: Output directory for downloads
+        hf_token: HuggingFace API token
+
+    Returns:
+        True if all files downloaded successfully
+    """
+    for filename in config["files"]:
+        if not download_file_with_hf_cli(
+            config["repo_id"], filename, output_dir, hf_token
+        ):
+            return False
+    return True
+
+
+def _is_extractable_archive(archive_path: Path) -> bool:
+    """Check if a path is an extractable archive.
+
+    Args:
+        archive_path: Path to check
+
+    Returns:
+        True if the file is a tar.gz or zip archive
+    """
+    if not archive_path.exists():
+        return False
+    return archive_path.suffix in [".gz", ".zip"] or str(archive_path).endswith(
+        ".tar.gz"
+    )
+
+
+def _handle_tablebank_postprocess(
+    output_dir: Path, dataset_name: str, extract: bool
+) -> bool:
+    """Handle TableBank multi-part zip joining and extraction.
+
+    Args:
+        output_dir: Output directory
+        dataset_name: Dataset name
+        extract: Whether to extract after joining
+
+    Returns:
+        True if post-processing succeeded
+    """
+    if not join_zip_parts(output_dir, dataset_name):
+        return False
+
+    if extract:
+        joined_zip = output_dir / f"{dataset_name}.zip"
+        if joined_zip.exists():
+            extract_archive(joined_zip, output_dir)
+
+    return True
+
+
+def _extract_archives(config: dict[str, Any], output_dir: Path) -> None:
+    """Extract all archives for a dataset.
+
+    Args:
+        config: Dataset configuration dictionary
+        output_dir: Output directory containing archives
+    """
+    for filename in config["files"]:
+        archive_path = output_dir / filename
+        if _is_extractable_archive(archive_path):
+            extract_archive(archive_path, output_dir)
+
+
+def _log_download_header(config: dict[str, Any], output_dir: Path) -> None:
+    """Log download header information.
+
+    Args:
+        config: Dataset configuration dictionary
+        output_dir: Output directory
+    """
+    logger.info("\n" + "=" * 80)
+    logger.info(f"Downloading: {config['description']}")
+    logger.info(f"Repository: {config['repo_id']}")
+    logger.info(f"Size: {config['size_gb']:.1f} GB")
+    logger.info(f"Files: {len(config['files'])}")
+    logger.info(f"Output: {output_dir}")
+    logger.info("=" * 80 + "\n")
+
+
 def download_dataset(
     dataset_name: str, output_base_dir: str, hf_token: str, extract: bool = True
 ) -> bool:
-    """
-    Download a table dataset from HuggingFace.
+    """Download a table dataset from HuggingFace.
 
     Args:
         dataset_name: Name of dataset ('tablebank', 'pubtabnet', or 'fintabnet')
@@ -282,46 +373,19 @@ def download_dataset(
     output_dir = Path(output_base_dir) / config["output_subdir"]
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    logger.info("\n" + "=" * 80)
-    logger.info(f"Downloading: {config['description']}")
-    logger.info(f"Repository: {config['repo_id']}")
-    logger.info(f"Size: {config['size_gb']:.1f} GB")
-    logger.info(f"Files: {len(config['files'])}")
-    logger.info(f"Output: {output_dir}")
-    logger.info("=" * 80 + "\n")
+    _log_download_header(config, output_dir)
 
     # Download all files
-    success = True
-    for filename in config["files"]:
-        if not download_file_with_hf_cli(
-            config["repo_id"], filename, output_dir, hf_token
-        ):
-            success = False
-            break
-
-    if not success:
+    if not _download_all_files(config, output_dir, hf_token):
         return False
 
-    # Handle multi-part zip (TableBank)
-    if dataset_name == "tablebank" and len(config["files"]) > 1:
-        if not join_zip_parts(output_dir, dataset_name):
+    # Post-process based on dataset type
+    is_multipart = dataset_name == "tablebank" and len(config["files"]) > 1
+    if is_multipart:
+        if not _handle_tablebank_postprocess(output_dir, dataset_name, extract):
             return False
-
-        # Extract if requested
-        if extract:
-            joined_zip = output_dir / f"{dataset_name}.zip"
-            if joined_zip.exists():
-                extract_archive(joined_zip, output_dir)
-
-    # Extract other archives if requested
     elif extract:
-        for filename in config["files"]:
-            archive_path = output_dir / filename
-            if archive_path.exists() and (
-                archive_path.suffix in [".gz", ".zip"]
-                or str(archive_path).endswith(".tar.gz")
-            ):
-                extract_archive(archive_path, output_dir)
+        _extract_archives(config, output_dir)
 
     logger.info("\n" + "=" * 80)
     logger.info(f"✓ {dataset_name.upper()} Download Complete!")
@@ -331,8 +395,89 @@ def download_dataset(
     return True
 
 
-def main():
-    """Main entry point."""
+def _resolve_hf_token(token_arg: str | None) -> str | None:
+    """Resolve HuggingFace token from argument, .env, or environment.
+
+    Args:
+        token_arg: Token from command line argument (if any)
+
+    Returns:
+        Resolved token or None if not found
+    """
+    return token_arg or load_token_from_env() or os.getenv("HF_TOKEN")
+
+
+def _log_missing_token_error() -> None:
+    """Log error message for missing HuggingFace token."""
+    logger.error("No HuggingFace token found!")
+    logger.error("Please either:")
+    logger.error("  1. Add HF_TOKEN to .env file")
+    logger.error("  2. Set HF_TOKEN environment variable")
+    logger.error("  3. Pass --token argument")
+    logger.error("\nGet your token at: https://huggingface.co/settings/tokens")
+
+
+def _check_disk_space(output_path: Path, total_size_gb: float) -> bool:
+    """Check if sufficient disk space is available.
+
+    Args:
+        output_path: Output directory path
+        total_size_gb: Total size needed in GB
+
+    Returns:
+        True if user confirms to proceed or space is sufficient
+    """
+    stat = os.statvfs(output_path)
+    free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
+
+    logger.info(f"Available disk space: {free_gb:.1f} GB")
+
+    required_gb = total_size_gb * 1.5  # Need 1.5x for extraction
+    if free_gb >= required_gb:
+        return True
+
+    logger.warning(
+        f"Low disk space! Need ~{required_gb:.1f} GB for download + extraction"
+    )
+    response = input("Continue anyway? (y/N): ")
+    return response.lower() == "y"
+
+
+def _run_downloads(
+    datasets: list[str], output_dir: str, hf_token: str, extract: bool
+) -> int:
+    """Run downloads for all specified datasets.
+
+    Args:
+        datasets: List of dataset names to download
+        output_dir: Output directory
+        hf_token: HuggingFace API token
+        extract: Whether to extract archives
+
+    Returns:
+        Number of successfully downloaded datasets, or -1 if interrupted
+    """
+    success_count = 0
+    for dataset in datasets:
+        try:
+            if download_dataset(dataset, output_dir, hf_token, extract=extract):
+                success_count += 1
+            else:
+                logger.error(f"Failed to download {dataset}")
+        except KeyboardInterrupt:
+            logger.warning("\nDownload interrupted by user")
+            return -1
+        except Exception as e:
+            logger.error(f"Error downloading {dataset}: {e}")
+    return success_count
+
+
+def _create_argument_parser() -> argparse.ArgumentParser:
+    """Create and configure the argument parser.
+
+    Returns:
+        Configured ArgumentParser
+    """
     parser = argparse.ArgumentParser(
         description="Download table datasets from HuggingFace",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -360,7 +505,12 @@ def main():
         action="store_true",
         help="Do not extract archives after download",
     )
+    return parser
 
+
+def main() -> int:
+    """Main entry point."""
+    parser = _create_argument_parser()
     args = parser.parse_args()
 
     # Validate arguments
@@ -368,31 +518,21 @@ def main():
         parser.error("Must specify either --datasets or --all")
 
     # Get HuggingFace token
-    hf_token = args.token or load_token_from_env() or os.getenv("HF_TOKEN")
-
+    hf_token = _resolve_hf_token(args.token)
     if not hf_token:
-        logger.error("No HuggingFace token found!")
-        logger.error("Please either:")
-        logger.error("  1. Add HF_TOKEN to .env file")
-        logger.error("  2. Set HF_TOKEN environment variable")
-        logger.error("  3. Pass --token argument")
-        logger.error("\nGet your token at: https://huggingface.co/settings/tokens")
+        _log_missing_token_error()
         return 1
 
     # Determine which datasets to download
-    if args.all:
-        datasets_to_download = list(DATASETS.keys())
-    else:
-        datasets_to_download = args.datasets
+    datasets_to_download = list(DATASETS.keys()) if args.all else args.datasets
 
     # Print summary
+    total_size = sum(DATASETS[d]["size_gb"] for d in datasets_to_download)
     print("\n" + "=" * 80)
     print("TABLE DATASETS DOWNLOADER")
     print("=" * 80)
     print(f"Datasets: {', '.join(datasets_to_download)}")
     print(f"Output directory: {args.output_dir}")
-
-    total_size = sum(DATASETS[d]["size_gb"] for d in datasets_to_download)
     print(f"Total size: {total_size:.1f} GB")
     print(f"Extract after download: {not args.no_extract}")
     print("=" * 80 + "\n")
@@ -400,35 +540,16 @@ def main():
     # Check disk space
     output_path = Path(args.output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
-    stat = os.statvfs(output_path)
-    free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
-
-    logger.info(f"Available disk space: {free_gb:.1f} GB")
-
-    if free_gb < total_size * 1.5:  # Need 1.5x for extraction
-        logger.warning(
-            f"Low disk space! Need ~{total_size * 1.5:.1f} GB for download + extraction"
-        )
-        response = input("Continue anyway? (y/N): ")
-        if response.lower() != "y":
-            logger.info("Download cancelled")
-            return 0
+    if not _check_disk_space(output_path, total_size):
+        logger.info("Download cancelled")
+        return 0
 
     # Download datasets
-    success_count = 0
-    for dataset in datasets_to_download:
-        try:
-            if download_dataset(
-                dataset, args.output_dir, hf_token, extract=not args.no_extract
-            ):
-                success_count += 1
-            else:
-                logger.error(f"Failed to download {dataset}")
-        except KeyboardInterrupt:
-            logger.warning("\nDownload interrupted by user")
-            return 1
-        except Exception as e:
-            logger.error(f"Error downloading {dataset}: {e}")
+    success_count = _run_downloads(
+        datasets_to_download, args.output_dir, hf_token, extract=not args.no_extract
+    )
+    if success_count == -1:  # Interrupted
+        return 1
 
     # Final summary
     print("\n" + "=" * 80)

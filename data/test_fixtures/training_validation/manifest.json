@@ -1,0 +1,82 @@
+{
+  "dataset": "iqa_phase2_100k",
+  "split": "validation_subset",
+  "count": 5,
+  "samples": [
+    {
+      "filename": "sample_000000.jpg",
+      "category": "mixed_layout",
+      "document_type": "image_only",
+      "dpi": 266,
+      "num_defects": 0,
+      "labels": {
+        "blur": 0.0,
+        "noise": 0.0,
+        "illumination": 0.0,
+        "artifacts": 0.0,
+        "skew": 0.0
+      },
+      "quality": "clean"
+    },
+    {
+      "filename": "sample_000001.jpg",
+      "category": "mixed_layout",
+      "document_type": "image_only",
+      "dpi": 209,
+      "num_defects": 0,
+      "labels": {
+        "blur": 0.0,
+        "noise": 0.0,
+        "illumination": 0.0,
+        "artifacts": 0.0,
+        "skew": 0.0
+      },
+      "quality": "clean"
+    },
+    {
+      "filename": "sample_000009.jpg",
+      "category": "mixed_layout",
+      "document_type": "image_only",
+      "dpi": 266,
+      "num_defects": 0,
+      "labels": {
+        "blur": 0.0,
+        "noise": 0.0,
+        "illumination": 0.0,
+        "artifacts": 0.0,
+        "skew": 0.0
+      },
+      "quality": "clean"
+    },
+    {
+      "filename": "sample_000002.jpg",
+      "category": "mixed_layout",
+      "document_type": "image_only",
+      "dpi": 209,
+      "num_defects": 1,
+      "labels": {
+        "blur": 0.0,
+        "noise": 0.0,
+        "illumination": 1.0,
+        "artifacts": 0.0,
+        "skew": 0.0
+      },
+      "quality": "moderate"
+    },
+    {
+      "filename": "sample_000003.jpg",
+      "category": "mixed_layout",
+      "document_type": "image_only",
+      "dpi": 266,
+      "num_defects": 2,
+      "labels": {
+        "blur": 1.0,
+        "noise": 0.0,
+        "illumination": 0.0,
+        "artifacts": 1.0,
+        "skew": 0.0
+      },
+      "quality": "severe"
+    }
+  ]
+}

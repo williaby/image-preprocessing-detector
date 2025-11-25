@@ -18,8 +18,8 @@ This file ensures that the CodeQL security-extended query suite is:
 CodeQL should flag every function in this file with appropriate severity.
 """
 
-import pickle
-import subprocess
+import pickle  # nosec B403 - required for security validation testing
+import subprocess  # nosec B404 - required for security validation testing
 import hashlib
 import os
 import sqlite3
@@ -146,7 +146,7 @@ class CodeQLValidationTests:
         Expected: CWE-327: Use of Weak Cryptographic Algorithm
         Severity: Medium
         """
-        password = "user_password_123"
+        password = "user_password_123"  # nosec B105 - test fixture password
 
         # VULNERABLE: MD5 is cryptographically broken
         md5_hash = hashlib.md5(password.encode()).hexdigest()  # nosec

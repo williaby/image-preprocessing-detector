@@ -27,9 +27,9 @@ def recommend_ocr_routing(
 
     Decision tree logic (in evaluation order):
     1. IF has_tables OR has_figures → vision_structured
-    2. ELIF pdf_type == born_digital AND dqs.degradation_score > 0.8 AND layout simple
+    2. ELIF pre_ocr_risk > 0.6 OR has_handwriting → ocr_advanced
+    3. ELIF pdf_type == born_digital AND dqs.degradation_score > 0.8 AND layout simple
        → ocr_fast
-    3. ELIF pre_ocr_risk > 0.6 OR has_handwriting → ocr_advanced
     4. ELIF pdf_type == image_only AND layout simple → vision_simple
     5. ELSE → ocr_advanced (conservative fallback)
 
@@ -76,7 +76,7 @@ def recommend_ocr_routing(
     )
 
     # Decision Tree Implementation
-    # Rule 2: Documents with tables or figures → vision-based structured extraction
+    # Rule 1: Documents with tables or figures → vision-based structured extraction
     # (Evaluated first as it takes precedence over other rules)
     if has_tables or has_figures:
         content_types = []
@@ -90,7 +90,18 @@ def recommend_ocr_routing(
         )
         return OCRRoutingRecommendation.VISION_STRUCTURED, rationale
 
-    # Rule 1: Born-digital PDFs with good quality and simple layout → fast OCR
+    # Rule 2: High-risk documents or handwriting → advanced OCR
+    # (Evaluated before born-digital fast path to ensure safety)
+    if pre_ocr_risk > 0.6 or has_handwriting:
+        reasons = []
+        if pre_ocr_risk > 0.6:
+            reasons.append(f"high OCR risk score ({pre_ocr_risk:.2f})")
+        if has_handwriting:
+            reasons.append("handwriting detected")
+        rationale = f"Advanced OCR required due to: {', '.join(reasons)}."
+        return OCRRoutingRecommendation.OCR_ADVANCED, rationale
+
+    # Rule 3: Born-digital PDFs with good quality and simple layout → fast OCR
     if (
         pdf_type == PDFType.BORN_DIGITAL
         and dqs.degradation_score > 0.8  # High score = low degradation (pristine)
@@ -101,16 +112,6 @@ def recommend_ocr_routing(
             f"and simple layout. Fast OCR sufficient."
         )
         return OCRRoutingRecommendation.OCR_FAST, rationale
-
-    # Rule 3: High-risk documents or handwriting → advanced OCR
-    if pre_ocr_risk > 0.6 or has_handwriting:
-        reasons = []
-        if pre_ocr_risk > 0.6:
-            reasons.append(f"high OCR risk score ({pre_ocr_risk:.2f})")
-        if has_handwriting:
-            reasons.append("handwriting detected")
-        rationale = f"Advanced OCR required due to: {', '.join(reasons)}."
-        return OCRRoutingRecommendation.OCR_ADVANCED, rationale
 
     # Rule 4: Image-only PDFs with simple layout → simple vision extraction
     if pdf_type == PDFType.IMAGE_ONLY and is_simple_layout:

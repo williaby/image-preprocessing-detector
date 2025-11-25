@@ -8,11 +8,16 @@ Colab-specific optimizations for training workflows.
 """
 
 import os
+import shutil
 import subprocess  # nosec B404 - subprocess used safely with hardcoded commands
 import sys
 from pathlib import Path
 
 import torch
+
+# Constants for Colab-specific paths
+COLAB_CONTENT_ROOT = "/content"
+COLAB_DRIVE_ROOT = "/content/drive/MyDrive"
 
 
 def is_colab_environment() -> bool:
@@ -29,6 +34,58 @@ def is_colab_environment() -> bool:
         return False
 
 
+# GPU tier mapping: (identifier, tier_name, expected_memory_gb)
+_GPU_TIERS: dict[str, tuple[str, int]] = {
+    "t4": ("Free/Pro (T4)", 15),
+    "p100": ("Pro (P100)", 16),
+    "v100": ("Pro (V100)", 16),
+    "a100": ("Pro+ (A100)", 40),
+}
+
+
+def _detect_colab_tier(gpu_name: str, fallback_memory: float) -> tuple[str, float]:
+    """Detect Colab GPU tier from GPU name.
+
+    Args:
+        gpu_name: Name of the GPU (case-insensitive)
+        fallback_memory: Memory to use if tier not recognized
+
+    Returns:
+        Tuple of (tier_name, expected_memory_gb)
+    """
+    gpu_name_lower = gpu_name.lower()
+    for identifier, (tier_name, memory) in _GPU_TIERS.items():
+        if identifier in gpu_name_lower:
+            return tier_name, memory
+    return "Unknown", fallback_memory
+
+
+def _get_nvidia_smi_info() -> dict[str, str]:
+    """Get detailed GPU info from nvidia-smi.
+
+    Returns:
+        Dictionary with gpu_name_detailed and gpu_memory_detailed, or empty dict on failure
+    """
+    nvidia_smi_path = shutil.which("nvidia-smi")
+    if nvidia_smi_path is None:
+        return {}
+
+    result = subprocess.run(  # nosec B603 - nvidia-smi path resolved via shutil.which
+        [nvidia_smi_path, "--query-gpu=name,memory.total", "--format=csv,noheader"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return {}
+
+    try:
+        gpu_name, gpu_memory = result.stdout.strip().split(", ")
+        return {"gpu_name_detailed": gpu_name, "gpu_memory_detailed": gpu_memory}
+    except ValueError:
+        return {}
+
+
 def get_gpu_info() -> dict[str, any]:
     """Get GPU information in Colab.
 
@@ -41,49 +98,23 @@ def get_gpu_info() -> dict[str, any]:
         "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
     }
 
-    if info["gpu_available"]:
-        info["gpu_name"] = torch.cuda.get_device_name(0)
-        info["gpu_memory_total_gb"] = round(
-            torch.cuda.get_device_properties(0).total_memory / (1024**3), 2
-        )
+    if not info["gpu_available"]:
+        return info
 
-        # Try to get more detailed info from nvidia-smi
-        try:
-            result = subprocess.run(  # nosec B607,B603 - nvidia-smi is hardcoded, shell=False
-                [
-                    "nvidia-smi",
-                    "--query-gpu=name,memory.total",
-                    "--format=csv,noheader",
-                ],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode == 0:
-                gpu_name, gpu_memory = result.stdout.strip().split(", ")
-                info["gpu_name_detailed"] = gpu_name
-                info["gpu_memory_detailed"] = gpu_memory
-        except Exception:  # nosec B110 - graceful degradation for optional GPU info
-            pass
+    info["gpu_name"] = torch.cuda.get_device_name(0)
+    info["gpu_memory_total_gb"] = round(
+        torch.cuda.get_device_properties(0).total_memory / (1024**3), 2
+    )
+
+    # Try to get more detailed info from nvidia-smi
+    info.update(_get_nvidia_smi_info())
 
     # Detect GPU tier for Colab
-    if info["gpu_available"]:
-        gpu_name = info["gpu_name"].lower()
-        if "t4" in gpu_name:
-            info["colab_tier"] = "Free/Pro (T4)"
-            info["expected_memory_gb"] = 15
-        elif "p100" in gpu_name:
-            info["colab_tier"] = "Pro (P100)"
-            info["expected_memory_gb"] = 16
-        elif "v100" in gpu_name:
-            info["colab_tier"] = "Pro (V100)"
-            info["expected_memory_gb"] = 16
-        elif "a100" in gpu_name:
-            info["colab_tier"] = "Pro+ (A100)"
-            info["expected_memory_gb"] = 40
-        else:
-            info["colab_tier"] = "Unknown"
-            info["expected_memory_gb"] = info.get("gpu_memory_total_gb", 0)
+    tier, memory = _detect_colab_tier(
+        info["gpu_name"], info.get("gpu_memory_total_gb", 0)
+    )
+    info["colab_tier"] = tier
+    info["expected_memory_gb"] = memory
 
     return info
 
@@ -117,11 +148,11 @@ def print_environment_info() -> None:
 
     # Disk space
     print("\n💾 Disk Space:")
-    total, used, free = get_disk_space("/content")
-    print(f"   /content: {free:.1f} GB free (Total: {total:.1f} GB)")
+    total, _, free = get_disk_space(COLAB_CONTENT_ROOT)
+    print(f"   {COLAB_CONTENT_ROOT}: {free:.1f} GB free (Total: {total:.1f} GB)")
 
     if is_colab_environment():
-        drive_total, drive_used, drive_free = get_disk_space("/content/drive/MyDrive")
+        drive_total, _, drive_free = get_disk_space(COLAB_DRIVE_ROOT)
         if drive_total > 0:
             print(
                 f"   Google Drive: {drive_free:.1f} GB free (Total: {drive_total:.1f} GB)"
@@ -130,7 +161,7 @@ def print_environment_info() -> None:
     print("=" * 60)
 
 
-def get_disk_space(path: str = "/content") -> tuple[float, float, float]:
+def get_disk_space(path: str = COLAB_CONTENT_ROOT) -> tuple[float, float, float]:
     """Get disk space information.
 
     Args:
@@ -139,8 +170,6 @@ def get_disk_space(path: str = "/content") -> tuple[float, float, float]:
     Returns:
         Tuple of (total_gb, used_gb, free_gb)
     """
-    import shutil
-
     try:
         stat = shutil.disk_usage(path)
         total_gb = stat.total / (1024**3)
@@ -318,7 +347,7 @@ def check_session_health() -> dict[str, any]:
         health["gpu_memory_usage"] = gpu_usage["usage_percent"]
 
     # Check disk space
-    _, _, free_gb = get_disk_space("/content")
+    _, _, free_gb = get_disk_space(COLAB_CONTENT_ROOT)
     health["disk_space_ok"] = free_gb > 5  # At least 5GB free
     health["disk_free_gb"] = round(free_gb, 1)
 
@@ -375,8 +404,8 @@ def setup_colab_training_environment(
     print("=" * 60 + "\n")
 
     paths = {
-        "content_root": "/content",
-        "project_root": f"/content/{project_name}",
+        "content_root": COLAB_CONTENT_ROOT,
+        "project_root": f"{COLAB_CONTENT_ROOT}/{project_name}",
     }
 
     # Mount Google Drive if requested
@@ -384,8 +413,8 @@ def setup_colab_training_environment(
         from scripts.gdrive_sync import mount_google_drive
 
         mount_google_drive()
-        paths["drive_root"] = "/content/drive/MyDrive"
-        paths["drive_project"] = f"/content/drive/MyDrive/{project_name}"
+        paths["drive_root"] = COLAB_DRIVE_ROOT
+        paths["drive_project"] = f"{COLAB_DRIVE_ROOT}/{project_name}"
 
     # Print environment info
     print_environment_info()

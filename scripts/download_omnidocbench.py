@@ -113,6 +113,91 @@ def load_token_from_env() -> str | None:
     return None
 
 
+def _resolve_hf_token(hf_token: str | None) -> str | None:
+    """Resolve HuggingFace token from multiple sources.
+
+    Args:
+        hf_token: Explicit token if provided
+
+    Returns:
+        Resolved token or None if not found
+    """
+    if hf_token is not None:
+        return hf_token
+
+    token = load_token_from_env()
+    if token is not None:
+        return token
+
+    return os.getenv("HF_TOKEN")
+
+
+def _log_token_not_found() -> None:
+    """Log error message when HuggingFace token is not found."""
+    logger.error("No HuggingFace token found!")
+    logger.error("Please either:")
+    logger.error("  1. Add HF_TOKEN to .env file")
+    logger.error("  2. Set HF_TOKEN environment variable")
+    logger.error("  3. Pass --token argument")
+    logger.error("\nGet your token at: https://huggingface.co/settings/tokens")
+
+
+def _check_account_status(hf_token: str) -> None:
+    """Check and log HuggingFace account status."""
+    try:
+        from huggingface_hub import HfApi
+
+        api = HfApi(token=hf_token)
+        user_info = api.whoami()
+        logger.info(f"Logged in as: {user_info.get('name', 'Unknown')}")
+
+        is_pro = user_info.get("isPro", False) or user_info.get("orgs", [])
+        if is_pro:
+            logger.info(
+                "✓ PRO/Enterprise account detected - higher rate limits available"
+            )
+        else:
+            logger.info(
+                "Free tier account - using conservative rate limiting (5,000 req/5min)"
+            )
+    except Exception as e:
+        logger.warning(f"Could not check account status: {e}")
+
+
+def _is_rate_limit_error(error_msg: str) -> bool:
+    """Check if an error message indicates a rate limit error."""
+    error_lower = error_msg.lower()
+    return any(
+        indicator in error_lower
+        for indicator in ("rate limit", "429", "too many requests")
+    )
+
+
+def _log_rate_limit_suggestions() -> None:
+    """Log suggestions for handling rate limits."""
+    logger.info("Consider:")
+    logger.info("  1. Using a PRO account for higher limits (12,000 req/5min)")
+    logger.info("  2. Running during off-peak hours")
+    logger.info("  3. Downloading in smaller batches")
+
+
+def _log_download_success(output_path: Path, dataset) -> None:
+    """Log successful download information."""
+    logger.info("\n" + "=" * 70)
+    logger.info("✓ Download Complete!")
+    logger.info("=" * 70)
+    logger.info(f"Dataset saved to: {output_path.absolute()}")
+    logger.info("\nDataset structure:")
+    for split_name, split_dataset in dataset.items():
+        logger.info(f"  {split_name}: {len(split_dataset)} rows")
+        logger.info(f"    Features: {list(split_dataset.features.keys())}")
+
+    logger.info(f"\nTotal size on disk: {get_directory_size(output_path):.2f} MB")
+    logger.info("\nTo use this dataset:")
+    logger.info("  from datasets import load_from_disk")
+    logger.info(f"  dataset = load_from_disk('{output_path}')")
+
+
 def download_omnidocbench(
     output_dir: str = "data/benchmarks/omnidocbench",
     hf_token: str | None = None,
@@ -132,8 +217,7 @@ def download_omnidocbench(
         bool: True if download successful, False otherwise
     """
     try:
-        # Import here to provide better error messages
-        from huggingface_hub import HfApi, login
+        from huggingface_hub import login
 
         from datasets import load_dataset
     except ImportError:
@@ -141,20 +225,10 @@ def download_omnidocbench(
         logger.error("Or: pip install datasets huggingface-hub")
         return False
 
-    # Get HuggingFace token
-    if hf_token is None:
-        hf_token = load_token_from_env()
-
-    if hf_token is None:
-        hf_token = os.getenv("HF_TOKEN")
-
+    # Resolve and validate token
+    hf_token = _resolve_hf_token(hf_token)
     if not hf_token:
-        logger.error("No HuggingFace token found!")
-        logger.error("Please either:")
-        logger.error("  1. Add HF_TOKEN to .env file")
-        logger.error("  2. Set HF_TOKEN environment variable")
-        logger.error("  3. Pass --token argument")
-        logger.error("\nGet your token at: https://huggingface.co/settings/tokens")
+        _log_token_not_found()
         return False
 
     # Authenticate with HuggingFace
@@ -166,113 +240,100 @@ def download_omnidocbench(
         logger.error(f"Authentication failed: {e}")
         return False
 
-    # Check rate limit status (optional, requires API)
-    try:
-        api = HfApi(token=hf_token)
-        user_info = api.whoami()
-        logger.info(f"Logged in as: {user_info.get('name', 'Unknown')}")
+    _check_account_status(hf_token)
 
-        # Check if PRO account (higher rate limits)
-        if user_info.get("isPro", False) or user_info.get("orgs", []):
-            logger.info(
-                "✓ PRO/Enterprise account detected - higher rate limits available"
-            )
-        else:
-            logger.info(
-                "Free tier account - using conservative rate limiting (5,000 req/5min)"
-            )
-    except Exception as e:
-        logger.warning(f"Could not check account status: {e}")
-
-    # Initialize rate limit handler
+    # Initialize rate limit handler and output directory
     rate_limiter = RateLimitHandler()
-
-    # Create output directory
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output directory: {output_path.absolute()}")
 
     # Download dataset with retries
+    return _execute_download_with_retries(
+        load_dataset, output_path, hf_token, rate_limiter, max_retries, retry_delay
+    )
+
+
+def _execute_download_with_retries(
+    load_dataset,
+    output_path: Path,
+    hf_token: str,
+    rate_limiter: RateLimitHandler,
+    max_retries: int,
+    retry_delay: int,
+) -> bool:
+    """Execute the download with retry logic.
+
+    Returns:
+        True if successful, False otherwise
+    """
     for attempt in range(1, max_retries + 1):
+        logger.info(f"\n{'=' * 70}")
+        logger.info(f"Download Attempt {attempt}/{max_retries}")
+        logger.info(f"{'=' * 70}")
+        logger.info("Dataset: opendatalab/OmniDocBench")
+        logger.info("Size: ~1.25 GB (1,358 rows with images)")
+        logger.info("This may take 10-30 minutes depending on connection speed...")
+        logger.info("")
+
+        rate_limiter.check_and_wait()
+
         try:
-            logger.info(f"\n{'=' * 70}")
-            logger.info(f"Download Attempt {attempt}/{max_retries}")
-            logger.info(f"{'=' * 70}")
-            logger.info("Dataset: opendatalab/OmniDocBench")
-            logger.info("Size: ~1.25 GB (1,358 rows with images)")
-            logger.info("This may take 10-30 minutes depending on connection speed...")
-            logger.info("")
-
-            # Check rate limit before starting
-            rate_limiter.check_and_wait()
-
-            # Download dataset
-            # Using streaming=False to download everything at once
-            # Using cache_dir to avoid redundant downloads
-            dataset = load_dataset(
+            dataset = load_dataset(  # nosec B615 - trusted dataset
                 "opendatalab/OmniDocBench",
                 cache_dir=str(output_path / ".cache"),
                 token=hf_token,
-                trust_remote_code=True,  # Required for some datasets
+                trust_remote_code=True,
             )
 
-            # Save to disk in arrow format (efficient)
             logger.info(f"\nSaving dataset to: {output_path}")
             dataset.save_to_disk(str(output_path))
-
-            # Print dataset info
-            logger.info("\n" + "=" * 70)
-            logger.info("✓ Download Complete!")
-            logger.info("=" * 70)
-            logger.info(f"Dataset saved to: {output_path.absolute()}")
-            logger.info("\nDataset structure:")
-            for split_name, split_dataset in dataset.items():
-                logger.info(f"  {split_name}: {len(split_dataset)} rows")
-                logger.info(f"    Features: {list(split_dataset.features.keys())}")
-
-            logger.info(
-                f"\nTotal size on disk: {get_directory_size(output_path):.2f} MB"
-            )
-            logger.info("\nTo use this dataset:")
-            logger.info("  from datasets import load_from_disk")
-            logger.info(f"  dataset = load_from_disk('{output_path}')")
-
+            _log_download_success(output_path, dataset)
             return True
 
         except Exception as e:
-            error_msg = str(e).lower()
-
-            # Check if rate limit error
-            if (
-                "rate limit" in error_msg
-                or "429" in error_msg
-                or "too many requests" in error_msg
-            ):
-                wait_time = retry_delay * (2 ** (attempt - 1))  # Exponential backoff
-                logger.warning(f"Rate limit hit on attempt {attempt}/{max_retries}")
-
-                if attempt < max_retries:
-                    logger.info(f"Waiting {wait_time}s before retry...")
-                    logger.info("Consider:")
-                    logger.info(
-                        "  1. Using a PRO account for higher limits (12,000 req/5min)"
-                    )
-                    logger.info("  2. Running during off-peak hours")
-                    logger.info("  3. Downloading in smaller batches")
-                    time.sleep(wait_time)
-                    continue
-                logger.error("Max retries exceeded due to rate limiting")
-                logger.error("Please try again later or upgrade to PRO account")
+            should_continue = _handle_download_error(
+                e, attempt, max_retries, retry_delay
+            )
+            if not should_continue:
                 return False
-            # Other error
-            logger.error(f"Download failed: {e}")
-            if attempt < max_retries:
-                logger.info(f"Retrying in {retry_delay}s...")
-                time.sleep(retry_delay)
-                continue
-            return False
 
     return False
+
+
+def _handle_download_error(
+    error: Exception, attempt: int, max_retries: int, retry_delay: int
+) -> bool:
+    """Handle download errors and determine if retry should continue.
+
+    Returns:
+        True if should continue retrying, False if should stop
+    """
+    error_msg = str(error)
+    is_last_attempt = attempt >= max_retries
+
+    if _is_rate_limit_error(error_msg):
+        wait_time = retry_delay * (2 ** (attempt - 1))
+        logger.warning(f"Rate limit hit on attempt {attempt}/{max_retries}")
+
+        if is_last_attempt:
+            logger.error("Max retries exceeded due to rate limiting")
+            logger.error("Please try again later or upgrade to PRO account")
+            return False
+
+        logger.info(f"Waiting {wait_time}s before retry...")
+        _log_rate_limit_suggestions()
+        time.sleep(wait_time)
+        return True
+
+    # Other error
+    logger.error(f"Download failed: {error}")
+    if is_last_attempt:
+        return False
+
+    logger.info(f"Retrying in {retry_delay}s...")
+    time.sleep(retry_delay)
+    return True
 
 
 def get_directory_size(path: Path) -> float:

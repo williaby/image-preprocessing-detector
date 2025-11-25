@@ -1,0 +1,65 @@
+{
+  "num_documents": 50,
+  "num_pages": 101,
+  "target_f1": 0.85,
+  "flags": {
+    "has_tables": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "target_met": false,
+      "num_samples": 101,
+      "num_positive": 32
+    },
+    "has_figures": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "target_met": false,
+      "num_samples": 101,
+      "num_positive": 35
+    },
+    "has_dense_math": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "target_met": false,
+      "num_samples": 101,
+      "num_positive": 14
+    },
+    "has_handwriting": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "target_met": false,
+      "num_samples": 101,
+      "num_positive": 18
+    },
+    "fuzzy_scan": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "target_met": false,
+      "num_samples": 101,
+      "num_positive": 17
+    },
+    "watermark": {
+      "precision": 0.04950495049504951,
+      "recall": 1.0,
+      "f1": 0.09433962264150944,
+      "target_met": false,
+      "num_samples": 101,
+      "num_positive": 5
+    },
+    "colorful_background": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "target_met": false,
+      "num_samples": 101,
+      "num_positive": 9
+    }
+  },
+  "mean_f1": 0.09433962264150944,
+  "all_targets_met": false
+}

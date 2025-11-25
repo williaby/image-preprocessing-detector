@@ -802,6 +802,8 @@ class TestPhase2MLInference:
             blur_score=0.82,  # 0.03 difference
             contrast_score=0.72,  # 0.02 difference
             skew_score=0.88,  # 0.02 difference
+            noise_score=0.73,  # 0.02 difference (close to ML 0.75)
+            compression_score=0.80,  # 0.02 difference (close to ML 0.82)
         )
 
         discrepancy = detector.calculate_discrepancy(ml_scores, classical_close)
@@ -816,6 +818,8 @@ class TestPhase2MLInference:
             blur_score=0.45,  # 0.40 difference - large!
             contrast_score=0.68,
             skew_score=0.85,
+            noise_score=0.73,  # Keep noise close to avoid triggering on wrong dimension
+            compression_score=0.80,  # Keep compression close
         )
 
         discrepancy_large = detector.calculate_discrepancy(

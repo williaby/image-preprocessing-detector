@@ -1,0 +1,29 @@
+# Coverage configuration for ML-inclusive test runs
+# This config includes PyTorch-dependent modules that are excluded from base coverage
+
+[run]
+source = src
+branch = true
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */site-packages/*
+    validation/*
+    benchmarks/*
+    data/*
+    # Only exclude cloud utilities that require credentials
+    src/image_preprocessing_detector/utils/gcs_uploader.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+precision = 2
+show_missing = true

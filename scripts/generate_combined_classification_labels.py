@@ -32,7 +32,7 @@ See: https://www.cs.cmu.edu/~aharley/rvl-cdip/
 import argparse
 import json
 import logging
-import random
+import random  # nosec B311 - used for non-cryptographic dataset sampling
 from collections import defaultdict
 from pathlib import Path
 
@@ -168,12 +168,14 @@ def sample_doclaynet_by_class(
         f"DocLayNet: {len(born_digital_pages)} born_digital, {len(hybrid_pages)} hybrid"
     )
 
-    # Sample requested counts
-    random.seed(42)
-    sampled_born_digital = random.sample(
+    # Sample requested counts (deterministic with fixed seed for reproducibility)
+    random.seed(42)  # nosec B311 - fixed seed for reproducible dataset sampling
+    sampled_born_digital = random.sample(  # nosec B311
         born_digital_pages, min(born_digital_count, len(born_digital_pages))
     )
-    sampled_hybrid = random.sample(hybrid_pages, min(hybrid_count, len(hybrid_pages)))
+    sampled_hybrid = random.sample(  # nosec B311
+        hybrid_pages, min(hybrid_count, len(hybrid_pages))
+    )
 
     return sampled_born_digital + sampled_hybrid
 
@@ -226,9 +228,11 @@ def sample_rvl_cdip(
 
     logger.info(f"RVL-CDIP: {len(image_entries)} image_only samples available")
 
-    # Sample requested count
-    random.seed(42)
-    sampled = random.sample(image_entries, min(image_only_count, len(image_entries)))
+    # Sample requested count (deterministic with fixed seed for reproducibility)
+    random.seed(42)  # nosec B311 - fixed seed for reproducible dataset sampling
+    sampled = random.sample(  # nosec B311
+        image_entries, min(image_only_count, len(image_entries))
+    )
 
     return sampled
 
