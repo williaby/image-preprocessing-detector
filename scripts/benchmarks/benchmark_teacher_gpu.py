@@ -86,7 +86,9 @@ def benchmark_single_inference(
     }
 
 
-def warmup_model(detector: MLIQADetector, warmup_image: np.ndarray, num_warmup: int = 10) -> None:
+def warmup_model(
+    detector: MLIQADetector, warmup_image: np.ndarray, num_warmup: int = 10
+) -> None:
     """Warm up model before benchmarking.
 
     Args:
@@ -149,7 +151,7 @@ def run_benchmark() -> dict[str, Any]:
     meets_target = single_results["mean"] <= 30.0
     target_mark = "✅ PASS" if meets_target else "❌ FAIL"
 
-    print(f"\nTarget Validation:")
+    print("\nTarget Validation:")
     print(f"  Target (≤30ms): {target_mark} ({single_results['mean']:.2f}ms)")
 
     # Compile final results

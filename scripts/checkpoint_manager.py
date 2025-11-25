@@ -25,6 +25,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+# Checkpoint file naming constants
+CHECKPOINT_LATEST_FILENAME = "checkpoint_latest.pt"
+CHECKPOINT_BEST_FILENAME = "checkpoint_best.pt"
+
 
 class CheckpointManager:
     """Manages training checkpoints with session time awareness."""
@@ -157,7 +161,7 @@ class CheckpointManager:
 
         # Also save as "latest" for easy resuming
         # nosec B614 - torch.save uses pickle, but saving our own trusted model checkpoints
-        latest_path = self.checkpoint_dir / "checkpoint_latest.pt"
+        latest_path = self.checkpoint_dir / CHECKPOINT_LATEST_FILENAME
         torch.save(checkpoint, latest_path)  # nosec
 
         # Save metadata JSON for easy inspection
@@ -186,7 +190,7 @@ class CheckpointManager:
             if self.best_metric_value is None or metric_value < self.best_metric_value:
                 self.best_metric_value = metric_value
                 self.best_model_path = checkpoint_path
-                best_path = self.checkpoint_dir / "checkpoint_best.pt"
+                best_path = self.checkpoint_dir / CHECKPOINT_BEST_FILENAME
                 # nosec B614 - torch.save uses pickle, but saving our own trusted model checkpoints
                 torch.save(checkpoint, best_path)  # nosec
                 print(f"   ⭐ New best model! Val loss: {metric_value:.4f}")
@@ -217,18 +221,19 @@ class CheckpointManager:
         Raises:
             FileNotFoundError: If no checkpoint exists
         """
+        resolved_path: Path
         if checkpoint_path is None:
-            checkpoint_path = self.checkpoint_dir / "checkpoint_latest.pt"
+            resolved_path = self.checkpoint_dir / CHECKPOINT_LATEST_FILENAME
         else:
-            checkpoint_path = Path(checkpoint_path)
+            resolved_path = Path(checkpoint_path)
 
-        if not checkpoint_path.exists():
-            raise FileNotFoundError(f"No checkpoint found at {checkpoint_path}")
+        if not resolved_path.exists():
+            raise FileNotFoundError(f"No checkpoint found at {resolved_path}")
 
-        print(f"📂 Loading checkpoint: {checkpoint_path.name}")
+        print(f"📂 Loading checkpoint: {resolved_path.name}")
         # nosec B614 - torch.load uses pickle, but loading our own trusted checkpoints from local filesystem
         # WARNING: Only load checkpoints from trusted sources (our own training runs)
-        checkpoint = torch.load(checkpoint_path, map_location="cpu")  # nosec
+        checkpoint = torch.load(resolved_path, map_location="cpu")  # nosec
 
         # Load model state
         model.load_state_dict(checkpoint["model_state_dict"])
@@ -260,7 +265,7 @@ class CheckpointManager:
         Returns:
             True if checkpoint_latest.pt exists
         """
-        latest_path = self.checkpoint_dir / "checkpoint_latest.pt"
+        latest_path = self.checkpoint_dir / CHECKPOINT_LATEST_FILENAME
         return latest_path.exists()
 
     def get_best_checkpoint_path(self) -> Path | None:
@@ -269,7 +274,7 @@ class CheckpointManager:
         Returns:
             Path to best checkpoint or None if not found
         """
-        best_path = self.checkpoint_dir / "checkpoint_best.pt"
+        best_path = self.checkpoint_dir / CHECKPOINT_BEST_FILENAME
         if best_path.exists():
             return best_path
         return self.best_model_path

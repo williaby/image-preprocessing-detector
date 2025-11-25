@@ -33,7 +33,7 @@ def load_latest_results(reports_dir: Path) -> dict[str, Any]:
     Returns:
         Dictionary mapping suite names to their latest results
     """
-    results = {}
+    results: dict[str, Any] = {}
 
     if not reports_dir.exists():
         print(f"⚠ Reports directory not found: {reports_dir}")
@@ -115,6 +115,155 @@ def get_status_icon(
     return "✓" if value >= target else "✗"
 
 
+def _format_target_string(
+    metric_name: str, target: float | None, lower_is_better: bool
+) -> str:
+    """Format target value for display in metrics table.
+
+    Args:
+        metric_name: Name of the metric
+        target: Target value (or None if no target)
+        lower_is_better: Whether lower values are better
+
+    Returns:
+        Formatted target string
+    """
+    if target is None:
+        return "—"
+
+    metric_lower = metric_name.lower()
+    comparator = "≤" if lower_is_better else "≥"
+
+    if "percentage" in metric_lower or "rate" in metric_lower:
+        return f"{comparator} {target * 100:.0f}%"
+    if "degrees" in metric_lower:
+        return f"{comparator} {target}°"
+    if "db" in metric_lower:
+        return f"≥ {target} dB"
+    return f"{comparator} {target}"
+
+
+def _get_metric_value(results: dict[str, Any], suite: str, key: str) -> float | None:
+    """Extract metric value from results.
+
+    Args:
+        results: Benchmark results dictionary
+        suite: Suite name
+        key: Metric key
+
+    Returns:
+        Metric mean value or None if not found
+    """
+    if suite not in results:
+        return None
+    aggregates = results[suite].get("aggregates", {})
+    if key not in aggregates:
+        return None
+    mean_value: float | None = aggregates[key].get("mean")
+    return mean_value
+
+
+def _determine_status(
+    value: float | None,
+    target: float | None,
+    lower_is_better: bool,
+    category: str,
+) -> str:
+    """Determine status icon for a metric.
+
+    Args:
+        value: Current metric value
+        target: Target value
+        lower_is_better: Whether lower is better
+        category: Category name (for special handling)
+
+    Returns:
+        Status icon string
+    """
+    if value is None:
+        return "⏳" if "Layout" in category else "🔄"
+    if target is None:
+        return "—"
+    return get_status_icon(value, target, lower_is_better)
+
+
+def _build_metric_row(
+    category: str,
+    metric_name: str,
+    results: dict[str, Any],
+    suite: str,
+    key: str,
+    target: float | None,
+    lower_is_better: bool,
+) -> str:
+    """Build a single metric row for the table.
+
+    Args:
+        category: Category name
+        metric_name: Metric name
+        results: Benchmark results
+        suite: Suite name
+        key: Metric key
+        target: Target value
+        lower_is_better: Whether lower is better
+
+    Returns:
+        Formatted table row string
+    """
+    value = _get_metric_value(results, suite, key)
+    target_str = _format_target_string(metric_name, target, lower_is_better)
+    current_str = format_metric(value, metric_name)
+    status = _determine_status(value, target, lower_is_better, category)
+
+    return (
+        f"| **{category}** | {metric_name} | {target_str} | {current_str} | {status} |"
+    )
+
+
+# Metrics configuration: category -> metric_name -> (suite, key, target, lower_is_better)
+METRICS_CONFIG: dict[str, dict[str, tuple[str, str, float | None, bool]]] = {
+    "IQA - Blur": {
+        "Correlation (Pearson r)": (
+            "synthetic-iqa-blur-full",
+            "blur_correlation",
+            0.85,
+            False,
+        ),
+        "RMSE": ("synthetic-iqa-blur-full", "blur_rmse", 0.05, True),
+    },
+    "IQA - Skew": {
+        "MAE (degrees)": ("synthetic-iqa-skew-full", "skew_mae", 0.5, True),
+    },
+    "IQA - Deskew": {
+        "Success Rate": (
+            "synthetic-iqa-skew-full",
+            "deskew_success_rate",
+            0.99,
+            False,
+        ),
+    },
+    "IQA - Noise": {
+        "SNR Improvement": (
+            "synthetic-iqa-noise-full",
+            "snr_improvement",
+            6.0,
+            False,
+        ),
+    },
+    "IQA - Quality": {
+        "PSNR": ("synthetic-iqa-noise-full", "psnr", 30.0, False),
+        "SSIM": ("synthetic-iqa-noise-full", "ssim", 0.9, False),
+    },
+    "IQA - Binarization": {
+        "F-measure": ("synthetic-iqa-binarization-full", "f_measure", 0.95, False),
+    },
+    "Layout Detection": {
+        "mAP@[.5:.95] (DocLayNet)": ("doclaynet-layout-full", "mAP", 0.80, False),
+        "Per-class AP": ("doclaynet-layout-full", "per_class_AP", None, False),
+    },
+}
+
+
 def update_quick_metrics_table(readme_content: str, results: dict[str, Any]) -> str:
     """Update the Quick Metrics Summary table.
 
@@ -125,96 +274,18 @@ def update_quick_metrics_table(readme_content: str, results: dict[str, Any]) -> 
     Returns:
         Updated README content
     """
-    # Define metrics and their suite mappings
-    metrics_map = {
-        "IQA - Blur": {
-            "Correlation (Pearson r)": (
-                "synthetic-iqa-blur-full",
-                "blur_correlation",
-                0.85,
-                False,
-            ),
-            "RMSE": ("synthetic-iqa-blur-full", "blur_rmse", 0.05, True),
-        },
-        "IQA - Skew": {
-            "MAE (degrees)": ("synthetic-iqa-skew-full", "skew_mae", 0.5, True),
-        },
-        "IQA - Deskew": {
-            "Success Rate": (
-                "synthetic-iqa-skew-full",
-                "deskew_success_rate",
-                0.99,
-                False,
-            ),
-        },
-        "IQA - Noise": {
-            "SNR Improvement": (
-                "synthetic-iqa-noise-full",
-                "snr_improvement",
-                6.0,
-                False,
-            ),
-        },
-        "IQA - Quality": {
-            "PSNR": ("synthetic-iqa-noise-full", "psnr", 30.0, False),
-            "SSIM": ("synthetic-iqa-noise-full", "ssim", 0.9, False),
-        },
-        "IQA - Binarization": {
-            "F-measure": ("synthetic-iqa-binarization-full", "f_measure", 0.95, False),
-        },
-        "Layout Detection": {
-            "mAP@[.5:.95] (DocLayNet)": ("doclaynet-layout-full", "mAP", 0.80, False),
-            "Per-class AP": ("doclaynet-layout-full", "per_class_AP", None, False),
-        },
-    }
-
     # Build new table
-    new_rows = []
-    new_rows.append("| Category | Metric | Target | Current | Status |")
-    new_rows.append("|----------|--------|--------|---------|--------|")
+    new_rows = [
+        "| Category | Metric | Target | Current | Status |",
+        "|----------|--------|--------|---------|--------|",
+    ]
 
-    for category, metrics in metrics_map.items():
+    for category, metrics in METRICS_CONFIG.items():
         for metric_name, (suite, key, target, lower_is_better) in metrics.items():
-            # Get value from results
-            value = None
-            if suite in results:
-                aggregates = results[suite].get("aggregates", {})
-                if key in aggregates:
-                    value = aggregates[key].get("mean")
-
-            # Format target
-            if target is None:
-                target_str = "—"
-            elif "percentage" in metric_name.lower() or "rate" in metric_name.lower():
-                target_str = (
-                    f"≥ {target * 100:.0f}%"
-                    if not lower_is_better
-                    else f"≤ {target * 100:.0f}%"
-                )
-            elif "degrees" in metric_name.lower():
-                target_str = f"≤ {target}°" if lower_is_better else f"≥ {target}°"
-            elif "db" in metric_name.lower():
-                target_str = f"≥ {target} dB"
-            else:
-                target_str = f"≥ {target}" if not lower_is_better else f"≤ {target}"
-
-            # Format current value
-            current_str = format_metric(value, metric_name)
-
-            # Get status
-            if value is None:
-                if "Layout" in category:
-                    status = "⏳"
-                else:
-                    status = "🔄"
-            else:
-                status = (
-                    get_status_icon(value, target, lower_is_better) if target else "—"
-                )
-
-            new_rows.append(
-                f"| **{category}** | {metric_name} | {target_str} | {current_str} | {status} |"
+            row = _build_metric_row(
+                category, metric_name, results, suite, key, target, lower_is_better
             )
+            new_rows.append(row)
 
     new_table = "\n".join(new_rows)
 
@@ -222,9 +293,7 @@ def update_quick_metrics_table(readme_content: str, results: dict[str, Any]) -> 
     pattern = r"\| Category \| Metric \| Target \| Current \| Status \|.*?\n\n"
     replacement = new_table + "\n\n"
 
-    updated = re.sub(pattern, replacement, readme_content, flags=re.DOTALL)
-
-    return updated
+    return re.sub(pattern, replacement, readme_content, flags=re.DOTALL)
 
 
 def update_last_updated(readme_content: str) -> str:

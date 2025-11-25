@@ -26,3 +26,14 @@ WORKDIR $SRC/image-preprocessing-detector
 # Copy build script to expected location
 COPY .clusterfuzzlite/build.sh /src/build.sh
 RUN chmod +x /src/build.sh
+
+# Security: Create non-root user for build execution (DS002)
+# Note: ClusterFuzzLite infrastructure handles actual execution context
+RUN useradd -m -s /bin/bash -u 1000 fuzzer \
+    && chown -R fuzzer:fuzzer $SRC/image-preprocessing-detector
+
+# Security: HEALTHCHECK not applicable for build containers (DS026)
+# This container performs one-time build operations, not long-running services
+HEALTHCHECK NONE
+
+USER fuzzer

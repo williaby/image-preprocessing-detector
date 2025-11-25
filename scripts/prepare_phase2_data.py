@@ -98,6 +98,63 @@ def convert_pdf_to_images(pdf_path: Path) -> list[np.ndarray]:
         return []
 
 
+VALID_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tiff", ".tif"}
+
+
+def _load_images_from_directory(
+    source_dir: Path, max_images: int | None, current_count: int
+) -> tuple[list[np.ndarray], bool]:
+    """Load image files from a directory.
+
+    Args:
+        source_dir: Directory to scan
+        max_images: Maximum total images to collect
+        current_count: Current number of images collected
+
+    Returns:
+        Tuple of (loaded_images, limit_reached)
+    """
+    images = []
+    image_paths = []
+    for ext in VALID_IMAGE_EXTENSIONS:
+        image_paths.extend(source_dir.rglob(f"*{ext}"))
+
+    for img_path in tqdm(image_paths, desc="Loading images", leave=False):
+        img = cv2.imread(str(img_path))
+        if img is not None:
+            images.append(img)
+            if max_images and current_count + len(images) >= max_images:
+                return images, True
+
+    return images, False
+
+
+def _convert_pdfs_from_directory(
+    source_dir: Path, max_images: int | None, current_count: int
+) -> tuple[list[np.ndarray], bool]:
+    """Convert PDF files to images from a directory.
+
+    Args:
+        source_dir: Directory to scan
+        max_images: Maximum total images to collect
+        current_count: Current number of images collected
+
+    Returns:
+        Tuple of (converted_images, limit_reached)
+    """
+    images = []
+    pdf_paths = list(source_dir.rglob("*.pdf"))
+    print(f"Found {len(pdf_paths)} PDF files to convert...")
+
+    for pdf_path in tqdm(pdf_paths, desc="Converting PDFs"):
+        pdf_images = convert_pdf_to_images(pdf_path)
+        images.extend(pdf_images)
+        if max_images and current_count + len(images) >= max_images:
+            return images, True
+
+    return images, False
+
+
 def collect_source_images(
     source_dirs: list[Path],
     max_images: int | None = None,
@@ -113,9 +170,7 @@ def collect_source_images(
     Returns:
         List of loaded images as numpy arrays (BGR format)
     """
-    valid_image_extensions = {".png", ".jpg", ".jpeg", ".tiff", ".tif"}
-
-    all_images = []
+    all_images: list[np.ndarray] = []
 
     for source_dir in source_dirs:
         if not source_dir.exists():
@@ -124,36 +179,25 @@ def collect_source_images(
 
         print(f"Scanning {source_dir}...")
 
-        # Collect image files
-        image_paths = []
-        for ext in valid_image_extensions:
-            image_paths.extend(source_dir.rglob(f"*{ext}"))
-
-        # Load images
-        for img_path in tqdm(image_paths, desc="Loading images", leave=False):
-            img = cv2.imread(str(img_path))
-            if img is not None:
-                all_images.append(img)
-                if max_images and len(all_images) >= max_images:
-                    break
-
-        # Collect and convert PDFs if enabled
-        if include_pdfs:
-            pdf_paths = list(source_dir.rglob("*.pdf"))
-            print(f"Found {len(pdf_paths)} PDF files to convert...")
-
-            for pdf_path in tqdm(pdf_paths, desc="Converting PDFs"):
-                pdf_images = convert_pdf_to_images(pdf_path)
-                all_images.extend(pdf_images)
-
-                if max_images and len(all_images) >= max_images:
-                    break
-
-        if max_images and len(all_images) >= max_images:
+        # Load image files
+        images, limit_reached = _load_images_from_directory(
+            source_dir, max_images, len(all_images)
+        )
+        all_images.extend(images)
+        if limit_reached:
             break
 
-    # Shuffle and limit
-    random.shuffle(all_images)
+        # Convert PDFs if enabled
+        if include_pdfs:
+            pdf_images, limit_reached = _convert_pdfs_from_directory(
+                source_dir, max_images, len(all_images)
+            )
+            all_images.extend(pdf_images)
+            if limit_reached:
+                break
+
+    # Shuffle and limit (nosec B311 - non-cryptographic shuffling for ML dataset)
+    random.shuffle(all_images)  # nosec B311
     if max_images:
         all_images = all_images[:max_images]
 
@@ -169,7 +213,6 @@ def generate_augmented_dataset(
     labeler: WeakSupervisionLabeler,
     train_split: float = 0.70,
     val_split: float = 0.15,
-    test_split: float = 0.15,
 ) -> dict[str, Any]:
     """Generate augmented dataset with weak supervision labels.
 
@@ -181,12 +224,15 @@ def generate_augmented_dataset(
         labeler: Weak supervision labeler
         train_split: Fraction for training set
         val_split: Fraction for validation set
-        test_split: Fraction for test set
 
     Returns:
         Dictionary with dataset statistics
+
+    Note:
+        Test split is calculated as remainder (1 - train_split - val_split)
+        to ensure exact num_samples total.
     """
-    # Calculate split sizes
+    # Calculate split sizes (test is remainder to ensure exact num_samples)
     num_train = int(num_samples * train_split)
     num_val = int(num_samples * val_split)
     num_test = num_samples - num_train - num_val
@@ -219,9 +265,9 @@ def generate_augmented_dataset(
         split_labels = []
         images_dir = split_dir / "images"
 
-        for i in tqdm(range(split_size), desc=f"{split_name} set"):
+        for _ in tqdm(range(split_size), desc=f"{split_name} set"):
             # Select random source image (with replacement)
-            image = random.choice(source_images)
+            image = random.choice(source_images)  # nosec B311
 
             # Apply augmentations
             augmented = augmentation_pipeline(image)
@@ -410,7 +456,7 @@ def main() -> None:
     print("Creating weak supervision labeler...")
     labeler = WeakSupervisionLabeler()
 
-    # Generate dataset
+    # Generate dataset (test_split calculated as remainder inside function)
     stats = generate_augmented_dataset(
         source_images=source_images,
         output_dir=output_dir,
@@ -419,7 +465,6 @@ def main() -> None:
         labeler=labeler,
         train_split=args.train_split,
         val_split=args.val_split,
-        test_split=args.test_split,
     )
 
     # Print summary

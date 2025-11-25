@@ -119,6 +119,112 @@ def get_rotated_image_dimensions(
     return (img_width, img_height)
 
 
+def _build_annotation_mappings(
+    coco_data: dict, text_category_ids: list[int]
+) -> tuple[dict, dict, list]:
+    """Build image ID to info and annotations mappings."""
+    img_id_to_info = {img["id"]: img for img in coco_data["images"]}
+
+    img_to_anns: dict = {}
+    for ann in coco_data["annotations"]:
+        img_id = ann["image_id"]
+        if ann.get("category_id") in text_category_ids:
+            if img_id not in img_to_anns:
+                img_to_anns[img_id] = []
+            img_to_anns[img_id].append(ann)
+
+    text_images = [img_id for img_id in img_to_anns if img_to_anns[img_id]]
+    return img_id_to_info, img_to_anns, text_images
+
+
+def _create_output_coco_structure() -> dict:
+    """Create the base output COCO dataset structure."""
+    return {
+        "info": {
+            "description": "Synthetic vertical text dataset with orientation annotations",
+            "source": "DocLayNet CDLA-Permissive-2.0 (rotated)",
+            "generation_method": "Rotation augmentation (0°, 90°, 180°, 270°)",
+        },
+        "images": [],
+        "annotations": [],
+        "categories": [
+            {
+                "id": angle,
+                "name": ORIENTATIONS[angle],
+                "orientation_angle": angle,
+            }
+            for angle in ORIENTATIONS
+        ],
+    }
+
+
+def _process_single_rotation(
+    img_id: int,
+    angle: int,
+    img_id_to_info: dict,
+    img_to_anns: dict,
+    images_dir: Path,
+    output_images_dir: Path,
+    new_img_id: int,
+    new_ann_id: int,
+    output_coco: dict,
+) -> tuple[int, int, bool]:
+    """Process a single image rotation and add to output dataset."""
+    img_info = img_id_to_info[img_id]
+    img_path = images_dir / img_info["file_name"]
+
+    if not img_path.exists():
+        logger.warning(f"Image not found: {img_path}")
+        return new_img_id, new_ann_id, False
+
+    img = cv2.imread(str(img_path))
+    if img is None:
+        logger.warning(f"Failed to load image: {img_path}")
+        return new_img_id, new_ann_id, False
+
+    rotated_img = rotate_image(img, angle)
+
+    output_filename = f"vertical_{angle}deg_{img_path.stem}.png"
+    output_path = output_images_dir / output_filename
+    cv2.imwrite(str(output_path), rotated_img)
+
+    new_width, new_height = get_rotated_image_dimensions(
+        img_info["width"], img_info["height"], angle
+    )
+
+    output_coco["images"].append(
+        {
+            "id": new_img_id,
+            "file_name": output_filename,
+            "width": new_width,
+            "height": new_height,
+            "original_image_id": img_id,
+            "orientation_angle": angle,
+        }
+    )
+
+    for ann in img_to_anns[img_id]:
+        adjusted_bbox = adjust_bbox_for_rotation(
+            ann["bbox"], img_info["width"], img_info["height"], angle
+        )
+        output_coco["annotations"].append(
+            {
+                "id": new_ann_id,
+                "image_id": new_img_id,
+                "category_id": angle,
+                "bbox": adjusted_bbox,
+                "area": adjusted_bbox[2] * adjusted_bbox[3],
+                "iscrowd": 0,
+                "orientation_angle": angle,
+                "orientation_label": ORIENTATIONS[angle],
+                "original_category_id": ann.get("category_id"),
+            }
+        )
+        new_ann_id += 1
+
+    return new_img_id + 1, new_ann_id, True
+
+
 def generate_rotated_samples(
     coco_data: dict,
     images_dir: Path,
@@ -142,51 +248,26 @@ def generate_rotated_samples(
     output_images_dir = output_dir / "images"
     output_images_dir.mkdir(parents=True, exist_ok=True)
 
-    # Build image ID to filename mapping
-    img_id_to_info = {img["id"]: img for img in coco_data["images"]}
-
-    # Build image ID to annotations mapping
-    img_to_anns = {}
-    for ann in coco_data["annotations"]:
-        img_id = ann["image_id"]
-        if ann.get("category_id") in text_category_ids:
-            if img_id not in img_to_anns:
-                img_to_anns[img_id] = []
-            img_to_anns[img_id].append(ann)
-
-    # Filter images with text annotations
-    text_images = [img_id for img_id in img_to_anns if img_to_anns[img_id]]
+    # Build mappings using helper function
+    img_id_to_info, img_to_anns, text_images = _build_annotation_mappings(
+        coco_data, text_category_ids
+    )
 
     logger.info(f"Found {len(text_images)} images with text annotations")
     logger.info(
         f"Generating {num_samples_per_orientation} samples per orientation (4 orientations)"
     )
 
-    # Generate output COCO dataset
-    output_coco = {
-        "info": {
-            "description": "Synthetic vertical text dataset with orientation annotations",
-            "source": "DocLayNet CDLA-Permissive-2.0 (rotated)",
-            "generation_method": "Rotation augmentation (0°, 90°, 180°, 270°)",
-        },
-        "images": [],
-        "annotations": [],
-        "categories": [
-            {
-                "id": angle,
-                "name": ORIENTATIONS[angle],
-                "orientation_angle": angle,
-            }
-            for angle in ORIENTATIONS
-        ],
-    }
+    # Create output COCO structure
+    output_coco = _create_output_coco_structure()
 
     # Sample images for each orientation
-    samples_per_orientation = {}
-    for angle in ORIENTATIONS:
-        samples_per_orientation[angle] = random.sample(
+    samples_per_orientation = {
+        angle: random.sample(  # nosec B311
             text_images, min(num_samples_per_orientation, len(text_images))
         )
+        for angle in ORIENTATIONS
+    }
 
     # Generate rotated samples
     new_img_id = 1
@@ -198,67 +279,17 @@ def generate_rotated_samples(
             desc=f"Generating {angle}° samples",
             leave=False,
         ):
-            img_info = img_id_to_info[img_id]
-            img_path = images_dir / img_info["file_name"]
-
-            if not img_path.exists():
-                logger.warning(f"Image not found: {img_path}")
-                continue
-
-            # Load image
-            img = cv2.imread(str(img_path))
-            if img is None:
-                logger.warning(f"Failed to load image: {img_path}")
-                continue
-
-            # Rotate image
-            rotated_img = rotate_image(img, angle)
-
-            # Save rotated image
-            output_filename = f"vertical_{angle}deg_{img_path.stem}.png"
-            output_path = output_images_dir / output_filename
-            cv2.imwrite(str(output_path), rotated_img)
-
-            # Get rotated dimensions
-            new_width, new_height = get_rotated_image_dimensions(
-                img_info["width"], img_info["height"], angle
+            new_img_id, new_ann_id, _success = _process_single_rotation(
+                img_id,
+                angle,
+                img_id_to_info,
+                img_to_anns,
+                images_dir,
+                output_images_dir,
+                new_img_id,
+                new_ann_id,
+                output_coco,
             )
-
-            # Add image to output dataset
-            output_coco["images"].append(
-                {
-                    "id": new_img_id,
-                    "file_name": output_filename,
-                    "width": new_width,
-                    "height": new_height,
-                    "original_image_id": img_id,
-                    "orientation_angle": angle,
-                }
-            )
-
-            # Add annotations for text regions
-            for ann in img_to_anns[img_id]:
-                # Adjust bbox for rotation
-                adjusted_bbox = adjust_bbox_for_rotation(
-                    ann["bbox"], img_info["width"], img_info["height"], angle
-                )
-
-                output_coco["annotations"].append(
-                    {
-                        "id": new_ann_id,
-                        "image_id": new_img_id,
-                        "category_id": angle,  # Category = orientation angle
-                        "bbox": adjusted_bbox,
-                        "area": adjusted_bbox[2] * adjusted_bbox[3],
-                        "iscrowd": 0,
-                        "orientation_angle": angle,
-                        "orientation_label": ORIENTATIONS[angle],
-                        "original_category_id": ann.get("category_id"),
-                    }
-                )
-                new_ann_id += 1
-
-            new_img_id += 1
 
     return output_coco
 

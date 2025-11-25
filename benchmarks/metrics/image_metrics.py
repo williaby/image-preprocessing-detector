@@ -16,6 +16,9 @@ from numpy.typing import NDArray
 from scipy import stats
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
+# Error messages
+_ERR_ARRAY_LENGTH_MISMATCH = "Arrays must have same length"
+
 
 def laplacian_variance(image: NDArray[np.uint8]) -> float:
     """Calculate Laplacian variance as blur metric.
@@ -62,7 +65,7 @@ def blur_correlation(
     Target: ≥ 0.85 (FR-3.1)
     """
     if len(predicted_blur) != len(ground_truth_blur):
-        raise ValueError("Arrays must have same length")
+        raise ValueError(_ERR_ARRAY_LENGTH_MISMATCH)
 
     correlation, _ = stats.pearsonr(predicted_blur, ground_truth_blur)
     return float(correlation)
@@ -83,7 +86,7 @@ def blur_rmse(
     Target: ≤ 0.05 (FR-3.2)
     """
     if len(predicted_blur) != len(ground_truth_blur):
-        raise ValueError("Arrays must have same length")
+        raise ValueError(_ERR_ARRAY_LENGTH_MISMATCH)
 
     mse = np.mean((predicted_blur - ground_truth_blur) ** 2)
     return float(np.sqrt(mse))
@@ -104,7 +107,7 @@ def skew_mae(
     Target: ≤ 0.5° (FR-3.3)
     """
     if len(predicted_angles) != len(ground_truth_angles):
-        raise ValueError("Arrays must have same length")
+        raise ValueError(_ERR_ARRAY_LENGTH_MISMATCH)
 
     mae = np.mean(np.abs(predicted_angles - ground_truth_angles))
     return float(mae)
@@ -130,7 +133,7 @@ def deskew_success_rate(
     Target: ≥ 0.99 (FR-3.4)
     """
     if len(corrected_angles) != len(ground_truth_angles):
-        raise ValueError("Arrays must have same length")
+        raise ValueError(_ERR_ARRAY_LENGTH_MISMATCH)
 
     errors = np.abs(corrected_angles - ground_truth_angles)
     successes = np.sum(errors <= threshold)

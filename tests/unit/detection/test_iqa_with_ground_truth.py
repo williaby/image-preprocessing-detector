@@ -466,7 +466,9 @@ class TestCombinedDefectScenarios:
         )
 
         # Both defects should be indicated (blur flag + noise score)
-        assert blur_result.is_blurred, "Blur should be detected in combined defect image"
+        assert blur_result.is_blurred, (
+            "Blur should be detected in combined defect image"
+        )
         assert noise_result.noise_score > 0.15, (
             f"Noise should be detected (score={noise_result.noise_score})"
         )

@@ -44,6 +44,10 @@ from image_preprocessing_detector.output.json_generator import (
 
 console = Console()
 
+# Status indicator constants
+STATUS_PASS = "✓ Pass"
+STATUS_FAIL = "✗ Fail"
+
 
 class PerformanceBenchmark:
     """Performance benchmarking for Phase 1 and Phase 2 pipelines."""
@@ -148,7 +152,7 @@ class PerformanceBenchmark:
             pages = load_pdf(str(pdf_path))
             test_image = pages[0].image
 
-            image, _ = load_image(str(img_path))
+            _, _ = load_image(str(img_path))
 
             # Benchmark components
             console.print("\n[cyan]Ingestion Components:[/cyan]")
@@ -440,7 +444,7 @@ class PerformanceBenchmark:
         targets_table.add_column("Status", style="magenta")
 
         # Latency target: <150ms per page (with GPU)
-        status = "✓ Pass" if phase2_total < 150 else "✗ Fail"
+        status = STATUS_PASS if phase2_total < 150 else STATUS_FAIL
         targets_table.add_row(
             "Latency (GPU)",
             "<150ms/page",
@@ -449,7 +453,7 @@ class PerformanceBenchmark:
         )
 
         # Throughput target: >6 pages/sec
-        status = "✓ Pass" if phase2_throughput > 6 else "✗ Fail"
+        status = STATUS_PASS if phase2_throughput > 6 else STATUS_FAIL
         targets_table.add_row(
             "Throughput (GPU)",
             ">6 pages/sec",
@@ -459,7 +463,7 @@ class PerformanceBenchmark:
 
         # Overhead target: <50ms
         overhead = phase2_total - phase1_baseline if phase1_baseline > 0 else 50
-        status = "✓ Pass" if overhead < 50 else "✗ Fail"
+        status = STATUS_PASS if overhead < 50 else STATUS_FAIL
         targets_table.add_row(
             "ML Overhead",
             "<50ms",

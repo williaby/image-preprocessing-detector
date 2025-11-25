@@ -62,9 +62,7 @@ def load_ground_truth(labels_file: Path) -> dict[str, Any]:
         return json.load(f)
 
 
-def analyze_layout_lite(
-    pdf_path: Path, analyzer: LayoutLiteAnalyzer
-) -> dict[str, Any]:
+def analyze_layout_lite(pdf_path: Path, analyzer: LayoutLiteAnalyzer) -> dict[str, Any]:
     """
     Analyze layout-lite attributes for a PDF.
 
@@ -86,18 +84,30 @@ def analyze_layout_lite(
 
             # Extract boolean flags from detection result objects
             results[page_key] = {
-                "has_tables": detection_results.get("table").has_tables if detection_results.get("table") else False,
-                "has_figures": detection_results.get("figure").has_figures if detection_results.get("figure") else False,
+                "has_tables": detection_results.get("table").has_tables
+                if detection_results.get("table")
+                else False,
+                "has_figures": detection_results.get("figure").has_figures
+                if detection_results.get("figure")
+                else False,
                 "has_dense_math": False,  # Not implemented yet (Phase 6)
                 "has_handwriting": False,  # Not implemented yet (Phase 6)
-                "fuzzy_scan": detection_results.get("fuzzy_scan").fuzzy_scan if detection_results.get("fuzzy_scan") else False,
-                "watermark": detection_results.get("watermark").watermark if detection_results.get("watermark") else False,
-                "colorful_background": detection_results.get("colorful_background").colorful_background if detection_results.get("colorful_background") else False,
+                "fuzzy_scan": detection_results.get("fuzzy_scan").fuzzy_scan
+                if detection_results.get("fuzzy_scan")
+                else False,
+                "watermark": detection_results.get("watermark").watermark
+                if detection_results.get("watermark")
+                else False,
+                "colorful_background": detection_results.get(
+                    "colorful_background"
+                ).colorful_background
+                if detection_results.get("colorful_background")
+                else False,
             }
 
         return results
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.error("Failed to analyze layout-lite", path=str(pdf_path), error=str(e))
         return {}
 
@@ -130,16 +140,13 @@ def calculate_presence_flag_metrics(
         # If predictions match ground truth, perfect score
         if all(pred == y_true[0] for pred in y_pred):
             return {"precision": 1.0, "recall": 1.0, "f1": 1.0}
-        else:
-            return {"precision": 0.0, "recall": 0.0, "f1": 0.0}
+        return {"precision": 0.0, "recall": 0.0, "f1": 0.0}
 
     # Calculate F1 score
     f1 = f1_score(y_true, y_pred, average="binary", zero_division=0.0)
 
     # Get detailed report
-    report = classification_report(
-        y_true, y_pred, output_dict=True, zero_division=0.0
-    )
+    report = classification_report(y_true, y_pred, output_dict=True, zero_division=0.0)
 
     # Extract true class metrics (label=True)
     true_class = report.get("True", {})
@@ -309,7 +316,7 @@ def main() -> int:
 
     if not labels_file.exists():
         logger.error("Labels file not found", path=str(labels_file))
-        print(f"ERROR: Labels file not found: {labels_file}")  # noqa: T201
+        print(f"ERROR: Labels file not found: {labels_file}")
         return 1
 
     # Run validation
@@ -317,29 +324,31 @@ def main() -> int:
         results = validate_layout_lite(args.test_dir, labels_file, args.output)
 
         # Print summary
-        print("\n" + "=" * 70)  # noqa: T201
-        print("Layout-Lite Validation Results")  # noqa: T201
-        print("=" * 70)  # noqa: T201
-        print(f"Documents: {results['num_documents']}")  # noqa: T201
-        print(f"Pages: {results['num_pages']}")  # noqa: T201
-        print(f"Mean F1: {results['mean_f1']:.3f}")  # noqa: T201
-        print(f"Target (F1 > 0.85): {'✅ MET' if results['all_targets_met'] else '❌ MISSED'}")  # noqa: T201, E501
-        print("\nPer-Flag Results:")  # noqa: T201
+        print("\n" + "=" * 70)
+        print("Layout-Lite Validation Results")
+        print("=" * 70)
+        print(f"Documents: {results['num_documents']}")
+        print(f"Pages: {results['num_pages']}")
+        print(f"Mean F1: {results['mean_f1']:.3f}")
+        print(
+            f"Target (F1 > 0.85): {'✅ MET' if results['all_targets_met'] else '❌ MISSED'}"
+        )
+        print("\nPer-Flag Results:")
 
         for flag_name, flag_metrics in results["flags"].items():
             status = "✅" if flag_metrics["target_met"] else "❌"
-            print(  # noqa: T201
+            print(
                 f"  {status} {flag_name:25s}  F1={flag_metrics['f1']:.3f}  "
                 f"P={flag_metrics['precision']:.3f}  R={flag_metrics['recall']:.3f}"
             )
 
-        print("=" * 70)  # noqa: T201
+        print("=" * 70)
 
         return 0 if results["all_targets_met"] else 1
 
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         logger.error("Validation failed", error=str(e))
-        print(f"ERROR: Validation failed: {e}")  # noqa: T201
+        print(f"ERROR: Validation failed: {e}")
         return 1
 
 

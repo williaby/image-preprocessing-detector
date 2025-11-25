@@ -10,7 +10,8 @@ Target: Combined <50ms per page (already achieved <25ms in Phase 4)
 import json
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 import cv2
 import numpy as np
@@ -191,8 +192,10 @@ def run_benchmark() -> dict[str, Any]:
     meets_target = results["combined"]["mean"] <= target_ms
     target_mark = "✅ PASS" if meets_target else "❌ FAIL"
 
-    print(f"\nTarget Validation:")
-    print(f"  Target (<{target_ms}ms): {target_mark} ({results['combined']['mean']:.2f}ms)")
+    print("\nTarget Validation:")
+    print(
+        f"  Target (<{target_ms}ms): {target_mark} ({results['combined']['mean']:.2f}ms)"
+    )
 
     # Improvement over target
     if meets_target:

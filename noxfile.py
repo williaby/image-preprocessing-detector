@@ -34,6 +34,9 @@ import nox
 # Supported Python versions (aligned with pyproject.toml: >=3.10,<3.15)
 PYTHON_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
+# Package install specifiers
+DEV_EXTRAS = ".[dev]"
+
 # Use the same Python version as the project
 nox.options.sessions = ["fm", "docs"]
 nox.options.reuse_existing_virtualenvs = True
@@ -60,7 +63,7 @@ def docs(session: nox.Session) -> None:
     This session installs the project with docs dependencies and builds
     the documentation in strict mode.
     """
-    session.install("-e", ".[dev]")
+    session.install("-e", DEV_EXTRAS)
     session.run("mkdocs", "build", "--strict")
 
 
@@ -71,7 +74,7 @@ def serve(session: nox.Session) -> None:
     This session starts the MkDocs development server with live reloading.
     Access at http://127.0.0.1:8000
     """
-    session.install("-e", ".[dev]")
+    session.install("-e", DEV_EXTRAS)
     session.run("mkdocs", "serve")
 
 
@@ -96,7 +99,7 @@ def validate(session: nox.Session) -> None:
     """
     session.install(
         "-e",
-        ".[dev]",
+        DEV_EXTRAS,
         "pydantic>=2.0",
         "python-frontmatter>=1.1",
         "ruamel.yaml>=0.18",
@@ -249,7 +252,7 @@ def tests(session: nox.Session) -> None:
         nox -s tests-3.12         # Run only on Python 3.12
         nox -s tests -- -k test_schema  # Pass pytest args
     """
-    session.install(".[dev]")
+    session.install(DEV_EXTRAS)
     args = session.posargs or ["-v", "--cov=src", "--cov-report=term-missing"]
     session.run("pytest", *args)
 
@@ -260,7 +263,7 @@ def tests_no_cov(session: nox.Session) -> None:
 
     Useful for rapid iteration during development.
     """
-    session.install(".[dev]")
+    session.install(DEV_EXTRAS)
     args = session.posargs or ["-v", "-x"]  # -x stops at first failure
     session.run("pytest", *args)
 
@@ -272,14 +275,14 @@ def type_check(session: nox.Session) -> None:
     Different Python versions may have different typing behaviors,
     so testing across versions ensures broad compatibility.
     """
-    session.install(".[dev]")
+    session.install(DEV_EXTRAS)
     session.run("mypy", "src")
 
 
 @nox.session(python=PYTHON_VERSIONS)
 def lint(session: nox.Session) -> None:
     """Run ruff linting across Python versions."""
-    session.install(".[dev]")
+    session.install(DEV_EXTRAS)
     session.run("ruff", "check", "src", "tests")
 
 
@@ -304,7 +307,7 @@ def tests_opencv_compat(session: nox.Session, opencv: str) -> None:
         - tests_opencv_compat(opencv='4.10.0')
     """
     session.install(f"opencv-python-headless=={opencv}")
-    session.install(".[dev]")
+    session.install(DEV_EXTRAS)
     session.run("pytest", "-v", "-m", "integration")
 
 
@@ -314,7 +317,7 @@ def quality(session: nox.Session) -> None:
 
     This is your pre-commit quality gate for the current dev version.
     """
-    session.install(".[dev]")
+    session.install(DEV_EXTRAS)
     session.log("🔍 Running ruff format check...")
     session.run("ruff", "format", "--check", "src", "tests")
 

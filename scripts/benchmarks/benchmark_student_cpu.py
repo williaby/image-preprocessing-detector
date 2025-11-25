@@ -124,7 +124,9 @@ def benchmark_batch_inference(
     }
 
 
-def warmup_model(detector: MLIQADetector, warmup_image: np.ndarray, num_warmup: int = 10) -> None:
+def warmup_model(
+    detector: MLIQADetector, warmup_image: np.ndarray, num_warmup: int = 10
+) -> None:
     """Warm up model before benchmarking.
 
     Args:
@@ -191,9 +193,7 @@ def run_benchmark() -> dict[str, Any]:
     acceptable_mark = "✅ PASS" if acceptable else "❌ FAIL"
     ideal_mark = "✅ PASS" if ideal else "❌ MISS"
 
-    print(
-        f"  Acceptable (≤100ms): {acceptable_mark} ({single_results['mean']:.1f}ms)"
-    )
+    print(f"  Acceptable (≤100ms): {acceptable_mark} ({single_results['mean']:.1f}ms)")
     print(f"  Ideal (≤40ms):       {ideal_mark} ({single_results['mean']:.1f}ms)")
 
     # Benchmark batch inference

@@ -19,9 +19,11 @@ Usage:
 
 import argparse
 import os
+import shutil
 import subprocess  # nosec B404 - subprocess used only with gsutil/wget for dataset operations
 import sys
 from pathlib import Path
+from collections.abc import Callable
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -256,9 +258,15 @@ if hasattr(dataset, 'keys'):
 """
 
     try:
-        # nosec B603 B607 - subprocess used to invoke generation script with hardcoded args
-        result = subprocess.run(
-            ["uv", "run", "python", "-c", script],
+        # Resolve full path to uv executable for security (B607)
+        uv_path = shutil.which("uv")
+        if uv_path is None:
+            print("❌ 'uv' command not found in PATH")
+            return False
+
+        # Security: script content is constructed from hardcoded config values only
+        result = subprocess.run(  # nosec B603
+            [uv_path, "run", "python", "-c", script],
             check=True,
             capture_output=True,
             text=True,
@@ -305,27 +313,42 @@ def download_from_url(dataset_name: str, config: dict) -> bool:
         return False
 
 
+def _handle_local_source(dataset_name: str, _config: dict) -> bool:
+    """Handle local source datasets."""
+    print(f"✅ {dataset_name} already present locally")
+    return True
+
+
+def _handle_manual_source(dataset_name: str, config: dict) -> bool:
+    """Handle manual download datasets."""
+    print(f"⚠️ {dataset_name} requires manual download: {config.get('note', '')}")
+    return True
+
+
+# Dispatch table for download sources
+_DOWNLOAD_HANDLERS: dict[str, Callable[[str, dict], bool]] = {
+    "local": _handle_local_source,
+    "gcs": download_from_gcs,
+    "huggingface": download_from_huggingface,
+    "url": download_from_url,
+    "manual": _handle_manual_source,
+}
+
+
 def download_dataset(dataset_name: str, config: dict) -> bool:
     """Download a single dataset based on its source type."""
-    source = config.get("source")
+    source = config.get("source", "")
+    handler = _DOWNLOAD_HANDLERS.get(source)
 
-    if source == "local":
-        print(f"✅ {dataset_name} already present locally")
-        return True
-    if source == "gcs":
-        return download_from_gcs(dataset_name, config)
-    if source == "huggingface":
-        return download_from_huggingface(dataset_name, config)
-    if source == "url":
-        return download_from_url(dataset_name, config)
-    if source == "manual":
-        print(f"⚠️ {dataset_name} requires manual download: {config.get('note', '')}")
-        return True
-    print(f"❌ Unknown source type: {source}")
-    return False
+    if handler is None:
+        print(f"❌ Unknown source type: {source}")
+        return False
+
+    return handler(dataset_name, config)
 
 
-def main():
+def _create_argument_parser() -> argparse.ArgumentParser:
+    """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(description="Download and organize all datasets")
     parser.add_argument("--all", action="store_true", help="Download all datasets")
     parser.add_argument(
@@ -348,39 +371,41 @@ def main():
         type=str,
         help="Download specific dataset by name",
     )
+    return parser
 
-    args = parser.parse_args()
 
-    # Combine all datasets
-    all_datasets = {**BENCHMARK_DATASETS, **TRAINING_DATASETS}
-
-    # Determine which datasets to download
-    datasets_to_download = {}
-
+def _determine_datasets_to_download(
+    args: argparse.Namespace,
+    all_datasets: dict,
+    parser: argparse.ArgumentParser,
+) -> dict:
+    """Determine which datasets to download based on CLI arguments."""
     if args.dataset:
-        if args.dataset in all_datasets:
-            datasets_to_download = {args.dataset: all_datasets[args.dataset]}
-        else:
+        if args.dataset not in all_datasets:
             print(f"❌ Unknown dataset: {args.dataset}")
             print(f"Available benchmarks: {', '.join(BENCHMARK_DATASETS.keys())}")
             print(f"Available training: {', '.join(TRAINING_DATASETS.keys())}")
             sys.exit(1)
-    elif args.required_only:
-        datasets_to_download = {
+        return {args.dataset: all_datasets[args.dataset]}
+
+    if args.required_only:
+        return {
             k: BENCHMARK_DATASETS[k]
             for k in ["tablebank", "pubtabnet", "diqa-5000", "funsd_plus"]
         }
-    elif args.benchmarks_only:
-        datasets_to_download = BENCHMARK_DATASETS
-    elif args.training_only:
-        datasets_to_download = TRAINING_DATASETS
-    elif args.all:
-        datasets_to_download = all_datasets
-    else:
-        parser.print_help()
-        sys.exit(1)
+    if args.benchmarks_only:
+        return BENCHMARK_DATASETS
+    if args.training_only:
+        return TRAINING_DATASETS
+    if args.all:
+        return all_datasets
 
-    # Check prerequisites
+    parser.print_help()
+    sys.exit(1)
+
+
+def _check_prerequisites() -> None:
+    """Check that required prerequisites exist."""
     if not NFS_ROOT.exists():
         print(f"❌ NFS mount not found: {NFS_ROOT}")
         sys.exit(1)
@@ -389,6 +414,9 @@ def main():
         print(f"❌ GCS credentials not found: {GCS_CREDENTIALS}")
         sys.exit(1)
 
+
+def _print_download_plan(datasets_to_download: dict) -> None:
+    """Print the download plan."""
     print(f"\n{'=' * 80}")
     print("Dataset Download Plan")
     print(f"{'=' * 80}")
@@ -397,13 +425,9 @@ def main():
         print(f"  - {name}: {config['description']} (~{config['size_gb']} GB)")
     print()
 
-    # Download datasets
-    results = {}
-    for dataset_name, config in datasets_to_download.items():
-        success = download_dataset(dataset_name, config)
-        results[dataset_name] = success
 
-    # Summary
+def _print_download_summary(results: dict[str, bool]) -> None:
+    """Print download summary with success/failure counts."""
     print(f"\n{'=' * 80}")
     print("Download Summary")
     print(f"{'=' * 80}")
@@ -419,7 +443,27 @@ def main():
             if not success:
                 print(f"  - {name}")
 
-    return failed == 0
+
+def main() -> bool:
+    """Main entry point for dataset download script."""
+    parser = _create_argument_parser()
+    args = parser.parse_args()
+
+    all_datasets = {**BENCHMARK_DATASETS, **TRAINING_DATASETS}
+    datasets_to_download = _determine_datasets_to_download(args, all_datasets, parser)
+
+    _check_prerequisites()
+    _print_download_plan(datasets_to_download)
+
+    # Download datasets
+    results = {
+        name: download_dataset(name, config)
+        for name, config in datasets_to_download.items()
+    }
+
+    _print_download_summary(results)
+
+    return all(results.values())
 
 
 if __name__ == "__main__":

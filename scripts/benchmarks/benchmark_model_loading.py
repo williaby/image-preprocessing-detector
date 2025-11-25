@@ -15,7 +15,9 @@ from typing import Any
 from image_preprocessing_detector.detection.iqa_ml import Device, MLIQADetector
 
 
-def benchmark_model_loading(model_path: Path, model_name: str, num_trials: int = 5) -> dict[str, float]:
+def benchmark_model_loading(
+    model_path: Path, model_name: str, num_trials: int = 5
+) -> dict[str, float]:
     """Benchmark model loading time.
 
     Args:
@@ -98,7 +100,7 @@ def run_benchmark() -> dict[str, Any]:
     student_size_mb = student_path.stat().st_size / (1024 * 1024)
     teacher_size_mb = teacher_path.stat().st_size / (1024 * 1024)
 
-    print(f"\nModel sizes:")
+    print("\nModel sizes:")
     print(f"  Student: {student_size_mb:.1f} MB")
     print(f"  Teacher: {teacher_size_mb:.1f} MB")
 
@@ -106,7 +108,7 @@ def run_benchmark() -> dict[str, Any]:
     print("\nBenchmarking student model loading...")
     student_results = benchmark_model_loading(student_path, "student", num_trials=5)
 
-    print(f"\nStudent Loading Results:")
+    print("\nStudent Loading Results:")
     print(f"  Mean:   {student_results['mean']:.3f}s")
     print(f"  Median: {student_results['median']:.3f}s")
     print(f"  Min:    {student_results['min']:.3f}s")
@@ -121,7 +123,7 @@ def run_benchmark() -> dict[str, Any]:
     print("\nBenchmarking teacher model loading...")
     teacher_results = benchmark_model_loading(teacher_path, "teacher", num_trials=5)
 
-    print(f"\nTeacher Loading Results:")
+    print("\nTeacher Loading Results:")
     print(f"  Mean:   {teacher_results['mean']:.3f}s")
     print(f"  Median: {teacher_results['median']:.3f}s")
     print(f"  Min:    {teacher_results['min']:.3f}s")

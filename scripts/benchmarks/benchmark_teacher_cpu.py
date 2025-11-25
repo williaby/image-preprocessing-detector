@@ -86,7 +86,9 @@ def benchmark_single_inference(
     }
 
 
-def warmup_model(detector: MLIQADetector, warmup_image: np.ndarray, num_warmup: int = 10) -> None:
+def warmup_model(
+    detector: MLIQADetector, warmup_image: np.ndarray, num_warmup: int = 10
+) -> None:
     """Warm up model before benchmarking.
 
     Args:

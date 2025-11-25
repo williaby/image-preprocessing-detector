@@ -223,10 +223,12 @@ class AugmentationPipeline:
         # Select defects to apply (avoid conflicting combinations)
         defect_pool = list(self.defect_transforms.keys())
         # Avoid skew + artifacts (skew should be detected, not masked by compression)
-        if num_defects > 1 and random.random() < 0.5:
+        if num_defects > 1 and random.random() < 0.5:  # nosec B311
             defect_pool = [d for d in defect_pool if d != "artifacts"]
 
-        applied_defects = random.sample(defect_pool, min(num_defects, len(defect_pool)))
+        applied_defects = random.sample(  # nosec B311
+            defect_pool, min(num_defects, len(defect_pool))
+        )
 
         # Apply each defect sequentially
         for defect in applied_defects:
@@ -278,7 +280,7 @@ class DatasetGenerator:
         )
         if tablebank_path.exists():
             all_files = sorted(tablebank_path.glob("*.jpg"))
-            datasets["tablebank"] = random.sample(
+            datasets["tablebank"] = random.sample(  # nosec B311
                 all_files, min(self.config.COMPOSITION["tablebank"], len(all_files))
             )
 
@@ -286,7 +288,7 @@ class DatasetGenerator:
         pubtabnet_path = PROJECT_ROOT / "data/benchmarks/pubtabnet/pubtabnet/train"
         if pubtabnet_path.exists():
             all_files = sorted(pubtabnet_path.glob("*.png"))
-            datasets["pubtabnet"] = random.sample(
+            datasets["pubtabnet"] = random.sample(  # nosec B311
                 all_files, min(self.config.COMPOSITION["pubtabnet"], len(all_files))
             )
 
@@ -473,7 +475,7 @@ class DatasetGenerator:
             return image, None, self.estimate_dpi(image)
 
         # Choose target DPI based on strategy
-        target_dpi = random.choices(
+        target_dpi = random.choices(  # nosec B311
             [int(k) for k in dpi_strategy.keys()],
             weights=list(dpi_strategy.values()),
         )[0]
@@ -493,7 +495,7 @@ class DatasetGenerator:
 
     def apply_color_conversion(self, image: Image.Image) -> tuple[str, Image.Image]:
         """Apply color mode conversion (35% grayscale, 5% B&W)."""
-        rand = random.random()
+        rand = random.random()  # nosec B311
 
         if rand < 0.05:  # 5% B&W
             image = image.convert("1")
@@ -512,7 +514,7 @@ class DatasetGenerator:
             "portrait" if image.size[0] < image.size[1] else "landscape"
         )
 
-        rand = random.random()
+        rand = random.random()  # nosec B311
 
         if rand < 0.05:
             # Center crop to square
@@ -531,7 +533,7 @@ class DatasetGenerator:
 
     def choose_num_defects(self) -> int:
         """Choose number of defects based on target distribution."""
-        return random.choices([0, 1, 2, 3], weights=[0.20, 0.40, 0.25, 0.15])[0]
+        return random.choices([0, 1, 2, 3], weights=[0.20, 0.40, 0.25, 0.15])[0]  # nosec B311
 
     def choose_jpeg_quality(self) -> int:
         """Choose JPEG quality based on target distribution."""
@@ -542,11 +544,11 @@ class DatasetGenerator:
             "very_low": (30, 49),
         }
 
-        quality_level = random.choices(
+        quality_level = random.choices(  # nosec B311
             list(quality_ranges.keys()), weights=[0.30, 0.40, 0.20, 0.10]
         )[0]
 
-        return random.randint(*quality_ranges[quality_level])
+        return random.randint(*quality_ranges[quality_level])  # nosec B311
 
     def generate_weak_supervision_labels(
         self, _image: np.ndarray, applied_defects: list[str]
@@ -577,10 +579,12 @@ class DatasetGenerator:
         """Infer layout type from dataset."""
         layout_map = {
             "diqa_5000": "single_column",
-            "doclaynet": random.choice(["single_column", "multi_column", "complex"]),
+            "doclaynet": random.choice(  # nosec B311
+                ["single_column", "multi_column", "complex"]
+            ),
             "tablebank": "single_column",
             "pubtabnet": "single_column",
-            "docbank": random.choice(["single_column", "multi_column"]),
+            "docbank": random.choice(["single_column", "multi_column"]),  # nosec B311
             "iam": "single_column",
             "funsd_plus": "single_column",
         }

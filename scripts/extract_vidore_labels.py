@@ -31,6 +31,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Constants
+LICENSE_SEC_PUBLIC_DOMAIN = "Public Domain (SEC website)"
+
 
 # ============================================================================
 # FR-2.1: Document Classification
@@ -76,7 +79,7 @@ def extract_document_classification(corpus: Any) -> dict:
             "total_documents": len(classifications),
             "classification_method": "dataset_labels",
             "source": "vidore_v3_finance",
-            "license": "Public Domain (SEC website)",
+            "license": LICENSE_SEC_PUBLIC_DOMAIN,
         },
         "classes": ["financial_report"],
         "class_distribution": {"financial_report": len(classifications)},
@@ -226,9 +229,6 @@ def extract_parasitic_content(corpus: Any, qrels: Any) -> dict:
     """
     logger.info("Extracting FR-4.4 parasitic content labels...")
 
-    # Create corpus_id → qrels mapping
-    corpus_to_qrels = create_corpus_to_qrels_map(qrels)
-
     annotations = []
 
     for page in tqdm(corpus, desc="FR-4.4 parasitic content"):
@@ -262,7 +262,7 @@ def extract_parasitic_content(corpus: Any, qrels: Any) -> dict:
             "total_elements": total_elements,
             "detection_method": "spatial_heuristics",
             "source": "vidore_v3_finance",
-            "license": "Public Domain (SEC website)",
+            "license": LICENSE_SEC_PUBLIC_DOMAIN,
         },
         "element_types": ["header", "footer", "page_number", "watermark"],
         "element_distribution": dict(element_types),
@@ -406,6 +406,40 @@ def calculate_complexity_metrics(markdown: str, qrels_entries: list[dict]) -> di
     }
 
 
+def _score_metric(
+    value: float, thresholds: tuple[float, float], higher_is_better: bool
+) -> int:
+    """Score a metric value against thresholds.
+
+    Args:
+        value: The metric value to score
+        thresholds: (low_threshold, medium_threshold) tuple
+        higher_is_better: If True, higher values get lower scores
+
+    Returns:
+        Score: 0 (good), 1 (medium), or 2 (bad)
+    """
+    low_thresh, med_thresh = thresholds
+    if higher_is_better:
+        if value > low_thresh:
+            return 0
+        return 1 if value > med_thresh else 2
+    # Lower is better
+    if value < low_thresh:
+        return 0
+    return 1 if value < med_thresh else 2
+
+
+def _level_from_score(total_score: int, num_metrics: int) -> str:
+    """Convert total score to level string."""
+    avg_score = total_score / num_metrics
+    if avg_score < 0.5:
+        return "low"
+    if avg_score < 1.5:
+        return "medium"
+    return "high"
+
+
 def classify_degradation(metrics: dict) -> str:
     """
     Classify degradation level from metrics.
@@ -416,45 +450,16 @@ def classify_degradation(metrics: dict) -> str:
     Returns:
         str: "low" (high quality), "medium", or "high" (low quality)
     """
-    # Professional financial documents typically have low degradation
-    # Thresholds based on expected ranges:
-    # Blur: >500 = low, 200-500 = medium, <200 = high
-    # Noise: <10 = low, 10-30 = medium, >30 = high
-    # Contrast: >50 = low, 20-50 = medium, <20 = high
-
-    score = 0
-
-    # Blur score (higher is better)
-    if metrics["blur"] > 500:
-        score += 0  # Low degradation
-    elif metrics["blur"] > 200:
-        score += 1  # Medium
-    else:
-        score += 2  # High degradation
-
-    # Noise score (lower is better)
-    if metrics["noise"] < 10:
-        score += 0
-    elif metrics["noise"] < 30:
-        score += 1
-    else:
-        score += 2
-
-    # Contrast score (higher is better)
-    if metrics["contrast"] > 50:
-        score += 0
-    elif metrics["contrast"] > 20:
-        score += 1
-    else:
-        score += 2
-
-    # Average score → degradation level
-    avg_score = score / 3
-    if avg_score < 0.5:
-        return "low"
-    if avg_score < 1.5:
-        return "medium"
-    return "high"
+    # Scoring thresholds for each metric (good_threshold, medium_threshold):
+    # - Blur uses (500, 200) where higher blur variance indicates better sharpness
+    # - Noise uses (10, 30) where lower noise indicates better quality
+    # - Contrast uses (50, 20) where higher contrast indicates better quality
+    score = (
+        _score_metric(metrics["blur"], (500, 200), higher_is_better=True)
+        + _score_metric(metrics["noise"], (10, 30), higher_is_better=False)
+        + _score_metric(metrics["contrast"], (50, 20), higher_is_better=True)
+    )
+    return _level_from_score(score, 3)
 
 
 def classify_complexity(metrics: dict) -> str:
@@ -467,43 +472,24 @@ def classify_complexity(metrics: dict) -> str:
     Returns:
         str: "low", "medium", or "high"
     """
-    # Financial documents typically have high complexity
-    # Thresholds based on expected content:
-    # Tables: 0 = low, 1-3 = medium, >3 = high
-    # Columns: 1 = low/medium, 2+ = high
+    # Thresholds: Tables: 0 = low, 1-3 = medium, >3 = high
+    # Columns: 1 = low, 2+ = high (treated as jump to 2)
     # Text density: <5 = low, 5-10 = medium, >10 = high
 
-    score = 0
+    # Table score: 0=0, 1-3=1, >3=2
+    table_count = metrics["table_count"]
+    table_score = 0 if table_count == 0 else (1 if table_count <= 3 else 2)
 
-    # Table score
-    if metrics["table_count"] == 0:
-        score += 0  # Low complexity
-    elif metrics["table_count"] <= 3:
-        score += 1  # Medium
-    else:
-        score += 2  # High complexity
+    # Column score: 1=0, 2+=2 (multi-column = high complexity)
+    column_score = 0 if metrics["column_count"] == 1 else 2
 
-    # Column score
-    if metrics["column_count"] == 1:
-        score += 0
-    else:
-        score += 2  # Multi-column = high complexity
+    # Text density score (lower is better for complexity)
+    density_score = _score_metric(
+        metrics["text_density"], (5, 10), higher_is_better=False
+    )
 
-    # Text density score
-    if metrics["text_density"] < 5:
-        score += 0
-    elif metrics["text_density"] < 10:
-        score += 1
-    else:
-        score += 2
-
-    # Average score → complexity level
-    avg_score = score / 3
-    if avg_score < 0.5:
-        return "low"
-    if avg_score < 1.5:
-        return "medium"
-    return "high"
+    total_score = table_score + column_score + density_score
+    return _level_from_score(total_score, 3)
 
 
 def get_routing_bin(degradation: str, complexity: str) -> int:
@@ -597,7 +583,7 @@ def extract_dqs_routing(corpus: Any, qrels: Any) -> dict:
             "total_samples": len(labels),
             "generation_method": "classical_cv_analysis",
             "source": "vidore_v3_finance",
-            "license": "Public Domain (SEC website)",
+            "license": LICENSE_SEC_PUBLIC_DOMAIN,
         },
         "routing_matrix": {
             "bins": 9,

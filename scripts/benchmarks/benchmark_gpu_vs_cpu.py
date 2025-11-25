@@ -44,11 +44,11 @@ def run_comparison():
     print(f"  Speedup: {student_speedup:.2f}x")
 
     if student_speedup < 1.0:
-        print(f"  ⚠️  GPU is SLOWER than CPU ({1/student_speedup:.2f}x slower)")
+        print(f"  ⚠️  GPU is SLOWER than CPU ({1 / student_speedup:.2f}x slower)")
     elif student_speedup < 2.0:
-        print(f"  ⚠️  Modest speedup (<2x)")
+        print("  ⚠️  Modest speedup (<2x)")
     else:
-        print(f"  ✅ Good speedup")
+        print("  ✅ Good speedup")
 
     # Teacher comparison
     teacher_cpu_mean = teacher_cpu["single_inference"]["mean"]
@@ -61,11 +61,11 @@ def run_comparison():
     print(f"  Speedup: {teacher_speedup:.2f}x")
 
     if teacher_speedup < 1.0:
-        print(f"  ⚠️  GPU is SLOWER than CPU ({1/teacher_speedup:.2f}x slower)")
+        print(f"  ⚠️  GPU is SLOWER than CPU ({1 / teacher_speedup:.2f}x slower)")
     elif teacher_speedup < 2.0:
-        print(f"  ⚠️  Modest speedup (<2x)")
+        print("  ⚠️  Modest speedup (<2x)")
     else:
-        print(f"  ✅ Good speedup")
+        print("  ✅ Good speedup")
 
     # Summary
     print("\n" + "=" * 60)
@@ -103,8 +103,12 @@ def run_comparison():
             "speedup": teacher_speedup,
         },
         "analysis": {
-            "student_recommendation": "Use CPU (minimal GPU benefit)" if student_speedup < 1.5 else "Use GPU",
-            "teacher_recommendation": "Limit usage (both CPU/GPU too slow)" if teacher_gpu_mean > 100 else "Use GPU",
+            "student_recommendation": "Use CPU (minimal GPU benefit)"
+            if student_speedup < 1.5
+            else "Use GPU",
+            "teacher_recommendation": "Limit usage (both CPU/GPU too slow)"
+            if teacher_gpu_mean > 100
+            else "Use GPU",
         },
     }
 

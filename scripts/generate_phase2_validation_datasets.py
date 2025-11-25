@@ -24,7 +24,6 @@ import numpy as np
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from image_preprocessing_detector.schema import LayoutType, PDFType
 from image_preprocessing_detector.utils import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -80,26 +79,38 @@ class Phase2DatasetGenerator:
         dataset_dir = self.output_dir / "pdf_classification"
         dataset_dir.mkdir(parents=True, exist_ok=True)
 
-        labels = {"born_digital": [], "image_only": [], "hybrid": []}
+        labels: dict[str, list[str]] = {
+            "born_digital": [],
+            "image_only": [],
+            "hybrid": [],
+        }
 
         # Born-digital PDFs (40 samples) - text only, no images
         for i in range(40):
             pdf_path = dataset_dir / f"born_digital_{i:03d}.pdf"
-            self._create_born_digital_pdf(pdf_path, pages=random.randint(1, 5))
+            self._create_born_digital_pdf(
+                pdf_path,
+                pages=random.randint(1, 5),  # nosec B311
+            )
             labels["born_digital"].append(pdf_path.name)
 
         # Image-only PDFs (40 samples) - images only, no extractable text
         for i in range(40):
             pdf_path = dataset_dir / f"image_only_{i:03d}.pdf"
-            image_paths = random.sample(self.images + self.gradient_images, k=random.randint(1, 3))
+            num_images = random.randint(1, 3)  # nosec B311
+            image_paths = random.sample(  # nosec B311
+                self.images + self.gradient_images, k=num_images
+            )
             self._create_image_only_pdf(pdf_path, image_paths)
             labels["image_only"].append(pdf_path.name)
 
         # Hybrid PDFs (20 samples) - text + embedded images
         for i in range(20):
             pdf_path = dataset_dir / f"hybrid_{i:03d}.pdf"
-            image_paths = random.sample(self.images, k=random.randint(1, 2))
-            self._create_hybrid_pdf(pdf_path, image_paths, pages=random.randint(1, 3))
+            num_images = random.randint(1, 2)  # nosec B311
+            image_paths = random.sample(self.images, k=num_images)  # nosec B311
+            num_pages = random.randint(1, 3)  # nosec B311
+            self._create_hybrid_pdf(pdf_path, image_paths, pages=num_pages)
             labels["hybrid"].append(pdf_path.name)
 
         # Save labels
@@ -134,25 +145,29 @@ class Phase2DatasetGenerator:
             pdf_path = dataset_dir / f"layout_doc_{i:03d}.pdf"
 
             # Randomly decide layout characteristics
-            layout_type = random.choice([
-                "single_column", "multi_column", "three_column", "complex"
-            ])
-            has_tables = random.random() < 0.3
-            has_figures = random.random() < 0.4
-            has_dense_math = random.random() < 0.1
-            has_handwriting = random.random() < 0.1
-            fuzzy_scan = random.random() < 0.2
-            watermark = random.random() < 0.1
-            colorful_background = random.random() < 0.1
+            layout_type = random.choice(
+                [  # nosec B311
+                    "single_column",
+                    "multi_column",
+                    "three_column",
+                    "complex",
+                ]
+            )
+            has_tables = random.random() < 0.3  # nosec B311
+            has_figures = random.random() < 0.4  # nosec B311
+            has_dense_math = random.random() < 0.1  # nosec B311
+            has_handwriting = random.random() < 0.1  # nosec B311
+            fuzzy_scan = random.random() < 0.2  # nosec B311
+            watermark = random.random() < 0.1  # nosec B311
+            colorful_background = random.random() < 0.1  # nosec B311
 
             # Create PDF with characteristics
-            num_pages = random.randint(1, 3)
+            num_pages = random.randint(1, 3)  # nosec B311
             self._create_layout_pdf(
                 pdf_path,
                 layout_type=layout_type,
                 has_tables=has_tables,
                 has_figures=has_figures,
-                fuzzy_scan=fuzzy_scan,
                 num_pages=num_pages,
             )
 
@@ -200,20 +215,31 @@ class Phase2DatasetGenerator:
             if i < 10:
                 # Clean images (high OCR accuracy)
                 source = [img for img in self.images if "clean" in str(img)]
-                expected_accuracy = random.uniform(0.95, 0.99)
+                expected_accuracy = random.uniform(0.95, 0.99)  # nosec B311
+                source_degradation = "clean"
             elif i < 25:
                 # Moderate degradation
-                source = [img for img in self.images if "blur_k5" in str(img) or "contrast" in str(img)]
-                expected_accuracy = random.uniform(0.75, 0.90)
+                source = [
+                    img
+                    for img in self.images
+                    if "blur_k5" in str(img) or "contrast" in str(img)
+                ]
+                expected_accuracy = random.uniform(0.75, 0.90)  # nosec B311
+                source_degradation = "moderate"
             else:
                 # Heavy degradation
-                source = [img for img in self.images + self.gradient_images if "blur_k" in str(img) or "skew" in str(img)]
-                expected_accuracy = random.uniform(0.40, 0.70)
+                source = [
+                    img
+                    for img in self.images + self.gradient_images
+                    if "blur_k" in str(img) or "skew" in str(img)
+                ]
+                expected_accuracy = random.uniform(0.40, 0.70)  # nosec B311
+                source_degradation = "heavy"
 
             if not source:
                 source = self.images
 
-            source_img = random.choice(source)
+            source_img = random.choice(source)  # nosec B311
             img_path = dataset_dir / f"dqs_doc_{i:03d}.png"
 
             # Copy image
@@ -221,10 +247,11 @@ class Phase2DatasetGenerator:
             cv2.imwrite(str(img_path), img)
 
             # Synthetic OCR accuracy (inversely correlated with degradation)
+            word_accuracy_delta = random.uniform(0.02, 0.05)  # nosec B311
             ocr_accuracy[img_path.name] = {
                 "character_accuracy": expected_accuracy,
-                "word_accuracy": expected_accuracy - random.uniform(0.02, 0.05),
-                "source_degradation": "clean" if i < 10 else "moderate" if i < 25 else "heavy",
+                "word_accuracy": expected_accuracy - word_accuracy_delta,
+                "source_degradation": source_degradation,
             }
 
         # Save OCR accuracy labels
@@ -256,24 +283,32 @@ class Phase2DatasetGenerator:
             # Determine routing based on document characteristics
             if i < 15:
                 # Clean born-digital → ocr_fast
-                self._create_born_digital_pdf(pdf_path, pages=random.randint(1, 3))
+                num_pages = random.randint(1, 3)  # nosec B311
+                self._create_born_digital_pdf(pdf_path, pages=num_pages)
                 routing = "ocr_fast"
                 pdf_type = "born_digital"
             elif i < 30:
                 # Degraded image-only → ocr_advanced
-                source_imgs = [img for img in self.images if "blur" in str(img) or "skew" in str(img)]
-                self._create_image_only_pdf(pdf_path, random.sample(source_imgs, k=2))
+                source_imgs = [
+                    img
+                    for img in self.images
+                    if "blur" in str(img) or "skew" in str(img)
+                ]
+                sampled_imgs = random.sample(source_imgs, k=2)  # nosec B311
+                self._create_image_only_pdf(pdf_path, sampled_imgs)
                 routing = "ocr_advanced"
                 pdf_type = "image_only"
             elif i < 40:
                 # Documents with tables → vision_structured
-                self._create_hybrid_pdf(pdf_path, random.sample(self.images, k=1), pages=1)
+                sampled_imgs = random.sample(self.images, k=1)  # nosec B311
+                self._create_hybrid_pdf(pdf_path, sampled_imgs, pages=1)
                 routing = "vision_structured"
                 pdf_type = "hybrid"
             else:
                 # Simple images → vision_simple
                 source_imgs = [img for img in self.images if "clean" in str(img)]
-                self._create_image_only_pdf(pdf_path, random.sample(source_imgs, k=1))
+                sampled_imgs = random.sample(source_imgs, k=1)  # nosec B311
+                self._create_image_only_pdf(pdf_path, sampled_imgs)
                 routing = "vision_simple"
                 pdf_type = "image_only"
 
@@ -313,7 +348,9 @@ class Phase2DatasetGenerator:
         doc.save(str(output_path))
         doc.close()
 
-    def _create_image_only_pdf(self, output_path: Path, image_paths: list[Path]) -> None:
+    def _create_image_only_pdf(
+        self, output_path: Path, image_paths: list[Path]
+    ) -> None:
         """Create an image-only PDF with embedded images."""
         doc = fitz.open()
 
@@ -326,7 +363,9 @@ class Phase2DatasetGenerator:
         doc.save(str(output_path))
         doc.close()
 
-    def _create_hybrid_pdf(self, output_path: Path, image_paths: list[Path], pages: int = 1) -> None:
+    def _create_hybrid_pdf(
+        self, output_path: Path, image_paths: list[Path], pages: int = 1
+    ) -> None:
         """Create a hybrid PDF with text and embedded images."""
         doc = fitz.open()
 
@@ -356,13 +395,12 @@ class Phase2DatasetGenerator:
         layout_type: str,
         has_tables: bool,
         has_figures: bool,
-        fuzzy_scan: bool,
         num_pages: int,
     ) -> None:
         """Create a PDF with specific layout characteristics."""
         doc = fitz.open()
 
-        for page_num in range(num_pages):
+        for _ in range(num_pages):
             page = doc.new_page(width=595, height=842)
 
             # Add text based on layout type
@@ -382,12 +420,16 @@ class Phase2DatasetGenerator:
 
             # Add table simulation if needed
             if has_tables:
-                page.insert_text((50, 400), "Table Header | Column 1 | Column 2", fontsize=10)
-                page.insert_text((50, 420), "Row 1       | Data A   | Data B", fontsize=10)
+                page.insert_text(
+                    (50, 400), "Table Header | Column 1 | Column 2", fontsize=10
+                )
+                page.insert_text(
+                    (50, 420), "Row 1       | Data A   | Data B", fontsize=10
+                )
 
             # Add figure if needed
             if has_figures and self.images:
-                fig_img = random.choice(self.images)
+                fig_img = random.choice(self.images)  # nosec B311
                 page.insert_image(fitz.Rect(400, 600, 550, 750), filename=str(fig_img))
 
         doc.save(str(output_path))
@@ -399,7 +441,9 @@ def main() -> int:
     setup_logging(level="INFO", json_logs=False)
 
     # Paths
-    fixtures_dir = Path(__file__).parents[1] / "tests" / "fixtures" / "phase1_validation" / "data"
+    fixtures_dir = (
+        Path(__file__).parents[1] / "tests" / "fixtures" / "phase1_validation" / "data"
+    )
     output_dir = Path(__file__).parents[1] / "tests" / "fixtures" / "phase2_validation"
 
     if not fixtures_dir.exists():
@@ -411,18 +455,18 @@ def main() -> int:
     results = generator.generate_all_datasets()
 
     # Print summary
-    print("\n" + "=" * 70)  # noqa: T201
-    print("Phase 2 Validation Datasets Generated")  # noqa: T201
-    print("=" * 70)  # noqa: T201
+    print("\n" + "=" * 70)
+    print("Phase 2 Validation Datasets Generated")
+    print("=" * 70)
 
     for dataset_name, dataset_info in results.items():
-        print(f"\n{dataset_name.upper()}:")  # noqa: T201
+        print(f"\n{dataset_name.upper()}:")
         for key, value in dataset_info.items():
-            print(f"  {key}: {value}")  # noqa: T201
+            print(f"  {key}: {value}")
 
-    print("\n" + "=" * 70)  # noqa: T201
-    print(f"All datasets saved to: {output_dir}")  # noqa: T201
-    print("=" * 70)  # noqa: T201
+    print("\n" + "=" * 70)
+    print(f"All datasets saved to: {output_dir}")
+    print("=" * 70)
 
     return 0
 
