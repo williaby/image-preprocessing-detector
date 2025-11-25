@@ -25,7 +25,7 @@ class TestTextDetectionResult:
             edge_score=0.08,
         )
 
-        assert result.has_text is True
+        assert result.has_text
         assert result.confidence == 0.85
         assert result.stroke_density == 0.12
         assert result.component_score == 0.75
@@ -79,7 +79,7 @@ class TestTextGate:
         result = gate.detect(img)
 
         # Text should be detected with high confidence
-        assert result.has_text is True
+        assert result.has_text  # NumPy bool is truthy
         assert result.confidence > 0.3  # Reasonable confidence for synthetic text
         assert result.stroke_density > 0.02  # Should have measurable stroke density
         assert result.component_score > 0.1  # Should have text-like components
@@ -121,7 +121,7 @@ class TestTextGate:
         result = gate.detect(img)
 
         # Text should be detected (top half has text)
-        assert result.has_text is True
+        assert result.has_text
         assert result.confidence > 0.2
 
     def test_detect_empty_image_raises(self) -> None:
@@ -182,7 +182,7 @@ class TestTextGate:
 
         # Should detect text-like components
         assert result.component_score > 0.1
-        assert result.has_text is True  # Many text-like components
+        assert result.has_text  # Many text-like components
 
     def test_edge_density_computation(self) -> None:
         """Test edge density computation."""
@@ -237,7 +237,7 @@ class TestTextGate:
 
         # Should detect text based on stroke density alone
         assert result.stroke_density > gate.stroke_threshold
-        assert result.has_text is True
+        assert result.has_text
 
     def test_decision_logic_component_threshold(self) -> None:
         """Test decision logic triggers on high component count."""
@@ -254,7 +254,7 @@ class TestTextGate:
 
         # Should detect text based on component count
         assert result.component_score > 0.5  # Indicates >= min_text_components
-        assert result.has_text is True
+        assert result.has_text
 
 
 class TestDetectTextConvenience:
@@ -270,7 +270,7 @@ class TestDetectTextConvenience:
         result = detect_text(img)
 
         assert isinstance(result, TextDetectionResult)
-        assert result.has_text is True
+        assert result.has_text
 
     def test_detect_text_with_custom_params(self) -> None:
         """Test detect_text with custom parameters."""
