@@ -9,9 +9,9 @@ Verifies that Modal can access GCS bucket using base64-encoded credentials.
 Usage:
     modal run modal/test_gcs.py
 """
-# bandit: noqa: B108
 
 import os
+import tempfile
 
 import modal
 
@@ -45,13 +45,15 @@ def test_gcs():
         print("Run: ./scripts/modal_helpers.sh setup-gcs-secret /path/to/key.json")
         return {"error": "GCP_SA_KEY not found"}
 
-    # Decode base64 and write to temp file
+    # Decode base64 and write to secure temp file
     gcp_sa_key_json = base64.b64decode(gcp_sa_key_b64).decode("utf-8")
-    credentials_path = "/tmp/gcp-sa-key.json"
-    with open(credentials_path, "w") as f:
-        f.write(gcp_sa_key_json)
-
-    # Set restrictive permissions (owner-only read/write)
+    # Use tempfile.mkstemp for secure temp file creation (unique name, restrictive permissions)
+    fd, credentials_path = tempfile.mkstemp(suffix=".json", prefix="gcp-sa-key-")
+    try:
+        os.write(fd, gcp_sa_key_json.encode("utf-8"))
+    finally:
+        os.close(fd)
+    # Ensure restrictive permissions (owner-only read/write)
     os.chmod(credentials_path, 0o600)
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path

@@ -31,10 +31,10 @@ class SyntheticParams:
     dpi: int = 300
 
     # Quality degradation ranges
-    blur_sigmas: list[float] = None  # Gaussian blur sigma values
-    skew_angles: list[float] = None  # Rotation angles in degrees
-    noise_levels: list[float] = None  # Noise standard deviations
-    contrast_factors: list[float] = None  # Contrast reduction factors
+    blur_sigmas: list[float] | None = None  # Gaussian blur sigma values
+    skew_angles: list[float] | None = None  # Rotation angles in degrees
+    noise_levels: list[float] | None = None  # Noise standard deviations
+    contrast_factors: list[float] | None = None  # Contrast reduction factors
 
     def __post_init__(self) -> None:
         """Set default ranges if not provided."""
@@ -222,9 +222,10 @@ class SyntheticIQAAdapter(BaseAdapter):
             base_image = self._create_text_image()
             img_array = np.array(base_image, dtype=np.float32) / 255.0
 
-            # Add Gaussian noise
+            # Add Gaussian noise using modern Generator API
             if noise_level > 0:
-                noise = np.random.normal(0, noise_level, img_array.shape)
+                rng = np.random.default_rng()
+                noise = rng.normal(0, noise_level, img_array.shape)
                 img_array = np.clip(img_array + noise, 0, 1)
 
             # Convert back to uint8
