@@ -17,6 +17,7 @@ exclude_patterns = [
   "*_min.*",
   "*-min.*",
   "*.min.*",
+  "**/.claude/**",
   "**/.yarn/**",
   "**/*.d.ts",
   "**/assets/**",
@@ -37,8 +38,10 @@ exclude_patterns = [
   "**/protos/**",
   "**/seed/**",
   "**/target/**",
+  "**/template_feedback/**",
   "**/templates/**",
   "**/testdata/**",
+  "**/tmp_cleanup/**",
   "**/vendor/**",
 ]
 
@@ -76,6 +79,25 @@ file_patterns = ["tests/**", "**/test_*.py", "**/*_test.py"]
 [[triage]]
 match.plugins = ["bandit"]
 match.rules = ["bandit:B101"]
+set.ignored = true
+
+# Ignore path traversal in scripts/ - CLI tools intentionally accept file paths
+[[triage]]
+match.plugins = ["semgrep"]
+match.rules = ["semgrep:cli-path-traversal-open"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore TODO comments - these are for tracking, not issues
+[[triage]]
+match.plugins = ["ripgrep"]
+match.rules = ["ripgrep:TODO"]
+set.ignored = true
+
+# Ignore radarlint TODO findings - same as ripgrep
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1135"]
 set.ignored = true
 
 [[plugin]]

@@ -1,0 +1,40 @@
+# Yamllint Configuration
+# Aligned with project standards: 120 char line length, 2-space indent
+# See: https://yamllint.readthedocs.io/en/stable/rules.html
+
+extends: default
+
+rules:
+  # Line length: 120 chars (matching CLAUDE.md standards)
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  # Document start (---) is optional, not required
+  document-start: disable
+
+  # Truthy values: allow yes/no, on/off (common in CI configs)
+  truthy:
+    allowed-values: ["true", "false", "yes", "no", "on", "off"]
+    check-keys: false
+
+  # Comments: require space after #
+  comments:
+    require-starting-space: true
+    ignore-shebangs: true
+    min-spaces-from-content: 1
+
+  # Indentation: 2 spaces (matching CLAUDE.md standards)
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Braces/brackets spacing
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 0

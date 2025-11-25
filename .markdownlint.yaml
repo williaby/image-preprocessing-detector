@@ -1,0 +1,22 @@
+# Markdownlint Configuration
+# Aligned with project standards: 120 char line length
+# See: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+default: true
+
+# MD013 - Line length: 120 chars (matching CLAUDE.md standards)
+MD013:
+  line_length: 120
+  heading_line_length: 120
+  code_block_line_length: 120
+  tables: false  # Don't enforce on tables (hard to control)
+
+# MD024 - Allow duplicate headings in different sections
+MD024:
+  siblings_only: true
+
+# MD033 - Allow inline HTML (needed for some docs)
+MD033: false
+
+# MD041 - First line doesn't have to be a heading
+MD041: false
