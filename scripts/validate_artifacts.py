@@ -102,6 +102,206 @@ def validate_model_file(file_path: Path) -> tuple[bool, str]:
     return True, f"✅ VALID: {file_path.name:<30} ({size_mb:>6.2f} MB)"
 
 
+def _validate_required_files(path: Path, results: dict[str, Any]) -> None:
+    """Validate required metadata files."""
+    print("📋 Required Metadata Files:")
+    print("-" * 80)
+
+    required_files = [
+        ("training_config.yaml", "yaml"),
+        ("commit_hash.txt", "text"),
+        ("dataset_version.txt", "text"),
+        ("env_info.txt", "text"),
+    ]
+
+    for filename, file_type in required_files:
+        file_path = path / filename
+        valid, message = validate_metadata_file(file_path, file_type)
+        print(f"  {message}")
+
+        results["required_files"].append(
+            {"file": filename, "valid": valid, "message": message}
+        )
+
+        if not valid:
+            results["errors"].append(message)
+
+    print()
+
+
+def _validate_optional_files(path: Path, results: dict[str, Any]) -> None:
+    """Validate optional metadata files."""
+    print("📊 Optional Metadata Files:")
+    print("-" * 80)
+
+    optional_files = [("metrics.json", "json")]
+
+    for filename, file_type in optional_files:
+        file_path = path / filename
+        if file_path.exists():
+            valid, message = validate_metadata_file(file_path, file_type)
+            print(f"  {message}")
+            results["optional_files"].append(
+                {"file": filename, "valid": valid, "message": message}
+            )
+            if not valid:
+                results["warnings"].append(message)
+        else:
+            message = f"⚠️  MISSING: {filename} (optional but recommended)"
+            print(f"  {message}")
+            results["warnings"].append(message)
+
+    print()
+
+
+def _validate_model_files(path: Path, results: dict[str, Any]) -> None:
+    """Validate model checkpoint files."""
+    print("🧠 Model Files:")
+    print("-" * 80)
+
+    model_extensions = ["*.pth", "*.pt", "*.onnx"]
+    model_files = []
+    for ext in model_extensions:
+        model_files.extend(path.glob(ext))
+
+    if not model_files:
+        message = "❌ ERROR: No model files found (.pth, .pt, .onnx)"
+        print(f"  {message}")
+        results["errors"].append(message)
+        print()
+        return
+
+    for model_file in sorted(model_files):
+        valid, message = validate_model_file(model_file)
+        print(f"  {message}")
+        results["model_files"].append(
+            {"file": model_file.name, "valid": valid, "message": message}
+        )
+        if not valid:
+            target = results["warnings"] if "SUSPICIOUS" in message else results["errors"]
+            target.append(message)
+
+    print()
+
+
+def _check_git_state(path: Path, results: dict[str, Any]) -> None:
+    """Check git state from commit hash file."""
+    commit_hash_file = path / "commit_hash.txt"
+    if not commit_hash_file.exists():
+        return
+
+    with open(commit_hash_file) as f:
+        commit_info = f.read()
+
+    if "dirty" in commit_info:
+        message = "⚠️  WARNING: Model trained from dirty git state (uncommitted changes)"
+        print(f"  {message}")
+        results["warnings"].append(message)
+    else:
+        print("  ✅ Git state: clean (reproducible)")
+
+
+def _check_config_completeness(path: Path, results: dict[str, Any]) -> None:
+    """Check training config completeness."""
+    config_file = path / "training_config.yaml"
+    if not config_file.exists():
+        return
+
+    with open(config_file) as f:
+        config = yaml.safe_load(f)
+
+    required_config_keys = ["model", "training"]
+    missing_keys = [key for key in required_config_keys if key not in config]
+
+    if missing_keys:
+        message = f"⚠️  WARNING: Config missing keys: {missing_keys}"
+        print(f"  {message}")
+        results["warnings"].append(message)
+    else:
+        print("  ✅ Config structure: complete")
+
+
+def _check_metrics(path: Path, results: dict[str, Any]) -> None:
+    """Check metrics file."""
+    metrics_file = path / "metrics.json"
+    if not metrics_file.exists():
+        return
+
+    with open(metrics_file) as f:
+        metrics = json.load(f)
+
+    if not metrics:
+        message = "⚠️  WARNING: metrics.json is empty"
+        print(f"  {message}")
+        results["warnings"].append(message)
+    else:
+        print(f"  ✅ Metrics: {len(metrics)} metrics recorded")
+
+
+def _perform_additional_checks(path: Path, results: dict[str, Any]) -> None:
+    """Perform additional validation checks."""
+    print("🔬 Additional Validation:")
+    print("-" * 80)
+
+    _check_git_state(path, results)
+    _check_config_completeness(path, results)
+    _check_metrics(path, results)
+
+    print()
+
+
+def _print_validation_summary(results: dict[str, Any], strict: bool) -> None:
+    """Print validation summary and determine pass/fail status."""
+    print("=" * 80)
+    print("📈 Validation Summary")
+    print("=" * 80)
+
+    num_errors = len(results["errors"])
+    num_warnings = len(results["warnings"])
+    num_model_files = len(results["model_files"])
+
+    print(f"Required files: {len(results['required_files'])} checked")
+    print(f"Model files: {num_model_files} found")
+    print(f"Errors: {num_errors}")
+    print(f"Warnings: {num_warnings}")
+    print()
+
+    if num_errors > 0:
+        print("❌ VALIDATION FAILED")
+        print()
+        print("Errors:")
+        for error in results["errors"]:
+            print(f"  - {error}")
+        print()
+        return
+
+    if num_warnings > 0:
+        if strict:
+            print("❌ VALIDATION FAILED (strict mode)")
+            print()
+            print("Warnings (treated as errors in strict mode):")
+            for warning in results["warnings"]:
+                print(f"  - {warning}")
+            print()
+            return
+
+        print("⚠️  VALIDATION PASSED WITH WARNINGS")
+        print()
+        print("Warnings:")
+        for warning in results["warnings"]:
+            print(f"  - {warning}")
+        print()
+        print("✅ All required artifacts present")
+        print("=" * 80)
+        return
+
+    print("✅ VALIDATION PASSED")
+    print()
+    print("All required artifacts present and valid!")
+    print("This run is ready for promotion to Hugging Face Hub.")
+    print("=" * 80)
+
+
 def validate_artifacts(artifact_dir: str, strict: bool = False) -> dict[str, Any]:
     """Validate all artifacts in a training run directory.
 
@@ -127,7 +327,7 @@ def validate_artifacts(artifact_dir: str, strict: bool = False) -> dict[str, Any
         print(f"❌ ERROR: Directory does not exist: {artifact_dir}")
         sys.exit(1)
 
-    results = {
+    results: dict[str, Any] = {
         "required_files": [],
         "optional_files": [],
         "model_files": [],
@@ -135,190 +335,11 @@ def validate_artifacts(artifact_dir: str, strict: bool = False) -> dict[str, Any
         "warnings": [],
     }
 
-    # =========================================================================
-    # Required Metadata Files
-    # =========================================================================
-    print("📋 Required Metadata Files:")
-    print("-" * 80)
-
-    required_files = [
-        ("training_config.yaml", "yaml"),
-        ("commit_hash.txt", "text"),
-        ("dataset_version.txt", "text"),
-        ("env_info.txt", "text"),
-    ]
-
-    for filename, file_type in required_files:
-        file_path = path / filename
-        valid, message = validate_metadata_file(file_path, file_type)
-        print(f"  {message}")
-
-        results["required_files"].append(
-            {"file": filename, "valid": valid, "message": message}
-        )
-
-        if not valid:
-            results["errors"].append(message)
-
-    print()
-
-    # =========================================================================
-    # Optional Metadata Files
-    # =========================================================================
-    print("📊 Optional Metadata Files:")
-    print("-" * 80)
-
-    optional_files = [("metrics.json", "json")]
-
-    for filename, file_type in optional_files:
-        file_path = path / filename
-        if file_path.exists():
-            valid, message = validate_metadata_file(file_path, file_type)
-            print(f"  {message}")
-            results["optional_files"].append(
-                {"file": filename, "valid": valid, "message": message}
-            )
-            if not valid:
-                results["warnings"].append(message)
-        else:
-            message = f"⚠️  MISSING: {filename} (optional but recommended)"
-            print(f"  {message}")
-            results["warnings"].append(message)
-
-    print()
-
-    # =========================================================================
-    # Model Files
-    # =========================================================================
-    print("🧠 Model Files:")
-    print("-" * 80)
-
-    # Find all .pth, .pt, .onnx files
-    model_extensions = ["*.pth", "*.pt", "*.onnx"]
-    model_files = []
-    for ext in model_extensions:
-        model_files.extend(path.glob(ext))
-
-    if not model_files:
-        message = "❌ ERROR: No model files found (.pth, .pt, .onnx)"
-        print(f"  {message}")
-        results["errors"].append(message)
-    else:
-        for model_file in sorted(model_files):
-            valid, message = validate_model_file(model_file)
-            print(f"  {message}")
-            results["model_files"].append(
-                {"file": model_file.name, "valid": valid, "message": message}
-            )
-            if not valid:
-                if "SUSPICIOUS" in message:
-                    results["warnings"].append(message)
-                else:
-                    results["errors"].append(message)
-
-    print()
-
-    # =========================================================================
-    # Additional Checks
-    # =========================================================================
-    print("🔬 Additional Validation:")
-    print("-" * 80)
-
-    # Check git status
-    commit_hash_file = path / "commit_hash.txt"
-    if commit_hash_file.exists():
-        with open(commit_hash_file) as f:
-            commit_info = f.read()
-        if "dirty" in commit_info:
-            message = (
-                "⚠️  WARNING: Model trained from dirty git state (uncommitted changes)"
-            )
-            print(f"  {message}")
-            results["warnings"].append(message)
-        else:
-            print("  ✅ Git state: clean (reproducible)")
-
-    # Check config completeness
-    config_file = path / "training_config.yaml"
-    if config_file.exists():
-        with open(config_file) as f:
-            config = yaml.safe_load(f)
-
-        required_config_keys = ["model", "training"]
-        missing_keys = [key for key in required_config_keys if key not in config]
-
-        if missing_keys:
-            message = f"⚠️  WARNING: Config missing keys: {missing_keys}"
-            print(f"  {message}")
-            results["warnings"].append(message)
-        else:
-            print("  ✅ Config structure: complete")
-
-    # Check metrics
-    metrics_file = path / "metrics.json"
-    if metrics_file.exists():
-        with open(metrics_file) as f:
-            metrics = json.load(f)
-
-        if not metrics:
-            message = "⚠️  WARNING: metrics.json is empty"
-            print(f"  {message}")
-            results["warnings"].append(message)
-        else:
-            print(f"  ✅ Metrics: {len(metrics)} metrics recorded")
-
-    print()
-
-    # =========================================================================
-    # Summary
-    # =========================================================================
-    print("=" * 80)
-    print("📈 Validation Summary")
-    print("=" * 80)
-
-    num_errors = len(results["errors"])
-    num_warnings = len(results["warnings"])
-    num_model_files = len(results["model_files"])
-
-    print(f"Required files: {len(results['required_files'])} checked")
-    print(f"Model files: {num_model_files} found")
-    print(f"Errors: {num_errors}")
-    print(f"Warnings: {num_warnings}")
-    print()
-
-    if num_errors > 0:
-        print("❌ VALIDATION FAILED")
-        print()
-        print("Errors:")
-        for error in results["errors"]:
-            print(f"  - {error}")
-        print()
-        return results
-
-    if num_warnings > 0:
-        if strict:
-            print("❌ VALIDATION FAILED (strict mode)")
-            print()
-            print("Warnings (treated as errors in strict mode):")
-            for warning in results["warnings"]:
-                print(f"  - {warning}")
-            print()
-            return results
-        print("⚠️  VALIDATION PASSED WITH WARNINGS")
-        print()
-        print("Warnings:")
-        for warning in results["warnings"]:
-            print(f"  - {warning}")
-        print()
-        print("✅ All required artifacts present")
-        print("=" * 80)
-        return results
-
-    print("✅ VALIDATION PASSED")
-    print()
-    print("All required artifacts present and valid!")
-    print("This run is ready for promotion to Hugging Face Hub.")
-    print("=" * 80)
+    _validate_required_files(path, results)
+    _validate_optional_files(path, results)
+    _validate_model_files(path, results)
+    _perform_additional_checks(path, results)
+    _print_validation_summary(results, strict)
 
     return results
 
