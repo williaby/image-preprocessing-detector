@@ -35,6 +35,7 @@ import logging
 import os
 import sys
 import time
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -82,11 +83,12 @@ def load_image_from_dataset(dataset: Any, idx: int) -> np.ndarray | None:
                 if len(rgb_array.shape) == 2:
                     # Grayscale
                     return cv2.cvtColor(rgb_array, cv2.COLOR_GRAY2BGR)
-                if rgb_array.shape[2] == 4:
+                elif rgb_array.shape[2] == 4:
                     # RGBA
                     return cv2.cvtColor(rgb_array, cv2.COLOR_RGBA2BGR)
-                # RGB
-                return cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR)
+                else:
+                    # RGB
+                    return cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR)
 
         # Fallback: try to load from image_path
         page_info = record.get("page_info", {})
@@ -132,6 +134,7 @@ def run_layout_lite_detection(image: np.ndarray) -> dict[str, Any]:
         Dict with detection results
     """
     from image_preprocessing_detector.detection.layout_lite import LayoutLiteAnalyzer
+    from image_preprocessing_detector.schema import LayoutType
 
     analyzer = LayoutLiteAnalyzer()
     results = analyzer.analyze(image)
@@ -198,11 +201,7 @@ def calculate_binary_metrics(
 
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = (
-        2 * precision * recall / (precision + recall)
-        if (precision + recall) > 0
-        else 0.0
-    )
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     return {
         "precision": precision,
@@ -232,9 +231,7 @@ def calculate_multiclass_metrics(
     from sklearn.metrics import classification_report, confusion_matrix
 
     # Filter to valid classes
-    valid_mask = [
-        (gt in classes and pred in classes) for gt, pred in zip(y_true, y_pred)
-    ]
+    valid_mask = [(gt in classes and pred in classes) for gt, pred in zip(y_true, y_pred)]
     y_true_valid = [y_true[i] for i in range(len(y_true)) if valid_mask[i]]
     y_pred_valid = [y_pred[i] for i in range(len(y_pred)) if valid_mask[i]]
 
@@ -242,14 +239,11 @@ def calculate_multiclass_metrics(
         return {"accuracy": 0.0, "macro_f1": 0.0, "per_class": {}}
 
     # Calculate accuracy
-    accuracy = sum(
-        1 for gt, pred in zip(y_true_valid, y_pred_valid) if gt == pred
-    ) / len(y_true_valid)
+    accuracy = sum(1 for gt, pred in zip(y_true_valid, y_pred_valid) if gt == pred) / len(y_true_valid)
 
     # Get sklearn report
     report = classification_report(
-        y_true_valid,
-        y_pred_valid,
+        y_true_valid, y_pred_valid,
         labels=classes,
         output_dict=True,
         zero_division=0.0,
@@ -315,13 +309,7 @@ def evaluate_from_huggingface(
     logger.info(f"Evaluating {total} samples...")
 
     # Collect predictions and ground truth
-    binary_flags = [
-        "has_tables",
-        "has_figures",
-        "fuzzy_scan",
-        "watermark",
-        "colorful_background",
-    ]
+    binary_flags = ["has_tables", "has_figures", "fuzzy_scan", "watermark", "colorful_background"]
     collections: dict[str, dict[str, list]] = {
         flag: {"y_true": [], "y_pred": []} for flag in binary_flags
     }
@@ -477,9 +465,7 @@ def calculate_all_metrics(
 
     # Layout classification metrics
     layout_classes = ["single_column", "multi_column", "three_column", "complex"]
-    layout_metrics = calculate_multiclass_metrics(
-        layout_true, layout_pred, layout_classes
-    )
+    layout_metrics = calculate_multiclass_metrics(layout_true, layout_pred, layout_classes)
     results["layout_classification"] = layout_metrics
 
     # Summary metrics
@@ -557,24 +543,22 @@ def generate_markdown_report(results: dict[str, Any]) -> str:
             f"{metrics['f1']:.3f} | {metrics['support']} | {target_met} |"
         )
 
-    lines.extend(
-        [
-            "",
-            f"**Mean F1**: {results['summary']['mean_binary_f1']:.3f}",
-            "",
-            "---",
-            "",
-            "## Layout Classification",
-            "",
-            f"**Accuracy**: {results['layout_classification']['accuracy']:.3f}",
-            f"**Macro F1**: {results['layout_classification']['macro_f1']:.3f}",
-            "",
-            "### Per-Class Performance",
-            "",
-            "| Layout Type | Precision | Recall | F1 | Support |",
-            "|-------------|-----------|--------|-----|---------|",
-        ]
-    )
+    lines.extend([
+        "",
+        f"**Mean F1**: {results['summary']['mean_binary_f1']:.3f}",
+        "",
+        "---",
+        "",
+        "## Layout Classification",
+        "",
+        f"**Accuracy**: {results['layout_classification']['accuracy']:.3f}",
+        f"**Macro F1**: {results['layout_classification']['macro_f1']:.3f}",
+        "",
+        "### Per-Class Performance",
+        "",
+        "| Layout Type | Precision | Recall | F1 | Support |",
+        "|-------------|-----------|--------|-----|---------|",
+    ])
 
     for cls, metrics in results["layout_classification"]["per_class"].items():
         lines.append(
@@ -582,29 +566,27 @@ def generate_markdown_report(results: dict[str, Any]) -> str:
             f"{metrics['f1']:.3f} | {metrics['support']} |"
         )
 
-    lines.extend(
-        [
-            "",
-            "---",
-            "",
-            "## Evaluation Scope",
-            "",
-            "### In Scope (Project A)",
-            "- Page attributes: fuzzy_scan, watermark, colorful_background",
-            "- Layout classification: single/multi/three-column, complex",
-            "- Element presence: has_tables, has_figures",
-            "",
-            "### Out of Scope (Project B)",
-            "- Text/OCR recognition (NED, BLEU, METEOR)",
-            "- Table structure extraction (TEDS)",
-            "- Formula recognition (CDM)",
-            "- Reading order",
-            "",
-            "---",
-            "",
-            "*Generated by Project A OmniDocBench Baseline Evaluation*",
-        ]
-    )
+    lines.extend([
+        "",
+        "---",
+        "",
+        "## Evaluation Scope",
+        "",
+        "### In Scope (Project A)",
+        "- Page attributes: fuzzy_scan, watermark, colorful_background",
+        "- Layout classification: single/multi/three-column, complex",
+        "- Element presence: has_tables, has_figures",
+        "",
+        "### Out of Scope (Project B)",
+        "- Text/OCR recognition (NED, BLEU, METEOR)",
+        "- Table structure extraction (TEDS)",
+        "- Formula recognition (CDM)",
+        "- Reading order",
+        "",
+        "---",
+        "",
+        "*Generated by Project A OmniDocBench Baseline Evaluation*",
+    ])
 
     return "\n".join(lines)
 
@@ -665,13 +647,13 @@ def main() -> int:
     print("=" * 70)
     print(f"\nSamples: {results['metadata']['processed']}")
     print(f"Time: {results['metadata']['elapsed_seconds']:.1f}s")
-    print("\nBinary Flag Detection (F1 scores):")
+    print(f"\nBinary Flag Detection (F1 scores):")
 
     for flag, metrics in results["binary_flags"].items():
         status = "✅" if metrics["f1"] >= 0.85 else "❌"
         print(f"  {status} {flag:25s}: {metrics['f1']:.3f}")
 
-    print("\nLayout Classification:")
+    print(f"\nLayout Classification:")
     print(f"  Accuracy: {results['layout_classification']['accuracy']:.3f}")
     print(f"  Macro F1: {results['layout_classification']['macro_f1']:.3f}")
 
