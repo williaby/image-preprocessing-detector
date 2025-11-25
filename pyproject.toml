@@ -466,6 +466,10 @@ omit = [
     # Training modules (require PyTorch, tested separately with ml dependencies)
     "src/image_preprocessing_detector/training/*",
     "src/image_preprocessing_detector/datasets/*",
+    # PyTorch model definitions (require torch, tested with ml dependencies)
+    "src/image_preprocessing_detector/models/resnet_student.py",
+    "src/image_preprocessing_detector/models/resnet_teacher.py",
+    "src/image_preprocessing_detector/models/loss_functions.py",
     # Routing (Phase 8, needs implementation)
     "src/image_preprocessing_detector/routing/*",
 ]

@@ -12,14 +12,16 @@ Tests cover:
 from unittest.mock import MagicMock
 
 import pytest
-import torch
-import torch.nn as nn
 
-from image_preprocessing_detector.models.resnet_student import (
+torch = pytest.importorskip("torch", reason="PyTorch required for ResNet models tests")
+
+import torch.nn as nn  # noqa: E402
+
+from image_preprocessing_detector.models.resnet_student import (  # noqa: E402
     ResNetStudent,
     StudentIQAHead,
 )
-from image_preprocessing_detector.models.resnet_teacher import (
+from image_preprocessing_detector.models.resnet_teacher import (  # noqa: E402
     IQAHead,
     ResNetTeacher,
 )

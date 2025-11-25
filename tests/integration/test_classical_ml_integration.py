@@ -9,8 +9,6 @@ Tests the complete workflow:
 This file implements Phase 5A-C of the Priority 5 implementation plan.
 """
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 
@@ -26,39 +24,17 @@ from image_preprocessing_detector.detection.iqa_classical import (
 )
 from image_preprocessing_detector.detection.iqa_ml import (
     ClassicalIQAScores,
-    Device,
     MLIQADetector,
     ModelType,
 )
 
 
 class TestNoiseMLIQAIntegration:
-    """Integration tests for Noise detector + ML IQA."""
+    """Integration tests for Noise detector + ML IQA.
 
-    @pytest.fixture
-    def onnx_models_available(self) -> bool:
-        """Check if ONNX models are available."""
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-        return student_path.exists() and teacher_path.exists()
-
-    @pytest.fixture
-    def ml_detector(self, onnx_models_available: bool) -> MLIQADetector | None:
-        """Create ML IQA detector with real models if available."""
-        if not onnx_models_available:
-            pytest.skip("ONNX models not available")
-
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-
-        return MLIQADetector(
-            student_model_path=student_path,
-            teacher_model_path=teacher_path,
-            device=Device.CPU,
-            enable_modal_fallback=False,
-        )
+    Note: Uses shared ml_detector fixture from conftest.py that handles
+    onnxruntime availability and model file checks.
+    """
 
     def test_noisy_image_detection_with_ml_confirmation(
         self, ml_detector: MLIQADetector | None
@@ -203,32 +179,10 @@ class TestNoiseMLIQAIntegration:
 
 
 class TestIlluminationMLIQAIntegration:
-    """Integration tests for Illumination detector + ML IQA."""
+    """Integration tests for Illumination detector + ML IQA.
 
-    @pytest.fixture
-    def onnx_models_available(self) -> bool:
-        """Check if ONNX models are available."""
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-        return student_path.exists() and teacher_path.exists()
-
-    @pytest.fixture
-    def ml_detector(self, onnx_models_available: bool) -> MLIQADetector | None:
-        """Create ML IQA detector with real models if available."""
-        if not onnx_models_available:
-            pytest.skip("ONNX models not available")
-
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-
-        return MLIQADetector(
-            student_model_path=student_path,
-            teacher_model_path=teacher_path,
-            device=Device.CPU,
-            enable_modal_fallback=False,
-        )
+    Note: Uses shared ml_detector fixture from conftest.py.
+    """
 
     def test_poor_illumination_detection_with_ml_confirmation(
         self, ml_detector: MLIQADetector | None
@@ -354,32 +308,10 @@ class TestIlluminationMLIQAIntegration:
 
 
 class TestJPEGBlockinessMLIQAIntegration:
-    """Integration tests for JPEG Blockiness detector + ML IQA."""
+    """Integration tests for JPEG Blockiness detector + ML IQA.
 
-    @pytest.fixture
-    def onnx_models_available(self) -> bool:
-        """Check if ONNX models are available."""
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-        return student_path.exists() and teacher_path.exists()
-
-    @pytest.fixture
-    def ml_detector(self, onnx_models_available: bool) -> MLIQADetector | None:
-        """Create ML IQA detector with real models if available."""
-        if not onnx_models_available:
-            pytest.skip("ONNX models not available")
-
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-
-        return MLIQADetector(
-            student_model_path=student_path,
-            teacher_model_path=teacher_path,
-            device=Device.CPU,
-            enable_modal_fallback=False,
-        )
+    Note: Uses shared ml_detector fixture from conftest.py.
+    """
 
     def test_jpeg_artifacts_detection_with_ml_confirmation(
         self, ml_detector: MLIQADetector | None
@@ -520,32 +452,10 @@ class TestJPEGBlockinessMLIQAIntegration:
 
 
 class TestBinarizationMLIQAIntegration:
-    """Integration tests for Binarization Quality detector + ML IQA."""
+    """Integration tests for Binarization Quality detector + ML IQA.
 
-    @pytest.fixture
-    def onnx_models_available(self) -> bool:
-        """Check if ONNX models are available."""
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-        return student_path.exists() and teacher_path.exists()
-
-    @pytest.fixture
-    def ml_detector(self, onnx_models_available: bool) -> MLIQADetector | None:
-        """Create ML IQA detector with real models if available."""
-        if not onnx_models_available:
-            pytest.skip("ONNX models not available")
-
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-
-        return MLIQADetector(
-            student_model_path=student_path,
-            teacher_model_path=teacher_path,
-            device=Device.CPU,
-            enable_modal_fallback=False,
-        )
+    Note: Uses shared ml_detector fixture from conftest.py.
+    """
 
     def test_poor_binarization_detection_with_ml_confirmation(
         self, ml_detector: MLIQADetector | None
@@ -681,32 +591,10 @@ class TestBinarizationMLIQAIntegration:
 
 
 class TestBleedThroughMLIQAIntegration:
-    """Integration tests for Bleed-Through detector + ML IQA."""
+    """Integration tests for Bleed-Through detector + ML IQA.
 
-    @pytest.fixture
-    def onnx_models_available(self) -> bool:
-        """Check if ONNX models are available."""
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-        return student_path.exists() and teacher_path.exists()
-
-    @pytest.fixture
-    def ml_detector(self, onnx_models_available: bool) -> MLIQADetector | None:
-        """Create ML IQA detector with real models if available."""
-        if not onnx_models_available:
-            pytest.skip("ONNX models not available")
-
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-
-        return MLIQADetector(
-            student_model_path=student_path,
-            teacher_model_path=teacher_path,
-            device=Device.CPU,
-            enable_modal_fallback=False,
-        )
+    Note: Uses shared ml_detector fixture from conftest.py.
+    """
 
     def test_bleed_through_detection_with_ml_confirmation(
         self, ml_detector: MLIQADetector | None
@@ -849,32 +737,10 @@ class TestBleedThroughMLIQAIntegration:
 
 
 class TestMultiDefectMLIQAIntegration:
-    """Integration tests for multiple simultaneous defects with ML IQA."""
+    """Integration tests for multiple simultaneous defects with ML IQA.
 
-    @pytest.fixture
-    def onnx_models_available(self) -> bool:
-        """Check if ONNX models are available."""
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-        return student_path.exists() and teacher_path.exists()
-
-    @pytest.fixture
-    def ml_detector(self, onnx_models_available: bool) -> MLIQADetector | None:
-        """Create ML IQA detector with real models if available."""
-        if not onnx_models_available:
-            pytest.skip("ONNX models not available")
-
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-
-        return MLIQADetector(
-            student_model_path=student_path,
-            teacher_model_path=teacher_path,
-            device=Device.CPU,
-            enable_modal_fallback=False,
-        )
+    Note: Uses shared ml_detector fixture from conftest.py.
+    """
 
     def test_blur_noise_low_contrast_combined(
         self, ml_detector: MLIQADetector | None
@@ -1142,32 +1008,9 @@ class TestDiscrepancyEscalationComprehensive:
 
     Systematically tests discrepancy-triggered teacher escalation for each
     of the 8 classical IQA detectors.
+
+    Note: Uses shared ml_detector fixture from conftest.py.
     """
-
-    @pytest.fixture
-    def onnx_models_available(self) -> bool:
-        """Check if ONNX models are available."""
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-        return student_path.exists() and teacher_path.exists()
-
-    @pytest.fixture
-    def ml_detector(self, onnx_models_available: bool) -> MLIQADetector | None:
-        """Create ML IQA detector with real models if available."""
-        if not onnx_models_available:
-            pytest.skip("ONNX models not available")
-
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-
-        return MLIQADetector(
-            student_model_path=student_path,
-            teacher_model_path=teacher_path,
-            device=Device.CPU,
-            enable_modal_fallback=False,
-        )
 
     def test_blur_discrepancy_escalation(
         self, ml_detector: MLIQADetector | None

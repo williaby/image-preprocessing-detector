@@ -206,12 +206,14 @@ class TestGenalogDegraderSensitivity:
         image = np.zeros((100, 100, 3), dtype=np.uint8)
 
         with pytest.raises(NotImplementedError, match="Phase 2 Week 2"):
+            # Use positional arguments since method params are prefixed with
+            # underscores (_image, _degradation_type, etc.) to indicate unused
             degrader.generate_sensitivity_gradient(
-                image=image,
-                degradation_type="blur",
-                param_name="kernel_size",
-                param_range=(1, 11, 2),
-                output_dir=tmp_path,  # type: ignore
+                image,  # _image
+                "blur",  # _degradation_type
+                "kernel_size",  # _param_name
+                (1.0, 11.0, 2.0),  # _param_range
+                tmp_path,  # type: ignore  # _output_dir
             )
 
 
