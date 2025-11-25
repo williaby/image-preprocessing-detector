@@ -56,7 +56,7 @@ fi
 
 # Extract and decode GCP_SA_KEY from .env using Python
 log_info "Reading GCP_SA_KEY from $ENV_FILE..."
-python3 << 'EOF'
+if ! python3 << 'EOF'
 import os
 import sys
 from pathlib import Path
@@ -93,8 +93,7 @@ if not found:
     print("Error: GCP_SA_KEY not found in .env file", file=sys.stderr)
     sys.exit(1)
 EOF
-
-if [ $? -ne 0 ]; then
+then
     log_error "Failed to extract GCP_SA_KEY from .env"
     exit 1
 fi

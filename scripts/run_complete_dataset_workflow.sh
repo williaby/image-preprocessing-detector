@@ -41,7 +41,7 @@ echo -e "${YELLOW}WARNING: This will take 9-13 hours total and use ~45GB disk sp
 echo ""
 
 ACCEPT_PATTERN='^(yes|y|Y|YES)$'
-read -p "Proceed with full workflow? (yes/no): " response
+read -r -p "Proceed with full workflow? (yes/no): " response
 if [[ ! "$response" =~ $ACCEPT_PATTERN ]]; then
     echo "Aborted."
     exit 0

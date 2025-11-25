@@ -28,7 +28,7 @@ echo "Python version $PYTHON_VERSION is compatible with Atheris"
 pip3 install uv
 
 # Install project dependencies (without dev dependencies)
-cd $SRC/image-preprocessing-detector
+cd "$SRC/image-preprocessing-detector"
 
 # Generate requirements without dev dependencies (no hashes for pip compatibility)
 uv export --no-dev --no-hashes --format requirements-txt > /tmp/requirements.txt
@@ -57,13 +57,15 @@ if command -v compile_python_fuzzer &> /dev/null; then
 else
     echo "WARNING: compile_python_fuzzer not found, using alternative approach"
     # Alternative: directly copy and make executable
-    cp fuzz/fuzz_pdf_loader.py $OUT/fuzz_pdf_loader
-    cp fuzz/fuzz_image_loader.py $OUT/fuzz_image_loader
-    cp fuzz/fuzz_text_gate.py $OUT/fuzz_text_gate
-    chmod +x $OUT/fuzz_*
+    cp fuzz/fuzz_pdf_loader.py "$OUT/fuzz_pdf_loader"
+    cp fuzz/fuzz_image_loader.py "$OUT/fuzz_image_loader"
+    cp fuzz/fuzz_text_gate.py "$OUT/fuzz_text_gate"
+    chmod +x "$OUT"/fuzz_*
 fi
 
 echo "=== Fuzzing Build Complete ==="
 echo "Fuzz targets in $OUT:"
-ls -la $OUT/ | grep -E "(fuzz_|^total|^d)"
+for f in "$OUT"/fuzz_*; do
+    [ -e "$f" ] && ls -la "$f"
+done
 echo "================================"
