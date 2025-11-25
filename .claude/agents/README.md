@@ -22,7 +22,7 @@ description: Context-optimized agent system documentation and development guidel
 ### Token Optimization Strategy
 
 **Before**: 12 agents × 300 lines avg = ~3,600 lines of context (~10% context window)
-**Target**: 10 agents × 75 lines avg + shared context = ~1,200 lines (~3% context window)
+**Current**: 20 agents × 75 lines avg + shared context = ~1,500 lines (~4% context window)
 
 ## Agent Categories
 
@@ -37,7 +37,31 @@ Essential expertise that applies across all projects:
 - **`prompt-engineer`** - Prompt optimization, framework implementation
 - **`documentation-writer`** - Technical writing, information architecture
 
-### Contextual Agents (4)
+### Development Workflow Agents (5)
+
+Specialized agents for development operations:
+
+- **`api-development-agent`** - API development, REST/GraphQL, OpenAPI specifications
+- **`database-operations-agent`** - Database queries, schema management, migrations
+- **`git-workflow-agent`** - Git operations, branch management, commit workflows
+- **`github-workflow-agent`** - GitHub PRs, issues, repository management
+- **`file-operations-agent`** - File system operations, reading, writing, management
+
+### Frontend & UI Agents (2)
+
+User interface and visual development:
+
+- **`frontend-design-agent`** - React components, responsive layouts, design systems
+- **`ui-testing-agent`** - End-to-end testing, user interaction validation, accessibility
+
+### Infrastructure Agents (2)
+
+Operations and research capabilities:
+
+- **`devops-deployment-agent`** - CI/CD pipelines, infrastructure automation, deployment
+- **`research-agent`** - Web search, documentation research, information gathering
+
+### Contextual Agents (5)
 
 Project or domain-specific capabilities:
 
@@ -45,6 +69,7 @@ Project or domain-specific capabilities:
 - **`mcp-integration-agent`** - MCP protocol communication, multi-agent orchestration
 - **`journey-orchestrator`** - Multi-level user experience management
 - **`modularization-assistant`** - System decomposition, architectural refactoring
+- **`project-plan-synthesizer`** - Project planning, roadmap synthesis, task breakdown
 
 ### Merged/Eliminated
 
@@ -92,7 +117,6 @@ context_refs:  # NEW: Reference shared context instead of repeating
 - **`shared-architecture.md`** - Common system architectures and patterns
 - **`development-standards.md`** - Universal coding standards and practices
 - **`integration-patterns.md`** - Common integration and API patterns
-- **`project-context.md`** - Current project-specific context when needed
 
 **Size Limits**:
 
@@ -140,10 +164,10 @@ context_refs:  # NEW: Reference shared context instead of repeating
 
 ```bash
 # Assess current context usage
-wc -l ~/.claude/agents/*.md
+wc -l .claude/agents/*.md
 
 # Identify overlapping content
-grep -r "similar patterns" ~/.claude/agents/
+grep -r "similar patterns" .claude/agents/
 
 # Measure context impact
 claude /context  # Check current context window usage
@@ -210,13 +234,13 @@ claude /context  # Check current context window usage
 ```bash
 # Monitor context usage
 echo "Current agent context usage:"
-wc -l ~/.claude/agents/*.md | tail -1
+wc -l .claude/agents/*.md | tail -1
 
 # Target context size
 echo "Target: < 1200 lines total"
 
 # Shared context size
-wc -l ~/.claude/context/*.md 2>/dev/null || echo "Shared context not yet implemented"
+wc -l .claude/context/*.md 2>/dev/null || echo "Shared context not yet implemented"
 ```
 
 ### Optimization Techniques
@@ -257,14 +281,14 @@ claude "implement secure user registration with comprehensive tests"
 
 ```bash
 # 1. Create new agent (only when justified)
-cp ~/.claude/agents/template-agent.md ~/.claude/agents/new-agent.md
+cp .claude/agents/template-agent.md .claude/agents/new-agent.md
 
 # 2. Update shared context if needed
-vim ~/.claude/context/shared-architecture.md
+vim .claude/context/shared-architecture.md
 
 # 3. Test agent functionality
 claude @new-agent "test task to verify agent capabilities"
 
 # 4. Measure context impact
-wc -l ~/.claude/agents/*.md ~/.claude/context/*.md
+wc -l .claude/agents/*.md .claude/context/*.md
 ```
