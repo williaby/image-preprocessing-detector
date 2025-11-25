@@ -42,7 +42,6 @@ logger = get_logger(__name__)
 _IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}
 
 
-<<<<<<< HEAD
 def _parse_roi_string(roi: str | None) -> tuple[int, int, int, int] | None:
     """Parse ROI string to bbox tuple.
 
