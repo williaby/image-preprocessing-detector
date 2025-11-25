@@ -41,4 +41,6 @@ Follow documentation pyramid: overview → user guides → reference → advance
 - Automated quality checks and maintenance workflows
 
 ---
-*Use this agent for: API documentation, user guides, architecture documentation, technical writing, information architecture design*
+## Use Cases
+
+**Recommended for: API documentation, user guides, architecture documentation, technical writing, information architecture design

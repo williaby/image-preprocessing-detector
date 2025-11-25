@@ -42,23 +42,25 @@ Execute database workflows: schema analysis → query optimization → migration
 
 ## Database Operation Categories
 
-### **Schema Operations**
+### **Schema Operations*
 - Table creation, modification, and optimization
 - Index strategy development and maintenance
 - Foreign key and constraint management
 - Database normalization and denormalization decisions
 
-### **Query Operations**
+### **Query Operations*
 - SQL query optimization and performance tuning
 - Execution plan analysis and improvement recommendations
 - Batch operation design for large dataset processing
 - Query caching strategy implementation
 
-### **Data Integrity Operations**
+### **Data Integrity Operations*
 - Data validation and constraint verification
 - Referential integrity checking and cleanup
 - Data migration validation and verification
 - Backup and recovery testing procedures
 
 ---
-*Use this agent for: database schema management, query optimization, migrations, data integrity, performance tuning*
+## Use Cases
+
+**Recommended for: database schema management, query optimization, migrations, data integrity, performance tuning

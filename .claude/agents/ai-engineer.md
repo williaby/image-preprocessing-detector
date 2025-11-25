@@ -42,4 +42,6 @@ Start with C.R.E.A.T.E. framework for all prompts → integrate external Qdrant 
 - Token usage tracking and cost optimization features
 
 ---
-*Use this agent for: LLM application development, RAG system implementation, multi-agent workflows, prompt optimization, AI API integrations*
+## Use Cases
+
+**Recommended for: LLM application development, RAG system implementation, multi-agent workflows, prompt optimization, AI API integrations

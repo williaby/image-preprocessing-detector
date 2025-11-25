@@ -41,4 +41,6 @@ Execute GitHub workflows: repository analysis → branch management → pull req
 - Repository documentation and README maintenance
 
 ---
-*Use this agent for: GitHub operations, pull requests, issues, repository management, code review workflows*
+## Use Cases
+
+**Recommended for: GitHub operations, pull requests, issues, repository management, code review workflows

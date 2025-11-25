@@ -41,4 +41,6 @@ Follow knowledge pipeline: file discovery → frontmatter validation → content
 - Update summaries documenting knowledge base changes
 
 ---
-*Use this agent for: knowledge base ingestion, semantic search optimization, content validation, vector database management, knowledge curation*
+## Use Cases
+
+**Recommended for: knowledge base ingestion, semantic search optimization, content validation, vector database management, knowledge curation

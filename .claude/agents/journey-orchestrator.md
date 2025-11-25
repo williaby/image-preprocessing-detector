@@ -41,4 +41,6 @@ Execute journey workflow: input analysis → journey recommendation → context 
 - Performance monitoring with real-time journey effectiveness tracking
 
 ---
-*Use this agent for: user experience optimization, workflow orchestration, journey level assessment, progressive complexity management, multi-level interface coordination*
+## Use Cases
+
+**Recommended for: user experience optimization, workflow orchestration, journey level assessment, progressive complexity management, multi-level interface coordination

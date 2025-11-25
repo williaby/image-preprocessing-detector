@@ -41,4 +41,6 @@ Execute file operations with safety checks: permission verification → backup c
 - Clear feedback on operation success/failure with rollback options
 
 ---
-*Use this agent for: file system operations, directory management, file content manipulation, batch file processing*
+## Use Cases
+
+**Recommended for: file system operations, directory management, file content manipulation, batch file processing

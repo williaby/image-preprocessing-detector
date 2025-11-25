@@ -41,4 +41,6 @@ Always structure prompts using C.R.E.A.T.E. six-component framework → assess t
 - Template patterns for similar use cases
 
 ---
-*Use this agent for: prompt optimization, C.R.E.A.T.E. framework implementation, template creation, multi-agent prompt design, LLM effectiveness improvement*
+## Use Cases
+
+**Recommended for: prompt optimization, C.R.E.A.T.E. framework implementation, template creation, multi-agent prompt design, LLM effectiveness improvement

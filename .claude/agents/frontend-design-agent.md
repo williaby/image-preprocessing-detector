@@ -48,4 +48,6 @@ Execute design workflows: design analysis → component scaffolding → responsi
 - **Cross-browser Compatibility**: Testing across Chrome, Firefox, Safari, and Edge
 
 ---
-*Use this agent for: frontend design, React components, responsive layouts, design systems, visual validation*
+## Use Cases
+
+**Recommended for: frontend design, React components, responsive layouts, design systems, visual validation

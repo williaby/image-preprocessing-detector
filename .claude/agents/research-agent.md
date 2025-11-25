@@ -41,4 +41,6 @@ Execute research workflows: query formulation → multi-source information gathe
 - Source credibility assessment and verification status
 
 ---
-*Use this agent for: research tasks, information gathering, documentation research, trend analysis, time-sensitive queries*
+## Use Cases
+
+**Recommended for: research tasks, information gathering, documentation research, trend analysis, time-sensitive queries

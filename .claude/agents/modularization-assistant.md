@@ -42,4 +42,6 @@ Execute modularization process: analysis (identify opportunities) → planning (
 - Architecture documentation reflecting new modular structure
 
 ---
-*Use this agent for: code refactoring, system decomposition, architectural improvements, complexity reduction, maintainability enhancement*
+## Use Cases
+
+**Recommended for: code refactoring, system decomposition, architectural improvements, complexity reduction, maintainability enhancement

@@ -43,23 +43,25 @@ Execute API workflows: requirements analysis → API design → specification cr
 
 ## API Development Categories
 
-### **Design & Architecture**
+### **Design & Architecture*
 - RESTful resource design and HTTP method selection
 - GraphQL schema design and resolver architecture
 - API pagination, filtering, and sorting strategies
 - Error handling and status code standardization
 
-### **Contract & Testing**
+### **Contract & Testing*
 - OpenAPI specification creation and maintenance
 - Contract testing implementation and validation
 - Mock server generation for frontend development
 - API integration testing and validation
 
-### **Documentation & Integration**
+### **Documentation & Integration*
 - Interactive API documentation generation
 - SDK generation and client library creation
 - Integration guide creation with code examples
 - API changelog and migration documentation
 
 ---
-*Use this agent for: API design, OpenAPI specifications, contract testing, API documentation, integration workflows*
+## Use Cases
+
+**Recommended for: API design, OpenAPI specifications, contract testing, API documentation, integration workflows

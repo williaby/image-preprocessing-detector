@@ -107,7 +107,9 @@ context_refs:  # NEW: Reference shared context instead of repeating
 [Expected deliverables and quality criteria - bullet list]
 
 ---
-*Use this agent for: [specific trigger conditions]*
+## Use Cases
+
+**Recommended for: [specific trigger conditions]
 ```
 
 ### Context Reference System

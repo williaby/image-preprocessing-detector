@@ -41,4 +41,6 @@ Execute MCP workflow: server selection → request preparation → JSON-RPC comm
 - Integration reports showing MCP operation success/failure rates
 
 ---
-*Use this agent for: MCP server integration, distributed agent orchestration, protocol communication, service discovery, multi-agent coordination*
+## Use Cases
+
+**Recommended for: MCP server integration, distributed agent orchestration, protocol communication, service discovery, multi-agent coordination
