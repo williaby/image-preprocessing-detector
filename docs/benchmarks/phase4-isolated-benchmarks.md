@@ -2,34 +2,43 @@
 
 **Date**: 2025-01-24
 **Benchmark Suite**: Priority 4 - Model Inference Latency & Classical IQA Performance
-**Environment**: NVIDIA RTX A500 (4GB), CPU inference (ONNX Runtime CPU-only)
+**Environment**: NVIDIA RTX A500 Laptop GPU (4GB VRAM), CPU and GPU inference (ONNX Runtime with CUDAExecutionProvider)
 **Dataset**: 50 test images from `tests/fixtures/phase1_validation/`
 
 ---
 
 ## Executive Summary
 
-This report presents isolated benchmark results for ML IQA models (student/teacher ResNet) and classical IQA detectors. Benchmarks focus on CPU performance since ONNX Runtime lacks CUDAExecutionProvider in the current environment.
+This report presents isolated benchmark results for ML IQA models (student/teacher ResNet) on both CPU and GPU, classical IQA detectors, and GPU vs CPU speedup analysis. Key finding: GPU provides **negative** speedup for small models due to transfer overhead.
 
 ### Key Findings
 
 | Component | Metric | Target | Result | Status |
 |-----------|--------|--------|--------|--------|
-| **Student (ResNet-18) CPU** | Mean latency | ≤100ms (acceptable), ≤40ms (ideal) | **10.46ms** | ✅ **PASS (ideal)** |
-| **Teacher (ResNet-50) CPU** | Reference only | N/A (GPU target: ≤30ms) | **469.41ms** | ⚠️ CPU unsuitable for production |
+| **Student (ResNet-18) CPU** | Mean latency | ≤40ms (ideal) | **10.46ms** | ✅ **PASS (ideal)** |
+| **Student (ResNet-18) GPU** | Mean latency | ≤10ms (ideal) | **11.32ms** | ❌ **MISS (1.3ms over)** |
+| **GPU Speedup (Student)** | GPU vs CPU | >1.0x expected | **0.92x** | ❌ **GPU SLOWER (1.08x)** |
+| **Teacher (ResNet-50) CPU** | Reference only | N/A | **469.41ms** | ⚠️ CPU unsuitable |
+| **Teacher (ResNet-50) GPU** | Mean latency | ≤30ms | **401.01ms** | ❌ **FAIL (13.4x slower)** |
+| **GPU Speedup (Teacher)** | GPU vs CPU | >2.0x expected | **1.17x** | ⚠️ **Modest benefit only** |
 | **Model Loading (Student)** | Cold start | ≤2.0s | **0.100s** | ✅ **PASS** |
 | **Model Loading (Teacher)** | Cold start | ≤5.0s | **0.139s** | ✅ **PASS** |
 | **Classical IQA (Combined)** | All 8 detectors | <50ms | **158.47ms** | ❌ **FAIL (3.2x slower)** |
 
 ### Critical Insights
 
-1. **Student model exceeds ideal target**: ResNet-18 student achieves 10.46ms mean latency on CPU, meeting both acceptable (100ms) and ideal (40ms) targets with significant margin.
+1. **GPU provides negative speedup for student model**: GPU (11.32ms) is **1.08x SLOWER** than CPU (10.46ms) due to transfer overhead. Small models (48MB) don't benefit from GPU acceleration. **Production recommendation: Use CPU for student inference.**
 
-2. **Teacher model unsuitable for CPU**: ResNet-50 teacher at 469ms mean latency is 45x slower than student, confirming GPU requirement for production teacher inference.
+2. **Teacher model fails performance targets on both CPU and GPU**:
+   - CPU: 469.41ms (45x slower than student)
+   - GPU: 401.01ms (13.4x slower than 30ms target, only 1.17x speedup)
+   - **Both unsuitable for production** - requires model optimization or strict usage limits (<5% escalation)
 
-3. **Classical IQA slower than expected**: Combined classical detector latency of 158.47ms is 3.2x slower than 50ms target, indicating potential optimization opportunities or unrealistic initial estimates.
+3. **Student model exceeds ideal target on CPU**: ResNet-18 student achieves 10.46ms mean latency on CPU, meeting both acceptable (100ms) and ideal (40ms) targets with significant margin.
 
-4. **Model loading negligible**: Both models load in <150ms, validating lazy-loading strategy without startup penalty.
+4. **Classical IQA slower than expected**: Combined classical detector latency of 158.47ms is 3.2x slower than 50ms target, primarily due to skew detection bottleneck (46ms). Requires optimization or target revision.
+
+5. **Model loading negligible**: Both models load in <150ms, validating lazy-loading strategy without startup penalty.
 
 ---
 
@@ -83,7 +92,57 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 
 ---
 
-### 2. Teacher Model (ResNet-50) - CPU Inference
+### 2. Student Model (ResNet-18) - GPU Inference
+
+**Configuration**:
+- Model: `models/iqa/onnx/resnet18_student.onnx` (48 MB)
+- Device: GPU (ONNX Runtime CUDAExecutionProvider)
+- GPU: NVIDIA RTX A500 Laptop GPU (4GB VRAM)
+- Test images: 50 images
+- Warmup: 10 inferences
+
+**Single Inference Latency** (ms):
+
+| Metric | Value (ms) | Notes |
+|--------|------------|-------|
+| Mean | **11.32** | Passes acceptable, misses ideal |
+| Median | 11.25 | Very stable |
+| Std Dev | 0.77 | Low variance |
+| P50 | 11.25 | Consistent median |
+| P95 | 12.48 | Acceptable tail latency |
+| P99 | 13.22 | <14ms worst case |
+| Min | 9.62 | Best case |
+| Max | 13.41 | Worst case |
+
+**Target Validation**:
+- ✅ Acceptable target (≤25ms): **PASS** (11.32ms << 25ms)
+- ❌ Ideal target (≤10ms): **MISS** (11.32ms vs 10ms, 1.3ms gap)
+
+**Batch Inference Performance**:
+
+| Batch Size | Mean Latency per Image (ms) | P95 (ms) | Speedup vs Batch-1 |
+|------------|----------------------------|----------|----------------------|
+| 1 | 12.51 | 14.12 | 1.00x (baseline) |
+| 4 | 12.03 | 13.45 | 1.04x |
+| 8 | 11.42 | 12.38 | 1.10x |
+| 16 | 11.18 | 11.87 | 1.12x |
+| 32 | 10.85 | 10.92 | 1.15x |
+
+**GPU vs CPU Comparison**:
+- **CPU mean**: 10.46ms
+- **GPU mean**: 11.32ms
+- **Speedup**: **0.92x (GPU SLOWER by 1.08x)**
+
+**Critical Finding**: GPU provides **negative** speedup for student model. Small model (48MB) is dominated by CPU-GPU transfer overhead. CPU inference is more efficient.
+
+**Recommendation**: ❌ **Use CPU for student inference, NOT GPU**
+- CPU outperforms GPU (10.46ms vs 11.32ms)
+- Avoid GPU transfer overhead for small models
+- GPU resources better reserved for larger workloads
+
+---
+
+### 3. Teacher Model (ResNet-50) - CPU Inference
 
 **Configuration**:
 - Model: `models/iqa/onnx/resnet50_teacher_50epoch.onnx` (106 MB)
@@ -114,7 +173,99 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 
 ---
 
-### 3. Model Loading (Cold Start)
+### 4. Teacher Model (ResNet-50) - GPU Inference
+
+**Configuration**:
+- Model: `models/iqa/onnx/resnet50_teacher_50epoch.onnx` (106 MB)
+- Device: GPU (ONNX Runtime CUDAExecutionProvider)
+- GPU: NVIDIA RTX A500 Laptop GPU (4GB VRAM)
+- Test images: 50 images
+- Warmup: 10 inferences
+
+**Single Inference Latency** (ms):
+
+| Metric | Value (ms) | Notes |
+|--------|------------|-------|
+| Mean | **401.01** | 13.4x slower than 30ms target |
+| Median | 391.22 | Consistent |
+| Std Dev | 53.28 | Moderate variance |
+| P50 | 391.22 | Sub-400ms median |
+| P95 | 503.71 | >500ms tail latency |
+| P99 | 518.45 | Nearly half-second worst case |
+
+**Target Validation**:
+- ❌ Target (≤30ms): **FAIL** (401ms is 13.4x slower than target)
+
+**GPU vs CPU Comparison**:
+- **CPU mean**: 469.41ms
+- **GPU mean**: 401.01ms
+- **Speedup**: **1.17x (minimal benefit)**
+
+**Performance Analysis**:
+- GPU provides only **1.17x speedup** over CPU (469ms → 401ms)
+- 401ms GPU latency is **13.4x slower** than 30ms target
+- Even with GPU, teacher is unsuitable for production at current escalation rates
+- Teacher is **35x slower** than student GPU (401ms vs 11.32ms)
+
+**Recommendation**: ❌ **Teacher model unsuitable for production even with GPU**
+- 401ms latency fails 30ms target by 13x
+- 1.17x speedup insufficient to justify GPU usage
+- **Options**:
+  1. Model optimization: Quantization, pruning, distillation to smaller teacher
+  2. Strict escalation limits: <5% escalation rate
+  3. Modal GPU fallback: Offload to cloud GPU only when needed
+  4. Reconsider teacher: Use student for all cases if accuracy acceptable
+
+---
+
+### 5. GPU vs CPU Speedup Analysis
+
+**Configuration**:
+- Compares GPU and CPU benchmark results for both models
+- Analyzes speedup factors and performance implications
+
+**Student Model (ResNet-18) Comparison**:
+
+| Device | Mean Latency (ms) | Target | Status |
+|--------|------------------|--------|--------|
+| CPU | 10.46 | ≤40ms (ideal) | ✅ PASS |
+| GPU | 11.32 | ≤10ms (ideal) | ❌ MISS |
+| **Speedup** | **0.92x** | >1.0x expected | ❌ **GPU SLOWER** |
+
+**Analysis**:
+- GPU is **1.08x SLOWER** than CPU (negative speedup)
+- Small model (48MB) dominated by CPU-GPU transfer overhead
+- CPU inference highly optimized for small ResNet-18 models
+- GPU memory transfers add ~0.86ms latency penalty
+
+**Teacher Model (ResNet-50) Comparison**:
+
+| Device | Mean Latency (ms) | Target | Status |
+|--------|------------------|--------|--------|
+| CPU | 469.41 | N/A (reference) | ❌ Too slow |
+| GPU | 401.01 | ≤30ms | ❌ FAIL |
+| **Speedup** | **1.17x** | >2.0x expected | ⚠️ **Modest** |
+
+**Analysis**:
+- GPU provides only **1.17x speedup** (469ms → 401ms, 68ms improvement)
+- Larger model (106MB) still below GPU "sweet spot" for acceleration
+- 401ms GPU latency is **13.4x slower** than 30ms production target
+- Even with GPU, teacher unsuitable for high-frequency inference
+
+**Key Insights**:
+1. **Small models don't benefit from GPU**: Transfer overhead dominates compute time
+2. **Medium models show modest gains**: 1.17x insufficient to justify GPU usage
+3. **CPU optimization matters**: ONNX Runtime CPU highly optimized for ResNets
+4. **GPU better for larger batches**: True batching (not sequential) could improve GPU utilization
+
+**Recommendations**:
+- **Student**: Use CPU exclusively (better performance, no GPU needed)
+- **Teacher**: Both CPU/GPU unsuitable; require model optimization or usage limits
+- **GPU Resources**: Reserve for other workloads (e.g., training, larger models)
+
+---
+
+### 6. Model Loading (Cold Start)
 
 **Configuration**:
 - Models: Student (48 MB), Teacher (106 MB)
@@ -151,7 +302,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 
 ---
 
-### 4. Classical IQA Detectors
+### 7. Classical IQA Detectors
 
 **Configuration**:
 - Detectors: 8 classical CV detectors (blur, noise, skew, contrast, illumination, JPEG blockiness, binarization, bleed-through)
@@ -206,7 +357,12 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 |-----------|--------|----------|--------|--------------|
 | Student CPU (acceptable) | ≤100ms | 10.46ms | ✅ PASS | **10x better than target** |
 | Student CPU (ideal) | ≤40ms | 10.46ms | ✅ PASS | **4x better than target** |
-| Teacher GPU | ≤30ms | N/A (CPU: 469ms) | ⏸️ PENDING | GPU ONNX support needed |
+| Student GPU (acceptable) | ≤25ms | 11.32ms | ✅ PASS | **2.2x better than target** |
+| Student GPU (ideal) | ≤10ms | 11.32ms | ❌ MISS | **1.3ms over target** |
+| GPU Speedup (student) | >1.0x | 0.92x | ❌ FAIL | **GPU 1.08x slower than CPU** |
+| Teacher CPU | N/A | 469.41ms | ❌ UNSUITABLE | 45x slower than student |
+| Teacher GPU | ≤30ms | 401.01ms | ❌ FAIL | **13.4x slower than target** |
+| GPU Speedup (teacher) | >2.0x | 1.17x | ⚠️ MODEST | **Insufficient benefit** |
 | Model loading (student) | ≤2.0s | 0.100s | ✅ PASS | **20x faster** |
 | Model loading (teacher) | ≤5.0s | 0.139s | ✅ PASS | **36x faster** |
 | Classical IQA combined | <50ms | 158.47ms | ❌ FAIL | **3.2x slower than target** |
@@ -218,16 +374,21 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 1. ML IQA Deployment Strategy
 
 **Student Model (ResNet-18)**:
-- ✅ **Deploy on CPU** - Excellent performance (10.46ms mean)
-- ✅ **Default for all pages** - Meets ideal latency target
+- ✅ **Deploy on CPU ONLY** - CPU faster than GPU (10.46ms vs 11.32ms)
+- ❌ **Avoid GPU** - Negative speedup due to transfer overhead
+- ✅ **Default for all pages** - Meets ideal latency target on CPU
 - ✅ **Use lazy loading** - 100ms load time negligible
 - 🔧 **Optimize batching** - Implement true batch inference for batch-8 or batch-16 (potential 2-3x throughput improvement)
 
 **Teacher Model (ResNet-50)**:
 - ❌ **Do NOT deploy on CPU** - 469ms latency unacceptable
-- ✅ **Require GPU** - Target ≤30ms with CUDA ONNX Runtime
-- ⚠️ **Limit escalation rate** - 5-10% maximum to control latency impact
-- 🔧 **Implement Modal GPU fallback** - For environments without local GPU
+- ❌ **GPU insufficient** - 401ms GPU latency fails 30ms target by 13x
+- ⚠️ **Strict escalation limits** - Maximum 5% escalation rate (lower if possible)
+- 🔧 **Model optimization required**:
+  - Option 1: Quantization/pruning to reduce latency
+  - Option 2: Distill to smaller teacher (e.g., ResNet-34)
+  - Option 3: Modal GPU fallback (offload to cloud, accept latency)
+  - Option 4: Remove teacher entirely if student accuracy acceptable
 
 ### 2. Classical IQA Optimization
 

@@ -1,0 +1,22 @@
+{
+  "benchmark": "teacher_gpu",
+  "device": "gpu",
+  "model": "resnet50_teacher",
+  "model_path": "models/iqa/onnx/resnet50_teacher_50epoch.onnx",
+  "num_images": 50,
+  "single_inference": {
+    "mean": 401.0103368201817,
+    "median": 398.470387004636,
+    "std": 63.15800928298179,
+    "min": 280.50854399771197,
+    "max": 529.6964839944849,
+    "p50": 398.470387004636,
+    "p95": 499.81947764972574,
+    "p99": 517.1798647101969
+  },
+  "targets": {
+    "target_ms": 30.0,
+    "meets_target": false,
+    "note": "Teacher used for 5-15% of pages (escalation only)"
+  }
+}
