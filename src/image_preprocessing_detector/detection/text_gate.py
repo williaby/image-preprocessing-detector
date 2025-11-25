@@ -176,7 +176,7 @@ class TextGate:
         stroke_pixels = np.count_nonzero(gradient > MORPH_GRADIENT_THRESHOLD)
         total_pixels = gradient.size
 
-        return stroke_pixels / total_pixels if total_pixels > 0 else 0.0
+        return float(stroke_pixels / total_pixels) if total_pixels > 0 else 0.0
 
     def _analyze_connected_components(self, gray: np.ndarray) -> float:
         """Analyze connected components for text-like structures.
@@ -245,7 +245,7 @@ class TextGate:
         edge_pixels = np.count_nonzero(edges)
         total_pixels = edges.size
 
-        return edge_pixels / total_pixels if total_pixels > 0 else 0.0
+        return float(edge_pixels / total_pixels) if total_pixels > 0 else 0.0
 
     def _compute_confidence(
         self, stroke_density: float, component_score: float, edge_score: float

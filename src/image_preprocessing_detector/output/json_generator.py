@@ -5,6 +5,7 @@ using Pydantic schema validation.
 """
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -235,7 +236,7 @@ class MetadataBuilder:
         self.document_id = document_id
         self.file_name = file_name
         self.pages: list[PageMetadata] = []
-        self.upscaling_metadata: dict | None = None
+        self.upscaling_metadata: dict[str, Any] | None = None
 
         logger.info(
             "Metadata builder initialized",
@@ -243,7 +244,7 @@ class MetadataBuilder:
             file_name=file_name,
         )
 
-    def set_upscaling_metadata(self, upscaling_result: dict) -> None:
+    def set_upscaling_metadata(self, upscaling_result: dict[str, Any]) -> None:
         """Set PDF upscaling metadata (Phase 1B).
 
         Args:

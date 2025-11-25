@@ -8,6 +8,7 @@ Implements fast classical computer vision methods for detecting image quality is
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 import cv2
 import numpy as np
@@ -996,7 +997,7 @@ class NoiseDetector:
     def _compute_detailed_metrics(
         self,
         gray: np.ndarray,
-        coeffs: list,
+        coeffs: list[Any],
         noise_sigma: float,
         noise_score: float,
     ) -> NoiseMetrics:

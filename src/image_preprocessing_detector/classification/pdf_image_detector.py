@@ -4,6 +4,7 @@ Detects and extracts metadata about embedded images in PDF files.
 """
 
 from pathlib import Path
+from typing import Any
 
 import fitz  # PyMuPDF
 
@@ -16,7 +17,101 @@ class PDFImageDetectionError(Exception):
     """Raised when PDF image detection fails."""
 
 
-def detect_embedded_images(pdf_path: Path | str) -> list[dict]:
+def _open_pdf_document(pdf_path: Path) -> fitz.Document:
+    """Open a PDF document with proper error handling.
+
+    Args:
+        pdf_path: Path to the PDF file
+
+    Returns:
+        Opened fitz.Document
+
+    Raises:
+        PDFImageDetectionError: If PDF cannot be opened
+    """
+    try:
+        return fitz.open(str(pdf_path))
+    except fitz.FileDataError as e:
+        logger.exception("Invalid or corrupted PDF file", path=str(pdf_path))
+        raise PDFImageDetectionError(f"Invalid or corrupted PDF: {pdf_path}") from e
+    except RuntimeError as e:
+        if "password" in str(e).lower():
+            logger.exception("Password-protected PDF", path=str(pdf_path))
+            raise PDFImageDetectionError(
+                f"Password-protected PDF cannot be processed: {pdf_path}"
+            ) from e
+        raise PDFImageDetectionError(f"Error opening PDF: {pdf_path}") from e
+    except Exception as e:
+        logger.exception("Unexpected error opening PDF", path=str(pdf_path))
+        raise PDFImageDetectionError(f"Error opening PDF: {pdf_path}") from e
+
+
+def _extract_image_metadata(
+    doc: fitz.Document, page_num: int, img_index: int, xref: int
+) -> dict[str, Any] | None:
+    """Extract metadata for a single image.
+
+    Args:
+        doc: PDF document
+        page_num: Page number (zero-based)
+        img_index: Image index on the page
+        xref: Image cross-reference number
+
+    Returns:
+        Image metadata dictionary or None if extraction fails
+    """
+    try:
+        img_dict = doc.extract_image(xref)
+        if img_dict:
+            return {
+                "page_number": page_num,
+                "image_index": img_index,
+                "width": img_dict.get("width", 0),
+                "height": img_dict.get("height", 0),
+                "colorspace": img_dict.get("colorspace", "Unknown"),
+                "bits_per_component": img_dict.get("bpc", 0),
+                "xref": xref,
+            }
+    except Exception as e:
+        logger.warning(
+            "Failed to extract image metadata",
+            page_num=page_num,
+            img_index=img_index,
+            error=str(e),
+        )
+    return None
+
+
+def _extract_page_images(doc: fitz.Document, page_num: int) -> list[dict[str, Any]]:
+    """Extract all images from a single page.
+
+    Args:
+        doc: PDF document
+        page_num: Page number (zero-based)
+
+    Returns:
+        List of image metadata dictionaries
+    """
+    images: list[dict[str, Any]] = []
+    try:
+        page = doc[page_num]
+        page_images = page.get_images()
+
+        for img_index, img_info in enumerate(page_images):
+            xref = img_info[0]
+            metadata = _extract_image_metadata(doc, page_num, img_index, xref)
+            if metadata:
+                images.append(metadata)
+    except Exception as e:
+        logger.warning(
+            "Failed to process page for images",
+            page_num=page_num,
+            error=str(e),
+        )
+    return images
+
+
+def detect_embedded_images(pdf_path: Path | str) -> list[dict[str, Any]]:
     """Detect embedded images in a PDF file.
 
     Uses PyMuPDF (fitz) to detect embedded images and extract metadata.
@@ -58,64 +153,11 @@ def detect_embedded_images(pdf_path: Path | str) -> list[dict]:
 
     logger.info("Detecting embedded images in PDF", path=str(pdf_path))
 
+    doc = _open_pdf_document(pdf_path)
     try:
-        doc = fitz.open(str(pdf_path))
-    except fitz.FileDataError as e:
-        logger.exception("Invalid or corrupted PDF file", path=str(pdf_path))
-        raise PDFImageDetectionError(f"Invalid or corrupted PDF: {pdf_path}") from e
-    except RuntimeError as e:
-        # Handle password-protected PDFs
-        if "password" in str(e).lower():
-            logger.exception("Password-protected PDF", path=str(pdf_path))
-            raise PDFImageDetectionError(
-                f"Password-protected PDF cannot be processed: {pdf_path}"
-            ) from e
-        raise PDFImageDetectionError(f"Error opening PDF: {pdf_path}") from e
-    except Exception as e:
-        logger.exception("Unexpected error opening PDF", path=str(pdf_path))
-        raise PDFImageDetectionError(f"Error opening PDF: {pdf_path}") from e
-
-    try:
-        images = []
+        images: list[dict[str, Any]] = []
         for page_num in range(len(doc)):
-            try:
-                page = doc[page_num]
-                page_images = page.get_images()
-
-                for img_index, img_info in enumerate(page_images):
-                    try:
-                        # Extract image metadata
-                        xref = img_info[0]
-                        img_dict = doc.extract_image(xref)
-
-                        if img_dict:
-                            images.append(
-                                {
-                                    "page_number": page_num,
-                                    "image_index": img_index,
-                                    "width": img_dict.get("width", 0),
-                                    "height": img_dict.get("height", 0),
-                                    "colorspace": img_dict.get("colorspace", "Unknown"),
-                                    "bits_per_component": img_dict.get("bpc", 0),
-                                    "xref": xref,
-                                }
-                            )
-                    except Exception as e:
-                        logger.warning(
-                            "Failed to extract image metadata",
-                            page_num=page_num,
-                            img_index=img_index,
-                            error=str(e),
-                        )
-                        # Continue processing other images
-
-            except Exception as e:
-                logger.warning(
-                    "Failed to process page for images",
-                    page_num=page_num,
-                    error=str(e),
-                )
-                # Continue processing other pages
+            images.extend(_extract_page_images(doc, page_num))
 
         logger.info(
             "Image detection complete",
@@ -123,9 +165,7 @@ def detect_embedded_images(pdf_path: Path | str) -> list[dict]:
             pages=len(doc),
             total_images=len(images),
         )
-
         return images
-
     finally:
         doc.close()
 

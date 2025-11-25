@@ -84,7 +84,13 @@ def _process_single_pdf(
         })
 
         if verbose:
-            status = "✓" if is_correct else "✗" if is_correct is False else ""
+            # Determine status icon based on correctness
+            if is_correct:
+                status = "✓"
+            elif is_correct is False:
+                status = "✗"
+            else:
+                status = ""
             print(
                 f"{status:2} {pdf_file.name:40} → {pdf_type.value:15} "
                 f"(expected: {expected_type or 'N/A'})"

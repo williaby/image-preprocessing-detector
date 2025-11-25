@@ -116,7 +116,10 @@ class SoftLabelGenerator:
                 else:
                     images = batch
 
-                images = images.to(self.device)
+                # Ensure images is a tensor (type narrowing for BasedPyright)
+                if not isinstance(images, torch.Tensor):
+                    images = torch.stack(images)  # pyright: ignore[reportUnknownArgumentType]
+                images = images.to(self.device)  # pyright: ignore[reportAttributeAccessIssue]
                 batch_size = images.size(0)
 
                 # Get teacher predictions

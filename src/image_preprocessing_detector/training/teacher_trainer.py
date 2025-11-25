@@ -443,7 +443,10 @@ class TeacherTrainer:
         logger.info(f"Batch size: {self.batch_size}")
         logger.info(f"Mixed precision: {self.use_amp}")
 
+        # Track last completed epoch for reporting
+        last_epoch = self.epoch - 1  # Will be updated in loop
         for epoch in range(self.epoch, self.epochs):
+            last_epoch = epoch
             self.epoch = epoch
             logger.info(f"\n{'=' * 60}")
             logger.info(f"Epoch {epoch + 1}/{self.epochs}")
@@ -523,6 +526,6 @@ class TeacherTrainer:
 
         return {
             "best_val_loss": self.best_val_loss,
-            "total_epochs": epoch + 1,
+            "total_epochs": last_epoch + 1,
             "training_history": self.training_history,
         }

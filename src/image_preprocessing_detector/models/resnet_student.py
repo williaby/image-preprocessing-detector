@@ -266,8 +266,8 @@ class ResNetStudent(nn.Module):
             ResNetStudent instance configured to match teacher
         """
         if dropout is None:
-            # Try to get dropout from teacher
-            dropout = getattr(teacher_model, "dropout", 0.2)
+            # Try to get dropout from teacher, ensure it's a float
+            dropout = float(getattr(teacher_model, "dropout", 0.2))
 
         return cls(
             num_heads=len(cls.ISSUE_TYPES),

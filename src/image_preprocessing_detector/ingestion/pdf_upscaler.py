@@ -112,6 +112,7 @@ class PDFUpscaler:
                 pages_processed = 0
 
                 for page_num in range(len(doc)):
+                    page: fitz.Page | None = None
                     try:
                         page = doc[page_num]
 
@@ -172,7 +173,7 @@ class PDFUpscaler:
                     except Exception:
                         logger.exception("Error upscaling page %d", page_num + 1)
                         # Copy original page if upscaling fails
-                        if self.preserve_original:
+                        if self.preserve_original and page is not None:
                             new_page = new_doc.new_page(
                                 width=page.rect.width, height=page.rect.height
                             )

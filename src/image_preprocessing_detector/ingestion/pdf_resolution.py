@@ -87,7 +87,10 @@ class PDFResolutionAnalyzer:
                         img_height = pix.height
 
                         # Get image bbox on page (in points, 72 points = 1 inch)
-                        img_bbox = page.get_image_bbox(img)
+                        # transform=False returns Rect directly (not tuple)
+                        img_bbox_result = page.get_image_bbox(img, transform=False)
+                        # Type assertion: with transform=False, returns Rect not tuple
+                        img_bbox: fitz.Rect = img_bbox_result  # pyright: ignore[reportAssignmentType]
 
                         # Calculate DPI (dots per inch)
                         # bbox dimensions are in points (1/72 inch)
