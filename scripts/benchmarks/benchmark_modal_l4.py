@@ -19,6 +19,9 @@ from pathlib import Path
 
 import modal
 
+# Constants
+FIXTURES_PATH = "/fixtures"
+
 # Create Modal app for benchmarking
 stub = modal.App("iqa-benchmark-l4")
 
@@ -39,7 +42,7 @@ benchmark_image = (
     )
     .add_local_dir(
         "tests/fixtures/phase1_validation",
-        remote_path="/fixtures",
+        remote_path=FIXTURES_PATH,
         copy=True,
     )
 )
@@ -84,11 +87,11 @@ def benchmark_student_l4():
     print(f"Model input name: {input_name}")
 
     # Load test images (use rglob to recursively find all images)
-    fixture_dir = Path("/fixtures")
+    fixture_dir = Path(FIXTURES_PATH)
     image_files = sorted(fixture_dir.rglob("*.png"))[:50]  # Limit to 50 images
 
     print(f"Found {len(image_files)} test image files...")
-    print(f"Loading images...")
+    print("Loading images...")
     images = []
     for img_path in image_files:
         img = cv2.imread(str(img_path))
@@ -226,11 +229,11 @@ def benchmark_teacher_l4():
     print(f"Model input name: {input_name}")
 
     # Load test images (use rglob to recursively find all images)
-    fixture_dir = Path("/fixtures")
+    fixture_dir = Path(FIXTURES_PATH)
     image_files = sorted(fixture_dir.rglob("*.png"))[:50]
 
     print(f"Found {len(image_files)} test image files...")
-    print(f"Loading images...")
+    print("Loading images...")
     images = []
     for img_path in image_files:
         img = cv2.imread(str(img_path))
