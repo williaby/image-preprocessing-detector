@@ -1,0 +1,116 @@
+---
+# Semgrep Configuration for Image Preprocessing Detector
+# Used by qlty semgrep plugin for local SAST scanning
+# See https://semgrep.dev/docs/writing-rules/overview/
+
+rules:
+  # Path traversal detection for CLI scripts
+  - id: cli-path-traversal-open
+    patterns:
+      - pattern-either:
+          - pattern: open($PATH, ...)
+          - pattern: open(str($PATH), ...)
+    paths:
+      exclude:
+        - tests/
+        - "**/test_*.py"
+        - "**/*_test.py"
+    message: >-
+      Potential path traversal: user-controlled path flows to open().
+      Consider validating the path is within expected directories.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
+      owasp: "A01:2021 - Broken Access Control"
+      confidence: MEDIUM
+
+  # Unsafe pickle deserialization
+  - id: unsafe-pickle-load
+    pattern-either:
+      - pattern: pickle.load(...)
+      - pattern: pickle.loads(...)
+      - pattern: _pickle.load(...)
+    message: >-
+      Pickle deserialization of untrusted data can lead to code execution.
+      Consider using safer alternatives like JSON for untrusted data.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+      confidence: HIGH
+
+  # Unsafe torch.load without weights_only
+  - id: unsafe-torch-load
+    patterns:
+      - pattern: torch.load($PATH, ...)
+      - pattern-not: torch.load($PATH, ..., weights_only=True, ...)
+      - pattern-not: torch.load($PATH, ..., weights_only=$X, ...)
+    message: >-
+      torch.load() without weights_only=True can execute arbitrary code.
+      Use torch.load(..., weights_only=True) for untrusted model files.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+      confidence: HIGH
+
+  # Hardcoded paths that should use config
+  - id: hardcoded-absolute-path
+    pattern-regex: '["'']/(?:home|tmp|var|etc|usr)/[^"'']+["'']'
+    paths:
+      exclude:
+        - tests/
+        - "*.md"
+        - conftest.py
+    message: >-
+      Hardcoded absolute path detected. Consider using configuration
+      or environment variables for portability.
+    languages: [python]
+    severity: INFO
+    metadata:
+      category: best-practice
+      confidence: LOW
+
+  # SQL injection (basic)
+  - id: sql-injection-format-string
+    patterns:
+      - pattern-either:
+          - pattern: $CURSOR.execute(f"...", ...)
+          - pattern: $CURSOR.execute("..." % ..., ...)
+          - pattern: $CURSOR.execute("...".format(...), ...)
+    message: >-
+      Potential SQL injection via string formatting.
+      Use parameterized queries instead.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-89: SQL Injection"
+      owasp: "A03:2021 - Injection"
+      confidence: HIGH
+
+  # Command injection
+  - id: command-injection-subprocess
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.call($CMD, shell=True, ...)
+          - pattern: subprocess.run($CMD, shell=True, ...)
+          - pattern: subprocess.Popen($CMD, shell=True, ...)
+          - pattern: os.system($CMD)
+      - metavariable-regex:
+          metavariable: $CMD
+          regex: .*\{.*\}.*|.*%.*|.*\+.*
+    message: >-
+      Potential command injection via shell=True with formatted string.
+      Use subprocess with shell=False and pass arguments as a list.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-78: OS Command Injection"
+      owasp: "A03:2021 - Injection"
+      confidence: HIGH

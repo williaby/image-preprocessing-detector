@@ -114,3 +114,27 @@ drivers = [
 
 [[plugin]]
 name = "trufflehog"
+
+# Security - SAST scanning with community rules
+# Rulesets configured in .semgrep.yml
+# Covers path traversal, injection, OWASP Top 10
+[[plugin]]
+name = "semgrep"
+
+# Exclude semgrep from test files (reduce noise)
+[[exclude]]
+plugins = ["semgrep"]
+file_patterns = ["tests/**", "**/test_*.py", "**/*_test.py"]
+
+# Markdown linting for documentation
+[[plugin]]
+name = "markdownlint"
+
+# YAML linting for CI/config files
+[[plugin]]
+name = "yamllint"
+
+# JSON formatting
+[[plugin]]
+name = "prettier"
+drivers = ["json"]

@@ -35,6 +35,7 @@ from pydantic import TypeAdapter, ValidationError
 from ruamel.yaml import YAML
 
 # Regular expression to detect body H1 headings
+# Pattern is ReDoS-safe: anchored with ^ and $, bounded by line length
 H1_RE = re.compile(r"^\s*#\s+(.+?)\s*$", re.MULTILINE)
 
 # Create type adapter for validating discriminated union
@@ -197,8 +198,12 @@ def validate_file(
     # Check for redundant body H1 (but skip code blocks)
     # Remove code blocks (3+ backticks/tildes, with optional indentation) before checking for H1
     # Pattern handles varying fence lengths (```, ````, ~~~~~, etc.)
+    # Uses negative lookahead to avoid ReDoS: each line is checked once for closing fence
     content_without_code = re.sub(
-        r"^\s*(`{3,}|~{3,}).*?^\s*\1", "", content, flags=re.DOTALL | re.MULTILINE
+        r"^\s*(`{3,}|~{3,})[^\n]*\n(?:(?!^\s*\1)[^\n]*\n)*\s*\1",
+        "",
+        content,
+        flags=re.MULTILINE,
     )
     h1_match = H1_RE.search(content_without_code)
     if h1_match:
