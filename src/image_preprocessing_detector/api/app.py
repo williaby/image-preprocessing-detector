@@ -15,7 +15,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from image_preprocessing_detector.api.config import APISettings, get_api_settings
-from image_preprocessing_detector.api.middleware import RequestLoggingMiddleware
+from image_preprocessing_detector.api.middleware import (
+    APIKeyAuthMiddleware,
+    RateLimitMiddleware,
+    RequestLoggingMiddleware,
+)
 from image_preprocessing_detector.api.routes.health import (
     router as health_router,
     set_server_start_time,
@@ -108,6 +112,35 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
         log_response_body=settings.log_response_body,
     )
     logger.info("logging_middleware_enabled")
+
+    # Add rate limiting middleware if enabled
+    if settings.rate_limit_enabled:
+        app.add_middleware(
+            RateLimitMiddleware,
+            requests_per_window=settings.rate_limit_requests,
+            window_seconds=settings.rate_limit_window_seconds,
+            enabled=True,
+            limit_paths=["/process", "/batch"],  # Only limit processing endpoints
+        )
+        logger.info(
+            "rate_limit_middleware_enabled",
+            requests_per_window=settings.rate_limit_requests,
+            window_seconds=settings.rate_limit_window_seconds,
+        )
+
+    # Add API key authentication middleware if enabled
+    if settings.auth_enabled:
+        app.add_middleware(
+            APIKeyAuthMiddleware,
+            api_keys=settings.api_keys,
+            internal_callers=settings.internal_callers,
+            enabled=True,
+        )
+        logger.info(
+            "auth_middleware_enabled",
+            num_api_keys=len(settings.api_keys),
+            num_internal_callers=len(settings.internal_callers),
+        )
 
     # Include routers
     app.include_router(health_router)
