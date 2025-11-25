@@ -107,9 +107,11 @@ jobs:
       - name: Verify coverage report
         run: |
           if [ ! -f coverage.xml ]; then
-            echo "::warning::Coverage report not found. Tests may have failed."
-            # Create empty coverage file to prevent SonarCloud error
-            echo '<?xml version="1.0" ?><coverage version="1.0"></coverage>' > coverage.xml
+            echo "::error::Coverage report not found. Tests may have failed."
+            echo "Workflow will continue to allow SonarCloud to analyze code quality,"
+            echo "but coverage metrics will be unavailable for this run."
+            # Note: We do NOT create a dummy coverage file as it masks test failures.
+            # SonarCloud will proceed without coverage data and report accordingly.
           else
             echo "✓ Coverage report generated successfully"
             ls -lh coverage.xml

@@ -229,7 +229,7 @@ Display all available universal slash commands organized by category: $ARGUMENTS
 
 ### Naming Convention
 
-```
+```text
 {category}-{action}-{object}.md
 ```
 

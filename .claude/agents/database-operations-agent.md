@@ -1,6 +1,6 @@
 ---
 name: database-operations-agent
-description: Database operations specialist for query optimization, schema management, migration handling, and data integrity maintenance. Use PROACTIVELY when schema changes, query performance issues, or data integrity problems are detected.
+description: Database operations specialist for query optimization, schema management, migration handling, and data integrity maintenance. Invoke when making schema changes, optimizing queries, or addressing data integrity concerns.
 model: sonnet
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 context_refs:
