@@ -1,0 +1,393 @@
+# Image Preprocessing Detector - Prometheus Alert Rules
+# Sprint 6.2.3: Alert rules for latency, errors, GPU, budget, and drift
+
+groups:
+  # ============================================================================
+  # Latency Alerts
+  # ============================================================================
+  - name: imgprep_latency
+    interval: 30s
+    rules:
+      - alert: HighP50Latency
+        expr: >
+          histogram_quantile(0.50,
+            sum(rate(imgprep_processing_duration_seconds_bucket[5m])) by (le)
+          ) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          team: imgprep
+          category: latency
+        annotations:
+          summary: "High p50 latency detected"
+          description: "Median processing latency is {{ $value | printf \"%.3f\" }}s (threshold: 0.2s)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/high-latency"
+          dashboard: "https://grafana.internal/d/imgprep-app"
+
+      - alert: HighP95Latency
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(imgprep_processing_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: imgprep
+          category: latency
+        annotations:
+          summary: "High p95 latency detected"
+          description: "95th percentile latency is {{ $value | printf \"%.3f\" }}s (threshold: 0.5s)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/high-latency"
+          dashboard: "https://grafana.internal/d/imgprep-app"
+
+      - alert: CriticalP99Latency
+        expr: >
+          histogram_quantile(0.99,
+            sum(rate(imgprep_processing_duration_seconds_bucket[5m])) by (le)
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: critical
+          team: imgprep
+          category: latency
+        annotations:
+          summary: "Critical p99 latency spike"
+          description: "99th percentile latency is {{ $value | printf \"%.3f\" }}s (threshold: 2.0s)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/high-latency"
+          dashboard: "https://grafana.internal/d/imgprep-app"
+
+      - alert: StudentModelSlow
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(imgprep_iqa_duration_seconds_bucket{model="student"}[5m])) by (le)
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: imgprep
+          category: latency
+          component: student_model
+        annotations:
+          summary: "Student model latency exceeds target"
+          description: "Student model p95 latency is {{ $value | printf \"%.3f\" }}s (target: <0.1s)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/model-latency"
+
+  # ============================================================================
+  # Error Rate Alerts
+  # ============================================================================
+  - name: imgprep_errors
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: >
+          (
+            sum(rate(imgprep_pages_processed_total{status="error"}[5m]))
+            / sum(rate(imgprep_pages_processed_total[5m]))
+          ) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: imgprep
+          category: errors
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | printf \"%.2f\" }}% (threshold: 5%)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/high-errors"
+          dashboard: "https://grafana.internal/d/imgprep-app"
+
+      - alert: CriticalErrorRate
+        expr: >
+          (
+            sum(rate(imgprep_pages_processed_total{status="error"}[5m]))
+            / sum(rate(imgprep_pages_processed_total[5m]))
+          ) * 100 > 20
+        for: 2m
+        labels:
+          severity: critical
+          team: imgprep
+          category: errors
+        annotations:
+          summary: "Critical error rate - immediate action required"
+          description: "Error rate is {{ $value | printf \"%.2f\" }}% (threshold: 20%)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/high-errors"
+          dashboard: "https://grafana.internal/d/imgprep-app"
+
+      - alert: ProcessingErrorSpike
+        expr: >
+          sum(increase(imgprep_errors_total{category="processing"}[5m])) > 50
+        for: 2m
+        labels:
+          severity: warning
+          team: imgprep
+          category: errors
+        annotations:
+          summary: "Processing error spike detected"
+          description: "{{ $value }} processing errors in the last 5 minutes"
+          runbook_url: "https://docs.imgprep.internal/runbooks/processing-errors"
+
+      - alert: InfrastructureErrorSpike
+        expr: >
+          sum(increase(imgprep_errors_total{category="infrastructure"}[5m])) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: imgprep
+          category: errors
+        annotations:
+          summary: "Infrastructure error spike detected"
+          description: "{{ $value }} infrastructure errors in the last 5 minutes"
+          runbook_url: "https://docs.imgprep.internal/runbooks/infrastructure-errors"
+
+  # ============================================================================
+  # GPU and Infrastructure Alerts
+  # ============================================================================
+  - name: imgprep_infrastructure
+    interval: 30s
+    rules:
+      - alert: GPUMemoryHigh
+        expr: >
+          (imgprep_gpu_memory_bytes / (16 * 1024 * 1024 * 1024)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          team: imgprep
+          category: infrastructure
+        annotations:
+          summary: "GPU memory usage high"
+          description: "GPU {{ $labels.device_id }} memory usage is {{ $value | printf \"%.1f\" }}%"
+          runbook_url: "https://docs.imgprep.internal/runbooks/gpu-memory"
+
+      - alert: GPUUnavailable
+        expr: >
+          sum(imgprep_model_loaded{model_name=~"student|teacher"}) == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: imgprep
+          category: infrastructure
+        annotations:
+          summary: "No models loaded - GPU may be unavailable"
+          description: "No student or teacher models are currently loaded"
+          runbook_url: "https://docs.imgprep.internal/runbooks/gpu-unavailable"
+
+      - alert: WorkersDegraded
+        expr: >
+          sum(imgprep_active_workers) < 2
+        for: 5m
+        labels:
+          severity: warning
+          team: imgprep
+          category: infrastructure
+        annotations:
+          summary: "Worker count degraded"
+          description: "Only {{ $value }} workers active (expected: ≥2)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/workers-degraded"
+
+      - alert: NoActiveWorkers
+        expr: >
+          sum(imgprep_active_workers) == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: imgprep
+          category: infrastructure
+        annotations:
+          summary: "No active workers"
+          description: "All workers are down - processing is unavailable"
+          runbook_url: "https://docs.imgprep.internal/runbooks/workers-down"
+
+      - alert: QueueBacklog
+        expr: >
+          sum(imgprep_queue_depth) > 500
+        for: 10m
+        labels:
+          severity: warning
+          team: imgprep
+          category: infrastructure
+        annotations:
+          summary: "Processing queue backlog"
+          description: "Queue depth is {{ $value }} items (threshold: 500)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/queue-backlog"
+
+      - alert: CriticalQueueBacklog
+        expr: >
+          sum(imgprep_queue_depth) > 2000
+        for: 5m
+        labels:
+          severity: critical
+          team: imgprep
+          category: infrastructure
+        annotations:
+          summary: "Critical queue backlog"
+          description: "Queue depth is {{ $value }} items - consider scaling workers"
+          runbook_url: "https://docs.imgprep.internal/runbooks/queue-backlog"
+
+  # ============================================================================
+  # Teacher Escalation & Model Alerts
+  # ============================================================================
+  - name: imgprep_model
+    interval: 30s
+    rules:
+      - alert: HighTeacherEscalationRate
+        expr: >
+          (
+            sum(rate(imgprep_teacher_invocations_total[5m]))
+            / sum(rate(imgprep_pages_processed_total[5m]))
+          ) * 100 > 25
+        for: 10m
+        labels:
+          severity: warning
+          team: imgprep
+          category: model
+        annotations:
+          summary: "High teacher escalation rate"
+          description: "{{ $value | printf \"%.1f\" }}% of pages are escalating to teacher model (threshold: 25%)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/high-escalation"
+          dashboard: "https://grafana.internal/d/imgprep-model"
+
+      - alert: TeacherBlockedFrequently
+        expr: >
+          sum(rate(imgprep_teacher_blocked_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: imgprep
+          category: model
+        annotations:
+          summary: "Teacher invocations being blocked frequently"
+          description: "Teacher invocations are being blocked (rate: {{ $value | printf \"%.3f\" }}/s)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/teacher-blocked"
+
+      - alert: ModelDrift
+        expr: >
+          abs(
+            avg_over_time(imgprep_quality_score_sum[1h] / imgprep_quality_score_count[1h])
+            - avg_over_time(imgprep_quality_score_sum[24h] / imgprep_quality_score_count[24h])
+          ) > 0.1
+        for: 30m
+        labels:
+          severity: warning
+          team: imgprep
+          category: model
+        annotations:
+          summary: "Potential model drift detected"
+          description: "Quality score distribution has shifted significantly"
+          runbook_url: "https://docs.imgprep.internal/runbooks/model-drift"
+
+  # ============================================================================
+  # Modal Budget Alerts
+  # ============================================================================
+  - name: imgprep_cost
+    interval: 60s
+    rules:
+      - alert: HighDailyCost
+        expr: >
+          sum(increase(imgprep_estimated_cost_dollars_total[24h])) > 5
+        for: 1m
+        labels:
+          severity: warning
+          team: imgprep
+          category: cost
+        annotations:
+          summary: "Daily cost exceeds threshold"
+          description: "Estimated cost today: ${{ $value | printf \"%.2f\" }} (threshold: $5)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/high-cost"
+          dashboard: "https://grafana.internal/d/imgprep-cost"
+
+      - alert: CostSpike
+        expr: >
+          sum(rate(imgprep_estimated_cost_dollars_total[1h])) * 3600 > 1
+        for: 30m
+        labels:
+          severity: warning
+          team: imgprep
+          category: cost
+        annotations:
+          summary: "Cost rate spike detected"
+          description: "Current cost rate: ${{ $value | printf \"%.2f\" }}/hour"
+          runbook_url: "https://docs.imgprep.internal/runbooks/cost-spike"
+
+      - alert: MonthlyBudgetWarning
+        expr: >
+          sum(increase(imgprep_estimated_cost_dollars_total[30d])) > 20
+        for: 1m
+        labels:
+          severity: warning
+          team: imgprep
+          category: cost
+        annotations:
+          summary: "Approaching monthly budget"
+          description: "30-day spend: ${{ $value | printf \"%.2f\" }} (budget: $30)"
+          runbook_url: "https://docs.imgprep.internal/runbooks/budget-warning"
+
+      - alert: MonthlyBudgetCritical
+        expr: >
+          sum(increase(imgprep_estimated_cost_dollars_total[30d])) > 28
+        for: 1m
+        labels:
+          severity: critical
+          team: imgprep
+          category: cost
+        annotations:
+          summary: "Monthly budget nearly exhausted"
+          description: "30-day spend: ${{ $value | printf \"%.2f\" }} - budget will be exceeded"
+          runbook_url: "https://docs.imgprep.internal/runbooks/budget-critical"
+
+      - alert: HighModalGPUUsage
+        expr: >
+          sum(rate(imgprep_modal_gpu_seconds_total[1h])) > 100
+        for: 30m
+        labels:
+          severity: warning
+          team: imgprep
+          category: cost
+        annotations:
+          summary: "High Modal GPU usage rate"
+          description: "GPU usage rate: {{ $value | printf \"%.1f\" }} seconds/hour"
+          runbook_url: "https://docs.imgprep.internal/runbooks/high-gpu-usage"
+
+  # ============================================================================
+  # Availability Alerts
+  # ============================================================================
+  - name: imgprep_availability
+    interval: 30s
+    rules:
+      - alert: LowThroughput
+        expr: >
+          sum(rate(imgprep_pages_processed_total[5m])) < 0.1
+          and sum(imgprep_queue_depth) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: imgprep
+          category: availability
+        annotations:
+          summary: "Low throughput with pending work"
+          description: "Processing rate is {{ $value | printf \"%.2f\" }} pages/sec with {{ with query \"sum(imgprep_queue_depth)\" }}{{ . | first | value }}{{ end }} items in queue"
+          runbook_url: "https://docs.imgprep.internal/runbooks/low-throughput"
+
+      - alert: ProcessingStalled
+        expr: >
+          sum(rate(imgprep_pages_processed_total[10m])) == 0
+          and sum(imgprep_queue_depth) > 0
+        for: 5m
+        labels:
+          severity: critical
+          team: imgprep
+          category: availability
+        annotations:
+          summary: "Processing has stalled"
+          description: "No pages processed in 10 minutes with items in queue"
+          runbook_url: "https://docs.imgprep.internal/runbooks/processing-stalled"
+
+      - alert: ServiceDown
+        expr: up{job="imgprep"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: imgprep
+          category: availability
+        annotations:
+          summary: "ImgPrep service is down"
+          description: "Service instance {{ $labels.instance }} is not responding"
+          runbook_url: "https://docs.imgprep.internal/runbooks/service-down"
