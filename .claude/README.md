@@ -21,7 +21,7 @@ rm -rf /tmp/.claude-update
 
 ## Directory Structure
 
-```
+```text
 .claude/
 ├── README.md                   # This file
 ├── settings.local.json         # Local Claude Code settings (gitignored)
