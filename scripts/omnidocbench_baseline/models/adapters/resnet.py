@@ -7,6 +7,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -111,14 +112,12 @@ class ResNetAdapter(IQAModel):
                 norm_mean = [0.5, 0.5, 0.5]
                 norm_std = [0.5, 0.5, 0.5]
 
-            self._transform = transforms.Compose(
-                [
-                    transforms.ToPILImage(),
-                    transforms.Resize((input_size, input_size)),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean=norm_mean, std=norm_std),
-                ]
-            )
+            self._transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.Resize((input_size, input_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=norm_mean, std=norm_std),
+            ])
 
             self._is_loaded = True
             logger.info(f"Loaded {self.config.name} ({arch})")
@@ -251,7 +250,6 @@ class ResNetAdapter(IQAModel):
             # Clear CUDA cache if available
             try:
                 import torch
-
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
             except ImportError:

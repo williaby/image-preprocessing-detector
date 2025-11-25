@@ -39,7 +39,8 @@ class DocLayoutYOLOAdapter(LayoutModel):
             return
 
         logger.warning(
-            f"{self.config.name} is not yet implemented. Using placeholder predictions."
+            f"{self.config.name} is not yet implemented. "
+            f"Using placeholder predictions."
         )
         self._is_loaded = True
 
@@ -83,9 +84,8 @@ class DocLayoutYOLOAdapter(LayoutModel):
         elapsed = (time.perf_counter() - start) * 1000
 
         labels = {
-            k: v
-            for k, v in layout.items()
-            if isinstance(v, bool | str) and not k.startswith("_")
+            k: v for k, v in layout.items()
+            if isinstance(v, (bool, str)) and not k.startswith("_")
         }
 
         return ModelPrediction(

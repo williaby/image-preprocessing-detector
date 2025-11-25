@@ -81,9 +81,7 @@ def load_results(model_id: str, results_dir: Path) -> dict[str, Any] | None:
     return None
 
 
-def calculate_delta(
-    baseline: float, current: float, higher_is_better: bool = True
-) -> dict[str, Any]:
+def calculate_delta(baseline: float, current: float, higher_is_better: bool = True) -> dict[str, Any]:
     """Calculate improvement delta between baseline and current.
 
     Args:
@@ -178,23 +176,17 @@ def compare_models(
     baseline_mean_f1 = baseline_results.get("summary", {}).get("mean_f1", 0.0)
     current_mean_f1 = current_results.get("summary", {}).get("mean_f1", 0.0)
 
-    comparison["summary"]["mean_f1"] = calculate_delta(
-        baseline_mean_f1, current_mean_f1
-    )
+    comparison["summary"]["mean_f1"] = calculate_delta(baseline_mean_f1, current_mean_f1)
     comparison["summary"]["mean_f1"]["target"] = PROJECT_A_TARGETS["overall"]["mean_f1"]
-    comparison["summary"]["mean_f1"]["target_met"] = (
-        current_mean_f1 >= PROJECT_A_TARGETS["overall"]["mean_f1"]
-    )
+    comparison["summary"]["mean_f1"]["target_met"] = current_mean_f1 >= PROJECT_A_TARGETS["overall"]["mean_f1"]
 
     # Count improvements
     improvements = sum(
-        1
-        for attr_delta in comparison["binary_attributes"].values()
+        1 for attr_delta in comparison["binary_attributes"].values()
         if attr_delta["improved"]
     )
     regressions = sum(
-        1
-        for attr_delta in comparison["binary_attributes"].values()
+        1 for attr_delta in comparison["binary_attributes"].values()
         if not attr_delta["improved"] and attr_delta["absolute_delta"] != 0
     )
 
@@ -220,17 +212,13 @@ def generate_comparison_table(comparison: dict[str, Any]) -> str:
     current = comparison["current_model"]
 
     lines.append("=" * 90)
-    lines.append(
-        f"COMPARISON: {baseline['name']} (v{baseline['version']}) → {current['name']} (v{current['version']})"
-    )
+    lines.append(f"COMPARISON: {baseline['name']} (v{baseline['version']}) → {current['name']} (v{current['version']})")
     lines.append("=" * 90)
 
     # Binary attributes table
     lines.append("\nBinary Attribute Detection:")
     lines.append("-" * 90)
-    lines.append(
-        f"{'Attribute':<25} {'Baseline':>10} {'Current':>10} {'Delta':>10} {'Relative':>10} {'Target':>8}"
-    )
+    lines.append(f"{'Attribute':<25} {'Baseline':>10} {'Current':>10} {'Delta':>10} {'Relative':>10} {'Target':>8}")
     lines.append("-" * 90)
 
     for attr, delta in comparison["binary_attributes"].items():
@@ -270,17 +258,11 @@ def generate_comparison_table(comparison: dict[str, Any]) -> str:
     mean_f1_delta = summary["mean_f1"]
     lines.append("\nSummary:")
     lines.append("-" * 90)
-    lines.append(
-        f"  Mean F1: {mean_f1_delta['baseline']:.3f} → {mean_f1_delta['current']:.3f} "
-        f"({mean_f1_delta['direction']}{abs(mean_f1_delta['absolute_delta']):.3f})"
-    )
-    lines.append(
-        f"  Improvements: {summary['improvements']} | Regressions: {summary['regressions']}"
-    )
+    lines.append(f"  Mean F1: {mean_f1_delta['baseline']:.3f} → {mean_f1_delta['current']:.3f} "
+                 f"({mean_f1_delta['direction']}{abs(mean_f1_delta['absolute_delta']):.3f})")
+    lines.append(f"  Improvements: {summary['improvements']} | Regressions: {summary['regressions']}")
     lines.append(f"  Net Improvement: {summary['net_improvement']:+d}")
-    lines.append(
-        f"  Target Met: {'✅' if mean_f1_delta['target_met'] else '❌'} (>= {mean_f1_delta['target']:.2f})"
-    )
+    lines.append(f"  Target Met: {'✅' if mean_f1_delta['target_met'] else '❌'} (>= {mean_f1_delta['target']:.2f})")
 
     lines.append("=" * 90)
 
@@ -305,7 +287,7 @@ def generate_markdown_report(
     baseline = comparison["baseline_model"]
     current = comparison["current_model"]
 
-    lines.append("# Model Comparison Report")
+    lines.append(f"# Model Comparison Report")
     lines.append("")
     lines.append(f"**Baseline**: {baseline['name']} (v{baseline['version']})")
     lines.append(f"**Current**: {current['name']} (v{current['version']})")
@@ -316,17 +298,11 @@ def generate_markdown_report(
         lines.append("## Project A Evaluation Scope")
         lines.append("")
         lines.append("This comparison evaluates metrics within Project A's scope:")
-        lines.append(
-            "- Page attributes: `fuzzy_scan`, `watermark`, `colorful_background`"
-        )
-        lines.append(
-            "- Element presence: `has_tables`, `has_figures`, `has_dense_math`"
-        )
+        lines.append("- Page attributes: `fuzzy_scan`, `watermark`, `colorful_background`")
+        lines.append("- Element presence: `has_tables`, `has_figures`, `has_dense_math`")
         lines.append("- Layout classification (not shown if not evaluated)")
         lines.append("")
-        lines.append(
-            "**NOT evaluated** (Project B scope): OCR, table structure, formula recognition, reading order"
-        )
+        lines.append("**NOT evaluated** (Project B scope): OCR, table structure, formula recognition, reading order")
         lines.append("")
 
     # Summary
@@ -335,16 +311,12 @@ def generate_markdown_report(
 
     lines.append("## Summary")
     lines.append("")
-    lines.append("| Metric | Value |")
-    lines.append("|--------|-------|")
-    lines.append(
-        f"| Mean F1 Change | {mean_f1['baseline']:.3f} → {mean_f1['current']:.3f} ({mean_f1['direction']}{abs(mean_f1['absolute_delta']):.3f}) |"
-    )
+    lines.append(f"| Metric | Value |")
+    lines.append(f"|--------|-------|")
+    lines.append(f"| Mean F1 Change | {mean_f1['baseline']:.3f} → {mean_f1['current']:.3f} ({mean_f1['direction']}{abs(mean_f1['absolute_delta']):.3f}) |")
     lines.append(f"| Improvements | {summary['improvements']} |")
     lines.append(f"| Regressions | {summary['regressions']} |")
-    lines.append(
-        f"| Target Met | {'✅' if mean_f1['target_met'] else '❌'} (>= {mean_f1['target']:.2f}) |"
-    )
+    lines.append(f"| Target Met | {'✅' if mean_f1['target_met'] else '❌'} (>= {mean_f1['target']:.2f}) |")
     lines.append("")
 
     # Detailed results
@@ -421,15 +393,13 @@ def track_progression(
         try:
             with open(f, encoding="utf-8") as fp:
                 data = json.load(fp)
-                versions.append(
-                    {
-                        "file": f.name,
-                        "model": data.get("model", {}),
-                        "summary": data.get("summary", {}),
-                        "binary_attributes": data.get("binary_attributes", {}),
-                        "timestamp": data.get("metadata", {}).get("timestamp", ""),
-                    }
-                )
+                versions.append({
+                    "file": f.name,
+                    "model": data.get("model", {}),
+                    "summary": data.get("summary", {}),
+                    "binary_attributes": data.get("binary_attributes", {}),
+                    "timestamp": data.get("metadata", {}).get("timestamp", ""),
+                })
         except Exception as e:
             logger.warning(f"Failed to load {f}: {e}")
 

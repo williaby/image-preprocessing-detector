@@ -5,6 +5,7 @@ Placeholder for fastText/py3langid integration (Phase 4).
 
 import logging
 import time
+from typing import Any
 
 import numpy as np
 
@@ -38,7 +39,8 @@ class LanguageAdapter(BaseModel):
             return
 
         logger.warning(
-            f"{self.config.name} is not yet implemented. Using placeholder predictions."
+            f"{self.config.name} is not yet implemented. "
+            f"Using placeholder predictions."
         )
         self._is_loaded = True
 
