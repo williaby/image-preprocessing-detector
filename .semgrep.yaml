@@ -44,6 +44,7 @@ rules:
       subcategory:
         - vuln
       cwe: "CWE-502: Deserialization of Untrusted Data"
+      owasp: "A08:2021 - Software and Data Integrity Failures"
       confidence: HIGH
 
   # Unsafe torch.load without weights_only
@@ -62,6 +63,7 @@ rules:
       subcategory:
         - vuln
       cwe: "CWE-502: Deserialization of Untrusted Data"
+      owasp: "A08:2021 - Software and Data Integrity Failures"
       confidence: HIGH
 
   # Hardcoded paths that should use config
