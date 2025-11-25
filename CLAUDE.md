@@ -4,6 +4,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **Project Context**: Extends global CLAUDE.md standards from `~/.claude/CLAUDE.md`. Only project-specific configurations documented below.
 
+## Template Feedback Tracking (CRITICAL)
+
+This project uses the `cookiecutter-python-template` for standards alignment.
+All template-related issues MUST be documented for upstream fixes.
+
+**Location**: `template_feedback/`
+**Naming Convention**: `MMDDYYYY_template_feedback.md`
+
+### When to Create Feedback
+
+- CI failures caused by template-managed files
+- Missing features in generated files
+- Configuration mismatches between template and project
+- Formatting/linting issues in template output
+- Tools or patterns that should be added to the template
+
+### .claude/ Directory
+
+This project includes a comprehensive `.claude/` directory with:
+
+- **21 Agents**: Specialized agents for code review, security, testing, etc.
+- **13 Commands**: Custom slash commands for quality, security, and testing
+- **9 Skills**: Reusable skills for git, PR preparation, and project planning
+- **Standards**: Development standards reference documents
+
+See [.claude/README.md](.claude/README.md) for full documentation.
+
+**Source**: [https://github.com/ByronWilliamsCPA/.claude](https://github.com/ByronWilliamsCPA/.claude)
+
 ## Claude Code Supervisor Role (CRITICAL)
 
 **Claude Code acts as the SUPERVISOR for all development tasks and MUST:**
@@ -119,68 +148,74 @@ DocumentMetadata.json           OCRDocument.json        FusedDocument.json     V
 
 ```bash
 # Install dependencies (includes dev tools)
-poetry install --with dev
+uv sync --extra dev
 
 # Install with ML dependencies (Phase 2+)
-poetry install --with dev,ml
+uv sync --extra dev --extra ml
 
 # Setup pre-commit hooks (required before first commit)
-poetry run pre-commit install
+uv run pre-commit install
 
 # Run CLI tool
-poetry run imgprep --help
-poetry run imgprep process input.pdf --output result.json
+uv run imgprep --help
+uv run imgprep process input.pdf --output result.json
 ```
 
 ### Testing
 
 ```bash
 # Run all tests with coverage (80% minimum enforced)
-poetry run pytest -v
+uv run pytest -v
 
 # Run specific test categories
-poetry run pytest -v -m unit               # Unit tests only
-poetry run pytest -v -m integration        # Integration tests only
-poetry run pytest -v -m "not slow"         # Exclude slow tests
+uv run pytest -v -m unit               # Unit tests only
+uv run pytest -v -m integration        # Integration tests only
+uv run pytest -v -m "not slow"         # Exclude slow tests
 
 # Run single test file
-poetry run pytest tests/unit/test_schema.py -v
+uv run pytest tests/unit/test_schema.py -v
 
 # Run single test function
-poetry run pytest tests/unit/test_schema.py::test_detected_issue_validation -v
+uv run pytest tests/unit/test_schema.py::test_detected_issue_validation -v
 
 # Run with coverage report
-poetry run pytest --cov=src --cov-report=html --cov-report=term-missing
+uv run pytest --cov=src --cov-report=html --cov-report=term-missing
 
 # Run tests in parallel (faster for large suites)
-poetry run pytest -n auto
+uv run pytest -n auto
 ```
 
 ### Code Quality
 
 ```bash
 # Format code (required before commit)
-poetry run ruff format src tests
+uv run ruff format src tests
 
 # Lint and auto-fix
-poetry run ruff check --fix src tests
+uv run ruff check --fix src tests
 
-# Type checking (strict on src/, relaxed on tests/)
-poetry run mypy src
+# Type checking - BasedPyright (strict on src/, 3-5x faster than MyPy)
+uv run basedpyright src
+
+# Legacy type checking (MyPy - kept for reference)
+# uv run mypy src
+
+# Dead code detection
+uv run vulture src/ --min-confidence 80
 
 # Run all pre-commit hooks manually
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 
 # Security scanning
-poetry run bandit -r src
-poetry run safety check
+uv run bandit -r src
+uv run safety check
 ```
 
 ### Validation Scripts
 
 ```bash
 # Run standalone validation scripts (not part of test suite)
-PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH poetry run python validation/validate_*.py
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/validate_*.py
 ```
 
 ### Modal & Training (Phase 2+)
@@ -191,18 +226,18 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH poetry run python validat
 
 ```bash
 # Start training (ready to use)
-poetry run modal run modal/train_phase2_iqa.py      # Phase 2: ResNet IQA
+uv run modal run modal/train_phase2_iqa.py      # Phase 2: ResNet IQA
 
 # Monitor training
-poetry run modal app logs image-detection --follow  # Stream logs
-open https://modal.com/apps                         # Dashboard
+uv run modal app logs image-detection --follow  # Stream logs
+open https://modal.com/apps                     # Dashboard
 
 # Cost tracking
-poetry run modal profile current                    # Check usage
+uv run modal profile current                    # Check usage
 
 # Verify setup (optional)
-poetry run modal token current                      # Check authentication
-poetry run modal secret list | grep gcs-credentials # Check GCS credentials
+uv run modal token current                      # Check authentication
+uv run modal secret list | grep gcs-credentials # Check GCS credentials
 ```
 
 **Key Training Details:**
@@ -224,8 +259,8 @@ ssh-add -l              # Must show SSH key for signed commits
 git config --get user.signingkey  # Must be configured for signed commits
 
 # Security scanning
-poetry run bandit -r src                    # Python security analysis
-poetry run safety check                     # Dependency vulnerability check
+uv run bandit -r src                        # Python security analysis
+uv run safety check                         # Dependency vulnerability check
 ```
 
 ### OSV Scanner (Optional - Local Development)
@@ -240,12 +275,12 @@ go install github.com/google/osv-scanner/cmd/osv-scanner@latest
 osv-scanner --version
 
 # Run scan (automatically respects osv-scanner.toml exceptions)
-osv-scanner --lockfile=poetry.lock
+osv-scanner --lockfile=uv.lock
 
 # Expected output: 0 vulnerabilities (all false positives documented in osv-scanner.toml)
 
 # Scan with detailed output
-osv-scanner --lockfile=poetry.lock --format=json --output=osv-local-results.json
+osv-scanner --lockfile=uv.lock --format=json --output=osv-local-results.json
 ```
 
 **Key Features:**
@@ -255,7 +290,7 @@ osv-scanner --lockfile=poetry.lock --format=json --output=osv-local-results.json
 - **CI Integration**: Runs automatically in `security-analysis.yml` workflow
 
 **When to Run Locally:**
-- After updating dependencies (`poetry add/update`)
+- After updating dependencies (`uv add/uv sync`)
 - Before creating PR with dependency changes
 - To verify `osv-scanner.toml` exceptions work correctly
 - When OpenSSF Scorecard reports new vulnerabilities
@@ -538,30 +573,30 @@ Before committing ANY changes, ensure:
 
 ```bash
 # Check coverage threshold
-poetry run pytest --cov=src --cov-report=term-missing
+uv run pytest --cov=src --cov-report=term-missing
 
 # Run specific failing test
-poetry run pytest tests/path/to/test.py::test_name -v
+uv run pytest tests/path/to/test.py::test_name -v
 
 # Check pre-commit hooks
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 ### Type Errors
 
 ```bash
-# MyPy strict on src/, relaxed on tests/
-poetry run mypy src
+# BasedPyright strict on src/, relaxed on tests/
+uv run basedpyright src
 
 # Check specific file
-poetry run mypy src/image_preprocessing_detector/schema.py
+uv run basedpyright src/image_preprocessing_detector/schema.py
 ```
 
 ### Import Errors in Validation Scripts
 
 ```bash
 # Validation scripts need PYTHONPATH set
-PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH poetry run python validation/script.py
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/script.py
 ```
 
 ### Database Connection Issues

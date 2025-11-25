@@ -1,0 +1,30 @@
+---
+# Semgrep Configuration for Image Preprocessing Detector
+# This file defines which Semgrep rulesets to use for code analysis.
+# See https://semgrep.dev/docs/
+
+rules:
+  # Python Security and Best Practices
+  - id: python-best-practices
+    patterns:
+      - pattern-inside: |
+          import $MODULE
+    languages: [python]
+    severity: INFO
+    message: Using Semgrep community rulesets for Python analysis
+
+# Use community rulesets (configured in CI workflows)
+# These are pulled automatically by Semgrep:
+# - p/python: Python best practices
+# - p/security-audit: Security auditing
+# - p/owasp-top-ten: OWASP Top 10 vulnerabilities
+# - p/bandit: Additional Python security rules
+
+# Custom rules can be added here
+# See https://semgrep.dev/docs/writing-rules/overview/
+
+# Project-specific patterns to watch for:
+# - Unsafe pickle/torch.load without weights_only=True
+# - Hardcoded file paths (should use config)
+# - Missing input validation on image data
+# - Unvalidated DPI/resolution values
