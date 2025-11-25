@@ -1,0 +1,384 @@
+{
+  "validation_type": "DQS-OCR Correlation",
+  "num_samples": 45,
+  "correlation": {
+    "pearson_r": 0.2990032126913066,
+    "p_value": 0.039908659747089015,
+    "target": 0.7,
+    "meets_target": false
+  },
+  "dqs_statistics": {
+    "mean": 0.5291622047128876,
+    "std": 0.04423445514767428,
+    "min": 0.46433655715720523,
+    "max": 0.5920844204564313
+  },
+  "ocr_statistics": {
+    "mean": 0.6629407994404467,
+    "std": 0.0640830999617775,
+    "min": 0.5602485538671571,
+    "max": 0.7696481439699121
+  },
+  "test_cases": [
+    {
+      "doc_id": "high_simple_0",
+      "quality_level": "high",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5920844204564313,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7676574959705793
+    },
+    {
+      "doc_id": "high_simple_1",
+      "quality_level": "high",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5920844204564313,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7580123303410362
+    },
+    {
+      "doc_id": "high_simple_2",
+      "quality_level": "high",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5920844204564313,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7627965691551746
+    },
+    {
+      "doc_id": "high_simple_3",
+      "quality_level": "high",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5920844204564313,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7595202424871892
+    },
+    {
+      "doc_id": "high_simple_4",
+      "quality_level": "high",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5920844204564313,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7365698024598689
+    },
+    {
+      "doc_id": "high_moderate_0",
+      "quality_level": "high",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5334416481464567,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6523033920174325
+    },
+    {
+      "doc_id": "high_moderate_1",
+      "quality_level": "high",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5334416481464567,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6587598513514832
+    },
+    {
+      "doc_id": "high_moderate_2",
+      "quality_level": "high",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5334416481464567,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6515701709595256
+    },
+    {
+      "doc_id": "high_moderate_3",
+      "quality_level": "high",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5334416481464567,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6121579624625665
+    },
+    {
+      "doc_id": "high_moderate_4",
+      "quality_level": "high",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5334416481464567,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6534308302249417
+    },
+    {
+      "doc_id": "high_complex_0",
+      "quality_level": "high",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5856263069722898,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.61144141830803
+    },
+    {
+      "doc_id": "high_complex_1",
+      "quality_level": "high",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5856263069722898,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.6048920513867755
+    },
+    {
+      "doc_id": "high_complex_2",
+      "quality_level": "high",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5856263069722898,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.5945153980859298
+    },
+    {
+      "doc_id": "high_complex_3",
+      "quality_level": "high",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5856263069722898,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.6219830529492273
+    },
+    {
+      "doc_id": "high_complex_4",
+      "quality_level": "high",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5856263069722898,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.6298207710138404
+    },
+    {
+      "doc_id": "medium_simple_0",
+      "quality_level": "medium",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5550128782604641,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7489708226745188
+    },
+    {
+      "doc_id": "medium_simple_1",
+      "quality_level": "medium",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5578154774639947,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7588658832162195
+    },
+    {
+      "doc_id": "medium_simple_2",
+      "quality_level": "medium",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5562668524411516,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7696481439699121
+    },
+    {
+      "doc_id": "medium_simple_3",
+      "quality_level": "medium",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5598239182150113,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7578835830584869
+    },
+    {
+      "doc_id": "medium_simple_4",
+      "quality_level": "medium",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.5533284177143893,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7225546152240024
+    },
+    {
+      "doc_id": "medium_moderate_0",
+      "quality_level": "medium",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5130639937583871,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6512841434887675
+    },
+    {
+      "doc_id": "medium_moderate_1",
+      "quality_level": "medium",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5140156722208599,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6502183488306025
+    },
+    {
+      "doc_id": "medium_moderate_2",
+      "quality_level": "medium",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5130231551024208,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6557968677934308
+    },
+    {
+      "doc_id": "medium_moderate_3",
+      "quality_level": "medium",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5145668409444352,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.68057612321432
+    },
+    {
+      "doc_id": "medium_moderate_4",
+      "quality_level": "medium",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.5104958631326163,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6473678986747925
+    },
+    {
+      "doc_id": "medium_complex_0",
+      "quality_level": "medium",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5578822441963642,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.5994600338555743
+    },
+    {
+      "doc_id": "medium_complex_1",
+      "quality_level": "medium",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5563086926092871,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.6325950913607069
+    },
+    {
+      "doc_id": "medium_complex_2",
+      "quality_level": "medium",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5522867417305299,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.5946918355560977
+    },
+    {
+      "doc_id": "medium_complex_3",
+      "quality_level": "medium",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5553439562183008,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.6269766681906705
+    },
+    {
+      "doc_id": "medium_complex_4",
+      "quality_level": "medium",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.5526023209787378,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.5910640139041377
+    },
+    {
+      "doc_id": "low_simple_0",
+      "quality_level": "low",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.4833841624945995,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7235206347045812
+    },
+    {
+      "doc_id": "low_simple_1",
+      "quality_level": "low",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.4818376669421368,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7290559237303126
+    },
+    {
+      "doc_id": "low_simple_2",
+      "quality_level": "low",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.48239784687798604,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7390563122068847
+    },
+    {
+      "doc_id": "low_simple_3",
+      "quality_level": "low",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.4818782823929586,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7383807500893679
+    },
+    {
+      "doc_id": "low_simple_4",
+      "quality_level": "low",
+      "complexity_level": "simple",
+      "dqs_degradation": 0.48200582209795606,
+      "dqs_complexity": 0.1,
+      "ocr_accuracy": 0.7127856200541697
+    },
+    {
+      "doc_id": "low_moderate_0",
+      "quality_level": "low",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.4652129373255105,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6405962768566867
+    },
+    {
+      "doc_id": "low_moderate_1",
+      "quality_level": "low",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.4647564408831951,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6178653514872738
+    },
+    {
+      "doc_id": "low_moderate_2",
+      "quality_level": "low",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.46517672764930884,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6325420391216823
+    },
+    {
+      "doc_id": "low_moderate_3",
+      "quality_level": "low",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.46543195269732474,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.6457118681162171
+    },
+    {
+      "doc_id": "low_moderate_4",
+      "quality_level": "low",
+      "complexity_level": "moderate",
+      "dqs_degradation": 0.46433655715720523,
+      "dqs_complexity": 0.6000000000000001,
+      "ocr_accuracy": 0.5895285723843346
+    },
+    {
+      "doc_id": "low_complex_0",
+      "quality_level": "low",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.47951462851822046,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.5814269472561308
+    },
+    {
+      "doc_id": "low_complex_1",
+      "quality_level": "low",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.4789104923525832,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.585070640764279
+    },
+    {
+      "doc_id": "low_complex_2",
+      "quality_level": "low",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.47998977066134907,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.5602485538671571
+    },
+    {
+      "doc_id": "low_complex_3",
+      "quality_level": "low",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.47975930124392385,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.5805833953487787
+    },
+    {
+      "doc_id": "low_complex_4",
+      "quality_level": "low",
+      "complexity_level": "complex",
+      "dqs_degradation": 0.4801077199228416,
+      "dqs_complexity": 1.0,
+      "ocr_accuracy": 0.5925776766464039
+    }
+  ]
+}

@@ -38,9 +38,8 @@ from image_preprocessing_detector.metrics.dqs_calculator import (
     normalize_classical_iqa,
 )
 from image_preprocessing_detector.schema import (
-    DocumentQualityScore,
+    DQSMetadata,
     LayoutType,
-    PageAttributes,
     PageLayoutSummary,
 )
 from image_preprocessing_detector.utils import get_logger
@@ -81,7 +80,7 @@ def generate_synthetic_document(
     quality_level: str,
     complexity_level: str,
     output_path: Path,
-) -> tuple[str, DocumentQualityScore]:
+) -> tuple[str, DQSMetadata]:
     """
     Generate synthetic test document with known quality and complexity.
 
@@ -166,17 +165,20 @@ def generate_synthetic_document(
     degradation_score = calculate_degradation_score(iqa)
 
     layout = PageLayoutSummary(
-        page_index=0,
+        page_number=1,
         layout_type=cparams["layout_type"],
         has_tables=cparams["has_tables"],
         has_figures=cparams["has_figures"],
         has_dense_math=False,
         has_handwriting=False,
-        page_attributes=PageAttributes(),
+        fuzzy_scan=False,
+        watermark=False,
+        colorful_background=False,
+        complexity_score=0.0,  # Will be calculated below
     )
     complexity_score = calculate_structural_complexity_score(layout)
 
-    dqs = DocumentQualityScore(
+    dqs = DQSMetadata(
         degradation_score=degradation_score,
         structural_complexity_score=complexity_score,
     )
@@ -193,7 +195,7 @@ def generate_synthetic_document(
 
 
 def simulate_ocr_accuracy(
-    dqs: DocumentQualityScore,
+    dqs: DQSMetadata,
 ) -> float:
     """
     Simulate OCR accuracy based on DQS.

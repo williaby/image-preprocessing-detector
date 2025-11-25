@@ -1,0 +1,252 @@
+{
+  "routing_doc_000.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 0: ocr_fast based on born_digital"
+  },
+  "routing_doc_001.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 1: ocr_fast based on born_digital"
+  },
+  "routing_doc_002.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 2: ocr_fast based on born_digital"
+  },
+  "routing_doc_003.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 3: ocr_fast based on born_digital"
+  },
+  "routing_doc_004.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 4: ocr_fast based on born_digital"
+  },
+  "routing_doc_005.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 5: ocr_fast based on born_digital"
+  },
+  "routing_doc_006.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 6: ocr_fast based on born_digital"
+  },
+  "routing_doc_007.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 7: ocr_fast based on born_digital"
+  },
+  "routing_doc_008.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 8: ocr_fast based on born_digital"
+  },
+  "routing_doc_009.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 9: ocr_fast based on born_digital"
+  },
+  "routing_doc_010.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 10: ocr_fast based on born_digital"
+  },
+  "routing_doc_011.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 11: ocr_fast based on born_digital"
+  },
+  "routing_doc_012.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 12: ocr_fast based on born_digital"
+  },
+  "routing_doc_013.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 13: ocr_fast based on born_digital"
+  },
+  "routing_doc_014.pdf": {
+    "expected_routing": "ocr_fast",
+    "pdf_type": "born_digital",
+    "rationale": "Test case 14: ocr_fast based on born_digital"
+  },
+  "routing_doc_015.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 15: ocr_advanced based on image_only"
+  },
+  "routing_doc_016.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 16: ocr_advanced based on image_only"
+  },
+  "routing_doc_017.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 17: ocr_advanced based on image_only"
+  },
+  "routing_doc_018.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 18: ocr_advanced based on image_only"
+  },
+  "routing_doc_019.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 19: ocr_advanced based on image_only"
+  },
+  "routing_doc_020.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 20: ocr_advanced based on image_only"
+  },
+  "routing_doc_021.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 21: ocr_advanced based on image_only"
+  },
+  "routing_doc_022.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 22: ocr_advanced based on image_only"
+  },
+  "routing_doc_023.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 23: ocr_advanced based on image_only"
+  },
+  "routing_doc_024.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 24: ocr_advanced based on image_only"
+  },
+  "routing_doc_025.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 25: ocr_advanced based on image_only"
+  },
+  "routing_doc_026.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 26: ocr_advanced based on image_only"
+  },
+  "routing_doc_027.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 27: ocr_advanced based on image_only"
+  },
+  "routing_doc_028.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 28: ocr_advanced based on image_only"
+  },
+  "routing_doc_029.pdf": {
+    "expected_routing": "ocr_advanced",
+    "pdf_type": "image_only",
+    "rationale": "Test case 29: ocr_advanced based on image_only"
+  },
+  "routing_doc_030.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 30: vision_structured based on hybrid"
+  },
+  "routing_doc_031.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 31: vision_structured based on hybrid"
+  },
+  "routing_doc_032.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 32: vision_structured based on hybrid"
+  },
+  "routing_doc_033.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 33: vision_structured based on hybrid"
+  },
+  "routing_doc_034.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 34: vision_structured based on hybrid"
+  },
+  "routing_doc_035.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 35: vision_structured based on hybrid"
+  },
+  "routing_doc_036.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 36: vision_structured based on hybrid"
+  },
+  "routing_doc_037.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 37: vision_structured based on hybrid"
+  },
+  "routing_doc_038.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 38: vision_structured based on hybrid"
+  },
+  "routing_doc_039.pdf": {
+    "expected_routing": "vision_structured",
+    "pdf_type": "hybrid",
+    "rationale": "Test case 39: vision_structured based on hybrid"
+  },
+  "routing_doc_040.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 40: vision_simple based on image_only"
+  },
+  "routing_doc_041.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 41: vision_simple based on image_only"
+  },
+  "routing_doc_042.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 42: vision_simple based on image_only"
+  },
+  "routing_doc_043.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 43: vision_simple based on image_only"
+  },
+  "routing_doc_044.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 44: vision_simple based on image_only"
+  },
+  "routing_doc_045.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 45: vision_simple based on image_only"
+  },
+  "routing_doc_046.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 46: vision_simple based on image_only"
+  },
+  "routing_doc_047.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 47: vision_simple based on image_only"
+  },
+  "routing_doc_048.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 48: vision_simple based on image_only"
+  },
+  "routing_doc_049.pdf": {
+    "expected_routing": "vision_simple",
+    "pdf_type": "image_only",
+    "rationale": "Test case 49: vision_simple based on image_only"
+  }
+}

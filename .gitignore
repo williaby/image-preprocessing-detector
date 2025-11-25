@@ -160,3 +160,5 @@ modal_cache/
 # Keep lightweight DVC pointer files even though dataset contents are ignored
 !data/**/*.dvc
 tmp_comments.json
+tests/fixtures/phase2_validation/*.pdf
+tests/fixtures/phase2_validation/**/*.pdf

@@ -1,0 +1,613 @@
+{
+  "total_pdfs": 100,
+  "classifications": {
+    "born_digital": 40,
+    "hybrid": 20,
+    "image_only": 40
+  },
+  "correct": 100,
+  "incorrect": 0,
+  "errors": [],
+  "details": [
+    {
+      "file": "born_digital_000.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_001.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_002.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_003.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_004.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_005.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_006.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_007.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_008.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_009.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_010.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_011.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_012.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_013.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_014.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_015.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_016.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_017.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_018.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_019.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_020.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_021.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_022.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_023.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_024.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_025.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_026.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_027.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_028.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_029.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_030.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_031.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_032.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_033.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_034.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_035.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_036.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_037.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_038.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "born_digital_039.pdf",
+      "predicted": "born_digital",
+      "expected": "born_digital",
+      "correct": true
+    },
+    {
+      "file": "hybrid_000.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_001.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_002.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_003.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_004.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_005.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_006.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_007.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_008.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_009.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_010.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_011.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_012.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_013.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_014.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_015.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_016.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_017.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_018.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "hybrid_019.pdf",
+      "predicted": "hybrid",
+      "expected": "hybrid",
+      "correct": true
+    },
+    {
+      "file": "image_only_000.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_001.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_002.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_003.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_004.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_005.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_006.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_007.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_008.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_009.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_010.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_011.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_012.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_013.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_014.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_015.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_016.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_017.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_018.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_019.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_020.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_021.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_022.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_023.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_024.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_025.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_026.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_027.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_028.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_029.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_030.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_031.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_032.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_033.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_034.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_035.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_036.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_037.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_038.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    },
+    {
+      "file": "image_only_039.pdf",
+      "predicted": "image_only",
+      "expected": "image_only",
+      "correct": true
+    }
+  ]
+}
