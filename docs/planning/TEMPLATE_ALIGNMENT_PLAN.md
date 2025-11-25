@@ -1,4 +1,18 @@
-# Template Alignment Project Plan
+---
+schema_type: planning
+title: "Template Alignment Project Plan"
+description: "Plan to align image_detection project with cookiecutter-python-template standards including modern tooling, CI/CD improvements, and template management"
+tags:
+  - planning
+  - tooling
+status: published
+owner: core-maintainer
+authors:
+  - name: "Claude Code"
+purpose: "Document the phased approach for aligning the image_detection project with cookiecutter-python-template standards."
+component: "Development-Tools"
+source: "Created during template alignment work on chore/update-project-templates branch"
+---
 
 > **Branch**: `chore/update-project-templates`
 > **Created**: 2025-11-24

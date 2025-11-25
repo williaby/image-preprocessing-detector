@@ -76,6 +76,8 @@ backports-datetime-fromisoformat==2.0.3 ; python_full_version < '3.11'
     # via marshmallow
 backrefs==6.1
     # via mkdocs-material
+basedpyright==1.34.0
+    # via image-preprocessing-detector
 bcrypt==5.0.0
     # via asyncssh
 beautifulsoup4==4.14.2
@@ -393,7 +395,9 @@ jinja2==3.1.6
     #   pydeck
     #   safety
 joblib==1.5.2
-    # via nltk
+    # via
+    #   nltk
+    #   scikit-learn
 json5==0.12.1
     # via jupyterlab-server
 jsonpointer==3.0.0
@@ -590,6 +594,8 @@ nltk==3.9.2
     # via safety
 nodeenv==1.9.1
     # via pre-commit
+nodejs-wheel-binaries==24.11.1
+    # via basedpyright
 notebook==7.5.0
     # via jupyter
 notebook-shim==0.2.4
@@ -613,6 +619,7 @@ numpy==2.2.6 ; python_full_version < '3.11'
     #   pydeck
     #   pywavelets
     #   scikit-image
+    #   scikit-learn
     #   scipy
     #   streamlit
     #   tifffile
@@ -631,6 +638,7 @@ numpy==2.3.5 ; python_full_version >= '3.11'
     #   pydeck
     #   pywavelets
     #   scikit-image
+    #   scikit-learn
     #   scipy
     #   streamlit
     #   tifffile
@@ -934,14 +942,18 @@ safety-schemas==0.0.16
     # via safety
 scikit-image==0.25.2
     # via image-preprocessing-detector
+scikit-learn==1.7.2
+    # via image-preprocessing-detector
 scipy==1.15.3 ; python_full_version < '3.11'
     # via
     #   image-preprocessing-detector
     #   scikit-image
+    #   scikit-learn
 scipy==1.16.3 ; python_full_version >= '3.11'
     # via
     #   image-preprocessing-detector
     #   scikit-image
+    #   scikit-learn
 scmrepo==3.5.5
     # via
     #   dvc
@@ -1014,6 +1026,8 @@ text-unidecode==1.3
     #   python-slugify
 textual==6.6.0
     # via mutmut
+threadpoolctl==3.6.0
+    # via scikit-learn
 tifffile==2025.5.10 ; python_full_version < '3.11'
     # via scikit-image
 tifffile==2025.10.16 ; python_full_version >= '3.11'
@@ -1036,6 +1050,7 @@ tomli==2.3.0 ; python_full_version <= '3.11'
     #   nox
     #   pytest
     #   safety
+    #   vulture
 tomlkit==0.13.3
     # via
     #   dvc
@@ -1162,6 +1177,8 @@ voluptuous==0.15.2
     # via
     #   dvc
     #   dvc-studio-client
+vulture==2.14
+    # via image-preprocessing-detector
 watchdog==6.0.0
     # via
     #   mkdocs

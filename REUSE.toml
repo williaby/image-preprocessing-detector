@@ -95,22 +95,85 @@ SPDX-FileCopyrightText = "2025 Byron Williams"
 # Additional configuration and temporary files - CC0-1.0
 [[annotations]]
 path = [
-    ".claude/settings.local.json",
     ".clusterfuzzlite/**",
+    ".coderabbit.yaml",  # CodeRabbit AI review config
     ".coveragerc-ml",  # ML coverage configuration
+    ".dockerignore",  # Docker build exclusions
     ".qlty/**",  # Qlty linter configuration
+    ".semgrep.yml",  # Semgrep security patterns
     ".snyk",  # Snyk vulnerability ignore configuration
     ".sonarlint/**",  # SonarLint IDE configuration
     "concept.txt",
     "coverage.json",  # Coverage report
+    "Dockerfile",  # Docker container definition
     "image_reference_sets.txt",
     "overrides/**",
+    "pyrightconfig.json",  # Pyright/BasedPyright config
     "renovate.json",
+    "sonar-project.properties",  # SonarCloud config
     "validate_workflows.sh",
     "scripts/**/*.sh",  # Shell scripts for automation
     "tmp_cleanup/**/*.txt",  # Temporary text files
 ]
 SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Claude Code ecosystem - Markdown documentation (CC-BY-4.0)
+[[annotations]]
+path = [
+    ".claude/*.md",
+    ".claude/agents/*.md",
+    ".claude/commands/*.md",
+    ".claude/context/*.md",
+    ".claude/standards/*.md",
+    ".claude/skills/*.md",
+    ".claude/skills/commit-prepare/*.md",
+    ".claude/skills/git/*.md",
+    ".claude/skills/git/context/*.md",
+    ".claude/skills/git/workflows/*.md",
+    ".claude/skills/pr-prepare/*.md",
+    ".claude/skills/project-planning/*.md",
+    ".claude/skills/project-planning/reference/*.md",
+    ".claude/skills/project-planning/templates/*.md",
+    ".claude/skills/project-planning/workflows/*.md",
+    ".claude/skills/quality/*.md",
+    ".claude/skills/quality/workflows/*.md",
+    ".claude/skills/rad/*.md",
+    ".claude/skills/rad/context/*.md",
+    ".claude/skills/rad/workflows/*.md",
+    ".claude/skills/security/*.md",
+    ".claude/skills/security/context/*.md",
+    ".claude/skills/security/workflows/*.md",
+    ".claude/skills/testing/*.md",
+    ".claude/skills/testing/context/*.md",
+    ".claude/skills/testing/workflows/*.md",
+]
+SPDX-License-Identifier = "CC-BY-4.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Claude Code ecosystem - Python scripts (Apache-2.0)
+[[annotations]]
+path = [
+    ".claude/skills/project-planning/scripts/*.py",
+]
+SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Claude Code ecosystem - JSON configuration (CC0-1.0)
+[[annotations]]
+path = [
+    ".claude/*.json",
+    ".claude/*.json.example",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Template feedback documentation - CC-BY-4.0
+[[annotations]]
+path = [
+    "template_feedback/**/*.md",
+]
+SPDX-License-Identifier = "CC-BY-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
 # Benchmark results and generated metadata files - CC0-1.0
