@@ -42,6 +42,170 @@ logger = get_logger(__name__)
 _IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}
 
 
+def _parse_roi_string(roi: str | None) -> tuple[int, int, int, int] | None:
+    """Parse ROI string to bbox tuple.
+
+    Args:
+        roi: ROI string in format 'x,y,width,height' or None
+
+    Returns:
+        Tuple of (x, y, width, height) or None if no ROI
+
+    Raises:
+        SystemExit: If ROI format is invalid
+    """
+    if not roi:
+        return None
+
+    parts = [x.strip() for x in roi.split(",")]
+    if len(parts) != 4:
+        click.echo("Error: Invalid ROI format: ROI must have 4 values", err=True)
+        click.echo("Expected format: 'x,y,width,height'", err=True)
+        sys.exit(1)
+    try:
+        return tuple(int(x) for x in parts)  # type: ignore[return-value]
+    except ValueError:
+        click.echo("Error: Invalid ROI format: values must be integers", err=True)
+        click.echo("Expected format: 'x,y,width,height'", err=True)
+        sys.exit(1)
+
+
+def _load_image_for_check(input_path: Path) -> Any:
+    """Load image for detection check commands.
+
+    Args:
+        input_path: Path to image file
+
+    Returns:
+        Loaded image array
+
+    Raises:
+        SystemExit: If image cannot be loaded
+    """
+    import cv2
+
+    image = cv2.imread(str(input_path))
+    if image is None:
+        click.echo(f"Error: Could not load image: {input_path}", err=True)
+        sys.exit(1)
+    return image
+
+
+def _output_check_result(
+    output_data: dict[str, Any],
+    json_output: Path | None,
+    print_fn: Any,
+) -> None:
+    """Output detection check result as JSON or pretty print.
+
+    Args:
+        output_data: Result data dictionary
+        json_output: Path to JSON output file or None for console output
+        print_fn: Function to call for pretty printing (takes output_data)
+    """
+    import json
+
+    if json_output:
+        with open(json_output, "w") as f:
+            json.dump(output_data, f, indent=2)
+        click.echo(f"Results saved to: {json_output}")
+    else:
+        print_fn(output_data)
+
+
+def _print_blur_results(output_data: dict[str, Any]) -> None:
+    """Pretty print blur detection results."""
+    click.echo("\n" + "=" * 50)
+    click.echo("BLUR DETECTION RESULTS")
+    click.echo("=" * 50)
+    click.echo(f"File: {Path(output_data['file']).name}")
+    click.echo("-" * 50)
+
+    severity_icons = {
+        "low": "✓ SHARP",
+        "medium": "~ SLIGHT BLUR",
+        "high": "! BLURRED",
+        "critical": "✗ SEVERELY BLURRED",
+    }
+    severity_display = severity_icons.get(
+        output_data["severity"], output_data["severity"]
+    )
+    click.echo(f"Status: {severity_display}")
+    click.echo(f"Blurred: {'Yes' if output_data['is_blurred'] else 'No'}")
+    click.echo(f"Severity: {output_data['severity'].upper()}")
+    click.echo("-" * 50)
+    click.echo(f"Laplacian Variance: {output_data['laplacian_variance']:.2f}")
+    click.echo(f"Blur Score (0-1): {output_data['blur_score']:.3f}")
+    click.echo(f"Confidence: {output_data['confidence']:.3f}")
+
+    if "metrics" in output_data:
+        click.echo("-" * 50)
+        click.echo("DETAILED METRICS:")
+        metrics = output_data["metrics"]
+        click.echo(f"  Local Variance Mean: {metrics['local_variance_mean']:.2f}")
+        click.echo(f"  Local Variance Std: {metrics['local_variance_std']:.2f}")
+        click.echo(f"  Edge Density: {metrics['edge_density']:.4f}")
+
+    click.echo("=" * 50)
+    click.echo("\nInterpretation:")
+    blur_score = output_data["blur_score"]
+    if blur_score >= 0.8:
+        click.echo("  Image is very sharp with well-defined edges.")
+    elif blur_score >= 0.5:
+        click.echo("  Image has acceptable sharpness for most use cases.")
+    elif blur_score >= 0.2:
+        click.echo("  Image shows noticeable blur. Consider re-scanning or correction.")
+    else:
+        click.echo("  Image is heavily blurred. Re-acquisition recommended.")
+
+
+def _print_noise_results(output_data: dict[str, Any], wavelet: str) -> None:
+    """Pretty print noise detection results."""
+    click.echo("\n" + "=" * 50)
+    click.echo("NOISE DETECTION RESULTS")
+    click.echo("=" * 50)
+    click.echo(f"File: {Path(output_data['file']).name}")
+    click.echo(f"Wavelet: {wavelet}")
+    click.echo("-" * 50)
+
+    severity_icons = {
+        "low": "✓ CLEAN",
+        "medium": "~ SLIGHT NOISE",
+        "high": "! NOISY",
+        "critical": "✗ SEVERELY NOISY",
+    }
+    severity_display = severity_icons.get(
+        output_data["severity"], output_data["severity"]
+    )
+    click.echo(f"Status: {severity_display}")
+    click.echo(f"Noisy: {'Yes' if output_data['is_noisy'] else 'No'}")
+    click.echo(f"Severity: {output_data['severity'].upper()}")
+    click.echo("-" * 50)
+    click.echo(f"Noise Sigma: {output_data['noise_sigma']:.3f}")
+    click.echo(f"Noise Score (0-1): {output_data['noise_score']:.3f}")
+    click.echo(f"Confidence: {output_data['confidence']:.3f}")
+
+    if "metrics" in output_data:
+        click.echo("-" * 50)
+        click.echo("DETAILED METRICS:")
+        metrics = output_data["metrics"]
+        click.echo(f"  Wavelet Detail Energy: {metrics['wavelet_detail_energy']:.4f}")
+        click.echo(f"  SNR Estimate: {metrics['snr_estimate_db']:.2f} dB")
+        click.echo(f"  Noise Type Hint: {metrics['noise_type_hint']}")
+
+    click.echo("=" * 50)
+    click.echo("\nInterpretation:")
+    noise_score = output_data["noise_score"]
+    if noise_score >= 0.8:
+        click.echo("  Image is very clean with minimal noise.")
+    elif noise_score >= 0.5:
+        click.echo("  Image has acceptable noise levels for most use cases.")
+    elif noise_score >= 0.2:
+        click.echo("  Image shows noticeable noise. Consider denoising.")
+    else:
+        click.echo("  Image is heavily affected by noise. Denoising recommended.")
+
+
 def _load_pdf_with_preflight(
     input_path: Path, builder: MetadataBuilder
 ) -> list[PageImage]:
@@ -70,9 +234,7 @@ def _load_pdf_with_preflight(
     return pages
 
 
-def _load_document_pages(
-    input_path: Path, builder: MetadataBuilder
-) -> list[Any]:
+def _load_document_pages(input_path: Path, builder: MetadataBuilder) -> list[Any]:
     """Load document pages based on file type."""
     suffix = input_path.suffix.lower()
 
@@ -87,9 +249,7 @@ def _load_document_pages(
     raise ValueError(f"Unsupported file format: {suffix}")
 
 
-def _run_iqa_detection(
-    image: np.ndarray, has_text: bool
-) -> tuple[Any, Any, Any]:
+def _run_iqa_detection(image: np.ndarray, has_text: bool) -> tuple[Any, Any, Any]:
     """Run IQA detection if page has text.
 
     Returns:
@@ -522,16 +682,9 @@ def blur_check(
         imgprep blur-check photo.jpg --roi "100,100,200,200"
         imgprep blur-check document.jpg --json-output result.json
     """
-    import json
-
-    import cv2
-
     try:
-        # Load image
-        image = cv2.imread(str(input_path))
-        if image is None:
-            click.echo(f"Error: Could not load image: {input_path}", err=True)
-            sys.exit(1)
+        # Load image using helper
+        image = _load_image_for_check(input_path)
 
         # Create detector with custom thresholds
         detector = BlurDetector(
@@ -540,24 +693,8 @@ def blur_check(
             threshold_medium=threshold_medium,
         )
 
-        # Parse ROI if provided
-        bbox = None
-        if roi:
-            parts = [x.strip() for x in roi.split(",")]
-            if len(parts) != 4:
-                click.echo(
-                    "Error: Invalid ROI format: ROI must have 4 values", err=True
-                )
-                click.echo("Expected format: 'x,y,width,height'", err=True)
-                sys.exit(1)
-            try:
-                bbox = tuple(int(x) for x in parts)
-            except ValueError:
-                click.echo(
-                    "Error: Invalid ROI format: values must be integers", err=True
-                )
-                click.echo("Expected format: 'x,y,width,height'", err=True)
-                sys.exit(1)
+        # Parse ROI using helper
+        bbox = _parse_roi_string(roi)
 
         # Run detection
         if bbox:
@@ -568,8 +705,8 @@ def blur_check(
         else:
             result = detector.detect(image, compute_detailed_metrics=detailed)
 
-        # Prepare output
-        output_data = {
+        # Prepare output data
+        output_data: dict[str, Any] = {
             "file": str(input_path),
             "is_blurred": result.is_blurred,
             "severity": result.severity.value,
@@ -588,63 +725,8 @@ def blur_check(
         if roi:
             output_data["roi"] = bbox
 
-        # Output results
-        if json_output:
-            with open(json_output, "w") as f:
-                json.dump(output_data, f, indent=2)
-            click.echo(f"Results saved to: {json_output}")
-        else:
-            # Pretty print results
-            click.echo("\n" + "=" * 50)
-            click.echo("BLUR DETECTION RESULTS")
-            click.echo("=" * 50)
-            click.echo(f"File: {input_path.name}")
-            click.echo(f"Image size: {image.shape[1]}x{image.shape[0]}")
-            click.echo("-" * 50)
-
-            # Severity indicator
-            severity_icons = {
-                "low": "✓ SHARP",
-                "medium": "~ SLIGHT BLUR",
-                "high": "! BLURRED",
-                "critical": "✗ SEVERELY BLURRED",
-            }
-            severity_display = severity_icons.get(
-                result.severity.value, result.severity.value
-            )
-            click.echo(f"Status: {severity_display}")
-            click.echo(f"Blurred: {'Yes' if result.is_blurred else 'No'}")
-            click.echo(f"Severity: {result.severity.value.upper()}")
-            click.echo("-" * 50)
-            click.echo(f"Laplacian Variance: {result.score:.2f}")
-            click.echo(f"Blur Score (0-1): {result.blur_score:.3f}")
-            click.echo(f"Confidence: {result.confidence:.3f}")
-
-            if detailed and result.metrics:
-                click.echo("-" * 50)
-                click.echo("DETAILED METRICS:")
-                click.echo(
-                    f"  Local Variance Mean: {result.metrics.local_variance_mean:.2f}"
-                )
-                click.echo(
-                    f"  Local Variance Std: {result.metrics.local_variance_std:.2f}"
-                )
-                click.echo(f"  Edge Density: {result.metrics.edge_density:.4f}")
-
-            click.echo("=" * 50)
-
-            # Interpretation
-            click.echo("\nInterpretation:")
-            if result.blur_score >= 0.8:
-                click.echo("  Image is very sharp with well-defined edges.")
-            elif result.blur_score >= 0.5:
-                click.echo("  Image has acceptable sharpness for most use cases.")
-            elif result.blur_score >= 0.2:
-                click.echo(
-                    "  Image shows noticeable blur. Consider re-scanning or correction."
-                )
-            else:
-                click.echo("  Image is heavily blurred. Re-acquisition recommended.")
+        # Output results using helper
+        _output_check_result(output_data, json_output, _print_blur_results)
 
     except Exception as e:
         logger.error("Blur check failed", error=str(e), exc_info=True)
@@ -715,16 +797,9 @@ def noise_check(
         imgprep noise-check photo.jpg --wavelet haar
         imgprep noise-check document.jpg --json-output result.json
     """
-    import json
-
-    import cv2
-
     try:
-        # Load image
-        image = cv2.imread(str(input_path))
-        if image is None:
-            click.echo(f"Error: Could not load image: {input_path}", err=True)
-            sys.exit(1)
+        # Load image using helper
+        image = _load_image_for_check(input_path)
 
         # Create detector with custom thresholds
         detector = NoiseDetector(
@@ -734,24 +809,8 @@ def noise_check(
             wavelet=wavelet,
         )
 
-        # Parse ROI if provided
-        bbox = None
-        if roi:
-            parts = [x.strip() for x in roi.split(",")]
-            if len(parts) != 4:
-                click.echo(
-                    "Error: Invalid ROI format: ROI must have 4 values", err=True
-                )
-                click.echo("Expected format: 'x,y,width,height'", err=True)
-                sys.exit(1)
-            try:
-                bbox = tuple(int(x) for x in parts)
-            except ValueError:
-                click.echo(
-                    "Error: Invalid ROI format: values must be integers", err=True
-                )
-                click.echo("Expected format: 'x,y,width,height'", err=True)
-                sys.exit(1)
+        # Parse ROI using helper
+        bbox = _parse_roi_string(roi)
 
         # Run detection
         if bbox:
@@ -762,8 +821,8 @@ def noise_check(
         else:
             result = detector.detect(image, compute_detailed_metrics=detailed)
 
-        # Prepare output
-        output_data = {
+        # Prepare output data
+        output_data: dict[str, Any] = {
             "file": str(input_path),
             "is_noisy": result.is_noisy,
             "severity": result.severity.value,
@@ -782,62 +841,12 @@ def noise_check(
         if roi:
             output_data["roi"] = bbox
 
-        # Output results
-        if json_output:
-            with open(json_output, "w") as f:
-                json.dump(output_data, f, indent=2)
-            click.echo(f"Results saved to: {json_output}")
-        else:
-            # Pretty print results
-            click.echo("\n" + "=" * 50)
-            click.echo("NOISE DETECTION RESULTS")
-            click.echo("=" * 50)
-            click.echo(f"File: {input_path.name}")
-            click.echo(f"Image size: {image.shape[1]}x{image.shape[0]}")
-            click.echo(f"Wavelet: {wavelet}")
-            click.echo("-" * 50)
-
-            # Severity indicator
-            severity_icons = {
-                "low": "✓ CLEAN",
-                "medium": "~ SLIGHT NOISE",
-                "high": "! NOISY",
-                "critical": "✗ SEVERELY NOISY",
-            }
-            severity_display = severity_icons.get(
-                result.severity.value, result.severity.value
-            )
-            click.echo(f"Status: {severity_display}")
-            click.echo(f"Noisy: {'Yes' if result.is_noisy else 'No'}")
-            click.echo(f"Severity: {result.severity.value.upper()}")
-            click.echo("-" * 50)
-            click.echo(f"Noise Sigma: {result.noise_sigma:.3f}")
-            click.echo(f"Noise Score (0-1): {result.noise_score:.3f}")
-            click.echo(f"Confidence: {result.confidence:.3f}")
-
-            if detailed and result.metrics:
-                click.echo("-" * 50)
-                click.echo("DETAILED METRICS:")
-                click.echo(
-                    f"  Wavelet Detail Energy: {result.metrics.wavelet_detail_energy:.4f}"
-                )
-                click.echo(f"  SNR Estimate: {result.metrics.snr_estimate:.2f} dB")
-                click.echo(f"  Noise Type Hint: {result.metrics.noise_type_hint}")
-
-            click.echo("=" * 50)
-
-            # Interpretation
-            click.echo("\nInterpretation:")
-            if result.noise_score >= 0.8:
-                click.echo("  Image is very clean with minimal noise.")
-            elif result.noise_score >= 0.5:
-                click.echo("  Image has acceptable noise levels for most use cases.")
-            elif result.noise_score >= 0.2:
-                click.echo("  Image shows noticeable noise. Consider denoising.")
-            else:
-                click.echo(
-                    "  Image is heavily affected by noise. Denoising recommended."
-                )
+        # Output results using helper (pass wavelet to print function via lambda)
+        _output_check_result(
+            output_data,
+            json_output,
+            lambda data: _print_noise_results(data, wavelet),
+        )
 
     except Exception as e:
         logger.error("Noise check failed", error=str(e), exc_info=True)

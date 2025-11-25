@@ -63,7 +63,7 @@ def load_test_images(num_images: int = 50) -> list[np.ndarray]:
 
 def benchmark_detector(
     detector_fn: Callable,
-    detector_name: str,
+    _detector_name: str,
     images: list[np.ndarray],
 ) -> dict[str, float]:
     """Benchmark a single detector function.
