@@ -6,8 +6,9 @@ Tests the deterministic metrics functions for IQA evaluation.
 
 import pytest
 
-# Skip if scipy is not available (required by benchmarks.metrics.image_metrics)
+# Skip if scipy or skimage is not available (required by benchmarks.metrics.image_metrics)
 pytest.importorskip("scipy", reason="scipy required for image metrics tests")
+pytest.importorskip("skimage", reason="scikit-image required for image metrics tests")
 
 import numpy as np
 

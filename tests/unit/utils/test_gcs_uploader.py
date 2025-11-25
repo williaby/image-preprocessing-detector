@@ -9,10 +9,13 @@ Tests cover:
 - Error handling for missing files/directories
 """
 
+import pytest
+
+# Skip entire module if google-cloud-storage is not available
+pytest.importorskip("google.cloud.storage", reason="google-cloud-storage required for GCS tests")
+
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from image_preprocessing_detector.utils.gcs_uploader import (
     GCSRunConfig,
