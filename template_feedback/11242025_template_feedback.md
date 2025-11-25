@@ -81,6 +81,22 @@ Initial template alignment for image_detection project from `cookiecutter-python
 - **Resolution**: Used selective copy approach instead of git subtree.
 - **Suggested Template Fix**: Consider restructuring `.claude` repo to have nested structure matching expected `.claude/` folder layout.
 
+### Phase 5: CI Fixes (Complete)
+
+1. **REUSE.toml Updates**
+   - Expanded patterns to cover all `.claude/` ecosystem files
+   - Added explicit paths for agents, commands, skills, context, standards directories
+   - Added JSON configuration file patterns
+   - Verified REUSE compliance (832/832 files compliant)
+
+2. **Front Matter Fixes**
+   - Fixed `docs/planning/TEMPLATE_ALIGNMENT_PLAN.md` with proper planning schema
+   - Added required fields: schema_type, title, description, tags, status, owner, authors, purpose, component, source
+
+3. **Dependency Synchronization**
+   - Regenerated `requirements-dev.txt` from `uv.lock`
+   - Added basedpyright and scikit-learn dependencies
+
 ## Completed Items
 
 - [x] Complete BasedPyright migration (pyproject.toml + CLAUDE.md)
@@ -94,12 +110,15 @@ Initial template alignment for image_detection project from `cookiecutter-python
 - [x] Merge code quality fixes from fix-qlty-issues branch
 - [x] Add core/exceptions.py exception hierarchy
 - [x] Enhance utils/log_config.py with proper type hints
+- [x] Fix REUSE.toml for .claude/ directory coverage
+- [x] Fix front matter in TEMPLATE_ALIGNMENT_PLAN.md
+- [x] Regenerate requirements files from uv.lock
 
 ## Pending Items
 
-- [ ] Verify all new workflows pass in CI
 - [ ] Configure SONAR_TOKEN in GitHub secrets
 - [ ] Test Docker build locally
+- [ ] Fix ClusterFuzzLite working directory issue (pre-existing)
 
 ## Notes
 
