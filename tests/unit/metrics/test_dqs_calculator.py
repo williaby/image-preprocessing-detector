@@ -239,7 +239,7 @@ class TestDQSCalibrator:
 
     def _create_samples(self, n: int = 10) -> list[CalibrationSample]:
         """Create synthetic calibration samples."""
-        import random
+        import random  # nosec B311 - used for non-cryptographic test data generation
 
         random.seed(42)
         samples = []

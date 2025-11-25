@@ -30,14 +30,14 @@ def main():
 
     # Download corpus (document pages with images)
     logger.info("Loading corpus config (2,940 pages)...")
-    corpus = load_dataset(
+    corpus = load_dataset(  # nosec B615 - trusted dataset source, consider revision pinning
         "vidore/vidore_v3_finance_en", "corpus", split="test", streaming=False
     )
     logger.info(f"✓ Corpus loaded: {len(corpus)} pages")
 
     # Download documents metadata
     logger.info("Loading documents_metadata config...")
-    metadata = load_dataset(
+    metadata = load_dataset(  # nosec B615 - trusted dataset source, consider revision pinning
         "vidore/vidore_v3_finance_en",
         "documents_metadata",
         split="test",
@@ -47,7 +47,7 @@ def main():
 
     # Download qrels (has bounding boxes!)
     logger.info("Loading qrels config (with bounding boxes)...")
-    qrels = load_dataset(
+    qrels = load_dataset(  # nosec B615 - trusted dataset source, consider revision pinning
         "vidore/vidore_v3_finance_en", "qrels", split="test", streaming=False
     )
     logger.info(f"✓ Qrels loaded: {len(qrels)} relevance judgments")

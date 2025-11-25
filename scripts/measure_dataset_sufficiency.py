@@ -27,6 +27,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Constants for file patterns and strings
+LABELS_JSON = "labels.json"
+DATASET_INFO_JSON = "dataset_info.json"
+PNG_PATTERN = "*.png"
+JPG_PATTERN = "*.jpg"
+PNG_GLOB_PATTERN = "**/*.png"
+JPG_GLOB_PATTERN = "**/*.jpg"
+MD_SEPARATOR = "---\n\n"
+MD_SEPARATOR_WITH_NEWLINE = "\n---\n\n"
+FR_4_2_ID = "FR-4.2"
+
 
 class SufficiencyStatus(Enum):
     """Status levels for sufficiency metrics."""
@@ -128,6 +139,226 @@ class DatasetSufficiencyMeasurer:
         self.inventory = inventory
         self.report = SufficiencyReport()
 
+    def _determine_sufficiency_status(
+        self, current: int, required: int, partial_threshold: float = 0.5
+    ) -> SufficiencyStatus:
+        """Determine sufficiency status based on current vs required samples."""
+        if current >= required:
+            return SufficiencyStatus.SUFFICIENT
+        elif current >= required * partial_threshold:
+            return SufficiencyStatus.PARTIAL
+        else:
+            return SufficiencyStatus.CRITICAL_GAP
+
+    def _check_quality_dimension(
+        self, quality_scores: dict, dimension_keys: list[str]
+    ) -> bool:
+        """Check if any of the dimension keys exist in quality scores."""
+        return any(key in quality_scores for key in dimension_keys)
+
+    def _load_json_labels(self, path: Path) -> list:
+        """Load JSON labels from a file, returning empty list if not found."""
+        if not path.exists():
+            return []
+        try:
+            with open(path) as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
+        except Exception as e:
+            logger.warning(f"Error loading labels from {path}: {e}")
+            return []
+
+    def _count_image_files(self, directory: Path) -> int:
+        """Count PNG and JPG files in a directory."""
+        if not directory.exists():
+            return 0
+        return len(list(directory.glob(PNG_PATTERN))) + len(
+            list(directory.glob(JPG_PATTERN))
+        )
+
+    def _count_image_files_recursive(self, directory: Path) -> int:
+        """Count PNG and JPG files recursively in a directory."""
+        if not directory.exists():
+            return 0
+        return len(list(directory.glob(PNG_GLOB_PATTERN))) + len(
+            list(directory.glob(JPG_GLOB_PATTERN))
+        )
+
+    def _analyze_quality_labels(
+        self, labels_paths: list[Path]
+    ) -> tuple[int, bool, bool, bool]:
+        """Analyze quality labels from multiple paths.
+
+        Returns:
+            tuple: (total_samples, has_overall_quality, has_sharpness, has_color_fidelity)
+        """
+        total_samples = 0
+        has_overall_quality = False
+        has_sharpness = False
+        has_color_fidelity = False
+
+        for labels_path in labels_paths:
+            labels = self._load_json_labels(labels_path)
+            if labels:
+                total_samples += len(labels)
+                # Check first sample for quality score dimensions
+                sample = labels[0]
+                quality_scores = sample.get("quality_scores", {})
+
+                if not has_overall_quality:
+                    has_overall_quality = self._check_quality_dimension(
+                        quality_scores, ["overall_quality", "brisque", "niqe"]
+                    )
+                if not has_sharpness:
+                    has_sharpness = self._check_quality_dimension(
+                        quality_scores, ["sharpness", "laplacian_variance"]
+                    )
+                if not has_color_fidelity:
+                    has_color_fidelity = self._check_quality_dimension(
+                        quality_scores, ["color_fidelity", "rms_contrast"]
+                    )
+
+        return total_samples, has_overall_quality, has_sharpness, has_color_fidelity
+
+    def _add_quality_requirement(
+        self, fr_id: str, name: str, total_samples: int, has_dimension: bool, notes: str
+    ) -> None:
+        """Add a quality dimension requirement with standard 50k threshold."""
+        status = (
+            self._determine_sufficiency_status(total_samples, 50000)
+            if has_dimension
+            else SufficiencyStatus.CRITICAL_GAP
+        )
+        self._add_fr_requirement(
+            fr_id,
+            name,
+            50000,
+            total_samples if has_dimension else 0,
+            status,
+            notes,
+            cost_estimate=0.0 if has_dimension else 2500.0,
+        )
+
+    def _count_coco_annotations(self, coco_dir: Path) -> Counter:
+        """Count COCO annotations per class from train/val/test splits."""
+        class_counts = Counter()
+        for split in ["train.json", "val.json", "test.json"]:
+            coco_file = coco_dir / split
+            if coco_file.exists():
+                with open(coco_file) as f:
+                    coco_data = json.load(f)
+                    for ann in coco_data.get("annotations", []):
+                        class_id = ann.get("category_id")
+                        if class_id:
+                            class_counts[class_id] += 1
+        return class_counts
+
+    def _count_docsynth_samples(self, docsynth_path: Path) -> int:
+        """Count DocSynth-300K samples with multiple fallback strategies."""
+        if not docsynth_path.exists():
+            return 0
+
+        # Strategy 1: Count Parquet files
+        parquet_files = list(docsynth_path.glob("part*.parquet"))
+        if parquet_files:
+            try:
+                import pyarrow.parquet as pq
+
+                total = 0
+                for parquet_file in parquet_files:
+                    metadata = pq.read_metadata(str(parquet_file))
+                    total += metadata.num_rows
+                logger.info(
+                    f"DocSynth-300K: Found {len(parquet_files)} Parquet files with {total:,} samples"
+                )
+                return total
+            except Exception as e:
+                logger.warning(f"Error reading DocSynth-300K Parquet files: {e}")
+
+        # Strategy 2: Check HuggingFace dataset_info.json
+        if (docsynth_path / DATASET_INFO_JSON).exists():
+            with open(docsynth_path / DATASET_INFO_JSON) as f:
+                info = json.load(f)
+                return sum(
+                    split_info.get("num_examples", 0)
+                    for split_info in info.get("splits", {}).values()
+                )
+
+        # Strategy 3: Count JSON annotation files
+        return len(list(docsynth_path.glob("**/*.json")))
+
+    def _add_layout_class_requirements(self, class_counts: Counter) -> None:
+        """Add FR requirements for each DocLayNet layout class."""
+        for class_id, min_samples in self.DOCLAYNET_CLASS_MINIMUMS.items():
+            current_count = class_counts.get(class_id, 0)
+            status = self._determine_sufficiency_status(current_count, min_samples)
+
+            self._add_fr_requirement(
+                f"FR-4.2.{class_id}",
+                f"Class {class_id} Detection",
+                min_samples,
+                current_count,
+                status,
+                f"DocLayNet class {class_id} samples",
+                cost_estimate=0.0,
+            )
+
+    def _count_parasitic_content(
+        self, parasitic_path: Path
+    ) -> tuple[int, int]:
+        """Count parasitic content annotations from weak supervision and VidOre.
+
+        Returns:
+            tuple: (parasitic_count, vidore_parasitic_count)
+        """
+        parasitic_count = 0
+        vidore_parasitic_count = 0
+
+        if not parasitic_path.exists():
+            return 0, 0
+
+        for split_file in parasitic_path.glob("*_parasitic_content.json"):
+            try:
+                with open(split_file) as f:
+                    data = json.load(f)
+                    count = len(
+                        data.get("parasitic_annotations", data.get("annotations", []))
+                    )
+
+                    if "vidore" in split_file.name:
+                        vidore_parasitic_count += count
+                        logger.info(
+                            f"Found {count} VidOre parasitic content annotations"
+                        )
+                    else:
+                        parasitic_count += count
+                        logger.info(
+                            f"Found {count} weak supervision parasitic content annotations"
+                        )
+            except Exception as e:
+                logger.warning(
+                    f"Error reading parasitic content labels from {split_file}: {e}"
+                )
+
+        return parasitic_count, vidore_parasitic_count
+
+    def _count_vertical_text_samples(self, vertical_text_path: Path) -> int:
+        """Count vertical text samples from generated labels."""
+        if not vertical_text_path.exists():
+            return 0
+
+        total = 0
+        for split_file in vertical_text_path.glob("*_vertical_text.json"):
+            try:
+                with open(split_file) as f:
+                    data = json.load(f)
+                    total += len(data.get("images", []))
+            except Exception as e:
+                logger.warning(
+                    f"Error reading vertical text labels from {split_file}: {e}"
+                )
+        return total
+
     def measure_all(self) -> SufficiencyReport:
         """Run all sufficiency measurements."""
         logger.info("Starting dataset sufficiency measurement...")
@@ -180,108 +411,69 @@ class DatasetSufficiencyMeasurer:
                 0,
                 SufficiencyStatus.CRITICAL_GAP,
                 "Phase 2 IQA dataset missing - need 50k samples with weak supervision (BRISQUE/NIQE)",
-                cost_estimate=0.0,  # Can generate with weak supervision
+                cost_estimate=0.0,
             )
             return
 
-        # Count Phase 2 IQA samples (weak supervision via BRISQUE/NIQE)
-        train_labels_path = phase2_iqa_path / "train" / "labels.json"
-        val_labels_path = phase2_iqa_path / "val" / "labels.json"
-        test_labels_path = phase2_iqa_path / "test" / "labels.json"
-
-        total_samples = 0
-        has_overall_quality = False
-        has_sharpness = False
-        has_color_fidelity = False
-
-        for labels_path in [train_labels_path, val_labels_path, test_labels_path]:
-            if labels_path.exists():
-                with open(labels_path) as f:
-                    labels = json.load(f)
-
-                    # Labels is a list of dicts with "image_path", "labels", "quality_scores"
-                    if isinstance(labels, list):
-                        total_samples += len(labels)
-
-                        # Check if 3-dimension labels present
-                        if labels:
-                            sample = labels[0]
-                            quality_scores = sample.get("quality_scores", {})
-
-                            # Check for explicit 3-dimension labels
-                            if "overall_quality" in quality_scores:
-                                has_overall_quality = True
-                            # Can derive from BRISQUE/NIQE
-                            elif (
-                                "brisque" in quality_scores or "niqe" in quality_scores
-                            ):
-                                has_overall_quality = True  # Weak supervision
-
-                            if "sharpness" in quality_scores:
-                                has_sharpness = True
-                            # Can derive from Laplacian variance
-                            elif "laplacian_variance" in quality_scores:
-                                has_sharpness = True  # Weak supervision
-
-                            if "color_fidelity" in quality_scores:
-                                has_color_fidelity = True
-                            # Can derive from RMS contrast
-                            elif "rms_contrast" in quality_scores:
-                                has_color_fidelity = True  # Weak supervision
+        # Analyze quality labels from train/val/test splits
+        labels_paths = [
+            phase2_iqa_path / "train" / LABELS_JSON,
+            phase2_iqa_path / "val" / LABELS_JSON,
+            phase2_iqa_path / "test" / LABELS_JSON,
+        ]
+        total_samples, has_overall_quality, has_sharpness, has_color_fidelity = (
+            self._analyze_quality_labels(labels_paths)
+        )
 
         # FR-2.3.1: Overall Quality
-        self._add_fr_requirement(
+        self._add_quality_requirement(
             "FR-2.3.1",
             "Overall Quality Labels",
-            50000,
-            total_samples if has_overall_quality else 0,
-            (
-                SufficiencyStatus.SUFFICIENT
-                if total_samples >= 50000 and has_overall_quality
-                else SufficiencyStatus.PARTIAL
-            ),
-            (
-                f"Phase 2: {total_samples} samples with weak supervision (BRISQUE/NIQE). "
-                "Phase 3: Need DIQA-5000 (5k ground-truth) - PENDING RELEASE Sept 2025"
-            ),
-            cost_estimate=0.0 if has_overall_quality else 2500.0,
+            total_samples,
+            has_overall_quality,
+            f"Phase 2: {total_samples} samples with weak supervision (BRISQUE/NIQE). "
+            "Phase 3: Need DIQA-5000 (5k ground-truth) - PENDING RELEASE Sept 2025",
         )
 
         # FR-2.3.2: Sharpness
+        sharpness_notes = (
+            f"{total_samples} samples with weak supervision"
+            if has_sharpness
+            else "Need Laplacian variance weak supervision + DIQA-5000 sharpness ground-truth"
+        )
+        status = (
+            self._determine_sufficiency_status(total_samples, 50000)
+            if has_sharpness
+            else SufficiencyStatus.CRITICAL_GAP
+        )
         self._add_fr_requirement(
             "FR-2.3.2",
             "Sharpness Labels",
             50000,
             total_samples if has_sharpness else 0,
-            (
-                SufficiencyStatus.SUFFICIENT
-                if total_samples >= 50000 and has_sharpness
-                else SufficiencyStatus.CRITICAL_GAP
-            ),
-            (
-                "Need Laplacian variance weak supervision + DIQA-5000 sharpness ground-truth"
-                if not has_sharpness
-                else f"{total_samples} samples with weak supervision"
-            ),
+            status,
+            sharpness_notes,
             cost_estimate=0.0 if has_sharpness else 2500.0,
         )
 
         # FR-2.3.3: Color Fidelity
+        color_notes = (
+            f"{total_samples} samples with weak supervision"
+            if has_color_fidelity
+            else "Need histogram analysis weak supervision + DIQA-5000 color ground-truth"
+        )
+        status = (
+            self._determine_sufficiency_status(total_samples, 50000)
+            if has_color_fidelity
+            else SufficiencyStatus.CRITICAL_GAP
+        )
         self._add_fr_requirement(
             "FR-2.3.3",
             "Color Fidelity Labels",
             50000,
             total_samples if has_color_fidelity else 0,
-            (
-                SufficiencyStatus.SUFFICIENT
-                if total_samples >= 50000 and has_color_fidelity
-                else SufficiencyStatus.CRITICAL_GAP
-            ),
-            (
-                "Need histogram analysis weak supervision + DIQA-5000 color ground-truth"
-                if not has_color_fidelity
-                else f"{total_samples} samples with weak supervision"
-            ),
+            status,
+            color_notes,
             cost_estimate=0.0 if has_color_fidelity else 2500.0,
         )
 
@@ -306,28 +498,30 @@ class DatasetSufficiencyMeasurer:
         logger.info("Measuring FR-4.2: Layout Elements (11 classes)...")
 
         doclaynet_path = self.inventory.doclaynet_path
+        total_required = sum(self.DOCLAYNET_CLASS_MINIMUMS.values())
+
+        # Validate dataset exists
         if not doclaynet_path.exists():
             logger.warning(f"DocLayNet dataset not found at {doclaynet_path}")
             self._add_fr_requirement(
-                "FR-4.2",
+                FR_4_2_ID,
                 "Layout Element Detection (11 classes)",
-                sum(self.DOCLAYNET_CLASS_MINIMUMS.values()),
+                total_required,
                 0,
                 SufficiencyStatus.CRITICAL_GAP,
                 "DocLayNet dataset missing - need 80k pages with COCO annotations",
-                cost_estimate=0.0,  # Free dataset
+                cost_estimate=0.0,
             )
             return
 
-        # Look for COCO annotation files
-        # DocLayNet structure: ground_truth/coco/train.json, val.json, test.json
+        # Validate COCO annotations directory
         coco_dir = doclaynet_path / "ground_truth" / "coco"
         if not coco_dir.exists():
             logger.warning(f"DocLayNet COCO annotations not found at {coco_dir}")
             self._add_fr_requirement(
-                "FR-4.2",
+                FR_4_2_ID,
                 "Layout Element Detection (11 classes)",
-                sum(self.DOCLAYNET_CLASS_MINIMUMS.values()),
+                total_required,
                 0,
                 SufficiencyStatus.CRITICAL_GAP,
                 f"DocLayNet COCO annotations missing at {coco_dir}",
@@ -336,91 +530,21 @@ class DatasetSufficiencyMeasurer:
             return
 
         # Count annotations per class
-        class_counts = Counter()
-        for split in ["train.json", "val.json", "test.json"]:
-            coco_file = coco_dir / split
-            if coco_file.exists():
-                with open(coco_file) as f:
-                    coco_data = json.load(f)
-                    for ann in coco_data.get("annotations", []):
-                        class_id = ann.get("category_id")
-                        if class_id:
-                            class_counts[class_id] += 1
-
-        # Store layout class coverage
+        class_counts = self._count_coco_annotations(coco_dir)
         self.report.layout_class_coverage = dict(class_counts)
 
-        # Evaluate each class
-        all_sufficient = True
-        for class_id, min_samples in self.DOCLAYNET_CLASS_MINIMUMS.items():
-            current_count = class_counts.get(class_id, 0)
-            status = (
-                SufficiencyStatus.SUFFICIENT
-                if current_count >= min_samples
-                else SufficiencyStatus.PARTIAL
-                if current_count >= min_samples * 0.5
-                else SufficiencyStatus.CRITICAL_GAP
-            )
+        # Evaluate each class and add individual requirements
+        self._add_layout_class_requirements(class_counts)
 
-            if status != SufficiencyStatus.SUFFICIENT:
-                all_sufficient = False
-
-            self._add_fr_requirement(
-                f"FR-4.2.{class_id}",
-                f"Class {class_id} Detection",
-                min_samples,
-                current_count,
-                status,
-                f"DocLayNet class {class_id} samples",
-                cost_estimate=0.0,  # Free dataset
-            )
-
-        # Overall FR-4.2 status
+        # Add overall FR-4.2 requirement with synthetic data
         total_current = sum(class_counts.values())
-        total_required = sum(self.DOCLAYNET_CLASS_MINIMUMS.values())
-        overall_status = (
-            SufficiencyStatus.SUFFICIENT
-            if all_sufficient
-            else SufficiencyStatus.PARTIAL
+        docsynth_samples = self._count_docsynth_samples(
+            self.inventory.docsynth300k_path
         )
 
-        # Check for DocSynth-300K synthetic data
-        docsynth_path = self.inventory.docsynth300k_path
-        docsynth_samples = 0
-
-        if docsynth_path.exists():
-            # Check for Parquet files (part0.parquet - part29.parquet)
-            parquet_files = list(docsynth_path.glob("part*.parquet"))
-            if parquet_files:
-                try:
-                    import pyarrow.parquet as pq
-
-                    for parquet_file in parquet_files:
-                        metadata = pq.read_metadata(str(parquet_file))
-                        docsynth_samples += metadata.num_rows
-                    logger.info(
-                        f"DocSynth-300K: Found {len(parquet_files)} Parquet files with {docsynth_samples:,} samples"
-                    )
-                except Exception as e:
-                    logger.warning(f"Error reading DocSynth-300K Parquet files: {e}")
-            # Fallback: Check for HuggingFace dataset_info.json
-            elif (docsynth_path / "dataset_info.json").exists():
-                with open(docsynth_path / "dataset_info.json") as f:
-                    info = json.load(f)
-                    for split_name, split_info in info.get("splits", {}).items():
-                        docsynth_samples += split_info.get("num_examples", 0)
-            else:
-                # Last resort: Count JSON annotation files
-                docsynth_samples = len(list(docsynth_path.glob("**/*.json")))
-
-        # Calculate combined status
         total_with_synthetic = total_current + docsynth_samples
-        combined_status = (
-            SufficiencyStatus.SUFFICIENT
-            if total_with_synthetic >= total_required
-            else SufficiencyStatus.PARTIAL
-            if total_with_synthetic >= total_required * 0.5
-            else SufficiencyStatus.CRITICAL_GAP
+        combined_status = self._determine_sufficiency_status(
+            total_with_synthetic, total_required
         )
 
         notes = f"Real-world: DocLayNet {total_current:,} annotations"
@@ -428,7 +552,7 @@ class DatasetSufficiencyMeasurer:
             notes += f" | Synthetic: DocSynth-300K {docsynth_samples:,} samples"
 
         self._add_fr_requirement(
-            "FR-4.2",
+            FR_4_2_ID,
             "Layout Element Detection (Overall)",
             total_required,
             total_with_synthetic,
@@ -592,8 +716,8 @@ class DatasetSufficiencyMeasurer:
             split_dir = signatr6k_path / split / "crop"
             if split_dir.exists():
                 # Count image files
-                total_signatures += len(list(split_dir.glob("*.png"))) + len(
-                    list(split_dir.glob("*.jpg"))
+                total_signatures += len(list(split_dir.glob(PNG_PATTERN))) + len(
+                    list(split_dir.glob(JPG_PATTERN))
                 )
 
         status = (
@@ -684,7 +808,7 @@ class DatasetSufficiencyMeasurer:
         if not data_dir.exists():
             return 0
 
-        png_files = list(data_dir.glob("**/*.png"))
+        png_files = list(data_dir.glob(PNG_GLOB_PATTERN))
         total_forms = len(png_files)
 
         logger.info(f"NIST DB2: Found {total_forms} tax form images (20 form types)")
@@ -750,16 +874,16 @@ class DatasetSufficiencyMeasurer:
             for split in ["train", "val"]:
                 images_dir = invoices_path / split / "images"
                 if images_dir.exists():
-                    invoice_count += len(list(images_dir.glob("*.jpg")))
-                    invoice_count += len(list(images_dir.glob("*.png")))
+                    invoice_count += len(list(images_dir.glob(JPG_PATTERN)))
+                    invoice_count += len(list(images_dir.glob(PNG_PATTERN)))
             total_business_docs += invoice_count
             real_world_docs += invoice_count
             logger.info(f"Found {invoice_count} invoice samples")
 
         # Mobile Receipts (Voxel51) - Arrow format
         mobile_receipts_path = self.inventory.mobile_receipts_path / "train"
-        if (mobile_receipts_path / "dataset_info.json").exists():
-            with open(mobile_receipts_path / "dataset_info.json") as f:
+        if (mobile_receipts_path / DATASET_INFO_JSON).exists():
+            with open(mobile_receipts_path / DATASET_INFO_JSON) as f:
                 info = json.load(f)
                 receipt_count = (
                     info.get("splits", {}).get("train", {}).get("num_examples", 0)
@@ -771,8 +895,8 @@ class DatasetSufficiencyMeasurer:
         # HITL Receipts - recursively search ds0 directory
         hitl_path = self.inventory.receipts_hitl_path / "ds0"
         if hitl_path.exists():
-            hitl_count = len(list(hitl_path.glob("**/*.jpg"))) + len(
-                list(hitl_path.glob("**/*.png"))
+            hitl_count = len(list(hitl_path.glob(JPG_GLOB_PATTERN))) + len(
+                list(hitl_path.glob(PNG_GLOB_PATTERN))
             )
             total_business_docs += hitl_count
             real_world_docs += hitl_count
@@ -925,19 +1049,19 @@ class DatasetSufficiencyMeasurer:
             for split in ["train", "validation", "test"]:
                 split_dir = iam_path / split
                 if split_dir.exists():
-                    total_handwriting += len(list(split_dir.glob("*.png"))) + len(
-                        list(split_dir.glob("*.jpg"))
+                    total_handwriting += len(list(split_dir.glob(PNG_PATTERN))) + len(
+                        list(split_dir.glob(JPG_PATTERN))
                     )
 
         # Fallback: Check root directory
         if total_handwriting == 0:
-            total_handwriting = len(list(iam_path.glob("**/*.png"))) + len(
-                list(iam_path.glob("**/*.jpg"))
+            total_handwriting = len(list(iam_path.glob(PNG_GLOB_PATTERN))) + len(
+                list(iam_path.glob(JPG_GLOB_PATTERN))
             )
 
         # Fallback: Check for HuggingFace Arrow format
-        if total_handwriting == 0 and (iam_path / "dataset_info.json").exists():
-            with open(iam_path / "dataset_info.json") as f:
+        if total_handwriting == 0 and (iam_path / DATASET_INFO_JSON).exists():
+            with open(iam_path / DATASET_INFO_JSON) as f:
                 info = json.load(f)
                 for split_name, split_info in info.get("splits", {}).items():
                     total_handwriting += split_info.get("num_examples", 0)
@@ -985,8 +1109,8 @@ class DatasetSufficiencyMeasurer:
                 except Exception as e:
                     logger.warning(f"Error reading DocSynth-300K Parquet files: {e}")
             # Fallback: Check for HuggingFace dataset_info.json
-            elif (docsynth_path / "dataset_info.json").exists():
-                with open(docsynth_path / "dataset_info.json") as f:
+            elif (docsynth_path / DATASET_INFO_JSON).exists():
+                with open(docsynth_path / DATASET_INFO_JSON) as f:
                     info = json.load(f)
                     for split_name, split_info in info.get("splits", {}).items():
                         docsynth_samples += split_info.get("num_examples", 0)
@@ -1192,7 +1316,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
             f"**Total Investment Needed**: ${report.total_cost_estimate:,.2f}\n\n"
         )
 
-        f.write("---\n\n")
+        f.write(MD_SEPARATOR)
         f.write("## Executive Summary\n\n")
 
         # Count status levels
@@ -1275,7 +1399,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
         )
 
         # TWO-PART SUFFICIENCY ANALYSIS
-        f.write("---\n\n")
+        f.write(MD_SEPARATOR)
         f.write("## Two-Part Sufficiency Analysis\n\n")
         f.write(
             "> **Goal**: Real-world human-annotated data is our primary target. "
@@ -1347,7 +1471,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
         )
 
         # FR-by-FR breakdown
-        f.write("---\n\n")
+        f.write(MD_SEPARATOR)
         f.write("## FR-by-FR Breakdown\n\n")
 
         f.write(
@@ -1392,13 +1516,6 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
             ):
                 flag = " ⚠️"  # High synthetic ratio
 
-            # Extract just the emoji + status text from combined status
-            combined_status_short = (
-                req.status.value.split()[1]
-                if len(req.status.value.split()) > 1
-                else req.status.value
-            )
-
             f.write(
                 f"| {req.fr_id} | {req.name} | {req.min_samples:,} | "
                 f"{req.real_world_count:,} ({real_coverage_pct:.0f}%) | "
@@ -1410,7 +1527,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
             )
 
         # Critical Gaps
-        f.write("\n---\n\n")
+        f.write(MD_SEPARATOR_WITH_NEWLINE)
         f.write("## Critical Gaps (Priority 1)\n\n")
 
         if critical:
@@ -1440,7 +1557,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
 
         # Layout Class Coverage (FR-4.2)
         if report.layout_class_coverage:
-            f.write("---\n\n")
+            f.write(MD_SEPARATOR)
             f.write("## FR-4.2: Layout Element Coverage (11 Classes)\n\n")
             f.write("| Class ID | Min Required | Current Count | Status |\n")
             f.write("|----------|--------------|---------------|--------|\n")
@@ -1463,7 +1580,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
 
         # Quality Dimension Coverage (FR-2.3)
         if report.quality_dimension_coverage:
-            f.write("\n---\n\n")
+            f.write(MD_SEPARATOR_WITH_NEWLINE)
             f.write("## FR-2.3: Learned Quality Dimensions\n\n")
             f.write("| Dimension | Required | Current | Status |\n")
             f.write("|-----------|----------|---------|--------|\n")
@@ -1484,7 +1601,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
 
         # Language Coverage (FR-5.3)
         if report.language_coverage:
-            f.write("\n---\n\n")
+            f.write(MD_SEPARATOR_WITH_NEWLINE)
             f.write(
                 f"## FR-5.3: Multilingual Coverage ({len(report.language_coverage)} Languages)\n\n"
             )
@@ -1506,7 +1623,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
             )
 
         # Recommendations
-        f.write("---\n\n")
+        f.write(MD_SEPARATOR)
         f.write("## Recommendations\n\n")
 
         f.write("### Priority 0: Real-World Data Acquisition Strategy\n\n")
@@ -1584,7 +1701,7 @@ def generate_markdown_report(report: SufficiencyReport, output_path: Path) -> No
         )
         f.write("- Validate learned quality models against human ratings  \n\n")
 
-        f.write("---\n\n")
+        f.write(MD_SEPARATOR)
         f.write("**Report End**\n")
 
     logger.info(f"Report generated at {output_path}")

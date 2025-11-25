@@ -172,7 +172,7 @@ def calculate_skew_score(image: np.ndarray) -> float:
     # Compute angles
     angles = []
     for line in lines:
-        rho, theta = line[0]
+        _, theta = line[0]
         angle = np.degrees(theta) - 90  # Convert to -90 to 90 range
         angles.append(angle)
 
@@ -192,7 +192,7 @@ def estimate_dpi(image: np.ndarray) -> float:
     Returns:
         Estimated DPI (assuming A4 page)
     """
-    height, width = image.shape[:2]
+    height, _ = image.shape[:2]
 
     # Assume A4 page (8.27 x 11.69 inches)
     # Use height for estimate
@@ -203,7 +203,7 @@ def estimate_dpi(image: np.ndarray) -> float:
 
 
 def calculate_structural_complexity(
-    annotations: list[dict], image_width: int, image_height: int
+    annotations: list[dict], image_width: int
 ) -> dict[str, int]:
     """
     Calculate structural complexity metrics from layout annotations.
@@ -211,7 +211,6 @@ def calculate_structural_complexity(
     Args:
         annotations: COCO annotations for the page
         image_width: Image width
-        image_height: Image height
 
     Returns:
         Dict with complexity metrics
@@ -394,7 +393,7 @@ def generate_dqs_routing_labels(
         import random
 
         random.seed(42)
-        images_to_process = random.sample(images_to_process, num_samples)
+        images_to_process = random.sample(images_to_process, num_samples)  # nosec B311
 
     # Generate DQS labels
     dqs_labels = []
@@ -426,7 +425,7 @@ def generate_dqs_routing_labels(
         # Calculate structural complexity metrics
         anns = image_annotations.get(image_id, [])
         complexity_metrics = calculate_structural_complexity(
-            anns, img.get("width", image.shape[1]), img.get("height", image.shape[0])
+            anns, img.get("width", image.shape[1])
         )
 
         # Classify degradation and complexity

@@ -9,7 +9,7 @@ Tests cover:
 """
 
 import json
-import subprocess
+import subprocess  # nosec B404 - used for testing metadata generation
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

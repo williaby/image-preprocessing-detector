@@ -185,6 +185,7 @@ def main():
 
     # Save JSON report
     # nosemgrep: gitlab.bandit.B108  # noqa: ERA001
+    # nosec B108 - local dev script, temporary status report file
     # Security: /tmp is appropriate for temporary status report; script runs locally
     output_file = Path("/tmp/dataset_status_report.json")
     with open(output_file, "w") as f:

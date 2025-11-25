@@ -22,6 +22,7 @@ import argparse
 import json
 import logging
 from collections import defaultdict
+from dataclasses import dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -38,6 +39,23 @@ logger = logging.getLogger(__name__)
 # DocLayNet class IDs
 CLASS_PAGE_HEADER = 6  # page-header
 CLASS_PAGE_FOOTER = 5  # page-footer
+
+
+@dataclass
+class ProcessingContext:
+    """Context for element processing with shared mappings."""
+
+    img_id_to_path: dict[int, Path]
+    img_to_anns: dict[int, list[dict]]
+    parasitic_annotations: dict[int, dict]
+
+
+@dataclass
+class PatternConfig:
+    """Configuration for pattern detection."""
+
+    similarity_threshold: float
+    min_occurrences: int
 
 
 def extract_text_from_bbox(
@@ -188,41 +206,35 @@ def identify_repeating_patterns(
     return parasitic_annotations
 
 
-def _process_element_type(
-    doc_name: str,
+def _collect_element_texts(
     image_ids: list[int],
     class_id: int,
-    img_id_to_path: dict[int, Path],
-    img_to_anns: dict[int, list[dict]],
-    similarity_threshold: float,
-    min_occurrences: int,
-    parasitic_annotations: dict[int, dict],
-) -> None:
+    context: ProcessingContext,
+) -> tuple[list[str], list[dict]]:
     """
-    Process single element type (header or footer) for repeating patterns.
+    Collect text content from all instances of an element type across pages.
 
     Args:
-        doc_name: Document identifier
         image_ids: List of page image IDs
         class_id: DocLayNet class ID (header or footer)
-        img_id_to_path: Mapping from image ID to file path
-        img_to_anns: Mapping from image ID to annotations
-        similarity_threshold: Similarity threshold for repeating patterns
-        min_occurrences: Minimum occurrences to flag as repeating
-        parasitic_annotations: Output dict to populate
+        context: Processing context with mappings
+
+    Returns:
+        Tuple of (texts, annotations) for elements with extracted text
     """
-    # Extract text from all instances of this element type across pages
     element_texts = []
     element_anns = []
 
     for img_id in sorted(image_ids):
-        img_path = img_id_to_path.get(img_id)
+        img_path = context.img_id_to_path.get(img_id)
         if not img_path or not img_path.exists():
             continue
 
         # Find annotations for this element type
         anns = [
-            ann for ann in img_to_anns[img_id] if ann.get("category_id") == class_id
+            ann
+            for ann in context.img_to_anns[img_id]
+            if ann.get("category_id") == class_id
         ]
 
         for ann in anns:
@@ -232,11 +244,23 @@ def _process_element_type(
                 element_texts.append(text)
                 element_anns.append(ann)
 
-    if len(element_texts) < min_occurrences:
-        return  # Not enough samples
+    return element_texts, element_anns
 
-    # Find repeating patterns using clustering
-    # For each text, find all similar texts (similarity > threshold)
+
+def _find_repeating_patterns(
+    element_texts: list[str],
+    config: PatternConfig,
+) -> list[list[int]]:
+    """
+    Find repeating text patterns using similarity clustering.
+
+    Args:
+        element_texts: List of text content from elements
+        config: Pattern detection configuration
+
+    Returns:
+        List of groups, where each group is a list of indices of similar texts
+    """
     repeating_groups = []
     processed = set()
 
@@ -249,23 +273,45 @@ def _process_element_type(
         for j, other_text in enumerate(element_texts):
             if i != j and j not in processed:
                 sim = compute_similarity(text, other_text)
-                if sim >= similarity_threshold:
+                if sim >= config.similarity_threshold:
                     similar_indices.append(j)
 
         # Flag as repeating if ≥ min_occurrences
-        if len(similar_indices) >= min_occurrences:
+        if len(similar_indices) >= config.min_occurrences:
             repeating_groups.append(similar_indices)
             processed.update(similar_indices)
 
-    # Mark annotations as parasitic
+    return repeating_groups
+
+
+def _mark_parasitic_annotations(
+    repeating_groups: list[list[int]],
+    element_texts: list[str],
+    element_anns: list[dict],
+    image_ids: list[int],
+    doc_name: str,
+    class_id: int,
+    context: ProcessingContext,
+) -> None:
+    """
+    Mark annotations as parasitic based on repeating pattern groups.
+
+    Args:
+        repeating_groups: Groups of similar text indices
+        element_texts: List of text content
+        element_anns: List of annotations
+        image_ids: List of page image IDs
+        doc_name: Document identifier
+        class_id: DocLayNet class ID
+        context: Processing context to update
+    """
     for group in repeating_groups:
-        page_numbers = []
         for idx in group:
             ann = element_anns[idx]
             img_id = ann["image_id"]
             page_num = image_ids.index(img_id) + 1  # 1-indexed page number
 
-            parasitic_annotations[ann["id"]] = {
+            context.parasitic_annotations[ann["id"]] = {
                 "annotation_id": ann["id"],
                 "image_id": img_id,
                 "bbox": ann["bbox"],
@@ -279,7 +325,63 @@ def _process_element_type(
                     :100
                 ],  # First 100 chars of representative text
             }
-            page_numbers.append(page_num)
+
+
+def _process_element_type(
+    doc_name: str,
+    image_ids: list[int],
+    class_id: int,
+    img_id_to_path: dict[int, Path],
+    img_to_anns: dict[int, list[dict]],
+    similarity_threshold: float,
+    min_occurrences: int,
+    parasitic_annotations: dict[int, dict],
+) -> None:
+    """
+    Process single element type (header or footer) for repeating patterns.
+
+    Orchestrates the pattern detection pipeline by delegating to specialized helper functions.
+
+    Args:
+        doc_name: Document identifier
+        image_ids: List of page image IDs
+        class_id: DocLayNet class ID (header or footer)
+        img_id_to_path: Mapping from image ID to file path
+        img_to_anns: Mapping from image ID to annotations
+        similarity_threshold: Similarity threshold for repeating patterns
+        min_occurrences: Minimum occurrences to flag as repeating
+        parasitic_annotations: Output dict to populate
+    """
+    # Create processing context and configuration
+    context = ProcessingContext(
+        img_id_to_path=img_id_to_path,
+        img_to_anns=img_to_anns,
+        parasitic_annotations=parasitic_annotations,
+    )
+    config = PatternConfig(
+        similarity_threshold=similarity_threshold,
+        min_occurrences=min_occurrences,
+    )
+
+    # Step 1: Collect text from all element instances
+    element_texts, element_anns = _collect_element_texts(image_ids, class_id, context)
+
+    if len(element_texts) < config.min_occurrences:
+        return  # Not enough samples
+
+    # Step 2: Find repeating patterns using similarity clustering
+    repeating_groups = _find_repeating_patterns(element_texts, config)
+
+    # Step 3: Mark annotations as parasitic
+    _mark_parasitic_annotations(
+        repeating_groups,
+        element_texts,
+        element_anns,
+        image_ids,
+        doc_name,
+        class_id,
+        context,
+    )
 
 
 def generate_dataset(

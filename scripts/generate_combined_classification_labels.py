@@ -32,7 +32,7 @@ See: https://www.cs.cmu.edu/~aharley/rvl-cdip/
 import argparse
 import json
 import logging
-import random
+import random  # nosec B311 - used for non-cryptographic dataset sampling
 from collections import defaultdict
 from pathlib import Path
 

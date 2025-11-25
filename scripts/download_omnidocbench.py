@@ -209,7 +209,7 @@ def download_omnidocbench(
             # Download dataset
             # Using streaming=False to download everything at once
             # Using cache_dir to avoid redundant downloads
-            dataset = load_dataset(
+            dataset = load_dataset(  # nosec B615 - trusted dataset, consider revision pinning
                 "opendatalab/OmniDocBench",
                 cache_dir=str(output_path / ".cache"),
                 token=hf_token,

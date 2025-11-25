@@ -21,7 +21,7 @@ License: Apache-2.0 (derived from DocLayNet CDLA-Permissive-2.0)
 import argparse
 import json
 import logging
-import random
+import random  # nosec B311 - used for non-cryptographic dataset sampling
 from pathlib import Path
 
 import cv2

@@ -24,7 +24,7 @@ class TestPDFPreflightResult:
         result = PDFPreflightResult(
             needs_upscaling=True,
             resolution_analysis={"min_dpi": 150, "needs_upscaling": True},
-            upscaled_path="/tmp/upscaled.pdf",
+            upscaled_path="/tmp/upscaled.pdf",  # nosec B108 - test fixture path
             upscaling_result={"success": True},
             processing_time=1.23,
         )
@@ -33,11 +33,11 @@ class TestPDFPreflightResult:
 
         assert result_dict["needs_upscaling"] is True
         assert result_dict["resolution_analysis"]["min_dpi"] == 150
-        assert result_dict["upscaled_path"] == "/tmp/upscaled.pdf"
+        assert result_dict["upscaled_path"] == "/tmp/upscaled.pdf"  # nosec B108
         assert result_dict["upscaling_result"]["success"] is True
         assert result_dict["processing_time"] == 1.23
         assert result_dict["should_use_upscaled"] is True
-        assert result_dict["recommended_path"] == "/tmp/upscaled.pdf"
+        assert result_dict["recommended_path"] == "/tmp/upscaled.pdf"  # nosec B108
 
     def test_should_use_upscaled_false_when_no_upscaling(self) -> None:
         """Test should_use_upscaled is False when upscaling wasn't performed."""

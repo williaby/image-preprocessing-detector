@@ -5,7 +5,7 @@ on real-world business documents without requiring external downloads.
 """
 
 import json
-import random
+import random  # nosec B311 - used for non-cryptographic test data sampling
 from pathlib import Path
 
 import numpy as np

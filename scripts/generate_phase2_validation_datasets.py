@@ -12,7 +12,7 @@ Uses existing test fixtures from tests/fixtures/phase1_validation/
 """
 
 import json
-import random
+import random  # nosec B311 - used for non-cryptographic dataset generation
 import sys
 from pathlib import Path
 from typing import Any

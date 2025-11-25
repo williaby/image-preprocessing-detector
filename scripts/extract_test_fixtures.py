@@ -16,7 +16,7 @@ Usage:
 
 import argparse
 import json
-import random
+import random  # nosec B311 - used for non-cryptographic dataset sampling
 import shutil
 from pathlib import Path
 
