@@ -19,7 +19,7 @@ import types
 from dataclasses import dataclass
 from functools import lru_cache
 
-from image_preprocessing_detector.utils import get_logger
+from image_preprocessing_detector.utils.log_config import get_logger
 
 logger = get_logger(__name__)
 

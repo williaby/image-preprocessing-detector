@@ -327,7 +327,7 @@ class TestDiscrepancyAnalyzer:
         result = analyzer.analyze(ml_scores, classical_scores)
 
         assert result.should_escalate
-        assert result.per_head_discrepancies["blur"] >= pytest.approx(0.25)
+        assert result.per_head_discrepancies["blur"] >= 0.25
         assert result.per_head_exceeded["blur"] is True
         assert EscalationReason.BLUR_DISCREPANCY in result.escalation_reasons
 
