@@ -12,6 +12,11 @@ rules:
     languages: [python]
     severity: INFO
     message: Using Semgrep community rulesets for Python analysis
+    metadata:
+      category: best-practice
+      technology:
+        - python
+      confidence: LOW
 
 # Use community rulesets (configured in CI workflows)
 # These are pulled automatically by Semgrep:
