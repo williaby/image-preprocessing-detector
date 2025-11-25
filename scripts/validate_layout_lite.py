@@ -199,12 +199,16 @@ def _process_document(
 
     for page_key, page_labels in doc_labels.items():
         if page_key not in predictions:
-            logger.warning("Missing predictions for page", document=doc_name, page=page_key)
+            logger.warning(
+                "Missing predictions for page", document=doc_name, page=page_key
+            )
             continue
         _collect_page_flags(page_labels, predictions[page_key], flag_data)
 
 
-def _calculate_flag_results(flag_data: dict[str, dict[str, list[bool]]]) -> dict[str, Any]:
+def _calculate_flag_results(
+    flag_data: dict[str, dict[str, list[bool]]],
+) -> dict[str, Any]:
     """Calculate metrics for all flags."""
     flag_results = {}
     for flag_name in FLAG_NAMES:

@@ -143,7 +143,7 @@ def plot_risk_distribution(
         print("Warning: No risk scores to plot")
         return
 
-    fig, axes = plt.subplots(
+    _fig, axes = plt.subplots(
         2 if ocr_accuracy else 1, 1, figsize=(10, 8 if ocr_accuracy else 6)
     )
     if not ocr_accuracy:
@@ -231,7 +231,7 @@ def plot_dqs_distribution(data: dict[str, Any], output_path: Path) -> None:
         print("Warning: No DQS scores to plot")
         return
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    _fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
     # Plot 1: Degradation score distribution
     axes[0].hist(

@@ -100,7 +100,7 @@ def split_dataset(
     random.shuffle(pairs_shuffled)
 
     train_ratio, val_ratio = split_ratios
-    assert abs(train_ratio + val_ratio - 1.0) < 0.001, "Split ratios must sum to 1.0"
+    assert abs(train_ratio + val_ratio - 1.0) < 0.001, "Split ratios must sum to 1.0"  # nosec B101
 
     train_size = int(len(pairs_shuffled) * train_ratio)
 
@@ -189,7 +189,7 @@ def main():
 
     # Parse split ratios
     split_values = [float(x) for x in args.split.split(",")]
-    assert len(split_values) == 2, "Split must have exactly 2 values (train,val)"
+    assert len(split_values) == 2, "Split must have exactly 2 values (train,val)"  # nosec B101
     train_ratio, val_ratio = split_values
 
     print("Preparing Kaggle invoice dataset...")

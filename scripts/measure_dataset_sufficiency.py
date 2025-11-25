@@ -533,7 +533,9 @@ class DatasetSufficiencyMeasurer:
             return 0
         with open(info_path) as f:
             info = json.load(f)
-            return sum(s.get("num_examples", 0) for s in info.get("splits", {}).values())
+            return sum(
+                s.get("num_examples", 0) for s in info.get("splits", {}).values()
+            )
 
     def _count_iam_handwriting_samples(self, iam_path: Path) -> int:
         """Count IAM handwriting samples with multiple fallback strategies."""
@@ -734,7 +736,10 @@ class DatasetSufficiencyMeasurer:
         if not phase2_iqa_path.exists():
             logger.warning(f"Phase 2 IQA dataset not found at {phase2_iqa_path}")
             self._add_fr_requirement(
-                "FR-2.3.1", "Overall Quality Labels", 50000, 0,
+                "FR-2.3.1",
+                "Overall Quality Labels",
+                50000,
+                0,
                 SufficiencyStatus.CRITICAL_GAP,
                 "Phase 2 IQA dataset missing - need 50k samples with weak supervision (BRISQUE/NIQE)",
                 cost_estimate=0.0,
@@ -752,26 +757,44 @@ class DatasetSufficiencyMeasurer:
 
         # FR-2.3.1: Overall Quality
         self._add_quality_requirement(
-            "FR-2.3.1", "Overall Quality Labels", total_samples, has_overall_quality,
+            "FR-2.3.1",
+            "Overall Quality Labels",
+            total_samples,
+            has_overall_quality,
             f"Phase 2: {total_samples} samples with weak supervision (BRISQUE/NIQE). "
             "Phase 3: Need DIQA-5000 (5k ground-truth) - PENDING RELEASE Sept 2025",
         )
 
         # FR-2.3.2 and FR-2.3.3: Other dimensions
         self._add_dimension_requirement(
-            "FR-2.3.2", "Sharpness Labels", total_samples, has_sharpness,
+            "FR-2.3.2",
+            "Sharpness Labels",
+            total_samples,
+            has_sharpness,
             "Need Laplacian variance weak supervision + DIQA-5000 sharpness ground-truth",
         )
         self._add_dimension_requirement(
-            "FR-2.3.3", "Color Fidelity Labels", total_samples, has_color_fidelity,
+            "FR-2.3.3",
+            "Color Fidelity Labels",
+            total_samples,
+            has_color_fidelity,
             "Need histogram analysis weak supervision + DIQA-5000 color ground-truth",
         )
 
         # Store dimension coverage
         self.report.quality_dimension_coverage = {
-            "overall_quality": {"current": total_samples if has_overall_quality else 0, "required": 50000},
-            "sharpness": {"current": total_samples if has_sharpness else 0, "required": 50000},
-            "color_fidelity": {"current": total_samples if has_color_fidelity else 0, "required": 50000},
+            "overall_quality": {
+                "current": total_samples if has_overall_quality else 0,
+                "required": 50000,
+            },
+            "sharpness": {
+                "current": total_samples if has_sharpness else 0,
+                "required": 50000,
+            },
+            "color_fidelity": {
+                "current": total_samples if has_color_fidelity else 0,
+                "required": 50000,
+            },
         }
 
     def _measure_fr_4_2_layout_elements(self) -> None:
@@ -932,15 +955,12 @@ class DatasetSufficiencyMeasurer:
                     list(split_dir.glob(JPG_PATTERN))
                 )
 
-        status = (
-            SufficiencyStatus.SUFFICIENT
-            if total_signatures >= 6000
-            else (
-                SufficiencyStatus.PARTIAL
-                if total_signatures >= 3000
-                else SufficiencyStatus.CRITICAL_GAP
-            )
-        )
+        if total_signatures >= 6000:
+            status = SufficiencyStatus.SUFFICIENT
+        elif total_signatures >= 3000:
+            status = SufficiencyStatus.PARTIAL
+        else:
+            status = SufficiencyStatus.CRITICAL_GAP
 
         self._add_fr_requirement(
             "FR-5.2",
@@ -989,15 +1009,12 @@ class DatasetSufficiencyMeasurer:
         num_languages = len(languages)
         total_paragraphs = sum(paragraph_counts.values())
 
-        status = (
-            SufficiencyStatus.SUFFICIENT
-            if num_languages >= 235
-            else (
-                SufficiencyStatus.PARTIAL
-                if num_languages >= 200
-                else SufficiencyStatus.CRITICAL_GAP
-            )
-        )
+        if num_languages >= 235:
+            status = SufficiencyStatus.SUFFICIENT
+        elif num_languages >= 200:
+            status = SufficiencyStatus.PARTIAL
+        else:
+            status = SufficiencyStatus.CRITICAL_GAP
 
         self._add_fr_requirement(
             "FR-5.3",
@@ -1311,19 +1328,21 @@ def _write_executive_summary(f, report: SufficiencyReport) -> None:
 def _count_synthetic_categories(report: SufficiencyReport) -> tuple[int, int, int]:
     """Count FRs by synthetic data category."""
     synthetic_only = sum(
-        1 for req in report.fr_requirements.values()
+        1
+        for req in report.fr_requirements.values()
         if req.synthetic_count > 0 and req.real_world_count == 0
     )
     high_synthetic = sum(
-        1 for req in report.fr_requirements.values()
+        1
+        for req in report.fr_requirements.values()
         if req.current_count > 0
         and (req.synthetic_count / req.current_count) > 0.5
         and req.real_world_count > 0
     )
     real_dominant = sum(
-        1 for req in report.fr_requirements.values()
-        if req.current_count > 0
-        and (req.real_world_count / req.current_count) >= 0.8
+        1
+        for req in report.fr_requirements.values()
+        if req.current_count > 0 and (req.real_world_count / req.current_count) >= 0.8
     )
     return synthetic_only, high_synthetic, real_dominant
 
@@ -1331,7 +1350,9 @@ def _count_synthetic_categories(report: SufficiencyReport) -> tuple[int, int, in
 def _write_data_composition(f, report: SufficiencyReport) -> None:
     """Write data composition analysis (real-world vs synthetic)."""
     total_real = sum(req.real_world_count for req in report.fr_requirements.values())
-    total_synthetic = sum(req.synthetic_count for req in report.fr_requirements.values())
+    total_synthetic = sum(
+        req.synthetic_count for req in report.fr_requirements.values()
+    )
     total_samples = total_real + total_synthetic
 
     real_pct = (total_real / total_samples * 100) if total_samples > 0 else 0
@@ -1345,7 +1366,9 @@ def _write_data_composition(f, report: SufficiencyReport) -> None:
     f.write(f"  - **Synthetic**: {total_synthetic:,} ({synthetic_pct:.1f}%)\n\n")
 
     f.write("### Synthetic Data Analysis\n\n")
-    f.write(f"- 🔴 **Synthetic Only**: {synthetic_only} FRs (100% synthetic, 0% real-world)\n")
+    f.write(
+        f"- 🔴 **Synthetic Only**: {synthetic_only} FRs (100% synthetic, 0% real-world)\n"
+    )
     f.write(f"- ⚠️ **High Synthetic Ratio**: {high_synthetic} FRs (>50% synthetic)\n")
     f.write(f"- ✅ **Real-World Dominant**: {real_dominant} FRs (≥80% real-world)\n\n")
 
@@ -1354,7 +1377,9 @@ def _categorize_by_real_world_coverage(requirements) -> tuple[list, list, list]:
     """Categorize requirements by real-world data coverage percentage."""
     sufficient, partial, critical = [], [], []
     for req in requirements:
-        coverage = (req.real_world_count / req.min_samples * 100) if req.min_samples > 0 else 0
+        coverage = (
+            (req.real_world_count / req.min_samples * 100) if req.min_samples > 0 else 0
+        )
         if coverage >= 100:
             sufficient.append(req)
         elif coverage >= 50:
@@ -1386,7 +1411,14 @@ def _categorize_requirements_by_status(
     rw_sufficient, rw_partial, rw_critical = _categorize_by_real_world_coverage(reqs)
     cb_sufficient, cb_partial, cb_critical = _categorize_by_combined_status(reqs)
 
-    return rw_sufficient, rw_partial, rw_critical, cb_sufficient, cb_partial, cb_critical
+    return (
+        rw_sufficient,
+        rw_partial,
+        rw_critical,
+        cb_sufficient,
+        cb_partial,
+        cb_critical,
+    )
 
 
 def _write_two_part_analysis(f, report: SufficiencyReport) -> None:

@@ -154,7 +154,7 @@ def count_files(path: Path, pattern: str = "*") -> int:
 
 
 def validate_dataset(
-    dataset_name: str, config: dict, data_root: Path
+    _dataset_name: str, config: dict, data_root: Path
 ) -> tuple[str, dict]:
     """
     Validate a single dataset.
@@ -276,16 +276,24 @@ def validate_all_datasets(data_root: Path) -> dict:
         "required_missing": [],
     }
 
-    _validate_dataset_category("benchmarks", EXPECTED_DATASETS["benchmarks"], data_root, results)
+    _validate_dataset_category(
+        "benchmarks", EXPECTED_DATASETS["benchmarks"], data_root, results
+    )
     _validate_dataset_category("raw", EXPECTED_DATASETS["raw"], data_root, results)
 
     return results
 
 
-def _get_status_display(status: str, details: dict, include_type: bool = True) -> tuple[str, str, str]:
+def _get_status_display(
+    status: str, details: dict, include_type: bool = True
+) -> tuple[str, str, str]:
     """Get display info for a dataset status."""
     status_info = {
-        "found": ("✅", f" ({details.get('size_human', '')}, {details.get('file_count', 0)} files)", f" [{details.get('type', '')}]" if include_type else ""),
+        "found": (
+            "✅",
+            f" ({details.get('size_human', '')}, {details.get('file_count', 0)} files)",
+            f" [{details.get('type', '')}]" if include_type else "",
+        ),
         "missing": ("❌", "", ""),
         "empty": ("⚠️", " (empty directory)", ""),
         "symlink_broken": ("🔗", " (broken symlink)", ""),
@@ -293,7 +301,9 @@ def _get_status_display(status: str, details: dict, include_type: bool = True) -
     return status_info.get(status, ("❓", "", ""))
 
 
-def _print_dataset_entry(name: str, info: dict, show_required: bool = True, show_type: bool = True) -> None:
+def _print_dataset_entry(
+    name: str, info: dict, show_required: bool = True, show_type: bool = True
+) -> None:
     """Print a single dataset entry."""
     status = info["status"]
     details = info["details"]
@@ -302,7 +312,9 @@ def _print_dataset_entry(name: str, info: dict, show_required: bool = True, show
     required_marker = " [REQUIRED]" if show_required and details.get("required") else ""
     phase_info = f" [Phase {details.get('phase', '?')}]"
 
-    print(f"  {emoji} {name:<20} {status:<15}{size_info}{type_info if show_type else ''}{phase_info}{required_marker}")
+    print(
+        f"  {emoji} {name:<20} {status:<15}{size_info}{type_info if show_type else ''}{phase_info}{required_marker}"
+    )
     print(f"     {info['description']}")
     if status == "found" and details.get("type") == "symlink":
         print(f"     → {details.get('target', '')}")

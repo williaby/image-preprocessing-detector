@@ -28,6 +28,9 @@ import cv2
 import fitz  # PyMuPDF
 import numpy as np
 
+# Random generator for reproducibility
+_rng = np.random.default_rng(seed=42)
+
 from image_preprocessing_detector.detection.iqa_classical import (
     detect_blur,
     detect_contrast,
@@ -147,9 +150,7 @@ def generate_synthetic_document(
         image = cv2.GaussianBlur(image, qparams["blur_kernel"], qparams["blur_sigma"])
 
     if qparams["noise_level"] > 0:
-        noise = np.random.normal(0, qparams["noise_level"], image.shape).astype(
-            np.uint8
-        )
+        noise = _rng.normal(0, qparams["noise_level"], image.shape).astype(np.uint8)
         image = cv2.add(image, noise)
 
     # Save degraded version
@@ -224,7 +225,7 @@ def simulate_ocr_accuracy(
     accuracy = quality_contribution - complexity_penalty
 
     # Add small random noise to simulate real-world variance
-    noise = np.random.normal(0, 0.02)
+    noise = _rng.normal(0, 0.02)
     accuracy = np.clip(accuracy + noise, 0.0, 1.0)
 
     return float(accuracy)
@@ -268,7 +269,7 @@ def validate_dqs_correlation(num_samples: int = 50) -> dict[str, Any]:
                     pdf_path = tmppath / f"{doc_id}.pdf"
 
                     # Generate document
-                    ground_truth, dqs = generate_synthetic_document(
+                    _ground_truth, dqs = generate_synthetic_document(
                         quality, complexity, pdf_path
                     )
 

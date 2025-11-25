@@ -291,10 +291,17 @@ def sample_ambiguous_cases(
     output_dir.mkdir(parents=True, exist_ok=True)
     console.print(f"\n[yellow]Copying sampled labels to {output_dir}...[/yellow]")
     for item in track(sampled, description="Copying files"):
-        shutil.copy(Path(item["label_file"]), output_dir / Path(item["label_file"]).name)
+        shutil.copy(
+            Path(item["label_file"]), output_dir / Path(item["label_file"]).name
+        )
 
     _save_sampling_metadata(
-        output_dir, label_files, scored_labels, sampled, num_samples, confidence_threshold
+        output_dir,
+        label_files,
+        scored_labels,
+        sampled,
+        num_samples,
+        confidence_threshold,
     )
 
     return sampled

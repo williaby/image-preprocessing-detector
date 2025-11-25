@@ -478,7 +478,12 @@ def classify_complexity(metrics: dict) -> str:
 
     # Table score: 0=0, 1-3=1, >3=2
     table_count = metrics["table_count"]
-    table_score = 0 if table_count == 0 else (1 if table_count <= 3 else 2)
+    if table_count == 0:
+        table_score = 0
+    elif table_count <= 3:
+        table_score = 1
+    else:
+        table_score = 2
 
     # Column score: 1=0, 2+=2 (multi-column = high complexity)
     column_score = 0 if metrics["column_count"] == 1 else 2

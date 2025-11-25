@@ -55,6 +55,13 @@ import yaml
 from google.cloud import storage
 from huggingface_hub import HfApi, create_repo
 
+# File name constants
+_TRAINING_CONFIG_FILE = "training_config.yaml"
+_COMMIT_HASH_FILE = "commit_hash.txt"
+_DATASET_VERSION_FILE = "dataset_version.txt"
+_ENV_INFO_FILE = "env_info.txt"
+_METRICS_FILE = "metrics.json"
+
 
 def download_run_artifacts(
     bucket_name: str,
@@ -136,10 +143,10 @@ def validate_artifacts(artifact_dir: str) -> dict[str, Any]:
 
     # Check required files
     required_files = [
-        "training_config.yaml",
-        "commit_hash.txt",
-        "dataset_version.txt",
-        "env_info.txt",
+        _TRAINING_CONFIG_FILE,
+        _COMMIT_HASH_FILE,
+        _DATASET_VERSION_FILE,
+        _ENV_INFO_FILE,
     ]
 
     missing_files = [file for file in required_files if not (path / file).exists()]
@@ -154,27 +161,27 @@ def validate_artifacts(artifact_dir: str) -> dict[str, Any]:
     metadata = {}
 
     # Load config
-    with open(path / "training_config.yaml") as f:
+    with open(path / _TRAINING_CONFIG_FILE) as f:
         metadata["config"] = yaml.safe_load(f)
 
     # Load metrics if present
-    if (path / "metrics.json").exists():
-        with open(path / "metrics.json") as f:
+    if (path / _METRICS_FILE).exists():
+        with open(path / _METRICS_FILE) as f:
             metadata["metrics"] = json.load(f)
     else:
         print("⚠️  WARNING: metrics.json not found")
         metadata["metrics"] = {}
 
     # Load commit hash
-    with open(path / "commit_hash.txt") as f:
+    with open(path / _COMMIT_HASH_FILE) as f:
         metadata["commit_info"] = f.read()
 
     # Load dataset version
-    with open(path / "dataset_version.txt") as f:
+    with open(path / _DATASET_VERSION_FILE) as f:
         metadata["dataset_version"] = f.read()
 
     # Load env info
-    with open(path / "env_info.txt") as f:
+    with open(path / _ENV_INFO_FILE) as f:
         metadata["env_info"] = f.read()
 
     # Find model files
@@ -225,10 +232,9 @@ def check_promotion_criteria(metadata: dict[str, Any]) -> bool:
         criteria_met = False
 
     # Reproducibility check
-    if metadata.get("commit_info"):
-        if "dirty" in metadata["commit_info"]:
-            print("⚠️  WARNING: Model trained from dirty git state")
-            criteria_met = False
+    if metadata.get("commit_info") and "dirty" in metadata["commit_info"]:
+        print("⚠️  WARNING: Model trained from dirty git state")
+        criteria_met = False
 
     print()
     if criteria_met:
@@ -448,11 +454,11 @@ def push_to_huggingface(
 
     # Upload metadata files
     metadata_files = [
-        "training_config.yaml",
-        "metrics.json",
-        "commit_hash.txt",
-        "dataset_version.txt",
-        "env_info.txt",
+        _TRAINING_CONFIG_FILE,
+        _METRICS_FILE,
+        _COMMIT_HASH_FILE,
+        _DATASET_VERSION_FILE,
+        _ENV_INFO_FILE,
     ]
 
     for filename in metadata_files:

@@ -200,22 +200,22 @@ class Phase2DatasetGenerator:
             "total_documents": 50,
         }
 
-    def _get_degradation_config(
-        self, index: int
-    ) -> tuple[list[Path], float, str]:
+    def _get_degradation_config(self, index: int) -> tuple[list[Path], float, str]:
         """Get source images, expected accuracy, and degradation level for an index."""
         if index < 10:
             source = [img for img in self.images if "clean" in str(img)]
             return source, random.uniform(0.95, 0.99), "clean"  # nosec B311
         if index < 25:
             source = [
-                img for img in self.images
+                img
+                for img in self.images
                 if "blur_k5" in str(img) or "contrast" in str(img)
             ]
             return source, random.uniform(0.75, 0.90), "moderate"  # nosec B311
         # Heavy degradation
         source = [
-            img for img in self.images + self.gradient_images
+            img
+            for img in self.images + self.gradient_images
             if "blur_k" in str(img) or "skew" in str(img)
         ]
         return source, random.uniform(0.40, 0.70), "heavy"  # nosec B311
@@ -230,7 +230,9 @@ class Phase2DatasetGenerator:
         ocr_accuracy = {}
 
         for i in range(50):
-            source, expected_accuracy, source_degradation = self._get_degradation_config(i)
+            source, expected_accuracy, source_degradation = (
+                self._get_degradation_config(i)
+            )
             if not source:
                 source = self.images
 
