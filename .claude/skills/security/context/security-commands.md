@@ -2,7 +2,7 @@
 category: security
 complexity: medium
 estimated_time: "5-20 minutes"
-dependencies: ["gpg", "ssh", "poetry"]
+dependencies: ["gpg", "ssh", "uv"]
 version: "1.0"
 ---
 
