@@ -2,14 +2,17 @@
 
 Loads images and quality issue labels for training IQA models.
 
+Supports both binary labels (Phase 2) and continuous labels (Phase 7).
+
 Sprint 3.3.5: Final Training Dataset (Milestone 10.3)
+Phase 7: Continuous Labels Support
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import cv2
 import numpy as np
@@ -26,6 +29,24 @@ QUALITY_ISSUES = [
     "low_contrast",
     "orientation",
 ]
+
+# Phase 7: Standard continuous label dimensions
+CONTINUOUS_DIMENSIONS = [
+    "blur_severity",
+    "noise_severity",
+    "skew_severity",
+    "contrast_severity",
+    "compression_severity",
+]
+
+# Mapping from continuous dimensions to binary issue names
+DIMENSION_TO_ISSUE = {
+    "blur_severity": "blur",
+    "noise_severity": "noise",
+    "skew_severity": "skew",
+    "contrast_severity": "illumination",
+    "compression_severity": "artifacts",
+}
 
 
 class IQADataset(Dataset):
@@ -295,6 +316,315 @@ def create_data_loaders(
         num_workers=num_workers,
         pin_memory=True,  # Faster GPU transfer
         drop_last=True,  # Drop incomplete batch
+    )
+
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+
+    return train_loader, val_loader, test_loader
+
+
+# =============================================================================
+# Phase 7: Continuous Labels Dataset
+# =============================================================================
+
+
+class ContinuousIQADataset(Dataset):
+    """PyTorch Dataset for Continuous IQA Training (Phase 7).
+
+    Loads images with continuous severity labels [0,1] for regression training.
+    Supports labels from DocCreator, Augraphy, and MLLM pseudo-labels.
+
+    Args:
+        data_dir: Directory containing images and labels
+        split: Dataset split ("train", "val", or "test")
+        transform: Optional image transforms
+        label_type: "continuous" for [0,1] scores, "binary" for backward compat
+        return_variance: If True, return label variance for GDBC loss
+        binary_threshold: Threshold for converting to binary (default: 0.3)
+
+    Example:
+        >>> dataset = ContinuousIQADataset("data/phase7_dataset", split="train")
+        >>> image, labels = dataset[0]
+        >>> print(labels.shape)  # (5,) - continuous severity for 5 issues
+    """
+
+    def __init__(
+        self,
+        data_dir: str | Path,
+        split: str = "train",
+        transform: Any = None,
+        label_type: Literal["continuous", "binary"] = "continuous",
+        return_variance: bool = False,
+        binary_threshold: float = 0.3,
+    ) -> None:
+        """Initialize continuous IQA dataset."""
+        self.data_dir = Path(data_dir)
+        self.split = split
+        self.transform = transform
+        self.label_type = label_type
+        self.return_variance = return_variance
+        self.binary_threshold = binary_threshold
+
+        # Load split metadata
+        split_file = self.data_dir / f"{split}_split.json"
+        if not split_file.exists():
+            msg = f"Split file not found: {split_file}"
+            raise FileNotFoundError(msg)
+
+        with open(split_file) as f:
+            self.split_metadata = json.load(f)
+
+        self.samples = self.split_metadata["samples"]
+
+    def __len__(self) -> int:
+        """Return number of samples in dataset."""
+        return len(self.samples)
+
+    def __getitem__(
+        self, idx: int
+    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Get image and continuous labels for given index.
+
+        Returns:
+            If return_variance=False:
+                Tuple of (image, labels)
+                - image: Tensor of shape (C, H, W)
+                - labels: Tensor of shape (5,) with continuous severities [0,1]
+
+            If return_variance=True:
+                Tuple of (image, labels, variances)
+                - variances: Tensor of shape (5,) for GDBC weighting
+        """
+        sample = self.samples[idx]
+
+        # Load image
+        image_path = Path(sample["image_path"])
+        image = cv2.imread(str(image_path))
+
+        if image is None:
+            msg = f"Failed to load image at index {idx}: {image_path}"
+            raise IndexError(msg)
+
+        # Convert BGR to RGB
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Load labels
+        label_path = Path(sample["label_path"])
+        with open(label_path) as f:
+            label_data = json.load(f)
+
+        # Extract continuous labels
+        labels, variances = self._extract_continuous_labels(label_data)
+
+        # Apply transforms if provided
+        if self.transform is not None:
+            if hasattr(self.transform, "__call__"):
+                # Try albumentations-style
+                try:
+                    transformed = self.transform(image=image)
+                    image = transformed["image"]
+                except (TypeError, KeyError):
+                    image = self.transform(image)
+
+        # Convert image to tensor if not already
+        if not isinstance(image, torch.Tensor):
+            image = self._to_tensor(image)
+
+        # Convert labels to tensor
+        if self.label_type == "binary":
+            # Convert continuous to binary for backward compatibility
+            labels = [1 if l >= self.binary_threshold else 0 for l in labels]
+
+        labels_tensor = torch.tensor(labels, dtype=torch.float32)
+
+        if self.return_variance:
+            variance_tensor = torch.tensor(variances, dtype=torch.float32)
+            return image, labels_tensor, variance_tensor
+
+        return image, labels_tensor
+
+    def _extract_continuous_labels(
+        self, label_data: dict[str, Any]
+    ) -> tuple[list[float], list[float]]:
+        """Extract continuous severity labels.
+
+        Handles multiple label formats:
+        - Phase 7 continuous_labels format
+        - MLLM pseudo-label format
+        - Weak supervision format (with severity in metadata)
+
+        Returns:
+            Tuple of (labels, variances) as lists of floats
+        """
+        labels = []
+        variances = []
+
+        # Check for continuous_labels field (Phase 7 format)
+        if "continuous_labels" in label_data:
+            cont = label_data["continuous_labels"]
+            for dim in CONTINUOUS_DIMENSIONS:
+                labels.append(float(cont.get(dim, 0.0)))
+                variances.append(float(label_data.get("label_variance", 0.0)))
+            return labels, variances
+
+        # Check for direct severity fields (MLLM/Augraphy format)
+        if "blur_severity" in label_data:
+            for dim in CONTINUOUS_DIMENSIONS:
+                labels.append(float(label_data.get(dim, 0.0)))
+                variances.append(float(label_data.get("label_variance", 0.0)))
+            return labels, variances
+
+        # Weak supervision format with severity in nested labels
+        if "labels" in label_data:
+            issue_to_dim = {v: k for k, v in DIMENSION_TO_ISSUE.items()}
+
+            for dim in CONTINUOUS_DIMENSIONS:
+                issue_name = DIMENSION_TO_ISSUE.get(dim, dim.replace("_severity", ""))
+
+                # Try to get severity from nested labels
+                if issue_name in label_data["labels"]:
+                    label_entry = label_data["labels"][issue_name]
+                    if isinstance(label_entry, dict):
+                        severity = float(label_entry.get("severity", label_entry.get("value", 0)))
+                    else:
+                        severity = float(label_entry) * 0.7  # Convert binary to soft
+                    labels.append(severity)
+                # Check illumination -> contrast mapping
+                elif issue_name == "illumination" and "illumination" in label_data["labels"]:
+                    label_entry = label_data["labels"]["illumination"]
+                    severity = float(label_entry.get("severity", label_entry.get("value", 0)))
+                    labels.append(severity)
+                else:
+                    labels.append(0.0)
+
+                variances.append(0.0)
+
+            return labels, variances
+
+        # Fallback: quality_scores format
+        if "quality_scores" in label_data:
+            scores = label_data["quality_scores"]
+            for dim in CONTINUOUS_DIMENSIONS:
+                key = dim.replace("_severity", "")
+                if key == "contrast":
+                    # May be stored as rms_contrast
+                    val = scores.get("contrast", scores.get("rms_contrast", 0.0))
+                elif key == "compression":
+                    # May be stored as blockiness
+                    val = scores.get("compression", scores.get("blockiness", 0.0) / 10.0)
+                else:
+                    val = scores.get(key, 0.0)
+                labels.append(float(val))
+                variances.append(0.0)
+            return labels, variances
+
+        # Default: zeros
+        return [0.0] * len(CONTINUOUS_DIMENSIONS), [0.0] * len(CONTINUOUS_DIMENSIONS)
+
+    def _to_tensor(self, image: NDArray[np.uint8]) -> torch.Tensor:
+        """Convert numpy image to PyTorch tensor."""
+        image = image.astype(np.float32) / 255.0
+        image = np.transpose(image, (2, 0, 1))
+        return torch.from_numpy(image)
+
+    def get_label_statistics(self) -> dict[str, Any]:
+        """Calculate continuous label distribution statistics."""
+        all_labels = []
+
+        for sample in self.samples:
+            label_path = Path(sample["label_path"])
+            with open(label_path) as f:
+                label_data = json.load(f)
+            labels, _ = self._extract_continuous_labels(label_data)
+            all_labels.append(labels)
+
+        all_labels_np = np.array(all_labels)
+
+        stats = {
+            "total_samples": len(self.samples),
+            "dimensions": CONTINUOUS_DIMENSIONS,
+        }
+
+        for i, dim in enumerate(CONTINUOUS_DIMENSIONS):
+            dim_values = all_labels_np[:, i]
+            stats[dim] = {
+                "mean": float(dim_values.mean()),
+                "std": float(dim_values.std()),
+                "min": float(dim_values.min()),
+                "max": float(dim_values.max()),
+                "median": float(np.median(dim_values)),
+                "above_threshold": int((dim_values >= self.binary_threshold).sum()),
+            }
+
+        return stats
+
+
+def create_continuous_data_loaders(
+    data_dir: str | Path,
+    batch_size: int = 32,
+    num_workers: int = 4,
+    train_transform: Any = None,
+    val_transform: Any = None,
+    label_type: Literal["continuous", "binary"] = "continuous",
+    return_variance: bool = False,
+) -> tuple[DataLoader, DataLoader, DataLoader]:
+    """Create DataLoaders for continuous label training (Phase 7).
+
+    Args:
+        data_dir: Directory containing dataset splits
+        batch_size: Batch size for training
+        num_workers: Number of worker processes
+        train_transform: Transform for training data
+        val_transform: Transform for validation/test data
+        label_type: "continuous" for regression, "binary" for classification
+        return_variance: Include variance tensor for GDBC loss
+
+    Returns:
+        Tuple of (train_loader, val_loader, test_loader)
+    """
+    train_dataset = ContinuousIQADataset(
+        data_dir,
+        split="train",
+        transform=train_transform,
+        label_type=label_type,
+        return_variance=return_variance,
+    )
+    val_dataset = ContinuousIQADataset(
+        data_dir,
+        split="val",
+        transform=val_transform,
+        label_type=label_type,
+        return_variance=return_variance,
+    )
+    test_dataset = ContinuousIQADataset(
+        data_dir,
+        split="test",
+        transform=val_transform,
+        label_type=label_type,
+        return_variance=return_variance,
+    )
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True,
+        drop_last=True,
     )
 
     val_loader = DataLoader(
