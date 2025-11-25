@@ -1358,3 +1358,215 @@ TOTAL: $675.00 for 150k images (NOT RECOMMENDED)
 4. **Alternative to DeepSeek-VL2**: Since unavailable on OpenRouter, use:
    - Qwen3-VL-8B-Instruct with CoT prompting
    - Or DeepSeek API directly (separate account required)
+
+---
+
+## Appendix B: Modal Self-Hosted Cost Estimation (Recommended)
+
+Running open-source VLMs on Modal provides **significant cost savings** over API-based pricing while offering full control over inference parameters.
+
+### B.1 Recommended Models for Modal Deployment
+
+| Model | Parameters | GPU Required | VRAM | Inference Speed | Best For |
+|-------|------------|--------------|------|-----------------|----------|
+| **Qwen3-VL-8B-Instruct** | 8B | A10G (24GB) | ~16GB | 0.5-1.0 sec/img | Best quality/speed |
+| **Qwen3-VL-8B-Thinking** | 8B | A10G (24GB) | ~16GB | 1.5-2.5 sec/img | Enhanced reasoning |
+| Qwen2.5-VL-7B-Instruct | 7B | A10G (24GB) | ~14GB | 0.5-1.0 sec/img | DeQA-Doc compatible |
+| Qwen2.5-VL-72B-Instruct | 72B | A100 (80GB) | ~75GB | 2-3 sec/img | Highest accuracy |
+| Qwen3-VL-32B-Instruct | 32B | A100 (40GB) | ~35GB | 1.5-2.0 sec/img | Balance accuracy/speed |
+
+### B.2 Modal GPU Pricing (as of Nov 2025)
+
+| GPU | VRAM | Price/Hour | Best For |
+|-----|------|------------|----------|
+| **A10G** | 24GB | ~$0.60 | 7B-8B models |
+| **A100-40GB** | 40GB | ~$1.10 | 32B models |
+| **A100-80GB** | 80GB | ~$1.50 | 72B models |
+| **H100** | 80GB | ~$3.50 | Maximum throughput |
+
+### B.3 Cost Calculation for 150k Images
+
+**Scenario A: Qwen3-VL-8B on A10G (RECOMMENDED)**
+```
+Model: Qwen3-VL-8B-Instruct
+GPU: A10G (24GB)
+Inference time: ~0.8 sec/image (batched)
+Total time: 150,000 × 0.8 sec = 120,000 sec = 33.3 hours
+
+Cost breakdown:
+  GPU hours: 33.3 hours × $0.60/hr = $20.00
+  Storage (temp): ~$1.00
+  ─────────────────────────────────
+  TOTAL: ~$21 for 150k images
+```
+
+**Scenario B: Qwen3-VL-8B-Thinking on A10G (Enhanced Reasoning)**
+```
+Model: Qwen3-VL-8B-Thinking
+GPU: A10G (24GB)
+Inference time: ~2.0 sec/image (CoT reasoning)
+Total time: 150,000 × 2.0 sec = 300,000 sec = 83.3 hours
+
+Cost breakdown:
+  GPU hours: 83.3 hours × $0.60/hr = $50.00
+  Storage (temp): ~$2.00
+  ─────────────────────────────────
+  TOTAL: ~$52 for 150k images
+```
+
+**Scenario C: Qwen2.5-VL-72B on A100 (Highest Accuracy)**
+```
+Model: Qwen2.5-VL-72B-Instruct
+GPU: A100-80GB
+Inference time: ~2.5 sec/image
+Total time: 150,000 × 2.5 sec = 375,000 sec = 104 hours
+
+Cost breakdown:
+  GPU hours: 104 hours × $1.50/hr = $156.00
+  Storage (temp): ~$4.00
+  ─────────────────────────────────
+  TOTAL: ~$160 for 150k images
+```
+
+### B.4 Cost Comparison: Modal vs OpenRouter
+
+| Dataset | Model | Modal (Self-Hosted) | OpenRouter API | Savings |
+|---------|-------|---------------------|----------------|---------|
+| **150k images** | Qwen3-VL-8B | **$21** | $20.52 | ~Same |
+| **150k images** | Qwen3-VL-8B-Thinking | **$52** | N/A | CoT reasoning |
+| **150k images** | Qwen2.5-VL-72B | **$160** | $21.83 | API cheaper |
+| **150k images** | GPT-4o equivalent | **$21** | $675 | **97% savings** |
+
+### B.5 Modal Deployment Script
+
+```python
+# modal/pseudo_label_generator.py
+
+import modal
+
+app = modal.App("phase7-pseudo-labels")
+
+# Define the image with Qwen3-VL dependencies
+image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .pip_install(
+        "torch>=2.1.0",
+        "transformers>=4.40.0",
+        "accelerate>=0.27.0",
+        "qwen-vl-utils",
+        "pillow",
+    )
+    .run_commands("pip install flash-attn --no-build-isolation")
+)
+
+@app.cls(
+    gpu=modal.gpu.A10G(),
+    image=image,
+    timeout=3600,
+    container_idle_timeout=300,
+)
+class QwenVLLabeler:
+    @modal.enter()
+    def load_model(self):
+        from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
+        import torch
+
+        self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            "Qwen/Qwen3-VL-8B-Instruct",
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
+            attn_implementation="flash_attention_2",
+        )
+        self.processor = AutoProcessor.from_pretrained("Qwen/Qwen3-VL-8B-Instruct")
+
+    @modal.method()
+    def generate_labels(self, image_bytes: bytes) -> dict:
+        from PIL import Image
+        import io
+        import json
+
+        image = Image.open(io.BytesIO(image_bytes))
+
+        prompt = """Analyze this document image and rate its quality on a scale of 0.0 to 1.0:
+        - blur_severity: How blurry is the text/content?
+        - noise_severity: How much visual noise is present?
+        - contrast_severity: How poor is the contrast?
+        - skew_severity: How misaligned is the content?
+        - compression_severity: How visible are compression artifacts?
+        - overall_quality: Overall quality (1.0 = best)
+
+        Respond in JSON format only."""
+
+        messages = [
+            {"role": "user", "content": [
+                {"type": "image", "image": image},
+                {"type": "text", "text": prompt},
+            ]}
+        ]
+
+        text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        inputs = self.processor(text=[text], images=[image], return_tensors="pt").to("cuda")
+
+        output_ids = self.model.generate(**inputs, max_new_tokens=256)
+        response = self.processor.batch_decode(output_ids, skip_special_tokens=True)[0]
+
+        # Parse JSON from response
+        try:
+            labels = json.loads(response.split("```json")[-1].split("```")[0].strip())
+        except:
+            labels = {"error": "Failed to parse", "raw": response}
+
+        return labels
+
+
+@app.function(image=image, timeout=7200)
+def batch_label_images(image_paths: list[str], output_dir: str):
+    """Process batch of images and save labels."""
+    import json
+    from pathlib import Path
+
+    labeler = QwenVLLabeler()
+
+    for image_path in image_paths:
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+
+        labels = labeler.generate_labels.remote(image_bytes)
+
+        output_path = Path(output_dir) / f"{Path(image_path).stem}_labels.json"
+        with open(output_path, "w") as f:
+            json.dump(labels, f, indent=2)
+
+
+# Run with: modal run modal/pseudo_label_generator.py
+```
+
+### B.6 Throughput Optimization
+
+To maximize throughput on Modal:
+
+1. **Batch processing**: Process 4-8 images per GPU call to reduce overhead
+2. **Parallel workers**: Spawn multiple containers for parallel processing
+3. **Flash Attention 2**: Enable for 2-3x speedup on attention computation
+4. **BF16 precision**: Use bfloat16 for optimal speed/quality tradeoff
+
+**Optimized throughput estimates:**
+
+| Configuration | Images/Hour | 150k Duration | Cost |
+|---------------|-------------|---------------|------|
+| 1x A10G, sequential | 4,500 | 33 hours | $20 |
+| 4x A10G, parallel | 18,000 | 8.3 hours | $20 |
+| 8x A10G, parallel | 36,000 | 4.2 hours | $20 |
+| 1x H100, optimized | 12,000 | 12.5 hours | $44 |
+
+### B.7 Recommendation
+
+**For Phase 7 pseudo-label generation, use Modal with Qwen3-VL-8B-Instruct:**
+
+1. **Best document understanding** - OCRBench 896-905, DocVQA 97%
+2. **Cost-effective** - ~$21 for 150k images (similar to API pricing)
+3. **Full control** - Custom prompts, batching, no rate limits
+4. **Reproducible** - Same model weights, deterministic outputs
+5. **Scalable** - Parallelize across multiple GPUs for faster processing
+
+**Alternative**: If highest accuracy is critical, use Qwen2.5-VL-72B with the DeQA-Doc fine-tuned weights (requires downloading from HuggingFace).
