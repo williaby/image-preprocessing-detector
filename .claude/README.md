@@ -65,6 +65,13 @@ rm -rf /tmp/.claude-update
     └── security.md             # Security requirements
 ```
 
+## Package Manager Note
+
+This project uses **UV** (`uv run`) for all commands. The documentation files in this
+directory reference `poetry run` because they originate from a shared template repository
+that supports both Poetry and UV workflows. For project-specific commands, refer to the
+main `CLAUDE.md` in the repository root, which uses UV syntax.
+
 ## How Claude Code Uses These Files
 
 Claude Code loads configuration in layers:
