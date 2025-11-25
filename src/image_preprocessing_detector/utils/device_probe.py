@@ -32,7 +32,7 @@ except ImportError:
 # Type annotation for conditional import (suppress Ruff SIM105, MyPy no-redef)
 torch: types.ModuleType | None = None
 try:  # noqa: SIM105
-    import torch  # type: ignore[no-redef]
+    import torch  # type: ignore[no-redef,unused-ignore]
 except ImportError:
     pass
 
