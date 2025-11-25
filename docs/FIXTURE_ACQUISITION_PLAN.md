@@ -3,14 +3,11 @@ schema_type: common
 title: Test Fixture Acquisition Plan
 tags:
   - testing
-  - fixtures
   - datasets
-status: active
+status: published
 owner: docs-team
 purpose: Detailed acquisition guide with specific file paths and copy commands for test fixtures.
 ---
-
-# Test Fixture Acquisition Plan
 
 **Created**: 2025-11-24
 **Status**: Ready for execution

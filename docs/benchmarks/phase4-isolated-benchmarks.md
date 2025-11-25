@@ -1,4 +1,11 @@
-# Phase 4: ML IQA Isolated Benchmarks Report
+---
+schema_type: common
+title: "Phase 4: ML IQA Isolated Benchmarks Report"
+tags: [benchmarks, performance, testing]
+status: published
+owner: "core-maintainer"
+purpose: "Isolated benchmark results for ML IQA models and classical detectors with GPU vs CPU analysis."
+---
 
 **Date**: 2025-01-24
 **Benchmark Suite**: Priority 4 - Model Inference Latency & Classical IQA Performance

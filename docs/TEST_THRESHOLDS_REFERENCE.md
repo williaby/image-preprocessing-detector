@@ -1,17 +1,11 @@
 ---
 schema_type: common
 title: Test Thresholds Reference & Changelog
-tags:
-  - testing
-  - thresholds
-  - configuration
-  - quality-assurance
-status: active
-owner: docs-team
-purpose: Central reference for all test thresholds, their rationale, and evolution over time.
+tags: [testing, quality]
+status: published
+owner: "core-maintainer"
+purpose: "Central reference for all test thresholds, their rationale, and evolution over time."
 ---
-
-# Test Thresholds Reference & Changelog
 
 **Last Updated**: 2025-11-24
 **Version**: 1.0.0

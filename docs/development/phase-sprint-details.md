@@ -2,11 +2,10 @@
 schema_type: common
 title: "Phase 4-10 Sprint Details (RAG Pipeline Numbering)"
 description: "Detailed sprint breakdowns for Phases 4, 6, 8, and 10 - HISTORICAL REFERENCE"
-tags: [planning, phase_planning, development, roadmap, historical]
-status: archived
-owner: "docs-team"
+tags: [planning, development, roadmap]
+status: published
+owner: "core-maintainer"
 purpose: "Historical reference for sprint-level implementation tasks. Phase 4 is COMPLETE."
-last_updated: "2025-01-24"
 ---
 
 > **IMPORTANT**: This document uses RAG Pipeline phase numbering and is now a **HISTORICAL REFERENCE**. For current project status and official phase numbering, see [docs/planning/PROJECT_PLAN.md](../planning/PROJECT_PLAN.md).

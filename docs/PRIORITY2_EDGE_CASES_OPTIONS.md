@@ -1,17 +1,11 @@
 ---
 schema_type: common
 title: Priority 2 Layout Edge Cases - Options and Recommendations
-tags:
-  - testing
-  - fixtures
-  - layout-detection
-  - research
-status: active
-owner: docs-team
-purpose: Research findings and implementation options for Priority 2 layout edge case test fixtures.
+tags: [testing, layout, research]
+status: published
+owner: "core-maintainer"
+purpose: "Research findings and implementation options for Priority 2 layout edge case test fixtures."
 ---
-
-# Priority 2: Layout Edge Cases - Options and Recommendations
 
 **Created**: 2025-11-24
 **Status**: Research complete, awaiting decision
