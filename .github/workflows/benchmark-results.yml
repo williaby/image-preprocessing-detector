@@ -36,7 +36,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -48,11 +48,11 @@ jobs:
         id: check-results
         run: |
           if [ -d "reports" ] && [ -n "$(find reports -name '*.json' 2>/dev/null)" ]; then
-            echo "results_found=true" >> $GITHUB_OUTPUT
+            echo "results_found=true" >> "$GITHUB_OUTPUT"
             echo "✓ Found committed benchmark results"
             find reports -name "results.json" | head -10
           else
-            echo "results_found=false" >> $GITHUB_OUTPUT
+            echo "results_found=false" >> "$GITHUB_OUTPUT"
             echo "⚠ No benchmark results found in reports/"
             echo "Run benchmarks locally and commit results to reports/ directory"
           fi
@@ -104,33 +104,37 @@ jobs:
       - name: Create Summary
         if: steps.check-results.outputs.results_found == 'true'
         run: |
-          echo "## 📊 Benchmark Results Auto-Update" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Update Date**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
           # Count committed results
           SUITES=$(find reports/ -name "results.json" 2>/dev/null | wc -l)
-          echo "**Committed Results**: $SUITES benchmark suites" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
 
           # List suite directories
-          echo "### Updated Benchmarks" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          BENCHMARKS=""
           for dir in reports/*/; do
             suite=$(basename "$dir")
             latest=$(find "$dir" -name "results.json" | sort -r | head -1)
             if [ -n "$latest" ]; then
               timestamp=$(basename "$(dirname "$latest")")
-              echo "- ✓ **$suite** (latest: $timestamp)" >> $GITHUB_STEP_SUMMARY
+              BENCHMARKS="${BENCHMARKS}- ✓ **${suite}** (latest: ${timestamp})
+          "
             fi
           done
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📈 **View updated README**: " \
-            "[benchmarks/README.md](benchmarks/README.md#quick-metrics-summary)" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "ℹ️ **Note**: Benchmarks are run locally (datasets too large for CI)." >> $GITHUB_STEP_SUMMARY
-          echo "This workflow only updates the README from committed results." >> $GITHUB_STEP_SUMMARY
+
+          # Write summary using grouped redirects
+          {
+            echo "## 📊 Benchmark Results Auto-Update"
+            echo ""
+            echo "**Update Date**: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            echo ""
+            echo "**Committed Results**: ${SUITES} benchmark suites"
+            echo ""
+            echo "### Updated Benchmarks"
+            echo ""
+            echo "$BENCHMARKS"
+            echo ""
+            echo "📈 **View updated README**: [benchmarks/README.md](benchmarks/README.md#quick-metrics-summary)"
+            echo ""
+            echo "---"
+            echo ""
+            echo "ℹ️ **Note**: Benchmarks are run locally (datasets too large for CI)."
+            echo "This workflow only updates the README from committed results."
+          } >> "$GITHUB_STEP_SUMMARY"

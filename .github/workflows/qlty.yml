@@ -1,0 +1,53 @@
+# Qlty Coverage Upload Workflow
+# Dedicated workflow for uploading test coverage reports to Qlty
+
+name: Qlty
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+permissions: read-all
+
+jobs:
+  upload-coverage:
+    name: Upload Coverage to Qlty
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read        # Required for downloading artifacts
+      actions: read         # Required for workflow_run artifact download
+
+    steps:
+      - name: Harden the runner (Audit outbound calls)
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: test-results-3.12
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Upload coverage to Qlty
+        uses: qltysh/qlty-action/coverage@v2
+        with:
+          token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
+          files: reports/lcov.info
+
+      - name: Coverage upload status
+        if: always()
+        env:
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ -f reports/lcov.info ]; then
+            echo "Coverage report uploaded successfully"
+            echo "View coverage at: https://qlty.sh"
+          else
+            echo "Coverage report not found at reports/lcov.info"
+            echo "This may indicate the test suite did not run or failed"
+          fi

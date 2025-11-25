@@ -53,7 +53,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -116,11 +116,13 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "## 🎉 Published to PyPI!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Project**: https://pypi.org/project/image-preprocessing-detector/" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Install**: \`pip install image-preprocessing-detector\`" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🎉 Published to PyPI!"
+            echo ""
+            echo "**Project**: https://pypi.org/project/image-preprocessing-detector/"
+            echo ""
+            echo "**Install**: \`pip install image-preprocessing-detector\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   publish-to-testpypi:
     name: Publish to TestPyPI
@@ -162,11 +164,13 @@ jobs:
 
       - name: Publication summary
         run: |
-          echo "## 🧪 Published to TestPyPI!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           URL="https://test.pypi.org/project/image-preprocessing-detector/"
-          echo "**Project**: ${URL}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           INSTALL_CMD="pip install --index-url https://test.pypi.org/simple/"
           INSTALL_CMD="${INSTALL_CMD} image-preprocessing-detector"
-          echo "**Test Install**: \`${INSTALL_CMD}\`" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🧪 Published to TestPyPI!"
+            echo ""
+            echo "**Project**: ${URL}"
+            echo ""
+            echo "**Test Install**: \`${INSTALL_CMD}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
