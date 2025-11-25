@@ -13,13 +13,15 @@ Used by Phase 4 device-priority execution to route ML inference to
 optimal compute resources: Local GPU → Modal GPU → CPU (with guards).
 """
 
-import logging
 import multiprocessing
 import os
+import types
 from dataclasses import dataclass
 from functools import lru_cache
 
-logger = logging.getLogger(__name__)
+from image_preprocessing_detector.utils import get_logger
+
+logger = get_logger(__name__)
 
 # Optional dependencies
 try:
@@ -27,10 +29,12 @@ try:
 except ImportError:
     ort = None
 
-try:
-    import torch
+# Type annotation for conditional import (suppress Ruff SIM105, MyPy no-redef)
+torch: types.ModuleType | None = None
+try:  # noqa: SIM105
+    import torch  # type: ignore[no-redef]
 except ImportError:
-    torch = None
+    pass
 
 
 @dataclass

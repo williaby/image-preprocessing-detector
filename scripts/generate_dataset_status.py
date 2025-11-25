@@ -24,6 +24,7 @@ GCS_CREDENTIALS = Path(__file__).parent.parent / ".gcp/service-account.json"
 def get_dataset_size(dataset_path: Path) -> tuple[str, int]:
     """Get size of dataset in human-readable and bytes."""
     try:
+        # nosec B603 B607 - subprocess used only with hardcoded commands
         result = subprocess.run(
             ["du", "-sb", str(dataset_path)],
             capture_output=True,
@@ -55,6 +56,7 @@ def count_files(dataset_path: Path, extensions: list[str] = None) -> dict[str, i
 
     for ext in extensions:
         try:
+            # nosec B603 B607 - subprocess used only with hardcoded commands
             result = subprocess.run(
                 ["find", str(dataset_path), "-type", "f", "-name", f"*{ext}"],
                 capture_output=True,
@@ -68,6 +70,7 @@ def count_files(dataset_path: Path, extensions: list[str] = None) -> dict[str, i
 
     # Total files
     try:
+        # nosec B603 B607 - subprocess used only with hardcoded commands
         result = subprocess.run(
             ["find", str(dataset_path), "-type", "f"],
             capture_output=True,
@@ -87,6 +90,7 @@ def check_gcs_status(dataset_name: str) -> tuple[bool, str]:
 
     try:
         env = {"GOOGLE_APPLICATION_CREDENTIALS": str(GCS_CREDENTIALS)}
+        # nosec B603 B607 - subprocess used only with gsutil for GCS operations
         result = subprocess.run(
             ["gsutil", "ls", "-d", gcs_path],
             capture_output=True,
@@ -97,6 +101,7 @@ def check_gcs_status(dataset_name: str) -> tuple[bool, str]:
 
         if exists:
             # Get size
+            # nosec B603 B607 - subprocess used only with gsutil for GCS operations
             result = subprocess.run(
                 ["gsutil", "du", "-sh", gcs_path],
                 capture_output=True,

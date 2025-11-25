@@ -256,6 +256,7 @@ if hasattr(dataset, 'keys'):
 """
 
     try:
+        # nosec B603 B607 - subprocess used to invoke generation script with hardcoded args
         result = subprocess.run(
             ["uv", "run", "python", "-c", script],
             check=True,

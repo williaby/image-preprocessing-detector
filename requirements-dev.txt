@@ -152,6 +152,8 @@ colorama==0.4.6
     #   mkdocs-material
     #   pytest
     #   tqdm
+coloredlogs==15.0.1
+    # via onnxruntime-gpu
 colorlog==6.10.1
     # via nox
 comm==0.2.3
@@ -250,6 +252,8 @@ filelock==3.20.0
     #   iterative-telemetry
     #   safety
     #   virtualenv
+flatbuffers==25.9.23
+    # via onnxruntime-gpu
 flatten-dict==0.4.2
     # via dvc
 flufl-lock==8.2.0
@@ -322,6 +326,8 @@ huggingface-hub==1.1.5
     # via
     #   datasets
     #   image-preprocessing-detector
+humanfriendly==10.0
+    # via coloredlogs
 humanize==4.14.0
     # via nox
 hydra-core==1.3.2
@@ -538,6 +544,8 @@ ml-dtypes==0.5.4
     # via onnx
 modal==1.2.4
     # via image-preprocessing-detector
+mpmath==1.3.0
+    # via sympy
 multidict==6.7.0
     # via
     #   aiohttp
@@ -599,9 +607,11 @@ numpy==2.2.6 ; python_full_version < '3.11'
     #   matplotlib
     #   ml-dtypes
     #   onnx
+    #   onnxruntime-gpu
     #   opencv-python-headless
     #   pandas
     #   pydeck
+    #   pywavelets
     #   scikit-image
     #   scipy
     #   streamlit
@@ -615,9 +625,11 @@ numpy==2.3.5 ; python_full_version >= '3.11'
     #   matplotlib
     #   ml-dtypes
     #   onnx
+    #   onnxruntime-gpu
     #   opencv-python-headless
     #   pandas
     #   pydeck
+    #   pywavelets
     #   scikit-image
     #   scipy
     #   streamlit
@@ -627,6 +639,8 @@ omegaconf==2.3.0
     #   dvc
     #   hydra-core
 onnx==1.19.1
+    # via image-preprocessing-detector
+onnxruntime-gpu==1.23.2
     # via image-preprocessing-detector
 opencv-python-headless==4.11.0.86
     # via image-preprocessing-detector
@@ -657,6 +671,7 @@ packaging==25.0
     #   mkdocs
     #   nbconvert
     #   nox
+    #   onnxruntime-gpu
     #   pytest
     #   safety
     #   safety-schemas
@@ -719,6 +734,7 @@ protobuf==6.33.1
     #   kagglesdk
     #   modal
     #   onnx
+    #   onnxruntime-gpu
     #   streamlit
 psutil==7.1.3
     # via
@@ -788,6 +804,8 @@ pyparsing==3.2.5
     #   grandalf
     #   matplotlib
     #   pydot
+pyreadline3==3.5.4 ; sys_platform == 'win32'
+    # via humanfriendly
 pytest==9.0.1
     # via
     #   image-preprocessing-detector
@@ -824,6 +842,10 @@ pytokens==0.3.0 ; python_full_version >= '3.11'
     # via black
 pytz==2025.2
     # via pandas
+pywavelets==1.8.0 ; python_full_version < '3.11'
+    # via image-preprocessing-detector
+pywavelets==1.9.0 ; python_full_version >= '3.11'
+    # via image-preprocessing-detector
 pywin32==311 ; sys_platform == 'win32'
     # via dvc-task
 pywinpty==3.0.2 ; os_name == 'nt' and sys_platform != 'darwin' and sys_platform != 'linux'
@@ -969,6 +991,8 @@ streamlit==1.51.0
     # via image-preprocessing-detector
 structlog==25.5.0
     # via image-preprocessing-detector
+sympy==1.14.0
+    # via onnxruntime-gpu
 synchronicity==0.10.4
     # via modal
 tabulate==0.9.0

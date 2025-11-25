@@ -35,14 +35,14 @@ class TestThresholdConfig:
             rationale="Test rationale",
             weight=1.2,
         )
-        assert config.value == 0.25
+        assert config.value == pytest.approx(0.25)
         assert config.rationale == "Test rationale"
-        assert config.weight == 1.2
+        assert config.weight == pytest.approx(1.2)
 
     def test_threshold_config_default_weight(self) -> None:
         """Test default weight value."""
         config = ThresholdConfig(value=0.3, rationale="Test")
-        assert config.weight == 1.0
+        assert config.weight == pytest.approx(1.0)
 
 
 class TestDiscrepancyThresholds:
@@ -52,30 +52,34 @@ class TestDiscrepancyThresholds:
         """Test default threshold values."""
         thresholds = DiscrepancyThresholds()
 
-        assert thresholds.blur.value == 0.25
-        assert thresholds.contrast.value == 0.30
-        assert thresholds.skew.value == 0.20
-        assert thresholds.noise.value == 0.35
-        assert thresholds.compression.value == 0.35
-        assert thresholds.illumination.value == 0.30
-        assert thresholds.aggregate_threshold == 0.25
+        assert thresholds.blur.value == pytest.approx(0.25)
+        assert thresholds.contrast.value == pytest.approx(0.30)
+        assert thresholds.skew.value == pytest.approx(0.20)
+        assert thresholds.noise.value == pytest.approx(0.35)
+        assert thresholds.compression.value == pytest.approx(0.35)
+        assert thresholds.illumination.value == pytest.approx(0.30)
+        assert thresholds.aggregate_threshold == pytest.approx(0.25)
         assert thresholds.min_heads_exceeded == 1
 
     def test_get_threshold(self) -> None:
         """Test get_threshold method."""
         thresholds = DiscrepancyThresholds()
 
-        assert thresholds.get_threshold("blur") == 0.25
-        assert thresholds.get_threshold("contrast") == 0.30
-        assert thresholds.get_threshold("unknown") == 0.30  # Default fallback
+        assert thresholds.get_threshold("blur") == pytest.approx(0.25)
+        assert thresholds.get_threshold("contrast") == pytest.approx(0.30)
+        assert thresholds.get_threshold("unknown") == pytest.approx(
+            0.30
+        )  # Default fallback
 
     def test_get_weight(self) -> None:
         """Test get_weight method."""
         thresholds = DiscrepancyThresholds()
 
-        assert thresholds.get_weight("blur") == 1.2  # Higher weight
-        assert thresholds.get_weight("skew") == 0.8  # Lower weight
-        assert thresholds.get_weight("unknown") == 1.0  # Default fallback
+        assert thresholds.get_weight("blur") == pytest.approx(1.2)  # Higher weight
+        assert thresholds.get_weight("skew") == pytest.approx(0.8)  # Lower weight
+        assert thresholds.get_weight("unknown") == pytest.approx(
+            1.0
+        )  # Default fallback
 
     def test_get_rationale(self) -> None:
         """Test get_rationale method."""
@@ -96,8 +100,8 @@ class TestDiscrepancyThresholds:
         )
         thresholds = DiscrepancyThresholds(blur=custom_blur)
 
-        assert thresholds.get_threshold("blur") == 0.15
-        assert thresholds.get_weight("blur") == 1.5
+        assert thresholds.get_threshold("blur") == pytest.approx(0.15)
+        assert thresholds.get_weight("blur") == pytest.approx(1.5)
 
 
 class TestClassicalScores:
@@ -107,20 +111,20 @@ class TestClassicalScores:
         """Test default scores are all 1.0 (good quality)."""
         scores = ClassicalScores()
 
-        assert scores.blur_score == 1.0
-        assert scores.contrast_score == 1.0
-        assert scores.skew_score == 1.0
-        assert scores.noise_score == 1.0
-        assert scores.compression_score == 1.0
-        assert scores.illumination_score == 1.0
+        assert scores.blur_score == pytest.approx(1.0)
+        assert scores.contrast_score == pytest.approx(1.0)
+        assert scores.skew_score == pytest.approx(1.0)
+        assert scores.noise_score == pytest.approx(1.0)
+        assert scores.compression_score == pytest.approx(1.0)
+        assert scores.illumination_score == pytest.approx(1.0)
 
     def test_to_dict(self) -> None:
         """Test conversion to dictionary."""
         scores = ClassicalScores(blur_score=0.5, contrast_score=0.8)
         d = scores.to_dict()
 
-        assert d["blur"] == 0.5
-        assert d["contrast"] == 0.8
+        assert d["blur"] == pytest.approx(0.5)
+        assert d["contrast"] == pytest.approx(0.8)
         assert "skew" in d
 
 
@@ -131,16 +135,16 @@ class TestMLScores:
         """Test default ML scores."""
         scores = MLScores()
 
-        assert scores.blur_score == 1.0
-        assert scores.contrast_score == 1.0
+        assert scores.blur_score == pytest.approx(1.0)
+        assert scores.contrast_score == pytest.approx(1.0)
 
     def test_to_dict(self) -> None:
         """Test conversion to dictionary."""
         scores = MLScores(blur_score=0.9, noise_score=0.7)
         d = scores.to_dict()
 
-        assert d["blur"] == 0.9
-        assert d["noise"] == 0.7
+        assert d["blur"] == pytest.approx(0.9)
+        assert d["noise"] == pytest.approx(0.7)
 
 
 class TestClassicalScoreAdapter:
@@ -281,7 +285,7 @@ class TestClassicalScoreAdapter:
 
         # Only blur should be converted, others should be default 1.0
         assert scores.blur_score < 1.0 or scores.blur_score == pytest.approx(0.5)
-        assert scores.contrast_score == 1.0
+        assert scores.contrast_score == pytest.approx(1.0)
 
 
 class TestDiscrepancyAnalyzer:
@@ -291,13 +295,13 @@ class TestDiscrepancyAnalyzer:
         """Test initialization with default thresholds."""
         analyzer = DiscrepancyAnalyzer()
         assert analyzer.thresholds is not None
-        assert analyzer.thresholds.aggregate_threshold == 0.25
+        assert analyzer.thresholds.aggregate_threshold == pytest.approx(0.25)
 
     def test_init_custom_thresholds(self) -> None:
         """Test initialization with custom thresholds."""
         thresholds = DiscrepancyThresholds(aggregate_threshold=0.5)
         analyzer = DiscrepancyAnalyzer(thresholds=thresholds)
-        assert analyzer.thresholds.aggregate_threshold == 0.5
+        assert analyzer.thresholds.aggregate_threshold == pytest.approx(0.5)
 
     def test_analyze_no_discrepancy(self) -> None:
         """Test analysis when scores are similar."""
@@ -323,7 +327,7 @@ class TestDiscrepancyAnalyzer:
         result = analyzer.analyze(ml_scores, classical_scores)
 
         assert result.should_escalate
-        assert result.per_head_discrepancies["blur"] >= 0.25
+        assert result.per_head_discrepancies["blur"] >= pytest.approx(0.25)
         assert result.per_head_exceeded["blur"] is True
         assert EscalationReason.BLUR_DISCREPANCY in result.escalation_reasons
 
@@ -379,7 +383,7 @@ class TestCreateDiscrepancyAnalyzer:
         analyzer = create_discrepancy_analyzer()
 
         assert isinstance(analyzer, DiscrepancyAnalyzer)
-        assert analyzer.thresholds.get_threshold("blur") == 0.25
+        assert analyzer.thresholds.get_threshold("blur") == pytest.approx(0.25)
 
     def test_create_with_custom_values(self) -> None:
         """Test creating analyzer with custom thresholds."""
@@ -389,9 +393,9 @@ class TestCreateDiscrepancyAnalyzer:
             aggregate_threshold=0.30,
         )
 
-        assert analyzer.thresholds.get_threshold("blur") == 0.15
-        assert analyzer.thresholds.get_threshold("contrast") == 0.40
-        assert analyzer.thresholds.aggregate_threshold == 0.30
+        assert analyzer.thresholds.get_threshold("blur") == pytest.approx(0.15)
+        assert analyzer.thresholds.get_threshold("contrast") == pytest.approx(0.40)
+        assert analyzer.thresholds.aggregate_threshold == pytest.approx(0.30)
 
 
 class TestEscalationReason:
