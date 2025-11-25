@@ -681,40 +681,147 @@ class MultiHeadContinuousLoss(nn.Module):
 
 ## 5. MLLM Teacher Distillation (Optional)
 
-### 5.1 DeQA-Score Integration
+### 5.1 Model Selection Based on Benchmarks
 
-For unlabeled production data, we can use **DeQA-Doc** (or similar MLLM-based quality assessor) as an offline teacher to generate pseudo-labels:
+Based on comprehensive analysis of [Q-Doc](https://arxiv.org/html/2511.11410v1), [DeQA-Doc](https://arxiv.org/html/2507.12796), [Q-Bench](https://q-future.github.io/Q-Bench/), and [OmniDocBench](https://github.com/opendatalab/OmniDocBench), the following models are recommended for pseudo-label generation:
+
+#### 5.1.1 Benchmark Summary
+
+| Benchmark | Focus | Key Metrics |
+|-----------|-------|-------------|
+| **Q-Doc** | Document IQA (coarse/middle/fine) | Quality scoring, distortion detection, severity assessment |
+| **DeQA-Doc** | Document quality regression | PLCC/SRCC on DIQA-5000 (sharpness, color, overall) |
+| **Q-Bench** | General low-level vision | Perception, description, assessment tasks |
+| **OmniDocBench** | Document parsing quality | Text/table/formula recognition accuracy |
+
+#### 5.1.2 Model Rankings by Task
+
+**Quality Score Regression (PLCC/SRCC correlation with human MOS):**
+
+| Rank | Model | Dataset | Final Score / PLCC |
+|------|-------|---------|-------------------|
+| 🥇 | **DeQA-Doc (Qwen2.5-VL-7B + mPLUG ensemble)** | DIQA-5000 | **0.9288** |
+| 🥈 | **DeQA-Doc (Qwen2.5-VL-7B 5-fold)** | DIQA-5000 | **0.9235** |
+| 🥉 | DeQA-Doc (mPLUG-Owl2-7B) | DIQA-5000 | 0.9112 |
+| 4 | DeepSeek-VL2 + CoT | Q-Doc | SRCC: 0.4603 |
+| 5 | InternLM-XComposer-VL | Q-Bench | SRCC: 0.541 |
+
+**Distortion Detection (blur, noise, defocus, brightness):**
+
+| Rank | Model | Task | Balanced Accuracy |
+|------|-------|------|-------------------|
+| 🥇 | **GPT-4o** | Multi-distortion classification | **62.54%** |
+| 🥈 | **DeepSeek-VL2 + CoT** | Multi-distortion classification | 51.20% |
+| 🥉 | GPT-4o | Severity assessment (single) | 50.86% |
+| 4 | DeepSeek-VL2 + CoT | Single distortion classification | 33.26% |
+
+**Consistency Across All Levels (Q-Doc):**
+
+| Model | Coarse (Score) | Middle (Detect) | Fine (Severity) | Verdict |
+|-------|----------------|-----------------|-----------------|---------|
+| **DeepSeek-VL2 + CoT** | ✅ Best SRCC | ✅ Good | ✅ Best overall | **Most consistent** |
+| GPT-4o | ❌ Poor (0.13 SRCC) | ✅ Best | ✅ Good | Inconsistent |
+| mPLUG-Owl3-7B | ⚠️ Medium | ⚠️ Medium | ⚠️ Medium | Moderate |
+
+#### 5.1.3 Recommended Model Selection
+
+Based on benchmark analysis, we recommend a **tiered approach**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ MLLM Teacher Distillation Pipeline                              │
+│ MLLM Selection Strategy for Phase 7 Pseudo-Labels              │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  Unlabeled Images (150k) ─────────────────────────────────┐    │
+│  TIER 1 (Primary - Quality Score Regression):                  │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ DeQA-Doc with Qwen2.5-VL-7B                             │   │
+│  │ • Best DIQA performance (0.9235 final score)            │   │
+│  │ • Handles original resolution (no aggressive resize)    │   │
+│  │ • Open-source, self-hostable                            │   │
+│  │ • Cost: ~$0 (local GPU) or ~$0.002/image (cloud)       │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  TIER 2 (Secondary - Distortion Detection):                    │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ DeepSeek-VL2 (27B MoE)                                  │   │
+│  │ • Most consistent across coarse/middle/fine levels      │   │
+│  │ • Best with Chain-of-Thought prompting                  │   │
+│  │ • Open-source, Apache 2.0 license                       │   │
+│  │ • Cost: ~$0 (local) or ~$0.003/image (API)             │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  TIER 3 (Validation/Ensemble - Commercial):                    │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ GPT-4o (for distortion type verification only)          │   │
+│  │ • Best multi-distortion classification (62.54%)         │   │
+│  │ • Poor at quality scoring (SRCC: 0.13) - DO NOT USE    │   │
+│  │ • Use only for distortion presence validation           │   │
+│  │ • Cost: ~$0.01/image                                    │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  NOT RECOMMENDED:                                               │
+│  • Gemini-Pro: Underperforms on fine-grained quality tasks    │
+│  • GPT-4V (old): Superseded by GPT-4o                         │
+│  • Generic VLMs without IQA fine-tuning                        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 5.1.4 Key Findings from Benchmarks
+
+1. **GPT-4o fails at quality scoring** despite being state-of-the-art for general vision tasks
+   - Q-Doc SRCC: 0.1321 (near random)
+   - Excellent at distortion *identification* but poor at *severity estimation*
+
+2. **DeQA-Doc (Qwen2.5-VL) is the clear winner for document IQA**
+   - Final score 0.9235 on DIQA-5000 (5-fold ensemble)
+   - Preserves fine-grained layout/text features via native resolution
+
+3. **DeepSeek-VL2 is the most balanced** across all task levels
+   - Only model maintaining competitive performance on coarse, middle, AND fine levels
+   - MoE architecture provides efficient compute scaling
+
+4. **Chain-of-Thought (CoT) prompting significantly improves performance**
+   - DeepSeek-VL2 + CoT outperforms vanilla by 3-10% across tasks
+
+### 5.2 Recommended Implementation Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ MLLM Teacher Distillation Pipeline (Updated)                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Unlabeled Images (150k) ─────────────────────────────────────┐ │
 │                                                            ↓    │
 │                                         ┌─────────────────────┐ │
-│                                         │ DeQA-Score MLLM     │ │
-│                                         │ (Offline Teacher)   │ │
-│                                         │ • GPT-4V or Gemini  │ │
-│                                         │ • Batch inference   │ │
-│                                         │ • ~$0.01/image      │ │
+│                                         │ DeQA-Doc            │ │
+│                                         │ (Qwen2.5-VL-7B)     │ │
+│                                         │ • Native resolution │ │
+│                                         │ • DIQA-5000 trained │ │
+│                                         │ • PLCC: 0.9235      │ │
 │                                         └─────────────────────┘ │
 │                                                   │             │
-│                                                   ↓             │
-│                                         Pseudo-Labels          │
-│                                         (JSON, [0,1] scores)   │
-│                                                   │             │
-│  ┌──────────────────────────────────────────────┐ │             │
-│  │ ResNet-50 Student                            │←┘             │
-│  │ • Trained on pseudo-labels                   │               │
-│  │ • Learns MLLM's quality understanding        │               │
+│                            ┌──────────────────────┼─────────┐   │
+│                            ↓                      ↓         │   │
+│                    Quality Scores         DeepSeek-VL2      │   │
+│                    (overall, sharpness)   (distortion CoT)  │   │
+│                            │                      │         │   │
+│                            └──────────┬───────────┘         │   │
+│                                       ↓                     │   │
+│                              Ensemble Labels                │   │
+│                              (JSON, [0,1] scores)           │   │
+│                                       │                     │   │
+│  ┌──────────────────────────────────────────────┐          │   │
+│  │ ResNet-50 Student                            │←─────────┘   │
+│  │ • Trained on ensemble pseudo-labels          │               │
+│  │ • Learns DIQA-level quality understanding    │               │
 │  │ • 1000x faster inference                     │               │
 │  └──────────────────────────────────────────────┘               │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.2 DeQA-Score Prompt Template
+### 5.3 DeQA-Doc Prompt Template
 
 ```python
 DEQA_PROMPT = """
@@ -1124,15 +1231,29 @@ evaluation:
 | Severity mapping inaccuracies | Validate against human MOS ratings |
 | PLCC/SRCC training instability | Use gradient clipping, warmup scheduler |
 | GDBC requires variance data | Default to uniform weighting if variance unavailable |
-| MLLM cost ($1,500 for 150k images) | Phase as optional, start with 10k sample |
+| MLLM cost ($1,500 for 150k images) | Use open-source DeQA-Doc (local GPU) instead of commercial APIs |
 | Model calibration issues | Add temperature scaling post-training |
+| GPT-4o poor at scoring | Use DeQA-Doc for quality regression, GPT-4o only for distortion detection |
 
 ---
 
 ## References
 
+### Core Papers
 1. DocCreator: A Tool for Creating Synthetic Documents (Kieu et al., 2013)
 2. Augraphy: Data Augmentation Library for Document Images (Augraphy, 2023)
-3. DeQA-Doc: Document Quality Assessment via MLLM (Microsoft Research, 2024)
-4. GDBC: Gated Dual-Bias Calibration for IQA (CVPR 2023)
-5. OHR-Bench: Document Quality Assessment Benchmark (ICDAR 2021)
+3. GDBC: Gated Dual-Bias Calibration for IQA (CVPR 2023)
+
+### Benchmarks (MLLM Model Selection)
+4. [Q-Doc: Benchmarking Document Image Quality Assessment Capabilities in MLLMs](https://arxiv.org/html/2511.11410v1) - Document-specific IQA benchmark with coarse/middle/fine evaluation levels
+5. [DeQA-Doc: Adapting DeQA-Score to Document Image Quality Assessment](https://arxiv.org/html/2507.12796) - State-of-the-art DIQA using Qwen2.5-VL (Final Score: 0.9235)
+6. [Q-Bench: General-Purpose Foundation Models on Low-level Vision](https://q-future.github.io/Q-Bench/) - ICLR 2024 Spotlight, comprehensive IQA benchmark
+7. [OmniDocBench: Benchmarking Diverse PDF Document Parsing](https://github.com/opendatalab/OmniDocBench) - CVPR 2025, document parsing quality benchmark
+
+### Datasets
+8. DIQA-5000: Document Image Quality Assessment dataset with 5,000 images rated across 3 dimensions
+9. OHR-Bench: Document Quality Assessment Benchmark (ICDAR 2021)
+
+### Recommended Models (from benchmark analysis)
+10. [DeepSeek-VL2: Mixture-of-Experts Vision-Language Models](https://arxiv.org/html/2412.10302v1) - Most consistent across quality assessment tasks
+11. [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) - Best backbone for DeQA-Doc quality regression
