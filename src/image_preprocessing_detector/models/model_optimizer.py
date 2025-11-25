@@ -508,7 +508,7 @@ class ModelOptimizer:
             return True
 
         # Type narrowing for BasedPyright - after HAS_ORT check, ort is guaranteed non-None
-        assert ort is not None
+        assert ort is not None  # nosec B101 - type narrowing, not runtime check
 
         # Get PyTorch output
         pytorch_model.eval()
@@ -579,8 +579,8 @@ class ModelOptimizer:
             raise RuntimeError("ONNX Runtime not available for quantization")
 
         # Type narrowing for BasedPyright - after HAS_ORT check, these are guaranteed non-None
-        assert QuantType is not None
-        assert quantize_static is not None
+        assert QuantType is not None  # nosec B101 - type narrowing, not runtime check
+        assert quantize_static is not None  # nosec B101 - type narrowing, not runtime check
 
         config = config or QuantizationConfig()
         onnx_path = Path(onnx_path)
@@ -598,8 +598,9 @@ class ModelOptimizer:
         # Generate synthetic calibration data if not provided
         if calibration_data is None:
             logger.info("Generating synthetic calibration data")
-            synthetic_data = np.random.randn(
-                config.num_calibration_samples, 3, 224, 224
+            rng = np.random.default_rng(seed=42)  # Fixed seed for reproducibility
+            synthetic_data = rng.standard_normal(
+                (config.num_calibration_samples, 3, 224, 224)
             ).astype(np.float32)
             calibration_data = CalibrationDataset(
                 precomputed_data=synthetic_data,
@@ -776,7 +777,7 @@ class ModelOptimizer:
             raise RuntimeError("ONNX Runtime not available for benchmarking")
 
         # Type narrowing for BasedPyright
-        assert ort is not None
+        assert ort is not None  # nosec B101 - type narrowing, not runtime check
 
         # Create session
         providers = (
@@ -791,7 +792,8 @@ class ModelOptimizer:
 
         # Create dummy input
         input_name = session.get_inputs()[0].name
-        dummy_input = np.random.randn(batch_size, 3, 224, 224).astype(np.float32)
+        rng = np.random.default_rng(seed=42)  # Fixed seed for reproducibility
+        dummy_input = rng.standard_normal((batch_size, 3, 224, 224)).astype(np.float32)
 
         # Warmup
         for _ in range(warmup_iterations):
@@ -861,7 +863,8 @@ class ModelOptimizer:
                 d_outputs.append(cuda.mem_alloc(size))
 
         # Dummy input
-        dummy_input = np.random.randn(*input_shape).astype(np.float32)
+        rng = np.random.default_rng(seed=42)  # Fixed seed for reproducibility
+        dummy_input = rng.standard_normal(input_shape).astype(np.float32)
 
         stream = cuda.Stream()
 

@@ -20,7 +20,7 @@ PY_311_PLUS = PY_VERSION >= (3, 11)
 # Use lowercase _utc internally to avoid BasedPyright reportConstantRedefinition
 if PY_311_PLUS:
     try:
-        from datetime import (  # type: ignore[attr-defined]
+        from datetime import (  # type: ignore[attr-defined,unused-ignore]  # mypy 3.10 target
             UTC as _utc,  # noqa: N811
         )
     except ImportError:
@@ -123,7 +123,10 @@ def parse_iso(iso_string: str, assume_utc: bool = True) -> datetime:
             if assume_utc:
                 dt = dt.replace(tzinfo=UTC)
 
-        return dt if is_aware(dt) else ensure_aware(dt, UTC if assume_utc else None)
+        if is_aware(dt):
+            return dt
+        default_tz = UTC if assume_utc else None
+        return ensure_aware(dt, default_tz)
     except ValueError as e:
         raise ValueError(f"Invalid ISO datetime string '{iso_string}': {e}") from e
 

@@ -79,6 +79,26 @@ class SoftLabelGenerator:
             batch_size=batch_size,
         )
 
+    def _extract_images_from_batch(
+        self, batch: list | tuple | torch.Tensor
+    ) -> torch.Tensor:
+        """Extract images tensor from a batch."""
+        if isinstance(batch, list | tuple) and len(batch) == 2:
+            images, _ = batch
+        else:
+            images = batch
+
+        if not isinstance(images, torch.Tensor):
+            images = torch.stack(images)  # pyright: ignore[reportUnknownArgumentType]
+
+        return images.to(self.device)  # pyright: ignore[reportAttributeAccessIssue]
+
+    def _get_teacher_logits(self, teacher_outputs: dict | torch.Tensor) -> torch.Tensor:
+        """Extract logits from teacher model output."""
+        if isinstance(teacher_outputs, dict):
+            return teacher_outputs["all"]
+        return teacher_outputs
+
     def generate(
         self,
         data_loader: DataLoader,
@@ -110,28 +130,13 @@ class SoftLabelGenerator:
 
         with torch.no_grad():
             for batch_idx, batch in enumerate(iterator):
-                # Handle different batch formats
-                if isinstance(batch, list | tuple) and len(batch) == 2:
-                    images, _ = batch  # Unpack but ignore labels
-                else:
-                    images = batch
-
-                # Ensure images is a tensor (type narrowing for BasedPyright)
-                if not isinstance(images, torch.Tensor):
-                    images = torch.stack(images)  # pyright: ignore[reportUnknownArgumentType]
-                images = images.to(self.device)  # pyright: ignore[reportAttributeAccessIssue]
+                # Extract and process images
+                images = self._extract_images_from_batch(batch)
                 batch_size = images.size(0)
 
-                # Get teacher predictions
+                # Get teacher predictions and extract logits
                 teacher_outputs = self.teacher_model(images)
-
-                # Extract logits from output
-                if isinstance(teacher_outputs, dict):
-                    teacher_logits = teacher_outputs["all"]
-                else:
-                    teacher_logits = teacher_outputs
-
-                # Move to CPU and store
+                teacher_logits = self._get_teacher_logits(teacher_outputs)
                 teacher_logits_cpu = teacher_logits.cpu()
 
                 # Store each sample's logits

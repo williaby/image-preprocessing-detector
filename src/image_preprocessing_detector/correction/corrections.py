@@ -18,6 +18,9 @@ from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
 
+# Error message constant to avoid duplication
+_INVALID_IMAGE_ERROR = "Invalid or empty image provided"
+
 
 @dataclass
 class CorrectionResult:
@@ -82,7 +85,7 @@ class DeskewCorrector:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         abs_angle = abs(angle)
 
@@ -217,7 +220,7 @@ class ContrastEnhancer:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         # Guardrail: Skip if contrast is already good
         if score >= self.min_score:
@@ -320,7 +323,7 @@ class Sharpener:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         # Guardrail: Skip if image is already sharp
         if blur_score >= self.min_blur_score:

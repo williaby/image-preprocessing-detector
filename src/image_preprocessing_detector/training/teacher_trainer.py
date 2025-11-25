@@ -165,6 +165,62 @@ class TeacherTrainer:
             "learning_rate": [],
         }
 
+    def _forward_with_loss(
+        self,
+        images: torch.Tensor,
+        targets: dict[str, dict[str, torch.Tensor]],
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        """Forward pass through model and compute loss.
+
+        Args:
+            images: Input batch of images
+            targets: Ground truth targets
+
+        Returns:
+            Tuple of (scaled_loss, loss_dict)
+        """
+        if self.use_amp and self.scaler is not None:
+            with autocast():
+                predictions = self.model(images)
+                loss_dict = self.loss_fn(predictions, targets)
+                loss = loss_dict["total_loss"] / self.gradient_accumulation_steps
+        else:
+            predictions = self.model(images)
+            loss_dict = self.loss_fn(predictions, targets)
+            loss = loss_dict["total_loss"] / self.gradient_accumulation_steps
+        return loss, loss_dict
+
+    def _optimizer_step(self, batch_idx: int, loss: torch.Tensor) -> None:
+        """Perform backward pass and optimizer step with gradient accumulation.
+
+        Args:
+            batch_idx: Current batch index
+            loss: Scaled loss value
+        """
+        # Backward pass
+        if self.use_amp and self.scaler is not None:
+            self.scaler.scale(loss).backward()
+        else:
+            loss.backward()
+
+        # Gradient accumulation and optimization step
+        if (batch_idx + 1) % self.gradient_accumulation_steps == 0:
+            if self.use_amp and self.scaler is not None:
+                self.scaler.unscale_(self.optimizer)
+                torch.nn.utils.clip_grad_norm_(
+                    self.model.parameters(), self.gradient_clip_norm
+                )
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                torch.nn.utils.clip_grad_norm_(
+                    self.model.parameters(), self.gradient_clip_norm
+                )
+                self.optimizer.step()
+
+            self.optimizer.zero_grad()
+            self.global_step += 1
+
     def train_epoch(self, train_loader: DataLoader) -> dict[str, float]:
         """Train for one epoch.
 
@@ -200,43 +256,11 @@ class TeacherTrainer:
                 for head_name in issue_types
             }
 
-            # Forward pass with mixed precision
-            if self.use_amp and self.scaler is not None:
-                with autocast():
-                    predictions = self.model(images)
-                    loss_dict = self.loss_fn(predictions, targets)
-                    loss = loss_dict["total_loss"]
-                    loss = loss / self.gradient_accumulation_steps
-            else:
-                predictions = self.model(images)
-                loss_dict = self.loss_fn(predictions, targets)
-                loss = loss_dict["total_loss"]
-                loss = loss / self.gradient_accumulation_steps
+            # Forward pass and compute loss
+            loss, loss_dict = self._forward_with_loss(images, targets)
 
-            # Backward pass
-            if self.use_amp and self.scaler is not None:
-                self.scaler.scale(loss).backward()
-            else:
-                loss.backward()
-
-            # Gradient accumulation and optimization step
-            if (batch_idx + 1) % self.gradient_accumulation_steps == 0:
-                # Gradient clipping
-                if self.use_amp and self.scaler is not None:
-                    self.scaler.unscale_(self.optimizer)
-                    torch.nn.utils.clip_grad_norm_(
-                        self.model.parameters(), self.gradient_clip_norm
-                    )
-                    self.scaler.step(self.optimizer)
-                    self.scaler.update()
-                else:
-                    torch.nn.utils.clip_grad_norm_(
-                        self.model.parameters(), self.gradient_clip_norm
-                    )
-                    self.optimizer.step()
-
-                self.optimizer.zero_grad()
-                self.global_step += 1
+            # Backward pass and optimizer step
+            self._optimizer_step(batch_idx, loss)
 
             # Accumulate losses
             epoch_loss += loss.item() * self.gradient_accumulation_steps
@@ -427,6 +451,52 @@ class TeacherTrainer:
             f"Resumed from epoch {self.epoch}, best val loss: {self.best_val_loss:.4f}"
         )
 
+    def _log_per_head_metrics(
+        self, per_head_metrics: dict[str, dict[str, float]]
+    ) -> None:
+        """Log per-head validation metrics.
+
+        Args:
+            per_head_metrics: Dictionary of per-head losses
+        """
+        for head_name, metrics in per_head_metrics.items():
+            logger.info(f"  {head_name}: {metrics['loss']:.4f}")
+
+    def _update_scheduler(self, val_loss: float) -> None:
+        """Update learning rate scheduler.
+
+        Args:
+            val_loss: Validation loss for ReduceLROnPlateau
+        """
+        if not self.scheduler:
+            return
+        if isinstance(self.scheduler, ReduceLROnPlateau):
+            self.scheduler.step(val_loss)
+        else:
+            self.scheduler.step()
+
+    def _check_early_stopping(self, val_loss: float) -> bool:
+        """Check for improvement and update early stopping state.
+
+        Args:
+            val_loss: Current validation loss
+
+        Returns:
+            True if this is the best model so far
+        """
+        is_best = val_loss < self.best_val_loss
+        if is_best:
+            self.best_val_loss = val_loss
+            self.patience_counter = 0
+            logger.info(f"New best validation loss: {self.best_val_loss:.4f}")
+        else:
+            self.patience_counter += 1
+            logger.info(
+                f"No improvement. Patience: {self.patience_counter}/"
+                f"{self.early_stopping_patience}"
+            )
+        return is_best
+
     def train(self, train_loader: DataLoader, val_loader: DataLoader) -> dict[str, Any]:
         """Main training loop.
 
@@ -470,15 +540,10 @@ class TeacherTrainer:
             )
 
             # Log per-head metrics
-            for head_name, metrics in val_metrics["per_head_metrics"].items():
-                logger.info(f"  {head_name}: {metrics['loss']:.4f}")
+            self._log_per_head_metrics(val_metrics["per_head_metrics"])
 
             # Update learning rate
-            if self.scheduler:
-                if isinstance(self.scheduler, ReduceLROnPlateau):
-                    self.scheduler.step(val_metrics["loss"])
-                else:
-                    self.scheduler.step()
+            self._update_scheduler(val_metrics["loss"])
 
             current_lr = self.optimizer.param_groups[0]["lr"]
             logger.info(f"Learning Rate: {current_lr:.6f}")
@@ -494,17 +559,7 @@ class TeacherTrainer:
             self.training_history["learning_rate"].append(current_lr)
 
             # Early stopping check
-            is_best = val_metrics["loss"] < self.best_val_loss
-            if is_best:
-                self.best_val_loss = val_metrics["loss"]
-                self.patience_counter = 0
-                logger.info(f"New best validation loss: {self.best_val_loss:.4f}")
-            else:
-                self.patience_counter += 1
-                logger.info(
-                    f"No improvement. Patience: {self.patience_counter}/"
-                    f"{self.early_stopping_patience}"
-                )
+            is_best = self._check_early_stopping(val_metrics["loss"])
 
             # Save checkpoint
             if (epoch + 1) % self.save_interval_epochs == 0 or is_best:

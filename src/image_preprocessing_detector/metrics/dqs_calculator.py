@@ -452,6 +452,30 @@ class DQSCalibrator:
             return test_config, test_mae, True
         return best_config, best_mae, False
 
+    def _optimize_single_weight(
+        self,
+        samples: list[CalibrationSample],
+        config: DQSWeightConfig,
+        mae: float,
+        weight_name: str,
+    ) -> tuple[DQSWeightConfig, float, bool]:
+        """Optimize a single weight by trying both directions.
+
+        Returns:
+            Tuple of (new_config, new_mae, improved)
+        """
+        # Try increasing the weight
+        new_config, new_mae, inc_improved = self._try_weight_adjustment(
+            samples, config, mae, weight_name, self.learning_rate
+        )
+        if inc_improved:
+            return new_config, new_mae, True
+
+        # Try decreasing the weight
+        return self._try_weight_adjustment(
+            samples, config, mae, weight_name, -self.learning_rate
+        )
+
     def calibrate(
         self,
         samples: list[CalibrationSample],
@@ -485,19 +509,10 @@ class DQSCalibrator:
 
             # Coordinate descent: optimize one weight at a time
             for weight_name in weight_names:
-                # Try increasing the weight
-                best_config, best_mae, inc_improved = self._try_weight_adjustment(
-                    samples, best_config, best_mae, weight_name, self.learning_rate
+                best_config, best_mae, weight_improved = self._optimize_single_weight(
+                    samples, best_config, best_mae, weight_name
                 )
-                if inc_improved:
-                    improved = True
-                    continue
-
-                # Try decreasing the weight
-                best_config, best_mae, dec_improved = self._try_weight_adjustment(
-                    samples, best_config, best_mae, weight_name, -self.learning_rate
-                )
-                if dec_improved:
+                if weight_improved:
                     improved = True
 
             if verbose and iteration % 100 == 0:

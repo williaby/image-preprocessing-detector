@@ -21,6 +21,38 @@ from image_preprocessing_detector.utils import get_logger
 logger = get_logger(__name__)
 
 
+def _classify_lines(
+    lines: np.ndarray,
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
+    """Classify lines as horizontal or vertical based on angle.
+
+    Args:
+        lines: Array of lines from HoughLinesP
+
+    Returns:
+        Tuple of (horizontal_lines, vertical_lines)
+    """
+    horizontal_lines: list[np.ndarray] = []
+    vertical_lines: list[np.ndarray] = []
+
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        dx, dy = x2 - x1, y2 - y1
+        angle = abs(np.degrees(np.arctan2(dy, dx)))
+
+        # Normalize to [0, 90] range
+        if angle > 90:
+            angle = 180 - angle
+
+        # Classify as horizontal (0°), vertical (90°), or diagonal
+        if angle < ANGLE_TOLERANCE:
+            horizontal_lines.append(line[0])
+        elif angle > (90 - ANGLE_TOLERANCE):
+            vertical_lines.append(line[0])
+
+    return horizontal_lines, vertical_lines
+
+
 def detect_tables(
     image: np.ndarray,
     min_horizontal_lines: int = DEFAULT_MIN_HORIZONTAL_LINES,
@@ -86,28 +118,7 @@ def detect_tables(
         )
 
     # Classify lines as horizontal or vertical
-    horizontal_lines = []
-    vertical_lines = []
-
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-
-        # Calculate angle from horizontal using arctan2 (handles all cases)
-        # arctan2 returns angle in range [-180, 180], we want [0, 90]
-        dx, dy = x2 - x1, y2 - y1
-        angle = abs(np.degrees(np.arctan2(dy, dx)))
-
-        # Normalize to [0, 90] range (acute angle from horizontal)
-        if angle > 90:
-            angle = 180 - angle
-
-        # Classify as horizontal (0°), vertical (90°), or diagonal
-        if angle < ANGLE_TOLERANCE:
-            horizontal_lines.append(line[0])
-        elif angle > (90 - ANGLE_TOLERANCE):
-            vertical_lines.append(line[0])
-        # else: ignore lines that are neither horizontal nor vertical
-
+    horizontal_lines, vertical_lines = _classify_lines(lines)
     num_horizontal = len(horizontal_lines)
     num_vertical = len(vertical_lines)
 

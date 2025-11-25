@@ -16,6 +16,52 @@ from image_preprocessing_detector.utils import get_logger
 logger = get_logger(__name__)
 
 
+def _find_valley_boundaries(valleys: np.ndarray, min_column_gap: int) -> list[int]:
+    """Find column boundaries from valley regions.
+
+    Args:
+        valleys: Boolean array marking valley positions
+        min_column_gap: Minimum gap width to consider as column boundary
+
+    Returns:
+        List of boundary positions (centers of significant valleys)
+    """
+    boundaries: list[int] = []
+    in_valley = False
+    valley_start = 0
+
+    for x in range(len(valleys)):
+        if valleys[x] and not in_valley:
+            in_valley = True
+            valley_start = x
+        elif not valleys[x] and in_valley:
+            valley_width = x - valley_start
+            if valley_width >= min_column_gap:
+                boundary = valley_start + valley_width // 2
+                boundaries.append(int(boundary))
+            in_valley = False
+
+    return boundaries
+
+
+def _classify_column_type(num_columns: int) -> tuple[str, float]:
+    """Classify column type based on number of columns.
+
+    Args:
+        num_columns: Number of detected columns
+
+    Returns:
+        Tuple of (column_type, confidence)
+    """
+    if num_columns <= 1:
+        return "single_column", 0.9
+    if num_columns == 2:
+        return "multi_column", 0.85
+    if num_columns == 3:
+        return "three_column", 0.8
+    return "complex", 0.7
+
+
 def detect_column_count(
     image: np.ndarray,
     min_column_gap: int = DEFAULT_MIN_COLUMN_GAP,
@@ -64,24 +110,8 @@ def detect_column_count(
     # Find valleys (potential column gaps) using threshold
     valleys = h_projection < VALLEY_THRESHOLD
 
-    # Find continuous valley regions
-    column_boundaries = []
-    in_valley = False
-    valley_start = 0
-
-    for x in range(len(valleys)):
-        if valleys[x] and not in_valley:
-            # Start of valley
-            in_valley = True
-            valley_start = x
-        elif not valleys[x] and in_valley:
-            # End of valley
-            valley_width = x - valley_start
-            if valley_width >= min_column_gap:
-                # Record valley center as column boundary
-                boundary = valley_start + valley_width // 2
-                column_boundaries.append(int(boundary))
-            in_valley = False
+    # Find continuous valley regions using helper
+    column_boundaries = _find_valley_boundaries(valleys, min_column_gap)
 
     # Add edges as implicit boundaries
     all_boundaries = [0, *column_boundaries, binary.shape[1]]
@@ -96,19 +126,8 @@ def detect_column_count(
 
     num_columns = len(column_widths)
 
-    # Classify column type
-    if num_columns <= 1:
-        column_type = "single_column"
-        confidence = 0.9
-    elif num_columns == 2:
-        column_type = "multi_column"
-        confidence = 0.85
-    elif num_columns == 3:
-        column_type = "three_column"
-        confidence = 0.8
-    else:
-        column_type = "complex"
-        confidence = 0.7
+    # Classify column type using helper
+    column_type, confidence = _classify_column_type(num_columns)
 
     logger.debug(
         "Column detection complete",
