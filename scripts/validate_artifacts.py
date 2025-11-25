@@ -178,7 +178,9 @@ def _validate_model_files(path: Path, results: dict[str, Any]) -> None:
             {"file": model_file.name, "valid": valid, "message": message}
         )
         if not valid:
-            target = results["warnings"] if "SUSPICIOUS" in message else results["errors"]
+            target = (
+                results["warnings"] if "SUSPICIOUS" in message else results["errors"]
+            )
             target.append(message)
 
     print()
