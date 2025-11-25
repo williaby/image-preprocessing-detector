@@ -509,34 +509,45 @@ class DatasetSufficiencyMeasurer:
 
         return ". ".join(notes_parts)
 
+    def _count_parquet_samples(self, data_dir: Path) -> int:
+        """Count samples from Parquet files in data directory."""
+        if not data_dir.exists():
+            return 0
+        try:
+            import pyarrow.parquet as pq
+
+            total = 0
+            for split in ["train", "validation", "test"]:
+                parquet_file = data_dir / f"{split}.parquet"
+                if parquet_file.exists():
+                    total += pq.read_table(str(parquet_file)).num_rows
+            return total
+        except Exception as e:
+            logger.warning(f"Error reading Parquet files: {e}")
+            return 0
+
+    def _count_hf_dataset_info(self, path: Path) -> int:
+        """Count samples from HuggingFace dataset_info.json."""
+        info_path = path / DATASET_INFO_JSON
+        if not info_path.exists():
+            return 0
+        with open(info_path) as f:
+            info = json.load(f)
+            return sum(s.get("num_examples", 0) for s in info.get("splits", {}).values())
+
     def _count_iam_handwriting_samples(self, iam_path: Path) -> int:
         """Count IAM handwriting samples with multiple fallback strategies."""
         if not iam_path.exists():
             return 0
 
-        total = 0
-        data_dir = iam_path / "data"
-
         # Strategy 1: Count Parquet files
-        if data_dir.exists():
-            try:
-                import pyarrow.parquet as pq
-
-                for split in ["train", "validation", "test"]:
-                    parquet_file = data_dir / f"{split}.parquet"
-                    if parquet_file.exists():
-                        table = pq.read_table(str(parquet_file))
-                        total += table.num_rows
-                if total > 0:
-                    return total
-            except Exception as e:
-                logger.warning(f"Error reading Parquet files: {e}")
+        total = self._count_parquet_samples(iam_path / "data")
+        if total > 0:
+            return total
 
         # Strategy 2: Count split directories
         for split in ["train", "validation", "test"]:
-            split_dir = iam_path / split
-            total += self._count_image_files(split_dir)
-
+            total += self._count_image_files(iam_path / split)
         if total > 0:
             return total
 
@@ -546,15 +557,7 @@ class DatasetSufficiencyMeasurer:
             return total
 
         # Strategy 4: Check HuggingFace dataset_info.json
-        if (iam_path / DATASET_INFO_JSON).exists():
-            with open(iam_path / DATASET_INFO_JSON) as f:
-                info = json.load(f)
-                return sum(
-                    split_info.get("num_examples", 0)
-                    for split_info in info.get("splits", {}).values()
-                )
-
-        return 0
+        return self._count_hf_dataset_info(iam_path)
 
     def _load_dqs_routing_labels(
         self, dqs_routing_path: Path
@@ -694,26 +697,50 @@ class DatasetSufficiencyMeasurer:
         logger.info("Sufficiency measurement complete.")
         return self.report
 
+    def _add_dimension_requirement(
+        self,
+        fr_id: str,
+        name: str,
+        total_samples: int,
+        has_data: bool,
+        missing_note: str,
+    ) -> None:
+        """Add a quality dimension requirement."""
+        notes = (
+            f"{total_samples} samples with weak supervision"
+            if has_data
+            else missing_note
+        )
+        status = (
+            self._determine_sufficiency_status(total_samples, 50000)
+            if has_data
+            else SufficiencyStatus.CRITICAL_GAP
+        )
+        self._add_fr_requirement(
+            fr_id,
+            name,
+            50000,
+            total_samples if has_data else 0,
+            status,
+            notes,
+            cost_estimate=0.0 if has_data else 2500.0,
+        )
+
     def _measure_fr_2_3_learned_quality(self) -> None:
         """Measure FR-2.3: 3-dimension learned quality assessment."""
         logger.info("Measuring FR-2.3: Learned Quality Assessment...")
 
-        # Check Phase 2 IQA dataset
         phase2_iqa_path = self.inventory.phase2_iqa_path
         if not phase2_iqa_path.exists():
             logger.warning(f"Phase 2 IQA dataset not found at {phase2_iqa_path}")
             self._add_fr_requirement(
-                "FR-2.3.1",
-                "Overall Quality Labels",
-                50000,
-                0,
+                "FR-2.3.1", "Overall Quality Labels", 50000, 0,
                 SufficiencyStatus.CRITICAL_GAP,
                 "Phase 2 IQA dataset missing - need 50k samples with weak supervision (BRISQUE/NIQE)",
                 cost_estimate=0.0,
             )
             return
 
-        # Analyze quality labels from train/val/test splits
         labels_paths = [
             phase2_iqa_path / "train" / LABELS_JSON,
             phase2_iqa_path / "val" / LABELS_JSON,
@@ -725,70 +752,26 @@ class DatasetSufficiencyMeasurer:
 
         # FR-2.3.1: Overall Quality
         self._add_quality_requirement(
-            "FR-2.3.1",
-            "Overall Quality Labels",
-            total_samples,
-            has_overall_quality,
+            "FR-2.3.1", "Overall Quality Labels", total_samples, has_overall_quality,
             f"Phase 2: {total_samples} samples with weak supervision (BRISQUE/NIQE). "
             "Phase 3: Need DIQA-5000 (5k ground-truth) - PENDING RELEASE Sept 2025",
         )
 
-        # FR-2.3.2: Sharpness
-        sharpness_notes = (
-            f"{total_samples} samples with weak supervision"
-            if has_sharpness
-            else "Need Laplacian variance weak supervision + DIQA-5000 sharpness ground-truth"
+        # FR-2.3.2 and FR-2.3.3: Other dimensions
+        self._add_dimension_requirement(
+            "FR-2.3.2", "Sharpness Labels", total_samples, has_sharpness,
+            "Need Laplacian variance weak supervision + DIQA-5000 sharpness ground-truth",
         )
-        status = (
-            self._determine_sufficiency_status(total_samples, 50000)
-            if has_sharpness
-            else SufficiencyStatus.CRITICAL_GAP
-        )
-        self._add_fr_requirement(
-            "FR-2.3.2",
-            "Sharpness Labels",
-            50000,
-            total_samples if has_sharpness else 0,
-            status,
-            sharpness_notes,
-            cost_estimate=0.0 if has_sharpness else 2500.0,
-        )
-
-        # FR-2.3.3: Color Fidelity
-        color_notes = (
-            f"{total_samples} samples with weak supervision"
-            if has_color_fidelity
-            else "Need histogram analysis weak supervision + DIQA-5000 color ground-truth"
-        )
-        status = (
-            self._determine_sufficiency_status(total_samples, 50000)
-            if has_color_fidelity
-            else SufficiencyStatus.CRITICAL_GAP
-        )
-        self._add_fr_requirement(
-            "FR-2.3.3",
-            "Color Fidelity Labels",
-            50000,
-            total_samples if has_color_fidelity else 0,
-            status,
-            color_notes,
-            cost_estimate=0.0 if has_color_fidelity else 2500.0,
+        self._add_dimension_requirement(
+            "FR-2.3.3", "Color Fidelity Labels", total_samples, has_color_fidelity,
+            "Need histogram analysis weak supervision + DIQA-5000 color ground-truth",
         )
 
         # Store dimension coverage
         self.report.quality_dimension_coverage = {
-            "overall_quality": {
-                "current": total_samples if has_overall_quality else 0,
-                "required": 50000,
-            },
-            "sharpness": {
-                "current": total_samples if has_sharpness else 0,
-                "required": 50000,
-            },
-            "color_fidelity": {
-                "current": total_samples if has_color_fidelity else 0,
-                "required": 50000,
-            },
+            "overall_quality": {"current": total_samples if has_overall_quality else 0, "required": 50000},
+            "sharpness": {"current": total_samples if has_sharpness else 0, "required": 50000},
+            "color_fidelity": {"current": total_samples if has_color_fidelity else 0, "required": 50000},
         }
 
     def _measure_fr_4_2_layout_elements(self) -> None:
@@ -1325,42 +1308,36 @@ def _write_executive_summary(f, report: SufficiencyReport) -> None:
     _write_data_composition(f, report)
 
 
+def _count_synthetic_categories(report: SufficiencyReport) -> tuple[int, int, int]:
+    """Count FRs by synthetic data category."""
+    synthetic_only = sum(
+        1 for req in report.fr_requirements.values()
+        if req.synthetic_count > 0 and req.real_world_count == 0
+    )
+    high_synthetic = sum(
+        1 for req in report.fr_requirements.values()
+        if req.current_count > 0
+        and (req.synthetic_count / req.current_count) > 0.5
+        and req.real_world_count > 0
+    )
+    real_dominant = sum(
+        1 for req in report.fr_requirements.values()
+        if req.current_count > 0
+        and (req.real_world_count / req.current_count) >= 0.8
+    )
+    return synthetic_only, high_synthetic, real_dominant
+
+
 def _write_data_composition(f, report: SufficiencyReport) -> None:
     """Write data composition analysis (real-world vs synthetic)."""
     total_real = sum(req.real_world_count for req in report.fr_requirements.values())
-    total_synthetic = sum(
-        req.synthetic_count for req in report.fr_requirements.values()
-    )
+    total_synthetic = sum(req.synthetic_count for req in report.fr_requirements.values())
     total_samples = total_real + total_synthetic
 
     real_pct = (total_real / total_samples * 100) if total_samples > 0 else 0
     synthetic_pct = (total_synthetic / total_samples * 100) if total_samples > 0 else 0
 
-    # Count FRs by synthetic ratio
-    synthetic_only = len(
-        [
-            req
-            for req in report.fr_requirements.values()
-            if req.synthetic_count > 0 and req.real_world_count == 0
-        ]
-    )
-    high_synthetic = len(
-        [
-            req
-            for req in report.fr_requirements.values()
-            if req.current_count > 0
-            and (req.synthetic_count / req.current_count) > 0.5
-            and req.real_world_count > 0
-        ]
-    )
-    real_dominant = len(
-        [
-            req
-            for req in report.fr_requirements.values()
-            if req.current_count > 0
-            and (req.real_world_count / req.current_count) >= 0.8
-        ]
-    )
+    synthetic_only, high_synthetic, real_dominant = _count_synthetic_categories(report)
 
     f.write("### Data Composition\n\n")
     f.write(f"- **Total Samples**: {total_samples:,}\n")
@@ -1368,11 +1345,32 @@ def _write_data_composition(f, report: SufficiencyReport) -> None:
     f.write(f"  - **Synthetic**: {total_synthetic:,} ({synthetic_pct:.1f}%)\n\n")
 
     f.write("### Synthetic Data Analysis\n\n")
-    f.write(
-        f"- 🔴 **Synthetic Only**: {synthetic_only} FRs (100% synthetic, 0% real-world)\n"
-    )
+    f.write(f"- 🔴 **Synthetic Only**: {synthetic_only} FRs (100% synthetic, 0% real-world)\n")
     f.write(f"- ⚠️ **High Synthetic Ratio**: {high_synthetic} FRs (>50% synthetic)\n")
     f.write(f"- ✅ **Real-World Dominant**: {real_dominant} FRs (≥80% real-world)\n\n")
+
+
+def _categorize_by_real_world_coverage(requirements) -> tuple[list, list, list]:
+    """Categorize requirements by real-world data coverage percentage."""
+    sufficient, partial, critical = [], [], []
+    for req in requirements:
+        coverage = (req.real_world_count / req.min_samples * 100) if req.min_samples > 0 else 0
+        if coverage >= 100:
+            sufficient.append(req)
+        elif coverage >= 50:
+            partial.append(req)
+        else:
+            critical.append(req)
+    return sufficient, partial, critical
+
+
+def _categorize_by_combined_status(requirements) -> tuple[list, list, list]:
+    """Categorize requirements by combined sufficiency status."""
+    return (
+        [req for req in requirements if req.status == SufficiencyStatus.SUFFICIENT],
+        [req for req in requirements if req.status == SufficiencyStatus.PARTIAL],
+        [req for req in requirements if req.status == SufficiencyStatus.CRITICAL_GAP],
+    )
 
 
 def _categorize_requirements_by_status(
@@ -1384,45 +1382,11 @@ def _categorize_requirements_by_status(
         tuple: (real_world_sufficient, real_world_partial, real_world_critical,
                 combined_sufficient, combined_partial, combined_critical)
     """
-    real_world_sufficient = []
-    real_world_partial = []
-    real_world_critical = []
+    reqs = list(report.fr_requirements.values())
+    rw_sufficient, rw_partial, rw_critical = _categorize_by_real_world_coverage(reqs)
+    cb_sufficient, cb_partial, cb_critical = _categorize_by_combined_status(reqs)
 
-    for req in report.fr_requirements.values():
-        real_coverage_pct = (
-            (req.real_world_count / req.min_samples * 100) if req.min_samples > 0 else 0
-        )
-        if real_coverage_pct >= 100:
-            real_world_sufficient.append(req)
-        elif real_coverage_pct >= 50:
-            real_world_partial.append(req)
-        else:
-            real_world_critical.append(req)
-
-    combined_critical = [
-        req
-        for req in report.fr_requirements.values()
-        if req.status == SufficiencyStatus.CRITICAL_GAP
-    ]
-    combined_partial = [
-        req
-        for req in report.fr_requirements.values()
-        if req.status == SufficiencyStatus.PARTIAL
-    ]
-    combined_sufficient = [
-        req
-        for req in report.fr_requirements.values()
-        if req.status == SufficiencyStatus.SUFFICIENT
-    ]
-
-    return (
-        real_world_sufficient,
-        real_world_partial,
-        real_world_critical,
-        combined_sufficient,
-        combined_partial,
-        combined_critical,
-    )
+    return rw_sufficient, rw_partial, rw_critical, cb_sufficient, cb_partial, cb_critical
 
 
 def _write_two_part_analysis(f, report: SufficiencyReport) -> None:

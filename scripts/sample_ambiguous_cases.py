@@ -142,85 +142,37 @@ def calculate_composite_priority(labels_data: dict[str, Any]) -> float:
     return float(priority)
 
 
-def sample_ambiguous_cases(
-    input_dir: Path,
-    output_dir: Path,
-    num_samples: int = 2000,
-    confidence_threshold: float = 0.85,
-) -> list[dict[str, Any]]:
-    """Sample ambiguous cases for manual review.
+def _process_label_file(
+    label_file: Path, confidence_threshold: float
+) -> dict[str, Any] | None:
+    """Process a single label file and return scored data if below threshold."""
+    try:
+        labels_data = load_weak_supervision_labels(label_file)
+        uncertainty = calculate_uncertainty(labels_data)
+        mean_confidence = 1.0 - uncertainty
 
-    Args:
-        input_dir: Directory containing weak supervision labels
-        output_dir: Directory to save sampled annotation queue
-        num_samples: Number of images to sample (default: 2000)
-        confidence_threshold: Confidence threshold for filtering (default: 0.85)
+        if mean_confidence < confidence_threshold:
+            return {
+                "label_file": str(label_file),
+                "image_path": labels_data["image_path"],
+                "uncertainty": uncertainty,
+                "edge_case_score": calculate_edge_case_score(labels_data),
+                "priority": calculate_composite_priority(labels_data),
+                "mean_confidence": mean_confidence,
+                "labels": labels_data["labels"],
+                "quality_scores": labels_data.get("quality_scores", {}),
+            }
+    except Exception as e:
+        console.print(f"[red]Error processing {label_file}: {e}[/red]")
+    return None
 
-    Returns:
-        List of sampled label dictionaries with priority scores
-    """
-    console.print("\n[bold cyan]Sampling Ambiguous Cases for Manual Review[/bold cyan]")
-    console.print(f"Input: {input_dir}")
-    console.print(f"Output: {output_dir}")
-    console.print(f"Target samples: {num_samples}")
-    console.print(f"Confidence threshold: {confidence_threshold}\n")
 
-    # Load all weak supervision labels
-    label_files = sorted(input_dir.glob("*_labels.json"))
-    console.print(f"Found {len(label_files)} label files")
-
-    if not label_files:
-        console.print("[red]No label files found![/red]")
-        return []
-
-    # Calculate priority scores
-    console.print("\n[yellow]Calculating priority scores...[/yellow]")
-    scored_labels = []
-
-    for label_file in track(label_files, description="Processing labels"):
-        try:
-            labels_data = load_weak_supervision_labels(label_file)
-
-            # Calculate uncertainty and priority
-            uncertainty = calculate_uncertainty(labels_data)
-            edge_case = calculate_edge_case_score(labels_data)
-            priority = calculate_composite_priority(labels_data)
-
-            # Check if below confidence threshold
-            mean_confidence = 1.0 - uncertainty
-            if mean_confidence < confidence_threshold:
-                scored_labels.append(
-                    {
-                        "label_file": str(label_file),
-                        "image_path": labels_data["image_path"],
-                        "uncertainty": uncertainty,
-                        "edge_case_score": edge_case,
-                        "priority": priority,
-                        "mean_confidence": mean_confidence,
-                        "labels": labels_data["labels"],
-                        "quality_scores": labels_data.get("quality_scores", {}),
-                    }
-                )
-        except Exception as e:
-            console.print(f"[red]Error processing {label_file}: {e}[/red]")
-            continue
-
-    console.print(f"\nFiltered to {len(scored_labels)} low-confidence images")
-
-    # Sort by priority (highest first)
-    scored_labels.sort(key=lambda x: x["priority"], reverse=True)
-
-    # Sample top N
-    sampled = scored_labels[:num_samples]
-    console.print(f"Sampled {len(sampled)} images for annotation\n")
-
-    if not sampled:
-        console.print(
-            "[red]No images met the sampling criteria; nothing to copy or summarize.[/red]"
-        )
-        return []
-
-    # Display statistics
+def _display_sampling_statistics(
+    label_files: list[Path],
+    scored_labels: list[dict[str, Any]],
+    sampled: list[dict[str, Any]],
+) -> None:
+    """Display sampling statistics table."""
     table = Table(title="Sampling Statistics")
     table.add_column("Metric", style="cyan")
     table.add_column("Value", style="magenta")
@@ -239,17 +191,16 @@ def sample_ambiguous_cases(
 
     console.print(table)
 
-    # Save annotation queue
-    output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy sampled label files to annotation queue
-    console.print(f"\n[yellow]Copying sampled labels to {output_dir}...[/yellow]")
-    for item in track(sampled, description="Copying files"):
-        src_file = Path(item["label_file"])
-        dst_file = output_dir / src_file.name
-        shutil.copy(src_file, dst_file)
-
-    # Save sampling metadata
+def _save_sampling_metadata(
+    output_dir: Path,
+    label_files: list[Path],
+    scored_labels: list[dict[str, Any]],
+    sampled: list[dict[str, Any]],
+    num_samples: int,
+    confidence_threshold: float,
+) -> None:
+    """Save sampling metadata to JSON file."""
     metadata_file = output_dir / "sampling_metadata.json"
     metadata = {
         "total_labels": len(label_files),
@@ -283,6 +234,68 @@ def sample_ambiguous_cases(
         json.dump(metadata, f, indent=2)
 
     console.print(f"[green]✅ Saved sampling metadata to {metadata_file}[/green]\n")
+
+
+def sample_ambiguous_cases(
+    input_dir: Path,
+    output_dir: Path,
+    num_samples: int = 2000,
+    confidence_threshold: float = 0.85,
+) -> list[dict[str, Any]]:
+    """Sample ambiguous cases for manual review.
+
+    Args:
+        input_dir: Directory containing weak supervision labels
+        output_dir: Directory to save sampled annotation queue
+        num_samples: Number of images to sample (default: 2000)
+        confidence_threshold: Confidence threshold for filtering (default: 0.85)
+
+    Returns:
+        List of sampled label dictionaries with priority scores
+    """
+    console.print("\n[bold cyan]Sampling Ambiguous Cases for Manual Review[/bold cyan]")
+    console.print(f"Input: {input_dir}")
+    console.print(f"Output: {output_dir}")
+    console.print(f"Target samples: {num_samples}")
+    console.print(f"Confidence threshold: {confidence_threshold}\n")
+
+    label_files = sorted(input_dir.glob("*_labels.json"))
+    console.print(f"Found {len(label_files)} label files")
+
+    if not label_files:
+        console.print("[red]No label files found![/red]")
+        return []
+
+    # Process labels and filter by confidence
+    console.print("\n[yellow]Calculating priority scores...[/yellow]")
+    scored_labels = [
+        result
+        for label_file in track(label_files, description="Processing labels")
+        if (result := _process_label_file(label_file, confidence_threshold)) is not None
+    ]
+
+    console.print(f"\nFiltered to {len(scored_labels)} low-confidence images")
+    scored_labels.sort(key=lambda x: x["priority"], reverse=True)
+    sampled = scored_labels[:num_samples]
+    console.print(f"Sampled {len(sampled)} images for annotation\n")
+
+    if not sampled:
+        console.print(
+            "[red]No images met the sampling criteria; nothing to copy or summarize.[/red]"
+        )
+        return []
+
+    _display_sampling_statistics(label_files, scored_labels, sampled)
+
+    # Copy files and save metadata
+    output_dir.mkdir(parents=True, exist_ok=True)
+    console.print(f"\n[yellow]Copying sampled labels to {output_dir}...[/yellow]")
+    for item in track(sampled, description="Copying files"):
+        shutil.copy(Path(item["label_file"]), output_dir / Path(item["label_file"]).name)
+
+    _save_sampling_metadata(
+        output_dir, label_files, scored_labels, sampled, num_samples, confidence_threshold
+    )
 
     return sampled
 

@@ -158,89 +158,61 @@ def calculate_presence_flag_metrics(
     }
 
 
-def validate_layout_lite(
-    test_dir: Path, labels_file: Path, output_file: Path | None = None
-) -> dict[str, Any]:
-    """
-    Run layout-lite validation on test dataset.
+FLAG_NAMES = [
+    "has_tables",
+    "has_figures",
+    "has_dense_math",
+    "has_handwriting",
+    "fuzzy_scan",
+    "watermark",
+    "colorful_background",
+]
 
-    Args:
-        test_dir: Directory containing test PDFs
-        labels_file: Path to ground truth labels JSON
-        output_file: Optional path to save validation results
 
-    Returns:
-        Validation results dictionary
-    """
-    logger.info("Starting layout-lite validation", test_dir=str(test_dir))
+def _collect_page_flags(
+    page_labels: dict[str, Any],
+    page_preds: dict[str, Any],
+    flag_data: dict[str, dict[str, list[bool]]],
+) -> None:
+    """Collect ground truth and prediction flags for a single page."""
+    for flag_name in FLAG_NAMES:
+        flag_data[flag_name]["y_true"].append(page_labels.get(flag_name, False))
+        flag_data[flag_name]["y_pred"].append(page_preds.get(flag_name, False))
 
-    # Load ground truth
-    ground_truth = load_ground_truth(labels_file)
-    logger.info("Loaded ground truth labels", num_documents=len(ground_truth))
 
-    # Initialize analyzer
-    analyzer = LayoutLiteAnalyzer()
+def _process_document(
+    doc_name: str,
+    doc_labels: dict[str, Any],
+    test_dir: Path,
+    analyzer: LayoutLiteAnalyzer,
+    flag_data: dict[str, dict[str, list[bool]]],
+) -> None:
+    """Process a single document and collect flag data."""
+    pdf_path = test_dir / doc_name
 
-    # Collect predictions and ground truth per flag
-    flag_names = [
-        "has_tables",
-        "has_figures",
-        "has_dense_math",
-        "has_handwriting",
-        "fuzzy_scan",
-        "watermark",
-        "colorful_background",
-    ]
+    if not pdf_path.exists():
+        logger.warning("Test file not found", path=str(pdf_path))
+        return
 
-    flag_data = {flag: {"y_true": [], "y_pred": []} for flag in flag_names}
+    logger.info("Processing document", document=doc_name)
+    predictions = analyze_layout_lite(pdf_path, analyzer)
 
-    # Process each document
-    for doc_name, doc_labels in ground_truth.items():
-        pdf_path = test_dir / doc_name
-
-        if not pdf_path.exists():
-            logger.warning("Test file not found", path=str(pdf_path))
+    for page_key, page_labels in doc_labels.items():
+        if page_key not in predictions:
+            logger.warning("Missing predictions for page", document=doc_name, page=page_key)
             continue
+        _collect_page_flags(page_labels, predictions[page_key], flag_data)
 
-        logger.info("Processing document", document=doc_name)
 
-        # Analyze document
-        predictions = analyze_layout_lite(pdf_path, analyzer)
-
-        # Collect per-page flags
-        for page_key, page_labels in doc_labels.items():
-            if page_key not in predictions:
-                logger.warning(
-                    "Missing predictions for page",
-                    document=doc_name,
-                    page=page_key,
-                )
-                continue
-
-            page_preds = predictions[page_key]
-
-            for flag_name in flag_names:
-                gt_value = page_labels.get(flag_name, False)
-                pred_value = page_preds.get(flag_name, False)
-
-                flag_data[flag_name]["y_true"].append(gt_value)
-                flag_data[flag_name]["y_pred"].append(pred_value)
-
-    # Calculate metrics per flag
-    results = {
-        "num_documents": len(ground_truth),
-        "num_pages": len(flag_data["has_tables"]["y_true"]),
-        "target_f1": 0.85,
-        "flags": {},
-    }
-
-    for flag_name in flag_names:
+def _calculate_flag_results(flag_data: dict[str, dict[str, list[bool]]]) -> dict[str, Any]:
+    """Calculate metrics for all flags."""
+    flag_results = {}
+    for flag_name in FLAG_NAMES:
         y_true = flag_data[flag_name]["y_true"]
         y_pred = flag_data[flag_name]["y_pred"]
-
         metrics = calculate_presence_flag_metrics(y_true, y_pred, flag_name)
 
-        results["flags"][flag_name] = {
+        flag_results[flag_name] = {
             "precision": metrics["precision"],
             "recall": metrics["recall"],
             "f1": metrics["f1"],
@@ -257,17 +229,48 @@ def validate_layout_lite(
             recall=f"{metrics['recall']:.3f}",
             target_met=metrics["f1"] >= 0.85,
         )
+    return flag_results
 
-    # Overall metrics
-    all_f1_scores = [
-        metrics["f1"] for metrics in results["flags"].values() if metrics["f1"] > 0
-    ]
-    results["mean_f1"] = float(np.mean(all_f1_scores)) if all_f1_scores else 0.0
-    results["all_targets_met"] = all(
-        flag_data["target_met"] for flag_data in results["flags"].values()
-    )
 
-    # Save results
+def validate_layout_lite(
+    test_dir: Path, labels_file: Path, output_file: Path | None = None
+) -> dict[str, Any]:
+    """
+    Run layout-lite validation on test dataset.
+
+    Args:
+        test_dir: Directory containing test PDFs
+        labels_file: Path to ground truth labels JSON
+        output_file: Optional path to save validation results
+
+    Returns:
+        Validation results dictionary
+    """
+    logger.info("Starting layout-lite validation", test_dir=str(test_dir))
+
+    ground_truth = load_ground_truth(labels_file)
+    logger.info("Loaded ground truth labels", num_documents=len(ground_truth))
+
+    analyzer = LayoutLiteAnalyzer()
+    flag_data = {flag: {"y_true": [], "y_pred": []} for flag in FLAG_NAMES}
+
+    # Process each document using helper
+    for doc_name, doc_labels in ground_truth.items():
+        _process_document(doc_name, doc_labels, test_dir, analyzer, flag_data)
+
+    # Calculate metrics using helper
+    flag_results = _calculate_flag_results(flag_data)
+
+    all_f1_scores = [m["f1"] for m in flag_results.values() if m["f1"] > 0]
+    results = {
+        "num_documents": len(ground_truth),
+        "num_pages": len(flag_data["has_tables"]["y_true"]),
+        "target_f1": 0.85,
+        "flags": flag_results,
+        "mean_f1": float(np.mean(all_f1_scores)) if all_f1_scores else 0.0,
+        "all_targets_met": all(f["target_met"] for f in flag_results.values()),
+    }
+
     if output_file:
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with open(output_file, "w", encoding="utf-8") as f:

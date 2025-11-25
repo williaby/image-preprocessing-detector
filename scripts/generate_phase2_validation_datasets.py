@@ -200,6 +200,26 @@ class Phase2DatasetGenerator:
             "total_documents": 50,
         }
 
+    def _get_degradation_config(
+        self, index: int
+    ) -> tuple[list[Path], float, str]:
+        """Get source images, expected accuracy, and degradation level for an index."""
+        if index < 10:
+            source = [img for img in self.images if "clean" in str(img)]
+            return source, random.uniform(0.95, 0.99), "clean"  # nosec B311
+        if index < 25:
+            source = [
+                img for img in self.images
+                if "blur_k5" in str(img) or "contrast" in str(img)
+            ]
+            return source, random.uniform(0.75, 0.90), "moderate"  # nosec B311
+        # Heavy degradation
+        source = [
+            img for img in self.images + self.gradient_images
+            if "blur_k" in str(img) or "skew" in str(img)
+        ]
+        return source, random.uniform(0.40, 0.70), "heavy"  # nosec B311
+
     def generate_dqs_correlation_dataset(self) -> dict[str, Any]:
         """Generate 50 documents with synthetic OCR accuracy."""
         logger.info("Generating DQS correlation dataset")
@@ -209,44 +229,17 @@ class Phase2DatasetGenerator:
 
         ocr_accuracy = {}
 
-        # Generate 50 images with varying quality levels
         for i in range(50):
-            # Select image based on degradation level
-            if i < 10:
-                # Clean images (high OCR accuracy)
-                source = [img for img in self.images if "clean" in str(img)]
-                expected_accuracy = random.uniform(0.95, 0.99)  # nosec B311
-                source_degradation = "clean"
-            elif i < 25:
-                # Moderate degradation
-                source = [
-                    img
-                    for img in self.images
-                    if "blur_k5" in str(img) or "contrast" in str(img)
-                ]
-                expected_accuracy = random.uniform(0.75, 0.90)  # nosec B311
-                source_degradation = "moderate"
-            else:
-                # Heavy degradation
-                source = [
-                    img
-                    for img in self.images + self.gradient_images
-                    if "blur_k" in str(img) or "skew" in str(img)
-                ]
-                expected_accuracy = random.uniform(0.40, 0.70)  # nosec B311
-                source_degradation = "heavy"
-
+            source, expected_accuracy, source_degradation = self._get_degradation_config(i)
             if not source:
                 source = self.images
 
             source_img = random.choice(source)  # nosec B311
             img_path = dataset_dir / f"dqs_doc_{i:03d}.png"
 
-            # Copy image
             img = cv2.imread(str(source_img))
             cv2.imwrite(str(img_path), img)
 
-            # Synthetic OCR accuracy (inversely correlated with degradation)
             word_accuracy_delta = random.uniform(0.02, 0.05)  # nosec B311
             ocr_accuracy[img_path.name] = {
                 "character_accuracy": expected_accuracy,
@@ -254,7 +247,6 @@ class Phase2DatasetGenerator:
                 "source_degradation": source_degradation,
             }
 
-        # Save OCR accuracy labels
         labels_file = dataset_dir / "ocr_accuracy.json"
         with open(labels_file, "w", encoding="utf-8") as f:
             json.dump(ocr_accuracy, f, indent=2)

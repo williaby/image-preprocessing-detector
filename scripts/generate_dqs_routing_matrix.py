@@ -296,6 +296,15 @@ def classify_degradation(
     return "high"  # High degradation (low quality)
 
 
+def _score_metric(value: int, high_threshold: int, low_threshold: int) -> int:
+    """Score a single metric based on thresholds."""
+    if value > high_threshold:
+        return 2
+    if value > low_threshold:
+        return 1
+    return 0
+
+
 def classify_structural_complexity(metrics: dict[str, int]) -> str:
     """
     Classify structural complexity level.
@@ -309,33 +318,13 @@ def classify_structural_complexity(metrics: dict[str, int]) -> str:
     Returns:
         "low", "medium", or "high" complexity
     """
-    complexity_score = 0
+    complexity_score = (
+        _score_metric(metrics["column_count"], 2, 1)
+        + _score_metric(metrics["table_count"], 2, 0)
+        + _score_metric(metrics["formula_count"], 5, 0)
+        + _score_metric(metrics["picture_count"], 3, 0)
+    )
 
-    # Column count
-    if metrics["column_count"] > 2:
-        complexity_score += 2
-    elif metrics["column_count"] > 1:
-        complexity_score += 1
-
-    # Tables
-    if metrics["table_count"] > 2:
-        complexity_score += 2
-    elif metrics["table_count"] > 0:
-        complexity_score += 1
-
-    # Formulas
-    if metrics["formula_count"] > 5:
-        complexity_score += 2
-    elif metrics["formula_count"] > 0:
-        complexity_score += 1
-
-    # Figures
-    if metrics["picture_count"] > 3:
-        complexity_score += 2
-    elif metrics["picture_count"] > 0:
-        complexity_score += 1
-
-    # Classify based on total score
     if complexity_score >= 5:
         return "high"
     if complexity_score >= 2:

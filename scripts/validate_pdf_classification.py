@@ -48,6 +48,55 @@ def load_ground_truth(labels_file: Path) -> dict[str, list[str]]:
         return json.load(f)
 
 
+def _find_expected_type(
+    filename: str, ground_truth: dict[str, list[str]]
+) -> str | None:
+    """Find expected PDF type from ground truth labels."""
+    for gt_type, file_names in ground_truth.items():
+        if filename in file_names:
+            return gt_type
+    return None
+
+
+def _process_single_pdf(
+    pdf_file: Path,
+    ground_truth: dict[str, list[str]],
+    results: dict[str, Any],
+    verbose: bool,
+) -> None:
+    """Process a single PDF file and update results."""
+    try:
+        pdf_type = classify_pdf_type(pdf_file)
+        results["classifications"][pdf_type.value] += 1
+
+        expected_type = _find_expected_type(pdf_file.name, ground_truth)
+        is_correct = None
+
+        if expected_type:
+            is_correct = pdf_type.value == expected_type
+            results["correct" if is_correct else "incorrect"] += 1
+
+        results["details"].append({
+            "file": pdf_file.name,
+            "predicted": pdf_type.value,
+            "expected": expected_type,
+            "correct": is_correct,
+        })
+
+        if verbose:
+            status = "✓" if is_correct else "✗" if is_correct is False else ""
+            print(
+                f"{status:2} {pdf_file.name:40} → {pdf_type.value:15} "
+                f"(expected: {expected_type or 'N/A'})"
+            )
+
+    except Exception as e:
+        error_msg = f"Error processing {pdf_file.name}: {e!s}"
+        results["errors"].append(error_msg)
+        if verbose:
+            print(f"✗  {error_msg}")
+
+
 def validate_classifications(
     pdf_dir: Path,
     labels_file: Path | None = None,
@@ -64,7 +113,7 @@ def validate_classifications(
     Returns:
         Dictionary with validation results and metrics
     """
-    results = {
+    results: dict[str, Any] = {
         "total_pdfs": 0,
         "classifications": defaultdict(int),
         "correct": 0,
@@ -90,56 +139,10 @@ def validate_classifications(
     print(f"\nValidating {len(pdf_files)} PDF files...")
     print("-" * 80)
 
-    # Process each PDF
+    # Process each PDF using helper
     for pdf_file in sorted(pdf_files):
         results["total_pdfs"] += 1
-
-        try:
-            # Classify PDF
-            pdf_type = classify_pdf_type(pdf_file)
-            results["classifications"][pdf_type.value] += 1
-
-            # Check against ground truth if available
-            is_correct = None
-            expected_type = None
-            if ground_truth:
-                # Find expected type
-                for gt_type, file_names in ground_truth.items():
-                    if pdf_file.name in file_names:
-                        expected_type = gt_type
-                        break
-
-                if expected_type:
-                    is_correct = pdf_type.value == expected_type
-                    if is_correct:
-                        results["correct"] += 1
-                    else:
-                        results["incorrect"] += 1
-
-            # Record details
-            detail = {
-                "file": pdf_file.name,
-                "predicted": pdf_type.value,
-                "expected": expected_type,
-                "correct": is_correct,
-            }
-            results["details"].append(detail)
-
-            # Print if verbose
-            if verbose:
-                status = ""
-                if is_correct is not None:
-                    status = "✓" if is_correct else "✗"
-                print(
-                    f"{status:2} {pdf_file.name:40} → {pdf_type.value:15} "
-                    f"(expected: {expected_type or 'N/A'})"
-                )
-
-        except Exception as e:
-            error_msg = f"Error processing {pdf_file.name}: {e!s}"
-            results["errors"].append(error_msg)
-            if verbose:
-                print(f"✗  {error_msg}")
+        _process_single_pdf(pdf_file, ground_truth, results, verbose)
 
     return results
 
