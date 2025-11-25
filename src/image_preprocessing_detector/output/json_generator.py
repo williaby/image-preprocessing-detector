@@ -40,6 +40,185 @@ from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
 logger = get_logger(__name__)
 
 
+def _extract_page_dimensions(
+    page_data: "PageImage | tuple[np.ndarray, ImageMetadata]",
+) -> tuple[int, int, int, int]:
+    """Extract page dimensions and DPI from page data.
+
+    Args:
+        page_data: PageImage from PDF or (image, metadata) tuple from direct image
+
+    Returns:
+        Tuple of (width, height, dpi_input, dpi_effective)
+    """
+    if isinstance(page_data, PageImage):
+        return (
+            page_data.width,
+            page_data.height,
+            int(page_data.dpi_input),
+            int(page_data.dpi_effective),
+        )
+    _image, metadata = page_data
+    dpi_input = int(metadata.dpi or 72.0)
+    return metadata.width, metadata.height, dpi_input, dpi_input
+
+
+def _collect_detected_issues(
+    skew_result: "SkewDetectionResult | None",
+    blur_result: "BlurDetectionResult | None",
+    contrast_result: "ContrastDetectionResult | None",
+) -> list[DetectedIssue]:
+    """Collect detected issues from detection results.
+
+    Args:
+        skew_result: Skew detection result
+        blur_result: Blur detection result
+        contrast_result: Contrast detection result
+
+    Returns:
+        List of detected issues
+    """
+    issues: list[DetectedIssue] = []
+
+    if skew_result and skew_result.is_skewed:
+        severity = IssueSeverity(skew_result.severity.value)
+        issues.append(
+            DetectedIssue(
+                type=IssueType.SKEW,
+                severity=severity,
+                confidence=skew_result.confidence,
+                metrics={"angle": skew_result.angle, "method": skew_result.method},
+            )
+        )
+
+    if blur_result and blur_result.is_blurred:
+        severity = IssueSeverity(blur_result.severity.value)
+        issues.append(
+            DetectedIssue(
+                type=IssueType.BLUR,
+                severity=severity,
+                confidence=blur_result.confidence,
+                metrics={"score": blur_result.score},
+            )
+        )
+
+    if contrast_result and contrast_result.is_low_contrast:
+        severity = IssueSeverity(contrast_result.severity.value)
+        issues.append(
+            DetectedIssue(
+                type=IssueType.LOW_CONTRAST,
+                severity=severity,
+                confidence=contrast_result.confidence,
+                metrics={"score": contrast_result.score},
+            )
+        )
+
+    return issues
+
+
+def _build_planned_actions(
+    skew_result: "SkewDetectionResult | None",
+    blur_result: "BlurDetectionResult | None",
+    contrast_result: "ContrastDetectionResult | None",
+) -> list[PlannedAction]:
+    """Build planned actions from detection results.
+
+    Args:
+        skew_result: Skew detection result
+        blur_result: Blur detection result
+        contrast_result: Contrast detection result
+
+    Returns:
+        List of planned actions
+    """
+    actions: list[PlannedAction] = []
+
+    if skew_result and skew_result.is_skewed:
+        actions.append(
+            PlannedAction(
+                action=ActionType.DESKEW,
+                params={"angle": skew_result.angle},
+                confidence=skew_result.confidence,
+                reason=f"Detected skew of {abs(skew_result.angle):.2f}°",
+            )
+        )
+
+    if contrast_result and contrast_result.is_low_contrast:
+        actions.append(
+            PlannedAction(
+                action=ActionType.CLAHE,
+                params={"score": contrast_result.score},
+                confidence=contrast_result.confidence,
+                reason=f"Low contrast detected (score: {contrast_result.score:.2f})",
+            )
+        )
+
+    if blur_result and blur_result.is_blurred:
+        actions.append(
+            PlannedAction(
+                action=ActionType.SHARPEN,
+                params={"blur_score": blur_result.score},
+                confidence=blur_result.confidence,
+                reason=f"Blur detected (score: {blur_result.score:.1f})",
+            )
+        )
+
+    return actions
+
+
+def _add_transform_entry(
+    correction: "CorrectionResult | None",
+    action_name: str,
+) -> TransformHistory | None:
+    """Create a transform history entry if correction was applied.
+
+    Args:
+        correction: Correction result
+        action_name: Name of the transform action
+
+    Returns:
+        TransformHistory entry or None if not applied
+    """
+    if not correction or not correction.applied:
+        return None
+    now = datetime.now(UTC)
+    return TransformHistory(
+        action=action_name,
+        params=correction.parameters,
+        started_at=now,
+        finished_at=now,
+        status="success",
+        error_message=None,
+    )
+
+
+def _build_transform_history(
+    skew_correction: "CorrectionResult | None",
+    contrast_correction: "CorrectionResult | None",
+    blur_correction: "CorrectionResult | None",
+) -> list[TransformHistory]:
+    """Build transform history from correction results.
+
+    Args:
+        skew_correction: Skew correction result
+        contrast_correction: Contrast correction result
+        blur_correction: Blur correction result
+
+    Returns:
+        List of transform history entries
+    """
+    history: list[TransformHistory] = []
+
+    if entry := _add_transform_entry(skew_correction, "deskew"):
+        history.append(entry)
+    if entry := _add_transform_entry(contrast_correction, "clahe_contrast_enhancement"):
+        history.append(entry)
+    if entry := _add_transform_entry(blur_correction, "unsharp_mask_sharpening"):
+        history.append(entry)
+
+    return history
+
+
 class MetadataBuilder:
     """Builds document metadata from detection and correction results.
 
@@ -110,127 +289,23 @@ class MetadataBuilder:
             ml_iqa_teacher: Teacher ML IQA scores if escalated (Phase 2) (optional)
             ml_iqa_escalation_reason: Reason for teacher escalation (Phase 2) (optional)
         """
-        # Extract page dimensions and DPI
-        if isinstance(page_data, PageImage):
-            width = page_data.width
-            height = page_data.height
-            dpi_input = int(page_data.dpi_input)
-            dpi_effective = int(page_data.dpi_effective)
-        else:
-            _image, metadata = page_data
-            width = metadata.width
-            height = metadata.height
-            dpi_input = int(metadata.dpi or 72.0)
-            dpi_effective = dpi_input
+        # Extract page dimensions using helper
+        width, height, dpi_input, dpi_effective = _extract_page_dimensions(page_data)
 
-        # Collect detected issues
-        detected_issues: list[DetectedIssue] = []
+        # Collect detected issues using helper
+        detected_issues = _collect_detected_issues(
+            skew_result, blur_result, contrast_result
+        )
 
-        if skew_result and skew_result.is_skewed:
-            # Convert Severity to IssueSeverity
-            severity = IssueSeverity(skew_result.severity.value)
-            detected_issues.append(
-                DetectedIssue(
-                    type=IssueType.SKEW,
-                    severity=severity,
-                    confidence=skew_result.confidence,
-                    metrics={"angle": skew_result.angle, "method": skew_result.method},
-                )
-            )
+        # Build planned actions using helper
+        planned_actions = _build_planned_actions(
+            skew_result, blur_result, contrast_result
+        )
 
-        if blur_result and blur_result.is_blurred:
-            severity = IssueSeverity(blur_result.severity.value)
-            detected_issues.append(
-                DetectedIssue(
-                    type=IssueType.BLUR,
-                    severity=severity,
-                    confidence=blur_result.confidence,
-                    metrics={"score": blur_result.score},
-                )
-            )
-
-        if contrast_result and contrast_result.is_low_contrast:
-            severity = IssueSeverity(contrast_result.severity.value)
-            detected_issues.append(
-                DetectedIssue(
-                    type=IssueType.LOW_CONTRAST,
-                    severity=severity,
-                    confidence=contrast_result.confidence,
-                    metrics={"score": contrast_result.score},
-                )
-            )
-
-        # Build planned actions
-        planned_actions: list[PlannedAction] = []
-        if skew_result and skew_result.is_skewed:
-            planned_actions.append(
-                PlannedAction(
-                    action=ActionType.DESKEW,
-                    params={"angle": skew_result.angle},
-                    confidence=skew_result.confidence,
-                    reason=f"Detected skew of {abs(skew_result.angle):.2f}°",
-                )
-            )
-        if contrast_result and contrast_result.is_low_contrast:
-            planned_actions.append(
-                PlannedAction(
-                    action=ActionType.CLAHE,
-                    params={"score": contrast_result.score},
-                    confidence=contrast_result.confidence,
-                    reason=f"Low contrast detected (score: {contrast_result.score:.2f})",
-                )
-            )
-        if blur_result and blur_result.is_blurred:
-            planned_actions.append(
-                PlannedAction(
-                    action=ActionType.SHARPEN,
-                    params={"blur_score": blur_result.score},
-                    confidence=blur_result.confidence,
-                    reason=f"Blur detected (score: {blur_result.score:.1f})",
-                )
-            )
-
-        # Build transform history
-        transform_history: list[TransformHistory] = []
-
-        if skew_correction and skew_correction.applied:
-            now = datetime.now(UTC)
-            transform_history.append(
-                TransformHistory(
-                    action="deskew",
-                    params=skew_correction.parameters,
-                    started_at=now,
-                    finished_at=now,
-                    status="success",
-                    error_message=None,
-                )
-            )
-
-        if contrast_correction and contrast_correction.applied:
-            now = datetime.now(UTC)
-            transform_history.append(
-                TransformHistory(
-                    action="clahe_contrast_enhancement",
-                    params=contrast_correction.parameters,
-                    started_at=now,
-                    finished_at=now,
-                    status="success",
-                    error_message=None,
-                )
-            )
-
-        if blur_correction and blur_correction.applied:
-            now = datetime.now(UTC)
-            transform_history.append(
-                TransformHistory(
-                    action="unsharp_mask_sharpening",
-                    params=blur_correction.parameters,
-                    started_at=now,
-                    finished_at=now,
-                    status="success",
-                    error_message=None,
-                )
-            )
+        # Build transform history using helper
+        transform_history = _build_transform_history(
+            skew_correction, contrast_correction, blur_correction
+        )
 
         # Convert ML IQA scores to dict format if provided
         ml_iqa_dict = ml_iqa_scores_to_dict(ml_iqa_student) if ml_iqa_student else None

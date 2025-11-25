@@ -72,7 +72,8 @@ upload_dataset() {
     fi
 
     # Calculate size
-    local size=$(du -sh "$dataset_path" | cut -f1)
+    local size
+    size=$(du -sh "$dataset_path" | cut -f1)
     log_section "Uploading: $dataset_name ($size)"
 
     local gcs_dest="${GCS_BUCKET}/${GCS_PREFIX}/${dataset_name}/"
@@ -151,7 +152,7 @@ upload_all_datasets() {
     if [ -n "$specific_dataset" ]; then
         if [ -z "${DATASETS[$specific_dataset]}" ]; then
             log_error "Unknown dataset: $specific_dataset"
-            log_info "Available datasets: ${!DATASETS[@]}"
+            log_info "Available datasets: ${!DATASETS[*]}"
             return 1
         fi
 

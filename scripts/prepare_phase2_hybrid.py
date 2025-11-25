@@ -19,6 +19,7 @@ import csv
 import json
 import random
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,42 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from data.augmentation import create_augmentation_pipeline
 from data.weak_supervision import WeakSupervisionLabeler
+
+# Type alias for image data tuple
+ImageData = tuple[np.ndarray, dict[str, int], dict[str, Any]]
+
+
+@dataclass
+class DatasetConfig:
+    """Configuration for dataset generation."""
+
+    num_samples: int
+    augmentation_multiplier: float = 5.0
+    preset: str = "medium"
+    train_ratio: float = 0.70
+    val_ratio: float = 0.15
+    test_ratio: float = 0.15
+
+
+def _map_kadid_distortion_to_labels(distortion_type: int) -> dict[str, int]:
+    """Map KADID-10k distortion type to binary labels.
+
+    KADID-10k has 25 distortion types:
+    - Types 1-5: blur-related
+    - Types 6-10: noise-related
+    - Types 11-15: compression/artifacts
+    - Types 16-20: color/illumination
+    - Types 21-25: other (map to artifacts)
+    """
+    return {
+        "blur": 1 if 1 <= distortion_type <= 5 else 0,
+        "noise": 1 if 6 <= distortion_type <= 10 else 0,
+        "artifacts": 1
+        if 11 <= distortion_type <= 15 or 21 <= distortion_type <= 25
+        else 0,
+        "illumination": 1 if 16 <= distortion_type <= 20 else 0,
+        "skew": 0,  # KADID-10k doesn't have geometric distortions
+    }
 
 
 def load_diqa5000_images(
@@ -112,9 +149,44 @@ def load_diqa5000_images(
     return loaded_images
 
 
-def load_kadid10k_images(
-    max_images: int = 1000,
-) -> list[tuple[np.ndarray, dict[str, int], dict[str, Any]]]:
+def _load_kadid_dataset() -> Any | None:
+    """Load the KADID-10k dataset, returning None on failure."""
+    try:
+        from iqadataset import KADID10K
+    except ImportError:
+        print("Warning: iqadataset not installed. Run: pip install iqadataset")
+        print("Skipping KADID-10k dataset.")
+        return None
+
+    try:
+        return KADID10K(download=True)
+    except Exception as e:
+        print(f"Error loading KADID-10k: {e}")
+        print("Skipping KADID-10k dataset.")
+        return None
+
+
+def _process_kadid_sample(sample: dict[str, Any]) -> ImageData:
+    """Process a single KADID-10k sample into ImageData format."""
+    dis_img = sample["dis_img"]
+
+    # Convert RGB to BGR for OpenCV compatibility
+    if len(dis_img.shape) == 3 and dis_img.shape[2] == 3:
+        dis_img = cv2.cvtColor(dis_img, cv2.COLOR_RGB2BGR)
+
+    distortion_type = sample.get("dist_type", 0)
+    binary_labels = _map_kadid_distortion_to_labels(distortion_type)
+
+    metadata = {
+        "source": "kadid10k",
+        "distortion_type": distortion_type,
+        "dmos": sample.get("dmos", 0.0),
+    }
+
+    return (dis_img, binary_labels, metadata)
+
+
+def load_kadid10k_images(max_images: int = 1000) -> list[ImageData]:
     """Load KADID-10k natural images with IQA labels.
 
     Args:
@@ -125,19 +197,8 @@ def load_kadid10k_images(
     """
     print(f"\n📖 Loading KADID-10k (max {max_images} images)...")
 
-    try:
-        from iqadataset import KADID10K
-    except ImportError:
-        print("Warning: iqadataset not installed. Run: pip install iqadataset")
-        print("Skipping KADID-10k dataset.")
-        return []
-
-    # Load dataset
-    try:
-        dataset = KADID10K(download=True)
-    except Exception as e:
-        print(f"Error loading KADID-10k: {e}")
-        print("Skipping KADID-10k dataset.")
+    dataset = _load_kadid_dataset()
+    if dataset is None:
         return []
 
     loaded_images = []
@@ -146,51 +207,88 @@ def load_kadid10k_images(
     ):
         if i >= max_images:
             break
-
-        # Get distorted image
-        dis_img = sample["dis_img"]
-
-        # Convert RGB to BGR for OpenCV compatibility
-        if len(dis_img.shape) == 3 and dis_img.shape[2] == 3:
-            dis_img = cv2.cvtColor(dis_img, cv2.COLOR_RGB2BGR)
-
-        # KADID-10k has distortion type labels
-        # Map to 5 classes (simplified - may need refinement)
-        distortion_type = sample.get("dist_type", 0)
-
-        # Rough mapping (KADID-10k has 25 distortion types)
-        # Types 1-5: blur-related
-        # Types 6-10: noise-related
-        # Types 11-15: compression/artifacts
-        # Types 16-20: color/illumination
-        # Types 21-25: other (map to artifacts)
-        binary_labels = {
-            "blur": 1 if 1 <= distortion_type <= 5 else 0,
-            "noise": 1 if 6 <= distortion_type <= 10 else 0,
-            "artifacts": 1
-            if 11 <= distortion_type <= 15 or 21 <= distortion_type <= 25
-            else 0,
-            "illumination": 1 if 16 <= distortion_type <= 20 else 0,
-            "skew": 0,  # KADID-10k doesn't have geometric distortions
-        }
-
-        metadata = {
-            "source": "kadid10k",
-            "distortion_type": distortion_type,
-            "dmos": sample.get("dmos", 0.0),
-        }
-
-        loaded_images.append((dis_img, binary_labels, metadata))
+        loaded_images.append(_process_kadid_sample(sample))
 
     print(f"Loaded {len(loaded_images)} KADID-10k images")
     return loaded_images
+
+
+def _render_pdf_page_to_image(page: Any, fitz_module: Any) -> np.ndarray:
+    """Render a PDF page to a BGR numpy array at 300 DPI."""
+    mat = fitz_module.Matrix(300 / 72, 300 / 72)
+    pix = page.get_pixmap(matrix=mat)
+
+    # Convert to numpy array
+    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+        pix.height, pix.width, pix.n
+    )
+
+    # Convert RGB/RGBA to BGR (OpenCV format)
+    if pix.n == 3:  # RGB
+        return cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    if pix.n == 4:  # RGBA
+        return cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
+    return img
+
+
+def _create_ohr_page_metadata(
+    img: np.ndarray,
+    pdf_path: Path,
+    page_num: int,
+    weak_labeler: WeakSupervisionLabeler,
+) -> ImageData:
+    """Create image data tuple for an OHR-Bench page."""
+    labels = weak_labeler.label_image(img, str(pdf_path))
+    binary_labels = {key: int(label.value) for key, label in labels.labels.items()}
+    label_confidences = {
+        key: float(label.confidence) for key, label in labels.labels.items()
+    }
+
+    metadata = {
+        "source": "ohr_bench",
+        "pdf_path": str(pdf_path.name),
+        "page_num": page_num,
+        "weak_supervision": True,
+        "quality_scores": labels.quality_scores,
+        "label_confidences": label_confidences,
+    }
+
+    return (img, binary_labels, metadata)
+
+
+def _process_single_pdf(
+    pdf_path: Path,
+    weak_labeler: WeakSupervisionLabeler,
+    fitz_module: Any,
+    max_pages: int,
+    current_count: int,
+) -> list[ImageData]:
+    """Process a single PDF and return list of image data."""
+    results: list[ImageData] = []
+    doc = fitz_module.open(str(pdf_path))
+
+    try:
+        for page_num in range(len(doc)):
+            if current_count + len(results) >= max_pages:
+                break
+
+            page = doc[page_num]
+            img = _render_pdf_page_to_image(page, fitz_module)
+            image_data = _create_ohr_page_metadata(
+                img, pdf_path, page_num, weak_labeler
+            )
+            results.append(image_data)
+    finally:
+        doc.close()
+
+    return results
 
 
 def load_ohr_bench_images(
     ohr_bench_dir: Path,
     max_images: int = 5000,
     weak_labeler: WeakSupervisionLabeler | None = None,
-) -> list[tuple[np.ndarray, dict[str, int], dict[str, Any]]]:
+) -> list[ImageData]:
     """Load OHR-Bench PDFs with weak supervision labels.
 
     Args:
@@ -206,13 +304,10 @@ def load_ohr_bench_images(
     if weak_labeler is None:
         weak_labeler = WeakSupervisionLabeler()
 
-    # Collect PDFs
     pdf_paths = list(ohr_bench_dir.rglob("*.pdf"))
     random.shuffle(pdf_paths)
-
     print(f"Found {len(pdf_paths)} OHR-Bench PDFs")
 
-    # Import PyMuPDF for PDF conversion
     try:
         import fitz  # PyMuPDF
     except ImportError:
@@ -220,62 +315,19 @@ def load_ohr_bench_images(
         print("Skipping OHR-Bench dataset.")
         return []
 
-    loaded_images = []
-    pages_extracted = 0
+    loaded_images: list[ImageData] = []
 
     for pdf_path in tqdm(pdf_paths, desc="Processing OHR-Bench PDFs"):
-        if pages_extracted >= max_images:
+        if len(loaded_images) >= max_images:
             break
 
         try:
-            doc = fitz.open(str(pdf_path))
-
-            for page_num in range(len(doc)):
-                if pages_extracted >= max_images:
-                    break
-
-                # Render page at 300 DPI
-                page = doc[page_num]
-                mat = fitz.Matrix(300 / 72, 300 / 72)
-                pix = page.get_pixmap(matrix=mat)
-
-                # Convert to numpy array
-                img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
-                    pix.height, pix.width, pix.n
-                )
-
-                # Convert RGB/RGBA to BGR (OpenCV format)
-                if pix.n == 3:  # RGB
-                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-                elif pix.n == 4:  # RGBA
-                    img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
-
-                # Apply weak supervision labeling
-                labels = weak_labeler.label_image(img, str(pdf_path))
-                binary_labels = {
-                    key: int(label.value) for key, label in labels.labels.items()
-                }
-                label_confidences = {
-                    key: float(label.confidence) for key, label in labels.labels.items()
-                }
-
-                metadata = {
-                    "source": "ohr_bench",
-                    "pdf_path": str(pdf_path.name),
-                    "page_num": page_num,
-                    "weak_supervision": True,
-                    "quality_scores": labels.quality_scores,
-                    "label_confidences": label_confidences,
-                }
-
-                loaded_images.append((img, binary_labels, metadata))
-                pages_extracted += 1
-
-            doc.close()
-
+            page_images = _process_single_pdf(
+                pdf_path, weak_labeler, fitz, max_images, len(loaded_images)
+            )
+            loaded_images.extend(page_images)
         except Exception as e:
             print(f"Error processing {pdf_path.name}: {e}")
-            continue
 
     print(f"Loaded {len(loaded_images)} OHR-Bench pages")
     return loaded_images
@@ -309,164 +361,158 @@ def load_smartdoc_qa_images(
     return []
 
 
-def generate_augmented_dataset(
-    source_images: list[tuple[np.ndarray, dict[str, int], dict[str, Any]]],
-    output_dir: Path,
-    num_samples: int,
-    augmentation_multiplier: float = 5.0,
-    preset: str = "medium",
-    train_ratio: float = 0.70,
-    val_ratio: float = 0.15,
-    test_ratio: float = 0.15,
-) -> None:
-    """Generate augmented dataset from source images.
-
-    Args:
-        source_images: List of (image, labels, metadata) tuples
-        output_dir: Output directory for dataset
-        num_samples: Target number of total samples
-        augmentation_multiplier: How many augmented versions per source image
-        preset: Augmentation preset ("light", "medium", "heavy")
-        train_ratio: Fraction for training set
-        val_ratio: Fraction for validation set
-        test_ratio: Fraction for test set
-    """
-    print("\n🎨 Generating augmented dataset...")
-    print(f"Source images: {len(source_images)}")
-    print(f"Augmentation multiplier: {augmentation_multiplier}x")
-    print(f"Target samples: {num_samples}")
-
-    # Create output directories
-    splits = ["train", "val", "test"]
+def _create_split_directories(output_dir: Path) -> dict[str, Path]:
+    """Create output directories for train/val/test splits."""
     split_dirs = {}
-    for split in splits:
+    for split in ["train", "val", "test"]:
         split_dir = output_dir / split
         split_dir.mkdir(parents=True, exist_ok=True)
         split_dirs[split] = split_dir
+    return split_dirs
 
-    # Shuffle source images
-    shuffled_sources = source_images.copy()
-    random.shuffle(shuffled_sources)
 
-    # Split source images into train/val/test
-    num_sources = len(shuffled_sources)
-    train_end = int(num_sources * train_ratio)
-    val_end = train_end + int(num_sources * val_ratio)
+def _split_source_images(
+    source_images: list[ImageData], config: DatasetConfig
+) -> dict[str, list[ImageData]]:
+    """Split source images into train/val/test sets."""
+    shuffled = source_images.copy()
+    random.shuffle(shuffled)
 
-    source_splits = {
-        "train": shuffled_sources[:train_end],
-        "val": shuffled_sources[train_end:val_end],
-        "test": shuffled_sources[val_end:],
+    num_sources = len(shuffled)
+    train_end = int(num_sources * config.train_ratio)
+    val_end = train_end + int(num_sources * config.val_ratio)
+
+    return {
+        "train": shuffled[:train_end],
+        "val": shuffled[train_end:val_end],
+        "test": shuffled[val_end:],
     }
 
-    print("\nSource split:")
-    print(f"  Train: {len(source_splits['train'])} images")
-    print(f"  Val: {len(source_splits['val'])} images")
-    print(f"  Test: {len(source_splits['test'])} images")
 
-    # Create augmentation pipeline
-    aug_pipeline = create_augmentation_pipeline(preset=preset)
+def _save_augmented_sample(
+    augmented: np.ndarray,
+    source_labels: dict[str, int],
+    source_metadata: dict[str, Any],
+    split: str,
+    sample_idx: int,
+    aug_idx: int,
+    split_dir: Path,
+) -> None:
+    """Save a single augmented sample and its metadata."""
+    img_filename = f"{split}_{sample_idx:06d}.jpg"
+    cv2.imwrite(str(split_dir / img_filename), augmented)
 
-    # Generate augmented samples for each split
-    split_ratios = {"train": train_ratio, "val": val_ratio, "test": test_ratio}
+    sample_metadata = {
+        "image_id": sample_idx,
+        "filename": img_filename,
+        "labels": source_labels,
+        "source_metadata": source_metadata,
+        "augmentation_index": aug_idx,
+    }
 
-    for split in splits:
-        split_target = int(num_samples * split_ratios[split])
-        split_sources = source_splits[split]
+    metadata_path = split_dir / f"{split}_{sample_idx:06d}.json"
+    with open(metadata_path, "w") as f:
+        json.dump(sample_metadata, f, indent=2)
 
-        if len(split_sources) == 0:
-            print(f"\nWarning: No source images for {split} split, skipping")
-            continue
 
-        # Calculate augmentations needed per source image
-        augs_per_source = int(augmentation_multiplier)
+def _update_issue_counts(
+    issue_counts: dict[str, int], source_labels: dict[str, int]
+) -> None:
+    """Update issue counts based on source labels."""
+    for issue, present in source_labels.items():
+        if present == 1:
+            issue_counts[issue] += 1
 
-        print(f"\n{'=' * 60}")
-        print(f"Generating {split.upper()} SET")
-        print(f"{'=' * 60}")
-        print(f"Target samples: {split_target}")
-        print(f"Source images: {len(split_sources)}")
-        print(f"Augmentations per source: {augs_per_source}")
 
-        # Track statistics
-        issue_counts = {
-            "blur": 0,
-            "noise": 0,
-            "skew": 0,
-            "illumination": 0,
-            "artifacts": 0,
-        }
+def _generate_split_samples(
+    split: str,
+    split_sources: list[ImageData],
+    split_dir: Path,
+    split_target: int,
+    augs_per_source: int,
+    aug_pipeline: Any,
+) -> dict[str, int]:
+    """Generate augmented samples for a single split.
 
-        samples_generated = 0
-        sample_idx = 0
+    Returns:
+        Dictionary of issue counts for statistics.
+    """
+    issue_counts = {
+        "blur": 0,
+        "noise": 0,
+        "skew": 0,
+        "illumination": 0,
+        "artifacts": 0,
+    }
 
-        # Generate augmented samples
-        with tqdm(total=split_target, desc=f"Generating {split}") as pbar:
-            while samples_generated < split_target:
-                # Cycle through source images
-                for source_img, source_labels, source_metadata in split_sources:
+    samples_generated = 0
+    sample_idx = 0
+
+    with tqdm(total=split_target, desc=f"Generating {split}") as pbar:
+        while samples_generated < split_target:
+            for source_img, source_labels, source_metadata in split_sources:
+                for aug_idx in range(augs_per_source):
                     if samples_generated >= split_target:
-                        break
+                        return issue_counts
 
-                    # Generate augmented versions
-                    for aug_idx in range(augs_per_source):
-                        if samples_generated >= split_target:
-                            break
+                    augmented = aug_pipeline(source_img)
+                    _update_issue_counts(issue_counts, source_labels)
+                    _save_augmented_sample(
+                        augmented,
+                        source_labels,
+                        source_metadata,
+                        split,
+                        sample_idx,
+                        aug_idx,
+                        split_dir,
+                    )
 
-                        # Apply augmentation
-                        augmented = aug_pipeline(source_img)
+                    samples_generated += 1
+                    sample_idx += 1
+                    pbar.update(1)
 
-                        # Update issue counts
-                        for issue, present in source_labels.items():
-                            if present == 1:
-                                issue_counts[issue] += 1
+    return issue_counts
 
-                        # Save image
-                        img_filename = f"{split}_{sample_idx:06d}.jpg"
-                        img_path = split_dirs[split] / img_filename
-                        cv2.imwrite(str(img_path), augmented)
 
-                        # Create sample metadata
-                        sample_metadata = {
-                            "image_id": sample_idx,
-                            "filename": img_filename,
-                            "labels": source_labels,
-                            "source_metadata": source_metadata,
-                            "augmentation_index": aug_idx,
-                        }
+def _print_split_statistics(
+    split: str, samples_generated: int, issue_counts: dict[str, int]
+) -> None:
+    """Print statistics for a completed split."""
+    print(f"\n{split.upper()} SET ({samples_generated} samples):")
+    if samples_generated == 0:
+        print("  No samples generated for this split.")
+        return
 
-                        # Save metadata JSON
-                        metadata_path = (
-                            split_dirs[split] / f"{split}_{sample_idx:06d}.json"
-                        )
-                        with open(metadata_path, "w") as f:
-                            json.dump(sample_metadata, f, indent=2)
+    print("  Issue frequencies:")
+    for issue, count in sorted(issue_counts.items()):
+        percentage = (count / samples_generated) * 100
+        print(f"    {issue:15s}: {count:5d} ({percentage:5.1f}%)")
 
-                        samples_generated += 1
-                        sample_idx += 1
-                        pbar.update(1)
 
-        # Print statistics
-        print(f"\n{split.upper()} SET ({samples_generated} samples):")
-        if samples_generated == 0:
-            print("  No samples generated for this split.")
-            continue
-
-        print("  Issue frequencies:")
-        for issue, count in sorted(issue_counts.items()):
-            percentage = (count / samples_generated) * 100
-            print(f"    {issue:15s}: {count:5d} ({percentage:5.1f}%)")
-
-    # Save dataset summary
+def _save_dataset_summary(
+    output_dir: Path,
+    source_images: list[ImageData],
+    config: DatasetConfig,
+) -> None:
+    """Save dataset summary to JSON file."""
     summary = {
-        "total_samples": num_samples,
-        "source_images": num_sources,
-        "augmentation_multiplier": augmentation_multiplier,
-        "augmentation_preset": preset,
+        "total_samples": config.num_samples,
+        "source_images": len(source_images),
+        "augmentation_multiplier": config.augmentation_multiplier,
+        "augmentation_preset": config.preset,
         "splits": {
-            "train": {"ratio": train_ratio, "samples": int(num_samples * train_ratio)},
-            "val": {"ratio": val_ratio, "samples": int(num_samples * val_ratio)},
-            "test": {"ratio": test_ratio, "samples": int(num_samples * test_ratio)},
+            "train": {
+                "ratio": config.train_ratio,
+                "samples": int(config.num_samples * config.train_ratio),
+            },
+            "val": {
+                "ratio": config.val_ratio,
+                "samples": int(config.num_samples * config.val_ratio),
+            },
+            "test": {
+                "ratio": config.test_ratio,
+                "samples": int(config.num_samples * config.test_ratio),
+            },
         },
         "datasets_used": list({meta["source"] for _, _, meta in source_images}),
     }
@@ -478,6 +524,66 @@ def generate_augmented_dataset(
     print("\n✅ Dataset generation complete!")
     print(f"Output directory: {output_dir}")
     print(f"Summary saved to: {summary_path}")
+
+
+def generate_augmented_dataset(
+    source_images: list[ImageData],
+    output_dir: Path,
+    config: DatasetConfig,
+) -> None:
+    """Generate augmented dataset from source images.
+
+    Args:
+        source_images: List of (image, labels, metadata) tuples
+        output_dir: Output directory for dataset
+        config: Dataset generation configuration
+    """
+    print("\n🎨 Generating augmented dataset...")
+    print(f"Source images: {len(source_images)}")
+    print(f"Augmentation multiplier: {config.augmentation_multiplier}x")
+    print(f"Target samples: {config.num_samples}")
+
+    split_dirs = _create_split_directories(output_dir)
+    source_splits = _split_source_images(source_images, config)
+
+    print("\nSource split:")
+    for split_name, split_data in source_splits.items():
+        print(f"  {split_name.capitalize()}: {len(split_data)} images")
+
+    aug_pipeline = create_augmentation_pipeline(preset=config.preset)
+    split_ratios = {
+        "train": config.train_ratio,
+        "val": config.val_ratio,
+        "test": config.test_ratio,
+    }
+    augs_per_source = int(config.augmentation_multiplier)
+
+    for split in ["train", "val", "test"]:
+        split_sources = source_splits[split]
+        if not split_sources:
+            print(f"\nWarning: No source images for {split} split, skipping")
+            continue
+
+        split_target = int(config.num_samples * split_ratios[split])
+
+        print(f"\n{'=' * 60}")
+        print(f"Generating {split.upper()} SET")
+        print(f"{'=' * 60}")
+        print(f"Target samples: {split_target}")
+        print(f"Source images: {len(split_sources)}")
+        print(f"Augmentations per source: {augs_per_source}")
+
+        issue_counts = _generate_split_samples(
+            split,
+            split_sources,
+            split_dirs[split],
+            split_target,
+            augs_per_source,
+            aug_pipeline,
+        )
+        _print_split_statistics(split, split_target, issue_counts)
+
+    _save_dataset_summary(output_dir, source_images, config)
 
 
 def main() -> None:
@@ -679,15 +785,18 @@ def main() -> None:
     print(f"{'=' * 60}")
 
     # Generate augmented dataset
-    generate_augmented_dataset(
-        source_images=all_images,
-        output_dir=output_dir,
+    config = DatasetConfig(
         num_samples=args.num_samples,
         augmentation_multiplier=args.augmentation_multiplier,
         preset=args.preset,
         train_ratio=args.train_ratio,
         val_ratio=args.val_ratio,
         test_ratio=args.test_ratio,
+    )
+    generate_augmented_dataset(
+        source_images=all_images,
+        output_dir=output_dir,
+        config=config,
     )
 
     print("\n✅ Dataset generation complete!")

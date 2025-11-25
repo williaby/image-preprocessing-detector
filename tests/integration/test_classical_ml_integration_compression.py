@@ -7,8 +7,6 @@ Tests the complete workflow:
 4. Discrepancy analysis validates escalation logic (ML predicts compression)
 """
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 
@@ -20,39 +18,16 @@ from image_preprocessing_detector.detection.iqa_classical import (
 )
 from image_preprocessing_detector.detection.iqa_ml import (
     ClassicalIQAScores,
-    Device,
     MLIQADetector,
     ModelType,
 )
 
 
 class TestCompressionMLIQAIntegration:
-    """Integration tests for JPEG Blockiness detector + ML IQA."""
+    """Integration tests for JPEG Blockiness detector + ML IQA.
 
-    @pytest.fixture
-    def onnx_models_available(self) -> bool:
-        """Check if ONNX models are available."""
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-        return student_path.exists() and teacher_path.exists()
-
-    @pytest.fixture
-    def ml_detector(self, onnx_models_available: bool) -> MLIQADetector | None:
-        """Create ML IQA detector with real models if available."""
-        if not onnx_models_available:
-            pytest.skip("ONNX models not available")
-
-        model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
-        student_path = model_dir / "resnet18_student.onnx"
-        teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
-
-        return MLIQADetector(
-            student_model_path=student_path,
-            teacher_model_path=teacher_path,
-            device=Device.CPU,
-            enable_modal_fallback=False,
-        )
+    Note: Uses shared ml_detector fixture from conftest.py.
+    """
 
     def test_jpeg_blockiness_detection_with_ml_confirmation(
         self, ml_detector: MLIQADetector | None

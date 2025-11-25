@@ -699,11 +699,19 @@ class TestPhase2MLInference:
         assert detector.mean_confidence_threshold == pytest.approx(0.7)
         assert detector.discrepancy_threshold == pytest.approx(0.3)
 
-        # Test with actual models if available
+        # Test with actual models if available AND onnxruntime is functional
         model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
         student_path = model_dir / "resnet18_student.onnx"
 
-        if student_path.exists():
+        # Check if onnxruntime is functional (has InferenceSession attribute)
+        try:
+            import onnxruntime as ort
+
+            onnxruntime_functional = hasattr(ort, "InferenceSession")
+        except ImportError:
+            onnxruntime_functional = False
+
+        if student_path.exists() and onnxruntime_functional:
             # Test student inference
             detector_with_model = MLIQADetector(
                 student_model_path=student_path,

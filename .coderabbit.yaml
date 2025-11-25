@@ -1,0 +1,210 @@
+---
+# CodeRabbit Configuration for Image Preprocessing Detector
+# https://docs.coderabbit.ai/reference/configuration
+#
+# CodeRabbit provides AI-powered code reviews for every pull request.
+# Philosophy: Complements (not duplicates) CI/CD, pre-commit, and Copilot
+# - CI/CD: Runs tests, linters → CodeRabbit: Contextual understanding of changes
+# - Pre-commit: Formats code → CodeRabbit: Reviews logic and architecture
+# - Copilot: Suggests code → CodeRabbit: Reviews entire PR holistically
+
+language: en-US
+
+# Early access features
+early_access: true
+
+# Reviews configuration
+reviews:
+  # Review profile: assertive = more thorough, catches more issues
+  profile: assertive
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+      - master
+      - develop
+
+  # Request changes workflow - makes reviews actionable
+  request_changes_workflow: true
+
+  # High-level summary - executive overview of changes
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+
+  # Auto-generate PR titles following conventional commits
+  auto_title_placeholder: "@coderabbitai title"
+  auto_title_instructions: |
+    Use conventional commits format: <type>(<scope>): <description>
+    Types: feat, fix, docs, refactor, test, chore, perf, ci
+    Keep descriptions concise and meaningful
+
+  # Poem feature - adds a creative touch
+  poem: true
+
+  # Review status
+  review_status: true
+
+  # Collapse walkthrough - false = expanded for visibility
+  collapse_walkthrough: false
+
+  # Sequence diagrams - visualizes complex control flow
+  sequence_diagrams: true
+
+  # Changed files summary
+  changed_files_summary: true
+
+  # Code review effort estimate (1-5 scale)
+  estimate_code_review_effort: true
+
+  # Related issues/PRs - links similar past work
+  related_issues: true
+  related_prs: true
+
+  # Linked issue assessment - validates PR addresses linked issues
+  assess_linked_issues: true
+
+  # Auto-labeling
+  suggested_labels: true
+  auto_apply_labels: true
+  labeling_instructions:
+    - label: "python"
+      instructions: "Apply when changes affect .py files"
+    - label: "tests"
+      instructions: "Apply when changes affect files in tests/"
+    - label: "ci"
+      instructions: "Apply when changes affect .github/workflows/ files"
+    - label: "documentation"
+      instructions: "Apply when changes affect README.md, docs/, or docstrings"
+    - label: "security"
+      instructions: "Apply when changes affect authentication, authorization, or security-related code"
+    - label: "dependencies"
+      instructions: "Apply when changes affect pyproject.toml or requirements files"
+    - label: "breaking-change"
+      instructions: "Apply when changes break backwards compatibility"
+    - label: "ml"
+      instructions: "Apply when changes affect ML models, training, or inference"
+    - label: "image-processing"
+      instructions: "Apply when changes affect image preprocessing or OpenCV code"
+
+  # Path filters - skip generated/cached files
+  path_filters:
+    - "!**/*.lock"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+    - "!**/node_modules/**"
+    - "!**/.venv/**"
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/__pycache__/**"
+    - "!**/.mypy_cache/**"
+    - "!**/.pytest_cache/**"
+    - "!**/.ruff_cache/**"
+    - "!**/htmlcov/**"
+    - "!**/.coverage"
+    - "!**/notebooks/**"
+    - "!**/tmp_cleanup/**"
+
+  # Path-specific instructions
+  path_instructions:
+    - path: "src/image_preprocessing_detector/**/*.py"
+      instructions: |
+        Review Python source code for:
+        - Type hints on all function signatures
+        - Proper error handling with specific exceptions
+        - Docstrings for public functions and classes
+        - No hardcoded secrets or credentials
+        - Adherence to project coding standards (Ruff, BasedPyright)
+        - Security best practices (input validation)
+        - OpenCV best practices (memory management, error handling)
+        - NumPy array operations efficiency
+
+    - path: "src/image_preprocessing_detector/detection/**"
+      instructions: |
+        Review IQA and detection code for:
+        - Proper handling of image edge cases (empty, corrupted)
+        - Efficient NumPy/OpenCV operations
+        - Reasonable confidence thresholds
+        - Clear separation of classical vs ML approaches
+
+    - path: "src/image_preprocessing_detector/training/**"
+      instructions: |
+        Review ML training code for:
+        - Proper device handling (CPU/GPU/Modal)
+        - Memory management for large datasets
+        - Checkpoint saving and loading
+        - Loss function appropriateness
+        - Data augmentation correctness
+
+    - path: "tests/**/*.py"
+      instructions: |
+        Review test files for:
+        - Comprehensive test coverage of edge cases
+        - Clear test names describing behavior
+        - Proper use of fixtures and mocking
+        - No flaky tests or timing dependencies
+        - Assertions that clearly explain failures
+
+    - path: ".github/workflows/**"
+      instructions: |
+        Review GitHub Actions workflows for:
+        - Security best practices (minimal permissions, pinned actions)
+        - Proper secret handling
+        - Efficient caching strategies
+        - Clear job dependencies
+
+    - path: "pyproject.toml"
+      instructions: |
+        Review dependency changes for:
+        - Version constraint appropriateness
+        - Security implications of new dependencies
+        - License compatibility
+        - ML dependency compatibility (PyTorch, ONNX)
+
+    - path: "modal/**"
+      instructions: |
+        Review Modal serverless code for:
+        - Proper GPU resource allocation
+        - Cost-efficient execution patterns
+        - Error handling for cloud failures
+        - Secure secret handling
+
+  # Finishing touches - suggestions for polish
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+
+  # Tools - provide inline context during review
+  tools:
+    ruff:
+      enabled: true
+    gitleaks:
+      enabled: true
+    markdownlint:
+      enabled: true
+    yamllint:
+      enabled: true
+
+# Chat configuration
+chat:
+  auto_reply: true
+
+# Knowledge base - learns from codebase
+knowledge_base:
+  opt_out: false
+  web_search:
+    enabled: true
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
+
+# Code generation settings
+code_generation:
+  docstrings:
+    language: en-US

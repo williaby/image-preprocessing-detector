@@ -186,11 +186,11 @@ class GenalogDegrader:
 
     def generate_sensitivity_gradient(
         self,
-        image: NDArray[np.uint8],
-        degradation_type: str,
-        param_name: str,
-        param_range: tuple[float, float, float],
-        output_dir: Path,
+        _image: NDArray[np.uint8],
+        _degradation_type: str,
+        _param_name: str,
+        _param_range: tuple[float, float, float],
+        _output_dir: Path,
     ) -> list[Path]:
         """Generate sensitivity analysis gradient for a degradation parameter.
 

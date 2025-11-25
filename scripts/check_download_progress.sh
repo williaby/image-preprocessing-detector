@@ -27,7 +27,7 @@ else
 fi
 
 # Check latest log file
-LATEST_LOG=$(ls -t logs/dataset_download_*.log 2>/dev/null | head -1)
+LATEST_LOG=$(find logs -maxdepth 1 -name "dataset_download_*.log" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
 if [ -n "$LATEST_LOG" ]; then
     echo -e "${BLUE}Latest log file:${NC} $LATEST_LOG"
     echo ""

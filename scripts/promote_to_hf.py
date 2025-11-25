@@ -243,7 +243,7 @@ def generate_model_card(
     model_name: str,
     version: str,
     metadata: dict[str, Any],
-    template: str | None = None,
+    _template: str | None = None,
 ) -> str:
     """Generate Hugging Face model card (README.md).
 

@@ -38,6 +38,317 @@ from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
 
+# Supported image file extensions
+_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}
+
+
+def _parse_roi_string(roi: str | None) -> tuple[int, int, int, int] | None:
+    """Parse ROI string to bbox tuple.
+
+    Args:
+        roi: ROI string in format 'x,y,width,height' or None
+
+    Returns:
+        Tuple of (x, y, width, height) or None if no ROI
+
+    Raises:
+        SystemExit: If ROI format is invalid
+    """
+    if not roi:
+        return None
+
+    parts = [x.strip() for x in roi.split(",")]
+    if len(parts) != 4:
+        click.echo("Error: Invalid ROI format: ROI must have 4 values", err=True)
+        click.echo("Expected format: 'x,y,width,height'", err=True)
+        sys.exit(1)
+    try:
+        return tuple(int(x) for x in parts)  # type: ignore[return-value]
+    except ValueError:
+        click.echo("Error: Invalid ROI format: values must be integers", err=True)
+        click.echo("Expected format: 'x,y,width,height'", err=True)
+        sys.exit(1)
+
+
+def _load_image_for_check(input_path: Path) -> Any:
+    """Load image for detection check commands.
+
+    Args:
+        input_path: Path to image file
+
+    Returns:
+        Loaded image array
+
+    Raises:
+        SystemExit: If image cannot be loaded
+    """
+    import cv2
+
+    image = cv2.imread(str(input_path))
+    if image is None:
+        click.echo(f"Error: Could not load image: {input_path}", err=True)
+        sys.exit(1)
+    return image
+
+
+def _output_check_result(
+    output_data: dict[str, Any],
+    json_output: Path | None,
+    print_fn: Any,
+) -> None:
+    """Output detection check result as JSON or pretty print.
+
+    Args:
+        output_data: Result data dictionary
+        json_output: Path to JSON output file or None for console output
+        print_fn: Function to call for pretty printing (takes output_data)
+    """
+    import json
+
+    if json_output:
+        with open(json_output, "w") as f:
+            json.dump(output_data, f, indent=2)
+        click.echo(f"Results saved to: {json_output}")
+    else:
+        print_fn(output_data)
+
+
+def _print_blur_results(output_data: dict[str, Any]) -> None:
+    """Pretty print blur detection results."""
+    click.echo("\n" + "=" * 50)
+    click.echo("BLUR DETECTION RESULTS")
+    click.echo("=" * 50)
+    click.echo(f"File: {Path(output_data['file']).name}")
+    click.echo("-" * 50)
+
+    severity_icons = {
+        "low": "✓ SHARP",
+        "medium": "~ SLIGHT BLUR",
+        "high": "! BLURRED",
+        "critical": "✗ SEVERELY BLURRED",
+    }
+    severity_display = severity_icons.get(
+        output_data["severity"], output_data["severity"]
+    )
+    click.echo(f"Status: {severity_display}")
+    click.echo(f"Blurred: {'Yes' if output_data['is_blurred'] else 'No'}")
+    click.echo(f"Severity: {output_data['severity'].upper()}")
+    click.echo("-" * 50)
+    click.echo(f"Laplacian Variance: {output_data['laplacian_variance']:.2f}")
+    click.echo(f"Blur Score (0-1): {output_data['blur_score']:.3f}")
+    click.echo(f"Confidence: {output_data['confidence']:.3f}")
+
+    if "metrics" in output_data:
+        click.echo("-" * 50)
+        click.echo("DETAILED METRICS:")
+        metrics = output_data["metrics"]
+        click.echo(f"  Local Variance Mean: {metrics['local_variance_mean']:.2f}")
+        click.echo(f"  Local Variance Std: {metrics['local_variance_std']:.2f}")
+        click.echo(f"  Edge Density: {metrics['edge_density']:.4f}")
+
+    click.echo("=" * 50)
+    click.echo("\nInterpretation:")
+    blur_score = output_data["blur_score"]
+    if blur_score >= 0.8:
+        click.echo("  Image is very sharp with well-defined edges.")
+    elif blur_score >= 0.5:
+        click.echo("  Image has acceptable sharpness for most use cases.")
+    elif blur_score >= 0.2:
+        click.echo("  Image shows noticeable blur. Consider re-scanning or correction.")
+    else:
+        click.echo("  Image is heavily blurred. Re-acquisition recommended.")
+
+
+def _print_noise_results(output_data: dict[str, Any], wavelet: str) -> None:
+    """Pretty print noise detection results."""
+    click.echo("\n" + "=" * 50)
+    click.echo("NOISE DETECTION RESULTS")
+    click.echo("=" * 50)
+    click.echo(f"File: {Path(output_data['file']).name}")
+    click.echo(f"Wavelet: {wavelet}")
+    click.echo("-" * 50)
+
+    severity_icons = {
+        "low": "✓ CLEAN",
+        "medium": "~ SLIGHT NOISE",
+        "high": "! NOISY",
+        "critical": "✗ SEVERELY NOISY",
+    }
+    severity_display = severity_icons.get(
+        output_data["severity"], output_data["severity"]
+    )
+    click.echo(f"Status: {severity_display}")
+    click.echo(f"Noisy: {'Yes' if output_data['is_noisy'] else 'No'}")
+    click.echo(f"Severity: {output_data['severity'].upper()}")
+    click.echo("-" * 50)
+    click.echo(f"Noise Sigma: {output_data['noise_sigma']:.3f}")
+    click.echo(f"Noise Score (0-1): {output_data['noise_score']:.3f}")
+    click.echo(f"Confidence: {output_data['confidence']:.3f}")
+
+    if "metrics" in output_data:
+        click.echo("-" * 50)
+        click.echo("DETAILED METRICS:")
+        metrics = output_data["metrics"]
+        click.echo(f"  Wavelet Detail Energy: {metrics['wavelet_detail_energy']:.4f}")
+        click.echo(f"  SNR Estimate: {metrics['snr_estimate_db']:.2f} dB")
+        click.echo(f"  Noise Type Hint: {metrics['noise_type_hint']}")
+
+    click.echo("=" * 50)
+    click.echo("\nInterpretation:")
+    noise_score = output_data["noise_score"]
+    if noise_score >= 0.8:
+        click.echo("  Image is very clean with minimal noise.")
+    elif noise_score >= 0.5:
+        click.echo("  Image has acceptable noise levels for most use cases.")
+    elif noise_score >= 0.2:
+        click.echo("  Image shows noticeable noise. Consider denoising.")
+    else:
+        click.echo("  Image is heavily affected by noise. Denoising recommended.")
+
+
+def _load_pdf_with_preflight(
+    input_path: Path, builder: MetadataBuilder
+) -> list[PageImage]:
+    """Load PDF with pre-flight analysis for DPI upscaling."""
+    settings = Settings()
+    analyzer = PDFDocumentAnalyzer(settings)
+    preflight = analyzer.analyze(input_path)
+
+    logger.info(
+        "PDF pre-flight analysis complete",
+        needs_upscaling=preflight.needs_upscaling,
+        should_use_upscaled=preflight.should_use_upscaled,
+        processing_time=f"{preflight.processing_time:.2f}s",
+    )
+
+    pdf_to_process = preflight.recommended_path or str(input_path)
+
+    if preflight.should_use_upscaled:
+        builder.set_upscaling_metadata(preflight.upscaling_result)
+        logger.info(f"Using upscaled PDF: {pdf_to_process}")
+    else:
+        logger.info("Using original PDF (upscaling not needed or disabled)")
+
+    pages = load_pdf(pdf_to_process)
+    logger.info(f"Loaded {len(pages)} pages from PDF")
+    return pages
+
+
+def _load_document_pages(input_path: Path, builder: MetadataBuilder) -> list[Any]:
+    """Load document pages based on file type."""
+    suffix = input_path.suffix.lower()
+
+    if suffix == ".pdf":
+        return _load_pdf_with_preflight(input_path, builder)
+
+    if suffix in _IMAGE_EXTENSIONS:
+        img, img_meta = load_image(str(input_path))
+        logger.info("Loaded single image")
+        return [(img, img_meta)]
+
+    raise ValueError(f"Unsupported file format: {suffix}")
+
+
+def _run_iqa_detection(image: np.ndarray, has_text: bool) -> tuple[Any, Any, Any]:
+    """Run IQA detection if page has text.
+
+    Returns:
+        Tuple of (skew_result, blur_result, contrast_result), all None if no text.
+    """
+    if not has_text:
+        return None, None, None
+
+    skew_result = detect_skew(image)
+    blur_result = detect_blur(image)
+    contrast_result = detect_contrast(image)
+
+    logger.debug(
+        f"IQA results: skew={skew_result.is_skewed}, "
+        f"blur={blur_result.is_blurred}, "
+        f"contrast={contrast_result.is_low_contrast}"
+    )
+
+    return skew_result, blur_result, contrast_result
+
+
+def _apply_skew_correction(
+    image: np.ndarray, skew_result: Any, threshold: float
+) -> tuple[np.ndarray, Any]:
+    """Apply skew correction if needed."""
+    if not (skew_result and skew_result.is_skewed):
+        return image, None
+    if skew_result.confidence < threshold:
+        return image, None
+
+    correction = correct_skew(image, skew_result.angle, skew_result.confidence)
+    if correction.applied:
+        logger.info(f"Applied skew correction: {skew_result.angle:.2f}°")
+        return correction.corrected_image, correction
+    return image, None
+
+
+def _apply_contrast_correction(
+    image: np.ndarray, contrast_result: Any, threshold: float
+) -> tuple[np.ndarray, Any]:
+    """Apply contrast correction if needed."""
+    if not (contrast_result and contrast_result.is_low_contrast):
+        return image, None
+    if contrast_result.confidence < threshold:
+        return image, None
+
+    correction = enhance_contrast(
+        image, contrast_result.score, contrast_result.severity
+    )
+    if correction.applied:
+        logger.info("Applied contrast enhancement")
+        return correction.corrected_image, correction
+    return image, None
+
+
+def _apply_blur_correction(
+    image: np.ndarray, blur_result: Any, threshold: float
+) -> tuple[np.ndarray, Any]:
+    """Apply blur correction (sharpening) if needed."""
+    if not (blur_result and blur_result.is_blurred):
+        return image, None
+    if blur_result.confidence < threshold:
+        return image, None
+
+    correction = sharpen_image(image, blur_result.score, blur_result.severity)
+    if correction.applied:
+        logger.info("Applied sharpening")
+        return correction.corrected_image, correction
+    return image, None
+
+
+def _apply_all_corrections(
+    image: np.ndarray,
+    skew_result: Any,
+    blur_result: Any,
+    contrast_result: Any,
+    skew_threshold: float,
+    blur_threshold: float,
+    contrast_threshold: float,
+) -> tuple[np.ndarray, Any, Any, Any]:
+    """Apply all corrections and return corrected image with correction results."""
+    image, skew_correction = _apply_skew_correction(image, skew_result, skew_threshold)
+    image, contrast_correction = _apply_contrast_correction(
+        image, contrast_result, contrast_threshold
+    )
+    image, blur_correction = _apply_blur_correction(image, blur_result, blur_threshold)
+    return image, skew_correction, contrast_correction, blur_correction
+
+
+def _extract_page_image_data(
+    page_data: Any,
+) -> tuple[np.ndarray, PageImage | None, ImageMetadata | None]:
+    """Extract image and metadata from page data."""
+    if isinstance(page_data, PageImage):
+        return page_data.image, page_data, None
+    # Direct image tuple
+    image, img_metadata = page_data
+    return image, None, img_metadata
+
 
 def process_single_file(
     input_path: Path,
@@ -68,132 +379,39 @@ def process_single_file(
         dry_run=dry_run,
     )
 
-    # Determine document ID and file type
     doc_id = input_path.stem
     file_name = input_path.name
-    suffix = input_path.suffix.lower()
-
-    # Create metadata builder
     builder = MetadataBuilder(document_id=doc_id, file_name=file_name)
+    pages = _load_document_pages(input_path, builder)
 
-    # Load pages based on file type
-    pages: list[Any]  # PageImage or tuple[np.ndarray, ImageMetadata]
-    if suffix == ".pdf":
-        # Phase 1B: Perform pre-flight analysis for DPI upscaling
-        settings = Settings()
-        analyzer = PDFDocumentAnalyzer(settings)
-        preflight = analyzer.analyze(input_path)
-
-        logger.info(
-            "PDF pre-flight analysis complete",
-            needs_upscaling=preflight.needs_upscaling,
-            should_use_upscaled=preflight.should_use_upscaled,
-            processing_time=f"{preflight.processing_time:.2f}s",
-        )
-
-        # Use upscaled version if available, otherwise original
-        pdf_to_process = preflight.recommended_path or str(input_path)
-
-        # Add upscaling metadata to builder if upscaling was performed
-        if preflight.should_use_upscaled:
-            builder.set_upscaling_metadata(preflight.upscaling_result)
-            logger.info(f"Using upscaled PDF: {pdf_to_process}")
-        else:
-            logger.info("Using original PDF (upscaling not needed or disabled)")
-
-        pages = load_pdf(pdf_to_process)
-        logger.info(f"Loaded {len(pages)} pages from PDF")
-    elif suffix in {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".bmp", ".webp"}:
-        img, img_meta = load_image(str(input_path))
-        pages = [(img, img_meta)]
-        logger.info("Loaded single image")
-    else:
-        raise ValueError(f"Unsupported file format: {suffix}")
-
-    # Process each page
     for page_idx, page_data in enumerate(pages):
-        page_image: PageImage | None
-        img_metadata: ImageMetadata | None
-
-        if isinstance(page_data, PageImage):
-            # PDF page
-            page_image = page_data
-            image = page_image.image
-            img_metadata = None
-        else:
-            # Direct image tuple
-            image, img_metadata = page_data
-            page_image = None
-
         logger.info(f"Processing page {page_idx + 1}/{len(pages)}")
 
-        # Text detection gate
+        image, page_image, img_metadata = _extract_page_image_data(page_data)
         text_result = detect_text(image)
         logger.debug(
             f"Text detection: has_text={text_result.has_text}, "
             f"confidence={text_result.confidence:.2f}"
         )
 
-        # IQA detection
-        skew_result = None
-        blur_result = None
-        contrast_result = None
+        skew_result, blur_result, contrast_result = _run_iqa_detection(
+            image, text_result.has_text
+        )
 
-        if text_result.has_text:
-            # Only run IQA on text-heavy pages
-            skew_result = detect_skew(image)
-            blur_result = detect_blur(image)
-            contrast_result = detect_contrast(image)
-
-            logger.debug(
-                f"IQA results: skew={skew_result.is_skewed}, "
-                f"blur={blur_result.is_blurred}, "
-                f"contrast={contrast_result.is_low_contrast}"
+        skew_correction = blur_correction = contrast_correction = None
+        if not dry_run and text_result.has_text:
+            image, skew_correction, contrast_correction, blur_correction = (
+                _apply_all_corrections(
+                    image,
+                    skew_result,
+                    blur_result,
+                    contrast_result,
+                    skew_threshold,
+                    blur_threshold,
+                    contrast_threshold,
+                )
             )
 
-        # Apply corrections (if not dry-run)
-        skew_correction = None
-        blur_correction = None
-        contrast_correction = None
-
-        if not dry_run and text_result.has_text:
-            if (
-                skew_result
-                and skew_result.is_skewed
-                and skew_result.confidence >= skew_threshold
-            ):
-                skew_correction = correct_skew(
-                    image, skew_result.angle, skew_result.confidence
-                )
-                if skew_correction.applied:
-                    image = skew_correction.corrected_image
-                    logger.info(f"Applied skew correction: {skew_result.angle:.2f}°")
-
-            if (
-                contrast_result
-                and contrast_result.is_low_contrast
-                and contrast_result.confidence >= contrast_threshold
-            ):
-                contrast_correction = enhance_contrast(
-                    image, contrast_result.score, contrast_result.severity
-                )
-                if contrast_correction.applied:
-                    image = contrast_correction.corrected_image
-                    logger.info("Applied contrast enhancement")
-
-            if (
-                blur_result
-                and blur_result.is_blurred
-                and blur_result.confidence >= blur_threshold
-            ):
-                blur_correction = sharpen_image(
-                    image, blur_result.score, blur_result.severity
-                )
-                if blur_correction.applied:
-                    image = blur_correction.corrected_image
-                    logger.info("Applied sharpening")
-
-        # Add page to metadata builder
         page_data_arg: PageImage | tuple[np.ndarray, ImageMetadata] | None = page_image
         if page_data_arg is None and img_metadata is not None:
             page_data_arg = (image, img_metadata)
@@ -211,10 +429,8 @@ def process_single_file(
                 blur_correction=blur_correction,
             )
 
-    # Build metadata and generate JSON
     metadata = builder.build()
     generate_json(metadata, output)
-
     logger.info("Processing complete", output=str(output))
 
 
@@ -466,16 +682,9 @@ def blur_check(
         imgprep blur-check photo.jpg --roi "100,100,200,200"
         imgprep blur-check document.jpg --json-output result.json
     """
-    import json
-
-    import cv2
-
     try:
-        # Load image
-        image = cv2.imread(str(input_path))
-        if image is None:
-            click.echo(f"Error: Could not load image: {input_path}", err=True)
-            sys.exit(1)
+        # Load image using helper
+        image = _load_image_for_check(input_path)
 
         # Create detector with custom thresholds
         detector = BlurDetector(
@@ -484,36 +693,20 @@ def blur_check(
             threshold_medium=threshold_medium,
         )
 
-        # Parse ROI if provided
-        bbox = None
-        if roi:
-            parts = [x.strip() for x in roi.split(",")]
-            if len(parts) != 4:
-                click.echo(
-                    "Error: Invalid ROI format: ROI must have 4 values", err=True
-                )
-                click.echo("Expected format: 'x,y,width,height'", err=True)
-                sys.exit(1)
-            try:
-                bbox = tuple(int(x) for x in parts)
-            except ValueError:
-                click.echo(
-                    "Error: Invalid ROI format: values must be integers", err=True
-                )
-                click.echo("Expected format: 'x,y,width,height'", err=True)
-                sys.exit(1)
+        # Parse ROI using helper
+        bbox = _parse_roi_string(roi)
 
         # Run detection
         if bbox:
-            result = detector.detect_roi(image, bbox)  # type: ignore[arg-type]
+            result = detector.detect_roi(image, bbox)
             click.echo(
                 f"Analyzing ROI: x={bbox[0]}, y={bbox[1]}, w={bbox[2]}, h={bbox[3]}"
             )
         else:
             result = detector.detect(image, compute_detailed_metrics=detailed)
 
-        # Prepare output
-        output_data = {
+        # Prepare output data
+        output_data: dict[str, Any] = {
             "file": str(input_path),
             "is_blurred": result.is_blurred,
             "severity": result.severity.value,
@@ -532,63 +725,8 @@ def blur_check(
         if roi:
             output_data["roi"] = bbox
 
-        # Output results
-        if json_output:
-            with open(json_output, "w") as f:
-                json.dump(output_data, f, indent=2)
-            click.echo(f"Results saved to: {json_output}")
-        else:
-            # Pretty print results
-            click.echo("\n" + "=" * 50)
-            click.echo("BLUR DETECTION RESULTS")
-            click.echo("=" * 50)
-            click.echo(f"File: {input_path.name}")
-            click.echo(f"Image size: {image.shape[1]}x{image.shape[0]}")
-            click.echo("-" * 50)
-
-            # Severity indicator
-            severity_icons = {
-                "low": "✓ SHARP",
-                "medium": "~ SLIGHT BLUR",
-                "high": "! BLURRED",
-                "critical": "✗ SEVERELY BLURRED",
-            }
-            severity_display = severity_icons.get(
-                result.severity.value, result.severity.value
-            )
-            click.echo(f"Status: {severity_display}")
-            click.echo(f"Blurred: {'Yes' if result.is_blurred else 'No'}")
-            click.echo(f"Severity: {result.severity.value.upper()}")
-            click.echo("-" * 50)
-            click.echo(f"Laplacian Variance: {result.score:.2f}")
-            click.echo(f"Blur Score (0-1): {result.blur_score:.3f}")
-            click.echo(f"Confidence: {result.confidence:.3f}")
-
-            if detailed and result.metrics:
-                click.echo("-" * 50)
-                click.echo("DETAILED METRICS:")
-                click.echo(
-                    f"  Local Variance Mean: {result.metrics.local_variance_mean:.2f}"
-                )
-                click.echo(
-                    f"  Local Variance Std: {result.metrics.local_variance_std:.2f}"
-                )
-                click.echo(f"  Edge Density: {result.metrics.edge_density:.4f}")
-
-            click.echo("=" * 50)
-
-            # Interpretation
-            click.echo("\nInterpretation:")
-            if result.blur_score >= 0.8:
-                click.echo("  Image is very sharp with well-defined edges.")
-            elif result.blur_score >= 0.5:
-                click.echo("  Image has acceptable sharpness for most use cases.")
-            elif result.blur_score >= 0.2:
-                click.echo(
-                    "  Image shows noticeable blur. Consider re-scanning or correction."
-                )
-            else:
-                click.echo("  Image is heavily blurred. Re-acquisition recommended.")
+        # Output results using helper
+        _output_check_result(output_data, json_output, _print_blur_results)
 
     except Exception as e:
         logger.error("Blur check failed", error=str(e), exc_info=True)
@@ -659,16 +797,9 @@ def noise_check(
         imgprep noise-check photo.jpg --wavelet haar
         imgprep noise-check document.jpg --json-output result.json
     """
-    import json
-
-    import cv2
-
     try:
-        # Load image
-        image = cv2.imread(str(input_path))
-        if image is None:
-            click.echo(f"Error: Could not load image: {input_path}", err=True)
-            sys.exit(1)
+        # Load image using helper
+        image = _load_image_for_check(input_path)
 
         # Create detector with custom thresholds
         detector = NoiseDetector(
@@ -678,36 +809,20 @@ def noise_check(
             wavelet=wavelet,
         )
 
-        # Parse ROI if provided
-        bbox = None
-        if roi:
-            parts = [x.strip() for x in roi.split(",")]
-            if len(parts) != 4:
-                click.echo(
-                    "Error: Invalid ROI format: ROI must have 4 values", err=True
-                )
-                click.echo("Expected format: 'x,y,width,height'", err=True)
-                sys.exit(1)
-            try:
-                bbox = tuple(int(x) for x in parts)
-            except ValueError:
-                click.echo(
-                    "Error: Invalid ROI format: values must be integers", err=True
-                )
-                click.echo("Expected format: 'x,y,width,height'", err=True)
-                sys.exit(1)
+        # Parse ROI using helper
+        bbox = _parse_roi_string(roi)
 
         # Run detection
         if bbox:
-            result = detector.detect_roi(image, bbox)  # type: ignore[arg-type]
+            result = detector.detect_roi(image, bbox)
             click.echo(
                 f"Analyzing ROI: x={bbox[0]}, y={bbox[1]}, w={bbox[2]}, h={bbox[3]}"
             )
         else:
             result = detector.detect(image, compute_detailed_metrics=detailed)
 
-        # Prepare output
-        output_data = {
+        # Prepare output data
+        output_data: dict[str, Any] = {
             "file": str(input_path),
             "is_noisy": result.is_noisy,
             "severity": result.severity.value,
@@ -726,62 +841,12 @@ def noise_check(
         if roi:
             output_data["roi"] = bbox
 
-        # Output results
-        if json_output:
-            with open(json_output, "w") as f:
-                json.dump(output_data, f, indent=2)
-            click.echo(f"Results saved to: {json_output}")
-        else:
-            # Pretty print results
-            click.echo("\n" + "=" * 50)
-            click.echo("NOISE DETECTION RESULTS")
-            click.echo("=" * 50)
-            click.echo(f"File: {input_path.name}")
-            click.echo(f"Image size: {image.shape[1]}x{image.shape[0]}")
-            click.echo(f"Wavelet: {wavelet}")
-            click.echo("-" * 50)
-
-            # Severity indicator
-            severity_icons = {
-                "low": "✓ CLEAN",
-                "medium": "~ SLIGHT NOISE",
-                "high": "! NOISY",
-                "critical": "✗ SEVERELY NOISY",
-            }
-            severity_display = severity_icons.get(
-                result.severity.value, result.severity.value
-            )
-            click.echo(f"Status: {severity_display}")
-            click.echo(f"Noisy: {'Yes' if result.is_noisy else 'No'}")
-            click.echo(f"Severity: {result.severity.value.upper()}")
-            click.echo("-" * 50)
-            click.echo(f"Noise Sigma: {result.noise_sigma:.3f}")
-            click.echo(f"Noise Score (0-1): {result.noise_score:.3f}")
-            click.echo(f"Confidence: {result.confidence:.3f}")
-
-            if detailed and result.metrics:
-                click.echo("-" * 50)
-                click.echo("DETAILED METRICS:")
-                click.echo(
-                    f"  Wavelet Detail Energy: {result.metrics.wavelet_detail_energy:.4f}"
-                )
-                click.echo(f"  SNR Estimate: {result.metrics.snr_estimate:.2f} dB")
-                click.echo(f"  Noise Type Hint: {result.metrics.noise_type_hint}")
-
-            click.echo("=" * 50)
-
-            # Interpretation
-            click.echo("\nInterpretation:")
-            if result.noise_score >= 0.8:
-                click.echo("  Image is very clean with minimal noise.")
-            elif result.noise_score >= 0.5:
-                click.echo("  Image has acceptable noise levels for most use cases.")
-            elif result.noise_score >= 0.2:
-                click.echo("  Image shows noticeable noise. Consider denoising.")
-            else:
-                click.echo(
-                    "  Image is heavily affected by noise. Denoising recommended."
-                )
+        # Output results using helper (pass wavelet to print function via lambda)
+        _output_check_result(
+            output_data,
+            json_output,
+            lambda data: _print_noise_results(data, wavelet),
+        )
 
     except Exception as e:
         logger.error("Noise check failed", error=str(e), exc_info=True)

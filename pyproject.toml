@@ -81,7 +81,9 @@ dev = [
 
     # Code Quality
     "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
-    "mypy>=1.4.0",
+    "mypy>=1.4.0",  # Legacy type checker (kept for reference)
+    "basedpyright>=1.18.0",  # Modern type checker (strict, 3-5x faster than mypy)
+    "vulture>=2.11",  # Dead code detection
     "interrogate>=1.7.0",  # Docstring coverage checker
     "types-pyyaml>=6.0.0",  # Type stubs for PyYAML
 
@@ -110,6 +112,7 @@ dev = [
 
     # Image metrics for benchmarking
     "scikit-image>=0.25.2",
+    "scikit-learn>=1.7.2",  # ML utilities for metrics and evaluation
     "scipy>=1.14.0",  # v1.14.x supports Python 3.10-3.12
 
     # Safety for dependency scanning
@@ -195,6 +198,7 @@ line-length = 88
 target-version = "py312"
 exclude = [
     ".git",
+    ".claude",
     ".mypy_cache",
     ".ruff_cache",
     ".venv",
@@ -356,6 +360,58 @@ disallow_untyped_defs = false
 check_untyped_defs = false
 ignore_missing_imports = true
 
+# BasedPyright Configuration (Modern Type Checker)
+# Replaces MyPy for primary type checking (3-5x faster, stricter)
+# Documentation: https://docs.basedpyright.com
+[tool.basedpyright]
+pythonVersion = "3.12"
+pythonPlatform = "Linux"
+typeCheckingMode = "strict"
+analyzeUnannotatedFunctions = true
+strictParameterNoneValue = true
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+reportMissingTypeStubs = "warning"
+reportUnknownMemberType = "warning"
+reportUnknownParameterType = "warning"
+reportUnknownVariableType = "warning"
+reportUnknownArgumentType = "warning"
+reportMissingParameterType = "error"
+reportUnnecessaryTypeIgnoreComment = "warning"
+exclude = [
+    "**/tests/**",
+    "**/validation/**",
+    "**/benchmarks/**",
+    "**/scripts/**",
+    "**/modal/**",
+    "**/fuzz/**",
+    "**/notebooks/**",
+    "**/tmp_cleanup/**",
+    "**/__pycache__/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/.venv/**",
+]
+
+# Vulture Configuration (Dead Code Detection)
+# Documentation: https://github.com/jendrikseipp/vulture
+[tool.vulture]
+min_confidence = 80
+paths = ["src/"]
+exclude = [
+    "tests/",
+    "validation/",
+    "benchmarks/",
+    "scripts/",
+    "modal/",
+    "fuzz/",
+    "notebooks/",
+    "tmp_cleanup/",
+]
+# Whitelist file for false positives (create if needed)
+# whitelist = ".vulture_whitelist.py"
+
 # Pytest Configuration
 [tool.pytest.ini_options]
 minversion = "7.0"
@@ -410,6 +466,10 @@ omit = [
     # Training modules (require PyTorch, tested separately with ml dependencies)
     "src/image_preprocessing_detector/training/*",
     "src/image_preprocessing_detector/datasets/*",
+    # PyTorch model definitions (require torch, tested with ml dependencies)
+    "src/image_preprocessing_detector/models/resnet_student.py",
+    "src/image_preprocessing_detector/models/resnet_teacher.py",
+    "src/image_preprocessing_detector/models/loss_functions.py",
     # Routing (Phase 8, needs implementation)
     "src/image_preprocessing_detector/routing/*",
 ]
@@ -446,6 +506,3 @@ tests_dir = "tests/"
 # Mutation score threshold: percentage of mutations that must be killed
 # Score below 80% indicates weak test coverage
 dict_synonyms = "Struct, NamedStruct"
-
-[tool.poetry.group.dev.dependencies]
-scikit-learn = "^1.7.2"

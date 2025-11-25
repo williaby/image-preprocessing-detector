@@ -28,7 +28,7 @@ echo "Python version $PYTHON_VERSION is compatible with Atheris"
 pip3 install uv
 
 # Install project dependencies (without dev dependencies)
-cd $SRC/image-preprocessing-detector
+cd "$SRC/image-preprocessing-detector"
 
 # Generate requirements without dev dependencies (no hashes for pip compatibility)
 uv export --no-dev --no-hashes --format requirements-txt > /tmp/requirements.txt
@@ -45,25 +45,34 @@ pip3 install -e . --no-deps
 # Install Atheris for Python fuzzing
 pip3 install atheris==2.3.0
 
+# Store project directory for absolute paths
+PROJECT_DIR="$SRC/image-preprocessing-detector"
+
 # Use OSS-Fuzz helper to compile Python fuzz targets
 # This creates proper executables that ClusterFuzzLite recognizes
 echo "Compiling Python fuzz targets with compile_python_fuzzer..."
+echo "PROJECT_DIR: $PROJECT_DIR"
+echo "Fuzz targets to compile:"
+ls -la "$PROJECT_DIR/fuzz/"
 
 # Check if compile_python_fuzzer exists
 if command -v compile_python_fuzzer &> /dev/null; then
-    compile_python_fuzzer fuzz/fuzz_pdf_loader.py
-    compile_python_fuzzer fuzz/fuzz_image_loader.py
-    compile_python_fuzzer fuzz/fuzz_text_gate.py
+    # Use absolute paths to avoid working directory issues with pyinstaller
+    compile_python_fuzzer "$PROJECT_DIR/fuzz/fuzz_pdf_loader.py"
+    compile_python_fuzzer "$PROJECT_DIR/fuzz/fuzz_image_loader.py"
+    compile_python_fuzzer "$PROJECT_DIR/fuzz/fuzz_text_gate.py"
 else
     echo "WARNING: compile_python_fuzzer not found, using alternative approach"
     # Alternative: directly copy and make executable
-    cp fuzz/fuzz_pdf_loader.py $OUT/fuzz_pdf_loader
-    cp fuzz/fuzz_image_loader.py $OUT/fuzz_image_loader
-    cp fuzz/fuzz_text_gate.py $OUT/fuzz_text_gate
-    chmod +x $OUT/fuzz_*
+    cp "$PROJECT_DIR/fuzz/fuzz_pdf_loader.py" "$OUT/fuzz_pdf_loader"
+    cp "$PROJECT_DIR/fuzz/fuzz_image_loader.py" "$OUT/fuzz_image_loader"
+    cp "$PROJECT_DIR/fuzz/fuzz_text_gate.py" "$OUT/fuzz_text_gate"
+    chmod +x "$OUT"/fuzz_*
 fi
 
 echo "=== Fuzzing Build Complete ==="
 echo "Fuzz targets in $OUT:"
-ls -la $OUT/ | grep -E "(fuzz_|^total|^d)"
+for f in "$OUT"/fuzz_*; do
+    [ -e "$f" ] && ls -la "$f"
+done
 echo "================================"

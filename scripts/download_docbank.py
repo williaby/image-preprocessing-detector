@@ -23,7 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def download_docbank(output_dir: Path, use_cache: bool = True) -> None:
+def download_docbank(output_dir: Path, _use_cache: bool = True) -> None:
     """
     Download DocBank dataset from HuggingFace.
 

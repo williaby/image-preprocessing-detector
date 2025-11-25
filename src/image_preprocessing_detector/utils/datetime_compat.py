@@ -353,9 +353,9 @@ class MockDatetime:
 
     def __exit__(
         self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: object,
+        _exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: object,
     ) -> None:
         """Stop mocking datetime functions."""
         global _mock_now_time  # Datetime mocking requires global state

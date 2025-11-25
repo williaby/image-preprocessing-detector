@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-config.json",
+  "comment": "Claude Code settings for Claude Code Configuration. Copy to settings.local.json and customize.",
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(git stash:*)",
+      "Bash(uv:*)",
+      "Bash(python:*)",
+      "Bash(pytest:*)",
+      "Bash(ruff:*)",
+      "Bash(black:*)",
+      "Bash(basedpyright:*)",
+      "Bash(bandit:*)",
+      "Bash(pre-commit:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [],
+    "ask": [
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)"
+    ]
+  },
+  "hooks": {
+    "preToolUse": [],
+    "postToolUse": []
+  }
+}

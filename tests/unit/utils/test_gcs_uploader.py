@@ -14,6 +14,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+pytest.importorskip(
+    "google.cloud", reason="google-cloud-storage required for GCS uploader tests"
+)
+
 from image_preprocessing_detector.utils.gcs_uploader import (
     GCSRunConfig,
     download_run_from_gcs,
