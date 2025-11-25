@@ -221,8 +221,8 @@ class PDFUpscaler:
                 "pages_processed": 0,
                 "error_message": error_msg,
             }
-        else:
-            return result
+
+        return result
 
     def _apply_upscaling(  # pragma: no cover
         self, img: np.ndarray, target_width: int, target_height: int

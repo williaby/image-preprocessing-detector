@@ -434,7 +434,7 @@ class ModelOptimizer:
                 "input": {0: "batch_size"},
             }
             # Add output dynamic axes for multi-head model
-            for head_name in ["blur", "noise", "skew", "illumination", "artifacts"]:
+            for head_name in ("blur", "noise", "skew", "illumination", "artifacts"):
                 dynamic_axes[f"{head_name}_logits"] = {0: "batch_size"}
                 dynamic_axes[f"{head_name}_confidence"] = {0: "batch_size"}
 
@@ -448,7 +448,7 @@ class ModelOptimizer:
 
         # Get output names from model architecture
         output_names = []
-        for head_name in ["blur", "noise", "skew", "illumination", "artifacts"]:
+        for head_name in ("blur", "noise", "skew", "illumination", "artifacts"):
             output_names.extend([f"{head_name}_logits", f"{head_name}_confidence"])
 
         torch.onnx.export(
@@ -518,7 +518,7 @@ class ModelOptimizer:
 
         # Compare outputs (multi-head model returns dict)
         output_idx = 0
-        for head_name in ["blur", "noise", "skew", "illumination", "artifacts"]:
+        for head_name in ("blur", "noise", "skew", "illumination", "artifacts"):
             pt_logits = pytorch_output[head_name]["logits"].numpy()
             pt_conf = pytorch_output[head_name]["confidence"].numpy()
 
