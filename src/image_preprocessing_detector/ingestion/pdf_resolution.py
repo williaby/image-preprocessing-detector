@@ -39,7 +39,7 @@ def _analyze_single_image(
         bbox_width_inches = (img_bbox.x1 - img_bbox.x0) / 72.0
         bbox_height_inches = (img_bbox.y1 - img_bbox.y0) / 72.0
 
-        pix = None  # Release memory
+        del pix  # Release pixmap memory explicitly
 
     except Exception as e:
         logger.warning(f"Error analyzing image {img_index} on page {page_num + 1}: {e}")

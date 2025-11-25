@@ -22,6 +22,8 @@ rules:
     severity: WARNING
     metadata:
       category: security
+      subcategory:
+        - vuln
       cwe: "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
       owasp: "A01:2021 - Broken Access Control"
       confidence: MEDIUM
@@ -39,6 +41,8 @@ rules:
     severity: WARNING
     metadata:
       category: security
+      subcategory:
+        - vuln
       cwe: "CWE-502: Deserialization of Untrusted Data"
       confidence: HIGH
 
@@ -55,6 +59,8 @@ rules:
     severity: WARNING
     metadata:
       category: security
+      subcategory:
+        - vuln
       cwe: "CWE-502: Deserialization of Untrusted Data"
       confidence: HIGH
 
@@ -89,6 +95,8 @@ rules:
     severity: ERROR
     metadata:
       category: security
+      subcategory:
+        - vuln
       cwe: "CWE-89: SQL Injection"
       owasp: "A03:2021 - Injection"
       confidence: HIGH
@@ -111,6 +119,8 @@ rules:
     severity: ERROR
     metadata:
       category: security
+      subcategory:
+        - vuln
       cwe: "CWE-78: OS Command Injection"
       owasp: "A03:2021 - Injection"
       confidence: HIGH

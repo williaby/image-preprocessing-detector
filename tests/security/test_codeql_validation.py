@@ -16,7 +16,11 @@ This file ensures that the CodeQL security-extended query suite is:
 3. Generating accurate SARIF reports for GitHub Security
 
 CodeQL should flag every function in this file with appropriate severity.
+
+Note: Variables prefixed with underscore are intentionally unused - they exist
+solely to create detectable security patterns for CodeQL validation.
 """
+# ruff: noqa: F841  # Intentionally unused variables for security testing
 
 import pickle  # nosec B403 - required for security validation testing
 import subprocess  # nosec B404 - required for security validation testing
