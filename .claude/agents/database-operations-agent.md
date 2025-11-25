@@ -6,7 +6,6 @@ tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 context_refs:
   - /context/shared-architecture.md
   - /context/development-standards.md
-  - /context/database-standards.md
 ---
 
 # Database Operations Agent

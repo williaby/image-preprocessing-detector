@@ -1,12 +1,12 @@
 ---
 name: api-development-agent
-description: API development and integration specialist for REST/GraphQL APIs, OpenAPI specifications, contract testing, and API versioning. Use PROACTIVELY when API design, contract testing, or integration workflows are needed.
+description: API development and integration specialist for REST/GraphQL APIs, OpenAPI specifications, contract testing, and API versioning. Invoke when designing APIs, implementing contract testing, or managing integration workflows.
 model: sonnet
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "WebFetch"]
 context_refs:
   - /context/shared-architecture.md
   - /context/development-standards.md
-  - /context/api-standards.md
+  - /context/integration-patterns.md
 ---
 
 # API Development Agent

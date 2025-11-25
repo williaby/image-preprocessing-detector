@@ -190,7 +190,28 @@ detect_language() {
 }
 ```
 
-### 3. File Name Validation
+### 3. Single File Analysis (Entry Point)
+
+```bash
+analyze_single_file() {
+    local file="$1"
+    local language="$2"
+    local violations=0
+
+    # Validate file name
+    if ! validate_file_naming "$file" "$language"; then
+        violations=$((violations + 1))
+    fi
+
+    # Analyze code naming conventions
+    code_violations=$(analyze_code_naming "$file" "$language")
+    violations=$((violations + code_violations))
+
+    return $violations
+}
+```
+
+### 4. File Name Validation
 
 ```bash
 validate_file_naming() {

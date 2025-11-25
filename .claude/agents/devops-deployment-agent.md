@@ -1,12 +1,11 @@
 ---
 name: devops-deployment-agent
-description: DevOps and deployment specialist for CI/CD pipelines, infrastructure automation, deployment orchestration, and monitoring integration. Use PROACTIVELY when deployment issues, infrastructure problems, or monitoring alerts occur.
+description: DevOps and deployment specialist for CI/CD pipelines, infrastructure automation, deployment orchestration, and monitoring integration. Invoke when handling deployment issues, infrastructure configuration, or monitoring alerts.
 model: sonnet
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 context_refs:
   - /context/shared-architecture.md
   - /context/development-standards.md
-  - /context/devops-standards.md
 ---
 
 # DevOps Deployment Agent

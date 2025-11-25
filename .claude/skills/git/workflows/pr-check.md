@@ -145,9 +145,9 @@ fi
 echo ""
 echo "=== Commit Message Validation ==="
 
-# Check all commits in PR
+# Check all commits in PR (using process substitution to avoid subshell)
 invalid_commits=0
-git log --pretty=format:"%h %s" origin/$main_branch..HEAD | while read -r commit message; do
+while read -r commit message; do
     if [[ ! $message =~ ^(feat|fix|docs|style|refactor|test|chore|ci|perf)(\(.+\))?: .+ ]]; then
         if [ "$invalid_commits" -eq 0 ]; then
             echo "❌ Invalid commit messages found:"
@@ -155,7 +155,7 @@ git log --pretty=format:"%h %s" origin/$main_branch..HEAD | while read -r commit
         echo "   $commit: $message"
         invalid_commits=$((invalid_commits + 1))
     fi
-done
+done < <(git log --pretty=format:"%h %s" origin/$main_branch..HEAD)
 
 # If all commits valid
 if [ "$invalid_commits" -eq 0 ]; then
