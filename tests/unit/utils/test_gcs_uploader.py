@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from image_preprocessing_detector.utils.gcs_uploader import (
+    GCSRunConfig,
     download_run_from_gcs,
     list_runs,
     upload_dir_to_gcs,
@@ -250,12 +251,15 @@ class TestUploadRunToGcs:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            result = upload_run_to_gcs(
-                local_dir=str(sample_directory),
+            config = GCSRunConfig(
                 bucket_name="rag-pipeline-models",
                 project_name="image-preprocessing-detector",
                 model_name="resnet50_teacher",
+            )
+            result = upload_run_to_gcs(
+                config=config,
                 run_id="2025-11-15T01-20Z_run-abc123",
+                local_dir=str(sample_directory),
                 verbose=False,
             )
 
@@ -273,12 +277,15 @@ class TestUploadRunToGcs:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            result = upload_run_to_gcs(
-                local_dir=str(sample_directory),
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="test-project",
                 model_name="test-model",
+            )
+            result = upload_run_to_gcs(
+                config=config,
                 run_id="test-run",
+                local_dir=str(sample_directory),
                 verbose=False,
             )
 
@@ -294,12 +301,15 @@ class TestUploadRunToGcs:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            result = upload_run_to_gcs(
-                local_dir=str(sample_directory),
+            config = GCSRunConfig(
                 bucket_name="bucket",
                 project_name="project",
                 model_name="model",
+            )
+            result = upload_run_to_gcs(
+                config=config,
                 run_id="run-123",
+                local_dir=str(sample_directory),
                 verbose=False,
             )
 
@@ -334,11 +344,12 @@ class TestListRuns:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            runs = list_runs(
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="project",
                 model_name="model",
             )
+            runs = list_runs(config=config)
 
             assert len(runs) == 3
             assert "2025-11-15T01-20Z_run-abc123" in runs
@@ -358,11 +369,12 @@ class TestListRuns:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            runs = list_runs(
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="project",
                 model_name="model",
             )
+            runs = list_runs(config=config)
 
             # Should be sorted newest first
             assert runs[0] == "2025-11-15T01-20Z_run-new"
@@ -380,12 +392,12 @@ class TestListRuns:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            runs = list_runs(
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="project",
                 model_name="model",
-                max_results=3,
             )
+            runs = list_runs(config=config, max_results=3)
 
             assert len(runs) == 3
 
@@ -399,11 +411,12 @@ class TestListRuns:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            runs = list_runs(
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="project",
                 model_name="model",
             )
+            runs = list_runs(config=config)
 
             assert runs == []
 
@@ -439,10 +452,13 @@ class TestDownloadRunFromGcs:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            result = download_run_from_gcs(
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="project",
                 model_name="model",
+            )
+            result = download_run_from_gcs(
+                config=config,
                 run_id="run-123",
                 local_dir=str(tmp_path),
                 verbose=False,
@@ -462,10 +478,13 @@ class TestDownloadRunFromGcs:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            result = download_run_from_gcs(
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="project",
                 model_name="model",
+            )
+            result = download_run_from_gcs(
+                config=config,
                 run_id="new-run",
                 local_dir=str(tmp_path),
                 verbose=False,
@@ -499,10 +518,13 @@ class TestDownloadRunFromGcs:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            download_run_from_gcs(
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="project",
                 model_name="model",
+            )
+            download_run_from_gcs(
+                config=config,
                 run_id="run-123",
                 local_dir=str(tmp_path),
                 verbose=False,
@@ -521,10 +543,13 @@ class TestDownloadRunFromGcs:
             "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
             return_value=mock_storage_client,
         ):
-            result = download_run_from_gcs(
+            config = GCSRunConfig(
                 bucket_name="test-bucket",
                 project_name="project",
                 model_name="model",
+            )
+            result = download_run_from_gcs(
+                config=config,
                 run_id="my-run-id",
                 local_dir=str(tmp_path),
                 verbose=False,
@@ -563,12 +588,15 @@ def test_canonical_path_construction(
         "image_preprocessing_detector.utils.gcs_uploader.storage.Client",
         return_value=mock_storage_client,
     ):
-        result = upload_run_to_gcs(
-            local_dir=str(sample_directory),
+        config = GCSRunConfig(
             bucket_name="bucket",
             project_name=project,
             model_name=model,
+        )
+        result = upload_run_to_gcs(
+            config=config,
             run_id=run_id,
+            local_dir=str(sample_directory),
             verbose=False,
         )
 
