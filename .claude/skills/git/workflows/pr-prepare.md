@@ -115,7 +115,7 @@ If `pyproject.toml` or `poetry.lock` changed:
 
 ### Security Scanning
 
-Runs `poetry run safety check` to detect vulnerabilities:
+Runs `uv run safety check` to detect vulnerabilities:
 
 ```
 🔒 Security Scan Results:

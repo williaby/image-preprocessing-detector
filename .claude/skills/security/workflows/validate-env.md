@@ -11,25 +11,30 @@ Comprehensive validation of security requirements for safe development with sign
 ## Core Validations
 
 ### 1. SSH Key Validation
+
 - Check if SSH key is loaded in ssh-agent
 - Verify key type and strength (256-bit minimum)
 - Validate key permissions
 
 ### 2. Git Signing Configuration
+
 - Check if commit signing is enabled
 - Verify signing key configuration
 - Validate signing format (SSH or GPG)
 
 ### 3. GPG Key Validation (Optional)
+
 - Check for GPG secret keys
 - Verify key is not expired
 - Confirm encryption capability
 
 ### 4. Git User Configuration
+
 - Verify user.name is set
 - Verify user.email is set
 
 ### 5. Commit Signature Verification
+
 - Check recent commits for signatures
 - Validate signature status
 

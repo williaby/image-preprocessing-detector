@@ -12,13 +12,13 @@ Lint code and apply automatic fixes.
 
 ```bash
 # Check and auto-fix
-poetry run ruff check --fix path/
+uv run ruff check --fix path/
 
 # Check only
-poetry run ruff check path/
+uv run ruff check path/
 
 # Show violations
-poetry run ruff check --output-format=full path/
+uv run ruff check --output-format=full path/
 ```
 
 ## Auto-fixable Issues

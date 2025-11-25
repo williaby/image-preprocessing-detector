@@ -8,51 +8,51 @@ Quick reference for common pytest commands and configurations.
 
 ```bash
 # Run all tests with coverage
-poetry run pytest -v --cov=src --cov-report=html --cov-report=term-missing
+uv run pytest -v --cov=src --cov-report=html --cov-report=term-missing
 
 # Fast dev cycle (skip slow tests)
-poetry run pytest -m "not slow"
+uv run pytest -m "not slow"
 
 # Specific test categories
-poetry run pytest tests/unit/          # Unit tests only
-poetry run pytest tests/integration/   # Integration tests
-poetry run pytest -m security          # Security tests
-poetry run pytest -m perf              # Performance tests
+uv run pytest tests/unit/          # Unit tests only
+uv run pytest tests/integration/   # Integration tests
+uv run pytest -m security          # Security tests
+uv run pytest -m perf              # Performance tests
 
 # Run specific test
-poetry run pytest tests/test_module.py::test_function_name
+uv run pytest tests/test_module.py::test_function_name
 
 # Run matching pattern
-poetry run pytest -k "test_user"
+uv run pytest -k "test_user"
 ```
 
 ### Coverage Analysis
 
 ```bash
 # Coverage with 80% minimum threshold
-poetry run pytest --cov=src --cov-fail-under=80
+uv run pytest --cov=src --cov-fail-under=80
 
 # HTML coverage report
-poetry run pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 
 # Coverage with missing lines
-poetry run pytest --cov=src --cov-report=term-missing
+uv run pytest --cov=src --cov-report=term-missing
 
 # Branch coverage
-poetry run pytest --cov=src --cov-branch --cov-report=term-missing
+uv run pytest --cov=src --cov-branch --cov-report=term-missing
 ```
 
 ### Parallel Execution
 
 ```bash
 # Install pytest-xdist first
-poetry add --group dev pytest-xdist
+uv add --dev pytest-xdist
 
 # Run tests in parallel
-poetry run pytest -n auto
+uv run pytest -n auto
 
 # Parallel with coverage
-poetry run pytest -n auto --cov=src --cov-report=html
+uv run pytest -n auto --cov=src --cov-report=html
 ```
 
 ## Debugging and Analysis
@@ -61,45 +61,45 @@ poetry run pytest -n auto --cov=src --cov-report=html
 
 ```bash
 # Drop into debugger on failure
-poetry run pytest --pdb
+uv run pytest --pdb
 
 # Stop after first failure
-poetry run pytest -x
+uv run pytest -x
 
 # Show print statements
-poetry run pytest -s
+uv run pytest -s
 
 # Show local variables on failure
-poetry run pytest -l
+uv run pytest -l
 
 # Detailed tracebacks
-poetry run pytest --tb=long
+uv run pytest --tb=long
 ```
 
 ### Test Discovery
 
 ```bash
 # Show collected tests
-poetry run pytest --collect-only
+uv run pytest --collect-only
 
 # Show available fixtures
-poetry run pytest --fixtures
+uv run pytest --fixtures
 
 # Show setup/teardown
-poetry run pytest --setup-show
+uv run pytest --setup-show
 ```
 
 ### Performance Analysis
 
 ```bash
 # Show slowest 10 tests
-poetry run pytest --durations=10
+uv run pytest --durations=10
 
 # Show slowest tests with times
-poetry run pytest --durations=0
+uv run pytest --durations=0
 
 # Profile test execution
-poetry run pytest --profile
+uv run pytest --profile
 ```
 
 ## Test Filtering
@@ -108,40 +108,40 @@ poetry run pytest --profile
 
 ```bash
 # Specific marker
-poetry run pytest -m "unit"
-poetry run pytest -m "integration"
-poetry run pytest -m "slow"
+uv run pytest -m "unit"
+uv run pytest -m "integration"
+uv run pytest -m "slow"
 
 # Exclude marker
-poetry run pytest -m "not slow"
+uv run pytest -m "not slow"
 
 # Multiple markers
-poetry run pytest -m "unit or integration"
-poetry run pytest -m "unit and not slow"
+uv run pytest -m "unit or integration"
+uv run pytest -m "unit and not slow"
 ```
 
 ### By Pattern
 
 ```bash
 # Match test name
-poetry run pytest -k "test_user"
+uv run pytest -k "test_user"
 pytest -k "not test_slow"
 
 # Multiple patterns
-poetry run pytest -k "test_user or test_admin"
+uv run pytest -k "test_user or test_admin"
 ```
 
 ### By Path
 
 ```bash
 # Specific directory
-poetry run pytest tests/unit/
+uv run pytest tests/unit/
 
 # Specific file
-poetry run pytest tests/test_auth.py
+uv run pytest tests/test_auth.py
 
 # Specific test
-poetry run pytest tests/test_auth.py::test_login
+uv run pytest tests/test_auth.py::test_login
 ```
 
 ## Output Formats
@@ -150,39 +150,39 @@ poetry run pytest tests/test_auth.py::test_login
 
 ```bash
 # Verbose output
-poetry run pytest -v
+uv run pytest -v
 
 # Quiet output
-poetry run pytest -q
+uv run pytest -q
 
 # Very verbose (show test docstrings)
-poetry run pytest -vv
+uv run pytest -vv
 ```
 
 ### Reporting
 
 ```bash
 # JUnit XML for CI
-poetry run pytest --junitxml=reports/junit.xml
+uv run pytest --junitxml=reports/junit.xml
 
 # JSON report (requires pytest-json-report)
-poetry run pytest --json-report --json-report-file=report.json
+uv run pytest --json-report --json-report-file=report.json
 
 # HTML report (requires pytest-html)
-poetry run pytest --html=report.html --self-contained-html
+uv run pytest --html=report.html --self-contained-html
 ```
 
 ## Test Result Caching
 
 ```bash
 # Rerun only failed tests
-poetry run pytest --lf  # --last-failed
+uv run pytest --lf  # --last-failed
 
 # Run failed first, then all
-poetry run pytest --ff  # --failed-first
+uv run pytest --ff  # --failed-first
 
 # Clear cache
-poetry run pytest --cache-clear
+uv run pytest --cache-clear
 ```
 
 ## Configuration Files
@@ -253,7 +253,7 @@ directory = "htmlcov"
 # .github/workflows/test.yml
 - name: Run tests with coverage
   run: |
-    poetry run pytest \
+    uv run pytest \
       --cov=src \
       --cov-report=xml \
       --cov-report=term-missing \
@@ -273,22 +273,22 @@ directory = "htmlcov"
 
 ```bash
 # Standard test run
-poetry run pytest -v --cov=src --cov-report=term-missing
+uv run pytest -v --cov=src --cov-report=term-missing
 
 # Fast dev cycle
-poetry run pytest -x -v -m "not slow"
+uv run pytest -x -v -m "not slow"
 
 # Detailed failure analysis
-poetry run pytest -vv --tb=long -l
+uv run pytest -vv --tb=long -l
 
 # CI test run
-poetry run pytest --cov=src --cov-fail-under=80 --junitxml=junit.xml
+uv run pytest --cov=src --cov-fail-under=80 --junitxml=junit.xml
 
 # Debug specific test
-poetry run pytest tests/test_module.py::test_function -s --pdb
+uv run pytest tests/test_module.py::test_function -s --pdb
 
 # Performance check
-poetry run pytest --durations=10 -m "not slow"
+uv run pytest --durations=10 -m "not slow"
 ```
 
 ## Test Cleanup

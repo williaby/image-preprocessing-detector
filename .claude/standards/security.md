@@ -105,29 +105,29 @@ repos:
 
 ```bash
 # Python dependency vulnerability check
-poetry run safety check
+uv run safety check
 
 # Static security analysis
-poetry run bandit -r src
+uv run bandit -r src
 
 # Generate security report
-poetry run bandit -r src -f json -o security-report.json
+uv run bandit -r src -f json -o security-report.json
 
 # Audit with detailed output
-poetry run safety check --full-report
+uv run safety check --full-report
 ```
 
 ### Dependency Management
 
 ```bash
 # Update dependencies to latest secure versions
-poetry update
+uv sync --upgrade
 
 # Check for outdated packages
-poetry show --outdated
+uv pip list --outdated
 
 # Add dependencies with version constraints
-poetry add "requests>=2.28.0,<3.0.0"
+uv add "requests>=2.28.0,<3.0.0"
 ```
 
 ## Secrets Management

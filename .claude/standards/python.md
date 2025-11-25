@@ -33,16 +33,16 @@
 
 ```bash
 # Format code
-poetry run black .
+uv run black .
 
 # Auto-fix linting issues
-poetry run ruff check --fix .
+uv run ruff check --fix .
 
 # Check for remaining issues
-poetry run ruff check .
+uv run ruff check .
 
 # Verify formatting is correct
-poetry run black --check .
+uv run black --check .
 ```
 
 ## Type Checking
@@ -79,10 +79,10 @@ class DataProcessor:
 
 ```bash
 # Type check entire project
-poetry run basedpyright src
+uv run basedpyright src
 
 # Type check specific files
-poetry run basedpyright src/module.py
+uv run basedpyright src/module.py
 
 # For UV-based projects
 uv run basedpyright src
@@ -125,15 +125,15 @@ class TestDataProcessor:
 
 ```bash
 # Run all tests with coverage
-poetry run pytest -v --cov=src --cov-report=html --cov-report=term-missing
+uv run pytest -v --cov=src --cov-report=html --cov-report=term-missing
 
 # Run specific test categories
-poetry run pytest tests/unit/
-poetry run pytest tests/integration/
+uv run pytest tests/unit/
+uv run pytest tests/integration/
 
 # Run tests with specific markers
-poetry run pytest -m "slow"
-poetry run pytest -m "not integration"
+uv run pytest -m "slow"
+uv run pytest -m "not integration"
 ```
 
 ## Dependency Management
@@ -214,13 +214,13 @@ project/
 
 ```bash
 # Security scanning
-poetry run bandit -r src
+uv run bandit -r src
 
 # Dependency vulnerability check
-poetry run safety check
+uv run safety check
 
 # Check for secrets (if pre-commit configured)
-poetry run pre-commit run detect-private-key --all-files
+uv run pre-commit run detect-private-key --all-files
 ```
 
 ## Performance Guidelines

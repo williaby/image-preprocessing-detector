@@ -11,31 +11,31 @@ Comprehensive validation before committing code. Runs all quality checks in sequ
 ## Validation Checklist
 
 ### 1. Code Formatting (Black)
-- Check: `poetry run black --check src tests`
-- Fix: `poetry run black src tests`
+- Check: `uv run black --check src tests`
+- Fix: `uv run black src tests`
 
 ### 2. Linting (Ruff)
-- Check: `poetry run ruff check src tests`
-- Fix: `poetry run ruff check --fix src tests`
+- Check: `uv run ruff check src tests`
+- Fix: `uv run ruff check --fix src tests`
 
 ### 3. Type Checking (MyPy)
-- Check: `poetry run mypy src`
+- Check: `uv run mypy src`
 - Report type errors with suggested fixes
 
 ### 4. Security Scanning (Bandit)
-- Check: `poetry run bandit -r src`
+- Check: `uv run bandit -r src`
 - Report security issues with severity
 
 ### 5. Dependency Security (Safety)
-- Check: `poetry run safety check`
+- Check: `uv run safety check`
 - Report vulnerable packages
 
 ### 6. Test Suite
-- Run: `poetry run pytest -v --cov=src --cov-report=term-missing --cov-fail-under=80`
+- Run: `uv run pytest -v --cov=src --cov-report=term-missing --cov-fail-under=80`
 - Report failing tests and coverage gaps
 
 ### 7. Pre-commit Hooks
-- Run: `poetry run pre-commit run --all-files`
+- Run: `uv run pre-commit run --all-files`
 
 ## Interactive Fix Mode
 

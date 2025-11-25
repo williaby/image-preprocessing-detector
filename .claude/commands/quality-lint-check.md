@@ -20,9 +20,9 @@ Detect file type and run the corresponding linter with appropriate configuration
 
 ```bash
 # Format and lint Python code
-poetry run black --check $ARGUMENTS
-poetry run ruff check $ARGUMENTS
-poetry run mypy $ARGUMENTS
+uv run black --check $ARGUMENTS
+uv run ruff check $ARGUMENTS
+uv run mypy $ARGUMENTS
 ```
 
 **Markdown Files (.md)**:

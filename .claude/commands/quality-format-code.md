@@ -18,14 +18,14 @@ Format code files based on their type and apply consistent styling:
 
 ```bash
 # Format Python files with Black (88 char line length)
-poetry run black $ARGUMENTS
+uv run black $ARGUMENTS
 
 # Auto-fix linting issues where possible
-poetry run ruff check --fix $ARGUMENTS
+uv run ruff check --fix $ARGUMENTS
 
 # Verify formatting is correct
-poetry run black --check $ARGUMENTS
-poetry run ruff check $ARGUMENTS
+uv run black --check $ARGUMENTS
+uv run ruff check $ARGUMENTS
 ```
 
 ### Markdown Formatting
@@ -118,8 +118,8 @@ After formatting, automatically run appropriate linters to verify:
 
 ```bash
 # Verify Python formatting
-poetry run black --check $ARGUMENTS
-poetry run ruff check $ARGUMENTS
+uv run black --check $ARGUMENTS
+uv run ruff check $ARGUMENTS
 
 # Verify Markdown formatting
 markdownlint $ARGUMENTS

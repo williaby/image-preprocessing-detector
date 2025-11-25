@@ -500,7 +500,7 @@ cruft check
 cruft update
 
 # Run basedpyright
-poetry run basedpyright src/
+uv run basedpyright src/
 
 # Run qlty (if installed)
 qlty check
@@ -509,5 +509,5 @@ qlty check
 docker build -t image-detection .
 
 # Run all pre-commit hooks
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```

@@ -87,19 +87,19 @@ exclude = '''
 
 ```bash
 # Format with Black
-poetry run black .
+uv run black .
 
 # Check formatting
-poetry run black --check .
+uv run black --check .
 
 # Lint with Ruff
-poetry run ruff check .
+uv run ruff check .
 
 # Auto-fix with Ruff
-poetry run ruff check --fix .
+uv run ruff check --fix .
 
 # Type check with BasedPyright
-poetry run basedpyright src
+uv run basedpyright src
 ```
 
 ### Markdown Files
@@ -307,7 +307,7 @@ repos:
   #   hooks:
   #     - id: basedpyright
   #       name: basedpyright
-  #       entry: poetry run basedpyright src
+  #       entry: uv run basedpyright src
   #       language: system
   #       types: [python]
 
@@ -362,14 +362,14 @@ repos:
 
 ```bash
 # Before making changes
-poetry run pre-commit install
+uv run pre-commit install
 
 # During development
-poetry run black .
-poetry run ruff check --fix .
+uv run black .
+uv run ruff check --fix .
 
 # Before committing
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 
 # If pre-commit fails, fix issues and retry
 git add .
@@ -401,13 +401,13 @@ jobs:
           poetry install
 
       - name: Lint with Black
-        run: poetry run black --check .
+        run: uv run black --check .
 
       - name: Lint with Ruff
-        run: poetry run ruff check .
+        run: uv run ruff check .
 
       - name: Type check with BasedPyright
-        run: poetry run basedpyright src
+        run: uv run basedpyright src
 
       - name: Lint Markdown
         run: markdownlint **/*.md
@@ -422,13 +422,13 @@ jobs:
 
 ```bash
 # Fix import sorting
-poetry run ruff check --fix --select I .
+uv run ruff check --fix --select I .
 
 # Fix code style
-poetry run black .
+uv run black .
 
 # Fix specific rule violations
-poetry run ruff check --fix --select F401 .  # Remove unused imports
+uv run ruff check --fix --select F401 .  # Remove unused imports
 ```
 
 ### Common Markdown Issues
@@ -498,13 +498,13 @@ ignore = [
 
 ```bash
 # Run linting in parallel
-poetry run black . & poetry run ruff check . & wait
+uv run black . & uv run ruff check . & wait
 
 # Use file caching
-poetry run ruff check --cache-dir .ruff_cache .
+uv run ruff check --cache-dir .ruff_cache .
 
 # Lint only changed files
-git diff --name-only --cached | grep '\.py$' | xargs poetry run ruff check
+git diff --name-only --cached | grep '\.py$' | xargs uv run ruff check
 ```
 
 ### Pre-commit Optimization
@@ -516,7 +516,7 @@ repos:
     hooks:
       - id: ruff
         name: ruff
-        entry: poetry run ruff check --fix
+        entry: uv run ruff check --fix
         language: system
         types: [python]
         require_serial: false

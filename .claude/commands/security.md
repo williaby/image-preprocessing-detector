@@ -15,13 +15,13 @@ Comprehensive security validation, scanning, and enforcement commands for develo
 ```bash
 # Complete security validation
 gpg --list-secret-keys && ssh-add -l && git config --get user.signingkey
-poetry run safety check && poetry run bandit -r src
+uv run safety check && uv run bandit -r src
 
 # Environment setup validation
 ./scripts/validate-mcp-env.sh || $HOME/.claude/scripts/validate-mcp-env.sh
 
 # Dependency security scan
-poetry run safety check --full-report
+uv run safety check --full-report
 ```
 
 ## Environment Security Validation
@@ -88,57 +88,57 @@ git commit --allow-empty -S -m "test: verify GPG signing"
 
 ```bash
 # Basic vulnerability check
-poetry run safety check
+uv run safety check
 
 # Detailed vulnerability report
-poetry run safety check --full-report
+uv run safety check --full-report
 
 # Check specific requirements file
-poetry run safety check --file requirements.txt
+uv run safety check --file requirements.txt
 
 # Output JSON format for CI
-poetry run safety check --json
+uv run safety check --json
 
 # Check and ignore specific vulnerabilities
-poetry run safety check --ignore 51668
+uv run safety check --ignore 51668
 
 # Update safety database
-poetry run safety --update
+uv run safety --update
 ```
 
 ### Static Security Analysis
 
 ```bash
 # Basic Bandit security scan
-poetry run bandit -r src
+uv run bandit -r src
 
 # Detailed report with confidence levels
-poetry run bandit -r src -ll
+uv run bandit -r src -ll
 
 # Output JSON format
-poetry run bandit -r src -f json
+uv run bandit -r src -f json
 
 # Save report to file
-poetry run bandit -r src -o security-report.txt
+uv run bandit -r src -o security-report.txt
 
 # Scan with custom configuration
-poetry run bandit -r src -c .bandit
+uv run bandit -r src -c .bandit
 
 # Exclude specific files or directories
-poetry run bandit -r src --exclude tests/,migrations/
+uv run bandit -r src --exclude tests/,migrations/
 ```
 
 ### Advanced Security Scanning
 
 ```bash
 # Check for secrets in code
-poetry run detect-secrets scan --all-files
+uv run detect-secrets scan --all-files
 
 # Update secrets baseline
-poetry run detect-secrets scan --update .secrets.baseline
+uv run detect-secrets scan --update .secrets.baseline
 
 # Audit detected secrets
-poetry run detect-secrets audit .secrets.baseline
+uv run detect-secrets audit .secrets.baseline
 
 # Scan git history for secrets
 git log --all --full-history --grep="password\|secret\|key\|token"
@@ -406,8 +406,8 @@ fi
 
 # Run dependency scan
 if command -v poetry >/dev/null; then
-    poetry run safety check
-    poetry run bandit -r src >/dev/null
+    uv run safety check
+    uv run bandit -r src >/dev/null
 fi
 
 echo "✅ Security validation passed"
@@ -442,8 +442,8 @@ fi
 # .github/workflows/security.yml
 - name: Run security scans
   run: |
-    poetry run safety check --json --output safety-report.json
-    poetry run bandit -r src -f json -o bandit-report.json
+    uv run safety check --json --output safety-report.json
+    uv run bandit -r src -f json -o bandit-report.json
 
 - name: Upload security reports
   uses: actions/upload-artifact@v3

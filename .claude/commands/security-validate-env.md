@@ -72,10 +72,10 @@ For Python projects:
 
 ```bash
 # Check for known vulnerabilities
-poetry run safety check
+uv run safety check
 
 # Security linting
-poetry run bandit -r src
+uv run bandit -r src
 ```
 
 ## Validation Results

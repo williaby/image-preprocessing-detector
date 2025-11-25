@@ -15,13 +15,13 @@ Comprehensive security validation, scanning, and enforcement commands for develo
 ```bash
 # Complete security validation
 gpg --list-secret-keys && ssh-add -l && git config --get user.signingkey
-poetry run safety check && poetry run bandit -r src
+uv run safety check && uv run bandit -r src
 
 # Environment setup validation
 ./scripts/validate-mcp-env.sh || /home/byron/.claude/scripts/validate-mcp-env.sh
 
 # Dependency security scan
-poetry run safety check --full-report
+uv run safety check --full-report
 ```
 
 ## Environment Security Validation
@@ -88,16 +88,16 @@ git commit --allow-empty -S -m "test: verify GPG signing"
 
 ```bash
 # Basic vulnerability check
-poetry run safety check
+uv run safety check
 
 # Detailed vulnerability report
-poetry run safety check --full-report
+uv run safety check --full-report
 
 # Check specific requirements file
-poetry run safety check --file requirements.txt
+uv run safety check --file requirements.txt
 
 # Output JSON format for CI
-poetry run safety check --json
+uv run safety check --json
 
 # Core Security Commands Reference
 
@@ -117,10 +117,10 @@ git config --get commit.gpgsign
 ## Dependency Scanning
 ```bash
 # Python vulnerabilities
-poetry run safety check --full-report
+uv run safety check --full-report
 
 # Static code analysis
-poetry run bandit -r src -ll
+uv run bandit -r src -ll
 ```
 
 ## File Encryption

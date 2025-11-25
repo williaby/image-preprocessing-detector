@@ -12,13 +12,13 @@ Auto-format code to match project standards.
 
 ```bash
 # Format specific path
-poetry run black path/
+uv run black path/
 
 # Check without modifying
-poetry run black --check path/
+uv run black --check path/
 
 # Format with diff
-poetry run black --diff path/
+uv run black --diff path/
 ```
 
 **Standards**: 88-character line length

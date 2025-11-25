@@ -16,7 +16,7 @@ Comprehensive security scanning for Python projects using industry-standard tool
 - Provide upgrade recommendations
 
 ```bash
-poetry run safety check --full-report
+uv run safety check --full-report
 ```
 
 ### 2. Static Code Analysis (bandit)
@@ -25,7 +25,7 @@ poetry run safety check --full-report
 - Identify insecure configurations
 
 ```bash
-poetry run bandit -r src -ll
+uv run bandit -r src -ll
 ```
 
 ### 3. Comprehensive Scan (all)

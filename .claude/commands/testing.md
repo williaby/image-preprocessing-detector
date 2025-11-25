@@ -14,15 +14,15 @@ Comprehensive testing commands for running tests, generating coverage reports, a
 
 ```bash
 # Run all tests with coverage
-poetry run pytest -v --cov=src --cov-report=html --cov-report=term-missing
+uv run pytest -v --cov=src --cov-report=html --cov-report=term-missing
 
 # Run specific test categories
-poetry run pytest tests/unit/
-poetry run pytest tests/integration/
-poetry run pytest -m "not slow"
+uv run pytest tests/unit/
+uv run pytest tests/integration/
+uv run pytest -m "not slow"
 
 # Generate detailed coverage report
-poetry run pytest --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=80
+uv run pytest --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=80
 ```
 
 ## Test Execution
@@ -31,42 +31,42 @@ poetry run pytest --cov=src --cov-report=html --cov-report=term-missing --cov-fa
 
 ```bash
 # Run all tests
-poetry run pytest
+uv run pytest
 
 # Run with verbose output
-poetry run pytest -v
+uv run pytest -v
 
 # Run specific test file
-poetry run pytest tests/test_module.py
+uv run pytest tests/test_module.py
 
 # Run specific test function
-poetry run pytest tests/test_module.py::test_function_name
+uv run pytest tests/test_module.py::test_function_name
 
 # Run specific test class
-poetry run pytest tests/test_module.py::TestClassName
+uv run pytest tests/test_module.py::TestClassName
 
 # Run tests matching pattern
-poetry run pytest -k "test_user"
+uv run pytest -k "test_user"
 ```
 
 ### Test Categories and Markers
 
 ```bash
 # Run only unit tests
-poetry run pytest tests/unit/
+uv run pytest tests/unit/
 
 # Run only integration tests
-poetry run pytest tests/integration/
+uv run pytest tests/integration/
 
 # Run tests by marker
-poetry run pytest -m "unit"
-poetry run pytest -m "integration"
-poetry run pytest -m "slow"
-poetry run pytest -m "not slow"
+uv run pytest -m "unit"
+uv run pytest -m "integration"
+uv run pytest -m "slow"
+uv run pytest -m "not slow"
 
 # Run multiple markers
-poetry run pytest -m "unit or integration"
-poetry run pytest -m "unit and not slow"
+uv run pytest -m "unit or integration"
+uv run pytest -m "unit and not slow"
 ```
 
 ### Parallel Test Execution
@@ -76,11 +76,11 @@ poetry run pytest -m "unit and not slow"
 poetry add --group dev pytest-xdist
 
 # Run tests in parallel
-poetry run pytest -n auto
-poetry run pytest -n 4  # Use 4 workers
+uv run pytest -n auto
+uv run pytest -n 4  # Use 4 workers
 
 # Run tests in parallel with coverage
-poetry run pytest -n auto --cov=src --cov-report=html
+uv run pytest -n auto --cov=src --cov-report=html
 ```
 
 ## Coverage Analysis
@@ -89,32 +89,32 @@ poetry run pytest -n auto --cov=src --cov-report=html
 
 ```bash
 # Basic coverage
-poetry run pytest --cov=src
+uv run pytest --cov=src
 
 # Coverage with missing lines
-poetry run pytest --cov=src --cov-report=term-missing
+uv run pytest --cov=src --cov-report=term-missing
 
 # HTML coverage report
-poetry run pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 
 # XML coverage report (for CI)
-poetry run pytest --cov=src --cov-report=xml
+uv run pytest --cov=src --cov-report=xml
 
 # Multiple report formats
-poetry run pytest --cov=src --cov-report=html --cov-report=term-missing --cov-report=xml
+uv run pytest --cov=src --cov-report=html --cov-report=term-missing --cov-report=xml
 ```
 
 ### Coverage Thresholds
 
 ```bash
 # Fail if coverage below threshold
-poetry run pytest --cov=src --cov-fail-under=80
+uv run pytest --cov=src --cov-fail-under=80
 
 # Branch coverage (more comprehensive)
-poetry run pytest --cov=src --cov-branch --cov-report=term-missing
+uv run pytest --cov=src --cov-branch --cov-report=term-missing
 
 # Coverage for specific modules
-poetry run pytest --cov=src.module --cov-report=term-missing
+uv run pytest --cov=src.module --cov-report=term-missing
 ```
 
 ### Coverage Configuration
@@ -167,13 +167,13 @@ tests/
 
 ```bash
 # Show collected tests without running
-poetry run pytest --collect-only
+uv run pytest --collect-only
 
 # Show test discovery pattern
-poetry run pytest --collect-only -q
+uv run pytest --collect-only -q
 
 # Collect tests from specific directory
-poetry run pytest tests/unit/ --collect-only
+uv run pytest tests/unit/ --collect-only
 ```
 
 ## Test Output and Reporting
@@ -182,45 +182,45 @@ poetry run pytest tests/unit/ --collect-only
 
 ```bash
 # Detailed output
-poetry run pytest -v
+uv run pytest -v
 
 # Short output
-poetry run pytest -q
+uv run pytest -q
 
 # No output capture (see print statements)
-poetry run pytest -s
+uv run pytest -s
 
 # Show local variables on failure
-poetry run pytest -l
+uv run pytest -l
 
 # Show full diff on assertion failures
-poetry run pytest --tb=long
+uv run pytest --tb=long
 ```
 
 ### JUnit XML Reports
 
 ```bash
 # Generate JUnit XML for CI
-poetry run pytest --junitxml=reports/junit.xml
+uv run pytest --junitxml=reports/junit.xml
 
 # Include properties in XML
-poetry run pytest --junitxml=reports/junit.xml --junitxml-properties
+uv run pytest --junitxml=reports/junit.xml --junitxml-properties
 
 # Custom XML report location
-poetry run pytest --junitxml=test-results/results.xml
+uv run pytest --junitxml=test-results/results.xml
 ```
 
 ### Test Result Caching
 
 ```bash
 # Run only failed tests from last run
-poetry run pytest --lf  # last-failed
+uv run pytest --lf  # last-failed
 
 # Run failed tests first, then all others
-poetry run pytest --ff  # failed-first
+uv run pytest --ff  # failed-first
 
 # Clear pytest cache
-poetry run pytest --cache-clear
+uv run pytest --cache-clear
 ```
 
 ## Advanced Testing Features
@@ -229,27 +229,27 @@ poetry run pytest --cache-clear
 
 ```bash
 # Show available fixtures
-poetry run pytest --fixtures
+uv run pytest --fixtures
 
 # Show fixture usage
-poetry run pytest --fixtures-per-test
+uv run pytest --fixtures-per-test
 
 # Run with specific fixture scope
-poetry run pytest --setup-show
+uv run pytest --setup-show
 ```
 
 ### Debugging Tests
 
 ```bash
 # Drop into debugger on failure
-poetry run pytest --pdb
+uv run pytest --pdb
 
 # Drop into debugger on first failure
-poetry run pytest -x --pdb
+uv run pytest -x --pdb
 
 # Use ipdb instead of pdb
 poetry add --group dev ipdb
-poetry run pytest --pdb --pdbcls=IPython.terminal.debugger:TerminalPdb
+uv run pytest --pdb --pdbcls=IPython.terminal.debugger:TerminalPdb
 ```
 
 ### Performance Testing
@@ -259,14 +259,14 @@ poetry run pytest --pdb --pdbcls=IPython.terminal.debugger:TerminalPdb
 poetry add --group dev pytest-benchmark
 
 # Run benchmark tests
-poetry run pytest --benchmark-only
+uv run pytest --benchmark-only
 
 # Skip benchmark tests
-poetry run pytest --benchmark-skip
+uv run pytest --benchmark-skip
 
 # Save benchmark results
-poetry run pytest --benchmark-save=baseline
-poetry run pytest --benchmark-compare=baseline
+uv run pytest --benchmark-save=baseline
+uv run pytest --benchmark-compare=baseline
 ```
 
 ## Continuous Integration
@@ -277,7 +277,7 @@ poetry run pytest --benchmark-compare=baseline
 # .github/workflows/test.yml
 - name: Run tests with coverage
   run: |
-    poetry run pytest \
+    uv run pytest \
       --cov=src \
       --cov-report=xml \
       --cov-report=term-missing \
@@ -300,7 +300,7 @@ strategy:
 
 steps:
   - name: Run tests
-    run: poetry run pytest -v --cov=src
+    run: uv run pytest -v --cov=src
 ```
 
 ## Test Environment Management
@@ -310,7 +310,7 @@ steps:
 ```bash
 # Set test environment
 export TESTING=true
-poetry run pytest
+uv run pytest
 
 # Use pytest-env plugin
 poetry add --group dev pytest-env
@@ -326,11 +326,11 @@ DATABASE_URL = "sqlite:///:memory:"
 ```bash
 # Run tests with test database
 export DATABASE_URL="postgresql://test:test@localhost/test_db"
-poetry run pytest
+uv run pytest
 
 # Use different settings for tests
 export DJANGO_SETTINGS_MODULE="myapp.settings.test"
-poetry run pytest
+uv run pytest
 ```
 
 ## Specialized Testing
@@ -342,9 +342,9 @@ poetry run pytest
 poetry add --group dev mutmut
 
 # Run mutation testing
-poetry run mutmut run
-poetry run mutmut results
-poetry run mutmut html
+uv run mutmut run
+uv run mutmut results
+uv run mutmut html
 ```
 
 ### Property-Based Testing
@@ -354,10 +354,10 @@ poetry run mutmut html
 poetry add --group dev hypothesis
 
 # Run property-based tests
-poetry run pytest tests/property/
+uv run pytest tests/property/
 
 # Generate hypothesis examples
-poetry run pytest --hypothesis-show-statistics
+uv run pytest --hypothesis-show-statistics
 ```
 
 ### Load Testing
@@ -367,7 +367,7 @@ poetry run pytest --hypothesis-show-statistics
 poetry add --group dev locust
 
 # Run load tests
-poetry run locust -f tests/load/locustfile.py
+uv run locust -f tests/load/locustfile.py
 ```
 
 ## Test Cleanup and Maintenance
@@ -390,13 +390,13 @@ find . -name "__pycache__" -type d -exec rm -rf {} +
 
 ```bash
 # Check test coverage quality
-poetry run pytest --cov=src --cov-report=term-missing | grep -E "TOTAL.*[0-9]+%"
+uv run pytest --cov=src --cov-report=term-missing | grep -E "TOTAL.*[0-9]+%"
 
 # Find slow tests
-poetry run pytest --durations=10
+uv run pytest --durations=10
 
 # Profile test execution
-poetry run pytest --profile
+uv run pytest --profile
 ```
 
 ## pytest Configuration

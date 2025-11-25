@@ -14,9 +14,9 @@ This document provides quick-reference summaries of development standards. For c
 
 ```bash
 # Essential commands
-poetry run black .          # Format (88 chars)
-poetry run ruff check --fix # Lint
-poetry run mypy src         # Type check
+uv run black .          # Format (88 chars)
+uv run ruff check --fix # Lint
+uv run mypy src         # Type check
 ```
 
 **Standards**:
@@ -31,8 +31,8 @@ poetry run mypy src         # Type check
 # Validation commands
 gpg --list-secret-keys      # GPG key check
 ssh-add -l                  # SSH key check
-poetry run safety check     # Dependency scan
-poetry run bandit -r src    # Security lint
+uv run safety check     # Dependency scan
+uv run bandit -r src    # Security lint
 ```
 
 **Requirements**:
@@ -127,24 +127,24 @@ $HOME/.claude/scripts/validate-mcp-env.sh
 git checkout main && git pull
 git checkout -b feature/my-feature
 # ... make changes ...
-poetry run black . && poetry run ruff check --fix .
-poetry run pytest --cov=src
+uv run black . && uv run ruff check --fix .
+uv run pytest --cov=src
 git add . && git commit -S -m "feat: Add my feature"
 ```
 
 ### Before Commit
 ```bash
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 ### Before Push
 ```bash
 # Ensure all tests pass
-poetry run pytest --cov=src --cov-fail-under=80
+uv run pytest --cov=src --cov-fail-under=80
 
 # Ensure security checks pass
-poetry run safety check
-poetry run bandit -r src
+uv run safety check
+uv run bandit -r src
 
 # Verify commits are signed
 git log --show-signature -5
