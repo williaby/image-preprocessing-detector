@@ -1257,3 +1257,104 @@ evaluation:
 ### Recommended Models (from benchmark analysis)
 10. [DeepSeek-VL2: Mixture-of-Experts Vision-Language Models](https://arxiv.org/html/2412.10302v1) - Most consistent across quality assessment tasks
 11. [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) - Best backbone for DeQA-Doc quality regression
+
+---
+
+## Appendix A: OpenRouter Cost Estimation
+
+### A.1 Available Vision Models on OpenRouter
+
+| Model | Input $/M tokens | Output $/M tokens | Context | Notes |
+|-------|------------------|-------------------|---------|-------|
+| **Qwen2.5-VL-72B-Instruct** | $0.08 | $0.33 | 32K | Best value for quality regression |
+| Qwen2.5-VL-3B-Instruct | $0.03 | $0.09 | 131K | Budget option |
+| Qwen3-VL-8B-Instruct | $0.064 | $0.40 | 256K | Newer generation |
+| GPT-4o-mini | $0.15 | $0.60 | 128K | Good for distortion detection |
+| GPT-4o | $2.50 | $10.00 | 128K | Premium (use sparingly) |
+| GPT-4.1-nano | $0.10 | $0.40 | 1M | Fast, cheap |
+
+**⚠️ Note:** DeepSeek-VL2 is **NOT available** on OpenRouter as of 2025. Alternative: Use DeepSeek API directly or substitute with Qwen3-VL.
+
+### A.2 Token Estimation per Document Image
+
+| Component | Token Estimate | Notes |
+|-----------|---------------|-------|
+| Image encoding (high-res) | ~1,000 tokens | 300 DPI document at 1024px |
+| Image encoding (low-res) | ~85 tokens | Downsampled preview |
+| Prompt template | ~200 tokens | Quality assessment prompt |
+| JSON output | ~150 tokens | Continuous labels response |
+| **Total per image** | **~1,350 tokens** | High-res analysis |
+
+### A.3 Cost Calculation for 100k Images
+
+**Scenario: Single-model approach using Qwen2.5-VL-72B-Instruct**
+
+```
+Images: 100,000
+Input tokens/image: 1,200 (image + prompt)
+Output tokens/image: 150 (JSON response)
+
+Total input tokens: 100,000 × 1,200 = 120M tokens
+Total output tokens: 100,000 × 150 = 15M tokens
+
+Cost breakdown:
+  Input:  120M × $0.08/M  = $9.60
+  Output: 15M × $0.33/M   = $4.95
+  ─────────────────────────────────
+  TOTAL: $14.55 for 100k images
+```
+
+### A.4 Cost Calculation for 150k Images
+
+**Scenario A: Budget (Qwen2.5-VL-72B only)**
+```
+Input:  180M × $0.08/M  = $14.40
+Output: 22.5M × $0.33/M = $7.43
+─────────────────────────────────
+TOTAL: $21.83 for 150k images
+```
+
+**Scenario B: Hybrid (Qwen for quality + GPT-4o-mini for distortion)**
+```
+Qwen2.5-VL-72B (150k images):
+  Input:  180M × $0.08/M  = $14.40
+  Output: 22.5M × $0.33/M = $7.43
+  Subtotal: $21.83
+
+GPT-4o-mini (subset: 30k uncertain images):
+  Input:  36M × $0.15/M  = $5.40
+  Output: 4.5M × $0.60/M = $2.70
+  Subtotal: $8.10
+─────────────────────────────────
+TOTAL: $29.93 for 150k images (hybrid)
+```
+
+**Scenario C: Premium (GPT-4o for all)**
+```
+Input:  180M × $2.50/M  = $450.00
+Output: 22.5M × $10.00/M = $225.00
+─────────────────────────────────
+TOTAL: $675.00 for 150k images (NOT RECOMMENDED)
+```
+
+### A.5 Cost Summary
+
+| Dataset Size | Budget (Qwen only) | Hybrid (Qwen + GPT-4o-mini) | Premium (GPT-4o) |
+|--------------|--------------------|-----------------------------|------------------|
+| 100k images | **$14.55** | $19.95 | $450.00 |
+| 150k images | **$21.83** | $29.93 | $675.00 |
+
+### A.6 Recommendations
+
+1. **Primary approach**: Use **Qwen2.5-VL-72B-Instruct** exclusively
+   - Best quality/cost ratio based on DeQA-Doc benchmarks
+   - Cost: **~$0.00015/image** ($0.15 per 1,000 images)
+
+2. **Validation subset**: Run GPT-4o-mini on 10% of images for distortion detection validation
+   - Cost: ~$2.70 additional for 150k dataset
+
+3. **Avoid GPT-4o** for bulk labeling - 30x more expensive than Qwen
+
+4. **Alternative to DeepSeek-VL2**: Since unavailable on OpenRouter, use:
+   - Qwen3-VL-8B-Instruct with CoT prompting
+   - Or DeepSeek API directly (separate account required)
