@@ -6,7 +6,8 @@ Contains route modules for:
 - Batch processing
 """
 
+from image_preprocessing_detector.api.routes.batch import router as batch_router
 from image_preprocessing_detector.api.routes.health import router as health_router
 from image_preprocessing_detector.api.routes.process import router as process_router
 
-__all__ = ["health_router", "process_router"]
+__all__ = ["health_router", "process_router", "batch_router"]

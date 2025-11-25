@@ -20,6 +20,7 @@ from image_preprocessing_detector.api.routes.health import (
     router as health_router,
     set_server_start_time,
 )
+from image_preprocessing_detector.api.routes.batch import router as batch_router
 from image_preprocessing_detector.api.routes.process import router as process_router
 
 logger = structlog.get_logger(__name__)
@@ -114,6 +115,9 @@ def create_app(settings: APISettings | None = None) -> FastAPI:
 
     app.include_router(process_router)
     logger.info("process_routes_registered")
+
+    app.include_router(batch_router)
+    logger.info("batch_routes_registered")
 
     # Root endpoint redirect to docs
     @app.get("/", include_in_schema=False)
