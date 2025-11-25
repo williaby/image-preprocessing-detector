@@ -29,10 +29,10 @@ try:
 except ImportError:
     ort = None
 
-# Type annotation for conditional import (suppress Ruff SIM105, MyPy no-redef)
+# Type annotation for conditional import (suppress Ruff SIM105)
 torch: types.ModuleType | None = None
 try:  # noqa: SIM105
-    import torch  # type: ignore[no-redef,unused-ignore]
+    import torch
 except ImportError:
     pass
 

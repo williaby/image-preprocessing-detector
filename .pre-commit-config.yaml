@@ -57,6 +57,7 @@ repos:
               tests/.*|validation/.*|fuzz/.*|benchmarks/.*|data/.*|scripts/.*|
               modal/.*|notebooks/.*|
               src/image_preprocessing_detector/utils/gcs_uploader\.py|
+              src/image_preprocessing_detector/utils/device_probe\.py|
               src/image_preprocessing_detector/utils/metadata_generator\.py|
               src/image_preprocessing_detector/routing/recommendation_engine\.py|
               src/image_preprocessing_detector/output/json_generator\.py|
