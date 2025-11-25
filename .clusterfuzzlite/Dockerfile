@@ -27,13 +27,17 @@ WORKDIR $SRC/image-preprocessing-detector
 COPY .clusterfuzzlite/build.sh /src/build.sh
 RUN chmod +x /src/build.sh
 
-# Security: Create non-root user for build execution (DS002)
-# Note: ClusterFuzzLite infrastructure handles actual execution context
-RUN useradd -m -s /bin/bash -u 1000 fuzzer \
-    && chown -R fuzzer:fuzzer $SRC/image-preprocessing-detector
-
+# Note: ClusterFuzzLite build containers MUST run as root
+# The build process needs to:
+# 1. Compile libFuzzer to /usr/lib/libFuzzingEngine.a (requires root)
+# 2. Install system-wide dependencies
+# 3. Run compile_python_fuzzer which writes to system paths
+#
+# DS002 (non-root user) does NOT apply here because:
+# - This is an ephemeral build container, not a runtime service
+# - ClusterFuzzLite handles sandboxing during actual fuzz execution
+# - OSS-Fuzz/ClusterFuzzLite infrastructure requires root for builds
+#
 # Security: HEALTHCHECK not applicable for build containers (DS026)
 # This container performs one-time build operations, not long-running services
 HEALTHCHECK NONE
-
-USER fuzzer
