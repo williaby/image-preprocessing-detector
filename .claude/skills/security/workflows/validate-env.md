@@ -41,6 +41,7 @@ Comprehensive validation of security requirements for safe development with sign
 ## Security Posture Report
 
 Generates comprehensive report:
+
 - ✅ All checks passed: SECURE
 - ⚠️ Some warnings: REVIEW NEEDED
 - ❌ Critical failures: SETUP REQUIRED
@@ -48,6 +49,7 @@ Generates comprehensive report:
 ## Verbose Mode
 
 With `--verbose` flag, provides detailed information:
+
 - SSH key details (algorithm, fingerprint, comment)
 - Git configuration (global and local)
 - GPG key details (ID, type, expiration)
