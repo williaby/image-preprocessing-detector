@@ -42,19 +42,19 @@ Execute DevOps workflows: pipeline analysis → deployment strategy design → i
 
 ## DevOps Operation Categories
 
-### **Pipeline Automation*
+### **Pipeline Automation**
 - CI/CD pipeline design and optimization
 - Automated testing integration and quality gates
 - Build optimization and artifact management
 - Deployment pipeline orchestration and approval workflows
 
-### **Infrastructure Management*
+### **Infrastructure Management**
 - Infrastructure as Code implementation and maintenance
 - Environment provisioning and configuration management
 - Secret management and security configuration
 - Resource monitoring and cost optimization
 
-### **Monitoring & Operations*
+### **Monitoring & Operations**
 - Application performance monitoring setup
 - Log aggregation and analysis configuration
 - Alert configuration and incident response automation

@@ -42,19 +42,19 @@ Execute testing workflows: test scenario planning â†’ user journey automation â†
 
 ## Testing Capabilities
 
-### **User Interaction Testing*
+### **User Interaction Testing**
 - Form filling, validation, and submission
 - Navigation testing across single and multi-page applications
 - Modal dialogs, dropdowns, and complex UI component interactions
 - Drag-and-drop functionality and gesture-based interactions
 
-### **Validation & Assertion Testing*
+### **Validation & Assertion Testing**
 - Content verification and dynamic content loading
 - State management validation in React/Vue applications
 - API response integration and error handling
 - Visual regression testing with automated screenshot comparison
 
-### **Accessibility & Performance*
+### **Accessibility & Performance**
 - Keyboard navigation and screen reader compatibility
 - Color contrast and visual accessibility validation
 - Page load performance and interaction responsiveness
