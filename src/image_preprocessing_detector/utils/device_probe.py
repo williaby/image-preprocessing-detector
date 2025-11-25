@@ -29,12 +29,13 @@ try:
 except ImportError:
     ort = None
 
-# Type annotation for conditional import (suppress Ruff SIM105)
-torch: types.ModuleType | None = None
-try:  # noqa: SIM105
-    import torch
+# Conditional torch import for GPU detection
+try:
+    import torch as _torch_module
+
+    torch: types.ModuleType | None = _torch_module
 except ImportError:
-    pass
+    torch = None
 
 
 @dataclass

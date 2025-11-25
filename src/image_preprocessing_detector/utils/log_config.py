@@ -140,7 +140,10 @@ def get_logger(name: str) -> BoundLogger:
         >>> logger.error("Processing failed", error="file_not_found")
     """
     # structlog.get_logger returns a BoundLogger when configured with stdlib LoggerFactory
-    return structlog.get_logger(name)
+    # Cast is safe because we configure structlog with stdlib LoggerFactory above
+    from typing import cast
+
+    return cast(BoundLogger, structlog.get_logger(name))
 
 
 def log_performance(
