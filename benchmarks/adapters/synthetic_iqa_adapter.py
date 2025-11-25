@@ -30,6 +30,9 @@ class SyntheticParams:
     height: int = 1600
     dpi: int = 300
 
+    # Reproducibility
+    seed: int = 42  # Random seed for reproducible benchmark generation
+
     # Quality degradation ranges
     blur_sigmas: list[float] | None = None  # Gaussian blur sigma values
     skew_angles: list[float] | None = None  # Rotation angles in degrees
@@ -222,9 +225,9 @@ class SyntheticIQAAdapter(BaseAdapter):
             base_image = self._create_text_image()
             img_array = np.array(base_image, dtype=np.float32) / 255.0
 
-            # Add Gaussian noise using modern Generator API
+            # Add Gaussian noise using modern Generator API with seed for reproducibility
             if noise_level > 0:
-                rng = np.random.default_rng()
+                rng = np.random.default_rng(seed=self.params.seed)
                 noise = rng.normal(0, noise_level, img_array.shape)
                 img_array = np.clip(img_array + noise, 0, 1)
 

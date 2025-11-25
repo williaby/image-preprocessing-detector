@@ -96,7 +96,8 @@ class SoftLabelGenerator:
     def _get_teacher_logits(self, teacher_outputs: dict | torch.Tensor) -> torch.Tensor:
         """Extract logits from teacher model output."""
         if isinstance(teacher_outputs, dict):
-            return teacher_outputs["all"]
+            logits: torch.Tensor = teacher_outputs["all"]
+            return logits
         return teacher_outputs
 
     def generate(
