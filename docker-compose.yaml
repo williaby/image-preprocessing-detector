@@ -1,0 +1,141 @@
+# Docker Compose configuration for Image Preprocessing Detector API
+#
+# Usage:
+#   docker-compose up -d                  # Start all services
+#   docker-compose up -d api              # Start API only
+#   docker-compose logs -f api            # Follow API logs
+#   docker-compose down                   # Stop all services
+#   docker-compose build --no-cache       # Rebuild images
+
+version: "3.9"
+
+services:
+  # =========================================================================
+  # Main API Service
+  # =========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: image-preprocessing-detector:latest
+    container_name: imgprep-api
+    ports:
+      - "8000:8000"
+    environment:
+      # API Configuration
+      - IMGPREP_API_TITLE=Image Preprocessing Detector API
+      - IMGPREP_API_VERSION=0.1.0
+      - IMGPREP_API_DESCRIPTION=Intelligent image preprocessing detection for RAG document pipelines
+
+      # CORS Configuration
+      - IMGPREP_API_CORS_ENABLED=true
+      - IMGPREP_API_CORS_ORIGINS=["*"]
+
+      # Rate Limiting
+      - IMGPREP_API_RATE_LIMIT_ENABLED=true
+      - IMGPREP_API_RATE_LIMIT_REQUESTS=100
+      - IMGPREP_API_RATE_LIMIT_WINDOW_SECONDS=60
+
+      # Processing Limits
+      - IMGPREP_API_MAX_BATCH_SIZE=100
+      - IMGPREP_API_MAX_FILE_SIZE_MB=50
+
+      # Timeouts
+      - IMGPREP_API_PROCESS_TIMEOUT_SECONDS=300
+      - IMGPREP_API_BATCH_TIMEOUT_SECONDS=3600
+
+      # Authentication (disabled by default for development)
+      - IMGPREP_API_AUTH_ENABLED=false
+      # - IMGPREP_API_API_KEYS=your-api-key-here
+      # - IMGPREP_API_INTERNAL_CALLERS=["127.0.0.1"]
+
+      # Processing Options
+      - IMGPREP_API_DEFAULT_PREFER_GPU=false  # CPU-only in container by default
+      - IMGPREP_API_DEFAULT_ENABLE_CORRECTIONS=true
+      - IMGPREP_API_DEFAULT_ENABLE_TEACHER=false
+
+    volumes:
+      # Mount for persistent data (optional)
+      - imgprep-data:/app/data
+      # Mount for logs
+      - imgprep-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - imgprep-network
+
+  # =========================================================================
+  # Redis for Production Rate Limiting & Job Queue (Optional)
+  # =========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: imgprep-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - imgprep-redis:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - imgprep-network
+    profiles:
+      - production
+
+  # =========================================================================
+  # GPU-Enabled API Service (NVIDIA GPU Support)
+  # =========================================================================
+  api-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: image-preprocessing-detector:gpu
+    container_name: imgprep-api-gpu
+    ports:
+      - "8001:8000"
+    environment:
+      - IMGPREP_API_DEFAULT_PREFER_GPU=true
+      - IMGPREP_API_AUTH_ENABLED=false
+      - IMGPREP_API_RATE_LIMIT_ENABLED=true
+    volumes:
+      - imgprep-data:/app/data
+      - imgprep-logs:/app/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - imgprep-network
+    profiles:
+      - gpu
+
+# =========================================================================
+# Networks
+# =========================================================================
+networks:
+  imgprep-network:
+    driver: bridge
+
+# =========================================================================
+# Volumes
+# =========================================================================
+volumes:
+  imgprep-data:
+    driver: local
+  imgprep-logs:
+    driver: local
+  imgprep-redis:
+    driver: local

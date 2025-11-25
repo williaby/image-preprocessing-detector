@@ -1,0 +1,120 @@
+# Docker ignore file for Image Preprocessing Detector
+# Reduces build context size and prevents sensitive files from being included
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.eggs
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+
+# Linting
+.ruff_cache/
+
+# Documentation
+docs/_build/
+site/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Build artifacts
+build/
+dist/
+*.whl
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+tmp_cleanup/
+*.tmp
+.tmp-*
+
+# Environment files (security)
+.env
+.env.*
+!.env.example
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Tests (optional - uncomment to exclude tests from production image)
+# tests/
+
+# Validation scripts (not needed in production)
+validation/
+
+# Benchmarks data (large files)
+benchmarks/data/
+*.pt
+*.onnx
+*.pth
+
+# Modal (serverless, not needed in container)
+modal/
+
+# Kubernetes manifests (separate deployment)
+k8s/
+
+# Docker files (don't nest)
+Dockerfile*
+docker-compose*.yaml
+.dockerignore
+
+# Development files
+CLAUDE.md
+CHANGELOG.md
+CONTRIBUTING.md
+Makefile
+noxfile.py
+conftest.py
+pyproject.toml.bak
+
+# Large model files (download at runtime or mount as volume)
+models/
+*.safetensors
+*.bin
