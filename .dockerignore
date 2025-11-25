@@ -65,7 +65,7 @@ tmp_cleanup/
 notebooks/
 validation/
 benchmarks/
-fuzz/
+# Note: fuzz/ is NOT excluded because ClusterFuzzLite needs it
 modal/
 *.log
 *.tmp
