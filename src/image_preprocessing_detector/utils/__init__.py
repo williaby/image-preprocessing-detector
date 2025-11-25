@@ -18,6 +18,12 @@ from image_preprocessing_detector.utils.datetime_compat import (
     utc_from_timestamp,
     utc_now,
 )
+from image_preprocessing_detector.utils.device_probe import (
+    DeviceCapabilities,
+    clear_device_cache,
+    get_recommended_device,
+    probe_device_capabilities,
+)
 from image_preprocessing_detector.utils.log_config import get_logger, setup_logging
 
 # Optional GCS utilities (Phase 2+) - require google-cloud-storage
@@ -53,16 +59,20 @@ except ImportError:
 # Build __all__ dynamically based on available imports
 __all__ = [
     "UTC",
+    "DeviceCapabilities",
     "MockDatetime",
     "aware_to_naive",
+    "clear_device_cache",
     "ensure_aware",
     "get_logger",
+    "get_recommended_device",
     "is_aware",
     "is_naive",
     "local_now",
     "mock_now",
     "naive_to_aware",
     "parse_iso",
+    "probe_device_capabilities",
     "safe_compare",
     "setup_logging",
     "timestamp_now",

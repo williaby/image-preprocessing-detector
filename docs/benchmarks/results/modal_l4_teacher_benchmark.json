@@ -1,0 +1,18 @@
+{
+  "model": "resnet50_teacher_50epoch.onnx",
+  "device": "Modal L4 GPU",
+  "num_images": 50,
+  "single_inference": {
+    "mean": 2.3400705600001714,
+    "median": 2.3471975000024514,
+    "std": 0.18613238751431524,
+    "min": 2.0716870000008214,
+    "max": 2.925824999998383,
+    "p50": 2.3471975000024514,
+    "p95": 2.665396349998694,
+    "p99": 2.924762189999228
+  },
+  "target_validation": {
+    "target_30ms": true
+  }
+}
