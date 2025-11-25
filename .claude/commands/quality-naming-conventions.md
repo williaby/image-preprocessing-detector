@@ -152,8 +152,8 @@ analyze_directory() {
     local total_files=0
     local violations=0
 
-    # Find relevant files
-    find "$dir" -type f \( -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.go" -o -name "*.rs" -o -name "*.md" \) | while read -r file; do
+    # Find relevant files (using process substitution to avoid subshell)
+    while read -r file; do
         total_files=$((total_files + 1))
 
         # Auto-detect language if not specified
@@ -165,7 +165,7 @@ analyze_directory() {
         # Analyze file
         local file_violations=$(analyze_single_file "$file" "$file_lang")
         violations=$((violations + file_violations))
-    done
+    done < <(find "$dir" -type f \( -name "*.py" -o -name "*.js" -o -name "*.ts" -o -name "*.go" -o -name "*.rs" -o -name "*.md" \))
 
     echo "📊 Summary: $total_files files analyzed, $violations violations found"
 }
@@ -286,7 +286,8 @@ analyze_python_naming() {
     local violations=0
 
     # Check class names (should be PascalCase)
-    grep -n "^class " "$file" | while read -r line; do
+    # Using process substitution to avoid subshell variable scoping issues
+    while read -r line; do
         local class_name=$(echo "$line" | sed -n 's/.*class \([A-Za-z_][A-Za-z0-9_]*\).*/\1/p')
         if [[ "$class_name" =~ ^[A-Z][A-Za-z0-9]*$ ]]; then
             echo "✅ Class name compliant: $class_name"
@@ -294,10 +295,10 @@ analyze_python_naming() {
             echo "❌ Class should be PascalCase: $class_name"
             violations=$((violations + 1))
         fi
-    done
+    done < <(grep -n "^class " "$file")
 
     # Check function names (should be snake_case)
-    grep -n "^def " "$file" | while read -r line; do
+    while read -r line; do
         local func_name=$(echo "$line" | sed -n 's/.*def \([A-Za-z_][A-Za-z0-9_]*\).*/\1/p')
         if [[ "$func_name" =~ ^[a-z][a-z0-9_]*$ ]]; then
             echo "✅ Function name compliant: $func_name"
@@ -305,10 +306,10 @@ analyze_python_naming() {
             echo "❌ Function should be snake_case: $func_name"
             violations=$((violations + 1))
         fi
-    done
+    done < <(grep -n "^def " "$file")
 
     # Check constants (should be UPPER_SNAKE_CASE)
-    grep -n "^[A-Z_][A-Z0-9_]* =" "$file" | while read -r line; do
+    while read -r line; do
         local const_name=$(echo "$line" | sed -n 's/^\([A-Z_][A-Z0-9_]*\) =.*/\1/p')
         if [[ "$const_name" =~ ^[A-Z][A-Z0-9_]*$ ]]; then
             echo "✅ Constant name compliant: $const_name"
@@ -316,7 +317,7 @@ analyze_python_naming() {
             echo "❌ Constant should be UPPER_SNAKE_CASE: $const_name"
             violations=$((violations + 1))
         fi
-    done
+    done < <(grep -n "^[A-Z_][A-Z0-9_]* =" "$file")
 
     return $violations
 }
