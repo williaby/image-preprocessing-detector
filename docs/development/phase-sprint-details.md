@@ -11,6 +11,7 @@ purpose: "Historical reference for sprint-level implementation tasks. Phase 4 is
 > **IMPORTANT**: This document uses RAG Pipeline phase numbering and is now a **HISTORICAL REFERENCE**. For current project status and official phase numbering, see [docs/planning/PROJECT_PLAN.md](../planning/PROJECT_PLAN.md).
 >
 > **Phase Status**:
+>
 > - **Phase 4 (Classical IQA)**: ✅ **COMPLETE** (January 2025) - Documented as Phase 1 + Phase 1C in PROJECT_PLAN.md
 > - **Phase 6 (Layout-Lite)**: ⬜ Not Started
 > - **Phase 8 (DQS & Routing)**: ⬜ In Progress (DQS calculation implementation)
@@ -35,6 +36,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Implement Laplacian variance-based blur detection with configurable thresholds.
 
 **Tasks**:
+
 1. Create `BlurMetrics` dataclass with fields:
    - `laplacian_variance: float` - Raw variance score
    - `blur_score: float` - Normalized 0-1 score (0=blurry, 1=sharp)
@@ -49,10 +51,12 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: OpenCV, NumPy
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/blur_detector.py`
 - Configurable threshold parameters in YAML
 
 **Tests Required**:
+
 - Unit tests for Laplacian variance calculation
 - Unit tests for score normalization
 - Integration test with synthetic blurred images
@@ -63,6 +67,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Integrate blur detection into the IQA classical module and add configuration support.
 
 **Tasks**:
+
 1. Add blur detection to `iqa_classical.py` module
 2. Create configuration schema for blur thresholds
 3. Implement caching for repeated blur checks on same image
@@ -73,11 +78,13 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: Sprint 4.1.1
 
 **Deliverables**:
+
 - Updated `iqa_classical.py` with blur detection
 - Configuration in `config/defaults.yaml`
 - CLI command `imgprep blur-check`
 
 **Tests Required**:
+
 - Integration test with configuration loading
 - CLI command test
 - Performance benchmark (target: <10ms per image)
@@ -93,6 +100,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Implement wavelet decomposition-based noise level estimation using Median Absolute Deviation (MAD).
 
 **Tasks**:
+
 1. Create `NoiseMetrics` dataclass with fields:
    - `noise_sigma: float` - Estimated noise standard deviation
    - `noise_score: float` - Normalized 0-1 score (0=noisy, 1=clean)
@@ -107,10 +115,12 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: PyWavelets (pywt), NumPy
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/noise_detector.py`
 - Wavelet configuration options
 
 **Tests Required**:
+
 - Unit tests for wavelet decomposition
 - Unit tests for MAD estimation
 - Integration test with synthetic noisy images (Gaussian, salt-pepper)
@@ -121,6 +131,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Integrate noise detection into IQA pipeline with configurable parameters.
 
 **Tasks**:
+
 1. Add noise detection to `iqa_classical.py` module
 2. Create configuration schema for noise thresholds
 3. Implement combined noise metrics (per-channel analysis)
@@ -131,11 +142,13 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: Sprint 4.2.1
 
 **Deliverables**:
+
 - Updated `iqa_classical.py` with noise detection
 - Configuration in `config/defaults.yaml`
 - CLI command `imgprep noise-check`
 
 **Tests Required**:
+
 - Integration test with various noise types
 - Performance benchmark (target: <20ms per image)
 - Accuracy validation against known noise levels
@@ -151,6 +164,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Implement skew angle detection using Probabilistic Hough Transform on document edges.
 
 **Tasks**:
+
 1. Create `SkewMetrics` dataclass with fields:
    - `skew_angle: float` - Detected skew angle in degrees
    - `skew_confidence: float` - Confidence in detection (0-1)
@@ -169,10 +183,12 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: OpenCV, NumPy
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/skew_detector.py`
 - Hough transform parameters in configuration
 
 **Tests Required**:
+
 - Unit tests for angle calculation
 - Integration tests with known skew angles (0°, 5°, 15°, 45°)
 - Edge cases: blank image, image with only noise
@@ -183,6 +199,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Integrate skew detection with correction pipeline feedback.
 
 **Tasks**:
+
 1. Add skew detection to `iqa_classical.py` module
 2. Link skew detection output to deskew correction module
 3. Implement multi-angle voting for complex documents
@@ -193,11 +210,13 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: Sprint 4.3.1, Correction pipeline (deskew)
 
 **Deliverables**:
+
 - Updated `iqa_classical.py` with skew detection
 - Integration with correction pipeline
 - CLI command `imgprep skew-check`
 
 **Tests Required**:
+
 - End-to-end test: detect skew → apply deskew → verify correction
 - Performance benchmark (target: <30ms per image)
 - Document type variations (single-column, multi-column)
@@ -213,6 +232,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Implement lighting analysis including contrast, brightness, and uniformity metrics.
 
 **Tasks**:
+
 1. Create `LightingMetrics` dataclass with fields:
    - `mean_brightness: float` - Average pixel intensity (0-255)
    - `brightness_std: float` - Brightness standard deviation
@@ -235,10 +255,12 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: OpenCV, NumPy, SciPy (for histogram metrics)
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/lighting_detector.py`
 - Lighting threshold configuration
 
 **Tests Required**:
+
 - Unit tests for each contrast method
 - Integration tests with underexposed/overexposed images
 - Synthetic tests with controlled lighting variations
@@ -249,6 +271,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Integrate lighting metrics into IQA pipeline with CLAHE correction feedback.
 
 **Tasks**:
+
 1. Add lighting detection to `iqa_classical.py` module
 2. Link lighting metrics to CLAHE correction parameters
 3. Implement adaptive threshold selection based on image statistics
@@ -259,11 +282,13 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: Sprint 4.4.1, Correction pipeline (CLAHE)
 
 **Deliverables**:
+
 - Updated `iqa_classical.py` with lighting detection
 - Integration with CLAHE correction
 - CLI command `imgprep lighting-check`
 
 **Tests Required**:
+
 - End-to-end test: detect low contrast → apply CLAHE → verify improvement
 - Performance benchmark (target: <15ms per image)
 - Validation against human perception (if labeled data available)
@@ -279,6 +304,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Implement JPEG compression artifact detection based on 8x8 block boundary analysis.
 
 **Tasks**:
+
 1. Create `CompressionMetrics` dataclass with fields:
    - `blockiness_score: float` - Block artifact severity (0-1)
    - `estimated_quality: int` - Estimated JPEG quality factor (1-100)
@@ -299,10 +325,12 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: OpenCV, NumPy
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/compression_detector.py`
 - JPEG quality threshold configuration
 
 **Tests Required**:
+
 - Unit tests with JPEG images at various quality levels (10, 30, 50, 70, 90)
 - Comparison: PNG vs JPEG at same visual content
 - Edge cases: lossless images, heavily compressed images
@@ -313,6 +341,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Integrate compression artifact detection into IQA pipeline.
 
 **Tasks**:
+
 1. Add compression detection to `iqa_classical.py` module
 2. Create configuration schema for compression thresholds
 3. Implement format-aware detection (JPEG vs. other formats)
@@ -323,11 +352,13 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: Sprint 4.5.1
 
 **Deliverables**:
+
 - Updated `iqa_classical.py` with compression detection
 - Configuration in `config/defaults.yaml`
 - CLI command `imgprep compression-check`
 
 **Tests Required**:
+
 - Integration test with mixed format inputs
 - Performance benchmark (target: <10ms per image)
 - Real-world document samples with compression artifacts
@@ -343,6 +374,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Implement discrepancy calculation between ML student model and classical IQA outputs.
 
 **Tasks**:
+
 1. Create `DiscrepancyResult` dataclass with fields:
    - `blur_discrepancy: float` - |student_blur - classical_blur|
    - `noise_discrepancy: float` - |student_noise - classical_noise|
@@ -360,10 +392,12 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: iqa_classical.py, iqa_ml.py
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/discrepancy_checker.py`
 - Discrepancy threshold configuration
 
 **Tests Required**:
+
 - Unit tests for score normalization
 - Unit tests for discrepancy calculation
 - Integration test with mock student/classical outputs
@@ -374,6 +408,7 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Description**: Tune discrepancy thresholds using validation dataset and integrate with escalation logic.
 
 **Tasks**:
+
 1. Create validation dataset with known quality issues
 2. Implement threshold tuning script:
    - Run classical IQA on validation set
@@ -388,11 +423,13 @@ Phase 4 implements classical computer vision-based Image Quality Assessment meth
 **Dependencies**: Sprint 4.6.1, Validation dataset
 
 **Deliverables**:
+
 - Tuned threshold values in configuration
 - `scripts/tune_discrepancy_threshold.py`
 - Integration with `MLIQADetector.should_escalate_to_teacher()`
 
 **Tests Required**:
+
 - Validation on held-out test set
 - Precision/recall analysis for escalation decisions
 - Performance impact analysis (escalation rate vs. accuracy gain)
@@ -413,6 +450,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Set up YOLOv8-nano model for coarse layout element detection.
 
 **Tasks**:
+
 1. Install Ultralytics YOLOv8 package
 2. Download pre-trained YOLOv8-nano weights
 3. Create model wrapper class `LayoutLiteDetector`:
@@ -428,10 +466,12 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Ultralytics, PyTorch, OpenCV
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/layout_lite.py`
 - Model weights in `models/yolov8n-layout/`
 
 **Tests Required**:
+
 - Unit test for model loading
 - Integration test with sample document images
 - Performance benchmark (target: <50ms per image on GPU)
@@ -441,6 +481,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Prepare dataset and configuration for fine-tuning YOLOv8-nano on document layouts.
 
 **Tasks**:
+
 1. Create data loader for PubLayNet subset (or similar)
 2. Define YAML configuration for fine-tuning:
    - Classes: text_block, table, figure, formula, handwriting
@@ -457,11 +498,13 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Sprint 6.1.1, PubLayNet or custom dataset
 
 **Deliverables**:
+
 - `configs/layout_lite_training.yaml`
 - `scripts/prepare_layout_dataset.py`
 - Dataset documentation
 
 **Tests Required**:
+
 - Data loader unit tests
 - Annotation conversion validation
 - Data augmentation verification
@@ -471,6 +514,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Fine-tune YOLOv8-nano on document layout dataset.
 
 **Tasks**:
+
 1. Implement training script for Modal GPU:
    - Load pre-trained weights
    - Configure optimizer (AdamW)
@@ -485,12 +529,14 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Sprint 6.1.2, Modal GPU access
 
 **Deliverables**:
+
 - `modal/train_layout_lite.py`
 - Fine-tuned model weights
 - Training logs and metrics
 - ONNX exported model
 
 **Tests Required**:
+
 - Validation mAP@0.5 > 0.75
 - Per-class precision/recall analysis
 - Inference speed validation
@@ -500,6 +546,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Integrate YOLOv8-nano layout detection into the main pipeline.
 
 **Tasks**:
+
 1. Add layout detection to detection pipeline
 2. Implement post-processing:
    - NMS (Non-Maximum Suppression) refinement
@@ -513,11 +560,13 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Sprint 6.1.3
 
 **Deliverables**:
+
 - Updated detection pipeline with layout-lite
 - CLI command `imgprep layout-check`
 - Visualization utilities
 
 **Tests Required**:
+
 - End-to-end pipeline test
 - Performance benchmark (target: <50ms GPU, <200ms CPU)
 - Integration with schema output
@@ -533,6 +582,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Implement binary classifier for handwriting presence detection.
 
 **Tasks**:
+
 1. Create `HandwritingDetector` class:
    - `__init__(model_path: str = None)`
    - `detect_handwriting(image: np.ndarray) -> HandwritingResult`
@@ -549,11 +599,13 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: PyTorch, ONNX Runtime
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/handwriting_detector.py`
 - Pre-trained model weights
 - ONNX exported model
 
 **Tests Required**:
+
 - Unit test with handwritten samples
 - Unit test with typed text samples
 - Binary classification accuracy > 95%
@@ -564,6 +616,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Integrate handwriting detection with layout-lite and schema output.
 
 **Tasks**:
+
 1. Add handwriting detection to layout-lite pipeline
 2. Update `PageLayoutSummary.has_handwriting` field population
 3. Implement per-element handwriting scoring in `DocumentElement`
@@ -574,11 +627,13 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Sprint 6.2.1, Layout-lite detector
 
 **Deliverables**:
+
 - Integrated handwriting detection
 - Updated schema population
 - CLI integration
 
 **Tests Required**:
+
 - Integration test with mixed documents
 - Schema validation with handwriting fields
 - End-to-end pipeline test
@@ -594,6 +649,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Implement page structural complexity scoring for routing decisions.
 
 **Tasks**:
+
 1. Create `ComplexityScorer` class:
    - `__init__(weights: dict = None)`
    - `compute_complexity(elements: list[LayoutElement], page_size: tuple) -> ComplexityResult`
@@ -615,10 +671,12 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Layout-lite detector output
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/complexity_scorer.py`
 - Complexity weight configuration
 
 **Tests Required**:
+
 - Unit tests for each complexity factor
 - Integration test with layout detector output
 - Calibration against human complexity ratings
@@ -629,6 +687,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Integrate complexity scoring into pipeline and schema.
 
 **Tasks**:
+
 1. Add complexity scoring to layout-lite pipeline
 2. Update `PageLayoutSummary.complexity_score` field
 3. Implement document-level complexity aggregation
@@ -639,11 +698,13 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Sprint 6.3.1
 
 **Deliverables**:
+
 - Integrated complexity scoring
 - Updated schema population
 - Documentation
 
 **Tests Required**:
+
 - End-to-end pipeline test
 - Schema validation
 - Routing decision validation
@@ -659,6 +720,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Create unified API for all structural features (layout, handwriting, complexity).
 
 **Tasks**:
+
 1. Create `StructuralFeaturesExtractor` class:
    - `__init__(config: StructuralConfig)`
    - `extract(image: np.ndarray) -> StructuralFeatures`
@@ -678,10 +740,12 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Layout-lite, Handwriting detector, Complexity scorer
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/detection/structural_features.py`
 - Unified configuration schema
 
 **Tests Required**:
+
 - Unit tests for each feature type
 - Integration test with full pipeline
 - Batch processing performance test
@@ -692,6 +756,7 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Description**: Complete documentation and CLI integration for structural features.
 
 **Tasks**:
+
 1. Create comprehensive API documentation
 2. Add CLI commands for structural analysis:
    - `imgprep analyze-structure` - Full structural analysis
@@ -704,12 +769,14 @@ Phase 6 implements lightweight layout detection for coarse page classification. 
 **Dependencies**: Sprint 6.4.1
 
 **Deliverables**:
+
 - API documentation
 - CLI commands
 - Usage examples
 - Updated pipeline integration
 
 **Tests Required**:
+
 - CLI command tests
 - JSON output validation
 - Documentation accuracy verification
@@ -729,6 +796,7 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Description**: Implement framework for calibrating DQS weights against OCR performance.
 
 **Tasks**:
+
 1. Create `DQSCalibrator` class:
    - `__init__(ocr_performance_data: pd.DataFrame)`
    - `optimize_weights(metric: str = 'f1') -> dict[str, float]`
@@ -746,11 +814,13 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Dependencies**: OCR performance dataset (from evaluation runs)
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/routing/dqs_calibrator.py`
 - `scripts/calibrate_dqs_weights.py`
 - Calibration report template
 
 **Tests Required**:
+
 - Unit tests for correlation calculation
 - Unit tests for optimization
 - Stability test across different datasets
@@ -761,6 +831,7 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Description**: Enhance DQS calculation with calibrated weights and additional factors.
 
 **Tasks**:
+
 1. Update `calculate_dqs()` with calibrated weights
 2. Add configuration for custom weight overrides
 3. Implement DQS confidence interval estimation
@@ -771,11 +842,13 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Dependencies**: Sprint 8.1.1
 
 **Deliverables**:
+
 - Updated `src/image_preprocessing_detector/metrics/dqs_calculator.py`
 - Enhanced DQS configuration
 - Updated schema fields
 
 **Tests Required**:
+
 - Integration test with calibrated weights
 - Schema validation
 - Performance benchmark
@@ -791,6 +864,7 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Description**: Implement detailed per-page quality scoring with all IQA dimensions.
 
 **Tasks**:
+
 1. Create `PageQualityScore` dataclass:
    - `page_index: int`
    - `degradation_score: float` - IQA-based degradation
@@ -809,10 +883,12 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Dependencies**: IQA pipeline, Structural features
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/metrics/page_scorer.py`
 - Page quality visualization tools
 
 **Tests Required**:
+
 - Unit tests for score aggregation
 - Integration test with full pipeline
 - Ranking validation
@@ -822,6 +898,7 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Description**: Implement document-level quality score aggregation.
 
 **Tasks**:
+
 1. Create `DocumentQualityScorer` class:
    - `__init__(aggregation_method: str = 'weighted_mean')`
    - `score_document(pages: list[PageQualityScore]) -> DocumentQualityScore`
@@ -838,11 +915,13 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Dependencies**: Sprint 8.2.1
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/metrics/document_scorer.py`
 - Document quality report template
 - Updated schema integration
 
 **Tests Required**:
+
 - Unit tests for each aggregation method
 - Integration test with multi-page documents
 - Schema validation
@@ -859,6 +938,7 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Description**: Implement OCR routing recommendation logic based on DQS and structural features.
 
 **Tasks**:
+
 1. Create `RoutingDecisionEngine` class:
    - `__init__(config: RoutingConfig)`
    - `recommend_routing(doc_metadata: DocumentMetadata) -> RoutingRecommendation`
@@ -880,10 +960,12 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Dependencies**: DQS calculator, Structural features
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/routing/decision_engine.py`
 - Routing configuration schema
 
 **Tests Required**:
+
 - Unit tests for each routing rule
 - Integration test with various document types
 - Decision explanation validation
@@ -894,6 +976,7 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Description**: Implement configurable routing thresholds and A/B testing support.
 
 **Tasks**:
+
 1. Create routing configuration schema:
    - DQS thresholds for each strategy
    - Complexity thresholds
@@ -908,11 +991,13 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Dependencies**: Sprint 8.3.1
 
 **Deliverables**:
+
 - Routing configuration in `config/routing.yaml`
 - `scripts/tune_routing_thresholds.py`
 - Routing documentation
 
 **Tests Required**:
+
 - Configuration validation tests
 - A/B testing functionality test
 - Statistics collection test
@@ -929,6 +1014,7 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Description**: Update DocumentMetadata schema with all routing-related fields.
 
 **Tasks**:
+
 1. Verify and update `DocumentMetadata` schema:
    - `pdf_type: PDFType` - Classification result
    - `languages: list[str]` - Detected languages
@@ -946,11 +1032,13 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Dependencies**: All previous milestones
 
 **Deliverables**:
+
 - Updated `src/image_preprocessing_detector/schema.py`
 - Schema migration utilities
 - Versioning documentation
 
 **Tests Required**:
+
 - Schema validation tests
 - JSON serialization/deserialization tests
 - Backward compatibility tests
@@ -961,6 +1049,7 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Description**: Integrate all routing metadata into final output pipeline.
 
 **Tasks**:
+
 1. Update `DocumentProcessor` to populate all routing fields
 2. Implement output validation (schema compliance check)
 3. Add output statistics and summary generation
@@ -971,12 +1060,14 @@ Phase 8 implements Document Quality Score calculation and OCR routing recommenda
 **Dependencies**: Sprint 8.4.1
 
 **Deliverables**:
+
 - Updated `DocumentProcessor`
 - Output validation utilities
 - Sample outputs for documentation
 - Updated CLI
 
 **Tests Required**:
+
 - End-to-end output generation test
 - Schema compliance validation
 - CLI output test
@@ -997,6 +1088,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Create comprehensive benchmark framework for full pipeline evaluation.
 
 **Tasks**:
+
 1. Create `PipelineBenchmark` class:
    - `__init__(config: BenchmarkConfig)`
    - `run_benchmark(dataset_path: str) -> BenchmarkReport`
@@ -1016,11 +1108,13 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: Complete pipeline
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/benchmarks/pipeline_benchmark.py`
 - Benchmark configuration
 - Result visualization tools
 
 **Tests Required**:
+
 - Benchmark framework unit tests
 - Result accuracy validation
 - Statistical validity tests
@@ -1030,6 +1124,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Execute comprehensive benchmarks and analyze results.
 
 **Tasks**:
+
 1. Create benchmark dataset:
    - 100+ diverse documents
    - Various quality levels
@@ -1047,11 +1142,13 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: Sprint 10.1.1, Benchmark dataset
 
 **Deliverables**:
+
 - Benchmark execution scripts
 - Performance analysis report
 - Baseline metrics for regression testing
 
 **Tests Required**:
+
 - Benchmark reproducibility test
 - Performance target validation
 - Regression baseline validation
@@ -1067,6 +1164,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Implement framework for comparing teacher and student model performance.
 
 **Tasks**:
+
 1. Create `ModelComparisonReport` class:
    - `__init__(student_results: dict, teacher_results: dict)`
    - `compute_metrics() -> ComparisonMetrics`
@@ -1084,10 +1182,12 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: Trained student and teacher models
 
 **Deliverables**:
+
 - `src/image_preprocessing_detector/analysis/model_comparison.py`
 - Comparison visualization tools
 
 **Tests Required**:
+
 - Metric calculation unit tests
 - Report generation tests
 - Statistical test validation
@@ -1097,6 +1197,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Analyze end-to-end performance with and without teacher escalation.
 
 **Tasks**:
+
 1. Run evaluation on validation dataset:
    - Student-only mode
    - Teacher-only mode (baseline)
@@ -1113,11 +1214,13 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: Sprint 10.2.1, Validation dataset with labels
 
 **Deliverables**:
+
 - Performance analysis report
 - Production configuration recommendations
 - Trade-off documentation
 
 **Tests Required**:
+
 - Evaluation script validation
 - Report accuracy verification
 
@@ -1132,6 +1235,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Implement and run stress tests for large batch processing.
 
 **Tasks**:
+
 1. Create `StressTestSuite` class:
    - `test_large_batch(num_documents: int)`
    - `test_large_pages(pages_per_doc: int)`
@@ -1149,11 +1253,13 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: Complete pipeline, Large test dataset
 
 **Deliverables**:
+
 - `tests/stress/test_large_batch.py`
 - Stress test execution scripts
 - Monitoring dashboards
 
 **Tests Required**:
+
 - Stress test framework validation
 - Monitoring accuracy validation
 
@@ -1162,6 +1268,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Test error handling and recovery under stress conditions.
 
 **Tasks**:
+
 1. Implement fault injection framework:
    - Random file corruption
    - Network failures (for Modal)
@@ -1179,11 +1286,13 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: Sprint 10.3.1
 
 **Deliverables**:
+
 - Fault injection framework
 - Error handling test suite
 - Operational runbook
 
 **Tests Required**:
+
 - Fault injection validation
 - Recovery verification
 - Data integrity tests
@@ -1199,6 +1308,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Update all PlantUML diagrams to reflect final implementation.
 
 **Tasks**:
+
 1. Update main architecture diagram:
    - Add Phase 2 ML IQA components
    - Add Phase 4 Classical IQA components
@@ -1219,11 +1329,13 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: All previous phases complete
 
 **Deliverables**:
+
 - Updated `docs/diagrams/*.puml`
 - Exported diagram images
 - Diagram index documentation
 
 **Tests Required**:
+
 - Diagram syntax validation
 - Manual accuracy review
 
@@ -1238,6 +1350,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Update README with complete feature documentation.
 
 **Tasks**:
+
 1. Update README.md:
    - Feature overview (all phases)
    - Quick start guide
@@ -1253,12 +1366,14 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: All features complete
 
 **Deliverables**:
+
 - Updated README.md
 - QUICKSTART.md
 - Updated CHANGELOG.md
 - MIGRATION.md
 
 **Tests Required**:
+
 - Link validation
 - Example code verification
 - Installation instruction testing
@@ -1268,6 +1383,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Create comprehensive API reference documentation.
 
 **Tasks**:
+
 1. Generate API documentation from docstrings:
    - All public classes
    - All public functions
@@ -1285,11 +1401,13 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: Sprint 10.5.1
 
 **Deliverables**:
+
 - `docs/api/` - API reference
 - `docs/guides/` - Usage guides
 - Documentation website configuration
 
 **Tests Required**:
+
 - Documentation build test
 - Example code execution
 - Link validation
@@ -1299,6 +1417,7 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Description**: Create operational documentation for production deployment.
 
 **Tasks**:
+
 1. Create deployment guide:
    - Prerequisites
    - Configuration options
@@ -1323,11 +1442,13 @@ Phase 10 focuses on comprehensive validation, performance benchmarking, and docu
 **Dependencies**: Sprint 10.5.2
 
 **Deliverables**:
+
 - `docs/operations/` - Operational documentation
 - `docs/deployment/` - Deployment guide
 - Documentation index
 
 **Tests Required**:
+
 - Procedure verification
 - Configuration validation
 - Security review

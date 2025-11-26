@@ -30,6 +30,7 @@ purpose: "Document the decision to build a comprehensive, extensible benchmarkin
 The Image Preprocessing Detector spans multiple phases (IQA, layout detection, end-to-end document understanding) with different tasks, datasets, and performance metrics. Without a unified evaluation framework, the project faces:
 
 **Current Pain Points**:
+
 1. **Manual Testing**: No systematic way to validate performance across datasets
 2. **Metric Fragmentation**: IQA metrics (blur, skew) vs. detection metrics (mAP, IoU) vs. end-to-end metrics (TEDS, NED)
 3. **Dataset Sprawl**: 9+ datasets across phases (DocLayNet, TableBank, LIVE, CSIQ, OmniDocBench, etc.)
@@ -40,6 +41,7 @@ The Image Preprocessing Detector spans multiple phases (IQA, layout detection, e
 ### Requirements
 
 **Functional Requirements**:
+
 1. **Multi-Dataset Support**: Evaluate on 9+ datasets with unified interface
 2. **Multi-Metric Evaluation**: Support IQA, detection, and composite metrics
 3. **Progressive Validation**: Smoke tests (<5 min) → Full benchmarks (hours)
@@ -47,6 +49,7 @@ The Image Preprocessing Detector spans multiple phases (IQA, layout detection, e
 5. **CI/CD Integration**: Automated regression detection on PRs
 
 **Operational Requirements**:
+
 1. **Local Development**: Work offline with small test fixtures (<50 MB)
 2. **Reproducibility**: Version-controlled configurations and fixtures
 3. **Extensibility**: Easy to add new datasets, metrics, and tasks
@@ -56,21 +59,25 @@ The Image Preprocessing Detector spans multiple phases (IQA, layout detection, e
 ### Existing Approaches (Inadequate)
 
 **1. Manual Testing**:
+
 - Run detection scripts on sample images
 - Manually inspect outputs
 - ❌ Not reproducible, not scalable, no regression detection
 
 **2. Unit Tests Only**:
+
 - Test individual functions in isolation
 - Mock dataset adapters
 - ❌ Doesn't validate end-to-end performance, no real-world accuracy metrics
 
 **3. Per-Dataset Evaluation Scripts**:
+
 - Separate script for each dataset
 - Different metric calculations per task
 - ❌ Code duplication, inconsistent metrics, hard to compare across datasets
 
 **4. External Benchmark Tools** (e.g., COCO API, HuggingFace Evaluate):
+
 - Pre-built evaluation for specific tasks
 - ❌ Not integrated with project, doesn't support hybrid validation, no test fixtures
 
@@ -79,11 +86,13 @@ The Image Preprocessing Detector spans multiple phases (IQA, layout detection, e
 **Context**: Research analysis of Q4 2024 - Q4 2025 literature identified critical gaps in current benchmarking approach:
 
 **Problem 1: Natural Image IQA Benchmarks Inadequate for Documents**
+
 - **Current**: LIVE, CSIQ, LIVE Challenge are natural image datasets (landscapes, people, buildings)
 - **Gap**: Documents have unique defects (skew, warping, shadow, stamps, handwriting) not covered
 - **Impact**: Model trained on LIVE/CSIQ underperforms on real document quality issues
 
 **Problem 2: Missing Document-Specific Benchmarks**
+
 - **Preprocessing**: No benchmark for dewarping, shadow removal, binarization
 - **Reading Order**: No benchmark for logical sequence prediction (optional Phase 4-5 scope)
 - **Table Structure**: PubTabNet exists but not emphasized for structure extraction (FR-4.11)
@@ -92,6 +101,7 @@ The Image Preprocessing Detector spans multiple phases (IQA, layout detection, e
 **Solution: Expand Benchmark Registry with 4 Document-Specific Datasets**
 
 **New Benchmarks (Validated 2025-01-13)**:
+
 1. **DIQA-5000** (Document IQA): Replaces LIVE/CSIQ with document-specific quality assessment
    - **Status**: ⚠️ Pending release (Sept 2025 arXiv paper, dataset not yet public)
    - **Fallback**: Continue using LIVE/CSIQ until release
@@ -113,11 +123,13 @@ The Image Preprocessing Detector spans multiple phases (IQA, layout detection, e
    - **Priority**: **CRITICAL** - End-to-end validation standard
 
 **Impact on Benchmark Registry**:
+
 - **Add 4 new adapters**: `diqa5000`, `anyphotodoc6300`, `roor`, (omnidocbench already planned)
 - **Add 8+ new suites**: DIQA-5000 IQA variants, AnyPhotoDoc dewarping, ROOR sequence prediction, OmniDocBench multi-task
 - **Update baselines**: Replace LIVE/CSIQ natural image baselines with DIQA-5000 document baselines (when available)
 
 **Phased Integration**:
+
 - **Phase 2**: Continue using LIVE/CSIQ (fallback until DIQA-5000 releases)
 - **Phase 3**: Integrate AnyPhotoDoc 6300, elevate OmniDocBench to critical
 - **Phase 4-5**: Integrate DIQA-5000 (when released), consider ROOR if scope expanded
@@ -135,6 +147,7 @@ The Image Preprocessing Detector spans multiple phases (IQA, layout detection, e
 **Purpose**: Centralized definition of all benchmark suites with declarative configuration
 
 **Implementation**:
+
 ```yaml
 # benchmarks/registry.yml
 suites:
@@ -201,6 +214,7 @@ suites:
 ```
 
 **Advantages**:
+
 - ✅ **Single Source of Truth**: All suites defined in one file
 - ✅ **Declarative**: No code changes to add new suites
 - ✅ **Versioned**: Registry tracked in Git for reproducibility
@@ -211,6 +225,7 @@ suites:
 **Purpose**: Unified interface for heterogeneous datasets
 
 **BaseAdapter Interface**:
+
 ```python
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -261,6 +276,7 @@ class BaseAdapter(ABC):
 ```
 
 **Example Implementation** ([doclaynet_adapter.py](../../benchmarks/adapters/doclaynet_adapter.py)):
+
 ```python
 from benchmarks.adapters.base import BaseAdapter, DatasetRegistry, PageSample
 
@@ -299,6 +315,7 @@ class DocLayNetAdapter(BaseAdapter):
 ```
 
 **Available Adapters** (Phase 1-2: 9 datasets | Phase 3+: +5 datasets = 14 total):
+
 | Adapter | Phase | Dataset | Task | License | Status |
 |---------|-------|---------|------|---------|--------|
 | `synthetic_iqa` | 1 | Internal | IQA | CC0-1.0 | ✅ Implemented |
@@ -317,6 +334,7 @@ class DocLayNetAdapter(BaseAdapter):
 | **`ohr_bench`** | **4** | **OHR-Bench** | **RAG Evaluation (CRITICAL)** | **CC-BY-4.0** | **⏳ To Implement** |
 
 **Key Changes (Phase 3+ Expansion)**:
+
 - **DIQA-5000**: **Replaces** LIVE/CSIQ for document-specific IQA when released
 - **AnyPhotoDoc 6300**: **NEW** benchmark for dewarping validation (DocRes ADR-032)
 - **PubTables-1M**: **ELEVATED** from training-only to benchmark (table structure extraction FR-4.11)
@@ -325,6 +343,7 @@ class DocLayNetAdapter(BaseAdapter):
 - **OmniDocBench**: **ELEVATED** from "nice-to-have" to **CRITICAL** (comprehensive validation)
 
 **Advantages**:
+
 - ✅ **Unified Interface**: Same API for all datasets
 - ✅ **License Tracking**: Each adapter documents license compliance
 - ✅ **Extensible**: Easy to add new datasets (inherit from BaseAdapter)
@@ -336,7 +355,7 @@ class DocLayNetAdapter(BaseAdapter):
 
 **Three-Level Testing Pyramid**:
 
-```
+```text
                     ┌─────────────────────┐
                     │  Full Benchmarks    │  Hours, production validation
                     │  (88+ GB datasets)  │
@@ -353,9 +372,10 @@ class DocLayNetAdapter(BaseAdapter):
                     │  Test Fixtures      │  <1 minute, local dev
                     │  (828 KB committed) │  5-10 samples per dataset
                     └─────────────────────┘
-```
+```text
 
 **Validation Level 1: Test Fixtures** (Local Development, CI Unit Tests)
+
 - **Purpose**: Offline development, fast iteration
 - **Size**: 828 KB total (committed to Git)
 - **Samples**: 5-10 representative samples per dataset
@@ -367,6 +387,7 @@ class DocLayNetAdapter(BaseAdapter):
 - **Runtime**: <1 minute for all fixtures
 
 **Example**:
+
 ```bash
 # Run tests with fixtures (no downloads required)
 poetry run pytest -v -m "not requires_full_dataset"
@@ -374,6 +395,7 @@ poetry run pytest -v -m "not requires_full_dataset"
 ```
 
 **Validation Level 2: Smoke Tests** (CI/CD, PR Validation)
+
 - **Purpose**: Fast regression detection on PRs
 - **Size**: Dataset subsets (20-100 samples per suite)
 - **Samples**: Representative subset with edge cases
@@ -385,6 +407,7 @@ poetry run pytest -v -m "not requires_full_dataset"
 - **Target**: Catch >95% of regressions
 
 **Example**:
+
 ```bash
 # Run all smoke tests (CI/CD mode)
 python -m benchmarks.runners.run_smoke --all
@@ -392,6 +415,7 @@ python -m benchmarks.runners.run_smoke --all
 ```
 
 **Validation Level 3: Full Benchmarks** (Production Validation, Paper Baselines)
+
 - **Purpose**: Comprehensive accuracy validation
 - **Size**: Full datasets (88+ GB total)
 - **Samples**: Complete test splits (hundreds to thousands)
@@ -403,6 +427,7 @@ python -m benchmarks.runners.run_smoke --all
 - **Frequency**: Weekly/monthly, pre-release
 
 **Example**:
+
 ```bash
 # Run full benchmark on DocLayNet
 python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
@@ -410,6 +435,7 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 ```
 
 **Decision Matrix**:
+
 | Scenario | Use Tier | Rationale |
 |----------|----------|-----------|
 | **Local dev (offline)** | Test Fixtures | No downloads, <1 min |
@@ -424,6 +450,7 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 **Baseline Tracking** ([benchmarks/README.md](../../benchmarks/README.md#benchmark-results--comparisons)):
 
 **Layout Detection (DocLayNet val_docwise)**:
+
 | Tool/Model | mAP@[.5:.95] | mAP@.50 | Reference |
 |------------|--------------|---------|-----------|
 | Mask R-CNN R50 (baseline) | 0.72 | — | DocLayNet 2022 |
@@ -431,6 +458,7 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 | Our Current | TBD | TBD | ⏳ Pending ML |
 
 **End-to-End (OmniDocBench)**:
+
 | Tool | Layout mAP | Text NED↓ | Table TEDS | Formula CDM | Composite | License |
 |------|------------|-----------|------------|-------------|-----------|---------|
 | Marker | 0.387 | 0.226 | 0.691 | 0.581 | 73.38 | Apache-2.0 |
@@ -439,17 +467,20 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 | **Our Target** | **≥ 0.82** | **≤ 0.10** | **≥ 0.90** | **≥ 0.85** | **≥ 85.0** | Apache-2.0 |
 
 **Tracking Methodology**:
+
 1. **Paper Baselines**: Extract metrics from published papers (DocLayNet, OmniDocBench)
 2. **SOTA Tools**: Reproduce evaluation on same datasets (Marker, Docling, GPT-4o)
 3. **Our Performance**: Run benchmarks on identical test splits
 4. **Comparison Report**: Generate markdown table with citations
 
 **References**:
+
 - DocLayNet: [arXiv:2206.01062](https://arxiv.org/abs/2206.01062)
 - OmniDocBench: [arXiv:2412.07626](https://arxiv.org/abs/2412.07626)
 - GTE (Tables): [WACV 2021](https://openaccess.thecvf.com/content/WACV2021/papers/Zheng_Global_Table_Extractor_GTE_A_Framework_for_Joint_Table_Identification_WACV_2021_paper.pdf)
 
 **Advantages**:
+
 - ✅ **Objective Comparison**: Same datasets, same metrics
 - ✅ **Goal Setting**: Targets based on SOTA performance
 - ✅ **Progress Tracking**: Monitor improvement over time
@@ -532,10 +563,12 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 **Description**: No automated benchmarks, manually test on sample images
 
 **Pros**:
+
 - Simple, no infrastructure overhead
 - Flexible (test whatever you want)
 
 **Cons**:
+
 - ❌ Not reproducible (different samples each time)
 - ❌ Not scalable (hours of manual work per release)
 - ❌ No regression detection (can't catch accuracy drops)
@@ -550,10 +583,12 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 **Description**: Separate script for each dataset (e.g., `eval_doclaynet.py`, `eval_live.py`)
 
 **Pros**:
+
 - Simple, no abstraction overhead
 - Dataset-specific optimizations possible
 
 **Cons**:
+
 - ❌ Code duplication (metric calculations repeated per dataset)
 - ❌ Inconsistent metrics (each script may calculate differently)
 - ❌ Hard to compare across datasets (different output formats)
@@ -568,10 +603,12 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 **Description**: Use existing tools like HF Evaluate library, COCO API for detection metrics
 
 **Pros**:
+
 - Pre-built, well-tested metric implementations
 - Community-standard tools
 
 **Cons**:
+
 - ❌ No unified interface (different API per tool)
 - ❌ No test fixtures support (assumes full datasets)
 - ❌ No registry-based configuration (scripts call APIs directly)
@@ -586,11 +623,13 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 **Description**: Jupyter notebooks for ad-hoc analysis
 
 **Pros**:
+
 - Interactive exploration
 - Good for prototyping
 - Visualizations built-in
 
 **Cons**:
+
 - ❌ Not reproducible (environment drift, execution order matters)
 - ❌ Not CI/CD friendly (can't run in GitHub Actions)
 - ❌ No version control (notebook JSON diffs are messy)
@@ -605,11 +644,13 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 **Description**: Use SaaS platforms for experiment tracking and benchmarking
 
 **Pros**:
+
 - Beautiful dashboards
 - Built-in metric tracking
 - Collaboration features
 
 **Cons**:
+
 - ❌ Cost (~$50-200/month for team)
 - ❌ External dependency (vendor lock-in)
 - ❌ Privacy concerns (upload data to third-party)
@@ -624,6 +665,7 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 ### Phase Roadmap
 
 **Phase 1** (Complete):
+
 - ✅ Base adapter interface
 - ✅ Synthetic IQA adapter (blur, skew, noise, contrast)
 - ✅ DocLayNet adapter (layout detection)
@@ -634,6 +676,7 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 - ✅ Test fixtures (828 KB)
 
 **Phase 2** (In Progress):
+
 - ⏳ LIVE, CSIQ, LIVE Challenge adapters (IQA validation)
 - ⏳ TableBank adapter (table detection)
 - ⏳ COCO-Text adapter (handwriting classification)
@@ -642,6 +685,7 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 - ⏳ CI integration (GitHub Actions smoke tests)
 
 **Phase 3** (Planned):
+
 - [ ] OmniDocBench adapter (end-to-end)
 - [ ] Composite scoring (layout + text + table + formula)
 - [ ] Attribute-sliced evaluation (by language, quality, layout)
@@ -649,7 +693,7 @@ python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 
 ### Directory Structure
 
-```
+```text
 benchmarks/
 ├── registry.yml              # Central suite configuration (SSOT)
 ├── adapters/                 # Dataset adapters
@@ -668,11 +712,12 @@ benchmarks/
 │   └── run_smoke.py         # Fast CI smoke tests
 └── labelmaps/               # Label mappings
     └── omnidoc_to_doclaynet.yaml
-```
+```text
 
 ### CI/CD Integration
 
 **GitHub Actions Workflow** (`.github/workflows/benchmarks.yml`):
+
 ```yaml
 name: Benchmarks
 
@@ -713,6 +758,7 @@ jobs:
 ### Report Format
 
 **JSON** (`reports/{suite}/{timestamp}/results.json`):
+
 ```json
 {
   "suite_name": "doclaynet-layout-smoke",
@@ -753,6 +799,7 @@ jobs:
 ```
 
 **Markdown** (`reports/{suite}/{timestamp}/summary.md`):
+
 ```markdown
 # Benchmark Summary: doclaynet-layout-smoke
 
@@ -832,6 +879,7 @@ def test_smoke_test_runtime():
 ## References
 
 **Datasets (Phase 1-2)**:
+
 - [DocLayNet](https://arxiv.org/abs/2206.01062) - Layout detection benchmark
 - [LIVE IQA](https://live.ece.utexas.edu/research/quality/subjective.htm) - Natural image quality assessment
 - [CSIQ](https://qualinet.github.io/databases/image/csiq_image_database/) - Natural image IQA benchmark
@@ -840,6 +888,7 @@ def test_smoke_test_runtime():
 - [TableBank](https://github.com/doc-analysis/TableBank) - Table detection dataset
 
 **Datasets (Phase 3+ - NEW)**:
+
 - [DIQA-5000](https://arxiv.org/abs/2509.17012) - Document-specific IQA (⚠️ Pending release, Sept 2025)
 - [AnyPhotoDoc 6300](https://arxiv.org/abs/2410.12189) - Dewarping benchmark (DvD model)
 - [PubTables-1M](https://github.com/microsoft/table-transformer) - Table structure extraction
@@ -847,11 +896,13 @@ def test_smoke_test_runtime():
 - [OmniDocBench](https://arxiv.org/abs/2412.07626) - **PRIMARY** comprehensive document AI benchmark
 
 **Tools**:
+
 - [COCO Evaluation API](https://cocodataset.org/#detection-eval) - Detection metrics
 - [Marker](https://github.com/VikParuchuri/marker) - Open-source document AI (Apache-2.0)
 - [Docling](https://github.com/DS4SD/docling) - IBM document processing (MIT)
 
 **Internal**:
+
 - [benchmarks/README.md](../../benchmarks/README.md) - Benchmarking framework documentation
 - [data/test_fixtures/README.md](../../data/test_fixtures/README.md) - Test fixtures guide
 - ADR-0013: Real Testing Over Mocking - Preference for real data

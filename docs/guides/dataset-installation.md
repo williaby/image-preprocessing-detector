@@ -43,6 +43,7 @@ purpose: Guide for benchmark dataset installation guide.
 The project includes a helper script for automatic GCS authentication using the service account stored in `.env`:
 
 **Quick Start**:
+
 ```bash
 # One-time setup: Authenticate with GCS
 ./scripts/auth_gcs.sh --cleanup
@@ -52,6 +53,7 @@ source ./scripts/auth_gcs.sh
 ```
 
 **What it does**:
+
 - ✅ Reads `GCP_SA_KEY` from `.env` file
 - ✅ Decodes base64-encoded service account JSON
 - ✅ Authenticates with `gcloud`
@@ -60,6 +62,7 @@ source ./scripts/auth_gcs.sh
 - ✅ Exports environment variables (`GOOGLE_APPLICATION_CREDENTIALS`, `GCP_PROJECT`, `GCS_BUCKET`)
 
 **Manual Authentication** (if needed):
+
 ```bash
 # Extract service account from .env
 export GCP_SA_KEY=$(grep "^GCP_SA_KEY=" .env | cut -d= -f2)
@@ -104,6 +107,7 @@ After authentication, use [scripts/gcs_helpers.sh](../scripts/gcs_helpers.sh) to
 ```
 
 **Typical Workflow**:
+
 1. Prepare datasets locally (follow sections below)
 2. Authenticate with GCS: `./scripts/auth_gcs.sh`
 3. Upload datasets to GCS: `./scripts/gcs_helpers.sh upload-phase2`
@@ -112,6 +116,7 @@ After authentication, use [scripts/gcs_helpers.sh](../scripts/gcs_helpers.sh) to
 6. Download final models: `./scripts/gcs_helpers.sh download-checkpoints`
 
 **See Also**:
+
 - [docs/PHASE2_QUICKSTART.md](PHASE2_QUICKSTART.md) - Google Colab training guide
 - [docs/setup/colab-storage-setup.md](setup/colab-storage-setup.md) - GCS configuration details
 
@@ -120,12 +125,14 @@ After authentication, use [scripts/gcs_helpers.sh](../scripts/gcs_helpers.sh) to
 ## ✅ Completed Datasets
 
 ### 1. DocLayNet (Phase 1 - Layout Detection)
+
 **Status**: ✅ Ready via symlink
 **Location**: `data/benchmarks/doclaynet` → `/home/byron/dev/data_ingestor/data/benchmarks/doclaynet`
 **Size**: 11GB (symlinked, no additional space needed)
 **License**: CDLA-Permissive-2.0
 
 **Verification**:
+
 ```bash
 ls -l data/benchmarks/doclaynet
 # Should show: documents/ and ground_truth/ directories
@@ -134,12 +141,14 @@ ls -l data/benchmarks/doclaynet
 **No action needed** - Already available from data_ingestor project.
 
 ### 2. SignaTR6K (Handwriting Detection)
+
 **Status**: ✅ Ready (local)
 **Location**: `data/benchmarks/signatr6k`
 **Size**: ~2GB
 **License**: TBD (academic dataset)
 
 **Verification**:
+
 ```bash
 ls -lh data/benchmarks/signatr6k
 # Should show dataset files
@@ -148,17 +157,20 @@ ls -lh data/benchmarks/signatr6k
 **No action needed** - Already present locally.
 
 ### 3. Synthetic IQA (Phase 1 - Image Quality Assessment)
+
 **Status**: ✅ Auto-generated
 **Location**: `data/benchmarks/synthetic_iqa`
 **Size**: 364KB (dynamically generated)
 **License**: Public Domain (project-generated)
 
 **How it works**:
+
 - Automatically generated when running IQA benchmarks
 - Creates synthetic images with controlled degradations (blur, skew, noise, contrast)
 - Can be regenerated anytime
 
 **Usage**:
+
 ```bash
 # Generates automatically on first run
 poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
@@ -171,16 +183,19 @@ poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smo
 **No manual download needed**.
 
 ### 4. COCO-Text (Phase 2 - Text Detection)
+
 **Status**: ✅ Annotations extracted
 **Location**: `data/benchmarks/cocotext/cocotext.v2.json`
 **Size**: 53MB (annotations only)
 **License**: CC-BY-4.0
 
 **Current Status**:
+
 - ✅ Annotations file extracted from `/home/byron/dev/image_detection/data/test/cocotext.v2.zip`
 - ⚠️ Image files NOT included (need separate COCO dataset download)
 
 **To download COCO images** (if needed for benchmarking):
+
 ```bash
 cd data/benchmarks/cocotext
 
@@ -200,6 +215,7 @@ unzip val2014.zip
 ```
 
 **Citation**:
+
 ```bibtex
 @inproceedings{veit2016coco,
   title={Coco-text: Dataset and benchmark for text detection and recognition in natural images},
@@ -214,12 +230,14 @@ unzip val2014.zip
 ## ⚠️ Manual Installation Required
 
 ### 5. OmniDocBench (Phase 3 - Comprehensive Document Understanding)
+
 **Status**: ✅ **Automated Download Available** (Requires HuggingFace Token)
-**Source**: https://huggingface.co/datasets/opendatalab/OmniDocBench
+**Source**: <https://huggingface.co/datasets/opendatalab/OmniDocBench>
 **Size**: 1.25 GB
 **License**: CC-BY-NC-4.0 (Evaluation only, non-commercial)
 
 **Automated Installation** (Recommended):
+
 ```bash
 # Download using automated script with rate-limit handling
 poetry run python scripts/download_omnidocbench.py
@@ -233,18 +251,21 @@ poetry run python scripts/download_omnidocbench.py
 ```
 
 **HuggingFace Token Setup** (One-time):
-1. Create account at: https://huggingface.co/join
-2. Get token at: https://huggingface.co/settings/tokens (create "Read" token)
+
+1. Create account at: <https://huggingface.co/join>
+2. Get token at: <https://huggingface.co/settings/tokens> (create "Read" token)
 3. Token already stored in `.env` as `HF_TOKEN`
 4. Verify: `grep HF_TOKEN .env` should show your token
 
 **Rate Limits (Free Tier)**:
+
 - **5,000 requests per 5-minute window** (file downloads)
 - **PRO tier**: 12,000 requests/5min (~$9/month)
 - **Enterprise**: 50,000+ requests/5min
 - Script automatically handles rate limiting and retries
 
 **Manual Installation** (Alternative):
+
 ```bash
 # Using HuggingFace CLI
 poetry run huggingface-cli login  # Paste token when prompted
@@ -256,6 +277,7 @@ dataset.save_to_disk('data/benchmarks/omnidocbench')
 ```
 
 **Dataset Info**:
+
 - **1,358 PDF pages** with comprehensive annotations
 - **9 document types**: Academic papers, financial reports, newspapers, textbooks, etc.
 - **3 languages**: English, Simplified Chinese, mixed
@@ -264,6 +286,7 @@ dataset.save_to_disk('data/benchmarks/omnidocbench')
 - Evaluation-only license (non-commercial)
 
 **Citation**:
+
 ```bibtex
 @article{meng2024omnidocbench,
   title={OmniDocBench: Benchmarking Diverse PDF Document Parsing with Comprehensive Annotations},
@@ -274,12 +297,14 @@ dataset.save_to_disk('data/benchmarks/omnidocbench')
 ```
 
 ### 6. TableBank (Phase 2 - Table Detection)
+
 **Status**: ✅ **Automated Download Available** (Requires HuggingFace Token)
-**Source**: https://huggingface.co/datasets/liminghao1630/TableBank
+**Source**: <https://huggingface.co/datasets/liminghao1630/TableBank>
 **Size**: 23.7 GB (full dataset)
 **License**: CC-BY-4.0
 
 **Automated Installation** (Recommended):
+
 ```bash
 # Download using automated script
 poetry run python scripts/download_table_datasets.py --datasets tablebank
@@ -293,12 +318,14 @@ poetry run python scripts/download_table_datasets.py --datasets tablebank
 ```
 
 **Dataset Info**:
+
 - **417,234 high-quality labeled tables**
 - **278,582 images** (78K Word + 200K LaTeX documents)
 - **Official splits**: Train (260K), Val (10K), Test (8K)
 - Table detection and structure recognition annotations
 
 **Alternative - Manual Download**:
+
 ```bash
 # Using HuggingFace CLI
 huggingface-cli download liminghao1630/TableBank \
@@ -315,6 +342,7 @@ unzip -q TableBank.zip
 The full dataset is now hosted on HuggingFace (23.7 GB).
 
 **Citation**:
+
 ```bibtex
 @article{li2020tablebank,
   title={TableBank: A benchmark dataset for table detection and recognition},
@@ -325,12 +353,14 @@ The full dataset is now hosted on HuggingFace (23.7 GB).
 ```
 
 ### 7. PubTabNet (Phase 2 - Table Structure Recognition)
+
 **Status**: ✅ Automated Download Available
-**Source**: https://huggingface.co/datasets/ajimeno/PubTabNet
+**Source**: <https://huggingface.co/datasets/ajimeno/PubTabNet>
 **Size**: 10.5 GB (full dataset)
 **License**: CDLA-Permissive-2.0
 
 **Automated Installation** (recommended):
+
 ```bash
 # Download PubTabNet using HuggingFace Hub
 poetry run python scripts/download_table_datasets.py --datasets pubtabnet
@@ -340,6 +370,7 @@ poetry run python scripts/download_table_datasets.py --all
 ```
 
 **Dataset Details**:
+
 - **Images**: 568,454 scientific publication tables
 - **Format**: Single tar.gz archive
 - **Features**: HTML structure annotations for table structure recognition
@@ -347,6 +378,7 @@ poetry run python scripts/download_table_datasets.py --all
 - **Image Format**: PNG images with COCO-aligned JSON annotations
 
 **Manual Installation** (alternative):
+
 ```bash
 cd data/benchmarks
 mkdir -p pubtabnet
@@ -364,7 +396,8 @@ tar -xzf pubtabnet.tar.gz
 ```
 
 **Expected structure**:
-```
+
+```text
 data/benchmarks/pubtabnet/
 ├── train/
 │   ├── images/
@@ -372,9 +405,10 @@ data/benchmarks/pubtabnet/
 └── val/
     ├── images/
     └── annotations.json
-```
+```text
 
 **Citation**:
+
 ```bibtex
 @article{zhong2020image,
   title={Image-based table recognition: data, model, and evaluation},
@@ -385,12 +419,14 @@ data/benchmarks/pubtabnet/
 ```
 
 ### 8. FinTabNet (Phase 2 - Financial Table Detection)
+
 **Status**: ✅ Automated Download Available
-**Source**: https://huggingface.co/datasets/bsmock/FinTabNet.c
+**Source**: <https://huggingface.co/datasets/bsmock/FinTabNet.c>
 **Size**: 3.2 GB (corrected version)
 **License**: CDLA-Permissive-2.0
 
 **Automated Installation** (recommended):
+
 ```bash
 # Download FinTabNet using HuggingFace Hub
 poetry run python scripts/download_table_datasets.py --datasets fintabnet
@@ -400,6 +436,7 @@ poetry run python scripts/download_table_datasets.py --all
 ```
 
 **Dataset Details**:
+
 - **Version**: FinTabNet.c (corrected version with fixes)
 - **Images**: Financial tables from annual reports
 - **Format**: Two tar.gz archives (PDF annotations + structure)
@@ -409,6 +446,7 @@ poetry run python scripts/download_table_datasets.py --all
 - **Features**: Table detection and cell structure recognition for financial documents
 
 **Manual Installation** (alternative):
+
 ```bash
 cd data/benchmarks
 mkdir -p fintabnet
@@ -433,7 +471,8 @@ tar -xzf FinTabNet.c-Structure.tar.gz
 ```
 
 **Expected structure**:
-```
+
+```text
 data/benchmarks/fintabnet/
 ├── FinTabNet.c-PDF_Annotations/
 │   ├── pdf/
@@ -441,11 +480,12 @@ data/benchmarks/fintabnet/
 │   └── annotations/
 └── FinTabNet.c-Structure/
     └── ...
-```
+```text
 
 **Note**: This is the corrected version (FinTabNet.c) which includes bug fixes from the original FinTabNet release. The original IBM Developer site version is no longer actively maintained.
 
 **Citation**:
+
 ```bibtex
 @article{zheng2021global,
   title={Global table extractor (gte): A framework for joint table identification and cell structure recognition using visual context},
@@ -456,11 +496,13 @@ data/benchmarks/fintabnet/
 ```
 
 ### 9. WiLI-2018 (Phase 2 - Language Identification)
-**Source**: https://zenodo.org/record/841984
+
+**Source**: <https://zenodo.org/record/841984>
 **Size**: ~800MB
 **License**: CC-BY-SA-4.0
 
 **Manual Installation**:
+
 ```bash
 cd data/benchmarks
 mkdir -p wili_2018
@@ -481,11 +523,13 @@ unzip wili-2018.zip
 ```
 
 **Dataset Info**:
+
 - 235,000 paragraphs
 - 235 languages
 - Wikipedia-based text samples
 
 **Citation**:
+
 ```bibtex
 @inproceedings{thoma2018wili,
   title={The WiLI benchmark dataset for written language identification},
@@ -500,6 +544,7 @@ unzip wili-2018.zip
 ## .gitignore Configuration
 
 **Current Rule** (line 119 in `.gitignore`):
+
 ```gitignore
 # Benchmark datasets (large) - added 2025-11-05
 data/benchmarks/
@@ -508,9 +553,11 @@ data/benchmarks/
 This rule covers **ALL datasets** in `data/benchmarks/` directory.
 
 **Exceptions** (files that SHOULD be tracked):
+
 - `data/benchmarks/README.md` - Dataset overview (needs to be re-added to git)
 
 **To track README**:
+
 ```bash
 # Force add README despite gitignore
 git add -f data/benchmarks/README.md
@@ -518,6 +565,7 @@ git commit -m "docs: Add benchmark datasets README"
 ```
 
 **Verification**:
+
 ```bash
 # Check what's tracked
 git ls-files data/benchmarks/
@@ -530,13 +578,15 @@ git ls-files data/benchmarks/
 
 ## Disk Space Management
 
-### Current Space Usage:
+### Current Space Usage
+
 ```bash
 df -h /home/byron/dev/image_detection
 # Available: 798GB
 ```
 
-### Expected Dataset Sizes:
+### Expected Dataset Sizes
+
 | Dataset | Size | Cumulative |
 |---------|------|------------|
 | doclaynet (symlink) | 11GB* | 0GB (symlinked) |
@@ -554,7 +604,8 @@ df -h /home/byron/dev/image_detection
 
 *doclaynet symlinked from data_ingestor - no additional space needed
 
-### Cleanup Commands:
+### Cleanup Commands
+
 ```bash
 # Remove old benchmark results (keep latest only)
 cd reports/
@@ -575,7 +626,8 @@ rm -rf data/benchmarks/cocotext/{train2014,val2014}
 
 ## Quick Setup Commands
 
-### Essential Datasets (Phase 1):
+### Essential Datasets (Phase 1)
+
 ```bash
 # 1. Verify doclaynet symlink
 ls -l data/benchmarks/doclaynet
@@ -587,7 +639,8 @@ ln -s /home/byron/dev/data_ingestor/data/benchmarks/doclaynet data/benchmarks/do
 poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
 ```
 
-### High-Priority Datasets (Phase 3):
+### High-Priority Datasets (Phase 3)
+
 ```bash
 # OmniDocBench (automated with rate-limit handling)
 # Token already configured in .env
@@ -602,7 +655,8 @@ dataset.save_to_disk('data/benchmarks/omnidocbench')
 "
 ```
 
-### Medium-Priority Datasets (Phase 2):
+### Medium-Priority Datasets (Phase 2)
+
 ```bash
 # TableBank (400MB)
 cd data/benchmarks && mkdir -p tablebank && cd tablebank
@@ -658,6 +712,7 @@ poetry run python -m benchmarks.runners.run_smoke --all
 ## Troubleshooting
 
 ### Issue: Dataset not found
+
 **Solution**: Check dataset directory exists and has correct structure
 
 ```bash
@@ -669,6 +724,7 @@ cat benchmarks/registry.yml | grep -A 5 "dataset: doclaynet"
 ```
 
 ### Issue: HuggingFace rate limit (429 error)
+
 **Solution**: Login with HF account
 
 ```bash
@@ -677,6 +733,7 @@ poetry run huggingface-cli login
 ```
 
 ### Issue: Disk space full
+
 **Solution**: Remove optional datasets or use cleanup commands
 
 ```bash
@@ -689,6 +746,7 @@ rm -rf data/benchmarks/pubtabnet  # Use small subset instead
 ```
 
 ### Issue: Symlink broken
+
 **Solution**: Recreate symlink
 
 ```bash
@@ -706,7 +764,8 @@ ls -l data/benchmarks/doclaynet
 
 ## License Compliance Summary
 
-### Must Cite in Publications:
+### Must Cite in Publications
+
 - ✅ DocLayNet (CDLA-Permissive-2.0)
 - ✅ TableBank (CC-BY-4.0)
 - ✅ PubTabNet (CDLA-Permissive-2.0)
@@ -715,11 +774,13 @@ ls -l data/benchmarks/doclaynet
 - ✅ WiLI-2018 (CC-BY-SA-4.0)
 - ✅ OmniDocBench (CC-BY-NC-4.0)
 
-### Commercial Use Restrictions:
+### Commercial Use Restrictions
+
 - ⚠️ **OmniDocBench**: Non-commercial evaluation only (CC-BY-NC-4.0)
 - ✅ **All others**: Commercial use allowed with attribution
 
-### Share-Alike Requirements:
+### Share-Alike Requirements
+
 - ⚠️ **WiLI-2018**: CC-BY-SA-4.0 (derivatives must use same license)
 - ✅ **All others**: No share-alike requirement
 
@@ -741,4 +802,4 @@ ls -l data/benchmarks/doclaynet
 3. Verify all dataset structures
 4. Run smoke tests to validate setup
 
-**Questions?** Check the troubleshooting section or create an issue at https://github.com/williaby/image-preprocessing-detector/issues
+**Questions?** Check the troubleshooting section or create an issue at <https://github.com/williaby/image-preprocessing-detector/issues>

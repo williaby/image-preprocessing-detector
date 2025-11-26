@@ -164,6 +164,7 @@ x2, y2 = x + width, y + height
 ```
 
 **Why COCO?**
+
 - Industry standard for object detection
 - Compatible with LayoutParser, Detectron2, YOLO
 - Simplifies integration with downstream tools

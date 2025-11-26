@@ -46,7 +46,7 @@ We need a deterministic device selection policy that:
 
 ### 1. Device Priority Hierarchy
 
-```
+```text
 Priority 1: Local GPU (if available and requested)
     ↓ (fallback if unavailable)
 Priority 2: Local CPU (default for student model)
@@ -54,7 +54,7 @@ Priority 2: Local CPU (default for student model)
 Priority 3: Modal GPU (teacher inference only)
     ↓ (if Modal unavailable or budget exceeded)
 Priority 4: Error (blocked operation)
-```
+```text
 
 ### 2. Device Selection Matrix
 

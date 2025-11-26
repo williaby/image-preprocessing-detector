@@ -170,8 +170,7 @@ Per-Element Hybrid IQA has been formally deferred to Phase 12.
 - ✅ Documentation (`docs/MODEL_STORAGE.md`)
 
 **Workflow**:
-```
-
+```text
 Training (Modal GPU)
     ↓
 GCS Storage (canonical archive)
@@ -183,6 +182,7 @@ Hugging Face Hub (curated releases)
 ```
 
 **Promotion Criteria**:
+
 - [ ] Performance meets baseline (mAP > 0.88)
 - [ ] Trained from clean git state
 - [ ] All required metadata files present
@@ -190,6 +190,7 @@ Hugging Face Hub (curated releases)
 - [ ] Semantic version assigned
 
 **Commands**:
+
 ```bash
 # List available runs
 python scripts/promote_to_hf.py --list-runs --model resnet50_teacher
@@ -208,10 +209,6 @@ python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --ver
 
 ---
 
-```
-
----
-
 ## Issue 3: Layout Model Reference
 
 ### Current State
@@ -225,6 +222,7 @@ python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --ver
 ### Recommendation: STANDARDIZE TO DocLayout-YOLO
 
 **Rationale**:
+
 1. Config file is authoritative for implementation
 2. DocLayout-YOLO is document-optimized
 3. Pre-trained models available on HuggingFace
@@ -234,10 +232,12 @@ python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --ver
 #### 1. Update PROJECT_PLAN.md
 
 **Replace all instances of**:
+
 - "YOLOv10-doc" → "DocLayout-YOLO"
 - "YOLOv8" → "DocLayout-YOLO"
 
 **Key locations**:
+
 - Line 103: Light layout detection description
 - Line 492: Light Layout Detection section
 - Line 619: Chosen Solution
@@ -245,6 +245,7 @@ python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --ver
 #### 2. Update ADR-015
 
 **Title change**:
+
 ```markdown
 # ADR-015: DocLayout-YOLO for Layout Detection (Updated from YOLOv8)
 ```

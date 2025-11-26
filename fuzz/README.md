@@ -22,6 +22,7 @@ Fuzzing is a dynamic testing technique that feeds random or malformed inputs to 
 **Module**: `image_preprocessing_detector.ingestion.pdf_loader`
 
 **Target Areas**:
+
 - PDF parsing and validation
 - Page extraction
 - DPI estimation
@@ -29,6 +30,7 @@ Fuzzing is a dynamic testing technique that feeds random or malformed inputs to 
 - Error handling
 
 **Typical Issues Found**:
+
 - Crashes on malformed PDF headers
 - Infinite loops on circular references
 - Memory exhaustion on compressed objects
@@ -39,6 +41,7 @@ Fuzzing is a dynamic testing technique that feeds random or malformed inputs to 
 **Module**: `image_preprocessing_detector.ingestion.image_loader`
 
 **Target Areas**:
+
 - Image format detection and validation
 - Image decoding (PNG, JPEG, TIFF)
 - Color space conversion
@@ -46,6 +49,7 @@ Fuzzing is a dynamic testing technique that feeds random or malformed inputs to 
 - Error handling
 
 **Typical Issues Found**:
+
 - Crashes on truncated image data
 - Buffer overflows in decompression
 - Color space conversion errors
@@ -56,6 +60,7 @@ Fuzzing is a dynamic testing technique that feeds random or malformed inputs to 
 **Module**: `image_preprocessing_detector.detection.text_gate`
 
 **Target Areas**:
+
 - Stroke density calculation
 - Connected components analysis
 - Edge density computation
@@ -63,6 +68,7 @@ Fuzzing is a dynamic testing technique that feeds random or malformed inputs to 
 - Error handling
 
 **Typical Issues Found**:
+
 - Division by zero on empty images
 - NumPy array shape mismatches
 - Out-of-bounds access
@@ -73,10 +79,11 @@ Fuzzing is a dynamic testing technique that feeds random or malformed inputs to 
 ### Prerequisites
 
 Install fuzzing dependencies:
+
 ```bash
 poetry install --with dev
 poetry add --group dev atheris
-```
+```text
 
 ### Running Fuzzers Locally
 
@@ -89,26 +96,28 @@ poetry run python fuzz/fuzz_image_loader.py -max_total_time=60
 
 # Run text gate fuzzer for 60 seconds
 poetry run python fuzz/fuzz_text_gate.py -max_total_time=60
-```
+```text
 
 ### Interpreting Results
 
 **Normal Output** (no issues found):
-```
+
+```text
 INFO: Seed: 1234567890
 INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
 INFO: A corpus is not provided, starting from an empty corpus
 #2      INITED cov: 123 ft: 456 corp: 1/1b exec/s: 0 rss: 45Mb
 #1000   NEW    cov: 145 ft: 478 corp: 12/34b lim: 4 exec/s: 1000 rss: 47Mb
 ...
-```
+```text
 
 **Crash Found**:
-```
+
+```text
 ==12345==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6020000000ab
 ...
 SUMMARY: AddressSanitizer: heap-buffer-overflow /path/to/file.py:123
-```
+```text
 
 If a crash is found, the fuzzer will save a reproducer file (e.g., `crash-abc123`). Report this as a security issue.
 
@@ -124,6 +133,7 @@ These harnesses run automatically via GitHub Actions on every push and PR:
 ### Workflow Configuration
 
 The ClusterFuzzLite workflow (`.github/workflows/cifuzzy.yml`):
+
 - Uses OSS-Fuzz `compile_python_fuzzer` helper to build proper fuzz target executables
 - Builds fuzzing harnesses with Atheris in Docker container
 - Runs each fuzzer for 600 seconds (10 minutes)
@@ -131,11 +141,12 @@ The ClusterFuzzLite workflow (`.github/workflows/cifuzzy.yml`):
 - Submits SARIF reports to Security tab
 
 The build script (`.clusterfuzzlite/build.sh`) uses the OSS-Fuzz Python compilation helper:
+
 ```bash
 compile_python_fuzzer fuzz fuzz_pdf_loader
 compile_python_fuzzer fuzz fuzz_image_loader
 compile_python_fuzzer fuzz fuzz_text_gate
-```
+```text
 
 This creates properly formatted executable fuzz targets that ClusterFuzzLite recognizes, eliminating the need for manual wrapper scripts.
 
@@ -155,7 +166,7 @@ See [TESTING.md](./TESTING.md) for viewing results and troubleshooting.
 
 ```bash
 poetry add --group dev atheris
-```
+```text
 
 ### "ValueError: Image array must be 2D or 3D"
 
@@ -164,9 +175,10 @@ Expected - fuzzer is testing invalid inputs. This should be caught gracefully.
 ### Fuzzer runs slowly
 
 Adjust timeout or corpus size:
+
 ```bash
 poetry run python fuzz/fuzz_pdf_loader.py -max_total_time=10 -max_len=1024
-```
+```text
 
 ## Contributing
 

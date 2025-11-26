@@ -59,7 +59,7 @@ poetry run pytest -v
 
 ### Project Structure
 
-```
+```text
 image-preprocessing-detector/
 ├── src/                      # Source code
 │   └── image_preprocessing_detector/
@@ -76,7 +76,7 @@ image-preprocessing-detector/
 ├── docs/                     # Documentation
 ├── configs/                  # Configuration files
 └── scripts/                  # Utility scripts
-```
+```text
 
 See [Architecture Documentation](architecture.md) for detailed system design.
 
@@ -220,11 +220,13 @@ See [Security Guide](../security/codeql-python-scanning-guide.md).
 ### Performance Targets
 
 **ML IQA (Phase 2)**:
+
 - Student (ResNet-18) CPU: ≤40ms/page
 - Student (ResNet-18) GPU: ≤10ms/page
 - Teacher (ResNet-50) GPU: ≤30ms/page
 
 **End-to-End (Phase 10)**:
+
 - GPU: <150ms/page
 - CPU: <500ms/page
 

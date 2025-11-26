@@ -25,7 +25,7 @@ All corrections include **guardrails** to validate improvements and prevent degr
 
 ## Correction Workflow
 
-```
+```text
 Detected Issues
       │
       ▼
@@ -60,7 +60,7 @@ Detected Issues
       │
       ▼
   Corrected Image
-```
+```text
 
 ## Deskew Correction
 
@@ -69,6 +69,7 @@ Detected Issues
 **Method**: Affine rotation based on detected skew angle
 
 **Steps**:
+
 1. Detect skew angle using Hough transform
 2. Compute rotation matrix
 3. Apply affine transformation
@@ -92,14 +93,17 @@ if transform_info["success"]:
 ### Guardrails
 
 **Angle Validation**:
+
 - Rejects |angle| > 45° (likely detection error)
 - Warns for |angle| > 10° (unusual skew)
 
 **Border Check**:
+
 - Validates no excessive black borders
 - Ensures content preservation
 
 **Quality Validation**:
+
 - Compares before/after edge strength
 - Rejects if content lost
 
@@ -119,6 +123,7 @@ if transform_info["success"]:
 **Method**: CLAHE (Contrast Limited Adaptive Histogram Equalization)
 
 **Benefits**:
+
 - Local contrast enhancement
 - Prevents over-amplification
 - Preserves details
@@ -142,15 +147,18 @@ if transform_info["success"]:
 ### Guardrails
 
 **Clip Limit Bounds**:
+
 - Range: 0.5 - 4.0
 - Default: 2.0
 - Higher = more contrast
 
 **Histogram Validation**:
+
 - Ensures improved distribution
 - Checks for over-enhancement
 
 **Content Preservation**:
+
 - Validates perceptual quality
 - Rejects if artifacts introduced
 
@@ -171,6 +179,7 @@ if transform_info["success"]:
 **Method**: Unsharp Mask
 
 **Steps**:
+
 1. Apply Gaussian blur to create smoothed version
 2. Subtract smoothed from original
 3. Add weighted difference back to original
@@ -197,15 +206,18 @@ if transform_info["success"]:
 ### Guardrails
 
 **Noise Amplification Check**:
+
 - Monitors high-frequency content
 - Prevents noise amplification
 
 **Amount Limits**:
+
 - Range: 0.5 - 3.0
 - Default: 1.5
 - Higher = stronger sharpening
 
 **Edge Preservation**:
+
 - Validates edge integrity
 - Rejects if edges degraded
 
@@ -227,11 +239,13 @@ if transform_info["success"]:
 **Method**: Non-Local Means Denoising
 
 **Benefits**:
+
 - Preserves edges and details
 - Reduces various noise types
 - Minimal artifacts
 
 **Limitations**:
+
 - Computationally expensive
 - May over-smooth with high strength
 
@@ -255,15 +269,18 @@ if transform_info["success"]:
 ### Guardrails
 
 **Detail Preservation**:
+
 - Checks for excessive smoothing
 - Validates text readability
 
 **Strength Limits**:
+
 - Range: 3 - 15
 - Default: 10
 - Higher = stronger denoising
 
 **Content Validation**:
+
 - Ensures edges preserved
 - Rejects if details lost
 
@@ -351,6 +368,7 @@ print(metadata.model_dump_json(indent=2))
 ```
 
 **Example Transform**:
+
 ```json
 {
   "transform_type": "deskew",
@@ -365,6 +383,7 @@ print(metadata.model_dump_json(indent=2))
 ### 1. Sequential Order
 
 **Always apply corrections in order**:
+
 1. Deskew (geometric)
 2. Contrast (intensity)
 3. Sharpen (detail)

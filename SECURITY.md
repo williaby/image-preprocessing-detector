@@ -17,13 +17,14 @@ Instead, please report them via:
 ### GitHub Private Vulnerability Reporting
 
 Use GitHub's private vulnerability reporting feature:
-https://github.com/williaby/image-preprocessing-detector/security/advisories/new
+<https://github.com/williaby/image-preprocessing-detector/security/advisories/new>
 
 ### Email
 
-Alternatively, email security reports to: byronawilliams@gmail.com
+Alternatively, email security reports to: <byronawilliams@gmail.com>
 
 Include:
+
 - Type of vulnerability
 - Full path to affected source file(s)
 - Location of affected code (tag/branch/commit)
@@ -63,7 +64,7 @@ Include:
 - Run security scans: `poetry run bandit -r src`
 - Check for known vulnerabilities: `poetry run safety check`
 - Check for OSV vulnerabilities: `osv-scanner --lockfile=poetry.lock` (requires Go)
-- Review security advisories: https://github.com/williaby/image-preprocessing-detector/security/advisories
+- Review security advisories: <https://github.com/williaby/image-preprocessing-detector/security/advisories>
 
 ## Vulnerability Exception Process
 
@@ -72,6 +73,7 @@ Include:
 This project uses `osv-scanner.toml` to document false positive vulnerabilities that don't affect the project:
 
 **Exception Criteria** (must meet ALL):
+
 1. **Verified False Positive**: CVE withdrawn, disputed, or affects unused code paths
 2. **Version Mismatch**: Current version significantly newer than vulnerable range
 3. **Impact Assessment**: Detailed analysis shows no actual security risk
@@ -81,6 +83,7 @@ This project uses `osv-scanner.toml` to document false positive vulnerabilities 
 **Exception File Location**: `/osv-scanner.toml` (repository root)
 
 **Format**:
+
 ```toml
 [[IgnoredVulns]]
 id = "PYSEC-2022-42969"
@@ -144,21 +147,25 @@ This project uses **OSV-Scanner** (Open Source Vulnerabilities Scanner) for comp
 This project follows secure development practices:
 
 ### Input Validation
+
 - All file inputs validated for type and size
 - PDF parsing with size limits and timeouts
 - JSON schema validation via Pydantic v2
 
 ### Dependency Security
+
 - Regular dependency updates via Poetry
 - Automated vulnerability scanning (Safety, Bandit)
 - Minimal dependency footprint
 
 ### Data Handling
+
 - No external network calls during processing
 - Temporary files cleaned up after use
 - No persistent storage of user data
 
 ### Code Quality
+
 - Type safety via MyPy strict mode
 - Comprehensive test coverage (94%+)
 - Security-focused linting with Bandit

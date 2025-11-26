@@ -17,6 +17,7 @@ This document identifies the critical path to achieve MVP (Minimum Viable Produc
 **MVP Goal**: Process a document (PDF/image), assess quality, and output metadata with routing recommendations for Project B.
 
 **MVP Outputs**:
+
 1. `DocumentMetadata.json` with:
    - Document identification
    - Per-page quality scores (DQS)
@@ -26,7 +27,7 @@ This document identifies the critical path to achieve MVP (Minimum Viable Produc
 
 ## Critical Path Milestones
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        CRITICAL PATH TO MVP                             │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -43,16 +44,18 @@ This document identifies the critical path to achieve MVP (Minimum Viable Produc
 │         └──────────────────────────────────────────┘                    │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ## Milestone Dependencies
 
 ### Phase 0: Foundation ✅ COMPLETE
+
 - **Status**: Complete
 - **Dependencies**: None
 - **Deliverables**: Project skeleton, logging, configuration
 
 ### Phase 2: ML IQA Training ✅ COMPLETE
+
 - **Status**: Complete (teacher trained, student in progress)
 - **Dependencies**: Phase 0
 - **Deliverables**: ResNet-50 teacher, ResNet-18 student models
@@ -102,7 +105,8 @@ This document identifies the critical path to achieve MVP (Minimum Viable Produc
 
 ## MVP Critical Path (Minimum Implementation)
 
-### Required for MVP:
+### Required for MVP
+
 1. **Phase 0**: ✅ Complete
 2. **Milestone 4.1**: ✅ Blur detection (complete)
 3. **Milestone 4.3**: ✅ Skew detection (complete)
@@ -114,20 +118,22 @@ This document identifies the critical path to achieve MVP (Minimum Viable Produc
 9. **Milestone 8.3**: ⬜ Routing logic
 10. **Milestone 8.4**: ⬜ JSON schema output
 
-### Completed Enhancements:
+### Completed Enhancements
+
 - Milestone 4.2: ✅ Noise estimation
 - Milestone 4.5: ✅ Illumination detection
 - Milestone 4.6: ✅ JPEG blockiness detection
 - Milestone 4.7: ✅ Binarization quality detection
 - Milestone 4.8: ✅ Bleed-through detection
 
-### Future Enhancements (can defer):
+### Future Enhancements (can defer)
+
 - All of Phase 6: Layout-lite detection (optional for MVP)
 - All of Phase 10: Validation (post-MVP)
 
 ## Dependency Graph
 
-```
+```text
 Phase 0 (Foundation) ✅
     │
     ├───► Phase 2 (ML IQA) ✅
@@ -159,7 +165,7 @@ Phase 0 (Foundation) ✅
     └───► Phase 6 (Layout-Lite) [OPTIONAL]
               │
               └───► Milestone 8.3 (enhances routing)
-```
+```text
 
 ## MVP Timeline Estimate
 
@@ -174,6 +180,7 @@ Phase 0 (Foundation) ✅
 ## First End-to-End Test
 
 **Prerequisites for first E2E test**:
+
 1. ✅ PDF/Image ingestion
 2. ✅ All 8 Classical IQA detectors (blur, noise, skew, contrast, illumination, JPEG, binarization, bleed-through)
 3. ✅ Corrections pipeline
@@ -184,6 +191,7 @@ Phase 0 (Foundation) ✅
 8. ⬜ JSON output with all fields (Milestone 8.4)
 
 **First benchmark test prerequisites**:
+
 - All of above for E2E
 - Benchmark dataset (100+ documents)
 - Benchmark framework (Phase 10.1)

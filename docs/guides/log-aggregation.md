@@ -65,11 +65,11 @@ All logs follow this JSON structure:
 
 ### Architecture
 
-```
+```text
 Application → Filebeat → Logstash → Elasticsearch → Kibana
      ↓
   JSON Logs
-```
+```text
 
 ### Filebeat Configuration
 
@@ -239,14 +239,14 @@ Vector is a lightweight alternative to the ELK stack, ideal for container enviro
 
 ### Architecture
 
-```
+```text
 Application → Vector → (Multiple Sinks)
      ↓           ↓
   JSON Logs   ├─→ Elasticsearch
               ├─→ CloudWatch
               ├─→ S3/GCS
               └─→ Datadog
-```
+```text
 
 ### Vector Configuration
 

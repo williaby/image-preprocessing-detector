@@ -25,6 +25,7 @@ This folder contains documentation for external tools and integrations used in t
 ## Purpose
 
 This documentation focuses on:
+
 - **External Tool Integration**: How to configure and use third-party tools
 - **Workflow Automation**: Tools that streamline development and collaboration
 - **CI/CD Tooling**: Integration guides for continuous integration tools

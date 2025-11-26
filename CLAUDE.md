@@ -54,11 +54,12 @@ See [.claude/README.md](.claude/README.md) for full documentation.
 - Debugging → Debug Agent (via mcp__zen-core__debug)
 - Analysis → Analysis Agent (via mcp__zen-core__analyze)
 - Refactoring → Refactor Agent (via mcp__zen-core__refactor)
-```
+```text
 
 ### Temporary Reference Files (Anti-Compaction Strategy)
 
 **ALWAYS create temporary reference files when:**
+
 - TODO list contains >5 items
 - Complex implementation details need preservation
 - Multi-step workflows span multiple conversation turns
@@ -89,7 +90,7 @@ See [.claude/README.md](.claude/README.md) for full documentation.
 
 ### Four-Project RAG Pipeline Architecture
 
-```
+```text
 Project A (THIS REPO)     →    Project B          →    Project C         →    Project D
 Preprocessing & IQA              OCR Orchestration       Fusion & Trust         Vector Indexing
 ─────────────────────           ─────────────────       ──────────────         ───────────────
@@ -101,15 +102,17 @@ Preprocessing & IQA              OCR Orchestration       Fusion & Trust         
 OUTPUT:                         OUTPUT:                 OUTPUT:                OUTPUT:
 DocumentMetadata.json           OCRDocument.json        FusedDocument.json     Vector DB Entries
 + Corrected Images
-```
+```text
 
 **Project A Mission**: Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Project B should use.
 
 **Key Innovation**: Multi-stage pipeline with **text detection gate** that routes documents to specialized processing paths:
+
 - **No-text path**: Classical CV + ML IQA (teacher-student ResNet architecture)
 - **Text-detected path**: Layout-lite classification + hybrid IQA on embedded images
 
 **Scope Boundaries**:
+
 - **IN SCOPE**: IQA, corrections, DQS, layout-lite (coarse page attributes), routing recommendations
 - **OUT OF SCOPE**: Full layout detection, table structure, reading order (Project B responsibility)
 
@@ -132,12 +135,14 @@ DocumentMetadata.json           OCRDocument.json        FusedDocument.json     V
 ## Naming Conventions (MANDATORY COMPLIANCE)
 
 **Core Components:**
+
 - **Module Names**: snake_case (e.g., `iqa_classical`, `text_gate`)
 - **Classes**: PascalCase (e.g., `DocumentMetadata`, `DetectedIssue`)
 - **Functions**: snake_case (e.g., `detect_skew`, `apply_correction`)
 - **Constants**: UPPER_SNAKE_CASE (e.g., `DEFAULT_DPI`, `MIN_CONFIDENCE`)
 
 **Code & Files:**
+
 - **Python Files**: snake_case.py
 - **Test Files**: test_*.py
 - **Git Branches**: kebab-case with prefixes (e.g., `feature/add-layout-detection`, `fix/skew-threshold`)
@@ -159,7 +164,7 @@ uv run pre-commit install
 # Run CLI tool
 uv run imgprep --help
 uv run imgprep process input.pdf --output result.json
-```
+```text
 
 ### Testing
 
@@ -183,7 +188,7 @@ uv run pytest --cov=src --cov-report=html --cov-report=term-missing
 
 # Run tests in parallel (faster for large suites)
 uv run pytest -n auto
-```
+```text
 
 ### Code Quality
 
@@ -209,14 +214,14 @@ uv run pre-commit run --all-files
 # Security scanning
 uv run bandit -r src
 uv run safety check
-```
+```text
 
 ### Validation Scripts
 
 ```bash
 # Run standalone validation scripts (not part of test suite)
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/validate_*.py
-```
+```text
 
 ### Modal & Training (Phase 2+)
 
@@ -238,7 +243,7 @@ uv run modal profile current                    # Check usage
 # Verify setup (optional)
 uv run modal token current                      # Check authentication
 uv run modal secret list | grep gcs-credentials # Check GCS credentials
-```
+```text
 
 **Key Training Details:**
 
@@ -261,7 +266,7 @@ git config --get user.signingkey  # Must be configured for signed commits
 # Security scanning
 uv run bandit -r src                        # Python security analysis
 uv run safety check                         # Dependency vulnerability check
-```
+```text
 
 ### OSV Scanner (Optional - Local Development)
 
@@ -281,15 +286,17 @@ osv-scanner --lockfile=uv.lock
 
 # Scan with detailed output
 osv-scanner --lockfile=uv.lock --format=json --output=osv-local-results.json
-```
+```text
 
 **Key Features:**
+
 - **Automatic Exception Handling**: Reads `osv-scanner.toml` from repository root
 - **Multi-Ecosystem**: Supports Python, npm, Go, Rust (vs. Safety Python-only)
 - **OSV Database**: Same database used by OpenSSF Scorecard and Google
 - **CI Integration**: Runs automatically in `security-analysis.yml` workflow
 
 **When to Run Locally:**
+
 - After updating dependencies (`uv add/uv sync`)
 - Before creating PR with dependency changes
 - To verify `osv-scanner.toml` exceptions work correctly
@@ -305,7 +312,7 @@ osv-scanner --lockfile=uv.lock --format=json --output=osv-local-results.json
 
 The system uses a **text detection gate** to route documents to specialized processing, with **automatic DPI upscaling** (Phase 4) for low-resolution inputs:
 
-```
+```text
 PDF/Image Input
     ↓
 [Pre-flight Analysis] (src/ingestion/) - DPI detection & upscaling (Phase 4)
@@ -332,9 +339,10 @@ ML IQA         ML IQA (Teacher-Student ResNet)
 [JSON Output] (src/output/) - DocumentMetadata.json + corrected images
     ↓
 HANDOFF TO PROJECT B (OCR Orchestration)
-```
+```text
 
 **Phase 4: DPI Upscaling**
+
 - **Technology**: Proven implementation from data_ingestor project (Phase 1C)
 - **DPI Detection**: PyMuPDF-based automatic resolution analysis
 - **Upscaling Trigger**: Documents below 300 DPI are automatically upscaled
@@ -345,6 +353,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 - **Configuration**: 5 settings (enable_pdf_upscaling, pdf_min_dpi, pdf_target_dpi, pdf_upscale_algorithm, pdf_preserve_original_on_error)
 
 **Phase 2: Teacher-Student ML IQA**
+
 - **Student Model** (ResNet-18): Default production inference, fast and accurate
 - **Teacher Model** (ResNet-50): High-capacity model for difficult/high-risk cases
 - **Selective Teacher Inference**: Triggered by uncertainty, discrepancy, or document risk
@@ -352,29 +361,34 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 - See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md)
 
 **Phase 6: Layout-Lite (NOT Full Layout)**
+
 - **Coarse page attributes only**: layout_type, has_tables, has_figures, has_dense_math, has_handwriting
 - **Page attributes**: fuzzy_scan, watermark, colorful_background
 - **Structural complexity score**: 0-1 metric for routing decisions
 - **NOT DocLayNet-style semantic layout** (that's Project B)
 
 **Phase 8: DQS & Routing**
+
 - **Document Quality Score**: Aggregates degradation (IQA) + structural complexity (layout-lite)
 - **Pre-OCR Risk**: Single 0-1 score combining quality and layout signals
 - **Routing Recommendations**: 4 strategies based on DQS, pdf_type, and complexity
 
 **Why Text Detection Gate?**
+
 - **Problem**: Mixed document types require different processing strategies
 - **Solution**: Fast text detection gate (< 10ms) routes to appropriate branch, avoiding expensive layout inference for pure images
 
 ### Module Responsibilities
 
 **[schema.py](src/image_preprocessing_detector/schema.py)**
+
 - Pydantic v2 models for JSON I/O
 - `DetectedIssue`, `DocumentElement`, `PageMetadata`, `DocumentMetadata`
 - COCO-aligned bounding boxes (`[x, y, width, height]`) for LayoutParser integration
 - **Hybrid IQA**: `quality_issues` field in `DocumentElement` for per-element assessment
 
 **[ingestion/](src/image_preprocessing_detector/ingestion/)** (Phase 0,4)
+
 - **Phase 4: DPI Upscaling**
   - [pdf_resolution.py](src/image_preprocessing_detector/ingestion/pdf_resolution.py): DPI detection and analysis
   - [pdf_upscaler.py](src/image_preprocessing_detector/ingestion/pdf_upscaler.py): OpenCV-based upscaling (5 algorithms)
@@ -385,27 +399,32 @@ HANDOFF TO PROJECT B (OCR Orchestration)
   - Multi-format support (PDF, PNG, JPEG, TIFF)
 
 **[detection/](src/image_preprocessing_detector/detection/)** (Phase 2,4,6)
+
 - [text_gate.py](src/image_preprocessing_detector/detection/text_gate.py): Fast text presence detection (ensemble: stroke density, connected components, edge density)
 - [iqa_classical.py](src/image_preprocessing_detector/detection/iqa_classical.py): Classical CV detectors (Phase 4: Hough skew, Laplacian blur, histogram contrast, lighting, JPEG blockiness)
 - [iqa_ml.py](src/image_preprocessing_detector/detection/iqa_ml.py): Teacher-student ML IQA (Phase 2: ResNet-50 teacher, ResNet-18 student, selective inference)
 - [layout_lite.py](src/image_preprocessing_detector/detection/layout_lite.py): Coarse layout classification (Phase 6: page attributes, complexity scoring, NOT full semantic layout)
 
 **[correction/](src/image_preprocessing_detector/correction/)** (Phase 4)
+
 - OpenCV-based corrections with guardrails
 - Deskew, CLAHE enhancement, sharpening, denoising
 - Transform history tracking for audit trail
 
 **[routing/](src/image_preprocessing_detector/routing/)** (Phase 8)
+
 - [dqs.py](src/image_preprocessing_detector/routing/dqs.py): Document Quality Score calculation (degradation + complexity)
 - [pdf_classifier.py](src/image_preprocessing_detector/routing/pdf_classifier.py): PDF type classification (image_only/born_digital/hybrid)
 - [recommendation.py](src/image_preprocessing_detector/routing/recommendation.py): OCR routing logic (4 strategies)
 
 **[output/](src/image_preprocessing_detector/output/)** (Phase 0,8)
+
 - JSON generation with updated schema including routing metadata
 - DocumentMetadata.json with pdf_type, DQS, pre_ocr_risk, ocr_routing_recommendation
 - Corrected image output to filesystem for Project B handoff
 
 **[utils/](src/image_preprocessing_detector/utils/)**
+
 - Structured logging: `structlog` + `rich` console output
 - Device probing utilities (GPU/CPU/Modal) - Phase 0
 - Telemetry and monitoring hooks (Phase 10)
@@ -499,6 +518,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
   - Documentation updates, PlantUML diagrams
 
 **REMOVED PHASES** (out of Project A scope):
+
 - ~~Phase 1/1B (old numbering)~~ → Absorbed into Phases 0 and 4
 - ~~Table Structure Extraction~~ → Project B responsibility
 - ~~Reading Order Prediction~~ → Project B responsibility
@@ -509,11 +529,13 @@ See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/R
 ## CI/CD Pipeline
 
 **GitHub Actions** ([.github/workflows/ci.yml](.github/workflows/ci.yml)):
+
 - Triggers: PRs to main/develop/feature branches, pushes to main/develop
 - Jobs: setup-optimized (10min), test (30min), quality-checks (12min), ci-gate
 - Coverage reports uploaded to Codecov
 
 **Quality Gates**:
+
 1. All tests pass with 80%+ coverage
 2. Ruff format, Ruff lint, MyPy checks pass
 3. Bandit security scan passes
@@ -522,11 +544,13 @@ See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/R
 ## Key Technologies
 
 **Classical CV** (Phase 4):
+
 - OpenCV 4.8+: Hough transform, Laplacian, histogram analysis, DPI upscaling
 - PyMuPDF: PDF extraction and DPI detection
 - Pillow: Image I/O and preprocessing
 
 **Deep Learning** (Phase 2,6):
+
 - PyTorch 2.0+: Model training and knowledge distillation
 - **ResNet-50/ResNet-18**: Teacher-student ML IQA (NOT MobileNetV3/EfficientNet)
 - **DocLayout-YOLO**: Layout detection (YOLOv10-based, document-optimized)
@@ -536,16 +560,19 @@ See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/R
 - Modal: Serverless GPU training platform
 
 **Routing & Quality** (Phase 8):
+
 - Document Quality Score (DQS): Degradation + complexity metrics
 - PDF type classification: image_only/born_digital/hybrid detection
 - OCR routing recommendations: 4-strategy decision logic
 
 **Framework**:
+
 - Click: CLI framework
 - Pydantic v2: JSON schema and validation
 - Structlog + Rich: Structured logging with console output
 
 **OUT OF SCOPE** (Project B):
+
 - Table structure extraction (PubTables-1M)
 - Reading order prediction (ReadingBank)
 - Full semantic layout detection (DocLayNet)
@@ -580,7 +607,7 @@ uv run pytest tests/path/to/test.py::test_name -v
 
 # Check pre-commit hooks
 uv run pre-commit run --all-files
-```
+```text
 
 ### Type Errors
 
@@ -590,14 +617,14 @@ uv run basedpyright src
 
 # Check specific file
 uv run basedpyright src/image_preprocessing_detector/schema.py
-```
+```text
 
 ### Import Errors in Validation Scripts
 
 ```bash
 # Validation scripts need PYTHONPATH set
 PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/script.py
-```
+```text
 
 ### Database Connection Issues
 
@@ -606,6 +633,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH uv run python validation/
 ### Performance Issues
 
 For Phase 3+ performance troubleshooting:
+
 - Check GPU availability: `nvidia-smi`
 - Monitor batch processing: Review logs in `logs/`
 - Profile slow operations: Use `cProfile` on specific modules

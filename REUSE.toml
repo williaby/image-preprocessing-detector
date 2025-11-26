@@ -106,6 +106,7 @@ path = [
     "concept.txt",
     "coverage.json",  # Coverage report
     "Dockerfile",  # Docker container definition
+    "Dockerfile.*",  # Docker variants (Dockerfile.gpu, etc.)
     "image_reference_sets.txt",
     "overrides/**",
     "pyrightconfig.json",  # Pyright/BasedPyright config
@@ -114,6 +115,8 @@ path = [
     "validate_workflows.sh",
     "scripts/**/*.sh",  # Shell scripts for automation
     "tmp_cleanup/**/*.txt",  # Temporary text files
+    "k8s/**",  # Kubernetes manifests
+    "monitoring/**",  # Monitoring configuration (Grafana, Prometheus)
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"

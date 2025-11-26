@@ -9,6 +9,7 @@ SPDX-License-Identifier: CC-BY-4.0
 **Purpose:** Determine if implementing a text detection gate (ensemble heuristics) provides meaningful performance benefits over always running YOLOv10-doc layout detection.
 
 **Decision Criteria:**
+
 - If YOLOv10-doc latency < 20ms on all document types → **SKIP gate** (not worth complexity)
 - If YOLOv10-doc latency > 50ms on pure images → **IMPLEMENT gate** (meaningful savings)
 - If YOLOv10-doc latency 20-50ms → **MARGINAL** (decision based on complexity tolerance)
@@ -20,6 +21,7 @@ SPDX-License-Identifier: CC-BY-4.0
 ### Test Datasets
 
 **1. Pure Images (No Text):**
+
 - Charts and diagrams (n=50)
 - Photographs (n=50)
 - Infographics without text (n=25)
@@ -27,18 +29,21 @@ SPDX-License-Identifier: CC-BY-4.0
 - **Total:** 150 pure image pages
 
 **2. Text Documents (Single Column):**
+
 - Academic papers single column (n=50)
 - Novels/books (n=50)
 - Simple reports (n=25)
 - **Total:** 125 single-column pages
 
 **3. Text Documents (Multi-Column):**
+
 - Academic papers two-column (n=50)
 - Newspapers (n=50)
 - Magazines (n=25)
 - **Total:** 125 multi-column pages
 
 **4. Complex Documents:**
+
 - Technical manuals with mixed content (n=50)
 - Financial reports with tables (n=50)
 - **Total:** 100 complex pages
@@ -48,6 +53,7 @@ SPDX-License-Identifier: CC-BY-4.0
 ### Source Datasets
 
 **Recommended:**
+
 - **DocLayNet:** Validation set (6,480 pages, filter by category)
 - **PubLayNet:** Public dataset (360K pages, sample subset)
 - **Custom Collection:** Web-sourced images, own documents
@@ -61,6 +67,7 @@ SPDX-License-Identifier: CC-BY-4.0
 ### 1. Latency Measurements
 
 **YOLOv10-doc (Full Layout Detection):**
+
 - Measure on **ALL** 500 pages
 - Record per-page latency
 - Calculate statistics:
@@ -69,6 +76,7 @@ SPDX-License-Identifier: CC-BY-4.0
   - CPU vs GPU performance
 
 **Text Detection Gate (Ensemble Heuristics):**
+
 - Measure on **ALL** 500 pages
 - Three methods:
   1. Stroke density analysis
@@ -80,6 +88,7 @@ SPDX-License-Identifier: CC-BY-4.0
   - Accuracy (precision/recall on text presence)
 
 **Combined Workflow (Gate + Conditional Layout):**
+
 - Run text gate on all pages
 - Run YOLOv10-doc ONLY on text-detected pages
 - Calculate end-to-end latency per page
@@ -88,14 +97,16 @@ SPDX-License-Identifier: CC-BY-4.0
 ### 2. Accuracy Measurements
 
 **Text Detection Gate Accuracy:**
+
 - **Ground Truth:** Manual annotation of 500 pages (has_text: bool)
 - **Metrics:**
   - Precision: (True Positives) / (True Positives + False Positives)
   - Recall: (True Positives) / (True Positives + False Negatives)
-  - F1-Score: 2 * (Precision * Recall) / (Precision + Recall)
+  - F1-Score: 2 *(Precision* Recall) / (Precision + Recall)
   - **Target:** Precision > 95%, Recall > 95%
 
 **YOLOv10-doc Accuracy:**
+
 - **Ground Truth:** DocLayNet validation annotations
 - **Metrics:**
   - mAP@.50 (COCO metric)
@@ -105,15 +116,18 @@ SPDX-License-Identifier: CC-BY-4.0
 ### 3. Cost-Benefit Analysis
 
 **Time Savings:**
+
 - Calculate average time saved per page by skipping layout on pure images
 - Extrapolate to typical workloads (e.g., 10,000 pages/day)
 
 **Accuracy Trade-off:**
+
 - Measure false negatives (pure images incorrectly routed to full pipeline)
 - Measure false positives (text documents incorrectly skipped)
 - Calculate impact on downstream OCR quality
 
 **Complexity Cost:**
+
 - Estimate development time to implement text gate (hours)
 - Estimate maintenance burden (additional code paths, configuration, debugging)
 
@@ -124,6 +138,7 @@ SPDX-License-Identifier: CC-BY-4.0
 ### Prerequisites
 
 **Install Dependencies:**
+
 ```bash
 # YOLOv10-doc model (ONNX format)
 # Obtain from: [MODEL_SOURCE_TBD]
@@ -134,6 +149,7 @@ poetry add onnxruntime opencv-python numpy pandas matplotlib tqdm
 ```
 
 **Prepare Dataset:**
+
 ```bash
 # Download DocLayNet validation set
 # OR use custom dataset
@@ -604,11 +620,13 @@ benchmarks/results/benchmark_gpu.json
 ### Additional Considerations
 
 **Implement Gate IF:**
+
 - Large proportion of pure images in typical workload (>30%)
 - Processing cost is critical (high-volume pipeline)
 - YOLOv10-doc latency consistently >40ms on pure images
 
 **Skip Gate IF:**
+
 - YOLOv10-doc is fast enough (<20ms) that savings are negligible
 - Workload is mostly text documents (gate overhead without benefit)
 - Simplicity preferred over optimization
@@ -620,6 +638,7 @@ benchmarks/results/benchmark_gpu.json
 ### Hypothesis 1: YOLOv10-doc is Fast Enough (SKIP GATE)
 
 **If YOLOv10-doc avg latency < 20ms:**
+
 - Text gate adds ~5-10ms overhead
 - Savings on pure images: ~10-15ms
 - Net benefit: Minimal (<5ms avg per page)
@@ -628,6 +647,7 @@ benchmarks/results/benchmark_gpu.json
 ### Hypothesis 2: Text Gate Provides Meaningful Savings (IMPLEMENT)
 
 **If YOLOv10-doc avg latency > 50ms on pure images:**
+
 - Text gate overhead: ~5-10ms
 - Savings on pure images: ~40-50ms
 - Net benefit: ~30-40ms per pure image page
@@ -636,6 +656,7 @@ benchmarks/results/benchmark_gpu.json
 ### Hypothesis 3: Marginal Benefit (USER DECISION)
 
 **If YOLOv10-doc avg latency 20-50ms:**
+
 - Moderate savings, moderate complexity
 - Decision based on:
   - Workload composition (% pure images)

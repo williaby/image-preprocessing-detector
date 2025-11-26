@@ -146,7 +146,7 @@ Each project allows corrected “gold” inputs to feed training sets.
 
 ## 8. Repository Structure (Recommended)
 
-```
+```text
 /docs/
     overview.md
     schema/
@@ -161,4 +161,4 @@ Each project allows corrected “gold” inputs to feed training sets.
 /tests/
 README.md
 CHANGELOG.md
-```
+```text

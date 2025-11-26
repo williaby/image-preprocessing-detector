@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 ---
 title: Google Colab Storage Setup Guide
 description: Configure Google Drive and Google Cloud Storage for Phase 2 training
@@ -63,14 +64,15 @@ auth.authenticate_user()
 
 # Verify bucket access
 !gsutil ls gs://image_detection_b
-```
+```text
 
 **Step 2: Understand Expected File Structure**
 
 GCS doesn't support empty directories - "folders" are created implicitly when you upload files with path prefixes. Here's the expected structure for each phase:
 
 **Phase 2: IQA Training**
-```
+
+```text
 gs://image_detection_b/
 ├── configs/
 │   └── colab_phase2_iqa_gcs.yaml
@@ -99,10 +101,11 @@ gs://image_detection_b/
 └── models/
     └── phase2_iqa/
         └── (final models uploaded after training)
-```
+```text
 
 **Phase 3: Layout Detection**
-```
+
+```text
 gs://image_detection_b/
 ├── configs/
 │   └── colab_phase3_yolov8_gcs.yaml
@@ -123,7 +126,7 @@ gs://image_detection_b/
 │   └── phase3_yolov8/
 └── models/
     └── phase3_yolov8/
-```
+```text
 
 **Step 3: Upload Configuration**
 
@@ -133,7 +136,7 @@ gsutil cp configs/colab_phase2_iqa_gcs.yaml gs://image_detection_b/configs/
 
 # For Phase 3 (later)
 gsutil cp configs/colab_phase3_yolov8_gcs.yaml gs://image_detection_b/configs/
-```
+```text
 
 **Step 4: Prepare and Upload Dataset**
 
@@ -156,9 +159,10 @@ poetry run python scripts/prepare_phase2_data.py \
 
 # 3. Verify upload (should show ~10GB)
 gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
-```
+```text
 
 **Base Datasets** (download before generation):
+
 - **Tobacco800**: 1,290 scanned documents (~1GB, fastest)
 - **DocBank**: 500k document pages (~40GB)
 - **RVL-CDIP**: 400k document images (~50GB)
@@ -184,7 +188,7 @@ gsutil -m cp -r datasets/layout_phase3/test gs://image_detection_b/datasets/layo
 
 # Verify upload (should show ~40-50GB)
 gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
-```
+```text
 
 **Step 5: In Your Training Notebook**
 
@@ -203,7 +207,7 @@ gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
 
 # Upload final model
 !gsutil cp /content/models/best_model.onnx gs://image_detection_b/models/phase2_iqa/
-```
+```text
 
 **That's it!** No Google Drive access needed. ✅
 
@@ -226,7 +230,7 @@ gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
 
 Create this structure in your Google Drive:
 
-```
+```text
 MyDrive/
 └── image-preprocessing-detector/
     ├── datasets/
@@ -248,7 +252,7 @@ MyDrive/
     │   └── phase2_iqa/
     └── configs/
         └── colab_phase2_iqa.yaml
-```
+```text
 
 ### 3. Mount in Colab Notebook
 
@@ -260,7 +264,7 @@ drive.mount('/content/drive')
 
 # Verify structure
 !ls "/content/drive/MyDrive/image-preprocessing-detector"
-```
+```text
 
 ### 4. Upload Configuration
 
@@ -269,7 +273,7 @@ Upload the training configuration to your Drive:
 ```bash
 # On your local machine
 cp configs/colab_phase2_iqa.yaml ~/Google\ Drive/image-preprocessing-detector/configs/
-```
+```text
 
 ---
 
@@ -291,7 +295,7 @@ auth.authenticate_user()
 
 # Configure project
 !gcloud config set project image-detection-478105
-```
+```text
 
 ### 2. Create Directory Structure in GCS
 
@@ -320,7 +324,7 @@ cat > lifecycle.json << EOF
 EOF
 
 gsutil lifecycle set lifecycle.json gs://image_detection_b
-```
+```text
 
 ### 3. Upload Dataset to GCS
 
@@ -330,7 +334,7 @@ gsutil -m cp -r datasets/iqa_phase2 gs://image_detection_b/datasets/
 
 # Verify upload
 gsutil du -sh gs://image_detection_b/datasets/iqa_phase2
-```
+```text
 
 ### 4. Use GCS in Training (Optional)
 
@@ -345,7 +349,7 @@ dataset_root = "/content/data_cache/iqa_phase2"
 
 # Upload checkpoints to GCS after each save
 !gsutil -m cp -r /content/checkpoints/* gs://image_detection_b/checkpoints/phase2_iqa/
-```
+```text
 
 ---
 
@@ -361,6 +365,7 @@ Use both storage systems for optimal results:
 4. **Save logs** to Drive for TensorBoard
 
 **Advantages**:
+
 - Native Colab integration
 - Automatic syncing
 - Easy access from multiple Colab sessions
@@ -372,6 +377,7 @@ Use both storage systems for optimal results:
 3. **Store production models** in GCS
 
 **Advantages**:
+
 - Versioning and lifecycle management
 - Production deployment integration
 - CI/CD pipeline compatibility
@@ -394,18 +400,20 @@ auth.authenticate_user()
 # Backup best checkpoint
 !gsutil cp /content/drive/MyDrive/checkpoints/phase2_iqa/best_model.pth \
     gs://image_detection_b/models/phase2_iqa_best_$(date +%Y%m%d).pth
-```
+```text
 
 ---
 
 ## Storage Cost Comparison
 
 ### Google Drive
+
 - **100GB Plan**: $1.99/month (flat rate)
 - **Phase 2 Usage**: ~25GB
 - **Best for**: Active training, frequent access
 
 ### Google Cloud Storage
+
 - **Standard Storage**: $0.020/GB/month
 - **Phase 2 Usage**: ~25GB = $0.50/month
 - **Nearline (archive)**: $0.010/GB/month = $0.25/month
@@ -448,7 +456,7 @@ from google.colab import auth
 auth.authenticate_user()
 !gcloud config set project image-detection-478105
 !gsutil ls gs://image_detection_b
-```
+```text
 
 ---
 
@@ -461,7 +469,7 @@ auth.authenticate_user()
 from google.colab import drive
 drive.flush_and_unmount()
 drive.mount('/content/drive', force_remount=True)
-```
+```text
 
 ### GCS Authentication Issues
 
@@ -475,7 +483,7 @@ auth.authenticate_user()
 
 # Test bucket access
 !gsutil ls gs://image_detection_b
-```
+```text
 
 ### Slow Transfer Speeds
 
@@ -485,7 +493,7 @@ auth.authenticate_user()
 
 # Monitor transfer progress
 !gsutil -m -o "GSUtil:parallel_process_count=4" cp -r source destination
-```
+```text
 
 ---
 

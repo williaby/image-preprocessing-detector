@@ -43,6 +43,7 @@ Copy **8 images** with known quality scores for IQA model validation:
 **Destination**: `data/test_fixtures/iqa_samples/`
 
 **Also create**: `data/test_fixtures/iqa_samples/labels.json`
+
 ```json
 {
   "reference_clean.png": {"dmos": 0.0, "blur": 0.0, "noise": 0.0, "contrast": 1.0},
@@ -137,7 +138,7 @@ These can be generated programmatically and should be added to conftest.py:
 
 Already available in `data/test_fixtures/`:
 
-```
+```text
 doclaynet/          5 PDFs (432 KB)
 ├── simple_text_1.pdf
 ├── tables_figures_2.pdf
@@ -154,7 +155,7 @@ tablebank/          5 images (324 KB)
 
 wili_2018/          10 text files (52 KB)
 └── [10 language samples]
-```
+```text
 
 **Current total**: ~828 KB
 **After additions**: ~7.5 MB (well under 50 MB limit)
@@ -164,6 +165,7 @@ wili_2018/          10 text files (52 KB)
 ## Acquisition Checklist
 
 ### Phase 1: IQA Samples (Priority 1)
+
 - [ ] Navigate to `data/benchmarks/external_iqa/`
 - [ ] Create `data/test_fixtures/iqa_samples/` directory
 - [ ] Copy/rename 8 images per table above
@@ -172,6 +174,7 @@ wili_2018/          10 text files (52 KB)
 - [ ] Commit and push
 
 ### Phase 2: Layout Samples (Priority 2)
+
 - [ ] Navigate to `data/benchmarks/doclaynet/` or `omnidocbench/`
 - [ ] Create `data/test_fixtures/layout_samples/` directory
 - [ ] Find and copy 5 samples per table above
@@ -180,6 +183,7 @@ wili_2018/          10 text files (52 KB)
 - [ ] Commit and push
 
 ### Phase 3: Training Validation (Priority 3)
+
 - [ ] Navigate to `data/training/iqa_phase2/validation/`
 - [ ] Create `data/test_fixtures/training_validation/` directory
 - [ ] Copy 10 representative samples
@@ -187,6 +191,7 @@ wili_2018/          10 text files (52 KB)
 - [ ] Commit and push
 
 ### Phase 4: Augmentation Input (Priority 4)
+
 - [ ] Create `data/test_fixtures/augmentation_input/` directory
 - [ ] Copy 3 clean document images
 - [ ] Commit and push

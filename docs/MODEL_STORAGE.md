@@ -34,7 +34,7 @@ The artifact management system follows three core principles:
 
 ## GCS Directory Structure
 
-```
+```text
 gs://rag-pipeline-models/
   image-preprocessing-detector/
     resnet50_teacher/
@@ -51,7 +51,7 @@ gs://rag-pipeline-models/
       runs/
         2025-11-15T02-05Z_run-def456/
           ...
-```
+```text
 
 ### Required Artifacts Per Run
 
@@ -182,11 +182,13 @@ See `modal/train_phase2_iqa_example.py` for a complete integration example.
 ### Prerequisites
 
 1. **HF Token**: Set `HF_TOKEN` environment variable
+
    ```bash
    export HF_TOKEN=your_huggingface_token
    ```
 
-2. **GCS Access**: Ensure `GOOGLE_APPLICATION_CREDENTIALS` is set
+1. **GCS Access**: Ensure `GOOGLE_APPLICATION_CREDENTIALS` is set
+
    ```bash
    export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
    ```
@@ -229,6 +231,7 @@ python scripts/promote_to_hf.py \
 ```
 
 The script will:
+
 1. ✅ Download artifacts from GCS
 2. ✅ Validate required files exist
 3. ✅ Check promotion criteria (metrics, reproducibility)
@@ -331,12 +334,12 @@ Follow [semver.org](https://semver.org) principles:
 
 ### Examples
 
-```
+```text
 v1.0.0 – Initial ResNet50 teacher model
 v1.1.0 – Improved augmentation pipeline (+2% accuracy)
 v1.2.0 – Added ONNX export for CPU inference
 v2.0.0 – Switched to EfficientNetV2 architecture (breaking change)
-```
+```text
 
 ## Model Card Template
 
@@ -418,9 +421,9 @@ modal secret list  # Should show gcs-credentials
 ## References
 
 - **Handoff Document**: See `docs/handoff/model_storage_handoff.md`
-- **GCS Documentation**: https://cloud.google.com/storage/docs
-- **Hugging Face Hub**: https://huggingface.co/docs/hub
-- **Semantic Versioning**: https://semver.org
+- **GCS Documentation**: <https://cloud.google.com/storage/docs>
+- **Hugging Face Hub**: <https://huggingface.co/docs/hub>
+- **Semantic Versioning**: <https://semver.org>
 
 ## Next Steps
 

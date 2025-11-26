@@ -22,6 +22,7 @@ purpose: "Document the decision to use a two-tier teacher-student ML IQA strateg
 **Date**: 2025-11-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ADR-014: Classical CV + ML Hybrid IQA](0014-classical-ml-hybrid-iqa.md)
 - [ADR-025: MobileNetV3 vs EfficientNet](0025-mobilenetv3-vs-efficientnet.md)
 - [ADR-026: Transfer Learning](0026-transfer-learning-imagenet-coco.md)
@@ -32,17 +33,20 @@ purpose: "Document the decision to use a two-tier teacher-student ML IQA strateg
 Project A serves as the preprocessing and IQA gateway for a multi-project RAG pipeline. ML-based IQA is critical for detecting image quality issues (blur, noise, skew, illumination, compression artifacts) that classical methods may miss or measure inaccurately.
 
 **Key Requirements**:
+
 1. **High accuracy**: Detect quality issues with > 88% mAP across diverse document types
 2. **Low latency**: Student inference ≤ 40ms CPU, ≤ 10ms GPU per page
 3. **Cost efficiency**: Minimize Modal GPU usage while maintaining quality
 4. **Robustness**: Handle edge cases and high-risk documents without catastrophic failures
 
 **Problem**: A single model cannot simultaneously achieve:
+
 - High accuracy (requires large capacity → ResNet-50 or larger)
 - Low latency (requires small model → MobileNet or ResNet-18)
 - Cost efficiency (large models on GPU are expensive at scale)
 
 **Constraints**:
+
 - Teacher model (ResNet-50) is too expensive for default inference on all pages
 - Student model (ResNet-18 or MobileNet) may struggle on difficult documents
 - No single model size balances accuracy, speed, and cost across all document types
@@ -80,7 +84,7 @@ Project A serves as the preprocessing and IQA gateway for a multi-project RAG pi
 
 ### Architecture Flow
 
-```
+```text
 Document Input
     ↓
 [Pre-flight Analysis]
@@ -100,11 +104,12 @@ Page Rendering (300 DPI)
 [Merge IQA Metrics]
     ↓
 DQS + Routing → Project B
-```
+```text
 
 ### Training Strategy
 
 **Phase 1: Teacher Training** (Weeks 2-4)
+
 - Train ResNet-50 from ImageNet pre-trained weights
 - Multi-label classification + regression heads
 - Heavy augmentations (Albumentations): blur, noise, skew, JPEG compression
@@ -112,6 +117,7 @@ DQS + Routing → Project B
 - Export to ONNX + TorchScript
 
 **Phase 2: Student Distillation** (Weeks 4-5)
+
 - Initialize ResNet-18 from ImageNet pre-trained weights
 - Knowledge distillation loss: `L = α * L_hard + (1-α) * L_soft`
   - `L_hard`: Cross-entropy on ground truth labels
@@ -120,6 +126,7 @@ DQS + Routing → Project B
 - Export student to ONNX for production inference
 
 **Phase 3: Calibration** (Week 6)
+
 - Tune uncertainty thresholds on validation set
 - Calibrate classical vs student discrepancy thresholds
 - Measure teacher escalation rate (target: < 10% of pages)
@@ -155,11 +162,13 @@ DQS + Routing → Project B
 ### Alternative 1: Single Large Model (ResNet-50 Only)
 
 **Pros**:
+
 - Simplest architecture
 - Best accuracy on all documents
 - No threshold tuning
 
 **Cons**:
+
 - Too expensive for default inference (2-3× slower than student)
 - High Modal GPU costs at scale
 - **REJECTED**: Cost and latency do not meet NFRs
@@ -167,11 +176,13 @@ DQS + Routing → Project B
 ### Alternative 2: Single Small Model (ResNet-18 or MobileNetV3 Only)
 
 **Pros**:
+
 - Simplest deployment
 - Fastest inference
 - Lowest cost
 
 **Cons**:
+
 - Lower accuracy on difficult documents (~82% vs 88% teacher mAP)
 - No fallback for edge cases
 - **REJECTED**: Accuracy insufficient for high-stakes RAG pipeline
@@ -179,10 +190,12 @@ DQS + Routing → Project B
 ### Alternative 3: Ensemble of Small Models
 
 **Pros**:
+
 - Better accuracy than single small model
 - No teacher training required
 
 **Cons**:
+
 - 2-3× inference cost vs single student
 - Still no high-capacity fallback for edge cases
 - Threshold tuning complexity similar to teacher-student
@@ -191,10 +204,12 @@ DQS + Routing → Project B
 ### Alternative 4: Adaptive Inference (Early Exit Networks)
 
 **Pros**:
+
 - Single model with variable compute
 - Potentially lower average latency
 
 **Cons**:
+
 - Requires custom architecture (not standard ResNet)
 - Limited pre-trained weights available
 - More complex training and deployment

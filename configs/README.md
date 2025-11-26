@@ -10,6 +10,7 @@ SPDX-License-Identifier: CC0-1.0
 ## What Goes Here
 
 **✅ Belongs in configs/**:
+
 - Training hyperparameter configs (YAML/JSON)
 - Colab-specific training configs (`colab_phase2_iqa.yaml`, `colab_phase3_yolov8.yaml`)
 - Model architecture configs (layer sizes, activations, etc.)
@@ -17,6 +18,7 @@ SPDX-License-Identifier: CC0-1.0
 - Augmentation pipeline configs
 
 **❌ Does NOT belong here** (and where it should go instead):
+
 - **Trained model weights** → `models/` (`.pth`, `.onnx`, `.safetensors` files)
 - **Application config** → `src/image_preprocessing_detector/config.py` (runtime config)
 - **Environment variables** → `.env` (secrets, API keys)
@@ -26,10 +28,12 @@ SPDX-License-Identifier: CC0-1.0
 ## Current Configuration Files
 
 ### Phase 2: IQA Training
+
 - `colab_phase2_iqa.yaml` - MobileNetV3/EfficientNet training config for Google Colab
 - `colab_phase2_iqa_gcs.yaml` - IQA training with GCS dataset integration
 
 **Key Settings**:
+
 ```yaml
 model:
   architecture: mobilenet_v3_small
@@ -51,9 +55,11 @@ data:
 ```
 
 ### Phase 3: Layout Detection
+
 - `colab_phase3_yolov8.yaml` - YOLOv8n/s training config for layout detection
 
 **Key Settings**:
+
 ```yaml
 model:
   architecture: yolov8n
@@ -134,20 +140,24 @@ with open("/content/drive/MyDrive/configs/colab_phase2_iqa.yaml") as f:
 ## Distinction from Other Folders
 
 ### vs. models/
+
 - **configs/**: Text-based configuration files (YAML/JSON)
 - **models/**: Binary trained model weights (`.pth`, `.onnx`)
 
 ### vs. data/
+
 - **configs/**: Training hyperparameters and model architecture
 - **data/**: Actual dataset files (images, annotations)
 
 ### vs. src/
+
 - **configs/**: Static configuration files for training
 - **src/**: Python code that reads and uses these configs
 
 ## Adding New Configurations
 
 When creating a new config file:
+
 1. **Naming**: Use descriptive names: `<platform>_<phase>_<model>.yaml`
    - Example: `colab_phase3_yolov8.yaml`, `local_phase2_efficientnet.yaml`
 2. **Validation**: Validate YAML syntax before committing
@@ -204,6 +214,7 @@ colab:
 ## Integration with Training Pipeline
 
 Configs are loaded by:
+
 - `scripts/colab_utils.py` - Colab training setup
 - `notebooks/colab/phase2_iqa_training.ipynb` - Phase 2 notebook
 - `notebooks/colab/phase3_yolov8_training.ipynb` - Phase 3 notebook

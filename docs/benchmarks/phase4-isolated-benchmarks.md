@@ -10,6 +10,7 @@ purpose: "Isolated benchmark results for ML IQA models and classical detectors w
 **Date**: 2025-01-24
 **Benchmark Suite**: Priority 4 - Model Inference Latency & Classical IQA Performance
 **Environment**:
+
 - **Local**: NVIDIA RTX A500 Laptop GPU (4GB VRAM), CPU and GPU inference (ONNX Runtime with CUDAExecutionProvider)
 - **Cloud**: Modal L4 GPU (24GB VRAM), GPU inference (ONNX Runtime with CUDAExecutionProvider)
 **Dataset**: 50 test images from `tests/fixtures/phase1_validation/`
@@ -69,6 +70,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 1. Student Model (ResNet-18) - CPU Inference
 
 **Configuration**:
+
 - Model: `models/iqa/onnx/resnet18_student.onnx` (48 MB)
 - Device: CPU (ONNX Runtime CPUExecutionProvider)
 - Test images: 50 images
@@ -88,6 +90,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | Max | 11.95 | Worst case |
 
 **Target Validation**:
+
 - ✅ Acceptable target (≤100ms): **PASS** (10.46ms << 100ms)
 - ✅ Ideal target (≤40ms): **PASS** (10.46ms << 40ms)
 
@@ -102,11 +105,13 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | 32 | 10.24 | 10.30 | 1.14x |
 
 **Key Observations**:
+
 - Batching provides modest latency improvements (up to 14% with batch-32)
 - Batch-8 or batch-16 offer best latency/throughput tradeoff
 - Current ONNX implementation processes images sequentially (not true batching)
 
 **Throughput**:
+
 - Single inference: ~95 images/second (1000ms / 10.46ms)
 - Batch-32 inference: ~97 images/second (minimal improvement due to sequential processing)
 
@@ -117,6 +122,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 2. Student Model (ResNet-18) - GPU Inference
 
 **Configuration**:
+
 - Model: `models/iqa/onnx/resnet18_student.onnx` (48 MB)
 - Device: GPU (ONNX Runtime CUDAExecutionProvider)
 - GPU: NVIDIA RTX A500 Laptop GPU (4GB VRAM)
@@ -137,6 +143,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | Max | 13.41 | Worst case |
 
 **Target Validation**:
+
 - ✅ Acceptable target (≤25ms): **PASS** (11.32ms << 25ms)
 - ❌ Ideal target (≤10ms): **MISS** (11.32ms vs 10ms, 1.3ms gap)
 
@@ -151,6 +158,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | 32 | 10.85 | 10.92 | 1.15x |
 
 **GPU vs CPU Comparison**:
+
 - **CPU mean**: 10.46ms
 - **GPU mean**: 11.32ms
 - **Speedup**: **0.92x (GPU SLOWER by 1.08x)**
@@ -158,6 +166,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 **Critical Finding**: GPU provides **negative** speedup for student model. Small model (48MB) is dominated by CPU-GPU transfer overhead. CPU inference is more efficient.
 
 **Recommendation**: ❌ **Use CPU for student inference, NOT GPU**
+
 - CPU outperforms GPU (10.46ms vs 11.32ms)
 - Avoid GPU transfer overhead for small models
 - GPU resources better reserved for larger workloads
@@ -167,6 +176,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 3. Teacher Model (ResNet-50) - CPU Inference
 
 **Configuration**:
+
 - Model: `models/iqa/onnx/resnet50_teacher_50epoch.onnx` (106 MB)
 - Device: CPU (ONNX Runtime CPUExecutionProvider)
 - Test images: 50 images
@@ -184,11 +194,13 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | P99 | 630.49 | Nearly 2/3 second |
 
 **Performance Analysis**:
+
 - **Student vs Teacher CPU**: Teacher is **45x slower** (469ms vs 10.5ms)
 - **GPU target comparison**: CPU performance is **15.6x slower** than 30ms GPU target
 - **Escalation rate impact**: At 10% escalation rate, teacher adds ~47ms to average per-page latency
 
 **Recommendation**: ❌ **Teacher model NOT suitable for CPU production use**
+
 - Require GPU for teacher inference (target: ≤30ms)
 - Limit escalation rate to 5-10% to control latency impact
 - Consider Modal GPU fallback for teacher when local GPU unavailable
@@ -198,6 +210,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 4. Teacher Model (ResNet-50) - GPU Inference
 
 **Configuration**:
+
 - Model: `models/iqa/onnx/resnet50_teacher_50epoch.onnx` (106 MB)
 - Device: GPU (ONNX Runtime CUDAExecutionProvider)
 - GPU: NVIDIA RTX A500 Laptop GPU (4GB VRAM)
@@ -216,20 +229,24 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | P99 | 518.45 | Nearly half-second worst case |
 
 **Target Validation**:
+
 - ❌ Target (≤30ms): **FAIL** (401ms is 13.4x slower than target)
 
 **GPU vs CPU Comparison**:
+
 - **CPU mean**: 469.41ms
 - **GPU mean**: 401.01ms
 - **Speedup**: **1.17x (minimal benefit)**
 
 **Performance Analysis**:
+
 - GPU provides only **1.17x speedup** over CPU (469ms → 401ms)
 - 401ms GPU latency is **13.4x slower** than 30ms target
 - Even with GPU, teacher is unsuitable for production at current escalation rates
 - Teacher is **35x slower** than student GPU (401ms vs 11.32ms)
 
 **Recommendation**: ❌ **Teacher model unsuitable for production even with GPU**
+
 - 401ms latency fails 30ms target by 13x
 - 1.17x speedup insufficient to justify GPU usage
 - **Options**:
@@ -243,6 +260,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 5. Modal L4 GPU Inference
 
 **Configuration**:
+
 - **Cloud Platform**: Modal (serverless GPU)
 - **GPU**: NVIDIA L4 (24GB VRAM)
 - **Runtime**: ONNX Runtime with CUDAExecutionProvider
@@ -262,6 +280,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | P99 | 2.10 | <3ms worst case |
 
 **Target Validation**:
+
 - ✅ Acceptable target (≤25ms): **PASS** (1.50ms << 25ms, 16.7x better)
 - ✅ Ideal target (≤10ms): **PASS** (1.50ms << 10ms, 6.7x better)
 
@@ -274,6 +293,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | **Modal L4** | **1.50** | **7.55x** | ✅ **EXCELLENT** |
 
 **Key Findings**:
+
 - **Modal L4 is 7.55x faster than CPU** for student model
 - **Modal L4 is 7.55x faster than local RTX A500** (11.32ms → 1.50ms)
 - **True GPU acceleration achieved** - no transfer overhead penalty
@@ -294,6 +314,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | P99 | 2.92 | <3ms worst case |
 
 **Target Validation**:
+
 - ✅ Target (≤30ms): **PASS** (2.34ms << 30ms, 12.8x better than target)
 
 **Comparison to Other Devices**:
@@ -305,6 +326,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | **Modal L4** | **2.34** | **171.37x** | ✅ **EXCEPTIONAL** |
 
 **Key Findings**:
+
 - **Modal L4 is 171.37x faster than CPU** for teacher model (469ms → 2.34ms)
 - **Modal L4 is 171.37x faster than local RTX A500** (401ms → 2.34ms)
 - **Transforms teacher from unusable to production-ready**
@@ -335,6 +357,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
    - Local RTX A500: Limited memory bandwidth (~128 GB/s)
 
 **Cost-Performance Analysis** (Modal L4):
+
 - **Student**: 1.50ms/inference
 - **Teacher**: 2.34ms/inference
 - **Modal L4 GPU cost**: ~$0.60/hour
@@ -348,6 +371,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 6. GPU vs CPU Speedup Analysis
 
 **Configuration**:
+
 - Compares GPU and CPU benchmark results for both models
 - Analyzes speedup factors and performance implications
 
@@ -360,6 +384,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | **Speedup** | **0.92x** | >1.0x expected | ❌ **GPU SLOWER** |
 
 **Analysis**:
+
 - GPU is **1.08x SLOWER** than CPU (negative speedup)
 - Small model (48MB) dominated by CPU-GPU transfer overhead
 - CPU inference highly optimized for small ResNet-18 models
@@ -374,18 +399,21 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | **Speedup** | **1.17x** | >2.0x expected | ⚠️ **Modest** |
 
 **Analysis**:
+
 - GPU provides only **1.17x speedup** (469ms → 401ms, 68ms improvement)
 - Larger model (106MB) still below GPU "sweet spot" for acceleration
 - 401ms GPU latency is **13.4x slower** than 30ms production target
 - Even with GPU, teacher unsuitable for high-frequency inference
 
 **Key Insights**:
+
 1. **Small models don't benefit from GPU**: Transfer overhead dominates compute time
 2. **Medium models show modest gains**: 1.17x insufficient to justify GPU usage
 3. **CPU optimization matters**: ONNX Runtime CPU highly optimized for ResNets
 4. **GPU better for larger batches**: True batching (not sequential) could improve GPU utilization
 
 **Recommendations**:
+
 - **Student**: Use CPU exclusively (better performance, no GPU needed)
 - **Teacher**: Both CPU/GPU unsuitable; require model optimization or usage limits
 - **GPU Resources**: Reserve for other workloads (e.g., training, larger models)
@@ -395,6 +423,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 6. Model Loading (Cold Start)
 
 **Configuration**:
+
 - Models: Student (48 MB), Teacher (106 MB)
 - Trials: 5 repeated loads per model
 - Device: CPU (ONNX Runtime CPUExecutionProvider)
@@ -422,6 +451,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 **Target**: ≤5.0s → ✅ **PASS** (36x faster than target)
 
 **Combined Loading** (both models):
+
 - Total: **0.239 seconds** (240ms)
 - Impact: Negligible startup overhead
 
@@ -432,6 +462,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 7. Classical IQA Detectors
 
 **Configuration**:
+
 - Detectors: 8 classical CV detectors (blur, noise, skew, contrast, illumination, JPEG blockiness, binarization, bleed-through)
 - Test images: 50 images
 - Execution: Individual and combined benchmarks
@@ -459,18 +490,21 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 | P99 | 329.50 | <50ms | ❌ **FAIL** |
 
 **Performance Analysis**:
+
 - Combined latency is **3.2x slower** than 50ms target
 - Sum of individual means: ~158ms (matches combined execution, indicating sequential processing)
 - Skew detection is bottleneck (45.67ms mean, 29% of total)
 - P95/P99 tail latency shows high variance (2x mean latency)
 
 **Root Causes**:
+
 1. **Skew detection overhead**: Hough transform is computationally expensive (~46ms)
 2. **No parallelization**: Detectors run sequentially (no multi-threading)
 3. **Large image sizes**: Test images resized to max 1024px (still large for some detectors)
 4. **Unrealistic initial target**: 50ms for 8 detectors may have been overly optimistic
 
 **Recommendations**:
+
 - ⚠️ **Optimize skew detection**: Consider faster approximation methods or skip for low-risk pages
 - 🔧 **Parallelize detectors**: Run independent detectors concurrently (potential 2-4x speedup)
 - 📏 **Adaptive resolution**: Run detectors on downscaled images (e.g., 512px max) for speed
@@ -501,6 +535,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 ### 1. ML IQA Deployment Strategy
 
 **Student Model (ResNet-18)**:
+
 - ✅ **Primary: Modal L4 GPU** - 1.50ms mean latency (7.55x faster than CPU, ideal for high-throughput)
 - ✅ **Fallback: CPU** - 10.46ms mean latency (production-ready when Modal unavailable)
 - ❌ **Avoid: Local RTX A500 GPU** - Negative speedup due to transfer overhead (11.32ms, slower than CPU)
@@ -509,6 +544,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 - 🔧 **Modal L4 enables unlimited throughput** - 1.50ms latency supports 600+ pages/second/worker
 
 **Teacher Model (ResNet-50)**:
+
 - ✅ **Primary: Modal L4 GPU** - **2.34ms mean latency (171x faster than CPU, production-ready!)**
 - ❌ **Fallback: CPU** - 469ms latency unacceptable (use only in emergencies)
 - ❌ **Avoid: Local RTX A500 GPU** - 401ms latency fails 30ms target by 13x
@@ -516,6 +552,7 @@ This report presents isolated benchmark results for ML IQA models (student/teach
 - ✅ **Modal L4 transforms teacher viability** - From "unusable" to "production-ready" with cloud GPU
 
 **Device Priority Strategy**:
+
 ```python
 # Recommended device priority for production
 if modal_l4_available:
@@ -530,11 +567,13 @@ else:
 ### 2. Classical IQA Optimization
 
 **Immediate Actions**:
+
 - 🎯 **Optimize skew detection** - Replace Hough transform with faster projection-based method (target: <20ms)
 - 🔧 **Parallelize detectors** - Run blur, noise, contrast, illumination concurrently (expected: 40-60ms combined)
 - 📏 **Adaptive resolution** - Downsample to 512px max for detector input (expected: 30-40% speedup)
 
 **Long-term Strategy**:
+
 - 🧪 **Profile per-detector overhead** - Identify additional bottlenecks beyond skew
 - 🎯 **Selective execution** - Skip expensive detectors (binarization, bleed-through) for high-quality pages
 - 🔬 **Evaluate ML replacements** - Consider lightweight ML models for expensive classical detectors
@@ -603,6 +642,7 @@ else:
 | **Total** | **~261ms/page** | Acceptable for CPU-only mode |
 
 **Key Insights**:
+
 - **Modal L4 enables unrestricted teacher usage** - 2.34ms teacher latency allows 100% escalation rate
 - **CPU fallback remains viable for student-only** - 183ms meets targets without teacher
 - **Modal L4 provides best end-to-end performance** - 176ms with full teacher escalation
@@ -612,17 +652,20 @@ else:
 ## Environment & Methodology
 
 ### Hardware
+
 - **CPU**: Unknown (ONNX Runtime CPUExecutionProvider)
 - **GPU**: NVIDIA RTX A500 Laptop GPU (4GB VRAM, driver 573.57)
   - **Note**: PyTorch CUDA available, but ONNX Runtime lacks CUDAExecutionProvider
 - **RAM**: Sufficient (no memory-related failures observed)
 
 ### Software
+
 - **ONNX Runtime**: CPU-only (CPUExecutionProvider, AzureExecutionProvider)
 - **PyTorch**: CUDA-enabled (used for model training, not inference benchmarks)
 - **Python**: 3.x (poetry environment)
 
 ### Benchmark Methodology
+
 - **Warmup**: 10 inferences before timing (exclude cold start bias)
 - **Measurement**: `time.perf_counter()` for microsecond precision
 - **Statistics**: NumPy percentile calculations (P50, P95, P99)
@@ -630,7 +673,9 @@ else:
 - **Test data**: 50 diverse images from Phase 1 validation fixtures (resized to max 1024px)
 
 ### Reproducibility
+
 All benchmark scripts available in `scripts/benchmarks/`:
+
 - `benchmark_student_cpu.py`
 - `benchmark_teacher_cpu.py`
 - `benchmark_model_loading.py`
@@ -660,18 +705,18 @@ Results JSON files in `docs/benchmarks/results/`.
 
 ### Phase 5 Integration
 
-4. **Discrepancy Calculation Benchmark**
+1. **Discrepancy Calculation Benchmark**
    - Measure ML vs Classical IQA comparison overhead
    - Validate teacher escalation decision time (<2ms target)
 
-5. **Teacher Escalation Rate Analysis**
+2. **Teacher Escalation Rate Analysis**
    - Measure actual escalation rate on diverse corpus
    - Validate 5-15% escalation assumption
    - Analyze latency impact at different escalation rates
 
 ### Phase 8 Validation
 
-6. **DQS Calculation Benchmark**
+1. **DQS Calculation Benchmark**
    - Document Quality Score aggregation overhead
    - Routing recommendation decision time
 
@@ -689,12 +734,14 @@ Results JSON files in `docs/benchmarks/results/`.
 ❌ **Classical IQA needs optimization** - 158ms combined latency 3.2x slower than target
 
 **Critical findings**:
+
 1. **Modal L4 transforms teacher viability** - From "unusable" (401ms local GPU) to "production-ready" (2.34ms)
 2. **Unrestricted teacher escalation possible** - 2.34ms latency enables 100% escalation rate without performance penalty
 3. **Local GPU provides negative value** - RTX A500 slower than CPU for student, fails targets for teacher
 4. **CPU remains strong fallback** - Student-only deployment viable at 10.46ms when Modal L4 unavailable
 
 **Production deployment strategy**:
+
 1. **Primary**: Modal L4 GPU for both student and teacher (1.50ms + 2.34ms)
 2. **Fallback**: CPU for student-only (10.46ms, teacher unavailable)
 3. **Avoid**: Local RTX A500 GPU (negative speedup, fails targets)

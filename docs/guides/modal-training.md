@@ -23,12 +23,14 @@ This guide covers training ML models for Phases 2 and 3 using Modal, a serverles
 ### Why Modal?
 
 **Cost-Effective Training**:
+
 - $30/month free credits (recurring monthly)
 - T4 GPU: $0.5904/hour (~$0.01/minute)
 - Pay only for actual compute time (scales to zero)
 - Phase 2 + 3 estimated at $0-15 total (mostly within free tier)
 
 **Infrastructure Advantages**:
+
 - **No Session Timeouts**: Train for days without interruption
 - **Sub-Second Cold Starts**: <1 second vs 2-3 minutes for notebooks
 - **Guaranteed GPU Access**: No queues, multi-cloud fallback
@@ -36,6 +38,7 @@ This guide covers training ML models for Phases 2 and 3 using Modal, a serverles
 - **Python-Native**: Define infrastructure with decorators, no YAML
 
 **Comparison to Alternatives**:
+
 | Feature | Modal | Colab Pro | AWS EC2 |
 |---------|-------|-----------|---------|
 | Free Credits | $30/month | None | None |
@@ -50,7 +53,7 @@ This guide covers training ML models for Phases 2 and 3 using Modal, a serverles
 
 ### 1. Modal Account Setup
 
-**Sign up**: https://modal.com/
+**Sign up**: <https://modal.com/>
 
 **Cost**: Free (includes $30/month credits)
 **GPU Access**: T4, A10, A100 (pay-per-second)
@@ -59,6 +62,7 @@ This guide covers training ML models for Phases 2 and 3 using Modal, a serverles
 ### 2. GCS Bucket Access
 
 **Required**:
+
 - GCP Project: image-detection-478105
 - GCS Bucket: `gs://image_detection_b`
 - Service Account Key: (you provide during setup)
@@ -68,6 +72,7 @@ This guide covers training ML models for Phases 2 and 3 using Modal, a serverles
 ### 3. Local Development Setup
 
 **Install Modal CLI**:
+
 ```bash
 # Add to project dependencies
 poetry add modal
@@ -102,10 +107,11 @@ poetry run modal token current
 ```
 
 **Expected Output**:
-```
+
+```text
 ✓ Web authentication finished successfully!
 Token written to ~/.modal.toml
-```
+```text
 
 ### Step 3: Setup GCS Credentials
 
@@ -126,13 +132,14 @@ poetry run modal run modal/app.py::hello_gpu
 ```
 
 **Expected Output**:
-```
+
+```text
 ✓ Initialized. View run at https://modal.com/...
 ✓ Created objects.
 ├── 🔨 Created function hello_gpu.
 └── 🔨 Created image ml_image.
 ✅ Hello from Modal GPU: Tesla T4
-```
+```text
 
 ### Step 5: Run Training
 
@@ -177,7 +184,8 @@ gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
 ```
 
 **Dataset format** (already structured correctly):
-```
+
+```text
 gs://image_detection_b/datasets/iqa_phase2/
 ├── train/
 │   ├── images/          # 35,000 images
@@ -188,7 +196,7 @@ gs://image_detection_b/datasets/iqa_phase2/
 └── test/
     ├── images/          # 7,500 images
     └── labels.json
-```
+```text
 
 ### Configuration
 
@@ -237,6 +245,7 @@ xdg-open https://modal.com/apps
 ```
 
 **Dashboard shows**:
+
 - Live stdout/stderr logs
 - GPU utilization graphs
 - Cost accumulation in real-time
@@ -252,16 +261,20 @@ poetry run modal app logs image-detection --follow
 ### Training Output
 
 **Checkpoints** (saved every 5 epochs):
+
 - Uploaded to: `gs://image_detection_b/checkpoints/phase2_iqa/`
 - Format: `checkpoint_epoch_10.pth`, `checkpoint_epoch_15.pth`, etc.
 
 **Final Model**:
+
 - ONNX export: `gs://image_detection_b/models/phase2_iqa/best_model.onnx`
 - PyTorch checkpoint: `gs://image_detection_b/models/phase2_iqa/best_model.pth`
 
 **TensorBoard Logs**:
+
 - Uploaded to: `gs://image_detection_b/logs/phase2_iqa/`
 - View locally:
+
   ```bash
   gsutil -m cp -r gs://image_detection_b/logs/phase2_iqa /tmp/logs
   tensorboard --logdir /tmp/logs
@@ -322,7 +335,8 @@ gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
 ```
 
 **Dataset format** (YOLO):
-```
+
+```text
 gs://image_detection_b/datasets/layout_phase3/
 ├── dataset.yaml          # YOLO config
 ├── train/
@@ -334,9 +348,10 @@ gs://image_detection_b/datasets/layout_phase3/
 └── test/
     ├── images/
     └── labels/
-```
+```text
 
 **dataset.yaml** structure:
+
 ```yaml
 path: /data/layout_phase3  # Modal mount path
 train: train/images
@@ -382,16 +397,18 @@ poetry run modal run modal/train_phase3_yolov8.py
 ### Monitor Progress
 
 Same as Phase 2:
-- **Dashboard**: https://modal.com/apps
+
+- **Dashboard**: <https://modal.com/apps>
 - **CLI**: `poetry run modal app logs image-detection --follow`
 
 **Typical Progress**:
-```
+
+```text
 Epoch 10/100: train/box_loss: 0.042, val/mAP@0.5: 0.68
 Epoch 20/100: train/box_loss: 0.031, val/mAP@0.5: 0.75
 ...
 Epoch 100/100: val/mAP@0.5: 0.87 ✓ Best model saved
-```
+```text
 
 ### Export & Download
 
@@ -419,25 +436,27 @@ gsutil cp gs://image_detection_b/models/phase3_yolov8/best.pt models/
 ### Cost Estimates
 
 **Phase 2 (40 hours T4)**:
-```
+
+```text
 40 hours × $0.5904/hour = $23.62
 Less free credits: -$30
 Net cost: $0
-```
+```text
 
 **Phase 3 (70 hours A10)**:
-```
+
+```text
 70 hours × $1.1016/hour = $77.11
 Month 1 free credits: -$30
 Month 2 free credits: -$30
 Net cost: $17.11
-```
+```text
 
 **Total Phases 2+3**: ~$17 (vs $50 for Colab Pro)
 
 ### Setting Billing Alerts
 
-1. Go to: https://modal.com/settings/billing
+1. Go to: <https://modal.com/settings/billing>
 2. Set alerts:
    - **Warning**: $10/month
    - **Critical**: $20/month
@@ -475,6 +494,7 @@ poetry run modal profile current
 **Symptom**: `modal: command not found` or `Not authenticated`
 
 **Solution**:
+
 ```bash
 # Verify Modal installed
 poetry run modal --version
@@ -492,7 +512,8 @@ poetry run modal token current
 
 **Solution**:
 Modal has multi-cloud fallback. This is rare, but if it happens:
-1. Check Modal status: https://modal.com/status
+
+1. Check Modal status: <https://modal.com/status>
 2. Try different GPU: Change `gpu="T4"` to `gpu="A10"` in config
 3. Contact Modal support (usually responds within hours)
 
@@ -501,6 +522,7 @@ Modal has multi-cloud fallback. This is rare, but if it happens:
 **Symptom**: `FileNotFoundError: gs://image_detection_b/...`
 
 **Solution**:
+
 ```bash
 # Verify GCS secret exists
 poetry run modal secret list | grep gcs-credentials
@@ -518,19 +540,23 @@ gsutil ls gs://image_detection_b/datasets/
 **Symptom**: `CUDA out of memory` error
 
 **Solutions**:
+
 1. **Reduce batch size** in config:
+
    ```yaml
    training:
      batch_size: 64  # Reduce from 128
    ```
 
-2. **Upgrade GPU**:
+1. **Upgrade GPU**:
+
    ```yaml
    modal:
      gpu: A10  # 24GB vs T4 16GB
    ```
 
-3. **Enable gradient accumulation**:
+1. **Enable gradient accumulation**:
+
    ```yaml
    training:
      gradient_accumulation_steps: 2
@@ -541,7 +567,9 @@ gsutil ls gs://image_detection_b/datasets/
 **Symptom**: Used more than expected free credits
 
 **Prevention**:
+
 1. **Set timeouts** in config:
+
    ```yaml
    modal:
      timeout: 86400  # 24 hours max
@@ -550,6 +578,7 @@ gsutil ls gs://image_detection_b/datasets/
 2. **Monitor dashboard** daily during training
 
 3. **Test with small run first**:
+
    ```yaml
    training:
      epochs: 5  # Test run
@@ -560,6 +589,7 @@ gsutil ls gs://image_detection_b/datasets/
 **Symptom**: No progress for >30 minutes
 
 **Solution**:
+
 ```bash
 # Check logs
 poetry run modal app logs image-detection --follow
@@ -578,19 +608,22 @@ poetry run modal run modal/train_phase2_iqa.py
 ### Development Workflow
 
 1. **Test locally first** (CPU):
+
    ```bash
    # Validate training script syntax
    python modal/train_phase2_iqa.py --dry-run
    ```
 
-2. **Small Modal test** (5 epochs):
+1. **Small Modal test** (5 epochs):
+
    ```bash
    # Edit config: epochs: 5
    poetry run modal run modal/train_phase2_iqa.py
    # Verify everything works (~1 hour, <$1)
    ```
 
-3. **Full training run**:
+1. **Full training run**:
+
    ```bash
    # Edit config: epochs: 50
    poetry run modal run modal/train_phase2_iqa.py
@@ -600,11 +633,13 @@ poetry run modal run modal/train_phase2_iqa.py
 ### Checkpoint Strategy
 
 **Even though Modal has no session timeout**, still save checkpoints:
+
 - **Reason**: Long runs (70+ hours) may encounter rare cloud failures
 - **Frequency**: Every 5-10 epochs
 - **Storage**: GCS (`gs://image_detection_b/checkpoints/`)
 
 **Example resumption** (manual, rarely needed):
+
 ```python
 # modal/train_phase2_iqa.py
 # Modal handles this automatically if timeout occurs
@@ -677,25 +712,25 @@ if checkpoint_exists():
 
 ### Documentation
 
-- **Modal Docs**: https://modal.com/docs/guide
-- **Modal GPU Guide**: https://modal.com/docs/guide/gpu
-- **Modal Secrets**: https://modal.com/docs/guide/secrets
+- **Modal Docs**: <https://modal.com/docs/guide>
+- **Modal GPU Guide**: <https://modal.com/docs/guide/gpu>
+- **Modal Secrets**: <https://modal.com/docs/guide/secrets>
 - **PROJECT_PLAN.md**: Overall project roadmap
 - **ARCHITECTURE_CORRECTION.md**: Design decisions
 
 ### External Resources
 
-- **Modal Examples**: https://modal.com/docs/examples
-- **Ultralytics YOLOv8**: https://docs.ultralytics.com/
-- **PyTorch ONNX**: https://pytorch.org/docs/stable/onnx.html
+- **Modal Examples**: <https://modal.com/docs/examples>
+- **Ultralytics YOLOv8**: <https://docs.ultralytics.com/>
+- **PyTorch ONNX**: <https://pytorch.org/docs/stable/onnx.html>
 
 ### Issue Reporting
 
 If you encounter Modal-specific issues:
 
-1. Check Modal status: https://modal.com/status
-2. Review Modal docs: https://modal.com/docs
-3. Contact Modal support: support@modal.com (fast response)
+1. Check Modal status: <https://modal.com/status>
+2. Review Modal docs: <https://modal.com/docs>
+3. Contact Modal support: <support@modal.com> (fast response)
 4. Create GitHub issue with:
    - Modal function name
    - Error message
@@ -722,7 +757,7 @@ A: Function stops, but checkpoints are saved. Restart training and it resumes au
 A: Yes, but Modal is more cost-effective for sporadic training. Save local GPU for inference.
 
 **Q: How do I check remaining free credits?**
-A: Visit https://modal.com/usage or run `modal profile current`
+A: Visit <https://modal.com/usage> or run `modal profile current`
 
 **Q: Can I pause training mid-run?**
 A: Cancel via dashboard, checkpoints auto-save every 5-10 epochs. Restart to resume.

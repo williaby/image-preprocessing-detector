@@ -23,6 +23,7 @@ purpose: "Document the upgrade from MobileNetV3-Small to ResNet18 for Phase 2 IQ
 **Supersedes**: [ADR-025: MobileNetV3 vs EfficientNet](0025-mobilenetv3-vs-efficientnet.md)
 
 **Related**:
+
 - [ADR-025: MobileNetV3 vs EfficientNet for IQA](0025-mobilenetv3-vs-efficientnet.md) (Superseded)
 - [ADR-014: Classical CV + ML Hybrid for IQA](0014-classical-ml-hybrid-iqa.md)
 - [PROJECT_PLAN.md Phase 2](../../PROJECT_PLAN.md#phase-2-ml-for-image-quality-assessment-3-4-weeks)
@@ -32,22 +33,28 @@ purpose: "Document the upgrade from MobileNetV3-Small to ResNet18 for Phase 2 IQ
 ## Context
 
 ### Original Decision (ADR-025)
+
 **MobileNetV3-Small** was selected for Phase 2 IQA training based on:
+
 - **Colab Constraints**: 12-hour session limits required fast training (~15h)
 - **Latency Priority**: 30ms GPU inference target
 - **Model Size**: <10MB quantized for deployment
 
 ### New Context (Modal Deployment)
+
 **Modal GPU Training** removes Colab constraints:
+
 - ✅ **No session limits**: 24+ hour training sessions feasible
 - ✅ **Guaranteed GPU access**: T4/A100 on-demand, no waiting
 - ✅ **Better monitoring**: TensorBoard, automatic checkpointing
 - ✅ **Cost-effective**: $0.60/hr T4 GPU (comparable to Colab Pro)
 
 ### Research Findings (2024-2025 SOTA)
+
 **Multiple 2024 studies confirm**: MobileNetV3 **underperforms** for IQA tasks
 
 **Key Evidence**:
+
 1. **December 2024 FR-IQA Study**:
    > "VGG backbone consistently maintained its superiority with the highest PLCC and SRCC values over MobileNet and EfficientNet. MobileNet exhibited **reduced effectiveness in capturing nuanced quality metrics required**."
 
@@ -148,12 +155,15 @@ purpose: "Document the upgrade from MobileNetV3-Small to ResNet18 for Phase 2 IQ
 ## Alternatives Considered
 
 ### 1. Keep MobileNetV3-Small (Rejected)
+
 **Pros**:
+
 - ✅ Fastest inference (30ms GPU)
 - ✅ Smallest model (3MB)
 - ✅ Shortest training (15h)
 
 **Cons**:
+
 - ❌ **Weak IQA performance** (multiple 2024 studies confirm)
 - ❌ **Borderline mAP** (0.86-0.88, risky)
 - ❌ **50% risk of missing target**
@@ -161,11 +171,14 @@ purpose: "Document the upgrade from MobileNetV3-Small to ResNet18 for Phase 2 IQ
 **Reason Rejected**: Unacceptable risk of failing 0.88 mAP target
 
 ### 2. ResNet50 (Deferred to Phase 3)
+
 **Pros**:
+
 - ✅ SOTA document IQA (DocIQ uses this)
 - ✅ Highest accuracy (0.92-0.94 mAP)
 
 **Cons**:
+
 - ❌ **Exceeds latency targets** (70ms GPU vs <50ms)
 - ❌ **Large model** (25MB vs 10MB budget)
 - ❌ **Longer training** (25h, may need multi-session)
@@ -173,11 +186,14 @@ purpose: "Document the upgrade from MobileNetV3-Small to ResNet18 for Phase 2 IQ
 **Reason Rejected**: Overkill for weak supervision. Save for Phase 3 DIQA-5000 fine-tuning.
 
 ### 3. EfficientNet-B0 (Inferior to ResNet18)
+
 **Pros**:
+
 - ✅ Better than MobileNetV3 (0.88-0.90 mAP)
 - ✅ Meets latency target (50ms GPU)
 
 **Cons**:
+
 - ⚠️ **Still underperforms ResNet18** for IQA (2024 studies)
 - ⚠️ **Slower than MobileNetV3** (50ms vs 30ms)
 - ⚠️ **Less proven** for document quality
@@ -185,10 +201,13 @@ purpose: "Document the upgrade from MobileNetV3-Small to ResNet18 for Phase 2 IQ
 **Reason Rejected**: ResNet18 is better choice (proven IQA performance)
 
 ### 4. Swin Transformer (Too Slow)
+
 **Pros**:
+
 - ✅ Best NR-IQA performance (global quality assessment)
 
 **Cons**:
+
 - ❌ **No ImageNet pretrained** weights available
 - ❌ **Slow inference** (>100ms GPU)
 - ❌ **Large model** (22M params)
@@ -222,6 +241,7 @@ model = timm.create_model(
 ```
 
 **Alternative (torchvision)**:
+
 ```python
 import torchvision.models as models
 import torch.nn as nn
@@ -288,6 +308,7 @@ config = {
 | **Overall Risk** | **HIGH** ❌ | **LOW** ✅ | **Risk mitigation achieved** |
 
 **Decision Confidence**: **HIGH** (>90%)
+
 - Multiple 2024 studies validate ResNet superiority for IQA
 - DocIQ proves ResNet for document quality assessment
 - Modal removes Colab speed constraints
@@ -298,12 +319,14 @@ config = {
 ## Validation Plan
 
 ### Training Validation
+
 1. Train ResNet18 on Modal T4 GPU (18h)
 2. Monitor validation mAP every epoch
 3. **Early stopping**: Best validation mAP checkpoint
 4. Target: Validation mAP > 0.89 after 30 epochs
 
 ### Test Evaluation
+
 1. Run test set evaluation (7,500 samples)
 2. **Success Criteria**:
    - mAP > 0.89
@@ -312,12 +335,15 @@ config = {
 3. Compare to classical IQA baselines (Phase 1)
 
 ### Latency Benchmarking
+
 1. ONNX export with INT8 quantization
 2. Benchmark on T4 GPU (target: <40ms)
 3. Benchmark on CPU 8-core (target: <180ms with INT8)
 
 ### Rollback Plan
+
 **If ResNet18 fails to meet targets**:
+
 1. Check for implementation bugs (likely cause)
 2. Try ResNet34 (+5% accuracy, +20ms latency)
 3. **Last resort**: Fall back to MobileNetV3 (accept lower accuracy)
@@ -329,16 +355,19 @@ config = {
 ## References
 
 ### Research Papers
+
 - [DocIQ (Sept 2025)](https://arxiv.org/abs/2509.17012) - ResNet50 for document IQA
 - [TOPIQ (2024)](https://arxiv.org/abs/2308.03060) - ResNet50 outperforms transformers
 - [VGG vs MobileNet for FR-IQA (Dec 2024)](https://www.nature.com/articles/s41598-024-12345) - MobileNet underperforms
 
 ### Internal Documentation
+
 - [Phase 2 Model Research Report](../../tmp_cleanup/.tmp-phase2-model-research-20251114.md)
 - [Phase 2 Validation Report](../../tmp_cleanup/.tmp-phase2-validation-20251114.md)
 - [ADR-025: MobileNetV3 vs EfficientNet](0025-mobilenetv3-vs-efficientnet.md) (Superseded)
 
 ### Implementation
+
 - [modal/train_phase2_iqa.py](../../modal/train_phase2_iqa.py) - Updated training script
 - [FR-2.3: Learned Quality Assessment](../requirements/functional_requirements_v2.md#fr-23-learned-quality-assessment-phase-2)
 

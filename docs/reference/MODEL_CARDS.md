@@ -310,14 +310,14 @@ DQS = (
 
 ### Version Format
 
-```
+```text
 {model_name}-v{major}.{minor}.{patch}
 
 Examples:
 - resnet18-iqa-v1.0.0
 - resnet50-iqa-v1.0.0
 - doclayout-yolo-v1.0.0
-```
+```text
 
 ### Model Registry
 

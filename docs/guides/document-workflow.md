@@ -55,7 +55,7 @@ Each page goes through the following steps:
 
 ### Pipeline Flow Diagram
 
-```
+```text
 Input File
     │
     ▼
@@ -110,7 +110,7 @@ Input File
              │
              ▼
     Project B Handoff (OCR Orchestration)
-```
+```text
 
 ### Correction Guardrails
 

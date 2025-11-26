@@ -22,6 +22,7 @@ purpose: "Document the decision to adopt DocRes unified model for document resto
 **Date**: 2025-01-13
 **Deciders**: Byron Williams
 **Related**:
+
 - [ADR-029: Three-Tier Dataset Strategy](0029-phase2-dataset-selection-strategy.md)
 - [ADR-031: Comprehensive Benchmarking Framework](0031-comprehensive-benchmarking-framework.md)
 - [ADR-021: Do-No-Harm Guardrails](0021-do-no-harm-guardrails.md)
@@ -32,16 +33,19 @@ purpose: "Document the decision to adopt DocRes unified model for document resto
 ### Problem: Fragmented Preprocessing Pipeline
 
 **Current State (Phase 1)**:
+
 - Classical OpenCV methods for basic corrections (deskew, CLAHE, sharpening, denoising)
 - Effective for simple quality issues but limited for complex degradations
 - Works well for controlled document scans but struggles with camera-captured documents
 
 **Phase 3+ Requirements**:
+
 - Handle complex degradations: warping, shadows, severe blur, poor binarization
 - Support camera-captured documents (AnyPhotoDoc 6300 benchmark)
 - Maintain performance targets: <150ms/page GPU latency, >6 pages/sec throughput
 
 **Original Approach (Separate Specialized Models)**:
+
 1. **DvD (Document Image Dewarping)** for warping correction
 2. **SynDocDS** for shadow removal
 3. Separate models for deblurring, binarization, contrast enhancement
@@ -50,6 +54,7 @@ purpose: "Document the decision to adopt DocRes unified model for document resto
 ### Research Findings (Q4 2024 - Q4 2025 Literature)
 
 **DocRes (CVPR 2024)** emerged as **HIGHEST PRIORITY** solution:
+
 - **Unified Model**: Single CNN handles 5 tasks (dewarping, de-shadowing, deblurring, binarization, contrast enhancement)
 - **Dynamic Task-Specific Prompts (DTSPrompt)**: Runtime task selection without model switching
 - **Performance**: State-of-the-art results on DocUNet, Doc3D, SynDocDS benchmarks
@@ -61,12 +66,14 @@ purpose: "Document the decision to adopt DocRes unified model for document resto
 ### Dual-Track Strategy Rationale
 
 **Why Maintain Classical Methods (ADR-021 Guardrails)?**
+
 1. **Fallback**: Classical methods proven effective for simple cases (Phase 1: 100% coverage, zero degradation)
 2. **CPU-First Deployment**: DocRes requires GPU; classical methods run on CPU
 3. **Confidence Routing**: Route simple cases to classical, complex cases to DocRes
 4. **Validation**: Classical outputs validate DocRes results
 
 **When to Use DocRes vs. Classical:**
+
 ```python
 if camera_captured or severe_degradation:
     # Complex degradation: use DocRes unified model
@@ -84,7 +91,7 @@ elif simple_quality_issues:
 
 **Two-Track Preprocessing Pipeline:**
 
-```
+```text
 Document Input
     ↓
 [Quality Assessment] (FR-2.3: Learned IQA)
@@ -99,9 +106,10 @@ Classical      DocRes Unified
 [Validation Gate] (Compare outputs if both available)
     ↓
 Restored Document
-```
+```text
 
 **DocRes Task Configuration:**
+
 ```python
 # Example 1: Camera-captured document with warping + shadow
 docres_tasks = ["dewarp", "deshadow"]
@@ -131,6 +139,7 @@ restored = docres_model.restore(
 ### Five Unified Tasks
 
 **Task 1: Dewarping (Warping/Curvature Correction)**
+
 - **Purpose**: Correct geometric distortion from camera perspective, book binding curvature
 - **Input**: Warped document image (curved text lines, perspective distortion)
 - **Output**: Rectified document with straight text lines
@@ -140,6 +149,7 @@ restored = docres_model.restore(
 - **Replaces**: DvD specialized model
 
 **Task 2: De-shadowing (Shadow Removal)**
+
 - **Purpose**: Remove shadows from uneven illumination, hand shadows, binding shadows
 - **Input**: Document image with shadows (dark regions, uneven brightness)
 - **Output**: Uniformly illuminated document
@@ -149,6 +159,7 @@ restored = docres_model.restore(
 - **Replaces**: SynDocDS specialized model
 
 **Task 3: Deblurring (Motion/Defocus Blur Correction)**
+
 - **Purpose**: Recover sharp text from camera shake, defocus blur
 - **Input**: Blurred document image
 - **Output**: Sharp document with clear text edges
@@ -158,6 +169,7 @@ restored = docres_model.restore(
 - **Complements**: Classical Laplacian blur detection (FR-3.1)
 
 **Task 4: Binarization (Adaptive Thresholding)**
+
 - **Purpose**: Convert grayscale to binary for OCR, improve text-background separation
 - **Input**: Grayscale document image with variable lighting
 - **Output**: Binary image (black text, white background)
@@ -167,6 +179,7 @@ restored = docres_model.restore(
 - **Complements**: Classical Otsu thresholding
 
 **Task 5: Contrast Enhancement (Adaptive Histogram Equalization)**
+
 - **Purpose**: Improve text visibility in low-contrast documents
 - **Input**: Low-contrast document image (faded text, washed-out appearance)
 - **Output**: Enhanced document with improved text-background contrast
@@ -178,6 +191,7 @@ restored = docres_model.restore(
 ### Training Data Strategy (Tier 1 - ADR-029)
 
 **Primary Datasets:**
+
 1. **DocSynth-300K** (50 GB, 300k layouts, Apache-2.0)
    - Base training for all 5 tasks
    - Albumentations augmentation pipeline for synthetic degradations
@@ -199,6 +213,7 @@ restored = docres_model.restore(
    - Download: (source to be verified)
 
 **Fallback Strategy:**
+
 - **If SynDocDS unavailable**: Use Albumentations shadow augmentation on DocSynth-300K
 - **If Doc3D unavailable**: Use AnyPhotoDoc 6300 for dewarping training
 - **If DIQA-5000 unavailable**: Use LIVE/CSIQ with synthetic document degradations
@@ -217,6 +232,7 @@ restored = docres_model.restore(
 | **Unified** | OmniDocBench | Multi-task accuracy | Baseline + 5% |
 
 **Integration with ADR-031:**
+
 - New adapters: `anyphotodoc6300`, `syndocds`, `docunet`
 - DIQA-5000 adapter replaces `live`, `csiq` for document IQA
 - OmniDocBench elevated to CRITICAL for unified validation
@@ -224,19 +240,23 @@ restored = docres_model.restore(
 ### Performance Targets (Phase 3)
 
 **Latency:**
+
 - Single task: <50ms/page (GPU)
 - All 5 tasks: <150ms/page (GPU)
 - CPU fallback (classical): <100ms/page (no GPU)
 
 **Throughput:**
+
 - GPU (T4): >6 pages/sec (unified pipeline)
 - CPU: >2 pages/sec (classical fallback)
 
 **Memory:**
+
 - GPU VRAM: <2 GB (INT8 quantized ONNX)
 - CPU RAM: <1 GB (classical methods)
 
 **Accuracy:**
+
 - Dewarping: MS-SSIM > 0.88 (AnyPhotoDoc 6300)
 - De-shadowing: PSNR > 20 dB (SynDocDS)
 - Deblurring: Laplacian variance improvement > 30%
@@ -246,29 +266,34 @@ restored = docres_model.restore(
 ### Implementation Plan (Phase 3 Timeline)
 
 **Week 1-2: DocRes Model Integration**
+
 - Research DocRes paper implementation (CVPR 2024)
 - Verify license and availability
 - Integrate DTSPrompt task selection
 - ONNX export and INT8 quantization
 
 **Week 3-4: Training Data Preparation**
+
 - Download DocSynth-300K (50 GB)
 - Download SynDocDS, Doc3D, DocUNet
 - Implement Albumentations augmentation pipeline
 - Generate synthetic degradations for 5 tasks
 
 **Week 5-8: Multi-Task Training**
+
 - Train unified DocRes model on DocSynth-300K base
 - Fine-tune on task-specific datasets (SynDocDS, Doc3D, DocUNet)
 - Validate on AnyPhotoDoc 6300, DIQA-5000 (when released)
 - Benchmark against classical methods (ADR-021 baselines)
 
 **Week 9-10: Dual-Track Integration**
+
 - Implement severity classifier (route simple → classical, complex → DocRes)
 - Add validation gate (compare classical vs. DocRes outputs)
 - Performance optimization (batch processing, ONNX optimization)
 
 **Week 11-12: Production Hardening**
+
 - Add do-no-harm guardrails for DocRes outputs (extend ADR-021)
 - Integration testing with full pipeline
 - Benchmark suite execution (ADR-031 adapters)
@@ -309,11 +334,13 @@ restored = docres_model.restore(
 **Approach**: Use DvD for dewarping, SynDocDS for de-shadowing, separate models for other tasks
 
 **Advantages**:
+
 - Task-specific optimization
 - Easier debugging (isolated models)
 - Independent model updates
 
 **Disadvantages**:
+
 - 5x model inferences (5x latency)
 - 5x memory overhead (VRAM exhaustion on edge devices)
 - Integration complexity (5 model pipelines)
@@ -326,12 +353,14 @@ restored = docres_model.restore(
 **Approach**: Expand classical OpenCV methods to handle complex degradations
 
 **Advantages**:
+
 - CPU-only (no GPU required)
 - Fast inference (<100ms/page)
 - Simple implementation
 - Zero ML training overhead
 
 **Disadvantages**:
+
 - Limited effectiveness on complex degradations (warping, shadows)
 - Poor performance on camera-captured documents
 - Cannot match state-of-the-art ML accuracy
@@ -344,11 +373,13 @@ restored = docres_model.restore(
 **Approach**: Use vision transformer for end-to-end document restoration
 
 **Advantages**:
+
 - Transformer architecture (state-of-the-art for vision tasks)
 - End-to-end learning
 - Potential for multi-modal inputs (text + image)
 
 **Disadvantages**:
+
 - Massive model size (>100M parameters vs. DocRes ~20M)
 - High latency (>500ms/page)
 - Requires huge training datasets (>1M images)
@@ -361,6 +392,7 @@ restored = docres_model.restore(
 ### DocRes Architecture (DTSPrompt)
 
 **Dynamic Task-Specific Prompts (DTSPrompt):**
+
 ```python
 class DocResModel:
     def __init__(self, checkpoint_path: str):
@@ -407,6 +439,7 @@ class DocResModel:
 ```
 
 **Severity Classifier (Routing Logic):**
+
 ```python
 class DegradationSeverityClassifier:
     def classify(self, image: np.ndarray, quality_scores: Dict[str, float]) -> str:
@@ -450,6 +483,7 @@ class DegradationSeverityClassifier:
 ```
 
 **Dual-Track Pipeline:**
+
 ```python
 class PreprocessingPipeline:
     def __init__(self):
@@ -504,6 +538,7 @@ class PreprocessingPipeline:
 ### Guardrails Extension (ADR-021 Compatibility)
 
 **DocRes-Specific Guardrails:**
+
 ```python
 class DocResGuardrails:
     def validate_output(
@@ -548,23 +583,27 @@ class DocResGuardrails:
 ## References
 
 **Research Papers:**
+
 - DocRes: A Generalist Model Toward Unifying Document Image Restoration Tasks (CVPR 2024)
-  - Paper: https://arxiv.org/abs/2405.04408 (to be verified)
+  - Paper: <https://arxiv.org/abs/2405.04408> (to be verified)
   - Code: GitHub (to be verified)
   - License: To be verified
 
 **Related ADRs:**
+
 - [ADR-021: Do-No-Harm Guardrails](0021-do-no-harm-guardrails.md) - Classical correction guardrails
 - [ADR-029: Three-Tier Dataset Strategy](0029-phase2-dataset-selection-strategy.md) - Training data (DocSynth-300K, SynDocDS, Doc3D)
 - [ADR-031: Comprehensive Benchmarking Framework](0031-comprehensive-benchmarking-framework.md) - Validation (AnyPhotoDoc 6300, DIQA-5000)
 
 **Datasets:**
+
 - DocSynth-300K: HuggingFace `juliozhao/DocSynth300K` (Apache-2.0)
 - SynDocDS: Shadow removal dataset (license to be verified)
 - AnyPhotoDoc 6300: Dewarping benchmark (research license)
 - DIQA-5000: Document IQA benchmark (pending release, Sept 2025)
 
 **Functional Requirements:**
+
 - [FR-2.3: Learned Quality Assessment](../requirements/functional_requirements_v2.md#fr-23-learned-quality-assessment-phase-2)
 - [FR-3.11: Warping/Curvature Detection](../requirements/functional_requirements_v2.md#fr-311-warpingcurvature-detection)
 
@@ -598,6 +637,7 @@ class DocResGuardrails:
    - Memory: <2 GB VRAM (INT8 quantized)
 
 **Success Criteria:**
+
 - ✅ All 5 tasks meet target metrics
 - ✅ Latency and throughput within bounds
 - ✅ Zero quality degradation on guardrail tests
@@ -608,6 +648,7 @@ class DocResGuardrails:
 **Phase 3 Extension**: +3 weeks (5 weeks → 8 weeks)
 
 **Breakdown:**
+
 - Week 1-2: DocRes integration and ONNX optimization (+2 weeks)
 - Week 3-4: Training data preparation (already planned)
 - Week 5-8: Multi-task training and fine-tuning (+1 week)
@@ -623,6 +664,7 @@ class DocResGuardrails:
 *This section will be updated after Phase 3 implementation with actual findings.*
 
 **Expected Learnings:**
+
 1. DTSPrompt effectiveness for runtime task selection
 2. Optimal task weight balancing for multi-task training
 3. Severity classifier accuracy and routing effectiveness

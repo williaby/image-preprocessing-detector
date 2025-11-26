@@ -21,6 +21,7 @@ purpose: "Document the decision to minimize mocking in favor of testing real imp
 **Date**: 2025-11-05
 **Deciders**: Byron Williams
 **Related**:
+
 - [TEST_ANALYSIS_MOCKING_VS_REAL.md](../../TEST_ANALYSIS_MOCKING_VS_REAL.md)
 - [ADR-006: Synthetic Validation Dataset Strategy](0006-synthetic-validation-dataset-strategy.md)
 - [Phase 1 Testing Summary](../../PHASE_1_COMPLETE.md#testing--quality-assurance)
@@ -32,12 +33,14 @@ When designing the test suite for Phase 1, we faced a fundamental choice: use ex
 ### Testing Landscape
 
 **Common Industry Pattern**:
+
 - Heavy mocking at all levels (unit, integration)
 - Fast test execution
 - Isolated component testing
 - Risk: Mocks drift from real implementations
 
 **Our Requirements**:
+
 - High confidence in computer vision algorithms
 - Deterministic test results
 - Fast execution (no external dependencies)
@@ -48,6 +51,7 @@ When designing the test suite for Phase 1, we faced a fundamental choice: use ex
 **Total Tests**: 163
 **Overall Coverage**: 94.46%
 **Test Distribution**:
+
 - **Real Testing**: ~127 tests (77.9%)
 - **Mock-Heavy Testing**: ~28 tests (17.2%)
 - **Mock-Moderate Testing**: ~8 tests (4.9%)
@@ -86,6 +90,7 @@ When designing the test suite for Phase 1, we faced a fundamental choice: use ex
 ### Guidelines
 
 **✅ DO Test with Real Implementations**:
+
 - OpenCV operations (cv2.warpAffine, cv2.CLAHE, cv2.Laplacian)
 - NumPy array operations
 - Pydantic validation and serialization
@@ -93,12 +98,14 @@ When designing the test suite for Phase 1, we faced a fundamental choice: use ex
 - Complete algorithms (text detection, blur detection, skew detection)
 
 **⚠️ MOCK External Library Boundaries**:
+
 - cv2.imread (file I/O)
 - PIL Image.open (file I/O)
 - PyMuPDF fitz (PDF parsing)
 - logging.basicConfig (configuration)
 
 **❌ DO NOT Mock**:
+
 - Our own correction algorithms
 - Our own detection logic
 - NumPy/OpenCV operations
@@ -185,6 +192,7 @@ def test_load_valid_jpeg(self, mock_pil_open: Mock, mock_cv2_imread: Mock) -> No
 **Approach**: Mock all dependencies including OpenCV, NumPy operations
 
 **Example**:
+
 ```python
 @patch("cv2.GaussianBlur")
 @patch("cv2.Laplacian")
@@ -197,11 +205,13 @@ def test_blur_detector(mock_laplacian, mock_blur):
 ```
 
 **Advantages**:
+
 - Fastest execution (<1ms per test)
 - Isolated component testing
 - Easy to test edge cases
 
 **Disadvantages**:
+
 - No verification that OpenCV actually works
 - Mock drift risk (mock behavior diverges from real OpenCV)
 - False confidence (tests pass but real operations may fail)
@@ -214,6 +224,7 @@ def test_blur_detector(mock_laplacian, mock_blur):
 **Approach**: Use actual image and PDF files instead of synthetic data
 
 **Example**:
+
 ```python
 def test_blur_detector_real_image():
     """Test with real blurred image from fixtures."""
@@ -224,11 +235,13 @@ def test_blur_detector_real_image():
 ```
 
 **Advantages**:
+
 - Most realistic testing
 - Catches real-world edge cases
 - No synthetic data generation
 
 **Disadvantages**:
+
 - Slow file I/O (100-500ms per test)
 - Non-deterministic (file corruption, path issues)
 - Requires large fixture dataset
@@ -241,6 +254,7 @@ def test_blur_detector_real_image():
 **Approach**: Compare outputs to saved snapshots
 
 **Example**:
+
 ```python
 def test_corrections_snapshot(snapshot):
     """Compare correction output to saved snapshot."""
@@ -250,11 +264,13 @@ def test_corrections_snapshot(snapshot):
 ```
 
 **Advantages**:
+
 - Detects unintended changes
 - Easy to maintain
 - Fast comparison
 
 **Disadvantages**:
+
 - Hard to interpret failures (what changed?)
 - Brittle (minor algorithm tweaks break tests)
 - Doesn't verify correctness, only consistency
@@ -266,7 +282,7 @@ def test_corrections_snapshot(snapshot):
 
 ### Test Suite Structure
 
-```
+```text
 tests/
 ├── unit/                  # Unit tests with synthetic data (77.9% of tests)
 │   ├── test_corrections.py       # 100% real OpenCV operations
@@ -283,11 +299,12 @@ tests/
     │   └── sample_150dpi.png
     └── pdfs/
         └── multi_page_300dpi.pdf
-```
+```text
 
 ### Synthetic Data Generation Patterns
 
 **Pattern 1: Checkerboard for Blur Testing**:
+
 ```python
 def create_sharp_checkerboard(size=500, square_size=25):
     """Generate sharp checkerboard pattern."""
@@ -300,6 +317,7 @@ def create_sharp_checkerboard(size=500, square_size=25):
 ```
 
 **Pattern 2: Text Strokes for Text Detection**:
+
 ```python
 def create_text_document(num_lines=15):
     """Generate synthetic text-heavy document."""
@@ -313,6 +331,7 @@ def create_text_document(num_lines=15):
 ```
 
 **Pattern 3: Low Contrast for Contrast Testing**:
+
 ```python
 def create_low_contrast_image():
     """Generate low-contrast image."""
@@ -325,6 +344,7 @@ def create_low_contrast_image():
 ### Mocking Guidelines
 
 **Mock at External Boundaries**:
+
 ```python
 # Good: Mock external library I/O
 @patch("image_preprocessing_detector.ingestion.image_loader.cv2.imread")
@@ -344,6 +364,7 @@ def test_blur_detector(mock_laplacian):
 ### Phase 1 Test Metrics
 
 **Test Distribution**:
+
 - Unit tests: 127 tests (77.9% real testing)
 - Integration tests: 19 tests (11.7%)
 - Mock-heavy tests: 28 tests (17.2%)
@@ -351,6 +372,7 @@ def test_blur_detector(mock_laplacian):
 **Coverage**: 94.46% (exceeds 80% requirement)
 
 **Performance**:
+
 - Average test execution: ~10-50ms (real operations)
 - Mocked tests: <1ms
 - Total suite runtime: ~15 seconds (163 tests)
@@ -415,12 +437,14 @@ def test_blur_detector(mock_laplacian):
 **Grade**: **A-** (Excellent foundation with minor improvements possible)
 
 **Strengths**:
+
 - 77.9% real testing provides high confidence
 - All core algorithms tested with real operations
 - Mocking limited to external boundaries
 - Strong integration test coverage
 
 **Weaknesses**:
+
 - Limited integration tests for file loaders (90% mocked)
 - No real-world fixture files
 - Logging tests only verify configuration

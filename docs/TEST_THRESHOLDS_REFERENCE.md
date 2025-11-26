@@ -13,6 +13,7 @@ purpose: "Central reference for all test thresholds, their rationale, and evolut
 ## Purpose
 
 This document tracks all configurable test thresholds across the test suite, providing:
+
 - **Current Values**: What thresholds are set to right now
 - **Rationale**: Why they're set to those values
 - **Targets**: Where we want them to be eventually
@@ -30,6 +31,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | `test_iqa_with_ground_truth.py` | Blur score blurriness | `blur_score <` | **0.5** | 0.3 | ✅ Target | 2025-11-24 |
 
 **Status Legend:**
+
 - ✅ **Target**: Threshold at desired level
 - 🟡 **Relaxed**: Threshold loosened due to detector limitations
 - ⚠️ **xfail**: Test marked as expected failure
@@ -53,6 +55,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | `test_blur_binary_classification` | `blur_score >` (for non-blur) | **0.3** | Relaxed from 0.5 to allow tolerance for images with other defects. | 0.4 | No |
 
 **Notes**:
+
 - Blur detection using Laplacian variance is reliable and accurate
 - Current thresholds are at or near target values
 - No relaxation needed for blur thresholds
@@ -67,6 +70,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | `test_combined_blur_noise_detection` | `noise_score >` | **0.15** | 🟡 Same as binary classification. Multi-defect scenario. | 0.3 | No |
 
 **Notes**:
+
 - Classical wavelet-based noise detection has **known limitations** on document images
 - Thresholds relaxed 2025-11-24 after initial optimistic values failed
 - Future: ML-based noise detection may allow tightening to target values
@@ -80,6 +84,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | `test_detects_poor_illumination` | `has_issues` (boolean) | **True** | Binary flag check. Detector reliable. | N/A | No |
 
 **Notes**:
+
 - Illumination detection is **highly reliable** (100% accuracy)
 - Uses boolean flags rather than score thresholds
 - No relaxation needed
@@ -92,6 +97,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | `test_detects_low_contrast` | `is_low_contrast` (boolean) | **True** | Detector reliable on actual low contrast. | N/A | No |
 
 **Notes**:
+
 - Initial assumption of `contrast_score > 0.5` for pristine images was **too optimistic**
 - Contrast scores vary significantly based on image content
 - Changed to absence of `is_low_contrast` flag (more robust)
@@ -106,6 +112,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | `test_artifact_binary_classification` | `blockiness_score >` | **0.2** | ⚠️ **xfail** for PNG-saved samples. Detector limitation. | 0.3 | No |
 
 **Notes**:
+
 - JPEG blockiness detector has **fundamental limitation** on PNG-encoded images
 - Frequency domain information lost during PNG encoding
 - Tests marked as **expected failures (xfail)** for PNG samples
@@ -120,6 +127,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | `test_noise_score_correlation_with_ground_truth` | Statistical comparison | N/A | Validates avg_high > avg_low (no fixed threshold). | N/A | No |
 
 **Notes**:
+
 - Correlation tests use **relative comparisons** rather than absolute thresholds
 - Robust against detector variability
 
@@ -136,6 +144,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | Classical IQA pipeline | Max latency (ms) | **50** | OpenCV operations, fast. | 30 | Yes (CI: 75ms) |
 
 **Notes**:
+
 - **CI environments run slower** due to shared resources
 - CPU thresholds more lenient than GPU
 - Target values assume optimized production deployment
@@ -152,6 +161,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 | Batch processing throughput | Min pages/sec | **2** | CPU-only processing rate. | 5 | Yes (CI: 1) |
 
 **Notes**:
+
 - Integration tests have **higher variance** than unit tests
 - CI thresholds significantly relaxed due to environment constraints
 
@@ -161,20 +171,23 @@ This document tracks all configurable test thresholds across the test suite, pro
 
 ### When to Update Thresholds
 
-#### Relax Thresholds (Increase Tolerance) When:
+#### Relax Thresholds (Increase Tolerance) When
+
 1. ✅ **Detector has known limitations** (e.g., noise detection on documents)
 2. ✅ **Ground truth validation reveals optimistic assumptions** (e.g., contrast varies by content)
 3. ✅ **CI environment constraints** (slower execution, shared resources)
 4. ✅ **False positives acceptable** for specific use cases
 5. ⚠️ **Document limitation clearly** with xfail or comments
 
-#### Tighten Thresholds (Reduce Tolerance) When:
+#### Tighten Thresholds (Reduce Tolerance) When
+
 1. 🎯 **Detector improvements** (e.g., new ML model with better accuracy)
 2. 🎯 **Algorithm optimization** reduces variability
 3. 🎯 **Better hardware** available in CI/production
 4. 🎯 **Ground truth validation** shows current thresholds too loose
 
-#### Mark as xfail (Expected Failure) When:
+#### Mark as xfail (Expected Failure) When
+
 1. ⚠️ **Fundamental detector limitation** cannot be fixed (e.g., JPEG detection on PNG)
 2. ⚠️ **Known issue** with external dependency
 3. ⚠️ **Future fix planned** but not yet implemented
@@ -183,6 +196,7 @@ This document tracks all configurable test thresholds across the test suite, pro
 ### Update Process
 
 1. **Modify Test File**
+
    ```python
    # BEFORE (optimistic)
    assert result.noise_score > 0.4, "High noise should be detected"
@@ -203,7 +217,8 @@ This document tracks all configurable test thresholds across the test suite, pro
    - Add entry to Changelog (below)
 
 3. **Document in Commit Message**
-   ```
+
+   ```text
    test: relax noise detection thresholds based on ground truth validation
 
    - Reduced noise_score threshold from 0.4 to 0.2
@@ -213,6 +228,7 @@ This document tracks all configurable test thresholds across the test suite, pro
    ```
 
 4. **Create Issue for Future Improvement** (if target differs from current)
+
    ```markdown
    ## Title: Tighten noise detection threshold after ML IQA implementation
 
@@ -237,6 +253,7 @@ CI environments are typically **slower and more variable** than local developmen
 | Batch throughput | 2 pages/sec | 1 page/sec | 0.5x |
 
 **Implementation Pattern**:
+
 ```python
 import os
 
@@ -266,11 +283,13 @@ def test_inference_performance():
 #### Noise Detection - Thresholds Relaxed 🟡
 
 **Changes**:
+
 - `test_detects_high_noise_image`: **0.4 → 0.2** (`noise_score >`)
 - `test_noise_binary_classification`: **0.3 → 0.15** (`noise_score >`)
 - `test_combined_blur_noise_detection`: **0.3 → 0.15** (`noise_score >`)
 
 **Rationale**:
+
 - Initial assumptions too optimistic for classical wavelet-based detector
 - Detector shows sensitivity but doesn't always trigger `is_noisy` flag
 - Score-based validation more reliable than boolean flags
@@ -285,9 +304,11 @@ def test_inference_performance():
 #### Contrast Detection - Changed to Boolean Check 🟡
 
 **Changes**:
+
 - `test_detects_good_contrast`: `contrast_score > 0.5` → `not is_low_contrast` (boolean)
 
 **Rationale**:
+
 - Contrast scores **vary significantly** based on image content
 - Pristine documents can have low contrast if they contain light colors or simple content
 - Boolean flag more robust than arbitrary score threshold
@@ -302,10 +323,12 @@ def test_inference_performance():
 #### JPEG Artifact Detection - Marked as xfail ⚠️
 
 **Changes**:
+
 - `test_detects_jpeg_artifacts`: Added **xfail** marker
 - `test_artifact_binary_classification`: Added **xfail** for 2 PNG samples
 
 **Rationale**:
+
 - **Fundamental limitation**: PNG encoding masks JPEG blockiness artifacts
 - Frequency domain patterns lost during lossless PNG encoding
 - Detector works correctly on actual JPEG files
@@ -324,6 +347,7 @@ def test_inference_performance():
 **Status**: Thresholds at target values
 
 **Rationale**:
+
 - Laplacian variance detector **highly accurate**
 - 100% passing rate on all blur tests
 - No relaxation needed
@@ -373,6 +397,7 @@ def test_inference_performance():
 ### After Major Changes
 
 Review thresholds after:
+
 - ✅ **New detector implementation** (e.g., Phase 2 ML IQA)
 - ✅ **Algorithm optimization** that improves accuracy
 - ✅ **Hardware upgrades** in CI environment
@@ -381,6 +406,7 @@ Review thresholds after:
 ### CI Monitoring
 
 Set up alerts for:
+
 - ⚠️ Tests that **consistently approach threshold** (within 10%)
 - ⚠️ Tests with **high variance** (> 20% standard deviation)
 - ⚠️ **Unexpected xfail passes** (limitation may be resolved)

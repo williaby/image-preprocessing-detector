@@ -23,7 +23,8 @@ source: "Merged from remote branch claude/update-root-project-plan-011NESKE9dRWr
 ---
 
 **Project**: Project A - Image Preprocessing Detection & Quality Assessment for RAG Applications
-**Purpose**: Intelligent preprocessing gateway that analyzes documents, corrects quality issues, and provides routing metadata for downstream OCR/RAG processing
+**Purpose**: Intelligent preprocessing gateway that analyzes documents, corrects quality issues,
+and provides routing metadata for downstream OCR/RAG processing
 **Position**: First stage in a 4-project RAG document processing pipeline (A → B → C → D)
 **Repository**: `image-preprocessing-detector`
 
@@ -36,7 +37,8 @@ Project A serves as the **front-door gateway** for the RAG document processing p
 **Key Innovation**: Teacher-student ResNet architecture with device-priority execution (Local GPU → Local CPU → Modal GPU) that balances accuracy with cost efficiency. The system uses a lightweight "layout-lite" approach for structural analysis while deferring full semantic layout detection to Project B.
 
 **Pipeline Position**:
-```
+
+```text
 Project A (THIS REPO)    →    Project B           →    Project C        →    Project D
 image_detection                ocr-orchestrator         fusion-trust          vector-indexer
 ─────────────────              ────────────────         ────────────          ──────────────
@@ -48,7 +50,7 @@ image_detection                ocr-orchestrator         fusion-trust          ve
 OUTPUT:                        OUTPUT:                  OUTPUT:               OUTPUT:
 DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Vector DB
 + Corrected Images                                      + RAGChunk.json       Entries
-```
+```text
 
 **Expected Performance**: 2-6 pages/second per worker (CPU/GPU respectively), <150ms latency per page (GPU), with horizontal scalability to handle thousands of pages/hour.
 
@@ -70,6 +72,7 @@ DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Ve
 | **Phase 7**: ML IQA Optimization | ⏳ PLANNED | 0% | Optimization phase - not blocking MVP |
 
 **Phase 3 Training Complete (Nov 22, 2025)**:
+
 - **Teacher Model**: ResNet-50, 50 epochs, val_loss=0.2694, 1.91 GPU hours on A10
 - **Student Model**: ResNet-18, 30 epochs, val_loss=0.1386, distilled from teacher (T=4.0, α=0.7)
 - **ONNX Exports**: `models/iqa/onnx/resnet50_teacher_50epoch.onnx` (105 MB), `resnet18_student.onnx` (48 MB)
@@ -77,6 +80,7 @@ DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Ve
 - **Datasets Available**: OmniDocBench & OHR-Bench via NFS symlinks at `data/benchmarks/`
 
 **Recommended Next Steps**:
+
 1. **Priority 1**: Begin Phase 4 device-priority execution implementation
 2. **Priority 2**: Complete Phase 2 integration testing
 3. **Priority 3**: Integrate ONNX models into inference pipeline (iqa_ml.py)
@@ -90,6 +94,7 @@ DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Ve
 ### ✅ IN SCOPE - What Project A Does
 
 **Core Responsibilities:**
+
 - File ingestion & page rasterization (PDF → standardized 300 DPI images)
 - **Classical IQA** (8 detectors):
   - **Phase 1 (basic)**: Blur (Laplacian variance), Skew (Hough transform), Contrast (histogram analysis)
@@ -115,6 +120,7 @@ DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Ve
 ### ❌ OUT OF SCOPE - What Project A Does NOT Do
 
 **Explicitly Deferred to Projects B-D:**
+
 - ❌ Full layout detection with precise bounding boxes (Project B)
 - ❌ Reading order estimation (Project B)
 - ❌ OCR of any type (Project B)
@@ -134,7 +140,7 @@ DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Ve
 
 ### Multi-Stage Pipeline Overview
 
-```
+```text
 Input (PDF/Image)
     ↓
 [1. Ingestion & Standardization]
@@ -159,12 +165,13 @@ Input (PDF/Image)
 [9. DQS Calculation & Routing Recommendation]
     ↓
 DocumentMetadata.json + Corrected Images → Project B
-```
+```text
 
 ### Teacher-Student ResNet Architecture
 
 **Training Phase:**
-```
+
+```text
 Raw Datasets (OmniDocBench, OHR-Bench, custom)
    ↓
 [ResNet-50 Teacher Training]
@@ -176,10 +183,11 @@ Teacher Weights
 Student Model (default inference) + Teacher Model (selective inference)
    ↓
 Registered in local + Modal registries
-```
+```text
 
 **Runtime Phase:**
-```
+
+```text
 Incoming Document
    ↓
 Preflight Checks (DPI, format, page count)
@@ -205,16 +213,18 @@ Corrections (with guardrails)
 DQS + Routing Recommendation
        ↓
 Output Package → Project B
-```
+```text
 
 ### Device-Priority Execution
 
 **Device Selection Order:**
+
 1. **Local GPU** (if available and under utilization threshold)
 2. **Local CPU** (if latency acceptable for student inference)
 3. **Modal GPU** (if enabled, within quota, for teacher inference)
 
 **Critical Constraints:**
+
 - **Student (ResNet-18)**: Can run on CPU or GPU
   - CPU target: ≤40ms/page
   - GPU target: ≤10ms/page
@@ -226,6 +236,7 @@ Output Package → Project B
 ### Light Layout (Project A) vs Full Semantic Layout (Project B)
 
 **Light Layout Detection (Project A - THIS REPO)**:
+
 - **Purpose**: Element detection with bounding boxes, quality assessment, spatial hints
 - **Model**: **YOLOv10-doc** (specifically trained on DocLayNet, ONNX for production)
 - **Classes**: All 11 DocLayNet classes
@@ -248,6 +259,7 @@ Output Package → Project B
 - **Rationale**: YOLOv10-doc provides better accuracy/speed than YOLOv8, specifically trained on DocLayNet
 
 **Full Semantic Layout (Project B - ocr-orchestrator)**:
+
 - **Purpose**: Semantic understanding with reading order and element linking
 - **Input**: Receives YOLOv10-doc detections from Project A
 - **Additional Processing**:
@@ -263,11 +275,13 @@ Output Package → Project B
 ### Office Document Support (NEW CAPABILITY)
 
 **Supported Formats**:
+
 - `.docx` - Word documents
 - `.xlsx` - Excel spreadsheets
 - `.pptx` - PowerPoint presentations
 
 **Project A Responsibility (Embedded Image Extraction)**:
+
 - Use Docling to extract all embedded images from office documents
 - Apply standard preprocessing pipeline to each extracted image:
   - Ingestion & normalization (DPI detection, upscaling if needed)
@@ -277,12 +291,14 @@ Output Package → Project B
 - Hand off preprocessed images + metadata to Project B
 
 **Project B Responsibility (Text & Structure Extraction)**:
+
 - Use Docling for native office text extraction
 - Parse tables, formatting, structure
 - Combine preprocessed images from Project A with extracted text
 - Generate unified document representation
 
 **Rationale**:
+
 - Office documents contain embedded images (charts, diagrams, photos) that benefit from IQA and correction
 - Separation of concerns: Project A owns image quality, Project B owns text/structure extraction
 - Docling has native .docx/.xlsx/.pptx support for both images and text
@@ -292,6 +308,7 @@ Output Package → Project B
 ## Output JSON Schema
 
 ### Design Principles
+
 - **COCO-aligned** for bounding boxes (compatibility with downstream processors)
 - **Versioned schema** for reproducibility (`schema_version` field)
 - **Routing metadata** for Project B decision-making
@@ -432,6 +449,7 @@ Output Package → Project B
 ### New Schema Fields vs Original Plan
 
 **Added for RAG Pipeline Integration:**
+
 - `pdf_type`: Classification of PDF origin (image_only / born_digital / hybrid)
 - `dqs`: Document Quality Score with degradation + structural complexity
 - `pre_ocr_risk`: Holistic risk score for OCR difficulty (0-1)
@@ -441,6 +459,7 @@ Output Package → Project B
 - `teacher_iqa`: Teacher model outputs (when escalated)
 
 **Removed/Deferred to Project B:**
+
 - ~~`elements`~~: Per-element detection with precise bounding boxes → Project B responsibility
 - ~~`detected_issues`~~: Internal detail, not needed in handoff JSON
 
@@ -455,6 +474,7 @@ Output Package → Project B
 **Approach: Synthetic Data Generation + Weak Supervision + Knowledge Distillation**
 
 **Data Sources:**
+
 1. **Base Dataset**: Clean document images (10,000+ pages)
    - OmniDocBench: Multi-domain document dataset with quality annotations
    - OHR-Bench: OCR-hard regions dataset with quality labels
@@ -494,6 +514,7 @@ Output Package → Project B
 **Approach: Use Pretrained YOLOv10-doc (DocLayNet-trained)**
 
 **Model Source:**
+
 - **YOLOv10-doc**: Pre-trained on DocLayNet dataset (specifically for document layout)
 - **Classes**: All 11 DocLayNet classes out-of-box
   - Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header
@@ -502,17 +523,20 @@ Output Package → Project B
 - **No custom training needed**: Model already trained on 80k+ DocLayNet pages
 
 **Project A Usage (Light Layout)**:
+
 - Detect all 11 classes with bounding boxes (COCO format)
 - Per-element quality assessment via hybrid IQA
 - Spatial hints calculation (column membership, vertical position)
 - Structural complexity scoring (aggregate element counts/types)
 
 **Fine-tuning (Optional, if needed)**:
+
 - If project-specific documents have unique characteristics
 - Use transfer learning on 1-2k pages
 - Focus on rare classes or domain-specific content
 
 **Target Accuracy** (Out-of-box YOLOv10-doc on DocLayNet):
+
 - mAP@.50: >0.82
 - Per-class AP: >0.70 for all 11 classes
 
@@ -521,6 +545,7 @@ Output Package → Project B
 **Approach: PyMuPDF-based heuristics (no ML needed)**
 
 **Implementation:**
+
 - **Born-digital detection**: High proportion of extractable text, vector graphics
 - **Image-only detection**: No extractable text, only embedded images
 - **Hybrid detection**: Mix of extractable text and embedded images
@@ -532,6 +557,7 @@ Output Package → Project B
 **Status**: Prototype and benchmark before committing to implementation
 
 **Evaluation Methodology**:
+
 1. Benchmark YOLOv10-doc latency on pure images vs text documents
 2. Compare architectures:
    - **With gate**: Text detection (ensemble) → conditional layout detection
@@ -539,17 +565,20 @@ Output Package → Project B
 3. Measure cost-benefit: Gate overhead + conditional savings vs always-layout overhead
 
 **Decision Criteria**:
+
 - **If YOLOv10-doc <20ms on all types** → **SKIP GATE** (not worth complexity)
 - **If YOLOv10-doc >50ms on pure images** → **IMPLEMENT GATE** (meaningful savings)
 - **If YOLOv10-doc 20-50ms** → **MARGINAL** (user decision based on complexity tolerance)
 
 **Test Datasets**:
+
 - 500 pages across 4 categories (pure images, text-light, text-dense, hybrid)
 - Measure: Gate latency, YOLOv10 latency, accuracy, total time saved
 
 **Benchmark Specification**: See [benchmarks/text_gate_evaluation.md](../../benchmarks/text_gate_evaluation.md)
 
 **Action Items**:
+
 - [ ] Acquire YOLOv10-doc pretrained model
 - [ ] Run benchmark on representative dataset
 - [ ] Document decision with empirical data
@@ -562,18 +591,21 @@ Output Package → Project B
 ### ML-based IQA: Teacher-Student ResNet
 
 **Teacher Model: ResNet-50**
+
 - **Architecture**: Multi-head IQA network
   - Backbone: ResNet-50 (ImageNet pretrained)
   - Heads: 5 parallel branches (blur, noise, skew, illumination, artifacts)
   - Output: Per-head scores (0-1) + confidence estimates
 
 **Student Model: ResNet-18**
+
 - **Architecture**: Distilled multi-head IQA network
   - Backbone: ResNet-18 (ImageNet pretrained)
   - Same head structure as teacher
   - Trained via knowledge distillation from teacher
 
 **Training Configuration:**
+
 ```python
 # Teacher Training (ResNet-50)
 INPUT_SIZE = 224
@@ -602,11 +634,13 @@ Albumentations pipeline (see Training Data Strategy)
 ```
 
 **Optimization:**
+
 - **ONNX Export**: Both teacher and student for cross-platform deployment
 - **INT8 Quantization**: ONNX Runtime for CPU deployment (student only)
 - **TensorRT**: GPU inference acceleration (optional)
 
 **Device-Priority Execution**:
+
 - **Student inference**:
   1. Local GPU (if available, utilization <80%)
   2. Local CPU (ONNX INT8)
@@ -619,6 +653,7 @@ Albumentations pipeline (see Training Data Strategy)
 ### Light Layout Detection (YOLOv10-doc)
 
 **Chosen Solution: YOLOv10-doc (DocLayNet-pretrained)**
+
 - **Model**: YOLOv10-doc (specifically trained on DocLayNet)
 - **Classes**: All 11 DocLayNet classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title)
 - **Input**: Variable size (maintains aspect ratio), optimized for document images
@@ -634,6 +669,7 @@ Albumentations pipeline (see Training Data Strategy)
 ### ML-based IQA Evaluation (ResNet-50 Teacher + ResNet-18 Student)
 
 **Primary Metrics:**
+
 1. **Per-Head Metrics** (blur, noise, skew, illumination, artifacts):
    - Precision, Recall, F1-Score for binary classification
    - ROC-AUC for confidence calibration
@@ -648,6 +684,7 @@ Albumentations pipeline (see Training Data Strategy)
    - Reliability diagrams per head
 
 **Benchmark Targets:**
+
 - **Teacher (ResNet-50)**:
   - Per-head F1-Score: >0.90
   - mAP: >0.92
@@ -663,6 +700,7 @@ Albumentations pipeline (see Training Data Strategy)
 ### Light Layout Evaluation (YOLOv10-doc)
 
 **Primary Metrics:**
+
 1. **Element Detection Accuracy**:
    - mAP@.50 (COCO metric): >0.82 (target), >0.75 (acceptable)
    - mAP@.50-.95: >0.70
@@ -685,14 +723,17 @@ Albumentations pipeline (see Training Data Strategy)
 ### End-to-End Pipeline Evaluation
 
 **Metric: Routing Accuracy**
+
 - Compare `ocr_routing_recommendation` against ground-truth routing decisions
 - **Target**: >0.88 accuracy on routing decisions
 
 **DQS Correlation**:
+
 - Correlation between DQS and downstream OCR accuracy (Project B)
 - **Target**: Pearson correlation >0.75
 
 **Performance Metrics:**
+
 1. **Latency**:
    - Target: <150ms per page (GPU), <400ms (CPU)
    - Measured: p50, p95, p99 latencies
@@ -713,44 +754,54 @@ Albumentations pipeline (see Training Data Strategy)
 ### Critical Production Risks
 
 #### 1. Teacher-Student Degradation
+
 **Risk**: Student model significantly underperforms teacher on edge cases
 **Impact**: HIGH - Missed quality issues on difficult documents
 **Mitigation**:
+
 - Uncertainty-based teacher escalation (high entropy → trigger teacher)
 - Classical IQA discrepancy checks (student disagrees with classical → trigger teacher)
 - Continuous monitoring of student-teacher agreement
 - Quarterly retraining with production failures
 
 #### 2. Device Availability & Cost Control
+
 **Risk**: Modal GPU costs spiral out of control OR teacher unavailable when needed
 **Impact**: MEDIUM-HIGH - Budget overruns or quality degradation
 **Mitigation**:
+
 - Strict Modal GPU budget caps (`modal_budget_per_run`)
 - Teacher usage tracking and alerting
 - Graceful degradation: Student-only output if teacher unavailable
 - Per-document teacher page limits
 
 #### 3. Text/No-Text Gating Errors
+
 **Risk**: False negatives on faint/stylized text → wrong processing path
 **Impact**: HIGH - Missed layout-lite analysis for text documents
 **Mitigation**:
+
 - Ensemble gate: Morphological stroke-density + EAST/DBNet-lite
 - Calibrate on validation set with aggressive augmentations (low-ink, halftone, fax)
 - If text gate uncertain (0.4-0.6 confidence) → run both paths and merge
 
 #### 4. Synthetic→Real Domain Gap
+
 **Risk**: ML models trained on synthetic augmentations fail on real-world artifacts
 **Impact**: HIGH - Over-correction or missed issues
 **Mitigation**:
+
 - Seed with OHR-Bench real-world noisy documents (20% of training set)
 - Add artifact-specific augmentations: JPEG ringing, halftone, uneven illumination
 - Test on OHR-Bench holdout set exclusively
 - Active learning: Mine production failures, add to training set
 
 #### 5. Over-Correction Harm
+
 **Risk**: Corrections applied when not needed → degrades OCR accuracy
 **Impact**: MEDIUM-HIGH - Downstream OCR failures
 **Mitigation**:
+
 - Confidence thresholds per correction (only apply if high confidence)
 - "Do-no-harm" guardrails: Measure quality improvement before/after
   - Only deskew if angle >2° AND variance improves by >5%
@@ -758,9 +809,11 @@ Albumentations pipeline (see Training Data Strategy)
 - A/B testing: Compare OCR accuracy with/without corrections on validation set
 
 #### 6. Scope Creep into Project B
+
 **Risk**: Layout-lite evolves into full layout detection, duplicating Project B
 **Impact**: MEDIUM - Architectural drift, maintenance burden
 **Mitigation**:
+
 - Strict ADR on layout-lite boundaries (page-level only, no precise bounding boxes)
 - Regular architecture review with Project B team
 - Schema validation: Ensure DocumentMetadata.json stays within contract
@@ -774,6 +827,7 @@ Albumentations pipeline (see Training Data Strategy)
 **Status**: ✅ VERIFIED COMPLETE (November 2025 audit)
 
 **Completed Deliverables:**
+
 - ✅ Repository with CI/CD pipeline (GitHub Actions)
 - ✅ JSON schema v1.0 with Pydantic v2 models
 - ✅ Pre-commit hooks (Ruff, MyPy, Bandit)
@@ -787,6 +841,7 @@ Albumentations pipeline (see Training Data Strategy)
 **Status**: ✅ VERIFIED COMPLETE (November 2025 audit)
 
 **Completed Tasks:**
+
 1. ✅ **PDF/Image Ingestion** (src/ingestion/)
    - File format detection and validation
    - PDF to image conversion (PyMuPDF)
@@ -817,6 +872,7 @@ Albumentations pipeline (see Training Data Strategy)
    - MetadataBuilder class for pipeline integration
 
 **Success Criteria:** ✅ MET
+
 - Pipeline processes 100-page PDF without errors
 - JSON Accuracy >0.60 on test set (baseline)
 - Latency <500ms per page (CPU-only)
@@ -828,6 +884,7 @@ Albumentations pipeline (see Training Data Strategy)
 **Status**: ✅ VERIFIED COMPLETE (November 2025 audit, PR #10 merged)
 
 **Completed Deliverables:**
+
 - ✅ DPI detection module (src/ingestion/pdf_resolution.py)
 - ✅ PDF upscaling module with 5 OpenCV algorithms (src/ingestion/pdf_upscaler.py)
 - ✅ Pre-flight analysis orchestrator (src/ingestion/pdf_analyzer.py)
@@ -835,6 +892,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ Comprehensive test suite (26+ unit tests, 8+ integration tests)
 
 **Performance Achieved:**
+
 - DPI detection accuracy: 100%
 - Processing time: 310-360ms per document
 - Memory usage: <2GB (page-by-page processing)
@@ -902,6 +960,7 @@ Albumentations pipeline (see Training Data Strategy)
   - Edge case coverage (grayscale/color, various resolutions)
 
 **Performance Achieved:**
+
 - Combined detector execution: <25ms per page (target: <50ms) - **50% faster than target**
 - Memory usage: <500MB per worker
 - Test success rate: 100% (125+ total tests passing for all phases)
@@ -913,6 +972,7 @@ Albumentations pipeline (see Training Data Strategy)
   - Bleed-through detection: ~4-6ms per page
 
 **Success Criteria:** ✅ ALL MET
+
 - All 8 detectors operational: ✅ (3 basic + 5 enhanced)
 - Performance: <50ms per page: ✅ (achieved <25ms, 50% improvement)
 - Test coverage: >80%: ✅ (100% for detector modules)
@@ -921,6 +981,7 @@ Albumentations pipeline (see Training Data Strategy)
 - Discrepancy framework functional: ✅
 
 **Integration Points:**
+
 - Integrated into main IQA pipeline after text gate (Phase 1)
 - Feeds into DQS calculation for degradation scoring (Phase 2)
 - Used for discrepancy analysis with ML IQA student/teacher models (Phase 3)
@@ -939,6 +1000,7 @@ Albumentations pipeline (see Training Data Strategy)
 **Total Sprints**: 26 sprints (~78 hours of implementation work, excluding training/testing)
 
 **Verified Implementations (November 2025):**
+
 - ✅ **Schema Extensions** - All fields implemented in schema.py:
   - PDFType enum, DQSMetadata, OCRRoutingStrategy, LayoutType
   - PageLayoutSummary, TeacherUsage, ml_iqa, teacher_iqa fields
@@ -950,6 +1012,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ **Document Processor** - src/ingestion/document_processor.py (functional with TODOs)
 
 **Remaining (Minor):**
+
 - 🔲 End-to-end integration validation testing
 - 🔲 Performance benchmarking of Phase 2 components
 
@@ -1245,6 +1308,7 @@ Albumentations pipeline (see Training Data Strategy)
 ---
 
 **Phase 2 Deliverables:**
+
 - ✅ Complete DocumentMetadata.json schema aligned with RAG Pipeline vision
 - ✅ PDF type classification (99.5% accuracy)
 - ✅ Layout-lite detection (heuristics-based)
@@ -1255,6 +1319,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ Comprehensive validation reports
 
 **Phase 2 Success Criteria:**
+
 - Schema validation: 100% pass on test documents
 - PDF type classification: >99% accuracy
 - Layout-lite: >85% F1 per presence flag
@@ -1275,6 +1340,7 @@ Albumentations pipeline (see Training Data Strategy)
 **Total Sprints**: 38 sprints (~130 hours of implementation + training time)
 
 **Verified Implementations (November 2025):**
+
 - ✅ **ResNet-50 Teacher Architecture** - src/models/resnet_teacher.py (5-head IQA network)
 - ✅ **ResNet-18 Student Architecture** - src/models/resnet_student.py (distillation-ready)
 - ✅ **Loss Functions** - src/models/loss_functions.py (BCEWithLogitsLoss, MSE)
@@ -1289,6 +1355,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ **GCS Artifact Storage** - src/utils/gcs_uploader.py
 
 **COMPLETED (November 22, 2025):**
+
 - ✅ Dataset acquisition (OmniDocBench, OHR-Bench via NFS symlinks)
 - ✅ Training dataset: 99,630 samples (IQA Phase 2 100K dataset)
 - ✅ Teacher model training (50 epochs, 1.91 GPU hours on A10, val_loss=0.2694)
@@ -1582,7 +1649,7 @@ Albumentations pipeline (see Training Data Strategy)
   - KL divergence loss (student logits vs teacher logits)
   - Temperature-scaled distillation (T=4.0)
   - Hard label loss (student vs ground truth)
-  - Combined loss: alpha * distillation + (1-alpha) * hard_label
+  - Combined loss: alpha *distillation + (1-alpha)* hard_label
   - Add unit test for loss function
 
 - **Sprint 3.7.3**: Implement student training loop (3 hours)
@@ -1770,6 +1837,7 @@ Albumentations pipeline (see Training Data Strategy)
 ---
 
 **Phase 3 Deliverables:**
+
 - ✅ Trained ResNet-50 teacher model (PyTorch + ONNX)
 - ✅ Trained ResNet-18 student model (PyTorch + ONNX)
 - ✅ Training dataset (50k images, versioned with DVC)
@@ -1777,6 +1845,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ Integrated ML IQA in pipeline with uncertainty-based teacher escalation
 
 **Success Criteria:**
+
 - Teacher mAP: >0.92, per-head F1 >0.90, ECE <0.03
 - Student mAP: >0.88, per-head F1 >0.85, ECE <0.05
 - Student-teacher KL divergence: <0.15
@@ -1891,6 +1960,7 @@ Albumentations pipeline (see Training Data Strategy)
 ---
 
 **Phase 4 Deliverables:**
+
 - ✅ Device-priority execution system (24 sprints)
 - ✅ Modal GPU integration (optional, configurable)
 - ✅ Cost tracking and quota enforcement
@@ -1900,6 +1970,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ Performance reports and dashboards
 
 **Phase 4 Success Criteria:**
+
 - Device selection accuracy: 100% (follows priority rules)
 - Modal GPU usage: Within configured budget
 - Teacher CPU blocking: 100% in production mode
@@ -2003,6 +2074,7 @@ Albumentations pipeline (see Training Data Strategy)
 ---
 
 **Phase 5 Deliverables:**
+
 - ✅ Comprehensive test suite (80%+ coverage, 22 sprints)
 - ✅ FastAPI service with async endpoints
 - ✅ Docker container and Docker Compose
@@ -2012,6 +2084,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ Integration guide for Project B
 
 **Phase 5 Success Criteria:**
+
 - Test coverage: >80%
 - All integration tests pass
 - All stress tests pass
@@ -2108,6 +2181,7 @@ Albumentations pipeline (see Training Data Strategy)
 ---
 
 **Phase 6 Deliverables (Initial Setup):**
+
 - ✅ Structured logging framework with rotation
 - ✅ Prometheus metrics collection
 - ✅ Grafana dashboards (system, application, model, cost)
@@ -2116,6 +2190,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ Comprehensive monitoring documentation
 
 **Phase 6 Success Criteria (Initial Setup):**
+
 - Drift detection alerts within 1 week of distribution shift
 - Alerting functional for latency spikes, errors, cost overruns
 - Dashboards provide real-time visibility into system health
@@ -2128,32 +2203,38 @@ Albumentations pipeline (see Training Data Strategy)
 After initial setup, ongoing operations include:
 
 **Weekly Tasks**:
+
 - Review drift metrics (KL divergence, confidence distributions)
 - Review cost analytics (Modal usage, teacher escalation trends)
 - Mine high-uncertainty samples for active learning
 
 **Monthly Tasks**:
+
 - Run model performance evaluation on change-detection set
 - Analyze error logs for systematic failures
 - Update alert thresholds if needed
 
 **Quarterly Tasks**:
+
 - Retrain models with production failures added to dataset
 - Recalibrate confidence thresholds per IQA head
 - Update documentation with lessons learned
 - A/B test new model versions (deploy to 10% traffic, compare metrics)
 
 **Annual Tasks**:
+
 - Major model architecture updates
 - Dataset refresh (add new public datasets like updated OmniDocBench)
 - Infrastructure upgrades (GPU hardware, cloud providers)
 
 **Continuous Improvement Pipeline:**
+
 1. **Data Flywheel**: Collect production failures → manual review → add to training set → retrain quarterly
 2. **Active Learning**: Weekly mining of high-uncertainty samples → annotate → add to dataset
 3. **Model Retraining**: Quarterly retraining with updated data → A/B test → gradual rollout
 
 **Long-term Success Criteria:**
+
 - Model performance degradation <2% over 6 months
 - Active learning reduces annotation effort by >50%
 - 95% of production failures resolved in next model version
@@ -2174,12 +2255,14 @@ After initial setup, ongoing operations include:
 #### Background & Rationale
 
 **Current Training Approach**:
+
 - **Labels**: Binary (0.0 = no defect, 1.0 = defect present)
 - **Loss**: Binary Cross-Entropy (BCE)
 - **Performance**: mAP 0.88, F1 0.85-0.90 per class
 - **Limitation**: Poor calibration (ECE ~0.18) - predicted probabilities not meaningful for severity assessment
 
 **Information Loss from Binarization**:
+
 ```python
 # Weak supervision computes continuous metrics
 laplacian_var = 150  # Moderate blur → normalized score 0.4
@@ -2190,17 +2273,20 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 ```
 
 **Benefits of Continuous Labels**:
+
 1. **Better calibration**: ECE 0.18 → 0.08 (-56% improvement)
 2. **Severity prediction**: New capability to distinguish mild (0.3) vs severe (0.9) defects
 3. **Meaningful quality scores**: Aggregated DQS scores more interpretable
 4. **Fewer false escalations**: Better classical+ML discrepancy analysis with calibrated scores
 
 **Expected Performance Impact**:
+
 - Binary F1: 0.88 → 0.87 (-1%, negligible)
 - Calibration ECE: 0.18 → 0.08 (-56%, major improvement)
 - Severity MAE: N/A → 0.12 (new capability)
 
 **Trade-offs**:
+
 - ⚠️ More sensitive to weak supervision noise (requires 50% more data: 150K vs 100K)
 - ⚠️ Slightly softer decision boundary (may reduce binary F1 by ~1%)
 - ⚠️ Requires careful loss function design (combined BCE+MSE)
@@ -2210,23 +2296,27 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 #### Week 1: Dataset Generation with Continuous Labels (Day 1-5)
 
 **Sprint 7.1.1: Expand ClassicalIQAScores dataclass** (2 hours) ✅ DONE
+
 - Add 5 new continuous score fields: `noise_score`, `illumination_score`, `compression_score`, `binarization_score`, `bleed_through_score`
 - Maintain backward compatibility with optional defaults
 - Update Pydantic validation (enforce [0, 1] range)
 
 **Sprint 7.1.2: Update weak supervision labeler** (4 hours)
+
 - Modify `WeakSupervisionLabeler` to output continuous scores instead of binary labels
 - Normalize classical detector outputs to [0, 1] scale (0=good, 1=bad)
 - Implement label smoothing (clip to [0.2, 0.8] to reduce overconfidence)
 - Add outlier filtering (remove samples with extreme detector disagreement)
 
 **Sprint 7.1.3: Generate 150K continuous-label dataset** (2 days)
+
 - Run `prepare_phase2_data.py` with continuous labeling mode
 - Target: 150K samples (50% more than binary training for noise robustness)
 - 70/15/15 train/val/test split (105K / 22.5K / 22.5K)
 - Upload to GCS: `gs://image_detection_b/training/iqa_phase2_150k_continuous/`
 
 **Sprint 7.1.4: Dataset validation** (3 hours)
+
 - Verify label distribution (continuous scores, not just 0/1)
 - Check outlier removal effectiveness
 - Validate normalization ranges ([0, 1] for all scores)
@@ -2237,23 +2327,27 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 #### Week 2: Model Training with Combined Loss (Day 6-12)
 
 **Sprint 7.2.1: Implement combined BCE+MSE loss** (3 hours)
+
 - Design hybrid loss function: `α * BCE(pred, target>0.5) + β * MSE(pred, target)`
 - BCE component: Strong classification signal (defect present/absent)
 - MSE component: Severity gradation (how much defect)
 - Hyperparameter tuning: α=0.6, β=0.4 (favor classification, add severity)
 
 **Sprint 7.2.2: Update training loop** (2 hours)
+
 - Modify `TeacherTrainer` to use continuous targets
 - Update loss computation for soft labels
 - Add severity MAE metric tracking alongside F1/mAP
 
 **Sprint 7.2.3: Train ResNet-50 teacher (continuous)** (5 days)
+
 - Modal GPU training: 50 epochs, batch_size=128
 - Target metrics: mAP>0.86, F1>0.83, ECE<0.10, Severity MAE<0.15
 - Early stopping based on validation ECE (not just loss)
 - Save checkpoints every 5 epochs
 
 **Sprint 7.2.4: Export teacher to ONNX** (1 hour)
+
 - Export to `resnet50_teacher_continuous.onnx`
 - Validate ONNX inference matches PyTorch
 - Upload to GCS model registry
@@ -2263,15 +2357,18 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 #### Week 3: Student Distillation & Validation (Day 13-19)
 
 **Sprint 7.3.1: Knowledge distillation with continuous teacher** (3 days)
+
 - Train ResNet-18 student via distillation from continuous teacher
 - Use same combined loss (BCE+MSE) + distillation loss
 - Target metrics: mAP>0.85, F1>0.82, ECE<0.12, Severity MAE<0.18
 
 **Sprint 7.3.2: Export student to ONNX** (1 hour)
+
 - Export to `resnet18_student_continuous.onnx`
 - Validate ONNX inference parity with PyTorch
 
 **Sprint 7.3.3: Calibration validation** (4 hours)
+
 - Compute Expected Calibration Error (ECE) on test set
 - Compare binary vs continuous models:
   - Binary ECE: ~0.18
@@ -2279,16 +2376,19 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - Generate calibration plots (reliability diagrams)
 
 **Sprint 7.3.4: Severity prediction validation** (4 hours)
+
 - Evaluate severity MAE on test set
 - Compare predicted severity with classical detector outputs
 - Analyze per-class severity prediction accuracy
 
 **Sprint 7.3.5: Discrepancy analysis validation** (3 hours)
+
 - Test classical+ML discrepancy calculation with continuous scores
 - Verify teacher escalation decisions more accurate (fewer false escalations)
 - Compare escalation rates: binary vs continuous models
 
 **Sprint 7.3.6: A/B testing preparation** (2 hours)
+
 - Document model versioning (binary=v1.0, continuous=v2.0)
 - Create deployment plan: 10% traffic → 50% → 100% rollout
 - Define success metrics for A/B test:
@@ -2301,21 +2401,25 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 #### Week 4: Integration & Rollout (Day 20-23)
 
 **Sprint 7.4.1: Update inference pipeline** (3 hours)
+
 - Modify `MLIQADetector` to load continuous models
 - Update config to support model version selection (binary vs continuous)
 - Add feature flag for gradual rollout
 
 **Sprint 7.4.2: Integration testing** (4 hours)
+
 - Run full test suite with continuous models
 - Verify backward compatibility (existing code works with new models)
 - Validate output JSON schema unchanged
 
 **Sprint 7.4.3: Performance benchmarking** (3 hours)
+
 - Compare inference latency: continuous vs binary models
 - Target: <5% latency increase (model complexity same, just different training)
 - Benchmark on GPU/CPU devices
 
 **Sprint 7.4.4: Documentation & report** (2 hours)
+
 - Document continuous vs binary model comparison
 - Update MODEL_CARD.md with v2.0 model details
 - Create deployment runbook for continuous model rollout
@@ -2323,6 +2427,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 ---
 
 **Phase 7 Deliverables:**
+
 - ✅ 150K continuous-label training dataset (DVC-tracked)
 - ✅ ResNet-50 teacher trained with continuous labels (v2.0)
 - ✅ ResNet-18 student distilled from continuous teacher (v2.0)
@@ -2332,6 +2437,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - ✅ Updated documentation (MODEL_CARD.md, deployment runbook)
 
 **Phase 7 Success Criteria:**
+
 - **Calibration improvement**: ECE <0.10 (from 0.18 with binary training)
 - **Binary classification maintained**: F1 >0.82 (≤6% degradation acceptable)
 - **Severity prediction**: MAE <0.18 on continuous scale
@@ -2339,17 +2445,20 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - **Performance**: <5% latency increase vs binary models
 
 **Phase 7 Cost Estimate:**
+
 - Dataset generation: ~$5 (GCS storage + compute)
 - Teacher training: ~$10-15 (Modal GPU, 50 epochs on 150K samples)
 - Student training: ~$5-8 (Modal GPU, 30 epochs distillation)
 - **Total**: ~$20-28
 
 **Phase 7 Dependencies:**
+
 - Requires: Phase 2-6 complete (integration testing, deployment, monitoring established)
 - Blocks: None (optimization phase, not blocking MVP)
 - Related: Uses expanded ClassicalIQAScores from Priority 5
 
 **Phase 7 Notes:**
+
 - This is an **optimization phase**, not required for MVP deployment
 - Current binary-trained models (v1.0) are production-ready and should be used initially
 - Continuous retraining provides incremental improvement (~10-20% better calibration, severity prediction)
@@ -2362,15 +2471,18 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 ### Core Technologies
 
 **Programming Language:**
+
 - Python 3.10+ (type hints, modern features)
 
 **Computer Vision:**
+
 - OpenCV 4.8+ (classical CV, image corrections)
 - Pillow (image manipulation)
 - PyMuPDF (PDF to image conversion, text extraction)
 - **Docling** (office document parsing for embedded image extraction)
 
 **Deep Learning:**
+
 - PyTorch 2.0+ (model training and inference)
 - torchvision (image transforms, pretrained ResNet models)
 - ONNX Runtime (cross-platform inference, INT8 quantization)
@@ -2378,33 +2490,40 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - **YOLOv10-doc** (DocLayNet-trained layout detection model, ONNX format)
 
 **Data Augmentation:**
+
 - Albumentations (fast, GPU-accelerated augmentations)
 
 **OCR (Secondary Analysis - Minimal Use):**
+
 - Tesseract OCR (lightweight script detection, if needed)
 - pytesseract (Python wrapper)
 
 **API & Web Service:**
+
 - FastAPI (async API framework)
 - Uvicorn (ASGI server)
 - Pydantic v2 (data validation and schema)
 
 **Task Queue (Optional):**
+
 - Celery or RQ (async worker pool)
 - Redis (message broker)
 
 **Monitoring & Logging:**
+
 - Prometheus (metrics collection)
 - Grafana (visualization)
 - Sentry (error tracking, optional)
 - structlog + rich (structured logging with console output)
 
 **Testing:**
+
 - pytest (unit and integration tests)
 - pytest-cov (code coverage)
 - hypothesis (property-based testing, optional)
 
 **Development Tools:**
+
 - Poetry (dependency management)
 - Ruff (fast linting and formatting)
 - MyPy (static type checking)
@@ -2413,26 +2532,31 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - Safety (dependency vulnerability scanning)
 
 **Data Versioning:**
+
 - DVC (Data Version Control, optional)
 - Git LFS (large file storage, optional)
 
 **Containerization:**
+
 - Docker (service containerization)
 - Docker Compose (local development)
 - Kubernetes (production orchestration, optional)
 
 **Remote GPU (Optional):**
+
 - Modal.com (serverless GPU for teacher inference)
 
 ### System Requirements
 
 **Development Environment:**
+
 - CPU: 8+ cores (for data processing)
 - RAM: 32GB+ (for large dataset handling)
 - GPU: NVIDIA GPU with 8GB+ VRAM (RTX 3080, A4000, or better)
 - Storage: 500GB+ SSD (datasets, models, checkpoints)
 
 **Production Deployment (Per Worker):**
+
 - **GPU Worker**:
   - GPU: NVIDIA T4 (16GB), L4, or A10 (24GB)
   - CPU: 4 cores
@@ -2444,6 +2568,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
   - Storage: 50GB
 
 **Scaling:**
+
 - Load Balancer: Nginx or cloud LB (AWS ALB, GCP Cloud Load Balancing)
 - Horizontal scaling: 10-100 workers for high-throughput scenarios
 
@@ -2454,6 +2579,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 ### Model Performance KPIs
 
 **ML-based IQA (Teacher-Student):**
+
 - **Teacher (ResNet-50)**:
   - mAP: >0.92
   - Per-head F1: >0.90
@@ -2465,11 +2591,13 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
   - Student-teacher KL divergence: <0.15
 
 **Layout-Lite Classification:**
+
 - `layout_type` accuracy: >0.90
 - Presence flags F1: >0.85 per flag
 - Inference time: <5ms GPU (YOLOv8-nano) or <5ms CPU (heuristics)
 
 **End-to-End Pipeline:**
+
 - JSON Accuracy: >0.85
 - Routing accuracy: >0.88
 - DQS correlation with OCR difficulty: >0.75
@@ -2479,21 +2607,25 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 ### Operational KPIs
 
 **Reliability:**
+
 - Uptime: >99.5%
 - Error rate: <0.5%
 - Mean time to recovery (MTTR): <1 hour
 
 **Performance:**
+
 - Latency p95: <150ms (GPU) / <400ms (CPU)
 - Throughput: Meets target SLA (6 pages/sec GPU, 2 pages/sec CPU)
 - Resource utilization: GPU 70-85%, CPU 60-75%
 
 **Quality:**
+
 - User-reported issues: <5% of processed pages
 - False positive rate: <10% per issue type
 - False negative rate: <15% per issue type
 
 **Cost (Device-Priority Execution):**
+
 - Modal GPU usage: Within configured budget
 - Teacher escalation rate: <20% of documents (target: 10-15%)
 - Cost per page: <$0.01 (target: <$0.005)
@@ -2501,11 +2633,13 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 ### Business KPIs
 
 **Efficiency:**
+
 - Reduce manual preprocessing time by >80%
 - Increase RAG ingestion throughput by >5x
 - Improve downstream OCR accuracy by >30% (via quality corrections)
 
 **Integration:**
+
 - Project B handoff: 100% schema compliance
 - Routing accuracy: >88% agreement with optimal OCR engine selection
 
@@ -2514,17 +2648,20 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 ## Related Documentation
 
 ### RAG Pipeline Architecture (docs/development/RAG Pipeline/)
+
 - **[RAG-pipeline-project-overview.md](docs/development/RAG Pipeline/RAG-pipeline-project-overview.md)**: Four-project architecture overview with responsibility boundaries
 - **[Project_A_F_NF.md](docs/development/RAG Pipeline/Project_A_F_NF.md)**: Functional and Non-Functional Requirements for Project A
 - **[project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md)**: Detailed 10-week implementation roadmap
 - **[PROJECT_ALIGNMENT_ANALYSIS.md](docs/development/RAG Pipeline/PROJECT_ALIGNMENT_ANALYSIS.md)**: Gap analysis and alignment roadmap
 
 ### Project-Specific Documentation
+
 - **[CLAUDE.md](CLAUDE.md)**: Project-specific guidance for Claude Code development
 - **[ARCHITECTURE_CORRECTION.md](ARCHITECTURE_CORRECTION.md)**: Correction pipeline architecture and guardrails
 - **[schema.py](src/image_preprocessing_detector/schema.py)**: Pydantic v2 models for DocumentMetadata and related schemas
 
 ### External Benchmarks
+
 - **OmniDocBench**: Multi-domain document dataset with layout and quality annotations
 - **OHR-Bench**: OCR-hard regions benchmark for quality assessment validation
 - **PubLayNet**: Layout detection benchmark (for layout-lite validation)
@@ -2538,12 +2675,14 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 **Decision**: Use ResNet-50 teacher + ResNet-18 student with knowledge distillation instead of single-model MobileNetV3/EfficientNet.
 
 **Rationale**:
+
 - **Accuracy-Cost Trade-off**: Teacher provides high-fidelity quality assessment on difficult cases; student provides fast, cost-effective inference on majority of documents
 - **Selective Escalation**: Teacher invoked only on high-risk documents (10-20% of corpus), reducing average cost
 - **Knowledge Distillation**: Student learns from teacher's soft labels, achieving near-teacher accuracy at fraction of computational cost
 - **Continuous Improvement**: Teacher can be retrained on hard samples without disrupting production (student remains default)
 
 **Alternatives Considered**:
+
 - Single MobileNetV3 model: Lower accuracy on edge cases, no escalation path
 - Single EfficientNet model: Higher GPU cost, less flexible cost control
 
@@ -2556,12 +2695,14 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 **Decision**: Implement device-priority execution: Local GPU → Local CPU → Modal GPU, with teacher CPU blocking in production mode.
 
 **Rationale**:
+
 - **Cost Optimization**: Prefer free local resources before paid cloud GPU
 - **Latency Control**: Local GPU provides lowest latency for GPU-capable inference
 - **Safety**: Teacher CPU blocking prevents expensive, slow inference on CPU
 - **Flexibility**: Modal GPU provides burst capacity for high-load scenarios
 
 **Alternatives Considered**:
+
 - Always use local resources: No burst capacity for high-load scenarios
 - Always use Modal GPU: Higher baseline cost, network latency
 
@@ -2574,6 +2715,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 **Decision**: Use YOLOv10-doc in Project A for element detection with bounding boxes, quality assessment, and spatial hints; defer semantic relationships and reading order to Project B.
 
 **Rationale**:
+
 - **Separation of Concerns**: Project A detects WHERE elements are and WHAT QUALITY they have; Project B determines HOW TO READ them and HOW THEY RELATE
 - **Model Choice**: YOLOv10-doc specifically trained on DocLayNet provides better accuracy/speed than YOLOv8
   - Pre-trained on 80k+ DocLayNet pages (no custom training needed)
@@ -2586,6 +2728,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - **Hybrid IQA**: Enables per-element quality assessment (critical for technical documents with embedded figures/charts)
 
 **Alternatives Considered**:
+
 - YOLOv8-nano with 4 lite blocks: Less accurate, missing specialized content detection (formulas, captions, footnotes)
 - Heuristics-based only: Insufficient accuracy for complex layouts, no bounding boxes
 - Full semantic layout in Project A: Violates separation of concerns, requires OCR text Project A doesn't have
@@ -2600,12 +2743,14 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 **Decision**: Calculate Document Quality Score (DQS) and routing recommendation in Project A; hand off to Project B for OCR engine selection.
 
 **Rationale**:
+
 - **Single Source of Truth**: Project A analyzes quality once; Project B uses metadata for decisions
 - **Efficiency**: Avoids Project B re-running quality analysis
 - **Holistic Signal**: DQS combines degradation + structural complexity for comprehensive quality assessment
 - **Routing Optimization**: Explicit routing recommendation guides Project B to optimal OCR engine
 
 **Alternatives Considered**:
+
 - Project B calculates own routing: Duplicates work, potential inconsistency
 - No routing metadata: Project B must guess optimal OCR engine, lower accuracy
 
@@ -2618,6 +2763,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 **Decision**: Use Docling for embedded image extraction from office documents (.docx, .xlsx, .pptx) in Project A; defer office text and structure extraction to Project B.
 
 **Rationale**:
+
 - **Comprehensive Support**: Office documents contain embedded images (charts, diagrams, photos) that benefit from IQA and correction
 - **Tool Selection**: Docling provides native support for both image extraction (Project A) and text/structure parsing (Project B)
 - **Separation of Concerns**:
@@ -2627,12 +2773,14 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - **Image Quality**: Embedded images often have quality issues (low resolution, compression artifacts) that benefit from Project A's preprocessing
 
 **Alternatives Considered**:
+
 - python-docx/openpyxl/python-pptx: Basic image extraction only, no text structure parsing for Project B
 - Marker only: Excellent for PDFs, but no native office format support
 - Convert office to PDF first: Loses native structure information, introduces conversion artifacts
 - Skip office formats entirely: Misses significant document source (many business/academic documents in Office formats)
 
 **Implementation**:
+
 1. Project A: `Docling.extract_images(office_file)` → standard preprocessing pipeline per image
 2. Project B: `Docling.parse_document(office_file)` → text + structure + receive preprocessed images from Project A
 3. Unified output: Project B combines native text with preprocessed images
@@ -2646,6 +2794,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 Project A serves as the intelligent gateway for the RAG document processing pipeline, providing high-quality preprocessing, comprehensive quality assessment, and routing metadata to downstream projects. The teacher-student ResNet architecture with device-priority execution balances accuracy with cost efficiency, while the light layout approach (YOLOv10-doc) provides complete element detection with clear separation of concerns from Project B.
 
 **Key Success Factors:**
+
 1. **Teacher-Student Architecture**: High accuracy on difficult cases, cost-effective on routine documents
 2. **Device-Priority Execution**: Optimizes cost while maintaining performance SLAs
 3. **YOLOv10-doc Light Layout**: All 11 DocLayNet classes detected with bounding boxes, enables hybrid IQA and spatial hints
@@ -2657,6 +2806,7 @@ Project A serves as the intelligent gateway for the RAG document processing pipe
 
 **Expected Timeline**: 20 weeks from Phase 2 start to production deployment
 **Expected Outcomes**:
+
 - JSON Accuracy: >0.85
 - Throughput: >6 pages/sec per GPU worker
 - Routing Accuracy: >88%
@@ -2664,6 +2814,7 @@ Project A serves as the intelligent gateway for the RAG document processing pipe
 - Reduces manual preprocessing time by >80%
 
 **Next Steps**:
+
 1. Complete Phase 1 remaining tasks (CLI tool, output generation)
 2. Begin Phase 2: Schema alignment and core components (PDF type, DQS, routing)
 3. Coordinate with Project B team on handoff contract validation

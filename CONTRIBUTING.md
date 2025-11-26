@@ -15,7 +15,7 @@ Thank you for your interest in contributing to the Image Preprocessing Detector!
 
 ## Code of Conduct
 
-This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to byronawilliams@gmail.com.
+This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to <byronawilliams@gmail.com>.
 
 ## Getting Started
 
@@ -44,11 +44,11 @@ poetry run pytest -v
 poetry run black --check src tests
 poetry run ruff check src tests
 poetry run mypy src
-```
+```text
 
 ### Project Structure
 
-```
+```text
 image_detection/
 ├── src/image_preprocessing_detector/  # Main package
 │   ├── ingestion/                     # PDF/image loading
@@ -62,7 +62,7 @@ image_detection/
 ├── docs/                              # Documentation
 ├── scripts/                           # Training and evaluation scripts
 └── configs/                           # Model configurations
-```
+```text
 
 ## Development Workflow
 
@@ -77,7 +77,7 @@ git checkout -b fix/issue-description
 
 # For documentation
 git checkout -b docs/documentation-update
-```
+```text
 
 ### Branch Naming Convention
 
@@ -115,7 +115,7 @@ poetry run pytest --cov=src --cov-report=term-missing
 
 # Run all pre-commit hooks manually
 poetry run pre-commit run --all-files
-```
+```text
 
 ## Code Quality Standards
 
@@ -154,7 +154,7 @@ Run before EVERY commit (automatically enforced):
 
 ```bash
 poetry run pre-commit run --all-files
-```
+```text
 
 See `pyproject.toml` for complete configuration.
 
@@ -184,7 +184,7 @@ def process_image(
         ValueError: If image format is not supported
     """
     pass
-```
+```text
 
 ### Documentation
 
@@ -243,7 +243,7 @@ poetry run pytest --cov=src --cov-report=html
 
 # Run specific test file
 poetry run pytest tests/unit/test_schema.py -v
-```
+```text
 
 ### Writing Tests
 
@@ -270,7 +270,7 @@ def test_document_metadata_json_roundtrip(tmp_path: Path):
 
     assert loaded.num_pages == metadata.num_pages
     assert loaded.source_file == metadata.source_file
-```
+```text
 
 ### Test Organization
 
@@ -285,13 +285,13 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 
 ### Commit Message Format
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
 
 <footer>
-```
+```text
 
 ### Types
 
@@ -333,7 +333,7 @@ BREAKING CHANGE: Bounding boxes now use [x, y, width, height]
 format instead of [x1, y1, x2, y2] for LayoutParser compatibility.
 
 Migration guide available in docs/migration/v0.2.0.md
-```
+```text
 
 ### Commit Signing
 
@@ -346,7 +346,7 @@ git config --global commit.gpgsign true
 
 # Verify signing is enabled
 git config --get commit.gpgsign  # Should output: true
-```
+```text
 
 ## Pull Request Process
 
@@ -364,11 +364,12 @@ git config --get commit.gpgsign  # Should output: true
 ### Submitting a Pull Request
 
 1. **Push your branch**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
 
-2. **Create Pull Request** on GitHub with:
+1. **Create Pull Request** on GitHub with:
    - **Clear title**: Following conventional commit format
    - **Description**: What changes were made and why
    - **Issue reference**: `Fixes #123` or `Refs #456`
@@ -376,17 +377,17 @@ git config --get commit.gpgsign  # Should output: true
    - **Screenshots**: For UI or visual changes
    - **Breaking changes**: Clearly documented
 
-3. **Wait for CI checks**:
+2. **Wait for CI checks**:
    - All GitHub Actions workflows must pass
    - CodeQL security analysis must pass
    - Test coverage must meet requirements
 
-4. **Address review feedback**:
+3. **Address review feedback**:
    - Respond to all reviewer comments
    - Push additional commits to the same branch
    - Request re-review when ready
 
-5. **Squash and merge**:
+4. **Squash and merge**:
    - Maintainers will squash commits before merging
    - Ensure final commit message follows conventional commits
 
@@ -452,7 +453,7 @@ When contributing, consider which phase your contribution aligns with.
 - **General Questions**: Open a [GitHub Discussion](https://github.com/williaby/image-preprocessing-detector/discussions)
 - **Bug Reports**: Open a [GitHub Issue](https://github.com/williaby/image-preprocessing-detector/issues)
 - **Security Issues**: See [SECURITY.md](SECURITY.md)
-- **Email**: byronawilliams@gmail.com
+- **Email**: <byronawilliams@gmail.com>
 
 ## Recognition
 

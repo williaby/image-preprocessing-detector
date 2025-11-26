@@ -45,7 +45,7 @@ _* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this p
 
 ### Three-Tier Strategy
 
-```
+```text
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
 │  LOCAL (WSL)    │         │   NFS (Unraid)   │         │   GCS (Cloud)   │
 │  ~1 MB          │◄────────┤   ~98 GB         │────────►│   Backup        │
@@ -55,9 +55,10 @@ _* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this p
 └─────────────────┘         └──────────────────┘         └─────────────────┘
       Tier 3                      Tier 2                      Tier 1
   (Fast CI/CD)            (Primary Storage)              (Cloud Backup)
-```
+```text
 
 **Design Goals**:
+
 1. **Minimal local storage** - WSL filesystem kept under 5GB
 2. **Fast NFS access** - Gigabit ethernet to Unraid server (192.168.1.16)
 3. **GCS backup** - Cloud backup for Modal training and disaster recovery
@@ -399,6 +400,7 @@ _* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this p
 **Download Status**: 8/8 datasets complete
 **NFS Storage**: `/mnt/unraid/training_data/image_detection/training/`
 **Next Steps**:
+
 1. ⏳ Regenerate 100K IQA training dataset (15K → 100K samples)
 2. ⏳ Create local symlinks with `scripts/create_symlinks.py --all`
 3. ⏳ Launch ResNet-50 training on Modal with updated 100K dataset
@@ -447,6 +449,7 @@ _* DocLayNet accessed via symlink from data_ingestor project (adds 0GB to this p
 | **100K IQA Training** | `gs://image_detection_b/.../datasets/iqa_phase2_100k/` | ~50GB | ⏳ Generation pending |
 
 **Next Steps**:
+
 1. ⏳ Upload remaining benchmarks to GCS (DIQA-5000, FUNSD+, FinTabNet, etc.)
 2. ⏳ Generate 100K IQA training dataset
 3. ⏳ Upload to GCS for Modal training access
@@ -486,6 +489,7 @@ gsutil du -sh gs://image_detection_b/
 **Current Usage**: ~98GB (benchmarks) + ~50GB future (training data) = ~148GB total
 
 **Mount Verification**:
+
 ```bash
 # Check NFS mount
 df -h /mnt/unraid/training_data/
@@ -515,6 +519,7 @@ uv run python scripts/create_symlinks.py --verify
 ```
 
 **Symlink Mappings**:
+
 ```python
 SYMLINK_MAPPINGS = [
     ("data/benchmarks/tablebank", "benchmarks/tablebank"),
@@ -550,6 +555,7 @@ uv run python scripts/download_all_datasets.py --dataset tablebank
 ```
 
 **Download Sources**:
+
 - **GCS**: TableBank, PubTabNet (via gsutil)
 - **HuggingFace**: FUNSD+, OHR-Bench, OmniDocBench, WiLI-2018 (via datasets library)
 - **Direct URL**: COCO-Text (via wget)
@@ -560,6 +566,7 @@ uv run python scripts/download_all_datasets.py --dataset tablebank
 ### 5.4 Disk Space Management
 
 **Current Usage**:
+
 ```bash
 # Local (WSL)
 data/                           # 1.1M (symlinks + synthetic_iqa only)
@@ -569,6 +576,7 @@ data/training/                  # 0B (not created yet)
 ```
 
 **NFS (Unraid)**:
+
 ```bash
 /mnt/unraid/training_data/image_detection/benchmarks/  # ~56GB (11 datasets)
   ├── tablebank/                # ~27GB
@@ -588,6 +596,7 @@ data/training/                  # 0B (not created yet)
 ```
 
 **External Symlinks**:
+
 ```bash
 /home/byron/dev/data_ingestor/data/benchmarks/doclaynet/  # 42GB (shared dataset)
 ```
@@ -601,7 +610,7 @@ data/training/                  # 0B (not created yet)
 **Phase**: Phase 2 - Dataset Management Complete
 **Next Step**: Generate 100K IQA training dataset
 
-```
+```text
 ✅ COMPLETE:
 ├── Download infrastructure (scripts/download_all_datasets.py)
 ├── Symlink management (scripts/create_symlinks.py)
@@ -617,13 +626,14 @@ data/training/                  # 0B (not created yet)
 ├── Generate 100K IQA training dataset
 ├── Upload datasets to GCS
 └── Launch ResNet-50 training on Modal
-```
+```text
 
 ---
 
 ### 6.2 100K Dataset Generation Plan
 
 **Source Composition**:
+
 ```python
 DATASET_SOURCES = {
     "diqa-5000": {
@@ -665,6 +675,7 @@ DATASET_SOURCES = {
 ### 7.1 Must Cite in Publications
 
 **Benchmark Datasets (Attribution Required)**:
+
 - ✅ **DocLayNet**: CDLA-Permissive-2.0 (IBM Research)
 - ✅ **TableBank, COCO-Text**: CC-BY-4.0 (Microsoft Research, BGU)
 - ✅ **PubTabNet, FinTabNet**: CDLA-Permissive-2.0 (Microsoft)
@@ -676,15 +687,18 @@ DATASET_SOURCES = {
 ### 7.2 Commercial Use Restrictions
 
 **Non-Commercial Evaluation Only**:
+
 - ❌ **OmniDocBench** (CC-BY-NC-4.0)
 - ❌ **OHR-Bench** (CC-BY-NC-4.0)
 
 **Research Purposes (Verify Before Commercial Use)**:
+
 - ⚠️ **DIQA-5000** - Check license before commercial deployment
 - ⚠️ **SignaTR6K** - Check license before commercial deployment
 - ⚠️ **FUNSD+** - Verify HuggingFace license terms
 
 **Commercial Use Allowed (With Attribution)**:
+
 - ✅ **TableBank, PubTabNet, FinTabNet, DocLayNet** - CDLA-Permissive/Apache-2.0
 - ✅ **WiLI-2018, COCO-Text** - CC-BY-4.0/CC-BY-SA-4.0
 
@@ -738,19 +752,23 @@ du -sh data/
 ## 9. RELATED DOCUMENTATION
 
 **Dataset Documentation**:
+
 - [data/benchmarks/README.md](../data/benchmarks/README.md): Benchmark dataset overview and download guide
 - [benchmarks/README.md](../benchmarks/README.md): Benchmarking framework overview
 - [benchmarks/registry.yml](../benchmarks/registry.yml): Benchmark suite definitions
 
 **Architecture Decisions**:
+
 - [ADR-029](ADRs/0029-phase2-dataset-selection-strategy.md): Three-tier dataset strategy (Storage Tiers)
 - [ADR-031](ADRs/0031-comprehensive-benchmarking-framework.md): Comprehensive benchmarking framework (Validation Levels)
 
 **Reference Guides**:
+
 - [docs/reference/document-type-coverage.md](reference/document-type-coverage.md): FR coverage matrix
 - [docs/reference/detection-taxonomy.md](reference/detection-taxonomy.md): Complete detection taxonomy
 
 **Scripts**:
+
 - [scripts/download_all_datasets.py](../scripts/download_all_datasets.py): Automated dataset downloads
 - [scripts/create_symlinks.py](../scripts/create_symlinks.py): Symlink management
 - [scripts/generate_100k_iqa_dataset.py](../scripts/generate_100k_iqa_dataset.py): Training dataset generation

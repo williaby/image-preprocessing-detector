@@ -29,13 +29,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: CDLA-Permissive-2.0
 
-**Source**: https://github.com/DS4SD/DocLayNet
+**Source**: <https://github.com/DS4SD/DocLayNet>
 
 **Description**: 80,863 pages from financial reports, manuals, scientific articles. 11-class taxonomy for layout detection.
 
 **Usage**: Full bundle use permitted. Commercial use allowed.
 
 **Citation**:
+
 ```bibtex
 @inproceedings{pfitzmann2022doclaynet,
   title={DocLayNet: A Large Human-Annotated Dataset for Document-Layout Analysis},
@@ -44,7 +45,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   pages={3743--3751},
   year={2022}
 }
-```
+```text
 
 **SPDX-License-Identifier**: `CDLA-Permissive-2.0`
 
@@ -56,13 +57,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: CC-BY-4.0
 
-**Source**: https://doc-analysis.github.io/docbank-page/
+**Source**: <https://doc-analysis.github.io/docbank-page/>
 
 **Description**: 500K document pages with fine-grained layout annotations.
 
 **Usage**: Full bundle use permitted. Attribution required.
 
 **Citation**:
+
 ```bibtex
 @inproceedings{li2020docbank,
   title={DocBank: A Benchmark Dataset for Document Layout Analysis},
@@ -71,7 +73,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   pages={949--960},
   year={2020}
 }
-```
+```text
 
 **SPDX-License-Identifier**: `CC-BY-4.0`
 
@@ -83,13 +85,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: CC-BY-4.0
 
-**Source**: https://doc-analysis.github.io/tablebank-page/
+**Source**: <https://doc-analysis.github.io/tablebank-page/>
 
 **Description**: 417K table images from Word and LaTeX documents.
 
 **Usage**: Evaluation use. Attribution required.
 
 **Citation**:
+
 ```bibtex
 @inproceedings{li2020tablebank,
   title={TableBank: Table Benchmark for Image-based Table Detection and Recognition},
@@ -98,7 +101,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   pages={1918--1925},
   year={2020}
 }
-```
+```text
 
 **SPDX-License-Identifier**: `CC-BY-4.0`
 
@@ -110,13 +113,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: CDLA-Permissive
 
-**Source**: https://developer.ibm.com/exchanges/data/all/fintabnet/
+**Source**: <https://developer.ibm.com/exchanges/data/all/fintabnet/>
 
 **Description**: 113K tables from financial reports with structure annotations.
 
 **Usage**: Full bundle use permitted. Commercial use allowed.
 
 **Citation**:
+
 ```bibtex
 @article{zheng2021global,
   title={Global table extractor (GTE): A framework for joint table identification and cell structure recognition using visual context},
@@ -125,7 +129,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   pages={697--706},
   year={2021}
 }
-```
+```text
 
 **SPDX-License-Identifier**: `CDLA-Permissive`
 
@@ -137,13 +141,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: CC-BY-4.0
 
-**Source**: https://github.com/ibm-aur-nlp/PubTabNet
+**Source**: <https://github.com/ibm-aur-nlp/PubTabNet>
 
 **Description**: 568K table images from PubMed Central with HTML structure.
 
 **Usage**: Evaluation use. Attribution required.
 
 **Citation**:
+
 ```bibtex
 @inproceedings{zhong2020image,
   title={Image-based table recognition: data, model, and evaluation},
@@ -153,7 +158,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   year={2020},
   organization={Springer}
 }
-```
+```text
 
 **SPDX-License-Identifier**: `CC-BY-4.0`
 
@@ -165,13 +170,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: CC-BY-4.0
 
-**Source**: https://bgshih.github.io/cocotext/
+**Source**: <https://bgshih.github.io/cocotext/>
 
 **Description**: 63K images with 145K text annotations. Includes printed/handwritten labels.
 
 **Usage**: Full bundle use permitted. Attribution required.
 
 **Citation**:
+
 ```bibtex
 @inproceedings{veit2016coco,
   title={Coco-text: Dataset and benchmark for text detection and recognition in natural images},
@@ -179,7 +185,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   booktitle={arXiv preprint arXiv:1601.07140},
   year={2016}
 }
-```
+```text
 
 **SPDX-License-Identifier**: `CC-BY-4.0`
 
@@ -191,13 +197,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: CC-BY-SA-4.0
 
-**Source**: https://dataset.cs.uni-duesseldorf.de/
+**Source**: <https://dataset.cs.uni-duesseldorf.de/>
 
 **Description**: 235K paragraphs in 235 languages for language identification.
 
 **Usage**: Full bundle use permitted. Share-alike required for derivatives.
 
 **Citation**:
+
 ```bibtex
 @inproceedings{thoma2018wili,
   title={The WiLI benchmark dataset for written language identification},
@@ -205,7 +212,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   booktitle={arXiv preprint arXiv:1801.07779},
   year={2018}
 }
-```
+```text
 
 **SPDX-License-Identifier**: `CC-BY-SA-4.0`
 
@@ -217,13 +224,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: RRC Terms (Evaluation Only)
 
-**Source**: https://rrc.cvc.uab.es/?ch=15
+**Source**: <https://rrc.cvc.uab.es/?ch=15>
 
 **Description**: Multi-lingual scene text in 10 languages/scripts.
 
 **Usage**: **Evaluation only**. No redistribution. No commercial use.
 
 **Citation**:
+
 ```bibtex
 @inproceedings{nayef2019icdar2019,
   title={ICDAR2019 robust reading challenge on multi-lingual scene text detection and recognition—RRC-MLT-2019},
@@ -233,7 +241,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   year={2019},
   organization={IEEE}
 }
-```
+```text
 
 **SPDX-License-Identifier**: Proprietary
 
@@ -247,13 +255,14 @@ This document tracks licenses for all third-party datasets used in benchmarking.
 
 **License**: CC-BY-NC-4.0
 
-**Source**: https://opendatalab.com/OmniDocBench
+**Source**: <https://opendatalab.com/OmniDocBench>
 
 **Description**: Comprehensive benchmark covering layout, text, tables, formulas, and attributes.
 
 **Usage**: **Evaluation only**. No commercial use. Attribution required.
 
 **Citation**:
+
 ```bibtex
 @article{li2024omnidocbench,
   title={OmniDocBench: Benchmarking Diverse PDF Document Parsing with Comprehensive Annotations},
@@ -261,7 +270,7 @@ This document tracks licenses for all third-party datasets used in benchmarking.
   journal={arXiv preprint arXiv:2412.07626},
   year={2024}
 }
-```
+```text
 
 **SPDX-License-Identifier**: `CC-BY-NC-4.0`
 
@@ -299,30 +308,37 @@ For datasets requiring attribution (CC-BY, CC-BY-SA, CC-BY-NC):
 ### Redistribution Restrictions
 
 **Cannot redistribute**:
+
 - ICDAR MLT 2019 (RRC Terms)
 
 **Non-commercial only**:
+
 - OmniDocBench (CC-BY-NC-4.0)
 
 **Share-alike required**:
+
 - WiLI-2018 (CC-BY-SA-4.0) - Derivatives must use same license
 
 ### Commercial Use
 
 **Allowed**:
+
 - DocLayNet, DocBank, TableBank, FinTabNet, PubTabNet, COCO-Text, WiLI-2018
 
 **Not allowed**:
+
 - ICDAR MLT 2019, OmniDocBench
 
 ### Evaluation-Only Datasets
 
 Some datasets are **evaluation-only** and should not be used for:
+
 - Model training
 - Commercial products
 - Public redistribution
 
 **Evaluation-only datasets**:
+
 - ICDAR MLT 2019
 - OmniDocBench
 
@@ -336,7 +352,7 @@ grep -r "SPDX-License-Identifier" benchmarks/adapters/
 
 # List all dataset licenses
 cat benchmarks/LICENSES.md | grep "SPDX-License-Identifier"
-```
+```text
 
 ## Adding New Datasets
 
@@ -353,14 +369,14 @@ When adding a new dataset:
 
 Full license texts are stored in `licenses/third_party/`:
 
-```
+```text
 licenses/third_party/
 ├── CDLA-Permissive-2.0.txt
 ├── CC-BY-4.0.txt
 ├── CC-BY-SA-4.0.txt
 ├── CC-BY-NC-4.0.txt
 └── CC0-1.0.txt
-```
+```text
 
 ## References
 

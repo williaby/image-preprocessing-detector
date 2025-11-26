@@ -55,13 +55,13 @@ poetry run python scripts/create_symlinks.py --verify
 
 # Generate synthetic IQA test data (auto-generated on benchmark runs)
 poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
-```
+```text
 
 **Note**: All datasets are automatically downloaded to NFS storage at `/mnt/unraid/training_data/image_detection/benchmarks/` and symlinked to local `data/benchmarks/` for fast access.
 
 ## Directory Structure
 
-```
+```text
 data/benchmarks/
 ├── README.md                          # This file
 ├── doclaynet/                         # ✅ Symlinked (42GB)
@@ -89,21 +89,23 @@ data/benchmarks/
 ├── pubtabnet/                         # ✅ Downloaded (14GB, 500K images)
 ├── fintabnet/                         # ✅ Downloaded (5.3GB)
 └── wili_2018/                         # ✅ Downloaded (129MB)
-```
+```text
 
 ## Gitignore Configuration
 
 **All datasets are gitignored** via rule in `.gitignore`:
+
 ```gitignore
 # Line 119
 data/benchmarks/
-```
+```text
 
 Only this README file is tracked in git (forced with `git add -f`).
 
 ## License Compliance
 
 ### Must Cite in Publications
+
 - DocLayNet (CDLA-Permissive-2.0)
 - TableBank, COCO-Text (CC-BY-4.0)
 - PubTabNet, FinTabNet (CDLA-Permissive-2.0)
@@ -113,6 +115,7 @@ Only this README file is tracked in git (forced with `git add -f`).
 - FUNSD+ (Other - check HuggingFace)
 
 ### Commercial Use Restrictions
+
 - ⚠️ **OmniDocBench, OHR-Bench**: Non-commercial evaluation only (CC-BY-NC-4.0)
 - ⚠️ **DIQA-5000, SignaTR6K, FUNSD+**: Research purposes (check licenses before commercial use)
 - ✅ **All others**: Commercial use allowed with attribution
@@ -120,6 +123,7 @@ Only this README file is tracked in git (forced with `git add -f`).
 ## Troubleshooting
 
 ### Dataset not found error
+
 ```bash
 # Check dataset exists
 ls -R doclaynet/ | head -20
@@ -127,28 +131,31 @@ ls -R doclaynet/ | head -20
 # Regenerate synthetic datasets
 rm -rf synthetic_iqa/
 poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
-```
+```text
 
 ### HuggingFace rate limit (429 error)
+
 ```bash
 # Login with HF account
 poetry run huggingface-cli login
-```
+```text
 
 ### Disk space full
+
 ```bash
 # Check space
 df -h
 
 # Remove optional datasets or old results
 rm -rf ../reports/*/$(ls -t ../reports/*/ | tail -n +2)
-```
+```text
 
 ## Cloud Storage Strategy
 
 **This directory is LOCAL ONLY** - benchmarks are NOT uploaded to GCS due to size (~101 GB) and cost.
 
 **Rationale**:
+
 - Too large for cost-effective cloud storage ($2.02/month @ $0.020/GB/month)
 - Benchmarks run locally on development machines (not in Colab)
 - Can re-download from HuggingFace/external sources if needed

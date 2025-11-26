@@ -22,6 +22,7 @@ purpose: "Document the decision to implement multi-level guardrails that prevent
 **Date**: 2025-11-04
 **Deciders**: Byron Williams
 **Related**:
+
 - [corrections.py](../../src/image_preprocessing_detector/correction/corrections.py)
 - [PHASE_1_KICKOFF.md](../../PHASE_1_KICKOFF.md)
 - [PHASE_1_COMPLETE.md](../../PHASE_1_COMPLETE.md)
@@ -29,6 +30,7 @@ purpose: "Document the decision to implement multi-level guardrails that prevent
 ## Context
 
 Image preprocessing corrections (deskew, CLAHE contrast enhancement, sharpening) can degrade quality if applied incorrectly:
+
 - Over-rotation can introduce artifacts
 - Excessive sharpening creates halos and noise
 - Aggressive CLAHE causes posterization
@@ -37,14 +39,17 @@ Image preprocessing corrections (deskew, CLAHE contrast enhancement, sharpening)
 ### Risk Examples
 
 **Over-Deskew**:
+
 - Large rotation angles (>45°) likely false detections
 - Rotation introduces black borders and interpolation artifacts
 
 **Over-Sharpen**:
+
 - Sharpening already-sharp images amplifies noise
 - Excessive unsharp mask creates halos around edges
 
 **Over-Enhance Contrast**:
+
 - CLAHE on good contrast causes posterization
 - High clip limits create unnatural appearance
 
@@ -55,20 +60,24 @@ Image preprocessing corrections (deskew, CLAHE contrast enhancement, sharpening)
 ### Three-Tier Guardrail System
 
 **Tier 1: Confidence Thresholds** (Pre-Correction)
+
 - Skip corrections with low confidence
 - Reject extreme values (e.g., skew >45°)
 
 **Tier 2: Parameter Limits** (During Correction)
+
 - Cap correction strength based on severity
 - Adaptive parameters (e.g., CLAHE clip limit)
 
 **Tier 3: Quality Validation + Rollback** (Post-Correction)
+
 - Measure quality before/after
 - Rollback if quality degrades
 
 ### Correction-Specific Guardrails
 
 **Deskew Correction**:
+
 ```python
 class DeskewCorrector:
     def correct(self, image: np.ndarray, angle: float, confidence: float):
@@ -93,6 +102,7 @@ class DeskewCorrector:
 ```
 
 **Contrast Enhancement (CLAHE)**:
+
 ```python
 class ContrastEnhancer:
     def correct(self, image: np.ndarray, score: float, severity: IssueSeverity):
@@ -116,6 +126,7 @@ class ContrastEnhancer:
 ```
 
 **Sharpening (Unsharp Mask)**:
+
 ```python
 class Sharpener:
     def correct(self, image: np.ndarray, blur_score: float):
@@ -164,11 +175,13 @@ class Sharpener:
 **Approach**: Apply all corrections unconditionally
 
 **Advantages**:
+
 - Simplest implementation
 - Fastest execution
 - Maximum correction coverage
 
 **Disadvantages**:
+
 - High risk of quality degradation
 - Over-correction on good images
 - False detections cause artifacts
@@ -181,10 +194,12 @@ class Sharpener:
 **Approach**: Only check confidence, no quality validation
 
 **Advantages**:
+
 - Simple implementation
 - Faster than multi-tier
 
 **Disadvantages**:
+
 - Doesn't catch parameter miscalibration
 - No post-correction validation
 - False positives with high confidence still degrade quality
@@ -196,10 +211,12 @@ class Sharpener:
 **Approach**: Human review before applying corrections
 
 **Advantages**:
+
 - Perfect accuracy
 - No false positives
 
 **Disadvantages**:
+
 - Not scalable
 - Manual bottleneck
 - Delays processing
@@ -211,6 +228,7 @@ class Sharpener:
 ### Guardrail Configuration (corrections.py - 455 lines)
 
 **Tier 1: Confidence Thresholds**
+
 ```python
 DESKEW_MIN_CONFIDENCE = 0.3
 DESKEW_MIN_ANGLE = 0.5
@@ -222,6 +240,7 @@ SHARPEN_MIN_BLUR_SCORE = 200
 ```
 
 **Tier 2: Parameter Limits**
+
 ```python
 CLAHE_CLIP_LIMITS = {
     IssueSeverity.LOW: 1.0,
@@ -234,6 +253,7 @@ SHARPEN_MAX_AMOUNT = 2.0
 ```
 
 **Tier 3: Quality Validation**
+
 ```python
 def _quality_degraded(self, original: np.ndarray, corrected: np.ndarray) -> bool:
     """Check if correction degraded image quality."""
@@ -312,11 +332,13 @@ transform_history = [
 **Correction Coverage**: 100% of detected issues had corrections applied or safely skipped
 
 **Quality Metrics**:
+
 - Deskew: 100% applied when |angle| > 0.5° and confidence > 0.3
 - CLAHE: 100% applied when score < 0.4
 - Sharpening: 100% applied when blur_score < 200
 
 **Guardrail Effectiveness**:
+
 - No quality degradation detected in 328 validation images
 - 0 rollbacks triggered (parameters well-calibrated)
 - Conservative thresholds prevented over-correction

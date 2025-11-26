@@ -25,7 +25,7 @@ Drift detection monitors for:
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Production Pipeline                          │
 ├─────────────────────────────────────────────────────────────────┤
@@ -70,7 +70,7 @@ Drift detection monitors for:
 │  • Generate re-training manifests                                │
 │  • Privacy review workflow                                       │
 └─────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ---
 
@@ -160,7 +160,7 @@ imgprep_harvested_samples_total{reason="low_agreement"}
 
 ## Alert Response Flow
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │                     Alert Received                            │
 └──────────────────────┬───────────────────────────────────────┘
@@ -203,7 +203,7 @@ imgprep_harvested_samples_total{reason="low_agreement"}
 │    • Document root cause                                      │
 │    • Update runbook if needed                                 │
 └──────────────────────────────────────────────────────────────┘
-```
+```text
 
 ---
 

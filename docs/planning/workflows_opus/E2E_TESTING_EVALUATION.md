@@ -40,7 +40,7 @@ This report evaluates the end-to-end testing against the unified workflow diagra
 
 ### Test Directory Organization
 
-```
+```text
 tests/
 ├── e2e/                    # End-to-end tests (3 files)
 │   ├── test_pipeline_e2e.py      # DocumentProcessor class, synthetic images
@@ -55,11 +55,11 @@ tests/
 ├── api/                    # API tests (9 files)
 ├── benchmark/              # Performance tests
 └── fixtures/               # Validation scripts
-```
+```text
 
 ### Real Test Fixtures Available
 
-```
+```text
 data/test_fixtures/
 ├── doclaynet/              # 5 PDF files
 │   ├── simple_text_1.pdf
@@ -87,7 +87,7 @@ data/test_fixtures/
 │   └── colorful_background.jpg
 ├── training_validation/    # 5 training samples
 └── augmentation_input/     # 3 clean baseline images
-```
+```text
 
 ---
 
@@ -311,7 +311,7 @@ def test_teacher_escalation_with_low_quality_pdf(low_quality_table_image, ml_det
    touch tests/integration/test_layout_fixtures_integration.py
    ```
 
-2. **Enable Real Data Tests in CI**
+1. **Enable Real Data Tests in CI**
 
    ```yaml
    # .github/workflows/ci.yml
@@ -319,7 +319,7 @@ def test_teacher_escalation_with_low_quality_pdf(low_quality_table_image, ml_det
      run: poetry run pytest -m real_data --tb=short
    ```
 
-3. **Add ONNX Models to CI**
+1. **Add ONNX Models to CI**
 
    ```yaml
    - name: Download Test Models
@@ -329,25 +329,25 @@ def test_teacher_escalation_with_low_quality_pdf(low_quality_table_image, ml_det
 
 ### Short-term Actions (Priority 2)
 
-4. **Expand Pre-flight Tests with Real PDFs**
+1. **Expand Pre-flight Tests with Real PDFs**
    - Add DocLayNet PDFs to DPI analysis tests
    - Add scanned document samples (different scanners)
 
-5. **Add Teacher Escalation E2E with Real Data**
+2. **Add Teacher Escalation E2E with Real Data**
    - Use IQA samples with known quality issues
    - Verify escalation triggers correctly
 
-6. **Add Golden File Tests for JSON Output**
+3. **Add Golden File Tests for JSON Output**
    - Create expected output JSON for each real fixture
    - Compare generated output against golden files
 
 ### Medium-term Actions (Priority 3)
 
-7. **Performance Benchmark Tests**
+1. **Performance Benchmark Tests**
    - Time each workflow stage with real documents
    - Compare against targets in workflow diagram
 
-8. **Regression Test Suite**
+2. **Regression Test Suite**
    - Save outputs from current version
    - Detect unintended changes in future versions
 
@@ -357,9 +357,9 @@ def test_teacher_escalation_with_low_quality_pdf(low_quality_table_image, ml_det
 
 ### Path 1: Text-Detected Branch (Most Common)
 
-```
+```text
 Input → Pre-flight → Ingestion → Text Gate (YES) → Layout-Lite → ML IQA → Corrections → DQS → Routing → Output
-```
+```text
 
 | Stage | Unit Tests | Integration Tests | E2E Tests | Real Files |
 |-------|------------|-------------------|-----------|------------|
@@ -377,9 +377,9 @@ Input → Pre-flight → Ingestion → Text Gate (YES) → Layout-Lite → ML IQ
 
 ### Path 2: No-Text Branch (Image-Only)
 
-```
+```text
 Input → Pre-flight → Ingestion → Text Gate (NO) → Classical IQA → ML IQA → Corrections → DQS → Routing → Output
-```
+```text
 
 | Stage | Unit Tests | Integration Tests | E2E Tests | Real Files |
 |-------|------------|-------------------|-----------|------------|
@@ -390,9 +390,9 @@ Input → Pre-flight → Ingestion → Text Gate (NO) → Classical IQA → ML I
 
 ### Path 3: Teacher Escalation
 
-```
+```text
 ... → ML IQA (Student) → Uncertainty Gate → Teacher → Merge → ...
-```
+```text
 
 | Stage | Unit Tests | Integration Tests | E2E Tests | Real Files |
 |-------|------------|-------------------|-----------|------------|

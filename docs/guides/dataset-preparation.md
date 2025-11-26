@@ -14,10 +14,12 @@ title: Phase 2 Dataset Preparation Guide
 description: Generate synthetic augmented dataset with weak supervision labels
   for IQA training
 tags:
+
 - phase_2
 - dataset
 - augmentation
 - weak_supervision
+
 ---
 
 **Last Updated**: 2025-01-15
@@ -132,7 +134,7 @@ poetry run python scripts/prepare_phase2_data.py \
 
 **Output Structure:**
 
-```
+```text
 datasets/iqa_phase2/
 ├── train/
 │   ├── images/
@@ -148,7 +150,7 @@ datasets/iqa_phase2/
     ├── images/
     │   └── ... (7,500 images)
     └── labels.json
-```
+```text
 
 ### Step 2: Verify Generated Dataset
 
@@ -173,7 +175,7 @@ find datasets/iqa_phase2/test/images -name "*.png" | wc -l   # Should be 7,500
 
 Expected output statistics (from script):
 
-```
+```text
 DATASET GENERATION COMPLETE
 ============================================================
 
@@ -206,7 +208,7 @@ TEST SET (7500 samples):
     perspective    :   750 (10.0%)
     low_contrast   :  1125 (15.0%)
     orientation    :   375 (5.0%)
-```
+```text
 
 ---
 
@@ -237,6 +239,7 @@ Upload the Phase 2 training configuration:
 ```
 
 This uploads:
+
 - `configs/colab_phase2_iqa_gcs.yaml` → `gs://image_detection_b/configs/`
 
 ### Step 5: Upload Dataset to GCS
@@ -257,7 +260,7 @@ Use the GCS helper script to upload your generated dataset:
 
 **Progress output:**
 
-```
+```text
 [INFO] Uploading Phase 2 dataset to GCS...
 [INFO] This may take 10-30 minutes for ~10GB...
 Copying file://datasets/iqa_phase2/train/images/img_000001.png [Content-Type=image/png]...
@@ -265,7 +268,7 @@ Copying file://datasets/iqa_phase2/train/images/img_000001.png [Content-Type=ima
 [INFO] Verifying upload...
 10.2 GiB    gs://image_detection_b/datasets/iqa_phase2
 [INFO] ✓ Phase 2 dataset uploaded
-```
+```text
 
 ### Step 6: Verify GCS Upload
 
@@ -279,7 +282,7 @@ Copying file://datasets/iqa_phase2/train/images/img_000001.png [Content-Type=ima
 
 Expected output:
 
-```
+```text
 [INFO] Storage usage by directory:
 10.2 GiB    gs://image_detection_b/datasets/iqa_phase2
 100 KiB     gs://image_detection_b/configs
@@ -289,7 +292,7 @@ Expected output:
 
 [INFO] Estimated monthly cost (Standard storage @ $0.020/GB):
 10.20 GB × $0.020 = $0.20/month
-```
+```text
 
 ---
 
@@ -426,11 +429,13 @@ poetry install --with dev
 ### Issue: Script runs slowly
 
 **Reasons**:
+
 - Large source images (>2MB) require more processing time
 - Heavy augmentation preset increases processing time
 - Disk I/O bottleneck (especially on HDD)
 
 **Solutions**:
+
 - Use SSD for faster disk I/O
 - Reduce `--num-samples` for testing
 - Use `--preset light` for faster generation
@@ -460,15 +465,16 @@ gsutil ls gs://image_detection_b  # Test access
 After generating and uploading the dataset:
 
 1. **Verify GCS Structure**:
+
    ```bash
    gsutil ls gs://image_detection_b/datasets/iqa_phase2/
    gsutil ls gs://image_detection_b/datasets/iqa_phase2/train/images/ | head -20
    ```
 
-2. **Open Colab Training Notebook**:
+1. **Open Colab Training Notebook**:
    - [notebooks/colab/phase2_iqa_training.ipynb](../notebooks/colab/phase2_iqa_training.ipynb)
 
-3. **Follow Training Guide**:
+1. **Follow Training Guide**:
    - [COLAB_TRAINING_GUIDE.md](colab-training.md)
 
 ---

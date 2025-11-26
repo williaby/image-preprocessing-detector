@@ -33,6 +33,7 @@ This folder contains technical reference materials, taxonomies, and coverage mat
 ## Purpose
 
 This documentation provides:
+
 - **Technical References**: Detailed specifications and classifications
 - **Coverage Analysis**: What document types and issues are supported
 - **Decision Support**: Reference material for architectural decisions

@@ -21,6 +21,7 @@ purpose: Setup guide for hardware configuration - phase 2 training.
 ### Available Hardware
 
 **GPU**: NVIDIA RTX A500 Laptop GPU
+
 - **VRAM**: 4096 MB (4 GB)
 - **Driver Version**: 573.57 (Host), 570.176 (WSL2)
 - **CUDA Version**: 12.8
@@ -30,12 +31,14 @@ purpose: Setup guide for hardware configuration - phase 2 training.
 ### Training Implications
 
 **4GB VRAM Considerations**:
+
 - ✅ **Sufficient** for MobileNetV3-Small training (lightweight model)
 - ⚠️ **Limited** for larger batch sizes - recommend batch_size ≤ 16
 - ⚠️ **May struggle** with EfficientNet-B0 at larger input sizes (320×320)
 - ✅ **Adequate** for ONNX Runtime inference testing
 
 **Recommended Configuration for Phase 2**:
+
 ```python
 # Training Configuration (models/iqa/config.py)
 BATCH_SIZE = 8  # Conservative for 4GB VRAM (vs 32 in plan)
@@ -45,6 +48,7 @@ ACCUMULATE_GRAD_BATCHES = 4  # Effective batch size = 32
 ```
 
 **Alternative Strategies**:
+
 1. **Mixed Precision Training** (FP16/BF16): Reduce memory by ~50%
 2. **Gradient Accumulation**: Simulate larger batches
 3. **CPU Training**: Slower but no memory constraints (~30-60 min/epoch vs 5-10 min/epoch)
@@ -54,13 +58,14 @@ ACCUMULATE_GRAD_BATCHES = 4  # Effective batch size = 32
 
 ## CPU Configuration
 
-```
+```text
 Platform: linux (WSL2 on Windows)
 Architecture: x86_64
 Cores: 8 logical processors
-```
+```text
 
 **CPU-Only Training** (Fallback):
+
 - Training time: 30-60 minutes per epoch (vs 5-10 minutes on GPU)
 - Total training: 4-8 hours for 50 epochs with early stopping
 - Inference: 8-15ms per image (acceptable for development)
@@ -72,13 +77,14 @@ Cores: 8 logical processors
 **Available Space**: Assumed sufficient (need ~50GB for Phase 2)
 
 **Dataset Storage Plan**:
-```
+
+```text
 data/raw/              # 10GB (10k+ clean images)
 data/augmented/        # 15GB (50k augmented images)
 data/labels/           # 500MB (labels, metadata)
 models/iqa/            # 5GB (checkpoints, ONNX models)
 Total Estimated:       # ~30GB
-```
+```text
 
 ---
 
@@ -87,12 +93,14 @@ Total Estimated:       # ~30GB
 ### Recommended Approach (4GB VRAM)
 
 **Model Selection**: MobileNetV3-Small (Phase 2 MVP)
+
 - Model size: 2.5MB
 - Parameters: ~2.5M
 - Memory footprint: ~1.5GB with batch_size=8, input_size=224
 - **Fits comfortably in 4GB VRAM**
 
 **Training Configuration**:
+
 ```python
 config = TrainingConfig(
     model_name="mobilenetv3_small",
@@ -107,6 +115,7 @@ config = TrainingConfig(
 ```
 
 **Expected Performance**:
+
 - Training time: 20-30 minutes per epoch
 - Total training: 5-10 hours for 50 epochs (with early stopping ~15-20 epochs)
 - Inference: 1-3ms per image (GPU)
@@ -114,6 +123,7 @@ config = TrainingConfig(
 ### Alternative: CPU Training
 
 If GPU memory becomes an issue:
+
 ```bash
 # Force CPU training
 export CUDA_VISIBLE_DEVICES=""
@@ -121,6 +131,7 @@ poetry run python scripts/train_iqa.py --device cpu --batch-size 16
 ```
 
 **CPU Training Estimates**:
+
 - Training time: 45-60 minutes per epoch
 - Total training: 6-12 hours for 50 epochs
 - Still viable for Phase 2 MVP
@@ -128,6 +139,7 @@ poetry run python scripts/train_iqa.py --device cpu --batch-size 16
 ### Cloud GPU Option
 
 If more VRAM needed for EfficientNet-B0 or larger batches:
+
 - **Google Colab Pro**: T4 (16GB) for $10/month
 - **AWS EC2 g4dn.xlarge**: T4 (16GB) at $0.526/hr
 - **Lambda Labs**: A10 (24GB) at $0.60/hr

@@ -21,6 +21,7 @@ purpose: "Document the decision to defer superscript/footnote detection until af
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ARCHITECTURE_SUMMARY.md](../../ARCHITECTURE_SUMMARY.md)
 - [PROJECT_PLAN.md](../../PROJECT_PLAN.md)
 - [ADR-008: Multi-Stage Pipeline Architecture](0008-multi-stage-pipeline-architecture.md)
@@ -32,12 +33,14 @@ Superscript and footnote detection could be implemented at the image preprocessi
 ### Technical Challenges
 
 **Image-Level Detection (Pre-OCR)**:
+
 - Difficult to distinguish superscripts from noise
 - No baseline information available
 - Cannot determine relative font size
 - Complex heuristics required (connected components analysis, spatial positioning)
 
 **Post-OCR Detection**:
+
 - OCR provides baseline position
 - Font size metadata available
 - Text content helps disambiguation (e.g., "1", "2", "3" likely footnote references)
@@ -100,11 +103,13 @@ def detect_superscripts_post_ocr(ocr_results):
 **Approach**: Detect superscripts using connected components analysis and spatial positioning
 
 **Advantages**:
+
 - Available in Phase 1-3
 - No OCR dependency
 - Could enable superscript enhancement
 
 **Disadvantages**:
+
 - Complex heuristics (baseline estimation, relative sizing)
 - Higher false positive rate (noise, decorations)
 - Cannot distinguish content (numbers vs letters)
@@ -117,10 +122,12 @@ def detect_superscripts_post_ocr(ocr_results):
 **Approach**: Train YOLOv8 or segmentation model to detect superscripts
 
 **Advantages**:
+
 - Higher accuracy than heuristics
 - Can handle complex layouts
 
 **Disadvantages**:
+
 - Requires labeled training data (expensive)
 - Additional model deployment complexity
 - Slower inference
@@ -133,10 +140,12 @@ def detect_superscripts_post_ocr(ocr_results):
 **Approach**: Ignore superscripts entirely, rely on downstream OCR
 
 **Advantages**:
+
 - Simplest approach
 - No additional work
 
 **Disadvantages**:
+
 - Misses opportunity to improve OCR quality
 - No structured metadata for footnote references
 
@@ -147,6 +156,7 @@ def detect_superscripts_post_ocr(ocr_results):
 ### Phase 4 Post-OCR Analysis (Planned)
 
 **Integration with OCR Pipeline**:
+
 ```python
 def analyze_ocr_output(page_image, ocr_results):
     """Post-OCR analysis including superscript detection."""

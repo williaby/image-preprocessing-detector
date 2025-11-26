@@ -34,14 +34,14 @@ Project B consumes these to:
 
 ### Output Directory Structure
 
-```
+```text
 output/
 ├── {document_id}/
 │   ├── metadata.json       # DocumentMetadata JSON
 │   ├── page_0000.png       # Corrected page (300 DPI)
 │   ├── page_0001.png
 │   └── ...
-```
+```text
 
 ### DocumentMetadata.json Schema
 

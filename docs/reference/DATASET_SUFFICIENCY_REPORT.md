@@ -73,7 +73,7 @@ Coverage using **combined real-world + synthetic/weak-supervision data**. This r
 | FR-2.3.1 | Overall Quality Labels | 50,000 | 50,000 (100%) | 0 | 50,000 (100%) | ✅ SUFFICIENT | ✅ SUFFICIENT | Phase 2: 50000 samples with weak supervision (BRISQUE/NIQE). Phase 3: Need DIQA-5000 (5k ground-truth) - PENDING RELEASE Sept 2025 |
 | FR-2.3.2 | Sharpness Labels | 50,000 | 50,000 (100%) | 0 | 50,000 (100%) | ✅ SUFFICIENT | ✅ SUFFICIENT | 50000 samples with weak supervision |
 | FR-2.3.3 | Color Fidelity Labels | 50,000 | 50,000 (100%) | 0 | 50,000 (100%) | ✅ SUFFICIENT | ✅ SUFFICIENT | 50000 samples with weak supervision |
-| FR-4.2 | Layout Element Detection (Overall) | 26,500 | 1,107,470 (4179%) | 300,000 | 1,407,470 (5311%) | ✅ SUFFICIENT | ✅ SUFFICIENT | Real-world: DocLayNet 1,107,470 annotations | Synthetic: DocSynth-300K 300,000 samples |
+| FR-4.2 | Layout Element Detection (Overall) | 26,500 | 1,107,470 (4179%) | 300,000 | 1,407,470 (5311%) | ✅ SUFFICIENT | ✅ SUFFICIENT | Real-world: DocLayNet 1,107,470 annotations; Synthetic: DocSynth-300K 300,000 samples |
 | FR-4.2-EXTRA | Additional Layout Training (DocSynth-300K) | 300,000 | 300,000 (100%) | 0 | 300,000 (100%) | ✅ SUFFICIENT | ✅ SUFFICIENT | DocSynth-300K: 300,000 synthetic layout samples with 71-class taxonomy (pre-training for DocLayNet fine-tuning) |
 | FR-4.2.1 | Class 1 Detection | 5,000 | 22,524 (450%) | 0 | 22,524 (450%) | ✅ SUFFICIENT | ✅ SUFFICIENT | DocLayNet class 1 samples |
 | FR-4.2.10 | Class 10 Detection | 2,000 | 510,377 (25519%) | 0 | 510,377 (25519%) | ✅ SUFFICIENT | ✅ SUFFICIENT | DocLayNet class 10 samples |

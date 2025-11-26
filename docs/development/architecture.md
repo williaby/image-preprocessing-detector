@@ -16,7 +16,7 @@ This document provides a comprehensive overview of the Image Preprocessing Detec
 
 Image Preprocessing Detector is **Project A** in a four-project RAG document processing pipeline:
 
-```
+```text
 Project A (THIS PROJECT)  →  Project B          →  Project C         →  Project D
 Preprocessing & IQA             OCR Orchestration    Fusion & Trust       Vector Indexing
 ─────────────────────         ─────────────────    ──────────────       ───────────────
@@ -28,7 +28,7 @@ Preprocessing & IQA             OCR Orchestration    Fusion & Trust       Vector
 OUTPUT:                       OUTPUT:              OUTPUT:              OUTPUT:
 DocumentMetadata.json         OCRDocument.json     FusedDocument.json   Vector DB Entries
 + Corrected Images
-```
+```text
 
 **Project A Mission**: Deliver clean, corrected, quality-scored page images with reliable metadata that determines which workflows Project B should use.
 
@@ -40,7 +40,7 @@ For complete RAG pipeline architecture, see [RAG Pipeline Overview](RAG%20Pipeli
 
 The system uses a **text detection gate** to route documents to specialized processing paths:
 
-```
+```text
 PDF/Image Input
     ↓
 [Pre-flight Analysis] - DPI detection & upscaling (Phase 4)
@@ -67,21 +67,24 @@ ML IQA         ML IQA (Teacher-Student ResNet)
 [JSON Output] - DocumentMetadata.json + corrected images
     ↓
 HANDOFF TO PROJECT B (OCR Orchestration)
-```
+```text
 
 ### Key Design Decisions
 
 **Why Text Detection Gate?**
+
 - **Problem**: Mixed document types require different processing strategies
 - **Solution**: Fast text detection gate (<10ms) routes to appropriate branch, avoiding expensive layout inference for pure images
 - See [ADR-0029: Project A Scope Boundaries](../ADRs/0029-project-a-scope-boundaries.md)
 
 **Why Teacher-Student ML IQA?**
+
 - **Problem**: ResNet-50 provides superior accuracy but is slower
 - **Solution**: ResNet-18 student for default inference, ResNet-50 teacher for difficult/high-risk cases
 - See [ADR-0034: ResNet18 Phase2 IQA](../ADRs/0034-resnet18-phase2-iqa.md)
 
 **Why Layout-Lite vs Full Layout?**
+
 - **Project A Scope**: Coarse page attributes only (has_tables, has_figures, layout_type)
 - **Project B Scope**: Full semantic layout with DocLayNet-style detection
 - See [ADR-0033: Delegate Semantic Features to OCR](../ADRs/0033-delegate-semantic-features-to-ocr.md)
@@ -90,7 +93,7 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 
 ### Core Components
 
-```
+```text
 src/image_preprocessing_detector/
 ├── schema.py                 # Pydantic v2 models (COCO-aligned)
 ├── ingestion/                # PDF/image loading and normalization
@@ -110,7 +113,7 @@ src/image_preprocessing_detector/
 │   └── recommendation.py     # OCR routing strategies
 ├── output/                   # JSON serialization
 └── utils/                    # Logging, device probing
-```
+```text
 
 ### Data Flow Pattern
 
@@ -193,12 +196,14 @@ See [Schema Documentation](../api/schema.md) for complete Pydantic models.
 ### Project B Handoff
 
 Project A outputs:
+
 - `DocumentMetadata.json` with routing recommendations
 - Corrected page images (300 DPI standardized)
 - PDF type classification (image_only/born_digital/hybrid)
 - Document Quality Score (DQS) and pre-OCR risk
 
 Project B consumes:
+
 - Uses routing recommendations to select OCR strategy
 - Applies full semantic layout detection
 - Performs table structure extraction

@@ -25,6 +25,7 @@ DVC is initialized in this project with a local remote storage for development.
 The following datasets are tracked with DVC:
 
 ### Training Data
+
 - **Location**: `data/training/iqa_phase2/`
 - **DVC File**: `data/training/iqa_phase2.dvc`
 - **Size**: ~18.6 GB
@@ -87,6 +88,7 @@ The following datasets are tracked with DVC:
 ## Common Commands
 
 ### Pull Datasets
+
 ```bash
 # Pull all tracked datasets
 uv run dvc pull
@@ -97,6 +99,7 @@ uv run dvc pull data/benchmarks/ohr-bench.dvc
 ```
 
 ### Add New Data to Tracking
+
 ```bash
 # Add a new dataset directory
 uv run dvc add data/training/new_dataset
@@ -110,6 +113,7 @@ uv run dvc push
 ```
 
 ### Update Existing Data
+
 ```bash
 # After modifying a tracked dataset
 uv run dvc add data/training/iqa_phase2
@@ -123,6 +127,7 @@ uv run dvc push
 ```
 
 ### Check Status
+
 ```bash
 # See which datasets have changed
 uv run dvc status
@@ -132,6 +137,7 @@ uv run dvc cache dir
 ```
 
 ### Remove Data Locally (Keep Tracking)
+
 ```bash
 # Remove local copy of dataset (keeps .dvc file)
 rm -rf data/training/iqa_phase2
@@ -143,6 +149,7 @@ uv run dvc pull data/training/iqa_phase2.dvc
 ## Remote Storage
 
 ### Current Configuration
+
 - **Type**: Local filesystem
 - **Location**: `.dvc/cache_local`
 - **Default**: Yes
@@ -152,23 +159,27 @@ uv run dvc pull data/training/iqa_phase2.dvc
 For production or team collaboration, you can add cloud storage remotes:
 
 #### AWS S3
+
 ```bash
 uv run dvc remote add -d s3remote s3://my-bucket/dvc-storage
 uv run dvc remote modify s3remote region us-east-1
 ```
 
 #### Google Cloud Storage
+
 ```bash
 uv run dvc remote add -d gcsremote gs://my-bucket/dvc-storage
 uv run dvc remote modify gcsremote projectname my-project
 ```
 
 #### SSH/SFTP
+
 ```bash
 uv run dvc remote add -d sshremote ssh://user@example.com/path/to/dvc-storage
 ```
 
 ### List Remotes
+
 ```bash
 uv run dvc remote list
 ```
@@ -201,12 +212,14 @@ steps:
 ## Troubleshooting
 
 ### Dataset Not Found
+
 ```bash
 # Pull from remote
 uv run dvc pull data/training/iqa_phase2.dvc
 ```
 
 ### Cache Issues
+
 ```bash
 # Verify cache
 uv run dvc cache dir
@@ -216,6 +229,7 @@ uv run dvc cache rebuild
 ```
 
 ### Permission Errors
+
 ```bash
 # Fix permissions on cache
 chmod -R u+w .dvc/cache

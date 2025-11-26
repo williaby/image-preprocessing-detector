@@ -67,11 +67,11 @@ When enabled (`IMGPREP_API_RATE_LIMIT_ENABLED=true`), processing endpoints are r
 
 **Response Headers**:
 
-```
+```text
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
 X-RateLimit-Window: 60
-```
+```text
 
 **Rate Limit Exceeded (429)**:
 

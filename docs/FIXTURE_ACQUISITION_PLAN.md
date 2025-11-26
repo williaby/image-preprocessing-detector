@@ -127,6 +127,7 @@ Create `data/test_fixtures/iqa_samples/labels.json`:
 ## Priority 2: Layout Detection Samples ⚠️ PARTIAL
 
 **Current status**: Existing `data/test_fixtures/doclaynet/` already has:
+
 - ✅ Multi-column layout (multi_column_3.pdf) - **Can be used for three-column requirement**
 - ✅ Tables and figures (tables_figures_2.pdf)
 - ✅ Simple text (simple_text_1.pdf)
@@ -134,6 +135,7 @@ Create `data/test_fixtures/iqa_samples/labels.json`:
 - ✅ Low contrast (low_contrast_5.pdf)
 
 **Still needed**:
+
 - ❌ Watermarked document
 - ❌ Colorful/gradient background document
 - ❌ Dense math equations (scientific paper)
@@ -142,11 +144,13 @@ Create `data/test_fixtures/iqa_samples/labels.json`:
 ### Recommendation
 
 **Option A (Use existing + synthetics)**:
+
 - Use existing `multi_column_3.pdf` for three-column requirement
 - Generate synthetic samples for watermark, colorful background, and dense math using test helpers
 - Extract handwriting sample from IAM dataset (see below)
 
 **Option B (Search DocLayNet)**:
+
 - Manually browse DocLayNet PDFs to find edge cases
 - This is time-consuming due to hash-based filenames without metadata
 
@@ -310,6 +314,7 @@ ls -lh data/test_fixtures/augmentation_input/
 ## Execution Checklist
 
 ### Phase 1: IQA Samples (Priority 1) ✅
+
 - [ ] Create `data/test_fixtures/iqa_samples/` directory
 - [ ] Copy 6 images using commands above
 - [ ] Create `labels.json` with ground truth scores
@@ -318,6 +323,7 @@ ls -lh data/test_fixtures/augmentation_input/
 - [ ] Commit and push
 
 ### Phase 2: Training Validation (Priority 3) ✅
+
 - [ ] Create `data/test_fixtures/training_validation/` directory
 - [ ] Copy 5 samples using commands above
 - [ ] Create `manifest.json` with labels
@@ -325,12 +331,14 @@ ls -lh data/test_fixtures/augmentation_input/
 - [ ] Commit and push
 
 ### Phase 3: Augmentation Input (Priority 4) ✅
+
 - [ ] Create `data/test_fixtures/augmentation_input/` directory
 - [ ] Copy 3 clean images using commands above
 - [ ] Rename files descriptively
 - [ ] Commit and push
 
 ### Phase 4: Layout Samples (Priority 2) ⚠️
+
 - [ ] Decide on Option A (synthetic) vs Option B (manual DocLayNet search)
 - [ ] Extract handwriting sample from IAM parquet
 - [ ] If Option B: Browse DocLayNet for watermark, colorful bg, dense math samples
@@ -360,6 +368,7 @@ These can be generated programmatically in `tests/conftest.py` or test helpers:
 After fixtures are added:
 
 1. **Update conftest.py**:
+
    ```python
    @pytest.fixture
    def iqa_samples(tmp_path):
@@ -399,6 +408,7 @@ du -h data/test_fixtures/* | sort -h
 ```
 
 **Expected breakdown**:
+
 - Existing fixtures: ~828 KB
 - IQA samples: ~2-3 MB
 - Training validation: ~2 MB

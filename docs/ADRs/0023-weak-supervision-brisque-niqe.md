@@ -23,6 +23,7 @@ purpose: "Document the decision to use classical IQA metrics for automated label
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [PROJECT_PLAN.md Phase 2](../../PROJECT_PLAN.md#phase-2-ml-for-image-quality-assessment-3-4-weeks)
 - [ADR-022: Synthetic Data Generation](0022-synthetic-data-generation.md)
 - [ADR-024: Active Learning for Annotation Efficiency](0024-active-learning-annotation.md)
@@ -32,6 +33,7 @@ purpose: "Document the decision to use classical IQA metrics for automated label
 Phase 2 ML training requires labeled training data. Synthetic augmentation (ADR-022) provides 50k images with perfect labels, but real-world validation requires labeled real-world images. Manual annotation costs $0.10-1.00 per image.
 
 **Labeling Requirements**:
+
 - Training: 50k synthetic (perfect labels via augmentation)
 - Validation: 10k real-world (manual annotation = $1,000-10,000)
 - Test: 5k real-world (manual annotation = $500-5,000)
@@ -45,16 +47,19 @@ Phase 2 ML training requires labeled training data. Synthetic augmentation (ADR-
 ### Weak Supervision Strategy
 
 **BRISQUE (Blind/Referenceless Image Spatial Quality Evaluator)**:
+
 - No-reference quality metric
 - Scores: 0-100 (lower = better quality)
 - Use for: Overall quality assessment
 
 **NIQE (Natural Image Quality Evaluator)**:
+
 - No-reference quality metric based on natural scene statistics
 - Scores: 0-100 (lower = better quality)
 - Use for: Naturalness assessment
 
 **PIQE (Perception-based Image Quality Evaluator)**:
+
 - No-reference quality metric
 - Scores: 0-100 (lower = better quality)
 - Use for: Perceptual quality
@@ -130,11 +135,13 @@ def weak_supervision_labeling(image):
 **Approach**: Manually annotate all real-world images
 
 **Advantages**:
+
 - Perfect labels
 - Fine-grained annotations
 - No noisy labels
 
 **Disadvantages**:
+
 - Expensive ($1,500-15,000)
 - Slow (100-500 hours)
 - Not scalable
@@ -146,10 +153,12 @@ def weak_supervision_labeling(image):
 **Approach**: Train model on synthetic data, use for pseudo-labeling real-world
 
 **Advantages**:
+
 - No classical metrics required
 - Learned features
 
 **Disadvantages**:
+
 - Requires trained model first
 - Circular dependency (need labels to train)
 - Noisy pseudo-labels
@@ -161,10 +170,12 @@ def weak_supervision_labeling(image):
 **Approach**: Use crowdworkers for cheap annotation
 
 **Advantages**:
+
 - Cheaper than expert annotation ($0.05-0.10 per image)
 - Faster than in-house annotation
 
 **Disadvantages**:
+
 - Lower quality than experts
 - Inter-annotator disagreement
 - Requires quality control infrastructure
@@ -296,6 +307,7 @@ def label_real_world_dataset(input_dir: Path, output_dir: Path):
 4. **Final Dataset**: 70% weak labels (high confidence) + 30% manual labels
 
 **Cost Savings**:
+
 - Original: 10k images × $0.50 = $5,000
 - Hybrid: 3k images × $0.50 = $1,500
 - **Savings**: $3,500 (70% reduction)
@@ -303,11 +315,13 @@ def label_real_world_dataset(input_dir: Path, output_dir: Path):
 ## Validation
 
 **Threshold Calibration**:
+
 - Annotate 500 images manually (validation set)
 - Tune BRISQUE/NIQE/PIQE thresholds to maximize F1
 - Measure weak supervision accuracy: ~70-80% expected
 
 **Label Noise Handling**:
+
 - Track labeling confidence
 - Use confident samples for training
 - Flag low-confidence for active learning

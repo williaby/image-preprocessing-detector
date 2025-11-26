@@ -32,6 +32,7 @@ purpose: "Document the three-tier dataset strategy combining synthetic training 
 ### The Labeled Data Challenge
 
 Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) to detect 6 quality defects:
+
 - **Blur**: Gaussian blur, motion blur, defocus
 - **Noise**: Gaussian noise, salt-and-pepper, compression artifacts
 - **Skew**: Document rotation (>2°)
@@ -42,6 +43,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) t
 **The Problem**: Publicly available IQA datasets (LIVE, CSIQ, LIVE Challenge) provide **overall quality scores** (MOS/DMOS) but **not multi-label defect classifications**. Research papers do not provide labeled datasets with specific defect types at scale.
 
 **Requirements**:
+
 1. **Training Set**: 50k+ samples with multi-label annotations (6 classes)
 2. **Validation Set**: Ground-truth quality labels to validate model accuracy
 3. **Test Fixtures**: Small samples (<50 MB) for CI/CD testing
@@ -50,6 +52,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) t
 ### Current Dataset Landscape
 
 **Existing IQA Datasets**:
+
 | Dataset | Size | Labels | License | Use Case |
 |---------|------|--------|---------|----------|
 | LIVE | 779 images | MOS scores (overall quality) | Academic/Research | Validation ✅ |
@@ -59,6 +62,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) t
 | TableBank | 46.38 GB | Table annotations (no quality) | Apache-2.0 | Layout detection ❌ |
 
 **Gap Analysis**:
+
 - ✅ **Ground-truth quality scores** exist (LIVE, CSIQ, LIVE Challenge)
 - ❌ **Multi-label defect classifications** do not exist at scale
 - ❌ **Document-specific IQA datasets** are scarce (most are natural images)
@@ -68,11 +72,13 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) t
 ### Requirements for Phase 2 Training
 
 **Training Performance Targets**:
+
 - **mAP** (multi-label classification): > 0.88
 - **Per-class F1**: > 0.85 for all 6 defect types
 - **ECE** (calibration): < 0.1 (well-calibrated probabilities)
 
 **Operational Constraints**:
+
 - **Local Generation**: Create datasets locally (~2-3 days)
 - **GCS Storage**: Upload to Google Cloud Storage (~26 GB)
 - **Colab Training**: Download in Google Colab Pro for GPU training
@@ -83,6 +89,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) t
 **Context**: Research analysis of 27 recent papers (Q4 2024 - Q4 2025) identified 10 additional datasets for Phase 3+ capabilities:
 
 **New Capabilities**:
+
 1. **Document-Specific IQA**: DIQA-5000 replaces LIVE/CSIQ natural image datasets
 2. **Layout Detection**: DocSynth-300K (300k synthetic layouts, 6x larger than TableBank)
 3. **Preprocessing**: DocRes unified model training data (SynDocDS, AnyPhotoDoc 6300)
@@ -92,14 +99,17 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) t
 7. **Comprehensive Benchmarking**: OmniDocBench (multi-domain document evaluation)
 
 **Dataset Availability Status** (Validated 2025-01-13):
+
 - ✅ **8/10 Available**: DocSynth-300K, SynDocDS, AnyPhotoDoc 6300, ROOR, PubTables-1M, StaVer, DDI-100, IAM Handwriting
 - ⚠️ **2/10 Pending**: DIQA-5000 (Sept 2025 arXiv, dataset release pending), Seal-DB (Oct 2023 paper, code not released)
 
 **Fallback Strategies**:
+
 - DIQA-5000: Use LIVE/CSIQ until release (validated existing approach)
 - Seal-DB: Use StaVer + DDI-100 for stamp detection (acceptable coverage)
 
 **Impact on Three-Tier Strategy**:
+
 - **Tier 1 (Training)**: +5 new datasets (DocSynth-300K, SynDocDS, PubTables-1M, IAM, StaVer+DDI-100)
 - **Tier 2 (Benchmarks)**: +4 new benchmarks (DIQA-5000, AnyPhotoDoc 6300, ROOR, OmniDocBench)
 - **Tier 3 (Test Fixtures)**: Expand with samples from new datasets (Phase 3 Week 2-3)
@@ -121,6 +131,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) t
 **Labeling**: Weak supervision using classical IQA algorithms
 
 **Implementation**:
+
 ```python
 # scripts/prepare_phase2_data.py
 from albumentations import Compose, GaussianBlur, GaussianNoise, Rotate, Affine
@@ -148,7 +159,8 @@ labels = {
 ```
 
 **Dataset Structure**:
-```
+
+```text
 datasets/iqa_phase2/
 ├── train/                    # 35,000 samples (70%)
 │   ├── images/
@@ -162,9 +174,10 @@ datasets/iqa_phase2/
 │   ├── images/
 │   └── labels.json
 └── metadata.json             # Generation config, source datasets
-```
+```text
 
 **Labels Format**:
+
 ```json
 {
   "images": [
@@ -187,6 +200,7 @@ datasets/iqa_phase2/
 ```
 
 **Advantages**:
+
 - ✅ **Scale**: Generate 50k+ samples locally (vs. 2,807 from external datasets)
 - ✅ **Document-Specific**: TableBank contains real document pages (not natural images)
 - ✅ **Licensing**: Apache-2.0 allows commercial use and redistribution
@@ -194,6 +208,7 @@ datasets/iqa_phase2/
 - ✅ **Reproducibility**: Version-controlled generation scripts
 
 **Limitations**:
+
 - ⚠️ **Weak Supervision Noise**: Labels are imperfect (classical detectors have ~10-15% error rate)
 - ⚠️ **Synthetic Artifacts**: Augmented images may not match real-world camera/scanner defects
 - ⚠️ **Limited Diversity**: TableBank is primarily printed documents (limited handwriting, diagrams)
@@ -201,6 +216,7 @@ datasets/iqa_phase2/
 #### Storage Tier 2: External Validation Data (~5 GB, 2,807 images)
 
 **Datasets**:
+
 1. **LIVE IQA Database** (779 images, ~1 GB)
    - Ground-truth DMOS scores (Difference Mean Opinion Score)
    - 5 defect types: JPEG compression, Gaussian blur, white noise, fastfading, JPEG2000
@@ -219,6 +235,7 @@ datasets/iqa_phase2/
 **Purpose**: **Validate model accuracy against human-annotated quality scores**
 
 **Implementation**:
+
 ```python
 # scripts/download_iqa_datasets.py
 from iqadataset import load_dataset
@@ -230,6 +247,7 @@ live_challenge = load_dataset("LIVE_Challenge", dataset_root="data/benchmarks/ex
 ```
 
 **Validation Workflow**:
+
 1. Train model on synthetic 50k dataset (Tier 1)
 2. Evaluate on external validation datasets (Tier 2)
 3. Compute correlation between predicted scores and ground-truth MOS/DMOS
@@ -238,11 +256,13 @@ live_challenge = load_dataset("LIVE_Challenge", dataset_root="data/benchmarks/ex
    - Spearman correlation > 0.75 (rank correlation)
 
 **Advantages**:
+
 - ✅ **Ground Truth**: Human-annotated quality scores (gold standard)
 - ✅ **Real Defects**: LIVE Challenge has authentic camera captures
 - ✅ **Research Standard**: LIVE/CSIQ are widely used benchmarks (comparable results)
 
 **Limitations**:
+
 - ⚠️ **Natural Images**: Most samples are natural scenes (not documents)
 - ⚠️ **License Restrictions**: Research use only, not for commercial redistribution
 - ⚠️ **Overall Scores**: MOS/DMOS are overall quality, not multi-label defect classifications
@@ -252,6 +272,7 @@ live_challenge = load_dataset("LIVE_Challenge", dataset_root="data/benchmarks/ex
 **Purpose**: Enable CI/CD testing without downloading 88+ GB of full datasets
 
 **Sources**:
+
 1. **LIVE Extracts** (5 samples, ~1.5 MB)
    - 1 reference image (clean, DMOS=0.0)
    - 1 JPEG compression sample (DMOS~25)
@@ -265,6 +286,7 @@ live_challenge = load_dataset("LIVE_Challenge", dataset_root="data/benchmarks/ex
    - Rotated/skewed document (orientation testing)
 
 **Implementation**:
+
 ```python
 # scripts/extract_iqa_fixtures.py
 from iqadataset import load_dataset
@@ -287,7 +309,8 @@ for i, sample in enumerate(fixtures):
 ```
 
 **Directory Structure**:
-```
+
+```text
 data/test_fixtures/
 ├── iqa_samples/                    # NEW: IQA-specific fixtures
 │   ├── live/                       # LIVE dataset extracts
@@ -301,9 +324,10 @@ data/test_fixtures/
 │   │   ├── combined_defects.png   # Blur + noise
 │   │   └── rotated_skewed.png     # Orientation testing
 │   └── labels.json                 # Ground-truth quality scores
-```
+```text
 
 **CI/CD Integration**:
+
 ```python
 # tests/integration/test_iqa_validation.py
 def test_iqa_validation_pipeline():
@@ -321,11 +345,13 @@ def test_iqa_validation_pipeline():
 ```
 
 **Advantages**:
+
 - ✅ **Fast CI/CD**: No 5+ GB downloads required for integration tests
 - ✅ **Offline Testing**: Developers can test IQA features without internet
 - ✅ **Regression Detection**: Catch model accuracy degradation in automated tests
 
 **Limitations**:
+
 - ⚠️ **Limited Coverage**: Only 8 samples (not comprehensive)
 - ⚠️ **License**: LIVE samples require citation in documentation
 
@@ -338,6 +364,7 @@ This section documents the expansion of the three-tier strategy to support Phase
 **New Datasets for Phase 3+ Training**:
 
 ##### 1. DocSynth-300K (Layout Detection Training)
+
 - **Source**: HuggingFace (juliozhao/DocSynth300K)
 - **Size**: ~113 GB, 300,000 synthetic document layouts
 - **License**: Not specified (arXiv:2410.12628 - assume research use)
@@ -347,16 +374,18 @@ This section documents the expansion of the three-tier strategy to support Phase
 - **Download**: `huggingface-cli download juliozhao/DocSynth300K --repo-type dataset --local-dir data/training/layout/docsynth300k/`
 
 **Structure**:
-```
+
+```text
 data/training/layout/
 └── docsynth300k/
     ├── train/
     ├── val/
     ├── test/
     └── annotations/           # COCO-format annotations
-```
+```text
 
 ##### 2. SynDocDS (Preprocessing Training - Shadow Removal)
+
 - **Source**: MDPI Sensors 2024 paper (arXiv:2410.18116)
 - **Size**: ~15 GB synthetic shadow dataset
 - **License**: Apache-2.0 (inferred from paper)
@@ -368,6 +397,7 @@ data/training/layout/
 **Note**: With DocRes adoption (ADR-020 update), SynDocDS becomes optional training data.
 
 ##### 3. PubTables-1M (Table Structure Extraction) - **REPLACED BY PUBTABNET**
+
 - **Status**: ⚠️ **REMOVED** (2025-11-14) - Replaced by PubTabNet for storage optimization
 - **Original Size**: ~109 GB (14 .tar.gz archives, unextracted)
 - **Replacement**: PubTabNet (510k tables, 16GB, already extracted) - See Tier 2 Benchmarks
@@ -377,6 +407,7 @@ data/training/layout/
 - **License**: CDLA-Permissive-1.0 (commercial use permitted)
 
 **Decision Details**:
+
 - **Academic Precedent**: TableFormer achieved 95.6% F1 with 460k tables (PubTabNet has 510k)
 - **Performance Target**: FR-4.11 requires F1 >85%, achievable with PubTabNet based on literature
 - **Test-First Strategy**: Train on PubTabNet (Phase 3 Week 1-5), re-download PubTables-1M only if F1 <85%
@@ -386,6 +417,7 @@ data/training/layout/
 **See**: [tmp_cleanup/.tmp-pubtables-analysis-20251114.md](../../tmp_cleanup/.tmp-pubtables-analysis-20251114.md) for complete analysis
 
 ##### 4. IAM Handwriting Database (Handwriting Detection)
+
 - **Source**: HuggingFace (Teklia/IAM-line, Sept 2024 update)
 - **Size**: 266 MB, 13,353 handwritten text line images
 - **License**: Academic license (registration required)
@@ -395,7 +427,8 @@ data/training/layout/
 - **Download**: `huggingface-cli download Teklia/IAM-line --repo-type dataset --local-dir data/training/specialized/handwriting/iam/`
 
 **Structure**:
-```
+
+```text
 data/training/specialized/
 ├── handwriting/
 │   └── iam/
@@ -405,9 +438,10 @@ data/training/specialized/
 └── stamps/
     ├── staver/                # See below
     └── ddi-100/               # See below
-```
+```text
 
 ##### 5. StaVer (Stamp Verification)
+
 - **Source**: Kaggle (olegggatttor/stamp-verification)
 - **Size**: ~50 MB, 400 images (200 stamped, 200 clean)
 - **License**: CC BY-NC-SA 4.0 (academic/research use)
@@ -417,6 +451,7 @@ data/training/specialized/
 - **Download**: `kaggle datasets download -d olegggatttor/stamp-verification -p data/training/specialized/stamps/staver/`
 
 ##### 6. DDI-100 (Document Defect Images)
+
 - **Source**: GitHub (jenifferYingyiWu/AI-CU-2018)
 - **Size**: ~5 GB, 99,870 images with stamps, hole punches, noise
 - **License**: Not specified (assume research use)
@@ -432,6 +467,7 @@ data/training/specialized/
 **New Benchmarks for Phase 3+ Evaluation**:
 
 ##### 1. DIQA-5000 / DocIQ-5000 (Document-Specific IQA)
+
 - **Source**: arXiv:2509.17012 (Sept 2025 paper)
 - **Status**: ⚠️ **PENDING RELEASE** (dataset not yet public as of 2025-01-13)
 - **Size**: ~3.9 GB (estimated), 5,000 document images with quality annotations
@@ -442,19 +478,22 @@ data/training/specialized/
 - **Fallback**: Continue using LIVE/CSIQ until DIQA-5000 releases
 
 **Target Structure**:
-```
+
+```text
 data/benchmarks/diqa-5000/
 ├── images/
 ├── annotations/               # 3-dimension quality scores
 └── metadata.json              # Dataset statistics
-```
+```text
 
 **Rationale for Replacement**:
+
 - LIVE/CSIQ are natural image datasets (not document-specific)
 - DIQA-5000 provides document-tailored quality assessment (scanned documents, PDFs)
 - 3-dimension output aligns with FR-2.3 learned quality assessment
 
 ##### 2. AnyPhotoDoc 6300 (Dewarping Benchmark)
+
 - **Source**: arXiv:2410.12189 (Oct 2025 paper, DvD model)
 - **Size**: ~2 GB, 6,300 camera-captured document images with warping
 - **License**: Not specified (assume research use)
@@ -464,14 +503,16 @@ data/benchmarks/diqa-5000/
 - **Download**: Contact paper authors (dataset release pending)
 
 **Structure**:
-```
+
+```text
 data/benchmarks/anyphotodoc6300/
 ├── warped/                    # Camera-captured warped documents
 ├── ground_truth/              # Flat reference documents
 └── annotations/               # Warp transformation parameters
-```
+```text
 
 ##### 3. ROOR (Reading Order Recognition)
+
 - **Source**: GitHub (chongzhangFDU/ROOR-Datasets)
 - **Size**: Not specified (~500 MB estimated)
 - **License**: CC BY 4.0 (commercial use with attribution)
@@ -481,14 +522,16 @@ data/benchmarks/anyphotodoc6300/
 - **Download**: `git clone https://github.com/chongzhangFDU/ROOR-Datasets data/benchmarks/roor/`
 
 **Structure**:
-```
+
+```text
 data/benchmarks/roor/
 ├── documents/
 ├── annotations/               # Reading order sequences
 └── evaluation/                # Benchmark scripts
-```
+```text
 
 **Priority Elevation** (2025-01-13):
+
 - **Previous Status**: Optional Phase 4-5 (not in core FR)
 - **New Status**: **Phase 3 Critical** (elevated based on OHR-Bench findings)
 - **Rationale**: OHR-Bench research demonstrates reading order errors cause **5-29% RAG performance loss**
@@ -496,6 +539,7 @@ data/benchmarks/roor/
 - **Action**: Create FR-3.14 (Reading Order Prediction) for Phase 3 implementation
 
 ##### 4. OmniDocBench (Comprehensive Document Evaluation)
+
 - **Source**: HuggingFace (opendatalab/OmniDocBench)
 - **Size**: 5.95 GB, multi-domain document benchmark
 - **License**: Apache-2.0 (commercial use permitted)
@@ -505,7 +549,8 @@ data/benchmarks/roor/
 - **Download**: `huggingface-cli download opendatalab/OmniDocBench --repo-type dataset --local-dir data/benchmarks/omnidocbench/`
 
 **Structure**:
-```
+
+```text
 data/benchmarks/omnidocbench/
 ├── receipts/
 ├── forms/
@@ -513,11 +558,12 @@ data/benchmarks/omnidocbench/
 ├── diagrams/
 ├── annotations/               # Multi-task ground-truth
 └── evaluation/                # Benchmark runners
-```
+```text
 
 **Rationale**: OmniDocBench provides **end-to-end validation** across all FR categories, replacing piecemeal benchmarks.
 
 ##### 5. OHR-Bench (OCR-RAG Performance Benchmark)
+
 - **Source**: HuggingFace (opendatalab/OHR-Bench)
 - **Size**: ~10 GB (estimated), 8,500+ PDF pages from 7 domains
 - **License**: CC-BY-4.0 (commercial use with attribution)
@@ -527,7 +573,8 @@ data/benchmarks/omnidocbench/
 - **Download**: `huggingface-cli download opendatalab/OHR-Bench --repo-type dataset --local-dir data/benchmarks/ohr-bench/`
 
 **Structure**:
-```
+
+```text
 data/benchmarks/ohr-bench/
 ├── pdfs/                      # 8,500+ PDF pages
 │   ├── textbook/
@@ -541,21 +588,24 @@ data/benchmarks/ohr-bench/
 ├── ocr_variants/              # OCR noise levels (mild, moderate, severe)
 ├── qa_pairs/                  # 8,498 Q&A for RAG evaluation
 └── annotations/               # ROE (Reading Order Error) annotations
-```
+```text
 
 **Key Metrics** (From Research Analysis):
+
 - **NDCG@5**: 0.74 (best OCR) vs. 0.773 (ground truth) = **4.5% retrieval gap**
 - **Reading Order Error (ROE)**: 5-29% RAG performance loss
 - **Semantic Noise**: More impactful than formatting noise for RAG
 - **Multimodal Retrieval**: Recovers ~70% of OCR accuracy loss during generation
 
 **Rationale**:
+
 - First comprehensive benchmark measuring OCR's cascading impact on end-to-end RAG
 - Validates FR-4.4 (RAG-Specific Document Quality Score) routing strategy
 - Demonstrates that preprocessing quality directly limits RAG performance (invisible ceiling)
 - Reading order errors identified as **critical bottleneck** (5-29% impact)
 
 **Integration with FR-4.4**:
+
 - Use OHR-Bench NDCG@5 metric for retrieval-readiness scoring
 - Use ROE metric for reading order prediction validation (FR-3.14)
 - Validate DQS routing: IF quality_score < 0.7 THEN use_multimodal_retrieval
@@ -565,18 +615,22 @@ data/benchmarks/ohr-bench/
 **New Test Fixtures for CI/CD**:
 
 ##### 1. DocSynth-300K Fixtures (5 samples, ~5 MB)
+
 - Extract 5 representative layout samples for CI/CD
 - Purpose: Fast layout detection validation
 
 ##### 2. PubTables-1M Fixtures (5 samples, ~3 MB)
+
 - Extract 5 table structure samples
 - Purpose: Table structure extraction smoke tests
 
 ##### 3. IAM Handwriting Fixtures (10 samples, ~2 MB)
+
 - Extract 10 handwritten text samples
 - Purpose: Handwriting detection CI/CD
 
 ##### 4. StaVer+DDI-100 Fixtures (10 samples, ~5 MB)
+
 - Extract 10 stamp/artifact samples
 - Purpose: Noise artifact detection tests
 
@@ -587,20 +641,24 @@ data/benchmarks/ohr-bench/
 ### Code Support
 
 **Dataset Generation**:
+
 - [scripts/prepare_phase2_data.py](../../scripts/prepare_phase2_data.py): Generate 50k synthetic samples with weak supervision
 - [scripts/validate_datasets.py](../../scripts/validate_datasets.py): Validate dataset structure and labels
 - [scripts/upload_datasets_to_gcs.sh](../../scripts/upload_datasets_to_gcs.sh): Upload to Google Cloud Storage
 
 **External Dataset Download**:
+
 - [scripts/download_iqa_datasets.py](../../scripts/download_iqa_datasets.py): Download LIVE, CSIQ, LIVE Challenge
 - [scripts/download_omnidocbench.py](../../scripts/download_omnidocbench.py): Download OmniDocBench (Phase 3)
 - [scripts/download_table_datasets.py](../../scripts/download_table_datasets.py): Download TableBank, PubTabNet
 
 **Test Fixtures**:
+
 - [scripts/extract_iqa_fixtures.py](../../scripts/extract_iqa_fixtures.py): Extract LIVE samples for CI/CD (planned Week 3)
 - [data/test_fixtures/README.md](../../data/test_fixtures/README.md): Test fixtures documentation
 
 **GCS Integration**:
+
 - [scripts/auth_gcs.sh](../../scripts/auth_gcs.sh): Authenticate with Google Cloud Storage
 - [scripts/gcs_helpers.sh](../../scripts/gcs_helpers.sh): GCS upload/download helpers
 
@@ -679,11 +737,13 @@ data/benchmarks/ohr-bench/
 **Description**: Hire annotators to label 50k+ real document images with quality defects
 
 **Pros**:
+
 - Gold standard quality labels (no weak supervision noise)
 - Real-world camera/scanner artifacts (no synthetic gap)
 - Document-specific defects (production relevance)
 
 **Cons**:
+
 - **Cost**: $0.10-0.50 per image × 50k = $5k-$25k (prohibitive for Phase 2)
 - **Time**: 3-6 months for annotation (delays Phase 2 by quarters)
 - **Expertise**: Requires domain expertise to label quality defects accurately
@@ -698,11 +758,13 @@ data/benchmarks/ohr-bench/
 **Description**: Use pre-trained IQA models (BRISQUE, NIQE, KonCept512) trained on LIVE/CSIQ
 
 **Pros**:
+
 - No training data required (use existing model)
 - Pre-trained on ground-truth quality scores (LIVE/CSIQ)
 - Fast to deploy (no training phase)
 
 **Cons**:
+
 - **Domain Mismatch**: Natural image IQA ≠ document IQA (different defects, lighting, composition)
 - **Single-Task**: Most models predict overall quality score, not multi-label defect classification
 - **No Customization**: Cannot fine-tune for document-specific defects (skew, perspective)
@@ -717,11 +779,13 @@ data/benchmarks/ohr-bench/
 **Description**: Start with 1k manually labeled samples, use active learning to expand
 
 **Pros**:
+
 - Lower initial annotation cost ($100-$500 for 1k samples)
 - Iterative improvement (annotate high-uncertainty samples)
 - Reduces weak supervision noise (human labels where model uncertain)
 
 **Cons**:
+
 - **Complexity**: Requires active learning infrastructure (uncertainty sampling, human-in-the-loop)
 - **Time**: Iterative annotation cycles extend timeline (weeks to months)
 - **Scale**: Difficult to reach 50k samples cost-effectively
@@ -736,11 +800,13 @@ data/benchmarks/ohr-bench/
 **Description**: Use crowdsourcing platform to label images at scale
 
 **Pros**:
+
 - Lower cost than expert annotation ($0.05-0.10 per image × 50k = $2.5k-$5k)
 - Faster than hiring annotators (days to weeks)
 - Scalable (unlimited annotator pool)
 
 **Cons**:
+
 - **Quality Concerns**: Crowdworkers may not have domain expertise (low inter-annotator agreement)
 - **Verification Overhead**: Requires quality control (majority voting, expert review)
 - **Time**: Still 2-4 weeks minimum for 50k samples
@@ -755,11 +821,13 @@ data/benchmarks/ohr-bench/
 **Description**: Train on LIVE + CSIQ + LIVE Challenge (~2.8k images)
 
 **Pros**:
+
 - Ground-truth quality labels (no weak supervision noise)
 - Research-standard datasets (comparable results)
 - No generation time (download only)
 
 **Cons**:
+
 - **Insufficient Scale**: 2.8k images too small for CNN training (overfitting risk)
 - **Natural Images**: Not document-specific (domain mismatch)
 - **License Restrictions**: Research-only (cannot commercialize)
@@ -774,22 +842,26 @@ data/benchmarks/ohr-bench/
 ### Phase 2 Timeline
 
 **Week 1** (Current):
+
 - ✅ Generate 50k synthetic training dataset (~8-12 hours)
 - ✅ Download external validation datasets (~3-4 hours)
 - ✅ Upload datasets to GCS (~1-2 hours)
 
 **Week 2**:
+
 - Implement model architectures (MobileNetV3, EfficientNet)
 - Implement training pipeline with early stopping
 - Train IQA model on Google Colab Pro (~24-48 hours GPU time)
 
 **Week 3**:
+
 - Evaluate model on validation datasets (LIVE, CSIQ, LIVE Challenge)
 - Compute mAP, F1, ECE metrics
 - Extract IQA test fixtures from LIVE dataset (5 samples ~2MB)
 - Export model to ONNX with INT8 quantization
 
 **Week 4**:
+
 - Implement ML detector (iqa_ml.py) with ONNX Runtime
 - Implement ensemble fusion (classical + ML)
 - Integration testing and documentation
@@ -808,6 +880,7 @@ data/benchmarks/ohr-bench/
 | **Orientation** | ✅ RandomRotate90 augmentation | ❌ Not in LIVE/CSIQ → **DIQA-5000** | ✅ Synthetic rotated sample |
 
 **Phase 2 Coverage Gaps (Addressed by DIQA-5000)**:
+
 - ⚠️ **Natural Images**: LIVE/CSIQ are natural scenes, not documents → **DIQA-5000 solves** (document-specific)
 - ⚠️ **Missing Defects**: Skew, perspective, orientation not in LIVE/CSIQ → **DIQA-5000 includes** (document artifacts)
 - ⚠️ **Single Score**: MOS/DMOS overall quality only → **DIQA-5000 provides** 3-dimension scores (overall, sharpness, color fidelity)
@@ -845,6 +918,7 @@ data/benchmarks/ohr-bench/
 | **Noise Artifacts** | ✅ DDI-100 | ⚠️ No benchmark identified | ✅ DDI fixtures |
 
 **Coverage Summary**:
+
 - ✅ **Phase 2 IQA**: Fully covered (DIQA-5000 pending, LIVE/CSIQ fallback)
 - ✅ **Phase 3 Layout**: Fully covered (DocSynth-300K, PubTables-1M, OmniDocBench)
 - ✅ **Phase 3 Preprocessing**: Fully covered (DocRes unified model, AnyPhotoDoc 6300)
@@ -854,16 +928,19 @@ data/benchmarks/ohr-bench/
 ### Validation Metrics
 
 **Training Metrics** (50k synthetic dataset):
+
 - **mAP** (multi-label average precision): > 0.88
 - **Per-class F1**: > 0.85 for all 6 defect types
 - **ECE** (Expected Calibration Error): < 0.1
 
 **Validation Metrics** (external datasets):
+
 - **Pearson Correlation** (predicted vs. ground-truth MOS/DMOS): > 0.75
 - **Spearman Correlation** (rank correlation): > 0.75
 - **MAE** (Mean Absolute Error): < 0.15 (normalized quality scores)
 
 **Test Fixture Metrics** (CI/CD):
+
 - **Regression Detection**: Alert if correlation drops > 10% from baseline
 - **Performance**: CI runtime < 5 min for IQA validation tests
 
@@ -876,12 +953,13 @@ data/benchmarks/ohr-bench/
 **Phase 5**: Active learning on production corpus for continuous improvement
 
 **Dataset Versioning**:
-```
+
+```text
 datasets/
 ├── iqa_phase2_v1/          # Current: 50k synthetic + weak supervision
 ├── iqa_phase2_v2/          # Future: + 10k scanned receipts (real camera captures)
 └── iqa_phase4_v1/          # Production: + 5k production corpus samples (active learning)
-```
+```text
 
 ---
 
@@ -929,6 +1007,7 @@ def test_validation_correlation():
 ## References
 
 **Datasets (Phase 2 - IQA)**:
+
 - [LIVE IQA Database](https://live.ece.utexas.edu/research/quality/subjective.htm) - Natural image IQA benchmark
 - [CSIQ Database](https://qualinet.github.io/databases/image/csiq_image_database/) - Natural image IQA benchmark
 - [LIVE Challenge](https://live.ece.utexas.edu/research/ChallengeDB/) - Authentic camera captures
@@ -936,6 +1015,7 @@ def test_validation_correlation():
 - [IQA-Dataset](https://github.com/icbcbicc/IQA-Dataset) - Unified interface for 31 IQA datasets
 
 **Datasets (Phase 3+ - Training Data)**:
+
 - [DocSynth-300K](https://huggingface.co/datasets/juliozhao/DocSynth300K) - 300k synthetic layouts (Apache-2.0)
 - [PubTables-1M](https://github.com/microsoft/table-transformer) - 1M real-world tables (Apache-2.0)
 - [IAM Handwriting](https://huggingface.co/datasets/Teklia/IAM-line) - 13k handwritten text lines (Academic)
@@ -944,12 +1024,14 @@ def test_validation_correlation():
 - [SynDocDS](https://arxiv.org/abs/2410.18116) - Synthetic shadow removal dataset (Sensors 2024)
 
 **Datasets (Phase 3+ - Benchmarks)**:
+
 - [DIQA-5000](https://arxiv.org/abs/2509.17012) - Document-specific IQA benchmark (⚠️ Pending release, Sept 2025)
 - [AnyPhotoDoc 6300](https://arxiv.org/abs/2410.12189) - Dewarping benchmark (Oct 2025, ⚠️ Contact authors)
 - [ROOR](https://github.com/chongzhangFDU/ROOR-Datasets) - Reading order recognition (CC BY 4.0)
 - [OmniDocBench](https://huggingface.co/datasets/opendatalab/OmniDocBench) - Multi-domain comprehensive benchmark (Apache-2.0)
 
 **Internal**:
+
 - [docs/guides/dataset-preparation.md](../guides/dataset-preparation.md) - Dataset preparation workflow
 - [docs/PHASE2_QUICKSTART.md](../PHASE2_QUICKSTART.md) - Phase 2 quick start guide
 - [docs/TESTING_STRATEGY.md](../TESTING_STRATEGY.md) - Testing strategy and test fixtures
@@ -959,6 +1041,7 @@ def test_validation_correlation():
 - ADR-0024: Active Learning - Future annotation strategy
 
 **Research**:
+
 - Sheikh et al. (2006) - "A statistical evaluation of recent full reference image quality assessment algorithms" (LIVE dataset)
 - Larson & Chandler (2010) - "Most apparent distortion: full-reference image quality assessment and the role of strategy" (CSIQ dataset)
 - Ghadiyaram & Bovik (2015) - "Massive online crowdsourced study of subjective and objective picture quality" (LIVE Challenge)

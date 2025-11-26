@@ -22,6 +22,7 @@ purpose: "Document the decision to use Albumentations for synthetic data generat
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [PROJECT_PLAN.md Phase 2](../../PROJECT_PLAN.md#phase-2-ml-for-image-quality-assessment-3-4-weeks)
 - [ADR-006: Synthetic Validation Dataset Strategy](0006-synthetic-validation-dataset-strategy.md)
 - [ADR-014: Classical CV + ML Hybrid for IQA](0014-classical-ml-hybrid-iqa.md)
@@ -35,6 +36,7 @@ Phase 2 requires training a multi-label IQA CNN to detect image quality issues (
 **Base Dataset**: 10k clean document images from DocLayNet
 **Augmentation Target**: 50k total images (5× augmentation)
 **Quality Issues to Generate**:
+
 - Noise (Gaussian, salt-and-pepper, speckle)
 - Blur (Gaussian, motion blur)
 - Low contrast (histogram manipulation)
@@ -45,11 +47,13 @@ Phase 2 requires training a multi-label IQA CNN to detect image quality issues (
 ### Dataset Cost Analysis
 
 **Manual Annotation**:
+
 - 50k images × $0.50/image = $25,000
 - Time: ~500 hours (100 images/hour)
 - Quality variance: High
 
 **Synthetic Generation**:
+
 - Infrastructure: ~$500 (GPU compute)
 - Time: ~40 hours (automated)
 - Quality variance: Low (deterministic)
@@ -62,14 +66,17 @@ Phase 2 requires training a multi-label IQA CNN to detect image quality issues (
 ### Augmentation Pipeline Strategy
 
 **Strategy 1: Single-Issue Augmentation** (80% of data)
+
 - Apply one quality issue per image
 - Clean ground truth labels
 - Training: Simplifies multi-label learning
 
 **Strategy 2: Multi-Issue Augmentation** (20% of data)
+
 - Apply 2-3 quality issues per image
 - Realistic edge cases
 - Training: Improves robustness
+
 ### Albumentations Pipeline Implementation
 
 ```python
@@ -146,11 +153,13 @@ multi_aug = A.Compose([
 **Approach**: Manually annotate all 50k images
 
 **Advantages**:
+
 - Real-world ground truth
 - No synthetic bias
 - Captures authentic quality issues
 
 **Disadvantages**:
+
 - Expensive ($25,000)
 - Slow (500 hours)
 - Quality variance (inter-annotator disagreement)
@@ -163,10 +172,12 @@ multi_aug = A.Compose([
 **Approach**: Train StyleGAN or similar to generate synthetic degraded documents
 
 **Advantages**:
+
 - More realistic than deterministic augmentation
 - Unlimited data generation
 
 **Disadvantages**:
+
 - Requires training GAN first (weeks of work)
 - No ground truth control (harder to label)
 - Computational cost (100× higher than Albumentations)
@@ -179,11 +190,13 @@ multi_aug = A.Compose([
 **Approach**: Use BRISQUE/NIQE for automated labeling + selective human annotation
 
 **Advantages**:
+
 - Real-world images
 - Scalable labeling
 - Combines automated + human expertise
 
 **Disadvantages**:
+
 - Noisy labels from BRISQUE/NIQE
 - Requires active learning infrastructure
 - Still needs manual annotation for ambiguous cases
@@ -357,7 +370,7 @@ dvc push
 
 ### Dataset Structure
 
-```
+```text
 data/training/synthetic_iqa_50k/
 ├── noise/              # 8,000 images
 │   ├── img_0001_gaussian_noise.jpg
@@ -370,20 +383,23 @@ data/training/synthetic_iqa_50k/
 ├── orientation/        # 2,000 images
 ├── multi_issue/        # 10,000 images
 └── metadata.json       # Dataset-level metadata
-```
+```text
 
 ## Performance Impact
 
 **Generation Time**:
+
 - Single augmentation: ~100ms (CPU)
 - 50k augmentations: ~1.4 hours (4× GPU parallel)
 - Total pipeline: ~40 hours (including I/O)
 
 **Storage**:
+
 - 50k images × 4MB/image = ~200GB
 - Compressed: ~50GB (4× compression)
 
 **Compute Cost**:
+
 - GPU hours: 40 hours × $1.50/hr = $60
 - Total infrastructure: ~$500 (including storage)
 

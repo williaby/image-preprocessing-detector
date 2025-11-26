@@ -52,15 +52,18 @@ Bounding boxes for detected document elements can be represented in multiple for
 ### Downstream Tools
 
 **LayoutParser**:
+
 - Accepts: COCO format `[x, y, width, height]`
 - Used for: Document layout analysis, reading order detection
 - Integration: Critical for Phase 3
 
 **YOLOv8**:
+
 - Outputs: COCO format (can convert to others)
 - Industry standard: MS COCO dataset
 
 **Detectron2** (potential future use):
+
 - Native: COCO format
 - Widely used: Facebook AI research framework
 
@@ -141,6 +144,7 @@ def corner_to_coco(bbox: list[float]) -> list[float]:
    - Clear semantic meaning (position + size)
 
 4. **JSON Schema Clarity**: Self-documenting format
+
    ```json
    {
      "bbox": [100, 150, 250, 180],
@@ -172,27 +176,35 @@ def corner_to_coco(bbox: list[float]) -> list[float]:
 ## Alternatives Considered
 
 ### Alternative 1: Corner Format `[x1, y1, x2, y2]`
+
 **Rejected**:
+
 - Incompatible with LayoutParser (requires conversion)
 - Harder to validate (x2 > x1 and y2 > y1)
 - Less intuitive for size-based operations
 - Not COCO standard
 
 ### Alternative 2: Center Format `[cx, cy, width, height]`
+
 **Rejected**:
+
 - Not compatible with LayoutParser
 - Requires conversion to COCO for YOLOv8 output
 - Less common in document analysis
 
 ### Alternative 3: Support Multiple Formats
+
 **Rejected**:
+
 - Adds complexity (format detection/conversion)
 - Inconsistent across codebase
 - Error-prone (which format is this?)
 - Violates "one way to do it" principle
 
 ### Alternative 4: Normalized Coordinates [0-1]
+
 **Rejected**:
+
 - Loses pixel precision
 - Requires denormalization for cropping
 - Less intuitive for debugging
@@ -290,11 +302,13 @@ for detection in results[0].boxes:
 ## Documentation
 
 **Schema Documentation**:
+
 - `schema.py`: Inline comments for COCO format
 - `api/schema.md`: MkDocs API reference with examples
 - `guides/layout.md`: Layout detection guide with bbox examples
 
 **Code Comments**:
+
 ```python
 # COCO format: [x, y, width, height]
 # x, y: Top-left corner coordinates

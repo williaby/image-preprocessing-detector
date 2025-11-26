@@ -29,7 +29,7 @@ This approach avoids expensive YOLOv8 inference for pure images while ensuring c
 
 ### High-Level Pipeline
 
-```
+```text
 PDF/Image Input
     ↓
 [Ingestion] - Standardize to 300 DPI
@@ -43,26 +43,30 @@ Classical IQA  YOLOv8 Layout → Extract elements → Per-element IQA
 [Correction] - Deskew, CLAHE, sharpening, denoising
     ↓              ↓
 [JSON Output] - COCO-aligned metadata
-```
+```text
 
 ### Module Responsibilities
 
 **Ingestion** ([ingestion/](../api/ingestion.md))
+
 - PDF → standardized images (300 DPI)
 - Image normalization and validation
 - Multi-format support (PDF, PNG, JPEG, TIFF)
 
 **Detection** ([detection/](../api/detection.md))
+
 - Text gate: Fast text presence detection
 - Classical IQA: Blur, skew, contrast detection
 - (Phase 2+): ML-based IQA and layout detection
 
 **Correction** ([correction/](../api/correction.md))
+
 - OpenCV-based corrections with guardrails
 - Deskew, CLAHE enhancement, sharpening, denoising
 - Transform history tracking
 
 **Output** ([output/](../api/output.md))
+
 - JSON generation with COCO alignment
 - Integration with downstream processors
 
@@ -73,6 +77,7 @@ Classical IQA  YOLOv8 Layout → Extract elements → Per-element IQA
 **Problem**: Mixed document types require different processing strategies.
 
 **Solution**: Fast text detection gate (< 10ms) routes to appropriate branch:
+
 - Pure images → classical IQA only (fast path)
 - Text documents → layout detection + hybrid IQA (comprehensive path)
 
@@ -83,6 +88,7 @@ This avoids expensive YOLOv8 inference for images while ensuring thorough analys
 **Problem**: Text documents contain embedded images that need independent quality assessment.
 
 **Solution**: Hybrid IQA approach:
+
 1. YOLOv8 detects layout elements (tables, images, handwriting)
 2. Each element gets independent IQA
 3. Both page-level and element-level quality tracked
@@ -132,12 +138,14 @@ See [ARCHITECTURE_CORRECTION.md](../../ARCHITECTURE_CORRECTION.md) for detailed 
 ## Phased Development
 
 ### Phase 0: Foundation (COMPLETE ✅)
+
 - Project scaffolding
 - Pydantic schema models
 - Development infrastructure
 - 100% docstring coverage
 
 ### Phase 1: MVP with Classical Methods (IN PROGRESS)
+
 - PDF ingestion
 - Text detection gate
 - Classical IQA (blur, skew, contrast)
@@ -145,22 +153,26 @@ See [ARCHITECTURE_CORRECTION.md](../../ARCHITECTURE_CORRECTION.md) for detailed 
 - JSON output
 
 ### Phase 2: ML for Image Quality (Planned)
+
 - MobileNetV3/EfficientNet IQA
 - Multi-label quality classification
 - GPU acceleration
 
 ### Phase 3: ML for Document Layout (Planned)
+
 - YOLOv8 layout detection
 - Hybrid IQA implementation
 - Per-element quality assessment
 
 ### Phase 4: Production Hardening (Planned)
+
 - API service (FastAPI)
 - Deployment automation
 - Monitoring and telemetry
 - Performance optimization
 
 ### Phase 5: Continuous Improvement (Ongoing)
+
 - Model retraining
 - Performance tuning
 - Feature expansion
@@ -214,11 +226,13 @@ if all(len(page.detected_issues) == 0 for page in metadata.pages):
 ## Integration Points
 
 ### Upstream (Input)
+
 - PDF documents
 - Scanned images (PNG, JPEG, TIFF)
 - Multi-page TIFF files
 
 ### Downstream (Output)
+
 - **LayoutParser**: Document layout analysis
 - **Tesseract**: OCR processing
 - **Marker**: Markdown conversion

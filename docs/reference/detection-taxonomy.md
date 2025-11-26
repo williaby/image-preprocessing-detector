@@ -26,6 +26,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 
 **Total Issues**: 30+ detection categories across 3 domains
 **Coverage Status**:
+
 - ✅ **Implemented**: 12 (Phase 0-1 complete)
 - 🚧 **In Progress**: 6 (Phase 2 ML IQA)
 - ⏳ **Planned**: 12+ (Phase 3-5)
@@ -44,12 +45,14 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 | **Uneven Illumination** | Local variance, shadow detection | Illumination normalization, adaptive histogram | Classical + ML | 2 | ⏳ Planned Phase 2 |
 
 **Research Citations**:
+
 - Blur: "No-Reference Image Blur Assessment Using Multiscale Gradient" (IEEE 2017)
 - Skew: "A robust skew detection algorithm for grayscale document images" (Pattern Recognition 2018)
 - Binarization: "Degraded Historical Document Binarization: A Review" (PMC 2021)
 - Illumination: "Robust Document Image Binarization Technique for Degraded Document Images" (IEEE 2013)
 
 **Key Requirements**:
+
 - **Multi-label classification**: Document can have multiple defects simultaneously
 - **Confidence scores**: All detections include confidence [0-1]
 - **Spatial localization**: Where possible, identify affected regions (bounding boxes)
@@ -64,11 +67,13 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 | **Watermarks** | Frequency domain, repeated patterns | Detect-only (flag for VLM processing) | Classical + ML | 3 | ⏳ Planned |
 
 **Research Citations**:
+
 - Bleed-through: "Reduction of bleed-through in scanned manuscript documents" (Pattern Recognition 2011)
 - Warping: "Straightening warped text lines using polynomial regression" (DAS 2016)
 - Warping (DL): "DocUNet: Document Image Unwarping via A Stacked U-Net" (CVPR 2018)
 
 **Key Requirements**:
+
 - **Bleed-through**: Requires dual-side scanning (if available) or single-side frequency analysis
 - **Warping**: Critical for book scans (spine curvature), mobile captures
 - **Watermarks**: Detect-only - flag regions for VLM to interpret semantics
@@ -84,6 +89,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 | **Margin Annotations** | Edge detection, spatial isolation | Detect-only (separate from main text) | Classical + ML | 4 | ⏳ Planned |
 
 **Research Citations**:
+
 - Perspective: "Automatic Document Image Rectification Using Geometric Features" (ICDAR 2017)
 - Stamps: "Automatic Detection and Recognition of Official Seals in Document Images" (ICDAR 2019)
 
@@ -115,11 +121,13 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 | **Page Boundaries** | Page metadata, PDF structure | Smart chunking (don't split mid-sentence) | Classical | 1B | ✅ Complete |
 
 **Research Citations**:
+
 - Layout: "LayoutLMv3: Pre-training for Document AI with Unified Text and Image Masking" (ACM 2022)
 - Tables: "TableFormer: Table Structure Understanding with Transformers" (CVPR 2022)
 - RAG Issues: "OCR Hinders RAG: Evaluating the Cascading Impact of OCR on RAG" (arXiv 2024)
 
 **Key Requirements**:
+
 - **COCO Format**: Bounding boxes as `[x, y, width, height]` for LayoutParser compatibility
 - **Confidence Scores**: All detections include confidence [0-1]
 - **Relationship Linking**: Captions linked to figures, footnotes to references
@@ -135,6 +143,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 | **Diagrams** | Visual complexity analysis | Detect-only (flag for VLM) | ML | 4 | ⏳ Planned |
 
 **Research Citations**:
+
 - Footnotes: "Footnote Detection and Recognition in Historical Documents" (ICDAR 2019)
 - Reading Order: "Reading Order Detection in Complex Layouts" (IJDAR 2021)
 
@@ -161,6 +170,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 | **DPI** | PyMuPDF metadata, pixel density | Upscale to 300 DPI if needed | Classical | 1B | ✅ Complete |
 
 **Related ADRs**:
+
 - [ADR-008](ADRs/0008-multi-stage-pipeline-architecture.md): Text detection fork architecture
 - [ADR-007](ADRs/0007-hybrid-iqa-approach.md): Embedded image detection
 
@@ -174,6 +184,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 | **Code Blocks** | Monospace font, indentation, syntax patterns | Preserve formatting | ML | 4 | ⏳ Planned |
 
 **Research Citations**:
+
 - Handwriting: "A Survey on Handwriting Recognition" (IEEE Access 2019)
 - Mixed Content: "Hybrid Text/Handwriting Recognition in Document Images" (ICDAR 2021)
 
@@ -193,39 +204,46 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 ### Classical Computer Vision
 
 **Advantages**:
+
 - ✅ Fast inference (< 50ms per page)
 - ✅ No training data required
 - ✅ Interpretable (clear thresholds)
 - ✅ Low memory footprint
 
 **Disadvantages**:
+
 - ❌ Requires manual threshold tuning
 - ❌ Less robust to edge cases
 - ❌ Fixed feature extraction
 
 **Used For**:
+
 - Phase 1: Blur, skew, contrast, noise, DPI
 - Supplementary: Text presence gate, PDF type classification
 
 ### Machine Learning (Deep Learning)
 
 **Advantages**:
+
 - ✅ Learns from data (no manual thresholds)
 - ✅ Robust to variations
 - ✅ State-of-the-art accuracy
 
 **Disadvantages**:
+
 - ❌ Requires training data (50k+ samples)
 - ❌ Slower inference (100-300ms per page)
 - ❌ Higher memory usage (model size)
 
 **Architectures**:
+
 - **IQA**: MobileNetV3, EfficientNet-B0 (multi-label classification)
 - **Layout**: YOLOv8n, LayoutLMv3 (object detection)
 - **Tables**: TableTransformer (structure recognition)
 - **Specialized**: Custom CNNs for handwriting, formulas
 
 **Used For**:
+
 - Phase 2: IQA multi-defect classification
 - Phase 3: Layout detection, table structure, specialized content
 
@@ -234,11 +252,13 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 **Strategy**: Classical detectors + ML refinement + ensemble fusion
 
 **Example - Blur Detection**:
+
 1. **Classical**: Laplacian variance (fast screening)
 2. **ML**: MobileNetV3 multi-label IQA (confidence refinement)
 3. **Fusion**: Max confidence or weighted average
 
 **Benefits**:
+
 - ✅ Fast screening with classical methods
 - ✅ High accuracy with ML refinement
 - ✅ Graceful degradation if ML fails
@@ -276,6 +296,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 | Super-Resolution | ESRGAN, Real-ESRGAN | PyTorch | ⏳ Planned (Phase 4) |
 
 **Research Citations**:
+
 - DocUNet: "DocUNet: Document Image Unwarping via A Stacked U-Net" (CVPR 2018)
 - Super-Resolution: "ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks" (ECCV 2018)
 
@@ -286,6 +307,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 ### P0 - Critical (Production Blocking)
 
 **Criteria**:
+
 - Causes complete OCR failure (e.g., severe blur, extreme skew)
 - Affects majority of documents (> 30% detection rate)
 - No workaround possible (must be corrected)
@@ -296,6 +318,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 ### P1 - High (Quality Impact)
 
 **Criteria**:
+
 - Degrades OCR accuracy significantly (> 20% error rate)
 - Affects specialized domains (book scans, historical documents)
 - Has viable correction method
@@ -306,6 +329,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 ### P2 - Medium (Feature Enhancement)
 
 **Criteria**:
+
 - Improves user experience but not critical
 - Affects edge cases or specific document types
 - Workarounds exist (manual review)
@@ -316,6 +340,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 ### P3 - Low (Future Nice-to-Have)
 
 **Criteria**:
+
 - Rarely encountered (< 5% of documents)
 - Minimal impact on core functionality
 - High implementation cost for low benefit
@@ -332,12 +357,14 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 **Purpose**: Identify content that requires specialized processing or VLM interpretation
 
 **Examples**:
+
 - **Handwriting**: Route to VLM or specialized handwriting OCR
 - **Formulas**: Route to MathPix, LaTeX generation
 - **Watermarks**: Flag for VLM to extract semantic meaning
 - **Stamps/Seals**: Flag region, may contain important metadata
 
 **Output Format**:
+
 ```json
 {
   "detection_type": "watermark",
@@ -356,12 +383,14 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 **Purpose**: Automatically fix issues to improve OCR accuracy
 
 **Examples**:
+
 - **Blur**: Sharpen image before OCR
 - **Skew**: Rotate to correct orientation
 - **Low Contrast**: Enhance with CLAHE
 - **Warping**: Dewarp curved text lines
 
 **Output Format**:
+
 ```json
 {
   "detection_type": "blur",
@@ -384,6 +413,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 ### Current Functional Requirements v2
 
 **Coverage**:
+
 - ✅ FR-1: File Handling (PDF, images)
 - ✅ FR-2: PDF Type Classification
 - ✅ FR-3: Image Quality Detection (partial - missing binarization, illumination, warping, bleed-through)
@@ -393,6 +423,7 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 ### Recommended Updates
 
 **Add to FR-3 (Image Quality)**:
+
 - FR-3.8: Binarization Quality Assessment (P0)
 - FR-3.9: Illumination Uniformity Detection (P0)
 - FR-3.10: Bleed-Through Detection (P1)
@@ -400,18 +431,21 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 - FR-3.12: Perspective Distortion Detection (P2)
 
 **Add to FR-4 (Layout)**:
+
 - FR-4.4: Parasitic Content Detection (headers/footers) (P0)
 - FR-4.5: Footnote Linking (superscript to footnote) (P1)
 - FR-4.6: Figure-Caption Linking (P1)
 - FR-4.7: Vertical Text Orientation Detection (P2)
 
 **Add to FR-5 (Specialized Content)**:
+
 - FR-5.4: Watermark Detection (P1)
 - FR-5.5: Stamp/Seal Detection (P2)
 - FR-5.6: Signature Detection (P2)
 - FR-5.7: Margin Annotation Detection (P2)
 
 **Add corrections** (FR-6):
+
 - FR-6.8: Binarization Correction (adaptive thresholding)
 - FR-6.9: Illumination Normalization
 - FR-6.10: Dewarping (polynomial regression, DocUNet)
@@ -486,17 +520,20 @@ This document provides a comprehensive taxonomy of all document quality issues, 
 ## References
 
 **Research Papers**:
+
 - OCR/RAG: "OCR Hinders RAG: Evaluating the Cascading Impact of OCR on RAG" (arXiv 2024)
 - Binarization: "Degraded Historical Document Binarization: A Review" (PMC 2021)
 - Dewarping: "DocUNet: Document Image Unwarping via A Stacked U-Net" (CVPR 2018)
 - Layout: "LayoutLMv3: Pre-training for Document AI with Unified Text and Image Masking" (ACM 2022)
 
 **Internal Documentation**:
+
 - [docs/requirements/functional_requirements_v2.md](requirements/functional_requirements_v2.md): Current FR specification
 - [data/README.md](../data/README.md): Three-tier dataset strategy
 - [benchmarks/registry.yml](../benchmarks/registry.yml): Benchmark suite definitions
 
 **Architecture Decision Records**:
+
 - [ADR-011](ADRs/0011-hybrid-validation-strategy.md): Hybrid validation (synthetic + real-world)
 - [ADR-029](ADRs/0029-phase2-dataset-selection-strategy.md): Three-tier dataset strategy
 - [ADR-031](ADRs/0031-comprehensive-benchmarking-framework.md): Registry-based benchmarking

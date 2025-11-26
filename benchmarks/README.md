@@ -35,7 +35,7 @@ python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
 
 # Run all smoke tests
 python -m benchmarks.runners.run_smoke --all
-```
+```text
 
 ## Architecture
 
@@ -58,7 +58,7 @@ benchmarks/
 │   └── run_smoke.py         # Fast CI smoke tests
 └── labelmaps/               # Label mappings
     └── omnidoc_to_doclaynet.yaml
-```
+```text
 
 **Dataset Storage** (separate location):
 
@@ -76,7 +76,7 @@ data/benchmarks/             # Actual dataset files (~98GB total, gitignored)
 ├── wili_2018/              # Language detection (129MB, 235K samples)
 ├── cocotext/               # Text detection (53MB)
 └── synthetic_iqa/          # Auto-generated test images (372KB)
-```
+```text
 
 ## Registry Configuration
 
@@ -97,7 +97,7 @@ suites:
     target:
       correlation: 0.85
       rmse: 0.05
-```
+```text
 
 ## Dataset Adapters
 
@@ -116,7 +116,7 @@ adapter = load_adapter(
 # Iterate over samples
 for sample in adapter:
     print(sample.image_path, len(sample.annotations))
-```
+```text
 
 ### Available Adapters
 
@@ -149,7 +149,7 @@ from benchmarks.metrics.image_metrics import (
     ssim,              # SSIM ≥ 0.9
     binarization_metrics,  # F-measure ≥ 0.95
 )
-```
+```text
 
 ### Layout Detection
 
@@ -160,7 +160,7 @@ from benchmarks.metrics.detection_metrics import (
     bbox_iou,          # IoU calculation
     precision_recall_f1,  # Classification metrics
 )
-```
+```text
 
 ## Running Benchmarks
 
@@ -175,7 +175,7 @@ python -m benchmarks.runners.run_benchmark \
     --suite synthetic-iqa-blur-full \
     --data-dir /path/to/data \
     --output-dir /path/to/reports
-```
+```text
 
 ### Smoke Tests (CI)
 
@@ -187,7 +187,7 @@ python -m benchmarks.runners.run_smoke --suite doclaynet-layout-smoke
 python -m benchmarks.runners.run_smoke --all
 
 # Expected runtime: < 5 minutes for all smoke tests
-```
+```text
 
 ## Environment Variables
 
@@ -204,19 +204,19 @@ export HF_TOKEN=your_huggingface_token  # For gated datasets
 export GCP_SA_KEY=base64_encoded_service_account_json
 export GCP_PROJECT=image-detection-478105
 export GCS_BUCKET=gs://image_detection_b/
-```
+```text
 
 ## Output Format
 
 Results are saved to `reports/{suite}/{timestamp}/`:
 
-```
+```text
 reports/
 └── synthetic-iqa-blur-full/
     └── 20251112_143022/
         ├── results.json      # Raw results
         └── summary.md        # Human-readable summary
-```
+```text
 
 ### results.json
 
@@ -243,7 +243,7 @@ reports/
     }
   }
 }
-```
+```text
 
 ### summary.md
 
@@ -259,13 +259,14 @@ reports/
 |--------|------|-----|-----|-----|--------|--------|
 | blur_correlation | 0.920 | 0.030 | 0.870 | 0.980 | 0.850 | ✓ PASS |
 | blur_rmse | 0.042 | 0.008 | 0.030 | 0.055 | 0.050 | ✓ PASS |
-```
+```text
 
 ## GCS Integration for Colab Training
 
 The project supports Google Cloud Storage for dataset sharing with Google Colab:
 
 ### Setup
+
 ```bash
 # Authenticate with GCS
 ./scripts/auth_gcs.sh --cleanup
@@ -275,9 +276,10 @@ The project supports Google Cloud Storage for dataset sharing with Google Colab:
 
 # Download datasets from GCS (in Colab)
 ./scripts/gcs_helpers.sh download-phase2
-```
+```text
 
 ### Available Commands
+
 - `list` - List GCS bucket contents
 - `info` - Show storage usage and costs
 - `upload-configs` - Upload training configs
@@ -353,7 +355,7 @@ jobs:
         with:
           name: smoke-test-results
           path: reports/
-```
+```text
 
 ## Adding New Adapters
 
@@ -388,7 +390,7 @@ class MyDatasetAdapter(BaseAdapter):
     @property
     def split_info(self):
         return {"train": 1000, "val": 200, "test": 200}
-```
+```text
 
 ## Testing
 
@@ -401,7 +403,7 @@ poetry run pytest tests/benchmarks/test_image_metrics.py -v
 
 # Run with coverage
 poetry run pytest tests/benchmarks/ --cov=benchmarks --cov-report=html
-```
+```text
 
 ## Testing with Fixtures
 
@@ -426,7 +428,7 @@ ls -lh data/test_fixtures/
 # - tablebank/   324KB (5 images)
 # - wili_2018/   52KB (10 text files)
 # - iqa_samples/ ~2MB (planned for Phase 2)
-```
+```text
 
 ### Running Tests with Fixtures
 
@@ -439,7 +441,7 @@ poetry run pytest tests/integration/ -v -m "not requires_full_dataset"
 
 # Smoke tests (use dataset subsets - requires downloads)
 poetry run python -m benchmarks.runners.run_smoke --all
-```
+```text
 
 ### Benefits
 
@@ -473,7 +475,7 @@ python -m benchmarks.runners.run_benchmark \
 
 # Option 5: Use GCS-stored datasets (Colab)
 # See docs/DATASET_INSTALLATION.md for GCS setup
-```
+```text
 
 ### Missing Dependencies
 
@@ -489,7 +491,7 @@ poetry show
 
 # Verify HuggingFace Hub available
 poetry run python -c "import huggingface_hub; print(huggingface_hub.__version__)"
-```
+```text
 
 ### Synthetic Dataset Generation Fails
 
@@ -497,7 +499,7 @@ poetry run python -c "import huggingface_hub; print(huggingface_hub.__version__)
 # Regenerate synthetic datasets
 rm -rf data/benchmarks/synthetic_iqa
 python -m benchmarks.runners.run_benchmark --suite synthetic-iqa-blur-smoke
-```
+```text
 
 ## Benchmark Results & Comparisons
 
@@ -624,13 +626,13 @@ python -m benchmarks.runners.run_smoke --all
 
 # Generate latest comparison table
 python -m benchmarks.runners.aggregate --format markdown
-```
+```text
 
 ### Detailed Results
 
 Full benchmark results are stored in `reports/` after each run:
 
-```
+```text
 reports/
 ├── synthetic-iqa-blur-full/
 │   └── 20251112_143022/
@@ -639,7 +641,7 @@ reports/
 ├── doclaynet-layout-full/
 │   └── [timestamp]/
 └── aggregate.csv             # Cross-suite comparison
-```
+```text
 
 **Live Dashboard**: TBD (GitHub Pages planned for Phase 4)
 
@@ -668,6 +670,7 @@ For complete baseline references, see:
 Benchmark datasets are **NOT uploaded to GCS** due to size (~101 GB) and cost constraints.
 
 **Rationale**:
+
 - Benchmarks run locally on development machines
 - Too expensive for cloud storage ($2.02/month at $0.020/GB/month)
 - Can re-download from original sources if needed
@@ -677,16 +680,19 @@ Benchmark datasets are **NOT uploaded to GCS** due to size (~101 GB) and cost co
 ## Related Documentation
 
 ### Architecture Decisions
+
 - [ADR-031: Comprehensive Benchmarking Framework](../docs/ADRs/0031-comprehensive-benchmarking-framework.md) - Design rationale and architecture
 - [ADR-029: Three-Tier Dataset Strategy](../docs/ADRs/0029-phase2-dataset-selection-strategy.md) - Dataset organization (Storage Tiers)
 
 ### Dataset Documentation
+
 - [docs/DATASET_LOCATIONS.md](../docs/DATASET_LOCATIONS.md) - Complete dataset inventory, sizes, and locations
 - [data/benchmarks/README.md](../data/benchmarks/README.md) - Dataset file storage details
 - [docs/reference/document-type-coverage.md](../docs/reference/document-type-coverage.md) - FR coverage matrix
 - [docs/reference/detection-taxonomy.md](../docs/reference/detection-taxonomy.md) - Complete detection taxonomy
 
 ### Installation & Usage
+
 - [docs/guides/dataset-installation.md](../docs/guides/dataset-installation.md) - Dataset installation guide
 - [docs/references/CITATIONS.md](../docs/references/CITATIONS.md) - Citation information
 

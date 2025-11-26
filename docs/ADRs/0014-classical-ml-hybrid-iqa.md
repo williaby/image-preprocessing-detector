@@ -29,6 +29,7 @@ purpose: "Document the decision to use a hybrid approach combining classical met
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ARCHITECTURE_SUMMARY.md](../../ARCHITECTURE_SUMMARY.md)
 - [PROJECT_PLAN.md](../../PROJECT_PLAN.md)
 - [ADR-020: MobileNetV3 vs EfficientNet for IQA](0020-mobilenetv3-vs-efficientnet.md) (Future)
@@ -40,11 +41,13 @@ Image Quality Assessment (IQA) can be implemented using classical computer visio
 ### Phase 1 Requirements
 
 **MVP Delivery**: Classical methods only
+
 - Skew detection: Hough transform + projection profile
 - Blur detection: Laplacian variance
 - Contrast detection: RMS contrast + histogram std dev
 
 **Performance Achieved**:
+
 - Latency: ~170ms per page (CPU)
 - Coverage: 100% of Phase 1 IQA requirements
 - Accuracy: 95%+ on DocLayNet validation set
@@ -52,6 +55,7 @@ Image Quality Assessment (IQA) can be implemented using classical computer visio
 ### Phase 2 Requirements
 
 **ML Enhancement**: Add deep learning for complex issues
+
 - Noise detection: Classical methods struggle
 - Compression artifacts: Requires learned features
 - Multi-label classification: Simultaneous issue detection
@@ -71,11 +75,13 @@ Image Quality Assessment (IQA) can be implemented using classical computer visio
 ### Phase 1 (Complete): Classical CV Only
 
 **Detectors**:
+
 - Skew: Hough transform + projection profile ensemble
 - Blur: Laplacian variance
 - Contrast: RMS contrast + histogram analysis
 
 **Performance**:
+
 - CPU-only operation
 - ~170ms per page
 - 95%+ accuracy on validation set
@@ -83,12 +89,14 @@ Image Quality Assessment (IQA) can be implemented using classical computer visio
 ### Phase 2 (Planned): Add ML Models
 
 **Architecture**: Lightweight CNN (MobileNetV3 or EfficientNet-Lite)
+
 - Input: 300 DPI image crops
 - Output: Multi-label classification [blur, noise, compression, contrast, skew]
 - Training: Transfer learning from ImageNet
 - Optimization: ONNX Runtime INT8 quantization
 
 **New Capabilities**:
+
 - Noise detection (Gaussian, salt-and-pepper, speckle)
 - Compression artifacts (JPEG blocking, ringing)
 - Multi-label simultaneous detection
@@ -97,6 +105,7 @@ Image Quality Assessment (IQA) can be implemented using classical computer visio
 ### Phase 3 (Planned): Ensemble Hybrid
 
 **Combine Classical + ML**:
+
 ```python
 def hybrid_iqa(image):
     # Classical detectors (always run, fast)
@@ -120,6 +129,7 @@ def hybrid_iqa(image):
 ```
 
 **Benefits**:
+
 - Higher accuracy than classical alone
 - Graceful degradation if GPU unavailable
 - Confidence calibration via ensemble
@@ -155,12 +165,14 @@ def hybrid_iqa(image):
 **Approach**: Use only Hough, Laplacian, histogram methods (no ML)
 
 **Advantages**:
+
 - Simplest implementation
 - CPU-only deployment
 - No training infrastructure
 - Fast execution
 
 **Disadvantages**:
+
 - Limited accuracy (~75% mAP vs ~88% ML)
 - Cannot detect noise or compression artifacts
 - No multi-label classification
@@ -173,12 +185,14 @@ def hybrid_iqa(image):
 **Approach**: Use only deep learning models from Phase 1
 
 **Advantages**:
+
 - Highest accuracy (~88%+ mAP)
 - Multi-label classification built-in
 - Learned features for complex issues
 - Single detection system
 
 **Disadvantages**:
+
 - Requires GPU for acceptable performance
 - Training infrastructure needed from Phase 1
 - Delays MVP delivery by 3-4 weeks
@@ -191,11 +205,13 @@ def hybrid_iqa(image):
 **Approach**: Use simple threshold rules (e.g., if Laplacian < 200, then blurred)
 
 **Advantages**:
+
 - Fastest execution (<10ms)
 - No training needed
 - Extremely simple
 
 **Disadvantages**:
+
 - Poor accuracy (~60% mAP)
 - Brittle thresholds
 - No confidence scores
@@ -210,6 +226,7 @@ def hybrid_iqa(image):
 **File**: `src/image_preprocessing_detector/detection/iqa_classical.py` (564 lines)
 
 **Skew Detector**:
+
 ```python
 class SkewDetector:
     def detect(self, image: np.ndarray) -> SkewResult:
@@ -227,6 +244,7 @@ class SkewDetector:
 ```
 
 **Blur Detector**:
+
 ```python
 class BlurDetector:
     def detect(self, image: np.ndarray) -> BlurResult:
@@ -240,6 +258,7 @@ class BlurDetector:
 ```
 
 **Contrast Detector**:
+
 ```python
 class ContrastDetector:
     def detect(self, image: np.ndarray) -> ContrastResult:
@@ -261,17 +280,20 @@ class ContrastDetector:
 ### Phase 2 ML Models (Planned)
 
 **Architecture**: MobileNetV3-Small or EfficientNet-Lite0
+
 - Input: 224×224 RGB crops from 300 DPI images
 - Backbone: Pre-trained on ImageNet
 - Head: Multi-label classification (5 quality issues)
 - Output: Confidence scores [0.0-1.0] per issue type
 
 **Training Data**:
+
 - Synthetic: Microsoft Genalog (228 images with perfect labels)
 - Real-World: DocLayNet (100 PDFs with manual annotations)
 - Weak Supervision: BRISQUE/NIQE scores for automated labeling
 
 **Performance Targets**:
+
 - mAP@0.5: > 0.88
 - Latency: < 50ms (GPU T4)
 - Model Size: < 10MB (INT8 quantized)
@@ -279,6 +301,7 @@ class ContrastDetector:
 ### Phase 3 Ensemble (Planned)
 
 **Hybrid Detector**:
+
 ```python
 class HybridIQADetector:
     def __init__(self):

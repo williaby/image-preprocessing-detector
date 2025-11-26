@@ -29,6 +29,7 @@ purpose: "Document the decision to use pre-trained models for faster convergence
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ADR-025: MobileNetV3 vs EfficientNet](0025-mobilenetv3-vs-efficientnet.md)
 - [ADR-015: YOLOv8 for Layout Detection](0015-yolov8-layout-detection.md)
 
@@ -43,12 +44,14 @@ Training deep learning models from scratch requires large datasets (100k+ images
 ### Transfer Learning Strategy
 
 **IQA Classifier** (MobileNetV3):
+
 - Pre-trained: ImageNet-1K (1.28M images, 1000 classes)
 - Fine-tune: All layers with low learning rate
 - Freeze: None (full fine-tuning)
 - Training time: 2-3 days (vs 10-14 days from scratch)
 
 **Layout Detector** (YOLOv8):
+
 - Pre-trained: COCO dataset (330k images, 80 classes)
 - Fine-tune: DocLayNet (81k pages, 11 classes)
 - Freeze: Backbone first 10 epochs, then full fine-tuning
@@ -71,6 +74,7 @@ Training deep learning models from scratch requires large datasets (100k+ images
 ## Implementation
 
 **IQA Fine-Tuning**:
+
 ```python
 model = models.mobilenet_v3_small(weights="IMAGENET1K_V1")
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
@@ -78,6 +82,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 ```
 
 **YOLOv8 Fine-Tuning**:
+
 ```bash
 yolo train model=yolov8n.pt data=doclaynet.yaml epochs=150 imgsz=640
 ```

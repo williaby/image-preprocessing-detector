@@ -49,11 +49,11 @@ Phase 5 delivered comprehensive testing infrastructure, REST API development, co
 
 ### Test Results
 
-```
+```text
 Tests:     1282 passed, 58 skipped, 3 xfailed
 Coverage:  90.15% (target: 80%)
 Duration:  ~3 minutes
-```
+```text
 
 ### Test Distribution
 

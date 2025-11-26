@@ -37,11 +37,11 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
     # Stub implementations for when prometheus_client is not installed
     # These stubs provide API compatibility when prometheus_client is not installed
-    REGISTRY = None  # type: ignore[assignment]
-    CollectorRegistry = None  # type: ignore[misc, assignment]
-    multiprocess = None  # type: ignore[assignment]
+    REGISTRY = None  # type: ignore[assignment, unused-ignore]
+    CollectorRegistry = None  # type: ignore[misc, assignment, unused-ignore]
+    multiprocess = None  # type: ignore[assignment, unused-ignore]
 
-    class Counter:  # type: ignore[no-redef]
+    class Counter:  # type: ignore[no-redef, unused-ignore]
         """Stub Counter metric when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -49,12 +49,12 @@ except ImportError:
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Counter":
             """Return self for method chaining (no-op)."""
-            return self  # type: ignore[return-value]
+            return self  # type: ignore[return-value, unused-ignore]
 
         def inc(self, _amount: float = 1) -> None:
             """Increment counter (no-op)."""
 
-    class Gauge:  # type: ignore[no-redef]
+    class Gauge:  # type: ignore[no-redef, unused-ignore]
         """Stub Gauge metric when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -62,7 +62,7 @@ except ImportError:
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Gauge":
             """Return self for method chaining (no-op)."""
-            return self  # type: ignore[return-value]
+            return self  # type: ignore[return-value, unused-ignore]
 
         def set(self, _value: float) -> None:
             """Set gauge value (no-op)."""
@@ -73,7 +73,7 @@ except ImportError:
         def dec(self, _amount: float = 1) -> None:
             """Decrement gauge (no-op)."""
 
-    class Histogram:  # type: ignore[no-redef]
+    class Histogram:  # type: ignore[no-redef, unused-ignore]
         """Stub Histogram metric when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -81,12 +81,12 @@ except ImportError:
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Histogram":
             """Return self for method chaining (no-op)."""
-            return self  # type: ignore[return-value]
+            return self  # type: ignore[return-value, unused-ignore]
 
         def observe(self, _amount: float) -> None:
             """Observe value (no-op)."""
 
-    class Info:  # type: ignore[no-redef]
+    class Info:  # type: ignore[no-redef, unused-ignore]
         """Stub Info metric when prometheus_client unavailable."""
 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
@@ -95,11 +95,11 @@ except ImportError:
         def info(self, _val: dict[str, str]) -> None:
             """Set info labels (no-op)."""
 
-    def generate_latest(_registry: Any = None) -> bytes:  # type: ignore[misc]
+    def generate_latest(_registry: Any = None) -> bytes:  # type: ignore[misc, unused-ignore]
         """Generate empty metrics output (stub)."""
         return b""
 
-    def start_http_server(_port: int, _registry: Any = None) -> None:  # type: ignore[misc]
+    def start_http_server(_port: int, _registry: Any = None) -> None:  # type: ignore[misc, unused-ignore]
         """Start HTTP server (no-op stub)."""
 
 
@@ -562,7 +562,8 @@ class MetricsCollector:
         """
         if not PROMETHEUS_AVAILABLE:
             return b"# prometheus_client not installed\n"
-        return generate_latest(self._registry)  # type: ignore[arg-type]
+        result = generate_latest(self._registry)  # type: ignore[arg-type, unused-ignore]
+        return result if isinstance(result, bytes) else b""
 
     def start_server(self, port: int | None = None) -> None:
         """Start the metrics HTTP server.
@@ -575,7 +576,7 @@ class MetricsCollector:
 
         server_port = port or self._config.port
         # Pass registry as positional argument (prometheus_client API)
-        start_http_server(server_port, self._registry)  # type: ignore[arg-type]
+        start_http_server(server_port, self._registry)  # type: ignore[arg-type, unused-ignore]
 
 
 # ============================================================================

@@ -221,12 +221,12 @@ Add to `PROJECT_PLAN.md` as Phase 3.5 or appendix:
 
 PROJECT_PLAN.md shows Phase 4 as "NOT STARTED", but Sonnet's workflow documents detailed logic:
 
-```
+```text
 Device Priority:
 1. Local GPU (CUDAExecutionProvider)
 2. Local CPU (CPUExecutionProvider)
 3. Modal GPU (if budget permits)
-```
+```text
 
 **Resolution**: Verify `detection/iqa_ml.py` implements the documented priority chain before marking Phase 4 complete.
 
@@ -304,7 +304,7 @@ All sources agree on these core workflow elements:
 
 ### 5.1 Primary Pipeline Flow
 
-```
+```text
 Input (PDF/Image)
     ↓
 Pre-flight Analysis (DPI detection, upscaling)
@@ -334,7 +334,7 @@ Routing Recommendation
 Output (DocumentMetadata.json + images)
     ↓
 Project B Handoff
-```
+```text
 
 ### 5.2 Agreed Performance Targets
 

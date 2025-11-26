@@ -17,6 +17,7 @@ Comprehensive testing guide for the Image Preprocessing Detector project.
 **Goal**: Maintain 80%+ code coverage with high-quality, maintainable tests
 
 **Principles**:
+
 1. **Test behavior, not implementation**
 2. **Fast feedback loop** (< 30 seconds for unit tests)
 3. **Clear test names** (describe what is being tested)
@@ -30,12 +31,14 @@ Comprehensive testing guide for the Image Preprocessing Detector project.
 **Purpose**: Test individual functions and methods
 
 **Characteristics**:
+
 - Fast (< 1ms per test)
 - Isolated (no I/O, no network)
 - Focused (single function/method)
 - Deterministic (same input → same output)
 
 **Example**:
+
 ```python
 # tests/unit/test_schema.py
 from image_preprocessing_detector.schema import DetectedIssue
@@ -58,12 +61,14 @@ def test_detected_issue_validation():
 **Purpose**: Test module interactions
 
 **Characteristics**:
+
 - Slower (10-100ms per test)
 - Multiple components
 - File I/O allowed
 - May use test fixtures
 
 **Example**:
+
 ```python
 # tests/integration/test_pipeline.py
 from image_preprocessing_detector.ingestion import load_and_normalize_image
@@ -84,12 +89,14 @@ def test_blur_detection_pipeline():
 **Purpose**: Test complete workflows
 
 **Characteristics**:
+
 - Slow (1-10s per test)
 - Full pipeline
 - Real files
 - CLI invocation
 
 **Example**:
+
 ```python
 # tests/e2e/test_cli.py
 import subprocess
@@ -112,7 +119,7 @@ def test_cli_process_pdf():
 
 ### Directory Structure
 
-```
+```text
 tests/
 ├── unit/
 │   ├── test_schema.py           # Schema validation
@@ -128,7 +135,7 @@ tests/
 │   ├── blurry.jpg
 │   └── skewed.png
 └── conftest.py                   # Pytest configuration
-```
+```text
 
 ### Test Markers
 
@@ -152,6 +159,7 @@ def test_expensive_operation():
 ```
 
 **Run specific markers**:
+
 ```bash
 # Unit tests only
 poetry run pytest -m unit
@@ -254,6 +262,7 @@ exclude_lines = [
 ### 1. Clear Test Names
 
 **Good**:
+
 ```python
 def test_detect_blur_returns_true_for_blurry_image():
     pass
@@ -263,6 +272,7 @@ def test_apply_deskew_rejects_excessive_angle():
 ```
 
 **Bad**:
+
 ```python
 def test_blur():
     pass
@@ -338,7 +348,7 @@ def test_deskew_angles(angle, expected):
 
 ### Fixtures Directory
 
-```
+```text
 tests/fixtures/
 ├── sample.pdf          # Multi-page PDF
 ├── blurry.jpg          # Blurry image
@@ -346,7 +356,7 @@ tests/fixtures/
 ├── low_contrast.tiff   # Low contrast image
 └── expected/
     └── sample_page1.json  # Expected output
-```
+```text
 
 ### Generating Test Data
 
@@ -400,6 +410,7 @@ poetry run pre-commit run --all-files
 ### Quality Gates
 
 All must pass before merge:
+
 1. ✅ All tests pass
 2. ✅ Coverage ≥ 80%
 3. ✅ No linting errors

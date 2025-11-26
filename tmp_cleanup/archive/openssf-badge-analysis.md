@@ -2,6 +2,7 @@
 SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
 SPDX-License-Identifier: MIT
 -->
+<!-- markdownlint-disable MD013 MD040 MD031 -->
 
 ---
 schema_type: common
@@ -12,8 +13,10 @@ status: published
 owner: "quality-team"
 review_cycle_days: 90
 authors:
-  - name: "Byron Williams"
+
+- name: "Byron Williams"
 purpose: "Document responses and evidence for OpenSSF Best Practices Badge criteria."
+
 ---
 
 **Project**: image-preprocessing-detector
@@ -38,32 +41,38 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### ✅ Already Meeting (Just Claim Them)
 
 #### `description_good` - Clear Project Description
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - README includes clear "What Does This Do?" section
 - User-friendly language without excessive jargon
 - Explains the problem it solves
 - All documentation in accessible language
 
 **Action Required**:
-- **Response**: "The project website (README) describes what the software does in clear language: 'Prepares scanned documents and images for AI processing by automatically detecting quality issues (blurriness, skew, poor contrast, noise) and identifying which preprocessing steps are needed to improve accuracy before feeding documents to AI systems.' The README explains the problem it solves without requiring deep technical knowledge. See: https://github.com/williaby/image-preprocessing-detector#what-does-this-do"
+
+- **Response**: "The project website (README) describes what the software does in clear language: 'Prepares scanned documents and images for AI processing by automatically detecting quality issues (blurriness, skew, poor contrast, noise) and identifying which preprocessing steps are needed to improve accuracy before feeding documents to AI systems.' The README explains the problem it solves without requiring deep technical knowledge. See: <https://github.com/williaby/image-preprocessing-detector#what-does-this-do>"
 - **Mark as**: Met ✅
 
 ---
 
 #### `english` - Documentation in English
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - README.md is in English
 - All documentation in English
 - Code comments in English
 - Issue tracker accepts English
 
 **Action Required**:
+
 - **Response**: "All project documentation, code comments, and issue discussions are conducted in English. The README, CONTRIBUTING.md, and all technical documentation are written in English."
 - **Mark as**: Met ✅
 
@@ -72,16 +81,20 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### 📝 Need Minor Additions
 
 #### `interact` - How to Obtain, Provide Feedback, Contribute
+
 **Current Status**: Unmet ❓
 **What's Missing**: Clear URL reference
 
 **Evidence You Already Have**:
+
 - ✅ GitHub issues for feedback
 - ✅ CONTRIBUTING.md for contribution process
 - ✅ Installation instructions in README
 
 **Action Required**:
+
 1. Add to [README.md](../README.md) (if not already present):
+
    ```markdown
    ## Getting Started
 
@@ -91,35 +104,43 @@ Your project has strong foundations in several areas but needs targeted improvem
    ```
 
    Or with Poetry:
+
    ```bash
    poetry add image-preprocessing-detector
    ```
 
    ### Providing Feedback
-   - Report bugs: https://github.com/williaby/image-preprocessing-detector/issues
-   - Feature requests: https://github.com/williaby/image-preprocessing-detector/issues
+
+   - Report bugs: <https://github.com/williaby/image-preprocessing-detector/issues>
+   - Feature requests: <https://github.com/williaby/image-preprocessing-detector/issues>
    - Security issues: See [SECURITY.md](SECURITY.md)
 
    ### Contributing
+
    See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
    ```
 
-2. **Badge Response**: "Installation, feedback, and contribution information available at https://github.com/williaby/image-preprocessing-detector#readme"
+2. **Badge Response**: "Installation, feedback, and contribution information available at <https://github.com/williaby/image-preprocessing-detector#readme>"
 3. **Mark as**: Met ✅
 
 ---
 
 #### `contribution_requirements` - Acceptable Contribution Standards
+
 **Current Status**: Unmet ❓
 **What's Missing**: URL reference to coding standards
 
 **Evidence You Already Have**:
+
 - ✅ Pre-commit hooks (Black, Ruff, MyPy, Bandit)
 - ✅ Testing requirements (80% coverage minimum)
 - ✅ CONTRIBUTING.md exists
 
 **Action Required**:
+
 1. Enhance [CONTRIBUTING.md](../CONTRIBUTING.md) with coding standards section:
+
    ```markdown
    ## Code Quality Standards
 
@@ -147,18 +168,21 @@ Your project has strong foundations in several areas but needs targeted improvem
    ```
 
    See [pyproject.toml](../pyproject.toml) for complete configuration.
+
    ```
 
-2. **Badge Response**: "https://github.com/williaby/image-preprocessing-detector/blob/main/CONTRIBUTING.md#code-quality-standards"
+2. **Badge Response**: "<https://github.com/williaby/image-preprocessing-detector/blob/main/CONTRIBUTING.md#code-quality-standards>"
 3. **Mark as**: Met ✅
 
 ---
 
 #### `documentation_interface` - Reference Documentation for External Interface
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - ✅ Comprehensive API reference documentation in `docs/api-reference.md`
 - ✅ CLI interface fully documented (commands, arguments, options, examples)
 - ✅ Python API documented (schema classes, validation, JSON I/O)
@@ -167,6 +191,7 @@ Your project has strong foundations in several areas but needs targeted improvem
 - ✅ Logging interface documented
 
 **Documentation Coverage**:
+
 1. **CLI Interface**: Both `process` and `batch` commands with all options
 2. **Python API**: Schema validation, JSON loading/saving, logging setup
 3. **JSON Schema**: Complete documentation of:
@@ -179,7 +204,9 @@ Your project has strong foundations in several areas but needs targeted improvem
 4. **Examples**: Code examples and JSON samples for all major use cases
 
 **Action Required**:
+
 1. **Existing documentation**: `docs/api-reference.md` contains:
+
    ```markdown
    # API Reference
 
@@ -220,9 +247,10 @@ Your project has strong foundations in several areas but needs targeted improvem
    ```
 
    For complete schema documentation, see [schema.py](../src/image_preprocessing_detector/schema.py).
+
    ```
 
-2. **Badge Response**: "Project provides comprehensive reference documentation for all external interfaces. CLI interface documented at https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api-reference.md#command-line-interface with all commands, arguments, and options. Python API documented at https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api-reference.md#python-api with schema classes and usage examples. JSON schema fully documented at https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api-reference.md#json-schema with field descriptions, validation rules, and examples. Complete reference: https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api-reference.md"
+2. **Badge Response**: "Project provides comprehensive reference documentation for all external interfaces. CLI interface documented at <https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api-reference.md#command-line-interface> with all commands, arguments, and options. Python API documented at <https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api-reference.md#python-api> with schema classes and usage examples. JSON schema fully documented at <https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api-reference.md#json-schema> with field descriptions, validation rules, and examples. Complete reference: <https://github.com/williaby/image-preprocessing-detector/blob/main/docs/api-reference.md>"
 3. **Mark as**: Met ✅
 
 ---
@@ -232,16 +260,19 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### ✅ Already Meeting (Just Claim Them)
 
 #### `repo_interim` - Interim Versions Between Releases
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Git repository with 100+ commits
 - Feature branches with work-in-progress code
 - Pull request history shows interim reviews
 
 **Action Required**:
-- **Response**: "The project repository contains all interim commits and development history. All development occurs via feature branches with pull requests for review before merging to main. Repository shows continuous development history: https://github.com/williaby/image-preprocessing-detector/commits/main"
+
+- **Response**: "The project repository contains all interim commits and development history. All development occurs via feature branches with pull requests for review before merging to main. Repository shows continuous development history: <https://github.com/williaby/image-preprocessing-detector/commits/main>"
 - **Mark as**: Met ✅
 
 ---
@@ -249,35 +280,42 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### 📝 Need Implementation
 
 #### `version_unique` - Unique Version Identifier
+
 **Current Status**: Unmet ❓
 **What's Missing**: Version numbering scheme
 
 **Action Required**:
+
 1. Add version to [pyproject.toml](../pyproject.toml):
+
    ```toml
    [tool.poetry]
    name = "image-preprocessing-detector"
    version = "0.1.0"  # Add this line
    ```
 
-2. Create [src/image_preprocessing_detector/__init__.py](../src/image_preprocessing_detector/__init__.py):
+2. Create [src/image_preprocessing_detector/**init**.py](../src/image_preprocessing_detector/__init__.py):
+
    ```python
    """Image Preprocessing Detector for RAG Applications."""
 
    __version__ = "0.1.0"
    ```
 
-3. **Badge Response**: "Project uses Semantic Versioning, tracked in pyproject.toml and __init__.py. Current version: 0.1.0"
+3. **Badge Response**: "Project uses Semantic Versioning, tracked in pyproject.toml and **init**.py. Current version: 0.1.0"
 4. **Mark as**: Met ✅
 
 ---
 
 #### `version_semver` - Semantic Versioning
+
 **Current Status**: Unmet ❓
 **What's Missing**: Commitment to SemVer
 
 **Action Required**:
+
 1. Add to [README.md](../README.md):
+
    ```markdown
    ## Versioning
 
@@ -289,38 +327,45 @@ Your project has strong foundations in several areas but needs targeted improvem
    Current version: 0.1.0 (pre-release, API may change)
    ```
 
-2. **Badge Response**: "Project follows Semantic Versioning 2.0.0 (https://semver.org). Version tracked in pyproject.toml."
+2. **Badge Response**: "Project follows Semantic Versioning 2.0.0 (<https://semver.org>). Version tracked in pyproject.toml."
 3. **Mark as**: Met ✅
 
 ---
 
 #### `version_tags` - Git Tags for Releases
+
 **Current Status**: Unmet ❓
 **What's Missing**: Git release tags
 
 **Action Required**:
+
 1. Create first release tag:
+
    ```bash
    git tag -a v0.1.0 -m "Initial release - Phase 0 complete"
    git push origin v0.1.0
    ```
 
 2. Create GitHub Release:
+
    ```bash
    gh release create v0.1.0 --title "v0.1.0 - Foundation Release" --notes "See CHANGELOG.md for details"
    ```
 
-3. **Badge Response**: "Each release is tagged in git with version tags (e.g., v0.1.0). Tags visible at https://github.com/williaby/image-preprocessing-detector/tags"
+3. **Badge Response**: "Each release is tagged in git with version tags (e.g., v0.1.0). Tags visible at <https://github.com/williaby/image-preprocessing-detector/tags>"
 4. **Mark as**: Met ✅
 
 ---
 
 #### `release_notes` - Human-Readable Release Notes
+
 **Current Status**: Unmet ❌
 **What's Missing**: CHANGELOG or release notes
 
 **Action Required**:
+
 1. Create [CHANGELOG.md](../CHANGELOG.md):
+
    ```markdown
    # Changelog
 
@@ -359,12 +404,13 @@ Your project has strong foundations in several areas but needs targeted improvem
    [0.1.0]: https://github.com/williaby/image-preprocessing-detector/releases/tag/v0.1.0
    ```
 
-2. **Badge Response**: "https://github.com/williaby/image-preprocessing-detector/blob/main/CHANGELOG.md"
+2. **Badge Response**: "<https://github.com/williaby/image-preprocessing-detector/blob/main/CHANGELOG.md>"
 3. **Mark as**: Met ✅
 
 ---
 
 #### `release_notes_vulns` - Vulnerability Disclosure in Release Notes
+
 **Current Status**: ? (Unknown)
 **Recommendation**: Mark as **N/A** for now
 
@@ -376,6 +422,7 @@ Your project has strong foundations in several areas but needs targeted improvem
 ```
 
 **Action Required**:
+
 - **Response**: "N/A - No releases have been made yet with publicly known vulnerabilities. Future releases will document security fixes in CHANGELOG.md with CVE references."
 - **Mark as**: N/A
 
@@ -386,30 +433,36 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### ✅ Already Meeting (Just Claim Them)
 
 #### `report_tracker` - Issue Tracker
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Using GitHub Issues
 - Searchable, has URLs, accessible to public
 
 **Action Required**:
-- **Response**: "Project uses GitHub Issues for bug tracking and enhancement requests: https://github.com/williaby/image-preprocessing-detector/issues"
+
+- **Response**: "Project uses GitHub Issues for bug tracking and enhancement requests: <https://github.com/williaby/image-preprocessing-detector/issues>"
 - **Mark as**: Met ✅
 
 ---
 
 #### `report_archive` - Public Archive of Reports
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - GitHub Issues are automatically archived
 - Searchable history
 - Permanent URLs
 
 **Action Required**:
-- **Response**: "GitHub Issues provides permanent, searchable archive: https://github.com/williaby/image-preprocessing-detector/issues?q=is%3Aissue"
+
+- **Response**: "GitHub Issues provides permanent, searchable archive: <https://github.com/williaby/image-preprocessing-detector/issues?q=is%3Aissue>"
 - **Mark as**: Met ✅
 
 ---
@@ -417,14 +470,18 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### 📝 Need Minor Additions
 
 #### `report_process` - Bug Report Process
+
 **Current Status**: Unmet ❓
 **What's Missing**: Clear documentation
 
 **Evidence You Already Have**:
+
 - ✅ GitHub Issues available
 
 **Action Required**:
+
 1. Add to [README.md](../README.md):
+
    ```markdown
    ## Reporting Issues
 
@@ -445,6 +502,7 @@ Your project has strong foundations in several areas but needs targeted improvem
    ```
 
 2. Create `.github/ISSUE_TEMPLATE/bug_report.md`:
+
    ```markdown
    ---
    name: Bug Report
@@ -476,17 +534,20 @@ Your project has strong foundations in several areas but needs targeted improvem
    Add any other context about the problem.
    ```
 
-3. **Badge Response**: "https://github.com/williaby/image-preprocessing-detector#reporting-issues"
+3. **Badge Response**: "<https://github.com/williaby/image-preprocessing-detector#reporting-issues>"
 4. **Mark as**: Met ✅
 
 ---
 
 #### `report_responses` - Acknowledge Bug Reports
+
 **Current Status**: Unmet ❓
 **What's Needed**: Policy commitment
 
 **Action Required**:
+
 1. Add to [CONTRIBUTING.md](../CONTRIBUTING.md):
+
    ```markdown
    ## Issue Response Policy
 
@@ -504,10 +565,12 @@ Your project has strong foundations in several areas but needs targeted improvem
 ---
 
 #### `enhancement_responses` - Respond to Enhancement Requests
+
 **Current Status**: Unmet ❓
 **What's Needed**: Policy commitment
 
 **Action Required**:
+
 - Same as `report_responses` - covered by the Issue Response Policy above
 - **Badge Response**: "Project maintainer commits to responding to enhancement requests within 14 days. See CONTRIBUTING.md for details."
 - **Mark as**: Met ✅
@@ -515,11 +578,14 @@ Your project has strong foundations in several areas but needs targeted improvem
 ---
 
 #### `vulnerability_report_process` - Vulnerability Reporting Process
+
 **Current Status**: Unmet ❓
 **What's Missing**: SECURITY.md file
 
 **Action Required**:
+
 1. Create [SECURITY.md](../SECURITY.md):
+
    ```markdown
    # Security Policy
 
@@ -589,23 +655,26 @@ Your project has strong foundations in several areas but needs targeted improvem
 2. Enable GitHub Private Vulnerability Reporting:
    - Go to repository Settings → Security → Enable private vulnerability reporting
 
-3. **Badge Response**: "https://github.com/williaby/image-preprocessing-detector/blob/main/SECURITY.md"
+3. **Badge Response**: "<https://github.com/williaby/image-preprocessing-detector/blob/main/SECURITY.md>"
 4. **Mark as**: Met ✅
 
 ---
 
 #### `vulnerability_report_private` - Private Vulnerability Reporting
+
 **Current Status**: Unmet ❓
 **What's Missing**: Private reporting mechanism
 
 **Action Required**:
+
 - Covered by SECURITY.md above (GitHub private reporting + email)
-- **Badge Response**: "https://github.com/williaby/image-preprocessing-detector/blob/main/SECURITY.md#reporting-a-vulnerability"
+- **Badge Response**: "<https://github.com/williaby/image-preprocessing-detector/blob/main/SECURITY.md#reporting-a-vulnerability>"
 - **Mark as**: Met ✅
 
 ---
 
 #### `vulnerability_report_response` - Timely Vulnerability Response
+
 **Current Status**: ? (Unknown)
 **What's Needed**: Policy commitment (already in SECURITY.md above)
 
@@ -621,132 +690,160 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### ✅ Already Meeting (Just Claim Them)
 
 #### `build` - Working Build System
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Poetry build system configured
 - `pyproject.toml` with complete build configuration
 - Automated builds in CI/CD
 
 **Action Required**:
+
 - **Response**: "Project uses Poetry for build automation. Build command: `poetry build`. See pyproject.toml for configuration. CI/CD validates builds on every commit."
 - **Mark as**: Met ✅
 
 ---
 
 #### `build_common_tools` - Common Build Tools
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Poetry is a standard Python build tool
 - Widely adopted in Python ecosystem
 
 **Action Required**:
-- **Response**: "Uses Poetry, a standard Python build and dependency management tool (https://python-poetry.org). Follows PEP 517/518 standards."
+
+- **Response**: "Uses Poetry, a standard Python build and dependency management tool (<https://python-poetry.org>). Follows PEP 517/518 standards."
 - **Mark as**: Met ✅
 
 ---
 
 #### `build_floss_tools` - FLOSS Build Tools
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Poetry is MIT licensed (FLOSS)
 - All build tools are FLOSS (Python, pip, setuptools, etc.)
 
 **Action Required**:
+
 - **Response**: "All build tools are FLOSS: Poetry (MIT), Python (PSF), pip (MIT), setuptools (MIT)."
 - **Mark as**: Met ✅
 
 ---
 
 #### `test` - Automated Test Suite
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - pytest test suite in `tests/`
 - CI/CD runs tests automatically
 - Documented in README and CONTRIBUTING.md
 
 **Action Required**:
-- **Response**: "Test suite: pytest with 163 tests, 94.46% coverage. Run with: `poetry run pytest -v`. CI runs on every commit: https://github.com/williaby/image-preprocessing-detector/blob/main/.github/workflows/ci.yml"
+
+- **Response**: "Test suite: pytest with 163 tests, 94.46% coverage. Run with: `poetry run pytest -v`. CI runs on every commit: <https://github.com/williaby/image-preprocessing-detector/blob/main/.github/workflows/ci.yml>"
 - **Mark as**: Met ✅
 
 ---
 
 #### `test_invocation` - Standard Test Invocation
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Standard pytest invocation
 - Documented in multiple places
 
 **Action Required**:
+
 - **Response**: "Tests use standard pytest invocation: `poetry run pytest` or `pytest` (if in poetry shell). Documented in README.md and CONTRIBUTING.md."
 - **Mark as**: Met ✅
 
 ---
 
 #### `test_most` - Comprehensive Test Coverage
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - 94.46% code coverage (well above 80% minimum)
 - Coverage enforced by `--cov-fail-under=80`
 
 **Action Required**:
+
 - **Response**: "Test suite achieves 94.46% code coverage, verified via pytest-cov. Coverage reports generated in CI/CD. Minimum 80% coverage enforced."
 - **Mark as**: Met ✅
 
 ---
 
 #### `test_continuous_integration` - Continuous Integration
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - GitHub Actions CI workflow
 - Runs on every PR and push
 - Tests, linting, security scans all automated
 
 **Action Required**:
-- **Response**: "GitHub Actions CI runs on every commit and PR: tests, coverage, linting (Ruff, Black), type checking (MyPy), security (Bandit). Configuration: https://github.com/williaby/image-preprocessing-detector/blob/main/.github/workflows/ci.yml"
+
+- **Response**: "GitHub Actions CI runs on every commit and PR: tests, coverage, linting (Ruff, Black), type checking (MyPy), security (Bandit). Configuration: <https://github.com/williaby/image-preprocessing-detector/blob/main/.github/workflows/ci.yml>"
 - **Mark as**: Met ✅
 
 ---
 
 #### `warnings` - Enable Compiler/Linter Warnings
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Ruff linting enabled
 - MyPy type checking enabled
 - Bandit security linting enabled
 - Pre-commit hooks enforce all
 
 **Action Required**:
+
 - **Response**: "Project enables multiple linters: Ruff (code quality), MyPy (type checking), Bandit (security). Configuration in pyproject.toml. Pre-commit hooks enforce on every commit."
 - **Mark as**: Met ✅
 
 ---
 
 #### `warnings_fixed` - Address Warnings
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS** (assuming no current warnings)
 
 **Evidence**:
+
 - CI/CD enforces zero warnings
 - Pre-commit hooks prevent commits with warnings
 
 **Action Required**:
+
 1. Verify no warnings exist:
+
    ```bash
    poetry run ruff check .
    poetry run mypy src
@@ -759,15 +856,18 @@ Your project has strong foundations in several areas but needs targeted improvem
 ---
 
 #### `warnings_strict` - Maximally Strict Warnings
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - MyPy runs in strict mode on `src/`
 - Ruff has comprehensive rule set enabled
 - Bandit runs with medium severity threshold
 
 **Action Required**:
+
 - **Response**: "MyPy runs in strict mode for production code (src/). Ruff configured with comprehensive rule set. Bandit security scanning at medium severity. See pyproject.toml for complete configuration."
 - **Mark as**: Met ✅
 
@@ -776,11 +876,14 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### 📝 Need Documentation
 
 #### `test_policy` - Testing Policy for New Features
+
 **Current Status**: Unmet ❓
 **What's Missing**: Documented policy
 
 **Action Required**:
+
 1. Add to [CONTRIBUTING.md](../CONTRIBUTING.md):
+
    ```markdown
    ## Testing Policy
 
@@ -808,19 +911,23 @@ Your project has strong foundations in several areas but needs targeted improvem
    ```
 
    ### Pre-Commit Validation
+
    CI/CD automatically runs all tests. Tests must pass before merge.
+
    ```
 
-2. **Badge Response**: "https://github.com/williaby/image-preprocessing-detector/blob/main/CONTRIBUTING.md#testing-policy"
+2. **Badge Response**: "<https://github.com/williaby/image-preprocessing-detector/blob/main/CONTRIBUTING.md#testing-policy>"
 3. **Mark as**: Met ✅
 
 ---
 
 #### `tests_are_added` - Evidence of Test Policy Adherence
+
 **Current Status**: Unmet ❓
 **What's Needed**: Evidence in recent changes
 
 **Action Required**:
+
 1. Review recent PRs/commits to show tests were added with features
 2. **Response**: "Recent commits demonstrate test policy: [provide 2-3 commit SHAs or PR numbers]. Example: Commit abc123 added PDF ingestion with corresponding tests in tests/unit/test_pdf_loader.py achieving 95% coverage of new code."
 3. **Mark as**: Met ✅
@@ -830,10 +937,12 @@ Your project has strong foundations in several areas but needs targeted improvem
 ---
 
 #### `tests_documented_added` - Testing Policy Documented
+
 **Current Status**: Unmet ❓
 **What's Missing**: Reference in PR/contribution docs
 
 **Action Required**:
+
 - Already covered by additions to CONTRIBUTING.md above
 - **Response**: "Testing policy documented in CONTRIBUTING.md. All contributors required to follow policy."
 - **Mark as**: Met ✅
@@ -845,51 +954,61 @@ Your project has strong foundations in several areas but needs targeted improvem
 ### ✅ Already Meeting (Just Claim Them)
 
 #### `delivery_mitm` - Secure Delivery Against MITM
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Delivered via GitHub (HTTPS)
 - Future PyPI delivery (HTTPS)
 - Git clone uses HTTPS
 
 **Action Required**:
-- **Response**: "Source code delivered via GitHub using HTTPS. Future PyPI releases will also use HTTPS. Repository URL uses HTTPS: https://github.com/williaby/image-preprocessing-detector"
+
+- **Response**: "Source code delivered via GitHub using HTTPS. Future PyPI releases will also use HTTPS. Repository URL uses HTTPS: <https://github.com/williaby/image-preprocessing-detector>"
 - **Mark as**: Met ✅
 
 ---
 
 #### `delivery_unsigned` - Signed Delivery
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - No insecure hash downloads
 - All dependencies via poetry.lock with hashes
 - PyPI uses cryptographic signatures
 
 **Action Required**:
+
 - **Response**: "Project does not retrieve cryptographic hashes over insecure HTTP. Poetry.lock contains SHA256 hashes for all dependencies. Future PyPI releases will include cryptographic signatures."
 - **Mark as**: Met ✅
 
 ---
 
 #### `vulnerabilities_fixed_60_days` - No Unpatched Vulnerabilities
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - No known vulnerabilities
 - Safety checks run in CI
 - Recent security updates applied (Black, FastAPI)
 
 **Action Required**:
+
 - **Response**: "No known unpatched vulnerabilities. Safety scanning runs in CI/CD. Recent security updates: Black 25.9.0 (CVE-2024-21503 fixed), FastAPI 0.115.14 (PVE-2024-64930 fixed)."
 - **Mark as**: Met ✅
 
 ---
 
 #### `vulnerabilities_critical_fixed` - Rapid Critical Vulnerability Fixes
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS** (policy commitment)
 
@@ -907,11 +1026,14 @@ Your project has strong foundations in several areas but needs targeted improvem
 ---
 
 #### `no_leaked_credentials` - No Leaked Credentials
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS** (verify first!)
 
 **Action Required**:
+
 1. Verify no secrets in git history:
+
    ```bash
    # Check for common secret patterns
    git log -p | grep -i -E '(password|secret|key|token|credential)' | less
@@ -942,6 +1064,7 @@ Your project does **not** implement cryptography, so these can be marked **N/A**
 - `crypto_random`
 
 **Action Required**:
+
 - **Response**: "N/A - This project does not implement cryptographic functions, protocols, or password storage. It processes images and documents using computer vision techniques."
 - **Mark all as**: N/A
 
@@ -950,11 +1073,14 @@ Your project does **not** implement cryptography, so these can be marked **N/A**
 ### 📝 Need Documentation
 
 #### `know_secure_design` - Secure Software Design Knowledge
+
 **Current Status**: Unmet ❓
 **What's Needed**: Evidence of security knowledge
 
 **Action Required**:
+
 1. Add to [SECURITY.md](../SECURITY.md):
+
    ```markdown
    ## Security Design Principles
 
@@ -987,11 +1113,14 @@ Your project does **not** implement cryptography, so these can be marked **N/A**
 ---
 
 #### `know_common_errors` - Knowledge of Common Vulnerabilities
+
 **Current Status**: Unmet ❓
 **What's Needed**: Evidence of security awareness
 
 **Action Required**:
+
 1. Add to [SECURITY.md](../SECURITY.md):
+
    ```markdown
    ## Common Vulnerability Mitigations
 
@@ -1027,45 +1156,55 @@ Your project does **not** implement cryptography, so these can be marked **N/A**
 ### ✅ Already Meeting (Just Claim Them)
 
 #### `static_analysis` - Static Code Analysis
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Ruff (comprehensive linting)
 - MyPy (static type checking)
 - Bandit (security analysis)
 - All run on every commit via pre-commit
 
 **Action Required**:
+
 - **Response**: "Static analysis tools run before every release: Ruff (linting), MyPy (type checking), Bandit (security). Configuration in pyproject.toml. CI/CD enforces all checks."
 - **Mark as**: Met ✅
 
 ---
 
 #### `static_analysis_common_vulnerabilities` - Security-Focused Analysis
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Bandit specifically looks for security vulnerabilities
 - Covers OWASP Python-specific issues
 
 **Action Required**:
+
 - **Response**: "Bandit static security analyzer checks for common Python vulnerabilities (SQL injection, code injection, weak cryptography, etc.). Runs on every commit via pre-commit hooks and CI/CD."
 - **Mark as**: Met ✅
 
 ---
 
 #### `static_analysis_fixed` - Fix Analysis Findings
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS** (assuming no current issues)
 
 **Evidence**:
+
 - CI/CD enforces zero findings
 - Pre-commit prevents commits with issues
 
 **Action Required**:
+
 1. Verify clean analysis:
+
    ```bash
    poetry run bandit -r src
    poetry run mypy src
@@ -1078,64 +1217,77 @@ Your project does **not** implement cryptography, so these can be marked **N/A**
 ---
 
 #### `static_analysis_often` - Frequent Analysis
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - Pre-commit hooks run on every commit
 - CI/CD runs on every push
 - More than daily (every code change)
 
 **Action Required**:
+
 - **Response**: "Static analysis runs on every commit via pre-commit hooks (local) and GitHub Actions CI/CD (remote). Exceeds daily analysis requirement."
 - **Mark as**: Met ✅
 
 ---
 
 #### `dynamic_analysis` - Dynamic Analysis
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - pytest runs code dynamically
 - 163 tests with 94% coverage
 - Runs before every release
 
 **Action Required**:
+
 - **Response**: "Dynamic analysis via pytest test suite (163 tests, 94% coverage). Tests run on every commit in CI/CD. Includes integration tests that exercise full workflows."
 - **Mark as**: Met ✅
 
 ---
 
 #### `dynamic_analysis_unsafe` - Memory Safety Testing
+
 **Current Status**: N/A ❓
 **Reality**: **N/A** (Python is memory-safe)
 
 **Action Required**:
+
 - **Response**: "N/A - Project written in Python (memory-safe language). No C/C++ extensions used."
 - **Mark as**: N/A
 
 ---
 
 #### `dynamic_analysis_enable_assertions` - Assertions in Testing
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS**
 
 **Evidence**:
+
 - pytest uses assertions extensively
 - Pydantic validation assertions in code
 
 **Action Required**:
+
 - **Response**: "Test suite uses Python assertions and pytest assertions throughout. Pydantic validation provides runtime type assertions. Development mode enables all assertions."
 - **Mark as**: Met ✅
 
 ---
 
 #### `dynamic_analysis_fixed` - Fix Dynamic Analysis Issues
+
 **Current Status**: Unmet ❓
 **Reality**: ✅ **YOU PASS THIS** (policy commitment)
 
 **Action Required**:
+
 - **Response**: "All test failures addressed before merge. CI/CD prevents merging if any tests fail. Medium+ severity issues fixed immediately."
 - **Mark as**: Met ✅
 
@@ -1232,24 +1384,32 @@ After completing all recommended actions:
 ## Areas That May Need Clarification
 
 ### 1. Test Suite Details
+
 The badge system couldn't auto-detect your test suite. Make sure:
+
 - Tests are in standard location: `tests/`
 - CI configuration shows test execution clearly
 - README/CONTRIBUTING explains how to run tests
 
 ### 2. Documentation Quality
+
 The "documentation_interface" criterion wants clear API docs. Consider:
+
 - Generating Sphinx/MkDocs documentation (better long-term)
 - Or create comprehensive markdown API reference (faster)
 
 ### 3. Release Process
+
 Since you haven't done a formal release yet:
+
 - First release (v0.1.0) establishes the pattern
 - Future releases will be easier to demonstrate
 - CHANGELOG becomes the single source of truth
 
 ### 4. Issue Response
+
 Can't demonstrate response time until you have issues:
+
 - Document your policy commitment now
 - Demonstrate adherence with first few issues
 - Badge system typically gives benefit of doubt with clear policy
@@ -1259,6 +1419,7 @@ Can't demonstrate response time until you have issues:
 ## Priority Order Recommendation
 
 ### Day 1 (High Priority - Badge Blockers)
+
 1. ✅ Create SECURITY.md
 2. ✅ Create CHANGELOG.md
 3. ✅ Update README.md (reporting, versioning, installation)
@@ -1267,6 +1428,7 @@ Can't demonstrate response time until you have issues:
 6. ✅ Create v0.1.0 tag and release
 
 ### Day 2 (Medium Priority - Quality Improvements)
+
 1. ✅ Create API reference documentation
 2. ✅ Create issue templates
 3. ✅ Verify no secrets/warnings
@@ -1274,6 +1436,7 @@ Can't demonstrate response time until you have issues:
 5. ✅ Update badge application with all responses
 
 ### Day 3 (Low Priority - Nice to Have)
+
 1. ✅ Generate Sphinx/MkDocs documentation (optional but better)
 2. ✅ Add more comprehensive examples
 3. ✅ Create CONTRIBUTORS.md (if applicable)
@@ -1296,7 +1459,7 @@ If you have questions while implementing these changes:
 
 1. Check the [OpenSSF Badge Criteria](https://bestpractices.coreinfrastructure.org/en/criteria)
 2. Review [examples from other projects](https://bestpractices.coreinfrastructure.org/en/projects)
-3. File questions at the badge project: https://github.com/coreinfrastructure/best-practices-badge/issues
+3. File questions at the badge project: <https://github.com/coreinfrastructure/best-practices-badge/issues>
 
 ---
 

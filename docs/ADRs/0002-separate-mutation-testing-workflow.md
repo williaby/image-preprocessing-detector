@@ -121,25 +121,33 @@ tests_dir = "tests/"
 ## Alternatives Considered
 
 ### Alternative 1: Mutation Testing in Main CI
+
 **Rejected**:
+
 - Would add 30-60 minutes to PR feedback loop
 - Expensive for every commit
 - May block valid PRs on edge case mutations
 
 ### Alternative 2: Mutation Testing on Every PR
+
 **Rejected**:
+
 - Too expensive (cost scales with PR volume)
 - Slower PR velocity
 - Similar issues to Alternative 1
 
 ### Alternative 3: No Mutation Testing
+
 **Rejected**:
+
 - Misses opportunity to improve test quality
 - No mechanism to detect weak test coverage
 - Lower confidence in test suite effectiveness
 
 ### Alternative 4: Daily Schedule
+
 **Rejected**:
+
 - Still expensive for marginal additional value
 - Weekly cadence provides sufficient feedback
 

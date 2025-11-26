@@ -204,7 +204,7 @@ modal secret create gcs-credentials \
 
 ### Directory Structure
 
-```
+```text
 modal/
 ├── train_phase2_iqa.py    # Training entry point
 ├── inference.py           # Inference functions
@@ -212,7 +212,7 @@ modal/
 └── utils/
     ├── gcs.py            # GCS integration
     └── monitoring.py     # Cost tracking
-```
+```text
 
 ### Environment Variables
 

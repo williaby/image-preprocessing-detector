@@ -50,7 +50,7 @@ This document transfers **four functional requirements** from the preprocessing 
 
 ### Updated System Boundary
 
-```
+```text
 ┌────────────────────────────────────────────────────────┐
 │  PREPROCESSING (Image Quality & Routing)               │
 │  ────────────────────────────────────────────────      │
@@ -93,7 +93,7 @@ This document transfers **four functional requirements** from the preprocessing 
 │                                                         │
 │  OUTPUT: Structured JSON (text, tables, chunks)        │
 └────────────────────────────────────────────────────────┘
-```
+```text
 
 ---
 
@@ -106,6 +106,7 @@ This document transfers **four functional requirements** from the preprocessing 
 > The system shall extract the internal structure of detected tables (rows, columns, cells) using a learned table structure recognition model.
 
 **Transferred Scope:**
+
 - Extract table structure: rows, columns, cells, spanning cells
 - Convert tables to structured format (JSON, DataFrame, HTML)
 - Handle complex tables (hierarchical headers, merged cells, footnotes)
@@ -120,6 +121,7 @@ This document transfers **four functional requirements** from the preprocessing 
 ### What Preprocessing Will Provide
 
 **JSON Metadata (Table Detection Only):**
+
 ```json
 {
   "detected_elements": [
@@ -146,6 +148,7 @@ This document transfers **four functional requirements** from the preprocessing 
 ```
 
 **What OCR Team Should Extract:**
+
 ```json
 {
   "table_id": "table_001",
@@ -177,6 +180,7 @@ This document transfers **four functional requirements** from the preprocessing 
 ### Recommended Tools
 
 **Option 1: Docling TableFormer (RECOMMENDED)**
+
 - **Performance:** 98.5% TEDS (best-in-class)
 - **License:** MIT License (commercial use allowed)
 - **Integration:** `pip install docling`
@@ -188,6 +192,7 @@ This document transfers **four functional requirements** from the preprocessing 
   - Production-ready SDK
 
 **Option 2: Microsoft Table Transformer**
+
 - **Performance:** 81% ICDAR Exact Match
 - **License:** MIT License
 - **Integration:** HuggingFace `microsoft/table-transformer-structure-recognition`
@@ -197,6 +202,7 @@ This document transfers **four functional requirements** from the preprocessing 
   - Good community support
 
 **Option 3: PaddleOCR PP-Structure**
+
 - **Performance:** 95% TEDS on complex tables
 - **License:** Apache 2.0
 - **Integration:** Part of PaddleOCR pipeline
@@ -208,6 +214,7 @@ This document transfers **four functional requirements** from the preprocessing 
 ### Implementation Notes
 
 **Training Data Available:**
+
 - **PubTables-1M:** 1M real-world tables from PubMed (Apache-2.0)
   - GitHub: microsoft/table-transformer
   - Size: ~25 GB
@@ -216,17 +223,20 @@ This document transfers **four functional requirements** from the preprocessing 
 - **TableBank:** 417k tables (Apache-2.0)
 
 **Performance Targets:**
+
 - GriTS F1 > 0.85 (Grid Table Similarity)
 - TEDS > 0.90 (Tree Edit Distance-based Similarity)
 - Latency < 500ms per table (CPU), < 200ms (GPU)
 
 **Validation Datasets:**
+
 - PubTables-1M test split (held-out tables)
 - ICDAR 2013/2019 table competition datasets
 
 ### Cost-Benefit Analysis
 
 **If Preprocessing Team Implemented:**
+
 - Development: 4-6 weeks (Phase 3 Week 8-12)
 - Training: $10-30 GPU costs (Colab Pro)
 - Infrastructure: +200-500ms latency, +1-2 GB VRAM
@@ -234,6 +244,7 @@ This document transfers **four functional requirements** from the preprocessing 
 - **Value-add:** ZERO (Docling already provides 93.6% accuracy)
 
 **If OCR Team Uses Pretrained Docling:**
+
 - Integration: 2-3 days
 - Training: $0 (pretrained weights)
 - Infrastructure: Already in Docling pipeline
@@ -251,6 +262,7 @@ This document transfers **four functional requirements** from the preprocessing 
 > The system shall predict the sequential reading order for document elements in complex layouts (multi-column, tables, figures, footnotes) to enable accurate text extraction and RAG retrieval.
 
 **Transferred Scope:**
+
 - Predict element sequence (text blocks, tables, figures, footnotes)
 - Handle multi-column layouts (2-3 column academic papers)
 - Generate ordered list of element IDs for RAG chunking
@@ -266,6 +278,7 @@ This document transfers **four functional requirements** from the preprocessing 
 ### What Preprocessing Will Provide
 
 **JSON Metadata (Layout Elements with Spatial Hints):**
+
 ```json
 {
   "detected_elements": [
@@ -302,6 +315,7 @@ This document transfers **four functional requirements** from the preprocessing 
 ```
 
 **What OCR Team Should Extract:**
+
 ```json
 {
   "reading_order": [
@@ -319,6 +333,7 @@ This document transfers **four functional requirements** from the preprocessing 
 ### Recommended Tools
 
 **Option 1: Surya Reading Order Detection (RECOMMENDED)**
+
 - **Performance:** Proven on complex multi-column layouts
 - **License:** Modified AI Pubs Open Rail-M (free for research, startups <$2M)
 - **Integration:** `pip install surya-ocr`
@@ -329,6 +344,7 @@ This document transfers **four functional requirements** from the preprocessing 
   - No training required
 
 **Option 2: Graph-Based Spatial Reasoning (Classical)**
+
 - **Performance:** F1 > 0.85 on simple layouts
 - **License:** N/A (algorithm-based)
 - **Implementation:** Custom spatial graph construction
@@ -341,6 +357,7 @@ This document transfers **four functional requirements** from the preprocessing 
   - No learning from errors
 
 **Option 3: Graph Neural Network (Custom Training)**
+
 - **Training Data:** DocSynth-300K (300k synthetic layouts, 113 GB)
 - **License:** Research use (verify arXiv:2410.12628)
 - **Advantages:**
@@ -354,6 +371,7 @@ This document transfers **four functional requirements** from the preprocessing 
 ### Implementation Notes
 
 **Training Data Available:**
+
 - **DocSynth-300K:** 300k synthetic layouts with ground-truth reading order
   - HuggingFace: juliozhao/DocSynth300K
   - Size: 113 GB
@@ -363,12 +381,14 @@ This document transfers **four functional requirements** from the preprocessing 
   - License: CC BY 4.0
 
 **Performance Targets (OHR-Bench Validation):**
+
 - **Reading Order Error (ROE) < 10%** (critical)
 - **NDCG@5 > 0.77** (RAG retrieval quality)
 - **F1 > 0.85** on pairwise reading order predictions
 - **Kendall's Tau > 0.80** (rank correlation)
 
 **Validation Strategy:**
+
 1. Test on OHR-Bench dataset (8,500+ PDFs, 7 domains)
 2. Measure impact on RAG retrieval (NDCG@5 metric)
 3. Compare reading order errors vs OCR quality errors
@@ -377,13 +397,15 @@ This document transfers **four functional requirements** from the preprocessing 
 ### Why This Is Critical for RAG
 
 **OHR-Bench Research Findings:**
+
 - Reading order errors cause **5-29% RAG performance loss**
 - **More impactful than individual quality defects** (blur, skew)
 - Retrieval stage is bottleneck (4.5% NDCG gap from OCR errors)
 - Correct reading order enables accurate semantic chunking
 
 **Example Failure:**
-```
+
+```text
 # Incorrect Reading Order (Left-to-right, ignoring columns)
 Column 1 Line 1 → Column 2 Line 1 → Column 1 Line 2 → Column 2 Line 2
 Result: Semantic incoherence, breaks paragraph flow
@@ -391,17 +413,19 @@ Result: Semantic incoherence, breaks paragraph flow
 # Correct Reading Order (Column-aware)
 Column 1 Line 1 → Column 1 Line 2 → ... → Column 2 Line 1 → Column 2 Line 2
 Result: Coherent text for RAG chunking
-```
+```text
 
 ### Cost-Benefit Analysis
 
 **If Preprocessing Team Implemented:**
+
 - Development: 10-14 days (Phase 3 Week 7)
 - Dataset Download: 113 GB (DocSynth-300K)
 - Training: Custom graph-based or GNN training
 - **Value-add:** Routing metadata (minimal)
 
 **If OCR Team Uses Surya:**
+
 - Integration: 1-2 days
 - Training: $0 (pretrained)
 - Dataset: Not needed
@@ -418,6 +442,7 @@ Result: Coherent text for RAG chunking
 > The system shall link footnotes to their references in the main text.
 
 **Transferred Scope:**
+
 - Detect superscript numbers/symbols in main text (reference markers)
 - Detect footnote regions (spatial proximity to page bottom)
 - Link reference markers to corresponding footnote text
@@ -433,6 +458,7 @@ Result: Coherent text for RAG chunking
 ### What Preprocessing Will Provide
 
 **JSON Metadata (Footnote Detection Only):**
+
 ```json
 {
   "detected_elements": [
@@ -452,6 +478,7 @@ Result: Coherent text for RAG chunking
 ```
 
 **What OCR Team Should Extract:**
+
 ```json
 {
   "footnotes": [
@@ -470,6 +497,7 @@ Result: Coherent text for RAG chunking
 ### Recommended Approach
 
 **Detection + Linking Pipeline:**
+
 1. **OCR Extraction:** Extract all text with bounding boxes
 2. **Superscript Detection:** Identify superscript numerals/symbols in main text
 3. **Footnote Region Detection:** Use preprocessing bbox (`category: "footnote"`)
@@ -477,6 +505,7 @@ Result: Coherent text for RAG chunking
 5. **Validation:** Verify spatial proximity (reference above footnote on page)
 
 **Tools:**
+
 - **Tesseract/PaddleOCR:** OCR with superscript detection
 - **Regex Matching:** Pattern matching for footnote markers (1, 2, 3, *, †, ‡)
 - **Layout Analysis:** Use preprocessing footnote bboxes as hints
@@ -486,15 +515,18 @@ Result: Coherent text for RAG chunking
 **Priority:** P1 (High for academic/legal documents)
 
 **Document Types:**
+
 - Academic papers (citations, references)
 - Legal documents (statute references, case citations)
 - Research reports (data sources, methodology notes)
 
 **Performance Targets:**
+
 - Footnote detection recall > 0.90 (find 90%+ of footnotes)
 - Linking accuracy > 0.85 (correctly match 85%+ references)
 
 **Validation:**
+
 - Test on academic papers with extensive footnotes
 - Legal documents with statutory references
 - Historical manuscripts with marginal notes
@@ -510,6 +542,7 @@ Result: Coherent text for RAG chunking
 > The system shall link figure captions to their parent figures.
 
 **Transferred Scope:**
+
 - Link `Caption` elements to `Picture` elements
 - Handle spatial proximity (captions above/below figures)
 - Pattern matching ("Figure N", "Fig. N", "Table N")
@@ -525,6 +558,7 @@ Result: Coherent text for RAG chunking
 ### What Preprocessing Will Provide
 
 **JSON Metadata (Detection Only):**
+
 ```json
 {
   "detected_elements": [
@@ -549,6 +583,7 @@ Result: Coherent text for RAG chunking
 ```
 
 **What OCR Team Should Extract:**
+
 ```json
 {
   "figures": [
@@ -566,12 +601,14 @@ Result: Coherent text for RAG chunking
 ### Recommended Approach
 
 **Detection + Linking Pipeline:**
+
 1. **OCR Extraction:** Extract caption text
 2. **Pattern Matching:** Regex for "Figure N:", "Fig. N:", "Table N:"
 3. **Spatial Proximity:** Use preprocessing `spatial_hints.nearest_picture`
 4. **Validation:** Verify caption-figure association (number matching, spatial consistency)
 
 **Regex Patterns:**
+
 ```python
 figure_patterns = [
     r"Figure\s+(\d+[a-z]?)",
@@ -585,11 +622,13 @@ figure_patterns = [
 **Priority:** P2 (Medium)
 
 **Document Types:**
+
 - Academic papers (charts, diagrams, experimental results)
 - Technical documentation (architecture diagrams, flowcharts)
 - Research reports (data visualizations)
 
 **Performance Targets:**
+
 - Caption detection recall > 0.85
 - Linking accuracy > 0.80 (correctly match 80%+ captions)
 
@@ -600,6 +639,7 @@ figure_patterns = [
 ### Guaranteed Outputs (Contract)
 
 **1. Cleaned Images (300 DPI Standard)**
+
 - DPI upscaling applied if < 300 DPI
 - Deskew correction (if |skew| > 2.0°)
 - CLAHE contrast enhancement (if contrast_score < 0.18)
@@ -607,18 +647,21 @@ figure_patterns = [
 - Sharpening (if blur_score < threshold)
 
 **2. Layout Element Detection (COCO Format Bounding Boxes)**
+
 - 11 DocLayNet classes: Caption, Footnote, Formula, List-item, Page-footer, Page-header, Picture, Section-header, Table, Text, Title
 - Bounding box format: `[x, y, width, height]` (COCO standard)
 - Confidence scores per element
 - YOLOv8 detection (mAP@.50 > 0.82 target)
 
 **3. Quality Assessment Metadata**
+
 - Per-page quality scores: blur, contrast, noise, skew
 - Per-element quality (for Picture and Figure elements)
 - `needs_correction` flags
 - Transform history (audit trail of corrections applied)
 
 **4. Routing Metadata**
+
 - Document Quality Score (DQS) - two axes:
   - Degradation Score (0.0-1.0): Physical quality
   - Structural Complexity Score (0.0-1.0): Layout complexity
@@ -626,6 +669,7 @@ figure_patterns = [
 - Confidence scores for routing decisions
 
 **5. Spatial Hints (for Semantic Processing)**
+
 - Multi-column detection (boolean + column count)
 - Element spatial proximity (nearest neighbors)
 - Complexity indicators (table row/column estimates, has_borders)
@@ -633,6 +677,7 @@ figure_patterns = [
 ### JSON Schema Contract
 
 **Preprocessing Output Schema:**
+
 ```json
 {
   "file_path": "document.pdf",
@@ -735,6 +780,7 @@ figure_patterns = [
 **Recommended Tool:** Docling TableFormer (98.5% TEDS)
 
 **Example Output:**
+
 ```json
 {
   "table_id": "table_001",
@@ -762,6 +808,7 @@ figure_patterns = [
 **Recommended Tool:** Surya Reading Order Detection
 
 **Example Output:**
+
 ```json
 {
   "reading_order": [
@@ -783,6 +830,7 @@ figure_patterns = [
 **Output:** Reference markers linked to footnote text
 
 **Example Output:**
+
 ```json
 {
   "footnotes": [
@@ -804,6 +852,7 @@ figure_patterns = [
 **Output:** Linked figure-caption pairs
 
 **Example Output:**
+
 ```json
 {
   "figures": [
@@ -824,7 +873,7 @@ figure_patterns = [
 
 ### End-to-End Pipeline
 
-```
+```text
 ┌──────────────────────────────────────────────────────┐
 │  STEP 1: PREPROCESSING (This System)                 │
 │  ─────────────────────────────────────────────────   │
@@ -862,11 +911,12 @@ figure_patterns = [
 │    3. Store metadata (tables, figures, footnotes)   │
 │  Output: Vector database ready for retrieval        │
 └──────────────────────────────────────────────────────┘
-```
+```text
 
 ### Handoff Protocol
 
 **Step 1: Preprocessing completes → writes files**
+
 ```bash
 output/
   ├── cleaned_images/
@@ -876,6 +926,7 @@ output/
 ```
 
 **Step 2: OCR team reads files → processes → writes output**
+
 ```bash
 output/
   ├── cleaned_images/
@@ -896,6 +947,7 @@ output/
 ### Datasets Available for Transferred FRs
 
 **For FR-4.11 (Table Structure):**
+
 - **PubTables-1M:** 1M tables with row/column annotations (Apache-2.0)
   - GitHub: microsoft/table-transformer
   - Size: ~25 GB
@@ -904,6 +956,7 @@ output/
 - **TableBank:** 417k tables (Apache-2.0)
 
 **For FR-4.12 (Reading Order):**
+
 - **DocSynth-300K:** 300k synthetic layouts with ground-truth reading order
   - HuggingFace: juliozhao/DocSynth300K
   - Size: 113 GB
@@ -917,27 +970,32 @@ output/
   - License: CC-BY-4.0
 
 **For FR-4.5 (Footnote Linking):**
+
 - Limited specialized datasets
 - Recommend using DocLayNet footnote annotations as starting point
 - Academic paper datasets (PubLayNet, DocBank) contain footnote examples
 
 **For FR-4.6 (Figure-Caption Linking):**
+
 - DocLayNet has Caption and Picture classes (can derive linking training data)
 - PubLayNet scientific papers (arXiv subset)
 
 ### Research Papers & References
 
 **Table Structure Extraction:**
+
 - [PubTables-1M Paper](https://arxiv.org/abs/2110.00061) (2021)
 - [TableFormer](https://github.com/docling-project/docling) (Docling integration, 2024-2025)
 - [Table Transformer](https://arxiv.org/abs/2110.00061) (Microsoft, 2021)
 
 **Reading Order Prediction:**
+
 - [DocSynth-300K](https://arxiv.org/abs/2410.12628) (2024)
 - [OHR-Bench: OCR Hinders RAG](https://arxiv.org/abs/2410.12628) (2024) - **Critical for understanding RAG impact**
 - [ROOR Dataset](https://github.com/chongzhangFDU/ROOR-Datasets) (Reading order benchmarks)
 
 **Document Understanding:**
+
 - [DocLayNet Paper](https://arxiv.org/abs/2206.01062) (2022) - Layout detection benchmark
 - [LayoutParser](https://arxiv.org/abs/2103.15348) (2021) - Document layout analysis toolkit
 
@@ -948,11 +1006,13 @@ output/
 ### FR-4.11: Table Structure Extraction
 
 **Metrics:**
+
 - **GriTS F1 > 0.85** (Grid Table Similarity)
 - **TEDS > 0.90** (Tree Edit Distance-based Similarity)
 - **Latency < 500ms per table** (CPU), < 200ms (GPU)
 
 **Validation Datasets:**
+
 - PubTables-1M test split
 - ICDAR 2013/2019 table competition datasets
 
@@ -961,12 +1021,14 @@ output/
 ### FR-4.12: Reading Order Prediction
 
 **Metrics (OHR-Bench Critical):**
+
 - **Reading Order Error (ROE) < 10%** (CRITICAL - impacts RAG 5-29%)
 - **NDCG@5 > 0.77** (RAG retrieval quality)
 - **F1 > 0.85** on pairwise reading order predictions
 - **Kendall's Tau > 0.80** (rank correlation)
 
 **Validation Datasets:**
+
 - OHR-Bench (8,500+ PDFs, RAG-specific evaluation)
 - ROOR Dataset (reading order ground truth)
 - DocLayNet multi-column subset
@@ -976,22 +1038,26 @@ output/
 ### FR-4.5: Footnote Linking
 
 **Metrics:**
+
 - **Footnote detection recall > 0.90** (find 90%+ of footnotes)
 - **Linking accuracy > 0.85** (correctly match 85%+ references)
 - **Latency < 100ms per page** (pattern matching + OCR)
 
 **Validation:**
+
 - Academic papers with extensive footnotes
 - Legal documents with statutory references
 
 ### FR-4.6: Figure-Caption Linking
 
 **Metrics:**
+
 - **Caption detection recall > 0.85**
 - **Linking accuracy > 0.80** (correctly match 80%+ captions)
 - **Latency < 50ms per page** (pattern matching + spatial)
 
 **Validation:**
+
 - Academic papers with charts/diagrams
 - Technical documentation
 
@@ -1002,26 +1068,31 @@ output/
 ### Preprocessing Team Timeline (Unchanged)
 
 **Phase 1 (Weeks 4-7): MVP - Classical Methods** ✅ COMPLETE
+
 - Classical IQA (blur, skew, contrast detection)
 - Text detection gate
 - Basic corrections (deskew, CLAHE, sharpen, denoise)
 
 **Phase 1B (Weeks 7-8): DPI Upscaling** ✅ COMPLETE
+
 - DPI detection and upscaling (5 OpenCV algorithms)
 - 300 DPI normalization standard
 
 **Phase 2 (Weeks 8-11): ML-Based IQA** 📋 IN PROGRESS
+
 - Train MobileNetV3 on 50k synthetic IQA dataset
 - PDF type classification (image_only, born_digital, hybrid)
 - Handwriting vs. printed classification
 
 **Phase 3 (Weeks 12-16): Layout Detection** 📋 PLANNED
+
 - YOLOv8 layout detection (11 DocLayNet classes)
 - ~~Table structure extraction~~ ❌ REMOVED (transferred to OCR)
 - ~~Reading order prediction~~ ❌ REMOVED (transferred to OCR)
 - Hybrid IQA (per-element quality assessment)
 
 **Phase 4 (Weeks 17-20): Production Hardening** 📋 PLANNED
+
 - Document Quality Score (DQS) calculation
 - Intelligent pipeline routing
 - REST API (FastAPI)
@@ -1030,23 +1101,27 @@ output/
 ### OCR Team Timeline (NEW - Transferred Work)
 
 **Immediate (Week 1-2): Tool Integration**
+
 - Integrate Docling TableFormer (FR-4.11)
 - Integrate Surya Reading Order (FR-4.12)
 - Implement footnote linking (FR-4.5)
 - Implement figure-caption linking (FR-4.6)
 
 **Week 3-4: Validation**
+
 - Benchmark TableFormer on PubTables-1M test split (GriTS F1 > 0.85)
 - Benchmark Surya on OHR-Bench (ROE < 10%)
 - Test footnote linking on academic papers
 - Test figure-caption linking on technical docs
 
 **Week 5-6: Integration Testing**
+
 - End-to-end pipeline testing (preprocessing → OCR → RAG)
 - Performance benchmarking (latency, throughput)
 - Quality validation (NDCG@5 > 0.77 on OHR-Bench)
 
 **Week 7-8: Production Hardening**
+
 - Error handling and edge cases
 - Logging and monitoring integration
 - Documentation and runbooks
@@ -1058,10 +1133,12 @@ output/
 ### Preprocessing Team Contacts
 
 **Lead Developer:** Byron Williams
-- Email: byron@example.com
+
+- Email: <byron@example.com>
 - GitHub: @byronwilliams (example)
 
 **Project Repository:**
+
 - GitHub: github.com/your-org/image_preprocessing_detector (example)
 - Documentation: `/docs/` directory
 - Handoff docs: `/docs/handoff/` directory
@@ -1069,12 +1146,14 @@ output/
 ### Questions & Clarifications
 
 **For questions about:**
+
 - **Preprocessing JSON schema:** See `src/image_preprocessing_detector/schema.py`
 - **Layout detection classes:** See `docs/requirements/functional_requirements_v2.md` FR-4.2
 - **Quality assessment scores:** See `docs/ADRs/0014-classical-ml-hybrid-iqa.md`
 - **Routing metadata (DQS):** See `docs/ADRs/0028-document-quality-score-routing.md`
 
 **For handoff coordination:**
+
 - Create GitHub issue in preprocessing repo with tag `ocr-handoff`
 - Expected response time: 24-48 hours
 - Escalation: Project manager (if needed)
@@ -1206,33 +1285,41 @@ Use this checklist to verify successful integration of transferred FRs:
 Use these example document types to validate transferred FR implementations:
 
 ### Test Case 1: Academic Paper (Multi-Column)
+
 **File:** `test_data/academic_paper_multicolumn.pdf`
 **Tests:** FR-4.12 (reading order), FR-4.6 (figure-caption linking)
 **Expected:**
+
 - 2-column layout detected
 - Reading order: Column 1 → Column 2 (per page)
 - 5 figures with captions correctly linked
 
 ### Test Case 2: Financial Report (Complex Tables)
+
 **File:** `test_data/sec_10k_filing.pdf`
 **Tests:** FR-4.11 (table structure)
 **Expected:**
+
 - 8 tables detected
 - Complex table structures extracted (merged cells, hierarchical headers)
 - GriTS F1 > 0.85 on ground truth
 
 ### Test Case 3: Legal Document (Footnotes)
+
 **File:** `test_data/legal_brief_footnotes.pdf`
 **Tests:** FR-4.5 (footnote linking)
 **Expected:**
+
 - 15 footnotes detected
 - Superscript markers correctly linked to footnote text
 - Linking accuracy > 0.85
 
 ### Test Case 4: Technical Manual (Mixed Content)
+
 **File:** `test_data/technical_manual_diagrams.pdf`
 **Tests:** FR-4.6 (figure-caption), FR-4.12 (reading order)
 **Expected:**
+
 - 12 diagrams with captions
 - Figure-caption linking accuracy > 0.80
 - Reading order preserves diagram context
@@ -1250,10 +1337,12 @@ Use these example document types to validate transferred FR implementations:
 ## Sign-off
 
 **Preprocessing Team:**
+
 - [ ] Byron Williams (Lead Developer) - Date: __________
 - [ ] Project Manager - Date: __________
 
 **OCR Team:**
+
 - [ ] OCR Team Lead - Date: __________
 - [ ] Technical Architect - Date: __________
 

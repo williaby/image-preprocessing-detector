@@ -34,9 +34,11 @@ OpenSSF Scorecard identified security issues in GitHub Actions workflows:
    - Impact: Supply chain attack vector
 
 2. **Download-Then-Run Patterns**: 7 instances of `curl | python` for Poetry installation
+
    ```yaml
    curl -sSL https://install.python-poetry.org | python3 -
    ```
+
    - Risk: MITM attack could inject malicious code
    - Impact: Build-time code execution vulnerability
 
@@ -123,11 +125,13 @@ OpenSSF Scorecard identified security issues in GitHub Actions workflows:
 ### Token Permission Patterns
 
 **Read-Only Jobs** (most common):
+
 ```yaml
 permissions: read-all  # Top-level covers all read-only jobs
 ```
 
 **SARIF Upload** (CodeQL, Scorecard, Trivy):
+
 ```yaml
 permissions:
   contents: read
@@ -135,6 +139,7 @@ permissions:
 ```
 
 **PR Comments** (Codecov, Dependency Review):
+
 ```yaml
 permissions:
   contents: read
@@ -143,6 +148,7 @@ permissions:
 ```
 
 **GitHub Pages Deployment**:
+
 ```yaml
 permissions:
   contents: write  # Required for gh-pages branch update
@@ -151,12 +157,14 @@ permissions:
 ### Poetry Installation Pattern
 
 **Before (Unsafe)**:
+
 ```yaml
 - name: Install Poetry
   run: curl -sSL https://install.python-poetry.org | python3 -
 ```
 
 **After (Secure)**:
+
 ```yaml
 env:
   POETRY_VERSION: 2.1.2
@@ -172,18 +180,22 @@ env:
 ## Alternatives Considered
 
 ### Alternative 1: Checksum Verification
+
 ```yaml
 run: |
   curl -fsSL -o install-poetry.py https://install.python-poetry.org
   echo "EXPECTED_SHA256  install-poetry.py" | sha256sum -c -
   python3 install-poetry.py
 ```
+
 **Rejected**: More complex, harder to maintain, still network-dependent
 
 ### Alternative 2: Keep Permissive Tokens
+
 **Rejected**: Violates principle of least privilege, fails OpenSSF checks
 
 ### Alternative 3: Mix of Patterns
+
 **Rejected**: Inconsistent security posture across workflows
 
 ## Monitoring

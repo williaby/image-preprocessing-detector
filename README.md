@@ -37,11 +37,12 @@
 5. **Routing Recommendations**: Tells Project B which OCR strategy to use
 
 **Four-Project RAG Pipeline**:
-```
+
+```text
 Project A (This) → Project B (OCR) → Project C (Fusion) → Project D (Vector Search)
 Preprocessing      Layout & Reading   Multi-Engine        Embeddings &
 & IQA Gateway      Order Detection    Fusion & Trust      Retrieval
-```
+```text
 
 **Problem it solves**: Poor-quality scans break OCR. Project A detects and fixes quality issues, then provides routing intelligence so downstream projects can optimize processing strategies.
 
@@ -80,7 +81,7 @@ Preprocessing      Layout & Reading   Multi-Engine        Embeddings &
 
 ### Four-Project RAG Pipeline
 
-```
+```text
 ┌───────────────────────────────────────────────────────────────────┐
 │                    RAG DOCUMENT PIPELINE                           │
 └───────────────────────────────────────────────────────────────────┘
@@ -96,11 +97,11 @@ Preprocessing & IQA              OCR Orchestration       Fusion & Trust         
 OUTPUT:                         OUTPUT:                 OUTPUT:                OUTPUT:
 DocumentMetadata.json           OCRDocument.json        FusedDocument.json     Vector DB Entries
 + Corrected Images
-```
+```text
 
 ### Project A Internal Pipeline
 
-```
+```text
 PDF/Image Input → DPI Upscaling → Ingestion → PDF Type Classification → Text Gate
                                                                              ↓
                                                            ┌─────────────────┴─────────────────┐
@@ -120,7 +121,7 @@ PDF/Image Input → DPI Upscaling → Ingestion → PDF Type Classification → 
                                                     JSON Output + Images
                                                            ↓
                                                     HANDOFF TO PROJECT B
-```
+```text
 
 See [docs/development/RAG Pipeline/RAG-pipeline-project-overview.md](docs/development/RAG Pipeline/RAG-pipeline-project-overview.md) for complete architecture and [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md) for detailed implementation plan.
 
@@ -162,7 +163,7 @@ poetry install --with dev
 
 # Install with ML dependencies (Phase 2+)
 poetry install --with dev,ml
-```
+```text
 
 ### Usage
 
@@ -182,7 +183,7 @@ logger = get_logger(__name__)
 # Validate JSON schema
 metadata = DocumentMetadata.from_json_file("output.json")
 logger.info("Processed document", pages=metadata.num_pages)
-```
+```text
 
 ### CLI Usage (Phase 1+)
 
@@ -195,7 +196,7 @@ poetry run imgprep batch input_dir/ --output-dir results/
 
 # With quality threshold tuning
 poetry run imgprep process input.pdf --blur-threshold 0.85 --skew-threshold 0.90
-```
+```text
 
 ## Development
 
@@ -218,11 +219,11 @@ poetry run pytest --cov=src/image_preprocessing_detector --cov-report=html
 poetry run black src tests
 poetry run ruff check --fix src tests
 poetry run mypy src
-```
+```text
 
 ### Project Structure
 
-```
+```text
 image_detection/
 ├── src/
 │   └── image_preprocessing_detector/
@@ -245,7 +246,7 @@ image_detection/
 ├── README.md                      # This file
 ├── PROJECT_PLAN.md                # Complete implementation plan
 └── ARCHITECTURE_SUMMARY.md        # Architecture quick reference
-```
+```text
 
 ## ML Model Training (Phase 2+)
 
@@ -270,7 +271,7 @@ poetry run modal token new
 ./scripts/modal_helpers.sh train-phase2
 
 # Monitor training at: https://modal.com/apps
-```
+```text
 
 **Training Cost**: ~$3 for 5 hours on T4 GPU - covered by Modal's $30/month free tier!
 
@@ -294,7 +295,7 @@ poetry run pytest --cov=src --cov-fail-under=80
 
 # Run tests in parallel
 poetry run pytest -n auto
-```
+```text
 
 ## Reporting Issues
 
@@ -302,8 +303,8 @@ poetry run pytest -n auto
 
 Found a bug? Please report it via GitHub Issues:
 
-1. **Check existing issues**: https://github.com/williaby/image-preprocessing-detector/issues
-2. **Create new issue**: https://github.com/williaby/image-preprocessing-detector/issues/new
+1. **Check existing issues**: <https://github.com/williaby/image-preprocessing-detector/issues>
+2. **Create new issue**: <https://github.com/williaby/image-preprocessing-detector/issues/new>
 3. **Include**:
    - Python version and OS
    - Steps to reproduce
@@ -313,6 +314,7 @@ Found a bug? Please report it via GitHub Issues:
 ### Feature Requests
 
 Have an idea? We welcome enhancement proposals via GitHub Issues. Please describe:
+
 - Use case and motivation
 - Proposed solution (if any)
 - Alternatives considered
@@ -326,6 +328,7 @@ See [SECURITY.md](SECURITY.md) for responsible disclosure process.
 ## Versioning
 
 This project uses [Semantic Versioning](https://semver.org/):
+
 - **MAJOR** version: Incompatible API changes
 - **MINOR** version: Backwards-compatible functionality additions
 - **PATCH** version: Backwards-compatible bug fixes
@@ -337,6 +340,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 ## Documentation
 
 ### Core Documentation
+
 - **[PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md)**: Complete 114-page implementation plan with phased roadmap (Phases 1-5)
 - **[ARCHITECTURE_SUMMARY.md](docs/architecture/ARCHITECTURE_SUMMARY.md)**: Quick reference for architecture and design decisions
 - **[ARCHITECTURE_CORRECTION.md](docs/architecture/ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
@@ -344,6 +348,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **[DOCUMENT_TYPE_COVERAGE_MATRIX.md](docs/DOCUMENT_TYPE_COVERAGE_MATRIX.md)**: Document type support matrix across phases
 
 ### Technical Guides
+
 - **[docs/ADRs/](docs/ADRs/)**: Architecture Decision Records
   - [ADR-031: Comprehensive Benchmarking Framework](docs/ADRs/0031-comprehensive-benchmarking-framework.md)
   - [ADR-032: DocRes Unified Preprocessing](docs/ADRs/0032-docres-unified-preprocessing.md)
@@ -354,12 +359,14 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **[docs/TESTING_STRATEGY.md](docs/TESTING_STRATEGY.md)**: Comprehensive testing approach with 80%+ coverage
 
 ### Development
+
 - **[docs/project/decision-matrix.md](docs/project/decision-matrix.md)**: Critical decisions tracking and stakeholder requirements
 - **[docs/WTD-Runbook.md](docs/WTD-Runbook.md)**: What The Diff integration guide for automated PR summaries
 - **[docs/api-reference.md](docs/api-reference.md)**: API and CLI reference documentation
 - **[SECURITY.md](SECURITY.md)**: Security policy and vulnerability reporting
 
 ### Research & References
+
 - **[docs/references/CITATIONS.md](docs/references/CITATIONS.md)**: Complete dataset and paper citations
 - **[docs/research/image_reference_sets.md](docs/research/image_reference_sets.md)**: Validation framework for pre-conversion document analysis
 
@@ -368,13 +375,16 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 **NEW PHASE STRUCTURE** (aligned with RAG Pipeline architecture):
 
 ### Phase 0: Project Setup (Week 0-1) ✅ **COMPLETE**
+
 - Project skeleton with Poetry, Modal workspace setup
 - GPU/CPU device probing utilities
 - Configuration system (YAML) with teacher fallback settings
 - Logging/telemetry scaffolding
 
 ### Phase 2: ResNet Teacher & Student ML IQA (Week 2-4) 🚧 **PLANNED**
+
 **Training Platform**: Modal serverless GPU (free tier: $30/month credits)
+
 - Multi-head ResNet-50 teacher architecture
 - Knowledge distillation to ResNet-18 student
 - Validation on OHR-Bench (document-specific IQA)
@@ -385,6 +395,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **Cost**: ~$5-10 (Modal GPU training) - **Covered by $30/month free tier**
 
 ### Phase 4: Classical IQA + DPI Upscaling (Week 5-6) 🚧 **PLANNED**
+
 - Laplacian blur, wavelet noise, Hough skew
 - Lighting metrics, JPEG blockiness detection
 - Student vs classical discrepancy threshold tuning
@@ -393,6 +404,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - Source: `/home/byron/dev/data_ingestor/src/data_ingestor/utils/`
 
 ### Phase 6: Layout-Lite Detection (Week 6-8) 🚧 **PLANNED**
+
 - YOLOv8-nano for coarse page attributes (text/table/figure blocks)
 - Handwriting presence classifier
 - Structural complexity scorer
@@ -400,6 +412,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **NOT full DocLayNet-style semantic layout** (Project B responsibility)
 
 ### Phase 8: DQS & Routing (Week 9) 🚧 **PLANNED**
+
 - Document Quality Score calculation (degradation + complexity)
 - PDF type classification (image_only/born_digital/hybrid)
 - Pre-OCR risk scoring
@@ -407,12 +420,14 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - JSON schema output with complete routing metadata
 
 ### Phase 10: Validation, Reporting, Documentation (Week 10) 🚧 **PLANNED**
+
 - End-to-end pipeline benchmarking
 - Teacher vs student performance analysis
 - Stress testing (large batches, cost tracking)
 - Documentation updates, PlantUML diagrams
 
 **REMOVED PHASES** (out of Project A scope):
+
 - ~~Phase 1/1B (old numbering)~~ → Absorbed into Phases 0 and 4
 - ~~Table Structure Extraction (PubTables-1M)~~ → Project B responsibility
 - ~~Reading Order Prediction (ReadingBank)~~ → Project B responsibility
@@ -442,10 +457,12 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 | Test Coverage | >80% | Unit + integration |
 
 **Benchmark Datasets**:
+
 - **IQA**: OHR-Bench (document-specific), DIQA-5000 (fallback)
 - **Layout-Lite**: OmniDocBench (page attributes)
 
 **REMOVED METRICS** (out of Project A scope):
+
 - ~~Layout mAP@.50~~ → Project B (full layout detection)
 - ~~Table Structure TEDS~~ → Project B (table structure extraction)
 - ~~Dewarping ED@10~~ → Out of scope (DocRes removed)
@@ -467,6 +484,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for comprehensive contribution guidelines
 ### Pre-commit Checks
 
 All commits must pass:
+
 - Black formatting
 - Ruff linting
 - MyPy type checking (src/ only)
@@ -489,7 +507,7 @@ If you use this software in your research, please cite:
   version = {0.1.0},
   url = {https://github.com/williaby/image-preprocessing-detector}
 }
-```
+```text
 
 ### Datasets Used
 
@@ -506,6 +524,7 @@ Full citations and dataset attributions available in [CITATIONS.md](docs/referen
 ## Acknowledgments
 
 Architecture designed with multi-model consensus analysis:
+
 - **Gemini 2.5 Pro**: Pipeline design and phased roadmap
 - **GPT-5**: Risk assessment and optimization strategies
 
@@ -513,7 +532,7 @@ Architecture designed with multi-model consensus analysis:
 
 - **Issues**: [GitHub Issues](https://github.com/username/image-preprocessing-detector/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/username/image-preprocessing-detector/discussions)
-- **Email**: byronawilliams@gmail.com
+- **Email**: <byronawilliams@gmail.com>
 
 ---
 

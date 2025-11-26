@@ -30,6 +30,7 @@ purpose: "Document the decision to use YOLOv8 for document layout detection in P
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ARCHITECTURE_SUMMARY.md](../../ARCHITECTURE_SUMMARY.md)
 - [PROJECT_PLAN.md Phase 3](../../PROJECT_PLAN.md#phase-3-ml-for-document-layout-weeks-12-16)
 - [ADR-007: Hybrid IQA Approach](0007-hybrid-iqa-approach.md)
@@ -41,11 +42,13 @@ Phase 3 requires document layout detection to identify elements (text, titles, l
 ### Requirements
 
 **Performance Targets**:
+
 - Latency: < 50ms per page (GPU)
 - mAP@.50: > 0.82 (object detection)
 - Elements: Text, Title, List, Table, Figure, Formula, Handwriting (7 classes)
 
 **Integration Needs**:
+
 - COCO bounding box format compatibility
 - Element extraction for per-element IQA
 - Production deployment (ONNX Runtime)
@@ -57,12 +60,14 @@ Phase 3 requires document layout detection to identify elements (text, titles, l
 ### Model Selection
 
 **YOLOv8-Nano (Primary)**:
+
 - Latency: ~20ms (GPU T4)
 - Parameters: 3.2M
 - Model Size: ~6MB (FP16)
 - mAP: ~0.82 (on DocLayNet validation)
 
 **YOLOv8-Small (Fallback)**:
+
 - Latency: ~30ms (GPU T4)
 - Parameters: 11.2M
 - Model Size: ~22MB (FP16)
@@ -71,12 +76,14 @@ Phase 3 requires document layout detection to identify elements (text, titles, l
 ### Training Strategy
 
 **Transfer Learning**:
+
 - Pre-trained: COCO dataset (general objects)
 - Fine-tuned: DocLayNet (document elements)
 - Epochs: 100-150 with early stopping
 - Data augmentation: Rotation, brightness, contrast (Albumentations)
 
 **DocLayNet Dataset**:
+
 - Training: 80,863 pages
 - Validation: 6,489 pages
 - Test: 4,138 pages
@@ -111,11 +118,13 @@ Phase 3 requires document layout detection to identify elements (text, titles, l
 **Approach**: Use transformer-based document understanding models
 
 **Advantages**:
+
 - Higher accuracy (~87-90% mAP)
 - Better handling of document structure
 - State-of-the-art on DocLayNet leaderboard
 
 **Disadvantages**:
+
 - Slower inference (200-700ms)
 - Larger models (100-300MB)
 - More complex deployment
@@ -128,10 +137,12 @@ Phase 3 requires document layout detection to identify elements (text, titles, l
 **Approach**: Use two-stage object detector
 
 **Advantages**:
+
 - Higher accuracy than YOLO (~85% mAP)
 - Better bounding box quality
 
 **Disadvantages**:
+
 - Slower inference (80-150ms)
 - More complex architecture
 - Harder to optimize
@@ -143,11 +154,13 @@ Phase 3 requires document layout detection to identify elements (text, titles, l
 **Approach**: Use LayoutParser library (built on Detectron2)
 
 **Advantages**:
+
 - Pre-built document layout models
 - High accuracy (~85% mAP)
 - Easy integration
 
 **Disadvantages**:
+
 - Slower inference (50-100ms)
 - Larger dependency footprint
 - Based on older Detectron2 architecture
@@ -159,21 +172,25 @@ Phase 3 requires document layout detection to identify elements (text, titles, l
 ### Phase 3 Plan (Weeks 12-16)
 
 **Week 12-13: Model Training**
+
 - Fine-tune YOLOv8n on DocLayNet
 - Hyperparameter tuning (learning rate, batch size, augmentation)
 - Validation on DocLayNet test set
 
 **Week 14: ONNX Optimization**
+
 - Export to ONNX format
 - INT8 quantization (FP32 → INT8 for 1.5-3× speedup)
 - Benchmark latency and accuracy trade-offs
 
 **Week 15: Integration**
+
 - Integrate with hybrid IQA pipeline (ADR-007)
 - Per-element extraction and quality assessment
 - JSON output with element-level metadata
 
 **Week 16: Validation**
+
 - End-to-end testing on DocLayNet
 - Performance benchmarking (latency, accuracy, throughput)
 - Production deployment preparation
@@ -249,11 +266,13 @@ def process_text_document(page_image):
 ## Deployment Strategy
 
 **ONNX Runtime with INT8 Quantization**:
+
 - FP16 → INT8: 1.5-3× speedup
 - Accuracy drop: < 2% (acceptable)
 - Model size: 6MB → 3MB
 
 **Hardware Requirements**:
+
 - GPU: NVIDIA T4 or better
 - VRAM: 4GB minimum
 - Driver: CUDA 11.8+

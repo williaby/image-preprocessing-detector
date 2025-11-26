@@ -88,9 +88,9 @@ dict_synonyms = "Struct, NamedStruct"
 
 ### Mutation Score
 
-```
+```text
 Mutation Score = (killed / total) × 100
-```
+```text
 
 - **>80%**: Excellent test coverage
 - **60-80%**: Good, but room for improvement
@@ -117,6 +117,7 @@ Focus on surviving mutants in:
 3. **Business logic**: dqs_calculator, routing
 
 Less critical:
+
 - Logging statements
 - Error message changes
 - UI/formatting code
@@ -204,6 +205,7 @@ poetry run mutmut run
 ### False Positives
 
 Some mutations may survive legitimately:
+
 - Logging changes (message text)
 - Error message wording
 - Unreachable code paths

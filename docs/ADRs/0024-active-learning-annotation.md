@@ -22,6 +22,7 @@ purpose: "Document the decision to use active learning to minimize manual annota
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [PROJECT_PLAN.md Phase 2-3](../../PROJECT_PLAN.md#phase-2-ml-for-image-quality-assessment-3-4-weeks)
 - [ADR-022: Synthetic Data Generation](0022-synthetic-data-generation.md)
 - [ADR-023: Weak Supervision with BRISQUE/NIQE](0023-weak-supervision-brisque-niqe.md)
@@ -31,6 +32,7 @@ purpose: "Document the decision to use active learning to minimize manual annota
 Manual annotation is expensive ($0.50-1.00 per image). Standard supervised learning requires large labeled datasets (10k+ images = $5k-10k). Active learning selectively chooses the most informative samples for annotation, reducing annotation cost by 50-80%.
 
 **Annotation Cost Analysis**:
+
 - Full annotation: 10,000 images × $0.50 = $5,000
 - Active learning (20%): 2,000 images × $0.50 = $1,000
 - **Savings**: $4,000 (80% reduction)
@@ -67,6 +69,7 @@ Manual annotation is expensive ($0.50-1.00 per image). Standard supervised learn
 ### Uncertainty Sampling Methods
 
 **Method 1: Least Confidence** (Primary)
+
 ```python
 def least_confidence_sampling(predictions, k=500):
     """Select samples with lowest max prediction confidence."""
@@ -77,6 +80,7 @@ def least_confidence_sampling(predictions, k=500):
 ```
 
 **Method 2: Entropy Sampling** (Secondary)
+
 ```python
 def entropy_sampling(predictions, k=500):
     """Select samples with highest prediction entropy."""
@@ -86,6 +90,7 @@ def entropy_sampling(predictions, k=500):
 ```
 
 **Method 3: Margin Sampling** (Fallback)
+
 ```python
 def margin_sampling(predictions, k=500):
     """Select samples with smallest margin between top 2 predictions."""
@@ -124,11 +129,13 @@ def margin_sampling(predictions, k=500):
 **Approach**: Randomly select 2k images for annotation
 
 **Advantages**:
+
 - Simplest approach
 - No bias in selection
 - Single training cycle
 
 **Disadvantages**:
+
 - Wastes annotations on easy examples
 - Lower final accuracy than active learning
 - No iterative refinement
@@ -140,10 +147,12 @@ def margin_sampling(predictions, k=500):
 **Approach**: Sample proportionally from each class/quality issue
 
 **Advantages**:
+
 - Ensures class balance
 - No complex uncertainty calculation
 
 **Disadvantages**:
+
 - Requires knowing class distribution beforehand
 - Still annotates easy examples
 - Lower efficiency than active learning
@@ -155,11 +164,13 @@ def margin_sampling(predictions, k=500):
 **Approach**: Annotate all 10k images
 
 **Advantages**:
+
 - Maximum training data
 - No selection bias
 - Single training cycle
 
 **Disadvantages**:
+
 - Expensive ($5,000 vs $1,000)
 - Wastes annotations on easy examples
 - Slower (10k vs 2k annotations)

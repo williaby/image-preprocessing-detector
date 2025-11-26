@@ -15,6 +15,7 @@ This document defines the handoff format between Project A (Preprocessing & IQA)
 ## Overview
 
 Project A produces a `DocumentMetadata.json` file for each processed document, which contains:
+
 1. Document identification and basic info
 2. Per-page quality assessment (IQA scores)
 3. Document-level quality score (DQS)
@@ -25,7 +26,7 @@ Project A produces a `DocumentMetadata.json` file for each processed document, w
 
 For each document processed, Project A outputs:
 
-```
+```text
 output/
 ├── {document_id}/
 │   ├── metadata.json          # DocumentMetadata JSON
@@ -33,7 +34,7 @@ output/
 │   ├── page_0001.png
 │   ├── ...
 │   └── page_NNNN.png
-```
+```text
 
 ## DocumentMetadata Schema (Required Fields for MVP)
 
@@ -270,7 +271,7 @@ output/
 
 ### Routing Decision Tree
 
-```
+```text
 IF pdf_type == "born_digital":
     # Skip IQA pipeline, use text extraction
     USE text_extraction_path
@@ -289,7 +290,7 @@ ELSE:
     ELSE:
         # High risk document
         USE vision_structured_path WITH retry_strategy
-```
+```text
 
 ### Quality Thresholds
 
@@ -302,6 +303,7 @@ ELSE:
 ### Per-Page Processing
 
 Project B should process pages individually when:
+
 1. `page.teacher_iqa` is present (indicates challenging page)
 2. Page has `severity: "high"` or `severity: "critical"` issues
 3. Page `complexity_score > 0.6`

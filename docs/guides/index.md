@@ -169,6 +169,7 @@ For documents with embedded images:
 ### Common Issues
 
 **Import errors:**
+
 ```bash
 # Ensure proper installation
 poetry install --with dev
@@ -178,6 +179,7 @@ pip install --force-reinstall image-preprocessing-detector
 ```
 
 **GPU not detected:**
+
 ```bash
 # Check CUDA availability
 python -c "import torch; print(torch.cuda.is_available())"
@@ -187,6 +189,7 @@ imgprep process input.pdf --device cpu
 ```
 
 **Low quality scores:**
+
 - Adjust detection thresholds in configuration
 - Check input resolution (should be ≥300 DPI)
 - Review correction pipeline settings

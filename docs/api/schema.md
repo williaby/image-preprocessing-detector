@@ -16,13 +16,13 @@ The schema module provides Pydantic v2 models for representing document metadata
 
 The schema uses a hierarchical structure with COCO-aligned bounding boxes for compatibility with LayoutParser and other document analysis tools:
 
-```
+```text
 DocumentMetadata
   └── PageMetadata (one per page)
       ├── DetectedIssue (quality issues)
       └── DocumentElement (layout elements)
           └── DetectedIssue (per-element quality)
-```
+```text
 
 ## Module Reference
 

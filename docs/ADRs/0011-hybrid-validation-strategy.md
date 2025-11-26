@@ -21,6 +21,7 @@ purpose: "Document the decision to use both synthetic and real-world validation 
 **Date**: 2025-11-05 (Updated: 2025-01-13 for DGQA)
 **Deciders**: Byron Williams
 **Related**:
+
 - [ADR-006: Synthetic Validation Dataset Strategy](0006-synthetic-validation-dataset-strategy.md)
 - [ADR-029: Three-Tier Dataset Strategy](0029-phase2-dataset-selection-strategy.md)
 - [FR-2.3: Learned Quality Assessment](../requirements/functional_requirements_v2.md#fr-23-learned-quality-assessment-phase-2)
@@ -42,6 +43,7 @@ During Phase 1 validation, we discovered a critical issue with detector threshol
 ### Validation Coverage
 
 **Datasets**:
+
 - **Synthetic**: 228 images from Microsoft Genalog (perfect ground truth)
 - **Real-World**: 100 PDFs from DocLayNet benchmark (production documents)
 - **Total**: 328 images for comprehensive validation
@@ -49,6 +51,7 @@ During Phase 1 validation, we discovered a critical issue with detector threshol
 ### Critical Discovery
 
 Real-world validation caught contrast threshold miscalibration:
+
 - **Synthetic calibration**: 0.18 threshold worked well
 - **Real-world detection**: 100% of documents flagged (incorrect)
 - **Adjusted threshold**: Reduced detection rate to 53% (appropriate)
@@ -86,6 +89,7 @@ Real-world validation caught contrast threshold miscalibration:
 | Skew | ✅ Validated (228 images) | ✅ Validated (100 PDFs) | ✅ Complete |
 
 **Detection Rates (Real-World)**:
+
 - Blur: 6% (appropriate for business documents)
 - Skew: 4% (appropriate for scanned documents)
 - Contrast: 53% (calibrated from 100% false positive rate)
@@ -120,11 +124,13 @@ Real-world validation caught contrast threshold miscalibration:
 **Approach**: Use only Microsoft Genalog synthetic data for validation
 
 **Advantages**:
+
 - Perfect ground truth
 - Faster validation (no manual annotation)
 - Easier to scale (generate more samples)
 
 **Disadvantages**:
+
 - Missed distribution shift (contrast miscalibration)
 - No production readiness guarantee
 - High risk of false positives on real-world documents
@@ -136,11 +142,13 @@ Real-world validation caught contrast threshold miscalibration:
 **Approach**: Use only DocLayNet PDFs for validation
 
 **Advantages**:
+
 - Direct production validation
 - Captures all real-world artifacts
 - Single validation pipeline
 
 **Disadvantages**:
+
 - No perfect ground truth
 - Manual annotation required (expensive)
 - Harder to generate edge cases
@@ -152,10 +160,12 @@ Real-world validation caught contrast threshold miscalibration:
 **Approach**: Start with synthetic, migrate to real-world later
 
 **Advantages**:
+
 - Gradual complexity increase
 - Can defer real-world work
 
 **Disadvantages**:
+
 - Delays discovery of calibration issues
 - Risk of shipping miscalibrated detectors
 - Re-work required when migration happens
@@ -193,11 +203,13 @@ final_validation = {
 ### Threshold Calibration Example (Contrast)
 
 **Original Threshold (Synthetic)**:
+
 - Threshold: 0.18 (RMS contrast)
 - Synthetic detection rate: 25% (appropriate)
 - Real-world detection rate: 100% (miscalibrated)
 
 **Calibrated Threshold (Real-World)**:
+
 - Threshold: 0.15 (adjusted based on real-world distribution)
 - Synthetic detection rate: 30% (slightly higher, acceptable)
 - Real-world detection rate: 53% (appropriate)
@@ -205,11 +217,13 @@ final_validation = {
 ### Validation Results
 
 **Stage 3A (IQA) - 100% Validated**:
+
 - 3/3 implemented detectors (blur, skew, contrast) validated on both datasets
 - All thresholds calibrated for production readiness
 - Detection rates established for real-world documents
 
 **Stage 3B (Element Detection) - 67% Ready for Phase 2**:
+
 - 4/6 elements available in DocLayNet COCO annotations
 - Text, Title, List, Figure/Table supported
 - Handwriting and Formulas deferred to Phase 2+
@@ -242,11 +256,13 @@ final_validation = {
 **Phase 1 Finding**: Real-world PDFs differ from synthetic images (contrast miscalibration: 100% false positive rate without calibration)
 
 **Phase 2+ Challenge**: ML models trained on synthetic data face **domain generalization** problem:
+
 - **Training**: 50k synthetic samples from TableBank with weak supervision (BRISQUE/NIQE labels)
 - **Target**: Real-world documents with scanning artifacts, compression, paper texture
 - **Risk**: Models overfit to synthetic distribution → poor performance on production documents
 
 **Evidence from Research** (Q4 2024 - Q4 2025 Literature):
+
 - DGQA framework (Domain-Generalized Quality Assessment) specifically designed to address synthetic-to-real gap for document IQA
 - Standard approach (train on synthetic, test on real) shows **15-25% performance degradation**
 - DGQA calibration reduces degradation to **<5%** through domain adaptation techniques
@@ -267,12 +283,14 @@ final_validation = {
 **Dataset**: 50k synthetic samples from TableBank + Albumentations augmentation
 **Weak Supervision**: BRISQUE/NIQE labels as pseudo-ground-truth
 **Augmentation Pipeline**:
+
 - Blur: Gaussian blur (σ=0.5-3.0), motion blur (5-15 pixels)
 - Noise: Gaussian noise (σ=5-25), salt-and-pepper noise (density=0.01-0.05)
 - Contrast: Random brightness/contrast adjustment (±30%)
 - Compression: JPEG compression (quality=50-95)
 
 **Model Architecture** (FR-2.3):
+
 - **Backbone**: MobileNetV3-Small or EfficientNet-B0
 - **Output**: 3-dimension scores (overall, sharpness, color fidelity)
 - **Loss**: Multi-task loss (MSE for each dimension + ranking loss)
@@ -307,6 +325,7 @@ for epoch in range(50):
 **Approach**: Train feature extractor to produce similar features for synthetic and real samples with same quality
 
 **Technique**: Adversarial domain adaptation with gradient reversal layer
+
 - **Domain Discriminator**: Classifier that tries to distinguish synthetic vs. real features
 - **Gradient Reversal**: Feature extractor learns features that fool the discriminator
 - **Result**: Features invariant to domain (synthetic vs. real) but discriminative for quality
@@ -362,6 +381,7 @@ for epoch in range(20):
 #### Stage 3: Real-World Calibration (Week 4)
 
 **Dataset**: Small real-world holdout set (500-1000 samples) with manual quality annotations
+
 - **Source**: DocLayNet PDFs (100 samples from Phase 1) + new annotated samples (400-900)
 - **Annotation**: Manual 3-dimension quality scores (overall, sharpness, color fidelity)
 - **Cost**: ~20 hours annotation effort (5-10 annotators, 2-3 hours each)
@@ -389,15 +409,18 @@ for epoch in range(10):
 #### Stage 4: Validation (Week 4)
 
 **Validation Datasets:**
+
 1. **Synthetic Test Set** (10k samples): Ensure no performance degradation on synthetic
 2. **Real-World Test Set** (200 samples): Validate production readiness
 3. **DIQA-5000** (when released): Document-specific IQA benchmark with ground-truth 3-dimension scores
 
 **Metrics** (FR-2.3 Targets):
+
 - **Phase 2**: Pearson/Spearman correlation > 0.75 with LIVE/CSIQ ground-truth scores
 - **Phase 3**: Pearson/Spearman correlation > 0.80 with DIQA-5000 ground-truth scores
 
 **Validation Results Expected:**
+
 ```python
 # Synthetic test set (should maintain performance)
 synthetic_correlation = evaluate_correlation(
@@ -423,6 +446,7 @@ assert domain_gap < 0.05  # DGQA success criterion
 **DGQA Extension**: +1 week (Weeks 8-12)
 
 **Breakdown:**
+
 - **Week 1-2**: Synthetic training with weak supervision (already planned)
 - **Week 3**: Domain-invariant feature learning with adversarial adaptation (**NEW**)
 - **Week 4**: Real-world calibration + validation (**EXTENDED**)
@@ -447,6 +471,7 @@ assert domain_gap < 0.05  # DGQA success criterion
 **Solution**: Efficient annotation protocol with quality controls
 
 **Annotation Protocol:**
+
 1. **Sample Selection**: Stratified sampling from DocLayNet (diverse document types, quality levels)
 2. **Annotator Training**: Calibration session with 20 reference images (quality examples)
 3. **3-Dimension Scoring**:
@@ -457,6 +482,7 @@ assert domain_gap < 0.05  # DGQA success criterion
 5. **Quality Control**: Flag disagreements (standard deviation >1.0) for re-annotation
 
 **Cost Estimate:**
+
 - **Annotators**: 5-10 annotators (crowdsourced or internal)
 - **Time per Image**: 30-60 seconds (3 scores per image)
 - **Total Time**: 500 images × 60s × 3 annotators = 25 hours (distributed)
@@ -467,6 +493,7 @@ assert domain_gap < 0.05  # DGQA success criterion
 **Alternative**: Pseudo-labeling with ensemble of classical methods
 
 **Approach**:
+
 1. Use Phase 1 classical detectors (blur, contrast) as weak supervision for real-world samples
 2. Ensemble BRISQUE/NIQE/classical methods to generate pseudo-labels
 3. Calibrate on pseudo-labeled real-world samples (less accurate but zero annotation cost)
@@ -478,22 +505,26 @@ assert domain_gap < 0.05  # DGQA success criterion
 ### DGQA Integration with Hybrid Validation Strategy
 
 **Phase 1 Hybrid Validation** (Classical Detectors):
+
 - Synthetic (perfect ground truth) + Real-world (calibration)
 - Threshold tuning based on real-world detection rates
 - **Success**: Prevented 100% false positive rate for contrast detection
 
 **Phase 2 DGQA** (Learned Models):
+
 - Synthetic (weak supervision) + Domain adaptation (feature alignment) + Real-world (calibration)
 - Model fine-tuning based on real-world manual annotations
 - **Goal**: Prevent 15-25% performance degradation on real-world documents
 
 **Unified Framework**: Both phases address synthetic-to-real domain shift, but with different methodologies:
+
 - **Classical**: Threshold calibration on real-world detection rates
 - **Learned**: Domain-invariant feature learning + model calibration on real-world annotations
 
 ### Success Criteria (Phase 2 DGQA Validation)
 
 **Required Outcomes:**
+
 1. ✅ **Synthetic Performance Maintained**: Pearson r > 0.75 on synthetic test set
 2. ✅ **Real-World Generalization**: Pearson r > 0.75 on real-world test set (FR-2.3 target)
 3. ✅ **Domain Gap Reduced**: <5% performance difference between synthetic and real-world
@@ -501,6 +532,7 @@ assert domain_gap < 0.05  # DGQA success criterion
 5. ✅ **Calibration Efficiency**: Real-world annotation cost <$3000 or use pseudo-labeling fallback
 
 **Validation Report Format:**
+
 ```markdown
 ## Phase 2 DGQA Validation Report
 
@@ -526,6 +558,7 @@ assert domain_gap < 0.05  # DGQA success criterion
 ## References (Updated)
 
 **Phase 1 References:**
+
 - [Synthetic Validation Dataset Strategy (ADR-006)](0006-synthetic-validation-dataset-strategy.md)
 - [Phase 1 Validation: Stage 3A/3B Coverage Update](../project/phases/phase-1-validation/STAGE_3A_3B_COVERAGE_UPDATE.md)
 - [DocLayNet Dataset](https://github.com/DS4SD/DocLayNet)
@@ -533,12 +566,14 @@ assert domain_gap < 0.05  # DGQA success criterion
 - [Phase 1 Completion Summary](../../PHASE_1_COMPLETE.md)
 
 **Phase 2+ DGQA References:**
+
 - [ADR-029: Three-Tier Dataset Strategy](0029-phase2-dataset-selection-strategy.md) - TableBank synthetic data, DIQA-5000 benchmark
 - [FR-2.3: Learned Quality Assessment](../requirements/functional_requirements_v2.md#fr-23-learned-quality-assessment-phase-2) - 3-dimension output specification
 - [ADR-025: MobileNetV3 vs. EfficientNet](0025-mobilenetv3-vs-efficientnet.md) - Model architecture selection
 - [ADR-023: Weak Supervision (BRISQUE/NIQE)](0023-weak-supervision-brisque-niqe.md) - Pseudo-label generation
 
 **DGQA Research Papers** (to be added):
+
 - Domain-Generalized Quality Assessment for Document Images (Q4 2024 - Q4 2025 literature)
 - Adversarial Domain Adaptation for Image Quality Assessment
 - Transfer Learning for Document Understanding

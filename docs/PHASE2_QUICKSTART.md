@@ -66,12 +66,13 @@ poetry install --with dev
 ```
 
 **Output structure:**
-```
+
+```text
 datasets/iqa_phase2/
 ├── train/ (35,000 images + labels.json)
 ├── val/   (7,500 images + labels.json)
 └── test/  (7,500 images + labels.json)
-```
+```text
 
 ---
 
@@ -104,7 +105,8 @@ gsutil ls gs://image_detection_b
 ```
 
 Expected output:
-```
+
+```text
 [INFO] Storage usage by directory:
 10.2 GiB    gs://image_detection_b/datasets/iqa_phase2
 100 KiB     gs://image_detection_b/configs
@@ -114,25 +116,28 @@ Expected output:
 
 [INFO] Estimated monthly cost (Standard storage @ $0.020/GB):
 10.20 GB × $0.020 = $0.20/month
-```
+```text
 
 ---
 
 ## Step 5: Setup Modal and Start Training (5 minutes setup)
 
 1. **Install Modal CLI**:
+
    ```bash
    poetry add modal
    poetry install
    ```
 
-2. **Authenticate with Modal**:
+1. **Authenticate with Modal**:
+
    ```bash
    poetry run modal token new
    # Opens browser for authentication
    ```
 
-3. **Setup GCS credentials**:
+2. **Setup GCS credentials**:
+
    ```bash
    # Use helper script (auto-encodes to base64)
    ./scripts/modal_helpers.sh setup-gcs-secret /path/to/gcp-service-account-key.json
@@ -142,21 +147,23 @@ Expected output:
    poetry run modal secret create gcs-credentials GCP_SA_KEY="$GCP_SA_KEY_B64"
    ```
 
-4. **Test GPU access**:
+3. **Test GPU access**:
+
    ```bash
    ./scripts/modal_helpers.sh test-gpu
    # Should show: "✅ Hello from Modal GPU: Tesla T4"
    ```
 
-5. **Start training**:
+4. **Start training**:
+
    ```bash
    ./scripts/modal_helpers.sh train-phase2
    # Or manually:
    poetry run modal run modal/train_phase2_iqa.py
    ```
 
-6. **Monitor training**:
-   - Open Modal dashboard: https://modal.com/apps
+5. **Monitor training**:
+   - Open Modal dashboard: <https://modal.com/apps>
    - View logs, GPU utilization, costs in real-time
 
 ---
@@ -293,20 +300,21 @@ After training completes, you can delete the GCS dataset to save costs (~$0.20/m
 After training completes:
 
 1. **Download trained model**:
+
    ```bash
    ./scripts/gcs_helpers.sh download-models phase2
    ```
 
-2. **Validate model** (Phase 2 Week 2):
+1. **Validate model** (Phase 2 Week 2):
    - Run validation on test set
    - Compute metrics (mAP, per-class precision/recall)
    - Calibrate confidence thresholds
 
-3. **Export to ONNX** (automatic in training notebook):
+1. **Export to ONNX** (automatic in training notebook):
    - INT8 quantization for CPU deployment
    - Production-ready model
 
-4. **Proceed to Phase 3**: YOLOv8 layout detection
+1. **Proceed to Phase 3**: YOLOv8 layout detection
 
 ---
 

@@ -28,6 +28,7 @@ purpose: "Document the model architecture selection for Phase 2 IQA classifier. 
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ADR-014: Classical CV + ML Hybrid for IQA](0014-classical-ml-hybrid-iqa.md)
 - [PROJECT_PLAN.md Phase 2](../../PROJECT_PLAN.md#phase-2-ml-for-image-quality-assessment-3-4-weeks)
 
@@ -36,6 +37,7 @@ purpose: "Document the model architecture selection for Phase 2 IQA classifier. 
 Phase 2 requires a lightweight CNN for multi-label IQA classification (noise, blur, perspective, orientation). Model must balance accuracy, latency, and model size.
 
 **Requirements**:
+
 - Latency: < 50ms (GPU), < 200ms (CPU)
 - Model size: < 10MB (quantized)
 - mAP: > 0.88

@@ -20,12 +20,14 @@ purpose: Project planning documentation for project improvement opportunities an
 This document identifies **strategic improvement opportunities** across performance, architecture, code quality, data pipeline, and production readiness. These recommendations are prioritized to maximize ROI while maintaining the project's phased approach.
 
 ### Quick Wins (High Impact, Low Effort)
+
 1. **Caching Layer** for repeated processing (20-40% latency reduction)
 2. **Plugin Architecture** for detectors and corrections (better extensibility)
 3. **Experiment Tracking** integration (faster ML iteration)
 4. **Batch Processing Pipeline** (5-10× throughput improvement)
 
 ### Strategic Enhancements (High Impact, Medium Effort)
+
 1. **Streaming Pipeline** for large documents (memory reduction)
 2. **Multi-Model Serving** infrastructure (A/B testing, gradual rollout)
 3. **Automated Hyperparameter Tuning** (better model performance)
@@ -40,11 +42,13 @@ This document identifies **strategic improvement opportunities** across performa
 **Gap Identified**: No caching mechanism for intermediate results
 
 **Current State**:
+
 - PDF pages re-rendered on every run
 - DPI detection re-computed on retry
 - Classical detectors rerun without state
 
 **Opportunity**:
+
 ```python
 # Add caching decorator for expensive operations
 from functools import lru_cache
@@ -71,6 +75,7 @@ class PDFProcessingCache:
 ```
 
 **Expected Impact**:
+
 - 20-40% latency reduction for repeated documents
 - 60-80% reduction for multi-run validation workflows
 - Enable incremental processing (only changed pages)
@@ -84,6 +89,7 @@ class PDFProcessingCache:
 **Gap Identified**: Current CLI processes files sequentially
 
 **Current State**:
+
 ```python
 # Sequential processing in cli.py
 for file_path in input_files:
@@ -92,6 +98,7 @@ for file_path in input_files:
 ```
 
 **Opportunity**: PyTorch DataLoader-style batch processing
+
 ```python
 class DocumentBatchProcessor:
     """Batch processor with dynamic batching."""
@@ -126,6 +133,7 @@ class DocumentBatchProcessor:
 ```
 
 **Expected Impact**:
+
 - 5-10× throughput improvement for batch workloads
 - Better GPU utilization (50% → 85%)
 - Linear scaling with worker count
@@ -139,6 +147,7 @@ class DocumentBatchProcessor:
 **Gap Identified**: Current implementation loads entire PDF in memory
 
 **Current State** (from pdf_loader.py):
+
 ```python
 def load_pdf(pdf_path):
     doc = fitz.open(pdf_path)
@@ -150,6 +159,7 @@ def load_pdf(pdf_path):
 ```
 
 **Opportunity**: Generator-based streaming
+
 ```python
 class StreamingPDFProcessor:
     """Process PDFs page-by-page without loading entire document."""
@@ -181,6 +191,7 @@ def write_streaming_json(output_path, page_stream):
 ```
 
 **Expected Impact**:
+
 - O(1) memory usage (vs O(n) pages)
 - Enable processing of 1000+ page documents
 - Faster time-to-first-result (progressive processing)
@@ -196,6 +207,7 @@ def write_streaming_json(output_path, page_stream):
 **Current State**: Full pipeline runs on every page
 
 **Opportunity**: Cascade detection with early exit
+
 ```python
 class CascadeDetector:
     """Cascade of fast→slow detectors with early exit."""
@@ -230,6 +242,7 @@ class CascadeDetector:
 ```
 
 **Expected Impact**:
+
 - 40-60% latency reduction on "easy" documents
 - Maintain accuracy on complex documents
 - Better resource utilization
@@ -245,6 +258,7 @@ class CascadeDetector:
 **Opportunity**: Comprehensive optimization strategy
 
 **Quantization Levels**:
+
 ```python
 # FP32 (baseline): 100% accuracy, 100ms latency
 # FP16 (mixed precision): 99.5% accuracy, 60ms latency
@@ -268,12 +282,14 @@ class ModelOptimizer:
 ```
 
 **Optimization Techniques**:
+
 1. **Quantization-Aware Training** (QAT): Train with quantization simulation
 2. **Knowledge Distillation**: Student model (MobileNetV3) learns from Teacher (EfficientNet)
 3. **Neural Architecture Search** (NAS): Find optimal architecture for latency/accuracy tradeoff
 4. **Dynamic Quantization**: Per-batch quantization based on input statistics
 
 **Expected Impact**:
+
 - 40-60% latency reduction (FP32 → INT8)
 - 75% model size reduction
 - <2% accuracy degradation
@@ -289,6 +305,7 @@ class ModelOptimizer:
 **Gap Identified**: Hard-coded detector implementations
 
 **Current State**:
+
 ```python
 # Tightly coupled in detection pipeline
 from detection.iqa_classical import SkewDetector, BlurDetector
@@ -298,6 +315,7 @@ result = detector.detect(image)
 ```
 
 **Opportunity**: Plugin-based extensibility
+
 ```python
 # Abstract base class for detectors
 class IQADetectorPlugin(ABC):
@@ -360,6 +378,7 @@ detectors = [
 ```
 
 **Benefits**:
+
 - Easy to add new detectors without modifying core pipeline
 - Third-party detector plugins
 - A/B testing of detector variants
@@ -376,6 +395,7 @@ detectors = [
 **Current State**: Fixed sequence (ingestion → detection → correction → output)
 
 **Opportunity**: Directed Acyclic Graph (DAG) execution
+
 ```python
 from dataclasses import dataclass
 from typing import Callable, List, Set
@@ -457,6 +477,7 @@ pipeline.add_node(PipelineNode(
 ```
 
 **Benefits**:
+
 - Conditional execution (e.g., skip YOLOv8 if no text)
 - Parallel execution of independent stages
 - Easy to add/remove stages
@@ -472,6 +493,7 @@ pipeline.add_node(PipelineNode(
 **Gap Identified**: No infrastructure for A/B testing or gradual rollout
 
 **Opportunity**: Model serving with traffic splitting
+
 ```python
 class ModelServer:
     """Serve multiple model versions with traffic splitting."""
@@ -526,6 +548,7 @@ server.traffic_split["v2.0"] = 0.5
 ```
 
 **Benefits**:
+
 - Safe gradual rollout (1% → 10% → 50% → 100%)
 - A/B testing with statistical significance
 - Easy rollback on performance regression
@@ -540,11 +563,13 @@ server.traffic_split["v2.0"] = 0.5
 **Gap Identified**: Limited configuration options in `Settings` class
 
 **Current State**:
+
 - Only 5 settings (PDF upscaling)
 - No per-detector configuration
 - No environment-specific configs (dev/staging/prod)
 
 **Opportunity**: Hierarchical configuration with Pydantic Settings
+
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
@@ -600,6 +625,7 @@ settings = AppSettings(_env_file=f".env.{os.getenv('ENV', 'dev')}")
 ```
 
 **Benefits**:
+
 - Type-safe configuration with validation
 - Environment-specific overrides
 - Easy to add new settings
@@ -616,6 +642,7 @@ settings = AppSettings(_env_file=f".env.{os.getenv('ENV', 'dev')}")
 **Gap Identified**: Current tests use fixed examples
 
 **Current State**: Example-based tests
+
 ```python
 def test_skew_detection():
     image = cv2.imread("test_skewed.png")
@@ -624,6 +651,7 @@ def test_skew_detection():
 ```
 
 **Opportunity**: Property-based testing with Hypothesis
+
 ```python
 from hypothesis import given, strategies as st
 from hypothesis.extra.numpy import arrays
@@ -670,6 +698,7 @@ def test_blur_detection_monotonicity(blur_radius):
 ```
 
 **Benefits**:
+
 - Catch edge cases automatically
 - Test invariants and properties
 - Better coverage than manual examples
@@ -684,6 +713,7 @@ def test_blur_detection_monotonicity(blur_radius):
 **Gap Identified**: High test coverage (89.75%) but quality unknown
 
 **Opportunity**: Measure test effectiveness with mutation testing
+
 ```bash
 # mutmut configuration in pyproject.toml
 [tool.mutmut]
@@ -702,6 +732,7 @@ poetry run mutmut run
 ```
 
 **Action Items**:
+
 - Target 80%+ mutation kill rate
 - Identify survived mutants (weak tests)
 - Add tests for uncaught mutations
@@ -715,6 +746,7 @@ poetry run mutmut run
 **Gap Identified**: No automated performance benchmarks
 
 **Opportunity**: Continuous performance tracking
+
 ```python
 # tests/performance/test_benchmarks.py
 import pytest
@@ -746,6 +778,7 @@ def test_skew_detection_benchmark(benchmark: BenchmarkFixture):
 ```
 
 **Benefits**:
+
 - Catch performance regressions early
 - Track optimization impact
 - Prevent latency creep
@@ -759,6 +792,7 @@ def test_skew_detection_benchmark(benchmark: BenchmarkFixture):
 **Gap Identified**: Only 19 integration tests vs 127 unit tests
 
 **Opportunity**: End-to-end scenario testing
+
 ```python
 # tests/integration/test_e2e_scenarios.py
 
@@ -808,6 +842,7 @@ def test_large_document_processing():
 ```
 
 **Target**: 50+ integration tests covering:
+
 - End-to-end workflows
 - Error handling paths
 - Edge cases (large files, corrupted PDFs)
@@ -824,6 +859,7 @@ def test_large_document_processing():
 **Gap Identified**: Manual dataset management
 
 **Opportunity**: Automated data pipeline with DVC
+
 ```yaml
 # dvc.yaml - Define reproducible data pipeline
 stages:
@@ -868,6 +904,7 @@ stages:
 ```
 
 **Benefits**:
+
 - Reproducible data pipelines
 - Version control for datasets
 - Track data lineage
@@ -882,6 +919,7 @@ stages:
 **Gap Identified**: No centralized experiment tracking
 
 **Opportunity**: MLflow / Weights & Biases integration
+
 ```python
 # scripts/train_iqa.py
 import mlflow
@@ -923,6 +961,7 @@ def train_model(config):
 ```
 
 **Tracked Metrics**:
+
 - Training/validation loss
 - mAP, F1, precision, recall per class
 - Calibration error (ECE)
@@ -930,6 +969,7 @@ def train_model(config):
 - Model size
 
 **Benefits**:
+
 - Compare experiments easily
 - Reproduce best runs
 - Share results with team
@@ -944,6 +984,7 @@ def train_model(config):
 **Gap Identified**: Manual hyperparameter tuning in Phase 2 plan
 
 **Opportunity**: Optuna/Ray Tune for automated search
+
 ```python
 import optuna
 
@@ -988,12 +1029,14 @@ optuna.visualization.plot_param_importances(study)
 ```
 
 **Search Strategies**:
+
 - Grid search (exhaustive, expensive)
 - Random search (baseline)
 - Bayesian optimization (sample efficient)
 - Tree-structured Parzen Estimator (TPE) - recommended
 
 **Expected Impact**:
+
 - 5-10% mAP improvement over manual tuning
 - 10× faster than manual iteration
 - Discover unexpected parameter interactions
@@ -1007,6 +1050,7 @@ optuna.visualization.plot_param_importances(study)
 **Gap Identified**: No validation for weak supervision quality
 
 **Opportunity**: Data quality checks and monitoring
+
 ```python
 class DataQualityChecker:
     """Monitor data quality during training."""
@@ -1069,6 +1113,7 @@ class DataQualityChecker:
 **Gap Identified**: No fault tolerance for ML model failures
 
 **Opportunity**: Circuit breaker for graceful degradation
+
 ```python
 from enum import Enum
 import time
@@ -1140,6 +1185,7 @@ def detect_with_ml(image):
 ```
 
 **Benefits**:
+
 - Graceful degradation (ML fails → classical methods)
 - Prevent cascading failures
 - Automatic recovery testing
@@ -1153,6 +1199,7 @@ def detect_with_ml(image):
 **Gap Identified**: No protection against abuse
 
 **Opportunity**: Token bucket rate limiter
+
 ```python
 import time
 from threading import Lock
@@ -1206,6 +1253,7 @@ def process_document(file: UploadFile):
 **Gap Identified**: No health monitoring endpoints
 
 **Opportunity**: Kubernetes-style health checks
+
 ```python
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -1252,6 +1300,7 @@ def check_ml_model():
 **Gap Identified**: Limited telemetry beyond basic logging
 
 **Opportunity**: OpenTelemetry integration
+
 ```python
 from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -1285,6 +1334,7 @@ FastAPIInstrumentor.instrument_app(app)
 ```
 
 **Collected Metrics**:
+
 - Request latency (p50, p95, p99)
 - Error rates by stage
 - Model inference time
@@ -1302,6 +1352,7 @@ FastAPIInstrumentor.instrument_app(app)
 **Gap Identified**: Manual environment setup
 
 **Opportunity**: Dev containers for consistent environment
+
 ```json
 // .devcontainer/devcontainer.json
 {
@@ -1340,6 +1391,7 @@ FastAPIInstrumentor.instrument_app(app)
 ```
 
 **Benefits**:
+
 - One-click setup
 - Consistent across team
 - GPU support configured
@@ -1354,6 +1406,7 @@ FastAPIInstrumentor.instrument_app(app)
 **Gap Identified**: No REPL/notebook for experimentation
 
 **Opportunity**: Jupyter integration for exploration
+
 ```python
 # notebooks/explore_detectors.ipynb
 from image_preprocessing_detector import load_pdf, SkewDetector
@@ -1417,22 +1470,26 @@ plt.show()
 ### Phase 2 Integration (Immediate - Weeks 8-11)
 
 **Week 1: Infrastructure** (Before Data Collection)
+
 - ✅ Plugin Architecture for detectors
 - ✅ Configuration Management (Pydantic Settings)
 - ✅ Experiment Tracking (MLflow)
 - ✅ DVC Pipeline setup
 
 **Week 2: Training Enhancements** (During Model Training)
+
 - ✅ Hyperparameter Tuning (Optuna)
 - ✅ Data Quality Monitoring
 - ✅ Property-Based Testing for data augmentation
 
 **Week 3: Optimization** (During Model Optimization)
+
 - ✅ Caching Layer (ONNX inference)
 - ✅ Model Quantization (INT8)
 - ✅ Performance Regression Tests
 
 **Week 4: Integration** (During Pipeline Integration)
+
 - ✅ Batch Processing Pipeline
 - ✅ Circuit Breaker for ML models
 - ✅ Multi-Model Serving (A/B testing)
@@ -1441,6 +1498,7 @@ plt.show()
 ### Phase 3 Enhancements (Weeks 12-16)
 
 **Layout Detection Integration**
+
 - ✅ Streaming Pipeline for large documents
 - ✅ DAG-based pipeline orchestration
 - ✅ Integration test expansion
@@ -1449,6 +1507,7 @@ plt.show()
 ### Phase 4 Production Hardening (Weeks 17-20)
 
 **Production Readiness**
+
 - ✅ Rate limiting
 - ✅ Health checks
 - ✅ OpenTelemetry tracing
@@ -1459,21 +1518,25 @@ plt.show()
 ## 9. Expected Impact Summary
 
 ### Performance Improvements
+
 - **Latency**: 20-60% reduction (caching, early exit, quantization)
 - **Throughput**: 5-10× improvement (batch processing)
 - **Memory**: O(n) → O(1) for large documents (streaming)
 
 ### Code Quality
+
 - **Test Coverage**: 89.75% → 90%+ (integration, property-based)
 - **Test Quality**: 80%+ mutation kill rate
 - **Maintainability**: Plugin architecture enables easy extension
 
 ### ML Workflow
+
 - **Experimentation**: 10× faster iteration (automated tuning, tracking)
 - **Reproducibility**: 100% (DVC pipelines, experiment tracking)
 - **Model Quality**: 5-10% mAP improvement (hyperparameter tuning)
 
 ### Production Readiness
+
 - **Reliability**: 99.5%+ uptime (circuit breaker, health checks)
 - **Observability**: Full request tracing (OpenTelemetry)
 - **Scalability**: Linear scaling with worker count (batch processing)

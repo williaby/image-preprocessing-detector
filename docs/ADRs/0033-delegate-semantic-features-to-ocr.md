@@ -20,6 +20,7 @@ purpose: "Document the decision to delegate semantic document feature extraction
 **Deciders**: Byron Williams, Architecture Team
 
 **Related ADRs**:
+
 - [ADR-007: Hybrid IQA Approach](0007-hybrid-iqa-approach.md)
 - [ADR-008: Multi-Stage Pipeline Architecture](0008-multi-stage-pipeline-architecture.md)
 - [ADR-028: Document Quality Score Routing](0028-document-quality-score-routing.md)
@@ -55,16 +56,19 @@ To determine preprocessing vs. processing scope, we applied this decision criter
 ### Problem Statement
 
 **Original FR-4.11 (Table Structure Extraction):**
+
 - Planned to train ClusterTabNet or Table Transformer on PubTables-1M (Phase 3 Week 8-12)
 - **Issue:** Docling already provides table structure extraction using TableFormer (93.6% accuracy)
 - **Result:** 4-6 weeks of duplicate work with zero value-add over existing solution
 
 **Original FR-4.12 (Reading Order Prediction):**
+
 - Planned to implement graph-based heuristics or train GNN on DocSynth-300K (Phase 3 Week 7)
 - **Issue:** Critical for RAG (5-29% performance impact per OHR-Bench research)
 - **Result:** Reading order is consumed by semantic chunking (RAG), not routing decisions
 
 **Original FR-4.5 & FR-4.6 (Linking):**
+
 - Planned to implement semantic linking between footnotes/captions and their targets
 - **Issue:** Requires OCR text extraction to perform pattern matching and contextual analysis
 - **Result:** Preprocessing cannot perform these tasks without OCR (circular dependency)
@@ -98,7 +102,7 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 
 ### Updated Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │  PREPROCESSING (Image Quality & Routing)        │
 │  ─────────────────────────────────────────────  │
@@ -138,7 +142,7 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 │                                                  │
 │  OUTPUT: Structured JSON (text, tables, chunks) │
 └─────────────────────────────────────────────────┘
-```
+```text
 
 ### Scope Boundary Definition
 
@@ -214,6 +218,7 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 ## Implementation Plan
 
 ### Phase 1: Handoff (Week 1)
+
 - [x] Create OCR Team Handoff Document (80+ pages, comprehensive)
 - [x] Update FR 1.2 scope boundary clarification
 - [x] Rewrite FR-4.5, FR-4.6, FR-4.11, FR-4.12 (detection-only)
@@ -222,18 +227,21 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 - [ ] Present handoff document and answer questions
 
 ### Phase 2: OCR Integration (Week 1-2)
+
 - [ ] OCR team integrates Docling TableFormer (FR-4.11)
 - [ ] OCR team integrates Surya Reading Order (FR-4.12)
 - [ ] OCR team implements footnote linking (FR-4.5)
 - [ ] OCR team implements figure-caption linking (FR-4.6)
 
 ### Phase 3: Validation (Week 3-4)
+
 - [ ] End-to-end pipeline testing (preprocessing → OCR → RAG)
 - [ ] Validate on test documents (academic papers, financial reports, legal docs)
 - [ ] Benchmark performance (GriTS F1 > 0.85, ROE < 10%, NDCG@5 > 0.77)
 - [ ] Iterate on preprocessing spatial hints based on OCR feedback
 
 ### Phase 4: Production (Week 5+)
+
 - [ ] Update integration documentation
 - [ ] Monitoring and alerting for handoff boundary
 - [ ] Performance profiling (latency, throughput)
@@ -245,10 +253,12 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 ### Alternative 1: Keep FR-4.11 in Preprocessing (Rejected)
 
 **Pros:**
+
 - Single-team ownership of table processing
 - No handoff coordination required
 
 **Cons:**
+
 - Duplicates Docling's TableFormer (93.6% accuracy already proven)
 - 4-6 weeks development time with zero value-add
 - Violates "preprocessing detects WHERE, OCR extracts WHAT" boundary
@@ -259,10 +269,12 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 ### Alternative 2: Keep FR-4.12 in Preprocessing (Rejected)
 
 **Pros:**
+
 - Preprocessing provides complete layout + reading order metadata
 - No OCR dependency for reading order
 
 **Cons:**
+
 - Reading order is consumed by RAG semantic chunking (OCR responsibility)
 - Requires 113 GB DocSynth-300K dataset download
 - 10-14 days development time vs. 1-2 days integrating Surya pretrained
@@ -273,11 +285,13 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 ### Alternative 3: Hybrid Approach - Preprocessing Provides Basic Reading Order Hints (Partially Accepted)
 
 **Pros:**
+
 - Preprocessing provides spatial hints (multi-column detection, column membership)
 - OCR team uses hints for full reading order prediction
 - Clear division: preprocessing = spatial analysis, OCR = sequential ordering
 
 **Cons:**
+
 - Requires coordination on spatial hint format
 - OCR team depends on preprocessing accuracy
 
@@ -290,12 +304,14 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 ### Preprocessing Team (This System)
 
 **Success Criteria:**
+
 - [ ] Layout detection provides accurate bounding boxes (mAP@.50 > 0.82)
 - [ ] Spatial hints accurate (multi-column detection > 95% accuracy)
 - [ ] Table quality assessment enables routing (complexity score correlates with OCR difficulty)
 - [ ] JSON metadata contract validated (no breaking changes)
 
 **Validation:**
+
 - Test on 100+ documents (academic papers, financial reports, legal docs)
 - Measure downstream OCR team's success rate with preprocessing metadata
 - Validate DQS routing recommendations align with OCR processing time
@@ -303,12 +319,14 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 ### OCR Team (Transferred Responsibilities)
 
 **Success Criteria:**
+
 - [ ] Table structure extraction: GriTS F1 > 0.85, TEDS > 0.90
 - [ ] Reading order prediction: ROE < 10% (OHR-Bench), NDCG@5 > 0.77 (RAG)
 - [ ] Footnote linking: Accuracy > 0.85
 - [ ] Figure-caption linking: Accuracy > 0.80
 
 **Validation:**
+
 - PubTables-1M test split (table structure)
 - OHR-Bench dataset (reading order + RAG impact)
 - Academic papers (footnotes, captions)
@@ -318,18 +336,21 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 ## References
 
 ### Internal Documents
+
 - [OCR Team Handoff Document](../handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md)
 - [Functional Requirements v2.2](../requirements/functional_requirements_v2.md)
 - [Preprocessing vs Processing Boundary Analysis](../analysis/PREPROCESSING_VS_PROCESSING_BOUNDARY.md)
 - [FR-4.11 Boundary Analysis](../analysis/FR_4_11_BOUNDARY_ANALYSIS.md)
 
 ### Research Papers
+
 - [OHR-Bench: OCR Hinders RAG](https://arxiv.org/abs/2410.12628) - Reading order impact (5-29% RAG loss)
 - [PubTables-1M](https://arxiv.org/abs/2110.00061) - Table structure dataset
 - [DocSynth-300K](https://arxiv.org/abs/2410.12628) - Reading order dataset
 - [Docling Paper](https://arxiv.org/abs/2408.09869) - TableFormer 98.5% TEDS
 
 ### Tools & Datasets
+
 - **Docling TableFormer:** github.com/docling-project/docling (MIT License)
 - **Surya Reading Order:** github.com/VikParuchuri/surya (Modified AI Pubs Open Rail-M)
 - **Microsoft Table Transformer:** github.com/microsoft/table-transformer (MIT License)
@@ -343,6 +364,7 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 **Date:** 2025-01-14
 **Status:** Accepted
 **Deciders:**
+
 - Byron Williams (Lead Developer, Preprocessing Team)
 - [OCR Team Lead - TBD]
 - [Project Manager - TBD]
@@ -351,6 +373,7 @@ FR-4.11 converts table images → structured JSON (rows/columns/cells) = downstr
 Delegate semantic document structure extraction (table structure, reading order, footnote/caption linking) to OCR/Processing team. Redefine preprocessing scope to focus on physical quality assessment, image corrections, layout detection (bounding boxes only), and routing metadata.
 
 **Rationale:**
+
 1. Eliminates duplicate work (Docling already provides table structure at 93.6% accuracy)
 2. Clarifies architectural boundary (pixel-level vs. semantic understanding)
 3. Saves 6-8 weeks development time
@@ -366,6 +389,7 @@ Delegate semantic document structure extraction (table structure, reading order,
 ### Preprocessing Team (Before Transfer)
 
 **Planned Development (Phase 3):**
+
 - FR-4.11 (Table Structure): 4-6 weeks, $10-30 GPU training
 - FR-4.12 (Reading Order): 10-14 days, 113 GB dataset download
 - FR-4.5 (Footnote Linking): 3-5 days development
@@ -377,6 +401,7 @@ Delegate semantic document structure extraction (table structure, reading order,
 ### OCR Team (After Transfer)
 
 **Integration Effort:**
+
 - FR-4.11 (Docling TableFormer): 2-3 days integration
 - FR-4.12 (Surya Reading Order): 1-2 days integration
 - FR-4.5 (Footnote Linking): 2-3 days pattern matching implementation

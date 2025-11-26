@@ -18,6 +18,7 @@ purpose: Guide for data collection strategy - phase 2 week 1.
 ## Overview
 
 Phase 2 requires a diverse training dataset for multi-label image quality assessment (IQA). We'll use a combination of:
+
 1. **Public datasets** (10k clean base images)
 2. **Synthetic augmentation** (40k degraded images via Albumentations)
 3. **Weak supervision** (automatic labeling via BRISQUE/NIQE)
@@ -28,9 +29,11 @@ Phase 2 requires a diverse training dataset for multi-label image quality assess
 ## Dataset Sources
 
 ### 1. RVL-CDIP (Primary Source)
+
 **Ryerson Vision Lab - Complex Document Information Processing**
 
 **Overview**:
+
 - **Size**: 400,000 grayscale document images
 - **Categories**: 16 document types (letter, form, email, resume, memo, etc.)
 - **Format**: TIFF, grayscale
@@ -39,6 +42,7 @@ Phase 2 requires a diverse training dataset for multi-label image quality assess
 - **License**: Public domain (government documents)
 
 **Download**:
+
 ```bash
 # Official source (Carnegie Mellon)
 wget https://www.cs.cmu.edu/~aharley/rvl-cdip/rvl-cdip.tar.gz
@@ -55,6 +59,7 @@ python scripts/data_collection/sample_rvlcdip.py \
 ```
 
 **Selection Criteria**:
+
 - 375 images per category (6000 total) for balanced representation
 - Prefer 300 DPI or higher
 - Exclude severely degraded originals
@@ -65,9 +70,11 @@ python scripts/data_collection/sample_rvlcdip.py \
 ---
 
 ### 2. Tobacco800 (Secondary Source)
+
 **Legacy Tobacco Document Library**
 
 **Overview**:
+
 - **Size**: 1,290 document images
 - **Categories**: 10 document types
 - **Format**: TIFF, mostly grayscale
@@ -76,6 +83,7 @@ python scripts/data_collection/sample_rvlcdip.py \
 - **License**: Public domain
 
 **Download**:
+
 ```bash
 # Official source
 wget http://www.cs.cmu.edu/~aharley/tobacco800/Tobacco800.tar.gz
@@ -87,6 +95,7 @@ tar -xzf Tobacco800.tar.gz -C data/raw/tobacco800/
 ```
 
 **Usage**:
+
 - **Training**: 500 images (mixed with RVL-CDIP)
 - **Validation**: 500 images (real-world quality variations)
 - **Test**: 290 images (holdout set)
@@ -96,9 +105,11 @@ tar -xzf Tobacco800.tar.gz -C data/raw/tobacco800/
 ---
 
 ### 3. DocBank (Tertiary Source)
+
 **Document Layout Analysis Benchmark**
 
 **Overview**:
+
 - **Size**: 500,000+ document pages with layout annotations
 - **Format**: PDF + annotations
 - **Source**: arXiv papers (LaTeX-generated PDFs)
@@ -107,6 +118,7 @@ tar -xzf Tobacco800.tar.gz -C data/raw/tobacco800/
 - **License**: CC BY 4.0
 
 **Download**:
+
 ```bash
 # GitHub repository
 git clone https://github.com/doc-analysis/DocBank.git data/raw/docbank/
@@ -116,12 +128,14 @@ git clone https://github.com/doc-analysis/DocBank.git data/raw/docbank/
 ```
 
 **Selection Criteria**:
+
 - 3,000 pages with diverse layouts
 - Prefer pages with embedded images/figures
 - Mix of single-column and multi-column
 - Rasterize to 300 DPI for consistency
 
 **Rasterization**:
+
 ```bash
 python scripts/data_collection/rasterize_docbank.py \
     --input data/raw/docbank/PDFs/ \
@@ -139,15 +153,18 @@ python scripts/data_collection/rasterize_docbank.py \
 ### Day 1: Setup and RVL-CDIP Download
 
 **Tasks**:
+
 1. Create download scripts in `scripts/data_collection/`
 2. Download RVL-CDIP dataset (320GB compressed, ~12 hours)
 3. Implement stratified sampling script
 
 **Scripts to Create**:
+
 - `scripts/data_collection/download_rvlcdip.sh`
 - `scripts/data_collection/sample_rvlcdip.py`
 
 **Deliverables**:
+
 - [ ] RVL-CDIP downloaded (or in progress)
 - [ ] 6,000 diverse images selected
 
@@ -156,16 +173,19 @@ python scripts/data_collection/rasterize_docbank.py \
 ### Day 2: Tobacco800 and DocBank
 
 **Tasks**:
+
 1. Download Tobacco800 (small, ~5 minutes)
 2. Clone DocBank repository
 3. Implement PDF rasterization script for DocBank
 4. Rasterize 3,000 DocBank pages to 300 DPI
 
 **Scripts to Create**:
+
 - `scripts/data_collection/download_tobacco800.sh`
 - `scripts/data_collection/rasterize_docbank.py`
 
 **Deliverables**:
+
 - [ ] Tobacco800 downloaded (1,290 images)
 - [ ] DocBank cloned and 3,000 pages rasterized
 
@@ -174,17 +194,20 @@ python scripts/data_collection/rasterize_docbank.py \
 ### Day 3: Dataset Organization and Validation
 
 **Tasks**:
+
 1. Organize all images into `data/raw/selected/`
 2. Validate image quality (resolution, format, corruption)
 3. Create dataset manifest (CSV with metadata)
 4. Split into train/val/test sets
 
 **Scripts to Create**:
+
 - `scripts/data_collection/validate_dataset.py`
 - `scripts/data_collection/create_manifest.py`
 - `scripts/data_collection/split_dataset.py`
 
 **Dataset Manifest** (CSV format):
+
 ```csv
 image_path,source,category,resolution,width,height,file_size
 data/raw/selected/img_0001.tif,rvlcdip,letter,300,2550,3300,245120
@@ -193,11 +216,13 @@ data/raw/selected/img_0002.tif,tobacco800,form,300,2200,2800,312458
 ```
 
 **Train/Val/Test Split**:
+
 - **Train**: 70% (7,000 images) → augmented to 50k
 - **Val**: 15% (1,500 images) → augmented to 10k
 - **Test**: 15% (1,500 images) → **NO augmentation** (real-world only)
 
 **Deliverables**:
+
 - [ ] 10,000+ clean images in `data/raw/selected/`
 - [ ] Dataset manifest CSV
 - [ ] Train/val/test split CSVs
@@ -211,6 +236,7 @@ data/raw/selected/img_0002.tif,tobacco800,form,300,2200,2800,312458
 **Augmentation Pipeline**: See `data/augmentation.py` (implemented separately)
 
 **Augmentation Parameters**:
+
 ```python
 # Per image, apply 1-3 random augmentations:
 - Noise: 20% probability (Gaussian, ISO, multiplicative)
@@ -222,6 +248,7 @@ data/raw/selected/img_0002.tif,tobacco800,form,300,2200,2800,312458
 ```
 
 **Generation Script**:
+
 ```bash
 # Generate augmented dataset
 python scripts/data_collection/generate_augmented.py \
@@ -232,12 +259,14 @@ python scripts/data_collection/generate_augmented.py \
 ```
 
 **Expected Output**:
+
 - 7,000 train images × 7 augmentations = 49,000 augmented images
 - 1,500 val images × 7 augmentations = 10,500 augmented images
 - Total: 59,500 images (~18GB)
 
 **Storage Layout**:
-```
+
+```text
 data/augmented/
 ├── train/
 │   ├── img_0001_aug_0.png
@@ -247,7 +276,7 @@ data/augmented/
 │   ├── img_7001_aug_0.png
 │   └── ...
 └── metadata.json  # Augmentation parameters per image
-```
+```text
 
 ---
 
@@ -258,6 +287,7 @@ data/augmented/
 **Labeling Functions**: See `data/weak_supervision.py` (implemented separately)
 
 **Quality Metrics**:
+
 1. **BRISQUE**: Blind/Referenceless Image Spatial Quality Evaluator
    - Range: 0-100 (lower = better quality)
    - Thresholds: <30 (good), 30-50 (moderate), >50 (poor)
@@ -273,6 +303,7 @@ data/augmented/
    - Threshold: >0.4 (good), 0.3-0.4 (low), <0.3 (very low)
 
 **Label Generation**:
+
 ```bash
 python scripts/data_collection/weak_label.py \
     --input data/augmented/ \
@@ -281,6 +312,7 @@ python scripts/data_collection/weak_label.py \
 ```
 
 **Label Format** (JSON per image):
+
 ```json
 {
   "image_path": "data/augmented/train/img_0001_aug_0.png",
@@ -300,6 +332,7 @@ python scripts/data_collection/weak_label.py \
 ```
 
 **Deliverables**:
+
 - [ ] Labels for all 59,500 augmented images
 - [ ] Label confidence scores
 - [ ] Quality metric distributions
@@ -311,16 +344,19 @@ python scripts/data_collection/weak_label.py \
 **Objective**: Validate 5,000 ambiguous samples to improve label quality
 
 **Selection Strategy**:
+
 1. Low confidence labels (confidence < 0.70)
 2. Conflicting labels (multiple labeling functions disagree)
 3. Rare classes (ensure minimum samples)
 
 **Annotation Tool**:
+
 - **CVAT** (Computer Vision Annotation Tool)
 - **Label Studio** (simpler, web-based)
 
 **Annotation Interface**:
-```
+
+```text
 Image: [Display image]
 
 Quality Issues (check all that apply):
@@ -332,9 +368,10 @@ Quality Issues (check all that apply):
 ☐ Orientation (rotated 90/180/270°)
 
 Confidence: ● Low  ● Medium  ● High
-```
+```text
 
 **Validation Workflow**:
+
 ```bash
 # Select ambiguous samples
 python scripts/data_collection/select_for_validation.py \
@@ -354,6 +391,7 @@ python scripts/data_collection/merge_validated_labels.py \
 ```
 
 **Deliverables**:
+
 - [ ] 5,000 manually validated labels
 - [ ] Updated label confidence scores
 - [ ] Inter-annotator agreement metrics
@@ -367,18 +405,21 @@ python scripts/data_collection/merge_validated_labels.py \
 **Source**: Reserve 1,500 images from initial split + 500 from Tobacco800 validation set
 
 **Requirements**:
+
 - **NO synthetic augmentation** (real-world images only)
 - **Manual annotation** for all images
 - **Multiple annotators** for quality control (3 annotators per image)
 - **High confidence** labels only (>0.90 inter-annotator agreement)
 
 **Test Set Composition**:
+
 - **Clean images**: 500 (no quality issues)
 - **Single issue**: 600 (one quality problem)
 - **Multiple issues**: 600 (2-3 quality problems)
 - **Severe issues**: 300 (critical quality problems)
 
 **Deliverables**:
+
 - [ ] 2,000 test images with gold-standard labels
 - [ ] Inter-annotator agreement report (Fleiss' Kappa)
 - [ ] Test set manifest with confidence scores
@@ -388,6 +429,7 @@ python scripts/data_collection/merge_validated_labels.py \
 ## Data Versioning with DVC
 
 **Setup** (Day 5):
+
 ```bash
 # Initialize DVC
 poetry run dvc init
@@ -410,6 +452,7 @@ poetry run dvc push
 ```
 
 **DVC Benefits**:
+
 - Version control for large datasets
 - Reproducible data pipeline
 - Team collaboration (shared remote storage)
@@ -420,6 +463,7 @@ poetry run dvc push
 ## Summary Checklist
 
 ### Week 1 Deliverables
+
 - [ ] **10,000+ base images** from RVL-CDIP (6k), Tobacco800 (1.3k), DocBank (3k)
 - [ ] **50,000+ augmented images** for training
 - [ ] **10,000+ augmented images** for validation
@@ -430,7 +474,8 @@ poetry run dvc push
 - [ ] **Dataset manifests** (CSV) with metadata
 
 ### Storage Usage
-```
+
+```text
 data/raw/selected/        1.8GB  (6k RVL-CDIP)
 data/raw/tobacco800/      0.5GB  (1.3k Tobacco800)
 data/raw/docbank/         1.5GB  (3k DocBank)
@@ -440,13 +485,14 @@ data/test_set/            0.8GB  (2k real-world)
 data/labels_final/        0.5GB  (JSON labels)
 ----------------------------------------------
 Total:                   23.1GB  (well under 30GB budget)
-```
+```text
 
 ---
 
 ## Next Steps
 
 After data collection (Week 1):
+
 1. **Week 2**: Train MobileNetV3-Small on collected dataset
 2. **Week 3**: Evaluate and optimize model
 3. **Week 4**: Integrate into detection pipeline
