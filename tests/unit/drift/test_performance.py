@@ -13,6 +13,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+
 from image_preprocessing_detector.drift.performance import (
     DEFAULT_EVALUATION_INTERVAL_HOURS,
     DEFAULT_RETENTION_DAYS,
@@ -84,7 +86,7 @@ class TestEvaluationResult:
     def test_get_metric(self) -> None:
         """Test getting specific metric."""
         result = EvaluationResult(
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             model_version="v1",
             dataset_name="test",
             dataset_version="v1",
@@ -211,7 +213,7 @@ class TestMetricsStore:
             store = MetricsStore(tmpdir)
 
             result = EvaluationResult(
-                timestamp=datetime.utcnow(),
+                timestamp=utc_now(),
                 model_version="v1.0.0",
                 dataset_name="test",
                 dataset_version="v1",
@@ -234,7 +236,7 @@ class TestMetricsStore:
             # Add results for different models
             for version in ["v1", "v2"]:
                 result = EvaluationResult(
-                    timestamp=datetime.utcnow(),
+                    timestamp=utc_now(),
                     model_version=version,
                     dataset_name="test",
                     dataset_version="v1",
@@ -256,7 +258,7 @@ class TestMetricsStore:
             # Add multiple results
             for i, map_value in enumerate([0.80, 0.82, 0.84, 0.86, 0.88]):
                 result = EvaluationResult(
-                    timestamp=datetime.utcnow() - timedelta(days=i),
+                    timestamp=utc_now() - timedelta(days=i),
                     model_version="v1",
                     dataset_name="test",
                     dataset_version="v1",
@@ -279,7 +281,7 @@ class TestMetricsStore:
             # Add results over time
             for i in range(5):
                 result = EvaluationResult(
-                    timestamp=datetime.utcnow() - timedelta(days=i),
+                    timestamp=utc_now() - timedelta(days=i),
                     model_version="v1",
                     dataset_name="test",
                     dataset_version="v1",
@@ -299,7 +301,7 @@ class TestMetricsStore:
 
             # Add old result
             old_result = EvaluationResult(
-                timestamp=datetime.utcnow() - timedelta(days=60),
+                timestamp=utc_now() - timedelta(days=60),
                 model_version="v1",
                 dataset_name="test",
                 dataset_version="v1",
@@ -311,7 +313,7 @@ class TestMetricsStore:
 
             # Add recent result
             recent_result = EvaluationResult(
-                timestamp=datetime.utcnow(),
+                timestamp=utc_now(),
                 model_version="v1",
                 dataset_name="test",
                 dataset_version="v1",
@@ -332,7 +334,7 @@ class TestMetricsStore:
             # Add result
             store1 = MetricsStore(tmpdir)
             result = EvaluationResult(
-                timestamp=datetime.utcnow(),
+                timestamp=utc_now(),
                 model_version="v1.0.0",
                 dataset_name="test",
                 dataset_version="v1",
@@ -355,7 +357,7 @@ class TestMetricsStore:
             store = MetricsStore(tmpdir)
 
             result = EvaluationResult(
-                timestamp=datetime.utcnow(),
+                timestamp=utc_now(),
                 model_version="v1",
                 dataset_name="test",
                 dataset_version="v1",
@@ -428,7 +430,7 @@ class TestPerformanceEvaluator:
             # Add baseline results
             for i in range(5):
                 result = EvaluationResult(
-                    timestamp=datetime.utcnow() - timedelta(days=i),
+                    timestamp=utc_now() - timedelta(days=i),
                     model_version="v1",
                     dataset_name="test",
                     dataset_version="v1",
@@ -440,7 +442,7 @@ class TestPerformanceEvaluator:
 
             # Analyze current (similar to baseline)
             current = EvaluationResult(
-                timestamp=datetime.utcnow(),
+                timestamp=utc_now(),
                 model_version="v1",
                 dataset_name="test",
                 dataset_version="v1",
@@ -470,7 +472,7 @@ class TestPerformanceEvaluator:
             # Add baseline results with good performance
             for i in range(5):
                 result = EvaluationResult(
-                    timestamp=datetime.utcnow() - timedelta(days=i),
+                    timestamp=utc_now() - timedelta(days=i),
                     model_version="v1",
                     dataset_name="test",
                     dataset_version="v1",
@@ -482,7 +484,7 @@ class TestPerformanceEvaluator:
 
             # Current has significant drop
             current = EvaluationResult(
-                timestamp=datetime.utcnow(),
+                timestamp=utc_now(),
                 model_version="v1",
                 dataset_name="test",
                 dataset_version="v1",
@@ -552,7 +554,7 @@ class TestPerformanceJob:
             assert job.should_run() is False
 
             # Simulate time passing
-            job._last_run = datetime.utcnow() - timedelta(hours=2)
+            job._last_run = utc_now() - timedelta(hours=2)
             assert job.should_run() is True
 
     def test_run_returns_report(self) -> None:
@@ -726,7 +728,7 @@ class TestDashboardPanelData:
             # Add some results
             for i in range(5):
                 result = EvaluationResult(
-                    timestamp=datetime.utcnow() - timedelta(days=i),
+                    timestamp=utc_now() - timedelta(days=i),
                     model_version="v1",
                     dataset_name="test",
                     dataset_version="v1",
@@ -750,7 +752,7 @@ class TestDashboardPanelData:
             store = MetricsStore(tmpdir)
 
             result = EvaluationResult(
-                timestamp=datetime.utcnow(),
+                timestamp=utc_now(),
                 model_version="v1",
                 dataset_name="test",
                 dataset_version="v1",
@@ -815,7 +817,7 @@ class TestPerformanceReport:
     def test_to_dict(self) -> None:
         """Test serialization."""
         current = EvaluationResult(
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             model_version="v1",
             dataset_name="test",
             dataset_version="v1",
@@ -825,7 +827,7 @@ class TestPerformanceReport:
         )
 
         report = PerformanceReport(
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             model_version="v1",
             current_evaluation=current,
             baseline_evaluation=None,

@@ -12,6 +12,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+
 from image_preprocessing_detector.drift.alerting import (
     DEFAULT_COOLDOWN_MINUTES,
     F1_DROP_CRITICAL_THRESHOLD,
@@ -117,7 +119,7 @@ class TestDriftAlert:
     def test_samples_limited_in_dict(self) -> None:
         """Test samples are limited in serialization."""
         samples = [
-            DriftSample(sample_id=f"s{i}", value=float(i), timestamp=datetime.utcnow())
+            DriftSample(sample_id=f"s{i}", value=float(i), timestamp=utc_now())
             for i in range(20)
         ]
 
@@ -360,7 +362,7 @@ class TestAlertHistory:
             threshold=0.30,
             baseline_value=0.0,
             message="Test",
-            timestamp=datetime.utcnow() - timedelta(days=5),
+            timestamp=utc_now() - timedelta(days=5),
         )
         history._alerts[old_alert.alert_id] = old_alert
 

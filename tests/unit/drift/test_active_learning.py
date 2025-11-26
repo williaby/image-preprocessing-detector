@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+
 from image_preprocessing_detector.drift.active_learning import (
     DEFAULT_AGREEMENT_THRESHOLD,
     DEFAULT_ENTROPY_THRESHOLD,
@@ -94,7 +96,7 @@ class TestHarvestManifest:
             HarvestedSample(
                 sample_id=f"sample_{i}",
                 source_path=f"/data/test{i}.png",
-                harvest_time=datetime.utcnow(),
+                harvest_time=utc_now(),
                 harvest_reason=HarvestReason.HIGH_ENTROPY,
             )
             for i in range(3)
@@ -140,21 +142,21 @@ class TestHarvestManifest:
             HarvestedSample(
                 sample_id="s1",
                 source_path="/data/t1.png",
-                harvest_time=datetime.utcnow(),
+                harvest_time=utc_now(),
                 harvest_reason=HarvestReason.HIGH_ENTROPY,
                 privacy_status=PrivacyStatus.APPROVED,
             ),
             HarvestedSample(
                 sample_id="s2",
                 source_path="/data/t2.png",
-                harvest_time=datetime.utcnow(),
+                harvest_time=utc_now(),
                 harvest_reason=HarvestReason.HIGH_ENTROPY,
                 privacy_status=PrivacyStatus.REJECTED,
             ),
             HarvestedSample(
                 sample_id="s3",
                 source_path="/data/t3.png",
-                harvest_time=datetime.utcnow(),
+                harvest_time=utc_now(),
                 harvest_reason=HarvestReason.HIGH_ENTROPY,
                 privacy_status=PrivacyStatus.PENDING,
             ),
@@ -162,7 +164,7 @@ class TestHarvestManifest:
 
         manifest = HarvestManifest(
             manifest_id="test",
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             samples=samples,
             total_count=0,
         )
@@ -220,7 +222,7 @@ class TestPrivacyChecker:
         sample = HarvestedSample(
             sample_id="sample_001",
             source_path="/data/documents/test.png",
-            harvest_time=datetime.utcnow(),
+            harvest_time=utc_now(),
             harvest_reason=HarvestReason.HIGH_ENTROPY,
             metadata={"quality": 0.85},
         )
@@ -236,7 +238,7 @@ class TestPrivacyChecker:
         sample = HarvestedSample(
             sample_id="sample_001",
             source_path="/data/personal/private_doc.png",
-            harvest_time=datetime.utcnow(),
+            harvest_time=utc_now(),
             harvest_reason=HarvestReason.HIGH_ENTROPY,
         )
 
@@ -252,7 +254,7 @@ class TestPrivacyChecker:
         sample = HarvestedSample(
             sample_id="sample_001",
             source_path="/data/test.png",
-            harvest_time=datetime.utcnow(),
+            harvest_time=utc_now(),
             harvest_reason=HarvestReason.HIGH_ENTROPY,
             metadata={"ssn": "123-45-6789"},  # PII indicator
         )
@@ -274,7 +276,7 @@ class TestPrivacyChecker:
         sample = HarvestedSample(
             sample_id="sample_001",
             source_path="/data/test.png",
-            harvest_time=datetime.utcnow(),
+            harvest_time=utc_now(),
             harvest_reason=HarvestReason.HIGH_ENTROPY,
             entropy=0.995,  # Above 0.99
         )
@@ -291,13 +293,13 @@ class TestPrivacyChecker:
             HarvestedSample(
                 sample_id="s1",
                 source_path="/data/clean.png",
-                harvest_time=datetime.utcnow(),
+                harvest_time=utc_now(),
                 harvest_reason=HarvestReason.HIGH_ENTROPY,
             ),
             HarvestedSample(
                 sample_id="s2",
                 source_path="/data/personal/sensitive.png",
-                harvest_time=datetime.utcnow(),
+                harvest_time=utc_now(),
                 harvest_reason=HarvestReason.HIGH_ENTROPY,
             ),
         ]
@@ -465,7 +467,7 @@ class TestManifestGenerator:
                 HarvestedSample(
                     sample_id=f"sample_{i}",
                     source_path=f"/data/test{i}.png",
-                    harvest_time=datetime.utcnow(),
+                    harvest_time=utc_now(),
                     harvest_reason=HarvestReason.HIGH_ENTROPY,
                 )
                 for i in range(3)
@@ -485,7 +487,7 @@ class TestManifestGenerator:
                 HarvestedSample(
                     sample_id="sample_001",
                     source_path="/data/test.png",
-                    harvest_time=datetime.utcnow(),
+                    harvest_time=utc_now(),
                     harvest_reason=HarvestReason.HIGH_ENTROPY,
                 )
             ]
@@ -514,7 +516,7 @@ class TestManifestGenerator:
                 HarvestedSample(
                     sample_id="sample_001",
                     source_path="/data/test.png",
-                    harvest_time=datetime.utcnow(),
+                    harvest_time=utc_now(),
                     harvest_reason=HarvestReason.HIGH_ENTROPY,
                 )
             ]
@@ -537,7 +539,7 @@ class TestManifestGenerator:
                 HarvestedSample(
                     sample_id=f"sample_{i}",
                     source_path=f"/data/test{i}.png",
-                    harvest_time=datetime.utcnow(),
+                    harvest_time=utc_now(),
                     harvest_reason=HarvestReason.HIGH_ENTROPY,
                     privacy_status=(
                         PrivacyStatus.APPROVED if i < 8 else PrivacyStatus.PENDING
@@ -564,7 +566,7 @@ class TestManifestGenerator:
                     HarvestedSample(
                         sample_id="sample_001",
                         source_path="/data/test.png",
-                        harvest_time=datetime.utcnow(),
+                        harvest_time=utc_now(),
                         harvest_reason=HarvestReason.HIGH_ENTROPY,
                     )
                 ]

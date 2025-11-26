@@ -15,6 +15,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+
 from image_preprocessing_detector.drift import (
     DEFAULT_EPSILON,
     DEFAULT_NUM_BINS,
@@ -558,7 +560,7 @@ class TestReferenceStore:
 
             # Manually expire it
             ref = store._references["test"]
-            ref.expires_at = datetime.utcnow() - timedelta(days=1)
+            ref.expires_at = utc_now() - timedelta(days=1)
 
             expired = store.rotate_expired()
 
@@ -869,8 +871,8 @@ class TestReferenceDistribution:
             histogram=[0.5, 0.5],
             bin_edges=[0.0, 0.5, 1.0],
             stats=compute_stats([0.25, 0.75]),
-            created_at=datetime.utcnow() - timedelta(days=40),
-            expires_at=datetime.utcnow() - timedelta(days=10),
+            created_at=utc_now() - timedelta(days=40),
+            expires_at=utc_now() - timedelta(days=10),
             sample_count=2,
             checksum="abc123",
         )
@@ -884,8 +886,8 @@ class TestReferenceDistribution:
             histogram=[0.5, 0.5],
             bin_edges=[0.0, 0.5, 1.0],
             stats=compute_stats([0.25, 0.75]),
-            created_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(days=30),
+            created_at=utc_now(),
+            expires_at=utc_now() + timedelta(days=30),
             sample_count=2,
             checksum="abc123",
         )
@@ -899,8 +901,8 @@ class TestReferenceDistribution:
             histogram=[0.3, 0.4, 0.3],
             bin_edges=[0.0, 0.33, 0.66, 1.0],
             stats=compute_stats([0.15, 0.5, 0.85]),
-            created_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(days=30),
+            created_at=utc_now(),
+            expires_at=utc_now() + timedelta(days=30),
             sample_count=3,
             checksum=compute_checksum([0.3, 0.4, 0.3], [0.0, 0.33, 0.66, 1.0]),
         )
