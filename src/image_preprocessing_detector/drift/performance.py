@@ -271,7 +271,7 @@ class ModelEvaluatorProtocol(Protocol):
         dataset_path: str,
     ) -> dict[str, float]:
         """Evaluate model on dataset, returning metrics dict."""
-        pass  # Protocol method stub
+        ...  # Protocol method stub - ellipsis required for Protocol
 
 
 # ============================================================================

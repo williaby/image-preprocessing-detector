@@ -562,9 +562,9 @@ class SentryIntegration:
                 data=data or {},
                 level=level,
             )
-        except Exception:
+        except Exception:  # noqa: S110
             # Sentry SDK may not be installed or configured; silently ignore
-            pass
+            pass  # nosec B110
 
     @classmethod
     def set_user(cls, user_id: str, **extra: Any) -> None:
@@ -581,9 +581,9 @@ class SentryIntegration:
             import sentry_sdk
 
             sentry_sdk.set_user({"id": user_id, **extra})
-        except Exception:
+        except Exception:  # noqa: S110
             # Sentry SDK may not be installed or configured; silently ignore
-            pass
+            pass  # nosec B110
 
 
 # ============================================================================

@@ -236,7 +236,7 @@ class AlertDispatcherProtocol(Protocol):
 
     def dispatch(self, alert: DriftAlert) -> bool:
         """Dispatch an alert. Returns True if successful."""
-        pass  # Protocol method stub
+        # Protocol method stub
 
 
 # ============================================================================
@@ -267,6 +267,34 @@ class LogDispatcher:
         return True
 
 
+def _validate_webhook_url(url: str, allow_localhost_http: bool = True) -> None:
+    """Validate webhook URL for security.
+
+    Args:
+        url: The webhook URL to validate
+        allow_localhost_http: Whether to allow http:// for localhost (for testing)
+
+    Raises:
+        ValueError: If URL scheme is not allowed
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+
+    if parsed.scheme == "https":
+        return  # Always allowed
+
+    if (
+        parsed.scheme == "http"
+        and allow_localhost_http
+        and parsed.hostname in ("localhost", "127.0.0.1")
+    ):
+        return  # Allow http for localhost testing
+
+    msg = f"Webhook URL must use HTTPS (got {parsed.scheme}://{parsed.hostname})"
+    raise ValueError(msg)
+
+
 class WebhookDispatcher:
     """Dispatches alerts to a webhook endpoint."""
 
@@ -276,7 +304,11 @@ class WebhookDispatcher:
         Args:
             webhook_url: URL to POST alerts to
             timeout: Request timeout in seconds
+
+        Raises:
+            ValueError: If webhook URL is invalid (must be HTTPS or localhost)
         """
+        _validate_webhook_url(webhook_url)
         self.webhook_url = webhook_url
         self.timeout = timeout
 
@@ -311,7 +343,11 @@ class SlackDispatcher:
 
         Args:
             webhook_url: Slack incoming webhook URL
+
+        Raises:
+            ValueError: If webhook URL is invalid (must be HTTPS or localhost)
         """
+        _validate_webhook_url(webhook_url)
         self.webhook_url = webhook_url
 
     def dispatch(self, alert: DriftAlert) -> bool:

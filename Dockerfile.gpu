@@ -4,17 +4,18 @@
 # ============================================================================
 # Stage 1: Build stage with poetry
 # ============================================================================
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
 # Install build dependencies
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install poetry
+# Install poetry (version pinned via POETRY_VERSION env var)
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_VERSION=2.1.1
 RUN curl -sSL https://install.python-poetry.org | python3 - \
@@ -34,7 +35,7 @@ RUN poetry export -f requirements.txt --without-hashes --extras api --extras ml 
 # ============================================================================
 # Stage 2: GPU Runtime with CUDA
 # ============================================================================
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04 as runtime
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04 AS runtime
 
 LABEL org.opencontainers.image.title="Image Preprocessing Detector API (GPU)"
 LABEL org.opencontainers.image.description="GPU-accelerated image preprocessing detection for RAG pipelines"

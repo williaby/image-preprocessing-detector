@@ -305,6 +305,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.limit_paths = set(limit_paths) if limit_paths else None
 
         # In-memory request tracking: {client_key: [(timestamp, count), ...]}
+        # NOTE: This state is per-worker instance. In multi-worker deployments,
+        # rate limiting is approximate since each worker tracks independently.
+        # For precise distributed rate limiting, use Redis or similar.
         self._request_counts: dict[str, list[tuple[float, int]]] = defaultdict(list)
 
     def _get_client_key(self, request: Request) -> str:

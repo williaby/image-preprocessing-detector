@@ -81,6 +81,13 @@ match.plugins = ["bandit"]
 match.rules = ["bandit:B101"]
 set.ignored = true
 
+# Ignore B110 (try-except-pass) in logging/errors.py - intentional for optional Sentry
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B110"]
+match.file_patterns = ["**/logging/errors.py"]
+set.ignored = true
+
 # Ignore path traversal in scripts/ - CLI tools intentionally accept file paths
 [[triage]]
 match.plugins = ["semgrep"]
@@ -102,6 +109,11 @@ set.ignored = true
 
 [[plugin]]
 name = "hadolint"
+
+# Exclude hadolint from .license files (REUSE sidecar files, not Dockerfiles)
+[[exclude]]
+plugins = ["hadolint"]
+file_patterns = ["*.license"]
 
 [[plugin]]
 name = "osv-scanner"
