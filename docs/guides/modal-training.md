@@ -555,7 +555,7 @@ gsutil ls gs://image_detection_b/datasets/
      gpu: A10  # 24GB vs T4 16GB
    ```
 
-2. **Enable gradient accumulation**:
+1. **Enable gradient accumulation**:
 
    ```yaml
    training:
@@ -622,7 +622,7 @@ poetry run modal run modal/train_phase2_iqa.py
    # Verify everything works (~1 hour, <$1)
    ```
 
-2. **Full training run**:
+1. **Full training run**:
 
    ```bash
    # Edit config: epochs: 50

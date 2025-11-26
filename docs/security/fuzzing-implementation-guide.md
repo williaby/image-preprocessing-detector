@@ -355,7 +355,7 @@ done
    # Add project.yaml, Dockerfile, build.sh
    ```
 
-2. **Test Build Locally**:
+1. **Test Build Locally**:
 
    ```bash
    python infra/helper.py build_image image-preprocessing-detector
@@ -363,13 +363,13 @@ done
    python infra/helper.py check_build image-preprocessing-detector
    ```
 
-3. **Run Fuzzers Locally**:
+1. **Run Fuzzers Locally**:
 
    ```bash
    python infra/helper.py run_fuzzer image-preprocessing-detector fuzz_pdf_loader -- -max_total_time=60
    ```
 
-4. **Submit Pull Request**:
+1. **Submit Pull Request**:
 
    ```bash
    git checkout -b add-image-preprocessing-detector
@@ -380,12 +380,12 @@ done
    # Create PR to google/oss-fuzz
    ```
 
-5. **Wait for Review** (1-2 weeks):
+1. **Wait for Review** (1-2 weeks):
    - OSS-Fuzz team reviews configuration
    - Tests build on their infrastructure
    - Approves and merges
 
-6. **Monitor Results**:
+1. **Monitor Results**:
    - Bugs filed automatically to GitHub Issues
    - Email notifications for crashes
    - Coverage reports available

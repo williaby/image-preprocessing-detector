@@ -527,7 +527,7 @@ poetry run modal run modal/test_gcs_access.py
    gsutil cp iqa_phase2.tar.gz gs://image_detection_b/datasets/
    ```
 
-2. **Use Modal Volumes** for persistent caching (advanced)
+1. **Use Modal Volumes** for persistent caching (advanced)
 
 ### Permission Denied Errors
 

@@ -310,11 +310,11 @@ After training completes:
    - Compute metrics (mAP, per-class precision/recall)
    - Calibrate confidence thresholds
 
-2. **Export to ONNX** (automatic in training notebook):
+1. **Export to ONNX** (automatic in training notebook):
    - INT8 quantization for CPU deployment
    - Production-ready model
 
-3. **Proceed to Phase 3**: YOLOv8 layout detection
+1. **Proceed to Phase 3**: YOLOv8 layout detection
 
 ---
 

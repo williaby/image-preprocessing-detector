@@ -339,8 +339,8 @@ tmp_cleanup/* linguist-generated=true
    wtd:summary
    ```
 
-1. Split PRs to focus on single concerns
-2. Regenerate summary by editing/saving PR description
+3. Split PRs to focus on single concerns
+4. Regenerate summary by editing/saving PR description
 
 ### WTD Dashboard Access Issues
 

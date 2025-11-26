@@ -319,7 +319,7 @@ def test_teacher_escalation_with_low_quality_pdf(low_quality_table_image, ml_det
      run: poetry run pytest -m real_data --tb=short
    ```
 
-2. **Add ONNX Models to CI**
+1. **Add ONNX Models to CI**
 
    ```yaml
    - name: Download Test Models

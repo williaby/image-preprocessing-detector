@@ -452,25 +452,25 @@ After completing Milestone 10.3:
    python -m data.weak_supervision <input_images> data/weak_supervision_labels
    ```
 
-2. **Sample ambiguous cases**:
+1. **Sample ambiguous cases**:
 
    ```bash
    python scripts/sample_ambiguous_cases.py
    ```
 
-3. **Run manual annotation sessions** (8 hours total):
+1. **Run manual annotation sessions** (8 hours total):
 
    ```bash
    streamlit run tools/manual_validation_ui.py
    ```
 
-4. **Create final dataset**:
+1. **Create final dataset**:
 
    ```bash
    python scripts/create_final_dataset.py
    ```
 
-5. **Train YOLOv8 model** (Phase 3):
+1. **Train YOLOv8 model** (Phase 3):
 
    ```bash
    modal run modal/train_phase3_yolov8.py

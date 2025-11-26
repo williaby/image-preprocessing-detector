@@ -474,7 +474,7 @@ After generating and uploading the dataset:
 1. **Open Colab Training Notebook**:
    - [notebooks/colab/phase2_iqa_training.ipynb](../notebooks/colab/phase2_iqa_training.ipynb)
 
-2. **Follow Training Guide**:
+1. **Follow Training Guide**:
    - [COLAB_TRAINING_GUIDE.md](colab-training.md)
 
 ---
