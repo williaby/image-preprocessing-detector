@@ -1,4 +1,17 @@
-# Drift Detection FAQ
+---
+schema_type: common
+title: "Drift Detection FAQ"
+description: "FAQ for drift detection troubleshooting and false positives"
+tags:
+  - guide
+  - monitoring
+  - machine_learning
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Answer common questions about drift detection and troubleshooting."
+---
 
 Frequently asked questions about drift detection, common false positives, and troubleshooting.
 

@@ -1,4 +1,17 @@
-# Baseline Metrics Guide
+---
+schema_type: common
+title: "Baseline Metrics Guide"
+description: "Guide for capturing and analyzing baseline metrics"
+tags:
+  - guide
+  - monitoring
+  - metrics
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document baseline metrics capture and analysis for alert tuning."
+---
 
 This document describes how to capture, analyze, and maintain baseline metrics for alert threshold tuning.
 

@@ -596,21 +596,24 @@ class TestSentryEnabled:
         mock_logging_integration = MagicMock()
         mock_sentry.integrations.logging.LoggingIntegration = mock_logging_integration
 
-        with patch.dict(
-            os.environ,
-            {
-                "IMGPREP_SENTRY_ENABLED": "true",
-                "SENTRY_DSN": "https://test@sentry.io/123",
-            },
-            clear=True,
-        ), patch.dict(
-            "sys.modules",
-            {
-                "sentry_sdk": mock_sentry,
-                "sentry_sdk.integrations.logging": MagicMock(
-                    LoggingIntegration=mock_logging_integration
-                ),
-            },
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "IMGPREP_SENTRY_ENABLED": "true",
+                    "SENTRY_DSN": "https://test@sentry.io/123",
+                },
+                clear=True,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "sentry_sdk": mock_sentry,
+                    "sentry_sdk.integrations.logging": MagicMock(
+                        LoggingIntegration=mock_logging_integration
+                    ),
+                },
+            ),
         ):
             result = SentryIntegration.initialize()
 
@@ -623,18 +626,21 @@ class TestSentryEnabled:
         mock_sentry = MagicMock()
         mock_logging_integration = MagicMock()
 
-        with patch.dict(
-            os.environ,
-            {"IMGPREP_SENTRY_ENABLED": "true"},
-            clear=True,
-        ), patch.dict(
-            "sys.modules",
-            {
-                "sentry_sdk": mock_sentry,
-                "sentry_sdk.integrations.logging": MagicMock(
-                    LoggingIntegration=mock_logging_integration
-                ),
-            },
+        with (
+            patch.dict(
+                os.environ,
+                {"IMGPREP_SENTRY_ENABLED": "true"},
+                clear=True,
+            ),
+            patch.dict(
+                "sys.modules",
+                {
+                    "sentry_sdk": mock_sentry,
+                    "sentry_sdk.integrations.logging": MagicMock(
+                        LoggingIntegration=mock_logging_integration
+                    ),
+                },
+            ),
         ):
             SentryIntegration.initialize(
                 dsn="https://custom@sentry.io/456",

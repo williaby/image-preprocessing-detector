@@ -1,4 +1,17 @@
-# Error Runbooks
+---
+schema_type: common
+title: "Error Runbooks"
+description: "Runbooks for error rate alerts and processing failures"
+tags:
+  - guide
+  - monitoring
+  - infrastructure
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document response procedures for error alerts."
+---
 
 ## HighErrorRate / CriticalErrorRate
 

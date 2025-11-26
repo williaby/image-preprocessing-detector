@@ -1,4 +1,17 @@
-# Drift Detection Guide
+---
+schema_type: common
+title: "Drift Detection Guide"
+description: "Comprehensive guide for model drift detection and monitoring"
+tags:
+  - guide
+  - monitoring
+  - machine_learning
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document drift detection architecture, configuration, and response procedures."
+---
 
 This document provides comprehensive guidance on model drift detection, monitoring, and response procedures.
 

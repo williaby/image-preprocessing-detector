@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams
+# SPDX-License-Identifier: MIT
+#
+# GitGuardian configuration file
+# https://docs.gitguardian.com/ggshield-docs/reference/gitguardian-yaml
+
+version: 2
+
+# Paths to exclude from secret scanning
+secret:
+  ignored_paths:
+    # Test fixtures with intentional fake credentials for CodeQL validation
+    - "tests/security/test_codeql_validation.py"
+    # Test API keys in test fixtures
+    - "tests/api/test_auth_ratelimit.py"
+    - "tests/api/test_app_coverage.py"
+    - "tests/api/test_middleware_coverage.py"
+    # Logging redaction tests with example sensitive data
+    - "tests/unit/logging/test_logging_framework.py"
+    - "tests/integration/logging/test_logging_integration.py"
+    # Documentation and schema examples
+    - "docs/**/*.md"
+    - "docs/**/*.json"
+    # Modal configuration (references secrets by name, not values)
+    - "modal/**/*.py"
+    # Scripts that read tokens from environment (not hardcoded)
+    - "scripts/**/*.py"
+
+  # Allow specific patterns that are commonly false positives
+  ignored_matches:
+    # Test fixture API keys
+    - name: "test-api-keys"
+      match: "test-key-*"
+    - name: "valid-key-patterns"
+      match: "valid-*-key*"
+    # Placeholder tokens in documentation
+    - name: "placeholder-tokens"
+      match: "your_token_here"
+    # AWS example key from AWS docs
+    - name: "aws-example-key"
+      match: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"

@@ -1,4 +1,17 @@
-# Latency Runbooks
+---
+schema_type: common
+title: "Latency Runbooks"
+description: "Runbooks for latency alerts and performance issues"
+tags:
+  - guide
+  - monitoring
+  - performance
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document response procedures for latency alerts."
+---
 
 ## HighP50Latency / HighP95Latency / CriticalP99Latency
 

@@ -1,4 +1,17 @@
-# Project A Output Specification
+---
+schema_type: common
+title: "Project A Output Specification"
+description: "Output specification for Project A to Project B handoff"
+tags:
+  - documentation
+  - integration
+  - reference
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document the output format and contract between Project A and Project B."
+---
 
 > **Status**: Production Ready
 > **Version**: 1.0.0

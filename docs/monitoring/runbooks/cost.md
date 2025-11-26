@@ -1,4 +1,17 @@
-# Cost Runbooks
+---
+schema_type: common
+title: "Cost Runbooks"
+description: "Runbooks for cost-related alerts and budget issues"
+tags:
+  - guide
+  - monitoring
+  - infrastructure
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document response procedures for cost alerts."
+---
 
 ## HighDailyCost
 

@@ -1,17 +1,18 @@
 ---
-schema_type: adr
+schema_type: common
 title: "ADR-0036: Device Priority Enforcement and Budgets"
+description: "Architecture decision for device priority ordering and cost control"
 tags:
+  - adr
   - architecture
-  - inference
   - performance
-  - cost-control
-status: accepted
-owner: platform-team
-decision_date: 2025-01-15
+  - production
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document device priority enforcement strategy for GPU/CPU/Modal inference."
 ---
-
-# ADR-0036: Device Priority Enforcement and Budgets
 
 ## Status
 

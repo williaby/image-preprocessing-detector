@@ -1,4 +1,18 @@
-# Log Aggregation Pipeline Guide
+---
+schema_type: common
+title: "Log Aggregation Pipeline Guide"
+description: "Guide for log aggregation with ELK, Vector, and CloudWatch"
+tags:
+  - guide
+  - logging
+  - infrastructure
+  - monitoring
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document log aggregation options and configurations for production deployments."
+---
 
 This guide covers log aggregation options for the Image Preprocessing Detector, including ELK Stack, Vector, and CloudWatch configurations.
 

@@ -1,4 +1,17 @@
-# Release Checklist
+---
+schema_type: common
+title: "Release Checklist"
+description: "Pre-release validation checklist for deployments"
+tags:
+  - guide
+  - deployment
+  - releases
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document pre-release validation steps and requirements."
+---
 
 Pre-release validation checklist for Image Preprocessing Detector.
 

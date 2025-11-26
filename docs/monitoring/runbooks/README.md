@@ -1,4 +1,17 @@
-# Runbooks Index
+---
+schema_type: common
+title: "Runbooks Index"
+description: "Index of operational runbooks for alert response"
+tags:
+  - guide
+  - monitoring
+  - infrastructure
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Provide index to operational runbooks for alert response."
+---
 
 This directory contains operational runbooks for responding to alerts from the Image Preprocessing Detector service.
 

@@ -1,4 +1,17 @@
-# Model Cards
+---
+schema_type: common
+title: "Model Cards"
+description: "Detailed specifications for ML models in Project A"
+tags:
+  - reference
+  - machine_learning
+  - documentation
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document model architectures, training data, and performance metrics."
+---
 
 Detailed specifications for ML models used in Project A: Preprocessing & IQA.
 

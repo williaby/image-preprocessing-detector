@@ -1,4 +1,17 @@
-# Model Runbooks
+---
+schema_type: common
+title: "Model Runbooks"
+description: "Runbooks for model-related alerts (escalation, drift)"
+tags:
+  - guide
+  - monitoring
+  - machine_learning
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document response procedures for model alerts."
+---
 
 ## HighTeacherEscalationRate
 

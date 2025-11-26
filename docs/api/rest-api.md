@@ -1,4 +1,17 @@
-# REST API Documentation
+---
+schema_type: common
+title: "REST API Documentation"
+description: "API reference for the Image Preprocessing Detector REST endpoints"
+tags:
+  - api_reference
+  - documentation
+  - reference
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document REST API endpoints, authentication, and usage examples."
+---
 
 Comprehensive documentation for the Image Preprocessing Detector REST API.
 

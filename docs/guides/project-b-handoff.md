@@ -1,4 +1,17 @@
-# Project B Integration Guide
+---
+schema_type: common
+title: "Project B Integration Guide"
+description: "Integration guide between Project A and Project B (OCR Orchestration)"
+tags:
+  - guide
+  - integration
+  - pipeline
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document the handoff interface between Project A (IQA) and Project B (OCR)."
+---
 
 Complete guide for integrating Project A (Preprocessing & IQA) with Project B (OCR Orchestration).
 

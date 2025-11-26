@@ -1,4 +1,17 @@
-# Standard Operating Procedures (SOPs)
+---
+schema_type: common
+title: "Standard Operating Procedures (SOPs)"
+description: "Regular operational procedures for monitoring and drift detection"
+tags:
+  - guide
+  - monitoring
+  - infrastructure
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document daily, weekly, and monthly operational procedures."
+---
 
 This document outlines regular operational procedures for monitoring and drift detection.
 

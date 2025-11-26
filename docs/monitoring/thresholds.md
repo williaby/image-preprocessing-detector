@@ -1,4 +1,17 @@
-# Alert Threshold Reference
+---
+schema_type: common
+title: "Alert Threshold Reference"
+description: "Reference for alert thresholds, justifications, and tuning guidance"
+tags:
+  - reference
+  - monitoring
+  - infrastructure
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document alert threshold values and their rationale."
+---
 
 This document provides the definitive reference for all alert thresholds, their justifications, and tuning guidance.
 

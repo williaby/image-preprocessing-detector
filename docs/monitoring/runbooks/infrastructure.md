@@ -1,4 +1,17 @@
-# Infrastructure Runbooks
+---
+schema_type: common
+title: "Infrastructure Runbooks"
+description: "Runbooks for infrastructure alerts (GPU, workers, queue)"
+tags:
+  - guide
+  - monitoring
+  - infrastructure
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document response procedures for infrastructure alerts."
+---
 
 ## GPUMemoryHigh
 

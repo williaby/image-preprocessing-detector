@@ -1,4 +1,17 @@
-# Deployment Guide
+---
+schema_type: common
+title: "Deployment Guide"
+description: "Complete guide for deploying the Image Preprocessing Detector API"
+tags:
+  - guide
+  - deployment
+  - infrastructure
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Provide deployment instructions for local, Docker, Kubernetes, and Modal environments."
+---
 
 Complete guide for deploying the Image Preprocessing Detector API across different environments.
 

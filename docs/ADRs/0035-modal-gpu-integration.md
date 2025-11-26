@@ -1,17 +1,18 @@
 ---
-schema_type: adr
+schema_type: common
 title: "ADR-0035: Modal GPU Integration Strategy"
+description: "Architecture decision to integrate Modal for GPU compute"
 tags:
+  - adr
   - architecture
   - modal
-  - gpu
   - infrastructure
-status: accepted
-owner: platform-team
-decision_date: 2025-01-15
+status: published
+owner: core-maintainer
+authors:
+  - name: "Byron Williams"
+purpose: "Document the decision to use Modal for GPU compute in training and inference."
 ---
-
-# ADR-0035: Modal GPU Integration Strategy
 
 ## Status
 

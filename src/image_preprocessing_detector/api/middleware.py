@@ -149,8 +149,8 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
     - OpenAPI documentation endpoints
     """
 
-    # Endpoints that don't require authentication
-    PUBLIC_PATHS: ClassVar[set[str]] = {
+    # Endpoints that don't require authentication (frozen to prevent accidental modification)
+    PUBLIC_PATHS: ClassVar[frozenset[str]] = frozenset({
         "/",
         "/health",
         "/ready",
@@ -158,7 +158,7 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         "/openapi.json",
         "/docs",
         "/redoc",
-    }
+    })
 
     def __init__(
         self,
