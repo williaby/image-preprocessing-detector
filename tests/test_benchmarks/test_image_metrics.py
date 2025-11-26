@@ -6,8 +6,9 @@ Tests the deterministic metrics functions for IQA evaluation.
 
 import pytest
 
-# Skip if scipy is not available (required by benchmarks.metrics.image_metrics)
+# Skip if scipy or skimage is not available (required by benchmarks.metrics.image_metrics)
 pytest.importorskip("scipy", reason="scipy required for image metrics tests")
+pytest.importorskip("skimage", reason="scikit-image required for image metrics tests")
 
 import numpy as np
 
@@ -98,8 +99,13 @@ class TestSkewMetrics:
 class TestNoiseMetrics:
     """Tests for noise and quality metrics."""
 
+    @pytest.mark.filterwarnings("ignore:divide by zero:RuntimeWarning")
     def test_psnr_identical_images(self) -> None:
-        """Test PSNR with identical images."""
+        """Test PSNR with identical images.
+
+        Note: PSNR is mathematically infinite for identical images (MSE=0),
+        which causes a divide-by-zero warning in skimage. This is expected.
+        """
         rng = np.random.default_rng(42)
         img = rng.integers(0, 255, (100, 100), dtype=np.uint8)
 

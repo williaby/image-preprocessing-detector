@@ -53,7 +53,7 @@ The project needed comprehensive documentation infrastructure with:
 
 ### Architecture
 
-```
+```text
 MkDocs (Material Theme)
   ├─ Markdown + YAML front matter (validated by Pydantic v2)
   ├─ mkdocstrings[python] + griffe-pydantic → API from docstrings
@@ -113,7 +113,7 @@ MkDocs (Material Theme)
 
 ### Content Organization
 
-```
+```text
 docs/
   ├─ index.md              # Project overview
   ├─ guides/               # User guides (7 files)
@@ -229,25 +229,33 @@ poetry run python tools/validate_front_matter.py docs --emit-json > report.json
 ## Alternatives Considered
 
 ### Alternative 1: Sphinx
+
 **Rejected**:
+
 - More complex configuration
 - Heavier theme customization required
 - ReStructuredText less familiar than Markdown
 
 ### Alternative 2: Docusaurus (React-based)
+
 **Rejected**:
+
 - Requires Node.js (additional toolchain)
 - Overkill for Python project
 - Slower build times
 
 ### Alternative 3: No Front Matter Validation
+
 **Rejected**:
+
 - Inconsistent metadata quality
 - No enforcement of documentation standards
 - Manual quality checks required
 
 ### Alternative 4: Jekyll (GitHub Pages default)
+
 **Rejected**:
+
 - Less Python-friendly
 - No built-in API documentation generation
 - Weaker plugin ecosystem for Python projects

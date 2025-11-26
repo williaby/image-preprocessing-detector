@@ -17,7 +17,7 @@ References:
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class MorphologicalOperation(str, Enum):
@@ -290,8 +290,4 @@ class DegradationConfig(BaseModel):
             "seed": self.seed,
         }
 
-    class Config:
-        """Pydantic configuration."""
-
-        use_enum_values = True
-        validate_assignment = True
+    model_config = ConfigDict(use_enum_values=True, validate_assignment=True)

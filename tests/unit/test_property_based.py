@@ -385,3 +385,342 @@ class TestPropertyBasedIntegration:
 
         # Should have same number of issues
         assert len(deserialized.quality_issues) == len(issues)
+
+
+# =============================================================================
+# DQS Calculator Property-Based Tests (Sprint 5.1.1)
+# =============================================================================
+
+from image_preprocessing_detector.metrics.dqs_calculator import (
+    DQSWeightConfig,
+    calculate_pre_ocr_risk,
+    calculate_structural_complexity_score,
+)
+from image_preprocessing_detector.routing.recommendation_engine import (
+    recommend_ocr_routing,
+)
+from image_preprocessing_detector.schema import (
+    DocumentQualityScore,
+    DQSMetadata,
+    LayoutType,
+    OCRRoutingRecommendation,
+    PageLayoutSummary,
+    PDFType,
+)
+
+
+@composite
+def dqs_weight_configs(draw: Any) -> DQSWeightConfig:
+    """Generate valid DQS weight configurations."""
+    return DQSWeightConfig(
+        blur_weight=draw(st.floats(min_value=0.0, max_value=1.0)),
+        noise_weight=draw(st.floats(min_value=0.0, max_value=1.0)),
+        contrast_weight=draw(st.floats(min_value=0.0, max_value=1.0)),
+        illumination_weight=draw(st.floats(min_value=0.0, max_value=1.0)),
+        artifacts_weight=draw(st.floats(min_value=0.0, max_value=1.0)),
+        ml_blend_ratio=draw(st.floats(min_value=0.0, max_value=1.0)),
+    )
+
+
+@composite
+def degradation_scores(draw: Any) -> float:
+    """Generate valid degradation scores (0.0 to 1.0)."""
+    return draw(st.floats(min_value=0.0, max_value=1.0, allow_nan=False))
+
+
+@composite
+def page_layout_summaries(draw: Any) -> PageLayoutSummary:
+    """Generate valid PageLayoutSummary instances."""
+    return PageLayoutSummary(
+        page_number=draw(st.integers(min_value=1, max_value=999)),
+        layout_type=draw(st.sampled_from(list(LayoutType))),
+        has_tables=draw(st.booleans()),
+        has_figures=draw(st.booleans()),
+        has_dense_math=draw(st.booleans()),
+        has_handwriting=draw(st.booleans()),
+        complexity_score=draw(st.floats(min_value=0.0, max_value=1.0)),
+    )
+
+
+@composite
+def document_quality_scores(draw: Any) -> DocumentQualityScore:
+    """Generate valid DocumentQualityScore instances."""
+    return DocumentQualityScore(
+        degradation_score=draw(degradation_scores()),
+        structural_complexity_score=draw(degradation_scores()),
+    )
+
+
+class TestDQSWeightConfigProperties:
+    """Property-based tests for DQS weight configuration."""
+
+    @given(dqs_weight_configs())
+    def test_all_weights_non_negative(self, config: DQSWeightConfig) -> None:
+        """Property: All weights must be non-negative."""
+        assert config.blur_weight >= 0
+        assert config.noise_weight >= 0
+        assert config.contrast_weight >= 0
+        assert config.illumination_weight >= 0
+        assert config.artifacts_weight >= 0
+        assert config.ml_blend_ratio >= 0
+
+    @given(dqs_weight_configs())
+    def test_ml_blend_ratio_in_valid_range(self, config: DQSWeightConfig) -> None:
+        """Property: ML blend ratio must be between 0 and 1."""
+        assert 0.0 <= config.ml_blend_ratio <= 1.0
+
+    @given(
+        st.floats(min_value=0.01, max_value=1.0),
+        st.floats(min_value=0.01, max_value=1.0),
+        st.floats(min_value=0.01, max_value=1.0),
+    )
+    def test_normalized_weights_sum_to_one(
+        self, w1: float, w2: float, w3: float
+    ) -> None:
+        """Property: Normalized degradation weights should sum to 1.0."""
+        config = DQSWeightConfig(
+            blur_weight=w1,
+            noise_weight=w2,
+            contrast_weight=w3,
+            illumination_weight=0.0,
+            artifacts_weight=0.0,
+        )
+        weights = config.get_normalized_degradation_weights()
+        total = sum(weights.values())
+        assert abs(total - 1.0) < 1e-6
+
+
+class TestDQSCalculatorProperties:
+    """Property-based tests for DQS calculations."""
+
+    @given(
+        degradation_scores(),
+        degradation_scores(),
+        st.sampled_from([None] + list(PDFType)),
+    )
+    def test_pre_ocr_risk_in_valid_range(
+        self, degradation: float, complexity: float, pdf_type: PDFType | None
+    ) -> None:
+        """Property: Pre-OCR risk must be between 0 and 1."""
+        dqs = DQSMetadata(
+            degradation_score=degradation,
+            structural_complexity_score=complexity,
+        )
+        layout = PageLayoutSummary(
+            page_number=1,
+            layout_type=LayoutType.SINGLE_COLUMN,
+            complexity_score=complexity,
+        )
+        risk = calculate_pre_ocr_risk(dqs, pdf_type, [layout])
+        assert 0.0 <= risk <= 1.0
+
+    @given(
+        degradation_scores(),
+        degradation_scores(),
+        st.sampled_from([None] + list(PDFType)),
+    )
+    def test_pre_ocr_risk_increases_with_worse_quality(
+        self, base_degradation: float, complexity: float, pdf_type: PDFType | None
+    ) -> None:
+        """Property: Higher degradation (lower score) → higher risk."""
+        # Lower degradation score means worse quality
+        low_quality_degradation = max(0.0, base_degradation - 0.2)
+        high_quality_degradation = min(1.0, base_degradation + 0.2)
+
+        layout = PageLayoutSummary(
+            page_number=1,
+            layout_type=LayoutType.SINGLE_COLUMN,
+            complexity_score=complexity,
+        )
+
+        low_risk = calculate_pre_ocr_risk(
+            DQSMetadata(
+                degradation_score=high_quality_degradation,
+                structural_complexity_score=complexity,
+            ),
+            pdf_type,
+            [layout],
+        )
+        high_risk = calculate_pre_ocr_risk(
+            DQSMetadata(
+                degradation_score=low_quality_degradation,
+                structural_complexity_score=complexity,
+            ),
+            pdf_type,
+            [layout],
+        )
+
+        # Lower degradation score (worse quality) should give higher risk
+        assert high_risk >= low_risk or abs(high_risk - low_risk) < 0.01
+
+    @given(st.sampled_from(list(LayoutType)))
+    def test_structural_complexity_in_valid_range(
+        self, layout_type: LayoutType
+    ) -> None:
+        """Property: Structural complexity must be between 0 and 1."""
+        layout = PageLayoutSummary(
+            page_number=1,
+            layout_type=layout_type,
+            has_tables=False,
+            has_figures=False,
+            has_dense_math=False,
+            has_handwriting=False,
+            complexity_score=0.5,
+        )
+        complexity = calculate_structural_complexity_score(layout)
+        assert 0.0 <= complexity <= 1.0
+
+    @given(page_layout_summaries())
+    def test_structural_complexity_always_valid(
+        self, layout: PageLayoutSummary
+    ) -> None:
+        """Property: Structural complexity is valid for any layout."""
+        complexity = calculate_structural_complexity_score(layout)
+        assert 0.0 <= complexity <= 1.0
+
+
+class TestRoutingRecommendationProperties:
+    """Property-based tests for OCR routing recommendations."""
+
+    @given(
+        st.sampled_from([None] + list(PDFType)),
+        document_quality_scores(),
+        st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
+        st.lists(page_layout_summaries(), min_size=1, max_size=5),
+    )
+    def test_routing_returns_valid_recommendation(
+        self,
+        pdf_type: PDFType | None,
+        dqs: DocumentQualityScore,
+        pre_ocr_risk: float,
+        layouts: list[PageLayoutSummary],
+    ) -> None:
+        """Property: Routing always returns valid recommendation."""
+        recommendation, rationale = recommend_ocr_routing(
+            pdf_type, dqs, pre_ocr_risk, layouts
+        )
+        assert recommendation in OCRRoutingRecommendation
+        assert isinstance(rationale, str)
+        assert len(rationale) > 0
+
+    @given(
+        st.sampled_from([None] + list(PDFType)),
+        document_quality_scores(),
+        st.floats(min_value=0.0, max_value=1.0, allow_nan=False),
+        st.lists(page_layout_summaries(), min_size=1, max_size=5),
+    )
+    def test_routing_is_deterministic(
+        self,
+        pdf_type: PDFType | None,
+        dqs: DocumentQualityScore,
+        pre_ocr_risk: float,
+        layouts: list[PageLayoutSummary],
+    ) -> None:
+        """Property: Same inputs should always produce same outputs."""
+        result1 = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
+        result2 = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
+        assert result1[0] == result2[0]
+
+    @given(
+        st.sampled_from([None] + list(PDFType)),
+        document_quality_scores(),
+        st.floats(min_value=0.0, max_value=0.6, allow_nan=False),
+    )
+    def test_tables_always_route_to_vision_structured(
+        self,
+        pdf_type: PDFType | None,
+        dqs: DocumentQualityScore,
+        pre_ocr_risk: float,
+    ) -> None:
+        """Property: Documents with tables should route to vision_structured."""
+        layouts = [
+            PageLayoutSummary(
+                page_number=1,
+                layout_type=LayoutType.SINGLE_COLUMN,
+                has_tables=True,  # Has tables
+                has_figures=False,
+                has_dense_math=False,
+                has_handwriting=False,
+                complexity_score=0.5,
+            )
+        ]
+        recommendation, _ = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
+        assert recommendation == OCRRoutingRecommendation.VISION_STRUCTURED
+
+    @given(
+        st.sampled_from([None] + list(PDFType)),
+        document_quality_scores(),
+        st.floats(min_value=0.0, max_value=0.6, allow_nan=False),
+    )
+    def test_figures_always_route_to_vision_structured(
+        self,
+        pdf_type: PDFType | None,
+        dqs: DocumentQualityScore,
+        pre_ocr_risk: float,
+    ) -> None:
+        """Property: Documents with figures should route to vision_structured."""
+        layouts = [
+            PageLayoutSummary(
+                page_number=1,
+                layout_type=LayoutType.SINGLE_COLUMN,
+                has_tables=False,
+                has_figures=True,  # Has figures
+                has_dense_math=False,
+                has_handwriting=False,
+                complexity_score=0.5,
+            )
+        ]
+        recommendation, _ = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
+        assert recommendation == OCRRoutingRecommendation.VISION_STRUCTURED
+
+    @given(
+        st.sampled_from([None] + list(PDFType)),
+        document_quality_scores(),
+        st.floats(min_value=0.61, max_value=1.0, allow_nan=False),
+    )
+    def test_high_risk_never_routes_to_fast(
+        self,
+        pdf_type: PDFType | None,
+        dqs: DocumentQualityScore,
+        pre_ocr_risk: float,
+    ) -> None:
+        """Property: High risk documents should not route to ocr_fast."""
+        layouts = [
+            PageLayoutSummary(
+                page_number=1,
+                layout_type=LayoutType.SINGLE_COLUMN,
+                has_tables=False,
+                has_figures=False,
+                has_dense_math=False,
+                has_handwriting=False,
+                complexity_score=0.5,
+            )
+        ]
+        recommendation, _ = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
+        assert recommendation != OCRRoutingRecommendation.OCR_FAST
+
+    @given(
+        st.sampled_from([None] + list(PDFType)),
+        document_quality_scores(),
+        st.floats(min_value=0.0, max_value=0.6, allow_nan=False),
+    )
+    def test_handwriting_routes_to_advanced(
+        self,
+        pdf_type: PDFType | None,
+        dqs: DocumentQualityScore,
+        pre_ocr_risk: float,
+    ) -> None:
+        """Property: Documents with handwriting should route to ocr_advanced."""
+        layouts = [
+            PageLayoutSummary(
+                page_number=1,
+                layout_type=LayoutType.SINGLE_COLUMN,
+                has_tables=False,
+                has_figures=False,
+                has_dense_math=False,
+                has_handwriting=True,  # Has handwriting
+                complexity_score=0.5,
+            )
+        ]
+        recommendation, _ = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
+        assert recommendation == OCRRoutingRecommendation.OCR_ADVANCED

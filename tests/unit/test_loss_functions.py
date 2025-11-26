@@ -13,7 +13,7 @@ import pytest
 
 torch = pytest.importorskip("torch", reason="PyTorch required for loss function tests")
 
-from image_preprocessing_detector.models.loss_functions import (  # noqa: E402
+from image_preprocessing_detector.models.loss_functions import (
     FocalLoss,
     MultiHeadIQALoss,
     WeightedMSELoss,

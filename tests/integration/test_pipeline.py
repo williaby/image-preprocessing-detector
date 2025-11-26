@@ -164,7 +164,7 @@ class TestEndToEndPipeline:
 
             # Apply skew
             center = (400, 500)
-            M = cv2.getRotationMatrix2D(center, -3, 1.0)  # noqa: N806  # fmt: skip
+            M = cv2.getRotationMatrix2D(center, -3, 1.0)  # fmt: skip
             img = cv2.warpAffine(img, M, (800, 1000))
 
             # Save image
@@ -329,7 +329,7 @@ class TestPipelineErrorHandling:
         invalid_image = np.array([])
 
         # Should raise ValueError for empty image
-        with pytest.raises(ValueError):  # noqa: PT011  # fmt: skip
+        with pytest.raises(ValueError):  # fmt: skip
             detect_text(invalid_image)
 
     def test_json_round_trip_preservation(self) -> None:

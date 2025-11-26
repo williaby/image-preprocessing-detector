@@ -1,0 +1,9 @@
+# Kubernetes Namespace for Image Preprocessing Detector
+# Creates isolated namespace for all related resources
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: imgprep
+  labels:
+    app.kubernetes.io/name: image-preprocessing-detector
+    app.kubernetes.io/part-of: rag-pipeline

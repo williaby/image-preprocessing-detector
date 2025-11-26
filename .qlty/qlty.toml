@@ -81,6 +81,27 @@ match.plugins = ["bandit"]
 match.rules = ["bandit:B101"]
 set.ignored = true
 
+# Ignore B110 (try-except-pass) in logging/errors.py - intentional for optional Sentry
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B110"]
+match.file_patterns = ["**/logging/errors.py"]
+set.ignored = true
+
+# Ignore S311/B311 (random) in logging module - used for log sampling, not crypto
+[[triage]]
+match.plugins = ["ruff"]
+match.rules = ["ruff:S311"]
+match.file_patterns = ["**/logging/__init__.py", "**/logging/outcomes.py"]
+set.ignored = true
+
+# Ignore B311 (random) in logging module - used for log sampling, not crypto
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B311"]
+match.file_patterns = ["**/logging/__init__.py", "**/logging/outcomes.py"]
+set.ignored = true
+
 # Ignore path traversal in scripts/ - CLI tools intentionally accept file paths
 [[triage]]
 match.plugins = ["semgrep"]
@@ -94,6 +115,12 @@ match.plugins = ["ripgrep"]
 match.rules = ["ripgrep:TODO"]
 set.ignored = true
 
+# Ignore NOTE comments - documentation/explanation, not issues
+[[triage]]
+match.plugins = ["ripgrep"]
+match.rules = ["ripgrep:NOTE"]
+set.ignored = true
+
 # Ignore radarlint TODO findings - same as ripgrep
 [[triage]]
 match.plugins = ["radarlint-python"]
@@ -102,6 +129,11 @@ set.ignored = true
 
 [[plugin]]
 name = "hadolint"
+
+# Exclude hadolint from .license files (REUSE sidecar files, not Dockerfiles)
+[[exclude]]
+plugins = ["hadolint"]
+file_patterns = ["*.license"]
 
 [[plugin]]
 name = "osv-scanner"

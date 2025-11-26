@@ -59,6 +59,10 @@ class TestDeviceCapabilities:
 class TestProbeDeviceCapabilities:
     """Test probe_device_capabilities function."""
 
+    def setup_method(self) -> None:
+        """Clear device cache before each test to ensure isolation."""
+        clear_device_cache()
+
     def teardown_method(self) -> None:
         """Clear device cache after each test."""
         clear_device_cache()
@@ -228,6 +232,10 @@ class TestProbeDeviceCapabilities:
 class TestGetRecommendedDevice:
     """Test get_recommended_device function."""
 
+    def setup_method(self) -> None:
+        """Clear device cache before each test to ensure isolation."""
+        clear_device_cache()
+
     def teardown_method(self) -> None:
         """Clear device cache after each test."""
         clear_device_cache()
@@ -298,6 +306,14 @@ class TestGetRecommendedDevice:
 
 class TestClearDeviceCache:
     """Test clear_device_cache function."""
+
+    def setup_method(self) -> None:
+        """Clear device cache before each test to ensure isolation."""
+        clear_device_cache()
+
+    def teardown_method(self) -> None:
+        """Clear device cache after each test."""
+        clear_device_cache()
 
     @patch("image_preprocessing_detector.utils.device_probe.torch")
     @patch("image_preprocessing_detector.utils.device_probe.multiprocessing")

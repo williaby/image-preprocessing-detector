@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 #
 
-# ruff: noqa: T201
 """Integration tests for PDF resolution detection and upscaling (Phase 1c).
 
 This module tests the end-to-end workflow of:

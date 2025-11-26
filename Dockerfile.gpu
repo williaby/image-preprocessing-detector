@@ -1,0 +1,105 @@
+# Image Preprocessing Detector API - GPU Enabled
+# NVIDIA CUDA-based image for GPU acceleration
+
+# ============================================================================
+# Stage 1: Build stage with poetry
+# ============================================================================
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Install build dependencies
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install poetry (version pinned via POETRY_VERSION env var)
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VERSION=2.1.1
+RUN curl -sSL https://install.python-poetry.org | python3 - \
+    && ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
+
+# Copy project files
+COPY pyproject.toml poetry.lock* ./
+COPY src/ ./src/
+COPY benchmarks/ ./benchmarks/
+
+# Configure poetry to not create virtualenv
+RUN poetry config virtualenvs.create false
+
+# Export requirements for production with ML dependencies
+RUN poetry export -f requirements.txt --without-hashes --extras api --extras ml > requirements.txt
+
+# ============================================================================
+# Stage 2: GPU Runtime with CUDA
+# ============================================================================
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04 AS runtime
+
+LABEL org.opencontainers.image.title="Image Preprocessing Detector API (GPU)"
+LABEL org.opencontainers.image.description="GPU-accelerated image preprocessing detection for RAG pipelines"
+LABEL org.opencontainers.image.version="0.1.0"
+
+# Create non-root user
+RUN groupadd -r imgprep && useradd -r -g imgprep imgprep
+
+WORKDIR /app
+
+# Install Python and runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-venv \
+    python3-pip \
+    # OpenCV dependencies
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    # PDF processing
+    libmupdf-dev \
+    # Health check
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/python3.11 /usr/bin/python
+
+# Copy requirements and install
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/benchmarks ./benchmarks
+
+# Install the package
+RUN pip install --no-cache-dir -e .
+
+# Create directories
+RUN mkdir -p /app/tmp /app/logs /app/models && \
+    chown -R imgprep:imgprep /app
+
+# Switch to non-root user
+USER imgprep
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app/src
+ENV IMGPREP_API_DEFAULT_PREFER_GPU=true
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose API port
+EXPOSE 8000
+
+# Run with uvicorn (fewer workers for GPU to avoid memory issues)
+CMD ["uvicorn", "image_preprocessing_detector.api.app:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "2", \
+     "--log-level", "info"]

@@ -1,0 +1,127 @@
+{
+  "document_id": "golden-full-001",
+  "file_name": "full_test.pdf",
+  "source_mime": "application/pdf",
+  "num_pages": 2,
+  "processing_version": {
+    "pipeline_version": "2.0.0-golden",
+    "iqa_model_hash": "sha256:abc123def456",
+    "layout_model_hash": "sha256:789xyz",
+    "thresholds": {
+      "blur": 100.0,
+      "skew": 2.0,
+      "contrast": 0.3
+    }
+  },
+  "pdf_type": "hybrid",
+  "pre_ocr_risk": 0.35,
+  "dqs": {
+    "degradation_score": 0.72,
+    "structural_complexity_score": 0.45
+  },
+  "ocr_routing_recommendation": "ocr_advanced",
+  "upscaling": {
+    "success": true,
+    "original_dpi": 150,
+    "target_dpi": 300,
+    "algorithm": "lanczos",
+    "processing_time_seconds": 0.5
+  },
+  "page_layout_summary": [
+    {
+      "page_number": 1,
+      "layout_type": "multi_column",
+      "has_tables": true,
+      "has_figures": true,
+      "has_dense_math": false,
+      "has_handwriting": false,
+      "fuzzy_scan": false,
+      "watermark": false,
+      "colorful_background": false,
+      "complexity_score": 0.65
+    }
+  ],
+  "teacher_usage": {
+    "pages_with_teacher": [0],
+    "escalation_reasons": {
+      "0": "high_uncertainty"
+    },
+    "teacher_device": "cuda:0",
+    "total_teacher_time_ms": 150
+  },
+  "pages": [
+    {
+      "page_index": 0,
+      "width_px": 2550,
+      "height_px": 3300,
+      "dpi_input": 150,
+      "dpi_effective": 300,
+      "ml_iqa": {
+        "blur": {"score": 0.2, "confidence": 0.9},
+        "noise": {"score": 0.1, "confidence": 0.85}
+      },
+      "teacher_iqa": {
+        "blur": {"score": 0.18, "confidence": 0.95},
+        "noise": {"score": 0.12, "confidence": 0.92}
+      },
+      "detected_issues": [
+        {
+          "type": "skew",
+          "severity": "medium",
+          "confidence": 0.85,
+          "metrics": {"angle": 2.5, "method": "hough"}
+        },
+        {
+          "type": "low_contrast",
+          "severity": "low",
+          "confidence": 0.72,
+          "metrics": {"score": 0.35}
+        }
+      ],
+      "planned_actions": [
+        {
+          "action": "deskew",
+          "params": {"angle": 2.5},
+          "confidence": 0.85,
+          "reason": "Detected skew of 2.5 degrees"
+        },
+        {
+          "action": "clahe",
+          "params": {"clip_limit": 2.0},
+          "confidence": 0.72,
+          "reason": "Low contrast detected"
+        }
+      ],
+      "elements": [
+        {
+          "id": "elem_table_001",
+          "category": "table",
+          "bbox": [100, 200, 400, 300],
+          "confidence": 0.92,
+          "quality_issues": []
+        },
+        {
+          "id": "elem_figure_001",
+          "category": "figure",
+          "bbox": [50, 600, 200, 150],
+          "confidence": 0.88,
+          "quality_issues": []
+        }
+      ],
+      "transform_history": []
+    },
+    {
+      "page_index": 1,
+      "width_px": 2550,
+      "height_px": 3300,
+      "dpi_input": 150,
+      "dpi_effective": 300,
+      "ml_iqa": null,
+      "teacher_iqa": null,
+      "detected_issues": [],
+      "planned_actions": [],
+      "elements": [],
+      "transform_history": []
+    }
+  ]
+}
