@@ -21,6 +21,10 @@ PROJECT_ROOT = Path(__file__).parent.parent
 FIXTURES_DIR = PROJECT_ROOT / "data" / "test_fixtures"
 BENCHMARKS_DIR = PROJECT_ROOT / "data" / "benchmarks"
 
+# Glob patterns - extracted to constants to avoid duplication (S1192)
+PDF_GLOB_PATTERN = "*.pdf"
+IMAGE_GLOB_PATTERN = "*.{jpg,png,jpeg}"
+
 
 # ============================================================================
 # Pytest Markers
@@ -235,7 +239,7 @@ def doclaynet_pdfs(doclaynet_fixtures_dir: Path) -> list[Path]:
     - Skewed/rotated pages
     - Low contrast or blurry scans
     """
-    pdfs = sorted(doclaynet_fixtures_dir.glob("*.pdf"))
+    pdfs = sorted(doclaynet_fixtures_dir.glob(PDF_GLOB_PATTERN))
     if not pdfs:
         pytest.skip("DocLayNet fixtures not available")
     return pdfs
@@ -371,7 +375,7 @@ def layout_edge_case_samples(layout_samples_dir: Path) -> list[Path]:
     - Handwriting mixed with printed text (JPG)
     """
     samples = []
-    samples.extend(sorted(layout_samples_dir.glob("*.pdf")))
+    samples.extend(sorted(layout_samples_dir.glob(PDF_GLOB_PATTERN)))
     samples.extend(sorted(layout_samples_dir.glob("*.jpg")))
     if not samples:
         pytest.skip("Layout edge case samples not available")
@@ -406,7 +410,7 @@ def all_doclaynet_pdfs(doclaynet_fixtures_dir: Path) -> list[Path]:
     """Return list of all DocLayNet PDF fixture paths."""
     if not doclaynet_fixtures_dir.exists():
         return []
-    return list(doclaynet_fixtures_dir.glob("*.pdf"))
+    return list(doclaynet_fixtures_dir.glob(PDF_GLOB_PATTERN))
 
 
 @pytest.fixture

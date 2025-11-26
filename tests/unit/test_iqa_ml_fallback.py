@@ -37,8 +37,7 @@ class TestMLIQAModelUnavailable:
             teacher_model_path=None,
         )
 
-        # Should create successfully
-        assert detector is not None
+        # Verify detector created with expected attributes
         assert detector.student_model_path is None
         assert detector.teacher_model_path is None
 
@@ -49,8 +48,7 @@ class TestMLIQAModelUnavailable:
             teacher_model_path="/nonexistent/path/teacher.onnx",
         )
 
-        # Should create but sessions not loaded
-        assert detector is not None
+        # Sessions should remain unloaded for nonexistent paths
         assert detector._student_session is None
         assert detector._teacher_session is None
 
