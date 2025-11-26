@@ -12,16 +12,15 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-
-from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 import numpy as np
+
+from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +91,7 @@ class EvaluationResult:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "EvaluationResult":
+    def from_dict(cls, data: dict[str, Any]) -> EvaluationResult:
         """Create from dictionary."""
         return cls(
             timestamp=ensure_aware(datetime.fromisoformat(data["timestamp"])),
@@ -156,9 +155,7 @@ class PerformanceReport:
             "model_version": self.model_version,
             "current_evaluation": self.current_evaluation.to_dict(),
             "baseline_evaluation": (
-                self.baseline_evaluation.to_dict()
-                if self.baseline_evaluation
-                else None
+                self.baseline_evaluation.to_dict() if self.baseline_evaluation else None
             ),
             "trends": [t.to_dict() for t in self.trends],
             "alerts": self.alerts,
@@ -205,7 +202,7 @@ class JobConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "JobConfig":
+    def from_dict(cls, data: dict[str, Any]) -> JobConfig:
         """Create from dictionary."""
         return cls(
             dataset_path=data["dataset_path"],
@@ -221,7 +218,9 @@ class JobConfig:
             baseline_window_days=data.get("baseline_window_days", 7),
             alert_on_degradation=data.get("alert_on_degradation", True),
             map_drop_warning=data.get("map_drop_warning", MAP_DROP_WARNING_THRESHOLD),
-            map_drop_critical=data.get("map_drop_critical", MAP_DROP_CRITICAL_THRESHOLD),
+            map_drop_critical=data.get(
+                "map_drop_critical", MAP_DROP_CRITICAL_THRESHOLD
+            ),
             f1_drop_warning=data.get("f1_drop_warning", F1_DROP_WARNING_THRESHOLD),
             f1_drop_critical=data.get("f1_drop_critical", F1_DROP_CRITICAL_THRESHOLD),
         )
@@ -323,7 +322,9 @@ class MetricsStore:
                     if result.timestamp > cutoff:
                         self._results.append(result)
 
-                logger.info(f"Loaded {len(self._results)} historical evaluation results")
+                logger.info(
+                    f"Loaded {len(self._results)} historical evaluation results"
+                )
 
             except (json.JSONDecodeError, KeyError, ValueError) as e:
                 logger.error(f"Error loading evaluation history: {e}")
@@ -414,7 +415,10 @@ class MetricsStore:
             metrics=aggregated_metrics,
             sample_count=sum(r.sample_count for r in filtered),
             evaluation_duration_seconds=0,
-            metadata={"baseline_window_days": window_days, "result_count": len(filtered)},
+            metadata={
+                "baseline_window_days": window_days,
+                "result_count": len(filtered),
+            },
         )
 
     def get_history(
@@ -613,7 +617,11 @@ class PerformanceEvaluator:
         trends = []
         for metric in self.config.metrics_to_track:
             current_value = current.metrics.get(metric, 0.0)
-            baseline_value = baseline.metrics.get(metric, current_value) if baseline else current_value
+            baseline_value = (
+                baseline.metrics.get(metric, current_value)
+                if baseline
+                else current_value
+            )
 
             change_absolute = current_value - baseline_value
             change_percent = (
@@ -661,16 +669,20 @@ class PerformanceEvaluator:
 
         drop = abs(change_percent) / 100  # Convert to decimal
 
-        if metric in [MetricType.MAP.value, MetricType.MAP_50.value, MetricType.MAP_75.value]:
+        if metric in [
+            MetricType.MAP.value,
+            MetricType.MAP_50.value,
+            MetricType.MAP_75.value,
+        ]:
             if drop >= self.config.map_drop_critical:
                 return AlertSeverity.CRITICAL
-            elif drop >= self.config.map_drop_warning:
+            if drop >= self.config.map_drop_warning:
                 return AlertSeverity.WARNING
 
         elif metric == MetricType.F1.value:
             if drop >= self.config.f1_drop_critical:
                 return AlertSeverity.CRITICAL
-            elif drop >= self.config.f1_drop_warning:
+            if drop >= self.config.f1_drop_warning:
                 return AlertSeverity.WARNING
 
         return AlertSeverity.NONE
@@ -700,15 +712,17 @@ class PerformanceEvaluator:
         alerts = []
         for trend in trends:
             if trend.severity != AlertSeverity.NONE:
-                alerts.append({
-                    "metric": trend.metric,
-                    "severity": trend.severity.value,
-                    "message": (
-                        f"{trend.metric} degraded by {abs(trend.change_percent):.1f}% "
-                        f"({trend.baseline_value:.3f} -> {trend.current_value:.3f})"
-                    ),
-                    "trend_direction": trend.trend_direction,
-                })
+                alerts.append(
+                    {
+                        "metric": trend.metric,
+                        "severity": trend.severity.value,
+                        "message": (
+                            f"{trend.metric} degraded by {abs(trend.change_percent):.1f}% "
+                            f"({trend.baseline_value:.3f} -> {trend.current_value:.3f})"
+                        ),
+                        "trend_direction": trend.trend_direction,
+                    }
+                )
 
         return PerformanceReport(
             timestamp=utc_now(),
@@ -757,7 +771,9 @@ class PerformanceJob:
         if self._last_run is None:
             return True
 
-        next_run = self._last_run + timedelta(hours=self.config.evaluation_interval_hours)
+        next_run = self._last_run + timedelta(
+            hours=self.config.evaluation_interval_hours
+        )
         return utc_now() >= next_run
 
     def run(
@@ -843,7 +859,9 @@ class PerformanceJob:
             return PerformanceReport(
                 timestamp=ensure_aware(datetime.fromisoformat(data["timestamp"])),
                 model_version=data["model_version"],
-                current_evaluation=EvaluationResult.from_dict(data["current_evaluation"]),
+                current_evaluation=EvaluationResult.from_dict(
+                    data["current_evaluation"]
+                ),
                 baseline_evaluation=(
                     EvaluationResult.from_dict(data["baseline_evaluation"])
                     if data.get("baseline_evaluation")
@@ -970,8 +988,7 @@ def get_dashboard_panel_data(
                 "avg": np.mean(values) if values else 0.0,
                 "data_points": len(history),
                 "history": [
-                    {"timestamp": ts.isoformat(), "value": v}
-                    for ts, v in history
+                    {"timestamp": ts.isoformat(), "value": v} for ts, v in history
                 ],
             }
 

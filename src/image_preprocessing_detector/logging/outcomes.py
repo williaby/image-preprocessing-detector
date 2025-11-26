@@ -9,20 +9,16 @@ Sprint 6.1.2: Provides:
 
 import random
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Generator
-
-import structlog
+from typing import Any
 
 from image_preprocessing_detector.logging import (
-    LoggingConfig,
-    get_correlation_id,
     get_logger,
     get_logging_config,
 )
-
 
 # ============================================================================
 # Outcome Data Classes
@@ -184,9 +180,7 @@ class OutcomeLogger:
             ),
             device_used=outcome.device_used.value,
             overall_quality=round(outcome.overall_quality, 4),
-            quality_scores={
-                k: round(v, 4) for k, v in outcome.quality_scores.items()
-            },
+            quality_scores={k: round(v, 4) for k, v in outcome.quality_scores.items()},
             corrections_applied=outcome.corrections_applied,
             corrections_rejected=outcome.corrections_rejected,
             gate_time_ms=round(outcome.gate_time_ms, 2),
@@ -309,9 +303,7 @@ class OutcomeLogger:
                 else None
             ),
             processing_time_ms=(
-                round(processing_time_ms, 2)
-                if processing_time_ms is not None
-                else None
+                round(processing_time_ms, 2) if processing_time_ms is not None else None
             ),
         )
 
@@ -373,9 +365,7 @@ class OutcomeLogger:
             if o.model_selection != ModelSelection.STUDENT_ONLY
         )
 
-        avg_quality = (
-            sum(o.overall_quality for o in self._batch_outcomes) / total_pages
-        )
+        avg_quality = sum(o.overall_quality for o in self._batch_outcomes) / total_pages
         avg_time = sum(o.total_time_ms for o in self._batch_outcomes) / total_pages
 
         # Gate decision distribution

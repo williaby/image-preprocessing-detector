@@ -142,9 +142,7 @@ class TestVersionEndpointModelDetection:
         app = create_app(settings=test_settings)
         return TestClient(app)
 
-    def test_version_model_detection_with_missing_dir(
-        self, client: TestClient
-    ) -> None:
+    def test_version_model_detection_with_missing_dir(self, client: TestClient) -> None:
         """Version endpoint handles missing model directory."""
         with patch("pathlib.Path.exists", return_value=False):
             response = client.get("/version")

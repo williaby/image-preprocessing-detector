@@ -11,7 +11,7 @@ Local GPU → Modal GPU → CPU (with guards for Modal failures)
 """
 
 import logging
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -31,7 +31,6 @@ from image_preprocessing_detector.utils.device_probe import (
     get_recommended_device,
 )
 
-
 # =============================================================================
 # Modal Outage Fixtures
 # =============================================================================
@@ -42,7 +41,7 @@ def sample_image() -> np.ndarray:
     """Create a sample image for testing."""
     image = np.ones((1000, 800, 3), dtype=np.uint8) * 255
     for y in range(50, 950, 30):
-        image[y:y + 2, 50:750] = 0
+        image[y : y + 2, 50:750] = 0
     return image
 
 
@@ -128,9 +127,7 @@ class TestModalOutageHandling:
         assert noise_result is not None
         assert contrast_result is not None
 
-    def test_student_only_fallback_mode(
-        self, sample_image: np.ndarray
-    ) -> None:
+    def test_student_only_fallback_mode(self, sample_image: np.ndarray) -> None:
         """Student-only mode works when teacher (Modal) unavailable.
 
         Note: This tests the concept - actual ML model inference
@@ -253,7 +250,7 @@ class TestGracefulDegradation:
 
         # Should get valid results
         assert result is not None
-        assert 0.0 <= result.score
+        assert result.score >= 0.0
 
     def test_batch_processing_falls_back_gracefully(
         self, sample_image: np.ndarray
@@ -271,9 +268,7 @@ class TestGracefulDegradation:
         for result in results:
             assert result is not None
 
-    def test_no_data_loss_during_outage(
-        self, sample_image: np.ndarray
-    ) -> None:
+    def test_no_data_loss_during_outage(self, sample_image: np.ndarray) -> None:
         """No data is lost when Modal becomes unavailable."""
         # Process image
         blur_detector = BlurDetector()

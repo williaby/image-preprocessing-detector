@@ -7,15 +7,12 @@ Sprint 6.1.5: Validates logging across modules with:
 - PII redaction verification
 """
 
-import json
-import os
 import tempfile
 import time
 from dataclasses import asdict
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -25,7 +22,6 @@ from image_preprocessing_detector.logging import (
     PIIRedactor,
     get_correlation_id,
     get_logger,
-    set_correlation_id,
     setup_logging,
 )
 from image_preprocessing_detector.logging.errors import (
@@ -47,7 +43,6 @@ from image_preprocessing_detector.logging.outcomes import (
     TeacherUsageContext,
     get_outcome_logger,
 )
-
 
 # ============================================================================
 # Test Fixtures
@@ -515,7 +510,11 @@ class TestSamplingBehavior:
         outcome_logger.log_page_outcome(outcome)
 
         # Should have been logged due to error
-        assert mock_logger.info.called or mock_logger.error.called or mock_logger.warning.called
+        assert (
+            mock_logger.info.called
+            or mock_logger.error.called
+            or mock_logger.warning.called
+        )
 
     def test_teacher_usage_always_logged(self) -> None:
         """Test teacher usage is always logged for cost tracking."""

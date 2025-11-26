@@ -9,9 +9,7 @@ Tests verify the device priority logic:
 Sprint 5.1.2: End-to-end integration test with Phase 4 device logic.
 """
 
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -20,10 +18,8 @@ from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
     ContrastDetector,
     NoiseDetector,
-    SkewDetector,
 )
 from image_preprocessing_detector.metrics.dqs_calculator import (
-    DQSWeightConfig,
     calculate_degradation_score,
     calculate_pre_ocr_risk,
     calculate_structural_complexity_score,
@@ -49,9 +45,7 @@ from image_preprocessing_detector.utils.device_probe import (
     DeviceCapabilities,
     clear_device_cache,
     get_recommended_device,
-    probe_device_capabilities,
 )
-
 
 # =============================================================================
 # Test Fixtures
@@ -66,7 +60,7 @@ def sample_document_image() -> np.ndarray:
 
     # Add some text-like content (horizontal lines)
     for y in range(100, 3200, 40):
-        image[y:y + 2, 100:2450] = 0
+        image[y : y + 2, 100:2450] = 0
 
     return image
 
@@ -79,7 +73,7 @@ def sample_blurry_image() -> np.ndarray:
     # Create sharp document
     image = np.ones((1000, 800, 3), dtype=np.uint8) * 255
     for y in range(50, 950, 30):
-        image[y:y + 2, 50:750] = 0
+        image[y : y + 2, 50:750] = 0
 
     # Apply heavy blur
     blurred = cv2.GaussianBlur(image, (21, 21), 10)
@@ -218,7 +212,9 @@ class TestFullPipelineE2E:
         degradation_score = calculate_degradation_score(iqa_metrics)
 
         # Clean document should have high degradation score (closer to 1.0)
-        assert degradation_score >= 0.5, f"Expected high quality, got {degradation_score}"
+        assert degradation_score >= 0.5, (
+            f"Expected high quality, got {degradation_score}"
+        )
 
     def test_blurry_document_produces_low_quality_score(
         self, sample_blurry_image: np.ndarray
@@ -399,7 +395,10 @@ class TestRoutingDecisionE2E:
         )
 
         recommendation, rationale = recommend_ocr_routing(
-            PDFType.BORN_DIGITAL, dqs, 0.1, [layout]  # Low risk
+            PDFType.BORN_DIGITAL,
+            dqs,
+            0.1,
+            [layout],  # Low risk
         )
 
         # Born digital, high quality, simple layout should use fast OCR
@@ -428,6 +427,7 @@ class TestRoutingDecisionE2E:
 
         # Document with tables should use vision structured
         from image_preprocessing_detector.schema import OCRRoutingRecommendation
+
         assert recommendation == OCRRoutingRecommendation.VISION_STRUCTURED
 
     def test_handwriting_routes_to_advanced(self) -> None:
@@ -452,6 +452,7 @@ class TestRoutingDecisionE2E:
         )
 
         from image_preprocessing_detector.schema import OCRRoutingRecommendation
+
         assert recommendation == OCRRoutingRecommendation.OCR_ADVANCED
 
 

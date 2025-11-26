@@ -7,8 +7,7 @@ and various fallback scenarios correctly.
 Sprint 5.1.x: ML IQA fallback and degradation tests.
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -22,7 +21,6 @@ from image_preprocessing_detector.detection.iqa_ml import (
     ModelType,
     UncertaintyMetrics,
 )
-
 
 # =============================================================================
 # Model Unavailable Tests
@@ -84,9 +82,7 @@ class TestDeviceDetectionFallback:
 
     def test_device_defaults_to_cpu_when_no_gpu(self):
         """Test device defaults to CPU when no GPU available."""
-        with patch(
-            "image_preprocessing_detector.detection.iqa_ml.ort"
-        ) as mock_ort:
+        with patch("image_preprocessing_detector.detection.iqa_ml.ort") as mock_ort:
             # Simulate no GPU providers
             mock_ort.get_available_providers.return_value = ["CPUExecutionProvider"]
 
@@ -414,9 +410,7 @@ class TestONNXRuntimeAvailability:
 
     def test_detector_creation_without_ort(self):
         """Test detector can be created even without ONNX Runtime."""
-        with patch(
-            "image_preprocessing_detector.detection.iqa_ml.ort", None
-        ):
+        with patch("image_preprocessing_detector.detection.iqa_ml.ort", None):
             # Should not crash during creation
             detector = MLIQADetector()
             assert detector is not None
@@ -509,4 +503,6 @@ class TestThresholdConfiguration:
         )
 
         # Sensitive should escalate more easily
-        assert detector_sensitive.entropy_threshold < detector_permissive.entropy_threshold
+        assert (
+            detector_sensitive.entropy_threshold < detector_permissive.entropy_threshold
+        )

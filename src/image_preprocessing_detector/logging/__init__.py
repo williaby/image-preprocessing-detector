@@ -83,15 +83,11 @@ class LoggingConfig(BaseModel):
 
     # File rotation
     log_to_file: bool = Field(default=False, description="Enable file logging")
-    log_file_path: str = Field(
-        default="logs/app.log", description="Path to log file"
-    )
+    log_file_path: str = Field(default="logs/app.log", description="Path to log file")
     max_bytes: int = Field(
         default=10 * 1024 * 1024, description="Max log file size (10MB default)"
     )
-    backup_count: int = Field(
-        default=5, description="Number of backup files to keep"
-    )
+    backup_count: int = Field(default=5, description="Number of backup files to keep")
     rotation_when: str = Field(
         default="midnight", description="Time-based rotation (midnight, hourly)"
     )
@@ -193,9 +189,9 @@ class PIIRedactor:
 
         if isinstance(data, dict):
             return self._redact_dict(data)
-        elif isinstance(data, list):
+        if isinstance(data, list):
             return [self.redact(item) for item in data]
-        elif isinstance(data, str):
+        if isinstance(data, str):
             return self._redact_string(data)
         return data
 
@@ -338,7 +334,9 @@ def setup_logging(config: LoggingConfig | None = None) -> None:
             # Time-based rotation
             file_handler = TimedRotatingFileHandler(
                 filename=str(log_path),
-                when=config.rotation_when[0].upper(),  # 'M' for midnight, 'H' for hourly
+                when=config.rotation_when[
+                    0
+                ].upper(),  # 'M' for midnight, 'H' for hourly
                 backupCount=config.backup_count,
             )
         else:
@@ -349,9 +347,7 @@ def setup_logging(config: LoggingConfig | None = None) -> None:
                 backupCount=config.backup_count,
             )
 
-        file_handler.setFormatter(
-            logging.Formatter("%(message)s")
-        )
+        file_handler.setFormatter(logging.Formatter("%(message)s"))
         handlers.append(file_handler)
 
     # Configure standard logging
@@ -379,19 +375,23 @@ def setup_logging(config: LoggingConfig | None = None) -> None:
         processors.append(structlog.processors.TimeStamper(fmt="iso"))
 
     if config.include_caller:
-        processors.append(structlog.processors.CallsiteParameterAdder(
-            parameters=[
-                structlog.processors.CallsiteParameter.FILENAME,
-                structlog.processors.CallsiteParameter.LINENO,
-                structlog.processors.CallsiteParameter.FUNC_NAME,
-            ]
-        ))
+        processors.append(
+            structlog.processors.CallsiteParameterAdder(
+                parameters=[
+                    structlog.processors.CallsiteParameter.FILENAME,
+                    structlog.processors.CallsiteParameter.LINENO,
+                    structlog.processors.CallsiteParameter.FUNC_NAME,
+                ]
+            )
+        )
 
-    processors.extend([
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        structlog.processors.UnicodeDecoder(),
-    ])
+    processors.extend(
+        [
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+        ]
+    )
 
     if config.json_logs:
         processors.append(structlog.processors.JSONRenderer())

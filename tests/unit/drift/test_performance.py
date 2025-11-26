@@ -13,8 +13,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from image_preprocessing_detector.utils.datetime_compat import utc_now
-
 from image_preprocessing_detector.drift.performance import (
     DEFAULT_EVALUATION_INTERVAL_HOURS,
     DEFAULT_RETENTION_DAYS,
@@ -35,7 +33,7 @@ from image_preprocessing_detector.drift.performance import (
     get_dashboard_panel_data,
     validate_job_config,
 )
-
+from image_preprocessing_detector.utils.datetime_compat import utc_now
 
 # ============================================================================
 # EvaluationResult Tests

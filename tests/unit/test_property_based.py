@@ -393,7 +393,6 @@ class TestPropertyBasedIntegration:
 
 from image_preprocessing_detector.metrics.dqs_calculator import (
     DQSWeightConfig,
-    calculate_degradation_score,
     calculate_pre_ocr_risk,
     calculate_structural_complexity_score,
 )
@@ -401,8 +400,8 @@ from image_preprocessing_detector.routing.recommendation_engine import (
     recommend_ocr_routing,
 )
 from image_preprocessing_detector.schema import (
-    DQSMetadata,
     DocumentQualityScore,
+    DQSMetadata,
     LayoutType,
     OCRRoutingRecommendation,
     PageLayoutSummary,
@@ -535,12 +534,18 @@ class TestDQSCalculatorProperties:
         )
 
         low_risk = calculate_pre_ocr_risk(
-            DQSMetadata(degradation_score=high_quality_degradation, structural_complexity_score=complexity),
+            DQSMetadata(
+                degradation_score=high_quality_degradation,
+                structural_complexity_score=complexity,
+            ),
             pdf_type,
             [layout],
         )
         high_risk = calculate_pre_ocr_risk(
-            DQSMetadata(degradation_score=low_quality_degradation, structural_complexity_score=complexity),
+            DQSMetadata(
+                degradation_score=low_quality_degradation,
+                structural_complexity_score=complexity,
+            ),
             pdf_type,
             [layout],
         )
@@ -639,9 +644,7 @@ class TestRoutingRecommendationProperties:
                 complexity_score=0.5,
             )
         ]
-        recommendation, _ = recommend_ocr_routing(
-            pdf_type, dqs, pre_ocr_risk, layouts
-        )
+        recommendation, _ = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
         assert recommendation == OCRRoutingRecommendation.VISION_STRUCTURED
 
     @given(
@@ -667,9 +670,7 @@ class TestRoutingRecommendationProperties:
                 complexity_score=0.5,
             )
         ]
-        recommendation, _ = recommend_ocr_routing(
-            pdf_type, dqs, pre_ocr_risk, layouts
-        )
+        recommendation, _ = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
         assert recommendation == OCRRoutingRecommendation.VISION_STRUCTURED
 
     @given(
@@ -695,9 +696,7 @@ class TestRoutingRecommendationProperties:
                 complexity_score=0.5,
             )
         ]
-        recommendation, _ = recommend_ocr_routing(
-            pdf_type, dqs, pre_ocr_risk, layouts
-        )
+        recommendation, _ = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
         assert recommendation != OCRRoutingRecommendation.OCR_FAST
 
     @given(
@@ -723,7 +722,5 @@ class TestRoutingRecommendationProperties:
                 complexity_score=0.5,
             )
         ]
-        recommendation, _ = recommend_ocr_routing(
-            pdf_type, dqs, pre_ocr_risk, layouts
-        )
+        recommendation, _ = recommend_ocr_routing(pdf_type, dqs, pre_ocr_risk, layouts)
         assert recommendation == OCRRoutingRecommendation.OCR_ADVANCED

@@ -9,16 +9,12 @@ Sprint 6.1.1: Tests for:
 """
 
 import json
-import logging
-import tempfile
 import uuid
 from io import StringIO
 from pathlib import Path
-from typing import Any
 from unittest.mock import patch
 
 import pytest
-import structlog
 
 from image_preprocessing_detector.logging import (
     LoggingConfig,
@@ -37,7 +33,6 @@ from image_preprocessing_detector.logging import (
     setup_logging,
     update_request_context,
 )
-
 
 # ============================================================================
 # PII Redaction Tests

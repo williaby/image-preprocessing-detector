@@ -949,8 +949,12 @@ class TestPhase2PerformanceTargets:
         student_size = student_path.stat().st_size
         teacher_size = teacher_path.stat().st_size
 
-        assert student_size > 10_000_000, f"Student model too small: {student_size} bytes"
-        assert teacher_size > 50_000_000, f"Teacher model too small: {teacher_size} bytes"
+        assert student_size > 10_000_000, (
+            f"Student model too small: {student_size} bytes"
+        )
+        assert teacher_size > 50_000_000, (
+            f"Teacher model too small: {teacher_size} bytes"
+        )
 
     @pytest.mark.skipif(
         not pytest.importorskip("onnxruntime", reason="ONNX Runtime required"),
@@ -967,7 +971,9 @@ class TestPhase2PerformanceTargets:
             pytest.skip(f"Student model not found at {student_path}")
 
         # Load model
-        session = ort.InferenceSession(str(student_path), providers=["CPUExecutionProvider"])
+        session = ort.InferenceSession(
+            str(student_path), providers=["CPUExecutionProvider"]
+        )
 
         # Prepare input (NCHW format, normalized)
         img = cv2.resize(sample_image, (224, 224))
@@ -1002,7 +1008,9 @@ class TestPhase2PerformanceTargets:
         if not student_path.exists():
             pytest.skip(f"Student model not found at {student_path}")
 
-        session = ort.InferenceSession(str(student_path), providers=["CPUExecutionProvider"])
+        session = ort.InferenceSession(
+            str(student_path), providers=["CPUExecutionProvider"]
+        )
 
         # Prepare input
         img = cv2.resize(sample_image, (224, 224))
@@ -1024,7 +1032,9 @@ class TestPhase2PerformanceTargets:
         avg_latency = sum(latencies) / len(latencies)
 
         # Assert latency is under 500ms on CPU
-        assert avg_latency < 500, f"Average latency {avg_latency:.1f}ms exceeds 500ms target"
+        assert avg_latency < 500, (
+            f"Average latency {avg_latency:.1f}ms exceeds 500ms target"
+        )
 
     def test_model_metadata_exists(self, model_paths: dict[str, Path]) -> None:
         """Test that training metadata files exist."""
@@ -1034,8 +1044,12 @@ class TestPhase2PerformanceTargets:
         student_summary = base_path / "training_summary_student.json"
         teacher_summary = base_path / "training_summary_50epoch.json"
 
-        assert student_summary.exists(), f"Student training summary not found: {student_summary}"
-        assert teacher_summary.exists(), f"Teacher training summary not found: {teacher_summary}"
+        assert student_summary.exists(), (
+            f"Student training summary not found: {student_summary}"
+        )
+        assert teacher_summary.exists(), (
+            f"Teacher training summary not found: {teacher_summary}"
+        )
 
 
 class TestPhase2EndToEndIntegration:

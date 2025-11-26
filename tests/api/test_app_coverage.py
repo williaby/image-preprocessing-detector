@@ -13,11 +13,11 @@ import pytest
 fastapi = pytest.importorskip("fastapi", reason="FastAPI required for API tests")
 httpx = pytest.importorskip("httpx", reason="httpx required for API tests")
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from image_preprocessing_detector.api.app import create_app, lifespan
+from image_preprocessing_detector.api.app import create_app
 from image_preprocessing_detector.api.config import APISettings
 
 
@@ -85,9 +85,7 @@ class TestCORSDisabled:
         response = no_cors_client.get("/health")
         assert response.status_code == 200
 
-    def test_cors_disabled_no_cors_headers(
-        self, no_cors_client: TestClient
-    ) -> None:
+    def test_cors_disabled_no_cors_headers(self, no_cors_client: TestClient) -> None:
         """CORS headers not present when disabled."""
         response = no_cors_client.options(
             "/health",
@@ -120,9 +118,7 @@ class TestAuthMiddlewareEnabled:
         app = create_app(settings=auth_settings)
         return TestClient(app)
 
-    def test_auth_middleware_logs_key_count(
-        self, auth_settings: APISettings
-    ) -> None:
+    def test_auth_middleware_logs_key_count(self, auth_settings: APISettings) -> None:
         """Auth middleware logs number of API keys on startup."""
         with patch("image_preprocessing_detector.api.app.logger") as mock_logger:
             app = create_app(settings=auth_settings)

@@ -14,13 +14,14 @@ import hashlib
 import json
 import logging
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
-from pathlib import Path
-from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,7 @@ class HarvestedSample:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "HarvestedSample":
+    def from_dict(cls, data: dict[str, Any]) -> HarvestedSample:
         """Create from dictionary."""
         return cls(
             sample_id=data["sample_id"],
@@ -141,7 +142,7 @@ class HarvestManifest:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "HarvestManifest":
+    def from_dict(cls, data: dict[str, Any]) -> HarvestManifest:
         """Create from dictionary."""
         samples = [HarvestedSample.from_dict(s) for s in data.get("samples", [])]
         return cls(
@@ -167,7 +168,8 @@ class HarvestManifest:
         self.pending_count = sum(
             1
             for s in self.samples
-            if s.privacy_status in [PrivacyStatus.PENDING, PrivacyStatus.REQUIRES_REVIEW]
+            if s.privacy_status
+            in [PrivacyStatus.PENDING, PrivacyStatus.REQUIRES_REVIEW]
         )
 
 
@@ -233,7 +235,9 @@ class PrivacyChecker:
         "**/hipaa/**",
     ]
 
-    def __init__(self, custom_rules: list[Callable[[HarvestedSample], bool]] | None = None):
+    def __init__(
+        self, custom_rules: list[Callable[[HarvestedSample], bool]] | None = None
+    ):
         """Initialize privacy checker.
 
         Args:
@@ -399,7 +403,9 @@ class SampleHarvester:
             HarvestedSample object
         """
         self._sample_counter += 1
-        sample_id = f"sample_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._sample_counter:04d}"
+        sample_id = (
+            f"sample_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._sample_counter:04d}"
+        )
 
         # Compute checksum if enabled
         checksum = ""
@@ -432,9 +438,7 @@ class SampleHarvester:
         if self.config.copy_sample_files:
             self._copy_sample_file(sample)
 
-        logger.info(
-            f"Harvested sample {sample_id} for reason: {reason.value}"
-        )
+        logger.info(f"Harvested sample {sample_id} for reason: {reason.value}")
 
         return sample
 

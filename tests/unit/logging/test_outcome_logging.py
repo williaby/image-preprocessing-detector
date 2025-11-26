@@ -7,16 +7,10 @@ Sprint 6.1.2: Tests for:
 - Batch summaries
 """
 
-import json
-from io import StringIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from image_preprocessing_detector.logging import (
-    LoggingConfig,
-    setup_logging,
-)
 from image_preprocessing_detector.logging.outcomes import (
     DeviceUsed,
     GateDecision,
@@ -24,11 +18,9 @@ from image_preprocessing_detector.logging.outcomes import (
     OutcomeLogger,
     PageOutcome,
     TeacherUsageContext,
-    TimingResult,
     get_outcome_logger,
     timed_operation,
 )
-
 
 # ============================================================================
 # PageOutcome Tests
@@ -281,9 +273,7 @@ class TestSampling:
         # Page outcome should be dropped, but batch start/complete logged
         # Filter for page_outcome calls specifically
         page_outcome_calls = [
-            c
-            for c in mock_logger.info.call_args_list
-            if c[0][0] == "page_outcome"
+            c for c in mock_logger.info.call_args_list if c[0][0] == "page_outcome"
         ]
         assert len(page_outcome_calls) == 0
 
@@ -330,9 +320,7 @@ class TestBatchContext:
 
         # Check batch_completed has summary
         batch_completed_calls = [
-            c
-            for c in mock_logger.info.call_args_list
-            if c[0][0] == "batch_completed"
+            c for c in mock_logger.info.call_args_list if c[0][0] == "batch_completed"
         ]
         assert len(batch_completed_calls) == 1
 
@@ -372,9 +360,7 @@ class TestBatchContext:
             outcome_logger.log_page_outcome(outcome2)
 
         batch_completed_calls = [
-            c
-            for c in mock_logger.info.call_args_list
-            if c[0][0] == "batch_completed"
+            c for c in mock_logger.info.call_args_list if c[0][0] == "batch_completed"
         ]
         summary = batch_completed_calls[0][1]
 

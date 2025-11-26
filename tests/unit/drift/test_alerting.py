@@ -8,14 +8,9 @@ from __future__ import annotations
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-
-from image_preprocessing_detector.utils.datetime_compat import utc_now
+from unittest.mock import MagicMock
 
 from image_preprocessing_detector.drift.alerting import (
-    DEFAULT_COOLDOWN_MINUTES,
     F1_DROP_CRITICAL_THRESHOLD,
     F1_DROP_WARNING_THRESHOLD,
     KL_CRITICAL_THRESHOLD,
@@ -35,12 +30,10 @@ from image_preprocessing_detector.drift.alerting import (
     DriftSample,
     DryRunDispatcher,
     LogDispatcher,
-    SlackDispatcher,
-    WebhookDispatcher,
     check_drift_and_alert,
     create_alert_manager,
 )
-
+from image_preprocessing_detector.utils.datetime_compat import utc_now
 
 # ============================================================================
 # DriftSample Tests
@@ -181,9 +174,7 @@ class TestAlertConfig:
 
     def test_enabled_channels(self) -> None:
         """Test channel configuration."""
-        config = AlertConfig(
-            enabled_channels=[AlertChannel.LOG, AlertChannel.SLACK]
-        )
+        config = AlertConfig(enabled_channels=[AlertChannel.LOG, AlertChannel.SLACK])
 
         assert AlertChannel.LOG in config.enabled_channels
         assert AlertChannel.SLACK in config.enabled_channels
@@ -597,9 +588,7 @@ class TestAlertManager:
 
     def test_runbook_url_included(self) -> None:
         """Test runbook URL is included in alert."""
-        config = AlertConfig(
-            runbook_base_url="https://docs.example.com/runbooks"
-        )
+        config = AlertConfig(runbook_base_url="https://docs.example.com/runbooks")
         manager = AlertManager(config)
 
         alert = manager.check_kl_divergence("test", 0.35)

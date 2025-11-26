@@ -4,7 +4,6 @@ Sprint 5.2.4: Auth and rate limits validation.
 """
 
 import io
-import time
 
 import pytest
 
@@ -16,7 +15,6 @@ from fastapi.testclient import TestClient
 
 from image_preprocessing_detector.api.app import create_app
 from image_preprocessing_detector.api.config import APISettings
-
 
 # ============================================================================
 # Authentication Tests
@@ -413,9 +411,7 @@ class TestRateLimitDisabled:
         )
 
     @pytest.fixture
-    def no_rate_limit_client(
-        self, no_rate_limit_settings: APISettings
-    ) -> TestClient:
+    def no_rate_limit_client(self, no_rate_limit_settings: APISettings) -> TestClient:
         """Create a test client with rate limiting disabled."""
         app = create_app(settings=no_rate_limit_settings)
         return TestClient(app)

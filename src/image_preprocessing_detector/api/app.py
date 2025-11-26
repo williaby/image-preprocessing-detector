@@ -20,11 +20,13 @@ from image_preprocessing_detector.api.middleware import (
     RateLimitMiddleware,
     RequestLoggingMiddleware,
 )
+from image_preprocessing_detector.api.routes.batch import router as batch_router
 from image_preprocessing_detector.api.routes.health import (
     router as health_router,
+)
+from image_preprocessing_detector.api.routes.health import (
     set_server_start_time,
 )
-from image_preprocessing_detector.api.routes.batch import router as batch_router
 from image_preprocessing_detector.api.routes.process import router as process_router
 
 logger = structlog.get_logger(__name__)

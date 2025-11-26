@@ -9,7 +9,6 @@ Sprint 5.1.x: E2E tests for Layout-Lite (Phase 6) workflow integration.
 """
 
 from datetime import UTC, datetime
-from pathlib import Path
 
 import cv2
 import numpy as np
@@ -20,7 +19,6 @@ from image_preprocessing_detector.detection.layout_lite.analyzer import (
 )
 from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
 from image_preprocessing_detector.metrics.dqs_calculator import (
-    DQSWeightConfig,
     calculate_structural_complexity_score,
 )
 from image_preprocessing_detector.routing.recommendation_engine import (
@@ -36,7 +34,6 @@ from image_preprocessing_detector.schema import (
     PDFType,
     ProcessingVersion,
 )
-
 
 # =============================================================================
 # Test Fixtures
@@ -460,9 +457,7 @@ class TestLayoutLiteFullPipeline:
         assert len(metadata.page_layout_summary) == len(page_images)
         assert len(metadata.pages) == len(page_images)
 
-    def test_all_doclaynet_pdfs_process(
-        self, layout_analyzer, all_doclaynet_pdfs
-    ):
+    def test_all_doclaynet_pdfs_process(self, layout_analyzer, all_doclaynet_pdfs):
         """Test that all DocLayNet PDFs can be processed through Layout-Lite."""
         if not all_doclaynet_pdfs:
             pytest.skip("DocLayNet fixtures not available")
@@ -482,8 +477,12 @@ class TestLayoutLiteFullPipeline:
 
                 # Check all expected keys exist
                 expected_keys = [
-                    "column", "table", "figure",
-                    "fuzzy_scan", "watermark", "colorful_background"
+                    "column",
+                    "table",
+                    "figure",
+                    "fuzzy_scan",
+                    "watermark",
+                    "colorful_background",
                 ]
                 for key in expected_keys:
                     assert key in result, f"Missing key: {key}"

@@ -12,14 +12,13 @@ from __future__ import annotations
 
 import json
 import logging
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-
-from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 from pathlib import Path
 from typing import Any, Protocol
+
+from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +139,7 @@ class DriftAlert:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "DriftAlert":
+    def from_dict(cls, data: dict[str, Any]) -> DriftAlert:
         """Create from dictionary."""
         return cls(
             alert_id=data["alert_id"],
@@ -204,7 +203,7 @@ class AlertConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "AlertConfig":
+    def from_dict(cls, data: dict[str, Any]) -> AlertConfig:
         """Create from dictionary."""
         channels = [AlertChannel(c) for c in data.get("enabled_channels", ["log"])]
         return cls(
@@ -213,7 +212,9 @@ class AlertConfig:
             psi_warning=data.get("psi_warning", PSI_WARNING_THRESHOLD),
             psi_critical=data.get("psi_critical", PSI_CRITICAL_THRESHOLD),
             map_drop_warning=data.get("map_drop_warning", MAP_DROP_WARNING_THRESHOLD),
-            map_drop_critical=data.get("map_drop_critical", MAP_DROP_CRITICAL_THRESHOLD),
+            map_drop_critical=data.get(
+                "map_drop_critical", MAP_DROP_CRITICAL_THRESHOLD
+            ),
             f1_drop_warning=data.get("f1_drop_warning", F1_DROP_WARNING_THRESHOLD),
             f1_drop_critical=data.get("f1_drop_critical", F1_DROP_CRITICAL_THRESHOLD),
             cooldown_minutes=data.get("cooldown_minutes", DEFAULT_COOLDOWN_MINUTES),
@@ -568,9 +569,7 @@ class AlertHistory:
         for aid in old_alerts:
             del self._alerts[aid]
 
-        old_times = [
-            key for key, dt in self._last_alert_times.items() if dt < cutoff
-        ]
+        old_times = [key for key, dt in self._last_alert_times.items() if dt < cutoff]
 
         for key in old_times:
             del self._last_alert_times[key]
@@ -888,9 +887,7 @@ class AlertManager:
                             f"Failed to dispatch alert {alert.alert_id} to {channel.value}"
                         )
                 except Exception as e:
-                    logger.error(
-                        f"Error dispatching alert to {channel.value}: {e}"
-                    )
+                    logger.error(f"Error dispatching alert to {channel.value}: {e}")
 
     def get_dry_run_alerts(self) -> list[DriftAlert]:
         """Get alerts from dry-run mode.

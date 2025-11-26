@@ -9,10 +9,6 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-import pytest
-
-from image_preprocessing_detector.utils.datetime_compat import utc_now
-
 from image_preprocessing_detector.drift.active_learning import (
     DEFAULT_AGREEMENT_THRESHOLD,
     DEFAULT_ENTROPY_THRESHOLD,
@@ -32,7 +28,7 @@ from image_preprocessing_detector.drift.active_learning import (
     harvest_and_manifest,
     save_privacy_checklist,
 )
-
+from image_preprocessing_detector.utils.datetime_compat import utc_now
 
 # ============================================================================
 # HarvestedSample Tests
@@ -266,6 +262,7 @@ class TestPrivacyChecker:
 
     def test_custom_rule(self) -> None:
         """Test custom privacy rule."""
+
         # Rule that rejects samples with certain entropy
         def custom_rule(sample: HarvestedSample) -> bool:
             return sample.entropy is None or sample.entropy < 0.99
@@ -552,7 +549,9 @@ class TestManifestGenerator:
             split = generator.generate_training_split(manifest)
 
             # Only approved samples (8) should be split
-            total_in_split = len(split["train"]) + len(split["val"]) + len(split["test"])
+            total_in_split = (
+                len(split["train"]) + len(split["val"]) + len(split["test"])
+            )
             assert total_in_split == 8
 
     def test_list_manifests(self) -> None:

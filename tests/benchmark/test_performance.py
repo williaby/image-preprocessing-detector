@@ -31,9 +31,11 @@ import pytest
 # Relaxed mode triggers for CI, containers, or when explicitly requested
 IS_CI = os.environ.get("CI", "").lower() in ("true", "1", "yes")
 IS_CONTAINER = os.path.exists("/.dockerenv") or os.path.isfile("/run/.containerenv")
-RELAXED_PERF = IS_CI or IS_CONTAINER or os.environ.get(
-    "RELAXED_PERF_TESTS", ""
-).lower() in ("true", "1", "yes")
+RELAXED_PERF = (
+    IS_CI
+    or IS_CONTAINER
+    or os.environ.get("RELAXED_PERF_TESTS", "").lower() in ("true", "1", "yes")
+)
 
 from image_preprocessing_detector.detection.iqa_classical import (
     detect_blur,

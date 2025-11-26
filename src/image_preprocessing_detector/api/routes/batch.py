@@ -6,12 +6,10 @@ Sprint 5.2.3: Batch endpoints
 - GET /batch/{job_id}/result - Get job results
 """
 
-import asyncio
 import tempfile
 import time
 import uuid
-from collections.abc import Callable
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -31,7 +29,6 @@ from image_preprocessing_detector.api.models import (
     ProcessingStatus,
 )
 from image_preprocessing_detector.api.routes.process import (
-    SUPPORTED_EXTENSIONS,
     process_document,
     validate_file,
 )
@@ -120,7 +117,7 @@ async def process_batch_job(
             errors.append(
                 ErrorResponse(
                     error=ErrorCode.PROCESSING_FAILED,
-                    message=f"Failed to process {filename}: {str(e)}",
+                    message=f"Failed to process {filename}: {e!s}",
                 )
             )
             _update_job(
@@ -133,7 +130,9 @@ async def process_batch_job(
 
     # Calculate total processing time
     job = _get_job(job_id)
-    start_time = job.get("start_time", time.perf_counter()) if job else time.perf_counter()
+    start_time = (
+        job.get("start_time", time.perf_counter()) if job else time.perf_counter()
+    )
     elapsed_ms = (time.perf_counter() - start_time) * 1000
 
     # Update job with final results

@@ -10,9 +10,6 @@ Tests the complete escalation path:
 Sprint 5.1.x: Teacher-student ML IQA escalation E2E tests.
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
 import cv2
 import numpy as np
 import pytest
@@ -32,7 +29,6 @@ from image_preprocessing_detector.detection.iqa_ml import (
     ModelType,
     UncertaintyMetrics,
 )
-
 
 # =============================================================================
 # Test Fixtures

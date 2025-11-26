@@ -338,9 +338,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """Remove entries outside the current window."""
         cutoff = current_time - self.window_seconds
         self._request_counts[client_key] = [
-            (ts, count)
-            for ts, count in self._request_counts[client_key]
-            if ts > cutoff
+            (ts, count) for ts, count in self._request_counts[client_key] if ts > cutoff
         ]
 
     def _get_request_count(self, client_key: str, current_time: float) -> int:

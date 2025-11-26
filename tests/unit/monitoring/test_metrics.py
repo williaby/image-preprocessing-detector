@@ -5,7 +5,7 @@ Sprint 6.2.1: Tests for metrics collection and export.
 
 import os
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -23,7 +23,6 @@ from image_preprocessing_detector.monitoring import (
     record_teacher_usage,
     timed,
 )
-
 
 # ============================================================================
 # MetricsConfig Tests
@@ -262,9 +261,7 @@ class TestMetricsCollector:
         """Test recording corrections."""
         collector = MetricsCollector()
 
-        collector.record_correction(
-            correction_type="deskew", duration_seconds=0.05
-        )
+        collector.record_correction(correction_type="deskew", duration_seconds=0.05)
 
     def test_record_quality_score(self) -> None:
         """Test recording quality scores."""
@@ -478,9 +475,7 @@ class TestMetricsIntegration:
             collector.gate_latency.labels(result="text_detected").observe(0.005)
 
             # Record IQA
-            collector.iqa_latency.labels(model="student", device="cpu").observe(
-                0.05
-            )
+            collector.iqa_latency.labels(model="student", device="cpu").observe(0.05)
 
             # Record correction
             collector.record_correction("deskew", 0.02)

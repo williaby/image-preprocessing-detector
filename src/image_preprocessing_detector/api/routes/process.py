@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from image_preprocessing_detector.api.config import get_api_settings
@@ -383,7 +383,7 @@ async def process_single_document(
         logger.exception("process_failed", error=str(e))
         error = ErrorResponse(
             error=ErrorCode.PROCESSING_FAILED,
-            message=f"Document processing failed: {str(e)}",
+            message=f"Document processing failed: {e!s}",
             correlation_id=correlation_id,
         )
         return JSONResponse(

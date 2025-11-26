@@ -5,22 +5,16 @@ Tests histogram computation, KL/PSI metrics, and distribution tracking.
 
 from __future__ import annotations
 
-import json
 import math
 import tempfile
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
-from unittest.mock import patch
 
 import numpy as np
 import pytest
 
-from image_preprocessing_detector.utils.datetime_compat import utc_now
-
 from image_preprocessing_detector.drift import (
-    DEFAULT_EPSILON,
     DEFAULT_NUM_BINS,
-    DEFAULT_SAMPLE_RATE,
     FEATURE_BOUNDS,
     KL_CRITICAL_THRESHOLD,
     KL_WARNING_THRESHOLD,
@@ -43,7 +37,7 @@ from image_preprocessing_detector.drift import (
     psi,
     symmetric_kl,
 )
-
+from image_preprocessing_detector.utils.datetime_compat import utc_now
 
 # ============================================================================
 # Histogram Computation Tests
@@ -774,7 +768,9 @@ class TestDriftDetector:
             for i in range(200):
                 tracker.add_sample("test", i / 200.0)
 
-            ref = detector.create_reference_from_tracker(tracker, "test", min_samples=100)
+            ref = detector.create_reference_from_tracker(
+                tracker, "test", min_samples=100
+            )
 
             assert ref is not None
             assert ref.feature == "test"
@@ -790,7 +786,9 @@ class TestDriftDetector:
             for i in range(50):
                 tracker.add_sample("test", i / 50.0)
 
-            ref = detector.create_reference_from_tracker(tracker, "test", min_samples=100)
+            ref = detector.create_reference_from_tracker(
+                tracker, "test", min_samples=100
+            )
 
             assert ref is None
 

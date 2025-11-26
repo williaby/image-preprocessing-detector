@@ -11,11 +11,12 @@ Sprint 6.2.1: Provides metrics for:
 
 import os
 import time
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Generator, TypeVar
+from typing import Any, TypeVar
 
 # Use prometheus_client if available, otherwise provide stubs
 try:
@@ -209,9 +210,7 @@ class MetricsCollector:
         self._registry = REGISTRY if PROMETHEUS_AVAILABLE else None
 
         # Cardinality guards
-        self._document_guard = CardinalityGuard(
-            self._config.max_document_id_labels
-        )
+        self._document_guard = CardinalityGuard(self._config.max_document_id_labels)
         self._error_guard = CardinalityGuard(self._config.max_error_code_labels)
 
         # Initialize metrics
@@ -475,9 +474,7 @@ class MetricsCollector:
                 cost = duration_seconds * self._config.modal_cost_per_gpu_second
                 self.estimated_cost_dollars.labels(cost_type="modal_gpu").inc(cost)
 
-    def record_correction(
-        self, correction_type: str, duration_seconds: float
-    ) -> None:
+    def record_correction(self, correction_type: str, duration_seconds: float) -> None:
         """Record a correction operation.
 
         Args:

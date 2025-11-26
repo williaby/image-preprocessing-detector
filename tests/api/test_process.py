@@ -4,9 +4,7 @@ Sprint 5.2.2: POST /process endpoint validation.
 """
 
 import io
-from pathlib import Path
 
-import numpy as np
 import pytest
 
 # Skip all tests if FastAPI is not installed
@@ -17,7 +15,6 @@ from fastapi.testclient import TestClient
 
 from image_preprocessing_detector.api.app import create_app
 from image_preprocessing_detector.api.config import APISettings
-from image_preprocessing_detector.api.models import ProcessingStatus
 
 
 @pytest.fixture

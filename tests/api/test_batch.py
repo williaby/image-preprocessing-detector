@@ -170,9 +170,7 @@ class TestBatchResult:
 class TestBatchDeletion:
     """Tests for batch job deletion."""
 
-    def test_delete_job(
-        self, client: TestClient, sample_png_bytes: bytes
-    ) -> None:
+    def test_delete_job(self, client: TestClient, sample_png_bytes: bytes) -> None:
         """Deleting a job removes it."""
         # Submit batch
         submit_response = client.post(

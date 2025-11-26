@@ -26,13 +26,13 @@ import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-
-from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
+from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ class HistogramStats:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "HistogramStats":
+    def from_dict(cls, data: dict[str, Any]) -> HistogramStats:
         """Create from dictionary."""
         return cls(
             mean=data["mean"],
@@ -208,7 +208,7 @@ class ReferenceDistribution:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ReferenceDistribution":
+    def from_dict(cls, data: dict[str, Any]) -> ReferenceDistribution:
         """Create from dictionary."""
         return cls(
             feature=data["feature"],
@@ -665,9 +665,7 @@ class ReferenceStore:
 
         return ref
 
-    def get_reference(
-        self, feature: str | FeatureType
-    ) -> ReferenceDistribution | None:
+    def get_reference(self, feature: str | FeatureType) -> ReferenceDistribution | None:
         """Get reference distribution for a feature.
 
         Args:

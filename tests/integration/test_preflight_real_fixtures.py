@@ -8,17 +8,13 @@ Tests DPI detection and upscaling workflow with:
 Sprint 5.1.x: Pre-flight analysis integration tests.
 """
 
-from pathlib import Path
-
 import pytest
 
 from image_preprocessing_detector.core.config import Settings
-from image_preprocessing_detector.ingestion.pdf_analyzer import PDFDocumentAnalyzer
 from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
 from image_preprocessing_detector.ingestion.pdf_resolution import (
     PDFResolutionAnalyzer,
 )
-
 
 # =============================================================================
 # Test Fixtures
@@ -57,9 +53,7 @@ def pdf_loader():
 class TestPreflightResolutionWithDocLayNet:
     """Test pre-flight resolution analysis with DocLayNet PDFs."""
 
-    def test_simple_text_pdf_resolution(
-        self, resolution_analyzer, simple_text_pdf
-    ):
+    def test_simple_text_pdf_resolution(self, resolution_analyzer, simple_text_pdf):
         """Test DPI detection on simple text PDF."""
         if not simple_text_pdf.exists():
             pytest.skip("Simple text PDF not available")
@@ -86,9 +80,7 @@ class TestPreflightResolutionWithDocLayNet:
         assert result["min_dpi"] >= 0
         # PDFs with embedded figures may have varying DPI
 
-    def test_multi_column_pdf_resolution(
-        self, resolution_analyzer, multi_column_pdf
-    ):
+    def test_multi_column_pdf_resolution(self, resolution_analyzer, multi_column_pdf):
         """Test DPI detection on multi-column PDF."""
         if not multi_column_pdf.exists():
             pytest.skip("Multi-column PDF not available")
@@ -100,9 +92,7 @@ class TestPreflightResolutionWithDocLayNet:
         if result["avg_dpi"] is not None:
             assert result["avg_dpi"] >= 0
 
-    def test_skewed_pdf_resolution(
-        self, resolution_analyzer, skewed_pdf
-    ):
+    def test_skewed_pdf_resolution(self, resolution_analyzer, skewed_pdf):
         """Test DPI detection on skewed PDF."""
         if not skewed_pdf.exists():
             pytest.skip("Skewed PDF not available")
@@ -113,9 +103,7 @@ class TestPreflightResolutionWithDocLayNet:
         assert result is not None
         assert result["min_dpi"] >= 0
 
-    def test_low_contrast_pdf_resolution(
-        self, resolution_analyzer, low_contrast_pdf
-    ):
+    def test_low_contrast_pdf_resolution(self, resolution_analyzer, low_contrast_pdf):
         """Test DPI detection on low contrast PDF."""
         if not low_contrast_pdf.exists():
             pytest.skip("Low contrast PDF not available")
@@ -234,9 +222,7 @@ class TestFullPreflightAnalysis:
                     f"Image too small in {pdf_path.name} page {idx}"
                 )
 
-    def test_preflight_preserves_aspect_ratio(
-        self, pdf_loader, simple_text_pdf
-    ):
+    def test_preflight_preserves_aspect_ratio(self, pdf_loader, simple_text_pdf):
         """Test that pre-flight processing preserves aspect ratio."""
         if not simple_text_pdf.exists():
             pytest.skip("Simple text PDF not available")
@@ -261,9 +247,7 @@ class TestFullPreflightAnalysis:
 class TestPreflightEdgeCases:
     """Test pre-flight with edge case documents."""
 
-    def test_watermarked_pdf_preflight(
-        self, resolution_analyzer, watermarked_pdf
-    ):
+    def test_watermarked_pdf_preflight(self, resolution_analyzer, watermarked_pdf):
         """Test pre-flight on watermarked PDF."""
         if not watermarked_pdf.exists():
             pytest.skip("Watermarked PDF not available")
@@ -273,9 +257,7 @@ class TestPreflightEdgeCases:
         # Should not crash on watermarked document
         assert result is not None
 
-    def test_dense_math_pdf_preflight(
-        self, resolution_analyzer, dense_math_pdf
-    ):
+    def test_dense_math_pdf_preflight(self, resolution_analyzer, dense_math_pdf):
         """Test pre-flight on dense math PDF."""
         if not dense_math_pdf.exists():
             pytest.skip("Dense math PDF not available")
@@ -285,9 +267,7 @@ class TestPreflightEdgeCases:
         assert result is not None
         # Math documents may have complex rendering
 
-    def test_handwriting_image_preflight(
-        self, handwriting_mixed_image
-    ):
+    def test_handwriting_image_preflight(self, handwriting_mixed_image):
         """Test pre-flight handles image files (not PDFs)."""
         if not handwriting_mixed_image.exists():
             pytest.skip("Handwriting image not available")
@@ -295,18 +275,18 @@ class TestPreflightEdgeCases:
         # Images don't need PDF resolution analysis
         # But should be loadable directly
         import cv2
+
         img = cv2.imread(str(handwriting_mixed_image))
         assert img is not None
         assert img.shape[0] > 0
 
-    def test_colorful_background_image_preflight(
-        self, colorful_background_image
-    ):
+    def test_colorful_background_image_preflight(self, colorful_background_image):
         """Test pre-flight handles colorful background images."""
         if not colorful_background_image.exists():
             pytest.skip("Colorful background image not available")
 
         import cv2
+
         img = cv2.imread(str(colorful_background_image))
         assert img is not None
 
@@ -329,6 +309,7 @@ class TestPreflightPerformance:
             pytest.skip("Simple text PDF not available")
 
         import time
+
         start = time.perf_counter()
 
         result = resolution_analyzer.analyze_pdf_resolution(simple_text_pdf)
@@ -339,14 +320,13 @@ class TestPreflightPerformance:
         # Resolution analysis should be fast (< 5 seconds for single PDF)
         assert elapsed < 5.0, f"Resolution analysis took {elapsed:.2f}s"
 
-    def test_pdf_loading_reasonable_time(
-        self, pdf_loader, simple_text_pdf
-    ):
+    def test_pdf_loading_reasonable_time(self, pdf_loader, simple_text_pdf):
         """Test that PDF loading completes in reasonable time."""
         if not simple_text_pdf.exists():
             pytest.skip("Simple text PDF not available")
 
         import time
+
         start = time.perf_counter()
 
         pages = list(pdf_loader.load(str(simple_text_pdf)))

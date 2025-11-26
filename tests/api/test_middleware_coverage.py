@@ -8,7 +8,7 @@ Tests for:
 """
 
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -19,7 +19,6 @@ httpx = pytest.importorskip("httpx", reason="httpx required for API tests")
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from starlette.requests import Request
-from starlette.responses import JSONResponse
 
 from image_preprocessing_detector.api.middleware import (
     APIKeyAuthMiddleware,
@@ -51,9 +50,7 @@ class TestCorrelationIDMiddleware:
         """Create test client."""
         return TestClient(app_with_correlation_middleware)
 
-    def test_generates_correlation_id_if_not_provided(
-        self, client: TestClient
-    ) -> None:
+    def test_generates_correlation_id_if_not_provided(self, client: TestClient) -> None:
         """Generates correlation ID if not in request headers."""
         response = client.get("/test")
         assert "X-Correlation-ID" in response.headers
@@ -62,9 +59,7 @@ class TestCorrelationIDMiddleware:
     def test_preserves_provided_correlation_id(self, client: TestClient) -> None:
         """Preserves correlation ID from request headers."""
         correlation_id = "my-custom-correlation-id"
-        response = client.get(
-            "/test", headers={"X-Correlation-ID": correlation_id}
-        )
+        response = client.get("/test", headers={"X-Correlation-ID": correlation_id})
         assert response.headers["X-Correlation-ID"] == correlation_id
 
 
@@ -98,9 +93,7 @@ class TestRequestLoggingMiddlewareExceptions:
 
     def test_logs_exception_and_reraises(self) -> None:
         """Middleware logs exception and re-raises it."""
-        with patch(
-            "image_preprocessing_detector.api.middleware.logger"
-        ) as mock_logger:
+        with patch("image_preprocessing_detector.api.middleware.logger") as mock_logger:
             app = FastAPI()
             app.add_middleware(
                 RequestLoggingMiddleware,

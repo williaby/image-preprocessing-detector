@@ -14,11 +14,10 @@ class TestMetricsWithoutPrometheus:
     @pytest.fixture(autouse=True)
     def reset_singleton(self) -> None:
         """Reset the singleton before each test."""
+        import image_preprocessing_detector.monitoring as monitoring
         from image_preprocessing_detector.monitoring import (
             MetricsCollector,
-            _metrics,
         )
-        import image_preprocessing_detector.monitoring as monitoring
 
         MetricsCollector._instance = None
         MetricsCollector._initialized = False
@@ -145,8 +144,8 @@ class TestMetricsConfigStartServer:
     @pytest.fixture(autouse=True)
     def reset_singleton(self) -> None:
         """Reset the singleton before each test."""
-        from image_preprocessing_detector.monitoring import MetricsCollector
         import image_preprocessing_detector.monitoring as monitoring
+        from image_preprocessing_detector.monitoring import MetricsCollector
 
         MetricsCollector._instance = None
         MetricsCollector._initialized = False

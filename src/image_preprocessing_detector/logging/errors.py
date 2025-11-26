@@ -10,14 +10,11 @@ Sprint 6.1.3: Provides:
 import os
 import traceback
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
-import structlog
-
 from image_preprocessing_detector.logging import get_correlation_id, get_logger
-
 
 # ============================================================================
 # Error Taxonomy
@@ -211,7 +208,7 @@ class StructuredError:
     http_status: int = field(init=False)
     details: dict[str, Any] = field(default_factory=dict)
     correlation_id: str = field(default_factory=get_correlation_id)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     exception: Exception | None = None
     traceback_str: str | None = None
 
@@ -531,12 +528,8 @@ class SentryIntegration:
 
                 if error.exception:
                     return sentry_sdk.capture_exception(error.exception)
-                else:
-                    return sentry_sdk.capture_message(
-                        error.message, level="error"
-                    )
-            else:
-                return sentry_sdk.capture_exception(error)
+                return sentry_sdk.capture_message(error.message, level="error")
+            return sentry_sdk.capture_exception(error)
 
         except Exception:
             return None

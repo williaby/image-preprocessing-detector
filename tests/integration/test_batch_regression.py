@@ -14,7 +14,6 @@ Performance targets (from CLAUDE.md):
 import gc
 import sys
 import time
-from typing import Any
 
 import numpy as np
 import pytest
@@ -23,7 +22,6 @@ from image_preprocessing_detector.detection.iqa_classical import (
     BlurDetector,
     ContrastDetector,
     NoiseDetector,
-    SkewDetector,
 )
 from image_preprocessing_detector.metrics.dqs_calculator import (
     calculate_degradation_score,
@@ -40,7 +38,6 @@ from image_preprocessing_detector.schema import (
     PageLayoutSummary,
     PDFType,
 )
-
 
 # =============================================================================
 # Performance Constants
@@ -69,7 +66,7 @@ def sample_page_images() -> list[np.ndarray]:
 
         # Add different content patterns for variety
         for y in range(50 + (i * 10), 950, 30 + (i % 5)):
-            image[y:y + 2, 50:750] = 0
+            image[y : y + 2, 50:750] = 0
 
         images.append(image)
     return images
@@ -83,7 +80,7 @@ def large_batch_images() -> list[np.ndarray]:
         # Smaller images to keep memory manageable
         image = np.ones((500, 400, 3), dtype=np.uint8) * 255
         for y in range(25, 475, 20):
-            image[y:y + 1, 25:375] = 0
+            image[y : y + 1, 25:375] = 0
         images.append(image)
     return images
 
@@ -166,9 +163,7 @@ class TestThroughputTargets:
 
     @pytest.mark.benchmark
     @pytest.mark.performance
-    def test_batch_throughput(
-        self, sample_page_images: list[np.ndarray]
-    ) -> None:
+    def test_batch_throughput(self, sample_page_images: list[np.ndarray]) -> None:
         """Validate batch processing throughput."""
         blur_detector = BlurDetector()
 
@@ -252,7 +247,9 @@ class TestThroughputTargets:
         latency_per_page = (elapsed / num_pages) * 1000  # ms
 
         # Record baseline
-        print(f"\nFull pipeline: {throughput:.2f} pages/sec, {latency_per_page:.1f}ms/page")
+        print(
+            f"\nFull pipeline: {throughput:.2f} pages/sec, {latency_per_page:.1f}ms/page"
+        )
 
         # Validate against relaxed targets
         assert throughput >= CPU_THROUGHPUT_TARGET / 2, (
@@ -333,7 +330,7 @@ class TestMixedPDFTypeBatch:
         routing_decisions = []
 
         for i, (image, pdf_type) in enumerate(
-            zip(sample_page_images, mixed_pdf_types[:len(sample_page_images)])
+            zip(sample_page_images, mixed_pdf_types[: len(sample_page_images)])
         ):
             # Process image
             blur_result = blur_detector.detect(image)
@@ -365,12 +362,14 @@ class TestMixedPDFTypeBatch:
             recommendation, rationale = recommend_ocr_routing(
                 pdf_type, dqs, pre_ocr_risk, [layout]
             )
-            routing_decisions.append({
-                "page": i,
-                "pdf_type": pdf_type,
-                "recommendation": recommendation,
-                "degradation": degradation,
-            })
+            routing_decisions.append(
+                {
+                    "page": i,
+                    "pdf_type": pdf_type,
+                    "recommendation": recommendation,
+                    "degradation": degradation,
+                }
+            )
 
         # Verify all pages got valid routing decisions
         assert len(routing_decisions) == len(sample_page_images)
@@ -384,9 +383,7 @@ class TestRegressionBaselines:
 
     @pytest.mark.benchmark
     @pytest.mark.performance
-    def test_iqa_baseline(
-        self, sample_page_images: list[np.ndarray]
-    ) -> None:
+    def test_iqa_baseline(self, sample_page_images: list[np.ndarray]) -> None:
         """Record IQA processing baseline."""
         blur_detector = BlurDetector()
         noise_detector = NoiseDetector()
@@ -417,7 +414,7 @@ class TestRegressionBaselines:
         avg_noise = sum(times["noise"]) / len(times["noise"])
         avg_contrast = sum(times["contrast"]) / len(times["contrast"])
 
-        print(f"\nIQA Baselines:")
+        print("\nIQA Baselines:")
         print(f"  Blur: {avg_blur:.2f}ms avg")
         print(f"  Noise: {avg_noise:.2f}ms avg")
         print(f"  Contrast: {avg_contrast:.2f}ms avg")

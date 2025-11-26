@@ -20,7 +20,9 @@ import pytest
 from image_preprocessing_detector.schema import DocumentMetadata
 
 # Golden files directory
-GOLDEN_DIR = Path(__file__).parent.parent.parent / "data" / "test_fixtures" / "golden_files"
+GOLDEN_DIR = (
+    Path(__file__).parent.parent.parent / "data" / "test_fixtures" / "golden_files"
+)
 
 
 def load_golden_file(name: str) -> dict[str, Any]:
@@ -281,15 +283,38 @@ class TestSchemaDriftGuard:
         assert golden["pdf_type"] in valid_pdf_types
 
         # Routing recommendation enum values
-        valid_routing = ["ocr_fast", "ocr_advanced", "vision_simple", "vision_structured"]
+        valid_routing = [
+            "ocr_fast",
+            "ocr_advanced",
+            "vision_simple",
+            "vision_structured",
+        ]
         assert golden["ocr_routing_recommendation"] in valid_routing
 
         # Layout type enum values
-        valid_layouts = ["single_column", "multi_column", "three_column", "complex", "unknown"]
+        valid_layouts = [
+            "single_column",
+            "multi_column",
+            "three_column",
+            "complex",
+            "unknown",
+        ]
         assert golden["page_layout_summary"][0]["layout_type"] in valid_layouts
 
         # Issue type enum values
-        valid_issues = ["noise", "blur", "skew", "perspective", "low_contrast", "orientation", "low_dpi", "illumination", "jpeg_artifacts", "binarization", "bleed_through"]
+        valid_issues = [
+            "noise",
+            "blur",
+            "skew",
+            "perspective",
+            "low_contrast",
+            "orientation",
+            "low_dpi",
+            "illumination",
+            "jpeg_artifacts",
+            "binarization",
+            "bleed_through",
+        ]
         for issue in golden["pages"][0]["detected_issues"]:
             assert issue["type"] in valid_issues, f"Unknown issue type: {issue['type']}"
 
@@ -310,7 +335,9 @@ class TestSchemaDriftGuard:
         assert serialized["document_id"] == golden["document_id"]
         assert serialized["pdf_type"] == golden["pdf_type"]
         assert serialized["pre_ocr_risk"] == golden["pre_ocr_risk"]
-        assert serialized["dqs"]["degradation_score"] == golden["dqs"]["degradation_score"]
+        assert (
+            serialized["dqs"]["degradation_score"] == golden["dqs"]["degradation_score"]
+        )
 
 
 class TestSchemaVersioning:

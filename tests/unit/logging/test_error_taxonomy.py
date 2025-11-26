@@ -5,7 +5,7 @@ in both disabled and enabled modes.
 """
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,7 +13,6 @@ import pytest
 from image_preprocessing_detector.logging.errors import (
     ERROR_CATEGORIES,
     ERROR_HTTP_STATUS,
-    EXCEPTION_MAPPING,
     AppError,
     AuthenticationError,
     ErrorCategory,
@@ -29,7 +28,6 @@ from image_preprocessing_detector.logging.errors import (
     get_error_logger,
     map_exception_to_error,
 )
-
 
 # ============================================================================
 # Error Code Tests
@@ -213,12 +211,12 @@ class TestStructuredError:
 
     def test_timestamp_generated(self) -> None:
         """Test timestamp is generated."""
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         error = StructuredError(
             code=ErrorCode.INTERNAL_ERROR,
             message="Internal error",
         )
-        after = datetime.now(timezone.utc)
+        after = datetime.now(UTC)
 
         assert before <= error.timestamp <= after
 
@@ -600,10 +598,21 @@ class TestSentryEnabled:
 
         with patch.dict(
             os.environ,
-            {"IMGPREP_SENTRY_ENABLED": "true", "SENTRY_DSN": "https://test@sentry.io/123"},
+            {
+                "IMGPREP_SENTRY_ENABLED": "true",
+                "SENTRY_DSN": "https://test@sentry.io/123",
+            },
             clear=True,
         ):
-            with patch.dict("sys.modules", {"sentry_sdk": mock_sentry, "sentry_sdk.integrations.logging": MagicMock(LoggingIntegration=mock_logging_integration)}):
+            with patch.dict(
+                "sys.modules",
+                {
+                    "sentry_sdk": mock_sentry,
+                    "sentry_sdk.integrations.logging": MagicMock(
+                        LoggingIntegration=mock_logging_integration
+                    ),
+                },
+            ):
                 result = SentryIntegration.initialize()
 
                 assert result is True
@@ -620,7 +629,15 @@ class TestSentryEnabled:
             {"IMGPREP_SENTRY_ENABLED": "true"},
             clear=True,
         ):
-            with patch.dict("sys.modules", {"sentry_sdk": mock_sentry, "sentry_sdk.integrations.logging": MagicMock(LoggingIntegration=mock_logging_integration)}):
+            with patch.dict(
+                "sys.modules",
+                {
+                    "sentry_sdk": mock_sentry,
+                    "sentry_sdk.integrations.logging": MagicMock(
+                        LoggingIntegration=mock_logging_integration
+                    ),
+                },
+            ):
                 SentryIntegration.initialize(
                     dsn="https://custom@sentry.io/456",
                     environment="production",
@@ -721,7 +738,9 @@ class TestSentryEnabled:
         SentryIntegration._enabled = True
 
         with patch.dict("sys.modules", {"sentry_sdk": mock_sentry}):
-            SentryIntegration.set_user("user123", email="test@example.com", name="Test User")
+            SentryIntegration.set_user(
+                "user123", email="test@example.com", name="Test User"
+            )
 
             mock_sentry.set_user.assert_called_once_with(
                 {"id": "user123", "email": "test@example.com", "name": "Test User"}
@@ -737,7 +756,10 @@ class TestSentryEnabled:
 
         with patch.dict(
             os.environ,
-            {"IMGPREP_SENTRY_ENABLED": "true", "SENTRY_DSN": "https://test@sentry.io/123"},
+            {
+                "IMGPREP_SENTRY_ENABLED": "true",
+                "SENTRY_DSN": "https://test@sentry.io/123",
+            },
             clear=True,
         ):
             # Simulate import error by making the import raise

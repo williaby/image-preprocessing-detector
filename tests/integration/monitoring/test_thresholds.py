@@ -3,11 +3,7 @@
 Sprint 6.2.5: Validate alert thresholds with synthetic metrics.
 """
 
-import time
-from unittest.mock import MagicMock, patch
-
 import pytest
-
 
 # ============================================================================
 # Threshold Constants (from alert-rules.yml)
