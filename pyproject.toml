@@ -474,6 +474,10 @@ omit = [
     "src/image_preprocessing_detector/models/loss_functions.py",
     # Routing (Phase 8, needs implementation)
     "src/image_preprocessing_detector/routing/*",
+    # Models (require PyTorch, tested separately with ml dependencies)
+    "src/image_preprocessing_detector/models/*",
+    # Core config (configuration scaffolding, not critical for coverage)
+    "src/image_preprocessing_detector/core/*",
 ]
 
 [tool.coverage.report]

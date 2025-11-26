@@ -1,0 +1,41 @@
+# Ingress for Image Preprocessing Detector API
+# Exposes the API externally via NGINX Ingress Controller
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: imgprep-api
+  namespace: imgprep
+  labels:
+    app.kubernetes.io/name: image-preprocessing-detector
+    app.kubernetes.io/component: api
+  annotations:
+    # NGINX Ingress annotations
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    # Rate limiting at ingress level
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-connections: "10"
+    # SSL redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # For cert-manager TLS certificate
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  # TLS configuration (uncomment and configure for production)
+  # tls:
+  #   - hosts:
+  #       - imgprep.example.com
+  #     secretName: imgprep-tls
+  rules:
+    - host: imgprep.example.com  # Replace with your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: imgprep-api
+                port:
+                  name: http

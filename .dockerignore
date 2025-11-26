@@ -1,3 +1,6 @@
+# Docker ignore file for Image Preprocessing Detector
+# Reduces build context size and prevents sensitive files from being included
+
 # Git
 .git
 .gitignore
@@ -24,6 +27,10 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+*.whl
 
 # Virtual environments
 .venv/
@@ -64,11 +71,16 @@ site/
 tmp_cleanup/
 notebooks/
 validation/
-benchmarks/
+benchmarks/data/
 # Note: fuzz/ is NOT excluded because ClusterFuzzLite needs it
 modal/
+
+# Logs and temporary files
+logs/
 *.log
+tmp/
 *.tmp
+.tmp-*
 
 # Data (mount as volumes instead)
 data/
@@ -77,17 +89,41 @@ models/
 *.pt
 *.pth
 *.safetensors
+*.bin
 
-# Secrets
+# Environment files (security)
 .env
 .env.*
+!.env.example
 *.key
 *.pem
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+template_feedback/
+
+# Kubernetes manifests (separate deployment)
+k8s/
+
+# Docker files (don't nest)
+Dockerfile*
+docker-compose*.yaml
+.dockerignore
+
+# Development files
+CLAUDE.md
+CHANGELOG.md
+CONTRIBUTING.md
+Makefile
+noxfile.py
+conftest.py
+pyproject.toml.bak
+
+# Tests (optional - uncomment to exclude tests from production image)
+# tests/
 
 # OS
 .DS_Store
 Thumbs.db
-
-# CI/CD artifacts
-.github/
-template_feedback/

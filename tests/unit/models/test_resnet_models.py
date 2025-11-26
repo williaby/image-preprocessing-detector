@@ -9,13 +9,14 @@ Tests cover:
 - Error handling for invalid configurations
 """
 
-from unittest.mock import MagicMock
-
 import pytest
 
-torch = pytest.importorskip("torch", reason="PyTorch required for ResNet models tests")
+# Skip entire module if PyTorch is not available
+torch = pytest.importorskip("torch", reason="PyTorch required for ResNet model tests")
 
-import torch.nn as nn  # noqa: E402
+from unittest.mock import MagicMock
+
+import torch.nn as nn
 
 from image_preprocessing_detector.models.resnet_student import (  # noqa: E402
     ResNetStudent,

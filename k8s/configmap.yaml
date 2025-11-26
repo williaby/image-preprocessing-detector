@@ -1,0 +1,41 @@
+# ConfigMap for Image Preprocessing Detector API
+# Non-sensitive configuration values
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: imgprep-config
+  namespace: imgprep
+  labels:
+    app.kubernetes.io/name: image-preprocessing-detector
+    app.kubernetes.io/component: api
+data:
+  # API Metadata
+  IMGPREP_API_TITLE: "Image Preprocessing Detector API"
+  IMGPREP_API_VERSION: "0.1.0"
+  IMGPREP_API_DESCRIPTION: "Intelligent image preprocessing detection for RAG document pipelines"
+
+  # CORS Configuration
+  IMGPREP_API_CORS_ENABLED: "true"
+  IMGPREP_API_CORS_ORIGINS: '["*"]'
+
+  # Rate Limiting
+  IMGPREP_API_RATE_LIMIT_ENABLED: "true"
+  IMGPREP_API_RATE_LIMIT_REQUESTS: "100"
+  IMGPREP_API_RATE_LIMIT_WINDOW_SECONDS: "60"
+
+  # Processing Limits
+  IMGPREP_API_MAX_BATCH_SIZE: "100"
+  IMGPREP_API_MAX_FILE_SIZE_MB: "50"
+
+  # Timeouts
+  IMGPREP_API_PROCESS_TIMEOUT_SECONDS: "300"
+  IMGPREP_API_BATCH_TIMEOUT_SECONDS: "3600"
+
+  # Processing Options
+  IMGPREP_API_DEFAULT_PREFER_GPU: "false"
+  IMGPREP_API_DEFAULT_ENABLE_CORRECTIONS: "true"
+  IMGPREP_API_DEFAULT_ENABLE_TEACHER: "false"
+
+  # Logging
+  IMGPREP_API_LOG_REQUEST_BODY: "false"
+  IMGPREP_API_LOG_RESPONSE_BODY: "false"
