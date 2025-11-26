@@ -26,6 +26,8 @@ import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+
+from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -158,7 +160,7 @@ class DriftResult:
     severity: DriftSeverity
     reference_stats: HistogramStats | None
     current_stats: HistogramStats | None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=utc_now)
     sample_ids: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -213,15 +215,15 @@ class ReferenceDistribution:
             histogram=data["histogram"],
             bin_edges=data["bin_edges"],
             stats=HistogramStats.from_dict(data["stats"]),
-            created_at=datetime.fromisoformat(data["created_at"]),
-            expires_at=datetime.fromisoformat(data["expires_at"]),
+            created_at=ensure_aware(datetime.fromisoformat(data["created_at"])),
+            expires_at=ensure_aware(datetime.fromisoformat(data["expires_at"])),
             sample_count=data["sample_count"],
             checksum=data["checksum"],
         )
 
     def is_expired(self) -> bool:
         """Check if reference distribution has expired."""
-        return datetime.utcnow() > self.expires_at
+        return utc_now() > self.expires_at
 
     def verify_checksum(self) -> bool:
         """Verify the checksum of the distribution."""
@@ -636,7 +638,7 @@ class ReferenceStore:
         """
         feature_name = feature.value if isinstance(feature, FeatureType) else feature
 
-        now = datetime.utcnow()
+        now = utc_now()
         ref = ReferenceDistribution(
             feature=feature_name,
             histogram=histogram,

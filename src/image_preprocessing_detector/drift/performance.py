@@ -16,6 +16,8 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+
+from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
@@ -93,7 +95,7 @@ class EvaluationResult:
     def from_dict(cls, data: dict[str, Any]) -> "EvaluationResult":
         """Create from dictionary."""
         return cls(
-            timestamp=datetime.fromisoformat(data["timestamp"]),
+            timestamp=ensure_aware(datetime.fromisoformat(data["timestamp"])),
             model_version=data["model_version"],
             dataset_name=data["dataset_name"],
             dataset_version=data["dataset_version"],
@@ -317,7 +319,7 @@ class MetricsStore:
                 for item in data:
                     result = EvaluationResult.from_dict(item)
                     # Skip expired results
-                    cutoff = datetime.utcnow() - timedelta(days=self.retention_days)
+                    cutoff = utc_now() - timedelta(days=self.retention_days)
                     if result.timestamp > cutoff:
                         self._results.append(result)
 
@@ -381,7 +383,7 @@ class MetricsStore:
         Returns:
             Baseline result (aggregated) or None
         """
-        cutoff = datetime.utcnow() - timedelta(days=window_days)
+        cutoff = utc_now() - timedelta(days=window_days)
         filtered = [
             r
             for r in self._filter_results(model_version, dataset_name)
@@ -405,7 +407,7 @@ class MetricsStore:
 
         # Return aggregated baseline
         return EvaluationResult(
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             model_version=filtered[-1].model_version,
             dataset_name=filtered[-1].dataset_name,
             dataset_version="baseline_aggregate",
@@ -433,7 +435,7 @@ class MetricsStore:
         Returns:
             List of (timestamp, value) tuples
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = utc_now() - timedelta(days=days)
         filtered = [
             r
             for r in self._filter_results(model_version, dataset_name)
@@ -468,7 +470,7 @@ class MetricsStore:
         Returns:
             Number of results removed
         """
-        cutoff = datetime.utcnow() - timedelta(days=self.retention_days)
+        cutoff = utc_now() - timedelta(days=self.retention_days)
         original_count = len(self._results)
         self._results = [r for r in self._results if r.timestamp > cutoff]
 
@@ -558,7 +560,7 @@ class PerformanceEvaluator:
 
         # Create result
         result = EvaluationResult(
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             model_version=model_version,
             dataset_name=Path(self.config.dataset_path).name,
             dataset_version=dataset_version,
@@ -709,7 +711,7 @@ class PerformanceEvaluator:
                 })
 
         return PerformanceReport(
-            timestamp=datetime.utcnow(),
+            timestamp=utc_now(),
             model_version=current.model_version,
             current_evaluation=current,
             baseline_evaluation=baseline,
@@ -756,7 +758,7 @@ class PerformanceJob:
             return True
 
         next_run = self._last_run + timedelta(hours=self.config.evaluation_interval_hours)
-        return datetime.utcnow() >= next_run
+        return utc_now() >= next_run
 
     def run(
         self,
@@ -793,7 +795,7 @@ class PerformanceJob:
             report = self.evaluator.generate_report(result)
 
             # Update last run time
-            self._last_run = datetime.utcnow()
+            self._last_run = utc_now()
 
             # Save report
             self._save_report(report)
@@ -839,7 +841,7 @@ class PerformanceJob:
                 data = json.load(f)
 
             return PerformanceReport(
-                timestamp=datetime.fromisoformat(data["timestamp"]),
+                timestamp=ensure_aware(datetime.fromisoformat(data["timestamp"])),
                 model_version=data["model_version"],
                 current_evaluation=EvaluationResult.from_dict(data["current_evaluation"]),
                 baseline_evaluation=(
@@ -951,7 +953,7 @@ def get_dashboard_panel_data(
         ]
 
     panel_data: dict[str, Any] = {
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": utc_now().isoformat(),
         "time_range_days": days,
         "metrics": {},
     }

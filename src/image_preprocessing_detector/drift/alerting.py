@@ -16,6 +16,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+
+from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -111,7 +113,7 @@ class DriftAlert:
     threshold: float
     baseline_value: float | None
     message: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=utc_now)
     samples: list[DriftSample] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     acknowledged: bool = False
@@ -149,7 +151,7 @@ class DriftAlert:
             threshold=data["threshold"],
             baseline_value=data.get("baseline_value"),
             message=data["message"],
-            timestamp=datetime.fromisoformat(data["timestamp"]),
+            timestamp=ensure_aware(datetime.fromisoformat(data["timestamp"])),
             samples=[],  # Simplified - samples not restored
             metadata=data.get("metadata", {}),
             acknowledged=data.get("acknowledged", False),
@@ -439,7 +441,7 @@ class AlertHistory:
                 with open(history_file) as f:
                     data = json.load(f)
 
-                cutoff = datetime.utcnow() - timedelta(days=self.retention_days)
+                cutoff = utc_now() - timedelta(days=self.retention_days)
 
                 for item in data.get("alerts", []):
                     alert = DriftAlert.from_dict(item)
@@ -447,7 +449,7 @@ class AlertHistory:
                         self._alerts[alert.alert_id] = alert
 
                 for key, ts in data.get("last_alert_times", {}).items():
-                    dt = datetime.fromisoformat(ts)
+                    dt = ensure_aware(datetime.fromisoformat(ts))
                     if dt > cutoff:
                         self._last_alert_times[key] = dt
 
@@ -505,7 +507,7 @@ class AlertHistory:
             return False
 
         cooldown_until = last_time + timedelta(minutes=cooldown_minutes)
-        return datetime.utcnow() < cooldown_until
+        return utc_now() < cooldown_until
 
     def _get_cooldown_key(self, alert: DriftAlert) -> str:
         """Get cooldown key for an alert."""
@@ -525,7 +527,7 @@ class AlertHistory:
         Returns:
             List of recent alerts
         """
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = utc_now() - timedelta(hours=hours)
         alerts = [a for a in self._alerts.values() if a.timestamp > cutoff]
 
         if severity:
@@ -557,7 +559,7 @@ class AlertHistory:
         Returns:
             Number of alerts removed
         """
-        cutoff = datetime.utcnow() - timedelta(days=self.retention_days)
+        cutoff = utc_now() - timedelta(days=self.retention_days)
 
         old_alerts = [
             aid for aid, alert in self._alerts.items() if alert.timestamp < cutoff
@@ -844,7 +846,7 @@ class AlertManager:
                     DriftSample(
                         sample_id=sample_id,
                         value=value,
-                        timestamp=datetime.utcnow(),
+                        timestamp=utc_now(),
                     )
                 )
 

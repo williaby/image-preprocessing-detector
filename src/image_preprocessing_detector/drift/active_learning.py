@@ -17,6 +17,8 @@ import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+
+from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 from pathlib import Path
 from typing import Any, Callable
 
@@ -99,7 +101,7 @@ class HarvestedSample:
         return cls(
             sample_id=data["sample_id"],
             source_path=data["source_path"],
-            harvest_time=datetime.fromisoformat(data["harvest_time"]),
+            harvest_time=ensure_aware(datetime.fromisoformat(data["harvest_time"])),
             harvest_reason=HarvestReason(data["harvest_reason"]),
             entropy=data.get("entropy"),
             agreement_score=data.get("agreement_score"),
@@ -144,7 +146,7 @@ class HarvestManifest:
         samples = [HarvestedSample.from_dict(s) for s in data.get("samples", [])]
         return cls(
             manifest_id=data["manifest_id"],
-            created_at=datetime.fromisoformat(data["created_at"]),
+            created_at=ensure_aware(datetime.fromisoformat(data["created_at"])),
             samples=samples,
             total_count=data["total_count"],
             approved_count=data.get("approved_count", 0),
@@ -397,7 +399,7 @@ class SampleHarvester:
             HarvestedSample object
         """
         self._sample_counter += 1
-        sample_id = f"sample_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{self._sample_counter:04d}"
+        sample_id = f"sample_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._sample_counter:04d}"
 
         # Compute checksum if enabled
         checksum = ""
@@ -407,7 +409,7 @@ class SampleHarvester:
         sample = HarvestedSample(
             sample_id=sample_id,
             source_path=source_path,
-            harvest_time=datetime.utcnow(),
+            harvest_time=utc_now(),
             harvest_reason=reason,
             entropy=entropy,
             agreement_score=agreement,
@@ -459,7 +461,7 @@ class SampleHarvester:
             return False
 
         # Create batch subdirectory
-        batch_dir = self.output_path / datetime.utcnow().strftime("%Y%m%d")
+        batch_dir = self.output_path / utc_now().strftime("%Y%m%d")
         batch_dir.mkdir(exist_ok=True)
 
         # Copy with sample_id prefix
@@ -525,11 +527,11 @@ class ManifestGenerator:
             HarvestManifest object
         """
         self._manifest_counter += 1
-        manifest_id = f"manifest_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{self._manifest_counter:04d}"
+        manifest_id = f"manifest_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._manifest_counter:04d}"
 
         manifest = HarvestManifest(
             manifest_id=manifest_id,
-            created_at=datetime.utcnow(),
+            created_at=utc_now(),
             samples=samples,
             total_count=len(samples),
             metadata=metadata or {},
@@ -549,7 +551,7 @@ class ManifestGenerator:
             Path to saved manifest file
         """
         # Save to dated subdirectory
-        date_dir = self.output_dir / datetime.utcnow().strftime("%Y%m")
+        date_dir = self.output_dir / utc_now().strftime("%Y%m")
         date_dir.mkdir(exist_ok=True)
 
         manifest_path = date_dir / f"{manifest.manifest_id}.json"
