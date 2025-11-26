@@ -14,14 +14,14 @@ The Image Preprocessing Detector follows a phased development approach spanning 
 
 ## Roadmap Overview
 
-```
+```text
 Phase 0: Foundation (Weeks 1-3) ✅ COMPLETE
 Phase 1: MVP Classical (Weeks 4-7) 🔄 IN PROGRESS
 Phase 2: ML for IQA (Weeks 8-11) 📋 PLANNED
 Phase 3: ML for Layout (Weeks 12-16) 📋 PLANNED
 Phase 4: Production (Weeks 17-20) 📋 PLANNED
 Phase 5: Continuous Improvement (Ongoing) 📋 PLANNED
-```
+```text
 
 ## Phase 0: Foundation & Scaffolding
 
@@ -35,11 +35,13 @@ Establish foundational project structure, development tools, and evaluation fram
 ### Deliverables
 
 **Core Infrastructure**:
+
 - ✅ Poetry project with Python 3.12
 - ✅ Modular package layout (ingestion, detection, correction, output, utils)
 - ✅ Comprehensive dependency management with optional groups (ml, api, dev)
 
 **JSON Schema (Pydantic v2)**:
+
 - ✅ DetectedIssue: Image quality issues with validation
 - ✅ DocumentElement: Document elements with hybrid IQA support
 - ✅ PageMetadata: Per-page metadata with transform history
@@ -47,12 +49,14 @@ Establish foundational project structure, development tools, and evaluation fram
 - ✅ COCO-aligned bounding boxes for LayoutParser integration
 
 **Development Infrastructure**:
+
 - ✅ Structured logging with structlog + rich console
 - ✅ Pre-commit hooks (Black, Ruff, MyPy, Bandit, Safety)
 - ✅ CI/CD pipeline with GitHub Actions
 - ✅ Comprehensive test suite (163 tests, 94%+ coverage)
 
 **Documentation**:
+
 - ✅ README with quick start
 - ✅ PROJECT_PLAN with 50+ page implementation roadmap
 - ✅ ARCHITECTURE_SUMMARY with design decisions
@@ -79,24 +83,28 @@ Build minimum viable product using classical computer vision techniques for imme
 ### Deliverables
 
 **PDF Ingestion** ([ingestion/](../../src/image_preprocessing_detector/ingestion/)):
+
 - ✅ PyMuPDF-based PDF extraction
 - ✅ Multi-format image loading (PNG, JPEG, TIFF)
 - ✅ DPI standardization to 300 DPI
 - ✅ Image normalization and validation
 
 **Text Detection Gate** ([detection/text_gate.py](../../src/image_preprocessing_detector/detection/text_gate.py)):
+
 - ✅ Ensemble heuristics (< 10ms per page)
 - ✅ Stroke width analysis
 - ✅ Connected component analysis
 - ✅ Edge density patterns
 
 **Classical IQA** ([detection/iqa_classical.py](../../src/image_preprocessing_detector/detection/iqa_classical.py)):
+
 - ✅ Blur detection (Laplacian variance)
 - ✅ Skew detection (Hough transform)
 - ✅ Contrast assessment (histogram analysis)
 - ✅ Configurable thresholds
 
 **Correction Pipeline** ([correction/](../../src/image_preprocessing_detector/correction/)):
+
 - ✅ Deskew (affine rotation)
 - ✅ CLAHE (contrast enhancement)
 - ✅ Sharpening (unsharp mask)
@@ -104,6 +112,7 @@ Build minimum viable product using classical computer vision techniques for imme
 - ✅ Guardrails for validation
 
 **CLI Tool**:
+
 - ✅ Click-based interface
 - ✅ Single file and batch processing
 - ✅ JSON output generation
@@ -132,24 +141,28 @@ Replace classical IQA with deep learning models for improved accuracy and robust
 ### Deliverables
 
 **ML IQA Models**:
+
 - [ ] MobileNetV3/EfficientNet backbone
 - [ ] Multi-label classification (blur, skew, contrast, noise)
 - [ ] Training pipeline with Albumentations augmentation
 - [ ] ONNX export for production inference
 
 **Dataset Preparation**:
+
 - [ ] Custom IQA dataset (10,000+ images)
 - [ ] Multi-label annotations
 - [ ] Balanced class distribution
 - [ ] Train/val/test splits
 
 **Training Infrastructure**:
+
 - [ ] PyTorch training loop
 - [ ] Wandb experiment tracking
 - [ ] Hyperparameter tuning
 - [ ] Model selection and validation
 
 **Evaluation**:
+
 - [ ] Per-class precision/recall/F1
 - [ ] mAP > 0.88 target
 - [ ] Confusion matrix analysis
@@ -178,24 +191,28 @@ Add YOLOv8-based layout detection for text documents with hybrid per-element IQA
 ### Deliverables
 
 **YOLOv8 Layout Detection**:
+
 - [ ] YOLOv8n model fine-tuning
 - [ ] Element detection (tables, images, text, handwriting, formulas)
 - [ ] COCO-aligned bounding boxes
 - [ ] Batch inference optimization
 
 **Hybrid IQA Integration**:
+
 - [ ] Per-element quality assessment
 - [ ] Combined full-page + element-level metadata
 - [ ] DocumentElement schema population
 - [ ] LayoutParser compatibility
 
 **Training**:
+
 - [ ] PubLayNet dataset (360K+ images)
 - [ ] Custom dataset augmentation
 - [ ] Transfer learning from COCO weights
 - [ ] 100 epoch training
 
 **Optimization**:
+
 - [ ] ONNX export
 - [ ] TensorRT optimization (optional)
 - [ ] Batch processing (32+ images)
@@ -223,30 +240,35 @@ Prepare system for production deployment with API, monitoring, and scalability.
 ### Deliverables
 
 **REST API**:
+
 - [ ] FastAPI service
 - [ ] Async processing with Celery
 - [ ] File upload endpoints
 - [ ] JSON response formatting
 
 **Deployment**:
+
 - [ ] Docker containers
 - [ ] Kubernetes manifests
 - [ ] Horizontal scaling
 - [ ] GPU resource management
 
 **Monitoring**:
+
 - [ ] Prometheus metrics
 - [ ] Grafana dashboards
 - [ ] Distributed tracing (Jaeger)
 - [ ] Error tracking (Sentry)
 
 **Documentation**:
+
 - [ ] API reference (OpenAPI)
 - [ ] Deployment guide
 - [ ] Operations runbook
 - [ ] Performance tuning guide
 
 **Security**:
+
 - [ ] Input validation
 - [ ] Rate limiting
 - [ ] Authentication/authorization
@@ -266,24 +288,28 @@ Maintain and enhance system based on production usage and feedback.
 ### Focus Areas
 
 **Model Improvements**:
+
 - [ ] Active learning pipeline
 - [ ] Model retraining automation
 - [ ] A/B testing framework
 - [ ] Performance monitoring
 
 **Feature Additions**:
+
 - [ ] Additional correction algorithms
 - [ ] New element types
 - [ ] Enhanced metadata
 - [ ] Downstream integrations
 
 **Performance Optimization**:
+
 - [ ] Latency reduction
 - [ ] Throughput improvements
 - [ ] Memory optimization
 - [ ] GPU utilization
 
 **User Feedback**:
+
 - [ ] Bug fixes
 - [ ] Feature requests
 - [ ] Documentation updates
@@ -291,13 +317,13 @@ Maintain and enhance system based on production usage and feedback.
 
 ## Milestone Timeline
 
-```
+```text
 Week 0  ────────────────────────────────────────────────────────────▶ Week 20+
    │         │         │         │         │         │         │
    │   Phase 0   │   Phase 1   │   Phase 2   │   Phase 3   │ Phase 4 │ Phase 5
    │             │             │             │             │         │
    ✅ DONE      🔄 NOW        📋 NEXT       📋 PLANNED    📋 PLANNED  📋 ONGOING
-```
+```text
 
 ## Dependencies and Risks
 
@@ -332,6 +358,7 @@ Week 0  ────────────────────────
 
 **Phase 0**: ✅ Complete (100%)
 **Phase 1**: 🔄 In Progress (~85%)
+
 - Ingestion: ✅ Complete
 - Text Gate: ✅ Complete
 - Classical IQA: ✅ Complete

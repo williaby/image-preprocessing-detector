@@ -13,11 +13,13 @@ Manual annotation sessions correct weak supervision labels by having human annot
 ## Prerequisites
 
 1. **Weak supervision labels generated**:
+
    ```bash
    python -m data.weak_supervision <input_dir> <output_dir>
    ```
 
 2. **Ambiguous cases sampled**:
+
    ```bash
    python scripts/sample_ambiguous_cases.py \
        --input-dir data/weak_supervision_labels \
@@ -26,6 +28,7 @@ Manual annotation sessions correct weak supervision labels by having human annot
    ```
 
 3. **Streamlit installed**:
+
    ```bash
    pip install streamlit
    # or
@@ -46,10 +49,12 @@ This will open a web browser with the annotation interface.
 ### UI Components
 
 **Left Panel - Image Display**:
+
 - Full resolution image preview
 - Quality metric scores (BRISQUE, NIQE, Laplacian, etc.)
 
 **Right Panel - Label Correction**:
+
 - 6 quality issue checkboxes:
   - ✅ Noise
   - ✅ Blur
@@ -62,6 +67,7 @@ This will open a web browser with the annotation interface.
 - Notes field for observations
 
 **Sidebar**:
+
 - Progress tracker (completed/total)
 - File navigation (Previous/Next buttons)
 - Configuration settings
@@ -80,77 +86,95 @@ For each image:
 ## Quality Issue Definitions
 
 ### 1. Noise
+
 **Definition**: Visible grain, speckles, or random pixel variations
 
 **Examples**:
+
 - Salt and pepper noise
 - Gaussian noise
 - ISO noise from low-light scans
 - Film grain artifacts
 
 **Guidelines**:
+
 - ✅ Check if noise is distracting or affects readability
 - ❌ Don't check for minor JPEG compression artifacts
 
 ### 2. Blur
+
 **Definition**: Image is out of focus, motion-blurred, or lacks sharp edges
 
 **Examples**:
+
 - Motion blur from camera shake
 - Defocus blur (out of focus)
 - Gaussian blur from low-quality scanning
 - Radial blur
 
 **Guidelines**:
+
 - ✅ Check if text edges are noticeably soft
 - ❌ Don't check for minor softness (slight blur is common)
 
 ### 3. Skew
+
 **Definition**: Image is rotated from horizontal (text lines not level)
 
 **Examples**:
+
 - Document scanned at an angle
 - Camera photo not aligned with page
 - Minor rotation (1-10°)
 
 **Guidelines**:
+
 - ✅ Check if text lines are visibly tilted
 - ❌ Don't check for very minor skew (<1°)
 
 ### 4. Perspective
+
 **Definition**: Image has trapezoid distortion (not rectangular)
 
 **Examples**:
+
 - Camera photo taken at an angle
 - Page not flat during scanning
 - Perspective warp from camera lens
 
 **Guidelines**:
+
 - ✅ Check if page edges are not parallel
 - ❌ Don't check for minor lens distortion
 
 ### 5. Low Contrast
+
 **Definition**: Image appears washed out, faded, or lacks dynamic range
 
 **Examples**:
+
 - Faded scans
 - Overexposed/underexposed photos
 - Low contrast between text and background
 - Histogram bunching (not using full range)
 
 **Guidelines**:
+
 - ✅ Check if text is hard to read due to low contrast
 - ❌ Don't check for normal document contrast
 
 ### 6. Orientation
+
 **Definition**: Image needs rotation (90°, 180°, or 270°)
 
 **Examples**:
+
 - Portrait document in landscape orientation
 - Upside-down scan
 - Rotated 90° left or right
 
 **Guidelines**:
+
 - ✅ Check if document is not in reading orientation
 - ❌ Don't check for minor skew (that's "Skew", not "Orientation")
 
@@ -166,31 +190,37 @@ For each image:
 ### Edge Cases
 
 **Borderline Blur**:
+
 - If you're unsure, zoom in on text edges
 - Check if edges are crisp or noticeably soft
 - When in doubt, check the Laplacian variance score (>150 = sharp, <80 = blurry)
 
 **Mild Artifacts**:
+
 - Minor JPEG compression: ❌ Not noise (unless severe)
 - Slight graininess: ❌ Not noise (unless distracting)
 - Watermarks: Add to notes, don't mark as noise
 
 **Multiple Issues**:
+
 - An image can have multiple quality issues
 - Check all that apply (e.g., blur + low contrast)
 
 **Clean Images**:
+
 - If image looks perfect, uncheck all boxes
 - This is valid ground truth (high quality image)
 
 ## Session Planning
 
 ### Sprint 3.3.3: Session 1 (4 hours)
+
 - **Goal**: Annotate 1,000 images
 - **Rate**: ~4 images/minute (15 seconds each)
 - **Breaks**: Take 5-minute break every 30 minutes
 
 **Timeline**:
+
 - 0:00-0:30 → 120 images
 - 0:30-0:35 → Break
 - 0:35-1:05 → 120 images
@@ -199,6 +229,7 @@ For each image:
 - Total: ~1,000 images
 
 ### Sprint 3.3.4: Session 2 (4 hours)
+
 - **Goal**: Annotate remaining 1,000 images
 - **Process**: Same as Session 1
 
@@ -252,6 +283,7 @@ Corrected labels are saved to `data/corrected_labels/` as JSON files:
 ## Troubleshooting
 
 **UI not loading**:
+
 ```bash
 # Check Streamlit version
 streamlit --version
@@ -261,11 +293,13 @@ pip install --upgrade streamlit
 ```
 
 **Image not found**:
+
 - Check that image paths in labels JSON are correct
 - Verify images exist on disk
 - Use absolute paths if needed
 
 **Slow loading**:
+
 - Images are loaded on-demand (not cached)
 - Large images (>10MB) may load slowly
 - Consider downscaling very large images

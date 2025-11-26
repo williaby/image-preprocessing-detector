@@ -4,12 +4,11 @@
 
 default: true
 
-# MD013 - Line length: 120 chars (matching CLAUDE.md standards)
-MD013:
-  line_length: 120
-  heading_line_length: 120
-  code_block_line_length: 120
-  tables: false  # Don't enforce on tables (hard to control)
+# MD013 - Line length: Disabled for documentation
+# Rationale: Strict line length in documentation creates maintenance burden,
+# awkward line breaks, and harder-to-read diffs. Most major OSS projects
+# disable this rule for docs. See: https://github.com/DavidAnson/markdownlint/issues/473
+MD013: false
 
 # MD024 - Allow duplicate headings in different sections
 MD024:
@@ -20,3 +19,15 @@ MD033: false
 
 # MD041 - First line doesn't have to be a heading
 MD041: false
+
+# MD060 - Table column style (compact tables are acceptable)
+MD060: false
+
+# MD036 - Allow emphasis to highlight sections (common in technical docs)
+MD036: false
+
+# MD051 - Link fragments validation (can cause false positives with complex ToCs)
+MD051: false
+
+# MD025 - Allow multiple top-level headings (needed for some docs with preamble)
+MD025: false

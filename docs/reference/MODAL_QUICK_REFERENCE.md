@@ -42,9 +42,10 @@ poetry run modal run tmp_cleanup/modal_gpu_test.py
 # device_name: Tesla T4
 # torch_version: 2.5.1+cu124
 # ==============================
-```
+```text
 
 **Test Results** (verified 2025-11-16):
+
 - ✅ Authentication: `williaby` profile active
 - ✅ GCS Secret: `gcs-credentials` exists (created 2025-11-14)
 - ✅ GPU Access: Tesla T4 with CUDA available, PyTorch 2.5.1+cu124
@@ -63,16 +64,17 @@ open https://modal.com/apps                         # Dashboard
 # Alternatively, activate poetry shell first
 poetry shell
 modal run tmp_cleanup/modal_gpu_test.py  # Then use modal directly
-```
+```text
 
 **Helper script commands** (for reference):
+
 ```bash
 ./scripts/modal_helpers.sh test-gpu        # Test GPU access
 ./scripts/modal_helpers.sh train-phase2    # Start Phase 2 training
 ./scripts/modal_helpers.sh monitor         # Open dashboard
 ./scripts/modal_helpers.sh costs           # Check usage
 ./scripts/modal_helpers.sh secrets         # List secrets
-```
+```text
 
 ### First-Time Setup (Reference Only - Already Done)
 
@@ -93,7 +95,7 @@ poetry run modal token new
 # This encodes the key to base64 and creates Modal secret with:
 #   Secret name: gcs-credentials
 #   Environment variable: GCP_SA_KEY (base64 encoded)
-```
+```text
 
 **Important**: GCS credentials are stored as base64-encoded in Modal for portability.
 The helper script handles encoding automatically.
@@ -142,7 +144,7 @@ with ThreadPoolExecutor(max_workers=32) as executor:
     futures = [executor.submit(download_blob, blob) for blob in blobs]
     for future in as_completed(futures):
         result = future.result()  # Handle result
-```
+```text
 
 **Performance**: ~3,500 files/min with 32 workers (50,000 files in ~14 minutes)
 
@@ -169,12 +171,14 @@ gcs_secret = modal.Secret.from_name("gcs-hmac-credentials")
 def train():
     # Dataset accessible at /dataset/* (streaming, no download)
     pass
-```
+```text
 
 **To create HMAC credentials**:
+
 1. Go to Google Cloud Console → Storage → Settings → Interoperability
 2. Create HMAC key for service account
 3. Store `Access Key` and `Secret` in Modal secret:
+
    ```bash
    modal secret create gcs-hmac-credentials \
        GOOGLE_ACCESS_KEY_ID=<access_key> \
@@ -199,7 +203,7 @@ image = (
 )
 
 # Then use: gsutil -m rsync -r gs://bucket/path /tmp/data
-```
+```text
 
 **Not recommended**: Adds significant image build time and complexity.
 
@@ -223,7 +227,7 @@ poetry run modal run --detach modal/train_phase2_iqa.py
 
 # Monitor from CLI
 poetry run modal app logs iqa-phase2-training --follow
-```
+```text
 
 **CRITICAL**: Always use `--detach` flag when running training jobs. Without it, the job will stop if your local terminal disconnects.
 
@@ -260,7 +264,7 @@ poetry run modal app logs iqa-phase2-training --follow
 poetry run modal run modal/train_phase3_yolov8.py
 
 # Runs 50-80 hours continuously
-```
+```text
 
 **Key Details:**
 
@@ -287,6 +291,7 @@ poetry run modal run modal/train_phase3_yolov8.py
 ### Project A Device Strategy
 
 **Training (Phase 2-3)**:
+
 - **Phase 2 Primary**: Modal **L4 GPU** ($0.80/h) - optimal speed/cost for ResNet
 - **Phase 3 Primary**: Modal **A10 GPU** ($1.10/h) - optimal for long YOLO training
 - **Experimentation**: Modal **T4 GPU** ($0.59/h) - lowest cost for testing
@@ -294,6 +299,7 @@ poetry run modal run modal/train_phase3_yolov8.py
 - **Cost**: Optimized with $30/month free tier, total ~$13-32 for both phases
 
 **Production Inference** (when models are deployed):
+
 - **Preferred**: Local GPU (if available and adequate)
 - **Fallback**: Local CPU (ResNet-18 student is CPU-friendly)
 - **NOT Modal**: Modal GPU is not used for steady-state inference
@@ -301,6 +307,7 @@ poetry run modal run modal/train_phase3_yolov8.py
 ### When to Use Modal
 
 **✅ USE Modal for:**
+
 - Training ResNet-50 teacher model (L4 GPU recommended)
 - Training ResNet-18 student model (L4 GPU recommended)
 - Training YOLO-Doc layout detector (A10 GPU recommended)
@@ -308,11 +315,13 @@ poetry run modal run modal/train_phase3_yolov8.py
 - Dataset evaluation runs (T4 or L4 depending on size)
 
 **GPU Selection Guide:**
+
 - **T4** ($0.59/h): Quick experiments, small tests, hyperparameter search
 - **L4** ($0.80/h): Phase 2 training, medium models, best speed/cost
 - **A10** ($1.10/h): Phase 3 training, long runs, large models
 
 **❌ DON'T use Modal for:**
+
 - Production document processing
 - Routine inference on documents
 - Real-time API endpoints
@@ -324,7 +333,7 @@ poetry run modal run modal/train_phase3_yolov8.py
 
 ### Storage Structure
 
-```
+```text
 gs://rag-pipeline-models/
   image-preprocessing-detector/
     resnet50_teacher/
@@ -334,7 +343,7 @@ gs://rag-pipeline-models/
           training_config.yaml
           metrics.json
           commit_hash.txt
-```
+```text
 
 ### Upload/Download
 
@@ -347,7 +356,7 @@ gsutil cp gs://rag-pipeline-models/image-preprocessing-detector/resnet50_teacher
 
 # Verify upload
 gsutil du -sh gs://rag-pipeline-models/
-```
+```text
 
 ---
 
@@ -380,6 +389,7 @@ gsutil du -sh gs://rag-pipeline-models/
 | A10 | 10-17h | $11.00-$18.70 | $0 | ⚠️ Overkill for ResNet, use for experimentation |
 
 **Recommendation**: **L4 GPU**
+
 - 35% faster than T4, still within free tier
 - Better performance without significant cost increase
 - Completes training in 13-21 hours vs 18-30 hours
@@ -394,6 +404,7 @@ gsutil du -sh gs://rag-pipeline-models/
 | L40S | 28-40h | $54.60-$78.00 | $24.60-$48.00 | ⚠️ Expensive, diminishing returns |
 
 **Recommendation**: **A10 GPU**
+
 - 44% faster than L4, slightly higher cost
 - Completes in ~2 days instead of ~3 days
 - Better utilization of time vs money tradeoff
@@ -401,11 +412,13 @@ gsutil du -sh gs://rag-pipeline-models/
 ### Cost Optimization Strategy
 
 **Recommended Approach**:
+
 1. **Phase 2**: Use **L4** ($0.80/h) - completes within free tier, 35% faster than T4
 2. **Phase 3**: Use **A10** ($1.10/h) - best speed/cost balance for long training runs
 3. **Experimentation**: Use **T4** ($0.59/h) for quick tests and hyperparameter tuning
 
 **Total Estimated Costs**:
+
 - Phase 2 (L4): $0 (within $30 free tier)
 - Phase 3 (A10): ~$13-32 (after remaining free tier credit)
 - **Combined**: ~$13-32 total for both phases
@@ -418,7 +431,7 @@ open https://modal.com/settings/billing
 
 # Warning: $10/month
 # Critical: $20/month
-```
+```text
 
 ### Check Usage
 
@@ -428,7 +441,7 @@ poetry run modal profile current
 
 # Dashboard
 open https://modal.com/usage
-```
+```text
 
 ---
 
@@ -442,7 +455,7 @@ poetry run modal app logs image-detection --follow
 
 # View last 100 lines
 poetry run modal app logs image-detection --tail 100
-```
+```text
 
 ### Check Status
 
@@ -452,7 +465,7 @@ poetry run modal app list
 
 # Check specific app
 poetry run modal app describe image-detection
-```
+```text
 
 ### Cancel Training
 
@@ -463,7 +476,7 @@ open https://modal.com/apps
 
 # Via CLI
 poetry run modal app stop image-detection
-```
+```text
 
 ---
 
@@ -477,7 +490,7 @@ poetry run modal token new
 
 # Verify
 poetry run modal token current
-```
+```text
 
 ### GCS Access Failed
 
@@ -491,18 +504,20 @@ poetry run modal secret create gcs-credentials \
 
 # Test GCS access
 gsutil ls gs://rag-pipeline-models/
-```
+```text
 
 ### GPU Unavailable
 
 **Rare** - Modal has multi-cloud fallback. If it happens:
-1. Check status: https://modal.com/status
+
+1. Check status: <https://modal.com/status>
 2. Try different GPU: Change `gpu="T4"` to `gpu="A10"` in config
 3. Contact Modal support
 
 ### Out of Memory (OOM)
 
 **Solutions:**
+
 1. Reduce batch size in config
 2. Upgrade to A10 GPU (24GB vs T4 16GB)
 3. Enable gradient accumulation
@@ -530,7 +545,7 @@ modal:
   gpu: L4  # Recommended: best speed/cost balance
   # Alternatives: T4 (budget), A10 (faster)
   timeout: 86400  # 24 hours
-```
+```text
 
 ### GCS Paths
 
@@ -562,7 +577,7 @@ open https://modal.com/apps                         # Dashboard
 # DEBUGGING
 poetry run modal secret list                        # List secrets
 poetry run modal app stop image-detection           # Cancel training
-```
+```text
 
 **Alternative: Use poetry shell to avoid `poetry run` prefix**
 
@@ -572,7 +587,7 @@ poetry shell  # Activate poetry environment
 modal run tmp_cleanup/modal_gpu_test.py
 modal app list
 modal secret list
-```
+```text
 
 ---
 
@@ -581,6 +596,7 @@ modal secret list
 ### Model Architecture (Phase 2)
 
 **CRITICAL**: Use **ResNet-50 teacher** and **ResNet-18 student** (NOT MobileNetV3/EfficientNet)
+
 - Rationale: See [ADR-0034](../ADRs/0034-resnet18-phase2-iqa.md)
 - Dataset: OHR-Bench (document-specific IQA)
 
@@ -605,7 +621,7 @@ modal secret list
 - **Storage Setup**: [modal-storage.md](../guides/modal-storage.md)
 - **Quick Start**: [PHASE2_QUICKSTART.md](../PHASE2_QUICKSTART.md)
 - **Model Storage**: [MODEL_STORAGE.md](../MODEL_STORAGE.md)
-- **Modal Docs**: https://modal.com/docs
+- **Modal Docs**: <https://modal.com/docs>
 
 ---
 

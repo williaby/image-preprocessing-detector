@@ -21,6 +21,7 @@ purpose: "Document the decision to defer handwriting-specific detection to Phase
 **Date**: 2025-11-05
 **Deciders**: Byron Williams
 **Related**:
+
 - [validation/HANDWRITING_ANALYSIS_COMPLETE.md](../../validation/HANDWRITING_ANALYSIS_COMPLETE.md)
 - [validation/handwriting_samples_analysis.json](../../validation/handwriting_samples_analysis.json)
 - [PROJECT_PLAN.md](../../PROJECT_PLAN.md)
@@ -33,6 +34,7 @@ During Phase 1 development, we needed to decide whether to include specialized h
 ### Handwriting Validation Results
 
 **Test Coverage**:
+
 - **Manual Samples**: 6 web-sourced handwriting images
 - **SignaTR6K Dataset**: 50 random samples from 6,257 legal document crops
 
@@ -72,18 +74,21 @@ During Phase 1 development, we needed to decide whether to include specialized h
 ### Phase 2 (Planned)
 
 **Option A: Noteshrink-Based Detector** (Classical CV)
+
 - K-means clustering for background/foreground separation
 - HSV colorspace analysis for ink detection
 - 5% pixel sampling for efficiency
 - No ML required
 
 **Option B: SignaTR6K-Based Segmentation** (ML)
+
 - Train U-Net or DeepLabV3 on SignaTR6K masks
 - Pixel-wise handwriting vs. printed text classification
 - 6,257 training samples available
 - Requires GPU training infrastructure
 
 **Option C: Hybrid Approach** (Recommended)
+
 - Use noteshrink for fast binary handwriting detection (Phase 2)
 - Use SignaTR6K for precise segmentation if needed (Phase 3+)
 - Progressive enhancement strategy
@@ -133,11 +138,13 @@ else:
 **Approach**: Add noteshrink-based detector and content-aware thresholds to Phase 1
 
 **Advantages**:
+
 - Better handling of handwritten documents immediately
 - Content-aware thresholds from the start
 - No over-flagging of handwriting contrast
 
 **Disadvantages**:
+
 - Delays Phase 1 MVP delivery (additional 2-3 weeks)
 - Increases Phase 1 complexity and risk
 - Limited handwriting validation data available
@@ -150,11 +157,13 @@ else:
 **Approach**: Use SignaTR6K to train handwriting segmentation model
 
 **Advantages**:
+
 - Pixel-wise handwriting detection
 - State-of-the-art accuracy
 - Leverages existing 6,257 training samples
 
 **Disadvantages**:
+
 - Requires GPU training infrastructure (not available in Phase 1)
 - Adds ML complexity to classical CV phase
 - Training time: ~1-2 weeks
@@ -167,11 +176,13 @@ else:
 **Approach**: No handwriting consideration, assume printed text only
 
 **Advantages**:
+
 - Simplest approach
 - Focus solely on business documents
 - No additional work
 
 **Disadvantages**:
+
 - Unknown performance on handwriting
 - Risk of failures on handwritten content
 - No validation data for handwriting
@@ -183,6 +194,7 @@ else:
 ### Phase 1 Status (Complete)
 
 **Validation**:
+
 - ✅ Text gate: 100% detection on handwriting (56/56 samples)
 - ✅ Blur detector: Accurate on clean and degraded samples
 - ✅ Contrast detector: Works but may over-flag amateur scans
@@ -193,16 +205,19 @@ else:
 ### Phase 2 Implementation Plan
 
 **Step 1: Noteshrink Integration** (Week 8-9)
+
 - Integrate noteshrink algorithm for binary handwriting detection
 - K-means clustering for ink/background separation
 - HSV colorspace analysis
 
 **Step 2: Content-Aware Thresholds** (Week 9-10)
+
 - Implement document_type classification (handwriting vs. printed)
 - Adjust thresholds based on content type
 - Validate on SignaTR6K and manual samples
 
 **Step 3: Validation** (Week 10-11)
+
 - Test on full SignaTR6K dataset (6,257 samples)
 - Measure precision/recall for handwriting detection
 - Calibrate thresholds for optimal F1 score
@@ -210,6 +225,7 @@ else:
 ### Phase 3+ (Optional Enhancement)
 
 **SignaTR6K Segmentation Model**:
+
 - Train U-Net or DeepLabV3 on pixel-wise masks
 - Distinguish handwritten from printed text in mixed documents
 - Use for precise element-level handwriting detection
@@ -233,6 +249,7 @@ else:
 | **Low contrast rate** | 100% | 0% | **-100%** |
 
 **Insights**:
+
 1. SignaTR6K legal documents are professionally scanned (higher quality)
 2. Manual web samples represent amateur handwriting scans (lower quality)
 3. Both extremes validated - detectors work across quality spectrum
@@ -244,6 +261,7 @@ else:
 > ✅ IQA detectors successfully validated on handwriting content. Current Phase 1 detectors work on handwriting; no blockers for deployment.
 
 **Phase 2 Enhancements**:
+
 - Noteshrink-based handwriting detection
 - Content-aware threshold selection
 - Optional SignaTR6K segmentation model for precise localization

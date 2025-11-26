@@ -119,6 +119,7 @@ The following packages have GPL or unknown licenses but are approved for use bec
 ### Development Dependencies Only
 
 **Additional Allowed**:
+
 - GPL licenses (if dev-only, not distributed)
 - Dual-licensed packages with acceptable alternatives
 - Packages with linking exceptions

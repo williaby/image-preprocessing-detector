@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 <!--
 SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
 SPDX-License-Identifier: MIT
@@ -31,16 +32,19 @@ Use this context when querying for new research:
 **Image Preprocessing Detector** is an intelligent document quality assessment and preprocessing system designed for RAG (Retrieval-Augmented Generation) applications. The system analyzes documents (PDFs, images) and identifies required preprocessing steps before vector database ingestion.
 
 **Key Innovation**: Multi-stage pipeline with text detection gate that routes documents to specialized processing paths:
+
 - **No-text path**: Classical CV + ML IQA (skew, blur, contrast, noise)
 - **Text-detected path**: YOLOv8 layout detection + hybrid IQA on embedded images
 
 **Technology Stack**:
+
 - Classical Computer Vision: OpenCV (Hough transform, Laplacian, histogram analysis)
 - Deep Learning: PyTorch, YOLOv8, MobileNetV3/EfficientNet
 - Production: ONNX Runtime with INT8 quantization
 - Deployment: CPU-first strategy with optional GPU acceleration
 
 **Performance Targets**:
+
 - Latency: < 150ms per page (GPU), < 400ms per page (CPU)
 - Accuracy: mAP > 0.88 (IQA), mAP@.50 > 0.82 (layout detection)
 - Throughput: > 6 pages/sec per GPU worker
@@ -52,11 +56,13 @@ Use this context when querying for new research:
 **Focus**: Training multi-label CNN for IQA with 6 defect types (blur, noise, skew, perspective, low_contrast, orientation)
 
 **Completed**:
+
 - ✅ Phase 0: Foundation and scaffolding
 - ✅ Phase 1: MVP with classical CV methods (blur, skew, contrast detection)
 - ✅ Phase 1B: DPI detection and upscaling to 300 DPI
 
 **Upcoming**:
+
 - ⏳ Phase 3: YOLOv8 layout detection (DocLayNet 11 classes)
 - ⏳ Phase 4: Production hardening and Document Quality Score (DQS)
 - ⏳ Phase 5: Continuous improvement
@@ -64,6 +70,7 @@ Use this context when querying for new research:
 ### Current Capabilities
 
 **Image Quality Detection** (IQA):
+
 - Blur detection (Laplacian variance + ML)
 - Skew detection (Hough transform + ML)
 - Contrast assessment (histogram analysis + ML)
@@ -72,6 +79,7 @@ Use this context when querying for new research:
 - Perspective distortion (ML - Phase 2)
 
 **Planned Capabilities** (from DETECTION_TAXONOMY.md):
+
 - Binarization quality assessment (Phase 2)
 - Illumination uniformity detection (Phase 2)
 - Bleed-through detection (Phase 3)
@@ -81,6 +89,7 @@ Use this context when querying for new research:
 - Signature detection (Phase 3)
 
 **Layout Analysis** (Phase 3):
+
 - DocLayNet 11 classes (Text, Title, List, Table, Picture, Caption, Formula, Footnote, Page-Header, Page-Footer, Section-Header)
 - Parasitic content detection (headers/footers)
 - Footnote linking
@@ -88,6 +97,7 @@ Use this context when querying for new research:
 - Vertical text orientation
 
 **Specialized Content**:
+
 - PDF type classification (image_only, born_digital, hybrid)
 - Handwriting vs printed text (Phase 2)
 - Language/script detection (235 languages via Wili-2018)
@@ -96,16 +106,19 @@ Use this context when querying for new research:
 ### Training Strategy
 
 **Three-Tier Dataset Strategy** (ADR-029):
+
 1. **Tier 1: Training** (50k synthetic samples from TableBank + Albumentations augmentation, weak supervision)
 2. **Tier 2: Benchmarks** (LIVE, CSIQ, DocLayNet - evaluation only, never training)
 3. **Tier 3: Test Fixtures** (< 50 MB, committed to git for CI/CD)
 
 **Hybrid Validation** (ADR-011):
+
 - Train on synthetic data (perfect labels)
 - Calibrate on real-world data (production distribution)
 - Critical discovery: Synthetic-only calibration caused 100% false positive rate on real documents
 
 **Infrastructure** (ADR-030):
+
 - Local dataset generation (development machine)
 - Google Cloud Storage for datasets/models (~88 GB)
 - Google Colab Pro for GPU training (T4/V100/A100)
@@ -113,6 +126,7 @@ Use this context when querying for new research:
 ### Key Architecture Decisions
 
 **ADRs Referenced**:
+
 - ADR-007: Hybrid IQA approach (per-element quality assessment)
 - ADR-008: Multi-stage pipeline architecture (text detection fork)
 - ADR-011: Hybrid validation strategy (synthetic + real-world calibration)
@@ -126,7 +140,7 @@ Use this context when querying for new research:
 
 Use the following prompt with an LLM that has web search capabilities (e.g., Perplexity, ChatGPT with browsing, Claude with web search):
 
-```
+```text
 You are a research analyst helping to identify the latest advances in document preprocessing,
 OCR, image quality assessment, and RAG applications.
 
@@ -201,7 +215,7 @@ regression for book scan dewarping.
   3. Integrate if latency < 200ms per page on T4 GPU
 
 Please conduct this research analysis and provide findings.
-```
+```text
 
 ---
 
@@ -212,6 +226,7 @@ Please conduct this research analysis and provide findings.
 **Current Gap**: Most IQA research focuses on natural images (BRISQUE, NIQE, KonCept512). Document-specific IQA is under-researched.
 
 **Search Keywords**:
+
 - "document image quality assessment"
 - "document binarization quality metrics"
 - "OCR preprocessing quality"
@@ -219,11 +234,13 @@ Please conduct this research analysis and provide findings.
 - "scanned document quality"
 
 **Target Metrics**:
+
 - Multi-label classification (6+ defect types)
 - Real-time inference (< 50ms per page on CPU)
 - Calibration quality (ECE < 0.1)
 
 **Example Questions**:
+
 - Are there new document-specific IQA datasets beyond LIVE/CSIQ?
 - Has anyone solved the synthetic-to-real distribution shift problem we encountered (ADR-011)?
 - Are there better weak supervision techniques than classical detectors (BRISQUE, Laplacian)?
@@ -233,6 +250,7 @@ Please conduct this research analysis and provide findings.
 **Current Approach**: YOLOv8 on DocLayNet (11 classes), mAP@.50 > 0.82 target
 
 **Search Keywords**:
+
 - "document layout analysis 2024"
 - "LayoutLMv3 improvements"
 - "table detection transformer"
@@ -240,11 +258,13 @@ Please conduct this research analysis and provide findings.
 - "reading order prediction"
 
 **Target Improvements**:
+
 - Faster inference (< 100ms per page on T4 GPU)
 - Better small object detection (formulas, footnotes)
 - Reading order prediction (multi-column documents)
 
 **Example Questions**:
+
 - Are there LayoutLMv4 or newer multimodal document models?
 - Has anyone published better table structure recognition than TableFormer?
 - Are there new datasets beyond DocLayNet for layout analysis?
@@ -254,6 +274,7 @@ Please conduct this research analysis and provide findings.
 **Current Gap**: Missing binarization, illumination normalization, dewarping, bleed-through suppression
 
 **Search Keywords**:
+
 - "adaptive document binarization 2024"
 - "illumination normalization scanned documents"
 - "document dewarping deep learning"
@@ -261,12 +282,14 @@ Please conduct this research analysis and provide findings.
 - "document rectification perspective"
 
 **Target Capabilities**:
+
 - Binarization: Otsu/Sauvola/Niblack (Phase 2)
 - Illumination: Adaptive histogram equalization (Phase 2)
 - Dewarping: DocUNet or polynomial regression (Phase 3)
 - Bleed-through: Frequency domain filtering (Phase 3)
 
 **Example Questions**:
+
 - Are there better binarization methods than Sauvola for degraded documents?
 - Has anyone solved uneven illumination on mobile captures?
 - Are there real-time dewarping methods (< 200ms per page)?
@@ -276,6 +299,7 @@ Please conduct this research analysis and provide findings.
 **Current Gap**: Most research focuses on OCR accuracy, not RAG retrieval quality
 
 **Search Keywords**:
+
 - "RAG document preprocessing"
 - "OCR hinders RAG" (2024 paper identified this)
 - "document chunking strategies"
@@ -283,11 +307,13 @@ Please conduct this research analysis and provide findings.
 - "footnote linking RAG"
 
 **Target Insights**:
+
 - Which preprocessing steps most impact RAG retrieval quality?
 - How to handle headers/footers (parasitic content)?
 - How to preserve table structure in vector embeddings?
 
 **Example Questions**:
+
 - Are there new RAG benchmarks that measure preprocessing impact?
 - Has anyone quantified the value of footnote linking for RAG accuracy?
 - Are there better chunking strategies than fixed-size windows?
@@ -297,6 +323,7 @@ Please conduct this research analysis and provide findings.
 **Current Approach**: ONNX Runtime, INT8 quantization, CPU-first deployment
 
 **Search Keywords**:
+
 - "document model quantization"
 - "edge document processing"
 - "mobile OCR optimization"
@@ -304,11 +331,13 @@ Please conduct this research analysis and provide findings.
 - "TensorRT document models"
 
 **Target Metrics**:
+
 - < 2 GB memory per worker
 - < 150ms latency per page (GPU)
 - < 400ms latency per page (CPU)
 
 **Example Questions**:
+
 - Are there better quantization methods than INT8 (e.g., INT4, mixed precision)?
 - Has anyone deployed YOLOv8 on edge devices for documents?
 - Are there model distillation techniques for document models?
@@ -318,6 +347,7 @@ Please conduct this research analysis and provide findings.
 **Current Datasets**: TableBank, DocLayNet, LIVE, CSIQ, Wili-2018, SignaTR6K, OmniDocBench
 
 **Search Keywords**:
+
 - "document dataset 2024"
 - "OCR benchmark dataset"
 - "document quality assessment dataset"
@@ -325,12 +355,14 @@ Please conduct this research analysis and provide findings.
 - "multilingual document corpus"
 
 **Target Characteristics**:
+
 - Permissive license (Apache-2.0, MIT, CC-BY)
 - > 10k samples for training
 - Ground-truth annotations (COCO format for layout)
 - Diverse document types (academic, business, historical, mobile)
 
 **Example Questions**:
+
 - Are there new document quality datasets with ground-truth defect labels?
 - Has anyone released a book scan dataset for dewarping?
 - Are there new multi-lingual document datasets beyond Wili-2018?
@@ -340,6 +372,7 @@ Please conduct this research analysis and provide findings.
 **Current Gap**: Limited research on watermarks, stamps, seals, signatures in documents
 
 **Search Keywords**:
+
 - "watermark detection documents"
 - "seal stamp recognition"
 - "signature detection verification"
@@ -347,12 +380,14 @@ Please conduct this research analysis and provide findings.
 - "document forensics"
 
 **Target Capabilities**:
+
 - Watermark detection (P1 - Phase 3)
 - Stamp/seal detection (P2 - Phase 3)
 - Signature detection (P2 - Phase 3)
 - Margin annotations (P2 - Phase 3)
 
 **Example Questions**:
+
 - Are there new methods for watermark detection beyond frequency domain?
 - Has anyone published a stamp/seal detection dataset?
 - Are there signature verification models we can adapt for detection?
@@ -362,6 +397,7 @@ Please conduct this research analysis and provide findings.
 **Current Approach**: Two-axis DQS (degradation score + structural complexity score)
 
 **Search Keywords**:
+
 - "document quality metric"
 - "document complexity score"
 - "OCR confidence prediction"
@@ -369,11 +405,13 @@ Please conduct this research analysis and provide findings.
 - "VLM vs OCR routing"
 
 **Target Insights**:
+
 - How to predict OCR success before running OCR?
 - How to quantify document complexity for routing decisions?
 - Are there industry standards for document quality metrics?
 
 **Example Questions**:
+
 - Has anyone published DQS-like metrics for document routing?
 - Are there OCR confidence predictors that don't require running OCR?
 - How do VLM providers (GPT-4o Vision) handle document quality internally?
@@ -536,7 +574,7 @@ Use this template to capture findings from each quarterly review:
 2. ...
 
 [etc.]
-```
+```text
 
 ---
 
@@ -545,6 +583,7 @@ Use this template to capture findings from each quarterly review:
 ### Quarterly Review Workflow
 
 **Week 1: Research Collection**
+
 1. Run standardized prompt with LLM (Perplexity, ChatGPT with browsing)
 2. Search key conferences: CVPR, ICCV, ECCV, ICDAR, DAS, ACM DocEng
 3. Search Arxiv for preprints (>10 citations or reputable institutions)
@@ -552,6 +591,7 @@ Use this template to capture findings from each quarterly review:
 5. Compile list of 30-50 candidate papers
 
 **Week 2: Paper Review and Prioritization**
+
 1. Skim abstracts and filter to 15-20 high-relevance papers
 2. Deep read high-priority papers (introduction, method, results)
 3. Categorize by research focus area (IQA, layout, preprocessing, etc.)
@@ -559,6 +599,7 @@ Use this template to capture findings from each quarterly review:
 5. Extract key insights and action items
 
 **Week 3: Integration Planning**
+
 1. Map findings to functional requirements (FR updates needed?)
 2. Identify new datasets to download and integrate
 3. Estimate effort for integrating new techniques
@@ -567,6 +608,7 @@ Use this template to capture findings from each quarterly review:
 6. Create ADR if new architecture decision warranted
 
 **Week 4: Documentation and Handoff**
+
 1. Complete research analysis template
 2. Update project documentation (FR, taxonomy, coverage matrix)
 3. Create GitHub issues for action items
@@ -580,27 +622,32 @@ Use this template to capture findings from each quarterly review:
 ### Academic Conferences (Primary Sources)
 
 **Computer Vision**:
+
 - CVPR (Computer Vision and Pattern Recognition) - June
 - ICCV (International Conference on Computer Vision) - October
 - ECCV (European Conference on Computer Vision) - October
 
 **Document Analysis**:
+
 - ICDAR (International Conference on Document Analysis and Recognition) - September
 - DAS (Document Analysis Systems) - Biennial
 - IJDAR (International Journal on Document Analysis and Recognition) - Quarterly
 
 **Machine Learning**:
+
 - NeurIPS (Neural Information Processing Systems) - December
 - ICML (International Conference on Machine Learning) - July
 - ICLR (International Conference on Learning Representations) - May
 
 **Document Engineering**:
+
 - ACM DocEng (Document Engineering) - September
 - JCDL (Joint Conference on Digital Libraries) - September
 
 ### Preprint Archives
 
 **Arxiv Categories**:
+
 - cs.CV (Computer Vision and Pattern Recognition)
 - cs.LG (Machine Learning)
 - cs.CL (Computation and Language) - for RAG research
@@ -609,24 +656,27 @@ Use this template to capture findings from each quarterly review:
 ### Industry Research Blogs
 
 **Company Research**:
-- Google Research Blog: https://research.google/blog/
-- Microsoft Research Blog: https://www.microsoft.com/en-us/research/blog/
-- Adobe Research: https://research.adobe.com/
-- Meta AI Research: https://ai.meta.com/research/
-- Amazon Science (Textract team): https://www.amazon.science/
+
+- Google Research Blog: <https://research.google/blog/>
+- Microsoft Research Blog: <https://www.microsoft.com/en-us/research/blog/>
+- Adobe Research: <https://research.adobe.com/>
+- Meta AI Research: <https://ai.meta.com/research/>
+- Amazon Science (Textract team): <https://www.amazon.science/>
 
 ### Open Datasets
 
 **Dataset Aggregators**:
-- Papers with Code: https://paperswithcode.com/datasets (filter by "document")
-- Hugging Face Datasets: https://huggingface.co/datasets (search "document", "OCR")
-- Google Dataset Search: https://datasetsearch.research.google.com/
+
+- Papers with Code: <https://paperswithcode.com/datasets> (filter by "document")
+- Hugging Face Datasets: <https://huggingface.co/datasets> (search "document", "OCR")
+- Google Dataset Search: <https://datasetsearch.research.google.com/>
 
 **Document-Specific Repositories**:
-- DocLayNet: https://github.com/DS4SD/DocLayNet
-- TableBank: https://github.com/doc-analysis/TableBank
-- FUNSD: https://guillaumejaume.github.io/FUNSD/
-- RVL-CDIP: https://adamharley.com/rvl-cdip/
+
+- DocLayNet: <https://github.com/DS4SD/DocLayNet>
+- TableBank: <https://github.com/doc-analysis/TableBank>
+- FUNSD: <https://guillaumejaume.github.io/FUNSD/>
+- RVL-CDIP: <https://adamharley.com/rvl-cdip/>
 
 ---
 

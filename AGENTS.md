@@ -3,6 +3,7 @@
 Use this guide to onboard quickly and keep contributions consistent with the project’s practices.
 
 ## Project Structure & Module Organization
+
 - `src/image_preprocessing_detector/`: Core package; ingestion, detection (IQA + layout-lite), correction, routing/output, utils.
 - `tests/`: Unit tests in `tests/unit/`, integration in `tests/integration/`, security and benchmarks under `tests/security/` and `tests/test_benchmarks/`.
 - `configs/`: Training/inference configs (Modal/Colab YAMLs).
@@ -11,6 +12,7 @@ Use this guide to onboard quickly and keep contributions consistent with the pro
 - `data/`: DVC-tracked training sets (large, not committed) and `data/test_fixtures/` used in CI.
 
 ## Build, Test, and Development Commands
+
 - Install: `poetry install --with dev` (Python 3.12+).
 - Lint/format: `poetry run ruff format .` then `poetry run ruff check .`.
 - Type check: `poetry run mypy src`.
@@ -19,18 +21,21 @@ Use this guide to onboard quickly and keep contributions consistent with the pro
 - Docs: `poetry run nox -s docs` (strict MkDocs build).
 
 ## Coding Style & Naming Conventions
+
 - Ruff formatter (Black-compatible), 88 char line length, spaces for indentation, double quotes preferred.
 - Google-style docstrings; type hints required for public functions.
 - Prefer pathlib and explicit imports; avoid ad-hoc prints in library code (use structured logging in utils/log_config.py).
 - Names: `snake_case` for functions/vars, `PascalCase` for classes, `SCREAMING_SNAKE_CASE` for constants; keep module names descriptive (`pdf_loader.py`, `json_generator.py`).
 
 ## Testing Guidelines
+
 - Framework: pytest with property-based checks in targeted modules; coverage target ≥80%.
 - Place new unit tests alongside modules in `tests/unit/`; integration scenarios in `tests/integration/`.
 - Use markers: skip heavy datasets with `@pytest.mark.requires_full_dataset`; prefer fixtures in `data/test_fixtures/` for reproducibility.
 - Include regression cases when fixing bugs; keep assertions specific and avoid broad mocks for pipeline flows.
 
 ## Commit & Pull Request Guidelines
+
 - Conventional Commits with scope: `feat(detection): ...`; sign commits (GPG) and keep messages imperative.
 - Before pushing: format, lint, mypy, tests, and ensure coverage threshold; run `poetry run pre-commit run --all-files` if hooks are installed.
 - PRs should link issues (`Fixes #123`), describe changes and testing steps, and add screenshots for visual diffs.

@@ -16,6 +16,7 @@ purpose: "Document the decision to use Pydantic v2 for JSON schema validation an
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [schema.py](../../src/image_preprocessing_detector/schema.py)
 - [PROJECT_PLAN.md](../../PROJECT_PLAN.md)
 - [ADR-009: COCO Bounding Box Format](0009-coco-bounding-box-format.md)
@@ -23,6 +24,7 @@ purpose: "Document the decision to use Pydantic v2 for JSON schema validation an
 ## Context
 
 The system needs to generate JSON metadata for document preprocessing results. We required a solution for:
+
 - Type-safe schema definition
 - Runtime validation
 - JSON serialization/deserialization
@@ -35,6 +37,7 @@ The system needs to generate JSON metadata for document preprocessing results. W
 ### Key Features Used
 
 **Discriminated Unions**:
+
 ```python
 class DetectedIssue(BaseModel):
     type: IssueType  # BLUR, SKEW, CONTRAST, etc.
@@ -43,6 +46,7 @@ class DetectedIssue(BaseModel):
 ```
 
 **Field Validation**:
+
 ```python
 @field_validator("bbox")
 @classmethod
@@ -56,6 +60,7 @@ def validate_bbox(cls, v: list[float]) -> list[float]:
 ```
 
 **JSON Serialization**:
+
 ```python
 metadata = DocumentMetadata(document_id="doc_001", file_name="test.pdf", ...)
 json_str = metadata.model_dump_json(indent=2)
@@ -91,10 +96,12 @@ loaded = DocumentMetadata.model_validate_json(json_str)
 **Approach**: Use Python dataclasses with separate JSON schema validation
 
 **Advantages**:
+
 - Standard library (dataclasses)
 - No external dependencies (except jsonschema for validation)
 
 **Disadvantages**:
+
 - No runtime validation
 - Manual JSON serialization
 - Separate schema definition
@@ -107,10 +114,12 @@ loaded = DocumentMetadata.model_validate_json(json_str)
 **Approach**: Use attrs for classes, cattrs for serialization
 
 **Advantages**:
+
 - Lighter weight than Pydantic
 - Flexible serialization
 
 **Disadvantages**:
+
 - Less integrated than Pydantic
 - Smaller ecosystem
 - Manual validation logic
@@ -122,10 +131,12 @@ loaded = DocumentMetadata.model_validate_json(json_str)
 **Approach**: Use marshmallow for serialization and validation
 
 **Advantages**:
+
 - Mature validation library
 - Flexible schemas
 
 **Disadvantages**:
+
 - Separate schema and data classes
 - No type hint integration
 - Slower than Pydantic v2
@@ -137,6 +148,7 @@ loaded = DocumentMetadata.model_validate_json(json_str)
 ### Schema Structure (schema.py - 338 lines)
 
 **Core Models**:
+
 ```python
 class DocumentMetadata(BaseModel):
     document_id: str
@@ -164,6 +176,7 @@ class DocumentElement(BaseModel):
 ### Validation Examples
 
 **Confidence Score Validation**:
+
 ```python
 class DetectedIssue(BaseModel):
     confidence: Annotated[float, Field(ge=0.0, le=1.0)]
@@ -174,6 +187,7 @@ issue = DetectedIssue(type=IssueType.BLUR, confidence=0.85)  # ✅ Valid
 ```
 
 **COCO Bounding Box Validation**:
+
 ```python
 @field_validator("bbox")
 @classmethod
@@ -195,6 +209,7 @@ element = DocumentElement(category=ElementCategory.TEXT, bbox=[10, 20, 50, 30]) 
 ### JSON Serialization/Deserialization
 
 **Export to JSON**:
+
 ```python
 def generate_json(metadata: DocumentMetadata, output_path: Path) -> None:
     """Generate JSON output file."""
@@ -203,6 +218,7 @@ def generate_json(metadata: DocumentMetadata, output_path: Path) -> None:
 ```
 
 **Load from JSON**:
+
 ```python
 def load_json(json_path: Path) -> DocumentMetadata:
     """Load and validate JSON metadata."""
@@ -223,11 +239,13 @@ Path("docs/schema/document_metadata_schema.json").write_text(
 ## Performance Impact
 
 **Validation Overhead**:
+
 - Small objects (DetectedIssue): ~0.1-0.5ms
 - Medium objects (PageMetadata): ~1-2ms
 - Large objects (DocumentMetadata): ~5-10ms
 
 **JSON Serialization**:
+
 - Small objects: ~0.5-1ms
 - Medium objects: ~2-5ms
 - Large objects (multi-page): ~10-50ms

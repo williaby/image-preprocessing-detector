@@ -15,6 +15,7 @@ Welcome to the Image Preprocessing Detector API reference documentation. This se
 ## Core Modules
 
 ### [Schema](schema.md)
+
 Pydantic v2 models for JSON input/output, including:
 
 - `DetectedIssue` - Representation of detected quality issues
@@ -25,6 +26,7 @@ Pydantic v2 models for JSON input/output, including:
 **Key Feature**: COCO-aligned bounding boxes `[x, y, width, height]` for LayoutParser integration.
 
 ### [Ingestion](ingestion.md)
+
 Document ingestion and normalization:
 
 - PDF extraction and DPI standardization (300 DPI)
@@ -33,6 +35,7 @@ Document ingestion and normalization:
 - DPI upscaling for low-resolution inputs (Phase 4)
 
 ### [Detection](detection.md)
+
 Quality assessment and layout analysis:
 
 - **Text Gate**: Fast text presence detection for routing
@@ -41,6 +44,7 @@ Quality assessment and layout analysis:
 - **Layout-Lite**: Coarse page attribute classification (Phase 6)
 
 ### [Correction](correction.md)
+
 OpenCV-based image corrections:
 
 - Deskew correction with Hough transform
@@ -50,6 +54,7 @@ OpenCV-based image corrections:
 - Transform history tracking
 
 ### [Output](output.md)
+
 Results serialization and export:
 
 - DocumentMetadata JSON generation

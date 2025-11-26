@@ -17,6 +17,7 @@ Comprehensive testing guide for the Image Preprocessing Detector project.
 **Goal**: Maintain 80%+ code coverage with high-quality, maintainable tests
 
 **Principles**:
+
 1. **Test behavior, not implementation**
 2. **Fast feedback loop** (< 30 seconds for unit tests)
 3. **Clear test names** (describe what is being tested)
@@ -30,12 +31,14 @@ Comprehensive testing guide for the Image Preprocessing Detector project.
 **Purpose**: Test individual functions and methods
 
 **Characteristics**:
+
 - Fast (< 1ms per test)
 - Isolated (no I/O, no network)
 - Focused (single function/method)
 - Deterministic (same input → same output)
 
 **Example**:
+
 ```python
 # tests/unit/test_schema.py
 from image_preprocessing_detector.schema import DetectedIssue
@@ -49,7 +52,7 @@ def test_detected_issue_validation():
     )
     assert issue.severity == "high"
     assert issue.confidence == 0.92
-```
+```text
 
 **Coverage Target**: 90%+
 
@@ -58,12 +61,14 @@ def test_detected_issue_validation():
 **Purpose**: Test module interactions
 
 **Characteristics**:
+
 - Slower (10-100ms per test)
 - Multiple components
 - File I/O allowed
 - May use test fixtures
 
 **Example**:
+
 ```python
 # tests/integration/test_pipeline.py
 from image_preprocessing_detector.ingestion import load_and_normalize_image
@@ -75,7 +80,7 @@ def test_blur_detection_pipeline():
     is_blurry, variance = detect_blur(image)
     assert is_blurry is True
     assert variance < 100
-```
+```text
 
 **Coverage Target**: 80%+
 
@@ -84,12 +89,14 @@ def test_blur_detection_pipeline():
 **Purpose**: Test complete workflows
 
 **Characteristics**:
+
 - Slow (1-10s per test)
 - Full pipeline
 - Real files
 - CLI invocation
 
 **Example**:
+
 ```python
 # tests/e2e/test_cli.py
 import subprocess
@@ -104,7 +111,7 @@ def test_cli_process_pdf():
 
     assert result.returncode == 0
     assert Path("result.json").exists()
-```
+```text
 
 **Coverage Target**: Critical paths
 
@@ -112,7 +119,7 @@ def test_cli_process_pdf():
 
 ### Directory Structure
 
-```
+```text
 tests/
 ├── unit/
 │   ├── test_schema.py           # Schema validation
@@ -128,7 +135,7 @@ tests/
 │   ├── blurry.jpg
 │   └── skewed.png
 └── conftest.py                   # Pytest configuration
-```
+```text
 
 ### Test Markers
 
@@ -149,9 +156,10 @@ def test_integration():
 @pytest.mark.slow
 def test_expensive_operation():
     pass
-```
+```text
 
 **Run specific markers**:
+
 ```bash
 # Unit tests only
 poetry run pytest -m unit
@@ -161,7 +169,7 @@ poetry run pytest -m "not slow"
 
 # Integration tests
 poetry run pytest -m integration
-```
+```text
 
 ## Running Tests
 
@@ -185,7 +193,7 @@ poetry run pytest -v
 
 # Stop on first failure
 poetry run pytest -x
-```
+```text
 
 ### Parallel Execution
 
@@ -195,14 +203,14 @@ poetry run pytest -n auto
 
 # Use 4 workers
 poetry run pytest -n 4
-```
+```text
 
 ### Watch Mode
 
 ```bash
 # Re-run on file changes (requires pytest-watch)
 poetry run ptw
-```
+```text
 
 ## Coverage Requirements
 
@@ -225,7 +233,7 @@ open htmlcov/index.html
 
 # Terminal report
 poetry run pytest --cov=src --cov-report=term-missing
-```
+```text
 
 ### Coverage Configuration
 
@@ -247,29 +255,31 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
-```
+```text
 
 ## Writing Good Tests
 
 ### 1. Clear Test Names
 
 **Good**:
+
 ```python
 def test_detect_blur_returns_true_for_blurry_image():
     pass
 
 def test_apply_deskew_rejects_excessive_angle():
     pass
-```
+```text
 
 **Bad**:
+
 ```python
 def test_blur():
     pass
 
 def test_deskew_1():
     pass
-```
+```text
 
 ### 2. Arrange-Act-Assert Pattern
 
@@ -284,7 +294,7 @@ def test_contrast_enhancement():
     # Assert: Verify results
     assert info["success"] is True
     assert corrected.mean() != image.mean()
-```
+```text
 
 ### 3. Use Fixtures
 
@@ -303,7 +313,7 @@ def test_detect_blur(sample_image):
     """Test blur detection on sample image."""
     is_blurry, variance = detect_blur(sample_image)
     assert isinstance(is_blurry, bool)
-```
+```text
 
 ### 4. Test Edge Cases
 
@@ -317,7 +327,7 @@ def test_deskew_rejects_excessive_angle():
     """Test deskew rejects angle > 45 degrees."""
     corrected, info = apply_deskew(image, angle=90.0)
     assert info["success"] is False
-```
+```text
 
 ### 5. Use Parameterization
 
@@ -332,13 +342,13 @@ def test_deskew_angles(angle, expected):
     """Test deskew handles various angles."""
     corrected, info = apply_deskew(image, angle)
     assert info["success"] == expected
-```
+```text
 
 ## Test Data Management
 
 ### Fixtures Directory
 
-```
+```text
 tests/fixtures/
 ├── sample.pdf          # Multi-page PDF
 ├── blurry.jpg          # Blurry image
@@ -346,7 +356,7 @@ tests/fixtures/
 ├── low_contrast.tiff   # Low contrast image
 └── expected/
     └── sample_page1.json  # Expected output
-```
+```text
 
 ### Generating Test Data
 
@@ -360,7 +370,7 @@ def create_blurry_image(size=(300, 300), blur_kernel=15):
     image = np.random.randint(0, 256, size + (3,), dtype=np.uint8)
     # Apply blur...
     return image
-```
+```text
 
 ### Version Control
 
@@ -385,7 +395,7 @@ jobs:
       - run: poetry install
       - run: poetry run pytest --cov=src --cov-report=xml
       - uses: codecov/codecov-action@v3
-```
+```text
 
 ### Pre-commit Hooks
 
@@ -395,11 +405,12 @@ poetry run pre-commit install
 
 # Run manually
 poetry run pre-commit run --all-files
-```
+```text
 
 ### Quality Gates
 
 All must pass before merge:
+
 1. ✅ All tests pass
 2. ✅ Coverage ≥ 80%
 3. ✅ No linting errors
@@ -420,7 +431,7 @@ def test_blur_detection_performance(sample_image):
     elapsed = time.time() - start
 
     assert elapsed < 0.1  # 100ms
-```
+```text
 
 ### Profiling
 
@@ -430,7 +441,7 @@ poetry run pytest --profile
 
 # Generate profile report
 poetry run pytest --profile-svg
-```
+```text
 
 ## Mocking and Stubbing
 
@@ -448,7 +459,7 @@ def test_pdf_loading_with_mock():
 
         pages = load_pdf_pages("test.pdf")
         assert len(pages) == 5
-```
+```text
 
 ### Using pytest-mock
 
@@ -460,7 +471,7 @@ def test_with_pytest_mock(mocker):
 
     result = process_image("test.jpg")
     assert mock_load.called
-```
+```text
 
 ## Troubleshooting
 
@@ -478,7 +489,7 @@ poetry install
 
 # Run with verbose output
 poetry run pytest -vv
-```
+```text
 
 ### Coverage Not Meeting Threshold
 
@@ -489,7 +500,7 @@ poetry run pytest --cov=src --cov-report=term-missing
 # Generate HTML report for detailed view
 poetry run pytest --cov=src --cov-report=html
 open htmlcov/index.html
-```
+```text
 
 ### Slow Tests
 
@@ -499,7 +510,7 @@ poetry run pytest --durations=10
 
 # Skip slow tests
 poetry run pytest -m "not slow"
-```
+```text
 
 ## Best Practices Summary
 

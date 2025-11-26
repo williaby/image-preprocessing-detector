@@ -24,7 +24,7 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 If you experience or witness unacceptable behavior, or have any other concerns, please report it by contacting:
 
-- **Primary Contact**: byronawilliams@gmail.com
+- **Primary Contact**: <byronawilliams@gmail.com>
 - **Organization Team**: [@williaby/security](https://github.com/orgs/williaby/teams/security)
 
 All reports will be handled with discretion and confidentiality.

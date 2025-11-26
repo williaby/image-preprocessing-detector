@@ -30,11 +30,13 @@ purpose: "Document the decision to implement a two-axis quality scoring system t
 Production RAG systems face a critical architectural trade-off: there is **no single "best" pipeline** for all documents. Research demonstrates two competing approaches with fundamentally different failure modes:
 
 **1. OCR-based Pipelines (Nougat, LayoutLM, Marker)**
+
 - **Strengths**: Excellent at understanding complex structures (tables, formulas, multi-column layouts)
 - **Weaknesses**: Brittle; fail catastrophically on degraded images (blur, noise, low contrast)
 - **Use Case**: Clean, structurally complex documents
 
 **2. Vision-based Pipelines (ColPali, VLM-based embedders)**
+
 - **Strengths**: Robust to image degradation; can retrieve from blurry or noisy scans
 - **Weaknesses**: May struggle with novel layouts and complex text-heavy documents
 - **Use Case**: Degraded but structurally simple documents
@@ -50,6 +52,7 @@ The current Image Preprocessing Detector (Phase 0-1) performs detection and corr
 - Routes documents: ❌ (missing)
 
 Without routing, downstream systems must choose:
+
 - **Single Pipeline**: Apply same processing to all docs (suboptimal)
 - **Manual Triage**: Human selects pipeline (doesn't scale)
 - **Random Assignment**: Process failure, retry different pipeline (inefficient)
@@ -73,6 +76,7 @@ A production-grade system needs:
 ### Two-Axis Scoring Model
 
 **Axis 1: Degradation Score (0.0 - 1.0)**
+
 - **Measures**: Physical image quality degradation
 - **Components**:
   - Blur score (Laplacian variance)
@@ -83,6 +87,7 @@ A production-grade system needs:
 - **Scale**: 0.0 = severe degradation, 1.0 = pristine quality
 
 **Axis 2: Structural Complexity Score (0.0 - 1.0)**
+
 - **Measures**: Layout and content complexity
 - **Components**:
   - Multi-column detection (text block analysis)
@@ -94,7 +99,7 @@ A production-grade system needs:
 
 ### Routing Decision Matrix
 
-```
+```text
                     LOW STRUCTURAL          HIGH STRUCTURAL
                     COMPLEXITY              COMPLEXITY
                     (Simple Layout)         (Tables, Multi-col)
@@ -113,7 +118,7 @@ Quadrant 1 (High Deg, Low Struct):   Vision → Simple Chunking
 Quadrant 2 (High Deg, High Struct):  Vision → Structure-aware (challenging!)
 Quadrant 3 (Low Deg, Low Struct):    Fast OCR → Standard RAG
 Quadrant 4 (Low Deg, High Struct):   Advanced OCR → Layout-preserving RAG
-```
+```text
 
 ### Implementation
 
@@ -171,7 +176,7 @@ class DocumentMetadata(BaseModel):
         None,
         description="Document quality score and routing recommendation"
     )
-```
+```text
 
 **DQS Calculator** (src/image_preprocessing_detector/scoring/dqs_calculator.py):
 
@@ -345,7 +350,7 @@ class DQSCalculator:
                 )
 
         return routing, confidence, rationale
-```
+```text
 
 **Configuration** (src/image_preprocessing_detector/core/config.py):
 
@@ -379,7 +384,7 @@ class Settings(BaseSettings):
     dqs_contrast_weight: float = Field(default=0.2, ge=0.0, le=1.0)
     dqs_skew_weight: float = Field(default=0.1, ge=0.0, le=1.0)
     dqs_resolution_weight: float = Field(default=0.1, ge=0.0, le=1.0)
-```
+```text
 
 ---
 
@@ -451,11 +456,13 @@ class Settings(BaseSettings):
 **Description**: Hard-coded rules (e.g., "if blur > X, use Vision")
 
 **Pros**:
+
 - Simple to implement
 - No overhead from score calculation
 - Transparent decision logic
 
 **Cons**:
+
 - Brittle: Fails when multiple issues interact (blur + tables)
 - Not extensible: Adding new pipelines requires code changes
 - No explainability: Just "rule matched" not "score was X"
@@ -469,11 +476,13 @@ class Settings(BaseSettings):
 **Description**: Train classifier to predict optimal pipeline
 
 **Pros**:
+
 - Can learn complex interactions between quality dimensions
 - Potentially higher accuracy than rule-based
 - Adapts to production data
 
 **Cons**:
+
 - Requires labeled training data (which pipeline is "best" per doc)
 - Black box: Hard to explain routing decision
 - Overfitting risk: May not generalize
@@ -488,10 +497,12 @@ class Settings(BaseSettings):
 **Description**: Combine all factors into one 0-1 score
 
 **Pros**:
+
 - Simple to understand ("quality = 0.73")
 - Easy to threshold (e.g., > 0.5 → OCR)
 
 **Cons**:
+
 - Loses critical information: Can't distinguish degradation from complexity
 - Poor routing: Document with low degradation but high structure would route same as high degradation, low structure
 - Not aligned with pipeline trade-off (Vision vs. OCR axes)
@@ -505,10 +516,12 @@ class Settings(BaseSettings):
 **Description**: Run both Vision and OCR, use best result
 
 **Pros**:
+
 - Guaranteed optimal result (by definition)
 - No routing errors
 
 **Cons**:
+
 - 2× computational cost (prohibitive at scale)
 - 2× latency (unacceptable for real-time)
 - How to choose "best" result? Requires meta-scoring anyway
@@ -522,18 +535,21 @@ class Settings(BaseSettings):
 ### Phase Integration
 
 **Phase 1-3** (Current): Build foundation
+
 - ✅ Phase 1: Detect degradation issues (blur, noise, skew)
 - ✅ Phase 1B: DPI detection and upscaling
 - ✅ Phase 2: ML-based IQA for accurate scoring
 - ✅ Phase 3: Layout detection for structural scoring
 
 **Phase 4** (Production - Implement DQS):
+
 - Week 17: Implement DQSCalculator class
 - Week 18: Add routing logic and schema extension
 - Week 19: Calibrate thresholds on validation set
 - Week 20: Deploy with monitoring
 
 **Phase 5** (Optimization):
+
 - Collect production routing data
 - Tune thresholds based on downstream RAG accuracy
 - Evaluate ML-based meta-routing
@@ -541,20 +557,24 @@ class Settings(BaseSettings):
 ### Threshold Calibration Process
 
 **Step 1: Create Ground Truth** (Manual annotation)
+
 - Sample 500 documents from production corpus
 - Manually classify optimal pipeline per document
 - Annotate as: "vision_simple", "vision_structured", "ocr_fast", "ocr_advanced"
 
 **Step 2: Compute DQS on Ground Truth**
+
 - Run DQSCalculator on all 500 documents
 - Generate (degradation_score, structural_score) per document
 
 **Step 3: Optimize Thresholds**
+
 - Grid search over threshold pairs: degradation ∈ [0.3, 0.4, ..., 0.8], structural ∈ [0.3, 0.4, ..., 0.8]
 - Metric: Routing accuracy (% documents routed to annotated optimal pipeline)
 - Target: > 85% routing accuracy
 
 **Step 4: Validate**
+
 - Test on held-out 100 documents
 - Measure downstream RAG accuracy for DQS-routed vs. random assignment
 - Expected improvement: 15-25%
@@ -583,7 +603,7 @@ dqs_routing_confidence_p95 0.65
 # Problematic cases (Quadrant 2: high deg + high struct)
 dqs_challenging_docs_count 56
 dqs_challenging_docs_percent 2.1
-```
+```text
 
 **Quality Metrics** (Post-processing validation):
 
@@ -595,15 +615,17 @@ rag_accuracy_by_quadrant{quadrant="ocr_advanced"} 0.94
 # Pipeline utilization
 pipeline_usage_percent{pipeline="vision"} 35
 pipeline_usage_percent{pipeline="ocr"} 65
-```
+```text
 
 ### Alerts
 
 **Critical**:
+
 - `dqs_challenging_docs_percent > 10%` → Many Quadrant 2 docs, review corpus quality
 - `dqs_routing_confidence_avg < 0.7` → Low confidence, review thresholds
 
 **Warning**:
+
 - `dqs_quadrant_imbalance > 80%` → 80%+ docs in one quadrant, not getting value from routing
 - `rag_accuracy_by_quadrant < 0.8` → Specific quadrant performing poorly, review pipeline
 
@@ -617,15 +639,17 @@ pipeline_usage_percent{pipeline="ocr"} 65
 **Phase 4 Week 20**: Production deployment with feature flag
 
 **Feature Flag**:
+
 ```python
 if settings.enable_dqs:
     quality_score = dqs_calculator.calculate(page_metadata)
     routing = quality_score.routing_recommendation
 else:
     routing = "ocr_fast"  # Default fallback
-```
+```text
 
 **Rollout Strategy**:
+
 1. Week 20: Deploy with `enable_dqs=false` (shadow mode: calculate but don't route)
 2. Week 21: Enable for 10% traffic (A/B test)
 3. Week 22: Enable for 50% traffic
@@ -673,17 +697,19 @@ def test_dqs_quadrant_4():
     assert dqs.degradation_score >= 0.6  # Low degradation
     assert dqs.structural_score >= 0.5   # High complexity
     assert dqs.routing_recommendation == "ocr_advanced"
-```
+```text
 
 ### Integration Tests
 
 **Test: End-to-End Routing**
+
 - Process 10 sample documents (2-3 per quadrant)
 - Verify DQS calculated correctly
 - Verify routing matches expected quadrant
 - Verify JSON output includes routing rationale
 
 **Test: Threshold Sensitivity**
+
 - Process same document with different threshold configs
 - Verify routing changes as expected when crossing thresholds
 
@@ -692,11 +718,13 @@ def test_dqs_quadrant_4():
 ## References
 
 **Research:**
+
 - "Lost in OCR Translation?" study - OCR vs. Vision pipeline trade-off
 - DocLayNet paper - Layout complexity metrics
 - COCO dataset - Object detection for structure analysis
 
 **Internal:**
+
 - `docs/project_mandate.md` - Strategic justification for routing
 - `docs/image_preprocessing.doc` - Academic taxonomy of document issues
 - ADR-0007: Hybrid IQA Approach - Per-element quality assessment
@@ -704,6 +732,7 @@ def test_dqs_quadrant_4():
 - ADR-0020: CPU-First Deployment Strategy - Production constraints
 
 **External:**
+
 - [Tesseract Documentation](https://tesseract-ocr.github.io/) - OCR-based pipeline
 - [ColPali Paper](https://arxiv.org/abs/2407.01449) - Vision-based retrieval
 - [Nougat Paper](https://arxiv.org/abs/2308.13418) - Advanced OCR for structured docs

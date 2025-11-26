@@ -15,6 +15,7 @@ This document defines the handoff format between Project A (Preprocessing & IQA)
 ## Overview
 
 Project A produces a `DocumentMetadata.json` file for each processed document, which contains:
+
 1. Document identification and basic info
 2. Per-page quality assessment (IQA scores)
 3. Document-level quality score (DQS)
@@ -25,7 +26,7 @@ Project A produces a `DocumentMetadata.json` file for each processed document, w
 
 For each document processed, Project A outputs:
 
-```
+```text
 output/
 ├── {document_id}/
 │   ├── metadata.json          # DocumentMetadata JSON
@@ -33,7 +34,7 @@ output/
 │   ├── page_0001.png
 │   ├── ...
 │   └── page_NNNN.png
-```
+```text
 
 ## DocumentMetadata Schema (Required Fields for MVP)
 
@@ -59,7 +60,7 @@ output/
 {
   "pdf_type": "image_only" | "born_digital" | "hybrid"
 }
-```
+```text
 
 - `image_only`: Scanned document, all pages are images
 - `born_digital`: Digital-native PDF with embedded text
@@ -74,7 +75,7 @@ output/
     "structural_complexity_score": 0.40
   }
 }
-```
+```text
 
 - `degradation_score`: 0-1 where 0=worst quality, 1=pristine
 - `structural_complexity_score`: 0-1 where 0=simple, 1=very complex
@@ -85,7 +86,7 @@ output/
 {
   "ocr_routing_recommendation": "ocr_fast" | "ocr_advanced" | "vision_simple" | "vision_structured"
 }
-```
+```text
 
 | Strategy | When Used | Expected by Project B |
 |----------|-----------|----------------------|
@@ -113,7 +114,7 @@ output/
     }
   ]
 }
-```
+```text
 
 ### pages (Per-Page Metadata)
 
@@ -149,7 +150,7 @@ output/
     }
   ]
 }
-```
+```text
 
 ### processing_version
 
@@ -166,7 +167,7 @@ output/
     "timestamp": "2025-11-23T12:00:00Z"
   }
 }
-```
+```text
 
 ## Complete Example
 
@@ -264,13 +265,13 @@ output/
     }
   ]
 }
-```
+```text
 
 ## Project B Consumption Guidelines
 
 ### Routing Decision Tree
 
-```
+```text
 IF pdf_type == "born_digital":
     # Skip IQA pipeline, use text extraction
     USE text_extraction_path
@@ -289,7 +290,7 @@ ELSE:
     ELSE:
         # High risk document
         USE vision_structured_path WITH retry_strategy
-```
+```text
 
 ### Quality Thresholds
 
@@ -302,6 +303,7 @@ ELSE:
 ### Per-Page Processing
 
 Project B should process pages individually when:
+
 1. `page.teacher_iqa` is present (indicates challenging page)
 2. Page has `severity: "high"` or `severity: "critical"` issues
 3. Page `complexity_score > 0.6`
@@ -319,7 +321,7 @@ try:
 except ValidationError as e:
     # Handle invalid metadata
     log_error(f"Invalid metadata: {e}")
-```
+```text
 
 ## Versioning
 

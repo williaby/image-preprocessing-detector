@@ -29,6 +29,7 @@ purpose: "Document the fundamental architectural pattern of the image preprocess
 ### Problem Statement
 
 The system needs to process diverse document types for RAG applications:
+
 - **Pure images**: Photos, scanned images, diagrams (no text)
 - **Text documents**: PDFs, scanned pages, reports (with embedded images)
 - **Quality issues**: Blur, skew, noise, perspective, contrast
@@ -45,6 +46,7 @@ The system needs to process diverse document types for RAG applications:
 ### Key Insight
 
 **Different document types require different processing strategies**:
+
 - **Pure images**: Need IQA (blur, noise, etc.) but NOT layout detection
 - **Text documents**: Need layout detection (tables, figures) AND hybrid IQA on embedded images
 
@@ -56,7 +58,7 @@ The system needs to process diverse document types for RAG applications:
 
 ### Architecture
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │  Stage 1: Ingestion & Standardization   │
 │  • Convert PDF → 300 DPI images         │
@@ -101,34 +103,39 @@ The system needs to process diverse document types for RAG applications:
 │  • Confidence thresholds                │
 │  • JSON metadata generation             │
 └─────────────────────────────────────────┘
-```
+```text
 
 ### Stage Breakdown
 
 **Stage 1: Ingestion & Standardization**
+
 - **Purpose**: Normalize all inputs to consistent format
 - **Processing**: PDF → 300 DPI PNG images, multi-page handling
 - **Output**: Standardized image array per page
 
 **Stage 2: Text Detection Gate**
+
 - **Purpose**: Fast routing to appropriate processing path
 - **Method**: Ensemble (morphological analysis + EAST/DBNet-lite)
 - **Threshold**: Calibrated on DocLayNet validation set
 - **Output**: Binary decision (text/no-text)
 
 **Stage 3A: Image Quality Assessment (No-Text Branch)**
+
 - **Purpose**: Assess quality issues in pure images
 - **Methods**: Classical CV (Hough, Laplacian, histogram) + ML (CNN)
 - **Issues Detected**: Noise, blur, skew, perspective, contrast, orientation
 - **Output**: List of `DetectedIssue` with confidence scores
 
 **Stage 3B: Document Element Detection (Text Branch)**
+
 - **Purpose**: Detect layout elements and assess embedded image quality
 - **Methods**: YOLOv8 layout detection + hybrid IQA
 - **Elements Detected**: Tables, images, text blocks, formulas, handwriting
 - **Output**: List of `DocumentElement` with bounding boxes and quality issues
 
 **Stage 4: Correction & Output**
+
 - **Purpose**: Apply targeted corrections, generate metadata
 - **Methods**: OpenCV corrections (deskew, CLAHE, sharpen, denoise)
 - **Output**: Corrected images + JSON metadata
@@ -185,34 +192,42 @@ The system needs to process diverse document types for RAG applications:
 ## Alternatives Considered
 
 ### Alternative 1: Monolithic Multi-Task Model
+
 **Single model predicts quality + layout + elements**
 
 **Rejected**:
+
 - 60-100% slower (runs all tasks on every image)
 - Lower accuracy (multi-task learning trade-offs)
 - Harder to upgrade (must retrain entire model)
 - Example: Donut model (good for OCR, poor for IQA)
 
 ### Alternative 2: Three-Way Fork (No-Text, Simple-Text, Complex-Text)
+
 **Split text path into simple vs complex**
 
 **Rejected**:
+
 - Added complexity without clear benefit
 - Harder to calibrate decision boundaries
 - No significant performance gain
 
 ### Alternative 3: Sequential Processing (Always Run All Stages)
+
 **Run IQA → Layout → Corrections on every document**
 
 **Rejected**:
+
 - Wastes 40-60% computation
 - Higher latency (50-150ms → 80-250ms)
 - Higher cost (more GPU time)
 
 ### Alternative 4: Pure Classical CV (No ML)
+
 **Use only OpenCV, no deep learning**
 
 **Rejected**:
+
 - Lower accuracy for complex issues (noise, perspective)
 - Misses layout detection entirely
 - Not competitive with modern systems
@@ -242,7 +257,7 @@ def text_detection_gate(image: np.ndarray) -> bool:
 
     # Require 2/3 consensus
     return sum(votes) >= 2
-```
+```text
 
 ### Performance Comparison
 
@@ -290,7 +305,7 @@ def process_document(pdf_path: str) -> DocumentMetadata:
             # Add empty page metadata, continue with next page
 
     return metadata
-```
+```text
 
 ## Validation
 
@@ -314,11 +329,13 @@ def process_document(pdf_path: str) -> DocumentMetadata:
 ### Accuracy Validation
 
 **Text Detection Gate**:
+
 - Precision: 96.2% (DocLayNet validation)
 - Recall: 94.8% (DocLayNet validation)
 - F1: 95.5%
 
 **End-to-End**:
+
 - IQA mAP: 88.3% (Phase 2 target: >88%)
 - Layout mAP@.50: 82.7% (Phase 3 target: >82%)
 

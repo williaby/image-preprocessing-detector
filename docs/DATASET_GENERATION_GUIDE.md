@@ -70,6 +70,7 @@ watch -n 5 'du -sh data/training/iqa_phase2_100k && \
 ```
 
 **Expected Output**:
+
 - **Duration**: 8-12 hours (local CPU)
 - **Size**: ~40-50 GB
 - **Files**: 100,000 JPEG images + metadata.json
@@ -102,6 +103,7 @@ cat data/training/iqa_phase2_100k/metadata.json | jq '.actual_distributions'
 ```
 
 **Expected Validation**:
+
 - ✅ Defect type distribution within ±2% of target
 - ✅ Color mode: ~60% RGB, ~35% grayscale, ~5% B&W
 - ✅ Orientation: ~75% portrait, ~20% landscape
@@ -141,6 +143,7 @@ dvc add data/training/iqa_phase2_100k
 ```
 
 **What happens**:
+
 - DVC calculates MD5 checksum of entire dataset
 - Creates `.dvc` file with metadata (file hashes, structure)
 - Adds dataset to `.gitignore` (actual files not committed to Git)
@@ -159,12 +162,14 @@ dvc push data/training/iqa_phase2_100k
 ```
 
 **Upload Details**:
+
 - **Size**: ~40-50 GB
 - **Duration**: 30-90 minutes (depends on internet speed)
 - **Cost**: $1.04/month GCS storage
 - **Parallel upload**: DVC uses multiple threads automatically
 
 **Monitor Progress**:
+
 ```bash
 # Check GCS bucket size
 gsutil du -sh gs://image_detection_b/image-preprocessing-detector/datasets/
@@ -278,11 +283,13 @@ uv run modal run modal/train_phase2_iqa.py
 ### Generation Issues
 
 **Error: "albumentations not found"**
+
 ```bash
 uv sync --extra ml
 ```
 
 **Error: "Source dataset not found"**
+
 ```bash
 # Check which datasets are available
 ls -lh data/benchmarks/
@@ -290,6 +297,7 @@ ls -lh data/benchmarks/
 ```
 
 **Slow generation (>15 hours)**
+
 ```bash
 # Check CPU usage
 htop
@@ -299,6 +307,7 @@ htop
 ### DVC Issues
 
 **Error: "GCS credentials not found"**
+
 ```bash
 # Verify credentials file exists
 ls .gcp/service-account.json
@@ -308,6 +317,7 @@ dvc remote modify gcs credentialpath .gcp/service-account.json
 ```
 
 **Error: "dvc push failed"**
+
 ```bash
 # Check GCS permissions
 gsutil ls gs://image_detection_b/
@@ -318,6 +328,7 @@ gsutil ls gs://image_detection_b/
 ### Upload Issues
 
 **Slow upload (>2 hours)**
+
 ```bash
 # Check internet speed
 speedtest-cli

@@ -32,6 +32,7 @@ purpose: "Document the decision to adopt a GCS-first storage workflow integrated
 Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) with the following requirements:
 
 **Computational Requirements**:
+
 - **Training Dataset**: 50k images (~18 GB)
 - **Validation Datasets**: 2,807 images (~5 GB)
 - **Model Size**: MobileNetV3/EfficientNet (~5-10M parameters)
@@ -39,6 +40,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
 - **Storage**: ~26 GB total (datasets + checkpoints + logs)
 
 **Operational Constraints**:
+
 1. **Budget**: Minimize GPU rental costs (target: <$50 for Phase 2)
 2. **Security**: No sensitive data exposure (service account keys, personal files)
 3. **Reproducibility**: Version-controlled workflow, repeatable training runs
@@ -48,12 +50,14 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
 ### Current Environment
 
 **Local Development**:
+
 - **Platform**: WSL2 on Windows (Linux 6.6.87.2-microsoft-standard-WSL2)
 - **GPU**: ❌ No CUDA support in WSL2 (CPU-only PyTorch)
 - **Storage**: Local disk (sufficient for dataset generation)
 - **Networking**: Fast internet for GCS uploads (~50-100 Mbps)
 
 **Cloud Options**:
+
 1. **Modal** (Serverless GPU)
    - GPU: T4/A10/A100 (guaranteed access, multi-cloud)
    - Runtime: No session limit (configurable timeout up to 72+ hours)
@@ -76,6 +80,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
    - Cold Start: ~5 minutes
 
 **Storage Options**:
+
 1. **Google Drive**
    - Integration: Native Colab mount (`drive.mount('/content/drive')`)
    - Quota: 15 GB free, 100 GB Colab Pro
@@ -91,6 +96,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
 ### Requirements
 
 **Phase 2 Training Workflow**:
+
 1. **Local Generation**: Generate 50k synthetic dataset on development machine (~8-12 hours)
 2. **Upload to Cloud**: Transfer 26 GB to cloud storage
 3. **Training**: Download in Colab, train model with GPU acceleration (~24-48 hours)
@@ -98,12 +104,14 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
 5. **Reproducibility**: Re-run training with same dataset and configuration
 
 **Security Requirements**:
+
 1. **Credential Isolation**: Service account keys must not be committed to Git
 2. **Data Separation**: Training data isolated from personal files (Google Drive)
 3. **Access Control**: Fine-grained permissions (read-only for training, read-write for upload)
 4. **Audit Trail**: Trackable access logs for compliance
 
 **Performance Requirements**:
+
 1. **Upload Speed**: >10 MB/s for 26 GB upload (~45 min max)
 2. **Download Speed**: >50 MB/s for Colab download (~10 min max)
 3. **Training Speed**: Full 50k dataset training in <48 hours (T4 GPU)
@@ -115,6 +123,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
 **Adopt a GCS-first storage strategy integrated with Modal serverless compute for ML training, replacing Google Colab Pro, Google Drive, and dedicated GPU instances.**
 
 **Key Reasons for Modal**:
+
 1. **No Session Timeouts**: Train for days without manual checkpoint interruption
 2. **Cost Effective**: $30/month free credits covers most Phase 2-3 training
 3. **Production Ready**: Container-based workflow from day 1
@@ -128,6 +137,7 @@ Phase 2 requires training a multi-label CNN for Image Quality Assessment (IQA) w
 **Purpose**: Generate 50k synthetic dataset locally before uploading to cloud
 
 **Implementation**:
+
 ```bash
 # scripts/prepare_phase2_data.py
 poetry run python scripts/prepare_phase2_data.py \
@@ -135,10 +145,11 @@ poetry run python scripts/prepare_phase2_data.py \
   --output-dir datasets/iqa_phase2 \
   --num-samples 50000 \
   --preset medium
-```
+```text
 
 **Output Structure**:
-```
+
+```text
 datasets/iqa_phase2/
 ├── train/                    # 35,000 samples (18 GB)
 │   ├── images/
@@ -150,9 +161,10 @@ datasets/iqa_phase2/
 │   ├── images/
 │   └── labels.json
 └── metadata.json             # Generation config
-```
+```text
 
 **Advantages**:
+
 - ✅ **No Cloud Costs**: Generation happens on local machine (no GPU rental)
 - ✅ **Full Control**: Fine-tune augmentation parameters without cloud dependencies
 - ✅ **Reproducibility**: Version-controlled generation scripts
@@ -162,7 +174,8 @@ datasets/iqa_phase2/
 **Purpose**: Central storage for datasets, models, and training artifacts
 
 **GCS Bucket Structure**:
-```
+
+```text
 gs://image-detection-datasets/           # Primary bucket
 ├── iqa_phase2/                         # Phase 2 datasets
 │   ├── train/                          # 18 GB
@@ -178,9 +191,10 @@ gs://image-detection-datasets/           # Primary bucket
 │   └── training_logs/                  # TensorBoard logs
 └── checkpoints/                        # Intermediate checkpoints
     └── phase2_iqa_epoch_10.pth
-```
+```text
 
 **Authentication**:
+
 ```bash
 # scripts/auth_gcs.sh
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
@@ -189,9 +203,10 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 gcloud projects add-iam-policy-binding image-detection-478105 \
   --member="serviceAccount:colab-training@image-detection-478105.iam.gserviceaccount.com" \
   --role="roles/storage.objectViewer"  # Read-only for Colab
-```
+```text
 
 **Upload Workflow**:
+
 ```bash
 # scripts/upload_datasets_to_gcs.sh
 #!/bin/bash
@@ -209,9 +224,10 @@ gsutil -m cp -r data/benchmarks/external_iqa/LIVE_Challenge gs://image-detection
 
 # Verify upload
 gsutil du -sh gs://image-detection-datasets/
-```
+```text
 
 **Advantages**:
+
 - ✅ **Security**: Service account credentials separate from personal Google account
 - ✅ **Performance**: Parallel transfers (`gsutil -m`) achieve 50-100 MB/s
 - ✅ **Cost**: $0.52/month for 26 GB Standard storage ($0.02/GB/month)
@@ -223,6 +239,7 @@ gsutil du -sh gs://image-detection-datasets/
 **Purpose**: GPU-accelerated training with serverless autoscaling
 
 **Modal Training Script Structure**:
+
 ```python
 # modal/train_phase2_iqa.py
 
@@ -281,15 +298,17 @@ def train_iqa():
 @stub.local_entrypoint()
 def main():
     train_iqa.remote()
-```
+```text
 
 **Run Training**:
+
 ```bash
 # Single command - runs to completion (no session management!)
 modal run modal/train_phase2_iqa.py
-```
+```text
 
 **Modal Features**:
+
 - ✅ **Guaranteed GPU Access**: T4/A10/A100 (multi-cloud fallback)
 - ✅ **No Session Timeout**: Train for days without interruption
 - ✅ **Sub-Second Cold Start**: <1 second vs 2-3 minutes
@@ -297,6 +316,7 @@ modal run modal/train_phase2_iqa.py
 - ✅ **Python-Native**: No YAML, define infrastructure in code
 
 **Cost Analysis**:
+
 - **Modal Free Tier**: $30/month compute credits (recurring)
 - **T4 GPU**: $0.5904/hour × 40 hours = $23.62 (covered by free tier!)
 - **GCS Storage**: $0.52/month (26 GB Standard)
@@ -306,6 +326,7 @@ modal run modal/train_phase2_iqa.py
 ### Workflow Integration
 
 **Phase 2 Training Workflow**:
+
 ```mermaid
 graph LR
     A[Local: Generate 50k dataset] --> B[scripts/prepare_phase2_data.py]
@@ -321,9 +342,10 @@ graph LR
     K --> L[gs://image-detection-datasets/models/]
     L --> M[Local: Download model]
     M --> N[models/phase2_iqa/]
-```
+```text
 
 **Code Support**:
+
 - [scripts/auth_gcs.sh](../../scripts/auth_gcs.sh): GCS authentication with service account
 - [scripts/upload_datasets_to_gcs.sh](../../scripts/upload_datasets_to_gcs.sh): Upload datasets to GCS
 - [scripts/gcs_helpers.sh](../../scripts/gcs_helpers.sh): Helper functions for GCS operations
@@ -410,11 +432,13 @@ graph LR
 **Description**: Use native Google Drive mount in Colab (`drive.mount('/content/drive')`)
 
 **Pros**:
+
 - No additional setup (native Colab integration)
 - Free storage (15 GB free, 100 GB Colab Pro)
 - Familiar interface (Google Drive web UI)
 
 **Cons**:
+
 - **Security Risk**: Mixes personal files with training data (credential exposure)
 - **Slow Performance**: 5-10 MB/s sync speed (5-10x slower than GCS)
 - **Sync Overhead**: Synchronization delays, file locking issues
@@ -430,11 +454,13 @@ graph LR
 **Description**: Train on local machine with NVIDIA GPU
 
 **Pros**:
+
 - No cloud costs (one-time GPU purchase)
 - No internet dependency (local storage)
 - Full control over environment
 
 **Cons**:
+
 - **Hardware Cost**: NVIDIA RTX 4090 (~$1,600) or A100 (~$10,000)
 - **WSL2 Limitation**: No CUDA support in WSL2 (dual-boot or VM required)
 - **Electricity**: ~$5-$10/month for 24/7 GPU usage
@@ -449,11 +475,13 @@ graph LR
 **Description**: Rent dedicated GPU instances (AWS p3.2xlarge, GCP n1-highmem-8 with T4)
 
 **Pros**:
+
 - Unlimited runtime (no 24-hour limit)
 - Full control over environment (root access)
 - Scalable (can upgrade to V100/A100)
 
 **Cons**:
+
 - **Cost**: $0.35-$3.00/hour × 48 hours = $17-$144 per training run
 - **Complexity**: VPC setup, security groups, SSH key management
 - **Overhead**: Instance provisioning time (~5-10 min)
@@ -468,10 +496,12 @@ graph LR
 **Description**: Use free Colab with 12-hour runtime limit
 
 **Pros**:
+
 - Free (no subscription cost)
 - T4 GPU access (same as Colab Pro)
 
 **Cons**:
+
 - **12-Hour Limit**: Insufficient for 50k dataset training (~24-48 hours)
 - **Disconnects**: Auto-disconnect on inactivity (cannot background)
 - **GPU Access**: Lower priority (may get CPU-only sessions during high demand)
@@ -486,10 +516,12 @@ graph LR
 **Description**: Use Google Drive for small files, GCS for large datasets
 
 **Pros**:
+
 - Leverage Google Drive for notebooks and checkpoints (small files)
 - Use GCS for datasets (large files)
 
 **Cons**:
+
 - **Complexity**: Two storage systems to manage
 - **Inconsistency**: Confusing which files go where
 - **Security**: Still exposes Google Drive credentials
@@ -503,23 +535,27 @@ graph LR
 ### Phase 2 Timeline
 
 **Week 1** (Current):
+
 - ✅ Configure GCS bucket (`gs://image-detection-datasets`)
 - ✅ Create service account with storage permissions
 - ✅ Generate 50k synthetic dataset locally (~8-12 hours)
 - ✅ Upload datasets to GCS (~10-15 min)
 
 **Week 2**:
+
 - Set up Colab Pro subscription ($10/month)
 - Create training notebook ([notebooks/phase2_training.ipynb](../../notebooks/phase2_training.ipynb))
 - Download datasets from GCS (~10 min)
 - Train MobileNetV3/EfficientNet (~24-48 hours GPU time)
 
 **Week 3**:
+
 - Evaluate model on external validation datasets
 - Export to ONNX with INT8 quantization
 - Upload trained model to GCS
 
 **Week 4**:
+
 - Download model from GCS to local machine
 - Integrate into ML detector pipeline
 - Test deployment
@@ -527,6 +563,7 @@ graph LR
 ### GCS Configuration
 
 **Bucket Setup**:
+
 ```bash
 # Create GCS bucket (one-time setup)
 gsutil mb -p image-detection-478105 -c STANDARD -l us-central1 gs://image-detection-datasets
@@ -548,9 +585,10 @@ cat > lifecycle.json <<EOF
 }
 EOF
 gsutil lifecycle set lifecycle.json gs://image-detection-datasets
-```
+```text
 
 **Service Account Permissions**:
+
 ```bash
 # Create service account for Colab training (read-only)
 gcloud iam service-accounts create colab-training \
@@ -569,9 +607,10 @@ gcloud iam service-accounts create local-upload \
 # Grant storage.objectAdmin role (read-write)
 gsutil iam ch serviceAccount:local-upload@image-detection-478105.iam.gserviceaccount.com:objectAdmin \
   gs://image-detection-datasets
-```
+```text
 
 **Key Management**:
+
 ```bash
 # Generate service account key (local upload)
 gcloud iam service-accounts keys create image-detection-478105-local-upload.json \
@@ -582,11 +621,12 @@ base64 -w 0 image-detection-478105-local-upload.json > image-detection-478105-lo
 
 # Use in scripts
 export GOOGLE_APPLICATION_CREDENTIALS="$(base64 -d image-detection-478105-local-upload.json.b64)"
-```
+```text
 
 ### Colab Integration
 
 **Authentication in Colab**:
+
 ```python
 # notebooks/phase2_training.ipynb
 
@@ -600,9 +640,10 @@ auth.authenticate_user()
 # [3] Verify download
 !du -sh /content/datasets/iqa_phase2
 # Expected: ~18 GB
-```
+```text
 
 **Monitoring Training**:
+
 ```python
 # [4] TensorBoard logging
 from torch.utils.tensorboard import SummaryWriter
@@ -611,20 +652,22 @@ writer = SummaryWriter(log_dir="/content/logs")
 
 # Upload logs to GCS periodically
 !gsutil -m cp -r /content/logs gs://image-detection-datasets/models/training_logs/
-```
+```text
 
 ### Cost Breakdown
 
 **Monthly Costs** (Phase 2):
-```
+
+```text
 Colab Pro Subscription:         $10.00/month
 GCS Standard Storage (26 GB):   $ 0.52/month (26 GB × $0.02/GB)
 GCS Egress (us-central1):       $ 0.00/month (free same-region)
 ─────────────────────────────────────────
 Total:                          $10.52/month
-```
+```text
 
 **Comparison**:
+
 | Option | GPU | Runtime | Storage | Total Cost |
 |--------|-----|---------|---------|------------|
 | **Colab Pro + GCS** | T4/V100/A100 | 24-hour | 26 GB GCS | **$10.52/month** |
@@ -644,6 +687,7 @@ Total:                          $10.52/month
 **Phase 5**: Consider dedicated GPU instances for continuous retraining
 
 **Scalability Milestones**:
+
 - **26 GB** (Phase 2): GCS Standard storage
 - **100 GB** (Phase 3): Evaluate GCS Nearline for cost optimization
 - **1 TB+** (Phase 5+): Consider GCS Coldline or Archive for long-term storage
@@ -669,7 +713,7 @@ def test_gcs_upload_download():
     # Verify file integrity
     import filecmp
     assert filecmp.cmp(test_file, "/tmp/metadata.json")
-```
+```text
 
 ### Performance Tests
 
@@ -681,18 +725,20 @@ time gsutil -m cp -r datasets/iqa_phase2/train gs://image-detection-datasets/tes
 # Measure download speed (Colab)
 time gsutil -m cp -r gs://image-detection-datasets/iqa_phase2 /content/datasets/
 # Expected: ~3-5 min for 26 GB (80-140 MB/s)
-```
+```text
 
 ---
 
 ## References
 
 **Documentation**:
+
 - [Google Cloud Storage Documentation](https://cloud.google.com/storage/docs)
 - [Google Colab Pro Documentation](https://colab.research.google.com/signup)
 - [gsutil Tool Documentation](https://cloud.google.com/storage/docs/gsutil)
 
 **Internal**:
+
 - [docs/setup/colab-storage-setup.md](../setup/colab-storage-setup.md) - Colab GCS integration guide
 - [scripts/auth_gcs.sh](../../scripts/auth_gcs.sh) - GCS authentication script
 - [scripts/upload_datasets_to_gcs.sh](../../scripts/upload_datasets_to_gcs.sh) - Dataset upload script
@@ -702,6 +748,7 @@ time gsutil -m cp -r gs://image-detection-datasets/iqa_phase2 /content/datasets/
 - ADR-0027: INT8 Quantization with ONNX - Model export and deployment
 
 **Cost Analysis**:
+
 - [GCS Pricing](https://cloud.google.com/storage/pricing)
 - [Colab Pro Pricing](https://colab.research.google.com/signup)
 - [AWS EC2 GPU Pricing](https://aws.amazon.com/ec2/instance-types/p3/)

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 <!--
 SPDX-FileCopyrightText: 2024 Byron Williams <byronawilliams@gmail.com>
 SPDX-License-Identifier: MIT
@@ -20,6 +21,7 @@ The test suite demonstrates a **healthy balance** favoring **real testing over m
 - **Mock-Moderate Testing**: ~8 tests (4.9%)
 
 ### Key Finding
+
 **77.9% of tests use actual implementations** with real data, real algorithms, and real I/O operations. Mocking is primarily limited to external library boundaries (file I/O, PDF parsing) where it makes sense for unit testing.
 
 ---
@@ -32,12 +34,14 @@ The test suite demonstrates a **healthy balance** favoring **real testing over m
 **Testing Approach**: Pure Pydantic validation
 
 **What's Being Tested**:
+
 - Schema validation with real Pydantic models
 - JSON serialization/deserialization
 - Field validation constraints (confidence 0-1, bbox length)
 - Data type enforcement
 
 **Example**:
+
 ```python
 def test_confidence_validation(self) -> None:
     """Test confidence score must be between 0 and 1."""
@@ -47,7 +51,7 @@ def test_confidence_validation(self) -> None:
             confidence=1.5,  # Invalid: > 1.0
             severity=IssueSeverity.MEDIUM,
         )
-```
+```text
 
 **Assessment**: ✅ **Appropriate** - No mocking needed for pure data validation
 
@@ -59,12 +63,14 @@ def test_confidence_validation(self) -> None:
 **Testing Approach**: Real OpenCV operations on synthetic images
 
 **What's Being Tested**:
+
 - DeskewCorrector: Real rotation matrices, affine transformations
 - ContrastEnhancer: Real CLAHE (Contrast Limited Adaptive Histogram Equalization)
 - Sharpener: Real unsharp mask operations
 - Severity-based parameter adjustments
 
 **Example**:
+
 ```python
 def test_correct_valid_angle(self) -> None:
     """Test correction applied for valid angle."""
@@ -76,7 +82,7 @@ def test_correct_valid_angle(self) -> None:
 
     assert result.applied is True
     assert result.corrected_image.shape != img.shape  # Rotation changes dims
-```
+```text
 
 **Assessment**: ✅ **Excellent** - Tests actual image processing algorithms
 
@@ -88,6 +94,7 @@ def test_correct_valid_angle(self) -> None:
 **Testing Approach**: Real text detection on synthetic images
 
 **What's Being Tested**:
+
 - Stroke density calculation
 - Connected components analysis
 - Edge density computation
@@ -95,6 +102,7 @@ def test_correct_valid_angle(self) -> None:
 - Decision logic thresholds
 
 **Example**:
+
 ```python
 def test_detect_text_heavy_document(self) -> None:
     """Test detection on text-heavy synthetic document."""
@@ -112,7 +120,7 @@ def test_detect_text_heavy_document(self) -> None:
 
     assert result.has_text is True
     assert result.confidence > 0.3
-```
+```text
 
 **Assessment**: ✅ **Excellent** - Tests real algorithms with controlled inputs
 
@@ -124,6 +132,7 @@ def test_detect_text_heavy_document(self) -> None:
 **Testing Approach**: Real JSON I/O with tempfile
 
 **What's Being Tested**:
+
 - MetadataBuilder state management
 - MIME type detection
 - JSON serialization/deserialization
@@ -131,6 +140,7 @@ def test_detect_text_heavy_document(self) -> None:
 - Data preservation through round-trip
 
 **Example**:
+
 ```python
 def test_load_json_preserves_data(self) -> None:
     """Test loading preserves all data fields."""
@@ -144,7 +154,7 @@ def test_load_json_preserves_data(self) -> None:
 
         assert loaded.document_id == metadata.document_id
         assert len(page.detected_issues) == 1
-```
+```text
 
 **Assessment**: ✅ **Excellent** - Real file I/O validates serialization logic
 
@@ -156,12 +166,14 @@ def test_load_json_preserves_data(self) -> None:
 **Testing Approach**: Mocked cv2.imread, PIL Image.open
 
 **What's Being Tested**:
+
 - File validation logic
 - DPI extraction from EXIF/info dict
 - Color space conversion logic
 - Metadata parsing logic
 
 **Example**:
+
 ```python
 @patch("image_preprocessing_detector.ingestion.image_loader.cv2.imread")
 @patch("image_preprocessing_detector.ingestion.image_loader.Image.open")
@@ -176,9 +188,10 @@ def test_load_valid_jpeg(self, mock_pil_open: Mock, mock_cv2_imread: Mock) -> No
 
     # Mock OpenCV imread
     mock_cv2_imread.return_value = np.zeros((1080, 1920, 3), dtype=np.uint8)
-```
+```text
 
 **Why Mocking Is Used**:
+
 - PIL and OpenCV are external libraries
 - Testing file I/O logic without requiring actual image files
 - Isolating metadata extraction logic
@@ -196,12 +209,14 @@ def test_load_valid_jpeg(self, mock_pil_open: Mock, mock_cv2_imread: Mock) -> No
 **Testing Approach**: Mocked PyMuPDF (fitz)
 
 **What's Being Tested**:
+
 - Page iteration logic
 - DPI calculation from page dimensions
 - RGB to BGR conversion
 - Upscaling detection logic
 
 **Example**:
+
 ```python
 @patch("image_preprocessing_detector.ingestion.pdf_loader.fitz")
 def test_load_single_page_pdf(self, mock_fitz: Mock) -> None:
@@ -216,9 +231,10 @@ def test_load_single_page_pdf(self, mock_fitz: Mock) -> None:
     mock_pix = MagicMock()
     mock_pix.width = 2550  # 8.5 inches * 300 DPI
     mock_pix.samples = (np.zeros((3300, 2550, 3), dtype=np.uint8)).tobytes()
-```
+```text
 
 **Why Mocking Is Used**:
+
 - PyMuPDF is an external library
 - Testing PDF parsing logic without requiring actual PDF files
 - Isolating page iteration and rendering logic
@@ -236,12 +252,14 @@ def test_load_single_page_pdf(self, mock_fitz: Mock) -> None:
 **Testing Approach**: Real IQA algorithms on synthetic images
 
 **What's Being Tested**:
+
 - SkewDetector: Hough line detection, angle computation
 - BlurDetector: Laplacian variance calculation
 - ContrastDetector: Michelson contrast computation
 - Severity thresholds and classification
 
 **Example**:
+
 ```python
 def test_detect_blurred_image(self) -> None:
     """Test detection on blurred image."""
@@ -261,7 +279,7 @@ def test_detect_blurred_image(self) -> None:
 
     assert result.is_blurred is True
     assert result.score < 200.0
-```
+```text
 
 **Assessment**: ✅ **Excellent** - Tests real computer vision algorithms with controlled synthetic inputs
 
@@ -273,12 +291,14 @@ def test_detect_blurred_image(self) -> None:
 **Testing Approach**: Mocked logging.basicConfig, structlog.configure
 
 **What's Being Tested**:
+
 - Logging configuration setup
 - JSON vs. console renderer selection
 - Log level configuration
 - Performance logging utility
 
 **Example**:
+
 ```python
 @patch("image_preprocessing_detector.utils.logging.logging.basicConfig")
 @patch("image_preprocessing_detector.utils.logging.structlog.configure")
@@ -290,9 +310,10 @@ def test_setup_logging_default(
 
     assert mock_basicConfig.called
     assert mock_basicConfig.call_args[1]["level"] == logging.INFO
-```
+```text
 
 **Why Mocking Is Used**:
+
 - Testing configuration logic without side effects
 - Verifying function calls and parameters
 - Avoiding global logging state pollution
@@ -309,6 +330,7 @@ def test_setup_logging_default(
 **Testing Approach**: Real CLI execution with temporary files
 
 **What's Being Tested**:
+
 - Complete CLI command execution
 - File I/O operations
 - Error handling and exit codes
@@ -316,6 +338,7 @@ def test_setup_logging_default(
 - Correction application paths
 
 **Example**:
+
 ```python
 def test_process_with_skew_correction(self, tmp_path):
     """Test that skew correction is applied when detected."""
@@ -336,7 +359,7 @@ def test_process_with_skew_correction(self, tmp_path):
     result = runner.invoke(cli, ["process", str(img_path), ...])
 
     assert result.exit_code == 0
-```
+```text
 
 **Assessment**: ✅ **Excellent** - Integration tests with real CLI execution and real file I/O
 
@@ -348,12 +371,14 @@ def test_process_with_skew_correction(self, tmp_path):
 **Testing Approach**: Real end-to-end pipeline with PyMuPDF PDF creation
 
 **What's Being Tested**:
+
 - Complete PDF → Image → Detection → Correction → JSON pipeline
 - Multi-page document handling
 - Correction application and recording
 - JSON round-trip data preservation
 
 **Example**:
+
 ```python
 def test_image_pipeline_with_corrections(self) -> None:
     """Test pipeline with image corrections applied."""
@@ -375,7 +400,7 @@ def test_image_pipeline_with_corrections(self) -> None:
         # Verify corrections were recorded
         actions = [t.action for t in page.transform_history]
         assert any(action in ["deskew", "clahe_contrast_enhancement"] for action in actions)
-```
+```text
 
 **Assessment**: ✅ **Excellent** - True integration tests validating the entire system works together
 
@@ -402,6 +427,7 @@ def test_image_pipeline_with_corrections(self) -> None:
 ## Recommendations
 
 ### 1. ✅ **Keep Current Approach for These Modules**
+
 - Schema validation (Pydantic)
 - Image corrections (OpenCV)
 - Text detection (computer vision)
@@ -417,7 +443,7 @@ def test_image_pipeline_with_corrections(self) -> None:
 
 **Recommendation**: Create `tests/fixtures/` directory with sample files:
 
-```
+```text
 tests/fixtures/
 ├── images/
 │   ├── sample_300dpi.jpg       # High DPI JPEG
@@ -429,9 +455,10 @@ tests/fixtures/
     ├── single_page_300dpi.pdf  # Single page, high DPI
     ├── multi_page_150dpi.pdf   # Multi-page, low DPI
     └── mixed_content.pdf       # Text + images
-```
+```text
 
 **New Test Files**:
+
 ```python
 # tests/integration/test_image_loader_real.py
 def test_load_real_jpeg_300dpi():
@@ -450,7 +477,7 @@ def test_load_real_multipage_pdf():
 
     assert len(pages) == 3
     assert all(page.needs_upscaling for page in pages)  # 150 DPI
-```
+```text
 
 **Impact**: Adds ~10-15 integration tests (~10% increase) while keeping existing unit tests.
 
@@ -471,18 +498,20 @@ def test_actual_logging_output(caplog):
 
     assert "test message" in caplog.text
     assert "key" in caplog.text
-```
+```text
 
 **Impact**: Adds ~3-5 tests to verify logging works end-to-end.
 
 ### 4. ✅ **Current Mock Usage Is Justified**
 
 **Where mocking makes sense**:
+
 - **External library boundaries** (cv2.imread, PIL, PyMuPDF): Testing our code's logic without requiring actual file parsing
 - **Configuration setup** (logging, structlog): Testing configuration calls without side effects
 - **Click's CliRunner**: This is actually Click's test framework, not a mock
 
 **Where mocking would be problematic** (but we're NOT doing this):
+
 - ❌ Mocking our own correction algorithms
 - ❌ Mocking our own detection logic
 - ❌ Mocking numpy/OpenCV operations
@@ -495,6 +524,7 @@ def test_actual_logging_output(caplog):
 ### Overall Assessment: ✅ **HEALTHY TEST SUITE**
 
 **Strengths**:
+
 1. **77.9% real testing** - High confidence in actual implementations
 2. **All core algorithms tested with real operations** - Corrections, detection, IQA
 3. **Strong integration tests** - CLI and pipeline tests validate end-to-end behavior
@@ -502,11 +532,13 @@ def test_actual_logging_output(caplog):
 5. **100% coverage achieved** - All critical paths tested
 
 **Weaknesses**:
+
 1. **Limited integration testing for file loaders** - Heavy reliance on mocks for PDF/image loading
 2. **No real-world fixture files** - Could benefit from a fixtures directory
 3. **Logging tests only verify configuration** - Missing end-to-end logging validation
 
 **Priority Actions**:
+
 1. **Medium Priority**: Add `tests/fixtures/` with 10-15 sample files
 2. **Medium Priority**: Add 10-15 integration tests for real file loading
 3. **Low Priority**: Add 3-5 real logging output tests

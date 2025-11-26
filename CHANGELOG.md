@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - OpenSSF Best Practices badge compliance
 - Security policy (SECURITY.md) with vulnerability reporting process
 - Comprehensive API reference documentation
@@ -17,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - TBD
 
 ### Added
+
 - Initial project structure with Poetry package management
 - Pydantic v2 JSON schema (DetectedIssue, DocumentElement, PageMetadata, DocumentMetadata)
 - COCO-aligned bounding boxes for LayoutParser integration
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python 3.12 support
 
 ### Documentation
+
 - README with project overview and quick start
 - CONTRIBUTING guidelines with development workflow
 - PROJECT_PLAN with 50+ page implementation roadmap
@@ -39,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ARCHITECTURE_CORRECTION documenting hybrid IQA rationale
 
 ### Infrastructure
+
 - Poetry dependency management with lock file
 - pytest test framework with coverage reporting
 - GitHub issue tracking
@@ -47,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD pipeline with multiple quality gates
 
 ### Security
+
 - Bandit security linting
 - Safety dependency vulnerability scanning
 - Pre-commit hooks for security validation

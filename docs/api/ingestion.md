@@ -93,6 +93,7 @@ All ingestion functions standardize to 300 DPI for consistency:
 - **Fallback**: If DPI metadata missing, assumes 72 DPI and scales accordingly
 
 **Why 300 DPI?**
+
 - Industry standard for document scanning
 - Sufficient resolution for OCR and layout detection
 - Balances quality and computational cost

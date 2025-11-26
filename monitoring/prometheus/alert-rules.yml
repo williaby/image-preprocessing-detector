@@ -363,7 +363,9 @@ groups:
           category: availability
         annotations:
           summary: "Low throughput with pending work"
-          description: "Processing rate is {{ $value | printf \"%.2f\" }} pages/sec with {{ with query \"sum(imgprep_queue_depth)\" }}{{ . | first | value }}{{ end }} items in queue"
+          description: >-
+            Processing rate is {{ $value | printf "%.2f" }} pages/sec
+            with {{ with query "sum(imgprep_queue_depth)" }}{{ . | first | value }}{{ end }} items in queue
           runbook_url: "https://docs.imgprep.internal/runbooks/low-throughput"
 
       - alert: ProcessingStalled

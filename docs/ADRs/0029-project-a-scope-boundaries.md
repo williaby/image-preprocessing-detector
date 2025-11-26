@@ -21,6 +21,7 @@ purpose: "Establish explicit scope boundaries to prevent Project A from overlapp
 **Date**: 2025-11-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ADR-007: Hybrid IQA Approach](0007-hybrid-iqa-approach.md)
 - [ADR-008: Multi-Stage Pipeline Architecture](0008-multi-stage-pipeline-architecture.md)
 - [ADR-015: YOLOv8 Layout Detection](0015-yolov8-layout-detection.md)
@@ -31,7 +32,7 @@ purpose: "Establish explicit scope boundaries to prevent Project A from overlapp
 
 The **Image Preprocessing Detector** (this repository) is part of a four-project RAG document pipeline:
 
-```
+```text
 Project A              Project B            Project C           Project D
 image_detection   →    ocr-orchestrator →   fusion-trust   →    vector-indexer
 ───────────────        ────────────────     ─────────────       ──────────────
@@ -39,15 +40,17 @@ image_detection   →    ocr-orchestrator →   fusion-trust   →    vector-ind
 • Text Gate            • Reading Order      • Hallucination     • Vector DB
 • DQS Calculation      • Multi-Engine OCR   • Trust Scoring     • Metadata
 • Routing Metadata     • Paragraph Segment  • RAG Chunking      • Indexing
-```
+```text
 
 **Problem**: Without clear boundaries, Project A risks:
+
 1. **Scope creep**: Building features that belong in Projects B/C/D
 2. **Schema drift**: Current schema includes `DocumentElement` and per-element IQA, which may overlap with Project B's semantic layout detection
 3. **Duplicate computation**: Project A and Project B both detecting layout independently
 4. **Integration friction**: Unclear handoff contracts lead to impedance mismatches
 
 **Critical Questions**:
+
 - Where does "image quality assessment" end and "semantic layout detection" begin?
 - Should Project A detect document elements (tables, figures, text blocks)?
 - What metadata must Project A provide for Project B to make intelligent routing decisions?
@@ -147,18 +150,22 @@ image_detection   →    ocr-orchestrator →   fusion-trust   →    vector-ind
 ### Boundary Cases (CLARIFICATIONS)
 
 **Q: Should Project A detect handwriting?**
+
 - ✅ **YES**: Coarse page-level flag (`has_handwriting: bool`)
 - ❌ **NO**: Fine-grained handwriting transcription (Project B)
 
 **Q: Should Project A detect tables?**
+
 - ✅ **YES**: Coarse presence flag (`has_tables: bool`)
 - ❌ **NO**: Table bounding boxes, structure extraction, cell detection (Project B)
 
 **Q: Should Project A detect formulas?**
+
 - ✅ **YES**: Coarse density flag (`has_dense_math: bool`)
 - ❌ **NO**: Formula parsing or LaTeX generation (Project B with Nougat/Mathpix)
 
 **Q: Should Project A output bounding boxes for elements?**
+
 - ❌ **NO** (changed from earlier design):
   - Original design included `DocumentElement.bbox` for per-element IQA
   - **NEW**: Layout-lite provides page-level attributes only, no bounding boxes
@@ -166,6 +173,7 @@ image_detection   →    ocr-orchestrator →   fusion-trust   →    vector-ind
   - **Exception**: Internal use for hybrid IQA research is acceptable, but not in production schema
 
 **Q: Should Project A detect language?**
+
 - ✅ **YES**: Coarse hints (e.g., `languages: ["en"]`, `has_non_latin: false`)
 - ❌ **NO**: Fine-grained language spans or script detection (Project B with langdetect)
 
@@ -174,6 +182,7 @@ image_detection   →    ocr-orchestrator →   fusion-trust   →    vector-ind
 **Context**: [ADR-007 (Hybrid IQA)](0007-hybrid-iqa-approach.md) proposed per-element IQA for embedded images in text documents.
 
 **Refined Position**:
+
 - **Research Phase**: Per-element IQA is acceptable for exploring whether embedded images need different quality thresholds than full-page IQA
 - **Production Phase 1**: Use **layout-lite page-level attributes** only
   - Example: `has_figures: true` → adjust IQA thresholds globally for that page
@@ -214,10 +223,12 @@ image_detection   →    ocr-orchestrator →   fusion-trust   →    vector-ind
 ### Required Outputs
 
 **Files**:
+
 1. `<document_id>_page_NNN.png` - Corrected page images (300 DPI, RGB)
 2. `<document_id>_metadata.json` - DocumentMetadata schema
 
 **DocumentMetadata.json Fields** (minimum):
+
 ```json
 {
   "document_id": "string",
@@ -247,11 +258,12 @@ image_detection   →    ocr-orchestrator →   fusion-trust   →    vector-ind
     }
   ]
 }
-```
+```text
 
 ### Forbidden Outputs
 
 Project A **MUST NOT** output:
+
 - OCR text or bounding boxes
 - Reading order
 - Semantic element labels (title, caption, paragraph, etc.)
@@ -261,12 +273,14 @@ Project A **MUST NOT** output:
 ## Implementation Roadmap
 
 **Phase 1 (Weeks 1-2)**: Schema Alignment
+
 - [ ] Remove `DocumentElement` class (or mark internal-only)
 - [ ] Add `pdf_type`, `languages`, `has_non_latin` to DocumentMetadata
 - [ ] Add `dqs`, `pre_ocr_risk`, `ocr_routing_recommendation` fields
 - [ ] Add layout-lite attributes to PageMetadata
 
 **Phase 2 (Weeks 2-4)**: Core Components
+
 - [ ] Implement PDF type classification (PyMuPDF text extraction)
 - [ ] Implement layout-lite classifier (YOLOv8-nano or heuristics)
 - [ ] Implement DQS calculation (aggregate IQA metrics)
@@ -274,11 +288,13 @@ Project A **MUST NOT** output:
 - [ ] Implement routing recommendation logic
 
 **Phase 3 (Weeks 5-9)**: ML IQA
+
 - [ ] Train ResNet-50 teacher (page-level only)
 - [ ] Distill ResNet-18 student
 - [ ] Integrate ML IQA into pipeline
 
 **Phase 4 (Week 10)**: Validation & Documentation
+
 - [ ] Document handoff contract with Project B
 - [ ] Create integration tests for schema compliance
 - [ ] Benchmark end-to-end pipeline
@@ -290,10 +306,12 @@ Project A **MUST NOT** output:
 **Approach**: Project A runs full DocLayNet-style layout detection and passes bounding boxes to Project B
 
 **Pros**:
+
 - Project B can skip layout detection entirely
 - Single source of truth for layout
 
 **Cons**:
+
 - Massive scope creep (doubles Project A complexity)
 - Project A team must maintain layout model training/tuning
 - Tight coupling: layout model changes require Project A redeployment
@@ -304,10 +322,12 @@ Project A **MUST NOT** output:
 **Approach**: Project A outputs only IQA metrics, zero layout information
 
 **Pros**:
+
 - Simplest Project A design
 - Clearest boundary
 
 **Cons**:
+
 - Project B must rediscover layout for routing (e.g., handwriting detection)
 - Project A cannot compute meaningful routing recommendations
 - **REJECTED**: Insufficient metadata for intelligent routing
@@ -317,9 +337,11 @@ Project A **MUST NOT** output:
 **Approach**: Both Project A and Project B call a shared layout microservice
 
 **Pros**:
+
 - Single layout model, no duplication
 
 **Cons**:
+
 - Adds operational complexity (new service to deploy)
 - Latency overhead (network calls)
 - Project A still needs coarse layout for DQS calculation

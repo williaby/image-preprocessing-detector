@@ -25,7 +25,7 @@ Drift detection monitors for:
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Production Pipeline                          │
 ├─────────────────────────────────────────────────────────────────┤
@@ -70,7 +70,7 @@ Drift detection monitors for:
 │  • Generate re-training manifests                                │
 │  • Privacy review workflow                                       │
 └─────────────────────────────────────────────────────────────────┘
-```
+```text
 
 ---
 
@@ -129,7 +129,7 @@ imgprep_model_recall
 # Active learning
 imgprep_harvested_samples_total{reason="high_entropy"}
 imgprep_harvested_samples_total{reason="low_agreement"}
-```
+```text
 
 ### Grafana Dashboards
 
@@ -154,13 +154,13 @@ imgprep_harvested_samples_total{reason="low_agreement"}
 
 # Harvested samples manifest
 /data/drift_samples/manifests/latest_manifest.json
-```
+```text
 
 ---
 
 ## Alert Response Flow
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │                     Alert Received                            │
 └──────────────────────┬───────────────────────────────────────┘
@@ -203,7 +203,7 @@ imgprep_harvested_samples_total{reason="low_agreement"}
 │    • Document root cause                                      │
 │    • Update runbook if needed                                 │
 └──────────────────────────────────────────────────────────────┘
-```
+```text
 
 ---
 
@@ -236,7 +236,7 @@ store = ReferenceStore('data/drift_references')
 detector = DriftDetector(store)
 detector.create_reference_from_tracker(tracker, 'quality_score', min_samples=1000)
 "
-```
+```text
 
 ### mAP Drop Alert
 
@@ -254,7 +254,7 @@ poetry run python -m image_preprocessing_detector.drift.performance evaluate \
 
 # 4. If significant degradation, trigger re-training queue
 # (manual step - see re-training pipeline documentation)
-```
+```text
 
 ---
 

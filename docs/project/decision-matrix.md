@@ -18,23 +18,27 @@ purpose: Project planning documentation for critical decision matrix.
 ## ✅ FINALIZED DECISIONS (2025-01-15)
 
 ### Decision #1: Throughput Target - **APPROVED**
+
 - **Target**: 1,000 pages/hour (0.28 pages/sec, ~3.6 sec/page)
 - **Rationale**: Baseline from OCR project, achievable with modest hardware
 - **Performance Budget**: < 500ms/page (Phase 1 classical CV), < 150ms/page (Phase 2-3 with ML)
 
 ### Decision #2: Hardware Configuration - **APPROVED**
+
 - **GPU**: NVIDIA Quadro P2000 (5GB VRAM, Pascal architecture)
 - **CPU**: 2× Intel Xeon E5-2690 (16 cores total, 8 cores each)
 - **Environment**: Unraid server (shared GPU across processes)
 - **Deployment Strategy**: CPU-first (Phase 1), GPU acceleration (Phase 2-3)
 
 ### Decision #3: v1 Detection Scope - **APPROVED**
+
 - **Must-Have**: Tables, Text blocks, Images/Figures
 - **Ideally (if feasible)**: Handwriting, Mathematical Formulas
 - **Timeline**: Standard scope (14 weeks to v1)
 - **Training Data**: Available via DocLayNet (11 layout classes including all target classes)
 
 ### Decision #4: Test Data - **APPROVED**
+
 - **Source**: `/home/byron/dev/data_ingestor/data/benchmarks/`
 - **Datasets**:
   - READoc: 500 PDFs with Markdown ground truth
@@ -60,6 +64,7 @@ purpose: Project planning documentation for critical decision matrix.
 | 10 | Active learning budget | LOW | LOW | Affects annotation cost | 🟡 PENDING | Project Manager |
 
 **Legend**:
+
 - 🔴 **BLOCKED**: Critical blocker, must resolve immediately
 - 🟡 **PENDING**: Needs stakeholder input
 - 🟢 **RECOMMENDED**: Technical team has recommendation, needs approval
@@ -69,6 +74,7 @@ purpose: Project planning documentation for critical decision matrix.
 ## Decision #1: Throughput Target (CRITICAL - BLOCKING)
 
 ### Question
+
 What is the target throughput for the preprocessing pipeline?
 
 ### Options
@@ -81,21 +87,26 @@ What is the target throughput for the preprocessing pipeline?
 | **Very High** | > 500,000 | 50+ GPU + auto-scaling | $12,000+ | Large-scale RAG ingestion |
 
 ### Impact
+
 - **Architecture**: Low throughput allows CPU-only, high requires GPU optimization
 - **Cost**: 25-50x cost difference between low and high
 - **Timeline**: High throughput requires more optimization work (add 2-3 weeks)
 
 ### Recommendation
+
 Start with **Medium** (10k-100k pages/hour) for production launch:
+
 - Balances cost and capability
 - GPU acceleration for ML models
 - Horizontal scaling path to high throughput
 - Can downgrade to CPU for cost savings if throughput is lower
 
 ### Decision Needed By
+
 **Week 1** - Blocks hardware provisioning and architecture finalization
 
 ### Stakeholders
+
 - [ ] Product Owner (business requirements)
 - [ ] Finance (budget approval)
 - [ ] DevOps (infrastructure capacity)
@@ -105,6 +116,7 @@ Start with **Medium** (10k-100k pages/hour) for production launch:
 ## Decision #2: Hardware Deployment Mix (CRITICAL - BLOCKING)
 
 ### Question
+
 What hardware configuration should we deploy?
 
 ### Options (Based on Medium Throughput Target)
@@ -117,11 +129,14 @@ What hardware configuration should we deploy?
 | **D: Serverless** | Auto-scaling (GCP/AWS) | $1,500-3,000 | Variable | ✅ Elastic<br>❌ Cold starts |
 
 ### Dependencies
+
 - Depends on Decision #1 (throughput target)
 - Affects model optimization strategy (INT8 quantization priority)
 
 ### Recommendation
+
 **Option A: GPU-Only (8× T4 workers)** for production launch:
+
 - Consistent performance (no routing complexity)
 - Simplest deployment and monitoring
 - Clear scaling path (add more T4 workers)
@@ -131,9 +146,11 @@ What hardware configuration should we deploy?
 **Alternative for Pilot**: Start with 2× T4 workers ($510/month) to validate, then scale
 
 ### Decision Needed By
+
 **Week 1** - Blocks infrastructure provisioning
 
 ### Stakeholders
+
 - [ ] DevOps Lead (infrastructure)
 - [ ] Finance (budget approval)
 - [ ] Architecture Team (technical validation)
@@ -143,6 +160,7 @@ What hardware configuration should we deploy?
 ## Decision #3: v1 Detection Scope (HIGH - NEEDS INPUT)
 
 ### Question
+
 Which document element classes are must-have for v1 launch?
 
 ### Options
@@ -155,28 +173,34 @@ Which document element classes are must-have for v1 launch?
 | **Extended** | + Footnotes (pre-OCR) | VERY HIGH (+3k labels) | 20 weeks | mAP > 0.75 |
 
 ### Impact
+
 - **Timeline**: 4-8 week difference between minimal and extended
 - **Annotation Cost**: $500 (minimal) to $3,000 (extended)
 - **Accuracy**: More classes → lower per-class accuracy
 - **Downstream**: May require workflow changes if classes missing
 
 ### Recommendation
+
 **Standard scope** (Tables, Images, Handwriting):
+
 - Covers 85% of common document types
 - Handwriting detection is valuable for mixed documents
 - Formula detection can be added in v1.1 (4-week sprint)
 - Defer footnotes to post-OCR (see Decision #6)
 
 **Rationale**:
+
 - Balances coverage and timeline
 - Public datasets cover most needs
 - Custom labeling budget reasonable ($1,000-1,500)
 - Clear path to v1.1 for additional classes
 
 ### Decision Needed By
+
 **Week 2** - Affects data collection planning
 
 ### Stakeholders
+
 - [ ] Product Owner (business requirements)
 - [ ] Downstream Team (LayoutParser/OCR requirements)
 - [ ] ML Team (training feasibility)
@@ -186,6 +210,7 @@ Which document element classes are must-have for v1 launch?
 ## Decision #4: PDF Source Distribution (HIGH - NEEDS DATA)
 
 ### Question
+
 What is the expected distribution of PDF/image sources?
 
 ### Impact on Training Strategy
@@ -198,6 +223,7 @@ What is the expected distribution of PDF/image sources?
 | **Camera Captures (phone)** | Perspective, lighting, blur challenges | Perspective correction critical |
 
 ### Data Collection Needed
+
 - [ ] Sample 500 representative documents from production sources
 - [ ] Analyze distribution:
   - % vector PDFs
@@ -207,22 +233,27 @@ What is the expected distribution of PDF/image sources?
 - [ ] Identify worst-case examples for test set
 
 ### Recommendation
+
 **Assume mixed distribution** (conservative approach):
+
 - 40% vector PDFs (clean, born-digital)
 - 40% high-quality scans (modern scanners, 200-300 DPI)
 - 15% legacy scans (older scanners, fax, halftone)
 - 5% camera captures
 
 **Training Data Implications**:
+
 - Focus augmentation on legacy scan artifacts
 - Include halftone, JPEG compression, uneven illumination
 - Test perspective correction on camera capture subset
 - Validate on real-world samples from each category
 
 ### Decision Needed By
+
 **Week 2** - Affects augmentation strategy design
 
 ### Stakeholders
+
 - [ ] Data Team (source analysis)
 - [ ] ML Team (training strategy)
 
@@ -231,6 +262,7 @@ What is the expected distribution of PDF/image sources?
 ## Decision #5: Language/Script Coverage (MEDIUM - NEEDS INPUT)
 
 ### Question
+
 What language/script coverage is required?
 
 ### Options
@@ -242,26 +274,32 @@ What language/script coverage is required?
 | **Multi-script** | Latin, CJK, Arabic, Cyrillic, etc. | Comprehensive script detection | HIGH |
 
 ### Impact
+
 - **Latin-only**: Simplest, no pre-OCR script detection
 - **Multi-script**: Requires lightweight OCR on text blocks (+5-10ms latency)
 - **Training Data**: Multi-script requires diverse document sources
 
 ### Recommendation
+
 **Start with Latin-only, plan for multi-script in v1.1**:
+
 - Most enterprise documents are Latin-based
 - Avoids latency of script detection in v1
 - Can add script detection in 2-week sprint if needed
 - Test on multi-script documents to ensure no breaking
 
 **If multi-script required for v1**:
+
 - Integrate Tesseract fast mode on detected text blocks
 - Budget +5-10ms per page for script identification
 - Include CJK/Arabic/Cyrillic documents in test set
 
 ### Decision Needed By
+
 **Week 2** - Affects pipeline design and test set composition
 
 ### Stakeholders
+
 - [ ] Product Owner (geographic coverage requirements)
 - [ ] Downstream Team (OCR capabilities)
 
@@ -270,6 +308,7 @@ What language/script coverage is required?
 ## Decision #6: Superscript/Footnote Detection (MEDIUM - RECOMMENDATION READY)
 
 ### Question
+
 Should superscript and footnote detection be included in v1 preprocessing?
 
 ### Options
@@ -280,9 +319,11 @@ Should superscript and footnote detection be included in v1 preprocessing?
 | **Post-OCR (baseline analysis)** | v1.1 (or downstream) | HIGH (85-90%) | MEDIUM | +5ms |
 
 ### Recommendation
+
 **Defer to post-OCR (v1.1 or downstream)**:
 
 **Rationale**:
+
 - OCR provides precise baseline and font size data
 - Pre-OCR pixel analysis is unreliable (low accuracy)
 - Adds complexity and latency to v1
@@ -290,18 +331,22 @@ Should superscript and footnote detection be included in v1 preprocessing?
 - Can be added as lightweight post-processing step in v1.1
 
 **Implementation Path**:
+
 1. v1: Document in JSON that superscript/footnote detection is deferred
 2. v1.1 (if needed): Add post-OCR analysis module (2-week sprint)
 3. Alternative: Let downstream LayoutParser/OCR handle it
 
 ### Decision Needed By
+
 **Week 3** - Not blocking, but affects v1 scope communication
 
 ### Stakeholders
+
 - [ ] Product Owner (v1 requirements)
 - [ ] Downstream Team (LayoutParser/OCR coordination)
 
 ### Status
+
 ✅ **Technical recommendation ready** - Awaiting stakeholder approval
 
 ---
@@ -309,15 +354,18 @@ Should superscript and footnote detection be included in v1 preprocessing?
 ## Decision #7: Downstream Metadata Format (MEDIUM - NEEDS VALIDATION)
 
 ### Question
+
 Does the proposed JSON schema meet downstream requirements?
 
 ### Proposed Schema Highlights
+
 - COCO-aligned bounding boxes (easy LayoutParser integration)
 - Page-level diagnostics (detected issues, confidence scores)
 - Transform history (reproducibility and debugging)
 - Element attributes (category, confidence, custom attributes)
 
 ### Validation Needed
+
 - [ ] Share JSON schema with LayoutParser team
 - [ ] Confirm bounding box format (COCO vs YOLO vs custom)
 - [ ] Validate coordinate system (pixel space, origin top-left)
@@ -325,15 +373,18 @@ Does the proposed JSON schema meet downstream requirements?
 - [ ] Test integration with sample JSONs
 
 ### Action Items
+
 1. Schedule meeting with LayoutParser/OCR team (Week 2)
 2. Share sample JSON outputs for validation
 3. Iterate on schema based on feedback
 4. Lock schema by Week 3 (before Phase 0 completion)
 
 ### Decision Needed By
+
 **Week 3** - Affects JSON schema finalization
 
 ### Stakeholders
+
 - [ ] LayoutParser Team
 - [ ] Tesseract/Marker/Docling Team
 - [ ] Architecture Team
@@ -343,6 +394,7 @@ Does the proposed JSON schema meet downstream requirements?
 ## Decision #8: Deployment Environment (HIGH - NEEDS INPUT)
 
 ### Question
+
 Where should the production service be deployed?
 
 ### Options
@@ -354,21 +406,26 @@ Where should the production service be deployed?
 | **Hybrid** | Flexibility, cost optimization | Complex networking, coordination | Mixed |
 
 ### Recommendation
+
 **Start with Cloud (GCP or AWS)** for faster launch:
+
 - Deploy on GCP (Cloud Run + GPU VMs) or AWS (ECS + EC2)
 - Use managed Kubernetes (GKE or EKS) for orchestration
 - Auto-scaling for variable workload
 - Clear migration path to on-premise if cost becomes issue
 
 **Migration to On-Premise**:
+
 - Evaluate after 6 months of production usage
 - Compare actual costs: Cloud vs on-premise TCO
 - Move if processing volume justifies hardware investment
 
 ### Decision Needed By
+
 **Week 1** - Affects infrastructure setup
 
 ### Stakeholders
+
 - [ ] DevOps Lead (deployment strategy)
 - [ ] Finance (cost model preference)
 - [ ] Security (data privacy requirements)
@@ -378,6 +435,7 @@ Where should the production service be deployed?
 ## Decision #9: Precision vs Recall Balance (MEDIUM - RECOMMENDATION READY)
 
 ### Question
+
 Should we optimize for precision (fewer false positives) or recall (fewer false negatives)?
 
 ### Trade-offs
@@ -389,28 +447,34 @@ Should we optimize for precision (fewer false positives) or recall (fewer false 
 | **High Recall** | 0.60-0.70 | More corrections, risk over-correction |
 
 ### Recommendation
+
 **Favor Precision (thresholds 0.85-0.90)**:
 
 **Rationale**:
+
 - Over-correction (false positive) harms OCR more than missed correction (false negative)
 - Deskewing a straight page → introduces artifacts
 - CLAHE on good contrast → reduces OCR accuracy
 - Better to miss an issue than apply wrong correction
 
 **Implementation**:
+
 - Set default confidence threshold: 0.85
 - Apply "do-no-harm" guardrails (measure improvement before/after)
 - Tune per issue type during calibration (Phase 2)
 - Monitor production: Adjust if false negative rate too high
 
 ### Decision Needed By
+
 **Week 4** - Can be tuned during Phase 1, not blocking
 
 ### Stakeholders
+
 - [ ] ML Team (threshold tuning)
 - [ ] Downstream Team (OCR impact validation)
 
 ### Status
+
 ✅ **Technical recommendation ready** - Can finalize during Phase 1
 
 ---
@@ -418,6 +482,7 @@ Should we optimize for precision (fewer false positives) or recall (fewer false 
 ## Decision #10: Active Learning Budget (LOW - NEEDS INPUT)
 
 ### Question
+
 What annotation budget should we allocate for active learning iterations?
 
 ### Estimated Costs
@@ -429,16 +494,20 @@ What annotation budget should we allocate for active learning iterations?
 | **Comprehensive** (3,000 pages) | $3,000 | 5-6 weeks | +6-8% mAP |
 
 ### Recommendation
+
 **Standard budget ($1,500 for 1,500 pages)**:
+
 - 3-4 active learning iterations
 - Focus on rare classes (handwriting, formulas)
 - Mine high-uncertainty samples (maximize ROI)
 - Balance cost and accuracy improvement
 
 ### Decision Needed By
+
 **Week 4** - Affects Phase 3 planning, not blocking Phase 0-2
 
 ### Stakeholders
+
 - [ ] Project Manager (budget approval)
 - [ ] ML Team (active learning strategy)
 
@@ -447,21 +516,25 @@ What annotation budget should we allocate for active learning iterations?
 ## Decision Timeline
 
 ### Week 1 (CRITICAL)
+
 - [ ] **Decision #1**: Throughput target → Determines hardware needs
 - [ ] **Decision #2**: Hardware deployment → Blocks infrastructure provisioning
 - [ ] **Decision #8**: Deployment environment → Affects setup
 
 ### Week 2 (HIGH PRIORITY)
+
 - [ ] **Decision #3**: v1 detection scope → Affects data collection
 - [ ] **Decision #4**: PDF source distribution → Affects training strategy
 - [ ] **Decision #5**: Language/script coverage → Affects pipeline design
 - [ ] **Decision #7**: Downstream metadata format → Schedule validation meeting
 
 ### Week 3 (MEDIUM PRIORITY)
+
 - [ ] **Decision #6**: Superscript/footnote timing → Confirm with stakeholders
 - [ ] **Decision #7**: Lock JSON schema → After downstream validation
 
 ### Week 4 (LOW PRIORITY)
+
 - [ ] **Decision #9**: Precision vs Recall → Can tune during Phase 1
 - [ ] **Decision #10**: Active learning budget → Phase 3 planning
 

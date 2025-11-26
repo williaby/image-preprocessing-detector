@@ -17,6 +17,7 @@ purpose: Reference documentation for document type coverage matrix.
 This matrix ensures comprehensive coverage across document types for each functional requirement. Different document types exhibit different characteristics (e.g., math equations in textbooks vs. handwritten notes), requiring diverse training and testing data.
 
 **Document Type Categories**:
+
 1. **Academic**: Papers, journals, textbooks, dissertations
 2. **Business**: Reports, contracts, invoices, receipts
 3. **Historical**: Manuscripts, archives, scanned documents
@@ -39,6 +40,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Hybrid PDFs** | DocLayNet hybrid subset | OmniDocBench hybrid PDFs | Mixed scanned + digital content |
 
 **Coverage**:
+
 - ✅ **Training**: DocLayNet (80k pages, mixed types)
 - ✅ **Validation**: OmniDocBench (1,358 pages, 9 document types)
 - ⏳ **Test Fixtures**: 3 PDF samples (image-only, born-digital, hybrid)
@@ -52,6 +54,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Mixed Content** | DocLayNet diagrams + text | Technical manual samples | Diagrams with labels |
 
 **Coverage**:
+
 - ✅ **Training**: DocLayNet + TableBank (mixed types)
 - ✅ **Validation**: Synthetic test set (gradient: 0-100% text coverage)
 - ✅ **Implementation**: Ensemble heuristics (stroke density, connected components, edge density)
@@ -71,6 +74,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Technical Diagrams** | Synthetic blur on diagrams | Engineering drawing samples | Line clarity critical |
 
 **Coverage**:
+
 - ✅ **Training**: TableBank (50k synthetic blur variants)
 - ✅ **Validation**: **DIQA-5000** (document-specific blur assessment) → **Fallback**: LIVE/CSIQ until released
 - ✅ **Test Fixtures**: 5 blur samples (clean, slight, moderate, severe, extreme)
@@ -85,6 +89,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Historical** | Synthetic rotation | Historical archive samples | Scanner misalignment |
 
 **Coverage**:
+
 - ✅ **Training**: TableBank (50k synthetic rotation variants, -15° to +15°)
 - ✅ **Validation**: DocLayNet (100 random PDFs with natural skew)
 - ✅ **Test Fixtures**: 8 skew samples (0°, ±2°, ±5°, ±10°, ±15°)
@@ -99,6 +104,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Mobile Captures** | Synthetic noise | LIVE Challenge (authentic noise) | Camera sensor noise |
 
 **Coverage**:
+
 - ✅ **Training**: TableBank (10k synthetic noise variants: Gaussian, salt-and-pepper)
 - ✅ **Validation**: **DIQA-5000** (document noise assessment) → **Fallback**: LIVE/CSIQ until released
 - ✅ **Test Fixtures**: 5 noise samples (clean, slight, moderate, severe, combined)
@@ -113,6 +119,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Photocopies** | Synthetic contrast loss | Photocopy samples | Generation loss |
 
 **Coverage**:
+
 - ✅ **Training**: TableBank (10k synthetic contrast variants, 0-100% reduction)
 - ✅ **Validation**: **DIQA-5000** (document contrast/color fidelity) → **Fallback**: LIVE/CSIQ until released
 - ✅ **Test Fixtures**: 5 contrast samples (high, normal, low, very low, extreme)
@@ -126,6 +133,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **High DPI (>600)** | High-res scanner samples | Archive scan samples | Professional scanning |
 
 **Coverage**:
+
 - ✅ **Training**: All training data standardized to 300 DPI
 - ✅ **Validation**: Mixed DPI samples from real-world datasets
 - ✅ **Test Fixtures**: 5 DPI samples (72, 150, 300, 600, 1200 DPI)
@@ -139,6 +147,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Low-Res Scans** | Synthetic low-DPI | Mobile capture dataset | DPI upscaling candidates |
 
 **Coverage**:
+
 - ✅ **Implementation**: PyMuPDF-based DPI detection (from data_ingestor Phase 1C)
 - ✅ **Validation**: 100% test success rate on mixed-DPI corpus
 - ✅ **Test Fixtures**: 8 samples (72, 96, 150, 200, 300, 450, 600, 1200 DPI)
@@ -152,6 +161,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Historical Scans** | Archive samples | Degraded document corpus | Preservation digitization |
 
 **Coverage**:
+
 - ✅ **Implementation**: 5 OpenCV algorithms (lanczos, bicubic, inter_linear, inter_cubic, inter_area)
 - ✅ **Performance**: 310-360ms processing time, <2GB memory, page-by-page processing
 - ✅ **Quality**: 100% test success, 100% DPI improvement (e.g., 150→300 DPI)
@@ -168,6 +178,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Handwritten Notes** | SignaTR6K synthetic variants | SignaTR6K real samples | Ink variation |
 
 **Coverage**:
+
 - ⏳ **Training**: TableBank + historical degradation (5k samples, Phase 2)
 - ⏳ **Validation**: Yale historical manuscript dataset (ground-truth binarization)
 - ⏳ **Test Fixtures**: 8 binarization samples (clean, faded, noisy, bleed-through, mixed)
@@ -182,6 +193,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Desktop Photography** | Synthetic desk lighting | Desktop capture samples | Uncontrolled lighting |
 
 **Coverage**:
+
 - ⏳ **Training**: Synthetic lighting gradients (5k samples, Phase 2)
 - ⏳ **Validation**: Mobile capture dataset (authentic lighting issues)
 - ⏳ **Test Fixtures**: 5 illumination samples (uniform, gradient, shadow, spotlight, mixed)
@@ -196,6 +208,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Notebooks** | Synthetic notebook bleed | Student notebook samples | Thin notebook paper |
 
 **Coverage**:
+
 - ⏳ **Training**: Synthetic bleed-through (dual-side simulation, 3k samples, Phase 3)
 - ⏳ **Validation**: Historical manuscript dataset (real bleed-through)
 - ⏳ **Test Fixtures**: 5 bleed-through samples (none, slight, moderate, severe, extreme)
@@ -210,6 +223,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Historical Bound** | Synthetic age-related warping | Historical bound volumes | Age + binding |
 
 **Coverage**:
+
 - ✅ **Training**: **DocRes pretrained** or SynDocDS (synthetic warping, ~15 GB, Phase 3)
 - ✅ **Validation**: **AnyPhotoDoc 6300** (6,300 camera-captured warped documents)
 - ⏳ **Test Fixtures**: 5 warping samples (flat, slight curve, moderate, severe, extreme)
@@ -223,6 +237,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Whiteboard Photos** | Synthetic perspective | Whiteboard capture dataset | Classroom captures |
 
 **Coverage**:
+
 - ⏳ **Training**: Synthetic perspective (homography, 5k samples, Phase 2)
 - ⏳ **Validation**: SmartDoc dataset (mobile document capture)
 - ⏳ **Test Fixtures**: 5 perspective samples (frontal, slight, moderate, severe, extreme)
@@ -237,6 +252,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Presentations** | Presentation slides (Phase 5) | PowerPoint samples | Multiple embedded images |
 
 **Coverage**:
+
 - ✅ **Training**: DocLayNet (embedded images annotated), DocSynth-300K
 - ✅ **Approach**: YOLOv8 layout detection → per-element IQA assessment
 - ⏳ **Test Fixtures**: 5 hybrid samples (text + high-quality image, text + degraded image, multiple images, nested content, mixed quality)
@@ -256,6 +272,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Fine-tuning** | DocSynth-300K (300k layouts) | OmniDocBench (1,358 pages) | Domain-specific training |
 
 **Coverage**:
+
 - ✅ **Architecture**: YOLOv8 (selected for speed/accuracy balance)
 - ✅ **Training**: DocLayNet + DocSynth-300K (342k pages)
 - ✅ **Alternatives Evaluated**: LayoutLMv3 (transformer-based), Detectron2 (Mask R-CNN)
@@ -278,6 +295,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Section-Header** | Academic, technical | DocLayNet COCO | DocLayNet val | Section titles |
 
 **Coverage**:
+
 - ✅ **Training**: DocLayNet COCO annotations (42,075 pages)
 - ✅ **Validation**: DocLayNet validation set (6,480 pages)
 - ✅ **Test Fixtures**: 5 DocLayNet samples (diverse layouts)
@@ -292,6 +310,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Textbooks** | Textbook samples | Educational publisher samples | Page numbering, chapters |
 
 **Coverage**:
+
 - ⏳ **Training**: DocLayNet Page-Header/Page-Footer annotations (Phase 3)
 - ⏳ **Validation**: Academic paper corpus (IEEE, ACM formatting)
 - ⏳ **Test Fixtures**: 5 samples (academic, business, legal, textbook, mixed)
@@ -305,6 +324,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Historical Manuscripts** | Historical annotation dataset | Manuscript samples | Scholarly notes |
 
 **Coverage**:
+
 - ⏳ **Training**: DocLayNet Footnote class + superscript detection (Phase 3)
 - ⏳ **Validation**: Academic paper corpus (footnote-heavy)
 - ⏳ **Test Fixtures**: 5 samples (academic, legal, historical, mixed, complex)
@@ -318,6 +338,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Textbooks** | Textbook samples | Educational samples | Instructional figures |
 
 **Coverage**:
+
 - ⏳ **Training**: DocLayNet Caption + Picture classes (Phase 2)
 - ⏳ **Validation**: Academic paper corpus (figure-rich)
 - ⏳ **Test Fixtures**: 5 samples (above caption, below caption, side caption, far caption, no caption)
@@ -332,6 +353,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Posters** | Poster/flyer dataset | Advertising samples | Mixed orientations |
 
 **Coverage**:
+
 - ⏳ **Training**: Wili-2018 (235k paragraphs) + synthetic rotation (Phase 3)
 - ⏳ **Validation**: Asian language corpus (CJK documents)
 - ⏳ **Test Fixtures**: 8 samples (0°, 90°, 180°, 270° for each: text, diagram)
@@ -403,6 +425,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Handwritten Notes** | Handwritten equation dataset | Student notes | Handwritten math |
 
 **Coverage**:
+
 - ⏳ **Training**: DocLayNet Formula annotations (Phase 3)
 - ⏳ **Validation**: ArXiv paper corpus (math-heavy)
 - ⏳ **Test Fixtures**: 8 samples (printed simple, printed complex, handwritten, mixed, inline, display, multi-line, nested)
@@ -417,6 +440,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Mixed Documents** | DocLayNet + handwriting overlay | Annotated documents | Margin notes |
 
 **Coverage**:
+
 - ⏳ **Training**: SignaTR6K (6,000 signatures) + IAM Database (Phase 2)
 - ⏳ **Validation**: SignaTR6K test set (smoke: 100 samples, full: 6k)
 - ⏳ **Test Fixtures**: 5 samples (signature, cursive, print, mixed, margin notes)
@@ -431,6 +455,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Asian Scripts** | CJK corpus (Chinese, Japanese, Korean) | Asian language samples | Non-Latin scripts |
 
 **Coverage**:
+
 - ✅ **Training**: Wili-2018 (235,000 paragraphs, 235 languages)
 - ✅ **Validation**: Wili-2018 test set
 - ✅ **Test Fixtures**: 10 language samples (en, es, fr, de, zh, ja, ar, ru, hi, ko)
@@ -445,6 +470,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Security Documents** | Security paper dataset | Bank statement samples | Background patterns |
 
 **Coverage**:
+
 - ⏳ **Training**: Synthetic watermark dataset (text, logo, pattern, 3k samples, Phase 3)
 - ⏳ **Validation**: Real-world watermarked documents (business/legal corpus)
 - ⏳ **Test Fixtures**: 5 samples (text watermark, logo, diagonal, repeating pattern, none)
@@ -459,6 +485,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **International Shipping** | **StaVer** (400 images) | Customs forms | Customs stamps |
 
 **Coverage**:
+
 - ✅ **Training**: **StaVer** (400 images: 200 stamped, 200 clean) + **DDI-100** (99,870 images with stamps, hole punches)
 - ✅ **Validation**: StaVer test split + Government document corpus
 - ⏳ **Test Fixtures**: 10 samples (circular seal, rectangular stamp, multiple stamps, overlapping, faint, hole punches)
@@ -473,6 +500,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Invoices/Receipts** | Invoice signature dataset | Business transaction samples | Authorization signatures |
 
 **Coverage**:
+
 - ⏳ **Training**: SignaTR6K (6,000 signatures, Phase 3)
 - ⏳ **Validation**: SignaTR6K test set + contract corpus
 - ⏳ **Test Fixtures**: 5 samples (contract signature, form signature, receipt, multiple signatures, none)
@@ -487,6 +515,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **Student Assignments** | Student annotation dataset | Educational samples | Teacher comments |
 
 **Coverage**:
+
 - ⏳ **Training**: Annotated manuscript dataset (2k samples, Phase 3)
 - ⏳ **Validation**: Historical archive corpus (annotation-heavy)
 - ⏳ **Test Fixtures**: 5 samples (margin notes, highlight, strikethrough, insertion, mixed)
@@ -544,6 +573,7 @@ This matrix ensures comprehensive coverage across document types for each functi
 | **DocUNet Dataset** | ~1 GB | Academic | ❌ No (validation only) | ✅ Yes | ⏳ Phase 3+ (optional) |
 
 **Key Changes (2025-11-14)**:
+
 - **FR Coverage Completion**: Added 10 missing FR sections (FR-2.1, FR-2.4, FR-3.4, FR-3.5, FR-3.6, FR-3.14, FR-4.1, FR-4.8, FR-4.11, FR-4.12)
 - **Storage Verification**: Updated totals to 239 GB training + 119 GB benchmarks = **358 GB total** (not 333 GB)
 - **LIVE/CSIQ/LIVE Challenge**: ✅ **Downloaded** (Phase 2 external IQA validation complete)

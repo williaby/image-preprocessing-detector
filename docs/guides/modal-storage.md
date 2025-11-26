@@ -24,7 +24,7 @@ Modal integrates seamlessly with your existing GCS bucket (`gs://image_detection
 
 ### Storage Architecture
 
-```
+```text
 Local Machine (Dataset Generation)
     ↓
 Google Cloud Storage (Central Repository)
@@ -34,7 +34,7 @@ Modal (Training Environment)
 Google Cloud Storage (Model Output)
     ↓
 Local Machine (Deployment)
-```
+```text
 
 **No data migration needed** - Modal mounts existing GCS bucket directly!
 
@@ -45,6 +45,7 @@ Local Machine (Deployment)
 ### Option 1: GCS Integration (RECOMMENDED - Already Setup!)
 
 **Advantages**:
+
 - ✅ Use existing GCS bucket (`gs://image_detection_b`)
 - ✅ No data migration required
 - ✅ Consistent with current workflow
@@ -52,6 +53,7 @@ Local Machine (Deployment)
 - ✅ Works with existing upload scripts
 
 **How it works**:
+
 1. Modal mounts GCS bucket using service account credentials
 2. Training script reads datasets from GCS
 3. Checkpoints/models written back to GCS
@@ -60,11 +62,13 @@ Local Machine (Deployment)
 ### Option 2: Modal Volumes (Alternative)
 
 **Advantages**:
+
 - ✅ Native Modal storage (optimized for Modal)
 - ✅ Faster access than GCS mounting (potentially)
 - ✅ Persistent across function calls
 
 **Disadvantages**:
+
 - ❌ Requires data upload to Modal separately
 - ❌ Pricing structure unclear (check Modal docs)
 - ❌ Adds complexity to workflow
@@ -78,6 +82,7 @@ Local Machine (Deployment)
 ### Prerequisites
 
 You already have:
+
 - ✅ GCP Project: `image-detection-478105`
 - ✅ GCS Bucket: `gs://image_detection_b`
 - ✅ Service Account Key: (you'll provide during setup)
@@ -93,12 +98,13 @@ poetry run modal secret create gcs-credentials \
 
 # Verify secret created
 poetry run modal secret list | grep gcs-credentials
-```
+```text
 
 **Expected Output**:
-```
+
+```text
 gcs-credentials    Created 2025-01-14
-```
+```text
 
 ### Step 2: Verify GCS Access from Modal
 
@@ -129,12 +135,13 @@ def test_gcs():
 if __name__ == "__main__":
     with stub.run():
         test_gcs.remote()
-```
+```text
 
 **Run test**:
+
 ```bash
 poetry run modal run modal/test_gcs_access.py
-```
+```text
 
 ### Step 3: Use GCS in Training Scripts
 
@@ -177,7 +184,7 @@ def train_iqa():
     checkpoint_blob.upload_from_filename("/tmp/checkpoint.pth")
 
     print("✅ Checkpoint uploaded to GCS")
-```
+```text
 
 ---
 
@@ -187,7 +194,7 @@ def train_iqa():
 
 Your existing structure works perfectly:
 
-```
+```text
 gs://image_detection_b/
 ├── configs/
 │   ├── modal_phase2_iqa.yaml           # NEW (Modal config)
@@ -233,7 +240,7 @@ gs://image_detection_b/
     ├── LIVE/
     ├── CSIQ/
     └── LIVE_Challenge/
-```
+```text
 
 ---
 
@@ -264,7 +271,7 @@ gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
 # Output: 18 GB
 
 # 4. Modal will automatically access this during training
-```
+```text
 
 ### Phase 3: Layout Detection Dataset
 
@@ -285,7 +292,7 @@ gsutil -m cp -r datasets/layout_phase3 gs://image_detection_b/datasets/
 # 4. Verify upload
 gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
 # Expected: ~40-50 GB
-```
+```text
 
 ---
 
@@ -294,11 +301,13 @@ gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
 ### Option 1: Direct GCS Mount (Current Approach)
 
 **Pros**:
+
 - Simple implementation
 - No intermediate storage needed
 - Works with existing scripts
 
 **Cons**:
+
 - Network latency for each file access
 - Slower than local disk for small file reads
 
@@ -336,13 +345,15 @@ def train_iqa():
     # Upload results back to GCS
     checkpoint_blob = bucket.blob("checkpoints/phase2_iqa/best.pth")
     checkpoint_blob.upload_from_filename("/tmp/best.pth")
-```
+```text
 
 **Pros**:
+
 - Fast disk access during training
 - Minimal network overhead
 
 **Cons**:
+
 - Initial download time (~5-10 min for 18 GB)
 - Requires sufficient local storage (Modal provides 50-100 GB)
 
@@ -376,14 +387,16 @@ def train_iqa():
     dataset = ImageDataset(root="/data/iqa_phase2")
 
     # Training...
-```
+```text
 
 **Pros**:
+
 - Persistent across function calls
 - Faster subsequent runs
 - Good for hyperparameter tuning (many runs)
 
 **Cons**:
+
 - Additional complexity
 - Volume storage costs (check Modal pricing)
 
@@ -402,7 +415,7 @@ gsutil cp configs/modal_phase3_yolov8.yaml gs://image_detection_b/configs/
 
 # Verify
 gsutil ls gs://image_detection_b/configs/
-```
+```text
 
 ### Access Config in Modal Function
 
@@ -427,7 +440,7 @@ def train_iqa():
 
     # Use config for training
     model = create_model(config['model'])
-```
+```text
 
 ---
 
@@ -446,18 +459,21 @@ def train_iqa():
 | **Total** | **74 GB** | **$1.48/month** |
 
 **Egress Costs**:
+
 - GCS → Modal: Free (same cloud provider region)
 - Modal → GCS: Free (same region)
 
 ### Modal Storage Costs
 
 **Local SSD** (ephemeral):
+
 - Included in function execution cost
 - No additional charge
 - Lost when function completes
 
 **Modal Volumes** (persistent):
-- Pricing: Check https://modal.com/pricing
+
+- Pricing: Check <https://modal.com/pricing>
 - Estimated: ~$0.10-0.20/GB/month (competitive with GCS)
 - Only needed for persistent caching
 
@@ -472,6 +488,7 @@ def train_iqa():
 **Symptom**: `google.auth.exceptions.DefaultCredentialsError`
 
 **Solution**:
+
 ```bash
 # Verify secret exists
 poetry run modal secret list | grep gcs-credentials
@@ -482,14 +499,16 @@ poetry run modal secret create gcs-credentials \
 
 # Test access
 poetry run modal run modal/test_gcs_access.py
-```
+```text
 
 ### Slow Dataset Downloads
 
 **Symptom**: Download takes >30 minutes for 18 GB
 
 **Solutions**:
+
 1. **Use parallel downloads**:
+
    ```python
    from concurrent.futures import ThreadPoolExecutor
 
@@ -501,19 +520,21 @@ poetry run modal run modal/test_gcs_access.py
        executor.map(download_blob, blobs)
    ```
 
-2. **Compress datasets** before uploading to GCS:
+1. **Compress datasets** before uploading to GCS:
+
    ```bash
    tar -czf iqa_phase2.tar.gz datasets/iqa_phase2/
    gsutil cp iqa_phase2.tar.gz gs://image_detection_b/datasets/
    ```
 
-3. **Use Modal Volumes** for persistent caching (advanced)
+2. **Use Modal Volumes** for persistent caching (advanced)
 
 ### Permission Denied Errors
 
 **Symptom**: `403 Forbidden` when accessing GCS
 
 **Solution**:
+
 ```bash
 # Check service account permissions
 gcloud projects get-iam-policy image-detection-478105 \
@@ -524,13 +545,14 @@ gcloud projects get-iam-policy image-detection-478105 \
 gcloud projects add-iam-policy-binding image-detection-478105 \
   --member="serviceAccount:YOUR_SERVICE_ACCOUNT@image-detection-478105.iam.gserviceaccount.com" \
   --role="roles/storage.objectViewer"
-```
+```text
 
 ### Out of Disk Space
 
 **Symptom**: `No space left on device` during download
 
 **Solution**:
+
 ```python
 # Download only what's needed, or use streaming
 # Option 1: Download in batches
@@ -542,7 +564,7 @@ for i in range(0, len(blobs), 1000):
 
 # Option 2: Increase Modal disk size (future feature)
 # Check Modal docs for custom disk sizes
-```
+```text
 
 ---
 
@@ -551,13 +573,14 @@ for i in range(0, len(blobs), 1000):
 ### 1. Dataset Organization
 
 **Keep GCS organized**:
-```
+
+```text
 gs://image_detection_b/
 ├── datasets/           # Raw datasets (read-only during training)
 ├── checkpoints/        # Temporary (delete after 30 days)
 ├── models/             # Final artifacts (keep long-term)
 └── logs/               # TensorBoard logs (archive after training)
-```
+```text
 
 ### 2. Lifecycle Management
 
@@ -582,22 +605,24 @@ cat > lifecycle.json <<EOF
 EOF
 
 gsutil lifecycle set lifecycle.json gs://image_detection_b
-```
+```text
 
 ### 3. Efficient Uploads
 
 **Use `gsutil -m` for parallel uploads**:
+
 ```bash
 # Parallel upload (10x faster)
 gsutil -m cp -r datasets/iqa_phase2 gs://image_detection_b/datasets/
 
 # Monitor progress
 gsutil -m -o "GSUtil:parallel_process_count=16" cp -r ...
-```
+```text
 
 ### 4. Checkpoint Strategy
 
 **Save checkpoints to GCS periodically**:
+
 ```python
 # Every 5 epochs
 if epoch % 5 == 0:
@@ -607,7 +632,7 @@ if epoch % 5 == 0:
     # Upload to GCS (async, non-blocking)
     bucket.blob(f"checkpoints/phase2_iqa/checkpoint_epoch_{epoch}.pth") \
         .upload_from_filename(f"/tmp/checkpoint_epoch_{epoch}.pth")
-```
+```text
 
 ---
 
@@ -633,7 +658,7 @@ gsutil -m rsync -r datasets/iqa_phase2 gs://image_detection_b/datasets/iqa_phase
 
 # Delete old checkpoints
 gsutil -m rm gs://image_detection_b/checkpoints/phase2_iqa/checkpoint_epoch_*.pth
-```
+```text
 
 ### Modal Secret Management
 
@@ -646,7 +671,7 @@ modal secret list
 
 # Delete secret
 modal secret delete gcs-credentials
-```
+```text
 
 ---
 
@@ -661,12 +686,14 @@ modal secret delete gcs-credentials
 5. **Download final models** via `gsutil`
 
 **Costs**:
+
 - GCS Storage: $1.48/month (existing)
 - GCS → Modal Transfer: Free (same region)
 - Modal Local SSD: Free (included)
 - **Total**: ~$1.50/month (unchanged)
 
 **Next Steps**:
+
 1. Create Modal secret with GCS credentials (after Step 3)
 2. Test GCS access from Modal
 3. Run training - Modal handles the rest!

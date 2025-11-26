@@ -21,6 +21,7 @@ purpose: "Document the workflow and best practices for generating AI-powered PR 
 **What The Diff** (WTD) automatically generates AI-powered summaries for every pull request in the `image_detection` repository. These summaries provide reviewers with a quick, high-level overview of changes, reducing cognitive load and accelerating the review process.
 
 **Key Benefits:**
+
 - **Faster Reviews**: Immediate understanding of PR scope and impact
 - **Consistency**: Standardized summaries across all PRs
 - **Context Preservation**: Captures intent and reasoning from code changes
@@ -29,6 +30,7 @@ purpose: "Document the workflow and best practices for generating AI-powered PR 
 ### Integration Approach
 
 This project uses the **shortcode method** for WTD integration:
+
 - PR descriptions include `wtd:summary` placeholder
 - What The Diff replaces placeholder with AI-generated content
 - Integrated with `mcp__zen-core__pr_prepare` tool (see [CLAUDE.md](../CLAUDE.md))
@@ -75,9 +77,10 @@ wtd:summary
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] Coverage maintained above 80%
-```
+```text
 
 **Alternative:** AI Comments (auto-posted to PRs)
+
 - Enable if team prefers comment-based summaries
 - Configure trigger: "On PR creation and updates"
 
@@ -91,7 +94,7 @@ wtd:summary
 
 Configure What The Diff to **exclude** the following file patterns to reduce token consumption and improve summary quality:
 
-```
+```text
 # Generated code and dependencies
 poetry.lock
 requirements*.txt
@@ -141,24 +144,25 @@ site/
 tmp_cleanup/
 validation/report.json
 validation/*.png
-```
+```text
 
 ### File Inclusion (Alternative)
 
 If you prefer allowlist approach, configure **only** these directories:
 
-```
+```text
 src/
 tests/
 pyproject.toml
 CLAUDE.md
 PROJECT_PLAN.md
 ARCHITECTURE_*.md
-```
+```text
 
 ### Branch and Title Filters
 
 **Recommended exclusions:**
+
 - Branch pattern: `dependabot/*` (automated dependency updates)
 - Title pattern: `WIP:`, `[WIP]`, `Draft:` (unfinished work)
 
@@ -173,9 +177,10 @@ The project uses the `mcp__zen-core__pr_prepare` tool to automate PR creation wi
 ```bash
 # Claude Code automatically invokes:
 mcp__zen-core__pr_prepare --include_wtd=true --target_branch=main
-```
+```text
 
 **What happens:**
+
 1. Tool analyzes git commit history and changes
 2. Generates PR title and body with context
 3. Inserts `wtd:summary` shortcode in PR description
@@ -203,7 +208,7 @@ wtd:summary
 
 ## Related Issues
 Closes #42
-```
+```text
 
 **Important:** Place `wtd:summary` **before** detailed change descriptions to avoid duplicate content.
 
@@ -214,11 +219,13 @@ Closes #42
 ### Trigger Phase
 
 What The Diff activates when:
+
 - Pull request is **opened**
 - Pull request is **reopened**
 - New **commits** are pushed to an open PR
 
 **Exclusions:**
+
 - Bot-authored PRs (dependabot, renovate, github-actions)
 - Draft PRs (if configured in settings)
 
@@ -266,7 +273,7 @@ docs/_build/* linguist-generated=true
 
 # Temporary files
 tmp_cleanup/* linguist-generated=true
-```
+```text
 
 **Note:** This project's `.gitignore` already excludes most generated files, so `.gitattributes` is optional but recommended for any committed artifacts.
 
@@ -279,12 +286,14 @@ tmp_cleanup/* linguist-generated=true
 **Symptom:** PR created but no WTD summary generated
 
 **Checks:**
+
 1. Verify `wtd:summary` shortcode is present in PR description
 2. Check repository is enabled in What The Diff dashboard
 3. Confirm PR is not from a bot account (dependabot, renovate)
 4. Check What The Diff status page for service issues
 
 **Resolution:**
+
 - Edit PR description to add/fix `wtd:summary` shortcode
 - Close and reopen PR to trigger regeneration
 - Check organization billing if on paid plan
@@ -294,11 +303,13 @@ tmp_cleanup/* linguist-generated=true
 **Symptom:** Summary incomplete or error message about token limits
 
 **Causes:**
+
 - Large refactoring PRs (10,000+ LOC changes)
 - Binary files not properly excluded
 - Generated files included in diff
 
 **Resolution:**
+
 1. Review [File Exclusion Patterns](#file-exclusion-patterns) configuration
 2. Add problematic file patterns to exclusion list
 3. Split large PRs into smaller, focused changes
@@ -309,13 +320,16 @@ tmp_cleanup/* linguist-generated=true
 **Symptom:** Summary misses key changes or includes irrelevant details
 
 **Causes:**
+
 - Inadequate commit messages (WTD uses these for context)
 - Complex architectural changes without documentation
 - Mixed concerns in single PR (features + refactoring + fixes)
 
 **Resolution:**
+
 1. Write descriptive commit messages following Conventional Commits format
 2. Add context in PR description **above** `wtd:summary` shortcode:
+
    ```markdown
    ## Context
    This PR implements Phase 2 hybrid IQA approach, addressing the architectural
@@ -324,18 +338,20 @@ tmp_cleanup/* linguist-generated=true
    ## Summary
    wtd:summary
    ```
-3. Split PRs to focus on single concerns
-4. Regenerate summary by editing/saving PR description
+
+1. Split PRs to focus on single concerns
+2. Regenerate summary by editing/saving PR description
 
 ### WTD Dashboard Access Issues
 
 **Symptom:** Cannot access What The Diff dashboard or settings
 
 **Resolution:**
+
 - Verify GitHub organization admin privileges
 - Re-authorize What The Diff GitHub app
 - Check organization's third-party app policies
-- Contact What The Diff support: support@whatthediff.ai
+- Contact What The Diff support: <support@whatthediff.ai>
 
 ---
 
@@ -344,6 +360,7 @@ tmp_cleanup/* linguist-generated=true
 ### For PR Authors
 
 1. **Write Clear Commit Messages**: WTD uses these for context
+
    ```bash
    feat(detection): add YOLOv8 layout detection for text documents
 
@@ -355,6 +372,7 @@ tmp_cleanup/* linguist-generated=true
    ```
 
 2. **Use Shortcodes Strategically**: Place `wtd:summary` early in PR description
+
    ```markdown
    ## Summary
    wtd:summary
@@ -364,6 +382,7 @@ tmp_cleanup/* linguist-generated=true
    ```
 
 3. **Provide Context**: Add brief context for complex changes
+
    ```markdown
    ## Context
    Addresses architectural correction for hybrid IQA approach.
@@ -404,7 +423,7 @@ tmp_cleanup/* linguist-generated=true
 
 ## 📞 Support
 
-- **What The Diff Support**: support@whatthediff.ai
+- **What The Diff Support**: <support@whatthediff.ai>
 - **Project Issues**: [GitHub Issues](https://github.com/YOUR_ORG/image_detection/issues)
 - **Internal Questions**: Ask in #dev-tools Slack channel (if applicable)
 

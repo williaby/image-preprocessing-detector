@@ -110,16 +110,19 @@ This project depends on several open-source libraries. Their licenses are listed
 ### Compliance Strategy
 
 **Option 1: Keep MIT License (Recommended)**
+
 - Use PyMuPDF and Ultralytics as separate services
 - Communicate via JSON API (no code linking)
 - No AGPL contamination of MIT codebase
 
 **Option 2: Dual Licensing**
+
 - Core library: MIT License
 - ML components: AGPL-3.0 License
 - Clearly document separation
 
 **Option 3: Replace AGPL Dependencies**
+
 - PyMuPDF → pdfplumber (MIT) or PyPDF2 (BSD)
 - Ultralytics → Detectron2 (Apache-2.0) or MMDetection (Apache-2.0)
 
@@ -139,6 +142,7 @@ For users deploying with PyMuPDF or Ultralytics:
 ### Compatible Licenses
 
 The MIT License is compatible with:
+
 - ✅ Apache-2.0 (permissive)
 - ✅ BSD-3-Clause (permissive)
 - ✅ BSD-2-Clause (permissive)
@@ -148,6 +152,7 @@ The MIT License is compatible with:
 ### Incompatible Licenses
 
 The MIT License is NOT compatible with:
+
 - ❌ GPL-2.0 (copyleft, requires GPL)
 - ❌ GPL-3.0 (copyleft, requires GPL)
 - ⚠️ AGPL-3.0 (network copyleft, requires service separation)
@@ -164,6 +169,7 @@ This software is free for commercial use under the MIT License:
 4. **Consulting Services**: Use in client projects
 
 **Requirements**:
+
 - Include MIT License text in distributions
 - Preserve copyright notices
 - No warranty or liability claims
@@ -171,11 +177,13 @@ This software is free for commercial use under the MIT License:
 ### Selling Modified Versions
 
 You may:
+
 - Sell proprietary software that uses this library
 - Keep your modifications closed-source
 - Charge for support, training, or custom features
 
 You must:
+
 - Include the original MIT License text
 - Preserve copyright notices
 
@@ -184,16 +192,19 @@ You must:
 When using this software, we appreciate (but don't require) attribution:
 
 **Markdown**:
+
 ```markdown
 Built with [Image Preprocessing Detector](https://github.com/williaby/image-preprocessing-detector) by Byron Williams.
 ```
 
 **HTML**:
+
 ```html
 <p>Powered by <a href="https://github.com/williaby/image-preprocessing-detector">Image Preprocessing Detector</a></p>
 ```
 
 **Code Comments**:
+
 ```python
 # Image quality assessment using Image Preprocessing Detector
 # https://github.com/williaby/image-preprocessing-detector
@@ -232,6 +243,7 @@ This license information is provided for convenience and may not be legally comp
 ## Questions
 
 For licensing questions:
+
 - **General Use**: Review the MIT License text above
 - **Commercial Use**: Contact the maintainers
 - **Contributions**: See [CONTRIBUTING.md](../../CONTRIBUTING.md)

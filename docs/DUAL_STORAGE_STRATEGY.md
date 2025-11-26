@@ -19,10 +19,11 @@ purpose: Three-tier storage architecture for datasets across local, NFS, and clo
 ## Storage Tiers
 
 ### Tier 1: LOCAL (WSL Fast Storage)
+
 **Total Budget**: <5 GB
 **Purpose**: Development speed, test execution, temporary work
 
-```
+```text
 /home/byron/dev/image_detection/data/
 ├── test_fixtures/           # 824KB - KEEP LOCAL
 │   ├── doclaynet/          # Small PDFs for unit tests
@@ -48,13 +49,14 @@ purpose: Three-tier storage architecture for datasets across local, NFS, and clo
 └── training/               # Symlinks to NFS (12KB .dvc files tracked)
     ├── iqa_phase2_100k -> /mnt/unraid/training_data/image_detection/training/iqa_phase2_100k
     └── *.dvc               # DVC metadata files (tracked in git)
-```
+```text
 
 ### Tier 2: NFS (Unraid Fast Local Network)
+
 **Total Budget**: ~200 GB (48TB available, 53% used)
 **Purpose**: Large datasets, training data, benchmarks
 
-```
+```text
 /mnt/unraid/training_data/image_detection/
 ├── benchmarks/              # Source datasets for training generation
 │   ├── tablebank/          # ~27 GB (424K images)
@@ -91,13 +93,14 @@ purpose: Three-tier storage architecture for datasets across local, NFS, and clo
 └── validation/              # Validation run outputs
     ├── iqa_benchmarks/     # IQA benchmark results
     └── end_to_end/         # Full pipeline validation
-```
+```text
 
 ### Tier 3: GCS (Cloud Backup/Fallback)
+
 **Total Budget**: Unlimited (pay-as-you-go)
 **Purpose**: Backup, disaster recovery, remote Modal access
 
-```
+```text
 gs://image_detection_b/image-preprocessing-detector/
 ├── datasets/
 │   ├── tablebank/          # Mirror of NFS benchmarks/tablebank
@@ -120,45 +123,50 @@ gs://image_detection_b/image-preprocessing-detector/
     └── phase2_iqa/
         ├── resnet50_teacher.onnx
         └── resnet18_student.onnx
-```
+```text
 
 ## Data Flow Patterns
 
 ### Pattern 1: Dataset Generation (Local → NFS → GCS)
-```
+
+```text
 1. Load source datasets from NFS (symlinked to local)
 2. Generate synthetic samples to LOCAL temp dir (fast I/O)
 3. Stream completed batches to NFS (100K samples)
 4. DVC push from NFS to GCS (backup)
 5. Cleanup local temp dir
-```
+```text
 
 ### Pattern 2: Training (NFS → Modal → GCS)
-```
+
+```text
 1. Modal pulls dataset from GCS (or NFS if accessible)
 2. Training runs on Modal GPU
 3. Checkpoints saved to GCS every 5 epochs
 4. Final models exported to GCS (ONNX, TorchScript)
-```
+```text
 
 ### Pattern 3: Benchmarking (NFS → Local → Results)
-```
+
+```text
 1. Benchmark datasets on NFS (symlinked to local)
 2. Run benchmarks locally (small batches, fast iteration)
 3. Results saved to local (JSON, CSV)
 4. Periodic backup to GCS
-```
+```text
 
 ### Pattern 4: Development Testing (Local Only)
-```
+
+```text
 1. Test fixtures in local data/test_fixtures/
 2. Fast unit test execution (no network I/O)
 3. CI/CD uses local test fixtures
-```
+```text
 
 ## Symlink Strategy
 
 ### Local Symlinks (Development)
+
 ```bash
 # Benchmarks (source datasets)
 data/benchmarks/tablebank -> /mnt/unraid/training_data/image_detection/benchmarks/tablebank
@@ -168,9 +176,10 @@ data/benchmarks/external_iqa -> /mnt/unraid/training_data/image_detection/benchm
 
 # Training datasets
 data/training/iqa_phase2_100k -> /mnt/unraid/training_data/image_detection/training/iqa_phase2_100k
-```
+```text
 
 ### NFS Organization Principles
+
 1. **Path parity**: NFS structure mirrors local `data/` structure
 2. **No nesting**: Datasets at predictable depth (3 levels max)
 3. **DVC tracking**: All NFS datasets have `.dvc` files in git
@@ -179,6 +188,7 @@ data/training/iqa_phase2_100k -> /mnt/unraid/training_data/image_detection/train
 ## DVC Configuration
 
 ### Local .dvc/config (Git-tracked)
+
 ```ini
 [core]
     remote = gcs
@@ -189,9 +199,10 @@ data/training/iqa_phase2_100k -> /mnt/unraid/training_data/image_detection/train
 
 ['remote "nfs"']
     url = /mnt/unraid/training_data/image_detection
-```
+```text
 
 ### Usage Patterns
+
 ```bash
 # Pull from GCS (first time or if NFS unavailable)
 dvc pull data/benchmarks/tablebank
@@ -205,7 +216,7 @@ dvc push data/training/iqa_phase2_100k
 # Push to NFS (for NFS-first workflow)
 dvc add data/training/iqa_phase2_100k
 dvc push --remote nfs data/training/iqa_phase2_100k
-```
+```text
 
 ## Storage Budget Tracking
 

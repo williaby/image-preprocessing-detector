@@ -45,7 +45,7 @@ All logs follow this JSON structure:
   "model_used": "student",
   "device": "cpu"
 }
-```
+```text
 
 ### Key Fields
 
@@ -65,11 +65,11 @@ All logs follow this JSON structure:
 
 ### Architecture
 
-```
+```text
 Application → Filebeat → Logstash → Elasticsearch → Kibana
      ↓
   JSON Logs
-```
+```text
 
 ### Filebeat Configuration
 
@@ -103,7 +103,7 @@ output.logstash:
   hosts: ["logstash:5044"]
   ssl.enabled: true
   ssl.certificate_authorities: ["/etc/filebeat/ca.crt"]
-```
+```text
 
 ### Logstash Pipeline
 
@@ -182,7 +182,7 @@ output {
     password => "${ELASTIC_PASSWORD}"
   }
 }
-```
+```text
 
 ### Elasticsearch Index Template
 
@@ -218,7 +218,7 @@ output {
     }
   }
 }
-```
+```text
 
 ### Kibana Dashboards
 
@@ -239,14 +239,14 @@ Vector is a lightweight alternative to the ELK stack, ideal for container enviro
 
 ### Architecture
 
-```
+```text
 Application → Vector → (Multiple Sinks)
      ↓           ↓
   JSON Logs   ├─→ Elasticsearch
               ├─→ CloudWatch
               ├─→ S3/GCS
               └─→ Datadog
-```
+```text
 
 ### Vector Configuration
 
@@ -339,7 +339,7 @@ uri = "https://hooks.slack.com/services/${SLACK_WEBHOOK}"
 method = "post"
 encoding.codec = "json"
 request.headers.Content-Type = "application/json"
-```
+```text
 
 ### Docker Compose with Vector
 
@@ -371,7 +371,7 @@ services:
 
 volumes:
   logs:
-```
+```text
 
 ---
 
@@ -397,7 +397,7 @@ cloudwatch_handler = watchtower.CloudWatchLogHandler(
 
 # Add to structlog
 logging.getLogger("imgprep").addHandler(cloudwatch_handler)
-```
+```text
 
 ### CloudWatch Log Insights Queries
 
@@ -429,7 +429,7 @@ fields @timestamp, error_code, message
 fields @timestamp, event, duration_ms
 | filter correlation_id = "req-abc123"
 | sort @timestamp asc
-```
+```text
 
 ### CloudWatch Alarms
 
@@ -479,7 +479,7 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       AlarmActions:
         - !Ref AlertSNSTopic
-```
+```text
 
 ---
 
@@ -603,7 +603,7 @@ spec:
         - name: config
           configMap:
             name: fluent-bit-config
-```
+```text
 
 ---
 
@@ -649,7 +649,7 @@ spec:
     }
   }
 }
-```
+```text
 
 ### S3 Lifecycle Policy
 
@@ -674,7 +674,7 @@ spec:
     }
   ]
 }
-```
+```text
 
 ---
 
@@ -710,7 +710,7 @@ curl http://localhost:8686/health
 curl -X GET "http://elasticsearch:9200/imgprep-logs-*/_search?pretty" \
   -H 'Content-Type: application/json' \
   -d '{"query": {"range": {"@timestamp": {"gte": "now-1h"}}}}'
-```
+```text
 
 ---
 

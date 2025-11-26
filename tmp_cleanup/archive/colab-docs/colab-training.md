@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 # Google Colab Training Guide - Phase 2 & 3
 
 **Last Updated**: 2025-01-15
@@ -13,11 +14,13 @@ This guide covers training ML models for Phases 2 and 3 using Google Colab Pro. 
 ### Why Google Colab?
 
 **Cost-Effective Training**:
+
 - Colab Pro: $10/month vs $30-200 for cloud GPU hourly rates
 - Phase 2 + 3 can be completed for $20-30 (2-3 months)
 - No local GPU workstation required
 
 **Infrastructure Included**:
+
 - V100/P100/T4 GPUs (16GB memory)
 - PyTorch, CUDA pre-installed
 - Google Drive integration for persistence
@@ -28,7 +31,7 @@ This guide covers training ML models for Phases 2 and 3 using Google Colab Pro. 
 
 ### 1. Google Colab Pro Subscription
 
-**Sign up**: https://colab.research.google.com/signup
+**Sign up**: <https://colab.research.google.com/signup>
 
 **Cost**: $10/month
 **GPU Access**: V100, P100, or T4 (15-16GB VRAM)
@@ -38,6 +41,7 @@ This guide covers training ML models for Phases 2 and 3 using Google Colab Pro. 
 ### 2. Google Drive Setup
 
 **Required Space**:
+
 - Phase 2: ~25GB (dataset + checkpoints)
 - Phase 3: ~50GB (larger dataset + checkpoints)
 - Total: ~75GB recommended
@@ -48,7 +52,7 @@ This guide covers training ML models for Phases 2 and 3 using Google Colab Pro. 
 
 Create this structure in your Google Drive:
 
-```
+```text
 MyDrive/
 └── image-preprocessing-detector/
     ├── datasets/
@@ -66,7 +70,7 @@ MyDrive/
     └── configs/
         ├── colab_phase2_iqa.yaml
         └── colab_phase3_yolov8.yaml
-```
+```text
 
 ---
 
@@ -88,7 +92,8 @@ MyDrive/
 **Option B**: Upload pre-prepared dataset to Google Drive
 
 **Dataset format**:
-```
+
+```text
 iqa_phase2/
 ├── train/
 │   ├── images/
@@ -99,16 +104,18 @@ iqa_phase2/
 └── test/
     ├── images/
     └── labels.json
-```
+```text
 
 #### Step 2: Upload Configuration
 
 Upload `configs/colab_phase2_iqa.yaml` to:
-```
+
+```text
 /content/drive/MyDrive/image-preprocessing-detector/configs/colab_phase2_iqa.yaml
-```
+```text
 
 **Key settings to adjust** (in YAML file):
+
 - `training.batch_size`: 64 for V100, 32 for T4
 - `training.epochs`: 50 (default)
 - `model.architecture`: `mobilenet_v3_small` or `efficientnet_b0`
@@ -142,11 +149,13 @@ Upload `configs/colab_phase2_iqa.yaml` to:
 #### Step 5: Monitor Training
 
 **TensorBoard** (embedded in notebook):
+
 - Loss curves (train/val)
 - Accuracy metrics
 - Learning rate schedule
 
 **Console Output**:
+
 - Epoch progress
 - Checkpoint saves
 - Session time remaining warnings
@@ -199,7 +208,8 @@ YOLOv8 requires 100+ epochs. With 12-hour sessions:
 #### Step 1: Prepare Dataset (YOLO Format)
 
 **Dataset format** (required for YOLOv8):
-```
+
+```text
 layout_phase3/
 ├── dataset.yaml          # Required: class names and paths
 ├── train/
@@ -208,9 +218,10 @@ layout_phase3/
 └── val/
     ├── images/           # Validation images
     └── labels/           # YOLO format labels (.txt)
-```
+```text
 
 **dataset.yaml** structure:
+
 ```yaml
 path: /content/drive/MyDrive/image-preprocessing-detector/datasets/layout_phase3
 train: train/images
@@ -222,12 +233,14 @@ names:
   1: image
   2: handwriting
   3: formula
-```
+```text
 
 **Label format** (YOLO `.txt` files):
-```
+
+```text
 <class_id> <x_center> <y_center> <width> <height>
-```
+```text
+
 All coordinates normalized to [0, 1].
 
 #### Step 2: Upload Dataset & Config
@@ -276,11 +289,12 @@ All coordinates normalized to [0, 1].
 - **Best model**: `checkpoints/phase3_yolov8/weights/best.pt` (best mAP)
 
 **Typical session output**:
-```
+
+```text
 Epoch 15/100: ▓▓▓▓▓░░░░░░░░░░░░░░ 15% complete
 Session time remaining: 0.5 hours
 Saving checkpoint... ✅
-```
+```text
 
 #### Step 7: Validate & Export
 
@@ -297,11 +311,13 @@ Once training completes:
 ### How Checkpoints Work
 
 **Automatic Saving**:
+
 - Every 5 epochs (Phase 2) / 10 epochs (Phase 3)
 - Every 30 minutes (Phase 2) / 60 minutes (Phase 3)
 - At 11.5 hours (30min before session limit)
 
 **Checkpoint Contents**:
+
 - Model weights (`model_state_dict`)
 - Optimizer state (`optimizer_state_dict`)
 - Training metrics (loss, accuracy, etc.)
@@ -309,6 +325,7 @@ Once training completes:
 - Random number generator states (for reproducibility)
 
 **Checkpoint Files**:
+
 - `checkpoint_latest.pt`: Most recent checkpoint (auto-resume)
 - `checkpoint_best.pt`: Best validation loss/mAP
 - `checkpoint_epoch{N}_{timestamp}.pt`: Periodic checkpoints (last 3 kept)
@@ -316,23 +333,26 @@ Once training completes:
 ### Manual Checkpoint Operations
 
 **Check if checkpoint exists**:
+
 ```python
 from pathlib import Path
 checkpoint_path = Path("/content/drive/MyDrive/checkpoints/phase2_iqa/checkpoint_latest.pt")
 if checkpoint_path.exists():
     print("Checkpoint found! Will resume training.")
-```
+```text
 
 **Load specific checkpoint** (instead of latest):
+
 ```python
 checkpoint_manager.load_checkpoint(
     model=model,
     optimizer=optimizer,
     checkpoint_path="/path/to/specific/checkpoint.pt"
 )
-```
+```text
 
 **Skip resume** (start from scratch):
+
 - Delete `checkpoint_latest.pt` before running Cell 10/6
 
 ---
@@ -344,16 +364,18 @@ checkpoint_manager.load_checkpoint(
 **Symptoms**: `torch.cuda.is_available() == False`
 
 **Solutions**:
+
 1. **Runtime** → **Change runtime type** → **GPU** (Hardware accelerator)
 2. If still no GPU: Colab Pro GPU quota exhausted
    - Wait 12-24 hours for quota reset
    - Or upgrade to Colab Pro+ ($50/month) for priority access
 
 **Check GPU usage**:
+
 ```python
 from scripts.colab_utils import get_gpu_info
 print(get_gpu_info())
-```
+```text
 
 ### Session Disconnects
 
@@ -362,6 +384,7 @@ print(get_gpu_info())
 **Cause**: Colab detects inactivity
 
 **Solution**:
+
 - Keep browser tab **open and active**
 - Disable browser sleep mode
 - Optionally: Use browser extensions to simulate activity (e.g., Colab Alive)
@@ -375,25 +398,29 @@ print(get_gpu_info())
 **Solutions**:
 
 1. **Reduce batch size**:
+
    ```yaml
    # In config YAML
    training:
      batch_size: 32  # Reduce from 64
    ```
 
-2. **Reduce image size** (Phase 2):
+1. **Reduce image size** (Phase 2):
+
    ```yaml
    model:
      input_size: 224  # Reduce from 320
    ```
 
-3. **Enable gradient accumulation**:
+2. **Enable gradient accumulation**:
+
    ```yaml
    training:
      gradient_accumulation_steps: 2  # Simulate larger batch size
    ```
 
-4. **Clear GPU memory**:
+3. **Clear GPU memory**:
+
    ```python
    from scripts.colab_utils import clear_gpu_memory
    clear_gpu_memory()
@@ -404,6 +431,7 @@ print(get_gpu_info())
 **Symptom**: `FileNotFoundError: Dataset not found`
 
 **Causes**:
+
 - Google Drive not mounted
 - Incorrect path in config
 - Dataset not uploaded yet
@@ -411,16 +439,19 @@ print(get_gpu_info())
 **Solutions**:
 
 1. **Verify mount**:
+
    ```bash
    !ls /content/drive/MyDrive/
    ```
 
 2. **Check dataset path**:
+
    ```bash
    !ls /content/drive/MyDrive/image-preprocessing-detector/datasets/
    ```
 
 3. **Update config**:
+
    ```yaml
    paths:
      dataset_root: "/content/drive/MyDrive/datasets/iqa_phase2"  # Adjust path
@@ -431,6 +462,7 @@ print(get_gpu_info())
 **Symptoms**: < 1 epoch/hour (Phase 2) or < 5 epochs/hour (Phase 3)
 
 **Causes**:
+
 - T4 GPU (slower than V100)
 - Large batch size causing memory swapping
 - Data loading bottleneck
@@ -438,6 +470,7 @@ print(get_gpu_info())
 **Solutions**:
 
 1. **Check GPU type**:
+
    ```python
    !nvidia-smi  # Should show V100 for best speed
    ```
@@ -448,6 +481,7 @@ print(get_gpu_info())
    - Enable `pin_memory: true`
 
 3. **Enable mixed precision** (should be default):
+
    ```yaml
    training:
      mixed_precision:
@@ -461,6 +495,7 @@ print(get_gpu_info())
 **Cause**: Used >100 compute units (Colab Pro monthly limit)
 
 **Solutions**:
+
 1. Wait for monthly reset (1st of month)
 2. Upgrade to Colab Pro+ ($50/month, 500 units)
 3. Use another Google account (not recommended)
@@ -472,11 +507,13 @@ print(get_gpu_info())
 ### Colab Pro Subscription
 
 **Phase 2 Only**:
+
 - 1 month: $10
 - ~15-20 hours training
 - Well within 100 compute units
 
 **Phase 2 + Phase 3**:
+
 - 2-3 months: $20-30
 - ~65-100 total GPU hours
 - Within 100-200 compute units
@@ -498,6 +535,7 @@ print(get_gpu_info())
 **Total**: ~75GB
 
 **Plans**:
+
 - 15GB: Free (not enough)
 - 100GB: $1.99/month ✅ Recommended
 - 200GB: $2.99/month (extra headroom)
@@ -572,10 +610,10 @@ print(get_gpu_info())
 
 ### External Resources
 
-- **Google Colab Docs**: https://colab.research.google.com/notebooks/
-- **Ultralytics YOLOv8**: https://docs.ultralytics.com/
-- **PyTorch Lightning**: https://lightning.ai/docs/pytorch/
-- **TensorBoard**: https://www.tensorflow.org/tensorboard
+- **Google Colab Docs**: <https://colab.research.google.com/notebooks/>
+- **Ultralytics YOLOv8**: <https://docs.ultralytics.com/>
+- **PyTorch Lightning**: <https://lightning.ai/docs/pytorch/>
+- **TensorBoard**: <https://www.tensorflow.org/tensorboard>
 
 ### Issue Reporting
 
@@ -596,6 +634,7 @@ If you encounter issues:
 
 **Q: Can I use Colab Free tier?**
 A: Yes, but with limitations:
+
 - 12-hour session limit (same as Pro)
 - T4 GPU only (slower)
 - GPU availability not guaranteed

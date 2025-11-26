@@ -71,6 +71,7 @@ purpose: Track test coverage gaps, improvements, and real-data testing prioritie
 The following modules are still excluded from coverage measurement and need tests:
 
 #### layout_lite/ (9 files) - Phase 6 feature, NO tests
+
 - `detection/layout_lite/analyzer.py` - Layout analyzer (139 LOC)
 - `detection/layout_lite/table_detector.py` - Table detection (140 LOC)
 - `detection/layout_lite/figure_detector.py` - Figure detection (113 LOC)
@@ -82,6 +83,7 @@ The following modules are still excluded from coverage measurement and need test
 - `detection/layout_lite/constants.py` - Constants (64 LOC)
 
 #### Training Module (6 files) - Requires PyTorch
+
 - `training/teacher_trainer.py` - Teacher training (528 LOC)
 - `training/student_trainer.py` - Student training (597 LOC)
 - `training/distillation_loss.py` - Distillation (248 LOC)
@@ -89,6 +91,7 @@ The following modules are still excluded from coverage measurement and need test
 - `training/checkpoint_utils.py` - Checkpointing
 
 #### Other Excluded
+
 - `cli.py` - CLI interface (tested via integration but excluded from unit coverage)
 - `augmentation/genalog_config.py` - Augmentation config (297 LOC)
 - `augmentation/genalog_degrader.py` - Degradation (313 LOC)
@@ -185,7 +188,7 @@ These modules are tested and have good coverage:
 
 ### Current Inventory (`data/test_fixtures/`)
 
-```
+```text
 data/test_fixtures/           Total: ~828 KB
 ├── doclaynet/               5 PDFs, 432 KB
 │   ├── simple_text_1.pdf    (18K) - Simple text document
@@ -209,7 +212,7 @@ data/test_fixtures/           Total: ~828 KB
 │
 ├── cocotext/                NOT EXTRACTED
 └── omnidocbench/            NOT EXTRACTED
-```
+```text
 
 ### Fixture Usage in Tests
 
@@ -310,7 +313,7 @@ data/test_fixtures/           Total: ~828 KB
 
 #### 1. `iqa_samples/` (Critical for ML testing)
 
-```
+```text
 data/test_fixtures/iqa_samples/
 ├── live/                      # LIVE dataset extracts (~1.5 MB)
 │   ├── reference.png          # Clean reference (DMOS=0)
@@ -323,22 +326,23 @@ data/test_fixtures/iqa_samples/
 │   ├── combined_defects.png   # Multiple degradations
 │   └── skewed_document.png    # Orientation testing
 └── labels.json                # Ground truth scores
-```
+```text
 
 **Source**: LIVE Image Quality Database (requires academic citation)
 
 #### 2. `layout_samples/` (For layout_lite edge cases)
 
-```
+```text
 data/test_fixtures/layout_samples/
 ├── watermarked_doc.pdf        # Watermark detection
 ├── colorful_background.jpg    # Background detection
 ├── dense_math.pdf             # Math formula detection
 ├── handwriting_sample.jpg     # Handwriting presence
 └── manifest.json
-```
+```text
 
 **Sources**:
+
 - Watermarked: Generate synthetically or find CC-licensed sample
 - Colorful background: Generate with PIL
 - Dense math: arXiv paper extract (CC-licensed)
@@ -346,14 +350,14 @@ data/test_fixtures/layout_samples/
 
 #### 3. `degraded_samples/` (For corrections testing)
 
-```
+```text
 data/test_fixtures/degraded_samples/
 ├── severely_skewed.pdf        # >10° skew angle
 ├── motion_blur.jpg            # Motion blur artifact
 ├── uneven_lighting.jpg        # Lighting gradient
 ├── heavy_jpeg.jpg             # Heavy JPEG compression
 └── manifest.json
-```
+```text
 
 **Source**: Generate synthetically from existing clean fixtures
 
@@ -437,22 +441,26 @@ data/test_fixtures/degraded_samples/
 Added comprehensive test fixtures (18 files, 6.5 MB total) to enable IQA and layout testing without full datasets:
 
 #### 1. IQA Samples (2.3 MB)
+
 - **Location**: `data/test_fixtures/iqa_samples/`
 - **Files**: 6 images + labels.json with ground truth quality scores
 - **Purpose**: ML IQA model validation
 - **Tests Added**: 9 integration tests in `test_iqa_fixtures_integration.py`
 
 #### 2. Training Validation (1.8 MB)
+
 - **Location**: `data/test_fixtures/training_validation/`
 - **Files**: 5 images + manifest.json (clean → severe degradation spectrum)
 - **Purpose**: Training pipeline validation
 
 #### 3. Augmentation Input (728 KB)
+
 - **Location**: `data/test_fixtures/augmentation_input/`
 - **Files**: 3 pristine baseline images (text, table, form)
 - **Purpose**: Genalog augmentation testing
 
 #### 4. Layout Edge Cases (904 KB)
+
 - **Location**: `data/test_fixtures/layout_samples/`
 - **Files**: 4 samples (dense math, watermark, colorful background, handwriting mixed)
 - **Purpose**: Layout-lite edge case detection
@@ -461,12 +469,15 @@ Added comprehensive test fixtures (18 files, 6.5 MB total) to enable IQA and lay
 ### Test Infrastructure Updates ✅
 
 #### tests/conftest.py Enhancements
+
 Added fixture loaders for all new fixtures:
+
 - **Directory fixtures**: `iqa_samples_dir`, `training_validation_dir`, `augmentation_input_dir`, `layout_samples_dir`
 - **Collection fixtures**: `iqa_sample_images`, `iqa_labels`, `training_validation_images`, `augmentation_input_images`, `layout_edge_case_samples`
 - **Individual fixtures**: `reference_clean_image`, `blurry_image`, `noisy_image`, `watermarked_pdf`, `dense_math_pdf`, `handwriting_mixed_image`, `colorful_background_image`
 
 #### New Integration Tests
+
 - **test_iqa_fixtures_integration.py**: 9 tests validating IQA fixtures and ground truth labels
 - **test_layout_fixtures_integration.py**: 11 tests validating layout edge cases and metadata
 
@@ -482,11 +493,13 @@ Added fixture loaders for all new fixtures:
 | Fixture Categories | 3 | 7 | +4 |
 
 ### Documentation Added
+
 - `docs/FIXTURE_ACQUISITION_PLAN.md` - Detailed acquisition guide
 - `docs/PRIORITY2_EDGE_CASES_OPTIONS.md` - Research findings for edge cases
 - Updated `data/test_fixtures/README.md` with complete inventory
 
 ### Next Steps
+
 1. ✅ ~~Add fixture loaders to conftest.py~~ - COMPLETE
 2. ✅ ~~Create example integration tests~~ - COMPLETE
 3. **Create unit tests using new IQA fixtures** for:
@@ -509,29 +522,34 @@ Created comprehensive test suite validating classical IQA detectors against grou
 ### Test Coverage (40 tests total)
 
 #### Blur Detection (8 tests) ✅
+
 - Pristine image classification
 - High blur image detection
 - Binary classification across all 6 samples
 - **Result**: 100% passing, strong correlation with ground truth
 
 #### Noise Detection (8 tests) ✅
+
 - Pristine image classification
 - High noise image detection
 - Binary classification with score-based validation
 - **Result**: 100% passing with relaxed thresholds for classical detector limitations
 
 #### Illumination Detection (8 tests) ✅
+
 - Good illumination validation
 - Poor illumination (low contrast) detection
 - Binary classification across all samples
 - **Result**: 100% passing
 
 #### Contrast Detection (2 tests) ✅
+
 - Good contrast validation
 - Low contrast detection
 - **Result**: 100% passing
 
 #### JPEG Artifact Detection (6 tests) ⚠️
+
 - Pristine image validation
 - JPEG artifact detection on PNG-encoded images
 - Binary classification
@@ -539,16 +557,19 @@ Created comprehensive test suite validating classical IQA detectors against grou
 - **Finding**: Classical blockiness detector has low sensitivity to JPEG artifacts in PNG-saved images (known limitation, documented)
 
 #### Combined Defects (2 tests) ✅
+
 - Multi-defect scenario validation (blur + noise + skew)
 - Ground truth label structure validation
 - **Result**: 100% passing
 
 #### Detector Correlation (2 tests) ✅
+
 - Blur score correlation analysis
 - Noise score correlation analysis
 - **Result**: Strong positive correlation between detector scores and ground truth labels
 
 #### Detector Robustness (2 tests) ✅
+
 - Multi-detector processing validation
 - Consistency across multiple runs
 - **Result**: 100% passing
@@ -556,12 +577,14 @@ Created comprehensive test suite validating classical IQA detectors against grou
 ### Key Findings
 
 #### Strengths
+
 1. **Blur Detection**: Excellent accuracy (100%) using Laplacian variance
 2. **Illumination Detection**: Reliable detection of poor lighting/low contrast (100%)
 3. **Detector Consistency**: Deterministic results across multiple runs
 4. **Ground Truth Correlation**: Strong correlation between scores and labels
 
 #### Limitations (Documented)
+
 1. **Noise Detection**: Classical wavelet-based detector has moderate sensitivity
    - Required score-based validation (>0.15) instead of boolean flags
    - Successfully detects high noise with relaxed thresholds

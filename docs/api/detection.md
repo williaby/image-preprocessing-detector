@@ -161,6 +161,7 @@ def detect_all_issues(image, thresholds=None):
 ### Text Detection Gate
 
 **Method**: Ensemble of fast heuristics
+
 - Stroke width analysis
 - Connected component analysis
 - Edge density patterns
@@ -170,6 +171,7 @@ def detect_all_issues(image, thresholds=None):
 ### Blur Detection
 
 **Method**: Laplacian variance
+
 - Computes variance of Laplacian filter
 - Low variance indicates blur
 - Threshold: 100.0 (default)
@@ -177,6 +179,7 @@ def detect_all_issues(image, thresholds=None):
 ### Skew Detection
 
 **Method**: Hough transform
+
 - Detects dominant lines
 - Estimates rotation angle
 - Confidence based on line strength
@@ -184,6 +187,7 @@ def detect_all_issues(image, thresholds=None):
 ### Contrast Assessment
 
 **Method**: Histogram analysis
+
 - Analyzes intensity distribution
 - Computes normalized contrast score
 - Threshold: 0.3 (default)

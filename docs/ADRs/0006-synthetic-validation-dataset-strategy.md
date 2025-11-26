@@ -119,6 +119,7 @@ degraded_image = degrader.apply_effects(clean_image)
 ```
 
 **Validation Coverage**:
+
 - **Blur**: Gaussian blur with controlled radius (1-20px)
 - **Skew**: Rotation with precise angles (-15° to +15°, 0.1° increments)
 - **Noise**: Multiple types with controlled intensities
@@ -158,31 +159,41 @@ degraded_image = degrader.apply_effects(clean_image)
 ## Alternatives Considered
 
 ### Alternative 1: Wait for Dataset Access
+
 **Rejected**:
+
 - Blocks project progress indefinitely
 - No guarantee of eventual access
 - Registration/permissions may require institutional affiliation
 
 ### Alternative 2: Contact Dataset Authors
+
 **Rejected**:
+
 - Time-consuming (weeks to months)
 - No guarantee of response or access
 - May require academic collaboration agreements
 
 ### Alternative 3: Use Only DocLayNet
+
 **Rejected**:
+
 - DocLayNet has no IQA ground truth
 - Missing validation for blur, noise, skew, etc.
 - Stage 3A would be untested
 
 ### Alternative 4: Build Custom Validation Dataset
+
 **Rejected**:
+
 - Expensive (manual annotation)
 - Time-consuming (would delay Phase 1)
 - Genalog provides superior ground truth
 
 ### Alternative 5: Use Albumentations Library
+
 **Partially Accepted**:
+
 - Albumentations provides augmentations, not degradations
 - Can complement Genalog for additional variations
 - Not a complete replacement
@@ -219,6 +230,7 @@ def test_blur_detector_with_genalog():
 ## Future Considerations
 
 If Priority 1 academic datasets become accessible:
+
 1. Acquire and integrate for comparison
 2. Measure synthetic vs. real-world performance gap
 3. Calibrate thresholds based on real-world data

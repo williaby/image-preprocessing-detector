@@ -394,6 +394,7 @@ This file contains **intentional security vulnerabilities** to validate CodeQL c
 ### Verification Steps
 
 1. **Check Workflow Logs**:
+
    ```bash
    gh run list --workflow=security-analysis.yml --limit 1
    gh run view <run-id>
@@ -405,6 +406,7 @@ This file contains **intentional security vulnerabilities** to validate CodeQL c
    - Verify alert severity and CWE mappings
 
 3. **Download SARIF Report**:
+
    ```bash
    gh run download <run-id> --name security-scan-reports
    python -m json.tool sarif/codeql.sarif

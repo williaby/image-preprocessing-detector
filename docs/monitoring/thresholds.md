@@ -250,7 +250,7 @@ poetry run imgprep benchmark --pages 5000 --workers 4 --rate 50/s
 
 # Failure injection (should trigger critical)
 poetry run imgprep benchmark --pages 1000 --workers 1 --inject-errors 0.3
-```
+```text
 
 ---
 
@@ -264,7 +264,7 @@ poetry run imgprep benchmark --pages 1000 --workers 1 --inject-errors 0.3
 
 ## Quick Reference Card
 
-```
+```text
 LATENCY
   p50 > 200ms (5min)     → Warning: check load
   p95 > 500ms (5min)     → Warning: investigate tail
@@ -299,4 +299,4 @@ AVAILABILITY
   Throughput < 0.1/s     → Warning: slow processing
   Stalled (10min)        → Critical: processing stopped
   Service down           → Critical: instance down
-```
+```text

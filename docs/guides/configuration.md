@@ -77,6 +77,7 @@ poetry run imgprep process input.pdf --output result.json --dry-run
 ```
 
 This is useful for:
+
 - Validating detection accuracy
 - Estimating processing requirements
 - Testing threshold configurations

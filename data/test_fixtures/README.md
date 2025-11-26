@@ -10,7 +10,7 @@
 
 ## Directory Structure
 
-```
+```text
 test_fixtures/
 ├── doclaynet/               # 5 representative layout samples (432 KB)
 ├── tablebank/               # 5 table detection samples (324 KB)
@@ -20,7 +20,7 @@ test_fixtures/
 ├── augmentation_input/      # 3 clean baseline samples (728 KB) ✅ NEW
 ├── layout_samples/          # 4 layout edge case samples + manifest.json (904 KB) ✅ NEW
 └── README.md                # This file
-```
+```text
 
 **Total Size**: 6.5 MB (well under 50 MB GitHub limit)
 
@@ -40,6 +40,7 @@ Each fixture set contains **5-10 carefully selected samples** that represent:
 **Purpose**: Test layout detection and page-level IQA
 
 **Selected samples** (5 PDFs):
+
 - Simple text-heavy document
 - Document with tables and figures
 - Complex multi-column layout
@@ -51,16 +52,18 @@ Each fixture set contains **5-10 carefully selected samples** that represent:
 **License**: CDLA-Permissive-1.0 (DocLayNet dataset)
 
 **Extraction command**:
+
 ```bash
 # TODO: Run extraction script once created
 poetry run python scripts/extract_test_fixtures.py --dataset doclaynet --count 5
-```
+```text
 
 ### tablebank/
 
 **Purpose**: Test table detection and structure recognition
 
 **Selected samples** (5 images):
+
 - Simple table (3-5 columns)
 - Complex table (10+ columns, merged cells)
 - Rotated table
@@ -72,16 +75,18 @@ poetry run python scripts/extract_test_fixtures.py --dataset doclaynet --count 5
 **License**: Apache-2.0 (TableBank dataset)
 
 **Extraction command**:
+
 ```bash
 # TODO: Run extraction script once created
 poetry run python scripts/extract_test_fixtures.py --dataset tablebank --count 5
-```
+```text
 
 ### cocotext/
 
 **Purpose**: Test text detection gate and OCR preprocessing
 
 **Selected samples** (5 images):
+
 - Dense text (paragraphs)
 - Sparse text (signage, labels)
 - Different font sizes/styles
@@ -93,16 +98,18 @@ poetry run python scripts/extract_test_fixtures.py --dataset tablebank --count 5
 **License**: Creative Commons Attribution 4.0 (COCO dataset)
 
 **Extraction command**:
+
 ```bash
 # TODO: Run extraction script once created
 poetry run python scripts/extract_test_fixtures.py --dataset cocotext --count 5
-```
+```text
 
 ### wili_2018/
 
 **Purpose**: Test language identification (multilingual OCR routing)
 
 **Selected samples** (10 text files):
+
 - English (EN)
 - French (FR)
 - German (DE)
@@ -119,16 +126,18 @@ poetry run python scripts/extract_test_fixtures.py --dataset cocotext --count 5
 **License**: Apache-2.0 (WiLI-2018 dataset)
 
 **Extraction command**:
+
 ```bash
 # TODO: Run extraction script once created
 poetry run python scripts/extract_test_fixtures.py --dataset wili_2018 --count 10
-```
+```text
 
 ### omnidocbench/
 
 **Purpose**: Test comprehensive document understanding (Phase 3)
 
 **Selected samples** (5 images):
+
 - Financial document (tables, text, numbers)
 - Scientific paper (formulas, figures, citations)
 - Invoice/receipt (structured data extraction)
@@ -140,10 +149,11 @@ poetry run python scripts/extract_test_fixtures.py --dataset wili_2018 --count 1
 **License**: MIT (OmniDocBench dataset)
 
 **Extraction command**:
+
 ```bash
 # TODO: Run extraction script once created
 poetry run python scripts/extract_test_fixtures.py --dataset omnidocbench --count 5
-```
+```text
 
 ---
 
@@ -164,7 +174,7 @@ def test_skew_detection():
     skewed_pdf = FIXTURES_DIR / "doclaynet" / "skewed_sample.pdf"
     result = detect_skew(skewed_pdf)
     assert result.angle > 2.0  # Known skew angle
-```
+```text
 
 ### Integration Tests
 
@@ -182,7 +192,7 @@ def test_full_pipeline_doclaynet_fixtures():
         result = process_document(pdf)
         assert result.status == "success"
         assert len(result.pages) > 0
-```
+```text
 
 ### CI/CD Integration
 
@@ -194,9 +204,10 @@ GitHub Actions automatically uses test fixtures:
   run: |
     poetry run pytest -v -m "not requires_full_dataset"
   # Automatically uses data/test_fixtures/
-```
+```text
 
 **Test markers**:
+
 ```python
 @pytest.mark.requires_full_dataset
 def test_full_benchmark():
@@ -206,7 +217,7 @@ def test_full_benchmark():
 def test_with_fixtures():
     """Runs in CI - uses test_fixtures only."""
     pass
-```
+```text
 
 ---
 
@@ -222,6 +233,7 @@ def test_with_fixtures():
 ### How to Update
 
 1. **Extract new samples**:
+
    ```bash
    poetry run python scripts/extract_test_fixtures.py \
      --dataset doclaynet \
@@ -229,13 +241,15 @@ def test_with_fixtures():
      --criteria "skewed,low_contrast,complex_layout"
    ```
 
-2. **Verify size constraint**:
+1. **Verify size constraint**:
+
    ```bash
    du -sh data/test_fixtures/
    # Should be < 50 MB
    ```
 
-3. **Commit to GitHub**:
+2. **Commit to GitHub**:
+
    ```bash
    git add data/test_fixtures/
    git commit -m "test: Update doclaynet fixtures with complex layout samples"
@@ -261,11 +275,12 @@ wili_2018/      52K (10 text files)
 cocotext/       4K (empty - not extracted)
 omnidocbench/   4K (empty - not extracted)
 TOTAL:          828K (0.8 MB - well under 50 MB target)
-```
+```text
 
 ### Extracted Fixtures Inventory
 
 **doclaynet/** (5 PDFs, 432K total):
+
 - `simple_text_1.pdf` (18K) - Simple text-heavy document
 - `tables_figures_2.pdf` (29K) - Document with tables and figures
 - `multi_column_3.pdf` (50K) - Multi-column layout
@@ -273,6 +288,7 @@ TOTAL:          828K (0.8 MB - well under 50 MB target)
 - `low_contrast_5.pdf` (84K) - Low contrast scans
 
 **tablebank/** (5 images, 324K total):
+
 - `simple_table_1.png` (4.9K) - Simple 3-5 column table
 - `complex_table_2.png` (44K) - Complex table with merged cells
 - `rotated_3.jpg` (74K) - Rotated table
@@ -280,6 +296,7 @@ TOTAL:          828K (0.8 MB - well under 50 MB target)
 - `embedded_graphics_5.jpg` (51K) - Table with embedded graphics
 
 **wili_2018/** (10 text files, 52K total):
+
 - `eng_eng.txt` (446 bytes) - English sample
 - `fra_fra.txt` (168 bytes) - French sample
 - `deu_deu.txt` (496 bytes) - German sample
@@ -296,6 +313,7 @@ TOTAL:          828K (0.8 MB - well under 50 MB target)
 **omnidocbench/** - Not yet extracted (Arrow format requires special handling)
 
 **iqa_samples/** - Planned for Phase 2 Week 3 (~2 MB total):
+
 - `live/`: 3-5 LIVE dataset extracts with ground-truth quality scores (DMOS)
   - Reference image (clean, DMOS=0.0)
   - JPEG compression sample (DMOS~25)
@@ -309,7 +327,8 @@ TOTAL:          828K (0.8 MB - well under 50 MB target)
 - `labels.json`: Ground-truth quality scores and defect labels
 
 See [tmp_cleanup/.tmp-test-fixtures-iqa-requirements-20251113.md](../../tmp_cleanup/.tmp-test-fixtures-iqa-requirements-20251113.md) for detailed requirements analysis.
-```
+
+```text
 
 ### Projected Size After Phase 2
 
@@ -322,7 +341,7 @@ iqa_samples/    2.0M (8 images + labels.json)  # NEW in Week 3
   ├── live/     1.5M (5 LIVE extracts)
   └── synthetic/ 500K (3 generated variants)
 TOTAL:          3.0M (well under 50 MB target)
-```
+```text
 
 ---
 
@@ -342,11 +361,12 @@ All fixtures are extracted from permissively licensed datasets:
 **Attribution**: See LICENSE file and dataset source links in [DATASET_INSTALLATION.md](../../docs/DATASET_INSTALLATION.md)
 
 **IQA Fixtures Citation** (required for LIVE dataset):
-```
+
+```text
 Sheikh, H. R., Seshadrinathan, K., Moorthy, A. K., Wang, Z., Bovik, A. C., & Cormack, L. K. (2006).
 A statistical evaluation of recent full reference image quality assessment algorithms.
 IEEE Transactions on Image Processing, 15(11), 3440-3451.
-```
+```text
 
 ---
 
@@ -357,6 +377,7 @@ IEEE Transactions on Image Processing, 15(11), 3440-3451.
 **Purpose**: IQA model validation with ground truth quality labels
 
 **Selected samples** (6 images + labels.json, 2.3 MB total):
+
 - `reference_clean.png` (206 KB) - Pristine reference, all defects = 0.0
 - `gaussian_blur_high.png` (316 KB) - High blur (1.0) + artifacts (1.0)
 - `white_noise_high.png` (605 KB) - High noise (1.0) + skew (1.0)
@@ -376,6 +397,7 @@ IEEE Transactions on Image Processing, 15(11), 3440-3451.
 **Purpose**: Training pipeline validation samples
 
 **Selected samples** (5 images + manifest.json, 1.8 MB total):
+
 - `sample_000000.jpg` (406 KB) - Clean, high-quality baseline
 - `sample_000001.jpg` (261 KB) - Clean, high-quality baseline
 - `sample_000009.jpg` (318 KB) - Clean, high-quality baseline
@@ -394,6 +416,7 @@ IEEE Transactions on Image Processing, 15(11), 3440-3451.
 **Purpose**: Baseline samples for augmentation/degradation testing
 
 **Selected samples** (3 images, 728 KB total):
+
 - `clean_text_page.jpg` (406 KB) - Clean mixed layout document
 - `clean_table_page.jpg` (206 KB) - Clean table document
 - `clean_form_page.jpg` (112 KB) - Clean form document
@@ -409,6 +432,7 @@ IEEE Transactions on Image Processing, 15(11), 3440-3451.
 **Purpose**: Layout-lite edge case detection testing
 
 **Selected samples** (4 files + manifest.json, 904 KB total):
+
 - `dense_math_page4.pdf` (220 KB) - Scientific paper with dense equations, PDEs, matrices
   - **Source**: arXiv 2409.13432 (CC-BY-4.0)
   - **License**: CC-BY-4.0 with attribution
@@ -426,16 +450,18 @@ IEEE Transactions on Image Processing, 15(11), 3440-3451.
 **Usage**: Test layout-lite classification for watermarks, colorful backgrounds, dense math, and handwriting detection
 
 **Attribution Required**:
-```
+
+```text
 Dense math sample from: "Dense cell-by-cell systems of PDEs: approximation,
 spectral analysis, and preconditioning" (arXiv:2409.13432) - CC-BY-4.0
-```
+```text
 
 ---
 
 ## Next Steps
 
 ### Phase 1 (Completed)
+
 - [x] Create `scripts/extract_test_fixtures.py` automated extraction script
 - [x] Create `scripts/extract_wili_samples.py` for WiLI-2018 language extraction
 - [x] Extract representative samples from doclaynet, tablebank, wili_2018 (< 50 MB total)
@@ -445,6 +471,7 @@ spectral analysis, and preconditioning" (arXiv:2409.13432) - CC-BY-4.0
 - [x] Create `tests/integration/test_real_fixtures.py` with 14 real data tests
 
 ### Phase 2 Week 3 (Planned - IQA Fixtures)
+
 - [ ] Download LIVE, CSIQ, LIVE Challenge datasets (~5 GB)
 - [ ] Extract 5 LIVE samples with ground-truth DMOS scores (~1.5 MB)
 - [ ] Generate 3 synthetic IQA variants (extreme blur, combined defects, orientation) (~0.5 MB)
@@ -454,6 +481,7 @@ spectral analysis, and preconditioning" (arXiv:2409.13432) - CC-BY-4.0
 - [ ] Update total fixtures size: 828 KB → 3.0 MB (still well under 50 MB)
 
 ### Future Phases
+
 - [ ] Extract cocotext fixtures (requires handling nested directory structure)
 - [ ] Extract omnidocbench fixtures (requires Apache Arrow format handling)
 - [ ] Update CI configuration to use fixtures for integration tests
@@ -461,6 +489,7 @@ spectral analysis, and preconditioning" (arXiv:2409.13432) - CC-BY-4.0
 ---
 
 **References**:
+
 - [TESTING_STRATEGY.md](../../docs/TESTING_STRATEGY.md) - Complete testing strategy
 - [DATASET_INSTALLATION.md](../../docs/DATASET_INSTALLATION.md) - Full dataset sources
 - [.github/workflows/ci.yml](../../.github/workflows/ci.yml) - CI/CD configuration

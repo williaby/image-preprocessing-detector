@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 ## What Goes Here
 
 **✅ Belongs in notebooks/**:
+
 - Google Colab training notebooks (`.ipynb`)
 - Jupyter notebooks for data exploration
 - Interactive model evaluation notebooks
@@ -17,6 +18,7 @@ SPDX-License-Identifier: MIT
 - Experiment tracking notebooks
 
 **❌ Does NOT belong here** (and where it should go instead):
+
 - **Production training code** → `src/image_preprocessing_detector/training/` (Phase 4+)
 - **Utility scripts** → `scripts/` (standalone Python scripts)
 - **One-off validation** → `validation/` (non-reusable experimental code)
@@ -25,7 +27,7 @@ SPDX-License-Identifier: MIT
 
 ## Directory Structure
 
-```
+```text
 notebooks/
 ├── colab/                      # Google Colab notebooks (Phases 2-3)
 │   ├── phase2_iqa_training.ipynb         # IQA model training
@@ -36,16 +38,18 @@ notebooks/
 │   ├── dataset_analysis.ipynb
 │   └── augmentation_test.ipynb
 └── README.md
-```
+```text
 
 ## Current Notebooks
 
 ### Phase 2: IQA Training
+
 **File**: `colab/phase2_iqa_training.ipynb`
 
 **Purpose**: Train MobileNetV3/EfficientNet multi-label IQA classifier on Google Colab
 
 **Key Features**:
+
 - Auto-mounts Google Drive
 - Loads config from `configs/colab_phase2_iqa.yaml`
 - Multi-session training with `CheckpointManager`
@@ -55,17 +59,20 @@ notebooks/
 - Exports to ONNX on completion
 
 **Usage**:
+
 1. Open in Google Colab
 2. Runtime → Change runtime type → GPU (V100 recommended)
 3. Run all cells
 4. Training auto-resumes if session disconnects
 
 ### Phase 3: Layout Detection
+
 **File**: `colab/phase3_yolov8_training.ipynb`
 
 **Purpose**: Train YOLOv8 object detector for document layout detection
 
 **Key Features**:
+
 - Multi-session training (5-7 sessions over 5-7 days)
 - YOLOv8n/s architecture variants
 - COCO-aligned bounding boxes
@@ -73,6 +80,7 @@ notebooks/
 - Automatic checkpoint management
 
 **Usage**:
+
 1. Prepare dataset in YOLO format (`scripts/prepare_*.py`)
 2. Upload to Google Drive
 3. Open notebook in Colab
@@ -80,11 +88,13 @@ notebooks/
 5. Re-run in new sessions to auto-resume
 
 ### Model Evaluation
+
 **File**: `colab/model_evaluation.ipynb`
 
 **Purpose**: Evaluate trained models and generate benchmark reports
 
 **Features**:
+
 - Compute mAP, F1, ROC-AUC
 - Calibration analysis (ECE, reliability diagrams)
 - Confusion matrices
@@ -94,22 +104,26 @@ notebooks/
 ## Gitignore Policy
 
 Notebooks are **GITIGNORED** due to:
+
 - Large file sizes with outputs
 - Embedded images in outputs
 - Frequent changes during experimentation
 - Checkpoint metadata
 
 **What IS committed**:
+
 - Cleaned notebooks without outputs (optional, for documentation)
 - Notebook templates with placeholders
 
 **Storage**:
+
 - Working notebooks: Google Drive
 - Final versions: Export to `.py` format for version control
 
 ## Running Notebooks
 
 ### In Google Colab
+
 ```python
 # Cell 1: Mount Drive
 from google.colab import drive
@@ -125,9 +139,10 @@ with open("configs/colab_phase2_iqa.yaml") as f:
     config = yaml.safe_load(f)
 
 # Cell 4+: Training cells...
-```
+```text
 
 ### Locally (Jupyter)
+
 ```bash
 # Install Jupyter
 poetry add --group dev jupyter
@@ -137,25 +152,29 @@ poetry run jupyter notebook
 
 # Open notebooks/colab/phase2_iqa_training.ipynb
 # Note: Some Colab-specific features won't work
-```
+```text
 
 ## Distinction from Other Folders
 
 ### vs. scripts/
+
 - **notebooks/**: Interactive Jupyter/Colab notebooks (`.ipynb`)
 - **scripts/**: Standalone command-line utilities (`.py`, `.sh`)
 
 ### vs. validation/
+
 - **notebooks/**: Reusable training and evaluation workflows
 - **validation/**: One-off experimental scripts for specific hypotheses
 
 ### vs. src/
+
 - **notebooks/**: Exploratory code, not production-ready
 - **src/**: Production library code with tests and documentation
 
 ## Best Practices
 
 ### Cell Organization
+
 1. **Setup Cells**: Imports, Drive mounting, environment setup
 2. **Config Cells**: Load configuration files
 3. **Data Cells**: Dataset loading and preprocessing
@@ -164,6 +183,7 @@ poetry run jupyter notebook
 6. **Export Cells**: Save models and artifacts
 
 ### Checkpoint Management
+
 ```python
 from scripts.checkpoint_manager import CheckpointManager
 
@@ -189,9 +209,10 @@ for epoch in range(start_epoch, config["epochs"]):
     if ckpt_mgr.should_stop_session():
         print(f"Stopping at epoch {epoch} to save checkpoint")
         break
-```
+```text
 
 ### Reproducibility
+
 - **Fix random seeds** in first cell
 - **Log all hyperparameters**
 - **Save training config** alongside checkpoints
@@ -211,23 +232,27 @@ jupyter nbconvert --to script notebooks/colab/phase2_iqa_training.ipynb
 # 3. Refactor into functions
 # 4. Add proper error handling
 # 5. Move to src/image_preprocessing_detector/training/
-```
+```text
 
 ## Troubleshooting
 
 ### Colab Session Disconnects
+
 - **Solution**: Re-run all cells - CheckpointManager auto-resumes
 
 ### Out of Memory
+
 - **Solution**: Reduce batch size in config
 - **Alternative**: Use mixed precision training (FP16)
 
 ### Slow Training
+
 - **Check GPU**: Verify GPU is allocated (`nvidia-smi`)
 - **Data loading**: Use num_workers > 0 in DataLoader
 - **Mixed precision**: Enable AMP for faster training
 
 ### Google Drive Quota
+
 - **Dataset**: Keep datasets on Drive, not in Colab /content
 - **Checkpoints**: Clean old checkpoints periodically
 - **Logs**: Use TensorBoard with limited history
@@ -245,11 +270,12 @@ poetry run jupyter lab
 
 # Install kernel
 poetry run python -m ipykernel install --user --name=image_detection
-```
+```text
 
 ## Documentation
 
 Notebooks can serve as interactive documentation:
+
 - Tutorial notebooks for new contributors
 - Example usage notebooks for README
 - Benchmark reproduction notebooks for ADRs

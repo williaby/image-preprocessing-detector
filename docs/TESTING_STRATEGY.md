@@ -21,6 +21,7 @@ purpose: Documentation for testing strategy - dataset storage and test fixtures.
 ### Local Development Storage
 
 **Keep locally** (88+ GB):
+
 - **Purpose**: Development, debugging, benchmarking, local model training
 - **Location**: `data/benchmarks/`
 - **Datasets**:
@@ -35,6 +36,7 @@ purpose: Documentation for testing strategy - dataset storage and test fixtures.
   - fintabnet (3.2 GB downloading) - Phase 2
 
 **Disk space management**:
+
 - Current available: 794.6 GB (sufficient)
 - If constrained: Delete Phase 2+ datasets, keep Phase 1 datasets locally
 - Re-download from GCS when needed: `gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/tablebank data/benchmarks/`
@@ -46,6 +48,7 @@ purpose: Documentation for testing strategy - dataset storage and test fixtures.
 **Location**: `gs://image_detection_b/image-preprocessing-detector/datasets/`
 
 **Upload status** (as of 2025-11-13):
+
 - ✅ synthetic_iqa (345 KB)
 - ✅ cocotext (52 MB)
 - ✅ wili_2018 (128 MB)
@@ -57,6 +60,7 @@ purpose: Documentation for testing strategy - dataset storage and test fixtures.
 - ⏸️ fintabnet (pending - downloading)
 
 **Access from Google Colab**:
+
 ```python
 # Authenticate
 from google.colab import auth
@@ -64,11 +68,12 @@ auth.authenticate_user()
 
 # Download dataset
 !gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/tablebank /content/data/
-```
+```text
 
 ### GitHub Repository
 
 **DO NOT upload large datasets to GitHub**:
+
 - GitHub has 100 MB single file limit
 - Repository size should stay under 1 GB recommended limit
 - Large files cause slow clones and poor performance
@@ -85,7 +90,7 @@ Small, representative dataset samples for CI/CD testing without requiring full d
 
 ### Structure
 
-```
+```text
 data/
 ├── test_fixtures/          # ✅ Committed to GitHub (< 50 MB total)
 │   ├── doclaynet/          # 5-10 representative samples
@@ -100,11 +105,12 @@ data/
     ├── doclaynet/
     ├── tablebank/
     └── ...
-```
+```text
 
 ### Selection Criteria
 
 **Representative samples** (5-10 files per dataset):
+
 1. **Coverage**: Different document types, layouts, quality levels
 2. **Edge cases**: Skewed pages, low contrast, blurry text, complex tables
 3. **File size**: Prefer smaller files to stay under 50 MB total
@@ -131,9 +137,10 @@ data/
 - name: Run integration tests (fixtures only)
   run: |
     poetry run pytest tests/integration/ -v -m "not requires_full_dataset"
-```
+```text
 
 **Test markers**:
+
 ```python
 # tests/integration/test_pipeline.py
 
@@ -147,16 +154,18 @@ def test_pipeline_with_fixtures():
     """Uses test_fixtures/ - runs in CI."""
     # Runs in CI with small fixtures
     pass
-```
+```text
 
 ### Updating Test Fixtures
 
 **When to update**:
+
 - Adding new detection capabilities (need new edge cases)
 - Discovering bugs in production (add failing samples)
 - Phase transitions (add Phase 2/3 specific samples)
 
 **How to update**:
+
 ```bash
 # Extract new samples from full datasets
 poetry run python scripts/extract_test_fixtures.py --dataset doclaynet --count 5
@@ -167,7 +176,7 @@ du -sh data/test_fixtures/  # Should be < 50 MB
 # Commit to GitHub
 git add data/test_fixtures/
 git commit -m "test: Update doclaynet fixtures with complex layout samples"
-```
+```text
 
 ---
 
@@ -176,32 +185,35 @@ git commit -m "test: Update doclaynet fixtures with complex layout samples"
 ### Local Development
 
 **Use full datasets**:
+
 ```bash
 # Run all tests including benchmarks (requires 88+ GB)
 poetry run pytest -v
 
 # Run specific benchmark
 poetry run python -m benchmarks.runners.run_smoke --suite doclaynet-layout-smoke
-```
+```text
 
 ### CI/CD (GitHub Actions)
 
 **Use test fixtures only**:
+
 ```bash
 # Automatically uses data/test_fixtures/
 poetry run pytest -v -m "not requires_full_dataset"
-```
+```text
 
 ### Google Colab Training
 
 **Download from GCS**:
+
 ```python
 # Download specific dataset for training
 !gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/tablebank /content/data/
 
 # Train model
 !poetry run python src/train_iqa_model.py --dataset tablebank
-```
+```text
 
 ---
 
@@ -224,7 +236,7 @@ rm -rf data/benchmarks/fintabnet
 
 # Re-download when needed
 gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/tablebank data/benchmarks/
-```
+```text
 
 ---
 
@@ -237,6 +249,7 @@ gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/tab
 | GCS backup | 102+ GB | Backup, Colab training | N/A (cloud) |
 
 **Best practice**:
+
 - ✅ Keep full datasets local for development
 - ✅ Upload all datasets to GCS for backup/Colab
 - ✅ Use small test fixtures for CI/CD

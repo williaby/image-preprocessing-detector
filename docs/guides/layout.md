@@ -26,7 +26,7 @@ Layout detection uses YOLOv8 to identify and localize document elements:
 
 ## Architecture (Phase 3)
 
-```
+```text
 Input Page (300 DPI)
       │
       ▼
@@ -51,7 +51,7 @@ Input Page (300 DPI)
 ┌──────────────┐
 │   Metadata   │  JSON output with layout + quality
 └──────────────┘
-```
+```text
 
 ## Element Types
 
@@ -60,6 +60,7 @@ Input Page (300 DPI)
 **Detection**: Recognize table structures
 
 **Metadata**:
+
 - Number of rows/columns (estimated)
 - Cell boundaries
 - Table orientation
@@ -67,6 +68,7 @@ Input Page (300 DPI)
 **Quality Assessment**: Per-table blur, contrast
 
 **Use Cases**:
+
 - Extract structured data
 - Apply table-specific OCR
 - Preserve table layout in conversion
@@ -76,6 +78,7 @@ Input Page (300 DPI)
 **Detection**: Identify embedded graphics
 
 **Metadata**:
+
 - Image type (photo, diagram, chart)
 - Resolution estimate
 - Color vs. grayscale
@@ -83,6 +86,7 @@ Input Page (300 DPI)
 **Quality Assessment**: Per-image IQA
 
 **Use Cases**:
+
 - Extract figures for separate processing
 - Apply image-specific corrections
 - Preserve figure quality
@@ -92,6 +96,7 @@ Input Page (300 DPI)
 **Detection**: Locate paragraphs, captions
 
 **Metadata**:
+
 - Text orientation
 - Font size estimate
 - Text density
@@ -99,6 +104,7 @@ Input Page (300 DPI)
 **Quality Assessment**: Skew, contrast for text regions
 
 **Use Cases**:
+
 - Targeted OCR
 - Reading order detection
 - Text extraction
@@ -108,12 +114,14 @@ Input Page (300 DPI)
 **Detection**: Identify handwritten content
 
 **Metadata**:
+
 - Handwriting vs. printed text
 - Annotation vs. main content
 
 **Quality Assessment**: Special handling for handwriting
 
 **Use Cases**:
+
 - Route to handwriting-specific OCR
 - Flag for manual review
 - Preserve annotations
@@ -123,12 +131,14 @@ Input Page (300 DPI)
 **Detection**: Locate mathematical expressions
 
 **Metadata**:
+
 - Formula type (inline, display)
 - Complexity estimate
 
 **Quality Assessment**: Symbol clarity
 
 **Use Cases**:
+
 - Extract for LaTeX conversion
 - Apply formula-specific OCR
 - Preserve mathematical content
@@ -145,9 +155,10 @@ element = DocumentElement(
     bbox=[100, 200, 800, 600],  # x, y, width, height
     confidence=0.95,
 )
-```
+```text
 
 **Why COCO?**
+
 - Industry standard for object detection
 - Compatible with LayoutParser, Detectron2
 - Simplifies downstream integration
@@ -159,12 +170,14 @@ element = DocumentElement(
 **Variant**: YOLOv8n (nano)
 
 **Rationale**:
+
 - Fast inference (< 50ms on GPU)
 - Sufficient accuracy for layout detection
 - Low memory footprint
 - Easy deployment
 
 **Alternatives**:
+
 - YOLOv8s (small): More accurate, slower
 - YOLOv8m (medium): Best accuracy, slowest
 
@@ -173,6 +186,7 @@ element = DocumentElement(
 **Primary**: PubLayNet
 
 **Specifications**:
+
 - 360,000+ document images
 - 5 categories: text, title, list, table, figure
 - From scientific papers
@@ -186,6 +200,7 @@ element = DocumentElement(
 **Strategy**: Transfer learning from pre-trained COCO weights
 
 **Hyperparameters**:
+
 - Epochs: 100
 - Batch size: 16
 - Image size: 640×640
@@ -193,6 +208,7 @@ element = DocumentElement(
 - Learning rate: 0.001
 
 **Augmentation** (Albumentations):
+
 - Random rotation (±5°)
 - Random brightness/contrast
 - Random scaling (0.8-1.2×)
@@ -224,7 +240,7 @@ for element in detected_elements:
 
     # Store per-element quality
     element.quality_issues = quality_issues
-```
+```text
 
 ### Example Output
 
@@ -242,9 +258,10 @@ for element in detected_elements:
     }
   ]
 }
-```
+```text
 
 **Benefits**:
+
 - Accurate quality assessment for complex documents
 - Targeted corrections per element
 - Preserves high-quality regions
@@ -272,7 +289,7 @@ for element in metadata.pages[0].elements:
         score=element.confidence,
     )
     layout.append(block)
-```
+```text
 
 ### Table Extraction
 
@@ -287,7 +304,7 @@ for page in metadata.pages:
     for table in tables:
         x, y, w, h = table.bbox
         # Extract table region for processing
-```
+```text
 
 ## Performance Optimization
 
@@ -296,24 +313,27 @@ for page in metadata.pages:
 **Requirement**: CUDA-compatible GPU
 
 **Setup**:
+
 ```bash
 # Install with GPU support
 poetry install --with ml
 
 # Verify GPU
 python -c "import torch; print(torch.cuda.is_available())"
-```
+```text
 
 ### Batch Processing
 
 **Strategy**: Process multiple pages in batch
 
 **Benefits**:
+
 - Better GPU utilization
 - Higher throughput
 - Lower latency per page
 
 **Example**:
+
 ```python
 # Batch inference (pseudo-code)
 batch_size = 32
@@ -322,13 +342,14 @@ pages = load_pdf_pages("document.pdf")
 for i in range(0, len(pages), batch_size):
     batch = pages[i:i+batch_size]
     results = model.predict(batch)  # GPU batch inference
-```
+```text
 
 ### ONNX Optimization
 
 **Conversion**: PyTorch → ONNX
 
 **Benefits**:
+
 - Faster inference
 - Cross-platform deployment
 - Optimized operators
@@ -338,14 +359,17 @@ for i in range(0, len(pages), batch_size):
 ## Current Status
 
 **Phase 1** (Current): Classical IQA only
+
 - Text detection gate operational
 - No layout detection yet
 
 **Phase 2**: ML-based IQA
+
 - Deep learning image quality assessment
 - No layout detection yet
 
 **Phase 3**: Layout Detection (Planned)
+
 - YOLOv8 implementation
 - Hybrid IQA integration
 - COCO-aligned output

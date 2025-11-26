@@ -17,6 +17,7 @@ purpose: "Document the decision to deploy Phase 1 with CPU-only operation and de
 **Date**: 2025-11-04
 **Deciders**: Byron Williams
 **Related**:
+
 - [PHASE_1_KICKOFF.md](../../PHASE_1_KICKOFF.md)
 - [PHASE_1_COMPLETE.md](../../PHASE_1_COMPLETE.md)
 - [ADR-014: Classical CV + ML Hybrid for IQA](0014-classical-ml-hybrid-iqa.md)
@@ -28,11 +29,13 @@ Phase 1 MVP uses classical computer vision methods (Hough transform, Laplacian, 
 ### Hardware Available
 
 **Development Machine**:
+
 - CPU: 2× Intel Xeon E5-2690 (16 cores, 32 threads total)
 - GPU: NVIDIA Quadro P2000 (5GB VRAM, 1024 CUDA cores)
 - RAM: 64GB DDR4
 
 **Performance Considerations**:
+
 - Classical CV operations: CPU-optimized (OpenCV)
 - GPU acceleration: Minimal benefit for classical methods (~10-20% speedup)
 - GPU reserved for: Phase 2 ML training, Phase 3 inference
@@ -47,6 +50,7 @@ Phase 1 MVP uses classical computer vision methods (Hough transform, Laplacian, 
 **Throughput**: 0.5 pages/second (single thread)
 
 **Achieved Performance** (Phase 1 Complete):
+
 - End-to-end: ~800ms per page (exceeds target)
 - PDF rendering: ~300ms
 - Text detection: <50ms
@@ -82,11 +86,13 @@ Phase 1 MVP uses classical computer vision methods (Hough transform, Laplacian, 
 **Approach**: Require CUDA GPU for all deployments from Phase 1
 
 **Advantages**:
+
 - Faster classical CV operations (~10-20% speedup)
 - GPU infrastructure ready for Phase 2
 - Higher throughput potential
 
 **Disadvantages**:
+
 - Limits deployment targets (requires NVIDIA GPU)
 - Higher cost ($0.50/hr GPU vs $0.10/hr CPU on cloud)
 - Complexity (CUDA drivers, GPU memory management)
@@ -99,11 +105,13 @@ Phase 1 MVP uses classical computer vision methods (Hough transform, Laplacian, 
 **Approach**: Support both CPU and GPU, automatic detection
 
 **Advantages**:
+
 - Flexibility
 - Automatic acceleration if GPU available
 - Graceful degradation
 
 **Disadvantages**:
+
 - Code complexity (dual code paths)
 - Testing overhead (both modes)
 - Maintenance burden
@@ -115,10 +123,12 @@ Phase 1 MVP uses classical computer vision methods (Hough transform, Laplacian, 
 **Approach**: Deploy on cloud GPU instances (AWS p3, GCP T4)
 
 **Advantages**:
+
 - Scalable GPU access
 - Pay-per-use
 
 **Disadvantages**:
+
 - Higher cost ($0.50-3.00/hr vs $0.10/hr CPU)
 - Overkill for classical CV
 - Vendor lock-in
@@ -130,6 +140,7 @@ Phase 1 MVP uses classical computer vision methods (Hough transform, Laplacian, 
 ### Phase 1 CPU-Only Operation
 
 **Classical Detectors** (CPU-optimized):
+
 ```python
 class SkewDetector:
     def detect(self, image: np.ndarray) -> SkewResult:
@@ -143,6 +154,7 @@ class SkewDetector:
 ```
 
 **Performance Optimization**:
+
 - Single-threaded: ~800ms/page
 - Multi-threaded (4 workers): ~2 pages/sec aggregate throughput
 - Batch processing: Queue-based parallelism
@@ -150,6 +162,7 @@ class SkewDetector:
 ### Phase 2-3 GPU Integration (Planned)
 
 **ML Models** (GPU-required):
+
 ```python
 class IQAClassifier:
     def __init__(self):
@@ -166,6 +179,7 @@ class IQAClassifier:
 ```
 
 **Hybrid Deployment**:
+
 ```python
 # Phase 3: CPU fallback if GPU unavailable
 if torch.cuda.is_available():
@@ -178,16 +192,19 @@ else:
 ### Deployment Configurations
 
 **Phase 1 (Current)**:
+
 - Instance: CPU-only (e.g., AWS c5.2xlarge, 8 vCPUs)
 - Throughput: 0.5 pages/sec (single worker)
 - Cost: ~$0.10/hr
 
 **Phase 2 (ML Training)**:
+
 - Instance: GPU (NVIDIA Quadro P2000 local, or AWS p3.2xlarge)
 - Training: 10-20 hours for IQA classifier
 - Cost: ~$3/hr (cloud) or $0/hr (local)
 
 **Phase 3 (ML Inference)**:
+
 - Instance: GPU (AWS p3.2xlarge or g4dn.xlarge T4)
 - Throughput: 6+ pages/sec (with YOLOv8 + ML IQA)
 - Cost: ~$0.50-1.00/hr
@@ -222,16 +239,19 @@ else:
 ## Hardware Utilization
 
 **Phase 1 (Current)**:
+
 - CPU: 100% utilized (classical CV)
 - GPU: 0% utilized (idle)
 - GPU Status: Reserved for Phase 2 training
 
 **Phase 2 (ML Training)**:
+
 - CPU: 30% utilized (data loading)
 - GPU: 90% utilized (model training)
 - Duration: 10-20 hours for IQA classifier
 
 **Phase 3 (Production)**:
+
 - CPU: 40% utilized (preprocessing, data movement)
 - GPU: 80% utilized (YOLOv8 + ML IQA inference)
 

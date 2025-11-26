@@ -34,6 +34,7 @@ purpose: "Document the fuzzing infrastructure, harness creation, and integration
 ### Why Fuzzing?
 
 Image preprocessing detector processes untrusted input (PDFs, images) and is vulnerable to:
+
 - **Buffer overflows**: Malformed image headers, oversized dimensions
 - **Infinite loops**: Corrupted PDF streams, circular references
 - **Memory exhaustion**: Decompression bombs, recursive structures
@@ -87,12 +88,14 @@ Image preprocessing detector processes untrusted input (PDFs, images) and is vul
 **OSS-Fuzz** is Google's continuous fuzzing service for open-source projects.
 
 **Benefits**:
+
 - 24/7 fuzzing on Google infrastructure (free)
 - Automatic crash reporting via email + GitHub issues
 - Coverage reports and corpus management
 - Industry-standard integration (20,000+ projects)
 
 **Drawbacks**:
+
 - Registration approval required (1-2 weeks)
 - More setup complexity than ClusterFuzzLite
 - Public disclosure of vulnerabilities (responsible)
@@ -105,7 +108,7 @@ Create `fuzz/` directory with Python fuzz targets:
 
 ```bash
 mkdir -p fuzz
-```
+```text
 
 **Example: PDF Loader Fuzzer**
 
@@ -158,7 +161,7 @@ def TestOneInput(data):
 if __name__ == "__main__":
     atheris.Setup(sys.argv, TestOneInput)
     atheris.Fuzz()
-```
+```text
 
 **Example: Image Loader Fuzzer**
 
@@ -204,7 +207,7 @@ def TestOneInput(data):
 if __name__ == "__main__":
     atheris.Setup(sys.argv, TestOneInput)
     atheris.Fuzz()
-```
+```text
 
 **Example: Text Gate Fuzzer**
 
@@ -250,7 +253,7 @@ def TestOneInput(data):
 if __name__ == "__main__":
     atheris.Setup(sys.argv, TestOneInput)
     atheris.Fuzz()
-```
+```text
 
 #### Step 2: Create Project Configuration (30 minutes)
 
@@ -272,7 +275,7 @@ fuzzing_engines:
   - libfuzzer
 
 main_repo: "https://github.com/williaby/image-preprocessing-detector"
-```
+```text
 
 **Create `Dockerfile`**:
 
@@ -301,7 +304,7 @@ RUN pip3 install atheris
 
 # Copy build script
 COPY build.sh $SRC/
-```
+```text
 
 **Create `build.sh`**:
 
@@ -331,17 +334,19 @@ done
 
 # Copy dictionary files (optional)
 # cp fuzz/*.dict $OUT/ || true
-```
+```text
 
 #### Step 3: Register with OSS-Fuzz (1 week approval)
 
 1. **Fork OSS-Fuzz**:
+
    ```bash
    # On GitHub
    # Fork: https://github.com/google/oss-fuzz
    ```
 
-2. **Add Project Files**:
+1. **Add Project Files**:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/oss-fuzz
    cd oss-fuzz
@@ -350,19 +355,22 @@ done
    # Add project.yaml, Dockerfile, build.sh
    ```
 
-3. **Test Build Locally**:
+2. **Test Build Locally**:
+
    ```bash
    python infra/helper.py build_image image-preprocessing-detector
    python infra/helper.py build_fuzzers image-preprocessing-detector
    python infra/helper.py check_build image-preprocessing-detector
    ```
 
-4. **Run Fuzzers Locally**:
+3. **Run Fuzzers Locally**:
+
    ```bash
    python infra/helper.py run_fuzzer image-preprocessing-detector fuzz_pdf_loader -- -max_total_time=60
    ```
 
-5. **Submit Pull Request**:
+4. **Submit Pull Request**:
+
    ```bash
    git checkout -b add-image-preprocessing-detector
    git add projects/image-preprocessing-detector/
@@ -372,12 +380,12 @@ done
    # Create PR to google/oss-fuzz
    ```
 
-6. **Wait for Review** (1-2 weeks):
+5. **Wait for Review** (1-2 weeks):
    - OSS-Fuzz team reviews configuration
    - Tests build on their infrastructure
    - Approves and merges
 
-7. **Monitor Results**:
+6. **Monitor Results**:
    - Bugs filed automatically to GitHub Issues
    - Email notifications for crashes
    - Coverage reports available
@@ -395,14 +403,15 @@ gh run list --workflow=cifuzzy.yml
 
 # View fuzzing results
 gh run view <run-id>
-```
+```text
 
 **Expected Output**:
-```
+
+```text
 ✅ Fuzzers built and executed for 600 seconds
 📸 Image/PDF processing modules tested for edge cases
 🔐 Security vulnerabilities detection active
-```
+```text
 
 **Total Time**: 4-6 hours active work + 1-2 weeks approval
 
@@ -417,12 +426,14 @@ gh run view <run-id>
 **ClusterFuzzLite** is a lightweight fuzzing solution for CI/CD.
 
 **Benefits**:
+
 - No registration required (immediate use)
 - Simpler setup (1-2 hours)
 - Good for catching bugs before merge
 - May score points with Scorecard
 
 **Drawbacks**:
+
 - Only runs during CI (not continuous)
 - No long-term corpus management
 - Limited to CI timeout (typically 30-60 minutes)
@@ -483,7 +494,7 @@ jobs:
           name: clusterfuzzlite-crashes
           path: build/out/*/crashes
           retention-days: 7
-```
+```text
 
 #### Step 2: Create Fuzzing Harnesses (Same as Option 1)
 
@@ -498,7 +509,7 @@ language: python
 sanitizers:
   - address
   - undefined
-```
+```text
 
 **Create `.clusterfuzzlite/Dockerfile`**:
 
@@ -525,7 +536,7 @@ RUN for fuzzer in fuzz/fuzz_*.py; do \
         pyinstaller --onefile --name $fuzzer_basename $fuzzer; \
         cp dist/$fuzzer_basename $OUT/; \
     done
-```
+```text
 
 #### Step 4: Test Locally (15 minutes)
 
@@ -541,7 +552,7 @@ python -m clusterfuzzlite.run_fuzzers --fuzz-seconds 60
 
 # Check for crashes
 ls -la build/out/*/crashes
-```
+```text
 
 #### Step 5: Verify CI Integration (15 minutes)
 
@@ -554,7 +565,7 @@ git push origin main
 # Check workflow
 gh run list --workflow=cifuzzy.yml
 gh run view <run-id>
-```
+```text
 
 **Total Time**: 2-3 hours
 
@@ -571,6 +582,7 @@ gh run view <run-id>
 #### 1. Target Critical Code Paths
 
 Focus on:
+
 - **Input parsing**: PDF, PNG, JPEG, TIFF parsers
 - **Data transformation**: Image decoding, color space conversion
 - **Complex logic**: Text detection, layout analysis
@@ -588,7 +600,7 @@ def TestOneInput(data):
     except MemoryError:
         pass  # Expected for huge inputs
     # Let other exceptions crash (fuzzer will catch them)
-```
+```text
 
 #### 3. Add Input Validation
 
@@ -604,7 +616,7 @@ def TestOneInput(data):
 
     # Fuzzing logic
     ...
-```
+```text
 
 #### 4. Use Seed Corpus
 
@@ -618,13 +630,13 @@ mkdir -p fuzz/corpus/fuzz_pdf_loader/
 cp samples/valid_document.pdf fuzz/corpus/fuzz_pdf_loader/
 cp samples/scanned_image.pdf fuzz/corpus/fuzz_pdf_loader/
 cp samples/text_document.pdf fuzz/corpus/fuzz_pdf_loader/
-```
+```text
 
 #### 5. Create Dictionary Files
 
 Help fuzzer generate valid inputs:
 
-```
+```text
 # fuzz/pdf.dict
 PDF_HEADER="%PDF-1."
 PDF_EOF="%%EOF"
@@ -632,7 +644,7 @@ PDF_STREAM="stream"
 PDF_ENDSTREAM="endstream"
 PDF_OBJ="obj"
 PDF_ENDOBJ="endobj"
-```
+```text
 
 ---
 
@@ -649,7 +661,7 @@ python fuzz/fuzz_pdf_loader.py -max_total_time=60 fuzz/corpus/fuzz_pdf_loader/
 
 # Test with dictionary
 python fuzz/fuzz_pdf_loader.py -max_total_time=60 -dict=fuzz/pdf.dict
-```
+```text
 
 ### Coverage Analysis
 
@@ -663,7 +675,7 @@ python fuzz/fuzz_pdf_loader.py -max_total_time=600 -print_final_stats=1
 # cov = code coverage (unique edges)
 # ft = features (code paths)
 # corp = corpus size (unique inputs)
-```
+```text
 
 **Goal**: Maximize `cov` and `ft` values
 
@@ -675,7 +687,7 @@ python fuzz/fuzz_pdf_loader.py crash-abc123
 
 # Debug with debugger
 python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
-```
+```text
 
 ---
 
@@ -686,6 +698,7 @@ python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
 **Cause**: Insufficient fuzzing time or coverage
 
 **Solutions**:
+
 1. Increase fuzz-seconds: 600 → 1800 (30 minutes)
 2. Add seed corpus with diverse samples
 3. Use dictionary to guide input generation
@@ -696,6 +709,7 @@ python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
 **Cause**: Harness processes large inputs inefficiently
 
 **Solutions**:
+
 1. Add input size limits: `if len(data) > 1_000_000: return`
 2. Add timeout to operations: `signal.alarm(5)` before processing
 3. Profile harness to find slow operations
@@ -705,6 +719,7 @@ python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
 **Cause**: Genuine bugs in dependencies (OpenCV, PyMuPDF)
 
 **Solutions**:
+
 1. Report upstream to dependency maintainers
 2. Add exception handling for known issues
 3. Implement input validation before calling dependencies
@@ -714,6 +729,7 @@ python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
 **Cause**: Missing dependencies or build configuration
 
 **Solutions**:
+
 1. Test locally: `python infra/helper.py build_fuzzers <project>`
 2. Check Dockerfile has all system dependencies
 3. Verify poetry.lock is committed
@@ -739,17 +755,17 @@ python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
 
 ### Medium Priority (Phase 2+)
 
-4. **IQA Classical** (`fuzz_iqa_classical.py`):
+1. **IQA Classical** (`fuzz_iqa_classical.py`):
    - Risk: Division by zero, overflow in metrics
    - Impact: Low
 
-5. **Correction Pipeline** (`fuzz_corrections.py`):
+2. **Correction Pipeline** (`fuzz_corrections.py`):
    - Risk: Invalid transformations causing crashes
    - Impact: Medium
 
 ### Low Priority (Phase 3+)
 
-6. **YOLOv8 Layout** (`fuzz_layout_detection.py`):
+1. **YOLOv8 Layout** (`fuzz_layout_detection.py`):
    - Risk: Model crashes on adversarial inputs
    - Impact: Low (ML Phase)
 
@@ -760,30 +776,36 @@ python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
 ### After OSS-Fuzz Integration
 
 **Security**:
+
 - Continuous fuzzing 24/7 on Google infrastructure
 - Automatic bug reporting via GitHub Issues
 - Vulnerabilities found before production
 
 **Scorecard**:
+
 - Fuzzing: 0/10 → 10/10 (+1.0 points)
 - Overall: 6.5/10 → 7.5/10
 
 **Maintenance**:
+
 - ~1 hour/month reviewing fuzzing results
 - Fix bugs as reported by OSS-Fuzz
 
 ### After ClusterFuzzLite Integration
 
 **Security**:
+
 - Fuzzing on every commit (10 minutes)
 - Catch bugs before merge
 - Fast feedback loop
 
 **Scorecard**:
+
 - Fuzzing: 0/10 → ~5-8/10 (+0.5-0.8 points)
 - Overall: 6.5/10 → 7.0-7.3/10
 
 **Maintenance**:
+
 - ~15 minutes/week reviewing CI failures
 - Fix bugs found during development
 
@@ -807,22 +829,22 @@ python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
 
 ### Short-Term (This Month)
 
-4. **OSS-Fuzz Registration** (if chosen):
+1. **OSS-Fuzz Registration** (if chosen):
    - Submit PR to google/oss-fuzz
    - Wait for approval (1-2 weeks)
 
-5. **OR ClusterFuzzLite Setup** (if chosen):
+2. **OR ClusterFuzzLite Setup** (if chosen):
    - Add .clusterfuzzlite/ configuration
    - Test in CI
 
 ### Long-Term (Ongoing)
 
-6. **Monitor and Fix**:
+1. **Monitor and Fix**:
    - Review fuzzing results weekly
    - Fix crashes as discovered
    - Expand corpus with new samples
 
-7. **Expand Coverage**:
+2. **Expand Coverage**:
    - Add more fuzzing targets
    - Increase fuzzing time for deeper testing
    - Integrate coverage reporting
@@ -834,6 +856,7 @@ python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
 **Recommendation**: Start with **OSS-Fuzz** for full security benefits and Scorecard points.
 
 **Timeline**:
+
 - Week 1: Write fuzzing harnesses, test locally
 - Week 2: Submit OSS-Fuzz PR
 - Week 3-4: Wait for approval

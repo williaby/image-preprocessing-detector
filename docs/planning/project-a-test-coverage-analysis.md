@@ -169,6 +169,7 @@ purpose: Map functional requirements to tests and identify coverage gaps.
 ### Phase 3+ Requirements (Expected Gaps)
 
 These requirements are expected to be not implemented yet:
+
 - FR-3.11 Bleed-Through Detection
 - FR-3.12 Warping/Curvature Detection
 - FR-4.1-4.8 Layout Analysis
@@ -204,7 +205,7 @@ These requirements are expected to be not implemented yet:
 
 ## Mapping: Workflow Step → Tests → Requirements
 
-```
+```text
 INPUT STAGE
 ├── test_pdf_loader.py → FR-1.1, FR-1.2
 ├── test_image_loader.py → FR-1.1, FR-1.2
@@ -243,7 +244,7 @@ OUTPUT
 E2E COVERAGE
 ├── test_pipeline_e2e.py → Full pipeline (FR-1 through FR-7)
 └── test_real_fixtures.py → Full pipeline with real data
-```
+```text
 
 ---
 

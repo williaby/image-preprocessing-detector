@@ -21,6 +21,7 @@ This document provides proper citations for all datasets used or referenced in t
 **Status**: ✅ **CURRENTLY USED** for validation (See `validation/DOCLAYNET_COVERAGE.md`)
 
 **Citation**:
+
 ```bibtex
 @inproceedings{doclaynet2022,
   title={DocLayNet: A Large Human-Annotated Dataset for Document-Layout Analysis},
@@ -35,11 +36,13 @@ This document provides proper citations for all datasets used or referenced in t
 **License**: CDLA-Permissive-2.0 (Community Data License Agreement)
 
 **Access**:
-- GitHub: https://github.com/DS4SD/DocLayNet
-- Hugging Face: https://huggingface.co/datasets/ds4sd/DocLayNet
-- Paper: https://arxiv.org/abs/2206.01062
+
+- GitHub: <https://github.com/DS4SD/DocLayNet>
+- Hugging Face: <https://huggingface.co/datasets/ds4sd/DocLayNet>
+- Paper: <https://arxiv.org/abs/2206.01062>
 
 **Usage in Project**:
+
 - Validation of document element detection (Stage 3B)
 - Ground truth for tables, figures, formulas, and footnotes
 - 80,863 manually annotated pages across 6 document categories
@@ -57,6 +60,7 @@ This document provides proper citations for all datasets used or referenced in t
 **Status**: 🔨 **INFRASTRUCTURE READY** - Integrated for synthetic data generation (See [GENALOG_INTEGRATION.md](../research/genalog-integration.md))
 
 **Citation**:
+
 ```bibtex
 @misc{genalog2021,
   author={Microsoft},
@@ -69,11 +73,13 @@ This document provides proper citations for all datasets used or referenced in t
 **License**: MIT License
 
 **Access**:
-- GitHub: https://github.com/microsoft/genalog
-- Documentation: https://microsoft.github.io/genalog/
+
+- GitHub: <https://github.com/microsoft/genalog>
+- Documentation: <https://microsoft.github.io/genalog/>
 - PyPI: `pip install genalog`
 
 **Usage in Project**:
+
 - Synthetic document degradation for IQA training data augmentation
 - Infrastructure complete (Phase 2 Week 1)
 - See `src/image_preprocessing_detector/augmentation/` and [GENALOG_INTEGRATION.md](../research/genalog-integration.md)
@@ -86,6 +92,7 @@ This document provides proper citations for all datasets used or referenced in t
 **Status**: 📋 **PLANNED** for Phase 2 functional validation
 
 **Citation**:
+
 ```bibtex
 @inproceedings{chen2015dataset,
   title={A Dataset for Quality Assessment of Camera Captured Document Images},
@@ -97,9 +104,10 @@ This document provides proper citations for all datasets used or referenced in t
 }
 ```
 
-**Access**: https://github.com/rjchern/DIQA_CNN
+**Access**: <https://github.com/rjchern/DIQA_CNN>
 
 **Usage in Project**:
+
 - Gold standard for RAG validation (OCR accuracy ground truth)
 - 175 images with Tesseract accuracy scores
 - Functional validation strategy described in `image_reference_sets.md`
@@ -112,6 +120,7 @@ This document provides proper citations for all datasets used or referenced in t
 **Status**: 📋 **PLANNED** for Phase 2 perceptual IQA training
 
 **Citation**:
+
 ```bibtex
 @misc{vquala2025,
   title={VQualA 2025 Challenge: Document Image Quality Assessment},
@@ -121,9 +130,10 @@ This document provides proper citations for all datasets used or referenced in t
 }
 ```
 
-**Access**: https://codalab.lisn.upsaclay.fr/competitions/23020
+**Access**: <https://codalab.lisn.upsaclay.fr/competitions/23020>
 
 **Usage in Project**:
+
 - Perceptual quality assessment training data
 - 5,000 images with MOS scores (sharpness, color fidelity)
 
@@ -139,6 +149,7 @@ This document provides proper citations for all datasets used or referenced in t
 **Status**: 📋 **REFERENCE ONLY** - Not recommended for use (low diversity)
 
 **Citation**:
+
 ```bibtex
 @inproceedings{zhong2019publaynet,
   title={PubLayNet: Largest Dataset Ever for Document Layout Analysis},
@@ -152,7 +163,7 @@ This document provides proper citations for all datasets used or referenced in t
 
 **License**: CDLA-Permissive-1.0
 
-**Access**: https://github.com/ibm-aur-nlp/PubLayNet
+**Access**: <https://github.com/ibm-aur-nlp/PubLayNet>
 
 **Note**: Project uses **DocLayNet** instead due to superior source diversity (see `image_reference_sets.md` for rationale)
 
@@ -161,6 +172,7 @@ This document provides proper citations for all datasets used or referenced in t
 **Status**: 📋 **REFERENCE** - Alternative specialized table dataset if needed
 
 **Citation**:
+
 ```bibtex
 @inproceedings{li2020tablebank,
   title={TableBank: A Benchmark Dataset for Table Detection and Recognition},
@@ -171,13 +183,14 @@ This document provides proper citations for all datasets used or referenced in t
 }
 ```
 
-**Access**: https://doc-analysis.github.io/tablebank-page/
+**Access**: <https://doc-analysis.github.io/tablebank-page/>
 
 ### Marmot
 
 **Status**: 📋 **REFERENCE** - Mathematical formula detection
 
 **Citation**:
+
 ```bibtex
 @inproceedings{marmot2013,
   title={A Dataset for Mathematical Formula Detection},
@@ -188,13 +201,14 @@ This document provides proper citations for all datasets used or referenced in t
 }
 ```
 
-**Access**: https://www.icst.pku.edu.cn/cpdp/sjzy/
+**Access**: <https://www.icst.pku.edu.cn/cpdp/sjzy/>
 
 ### SignaTR6K
 
 **Status**: 📋 **REFERENCE** - Handwriting segmentation
 
 **Citation**:
+
 ```bibtex
 @inproceedings{signatr6k2023,
   title={Handwritten and Printed Text Segmentation: A Signature Case Study},
@@ -205,7 +219,7 @@ This document provides proper citations for all datasets used or referenced in t
 }
 ```
 
-**Access**: https://arxiv.org/abs/2307.07887
+**Access**: <https://arxiv.org/abs/2307.07887>
 
 ---
 
@@ -216,6 +230,7 @@ This document provides proper citations for all datasets used or referenced in t
 **Status**: 📋 **REFERENCE** - Base clean documents for synthetic augmentation
 
 **Citation**:
+
 ```bibtex
 @inproceedings{harley2015rvlcdip,
   title={Evaluation of Deep Convolutional Nets for Document Image Classification and Retrieval},
@@ -228,14 +243,16 @@ This document provides proper citations for all datasets used or referenced in t
 ```
 
 **Access**:
-- Website: https://adamharley.com/rvl-cdip/
-- Hugging Face: https://huggingface.co/datasets/rvl_cdip
+
+- Website: <https://adamharley.com/rvl-cdip/>
+- Hugging Face: <https://huggingface.co/datasets/rvl_cdip>
 
 ### DocBank
 
 **Status**: 📋 **REFERENCE** - Born-digital base documents
 
 **Citation**:
+
 ```bibtex
 @article{li2020docbank,
   title={DocBank: A Benchmark Dataset for Document Layout Analysis},
@@ -245,7 +262,7 @@ This document provides proper citations for all datasets used or referenced in t
 }
 ```
 
-**Access**: https://doc-analysis.github.io/docbank-page/
+**Access**: <https://doc-analysis.github.io/docbank-page/>
 
 ---
 
@@ -254,6 +271,7 @@ This document provides proper citations for all datasets used or referenced in t
 ### DISEC'13
 
 **Citation**:
+
 ```bibtex
 @article{disec2019,
   title={A Document Skew Detection Method Using Fast Hough Transform},
@@ -263,7 +281,7 @@ This document provides proper citations for all datasets used or referenced in t
 }
 ```
 
-**Access**: https://arxiv.org/abs/1912.02504
+**Access**: <https://arxiv.org/abs/1912.02504>
 
 ### Kaggle Noisy and Rotated Scanned Documents
 
@@ -271,7 +289,7 @@ This document provides proper citations for all datasets used or referenced in t
 When using this dataset, cite as:
 > Kaggle dataset: "Noisy and Rotated Scanned Documents" by Sthabile
 
-**Access**: https://www.kaggle.com/datasets/sthabile/noisy-and-rotated-scanned-documents
+**Access**: <https://www.kaggle.com/datasets/sthabile/noisy-and-rotated-scanned-documents>
 
 ---
 
@@ -333,6 +351,7 @@ Full citations available in [CITATIONS.md](../references/CITATIONS.md).
 **How to Update This File**:
 
 1. When adding a new dataset to the project:
+
    ```bash
    # Add entry to appropriate section above
    # Include: Citation, License, Access URLs, Usage in Project
@@ -353,8 +372,9 @@ Full citations available in [CITATIONS.md](../references/CITATIONS.md).
 ## Contact
 
 For questions about dataset usage or citations in this project:
-- Open an issue: https://github.com/williaby/image-preprocessing-detector/issues
-- Email: byronawilliams@gmail.com
+
+- Open an issue: <https://github.com/williaby/image-preprocessing-detector/issues>
+- Email: <byronawilliams@gmail.com>
 
 ---
 

@@ -17,6 +17,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 ## [Unreleased]
 
 ### Added
+
 - MkDocs documentation site with Material theme
 - Comprehensive API documentation using mkdocstrings
 - User guides for configuration, IQA, layout detection, and correction
@@ -26,10 +27,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 - Tools catalog auto-generation
 
 ### Changed
+
 - Migrated existing documentation to new MkDocs structure
 - Updated documentation front matter to use discriminated union schema
 
 ### In Progress
+
 - CLI tool final integration testing
 - Additional correction algorithm optimizations
 - Performance benchmarking suite
@@ -43,6 +46,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 #### Added
 
 **Core Infrastructure**:
+
 - Poetry project setup with Python 3.12 support
 - Modular package structure (ingestion, detection, correction, output, utils)
 - Dependency management with optional groups (ml, api, dev)
@@ -52,6 +56,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 - Test suite with 163 tests achieving 94.46% coverage
 
 **JSON Schema (Pydantic v2)**:
+
 - `DetectedIssue`: Image quality issue representation with severity levels
 - `DocumentElement`: Document elements with hybrid IQA support
 - `PageMetadata`: Per-page metadata with transform history tracking
@@ -59,24 +64,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 - COCO-aligned bounding boxes (`[x, y, width, height]`)
 
 **PDF Ingestion**:
+
 - PyMuPDF-based PDF extraction (src/ingestion/pdf_loader.py)
 - Multi-format image loading (PNG, JPEG, TIFF)
 - DPI standardization to 300 DPI
 - Image normalization and validation
 
 **Text Detection Gate**:
+
 - Fast ensemble heuristics (< 10ms per page)
 - Stroke width analysis
 - Connected component analysis
 - Edge density pattern detection
 
 **Classical IQA**:
+
 - Blur detection using Laplacian variance
 - Skew detection using Hough transform
 - Contrast assessment via histogram analysis
 - Configurable detection thresholds
 
 **Correction Pipeline**:
+
 - Deskew correction with affine rotation
 - CLAHE contrast enhancement
 - Unsharp mask sharpening
@@ -84,12 +93,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 - Guardrails to prevent over-correction
 
 **CLI Tool**:
+
 - Click-based command-line interface
 - Single file and batch processing modes
 - JSON metadata output
 - Dry run mode for detection-only workflows
 
 **Documentation**:
+
 - README with quick start guide
 - PROJECT_PLAN (50+ pages)
 - ARCHITECTURE_SUMMARY with design rationale
@@ -100,21 +111,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 #### Architecture Decisions
 
 **Hybrid IQA Approach**:
+
 - **Problem**: Text documents contain embedded images requiring independent quality assessment
 - **Solution**: YOLOv8 layout detection (Phase 3) extracts elements → per-element IQA
 - **Implementation**: `quality_issues` field in `DocumentElement` schema
 
 **Text Detection Gate**:
+
 - **Problem**: Mixed document types (pure images vs. text documents)
 - **Solution**: Fast text detection gate routes to specialized processing branches
 - **Performance**: < 10ms routing decision avoids expensive YOLOv8 for pure images
 
 **COCO Format Alignment**:
+
 - **Decision**: Use `[x, y, width, height]` bounding boxes (not `[x1, y1, x2, y2]`)
 - **Rationale**: Industry standard for LayoutParser, Detectron2, COCO datasets
 - **Impact**: Simplifies downstream integration
 
 **300 DPI Standard**:
+
 - **Decision**: Standardize all pages to 300 DPI
 - **Rationale**: Optimal balance for OCR quality and processing speed
 - **Validation**: Industry standard for document digitization
@@ -129,6 +144,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 #### Dependencies
 
 **Core**:
+
 - Python >= 3.11, < 3.13
 - PyMuPDF >= 1.25.1 (PDF processing)
 - Pillow >= 11.0.0 (image I/O)
@@ -139,16 +155,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 - rich >= 13.9.4 (console output)
 
 **ML Group** (Phase 2+):
+
 - torch >= 2.0.0
 - torchvision >= 0.15.0
 - ultralytics >= 8.0.0 (YOLOv8)
 - albumentations >= 1.3.0 (data augmentation)
 
 **API Group** (Phase 4):
+
 - fastapi >= 0.115.14
 - uvicorn >= 0.34.0
 
 **Dev Group**:
+
 - pytest >= 8.3.4
 - black >= 25.9.0
 - ruff >= 0.8.5
@@ -162,6 +181,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and
 ### Initial Project Setup
 
 #### Added
+
 - Repository initialization
 - Basic README with project overview
 - MIT License
@@ -179,12 +199,14 @@ This project follows [Semantic Versioning](https://semver.org/):
 ### Pre-1.0 Development
 
 Versions 0.x.y are in active development:
+
 - **0.x.0**: Phase completions (0.1.0 = Phase 0, 0.2.0 = Phase 1, etc.)
 - **0.x.y**: Patch releases within a phase
 
 ### 1.0 Release Criteria
 
 Version 1.0.0 will be released after Phase 4 completion when:
+
 - [ ] All phases 0-4 complete
 - [ ] REST API deployed and tested
 - [ ] Production monitoring operational
@@ -201,17 +223,20 @@ No migration required - this is the first functional release.
 ### Future Breaking Changes (Planned)
 
 **0.2.0 (Phase 1 → Phase 2)**:
+
 - Classical IQA detectors will be deprecated in favor of ML models
 - Detection API will maintain backward compatibility
 - Configuration format unchanged
 
 **0.3.0 (Phase 2 → Phase 3)**:
+
 - Layout detection added (text documents only)
 - Schema extended with `DocumentElement.quality_issues`
 - Hybrid IQA replaces full-page IQA for text documents
 - CLI flag changes for layout detection options
 
 **1.0.0 (Phase 4 → Production)**:
+
 - REST API stabilization
 - Configuration format freeze
 - Long-term support commitment

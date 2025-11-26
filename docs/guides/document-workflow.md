@@ -22,7 +22,7 @@ imgprep process <input_path> --output result.json
 
 # Batch processing
 imgprep batch <input_dir> --output-dir <output_dir>
-```
+```text
 
 ### Supported File Formats
 
@@ -55,7 +55,7 @@ Each page goes through the following steps:
 
 ### Pipeline Flow Diagram
 
-```
+```text
 Input File
     │
     ▼
@@ -110,7 +110,7 @@ Input File
              │
              ▼
     Project B Handoff (OCR Orchestration)
-```
+```text
 
 ### Correction Guardrails
 
@@ -183,7 +183,7 @@ The output schema is defined in `src/image_preprocessing_detector/schema.py`:
     }
   ]
 }
-```
+```text
 
 ### Key Output Fields
 

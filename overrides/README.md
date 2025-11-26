@@ -5,12 +5,14 @@
 ## What Goes Here
 
 **✅ Belongs in overrides/**:
+
 - Custom MkDocs HTML templates
 - Theme overrides (Jinja2 templates)
 - Custom CSS/JavaScript for docs site
 - Documentation layout customizations
 
 **❌ Does NOT belong here**:
+
 - **Documentation content** → `docs/` (markdown content files)
 - **MkDocs config** → `mkdocs.yml` (root-level configuration)
 - **Application UI** → `src/` (production application code)
@@ -18,9 +20,11 @@
 ## Current Files
 
 ### main.html
+
 **Purpose**: Custom base template for MkDocs Material theme
 
 **Customizations**:
+
 - Modified header/footer
 - Custom navigation structure
 - Additional metadata tags
@@ -37,11 +41,11 @@ theme:
   features:
     - navigation.tabs
     - navigation.sections
-```
+```text
 
 ## File Structure
 
-```
+```text
 overrides/
 ├── main.html           # Base template override
 ├── partials/           # Partial template overrides (future)
@@ -53,7 +57,7 @@ overrides/
 │   └── javascripts/
 │       └── extra.js
 └── README.md
-```
+```text
 
 ## Customization Guide
 
@@ -77,13 +81,14 @@ MkDocs Material uses Jinja2 templates. To customize:
 .md-header {
   background-color: var(--md-primary-fg-color);
 }
-```
+```text
 
 Register in `mkdocs.yml`:
+
 ```yaml
 extra_css:
   - assets/stylesheets/extra.css
-```
+```text
 
 ### Adding Custom JavaScript
 
@@ -92,21 +97,24 @@ extra_css:
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Custom docs loaded');
 });
-```
+```text
 
 Register in `mkdocs.yml`:
+
 ```yaml
 extra_javascript:
   - assets/javascripts/extra.js
-```
+```text
 
 ## Distinction from Other Folders
 
 ### vs. docs/
+
 - **overrides/**: HTML templates and styling for docs site
 - **docs/**: Actual markdown documentation content
 
 ### vs. site/
+
 - **overrides/**: Source templates (committed to git)
 - **site/**: Built documentation site (gitignored, generated)
 
@@ -127,11 +135,12 @@ poetry run mkdocs serve
 poetry run mkdocs build
 
 # Output in site/ folder
-```
+```text
 
 ## Theme Documentation
 
 For MkDocs Material theme customization:
+
 - [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/)
 - [Customization Guide](https://squidfunk.github.io/mkdocs-material/customization/)
 - [Template Overrides](https://squidfunk.github.io/mkdocs-material/customization/#overriding-template-blocks)

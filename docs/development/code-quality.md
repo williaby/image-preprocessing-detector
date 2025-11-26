@@ -17,6 +17,7 @@ Code quality standards and tooling for the Image Preprocessing Detector project.
 **Goal**: Maintain high code quality through automated tools and best practices
 
 **Requirements**:
+
 1. ✅ Black formatting (88 characters)
 2. ✅ Ruff linting (no errors)
 3. ✅ MyPy type checking (strict on src/)
@@ -31,6 +32,7 @@ Code quality standards and tooling for the Image Preprocessing Detector project.
 **Standard**: 88-character line length
 
 **Configuration**:
+
 ```toml
 # pyproject.toml
 [tool.black]
@@ -39,6 +41,7 @@ target-version = ["py312"]
 ```
 
 **Usage**:
+
 ```bash
 # Format all code
 poetry run black src tests
@@ -51,6 +54,7 @@ poetry run black src/image_preprocessing_detector/schema.py
 ```
 
 **Pre-commit Hook**:
+
 ```yaml
 # .pre-commit-config.yaml
 repos:
@@ -67,6 +71,7 @@ repos:
 **Purpose**: Fast Python linter (replaces flake8, isort, etc.)
 
 **Configuration**:
+
 ```toml
 # pyproject.toml
 [tool.ruff]
@@ -89,6 +94,7 @@ ignore = [
 ```
 
 **Usage**:
+
 ```bash
 # Lint all code
 poetry run ruff check src tests
@@ -101,6 +107,7 @@ poetry run ruff check src/image_preprocessing_detector/schema.py
 ```
 
 **Pre-commit Hook**:
+
 ```yaml
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -117,6 +124,7 @@ repos:
 **Standard**: Strict type checking on src/, relaxed on tests/
 
 **Configuration**:
+
 ```toml
 # pyproject.toml
 [tool.mypy]
@@ -136,6 +144,7 @@ disallow_untyped_defs = false
 ```
 
 **Usage**:
+
 ```bash
 # Type check source code
 poetry run mypy src
@@ -148,6 +157,7 @@ poetry run mypy --show-error-codes src
 ```
 
 **Pre-commit Hook**:
+
 ```yaml
 repos:
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -164,6 +174,7 @@ repos:
 **Standard**: Google-style docstrings
 
 **Configuration**:
+
 ```toml
 # pyproject.toml
 [tool.pydocstyle]
@@ -173,6 +184,7 @@ add-ignore = ["D105", "D107"]  # Ignore magic methods
 ```
 
 **Usage**:
+
 ```bash
 # Check docstrings
 poetry run pydocstyle src/
@@ -182,6 +194,7 @@ poetry run pydocstyle src/image_preprocessing_detector/schema.py
 ```
 
 **Example Google-style docstring**:
+
 ```python
 def detect_blur(image: np.ndarray, threshold: float = 100.0) -> tuple[bool, float]:
     """Detect blur in an image using Laplacian variance.
@@ -212,6 +225,7 @@ def detect_blur(image: np.ndarray, threshold: float = 100.0) -> tuple[bool, floa
 **Standard**: 85%+ docstring coverage
 
 **Configuration**:
+
 ```toml
 # pyproject.toml
 [tool.interrogate]
@@ -224,6 +238,7 @@ color = true
 ```
 
 **Usage**:
+
 ```bash
 # Check docstring coverage
 poetry run interrogate src/
@@ -244,6 +259,7 @@ poetry run interrogate --generate-badge docs/
 **Purpose**: Find common security issues in Python code
 
 **Configuration**:
+
 ```toml
 # pyproject.toml
 [tool.bandit]
@@ -252,6 +268,7 @@ skips = ["B101"]  # Skip assert_used (OK in tests)
 ```
 
 **Usage**:
+
 ```bash
 # Scan source code
 poetry run bandit -r src/
@@ -264,6 +281,7 @@ poetry run bandit src/image_preprocessing_detector/schema.py
 ```
 
 **Pre-commit Hook**:
+
 ```yaml
 repos:
   - repo: https://github.com/PyCQA/bandit
@@ -278,6 +296,7 @@ repos:
 **Purpose**: Check for known security vulnerabilities in dependencies
 
 **Usage**:
+
 ```bash
 # Check dependencies
 poetry run safety check
@@ -290,6 +309,7 @@ poetry run safety check --json
 ```
 
 **CI Integration**:
+
 ```yaml
 # .github/workflows/security.yml
 - name: Run Safety check
@@ -386,6 +406,7 @@ jobs:
 ### Required Checks
 
 All must pass before merge:
+
 1. ✅ Black formatting
 2. ✅ Ruff linting
 3. ✅ MyPy type checking
@@ -397,6 +418,7 @@ All must pass before merge:
 ### For Authors
 
 Before requesting review:
+
 - [ ] All tests pass locally
 - [ ] Coverage ≥ 80%
 - [ ] Pre-commit hooks pass
@@ -409,6 +431,7 @@ Before requesting review:
 ### For Reviewers
 
 Review checklist:
+
 - [ ] Code follows project standards
 - [ ] Tests are comprehensive
 - [ ] Docstrings are clear and complete
@@ -422,6 +445,7 @@ Review checklist:
 ### 1. Type Hints
 
 **Always use type hints**:
+
 ```python
 # Good
 def detect_blur(image: np.ndarray, threshold: float = 100.0) -> tuple[bool, float]:
@@ -435,6 +459,7 @@ def detect_blur(image, threshold=100.0):
 ### 2. Docstrings
 
 **Document all public functions**:
+
 ```python
 # Good
 def detect_skew(image: np.ndarray) -> tuple[float, float]:
@@ -456,6 +481,7 @@ def detect_skew(image):
 ### 3. Imports
 
 **Organize imports**:
+
 ```python
 # Standard library
 import os
@@ -472,6 +498,7 @@ from image_preprocessing_detector.schema import DetectedIssue
 ### 4. Error Handling
 
 **Use specific exceptions**:
+
 ```python
 # Good
 if not image_path.exists():
@@ -485,6 +512,7 @@ if not image_path.exists():
 ### 5. Constants
 
 **Use UPPER_CASE for constants**:
+
 ```python
 # Good
 DEFAULT_DPI = 300
@@ -514,6 +542,7 @@ blur_threshold = 100.0
 ### Black and Ruff Conflicts
 
 If Black and Ruff disagree, Black takes precedence:
+
 ```bash
 # Run Black first
 poetry run black src tests
@@ -525,6 +554,7 @@ poetry run ruff check --fix src tests
 ### MyPy Import Errors
 
 Install type stubs:
+
 ```bash
 poetry add --group dev types-Pillow
 poetry add --group dev types-requests
@@ -533,6 +563,7 @@ poetry add --group dev types-requests
 ### Pre-commit Hook Failures
 
 Update hooks:
+
 ```bash
 poetry run pre-commit autoupdate
 poetry run pre-commit run --all-files

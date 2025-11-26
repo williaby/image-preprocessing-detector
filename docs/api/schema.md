@@ -16,13 +16,13 @@ The schema module provides Pydantic v2 models for representing document metadata
 
 The schema uses a hierarchical structure with COCO-aligned bounding boxes for compatibility with LayoutParser and other document analysis tools:
 
-```
+```text
 DocumentMetadata
   └── PageMetadata (one per page)
       ├── DetectedIssue (quality issues)
       └── DocumentElement (layout elements)
           └── DetectedIssue (per-element quality)
-```
+```text
 
 ## Module Reference
 
@@ -68,7 +68,7 @@ issue = DetectedIssue(
     metadata={"laplacian_variance": 45.2},
 )
 page.detected_issues.append(issue)
-```
+```text
 
 ### JSON Serialization
 
@@ -84,7 +84,7 @@ loaded = DocumentMetadata.from_json_file("output.json")
 
 # Validate JSON
 metadata_dict = metadata.model_dump()
-```
+```text
 
 ### Bounding Box Format
 
@@ -101,7 +101,7 @@ element = DocumentElement(
 
 # Extract coordinates
 x, y, width, height = element.bbox
-```
+```text
 
 ## Key Features
 

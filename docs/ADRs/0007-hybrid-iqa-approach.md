@@ -30,19 +30,20 @@ purpose: "Document the critical architectural correction to support IQA on embed
 
 The initial design assumed a binary fork based on text detection:
 
-```
+```text
 Text Detection Gate
     ↓              ↓
 [NO TEXT]      [TEXT DETECTED]
     ↓              ↓
 IQA Only       Layout Detection Only
-```
+```text
 
 **Assumption**: Documents either contain text OR images, not both.
 
 ### Problem Discovered
 
 Real-world documents (technical docs, academic papers, reports) contain **both**:
+
 - **Text**: Headers, paragraphs, captions, footnotes
 - **Embedded Images**: Diagrams, photos, charts, tables, figures
 
@@ -51,6 +52,7 @@ Real-world documents (technical docs, academic papers, reports) contain **both**
 ### Example Scenario
 
 **Academic Paper**:
+
 - Has text (routed to layout detection path)
 - Contains 5 embedded images (figures)
 - Figure 3 is blurred (scanned from poor quality photocopy)
@@ -63,7 +65,7 @@ Real-world documents (technical docs, academic papers, reports) contain **both**
 
 ### Solution Architecture
 
-```
+```text
 Text Detection Gate
     ↓              ↓
 [NO TEXT]      [TEXT DETECTED]
@@ -77,7 +79,7 @@ Full Page           ↓
                 Crop Image Region → Run IQA → Report Quality Issues
                     ↓
                 Attach quality_issues to DocumentElement
-```
+```text
 
 ### Implementation
 
@@ -107,7 +109,7 @@ def process_text_document(page_image):
             )
 
     return elements
-```
+```text
 
 **Schema Update**: Added `quality_issues` field to `DocumentElement`:
 
@@ -120,7 +122,7 @@ class DocumentElement(BaseModel):
     quality_issues: list[DetectedIssue] = []  # Hybrid IQA support
     needs_correction: bool = False
     correction_applied: bool = False
-```
+```text
 
 ## Consequences
 
@@ -151,25 +153,33 @@ class DocumentElement(BaseModel):
 ## Alternatives Considered
 
 ### Alternative 1: IQA Only on No-Text Path
+
 **Rejected**:
+
 - Misses quality issues in embedded images
 - Fails on technical documentation (most common use case)
 - Incomplete quality assessment
 
 ### Alternative 2: Run IQA on Full Page Regardless of Text
+
 **Rejected**:
+
 - Wastes computation on high-quality text regions
 - Cannot provide per-element quality reporting
 - Less actionable for downstream processing
 
 ### Alternative 3: Separate Pipeline for Mixed Documents
+
 **Rejected**:
+
 - Adds complexity (3 paths instead of 2)
 - Harder to maintain
 - Requires additional routing logic
 
 ### Alternative 4: Skip IQA on Text Documents
+
 **Rejected**:
+
 - Unacceptable: Academic papers, reports, manuals contain critical images
 - Would miss majority of real-world use cases
 
@@ -178,10 +188,12 @@ class DocumentElement(BaseModel):
 ### Performance Impact
 
 **Before (No Hybrid IQA)**:
+
 - Layout detection: 25-70ms CPU / 2-7ms GPU
 - Total: ~30ms per text document
 
 **After (With Hybrid IQA)**:
+
 - Layout detection: 25-70ms CPU / 2-7ms GPU
 - IQA per image (avg 3 images): 3 × 8ms = 24ms CPU / 3 × 1ms = 3ms GPU
 - Total: ~54ms CPU / ~10ms GPU per text document
@@ -205,18 +217,20 @@ for element in detected_elements:
 
         # Record correction
         element.correction_applied = True
-```
+```text
 
 ## Validation
 
 ### Test Coverage
 
 **Unit Tests**:
+
 - `test_hybrid_iqa_on_embedded_images()`: Verify IQA runs on Image elements
 - `test_quality_issues_attached_to_elements()`: Schema validation
 - `test_selective_correction()`: Only problematic images corrected
 
 **Integration Tests**:
+
 - Academic papers with embedded figures
 - Technical documentation with diagrams
 - Mixed-quality embedded images
@@ -224,6 +238,7 @@ for element in detected_elements:
 ### Real-World Scenarios
 
 **Document Types Validated**:
+
 1. Academic papers (ArXiv): 5+ embedded figures per document
 2. Technical manuals: Diagrams, photos, schematics
 3. Reports: Charts, graphs, tables with embedded images

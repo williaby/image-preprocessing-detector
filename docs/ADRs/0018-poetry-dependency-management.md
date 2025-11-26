@@ -16,6 +16,7 @@ purpose: "Document the decision to use Poetry for Python dependency management a
 **Date**: 2025-01-08
 **Deciders**: Byron Williams
 **Related**:
+
 - [pyproject.toml](../../pyproject.toml)
 - [poetry.lock](../../poetry.lock)
 - [ADR-001: Consolidate Linting with Ruff](0001-consolidate-linting-with-ruff.md)
@@ -23,6 +24,7 @@ purpose: "Document the decision to use Poetry for Python dependency management a
 ## Context
 
 Python projects require dependency management for:
+
 - Deterministic builds (lock files)
 - Development vs production dependencies
 - Virtual environment management
@@ -37,6 +39,7 @@ Python projects require dependency management for:
 **Lock Files**: `poetry.lock` ensures deterministic builds across environments
 
 **Dependency Groups**:
+
 ```toml
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -54,6 +57,7 @@ ultralytics = "^8.0.0"
 ```
 
 **Commands**:
+
 ```bash
 poetry install               # Install all dependencies
 poetry install --with ml     # Install with ML dependencies
@@ -90,11 +94,13 @@ poetry lock                  # Update lock file
 **Approach**: Use pip with requirements.txt and requirements-dev.txt
 
 **Advantages**:
+
 - Standard Python tool
 - Fast installs
 - Simple
 
 **Disadvantages**:
+
 - No lock file (unless using pip-tools)
 - No dependency resolution
 - Manual virtual env management
@@ -106,10 +112,12 @@ poetry lock                  # Update lock file
 **Approach**: Use pipenv for Pipfile + Pipfile.lock
 
 **Advantages**:
+
 - Lock files
 - Dependency resolution
 
 **Disadvantages**:
+
 - Slower than Poetry
 - Less active development
 - Heavier weight
@@ -121,10 +129,12 @@ poetry lock                  # Update lock file
 **Approach**: Use conda for environment and dependency management
 
 **Advantages**:
+
 - Cross-language dependencies
 - Binary packages
 
 **Disadvantages**:
+
 - Heavier weight
 - Slower installs
 - Not Python-native
@@ -136,23 +146,28 @@ poetry lock                  # Update lock file
 ### Dependency Groups
 
 **Runtime Dependencies** (`dependencies`):
+
 - opencv-python, pillow, numpy, pymupdf
 - pydantic, structlog, rich, click
 
 **Development Tools** (`group.dev`):
+
 - pytest, black, ruff, mypy, bandit, safety
 - pre-commit hooks
 
 **ML Dependencies** (`group.ml`):
+
 - torch, ultralytics (YOLOv8), onnx, onnxruntime
 - albumentations (data augmentation)
 
 **API Dependencies** (`group.api`):
+
 - fastapi, uvicorn, pydantic-settings
 
 ### Installation Workflow
 
 **Developer Setup**:
+
 ```bash
 git clone <repo>
 cd image_detection
@@ -161,11 +176,13 @@ poetry shell               # Activate virtual environment
 ```
 
 **Production Deployment**:
+
 ```bash
 poetry install --only main  # Runtime dependencies only
 ```
 
 **ML Training**:
+
 ```bash
 poetry install --with ml  # Add ML dependencies
 ```
@@ -173,6 +190,7 @@ poetry install --with ml  # Add ML dependencies
 ### Lock File Management
 
 **Update Dependencies**:
+
 ```bash
 poetry update               # Update all dependencies
 poetry update opencv-python # Update specific package
@@ -180,6 +198,7 @@ poetry lock --no-update     # Regenerate lock without updating
 ```
 
 **Resolve Conflicts**:
+
 ```bash
 git checkout --theirs poetry.lock
 poetry lock --no-update
@@ -188,6 +207,7 @@ poetry lock --no-update
 ## Performance
 
 **Installation Times** (fresh install):
+
 - `poetry install`: ~45s
 - `poetry install --with dev`: ~60s
 - `poetry install --with ml`: ~120s (PyTorch)

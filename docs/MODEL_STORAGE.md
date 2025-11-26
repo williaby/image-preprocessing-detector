@@ -34,7 +34,7 @@ The artifact management system follows three core principles:
 
 ## GCS Directory Structure
 
-```
+```text
 gs://rag-pipeline-models/
   image-preprocessing-detector/
     resnet50_teacher/
@@ -51,7 +51,7 @@ gs://rag-pipeline-models/
       runs/
         2025-11-15T02-05Z_run-def456/
           ...
-```
+```text
 
 ### Required Artifacts Per Run
 
@@ -85,7 +85,7 @@ from image_preprocessing_detector.utils import (
     generate_run_id,
     upload_run_to_gcs,
 )
-```
+```text
 
 ### 2. Generate Run ID
 
@@ -97,7 +97,7 @@ run_id = generate_run_id(prefix="resnet50-teacher")
 
 output_dir = "/root/output"
 os.makedirs(output_dir, exist_ok=True)
-```
+```text
 
 ### 3. Train Model
 
@@ -109,7 +109,7 @@ torch.save(model.state_dict(), f"{output_dir}/model_epoch_{epoch}.pth")
 
 # Final checkpoint
 torch.save(model.state_dict(), f"{output_dir}/model_final.pth")
-```
+```text
 
 ### 4. Generate Metadata
 
@@ -155,7 +155,7 @@ generate_run_metadata(
         "labels": ["blur", "skew", "contrast", "noise"],
     },
 )
-```
+```text
 
 ### 5. Upload to GCS
 
@@ -171,7 +171,7 @@ gcs_path = upload_run_to_gcs(
 )
 
 print(f"Artifacts uploaded to: {gcs_path}")
-```
+```text
 
 ### Complete Example
 
@@ -182,11 +182,13 @@ See `modal/train_phase2_iqa_example.py` for a complete integration example.
 ### Prerequisites
 
 1. **HF Token**: Set `HF_TOKEN` environment variable
+
    ```bash
    export HF_TOKEN=your_huggingface_token
    ```
 
-2. **GCS Access**: Ensure `GOOGLE_APPLICATION_CREDENTIALS` is set
+1. **GCS Access**: Ensure `GOOGLE_APPLICATION_CREDENTIALS` is set
+
    ```bash
    export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
    ```
@@ -199,7 +201,7 @@ python scripts/promote_to_hf.py \
   --gcs-bucket rag-pipeline-models \
   --project image-preprocessing-detector \
   --model resnet50_teacher
-```
+```text
 
 ### Dry Run (Validation Only)
 
@@ -213,7 +215,7 @@ python scripts/promote_to_hf.py \
   --model resnet50_teacher \
   --run-id 2025-11-15T01-20Z_run-abc123 \
   --version v1.0.0
-```
+```text
 
 ### Promote to HF Hub
 
@@ -226,9 +228,10 @@ python scripts/promote_to_hf.py \
   --hf-repo williaby/doc-preproc-resnet50-teacher \
   --version v1.0.0 \
   --private
-```
+```text
 
 The script will:
+
 1. ✅ Download artifacts from GCS
 2. ✅ Validate required files exist
 3. ✅ Check promotion criteria (metrics, reproducibility)
@@ -260,7 +263,7 @@ gsutil ls gs://rag-pipeline-models/image-preprocessing-detector/resnet50_teacher
 gsutil -m cp -r \
   gs://rag-pipeline-models/image-preprocessing-detector/resnet50_teacher/runs/2025-11-15T01-20Z_run-abc123 \
   ./local_artifacts/
-```
+```text
 
 ### Using Python API
 
@@ -274,7 +277,7 @@ local_path = download_run_from_gcs(
     run_id="2025-11-15T01-20Z_run-abc123",
     local_dir="./downloads",
 )
-```
+```text
 
 ### From Hugging Face Hub
 
@@ -286,7 +289,7 @@ model_path = hf_hub_download(
     filename="model_final.pth",
     revision="v1.0.0",  # Specific version
 )
-```
+```text
 
 ## Security Considerations
 
@@ -310,7 +313,7 @@ modal secret create gcs-credentials GCP_SA_KEY=@key.b64
 
 # Clean up
 rm key.b64
-```
+```text
 
 ### Hugging Face Token
 
@@ -331,12 +334,12 @@ Follow [semver.org](https://semver.org) principles:
 
 ### Examples
 
-```
+```text
 v1.0.0 – Initial ResNet50 teacher model
 v1.1.0 – Improved augmentation pipeline (+2% accuracy)
 v1.2.0 – Added ONNX export for CPU inference
 v2.0.0 – Switched to EfficientNetV2 architecture (breaking change)
-```
+```text
 
 ## Model Card Template
 
@@ -370,7 +373,7 @@ model = torch.load("model_final.pth")
 ## Reproducibility
 Commit: a1b2c3d4e5f6...
 Dataset: v1.2.0
-```
+```text
 
 See `scripts/promote_to_hf.py` for auto-generated template.
 
@@ -384,7 +387,7 @@ See `scripts/promote_to_hf.py` for auto-generated template.
 gcloud projects get-iam-policy YOUR_PROJECT_ID \
   --flatten="bindings[].members" \
   --filter="bindings.members:serviceAccount:YOUR_SA_EMAIL"
-```
+```text
 
 ### HF Push Fails: Authentication Error
 
@@ -393,7 +396,7 @@ gcloud projects get-iam-policy YOUR_PROJECT_ID \
 ```bash
 echo $HF_TOKEN  # Should show token
 python -c "from huggingface_hub import whoami; print(whoami())"
-```
+```text
 
 ### Metadata Generation Fails: Not a Git Repository
 
@@ -402,7 +405,7 @@ python -c "from huggingface_hub import whoami; print(whoami())"
 ```bash
 cd /path/to/repo
 git rev-parse --git-dir  # Should show .git
-```
+```text
 
 ### Modal Can't Access GCS
 
@@ -413,14 +416,14 @@ modal secret list  # Should show gcs-credentials
 
 # Recreate if needed
 ./scripts/modal_helpers.sh setup-gcs-secret /path/to/key.json
-```
+```text
 
 ## References
 
 - **Handoff Document**: See `docs/handoff/model_storage_handoff.md`
-- **GCS Documentation**: https://cloud.google.com/storage/docs
-- **Hugging Face Hub**: https://huggingface.co/docs/hub
-- **Semantic Versioning**: https://semver.org
+- **GCS Documentation**: <https://cloud.google.com/storage/docs>
+- **Hugging Face Hub**: <https://huggingface.co/docs/hub>
+- **Semantic Versioning**: <https://semver.org>
 
 ## Next Steps
 

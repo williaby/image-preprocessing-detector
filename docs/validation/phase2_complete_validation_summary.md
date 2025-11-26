@@ -21,6 +21,7 @@ purpose: "Document Phase 2 validation results, test coverage, and readiness asse
 Phase 2 validation demonstrates **robust implementation of core Phase 2 features** with 100% accuracy on PDF classification and comprehensive test coverage. While some Phase 6/8 features show expected low accuracy (layout-lite, DQS correlation, routing), the infrastructure is fully validated and ready for deployment.
 
 **Key Achievements:**
+
 - ✅ PDF classification: 100% accuracy (target: >99%)
 - ✅ Test coverage: 81.51% DQS, 98-100% PDF classification (target: >80%)
 - ✅ Integration tests: 17/17 passing (100%)
@@ -28,6 +29,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 - ✅ Benchmark infrastructure: Classical detectors benchmarked (82.41ms mean)
 
 **Known Limitations (Expected):**
+
 - Layout-lite F1 scores: 0.094 (Phase 6 feature, heuristics need tuning)
 - DQS correlation: 0.299 (Phase 8 feature, needs calibration)
 - Routing accuracy: Not yet implemented (Phase 8 feature)
@@ -43,6 +45,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 **Test Dataset**: 100 PDFs (40 born-digital, 40 image-only, 20 hybrid)
 
 **Results**:
+
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
 | Accuracy | 100.00% | >99% | ✅ PASS |
@@ -62,6 +65,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 **Test Dataset**: 50 documents (101 pages) with ground truth labels for 7 flags
 
 **Results**:
+
 | Flag | F1 Score | Precision | Recall | Target | Status |
 |------|----------|-----------|--------|--------|--------|
 | has_tables | 0.000 | 0.000 | 0.000 | >0.85 | ❌ MISS |
@@ -74,6 +78,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 | **Mean F1** | **0.094** | **N/A** | **N/A** | **>0.85** | ❌ MISS |
 
 **Analysis**: Layout-lite detection shows **low F1 scores** because:
+
 1. **Phase 6 feature** - heuristic detectors not yet fully tuned
 2. **Synthetic test data** - generated from limited base images, lacks diversity
 3. **Watermark detector** - shows recall 1.0 (finds all watermarks) but low precision (many false positives)
@@ -89,6 +94,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 **Test Dataset**: 45 synthetic documents with simulated OCR accuracy
 
 **Results**:
+
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
 | Pearson correlation | 0.2990 | >0.70 | ❌ MISS |
@@ -96,16 +102,19 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 | Samples tested | 45 | >30 | ✅ |
 
 **DQS Statistics**:
+
 - Mean: 0.529
 - Std Dev: 0.044
 - Range: [0.464, 0.592]
 
 **OCR Accuracy Statistics**:
+
 - Mean: 0.663
 - Std Dev: 0.064
 - Range: [0.560, 0.770]
 
 **Analysis**: DQS shows **low correlation with OCR accuracy** because:
+
 1. **Phase 8 feature** - DQS calibration not yet performed
 2. **Synthetic simulation** - OCR accuracy model in script may not be realistic
 3. **Limited DQS range** - all samples clustered in 0.46-0.59 range (low variance)
@@ -125,6 +134,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 **Status**: Script shows placeholder message indicating test set loading function needs implementation.
 
 **Analysis**: Routing recommendation validation is a **Phase 8 feature** that depends on:
+
 1. Calibrated DQS (Phase 8)
 2. Tuned layout-lite detectors (Phase 6)
 3. Real OCR performance data for ground truth
@@ -140,6 +150,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 **Test Dataset**: Phase 1 validation images (diverse degradation types)
 
 **Results**:
+
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
 | Mean | 82.41ms | <50ms | ❌ MISS (Phase 4 target) |
@@ -174,6 +185,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 **Results**: 17 tests, 17 passed (100%)
 
 **Test Categories**:
+
 - ✅ PDF type classification (3 scenarios)
 - ✅ DQS calculation (4 scenarios)
 - ✅ Routing recommendation (5 scenarios)
@@ -181,6 +193,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 - ✅ End-to-end workflow (3 scenarios)
 
 **Bug Fixes Applied**:
+
 - Fixed `test_hybrid_iqa_ensemble_voting` - added missing `noise_score` and `compression_score` to ClassicalIQAScores mocks
 
 ---
@@ -238,6 +251,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 **Status**: ✅ **MARK PHASE 2 AS COMPLETE**
 
 **Rationale**:
+
 - All Phase 2 core features implemented and tested
 - 81.51% DQS coverage, 98-100% classification coverage (exceeds target)
 - Integration tests 100% passing
@@ -245,6 +259,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 - Validation infrastructure fully operational
 
 **Action Items**:
+
 - [x] Fix integration test failure (test_hybrid_iqa_ensemble_voting)
 - [x] Run all validation scripts
 - [x] Generate validation reports
@@ -254,16 +269,19 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 ### 2. Phase 6/8 Deferred Items ⚠️
 
 **Layout-Lite (Phase 6)**:
+
 - Defer detector tuning to Phase 6
 - Validation infrastructure is ready for use
 - Recommend real-world test data instead of synthetic
 
 **DQS Calibration (Phase 8)**:
+
 - Defer calibration to Phase 8
 - Requires real OCR ground truth data
 - Current DQS calculation is correct, just needs calibration weights
 
 **Routing Validation (Phase 8)**:
+
 - Implement test set loading function in Phase 8
 - Test dataset already generated and ready
 - Depends on calibrated DQS and tuned layout-lite
@@ -283,7 +301,7 @@ Phase 2 validation demonstrates **robust implementation of core Phase 2 features
 
 ### Files Generated
 
-```
+```text
 docs/validation/
 ├── pdf_classification_validation.json    (100% accuracy)
 ├── layout_lite_validation.json           (0.094 mean F1)
@@ -308,7 +326,7 @@ tests/fixtures/phase2_validation/
 └── routing_accuracy/
     ├── routing_doc_000.pdf ... routing_doc_049.pdf (50 files)
     └── routing_labels.json
-```
+```text
 
 ### Dependencies Added
 
@@ -324,6 +342,7 @@ Phase 2 is **substantially complete** with all core features implemented, tested
 - ⚠️ Partial Phase 6/8 features (layout-lite, DQS calibration, routing validation)
 
 The validation infrastructure is robust and demonstrates that:
+
 1. PDF classification works perfectly (100% accuracy)
 2. DQS calculation is mathematically correct (needs calibration data)
 3. Routing recommendation logic is correct (needs tuned inputs)

@@ -5,6 +5,7 @@
 ## What Goes Here
 
 **✅ Belongs in validation/**:
+
 - Experimental validation scripts (one-time use)
 - Dataset quality analysis scripts
 - Hypothesis testing code
@@ -12,6 +13,7 @@
 - Research prototypes before production integration
 
 **❌ Does NOT belong here** (and where it should go instead):
+
 - **Unit/integration tests** → `tests/` (reusable automated tests)
 - **Benchmark evaluations** → `benchmarks/` (systematic performance testing)
 - **Reusable utilities** → `scripts/` (production-ready scripts)
@@ -19,14 +21,14 @@
 
 ## Directory Structure
 
-```
+```text
 validation/
 ├── datasets/               # Downloaded datasets for validation (gitignored)
 ├── synthetic_images/       # Generated test images (gitignored)
 ├── characteristic_curves/  # Validation analysis outputs (gitignored)
 ├── validate_*.py          # Validation scripts
 └── README.md
-```
+```text
 
 ## Gitignore Policy
 
@@ -40,13 +42,14 @@ validation/datasets/     # Downloaded datasets
 validation/synthetic_images/  # Generated test images
 validation/characteristic_curves/  # Analysis outputs
 validation/*.json        # Large validation results
-```
+```text
 
 **Rationale**: Validation scripts are exploratory and temporary. Once findings are documented in ADRs or `docs/`, the scripts are no longer needed in version control.
 
 ## Typical Use Cases
 
 ### Dataset Quality Verification
+
 ```python
 # validation/validate_doclaynet_annotations.py
 """Verify DocLayNet annotations match expected format."""
@@ -55,9 +58,10 @@ validation/*.json        # Large validation results
 # - Bounding box validity
 # - Class distribution
 # - Image quality issues
-```
+```text
 
 ### Hypothesis Testing
+
 ```python
 # validation/test_blur_detection_threshold.py
 """Find optimal threshold for Laplacian blur detection."""
@@ -65,9 +69,10 @@ validation/*.json        # Large validation results
 # Experiment with different thresholds on sample dataset
 # Generate ROC curves, select best threshold
 # Results inform production implementation
-```
+```text
 
 ### Research Prototypes
+
 ```python
 # validation/prototype_handwriting_detector.py
 """Prototype noteshrink-based handwriting detection."""
@@ -75,19 +80,22 @@ validation/*.json        # Large validation results
 # Test approach before implementing in src/
 # Evaluate on sample images
 # Document findings in ADR
-```
+```text
 
 ## Distinction from Other Folders
 
 ### vs. tests/
+
 - **validation/**: One-off experimental scripts, not run in CI/CD
 - **tests/**: Automated tests run on every commit
 
 ### vs. benchmarks/
+
 - **validation/**: Ad-hoc hypothesis testing
 - **benchmarks/**: Systematic, repeatable performance evaluation
 
 ### vs. scripts/
+
 - **validation/**: Exploratory code, may not be production-ready
 - **scripts/**: Reusable utilities integrated into workflows
 
@@ -99,7 +107,7 @@ PYTHONPATH=$PWD:$PYTHONPATH poetry run python validation/validate_dataset.py
 
 # Or use the validation runner (if created)
 poetry run python validation/run_validation.py --script validate_doclaynet
-```
+```text
 
 ## Best Practices
 
@@ -145,11 +153,12 @@ def run_validation():
 
 if __name__ == "__main__":
     run_validation()
-```
+```text
 
 ## Integration with ADRs
 
 Validation findings should inform Architecture Decision Records (ADRs):
+
 - Document hypothesis in `docs/ADRs/`
 - Reference validation script in ADR
 - Include key findings and metrics

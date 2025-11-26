@@ -18,6 +18,7 @@ purpose: Documentation for repository structure reference.
 This document provides a comprehensive reference for the image-preprocessing-detector repository structure. Each folder includes a README explaining its purpose, contents, and distinctions from similar folders.
 
 **Repository Stats** (after cleanup):
+
 - **Total Folders**: 16 (down from 23, -30% reduction)
 - **Folders with READMEs**: 16 (100% coverage)
 - **Build Artifacts Removed**: 4 folders
@@ -27,7 +28,7 @@ This document provides a comprehensive reference for the image-preprocessing-det
 
 ## Root Directory Structure
 
-```
+```text
 image_detection/
 ├── .github/              # GitHub Actions workflows and templates
 ├── benchmarks/           # Benchmark registry, results, and reports
@@ -47,7 +48,7 @@ image_detection/
 ├── tmp_cleanup/          # Temporary reference files (anti-compaction)
 ├── tools/                # Development tools (linting, validation)
 └── validation/           # Experimental validation scripts (gitignored)
-```
+```text
 
 ---
 
@@ -56,9 +57,11 @@ image_detection/
 ### Core Project Structure
 
 #### src/
+
 **Purpose**: Main source code library
 
 **Contains**:
+
 - `image_preprocessing_detector/` - Core Python package
 - Module structure follows pipeline architecture
 - Production-ready library code
@@ -66,9 +69,11 @@ image_detection/
 **See**: Source code follows `src/image_preprocessing_detector/` layout
 
 #### tests/
+
 **Purpose**: Automated test suite
 
 **Contains**:
+
 - `unit/` - Unit tests
 - `integration/` - Integration tests
 - Test fixtures in `data/test_fixtures/`
@@ -76,9 +81,11 @@ image_detection/
 **Coverage**: Enforces 80%+ code coverage
 
 #### docs/
+
 **Purpose**: Project documentation
 
 **Contains**:
+
 - Architecture Decision Records (ADRs)
 - Planning documents
 - Technical guides
@@ -91,11 +98,13 @@ image_detection/
 ### Data & Training
 
 #### data/
+
 **README**: [data/README.md](../data/README.md)
 
 **Purpose**: Test fixtures and benchmark datasets (small files only)
 
 **Contains**:
+
 - `test_fixtures/` - Small test files for CI/CD (<50 MB total)
 - `benchmarks/` - Small benchmark samples
 - `annotations/` - Annotation files
@@ -103,21 +112,25 @@ image_detection/
 **Does NOT contain**: Training datasets (→ `data/training/` gitignored)
 
 **Distinction**:
+
 - **data/**: Small files committed to git
 - **data/training/**: Large training datasets (gitignored)
 - **benchmarks/**: Benchmark results and registry
 
 #### benchmarks/
+
 **README**: [benchmarks/README.md](../benchmarks/README.md)
 
 **Purpose**: Benchmark registry, evaluation results, and reports
 
 **Contains**:
+
 - `registry.yml` - Benchmark dataset registry
 - `reports/` - Smoke test reports (moved from root)
 - Benchmark results and metrics
 
 **Distinction**:
+
 - **benchmarks/**: Results and performance metrics
 - **data/**: Actual dataset files
 - **models/**: Model weights being benchmarked
@@ -127,41 +140,49 @@ image_detection/
 ### Development & Training
 
 #### scripts/
+
 **README**: [scripts/README.md](../scripts/README.md)
 
 **Purpose**: Operational utilities for dataset management, GCS, and Colab training
 
 **Contains**:
+
 - `download_*.py` - Dataset download scripts
 - `*_gcs.*` - Google Cloud Storage utilities
 - `colab_*.py` - Colab training helpers
 - `checkpoint_manager.py` - Multi-session training management
 
 **Distinction**:
+
 - **scripts/**: Operational utilities (reusable, production workflows)
 - **tools/**: Development tools (linting, validation, code generation)
 - **validation/**: One-off experimental scripts
 
 #### configs/
+
 **README**: [configs/README.md](../configs/README.md)
 
 **Purpose**: Training configuration files (YAML/JSON)
 
 **Contains**:
+
 - `colab_phase2_iqa.yaml` - IQA training config
 - `colab_phase3_yolov8.yaml` - Layout detection config
 - Model architecture and hyperparameter configs
 
 **Distinction**:
+
 - **configs/**: Text configuration files (YAML/JSON, committed)
 - **models/**: Binary model weights (.pth, .onnx, gitignored)
 
 #### models/
+
 **README**: [models/README.md](../models/README.md)
 
 **Purpose**: Trained model weights and exported inference models
 
 **Contains** (all gitignored):
+
 - `.pth`, `.pt`, `.safetensors` - PyTorch weights
 - `.onnx` - Exported ONNX models
 - `metadata.json` - Model information
@@ -169,15 +190,18 @@ image_detection/
 **Storage**: Google Drive (training), GCS (distribution), local on-demand
 
 **Distinction**:
+
 - **models/**: Binary model files (gitignored)
 - **configs/**: Configuration files (committed)
 
 #### notebooks/
+
 **README**: [notebooks/README.md](../notebooks/README.md)
 
 **Purpose**: Jupyter/Colab notebooks for interactive training
 
 **Contains** (gitignored):
+
 - `colab/phase2_iqa_training.ipynb` - Phase 2 IQA training
 - `colab/phase3_yolov8_training.ipynb` - Phase 3 layout training
 - Interactive model evaluation notebooks
@@ -185,6 +209,7 @@ image_detection/
 **Storage**: Google Drive (working copies)
 
 **Distinction**:
+
 - **notebooks/**: Interactive .ipynb files (gitignored)
 - **scripts/**: Standalone Python utilities
 - **validation/**: One-off experimental code
@@ -194,11 +219,13 @@ image_detection/
 ### Validation & Testing
 
 #### validation/
+
 **README**: [validation/README.md](../validation/README.md)
 
 **Purpose**: One-off experimental validation scripts (all gitignored)
 
 **Contains** (all gitignored):
+
 - `validate_*.py` - Experimental validation scripts
 - `datasets/` - Downloaded datasets for validation
 - `*.json` - Validation results
@@ -206,16 +233,19 @@ image_detection/
 **Lifecycle**: Create → Experiment → Document in ADR → Archive/Delete
 
 **Distinction**:
+
 - **validation/**: Exploratory, one-off scripts (gitignored)
 - **tests/**: Automated tests run in CI/CD (committed)
 - **benchmarks/**: Systematic performance evaluation
 
 #### fuzz/
+
 **README**: [fuzz/README.md](../fuzz/README.md)
 
 **Purpose**: Fuzzing tests for security and robustness
 
 **Contains**:
+
 - Fuzzing harnesses
 - ClusterFuzzLite integration
 
@@ -226,21 +256,25 @@ image_detection/
 ### Tools & Infrastructure
 
 #### tools/
+
 **README**: [tools/README.md](../tools/README.md)
 
 **Purpose**: Development tools for code quality and documentation
 
 **Contains**:
+
 - `validate_front_matter.py` - YAML front matter validation
 - `gen_tools_catalog.py` - Tools catalog generation
 - `frontmatter_contract/` - Schema definitions
 
 **Distinction**:
+
 - **tools/**: Development-time validation (pre-deployment)
 - **scripts/**: Operational utilities (datasets, training)
 - **monitoring/**: Runtime monitoring (post-deployment)
 
 #### monitoring/
+
 **README**: [monitoring/README.md](../monitoring/README.md)
 
 **Purpose**: Monitoring and observability configs (Phase 4+)
@@ -248,21 +282,25 @@ image_detection/
 **Status**: Placeholder for future implementation
 
 **Will contain**:
+
 - Prometheus metrics configs
 - Grafana dashboards
 - Alert rules
 
 **Distinction**:
+
 - **monitoring/**: Production observability (Phase 4+)
 - **tools/**: Development tooling
 - **logs/**: Actual log files (gitignored)
 
 #### tmp_cleanup/
+
 **README**: [tmp_cleanup/README.md](../tmp_cleanup/README.md)
 
 **Purpose**: Temporary reference files for context preservation
 
 **Contains** (gitignored):
+
 - `.tmp-*.md` - Temporary analysis files
 - Context preservation for multi-turn tasks
 - Implementation summaries
@@ -270,6 +308,7 @@ image_detection/
 **Lifecycle**: Create → Use → Migrate to docs/ or delete
 
 **Distinction**:
+
 - **tmp_cleanup/**: Temporary, informal notes (gitignored)
 - **docs/**: Permanent, formal documentation
 
@@ -278,25 +317,30 @@ image_detection/
 ### Documentation & Configuration
 
 #### overrides/
+
 **README**: [overrides/README.md](../overrides/README.md)
 
 **Purpose**: MkDocs theme customization
 
 **Contains**:
+
 - `main.html` - Custom base template
 - Theme overrides (Jinja2 templates)
 
 **Distinction**:
+
 - **overrides/**: HTML templates for docs site (committed)
 - **docs/**: Markdown documentation content
 - **site/**: Built documentation (gitignored)
 
 #### LICENSES/
+
 **README**: [LICENSES/README.md](../LICENSES/README.md)
 
 **Purpose**: License texts for REUSE Specification compliance
 
 **Contains**:
+
 - `Apache-2.0.txt` - Project code license
 - `CC-BY-4.0.txt` - Documentation license
 - `CC0-1.0.txt`, `MIT.txt`, `ODbL-1.0.txt` - Other licenses
@@ -308,12 +352,14 @@ image_detection/
 ## Gitignore Strategy
 
 ### Build Artifacts (Deleted)
+
 - ~~`__pycache__/`~~ - Python bytecode (deleted)
 - ~~`htmlcov/`~~ - Coverage reports (deleted)
 - ~~`site/`~~ - MkDocs output (deleted)
 - ~~`dist/`~~ - Package distributions (deleted)
 
 ### Large Files (Gitignored)
+
 - `data/training/` - Training datasets
 - `models/**/*.pth` - Model weights
 - `logs/` - Runtime logs
@@ -322,6 +368,7 @@ image_detection/
 - `tmp_cleanup/.tmp-*` - Temporary reference files
 
 ### Small Files (Committed)
+
 - `configs/*.yaml` - Configuration files
 - `scripts/*.py` - Utility scripts
 - `tools/*.py` - Development tools
@@ -375,7 +422,9 @@ image_detection/
 ## Phase-Specific Usage
 
 ### Phase 1: MVP (Current)
+
 **Active folders**:
+
 - `src/` - Classical CV implementation
 - `tests/` - Unit/integration tests
 - `scripts/` - Dataset utilities
@@ -384,20 +433,26 @@ image_detection/
 **Inactive**: `notebooks/`, `models/`, `monitoring/`
 
 ### Phase 2: ML for IQA (Upcoming)
+
 **New usage**:
+
 - `notebooks/colab/` - IQA training notebooks
 - `configs/` - Training configs
 - `models/iqa/` - Trained IQA models
 - `data/training/iqa_phase2/` - Training datasets
 
 ### Phase 3: Layout Detection
+
 **Additional**:
+
 - `models/layout/` - YOLOv8 models
 - `data/training/layout_phase3/` - Layout datasets
 - `configs/colab_phase3_yolov8.yaml` - YOLOv8 config
 
 ### Phase 4: Production
+
 **New folders**:
+
 - `monitoring/` - Prometheus, Grafana configs
 - `logs/` - Application logs (active)
 
@@ -406,18 +461,21 @@ image_detection/
 ## Navigation Tips
 
 ### Finding Documentation
+
 - **Architecture**: `docs/architecture/`
 - **Planning**: `docs/planning/`
 - **ADRs**: `docs/ADRs/`
 - **API Reference**: `docs/api/index.md`
 
 ### Finding Code
+
 - **Core library**: `src/image_preprocessing_detector/`
 - **Tests**: `tests/`
 - **Scripts**: `scripts/`
 - **Tools**: `tools/`
 
 ### Finding Training Artifacts
+
 - **Configs**: `configs/`
 - **Notebooks**: `notebooks/colab/`
 - **Models**: `models/` (download from GCS if needed)
@@ -427,11 +485,13 @@ image_detection/
 ## Repository Health
 
 ### Size Guidelines
+
 - **Keep small**: `data/`, `configs/`, `tools/`, `docs/`
 - **Gitignore large**: `models/`, `data/training/`, `notebooks/`, `logs/`
 - **Total repo size target**: <500 MB (excluding gitignored files)
 
 ### Maintenance
+
 - **Monthly**: Clean `tmp_cleanup/` (delete files >60 days)
 - **Per Phase**: Update README files for new usage patterns
 - **Before commits**: Run pre-commit hooks to validate structure

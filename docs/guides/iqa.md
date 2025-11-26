@@ -26,15 +26,18 @@ The system uses a **two-tier IQA approach**:
 **Method**: Laplacian Variance
 
 **How it works**:
+
 1. Apply Laplacian filter (edge detector)
 2. Compute variance of filtered image
 3. Low variance indicates blur
 
 **Threshold**: 100.0 (default)
+
 - Below threshold → Blurry
 - Above threshold → Sharp
 
 **Example**:
+
 ```python
 from image_preprocessing_detector.detection import detect_blur
 
@@ -44,16 +47,18 @@ if is_blurry:
     print(f"Blurry image (variance: {variance:.2f})")
 else:
     print(f"Sharp image (variance: {variance:.2f})")
-```
+```text
 
 **Performance**: ~50ms per image
 
 **Strengths**:
+
 - Fast and reliable
 - No training required
 - Works on grayscale
 
 **Limitations**:
+
 - Sensitive to noise
 - Doesn't distinguish motion blur from defocus
 - Global metric (doesn't detect local blur)
@@ -63,6 +68,7 @@ else:
 **Method**: Hough Transform Line Detection
 
 **How it works**:
+
 1. Convert to grayscale and apply edge detection
 2. Detect lines using Hough transform
 3. Compute dominant angle
@@ -71,6 +77,7 @@ else:
 **Threshold**: 0.7 confidence (default)
 
 **Example**:
+
 ```python
 from image_preprocessing_detector.detection import detect_skew
 
@@ -78,16 +85,18 @@ angle, confidence = detect_skew(image, threshold=0.7)
 
 if abs(angle) > 0.5 and confidence > 0.7:
     print(f"Skew detected: {angle:.2f}° (confidence: {confidence:.2f})")
-```
+```text
 
 **Performance**: ~100ms per image
 
 **Strengths**:
+
 - Accurate for text documents
 - Provides confidence score
 - Handles multi-line documents
 
 **Limitations**:
+
 - Requires structured content (lines of text)
 - May fail on artistic layouts
 - Computationally intensive
@@ -97,16 +106,19 @@ if abs(angle) > 0.5 and confidence > 0.7:
 **Method**: Histogram Analysis
 
 **How it works**:
+
 1. Convert to grayscale
 2. Compute intensity histogram
 3. Analyze distribution spread
 4. Compute normalized contrast score
 
 **Threshold**: 0.3 (default)
+
 - Below threshold → Low contrast
 - Above threshold → Normal/high contrast
 
 **Example**:
+
 ```python
 from image_preprocessing_detector.detection import assess_contrast
 
@@ -114,16 +126,18 @@ is_low, score = assess_contrast(image, threshold=0.3)
 
 if is_low:
     print(f"Low contrast (score: {score:.2f})")
-```
+```text
 
 **Performance**: ~20ms per image
 
 **Strengths**:
+
 - Fast computation
 - Intuitive metric
 - Works on all image types
 
 **Limitations**:
+
 - Global metric (doesn't detect local contrast issues)
 - Sensitive to image content
 - May flag artistic low-contrast as issues
@@ -136,7 +150,7 @@ if is_low:
 
 ### Workflow
 
-```
+```text
 1. Detect document layout (YOLOv8)
    └── Tables, images, figures, handwriting
 
@@ -147,9 +161,10 @@ if is_low:
 
 3. Generate hybrid metadata
    └── Page-level + per-element quality
-```
+```text
 
 **Example**:
+
 ```python
 from image_preprocessing_detector.schema import DocumentElement, DetectedIssue
 
@@ -166,9 +181,10 @@ element = DocumentElement(
         )
     ],
 )
-```
+```text
 
 **Benefits**:
+
 - Accurate quality assessment for complex documents
 - Identifies problematic regions
 - Supports selective correction
@@ -186,6 +202,7 @@ element = DocumentElement(
 **Task**: Multi-label classification
 
 **Labels**:
+
 - Blur (motion, defocus)
 - Noise (gaussian, salt-pepper)
 - Compression artifacts
@@ -198,12 +215,14 @@ element = DocumentElement(
 ### Training Data
 
 **Datasets**:
+
 - KADID-10k: Image quality assessment
 - LIVE-IQA: Distortion types
 - TID2013: Quality metrics
 - Custom synthetic data
 
 **Augmentation**:
+
 - Albumentations pipeline
 - Realistic degradation simulation
 
@@ -220,6 +239,7 @@ element = DocumentElement(
 ### Blur
 
 **Types**:
+
 - Motion blur (camera shake)
 - Defocus blur (out of focus)
 - Gaussian blur (smoothing)
@@ -227,6 +247,7 @@ element = DocumentElement(
 **Detection**: Laplacian variance
 
 **Severity Levels**:
+
 - High: variance < 50
 - Medium: variance 50-100
 - Low: variance 100-150
@@ -238,6 +259,7 @@ element = DocumentElement(
 **Detection**: Hough transform
 
 **Severity Levels**:
+
 - High: |angle| > 2.0°
 - Medium: 0.5° < |angle| ≤ 2.0°
 - Low: |angle| ≤ 0.5°
@@ -249,6 +271,7 @@ element = DocumentElement(
 **Detection**: Histogram analysis
 
 **Severity Levels**:
+
 - High: score < 0.2
 - Medium: 0.2 ≤ score < 0.3
 - Low: 0.3 ≤ score < 0.5
@@ -256,6 +279,7 @@ element = DocumentElement(
 ### Noise
 
 **Types** (Phase 2):
+
 - Gaussian noise
 - Salt-and-pepper noise
 - Compression artifacts
@@ -276,7 +300,7 @@ poetry run imgprep process scan.pdf --output result.json \
 # More lenient for low-quality sources
 poetry run imgprep process photo.jpg --output result.json \
   --blur-threshold 0.6
-```
+```text
 
 ### 2. Dry Run Mode
 
@@ -284,7 +308,7 @@ Test detection without corrections:
 
 ```bash
 poetry run imgprep process input.pdf --output result.json --dry-run
-```
+```text
 
 ### 3. Validate Results
 
@@ -299,7 +323,7 @@ for page in metadata.pages:
     print(f"Page {page.page_number}: {len(page.detected_issues)} issues")
     for issue in page.detected_issues:
         print(f"  - {issue.issue_type}: {issue.severity} (confidence: {issue.confidence})")
-```
+```text
 
 ### 4. Selective Correction
 
@@ -311,7 +335,7 @@ high_severity = [
     issue for issue in page.detected_issues
     if issue.severity == "high"
 ]
-```
+```text
 
 ## Performance Considerations
 
@@ -347,6 +371,7 @@ high_severity = [
 **Metric**: Latency and throughput
 
 **Targets** (Phase 3):
+
 - Latency < 150ms/page (GPU)
 - Throughput > 6 pages/sec
 
@@ -361,7 +386,7 @@ high_severity = [
 ```bash
 poetry run imgprep process input.pdf --output result.json \
   --blur-threshold 0.7  # More lenient
-```
+```text
 
 ### False Negatives
 
@@ -372,13 +397,14 @@ poetry run imgprep process input.pdf --output result.json \
 ```bash
 poetry run imgprep process input.pdf --output result.json \
   --blur-threshold 0.9  # Stricter
-```
+```text
 
 ### Performance Issues
 
 **Issue**: Slow processing
 
 **Solution**:
+
 - Use dry-run mode for testing
 - Process smaller batches
 - Consider GPU acceleration (Phase 2+)

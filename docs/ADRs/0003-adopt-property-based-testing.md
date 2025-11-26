@@ -37,6 +37,7 @@ Traditional example-based testing (pytest) tests specific inputs and outputs. Wh
 ### Project Requirements
 
 The Image Preprocessing Detector handles diverse inputs:
+
 - PDF files (various encodings, corrupted data)
 - Images (PNG, JPEG, TIFF, corrupted headers)
 - Bounding boxes (coordinates, dimensions)
@@ -62,6 +63,7 @@ The Image Preprocessing Detector handles diverse inputs:
 Created [tests/unit/test_property_based.py](../../tests/unit/test_property_based.py) with:
 
 1. **Custom Hypothesis Strategies**:
+
    ```python
    @composite
    def confidence_scores(draw):
@@ -137,25 +139,33 @@ def test_detected_issue_json_roundtrip(issue: DetectedIssue) -> None:
 ## Alternatives Considered
 
 ### Alternative 1: Only Example-Based Testing
+
 **Rejected**:
+
 - Misses edge cases
 - Requires manual enumeration of test cases
 - Less confidence in handling diverse inputs
 
 ### Alternative 2: QuickCheck (Haskell-style)
+
 **Rejected**:
+
 - Hypothesis is the Python standard
 - Better pytest integration
 - More active Python community
 
 ### Alternative 3: Faker for Test Data
+
 **Rejected**:
+
 - Faker generates realistic data, not edge cases
 - Doesn't verify invariants
 - No automatic shrinking
 
 ### Alternative 4: Manual Fuzzing
+
 **Rejected**:
+
 - Less systematic than Hypothesis
 - No shrinking to minimal failing example
 - More code to maintain

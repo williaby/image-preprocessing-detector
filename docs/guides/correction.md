@@ -25,7 +25,7 @@ All corrections include **guardrails** to validate improvements and prevent degr
 
 ## Correction Workflow
 
-```
+```text
 Detected Issues
       │
       ▼
@@ -60,7 +60,7 @@ Detected Issues
       │
       ▼
   Corrected Image
-```
+```text
 
 ## Deskew Correction
 
@@ -69,6 +69,7 @@ Detected Issues
 **Method**: Affine rotation based on detected skew angle
 
 **Steps**:
+
 1. Detect skew angle using Hough transform
 2. Compute rotation matrix
 3. Apply affine transformation
@@ -87,19 +88,22 @@ corrected, transform_info = apply_deskew(
 
 if transform_info["success"]:
     print(f"Deskewed by {angle}°")
-```
+```text
 
 ### Guardrails
 
 **Angle Validation**:
+
 - Rejects |angle| > 45° (likely detection error)
 - Warns for |angle| > 10° (unusual skew)
 
 **Border Check**:
+
 - Validates no excessive black borders
 - Ensures content preservation
 
 **Quality Validation**:
+
 - Compares before/after edge strength
 - Rejects if content lost
 
@@ -119,6 +123,7 @@ if transform_info["success"]:
 **Method**: CLAHE (Contrast Limited Adaptive Histogram Equalization)
 
 **Benefits**:
+
 - Local contrast enhancement
 - Prevents over-amplification
 - Preserves details
@@ -137,20 +142,23 @@ corrected, transform_info = apply_contrast_enhancement(
 
 if transform_info["success"]:
     print("Contrast enhanced")
-```
+```text
 
 ### Guardrails
 
 **Clip Limit Bounds**:
+
 - Range: 0.5 - 4.0
 - Default: 2.0
 - Higher = more contrast
 
 **Histogram Validation**:
+
 - Ensures improved distribution
 - Checks for over-enhancement
 
 **Content Preservation**:
+
 - Validates perceptual quality
 - Rejects if artifacts introduced
 
@@ -171,6 +179,7 @@ if transform_info["success"]:
 **Method**: Unsharp Mask
 
 **Steps**:
+
 1. Apply Gaussian blur to create smoothed version
 2. Subtract smoothed from original
 3. Add weighted difference back to original
@@ -192,20 +201,23 @@ corrected, transform_info = apply_sharpening(
 
 if transform_info["success"]:
     print("Image sharpened")
-```
+```text
 
 ### Guardrails
 
 **Noise Amplification Check**:
+
 - Monitors high-frequency content
 - Prevents noise amplification
 
 **Amount Limits**:
+
 - Range: 0.5 - 3.0
 - Default: 1.5
 - Higher = stronger sharpening
 
 **Edge Preservation**:
+
 - Validates edge integrity
 - Rejects if edges degraded
 
@@ -227,11 +239,13 @@ if transform_info["success"]:
 **Method**: Non-Local Means Denoising
 
 **Benefits**:
+
 - Preserves edges and details
 - Reduces various noise types
 - Minimal artifacts
 
 **Limitations**:
+
 - Computationally expensive
 - May over-smooth with high strength
 
@@ -250,20 +264,23 @@ corrected, transform_info = apply_denoising(
 
 if transform_info["success"]:
     print("Noise reduced")
-```
+```text
 
 ### Guardrails
 
 **Detail Preservation**:
+
 - Checks for excessive smoothing
 - Validates text readability
 
 **Strength Limits**:
+
 - Range: 3 - 15
 - Default: 10
 - Higher = stronger denoising
 
 **Content Validation**:
+
 - Ensures edges preserved
 - Rejects if details lost
 
@@ -324,7 +341,7 @@ def correct_document(image):
     # corrected, info = apply_denoising(corrected)
 
     return corrected, transforms
-```
+```text
 
 ## Transform History Tracking
 
@@ -348,9 +365,10 @@ for transform in transforms:
 
 # Export history
 print(metadata.model_dump_json(indent=2))
-```
+```text
 
 **Example Transform**:
+
 ```json
 {
   "transform_type": "deskew",
@@ -358,13 +376,14 @@ print(metadata.model_dump_json(indent=2))
   "timestamp": "2025-11-08T12:00:00Z",
   "success": true
 }
-```
+```text
 
 ## Best Practices
 
 ### 1. Sequential Order
 
 **Always apply corrections in order**:
+
 1. Deskew (geometric)
 2. Contrast (intensity)
 3. Sharpen (detail)
@@ -385,7 +404,7 @@ if info["success"]:
 else:
     # Use original image
     print(f"Deskew failed: {info.get('error')}")
-```
+```text
 
 ### 3. Track History
 
@@ -398,7 +417,7 @@ for transform in transforms:
 
 # Enable audit trail
 metadata.to_json_file("output.json")
-```
+```text
 
 ### 4. Test Parameters
 
@@ -412,7 +431,7 @@ apply_sharpening(image, amount=1.0)
 apply_sharpening(image, amount=2.5)
 
 # Test and compare results
-```
+```text
 
 ### 5. Use Dry Run
 
@@ -420,7 +439,7 @@ apply_sharpening(image, amount=2.5)
 
 ```bash
 poetry run imgprep process input.pdf --output result.json --dry-run
-```
+```text
 
 ## Performance Optimization
 
@@ -454,7 +473,7 @@ apply_sharpening(image, amount=1.0)  # Instead of 1.5
 
 # Reduce CLAHE clip limit
 apply_contrast_enhancement(image, clip_limit=1.5)  # Instead of 2.0
-```
+```text
 
 ### Under-Correction
 
@@ -468,7 +487,7 @@ apply_sharpening(image, amount=2.0)
 
 # Higher clip limit
 apply_contrast_enhancement(image, clip_limit=3.0)
-```
+```text
 
 ### Guardrail Failures
 
@@ -482,7 +501,7 @@ corrected, info = apply_deskew(image, angle)
 if not info["success"]:
     print(f"Error: {info.get('error', 'Unknown')}")
     # Try alternative approach or skip correction
-```
+```text
 
 ## See Also
 

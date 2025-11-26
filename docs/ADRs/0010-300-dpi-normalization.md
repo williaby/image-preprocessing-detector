@@ -29,6 +29,7 @@ purpose: "Document the decision to normalize all PDF and image inputs to a consi
 ### Problem Statement
 
 Input documents arrive in varying resolutions:
+
 - **PDF Documents**: Typically 72 DPI (default PDF resolution)
 - **Scanned Images**: 150-600 DPI (scanner-dependent)
 - **Camera Captures**: Variable DPI based on device and distance
@@ -45,11 +46,13 @@ Input documents arrive in varying resolutions:
 ### OCR Constraints
 
 **Tesseract Recommendations**:
+
 - Minimum: 300 DPI for Latin scripts
 - Optimal: 300-400 DPI for mixed scripts
 - Degradation: < 200 DPI results in significant accuracy loss
 
 **Marker/Docling**:
+
 - Optimized for: 300 DPI input
 - Performance degradation: < 250 DPI or > 600 DPI
 
@@ -60,6 +63,7 @@ Input documents arrive in varying resolutions:
 ### Implementation
 
 **PDF Conversion** (pdf_loader.py):
+
 ```python
 class PDFLoader:
     """Loads PDF files and converts pages to images."""
@@ -84,6 +88,7 @@ class PDFLoader:
 ```
 
 **DPI Detection and Flagging**:
+
 ```python
 def _detect_page_dpi(self, page: fitz.Page) -> float:
     """Detect the effective DPI of a PDF page."""
@@ -96,6 +101,7 @@ needs_upscaling = dpi_input < self.target_dpi  # < 300 DPI
 ```
 
 **Image Normalization** (future: image_loader.py):
+
 ```python
 def normalize_dpi(image: np.ndarray, source_dpi: float, target_dpi: int = 300):
     """Normalize image to target DPI."""
@@ -174,26 +180,32 @@ def normalize_dpi(image: np.ndarray, source_dpi: float, target_dpi: int = 300):
 ## Alternatives Considered
 
 ### Alternative 1: Preserve Original DPI
+
 **Keep source DPI, don't normalize**
 
 **Rejected**:
+
 - Inconsistent model inputs (trained on 300 DPI)
 - Variable OCR accuracy (72 DPI vs 600 DPI)
 - Bounding box coordinates not comparable across pages
 - Harder to debug (resolution-dependent issues)
 
 ### Alternative 2: 200 DPI (Faster)
+
 **Normalize to 200 DPI for speed**
 
 **Rejected**:
+
 - Below OCR recommendations (300 DPI minimum)
 - Degrades accuracy by 15-30% on fine text
 - Small savings: 2.25× fewer pixels, 1.5× faster (not worth accuracy loss)
 
 ### Alternative 3: 400 DPI (Higher Quality)
+
 **Normalize to 400 DPI for best OCR**
 
 **Rejected**:
+
 - Marginal accuracy gain (< 2% over 300 DPI for typical fonts)
 - 1.78× more pixels (78% increase)
 - Slower processing: +40-60% latency
@@ -201,9 +213,11 @@ def normalize_dpi(image: np.ndarray, source_dpi: float, target_dpi: int = 300):
 - Diminishing returns: OCR saturates at 300-350 DPI
 
 ### Alternative 4: 600+ DPI (Archival Quality)
+
 **Normalize to 600 DPI for maximum quality**
 
 **Rejected**:
+
 - Massive overhead: 4× pixels vs 300 DPI
 - 3-4× slower processing
 - 4× storage cost
@@ -211,9 +225,11 @@ def normalize_dpi(image: np.ndarray, source_dpi: float, target_dpi: int = 300):
 - Only useful for very small text (< 6pt fonts)
 
 ### Alternative 5: Adaptive DPI (Content-Based)
+
 **Analyze content, use variable DPI**
 
 **Rejected**:
+
 - Added complexity: Requires pre-analysis step
 - Inconsistent processing: Different pages, different DPI
 - Harder to debug: Resolution-dependent bugs
@@ -225,6 +241,7 @@ def normalize_dpi(image: np.ndarray, source_dpi: float, target_dpi: int = 300):
 ### Upscaling Strategy
 
 **Bicubic Interpolation** (cv2.INTER_CUBIC):
+
 ```python
 # Used when source_dpi < 300
 # Pros: Smoother edges, better for text
@@ -234,6 +251,7 @@ upscaled = cv2.resize(image, None, fx=scale, fy=scale,
 ```
 
 **Why Not Lanczos or Super-Resolution?**
+
 - Lanczos: Slower, ringing artifacts on text edges
 - Super-Resolution (ESRGAN): 10-100× slower, overkill for text
 - Bicubic: Fast, industry standard, good enough for OCR
@@ -241,6 +259,7 @@ upscaled = cv2.resize(image, None, fx=scale, fy=scale,
 ### Downscaling Strategy
 
 **Area Interpolation** (cv2.INTER_AREA):
+
 ```python
 # Used when source_dpi > 300
 # Pros: Anti-aliasing, preserves sharpness
@@ -250,6 +269,7 @@ downscaled = cv2.resize(image, None, fx=scale, fy=scale,
 ```
 
 **Why Not Bilinear or Nearest?**
+
 - Bilinear: Aliasing artifacts, worse quality
 - Nearest: Blocky, unusable for OCR
 - Area: Best quality for downsampling
@@ -264,6 +284,7 @@ downscaled = cv2.resize(image, None, fx=scale, fy=scale,
 | 600 | 300 | Downscale 0.5× | Area | 8-15ms | Minimal |
 
 **Total Ingestion Pipeline** (Stage 1):
+
 - PDF rendering: 20-80ms/page
 - DPI normalization: 0-25ms/page
 - Color conversion: 2-5ms/page
@@ -274,12 +295,14 @@ downscaled = cv2.resize(image, None, fx=scale, fy=scale,
 ### Test Coverage
 
 **Unit Tests**:
+
 - `test_pdf_loader_dpi_detection()`: Verify DPI detection accuracy
 - `test_pdf_loader_300_dpi_rendering()`: Confirm 300 DPI output
 - `test_upscaling_flag()`: Verify needs_upscaling field
 - `test_image_normalization()`: Test upscaling and downscaling
 
 **Integration Tests**:
+
 - Low DPI inputs (72, 96, 150): Verify upscaling and OCR accuracy
 - High DPI inputs (400, 600): Verify downscaling preserves quality
 - Native 300 DPI: Verify no processing overhead
@@ -287,6 +310,7 @@ downscaled = cv2.resize(image, None, fx=scale, fy=scale,
 ### OCR Accuracy Validation
 
 **Benchmark** (future Phase 2):
+
 | Source DPI | OCR Accuracy | Processing Time |
 |------------|--------------|-----------------|
 | 72 → 300 | 82.3% | 45ms |

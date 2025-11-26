@@ -24,6 +24,7 @@ purpose: "Document the decision to use INT8 quantization for production deployme
 **Date**: 2025-01-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ADR-025: MobileNetV3](0025-mobilenetv3-vs-efficientnet.md)
 - [ADR-015: YOLOv8](0015-yolov8-layout-detection.md)
 - [PROJECT_PLAN.md Phase 2-3](../../PROJECT_PLAN.md)
@@ -33,6 +34,7 @@ purpose: "Document the decision to use INT8 quantization for production deployme
 Production deployment requires optimizing model inference for latency and throughput. FP32 models are 4× larger and 2-3× slower than INT8 quantized models.
 
 **Performance Requirements**:
+
 - IQA: < 50ms GPU, < 200ms CPU
 - YOLOv8: < 50ms GPU, < 70ms CPU (ONNX INT8)
 - Accuracy loss: < 2% acceptable
@@ -44,12 +46,14 @@ Production deployment requires optimizing model inference for latency and throug
 ### Quantization Strategy
 
 **IQA Classifier**:
+
 - FP32 → INT8 via ONNX Runtime
 - Post-training quantization (no retraining)
 - Speedup: 1.5-2× (CPU), 1.2-1.5× (GPU)
 - Accuracy drop: < 1% mAP
 
 **YOLOv8 Layout Detector**:
+
 - FP32 → INT8 via TensorRT
 - Post-training quantization
 - Speedup: 2-3× (GPU)

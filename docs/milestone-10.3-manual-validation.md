@@ -30,6 +30,7 @@ Milestone 10.3 completes the manual validation pipeline for correcting weak supe
 **File**: `tools/manual_validation_ui.py`
 
 **Features**:
+
 - Streamlit-based web UI for manual annotation
 - Image preview with quality metric visualization
 - Side-by-side comparison of weak supervision predictions
@@ -40,6 +41,7 @@ Milestone 10.3 completes the manual validation pipeline for correcting weak supe
 - Keyboard shortcuts for navigation
 
 **Usage**:
+
 ```bash
 # Install Streamlit
 poetry install --with dev
@@ -48,9 +50,10 @@ poetry install --with dev
 streamlit run tools/manual_validation_ui.py -- \
     --input-dir data/annotation_queue \
     --output-dir data/corrected_labels
-```
+```text
 
 **Quality Issues**:
+
 1. **Noise** - Visible grain, speckles, or random pixel variations
 2. **Blur** - Out of focus, motion-blurred, or soft edges
 3. **Skew** - Rotated from horizontal (text lines not level)
@@ -63,6 +66,7 @@ streamlit run tools/manual_validation_ui.py -- \
 **File**: `scripts/sample_ambiguous_cases.py`
 
 **Features**:
+
 - Uncertainty scoring based on weak supervision confidence
 - Edge case detection (borderline quality metrics)
 - Composite priority ranking (uncertainty + edge case)
@@ -71,23 +75,26 @@ streamlit run tools/manual_validation_ui.py -- \
 - Rich CLI output with progress bars and tables
 
 **Sampling Strategy**:
+
 ```python
 priority = 0.7 * uncertainty + 0.3 * edge_case_score
 
 # Uncertainty = 1 - mean(confidence)
 # Edge cases: borderline quality metrics near thresholds
-```
+```text
 
 **Usage**:
+
 ```bash
 python scripts/sample_ambiguous_cases.py \
     --input-dir data/weak_supervision_labels \
     --output-dir data/annotation_queue \
     --num-samples 2000 \
     --confidence-threshold 0.85
-```
+```text
 
 **Output**:
+
 - Sampled label files copied to `data/annotation_queue/`
 - `sampling_metadata.json` with statistics and sample list
 - Console statistics table with sampling metrics
@@ -97,6 +104,7 @@ python scripts/sample_ambiguous_cases.py \
 **File**: `data/ANNOTATION_GUIDE.md`
 
 **Features**:
+
 - Comprehensive annotation guidelines
 - Quality issue definitions with examples
 - Edge case handling instructions
@@ -105,6 +113,7 @@ python scripts/sample_ambiguous_cases.py \
 - Progress monitoring and QA checklist
 
 **Session Planning**:
+
 - **Goal**: 2,000 images total (1,000 per session)
 - **Rate**: ~4 images/minute (15 seconds each)
 - **Breaks**: 5 minutes every 30 minutes
@@ -113,12 +122,14 @@ python scripts/sample_ambiguous_cases.py \
 ### Sprint 3.3.5: Final Training Dataset ✅
 
 **Files**:
+
 - `data/dataset.py` - PyTorch Dataset class
 - `scripts/create_final_dataset.py` - Dataset merging script
 
 **Features**:
 
 #### PyTorch Dataset (`data/dataset.py`)
+
 - Multi-label binary classification dataset
 - Support for albumentations and torchvision transforms
 - Automatic image normalization ([0, 255] → [0, 1])
@@ -128,6 +139,7 @@ python scripts/sample_ambiguous_cases.py \
 - Dataset integrity verification
 
 **Dataset Class**:
+
 ```python
 from data.dataset import IQADataset, create_data_loaders
 
@@ -147,9 +159,10 @@ for images, labels in train_loader:
     # images: (B, C, H, W)
     # labels: (B, 6)
     pass
-```
+```text
 
 #### Dataset Merging (`scripts/create_final_dataset.py`)
+
 - Merges weak supervision + manual corrections
 - Manual corrections take precedence
 - Train/val/test split (80/10/10 default)
@@ -159,6 +172,7 @@ for images, labels in train_loader:
 - Metadata export
 
 **Usage**:
+
 ```bash
 python scripts/create_final_dataset.py \
     --weak-supervision-dir data/weak_supervision_labels \
@@ -168,20 +182,21 @@ python scripts/create_final_dataset.py \
     --val-ratio 0.1 \
     --test-ratio 0.1 \
     --random-seed 42
-```
+```text
 
 **Output Structure**:
-```
+
+```text
 data/final_training_dataset/
 ├── train_split.json       # Training samples metadata
 ├── val_split.json         # Validation samples metadata
 ├── test_split.json        # Test samples metadata
 └── dataset_metadata.json  # Complete dataset metadata
-```
+```text
 
 ## Workflow Diagram
 
-```
+```text
 Raw Images
     ↓
 [Augmentation] (data/augmentation.py)
@@ -207,11 +222,12 @@ Final Training Dataset (train/val/test splits)
 [PyTorch Dataset] (data/dataset.py)
     ↓
 [YOLOv8 Training] (modal/train_phase3_yolov8.py)
-```
+```text
 
 ## Label Format
 
 ### Weak Supervision Format
+
 ```json
 {
   "image_path": "path/to/image.png",
@@ -238,9 +254,10 @@ Final Training Dataset (train/val/test splits)
     "edge_deviation_degrees": 3.4
   }
 }
-```
+```text
 
 ### Corrected Label Format
+
 ```json
 {
   "image_path": "path/to/image.png",
@@ -259,9 +276,10 @@ Final Training Dataset (train/val/test splits)
   "annotator_notes": "Visible noise but not severe",
   "annotation_source": "manual_validation_ui"
 }
-```
+```text
 
 ### Dataset Split Format
+
 ```json
 {
   "split": "train",
@@ -276,11 +294,12 @@ Final Training Dataset (train/val/test splits)
     }
   ]
 }
-```
+```text
 
 ## Quality Metrics
 
 ### Sampling Statistics
+
 - **Total Labels**: Full weak supervision dataset
 - **Low-Confidence Images**: Below confidence threshold (default: 0.85)
 - **Sampled for Annotation**: Top priority samples (default: 2000)
@@ -289,6 +308,7 @@ Final Training Dataset (train/val/test splits)
 - **Mean Priority**: Average composite priority
 
 ### Dataset Statistics
+
 - **Total Samples**: Combined weak supervision + manual corrections
 - **Manual Corrections**: Number of human-validated labels
 - **Weak Supervision**: Number of auto-generated labels
@@ -296,6 +316,7 @@ Final Training Dataset (train/val/test splits)
 - **Average Issues per Image**: Mean number of quality issues
 
 ### Dataset Integrity Checks
+
 - ✅ No train/val/test overlaps
 - ✅ All images exist on disk
 - ✅ All labels exist and are valid JSON
@@ -305,18 +326,21 @@ Final Training Dataset (train/val/test splits)
 ## Configuration
 
 ### Streamlit UI Configuration
+
 - **Input Directory**: `data/annotation_queue` (sampled labels)
 - **Output Directory**: `data/corrected_labels` (human corrections)
 - **Auto-advance**: Enabled (moves to next image after save)
 - **Progress Tracking**: Real-time sidebar metrics
 
 ### Sampling Configuration
+
 - **Confidence Threshold**: 0.85 (filter low-confidence predictions)
 - **Number of Samples**: 2000 (target annotation count)
 - **Uncertainty Weight**: 0.7 (in composite priority)
 - **Edge Case Weight**: 0.3 (in composite priority)
 
 ### Dataset Split Configuration
+
 - **Train Ratio**: 0.8 (80% training)
 - **Val Ratio**: 0.1 (10% validation)
 - **Test Ratio**: 0.1 (10% test)
@@ -325,6 +349,7 @@ Final Training Dataset (train/val/test splits)
 ## Testing
 
 ### Unit Tests
+
 ```bash
 # Test PyTorch Dataset class
 python data/dataset.py data/final_training_dataset
@@ -334,9 +359,10 @@ python scripts/create_final_dataset.py \
     --weak-supervision-dir data/weak_supervision_labels \
     --corrected-labels-dir data/corrected_labels \
     --output-dir data/final_training_dataset
-```
+```text
 
 ### Integration Tests
+
 ```bash
 # End-to-end workflow test
 # 1. Generate weak supervision labels
@@ -353,11 +379,12 @@ python scripts/create_final_dataset.py
 
 # 5. Test PyTorch loading
 python data/dataset.py data/final_training_dataset
-```
+```text
 
 ## Dependencies
 
 ### Required
+
 - `opencv-python-headless>=4.8.0` - Image loading
 - `pillow>=10.0.0` - Image I/O
 - `numpy>=1.24.0` - Array operations
@@ -367,11 +394,13 @@ python data/dataset.py data/final_training_dataset
 - `rich>=13.5.0` - CLI formatting
 
 ### Optional
+
 - `albumentations>=1.3.0` - Advanced transforms
 
 ## Future Improvements
 
 ### Short-term (Phase 3)
+
 - [ ] Add keyboard shortcuts to Streamlit UI
 - [ ] Implement undo/redo in annotation UI
 - [ ] Add image zoom/pan controls
@@ -379,6 +408,7 @@ python data/dataset.py data/final_training_dataset
 - [ ] Add inter-annotator agreement calculator
 
 ### Long-term (Phase 4+)
+
 - [ ] Active learning: prioritize most uncertain samples
 - [ ] Multi-annotator consensus workflow
 - [ ] Annotation quality scoring
@@ -396,6 +426,7 @@ python data/dataset.py data/final_training_dataset
 ## Success Criteria
 
 ✅ **All criteria met**:
+
 - [x] Streamlit UI functional and user-friendly
 - [x] 2k ambiguous cases sampled with documented strategy
 - [x] Annotation guide created with clear definitions
@@ -410,31 +441,37 @@ python data/dataset.py data/final_training_dataset
 After completing Milestone 10.3:
 
 1. **Install dependencies**:
+
    ```bash
    poetry install --with dev,ml
    ```
 
-2. **Generate weak supervision labels** (if not done):
+1. **Generate weak supervision labels** (if not done):
+
    ```bash
    python -m data.weak_supervision <input_images> data/weak_supervision_labels
    ```
 
-3. **Sample ambiguous cases**:
+2. **Sample ambiguous cases**:
+
    ```bash
    python scripts/sample_ambiguous_cases.py
    ```
 
-4. **Run manual annotation sessions** (8 hours total):
+3. **Run manual annotation sessions** (8 hours total):
+
    ```bash
    streamlit run tools/manual_validation_ui.py
    ```
 
-5. **Create final dataset**:
+4. **Create final dataset**:
+
    ```bash
    python scripts/create_final_dataset.py
    ```
 
-6. **Train YOLOv8 model** (Phase 3):
+5. **Train YOLOv8 model** (Phase 3):
+
    ```bash
    modal run modal/train_phase3_yolov8.py
    ```

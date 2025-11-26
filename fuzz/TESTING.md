@@ -7,6 +7,7 @@ ClusterFuzzLite runs fuzzing automatically in GitHub Actions CI/CD. No local tes
 ## Automatic CI/CD Fuzzing
 
 The `.github/workflows/cifuzzy.yml` workflow:
+
 - Installs Clang, LLVM, and libFuzzer
 - Builds fuzzing harnesses with Atheris
 - Runs each fuzzer for 600 seconds (10 minutes)
@@ -30,7 +31,7 @@ sudo apt-get install clang llvm lld
 
 # Verify installation
 clang --version
-```
+```text
 
 ### Installing Atheris
 
@@ -42,7 +43,7 @@ pip install atheris
 
 # Or with poetry (not in dev group to avoid WSL build issues)
 # poetry add --group dev atheris
-```
+```text
 
 ## Running Fuzzers Locally
 
@@ -55,7 +56,7 @@ poetry run python fuzz/fuzz_image_loader.py -max_total_time=60
 
 # Run text gate fuzzer for 60 seconds
 poetry run python fuzz/fuzz_text_gate.py -max_total_time=60
-```
+```text
 
 ## GitHub Actions Fuzzing (Recommended)
 
@@ -68,6 +69,7 @@ Instead of local testing, push your changes and let GitHub Actions run fuzzing:
 5. Check "Security" tab for SARIF reports
 
 **Advantages**:
+
 - No local Clang/LLVM setup required
 - Runs in clean environment
 - Results uploaded to GitHub Security
@@ -75,7 +77,7 @@ Instead of local testing, push your changes and let GitHub Actions run fuzzing:
 
 ## Expected Output (No Crashes)
 
-```
+```text
 INFO: Seed: 1234567890
 INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
 INFO: A corpus is not provided, starting from an empty corpus
@@ -84,21 +86,22 @@ INFO: A corpus is not provided, starting from an empty corpus
 #2000   NEW    cov: 156 ft: 489 corp: 15/56b lim: 8 exec/s: 2000 rss: 48Mb
 ...
 Done 60000 runs in 61 second(s)
-```
+```text
 
 ## Expected Output (Crash Found)
 
 If a crash is found:
 
-```
+```text
 ==12345==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6020000000ab
     #0 0x7f1234567890 in some_function file.py:123
     #1 0x7f1234567891 in another_function file.py:456
 ...
 SUMMARY: AddressSanitizer: heap-buffer-overflow /path/to/file.py:123
-```
+```text
 
 The fuzzer will save a reproducer file (e.g., `crash-abc123`). This should be:
+
 1. Reported as a security issue
 2. Fixed immediately
 3. Added to regression tests
@@ -114,12 +117,14 @@ The fuzzer will save a reproducer file (e.g., `crash-abc123`). This should be:
 ## Viewing Fuzzing Results
 
 ### Actions Tab
+
 - Go to repository → Actions tab
 - Click on latest workflow run
 - Check "ClusterFuzzLite" job for fuzzing summary
 - Download crash artifacts if any found
 
 ### Security Tab
+
 - Go to repository → Security tab
 - Click "Code scanning alerts"
 - View SARIF reports from fuzzing
@@ -128,15 +133,18 @@ The fuzzer will save a reproducer file (e.g., `crash-abc123`). This should be:
 ## Troubleshooting
 
 ### Fuzzing workflow fails
+
 - Check Actions logs for build errors
 - Ensure fuzzing harnesses have no syntax errors
 - Verify Atheris installation succeeded
 
 ### No crashes found
+
 - Expected! This is good - fuzzers didn't find vulnerabilities
 - Fuzzers run for 600 seconds (10 minutes) per push
 
 ### Crash found
+
 - Download crash artifact from Actions tab
 - Reproduce locally: `python fuzz/fuzz_<name>.py <crash-file>`
 - Fix the vulnerability

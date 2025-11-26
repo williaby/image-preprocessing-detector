@@ -56,6 +56,7 @@ Based on the analysis, I recommend a **three-phase approach** that allows increm
 **Objective**: Align CLAUDE.md structure with template while preserving project-specific content.
 
 **Changes Required**:
+
 1. Add "Template Feedback Tracking" section
 2. Add cross-references to `.claude/` modular structure
 3. Update security-first development section
@@ -63,6 +64,7 @@ Based on the analysis, I recommend a **three-phase approach** that allows increm
 5. Add cruft-managed files documentation
 
 **Files**:
+
 - [CLAUDE.md](../../CLAUDE.md)
 
 **Source Reference**: `/home/byron/dev/template-sample/CLAUDE.md`
@@ -72,13 +74,15 @@ Based on the analysis, I recommend a **three-phase approach** that allows increm
 **Objective**: Implement full Claude Code agent/command/skill ecosystem.
 
 **Current State**:
-```
+
+```text
 .claude/
 └── settings.local.json    (only file present)
-```
+```text
 
 **Target State** (from template):
-```
+
+```text
 .claude/
 ├── README.md                    # Documentation for .claude usage
 ├── settings.local.json.example  # Example settings
@@ -105,29 +109,34 @@ Based on the analysis, I recommend a **three-phase approach** that allows increm
     ├── quality/
     ├── security/
     └── testing/
-```
+```text
 
 **Implementation Options**:
 
 **Option A: Git Subtree (Recommended)**
+
 ```bash
 # Add .claude as subtree from williaby/.claude repository
 git subtree add --prefix .claude https://github.com/williaby/.claude.git main --squash
-```
+```text
+
 - Pros: Easy updates, shared maintenance, can contribute back
 - Cons: Requires separate repo setup
 
 **Option B: Direct Copy**
+
 ```bash
 # Copy from template-sample
 cp -r /home/byron/dev/template-sample/.claude/* /home/byron/dev/image_detection/.claude/
-```
+```text
+
 - Pros: Simple, no external dependencies
 - Cons: Manual updates, no upstream sync
 
 **Recommendation**: Option B for initial implementation, consider Option A for long-term maintenance.
 
 **Files to Copy** (from template-sample):
+
 - `.claude/README.md`
 - `.claude/settings.local.json.example`
 - `.claude/agents/*` (4 files)
@@ -140,19 +149,23 @@ cp -r /home/byron/dev/template-sample/.claude/* /home/byron/dev/image_detection/
 **Objective**: Add missing workflows and align with template patterns.
 
 **Missing Workflows**:
+
 1. `sonarcloud.yml` - SonarCloud integration
 2. `validate-cruft.yml` - Template validation (skip if not using cruft)
 
 **Workflow Updates**:
+
 1. Update `ci.yml` to support org workflow delegation (optional)
 2. Add SonarCloud integration to existing security workflows
 3. Ensure workflow badge URLs are correct
 
 **Files to Add**:
+
 - `.github/workflows/sonarcloud.yml`
 - `.github/workflows/validate-cruft.yml` (if using cruft)
 
 **Files to Update**:
+
 - `.github/workflows/ci.yml` (add SonarCloud job)
 - `.github/PULL_REQUEST_TEMPLATE.md` (verify alignment)
 - `.github/copilot-instructions.md` (add if missing)
@@ -164,13 +177,15 @@ cp -r /home/byron/dev/template-sample/.claude/* /home/byron/dev/image_detection/
 **Objective**: Establish template feedback tracking system.
 
 **Implementation**:
+
 ```bash
 mkdir -p template_feedback
-```
+```text
 
 Create initial file: `template_feedback/11242025_template_feedback.md`
 
 **Content Template**:
+
 ```markdown
 # Template Feedback - November 24, 2025
 
@@ -189,7 +204,7 @@ Initial template alignment for image_detection project.
 
 ## Pending Items
 - [Items deferred to future updates]
-```
+```text
 
 ---
 
@@ -203,14 +218,16 @@ Initial template alignment for image_detection project.
 **Objective**: Replace MyPy with BasedPyright for faster, stricter type checking.
 
 **Current Configuration** (MyPy):
+
 ```toml
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
 disallow_untyped_defs = true
-```
+```text
 
 **Target Configuration** (BasedPyright):
+
 ```toml
 [tool.basedpyright]
 pythonVersion = "3.12"
@@ -223,9 +240,10 @@ strictDictionaryInference = true
 strictSetInference = true
 reportMissingTypeStubs = "warning"
 reportUnknownMemberType = "warning"
-```
+```text
 
 **Migration Steps**:
+
 1. Add `basedpyright` to dev dependencies
 2. Add `[tool.basedpyright]` section to pyproject.toml
 3. Update pre-commit to use basedpyright instead of mypy
@@ -233,6 +251,7 @@ reportUnknownMemberType = "warning"
 5. Remove or deprecate mypy configuration (keep for reference period)
 
 **Files to Update**:
+
 - `pyproject.toml`
 - `.pre-commit-config.yaml`
 - `.github/workflows/ci.yml`
@@ -242,11 +261,13 @@ reportUnknownMemberType = "warning"
 **Objective**: Add Qlty for unified quality checking.
 
 **Configuration**:
+
 ```bash
 mkdir -p .qlty
-```
+```text
 
 **Files to Add**:
+
 - `.qlty/qlty.toml`
 - `.qlty/configs/` (tool-specific configs)
 
@@ -257,12 +278,14 @@ mkdir -p .qlty
 **Objective**: Add containerization support for deployment.
 
 **Files to Add**:
+
 - `Dockerfile` (multi-stage production build)
 - `docker-compose.yml` (development environment)
 - `docker-compose.prod.yml` (production environment)
 - `.dockerignore`
 
 **Dockerfile Template** (from template-sample):
+
 - Multi-stage build for smaller images
 - Non-root user (appuser:1000)
 - Health checks enabled
@@ -271,6 +294,7 @@ mkdir -p .qlty
 ### 2.4 Additional Config Files
 
 **Files to Add**:
+
 - `.coderabbit.yaml` - AI code review configuration
 - `.semgrep.yml` - Security patterns
 - `sonar-project.properties` - SonarCloud configuration
@@ -285,6 +309,7 @@ mkdir -p .qlty
 **Objective**: Enable automated versioning based on conventional commits.
 
 **Add to pyproject.toml**:
+
 ```toml
 [tool.semantic_release]
 version_variable = "src/image_preprocessing_detector/__init__.py:__version__"
@@ -307,7 +332,7 @@ prerelease_token = "dev"
 allowed_tags = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore"]
 minor_tags = ["feat"]
 patch_tags = ["fix", "perf"]
-```
+```text
 
 ---
 
@@ -323,25 +348,29 @@ patch_tags = ["fix", "perf"]
 **Decision Point**: Is automatic template synchronization important for this project?
 
 **Pros of Cruft**:
+
 - Automatic updates when template changes
 - Validation workflow ensures compliance
 - Baseline tracking in `.standards/`
 - Structured template feedback system
 
 **Cons of Cruft**:
+
 - Overhead for specialized ML project
 - May conflict with project-specific customizations
 - Requires maintaining compatibility with template
 
 **If YES - Proceed with Cruft**:
+
 ```bash
 # Link existing project to template
 cruft link /home/byron/dev/cookiecutter-python-template
 
 # This creates .cruft.json with current template reference
-```
+```text
 
 **If NO - Skip Cruft**:
+
 - Manually track template changes
 - No `.cruft.json` or `validate-cruft.yml`
 - Remove `.standards/` from plan
@@ -351,7 +380,8 @@ cruft link /home/byron/dev/cookiecutter-python-template
 **Only if using Cruft**
 
 **Files to Add**:
-```
+
+```text
 .standards/
 ├── README.md
 ├── CLAUDE.baseline.md
@@ -361,7 +391,7 @@ cruft link /home/byron/dev/cookiecutter-python-template
 ├── mkdocs.yml.baseline
 ├── pyproject.toml.baseline
 └── template_feedback.baseline.md
-```
+```text
 
 **Purpose**: Track template baselines for diff comparison during updates.
 
@@ -461,7 +491,8 @@ cruft link /home/byron/dev/cookiecutter-python-template
 
 ## Success Criteria
 
-### Phase 1 Complete When:
+### Phase 1 Complete When
+
 - [ ] CLAUDE.md includes template feedback section
 - [ ] .claude/ folder has all agents, commands, and skills
 - [ ] .github/ workflows include SonarCloud
@@ -469,14 +500,16 @@ cruft link /home/byron/dev/cookiecutter-python-template
 - [ ] All existing tests still pass
 - [ ] Pre-commit hooks pass
 
-### Phase 2 Complete When:
+### Phase 2 Complete When
+
 - [ ] BasedPyright configured and passing
 - [ ] Docker builds successfully
 - [ ] All config files present and valid
 - [ ] CI pipeline passes with new tooling
 - [ ] Semantic release configured
 
-### Phase 3 Complete When (if implemented):
+### Phase 3 Complete When (if implemented)
+
 - [ ] .cruft.json links to template
 - [ ] .standards/ baseline files present
 - [ ] validate-cruft.yml workflow passes
@@ -487,6 +520,7 @@ cruft link /home/byron/dev/cookiecutter-python-template
 ## Appendix: File Sources
 
 All template files sourced from:
+
 - **Template Repository**: `/home/byron/dev/cookiecutter-python-template/`
 - **Rendered Sample**: `/home/byron/dev/template-sample/`
 
@@ -510,4 +544,4 @@ docker build -t image-detection .
 
 # Run all pre-commit hooks
 uv run pre-commit run --all-files
-```
+```text

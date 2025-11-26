@@ -16,12 +16,14 @@ purpose: "Document the decision to use structlog + rich for structured logging w
 **Date**: 2025-01-08
 **Deciders**: Byron Williams
 **Related**:
+
 - [utils/logging.py](../../src/image_preprocessing_detector/utils/logging.py)
 - [ARCHITECTURE_SUMMARY.md](../../ARCHITECTURE_SUMMARY.md)
 
 ## Context
 
 The system needs logging for:
+
 - Development: Human-readable console output
 - Production: Machine-readable JSON logs
 - Performance: Timing and profiling
@@ -34,41 +36,46 @@ The system needs logging for:
 ### Architecture
 
 **Development Mode** (console):
+
 ```python
 setup_logging(level="DEBUG", json_format=False)
 logger.info("Processing page", page_num=1, width=2480, height=3509)
 # Output: [2025-11-05 10:23:45] INFO Processing page page_num=1 width=2480 height=3509
-```
+```text
 
 **Production Mode** (JSON):
+
 ```python
 setup_logging(level="INFO", json_format=True)
 logger.info("Processing page", page_num=1, width=2480)
 # Output: {"timestamp": "2025-11-05T10:23:45", "level": "info", "event": "Processing page", "page_num": 1, "width": 2480}
-```
+```text
 
 ### Key Features
 
 **Structured Context**:
+
 ```python
 logger = get_logger(__name__)
 logger.info("Detected skew", angle=5.2, confidence=0.85, severity="high")
-```
+```text
 
 **Performance Logging**:
+
 ```python
 with log_performance("PDF rendering"):
     pages = pdf_loader.load("document.pdf")
 # Output: PDF rendering took 1.23s
-```
+```text
 
 **Exception Logging**:
+
 ```python
 try:
     result = detector.detect(image)
 except Exception as e:
     logger.exception("Detection failed", detector="blur", image_shape=image.shape)
-```
+```text
 
 ## Consequences
 
@@ -98,11 +105,13 @@ except Exception as e:
 **Approach**: Use Python's built-in logging module
 
 **Advantages**:
+
 - No dependencies
 - Familiar API
 - Widespread adoption
 
 **Disadvantages**:
+
 - String formatting only
 - No structured data
 - Manual JSON serialization
@@ -115,11 +124,13 @@ except Exception as e:
 **Approach**: Use loguru for simplified logging
 
 **Advantages**:
+
 - Simple API
 - Pretty console output
 - Exception handling
 
 **Disadvantages**:
+
 - Not structured by default
 - Less flexible than structlog
 - Smaller ecosystem
@@ -131,10 +142,12 @@ except Exception as e:
 **Approach**: Use python-json-logger with stdlib logging
 
 **Advantages**:
+
 - JSON output
 - Works with stdlib
 
 **Disadvantages**:
+
 - No console formatting
 - Manual context management
 - No rich integration
@@ -176,20 +189,22 @@ def setup_logging(
 def get_logger(name: str) -> BoundLogger:
     """Get a logger instance."""
     return structlog.get_logger(name)
-```
+```text
 
 ### Usage Patterns
 
 **Basic Logging**:
+
 ```python
 logger = get_logger(__name__)
 logger.info("Starting processing", file_path=pdf_path)
 logger.debug("Loaded page", page_num=1, dpi=300, size=(2480, 3509))
 logger.warning("Low confidence", detector="skew", confidence=0.35)
 logger.error("Failed to load", file_path=pdf_path, error=str(e))
-```
+```text
 
 **Performance Monitoring**:
+
 ```python
 @contextmanager
 def log_performance(operation: str):
@@ -205,36 +220,40 @@ def log_performance(operation: str):
 # Usage
 with log_performance("Skew detection"):
     result = skew_detector.detect(image)
-```
+```text
 
 **Bind Context**:
+
 ```python
 logger = get_logger(__name__).bind(document_id="doc_001", page_num=1)
 logger.info("Processing started")  # Includes document_id and page_num
 logger.info("Detected issue", issue_type="blur")  # Also includes document_id and page_num
-```
+```text
 
 ### Console Output Examples
 
 **Development Mode** (Rich):
-```
+
+```text
 [2025-11-05 10:23:45] INFO  Processing document file_path=/path/to/doc.pdf
 [2025-11-05 10:23:46] DEBUG Loaded page page_num=1 dpi=300 size=(2480, 3509)
 [2025-11-05 10:23:47] WARN  Low confidence detector=skew confidence=0.35
 [2025-11-05 10:23:48] INFO  Detected issues count=3 types=['blur', 'contrast', 'skew']
-```
+```text
 
 **Production Mode** (JSON):
+
 ```json
 {"timestamp": "2025-11-05T10:23:45", "level": "info", "event": "Processing document", "file_path": "/path/to/doc.pdf"}
 {"timestamp": "2025-11-05T10:23:46", "level": "debug", "event": "Loaded page", "page_num": 1, "dpi": 300, "size": [2480, 3509]}
 {"timestamp": "2025-11-05T10:23:47", "level": "warning", "event": "Low confidence", "detector": "skew", "confidence": 0.35}
 {"timestamp": "2025-11-05T10:23:48", "level": "info", "event": "Detected issues", "count": 3, "types": ["blur", "contrast", "skew"]}
-```
+```text
 
 ## Performance Impact
 
 **Logging Overhead**:
+
 - Console (rich): ~2-5ms per statement
 - JSON: ~1-2ms per statement
 - Stdlib logging: ~0.1ms per statement

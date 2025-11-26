@@ -28,19 +28,19 @@ Install the package:
 
 ```bash
 pip install image-preprocessing-detector
-```
+```text
 
 Process a document:
 
 ```bash
 imgprep process input.pdf --output result.json
-```
+```text
 
 ## Architecture Overview
 
 The system uses a multi-stage pipeline with text detection fork:
 
-```
+```text
 PDF/Image Input → Ingestion (300 DPI) → Text Gate
                                            ↓         ↓
                                       [NO TEXT]  [TEXT]
@@ -50,7 +50,7 @@ PDF/Image Input → Ingestion (300 DPI) → Text Gate
                                       Correction Pipeline
                                            ↓
                                       JSON Output
-```
+```text
 
 ## Navigation
 

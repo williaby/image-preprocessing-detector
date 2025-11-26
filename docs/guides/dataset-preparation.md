@@ -14,10 +14,12 @@ title: Phase 2 Dataset Preparation Guide
 description: Generate synthetic augmented dataset with weak supervision labels
   for IQA training
 tags:
+
 - phase_2
 - dataset
 - augmentation
 - weak_supervision
+
 ---
 
 **Last Updated**: 2025-01-15
@@ -66,7 +68,7 @@ cd ../../..
 
 # Verify
 ls -lh data/raw/tobacco800/
-```
+```text
 
 **For complete download instructions**, see [DATASET_INSTALLATION.md](dataset-installation.md).
 
@@ -80,7 +82,7 @@ poetry install --with dev
 
 # Verify installation
 poetry run python -c "import albumentations, cv2, numpy; print('✓ Dependencies OK')"
-```
+```text
 
 ---
 
@@ -111,7 +113,7 @@ poetry run python scripts/prepare_phase2_data.py \
     --output-dir datasets/iqa_phase2 \
     --num-samples 50000 \
     --preset heavy
-```
+```text
 
 **Parameters:**
 
@@ -132,7 +134,7 @@ poetry run python scripts/prepare_phase2_data.py \
 
 **Output Structure:**
 
-```
+```text
 datasets/iqa_phase2/
 ├── train/
 │   ├── images/
@@ -148,7 +150,7 @@ datasets/iqa_phase2/
     ├── images/
     │   └── ... (7,500 images)
     └── labels.json
-```
+```text
 
 ### Step 2: Verify Generated Dataset
 
@@ -169,11 +171,11 @@ head -100 datasets/iqa_phase2/train/labels.json
 find datasets/iqa_phase2/train/images -name "*.png" | wc -l  # Should be 35,000
 find datasets/iqa_phase2/val/images -name "*.png" | wc -l    # Should be 7,500
 find datasets/iqa_phase2/test/images -name "*.png" | wc -l   # Should be 7,500
-```
+```text
 
 Expected output statistics (from script):
 
-```
+```text
 DATASET GENERATION COMPLETE
 ============================================================
 
@@ -206,7 +208,7 @@ TEST SET (7500 samples):
     perspective    :   750 (10.0%)
     low_contrast   :  1125 (15.0%)
     orientation    :   375 (5.0%)
-```
+```text
 
 ---
 
@@ -226,7 +228,7 @@ gcloud config set project image-detection-478105
 
 # Verify bucket access
 gsutil ls gs://image_detection_b
-```
+```text
 
 ### Step 4: Upload Configuration
 
@@ -234,9 +236,10 @@ Upload the Phase 2 training configuration:
 
 ```bash
 ./scripts/gcs_helpers.sh upload-configs
-```
+```text
 
 This uploads:
+
 - `configs/colab_phase2_iqa_gcs.yaml` → `gs://image_detection_b/configs/`
 
 ### Step 5: Upload Dataset to GCS
@@ -246,7 +249,7 @@ Use the GCS helper script to upload your generated dataset:
 ```bash
 # Upload Phase 2 dataset (takes 10-30 minutes for ~10GB)
 ./scripts/gcs_helpers.sh upload-phase2
-```
+```text
 
 **What this does:**
 
@@ -257,7 +260,7 @@ Use the GCS helper script to upload your generated dataset:
 
 **Progress output:**
 
-```
+```text
 [INFO] Uploading Phase 2 dataset to GCS...
 [INFO] This may take 10-30 minutes for ~10GB...
 Copying file://datasets/iqa_phase2/train/images/img_000001.png [Content-Type=image/png]...
@@ -265,7 +268,7 @@ Copying file://datasets/iqa_phase2/train/images/img_000001.png [Content-Type=ima
 [INFO] Verifying upload...
 10.2 GiB    gs://image_detection_b/datasets/iqa_phase2
 [INFO] ✓ Phase 2 dataset uploaded
-```
+```text
 
 ### Step 6: Verify GCS Upload
 
@@ -275,11 +278,11 @@ Copying file://datasets/iqa_phase2/train/images/img_000001.png [Content-Type=ima
 
 # Show storage usage and costs
 ./scripts/gcs_helpers.sh info
-```
+```text
 
 Expected output:
 
-```
+```text
 [INFO] Storage usage by directory:
 10.2 GiB    gs://image_detection_b/datasets/iqa_phase2
 100 KiB     gs://image_detection_b/configs
@@ -289,7 +292,7 @@ Expected output:
 
 [INFO] Estimated monthly cost (Standard storage @ $0.020/GB):
 10.20 GB × $0.020 = $0.20/month
-```
+```text
 
 ---
 
@@ -351,7 +354,7 @@ Each split (train/val/test) has a `labels.json` file with this structure:
     }
   }
 ]
-```
+```text
 
 **Field Descriptions:**
 
@@ -413,7 +416,7 @@ Labels are generated automatically using reference-free image quality metrics:
 ```bash
 ls -lh data/raw/tobacco800/
 find data/raw/tobacco800/ -name "*.png" | head -10
-```
+```text
 
 ### Issue: "ModuleNotFoundError: No module named 'albumentations'"
 
@@ -421,16 +424,18 @@ find data/raw/tobacco800/ -name "*.png" | head -10
 
 ```bash
 poetry install --with dev
-```
+```text
 
 ### Issue: Script runs slowly
 
 **Reasons**:
+
 - Large source images (>2MB) require more processing time
 - Heavy augmentation preset increases processing time
 - Disk I/O bottleneck (especially on HDD)
 
 **Solutions**:
+
 - Use SSD for faster disk I/O
 - Reduce `--num-samples` for testing
 - Use `--preset light` for faster generation
@@ -443,7 +448,7 @@ poetry install --with dev
 gcloud auth login
 gcloud config set project image-detection-478105
 gsutil ls gs://image_detection_b  # Test access
-```
+```text
 
 ### Issue: GCS upload is slow
 
@@ -460,15 +465,16 @@ gsutil ls gs://image_detection_b  # Test access
 After generating and uploading the dataset:
 
 1. **Verify GCS Structure**:
+
    ```bash
    gsutil ls gs://image_detection_b/datasets/iqa_phase2/
    gsutil ls gs://image_detection_b/datasets/iqa_phase2/train/images/ | head -20
    ```
 
-2. **Open Colab Training Notebook**:
+1. **Open Colab Training Notebook**:
    - [notebooks/colab/phase2_iqa_training.ipynb](../notebooks/colab/phase2_iqa_training.ipynb)
 
-3. **Follow Training Guide**:
+2. **Follow Training Guide**:
    - [COLAB_TRAINING_GUIDE.md](colab-training.md)
 
 ---
@@ -494,7 +500,7 @@ poetry run python scripts/prepare_phase2_data.py \
 
 # Start training
 # Open: notebooks/colab/phase2_iqa_training.ipynb
-```
+```text
 
 ---
 

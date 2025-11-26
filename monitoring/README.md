@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 ## What Will Go Here (Phase 4+)
 
 **✅ Will belong in monitoring/**:
+
 - Prometheus metric configurations
 - Grafana dashboard JSON files
 - Alert rules (Prometheus Alertmanager)
@@ -22,6 +23,7 @@ SPDX-License-Identifier: MIT
 - SLO/SLI definitions
 
 **❌ Will NOT belong here**:
+
 - **Application logs** → Gitignored in `logs/` (runtime logs)
 - **Training logs** → Google Drive or TensorBoard (training artifacts)
 - **CI/CD logs** → `.github/workflows/` (workflow logs)
@@ -29,7 +31,7 @@ SPDX-License-Identifier: MIT
 
 ## Planned Structure (Phase 4)
 
-```
+```text
 monitoring/
 ├── prometheus/
 │   ├── rules/
@@ -46,27 +48,31 @@ monitoring/
 ├── opentelemetry/
 │   └── otel-collector-config.yaml
 └── README.md
-```
+```text
 
 ## Planned Metrics (Phase 4)
 
 ### Performance Metrics
+
 - **Latency**: p50, p95, p99 per page
 - **Throughput**: pages/second per worker
 - **Queue Depth**: pending documents in queue
 
 ### Quality Metrics
+
 - **IQA Accuracy**: mAP, F1 scores over time
 - **Layout Detection**: mAP@.50 over time
 - **Confidence Distribution**: confidence score histograms
 
 ### System Health
+
 - **CPU/Memory**: Resource utilization
 - **GPU Utilization**: GPU memory, compute usage
 - **Disk I/O**: Read/write throughput
 - **Network**: Request/response times
 
 ### Business Metrics
+
 - **Documents Processed**: Total count, rate
 - **Error Rate**: Failed document processing
 - **Model Version**: Active model versions in production
@@ -74,6 +80,7 @@ monitoring/
 ## Integration (Phase 4)
 
 ### Prometheus
+
 ```yaml
 # prometheus/prometheus.yml
 global:
@@ -83,14 +90,16 @@ scrape_configs:
   - job_name: 'image-preprocessing'
     static_configs:
       - targets: ['localhost:8000']
-```
+```text
 
 ### Grafana Dashboards
+
 - IQA Performance: Visualize detection accuracy over time
 - System Health: CPU, memory, GPU utilization
 - Document Processing: Throughput, latency, error rates
 
 ### Alerting Rules
+
 ```yaml
 # prometheus/rules/latency_alerts.yml
 groups:
@@ -103,15 +112,17 @@ groups:
           severity: warning
         annotations:
           summary: "High p95 latency detected"
-```
+```text
 
 ## Distinction from Other Folders
 
 ### vs. logs/
+
 - **monitoring/**: Metric collection and visualization configs
 - **logs/**: Actual runtime log files (gitignored)
 
 ### vs. tools/
+
 - **monitoring/**: Production observability (post-deployment)
 - **tools/**: Development tooling (pre-deployment)
 
@@ -136,4 +147,4 @@ prometheus-client = "^0.20.0"
 opentelemetry-api = "^1.23.0"
 opentelemetry-sdk = "^1.23.0"
 opentelemetry-instrumentation-fastapi = "^0.44b0"
-```
+```text

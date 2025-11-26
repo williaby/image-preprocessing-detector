@@ -449,7 +449,7 @@ The Project A codebase demonstrates excellent engineering quality with:
 
 ### Core Source Files (70 Python modules)
 
-```
+```text
 src/image_preprocessing_detector/
 ├── api/                     (7 files) - FastAPI service
 ├── augmentation/            (3 files) - Data augmentation
@@ -468,18 +468,18 @@ src/image_preprocessing_detector/
 ├── routing/                 (2 files) - Routing engine
 ├── training/                (6 files) - Model training
 └── utils/                   (8 files) - Utilities
-```
+```text
 
 ### Test Files (83 test modules)
 
-```
+```text
 tests/
 ├── unit/                    (51 files) - Unit tests
 ├── integration/             (20 files) - Integration tests
 ├── api/                     (6 files) - API tests
 ├── e2e/                     (3 files) - End-to-end tests
 └── security/                (1 file) - Security tests
-```
+```text
 
 ---
 

@@ -1,4 +1,5 @@
 # Dataset Validation Report
+
 **Generated**: 2025-11-13 07:00 UTC
 **Purpose**: Validate all required datasets are available locally and in GCS
 
@@ -38,6 +39,7 @@
 ### ⚠️ Empty Directories (3)
 
 These are raw dataset placeholders not currently used:
+
 - docbank (Phase 1 raw data)
 - rvl-cdip (Phase 1 raw data)
 - tobacco800 (Phase 1 raw data)
@@ -62,6 +64,7 @@ These are raw dataset placeholders not currently used:
 ### 📋 Pending GCS Upload (2)
 
 These will be uploaded once downloads complete:
+
 - tablebank (46.38 GB) - Download complete, needs upload
 - pubtabnet (downloading)
 - fintabnet (downloading)
@@ -71,10 +74,12 @@ These will be uploaded once downloads complete:
 ## Dataset Requirements by Phase
 
 ### Phase 1 (MVP - Classical Methods) ✅ COMPLETE
+
 - ✅ doclaynet (40.97 GB) - Layout detection benchmark
 - ✅ synthetic_iqa (345 KB) - Auto-generated quality tests
 
 ### Phase 2 (ML Image Quality) 🔄 IN PROGRESS
+
 - ✅ cocotext (52.44 MB) - Text detection
 - ✅ wili_2018 (128.44 MB) - Language identification
 - ✅ tablebank (46.38 GB) - Table detection
@@ -82,9 +87,11 @@ These will be uploaded once downloads complete:
 - 🔄 fintabnet (downloading) - Financial table detection
 
 ### Phase 3 (ML Document Layout) ✅ COMPLETE
+
 - ✅ omnidocbench (1.16 GB) - Comprehensive document understanding
 
 ### Optional/Additional
+
 - ✅ signatr6k (116 MB) - Signature detection
 
 ---
@@ -92,6 +99,7 @@ These will be uploaded once downloads complete:
 ## Validation Scripts Created
 
 ### Local Validation
+
 ```bash
 # Validate all local datasets
 poetry run python scripts/validate_datasets.py
@@ -101,6 +109,7 @@ poetry run python scripts/validate_datasets.py --output-json validation_results.
 ```
 
 ### GCS Upload
+
 ```bash
 # Upload all datasets to GCS
 ./scripts/upload_datasets_to_gcs.sh
@@ -116,6 +125,7 @@ poetry run python scripts/validate_datasets.py --output-json validation_results.
 ```
 
 ### Dataset Downloads
+
 ```bash
 # Download all table datasets
 poetry run python scripts/download_table_datasets.py --all
@@ -132,6 +142,7 @@ poetry run python scripts/download_omnidocbench.py
 ## Background Processes
 
 Currently running:
+
 1. **doclaynet → GCS upload** (41 GB, ~95% complete based on time elapsed)
 2. **Table datasets download** (PubTabNet 10.5GB + FinTabNet 3.2GB remaining)
 
@@ -144,6 +155,7 @@ Currently running:
    - FinTabNet (3.2 GB)
 
 2. **Upload new datasets to GCS**:
+
    ```bash
    ./scripts/upload_datasets_to_gcs.sh --dataset tablebank
    # (After pubtabnet/fintabnet complete)
@@ -152,11 +164,13 @@ Currently running:
    ```
 
 3. **Verify GCS completion**:
+
    ```bash
    gsutil ls -lhr gs://image_detection_b/image-preprocessing-detector/datasets/
    ```
 
 4. **Run smoke tests**:
+
    ```bash
    poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
    ```

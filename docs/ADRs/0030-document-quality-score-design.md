@@ -22,6 +22,7 @@ purpose: "Document the decision to compute a two-component Document Quality Scor
 **Date**: 2025-11-15
 **Deciders**: Byron Williams
 **Related**:
+
 - [ADR-014: Classical CV + ML Hybrid IQA](0014-classical-ml-hybrid-iqa.md)
 - [ADR-028: ResNet Teacher-Student Architecture](0028-resnet-teacher-student-architecture.md)
 - [ADR-029: Project A Scope Boundaries](0029-project-a-scope-boundaries.md)
@@ -32,12 +33,14 @@ purpose: "Document the decision to compute a two-component Document Quality Scor
 Project A processes diverse document types ranging from pristine born-digital PDFs to heavily degraded scans. Downstream projects (B: OCR, C: Fusion, D: Indexing) need a **single holistic quality signal** to make intelligent routing decisions.
 
 **Current State**:
+
 - Classical IQA produces 5+ metrics per page (blur, noise, skew, contrast, illumination)
 - ML IQA produces 5+ metrics per page (same dimensions, different algorithm)
 - Layout-lite produces structural attributes (has_tables, has_handwriting, complexity)
 - **Problem**: No single "quality score" to answer: "Is this document easy or hard to process?"
 
 **Downstream Needs**:
+
 1. **OCR Engine Selection** (Project B):
    - High-quality, simple layout → Fast OCR (Tesseract)
    - Degraded or complex layout → Advanced OCR (PaddleOCR, EasyOCR)
@@ -52,6 +55,7 @@ Project A processes diverse document types ranging from pristine born-digital PD
    - High-complexity documents → Semantic chunking with layout awareness
 
 **Key Questions**:
+
 - How do we aggregate 10+ IQA metrics into a single score?
 - Should we combine quality degradation and structural complexity, or keep them separate?
 - What weights should different metrics have?
@@ -69,6 +73,7 @@ Project A processes diverse document types ranging from pristine born-digital PD
 ```
 
 **Additionally compute**:
+
 ```json
 "pre_ocr_risk": 0.45  // 0-1, probability of OCR failure (combined signal)
 ```
@@ -78,11 +83,13 @@ Project A processes diverse document types ranging from pristine born-digital PD
 **Definition**: Quantifies image quality degradation (blur, noise, artifacts). Higher score = worse quality.
 
 **Inputs**:
+
 - Classical IQA: `blur_classical`, `noise_classical`, `skew_classical`, `contrast_classical`, `illumination_classical`, `jpeg_artifacts_classical`
 - ML IQA: `blur_ml`, `noise_ml`, `skew_ml`, `contrast_ml`, `illumination_ml`, `artifacts_ml`
 - Both normalized to 0-1 where 0 = perfect, 1 = severe degradation
 
 **Aggregation Formula (weighted average)**:
+
 ```python
 degradation_score = (
     w_blur * max(blur_classical, blur_ml) +
@@ -95,6 +102,7 @@ degradation_score = (
 ```
 
 **Default Weights** (calibrated against OCR performance):
+
 - `w_blur = 0.30` (most critical for OCR)
 - `w_noise = 0.20`
 - `w_skew = 0.15`
@@ -103,11 +111,13 @@ degradation_score = (
 - `w_artifacts = 0.10`
 
 **Rationale for max(classical, ml)**:
+
 - Classical and ML IQA may disagree on edge cases
 - Conservative approach: assume worst-case degradation
 - Alternative considered: average(classical, ml) - REJECTED as too optimistic
 
 **Page-level vs Document-level**:
+
 - Compute per-page degradation score
 - Document-level = **95th percentile** of page scores (worst 5% of pages dominate)
 - Rationale: OCR fails on worst pages, not average quality
@@ -117,6 +127,7 @@ degradation_score = (
 **Definition**: Quantifies document layout complexity. Higher score = more complex structure.
 
 **Inputs** (from layout-lite):
+
 - `layout_type`: `single_column=0.2`, `multi_column=0.5`, `three_column=0.7`, `complex=1.0`
 - `has_tables`: `true=+0.3`, `false=+0.0`
 - `has_figures`: `true=+0.2`, `false=+0.0`
@@ -125,6 +136,7 @@ degradation_score = (
 - Capped at 1.0
 
 **Aggregation Formula (additive with cap)**:
+
 ```python
 page_complexity = min(1.0,
     layout_type_score +
@@ -142,6 +154,7 @@ page_complexity = min(1.0,
 **Definition**: Probability (0-1) that OCR will fail on this document. Combines degradation and complexity.
 
 **Formula (logistic regression)**:
+
 ```python
 pre_ocr_risk = sigmoid(
     β0 +
@@ -156,6 +169,7 @@ sigmoid(x) = 1 / (1 + exp(-x))
 **Calibration**: Coefficients `β0, β1, β2, β3` tuned on validation set with ground-truth OCR failures.
 
 **Initial Estimates** (before calibration):
+
 - `β0 = -2.0` (low base rate of OCR failure)
 - `β1 = 3.0` (degradation strongly predicts failure)
 - `β2 = 2.0` (complexity moderately predicts failure)
@@ -166,6 +180,7 @@ sigmoid(x) = 1 / (1 + exp(-x))
 ## Output Schema
 
 **DocumentMetadata**:
+
 ```json
 {
   "document_id": "doc_12345",
@@ -216,6 +231,7 @@ def compute_routing(dqs, pre_ocr_risk, layout, pdf_type):
 ```
 
 **Teacher Escalation** (for ML IQA):
+
 ```python
 def should_escalate_to_teacher(page, student_uncertainty):
     # High degradation + high uncertainty
@@ -265,17 +281,20 @@ def should_escalate_to_teacher(page, student_uncertainty):
 ### Phase 1: Initial Weights (Week 3)
 
 **Approach**: Expert-driven weights based on OCR sensitivity literature
+
 - Blur > Noise > Skew > Contrast > Illumination > Artifacts
 - Validate on 100 manually annotated documents
 
 ### Phase 2: Data-Driven Calibration (Week 4)
 
 **Dataset**: 500+ documents with ground-truth OCR quality (CER, WER)
+
 - Fit logistic regression for `pre_ocr_risk` coefficients
 - Optimize degradation weights to maximize correlation with OCR error rate
 - Optimize complexity weights to maximize correlation with layout extraction failures
 
 **Evaluation Metrics**:
+
 - Degradation score: Spearman ρ > 0.7 with OCR CER
 - Complexity score: Spearman ρ > 0.6 with layout extraction F1
 - Pre-OCR risk: AUC-ROC > 0.85, Brier score < 0.15
@@ -283,12 +302,14 @@ def should_escalate_to_teacher(page, student_uncertainty):
 ### Phase 3: A/B Testing (Week 10)
 
 **Experiment**: Route 50% of documents using DQS, 50% using heuristics
+
 - Measure downstream OCR accuracy, latency, cost
 - Target: DQS routing improves OCR CER by > 5% with < 10% latency increase
 
 ## Configuration Parameters
 
 **config.yaml**:
+
 ```yaml
 dqs:
   degradation_weights:
@@ -332,10 +353,12 @@ dqs:
 **Approach**: `quality_score = w1 * degradation + w2 * complexity`
 
 **Pros**:
+
 - Simplest possible interface
 - Single threshold for all routing decisions
 
 **Cons**:
+
 - Information loss: cannot distinguish degraded+simple from pristine+complex
 - Non-interpretable: what does 0.65 mean?
 - **REJECTED**: Insufficient granularity for intelligent routing
@@ -345,10 +368,12 @@ dqs:
 **Approach**: Pass all 10+ IQA metrics to Project B, let it decide
 
 **Pros**:
+
 - No information loss
 - Maximum flexibility for downstream projects
 
 **Cons**:
+
 - Pushes complexity to Project B (violates separation of concerns)
 - Duplicates routing logic across multiple projects
 - Harder to evolve (changes in Project A break Project B)
@@ -359,10 +384,12 @@ dqs:
 **Approach**: Train a regression model to predict OCR CER from IQA metrics
 
 **Pros**:
+
 - Data-driven, no manual weight tuning
 - Potentially higher accuracy
 
 **Cons**:
+
 - Black-box: hard to debug and explain
 - Requires large labeled dataset (500+ documents with OCR ground truth)
 - More complex deployment (another model to maintain)
@@ -373,10 +400,12 @@ dqs:
 **Approach**: Use BRISQUE/NIQE as DQS
 
 **Pros**:
+
 - No calibration required
 - Widely recognized metrics
 
 **Cons**:
+
 - Designed for natural images, not documents
 - Weak correlation with OCR performance (ρ ~ 0.4-0.5)
 - No structural complexity component
@@ -385,6 +414,7 @@ dqs:
 ## Implementation Roadmap
 
 **Week 3: Core Implementation**
+
 - [ ] Implement `compute_degradation_score(page)` function
 - [ ] Implement `compute_complexity_score(page)` function
 - [ ] Implement `compute_pre_ocr_risk(document)` function
@@ -392,17 +422,20 @@ dqs:
 - [ ] Add configuration parameters
 
 **Week 4: Calibration**
+
 - [ ] Collect 500-document validation set with OCR ground truth
 - [ ] Fit logistic regression for pre-OCR risk coefficients
 - [ ] Optimize degradation weights via grid search
 - [ ] Validate: AUC-ROC > 0.85, Spearman ρ > 0.7
 
 **Week 5: Routing Logic**
+
 - [ ] Implement `compute_ocr_routing_recommendation(dqs, pdf_type, layout)`
 - [ ] Implement `should_escalate_to_teacher(page, uncertainty)`
 - [ ] Add routing recommendation to DocumentMetadata schema
 
 **Week 10: A/B Testing**
+
 - [ ] Deploy A/B test: DQS routing vs heuristics
 - [ ] Measure OCR CER, latency, cost
 - [ ] Target: > 5% OCR accuracy improvement

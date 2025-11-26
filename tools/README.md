@@ -5,6 +5,7 @@
 ## What Goes Here
 
 **✅ Belongs in tools/**:
+
 - Code quality tools (linting, formatting)
 - Documentation generation scripts
 - Front matter validation
@@ -12,6 +13,7 @@
 - Catalog generation utilities
 
 **❌ Does NOT belong here** (and where it should go instead):
+
 - **Dataset/GCS utilities** → `scripts/` (operational utilities)
 - **Training code** → `src/` or `notebooks/` (model training)
 - **Testing code** → `tests/` (unit/integration tests)
@@ -20,11 +22,13 @@
 ## Current Tools
 
 ### Front Matter Validation
+
 **Files**: `validate_front_matter.py`, `frontmatter_contract/`
 
 **Purpose**: Validates YAML front matter in markdown files (docs, ADRs) using Pydantic models
 
 **Usage**:
+
 ```bash
 # Validate all markdown files in docs/
 poetry run python tools/validate_front_matter.py docs
@@ -37,6 +41,7 @@ poetry run python tools/validate_front_matter.py docs --emit-json
 ```
 
 **Validates**:
+
 - YAML syntax correctness
 - Required fields present (title, status, owner, purpose)
 - Field types match Pydantic schema
@@ -47,10 +52,12 @@ poetry run python tools/validate_front_matter.py docs --emit-json
 - No redundant H1 headings in body (title renders automatically)
 
 **Autofix Capabilities**:
+
 - Normalize tags to snake_case (replace hyphens/spaces, lowercase)
 - Add terminal punctuation to purpose field
 
 **Schema Types**:
+
 - `common`: General documentation pages (default)
 - `script`: Tool/script documentation pages
 - `knowledge`: Knowledge base entries
@@ -59,11 +66,13 @@ poetry run python tools/validate_front_matter.py docs --emit-json
 **Integration**: Pre-commit hook (`.pre-commit-config.yaml`)
 
 ### Tools Catalog Generation
+
 **File**: `gen_tools_catalog.py`
 
 **Purpose**: Generates catalog of script documentation pages for MkDocs
 
 **Usage**:
+
 ```bash
 # Runs automatically during MkDocs build via gen-files plugin
 mkdocs build
@@ -72,6 +81,7 @@ mkdocs build
 ```
 
 **Features**:
+
 - Scans all markdown files with `schema_type: script`
 - Organizes by category (validation, data, build, docs, release, misc)
 - Includes usage examples and descriptions
@@ -80,15 +90,18 @@ mkdocs build
 **Integration**: MkDocs build process (`mkdocs-gen-files` plugin)
 
 ### Front Matter Contract
+
 **Directory**: `frontmatter_contract/`
 
 **Purpose**: Pydantic models for front matter validation
 
 **Files**:
+
 - `models.py`: Pydantic v2 models with discriminated union
 - `__init__.py`: Package exports
 
 **Models**:
+
 - `CommonFM`: Base schema for general documentation
 - `ScriptSpecFM`: Extended schema for script/tool docs
 - `KnowledgeFM`: Extended schema for knowledge base entries
@@ -100,14 +113,17 @@ mkdocs build
 ## Distinction from Other Folders
 
 ### vs. scripts/
+
 - **tools/**: Development and quality assurance tools
 - **scripts/**: Operational utilities for datasets, training, deployment
 
 ### vs. tests/
+
 - **tools/**: Development-time validation and generation
 - **tests/**: Runtime test execution (pytest)
 
 ### vs. monitoring/
+
 - **tools/**: Development tools (pre-deployment)
 - **monitoring/**: Runtime monitoring (post-deployment, Phase 4+)
 

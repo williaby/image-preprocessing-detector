@@ -5,6 +5,7 @@
 ## What Goes Here
 
 **✅ Belongs in models/**:
+
 - Trained model weights (`.pth`, `.pt`, `.safetensors`)
 - Exported ONNX models (`.onnx`)
 - Quantized models (INT8, FP16)
@@ -12,6 +13,7 @@
 - Model metadata files (version, architecture, metrics)
 
 **❌ Does NOT belong here** (and where it should go instead):
+
 - **Training configuration** → `configs/` (YAML/JSON hyperparameters)
 - **Training code** → `src/image_preprocessing_detector/training/` (Phase 4+)
 - **Training datasets** → `data/training/` (images, annotations)
@@ -20,7 +22,7 @@
 
 ## Directory Structure
 
-```
+```text
 models/
 ├── .gitkeep
 ├── iqa/                        # Phase 2: IQA models
@@ -45,7 +47,7 @@ models/
 │       ├── best.pth
 │       └── metadata.json
 └── README.md
-```
+```text
 
 ## Gitignore Patterns
 
@@ -58,9 +60,10 @@ models/**/*.onnx
 models/**/*.pt
 models/**/*.safetensors
 !models/.gitkeep
-```
+```text
 
 **Where models are actually stored**:
+
 - **During training**: Google Drive (`/content/drive/MyDrive/models/`)
 - **For distribution**: Google Cloud Storage bucket
 - **Local development**: Downloaded on-demand to `models/` (gitignored)
@@ -101,11 +104,12 @@ Each trained model should have a `metadata.json` file:
     "quantization": "fp32"
   }
 }
-```
+```text
 
 ## Loading Models
 
 ### PyTorch Models
+
 ```python
 import torch
 from pathlib import Path
@@ -113,9 +117,10 @@ from pathlib import Path
 model_path = Path("models/iqa/mobilenet_v3_small/best.pth")
 checkpoint = torch.load(model_path, map_location="cpu")
 model.load_state_dict(checkpoint["state_dict"])
-```
+```text
 
 ### ONNX Models
+
 ```python
 import onnxruntime as ort
 
@@ -123,11 +128,12 @@ session = ort.InferenceSession(
     "models/iqa/mobilenet_v3_small/best.onnx",
     providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
 )
-```
+```text
 
 ## Model Versioning
 
 Follow Semantic Versioning for models:
+
 - **MAJOR**: Breaking changes to input/output schema
 - **MINOR**: New capabilities or improved accuracy
 - **PATCH**: Bug fixes, quantization, optimization
@@ -144,7 +150,7 @@ bash scripts/gcs_helpers.sh download_model iqa/mobilenet_v3_small/best.onnx
 
 # Download all Phase 2 models
 bash scripts/gcs_helpers.sh download_models iqa/
-```
+```text
 
 ## Model Size Guidelines
 
@@ -160,20 +166,24 @@ bash scripts/gcs_helpers.sh download_models iqa/
 ## Distinction from Other Folders
 
 ### vs. configs/
+
 - **models/**: Binary model weights (`.pth`, `.onnx`) - GITIGNORED
 - **configs/**: Text configuration files (`.yaml`) - COMMITTED to git
 
 ### vs. data/
+
 - **models/**: Trained neural network weights
 - **data/**: Input datasets (images, annotations)
 
 ### vs. benchmarks/
+
 - **models/**: The model artifacts themselves
 - **benchmarks/**: Evaluation results and performance metrics
 
 ## Exporting Models
 
 ### PyTorch → ONNX
+
 ```python
 import torch
 
@@ -193,9 +203,10 @@ torch.onnx.export(
     output_names=["output"],
     dynamic_axes={"input": {0: "batch_size"}}
 )
-```
+```text
 
 ### INT8 Quantization
+
 ```python
 from onnxruntime.quantization import quantize_dynamic, QuantType
 
@@ -204,11 +215,12 @@ quantize_dynamic(
     "models/iqa/mobilenet_v3_small/best_int8.onnx",
     weight_type=QuantType.QInt8
 )
-```
+```text
 
 ## CI/CD Integration
 
 Models are NOT included in CI/CD:
+
 - **Tests**: Use mocked models or tiny fixtures from `data/test_fixtures/`
 - **Integration Tests**: Download specific model versions from GCS
 - **Production**: Models deployed separately via model registry (Phase 4+)
@@ -216,6 +228,7 @@ Models are NOT included in CI/CD:
 ## Model Registry (Phase 4+)
 
 Future: Integrate with model registry for versioning and deployment:
+
 - **MLflow**: Track experiments, log models, deploy endpoints
 - **Weights & Biases**: Track training runs, compare models
 - **GCS with versioning**: Simple bucket-based versioning
@@ -223,17 +236,21 @@ Future: Integrate with model registry for versioning and deployment:
 ## Phase-Specific Models
 
 ### Phase 2: IQA Models
+
 - `models/iqa/mobilenet_v3_small/` - Primary IQA model
 - `models/iqa/efficientnet_b0/` - Alternative (if trained)
 
 ### Phase 3: Layout Detection
+
 - `models/layout/yolov8n/` - Fast layout detector
 - `models/layout/yolov8s/` - Higher accuracy variant
 
 ### Phase 3: Document Restoration
+
 - `models/docres/docres_unified/` - DocRes 5-in-1 model
 
 ### Phase 4: Ensemble Models
+
 - `models/ensemble/` - Combined IQA + layout pipelines
 
 ## Security & Licensing
