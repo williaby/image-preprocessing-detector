@@ -1,0 +1,251 @@
+# Prometheus Alerting Rules for Image Preprocessing Detector
+#
+# These rules monitor the IQA pipeline and trigger alerts when:
+# - Error rates exceed thresholds
+# - Latency degrades significantly
+# - GPU/Modal budget limits approach
+# - Quality drift is detected
+#
+# Deploy with: kubectl apply -f prometheus_alerts.yaml
+# Or add to prometheus.yml under rule_files:
+
+groups:
+  - name: imgprep_errors
+    rules:
+      # High error rate alert
+      - alert: ImagePrepHighErrorRate
+        expr: >
+          sum(rate(imgprep_production_errors_total[5m]))
+          / sum(rate(imgprep_production_pages_processed_total[5m]))
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: image-preprocessing
+        annotations:
+          summary: "High error rate in image preprocessing"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook_url: "https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/high_error_rate.md"
+
+      # Sustained errors alert
+      - alert: ImagePrepSustainedErrors
+        expr: >
+          sum(increase(imgprep_production_errors_total[1h])) > 50
+        for: 10m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "Sustained errors in image preprocessing"
+          description: "{{ $value }} errors in the last hour"
+
+  - name: imgprep_latency
+    rules:
+      # P95 latency exceeds GPU target
+      - alert: ImagePrepHighLatencyGPU
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(imgprep_production_processing_latency_bucket{device="cuda"}[5m])) by (le)
+          ) > 150
+        for: 5m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "GPU processing latency degraded"
+          description: "P95 GPU latency is {{ $value | humanizeDuration }} (target: <150ms)"
+
+      # P95 latency exceeds CPU target
+      - alert: ImagePrepHighLatencyCPU
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(imgprep_production_processing_latency_bucket{device="cpu"}[5m])) by (le)
+          ) > 400
+        for: 5m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "CPU processing latency degraded"
+          description: "P95 CPU latency is {{ $value | humanizeDuration }} (target: <400ms)"
+
+      # P99 extreme latency
+      - alert: ImagePrepExtremeLatency
+        expr: >
+          histogram_quantile(0.99,
+            sum(rate(imgprep_production_processing_latency_bucket[5m])) by (le)
+          ) > 1000
+        for: 5m
+        labels:
+          severity: critical
+          service: image-preprocessing
+        annotations:
+          summary: "Extreme processing latency detected"
+          description: "P99 latency is {{ $value | humanizeDuration }} (>1s)"
+
+  - name: imgprep_quality
+    rules:
+      # Quality drift detection - median DQS drops
+      - alert: ImagePrepQualityDrift
+        expr: >
+          histogram_quantile(0.50,
+            sum(rate(imgprep_production_quality_score_bucket[1h])) by (le)
+          )
+          <
+          histogram_quantile(0.50,
+            sum(rate(imgprep_production_quality_score_bucket[24h])) by (le)
+          ) * 0.9
+        for: 30m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "Document quality score drift detected"
+          description: "Median DQS dropped >10% compared to 24h baseline"
+          runbook_url: "https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/quality_drift.md"
+
+      # High teacher escalation rate
+      - alert: ImagePrepHighEscalationRate
+        expr: >
+          sum(rate(imgprep_production_teacher_blocked_total[5m]))
+          / sum(rate(imgprep_production_pages_processed_total[5m]))
+          > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "High teacher model escalation rate"
+          description: "{{ $value | humanizePercentage }} of pages escalating to teacher (threshold: 20%)"
+
+      # Low quality documents spike
+      - alert: ImagePrepLowQualitySpike
+        expr: >
+          histogram_quantile(0.10,
+            sum(rate(imgprep_production_quality_score_bucket[5m])) by (le)
+          ) < 0.3
+        for: 15m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "Spike in low quality documents"
+          description: "10th percentile DQS is {{ $value }} (very poor quality documents)"
+
+  - name: imgprep_budget
+    rules:
+      # Daily budget warning (80%)
+      - alert: ImagePrepBudgetWarning
+        expr: >
+          sum(increase(imgprep_production_estimated_cost_dollars_total{cost_type="modal_gpu"}[24h]))
+          > 8.0
+        for: 5m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "Modal GPU budget at 80% of daily limit"
+          description: "Daily spend: ${{ $value | printf \"%.2f\" }} (limit: $10)"
+
+      # Daily budget exceeded
+      - alert: ImagePrepBudgetExceeded
+        expr: >
+          sum(increase(imgprep_production_estimated_cost_dollars_total{cost_type="modal_gpu"}[24h]))
+          > 10.0
+        for: 1m
+        labels:
+          severity: critical
+          service: image-preprocessing
+        annotations:
+          summary: "Modal GPU daily budget exceeded"
+          description: "Daily spend: ${{ $value | printf \"%.2f\" }} (limit: $10)"
+          runbook_url: "https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/budget_exceeded.md"
+
+      # Monthly budget warning
+      - alert: ImagePrepMonthlyBudgetWarning
+        expr: >
+          sum(imgprep_production_estimated_cost_dollars_total{cost_type="modal_gpu"})
+          > 80.0
+        for: 5m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "Modal GPU monthly budget at 80%"
+          description: "Monthly spend: ${{ $value | printf \"%.2f\" }} (limit: $100)"
+
+  - name: imgprep_infrastructure
+    rules:
+      # GPU memory high
+      - alert: ImagePrepGPUMemoryHigh
+        expr: >
+          imgprep_production_gpu_memory_bytes / 1073741824 > 14
+        for: 5m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "GPU memory usage high"
+          description: "GPU memory at {{ $value | printf \"%.1f\" }}GB (T4 has 16GB)"
+
+      # Queue depth high
+      - alert: ImagePrepQueueBacklog
+        expr: >
+          imgprep_production_queue_depth > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "Processing queue backlog detected"
+          description: "Queue depth: {{ $value }} (threshold: 100)"
+
+      # No workers active
+      - alert: ImagePrepNoWorkers
+        expr: >
+          imgprep_production_active_workers == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: image-preprocessing
+        annotations:
+          summary: "No active workers"
+          description: "All processing workers are down"
+
+      # Model not loaded
+      - alert: ImagePrepModelNotLoaded
+        expr: >
+          imgprep_production_model_loaded == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: image-preprocessing
+        annotations:
+          summary: "ML model not loaded"
+          description: "ONNX model failed to load - inference unavailable"
+
+  - name: imgprep_throughput
+    rules:
+      # Throughput below target (GPU)
+      - alert: ImagePrepLowThroughputGPU
+        expr: >
+          sum(rate(imgprep_production_pages_processed_total{device="cuda"}[5m])) < 6
+        for: 10m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "GPU throughput below target"
+          description: "Throughput: {{ $value | printf \"%.1f\" }} pages/sec (target: >6)"
+
+      # Throughput below target (CPU)
+      - alert: ImagePrepLowThroughputCPU
+        expr: >
+          sum(rate(imgprep_production_pages_processed_total{device="cpu"}[5m])) < 2
+        for: 10m
+        labels:
+          severity: warning
+          service: image-preprocessing
+        annotations:
+          summary: "CPU throughput below target"
+          description: "Throughput: {{ $value | printf \"%.1f\" }} pages/sec (target: >2)"
