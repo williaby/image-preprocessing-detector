@@ -176,17 +176,21 @@ class TestDocLayoutClass:
         )
 
     def test_from_model_output_variations(self) -> None:
-        """Test handling of common variations."""
+        """Test handling of common variations.
+
+        DocLayNet and DocStructBench use different class names.
+        The implementation maps to the primary enum for each schema.
+        """
         from image_preprocessing_detector.detection.doclayout_yolo import DocLayoutClass
 
-        # Different names for same class
-        assert DocLayoutClass.from_model_output("text") == DocLayoutClass.PLAIN_TEXT
-        assert DocLayoutClass.from_model_output("picture") == DocLayoutClass.FIGURE
+        # DocLayNet classes (primary schema)
+        assert DocLayoutClass.from_model_output("text") == DocLayoutClass.TEXT
+        assert DocLayoutClass.from_model_output("picture") == DocLayoutClass.PICTURE
+        assert DocLayoutClass.from_model_output("formula") == DocLayoutClass.FORMULA
+
+        # DocStructBench classes with aliases
         assert DocLayoutClass.from_model_output("image") == DocLayoutClass.FIGURE
-        assert (
-            DocLayoutClass.from_model_output("formula")
-            == DocLayoutClass.ISOLATE_FORMULA
-        )
+        assert DocLayoutClass.from_model_output("figure") == DocLayoutClass.FIGURE
         assert (
             DocLayoutClass.from_model_output("abandon") == DocLayoutClass.ABANDONED_TEXT
         )
