@@ -422,7 +422,10 @@ class TestDocLayoutYOLODetector:
         detector = DocLayoutYOLODetector()
 
         assert detector.is_loaded is False
-        assert detector._model_id == "juliozhao/DocLayout-YOLO-DocStructBench"
+        assert (
+            detector._model_id
+            == "juliozhao/DocLayout-YOLO-DocLayNet-DocSynth300K_pretrained"
+        )
 
     def test_initialization_custom_model(self) -> None:
         """Test initialization with custom model key."""

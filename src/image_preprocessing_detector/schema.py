@@ -302,7 +302,8 @@ class PageLayoutSummary(BaseModel):
         default=False, description="Page contains handwritten content"
     )
     has_list_items: bool = Field(
-        default=False, description="Page contains list items (DocLayNet List-item class)"
+        default=False,
+        description="Page contains list items (DocLayNet List-item class)",
     )
     has_headers_footers: bool = Field(
         default=False,
