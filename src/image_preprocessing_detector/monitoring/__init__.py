@@ -36,8 +36,10 @@ try:
 except ImportError:
     PROMETHEUS_AVAILABLE = False
     # Stub implementations for when prometheus_client is not installed
-    REGISTRY = None
+    # These stubs provide API compatibility when prometheus_client is not installed
+    REGISTRY = None  # type: ignore[assignment]
     CollectorRegistry = None  # type: ignore[misc, assignment]
+    multiprocess = None  # type: ignore[assignment]
 
     class Counter:  # type: ignore[no-redef]
         """Stub Counter metric when prometheus_client unavailable."""
@@ -47,7 +49,7 @@ except ImportError:
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Counter":
             """Return self for method chaining (no-op)."""
-            return self
+            return self  # type: ignore[return-value]
 
         def inc(self, _amount: float = 1) -> None:
             """Increment counter (no-op)."""
@@ -60,7 +62,7 @@ except ImportError:
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Gauge":
             """Return self for method chaining (no-op)."""
-            return self
+            return self  # type: ignore[return-value]
 
         def set(self, _value: float) -> None:
             """Set gauge value (no-op)."""
@@ -79,7 +81,7 @@ except ImportError:
 
         def labels(self, *_args: Any, **_kwargs: Any) -> "Histogram":
             """Return self for method chaining (no-op)."""
-            return self
+            return self  # type: ignore[return-value]
 
         def observe(self, _amount: float) -> None:
             """Observe value (no-op)."""
@@ -93,11 +95,11 @@ except ImportError:
         def info(self, _val: dict[str, str]) -> None:
             """Set info labels (no-op)."""
 
-    def generate_latest(_registry: Any = None) -> bytes:
+    def generate_latest(_registry: Any = None) -> bytes:  # type: ignore[misc]
         """Generate empty metrics output (stub)."""
         return b""
 
-    def start_http_server(_port: int, _registry: Any = None) -> None:
+    def start_http_server(_port: int, _registry: Any = None) -> None:  # type: ignore[misc]
         """Start HTTP server (no-op stub)."""
 
 
@@ -560,7 +562,7 @@ class MetricsCollector:
         """
         if not PROMETHEUS_AVAILABLE:
             return b"# prometheus_client not installed\n"
-        return generate_latest(self._registry)
+        return generate_latest(self._registry)  # type: ignore[arg-type]
 
     def start_server(self, port: int | None = None) -> None:
         """Start the metrics HTTP server.
@@ -572,7 +574,7 @@ class MetricsCollector:
             return
 
         server_port = port or self._config.port
-        start_http_server(server_port, registry=self._registry)
+        start_http_server(server_port, registry=self._registry)  # type: ignore[arg-type]
 
 
 # ============================================================================

@@ -369,25 +369,25 @@ class OutcomeLogger:
         avg_time = sum(o.total_time_ms for o in self._batch_outcomes) / total_pages
 
         # Gate decision distribution
-        gate_decisions = {}
+        gate_decisions: dict[str, int] = {}
         for o in self._batch_outcomes:
             gate_decisions[o.gate_decision.value] = (
                 gate_decisions.get(o.gate_decision.value, 0) + 1
             )
 
         # Device distribution
-        device_distribution = {}
+        device_distribution: dict[str, int] = {}
         for o in self._batch_outcomes:
             device_distribution[o.device_used.value] = (
                 device_distribution.get(o.device_used.value, 0) + 1
             )
 
         # Correction stats
-        all_corrections = []
+        all_corrections: list[str] = []
         for o in self._batch_outcomes:
             all_corrections.extend(o.corrections_applied)
 
-        correction_counts = {}
+        correction_counts: dict[str, int] = {}
         for c in all_corrections:
             correction_counts[c] = correction_counts.get(c, 0) + 1
 

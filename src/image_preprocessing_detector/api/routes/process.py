@@ -143,15 +143,14 @@ async def process_document(
         if ext == ".pdf":
             # PDF processing
             from image_preprocessing_detector.classification.pdf_type_classifier import (
-                PDFTypeClassifier,
+                classify_pdf_type,
             )
             from image_preprocessing_detector.ingestion.pdf_loader import PDFLoader
 
             pdf_loader = PDFLoader()
-            classifier = PDFTypeClassifier()
 
             # Classify PDF type
-            pdf_type_result = classifier.classify(file_path)
+            pdf_type_result = classify_pdf_type(file_path)
             pdf_type = pdf_type_result.value if pdf_type_result else None
 
             # Load pages - PDFLoader.load() returns PageImage objects

@@ -882,7 +882,7 @@ class DriftDetector:
         if total > 0:
             resampled = resampled / total
 
-        return resampled.tolist()
+        return resampled.tolist()  # type: ignore[no-any-return]
 
     def create_reference_from_tracker(
         self,

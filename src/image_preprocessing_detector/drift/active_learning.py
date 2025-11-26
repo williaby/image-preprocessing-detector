@@ -609,7 +609,7 @@ class ManifestGenerator:
         Returns:
             List of manifest file paths
         """
-        manifests = []
+        manifests: list[Path] = []
 
         for month_dir in sorted(self.output_dir.iterdir()):
             if month_dir.is_dir() and month_dir.name.isdigit():

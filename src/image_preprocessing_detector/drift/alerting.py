@@ -328,7 +328,7 @@ class WebhookDispatcher:
             with urllib.request.urlopen(  # noqa: S310
                 request, timeout=self.timeout
             ) as response:
-                return response.status == 200
+                return bool(response.status == 200)
 
         except Exception:
             logger.exception("Failed to dispatch alert to webhook")
@@ -397,7 +397,7 @@ class SlackDispatcher:
             }
 
             if alert.runbook_url:
-                payload["attachments"][0]["fields"].append(
+                payload["attachments"][0]["fields"].append(  # type: ignore[attr-defined]
                     {"title": "Runbook", "value": alert.runbook_url, "short": False}
                 )
 
@@ -412,7 +412,7 @@ class SlackDispatcher:
             with urllib.request.urlopen(  # noqa: S310
                 request, timeout=30
             ) as response:
-                return response.status == 200
+                return bool(response.status == 200)
 
         except Exception:
             logger.exception("Failed to dispatch alert to Slack")
@@ -654,6 +654,7 @@ class AlertManager:
         self._alert_counter = 0
 
         # Set up dry-run dispatcher if enabled
+        self._dry_run_dispatcher: DryRunDispatcher | None
         if config.dry_run:
             self._dry_run_dispatcher = DryRunDispatcher()
         else:

@@ -247,7 +247,7 @@ def redact_pii_processor(
     """Redact PII from log event."""
     config = get_logging_config()
     redactor = PIIRedactor(config)
-    return redactor.redact(event_dict)
+    return redactor.redact(event_dict)  # type: ignore[no-any-return]
 
 
 def add_service_info(
@@ -334,6 +334,7 @@ def setup_logging(config: LoggingConfig | None = None) -> None:
         log_path = Path(config.log_file_path)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
+        file_handler: RotatingFileHandler | TimedRotatingFileHandler
         if config.rotation_when in ("midnight", "hourly"):
             # Time-based rotation
             file_handler = TimedRotatingFileHandler(

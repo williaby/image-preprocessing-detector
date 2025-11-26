@@ -527,9 +527,9 @@ class SentryIntegration:
                 sentry_sdk.set_tag("error_category", error.category.value)
 
                 if error.exception:
-                    return sentry_sdk.capture_exception(error.exception)
-                return sentry_sdk.capture_message(error.message, level="error")
-            return sentry_sdk.capture_exception(error)
+                    return sentry_sdk.capture_exception(error.exception)  # type: ignore[no-any-return]
+                return sentry_sdk.capture_message(error.message, level="error")  # type: ignore[no-any-return]
+            return sentry_sdk.capture_exception(error)  # type: ignore[no-any-return]
 
         except Exception:
             return None

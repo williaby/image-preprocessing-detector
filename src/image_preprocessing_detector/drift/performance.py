@@ -402,8 +402,8 @@ class MetricsStore:
                     avg_metrics[metric] = []
                 avg_metrics[metric].append(value)
 
-        aggregated_metrics = {
-            metric: np.mean(values) for metric, values in avg_metrics.items()
+        aggregated_metrics: dict[str, float] = {
+            metric: float(np.mean(values)) for metric, values in avg_metrics.items()
         }
 
         # Return aggregated baseline
