@@ -26,7 +26,6 @@ import logging
 import os
 import sys
 import time
-from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -38,7 +37,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from scripts.omnidocbench_baseline.models import ModelRegistry, load_model
-from scripts.omnidocbench_baseline.models.base import BaseModel, ModelPrediction
+from scripts.omnidocbench_baseline.models.base import BaseModel
 
 logging.basicConfig(
     level=logging.INFO,
@@ -116,7 +115,9 @@ def extract_ground_truth(record: dict[str, Any]) -> dict[str, Any]:
         "has_dense_math": sum(1 for c in categories if c in FORMULA_CATS) >= 3,
         "fuzzy_scan": page_attr.get("fuzzy_scan", False),
         "watermark": page_attr.get("watermark", False),
-        "colorful_background": page_attr.get("colorful_backgroud", False),  # typo in dataset
+        "colorful_background": page_attr.get(
+            "colorful_backgroud", False
+        ),  # typo in dataset
         "language": page_attr.get("language", "unknown"),
         "data_source": page_attr.get("data_source", "unknown"),
     }
@@ -141,10 +142,9 @@ def load_image_from_record(record: dict[str, Any]) -> np.ndarray | None:
                 rgb_array = np.array(pil_image)
                 if len(rgb_array.shape) == 2:
                     return cv2.cvtColor(rgb_array, cv2.COLOR_GRAY2BGR)
-                elif rgb_array.shape[2] == 4:
+                if rgb_array.shape[2] == 4:
                     return cv2.cvtColor(rgb_array, cv2.COLOR_RGBA2BGR)
-                else:
-                    return cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR)
+                return cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR)
         return None
     except Exception as e:
         logger.warning(f"Failed to load image: {e}")
@@ -156,7 +156,9 @@ def load_image_from_record(record: dict[str, Any]) -> np.ndarray | None:
 # =============================================================================
 
 
-def calculate_binary_metrics(y_true: list[bool], y_pred: list[bool]) -> dict[str, float]:
+def calculate_binary_metrics(
+    y_true: list[bool], y_pred: list[bool]
+) -> dict[str, float]:
     """Calculate metrics for binary classification."""
     if len(y_true) == 0:
         return {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 0}
@@ -167,7 +169,11 @@ def calculate_binary_metrics(y_true: list[bool], y_pred: list[bool]) -> dict[str
 
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
 
     return {
         "precision": precision,
@@ -187,6 +193,7 @@ def calculate_correlation(scores: list[float], labels: list[bool]) -> float:
 
     try:
         from scipy.stats import pointbiserialr
+
         corr, _ = pointbiserialr(labels, scores)
         return corr if not np.isnan(corr) else 0.0
     except ImportError:
@@ -222,14 +229,19 @@ def run_benchmark(
 
     # Determine which attributes to evaluate
     benchmarkable = set(model.benchmarkable_attributes)
-    binary_attrs = ["fuzzy_scan", "watermark", "colorful_background",
-                    "has_tables", "has_figures", "has_dense_math"]
+    binary_attrs = [
+        "fuzzy_scan",
+        "watermark",
+        "colorful_background",
+        "has_tables",
+        "has_figures",
+        "has_dense_math",
+    ]
     eval_binary = [a for a in binary_attrs if a in benchmarkable]
 
     # Collections for metrics
     collections: dict[str, dict[str, list]] = {
-        attr: {"y_true": [], "y_pred": [], "scores": []}
-        for attr in eval_binary
+        attr: {"y_true": [], "y_pred": [], "scores": []} for attr in eval_binary
     }
     layout_true: list[str] = []
     layout_pred: list[str] = []
@@ -301,8 +313,12 @@ def run_benchmark(
         },
         "performance": {
             "mean_inference_ms": np.mean(inference_times) if inference_times else 0,
-            "p50_inference_ms": np.percentile(inference_times, 50) if inference_times else 0,
-            "p95_inference_ms": np.percentile(inference_times, 95) if inference_times else 0,
+            "p50_inference_ms": np.percentile(inference_times, 50)
+            if inference_times
+            else 0,
+            "p95_inference_ms": np.percentile(inference_times, 95)
+            if inference_times
+            else 0,
         },
         "binary_attributes": {},
         "correlations": {},
@@ -325,7 +341,9 @@ def run_benchmark(
 
     # Layout metrics
     if layout_true and "layout_type" in benchmarkable:
-        accuracy = sum(1 for gt, pred in zip(layout_true, layout_pred) if gt == pred) / len(layout_true)
+        accuracy = sum(
+            1 for gt, pred in zip(layout_true, layout_pred) if gt == pred
+        ) / len(layout_true)
         results["layout"] = {"accuracy": accuracy}
 
     # Summary
@@ -391,13 +409,19 @@ def print_results_summary(results: dict[str, Any]) -> None:
     print(f"BENCHMARK RESULTS: {model['name']} (v{model['version']})")
     print("=" * 70)
     print(f"\nSamples: {meta['processed']} | Errors: {meta['errors']}")
-    print(f"Time: {meta['elapsed_seconds']:.1f}s | Rate: {meta['samples_per_second']:.1f}/sec")
-    print(f"Inference: {perf['mean_inference_ms']:.1f}ms (p50), {perf['p95_inference_ms']:.1f}ms (p95)")
+    print(
+        f"Time: {meta['elapsed_seconds']:.1f}s | Rate: {meta['samples_per_second']:.1f}/sec"
+    )
+    print(
+        f"Inference: {perf['mean_inference_ms']:.1f}ms (p50), {perf['p95_inference_ms']:.1f}ms (p95)"
+    )
 
     print("\nBinary Attribute Detection:")
     for attr, metrics in results.get("binary_attributes", {}).items():
         status = "✅" if metrics["f1"] >= 0.85 else "❌"
-        print(f"  {status} {attr:25s}: F1={metrics['f1']:.3f} P={metrics['precision']:.3f} R={metrics['recall']:.3f}")
+        print(
+            f"  {status} {attr:25s}: F1={metrics['f1']:.3f} P={metrics['precision']:.3f} R={metrics['recall']:.3f}"
+        )
 
     if results.get("correlations"):
         print("\nScore Correlations:")
@@ -539,7 +563,9 @@ def main() -> int:
                 for r in all_results
             },
         }
-        combined_path = args.output / f"comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        combined_path = (
+            args.output / f"comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         with open(combined_path, "w", encoding="utf-8") as f:
             json.dump(combined, f, indent=2, default=str)
         logger.info(f"Saved comparison to {combined_path}")
