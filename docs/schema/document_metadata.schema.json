@@ -1,0 +1,597 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/project-a/document-metadata.schema.json",
+  "title": "DocumentMetadata",
+  "description": "Project A output schema for Project B handoff - Preprocessing, IQA & Coarse Layout Gateway",
+  "type": "object",
+  "required": [
+    "document_id",
+    "file_name",
+    "source_mime",
+    "num_pages",
+    "pdf_type",
+    "dqs",
+    "pre_ocr_risk",
+    "ocr_routing_recommendation",
+    "page_layout_summary",
+    "pages",
+    "processing_version"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique document identifier",
+      "examples": ["doc_20251125_001"]
+    },
+    "file_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Original input filename",
+      "examples": ["contract_scan.pdf"]
+    },
+    "source_mime": {
+      "type": "string",
+      "description": "MIME type of source document",
+      "examples": ["application/pdf", "image/png", "image/jpeg", "image/tiff"]
+    },
+    "num_pages": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Total number of pages in document"
+    },
+    "pdf_type": {
+      "type": "string",
+      "enum": ["image_only", "born_digital", "hybrid"],
+      "description": "Document classification for routing decisions"
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z]{2}$"
+      },
+      "description": "ISO 639-1 language codes detected",
+      "examples": [["en"], ["en", "es"]]
+    },
+    "has_non_latin": {
+      "type": "boolean",
+      "default": false,
+      "description": "Document contains non-Latin scripts (CJK, Arabic, etc.)"
+    },
+    "pre_ocr_risk": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Combined risk score for OCR difficulty (0=easy, 1=very difficult)"
+    },
+    "dqs": {
+      "$ref": "#/$defs/DQSMetadata"
+    },
+    "ocr_routing_recommendation": {
+      "type": "string",
+      "enum": ["ocr_fast", "ocr_advanced", "vision_simple", "vision_structured"],
+      "description": "Recommended OCR strategy for Project B"
+    },
+    "page_layout_summary": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PageLayoutSummary"
+      },
+      "description": "Per-page coarse layout attributes (NOT full semantic layout)"
+    },
+    "upscaling": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/UpscalingMetadata"}
+      ],
+      "description": "DPI upscaling metadata (present if upscaling was performed)"
+    },
+    "teacher_usage": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/TeacherUsage"}
+      ],
+      "description": "Teacher model escalation metadata"
+    },
+    "processing_version": {
+      "$ref": "#/$defs/ProcessingVersion"
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PageMetadata"
+      },
+      "description": "Per-page detailed metadata"
+    }
+  },
+  "$defs": {
+    "DQSMetadata": {
+      "type": "object",
+      "required": ["degradation_score", "structural_complexity_score"],
+      "properties": {
+        "degradation_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Image degradation level (0=pristine, 1=severely degraded)"
+        },
+        "structural_complexity_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Layout complexity (0=simple, 1=very complex)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PageLayoutSummary": {
+      "type": "object",
+      "required": ["page_number", "layout_type", "complexity_score"],
+      "properties": {
+        "page_number": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-based page number"
+        },
+        "layout_type": {
+          "type": "string",
+          "enum": ["single_column", "multi_column", "three_column", "complex", "unknown"],
+          "description": "Coarse layout classification"
+        },
+        "has_tables": {
+          "type": "boolean",
+          "default": false,
+          "description": "Page contains tabular data"
+        },
+        "has_figures": {
+          "type": "boolean",
+          "default": false,
+          "description": "Page contains images/diagrams"
+        },
+        "has_dense_math": {
+          "type": "boolean",
+          "default": false,
+          "description": "Mathematical notation detected"
+        },
+        "has_handwriting": {
+          "type": "boolean",
+          "default": false,
+          "description": "Handwritten content present"
+        },
+        "fuzzy_scan": {
+          "type": "boolean",
+          "default": false,
+          "description": "Low-quality/blurry scan"
+        },
+        "watermark": {
+          "type": "boolean",
+          "default": false,
+          "description": "Watermark overlay detected"
+        },
+        "colorful_background": {
+          "type": "boolean",
+          "default": false,
+          "description": "Non-white background affects OCR"
+        },
+        "complexity_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Structural complexity for routing (0=simple, 1=complex)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "UpscalingMetadata": {
+      "type": "object",
+      "required": ["performed"],
+      "properties": {
+        "performed": {
+          "type": "boolean",
+          "description": "Whether upscaling was applied"
+        },
+        "original_dpi": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Original document DPI"
+        },
+        "target_dpi": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Target DPI (typically 300)"
+        },
+        "algorithm": {
+          "type": "string",
+          "enum": ["lanczos", "bicubic", "inter_linear", "inter_cubic", "inter_area"],
+          "description": "Upscaling algorithm used"
+        },
+        "processing_time_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Upscaling processing time in milliseconds"
+        }
+      },
+      "additionalProperties": true
+    },
+    "TeacherUsage": {
+      "type": "object",
+      "properties": {
+        "pages_with_teacher": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0},
+          "description": "Page indices where teacher model was used"
+        },
+        "escalation_reasons": {
+          "type": "object",
+          "additionalProperties": {"type": "string"},
+          "description": "Mapping of page index to escalation reason"
+        },
+        "teacher_device": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string"}
+          ],
+          "description": "Device used for teacher inference (cuda, cpu, modal)"
+        },
+        "total_teacher_time_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total teacher inference time in milliseconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ProcessingVersion": {
+      "type": "object",
+      "required": ["pipeline_version", "timestamp"],
+      "properties": {
+        "pipeline_version": {
+          "type": "string",
+          "description": "Semantic version of processing pipeline",
+          "examples": ["1.0.0"]
+        },
+        "iqa_model_hash": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string"}
+          ],
+          "description": "SHA256 hash of IQA model weights"
+        },
+        "layout_model_hash": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string"}
+          ],
+          "description": "SHA256 hash of layout model weights"
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Configuration thresholds used during processing"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 processing timestamp"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PageMetadata": {
+      "type": "object",
+      "required": ["page_index", "width_px", "height_px", "dpi_input", "dpi_effective"],
+      "properties": {
+        "page_index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based page index"
+        },
+        "width_px": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Page width in pixels"
+        },
+        "height_px": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Page height in pixels"
+        },
+        "dpi_input": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Original DPI of input"
+        },
+        "dpi_effective": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "DPI after processing (typically 300)"
+        },
+        "ml_iqa": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/MLIQAResult"}
+          ],
+          "description": "Student model ML IQA scores"
+        },
+        "teacher_iqa": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/MLIQAResult"}
+          ],
+          "description": "Teacher model IQA scores (if escalated)"
+        },
+        "detected_issues": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/DetectedIssue"},
+          "default": [],
+          "description": "Quality issues detected on this page"
+        },
+        "planned_actions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/PlannedAction"},
+          "default": [],
+          "description": "Correction actions planned"
+        },
+        "elements": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/DocumentElement"},
+          "default": [],
+          "description": "Detected document elements"
+        },
+        "languages": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/LanguageInfo"},
+          "default": [],
+          "description": "Detected languages/scripts"
+        },
+        "transform_history": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/TransformHistory"},
+          "default": [],
+          "description": "History of transformations applied"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MLIQAResult": {
+      "type": "object",
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["student", "teacher"],
+          "description": "Model that produced these scores"
+        },
+        "blur_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Sharpness score (0=blurry, 1=sharp)"
+        },
+        "noise_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Noise level (0=noisy, 1=clean)"
+        },
+        "contrast_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Contrast quality (0=poor, 1=good)"
+        },
+        "skew_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Alignment (0=skewed, 1=straight)"
+        },
+        "compression_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Compression artifacts (0=heavy, 1=clean)"
+        },
+        "overall_quality": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weighted aggregate quality score"
+        },
+        "device": {
+          "type": "string",
+          "description": "Device used for inference (cuda, cpu, modal)"
+        },
+        "inference_time_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Inference time in milliseconds"
+        },
+        "escalation_reason": {
+          "type": "string",
+          "description": "Reason for teacher escalation (teacher only)"
+        }
+      },
+      "additionalProperties": true
+    },
+    "DetectedIssue": {
+      "type": "object",
+      "required": ["type", "confidence", "severity"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["noise", "blur", "skew", "perspective", "low_contrast", "orientation", "low_dpi"],
+          "description": "Type of quality issue"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Issue severity level"
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Additional metrics specific to issue type"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PlannedAction": {
+      "type": "object",
+      "required": ["action", "confidence", "reason"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["deskew", "perspective_correction", "sharpen", "denoise", "clahe", "background_normalization", "upsample", "rotate"],
+          "description": "Type of correction action"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Parameters for the correction"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in this action"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for this action"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DocumentElement": {
+      "type": "object",
+      "required": ["id", "category", "bbox", "confidence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique element identifier"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["table", "image", "handwriting", "formula", "text_block", "figure"],
+          "description": "Element category"
+        },
+        "bbox": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0},
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "COCO format bounding box [x, y, width, height]"
+        },
+        "polygon": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {"type": "integer"},
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          ],
+          "description": "Optional polygon points for irregular shapes"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence"
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Additional element-specific attributes"
+        },
+        "quality_issues": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/DetectedIssue"},
+          "default": [],
+          "description": "Quality issues specific to this element"
+        },
+        "needs_correction": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether element requires correction"
+        },
+        "correction_applied": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "additionalProperties": true}
+          ],
+          "description": "Details of correction applied"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LanguageInfo": {
+      "type": "object",
+      "required": ["script", "confidence"],
+      "properties": {
+        "script": {
+          "type": "string",
+          "description": "Script name (Latin, CJK, Arabic, etc.)"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TransformHistory": {
+      "type": "object",
+      "required": ["action", "started_at", "finished_at", "status"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "Name of action performed"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Parameters used"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 start timestamp"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 completion timestamp"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "failed", "skipped"],
+          "description": "Action status"
+        },
+        "error_message": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "string"}
+          ],
+          "description": "Error message if failed"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

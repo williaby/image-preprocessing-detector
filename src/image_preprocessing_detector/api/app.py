@@ -33,13 +33,13 @@ logger = structlog.get_logger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> Any:
+async def lifespan(_app: FastAPI) -> Any:
     """Application lifespan context manager.
 
     Handles startup and shutdown events.
 
     Args:
-        app: The FastAPI application instance.
+        _app: The FastAPI application instance (unused but required by FastAPI).
 
     Yields:
         None during application runtime.

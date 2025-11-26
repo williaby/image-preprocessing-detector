@@ -13,7 +13,7 @@ import uuid
 from collections import defaultdict
 from collections.abc import Awaitable, Callable
 from contextvars import ContextVar
-from typing import Any
+from typing import Any, ClassVar
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -150,7 +150,7 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
     """
 
     # Endpoints that don't require authentication
-    PUBLIC_PATHS = {
+    PUBLIC_PATHS: ClassVar[set[str]] = {
         "/",
         "/health",
         "/ready",
@@ -199,12 +199,9 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
 
         # Handle localhost variants
         localhost_ips = {"127.0.0.1", "::1", "localhost"}
-        if client_ip in localhost_ips and any(
+        return client_ip in localhost_ips and any(
             ip in localhost_ips for ip in self.internal_callers
-        ):
-            return True
-
-        return False
+        )
 
     async def dispatch(
         self,

@@ -286,18 +286,20 @@ class WebhookDispatcher:
             import urllib.request
 
             payload = json.dumps(alert.to_dict()).encode("utf-8")
-            request = urllib.request.Request(
+            request = urllib.request.Request(  # noqa: S310
                 self.webhook_url,
                 data=payload,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
 
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(  # noqa: S310
+                request, timeout=self.timeout
+            ) as response:
                 return response.status == 200
 
-        except Exception as e:
-            logger.error(f"Failed to dispatch alert to webhook: {e}")
+        except Exception:
+            logger.exception("Failed to dispatch alert to webhook")
             return False
 
 
@@ -364,18 +366,20 @@ class SlackDispatcher:
                 )
 
             data = json.dumps(payload).encode("utf-8")
-            request = urllib.request.Request(
+            request = urllib.request.Request(  # noqa: S310
                 self.webhook_url,
                 data=data,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
 
-            with urllib.request.urlopen(request, timeout=30) as response:
+            with urllib.request.urlopen(  # noqa: S310
+                request, timeout=30
+            ) as response:
                 return response.status == 200
 
-        except Exception as e:
-            logger.error(f"Failed to dispatch alert to Slack: {e}")
+        except Exception:
+            logger.exception("Failed to dispatch alert to Slack")
             return False
 
 
@@ -454,8 +458,8 @@ class AlertHistory:
                     if dt > cutoff:
                         self._last_alert_times[key] = dt
 
-            except (json.JSONDecodeError, KeyError) as e:
-                logger.error(f"Error loading alert history: {e}")
+            except (json.JSONDecodeError, KeyError):
+                logger.exception("Error loading alert history")
 
     def _save_history(self) -> None:
         """Save alert history to storage."""
@@ -886,8 +890,8 @@ class AlertManager:
                         logger.warning(
                             f"Failed to dispatch alert {alert.alert_id} to {channel.value}"
                         )
-                except Exception as e:
-                    logger.error(f"Error dispatching alert to {channel.value}: {e}")
+                except Exception:
+                    logger.exception(f"Error dispatching alert to {channel.value}")
 
     def get_dry_run_alerts(self) -> list[DriftAlert]:
         """Get alerts from dry-run mode.
@@ -982,24 +986,6 @@ def check_drift_and_alert(
 
 
 __all__ = [
-    # Classes
-    "AlertConfig",
-    "AlertHistory",
-    "AlertManager",
-    "DriftAlert",
-    "DriftSample",
-    "DryRunDispatcher",
-    "LogDispatcher",
-    "SlackDispatcher",
-    "WebhookDispatcher",
-    # Enums
-    "AlertChannel",
-    "AlertSeverity",
-    "AlertType",
-    # Functions
-    "check_drift_and_alert",
-    "create_alert_manager",
-    # Constants
     "DEFAULT_COOLDOWN_MINUTES",
     "F1_DROP_CRITICAL_THRESHOLD",
     "F1_DROP_WARNING_THRESHOLD",
@@ -1010,4 +996,18 @@ __all__ = [
     "MAX_SAMPLES_IN_ALERT",
     "PSI_CRITICAL_THRESHOLD",
     "PSI_WARNING_THRESHOLD",
+    "AlertChannel",
+    "AlertConfig",
+    "AlertHistory",
+    "AlertManager",
+    "AlertSeverity",
+    "AlertType",
+    "DriftAlert",
+    "DriftSample",
+    "DryRunDispatcher",
+    "LogDispatcher",
+    "SlackDispatcher",
+    "WebhookDispatcher",
+    "check_drift_and_alert",
+    "create_alert_manager",
 ]

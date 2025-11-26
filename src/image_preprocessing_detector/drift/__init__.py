@@ -279,10 +279,7 @@ def compute_histogram(
 
     # Normalize to probability distribution
     total = counts.sum()
-    if total > 0:
-        normalized = (counts / total).tolist()
-    else:
-        normalized = [0.0] * num_bins
+    normalized = (counts / total).tolist() if total > 0 else [0.0] * num_bins
 
     return normalized, bin_edges.tolist()
 
@@ -350,7 +347,7 @@ def kl_divergence(
         return 0.0
 
     kl = 0.0
-    for pi, qi in zip(p, q):
+    for pi, qi in zip(p, q, strict=True):
         # Add epsilon for numerical stability
         pi_safe = max(pi, epsilon)
         qi_safe = max(qi, epsilon)
@@ -388,7 +385,7 @@ def psi(
         return 0.0
 
     psi_value = 0.0
-    for e, a in zip(expected, actual):
+    for e, a in zip(expected, actual, strict=True):
         # Add epsilon for numerical stability
         e_safe = max(e, epsilon)
         a_safe = max(a, epsilon)
@@ -613,8 +610,8 @@ class ReferenceStore:
                 self._references[ref.feature] = ref
                 logger.debug(f"Loaded reference distribution: {ref.feature}")
 
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                logger.error(f"Error loading reference from {filepath}: {e}")
+            except (json.JSONDecodeError, KeyError, ValueError):
+                logger.exception(f"Error loading reference from {filepath}")
 
     def save_reference(
         self,
@@ -961,25 +958,6 @@ def create_tracker(
 
 
 __all__ = [
-    # Classes
-    "DistributionTracker",
-    "DriftDetector",
-    "ReferenceStore",
-    # Data classes
-    "DriftResult",
-    "DriftSeverity",
-    "FeatureType",
-    "HistogramStats",
-    "ReferenceDistribution",
-    # Functions
-    "compute_histogram",
-    "compute_stats",
-    "create_drift_detector",
-    "create_tracker",
-    "kl_divergence",
-    "psi",
-    "symmetric_kl",
-    # Constants
     "DEFAULT_NUM_BINS",
     "DEFAULT_SAMPLE_RATE",
     "FEATURE_BOUNDS",
@@ -987,4 +965,19 @@ __all__ = [
     "KL_WARNING_THRESHOLD",
     "PSI_CRITICAL_THRESHOLD",
     "PSI_WARNING_THRESHOLD",
+    "DistributionTracker",
+    "DriftDetector",
+    "DriftResult",
+    "DriftSeverity",
+    "FeatureType",
+    "HistogramStats",
+    "ReferenceDistribution",
+    "ReferenceStore",
+    "compute_histogram",
+    "compute_stats",
+    "create_drift_detector",
+    "create_tracker",
+    "kl_divergence",
+    "psi",
+    "symmetric_kl",
 ]

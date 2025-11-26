@@ -47,12 +47,12 @@ SUPPORTED_MIME_TYPES = {
 SUPPORTED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
 
 
-def validate_file(file: UploadFile, max_size_mb: int) -> ErrorResponse | None:
+def validate_file(file: UploadFile, _max_size_mb: int) -> ErrorResponse | None:
     """Validate uploaded file.
 
     Args:
         file: The uploaded file.
-        max_size_mb: Maximum allowed file size in MB.
+        _max_size_mb: Maximum allowed file size in MB (reserved for future use).
 
     Returns:
         ErrorResponse if validation fails, None if valid.
@@ -161,7 +161,7 @@ async def process_document(
         else:
             # Single image processing
             # ImageLoader.load() returns (np.ndarray, ImageMetadata)
-            image_array, metadata = loader.load(file_path)
+            image_array, _metadata = loader.load(file_path)
             if image_array is not None:
                 h, w = image_array.shape[:2]
                 page_data.append((image_array, w, h))
@@ -399,5 +399,5 @@ async def process_single_document(
         try:
             if "tmp_path" in locals():
                 tmp_path.unlink(missing_ok=True)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("temp_file_cleanup_failed", error=str(e))

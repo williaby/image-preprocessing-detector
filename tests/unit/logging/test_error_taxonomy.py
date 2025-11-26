@@ -603,21 +603,20 @@ class TestSentryEnabled:
                 "SENTRY_DSN": "https://test@sentry.io/123",
             },
             clear=True,
+        ), patch.dict(
+            "sys.modules",
+            {
+                "sentry_sdk": mock_sentry,
+                "sentry_sdk.integrations.logging": MagicMock(
+                    LoggingIntegration=mock_logging_integration
+                ),
+            },
         ):
-            with patch.dict(
-                "sys.modules",
-                {
-                    "sentry_sdk": mock_sentry,
-                    "sentry_sdk.integrations.logging": MagicMock(
-                        LoggingIntegration=mock_logging_integration
-                    ),
-                },
-            ):
-                result = SentryIntegration.initialize()
+            result = SentryIntegration.initialize()
 
-                assert result is True
-                assert SentryIntegration.is_enabled() is True
-                mock_sentry.init.assert_called_once()
+            assert result is True
+            assert SentryIntegration.is_enabled() is True
+            mock_sentry.init.assert_called_once()
 
     def test_initialize_with_custom_params(self) -> None:
         """Test initialization with custom parameters."""
@@ -628,30 +627,29 @@ class TestSentryEnabled:
             os.environ,
             {"IMGPREP_SENTRY_ENABLED": "true"},
             clear=True,
+        ), patch.dict(
+            "sys.modules",
+            {
+                "sentry_sdk": mock_sentry,
+                "sentry_sdk.integrations.logging": MagicMock(
+                    LoggingIntegration=mock_logging_integration
+                ),
+            },
         ):
-            with patch.dict(
-                "sys.modules",
-                {
-                    "sentry_sdk": mock_sentry,
-                    "sentry_sdk.integrations.logging": MagicMock(
-                        LoggingIntegration=mock_logging_integration
-                    ),
-                },
-            ):
-                SentryIntegration.initialize(
-                    dsn="https://custom@sentry.io/456",
-                    environment="production",
-                    release="1.0.0",
-                    sample_rate=0.5,
-                    traces_sample_rate=0.2,
-                )
+            SentryIntegration.initialize(
+                dsn="https://custom@sentry.io/456",
+                environment="production",
+                release="1.0.0",
+                sample_rate=0.5,
+                traces_sample_rate=0.2,
+            )
 
-                call_kwargs = mock_sentry.init.call_args[1]
-                assert call_kwargs["dsn"] == "https://custom@sentry.io/456"
-                assert call_kwargs["environment"] == "production"
-                assert call_kwargs["release"] == "1.0.0"
-                assert call_kwargs["sample_rate"] == 0.5
-                assert call_kwargs["traces_sample_rate"] == 0.2
+            call_kwargs = mock_sentry.init.call_args[1]
+            assert call_kwargs["dsn"] == "https://custom@sentry.io/456"
+            assert call_kwargs["environment"] == "production"
+            assert call_kwargs["release"] == "1.0.0"
+            assert call_kwargs["sample_rate"] == 0.5
+            assert call_kwargs["traces_sample_rate"] == 0.2
 
     def test_capture_error_with_structured_error(self) -> None:
         """Test capture_error with StructuredError."""

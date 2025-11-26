@@ -326,8 +326,8 @@ class MetricsStore:
                     f"Loaded {len(self._results)} historical evaluation results"
                 )
 
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                logger.error(f"Error loading evaluation history: {e}")
+            except (json.JSONDecodeError, KeyError, ValueError):
+                logger.exception("Error loading evaluation history")
 
     def _save_results(self) -> None:
         """Save results to storage."""
@@ -709,20 +709,19 @@ class PerformanceEvaluator:
         trends = self.analyze_trends(current, self.config.baseline_window_days)
 
         # Generate alerts for significant degradations
-        alerts = []
-        for trend in trends:
-            if trend.severity != AlertSeverity.NONE:
-                alerts.append(
-                    {
-                        "metric": trend.metric,
-                        "severity": trend.severity.value,
-                        "message": (
-                            f"{trend.metric} degraded by {abs(trend.change_percent):.1f}% "
-                            f"({trend.baseline_value:.3f} -> {trend.current_value:.3f})"
-                        ),
-                        "trend_direction": trend.trend_direction,
-                    }
-                )
+        alerts = [
+            {
+                "metric": trend.metric,
+                "severity": trend.severity.value,
+                "message": (
+                    f"{trend.metric} degraded by {abs(trend.change_percent):.1f}% "
+                    f"({trend.baseline_value:.3f} -> {trend.current_value:.3f})"
+                ),
+                "trend_direction": trend.trend_direction,
+            }
+            for trend in trends
+            if trend.severity != AlertSeverity.NONE
+        ]
 
         return PerformanceReport(
             timestamp=utc_now(),
@@ -871,8 +870,8 @@ class PerformanceJob:
                 alerts=data.get("alerts", []),
             )
 
-        except (json.JSONDecodeError, KeyError) as e:
-            logger.error(f"Error loading latest report: {e}")
+        except (json.JSONDecodeError, KeyError):
+            logger.exception("Error loading latest report")
             return None
 
     def cleanup(self) -> None:
@@ -1006,27 +1005,22 @@ def get_dashboard_panel_data(
 
 
 __all__ = [
-    # Classes
+    "AlertSeverity",
+    "DEFAULT_EVALUATION_INTERVAL_HOURS",
+    "DEFAULT_RETENTION_DAYS",
+    "EvaluationResult",
+    "F1_DROP_CRITICAL_THRESHOLD",
+    "F1_DROP_WARNING_THRESHOLD",
+    "JobConfig",
+    "MAP_DROP_CRITICAL_THRESHOLD",
+    "MAP_DROP_WARNING_THRESHOLD",
+    "MetricType",
     "MetricsStore",
     "PerformanceEvaluator",
     "PerformanceJob",
-    # Data classes
-    "EvaluationResult",
-    "JobConfig",
     "PerformanceReport",
     "PerformanceTrend",
-    # Enums
-    "AlertSeverity",
-    "MetricType",
-    # Functions
     "create_sample_config",
     "get_dashboard_panel_data",
     "validate_job_config",
-    # Constants
-    "DEFAULT_EVALUATION_INTERVAL_HOURS",
-    "DEFAULT_RETENTION_DAYS",
-    "F1_DROP_CRITICAL_THRESHOLD",
-    "F1_DROP_WARNING_THRESHOLD",
-    "MAP_DROP_CRITICAL_THRESHOLD",
-    "MAP_DROP_WARNING_THRESHOLD",
 ]

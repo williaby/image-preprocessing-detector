@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 from image_preprocessing_detector.utils.datetime_compat import ensure_aware, utc_now
 
@@ -213,7 +213,7 @@ class PrivacyChecker:
     """
 
     # Keywords that might indicate PII
-    PII_INDICATORS = [
+    PII_INDICATORS: ClassVar[list[str]] = [
         "ssn",
         "social_security",
         "passport",
@@ -227,7 +227,7 @@ class PrivacyChecker:
     ]
 
     # File patterns that require review
-    SENSITIVE_PATTERNS = [
+    SENSITIVE_PATTERNS: ClassVar[list[str]] = [
         "**/personal/**",
         "**/private/**",
         "**/confidential/**",
@@ -372,7 +372,7 @@ class SampleHarvester:
 
         # Check for quality outliers (z-score > 2)
         if quality_scores:
-            for score_name, score_value in quality_scores.items():
+            for score_value in quality_scores.values():
                 if score_value < 0.1 or score_value > 0.9:  # Extreme values
                     return True, HarvestReason.QUALITY_OUTLIER
 
@@ -473,10 +473,11 @@ class SampleHarvester:
         try:
             shutil.copy2(source, dest)
             sample.metadata["harvested_path"] = str(dest)
-            return True
-        except Exception as e:
-            logger.error(f"Failed to copy sample file: {e}")
+        except Exception:
+            logger.exception("Failed to copy sample file")
             return False
+        else:
+            return True
 
     def get_current_batch(self) -> list[HarvestedSample]:
         """Get current batch of harvested samples."""
@@ -599,11 +600,11 @@ class ManifestGenerator:
 
         return self.load_manifest(latest_path)
 
-    def list_manifests(self, days: int = 30) -> list[Path]:
+    def list_manifests(self, _days: int = 30) -> list[Path]:
         """List manifest files within a time range.
 
         Args:
-            days: Number of days to look back
+            _days: Number of days to look back (reserved for future filtering)
 
         Returns:
             List of manifest file paths
@@ -612,8 +613,7 @@ class ManifestGenerator:
 
         for month_dir in sorted(self.output_dir.iterdir()):
             if month_dir.is_dir() and month_dir.name.isdigit():
-                for manifest_file in month_dir.glob("manifest_*.json"):
-                    manifests.append(manifest_file)
+                manifests.extend(month_dir.glob("manifest_*.json"))
 
         return sorted(manifests, key=lambda p: p.name, reverse=True)
 
@@ -622,7 +622,7 @@ class ManifestGenerator:
         manifest: HarvestManifest,
         train_ratio: float = 0.8,
         val_ratio: float = 0.1,
-        test_ratio: float = 0.1,
+        _test_ratio: float = 0.1,
     ) -> dict[str, list[str]]:
         """Generate train/val/test split from manifest.
 
@@ -820,25 +820,21 @@ def harvest_and_manifest(
 
 
 __all__ = [
-    # Classes
-    "HarvesterConfig",
-    "HarvestedSample",
-    "HarvestManifest",
-    "ManifestGenerator",
-    "PrivacyChecker",
-    "SampleHarvester",
-    # Enums
-    "HarvestReason",
-    "PrivacyStatus",
-    # Functions
-    "create_harvester",
-    "get_privacy_checklist",
-    "harvest_and_manifest",
-    "save_privacy_checklist",
-    # Constants
     "DEFAULT_AGREEMENT_THRESHOLD",
     "DEFAULT_ENTROPY_THRESHOLD",
     "DEFAULT_MAX_SAMPLES_PER_BATCH",
     "DEFAULT_OUTPUT_DIR",
     "PRIVACY_REVIEW_CHECKLIST",
+    "HarvestManifest",
+    "HarvestReason",
+    "HarvestedSample",
+    "HarvesterConfig",
+    "ManifestGenerator",
+    "PrivacyChecker",
+    "PrivacyStatus",
+    "SampleHarvester",
+    "create_harvester",
+    "get_privacy_checklist",
+    "harvest_and_manifest",
+    "save_privacy_checklist",
 ]
