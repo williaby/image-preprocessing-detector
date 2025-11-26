@@ -498,11 +498,13 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
   - **DPI upscaling integration** (from data_ingestor Phase 1C)
   - Source: `/home/byron/dev/data_ingestor/src/data_ingestor/utils/`
 
-- **Phase 6** (Week 6-8): Layout-Lite Detection - **PLANNED**
-  - DocLayout-YOLO or YOLOv8-nano for coarse page attributes (NOT full semantic layout)
-  - Model selection: `configs/models/doclayout_yolo.yaml`
-  - Handwriting presence classifier, structural complexity scorer
-  - OmniDocBench-style page attributes
+- **Phase 6** (Week 6-8): Layout-Lite Detection - **IN PROGRESS**
+  - DocLayout-YOLO (YOLOv10-based) for coarse page attributes (NOT full semantic layout)
+  - **Pre-trained models from HuggingFace - NO ADDITIONAL TRAINING REQUIRED**
+  - Model config: `configs/models/doclayout_yolo.yaml`
+  - 10 DocStructBench classes: title, text, table, figure, formula, captions
+  - Hybrid ML + heuristic detection (HybridLayoutAnalyzer)
+  - Handwriting presence classifier (TODO), structural complexity scorer
 
 - **Phase 8** (Week 9): DQS & Routing - **PLANNED**
   - Document Quality Score (degradation + complexity)
@@ -554,8 +556,10 @@ See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/R
 - PyTorch 2.0+: Model training and knowledge distillation
 - **ResNet-50/ResNet-18**: Teacher-student ML IQA (NOT MobileNetV3/EfficientNet)
 - **DocLayout-YOLO**: Layout detection (YOLOv10-based, document-optimized)
-  - Model selection: `configs/models/doclayout_yolo.yaml`
-  - Training: `modal run modal/train_phase3_doclayout_yolo.py`
+  - Model config: `configs/models/doclayout_yolo.yaml`
+  - **Pre-trained models available (no training required)**
+  - Models: DocStructBench (general), D4LA (higher accuracy)
+  - Performance: 85+ FPS, 70-80% mAP
 - ONNX Runtime: Production inference optimization
 - Modal: Serverless GPU training platform
 

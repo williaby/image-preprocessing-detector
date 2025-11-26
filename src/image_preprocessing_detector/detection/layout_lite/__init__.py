@@ -1,12 +1,33 @@
-"""Layout-Lite Detection - Heuristics-Based Document Layout Analysis.
+"""Layout-Lite Detection - Hybrid ML + Heuristics Document Layout Analysis.
 
-Implements fast classical CV methods for detecting layout features:
+Phase 6 Implementation combining:
+- DocLayout-YOLO ML detection (tables, figures, formulas, text blocks)
+- Heuristic-based detection for quality attributes
+
+Heuristic detectors (classical CV methods):
 - Column detection (projection profile analysis)
 - Table detection (Hough line + grid pattern)
 - Figure detection (large components with low text density)
 - Fuzzy scan detection (blur + noise estimation)
 - Watermark detection (FFT low-frequency analysis)
 - Colorful background detection (color histogram diversity)
+
+ML-based detection (DocLayout-YOLO):
+- Document element detection (10 DocStructBench classes)
+- Structural complexity scoring
+- Layout type inference
+
+Usage:
+    # Heuristic-only analysis (fast, no ML dependencies)
+    >>> from image_preprocessing_detector.detection.layout_lite import analyze_layout
+    >>> results = analyze_layout(image)
+
+    # Hybrid ML + heuristic analysis (recommended)
+    >>> from image_preprocessing_detector.detection.layout_lite import (
+    ...     HybridLayoutAnalyzer,
+    ...     analyze_layout_hybrid,
+    ... )
+    >>> summary = analyze_layout_hybrid(image, page_number=1)
 """
 
 # Export all result types
@@ -47,6 +68,20 @@ from image_preprocessing_detector.detection.layout_lite.watermark_detector impor
     detect_watermark,
 )
 
+# DocLayout-YOLO integration (Phase 6)
+# Import with try/except to allow graceful degradation when ML deps unavailable
+try:
+    from image_preprocessing_detector.detection.layout_lite.doclayout_integration import (
+        DocLayoutIntegration,
+        HybridLayoutAnalyzer,
+        LayoutAnalysisMetrics,
+        analyze_layout_hybrid,
+    )
+
+    _has_doclayout_integration = True
+except ImportError:
+    _has_doclayout_integration = False
+
 __all__ = [
     # Types
     "ColorfulBackgroundResult",
@@ -68,3 +103,13 @@ __all__ = [
     "detect_tables",
     "detect_watermark",
 ]
+
+# Add DocLayout-YOLO integration exports if available
+if _has_doclayout_integration:
+    __all__.extend([
+        # DocLayout-YOLO integration (Phase 6)
+        "DocLayoutIntegration",
+        "HybridLayoutAnalyzer",
+        "LayoutAnalysisMetrics",
+        "analyze_layout_hybrid",
+    ])
