@@ -31,7 +31,7 @@ class TestValidateFile:
         mock_file = MagicMock()
         mock_file.filename = None
 
-        error = validate_file(mock_file, max_size_mb=50)
+        error = validate_file(mock_file, 50)
         assert error is not None
         assert error.error.value == "invalid_parameters"
         assert "File name is required" in error.message
@@ -41,7 +41,7 @@ class TestValidateFile:
         mock_file = MagicMock()
         mock_file.filename = ""
 
-        error = validate_file(mock_file, max_size_mb=50)
+        error = validate_file(mock_file, 50)
         assert error is not None
         assert error.error.value == "invalid_parameters"
 
@@ -51,7 +51,7 @@ class TestValidateFile:
         mock_file.filename = "document.doc"
         mock_file.content_type = "application/msword"
 
-        error = validate_file(mock_file, max_size_mb=50)
+        error = validate_file(mock_file, 50)
         assert error is not None
         assert error.error.value == "invalid_file_type"
         assert ".doc" in error.message
@@ -62,7 +62,7 @@ class TestValidateFile:
         mock_file.filename = "image.png"
         mock_file.content_type = "image/png"
 
-        error = validate_file(mock_file, max_size_mb=50)
+        error = validate_file(mock_file, 50)
         assert error is None
 
     def test_validate_file_valid_pdf(self) -> None:
@@ -71,7 +71,7 @@ class TestValidateFile:
         mock_file.filename = "document.pdf"
         mock_file.content_type = "application/pdf"
 
-        error = validate_file(mock_file, max_size_mb=50)
+        error = validate_file(mock_file, 50)
         assert error is None
 
     def test_validate_file_mime_type_mismatch_allowed(self) -> None:
@@ -81,7 +81,7 @@ class TestValidateFile:
         mock_file.content_type = "application/octet-stream"
 
         # Should still pass because extension is valid
-        error = validate_file(mock_file, max_size_mb=50)
+        error = validate_file(mock_file, 50)
         assert error is None
 
     def test_validate_file_no_content_type(self) -> None:
@@ -90,7 +90,7 @@ class TestValidateFile:
         mock_file.filename = "image.jpeg"
         mock_file.content_type = None
 
-        error = validate_file(mock_file, max_size_mb=50)
+        error = validate_file(mock_file, 50)
         assert error is None
 
 
@@ -373,7 +373,7 @@ class TestFileSizeValidation:
         mock_file.content_type = "image/png"
 
         # Test with 1MB limit
-        error = validate_file(mock_file, max_size_mb=1)
+        error = validate_file(mock_file, 1)
         # validate_file doesn't check size directly (done at route level)
         # So this should pass validation
         assert error is None
