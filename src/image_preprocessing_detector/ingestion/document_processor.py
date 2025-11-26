@@ -13,6 +13,8 @@ This is the main entry point for processing documents end-to-end.
 
 from pathlib import Path
 
+from image_preprocessing_detector.classification import classify_pdf_type
+from image_preprocessing_detector.ingestion.pdf_loader import load_pdf
 from image_preprocessing_detector.metrics.dqs_calculator import (
     calculate_dqs,
     calculate_pre_ocr_risk,
@@ -90,9 +92,8 @@ class DocumentProcessor:
             else None
         )
 
-        # Placeholder: Generate page metadata
-        # TODO: Integrate with actual PDF/image loaders
-        pages = self._generate_placeholder_pages(file_path)
+        # Generate page metadata from actual document
+        pages = self._generate_pages_from_pdf(file_path)
         num_pages = len(pages)
 
         # Calculate DQS from page-level IQA metrics
@@ -114,6 +115,8 @@ class DocumentProcessor:
                 "blur_threshold": 100.0,
                 "contrast_threshold": 0.3,
                 "skew_threshold": 2.0,
+                "pdf_text_min_threshold": 10,  # Default from Settings
+                "pdf_text_max_threshold": 50,  # Default from Settings
             },
             timestamp=utc_now(),
         )
@@ -147,13 +150,11 @@ class DocumentProcessor:
         }
         return mime_map.get(file_path.suffix.lower(), "application/octet-stream")
 
-    def _classify_pdf_type(self, _file_path: Path) -> PDFType | None:
+    def _classify_pdf_type(self, file_path: Path) -> PDFType | None:
         """Classify PDF as image_only, born_digital, or hybrid.
 
-        TODO: Implement actual PDF type classification
-        - Use PyMuPDF to extract text
-        - Count embedded images
-        - Classify based on text/image ratio
+        Uses the real classify_pdf_type function from the classification module
+        which analyzes text content and embedded images.
 
         Args:
             file_path: Path to PDF file
@@ -161,36 +162,52 @@ class DocumentProcessor:
         Returns:
             PDFType or None if classification fails
         """
-        # Placeholder implementation
-        # TODO: Implement in Sprint 2.6.2+
-        return PDFType.HYBRID  # Default assumption
+        return classify_pdf_type(file_path)
 
-    def _generate_placeholder_pages(self, _file_path: Path) -> list[PageMetadata]:
-        """Generate placeholder page metadata.
+    def _generate_pages_from_pdf(self, file_path: Path) -> list[PageMetadata]:
+        """Generate page metadata from actual PDF using pdf_loader.
 
-        TODO: Replace with actual PDF/image loader integration
-        - Use pdf_loader.py for PDFs
-        - Use image_loader.py for images
-        - Run IQA analysis from iqa_classical.py
+        Uses pdf_loader to extract actual page dimensions and count.
+        IQA scores are placeholder values until IQA integration is complete.
 
         Args:
-            file_path: Path to document file
+            file_path: Path to PDF document file
 
         Returns:
-            List of PageMetadata with placeholder values
+            List of PageMetadata with actual dimensions from PDF
         """
-        # Placeholder: Assume single page for now
-        return [
-            PageMetadata(
-                page_index=0,
-                width_px=2550,
-                height_px=3300,
-                dpi_input=300,
-                dpi_effective=300,
-                ml_iqa=None,  # Phase 2: No student ML IQA yet
-                teacher_iqa=None,  # Phase 2: No teacher model yet
+        if file_path.suffix.lower() != ".pdf":
+            # For non-PDF files, return placeholder single page
+            return [
+                PageMetadata(
+                    page_index=0,
+                    width_px=2550,
+                    height_px=3300,
+                    dpi_input=300,
+                    dpi_effective=300,
+                    ml_iqa=None,
+                    teacher_iqa=None,
+                )
+            ]
+
+        # Load actual pages from PDF
+        page_images = load_pdf(str(file_path))
+        pages = []
+
+        for i, page_img in enumerate(page_images):
+            pages.append(
+                PageMetadata(
+                    page_index=i,
+                    width_px=page_img.width,
+                    height_px=page_img.height,
+                    dpi_input=int(page_img.dpi_input),
+                    dpi_effective=int(page_img.dpi_effective),
+                    ml_iqa=None,  # Phase 2: IQA not yet integrated
+                    teacher_iqa=None,  # Phase 2: No teacher model yet
+                )
             )
-        ]
+
+        return pages
 
     def _calculate_document_dqs(self, pages: list[PageMetadata]) -> DQSMetadata:
         """Calculate Document Quality Score from page-level IQA metrics.
