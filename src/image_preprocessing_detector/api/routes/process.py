@@ -108,8 +108,6 @@ async def process_document(
     dqs: DQSSummary | None = None
     pdf_type: str | None = None
     ocr_recommendation: str | None = None
-    # Default device fallback used in error responses if device detection fails
-    device_used = "cpu"
 
     try:
         # Import processing modules

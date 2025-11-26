@@ -574,7 +574,8 @@ class MetricsCollector:
             return
 
         server_port = port or self._config.port
-        start_http_server(server_port, registry=self._registry)  # type: ignore[arg-type]
+        # Pass registry as positional argument (prometheus_client API)
+        start_http_server(server_port, self._registry)  # type: ignore[arg-type]
 
 
 # ============================================================================

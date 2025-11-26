@@ -271,7 +271,7 @@ class ModelEvaluatorProtocol(Protocol):
         dataset_path: str,
     ) -> dict[str, float]:
         """Evaluate model on dataset, returning metrics dict."""
-        ...  # Protocol method stub - ellipsis required for Protocol
+        raise NotImplementedError  # Protocol method - must be implemented by subclasses
 
 
 # ============================================================================
