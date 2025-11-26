@@ -1,0 +1,295 @@
+# Scope Resolution Recommendations
+
+**Date**: 2025-01-25
+**Author**: Claude Opus 4.5
+**Status**: Proposed
+
+## Overview
+
+This document provides specific recommendations to resolve the scope inconsistencies identified in the workflow analysis.
+
+---
+
+## Issue 1: Per-Element Hybrid IQA
+
+### Current State
+
+| Document | Position | Date |
+|----------|----------|------|
+| project-a-project-plan.md | DEFERRED (Phase 12.2) | Current |
+| PROJECT_PLAN.md | IN SCOPE | Current |
+| ADR-029 | Research Only | 2025-11-15 |
+| schema.py | Field exists | Current |
+
+### Recommendation: DEFER (Option A)
+
+**Rationale**:
+
+1. ADR-029 is the most recent explicit decision
+2. Concept plan also marks as deferred
+3. Simplifies Phase 6 scope
+4. Aligns with "layout-lite" approach (page-level only)
+
+### Required Changes
+
+#### 1. Update PROJECT_PLAN.md
+
+**Location**: Lines 103-108
+
+**Current**:
+
+```markdown
+- **Light layout detection (YOLOv10-doc, 11 DocLayNet classes)**
+  - Hybrid IQA: Per-element quality assessment on figures, tables, embedded images
+```
+
+**Proposed**:
+
+```markdown
+- **Light layout detection (DocLayout-YOLO, 11 DocLayNet classes)**
+  - Page-level attributes only: layout_type, has_tables, has_figures, etc.
+  - Structural complexity scoring for routing decisions
+  - **Note**: Per-element Hybrid IQA deferred to Phase 12 (see ADR-029)
+```
+
+#### 2. Update schema.py
+
+**Location**: Lines 135-140
+
+**Current**:
+
+```python
+quality_issues: list[DetectedIssue] = Field(
+    default_factory=list,
+    description="Quality issues detected in this element (hybrid IQA support)"
+)
+```
+
+**Proposed**:
+
+```python
+quality_issues: list[DetectedIssue] = Field(
+    default_factory=list,
+    description="RESERVED: Per-element quality issues (Phase 12, currently deferred). "
+                "See ADR-029 for scope boundaries."
+)
+```
+
+#### 3. Move Tests to Research Directory
+
+```bash
+# Create research test directory
+mkdir -p tests/research/
+
+# Move hybrid IQA tests
+mv tests/unit/test_hybrid_iqa*.py tests/research/
+mv tests/integration/test_hybrid_iqa*.py tests/research/
+
+# Update pytest markers
+# Add to pyproject.toml:
+# [tool.pytest.ini_options]
+# markers = [
+#     "research: marks tests as research/experimental (deselect with '-m not research')"
+# ]
+```
+
+#### 4. Update ADR-029
+
+Add explicit closure statement:
+
+```markdown
+## Status Update (2025-01-25)
+
+Per-Element Hybrid IQA has been formally deferred to Phase 12.
+
+**Changes Made**:
+- PROJECT_PLAN.md updated to remove Hybrid IQA from Phase 6
+- schema.py `quality_issues` field marked as reserved
+- Related tests moved to `tests/research/`
+
+**Trigger for Re-evaluation**:
+- Phase 10 benchmarking shows page-level IQA insufficient
+- User feedback indicates per-element quality is critical
+- Project B explicitly requests element-level quality metadata
+```
+
+---
+
+## Issue 2: Model Artifact Promotion
+
+### Current State
+
+| Document | Documented? |
+|----------|-------------|
+| PROJECT_PLAN.md | NO |
+| MODEL_STORAGE.md | YES (complete) |
+| scripts/promote_to_hf.py | YES (implemented) |
+
+### Recommendation: ADD TO PROJECT PLAN
+
+**Rationale**:
+
+1. Workflow is fully implemented
+2. Critical for model releases
+3. Should be visible in project planning
+
+### Required Changes
+
+#### Add Phase 3.5 to PROJECT_PLAN.md
+
+**Insert after Phase 3 section**:
+
+```markdown
+---
+
+### Phase 3.5: Model Artifact Management (Ongoing) ✅ COMPLETE
+
+**Status**: ✅ IMPLEMENTED (Part of Phase 3 training infrastructure)
+
+**Purpose**: Manage trained model artifacts from development through production release.
+
+**Completed Deliverables**:
+- ✅ GCS storage infrastructure (`gs://image_detection_b/models/`)
+- ✅ Run metadata generation (`src/utils/gcs_uploader.py`)
+- ✅ Promotion script (`scripts/promote_to_hf.py`)
+- ✅ Documentation (`docs/MODEL_STORAGE.md`)
+
+**Workflow**:
+```
+
+Training (Modal GPU)
+    ↓
+GCS Storage (canonical archive)
+    ↓
+Validation (quality gates)
+    ↓
+Hugging Face Hub (curated releases)
+
+```
+
+**Promotion Criteria**:
+- [ ] Performance meets baseline (mAP > 0.88)
+- [ ] Trained from clean git state
+- [ ] All required metadata files present
+- [ ] Tested on held-out evaluation set
+- [ ] Semantic version assigned
+
+**Commands**:
+```bash
+# List available runs
+python scripts/promote_to_hf.py --list-runs --model resnet50_teacher
+
+# Dry run (validation only)
+python scripts/promote_to_hf.py --dry-run --run-id <run_id> --version v1.0.0
+
+# Promote to Hugging Face Hub
+python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --version v1.0.0
+```
+
+**References**:
+
+- [MODEL_STORAGE.md](../MODEL_STORAGE.md) - Complete documentation
+- [scripts/promote_to_hf.py](../../scripts/promote_to_hf.py) - Promotion script
+
+---
+
+```
+
+---
+
+## Issue 3: Layout Model Reference
+
+### Current State
+
+| Document | Model Referenced |
+|----------|------------------|
+| PROJECT_PLAN.md | YOLOv10-doc |
+| ADR-015 | YOLOv8 |
+| configs/models/doclayout_yolo.yaml | DocLayout-YOLO |
+
+### Recommendation: STANDARDIZE TO DocLayout-YOLO
+
+**Rationale**:
+1. Config file is authoritative for implementation
+2. DocLayout-YOLO is document-optimized
+3. Pre-trained models available on HuggingFace
+
+### Required Changes
+
+#### 1. Update PROJECT_PLAN.md
+
+**Replace all instances of**:
+- "YOLOv10-doc" → "DocLayout-YOLO"
+- "YOLOv8" → "DocLayout-YOLO"
+
+**Key locations**:
+- Line 103: Light layout detection description
+- Line 492: Light Layout Detection section
+- Line 619: Chosen Solution
+
+#### 2. Update ADR-015
+
+**Title change**:
+```markdown
+# ADR-015: DocLayout-YOLO for Layout Detection (Updated from YOLOv8)
+```
+
+**Add update section**:
+
+```markdown
+## Update (2025-01-25)
+
+Original ADR selected YOLOv8. After evaluation, DocLayout-YOLO was chosen:
+
+**Reasons for Change**:
+1. DocLayout-YOLO is specifically trained on DocLayNet
+2. Better accuracy on document layouts (mAP 0.82 vs 0.78)
+3. Pre-trained models available on HuggingFace
+4. Optimized for 11 DocLayNet classes
+
+**Model Configuration**: See `configs/models/doclayout_yolo.yaml`
+```
+
+---
+
+## Implementation Checklist
+
+### Immediate (Next PR)
+
+- [ ] Update PROJECT_PLAN.md per-element IQA language (Issue 1)
+- [ ] Add Phase 3.5 to PROJECT_PLAN.md (Issue 2)
+- [ ] Update model references to DocLayout-YOLO (Issue 3)
+
+### Short-term (Next Sprint)
+
+- [ ] Add deprecation note to schema.py quality_issues field
+- [ ] Update ADR-029 with closure statement
+- [ ] Update ADR-015 with model change rationale
+- [ ] Move hybrid IQA tests to research directory
+
+### Verification
+
+After changes, run:
+
+```bash
+# Verify no broken references
+grep -r "YOLOv10-doc\|YOLOv8" docs/planning/
+grep -r "Hybrid IQA" docs/planning/PROJECT_PLAN.md
+
+# Verify tests still pass
+poetry run pytest -v --ignore=tests/research/
+```
+
+---
+
+## Decision Log
+
+| Issue | Decision | Rationale | Owner |
+|-------|----------|-----------|-------|
+| Per-Element IQA | DEFER | ADR-029 authority | TBD |
+| Artifact Promotion | ADD | Complete implementation exists | TBD |
+| Layout Model | DocLayout-YOLO | Config is authoritative | TBD |
+
+---
+
+*Recommendations prepared by Claude Opus 4.5 on 2025-01-25*

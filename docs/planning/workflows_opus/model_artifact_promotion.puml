@@ -1,0 +1,249 @@
+@startuml Model Artifact Promotion Workflow
+!theme blueprint
+title Model Artifact Promotion (GCS → Hugging Face Hub)
+caption Workflow identified by Copilot analysis, validated against codebase
+
+skinparam BackgroundColor transparent
+skinparam defaultTextAlignment center
+
+skinparam activity {
+    BackgroundColor<<Training>> #E3F2FD
+    BackgroundColor<<GCS>> #FFF3E0
+    BackgroundColor<<Validation>> #E8F5E9
+    BackgroundColor<<HuggingFace>> #FCE4EC
+    BackgroundColor<<Error>> #FFEBEE
+    BorderColor #2C3E50
+}
+
+|Training|
+start
+:Modal GPU Training<<Training>>;
+note right
+  **Script:** modal/train_phase2_iqa.py
+
+  **Outputs:**
+  - model_final.pth
+  - model_epoch_XX.pth (checkpoints)
+  - training_config.yaml
+  - metrics.json
+end note
+
+:Generate Run Metadata<<Training>>;
+note right
+  **Functions:**
+  - generate_run_id()
+  - generate_run_metadata()
+
+  **Required Files:**
+  - commit_hash.txt
+  - dataset_version.txt
+  - env_info.txt
+end note
+
+|GCS Storage|
+:Upload to GCS<<GCS>>;
+note right
+  **Function:** upload_run_to_gcs()
+  **Module:** src/utils/gcs_uploader.py
+
+  **Bucket Structure:**
+  gs://image_detection_b/
+    models/
+      phase2_iqa/
+        runs/
+          2025-11-22T01-20Z_run-abc123/
+            model_final.pth
+            training_config.yaml
+            metrics.json
+            commit_hash.txt
+            ...
+end note
+
+:GCS is Canonical Archive<<GCS>>;
+note right
+  **Principles:**
+  1. Every run saved to GCS
+  2. Immutable run directories
+  3. Complete reproducibility metadata
+  4. Checkpoints preserved
+end note
+
+|Validation|
+partition "Pre-Promotion Validation" {
+  :List Available Runs<<Validation>>;
+  note right
+    **Command:**
+    python scripts/promote_to_hf.py \\
+      --list-runs \\
+      --model resnet50_teacher
+
+    **Shows:**
+    - Run IDs
+    - Timestamps
+    - Metrics summary
+  end note
+
+  :Select Run for Promotion<<Validation>>;
+
+  :Dry Run Validation<<Validation>>;
+  note right
+    **Command:**
+    python scripts/promote_to_hf.py \\
+      --dry-run \\
+      --run-id <run_id> \\
+      --version v1.0.0
+
+    **Checks:**
+    - All required files present
+    - Metrics meet baseline
+    - Clean git state
+  end note
+
+  :Check Promotion Criteria<<Validation>>;
+  note right
+    **Quality Gates:**
+    - [ ] Performance: mAP > 0.88
+    - [ ] Reproducibility: clean git
+    - [ ] Completeness: all metadata
+    - [ ] Documentation: model card
+    - [ ] Validation: held-out test
+    - [ ] Version: semantic (vX.Y.Z)
+  end note
+
+  if (All Criteria Met?) then (yes)
+    :Proceed to Promotion;
+  else (no)
+    :Block Promotion<<Error>>;
+    note right
+      **Reasons:**
+      - Performance below baseline
+      - Missing metadata files
+      - Dirty git state
+      - No semantic version
+
+      **Action:** Fix issues and retry
+    end note
+    stop
+  endif
+}
+
+|Hugging Face Hub|
+partition "Promotion Process" {
+  :Download from GCS<<GCS>>;
+  note right
+    **Temporary Local:**
+    ./promotion_temp/
+      model_final.pth
+      training_config.yaml
+      metrics.json
+      ...
+  end note
+
+  :Generate Model Card<<HuggingFace>>;
+  note right
+    **Module:** scripts/promote_to_hf.py
+    **Function:** generate_model_card()
+
+    **README.md Contents:**
+    - Model description
+    - Training details
+    - Performance metrics
+    - Usage examples
+    - License
+    - Citation
+  end note
+
+  :Create/Update HF Repository<<HuggingFace>>;
+  note right
+    **Function:** create_repo()
+
+    **Repository:**
+    - Private or public
+    - Model type: pytorch
+    - Tags: document-quality, iqa
+  end note
+
+  :Upload Model Files<<HuggingFace>>;
+  note right
+    **Uploaded:**
+    - model_final.pth
+    - config.yaml
+    - README.md (model card)
+    - metrics.json
+
+    **Excluded:**
+    - Intermediate checkpoints
+    - Large training logs
+  end note
+
+  :Create Version Tag<<HuggingFace>>;
+  note right
+    **Semantic Version:**
+    v1.0.0, v1.1.0, v2.0.0
+
+    **Tag Message:**
+    - Release notes
+    - Performance summary
+    - Breaking changes
+  end note
+
+  :Verify Upload<<HuggingFace>>;
+  note right
+    **Checks:**
+    - Files accessible
+    - Model loadable
+    - README renders
+    - Version tag exists
+  end note
+}
+
+:Promotion Complete<<HuggingFace>>;
+note right
+  **Output:**
+  https://huggingface.co/org/model-name
+
+  **Available via:**
+  from huggingface_hub import hf_hub_download
+
+  model_path = hf_hub_download(
+      repo_id="org/model-name",
+      filename="model_final.pth",
+      revision="v1.0.0"
+  )
+end note
+
+stop
+
+legend right
+  **Commands Reference:**
+
+  **List runs:**
+  python scripts/promote_to_hf.py \\
+    --list-runs \\
+    --gcs-bucket image_detection_b \\
+    --model resnet50_teacher
+
+  **Dry run:**
+  python scripts/promote_to_hf.py \\
+    --dry-run \\
+    --run-id <run_id> \\
+    --version v1.0.0
+
+  **Promote:**
+  python scripts/promote_to_hf.py \\
+    --gcs-bucket image_detection_b \\
+    --model resnet50_teacher \\
+    --run-id <run_id> \\
+    --hf-repo org/model-name \\
+    --version v1.0.0 \\
+    --private
+
+  **Environment:**
+  export HF_TOKEN=<token>
+  export GOOGLE_APPLICATION_CREDENTIALS=<path>
+
+  **Documentation:**
+  docs/MODEL_STORAGE.md
+endlegend
+
+@enduml

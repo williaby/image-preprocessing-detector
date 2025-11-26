@@ -1,0 +1,592 @@
+@startuml Unified Primary Workflow - Project A
+!theme blueprint
+title Project A - Unified Document Processing Pipeline
+caption Consolidated from Planning Docs + Copilot + Gemini + Sonnet analyses (Opus synthesis)
+
+skinparam BackgroundColor transparent
+skinparam defaultTextAlignment center
+skinparam ArrowColor #2C3E50
+skinparam ArrowThickness 2
+
+' Color coding for different stages
+skinparam activity {
+    BackgroundColor<<Input>> #E8F5E9
+    BackgroundColor<<Preflight>> #FFF3E0
+    BackgroundColor<<Gate>> #E3F2FD
+    BackgroundColor<<Detection>> #F3E5F5
+    BackgroundColor<<ML>> #FCE4EC
+    BackgroundColor<<Correction>> #FFF9C4
+    BackgroundColor<<Quality>> #E0F2F1
+    BackgroundColor<<Output>> #F1F8E9
+    BackgroundColor<<Error>> #FFEBEE
+    BorderColor #2C3E50
+}
+
+|#E8F5E9|Initialization|
+start
+:Load Configuration<<Input>>;
+note right
+  **Module:** core/config.py
+  **Source:** YAML + Environment
+
+  **Key Settings:**
+  - enable_pdf_upscaling
+  - teacher_fallback_enabled
+  - entropy_threshold: 0.8
+  - discrepancy_threshold: 0.3
+end note
+
+:Initialize Components<<Input>>;
+note right
+  **Components:**
+  - DocumentProcessor
+  - PDFDocumentAnalyzer
+  - TextGate
+  - ClassicalIQADetector (7 detectors)
+  - MLIQADetector (ONNX Runtime)
+  - LayoutLiteAnalyzer
+  - CorrectionPipeline
+  - DQSCalculator
+  - RoutingEngine
+end note
+
+|#FFF3E0|Pre-flight|
+:Input Document (PDF/Image)<<Input>>;
+note right
+  **Supported:**
+  PDF, PNG, JPEG, TIFF
+
+  **Validation:**
+  - File existence
+  - MIME type detection
+  - Size limits
+end note
+
+partition "DPI Analysis & Upscaling (Phase 4)" {
+  :PDFResolutionAnalyzer.analyze()<<Preflight>>;
+  note right
+    **Module:** ingestion/pdf_resolution.py
+
+    **Process:**
+    1. Extract image dimensions
+    2. Calculate effective DPI
+    3. Return resolution metrics
+
+    **Output:** min_dpi, avg_dpi, needs_upscaling
+    **Time:** <100ms
+  end note
+
+  if (DPI < 300?) then (yes)
+    if (Upscaling Enabled?) then (yes)
+      :PDFUpscaler.upscale()<<Preflight>>;
+      note right
+        **Module:** ingestion/pdf_upscaler.py
+
+        **Algorithms:**
+        - LANCZOS (default, best quality)
+        - BICUBIC (balanced)
+        - INTER_LINEAR (fastest)
+
+        **Time:** 310-360ms/page
+        **Memory:** <2GB
+      end note
+
+      if (Success?) then (yes)
+        :Use Upscaled Document;
+      else (no)
+        if (Preserve Original?) then (yes)
+          :Fallback to Original<<Error>>;
+        else (no)
+          :Raise Error<<Error>>;
+          stop
+        endif
+      endif
+    else (no)
+      :Skip (Config Disabled);
+    endif
+  else (no)
+    :Skip (DPI Sufficient);
+  endif
+}
+
+|#E3F2FD|Ingestion|
+partition "Document Loading" {
+  if (PDF?) then (yes)
+    :PDFLoader.load_pages()<<Input>>;
+    note right
+      **Module:** ingestion/pdf_loader.py
+      **Library:** PyMuPDF (fitz)
+
+      **Process:**
+      1. Open PDF
+      2. Render pages at 300 DPI
+      3. Convert to numpy (BGR)
+
+      **Output:** List[PageImage]
+    end note
+  else (Image)
+    :ImageLoader.load()<<Input>>;
+    note right
+      **Module:** ingestion/image_loader.py
+      **Library:** Pillow
+
+      **Handles:** PNG, JPEG, TIFF
+      **Extracts:** EXIF DPI
+    end note
+  endif
+
+  :Normalize to 300 DPI<<Input>>;
+  note right
+    - Standardize color space (BGR)
+    - COCO coordinate format
+    - Generate document_id
+  end note
+}
+
+|#E3F2FD|Classification|
+partition "PDF Type Classification (Phase 8)" {
+  :PDFTypeClassifier.classify()<<Gate>>;
+  note right
+    **Module:** classification/pdf_type_classifier.py
+
+    **Method:** PyMuPDF text extraction ratio
+
+    **Logic:**
+    - text_ratio > 0.8 → BORN_DIGITAL
+    - text_ratio < 0.2 → IMAGE_ONLY
+    - else → HYBRID
+
+    **Accuracy:** >99%
+  end note
+}
+
+partition "Text Gate Routing" {
+  :TextGate.detect()<<Gate>>;
+  note right
+    **Module:** detection/text_gate.py
+
+    **Ensemble Heuristics:**
+    1. Morphological stroke density (weight: 0.4)
+    2. Connected components (weight: 0.4)
+    3. Canny edge density (weight: 0.2)
+
+    **Threshold:** stroke_density > 0.05 OR components > 10
+    **Time:** <10ms (target <50ms)
+  end note
+}
+
+|#F3E5F5|Detection|
+fork
+  if (has_text?) then (no)
+    |#F3E5F5|No Text Path|
+    partition "Classical IQA (Full Page)" {
+      :Run 7 Classical Detectors<<Detection>>;
+      note right
+        **Module:** detection/iqa_classical.py
+
+        **Phase 1 (Basic):**
+        1. BlurDetector (Laplacian variance)
+        2. SkewDetector (Hough + projection)
+        3. ContrastDetector (histogram)
+
+        **Phase 1C (Enhanced):**
+        4. NoiseDetector (wavelet DWT)
+        5. IlluminationDetector (9-region)
+        6. JPEGBlockinessDetector (DCT)
+        7. BleedThroughDetector (verso)
+
+        **Total Time:** <25ms (all 7)
+      end note
+
+      :ClassicalScoreAdapter.normalize()<<Detection>>;
+      note right
+        Convert all outputs to [0, 1] range
+        for consistent comparison
+      end note
+    }
+  else (yes)
+    |#F3E5F5|Text Path|
+    partition "Layout-Lite Detection (Phase 6)" {
+      :DocLayout-YOLO Inference<<Detection>>;
+      note right
+        **Module:** detection/layout_lite/analyzer.py
+        **Model:** DocLayout-YOLO (ONNX)
+        **Config:** configs/models/doclayout_yolo.yaml
+
+        **11 DocLayNet Classes:**
+        Caption, Footnote, Formula, List-Item,
+        Page-Footer, Page-Header, Picture,
+        Section-Header, Table, Text, Title
+
+        **Time:** <30ms GPU, <100ms CPU
+      end note
+
+      :Extract Page Attributes<<Detection>>;
+      note right
+        **Coarse Classification:**
+        - layout_type: single/multi/complex
+        - has_tables: bool
+        - has_figures: bool
+        - has_dense_math: bool
+        - has_handwriting: bool
+
+        **NOT Semantic Layout:**
+        - No reading order
+        - No table structure
+        - No element linking
+        (Project B responsibility)
+      end note
+
+      :Calculate Complexity Score<<Detection>>;
+      note right
+        **Formula:**
+        score = base[layout_type]
+              + 0.20 * has_tables
+              + 0.15 * has_figures
+              + 0.15 * has_dense_math
+              + 0.10 * has_handwriting
+
+        **Range:** [0, 1]
+      end note
+    }
+  endif
+
+fork again
+  |#FCE4EC|ML IQA|
+  partition "Student ML IQA (Primary)" {
+    :MLIQADetector.run_student()<<ML>>;
+    note right
+      **Module:** detection/iqa_ml.py
+      **Model:** ResNet-18 Student (ONNX)
+      **Size:** 42 MB (12.3M params)
+
+      **Device Priority:**
+      1. Local GPU (CUDA)
+      2. Local CPU (ONNX)
+
+      **Time:** <10ms GPU, <40ms CPU
+    end note
+
+    :Preprocess (224x224)<<ML>>;
+    note right
+      1. Resize to 224x224
+      2. BGR → RGB
+      3. Normalize [0,1]
+      4. ImageNet standardization
+      5. HWC → CHW
+    end note
+
+    :5-Head Classification<<ML>>;
+    note right
+      **Heads:**
+      - blur_score
+      - noise_score
+      - contrast_score
+      - skew_score
+      - compression_score
+
+      **Each:** Binary classification + confidence
+    end note
+
+    :Calculate Uncertainty<<ML>>;
+    note right
+      **UncertaintyMetrics:**
+      - entropy = -Σ p(i) * log2(p(i))
+      - min_confidence
+      - mean_confidence
+    end note
+  }
+
+  partition "Teacher Escalation Gate" {
+    :Check Escalation Triggers<<ML>>;
+    note right
+      **6 Trigger Conditions:**
+
+      **1. High Uncertainty:**
+      - entropy >= 0.8
+      - min_confidence < 0.6
+      - mean_confidence < 0.7
+
+      **2. Classical Discrepancy:**
+      - |student - classical| >= 0.3
+
+      **3. High-Risk Document:**
+      - pre_ocr_risk >= 0.6
+      - pdf_type == IMAGE_ONLY
+      - complexity_score > 0.6
+
+      **4. Config Override:**
+      - force_teacher_inference: true
+
+      **5. Budget Check (BLOCKING):**
+      - max_pages_for_teacher exceeded
+      - Modal budget exceeded
+
+      **6. Device Check (BLOCKING):**
+      - No GPU available (local or Modal)
+    end note
+
+    if (Should Escalate?) then (yes)
+      if (GPU Available?) then (yes)
+        partition "Teacher ML IQA (Selective)" {
+          :MLIQADetector.run_teacher()<<ML>>;
+          note right
+            **Model:** ResNet-50 Teacher (ONNX)
+            **Size:** 105 MB (30.5M params)
+
+            **Device Priority:**
+            1. Local GPU
+            2. Modal GPU (if budget OK)
+            3. BLOCK (no CPU teacher)
+
+            **Time:** <30ms GPU
+            **Target:** <10% pages escalated
+          end note
+
+          :Merge Results (Teacher Override)<<ML>>;
+          note right
+            **Strategy:** Use teacher scores,
+            discard student for this page
+
+            **Log:**
+            - page_numbers
+            - escalation_reason
+            - inference_time_ms
+          end note
+        }
+      else (no)
+        :Fallback to Student<<ML>>;
+        note right
+          Graceful degradation:
+          - Log warning
+          - Use student results
+          - Flag in metadata
+        end note
+      endif
+    else (no)
+      :Use Student Results<<ML>>;
+    endif
+  }
+endfork
+
+:Merge All IQA Results<<ML>>;
+note right
+  **Final Scores:**
+  - Source: student OR teacher
+  - 5 quality dimensions
+  - Confidence metrics
+  - Classical comparison
+end note
+
+|#FFF9C4|Correction|
+partition "Apply Corrections (Phase 5)" {
+  if (is_skewed AND angle > 0.5°?) then (yes)
+    :DeskewCorrector.apply()<<Correction>>;
+    note right
+      **Guardrails:**
+      - Skip if angle > 45°
+      - Skip if confidence < 0.3
+      - Track transform history
+    end note
+  endif
+
+  if (low_contrast?) then (yes)
+    :ContrastEnhancer.apply()<<Correction>>;
+    note right
+      **CLAHE:**
+      - clipLimit: 2.0
+      - tileGridSize: (8, 8)
+    end note
+  endif
+
+  if (is_blurry?) then (yes)
+    :Sharpener.apply()<<Correction>>;
+    note right
+      **Unsharp Mask:**
+      Severity-based adjustment
+    end note
+  endif
+
+  if (has_noise?) then (yes)
+    :Denoiser.apply()<<Correction>>;
+    note right
+      **OpenCV fastNlMeans:**
+      - h: 10
+      - Skip if blur_score < 0.3
+    end note
+  endif
+
+  :Quality Re-verification<<Correction>>;
+  note right
+    **Before/After Comparison:**
+    - Re-run Classical IQA
+    - Rollback if degraded
+    - Track in transform_history
+  end note
+}
+
+|#E0F2F1|Quality Scoring|
+partition "DQS Calculation (Phase 8)" {
+  :Calculate Degradation Score<<Quality>>;
+  note right
+    **Module:** metrics/dqs_calculator.py
+
+    **Weights:**
+    - blur: 0.30
+    - noise: 0.25
+    - contrast: 0.20
+    - illumination: 0.15
+    - artifacts: 0.10
+
+    **ML Blend:** 0.30 (30% ML + 70% classical)
+  end note
+
+  :Calculate Structural Complexity<<Quality>>;
+  note right
+    **Base Scores:**
+    - SINGLE_COLUMN: 0.1
+    - MULTI_COLUMN: 0.4
+    - THREE_COLUMN: 0.6
+    - COMPLEX: 0.9
+
+    **+ Feature weights**
+  end note
+
+  :Calculate Pre-OCR Risk<<Quality>>;
+  note right
+    **Formula:**
+    risk = 0.40 * degradation
+         + 0.30 * complexity
+         + 0.20 * (pdf_type == IMAGE_ONLY)
+         + 0.10 * has_handwriting
+
+    **Range:** [0, 1]
+    - 0.0-0.3: Low risk
+    - 0.3-0.6: Medium risk
+    - 0.6-1.0: High risk
+  end note
+}
+
+partition "Routing Recommendation (Phase 8)" {
+  :RoutingEngine.recommend()<<Quality>>;
+  note right
+    **Module:** routing/recommendation_engine.py
+
+    **Decision Tree (5 Rules):**
+
+    **Rule 1:** has_tables OR has_figures
+    → VISION_STRUCTURED
+
+    **Rule 2:** risk > 0.6 OR has_handwriting
+    → OCR_ADVANCED
+
+    **Rule 3:** BORN_DIGITAL + quality > 0.8 + simple
+    → OCR_FAST
+
+    **Rule 4:** IMAGE_ONLY + simple
+    → VISION_SIMPLE
+
+    **Rule 5:** Fallback
+    → OCR_ADVANCED
+  end note
+
+  :Generate Rationale<<Quality>>;
+}
+
+|#F1F8E9|Output|
+partition "DocumentMetadata Assembly" {
+  :Create DocumentMetadata<<Output>>;
+  note right
+    **Module:** schema.py (Pydantic v2)
+
+    **Fields:**
+    - document_id, file_name
+    - pdf_type: PDFType
+    - num_pages: int
+    - pre_ocr_risk: float
+    - dqs: DQSMetadata
+    - ocr_routing_recommendation
+    - page_layout_summary: list
+    - upscaling: UpscalingMetadata
+    - teacher_usage: TeacherUsageMetadata
+    - processing_version
+    - pages: list[PageMetadata]
+  end note
+
+  :Serialize to JSON<<Output>>;
+  note right
+    **Output:** DocumentMetadata.json
+    - Pretty printed (indent=2)
+    - UTF-8 encoding
+    - COCO-aligned bboxes
+    - ISO 8601 timestamps
+  end note
+}
+
+partition "Image Output" {
+  :Write Corrected Images<<Output>>;
+  note right
+    **Format:**
+    {document_id}_page_{idx:04d}.png
+
+    **Quality:**
+    - 300 DPI
+    - Lossless PNG
+    - RGB color space
+  end note
+}
+
+:Package for Project B Handoff<<Output>>;
+note right
+  **Deliverables:**
+  1. DocumentMetadata.json
+  2. Corrected page images
+  3. Processing logs
+
+  **Project B receives:**
+  - OCR strategy guidance
+  - Pre-assessed quality
+  - Structural metadata
+end note
+
+stop
+
+legend right
+  **Performance Summary:**
+  |= Stage |= GPU |= CPU |
+  | Pre-flight | <100ms | <100ms |
+  | DPI Upscaling | 310-360ms | 310-360ms |
+  | Text Gate | <10ms | <10ms |
+  | Classical IQA | <25ms | <25ms |
+  | Student ML IQA | <10ms | <40ms |
+  | Teacher ML IQA | <30ms | N/A |
+  | Layout-Lite | <30ms | <100ms |
+  | Corrections | <100ms | <100ms |
+  | **Total** | **<150ms** | **<500ms** |
+
+  **Quality Targets:**
+  - IQA mAP: >0.88
+  - Routing accuracy: >90%
+  - Teacher escalation: <10%
+  - Coverage: >80%
+
+  **Key Modules:**
+  - ingestion/ - PDF/image loading
+  - detection/ - IQA + layout
+  - correction/ - Image transforms
+  - metrics/ - DQS calculation
+  - routing/ - Recommendation engine
+  - output/ - JSON + image export
+
+  **Synthesized from:**
+  - Planning docs (official)
+  - Copilot (artifact promotion)
+  - Sonnet (comprehensive detail)
+  - ADR-029 (scope boundaries)
+
+  **Excluded:**
+  - Per-element Hybrid IQA (ADR-029: deferred)
+  - Gemini per-element approach
+endlegend
+
+@enduml

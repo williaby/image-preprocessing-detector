@@ -1,0 +1,439 @@
+# End-to-End Testing Evaluation Report
+
+**Date**: 2025-01-25
+**Analyst**: Claude Opus 4.5
+**Project**: Image Preprocessing Detector (Project A)
+
+## Executive Summary
+
+This report evaluates the end-to-end testing against the unified workflow diagram to determine if tests effectively cover actual workflows with real files.
+
+### Key Findings
+
+| Metric | Value | Assessment |
+|--------|-------|------------|
+| Total Tests Collected | 2,141 | Extensive |
+| Code Coverage | 29.28% | **Below 80% target** |
+| Real Fixture Files | 28 files | Good variety |
+| E2E Test Files | 3 dedicated | Moderate |
+| Workflow Stages Tested | 12/16 | **75% coverage** |
+| Critical Gaps | 4 stages | Action needed |
+
+---
+
+## 1. Test Suite Structure
+
+### Test Directory Organization
+
+```
+tests/
+├── e2e/                    # End-to-end tests (3 files)
+│   ├── test_pipeline_e2e.py      # DocumentProcessor class, synthetic images
+│   ├── test_real_fixtures.py     # DocLayNet/TableBank real files
+│   └── test_device_priority_e2e.py # Device priority routing
+├── integration/            # Integration tests (20+ files)
+│   ├── test_pipeline.py          # Full pipeline with PDF creation
+│   ├── test_phase2_complete.py   # Phase 2 features
+│   ├── test_ml_iqa_e2e.py        # ML IQA with ONNX models
+│   └── ...
+├── unit/                   # Unit tests (50+ files)
+├── api/                    # API tests (9 files)
+├── benchmark/              # Performance tests
+└── fixtures/               # Validation scripts
+```
+
+### Real Test Fixtures Available
+
+```
+data/test_fixtures/
+├── doclaynet/              # 5 PDF files
+│   ├── simple_text_1.pdf
+│   ├── tables_figures_2.pdf
+│   ├── multi_column_3.pdf
+│   ├── skewed_4.pdf
+│   └── low_contrast_5.pdf
+├── tablebank/              # 5 image files
+│   ├── simple_table_1.png
+│   ├── complex_table_2.png
+│   ├── rotated_3.jpg
+│   ├── low_quality_4.jpg
+│   └── embedded_graphics_5.jpg
+├── iqa_samples/            # 6 IQA reference images
+│   ├── reference_clean.png
+│   ├── gaussian_blur_high.png
+│   ├── white_noise_high.png
+│   ├── contrast_low.png
+│   ├── jpeg_artifacts_high.png
+│   └── combined_blur_noise.png
+├── layout_samples/         # 4 edge case files
+│   ├── dense_math_page4.pdf
+│   ├── watermarked_document.pdf
+│   ├── handwriting_mixed.jpg
+│   └── colorful_background.jpg
+├── training_validation/    # 5 training samples
+└── augmentation_input/     # 3 clean baseline images
+```
+
+---
+
+## 2. Workflow Stage Coverage Analysis
+
+### Mapping: Unified Workflow → Test Coverage
+
+| Workflow Stage | Module | Test File(s) | Real Files? | Status |
+|----------------|--------|--------------|-------------|--------|
+| **1. Pre-flight DPI Analysis** | `pdf_resolution.py` | `test_pdf_resolution.py` | ❌ Synthetic | ⚠️ Partial |
+| **2. DPI Upscaling** | `pdf_upscaler.py` | `test_pdf_upscaling_integration.py` | ❌ Synthetic | ⚠️ Partial |
+| **3. PDF Loading** | `pdf_loader.py` | `test_pdf_loader.py`, `test_pipeline.py` | ✅ PyMuPDF-created | ✅ Good |
+| **4. Image Loading** | `image_loader.py` | `test_image_loader.py` | ❌ Synthetic | ⚠️ Partial |
+| **5. PDF Type Classification** | `pdf_type_classifier.py` | `test_pdf_type_classifier.py` | ❌ Synthetic | ⚠️ Partial |
+| **6. Text Gate** | `text_gate.py` | `test_text_gate.py` | ❌ Synthetic | ⚠️ Partial |
+| **7. Classical IQA (7 detectors)** | `iqa_classical.py` | `test_iqa_classical.py`, `test_iqa_fixtures_integration.py` | ✅ Real IQA samples | ✅ Good |
+| **8. ML IQA (Student)** | `iqa_ml.py` | `test_iqa_ml.py`, `test_ml_iqa_e2e.py` | ❌ Synthetic | ⚠️ **Conditional** |
+| **9. Teacher Escalation** | `iqa_ml.py` | `test_ml_iqa_e2e.py` | ❌ Synthetic | ⚠️ **Conditional** |
+| **10. Layout-Lite** | `layout_lite.py` | None identified | N/A | ❌ **MISSING** |
+| **11. Corrections** | `corrections.py` | `test_corrections.py` | ❌ Synthetic | ⚠️ Partial |
+| **12. DQS Calculation** | `dqs_calculator.py` | `test_dqs_calculator.py` | ❌ Synthetic | ✅ Good |
+| **13. Routing Recommendation** | `recommendation_engine.py` | `test_recommendation_engine.py` | ❌ Synthetic | ✅ Good |
+| **14. JSON Output** | `json_generator.py` | `test_json_generator.py` | ❌ Synthetic | ✅ Good |
+| **15. Full E2E Pipeline** | Multiple | `test_pipeline_e2e.py`, `test_pipeline.py` | ✅ Mix | ⚠️ Partial |
+| **16. Real Fixtures E2E** | Multiple | `test_real_fixtures.py` | ✅ DocLayNet/TableBank | ✅ **Good** |
+
+### Legend
+
+- ✅ **Good**: Tests exist with appropriate coverage
+- ⚠️ **Partial**: Tests exist but use synthetic data only
+- ⚠️ **Conditional**: Tests skip if models not available
+- ❌ **MISSING**: No tests identified for this stage
+
+---
+
+## 3. Critical Gaps Identified
+
+### Gap 1: Layout-Lite Detection (Phase 6) - NO TESTS
+
+**Severity**: HIGH
+
+The unified workflow includes Layout-Lite detection (DocLayout-YOLO) but **no dedicated tests exist**.
+
+**Evidence**:
+
+- No `test_layout_lite.py` file found
+- No tests for `layout_lite/analyzer.py`
+- No tests for complexity scoring
+- No tests for page attribute extraction
+
+**Impact**:
+
+- DQS calculation depends on complexity score
+- Routing recommendations depend on `has_tables`, `has_figures`
+- Untested code paths in production
+
+**Recommendation**:
+
+```python
+# Create tests/unit/test_layout_lite.py
+def test_layout_lite_with_doclaynet_fixtures(doclaynet_pdfs):
+    """Test Layout-Lite with real DocLayNet PDFs."""
+    ...
+
+def test_complexity_score_calculation():
+    """Test structural complexity scoring."""
+    ...
+
+def test_page_attribute_extraction():
+    """Test has_tables, has_figures, etc. detection."""
+    ...
+```
+
+### Gap 2: Real File Coverage in Pre-flight/Ingestion
+
+**Severity**: MEDIUM
+
+Pre-flight DPI analysis and ingestion tests use **only synthetic PDFs** created with PyMuPDF.
+
+**Evidence**:
+
+- `test_pdf_resolution.py`: Creates PDFs in-memory
+- `test_pdf_upscaler.py`: Uses synthetic images
+- `test_pdf_loader.py`: Creates PDFs in tmpdir
+
+**Impact**:
+
+- Real-world PDFs (scans, exports) may have different characteristics
+- Edge cases in real documents not tested
+
+**Recommendation**:
+
+```python
+# Add to tests/integration/test_preflight_real.py
+@pytest.mark.real_data
+def test_preflight_with_doclaynet_pdfs(doclaynet_pdfs):
+    """Test DPI analysis with real DocLayNet PDFs."""
+    for pdf_path in doclaynet_pdfs:
+        analyzer = PDFDocumentAnalyzer()
+        result = analyzer.analyze(pdf_path)
+        assert result.resolution_analysis is not None
+```
+
+### Gap 3: ML IQA Tests Conditional on Model Availability
+
+**Severity**: MEDIUM
+
+ML IQA tests are **skipped** when ONNX models not available.
+
+**Evidence**:
+
+```python
+# From test_ml_iqa_e2e.py
+def test_e2e_student_inference_with_high_confidence(
+    self, ml_detector: MLIQADetector | None
+) -> None:
+    if ml_detector is None:
+        pytest.skip("ML detector not available")
+```
+
+**Impact**:
+
+- CI may not test ML IQA paths
+- Model integration issues not caught in PR validation
+
+**Recommendation**:
+
+1. Add ONNX models to test fixtures or CI artifacts
+2. Add mock-based tests for model unavailable paths
+3. Add CI job that downloads models and runs ML tests
+
+### Gap 4: Teacher Escalation Logic Not Fully E2E Tested
+
+**Severity**: MEDIUM
+
+While unit tests exist for escalation triggers, the **full E2E path** through teacher escalation with real documents is limited.
+
+**Evidence**:
+
+- `test_ml_iqa_e2e.py`: Tests escalation with synthetic images
+- No test with real low-quality documents triggering teacher
+
+**Recommendation**:
+
+```python
+@pytest.mark.real_data
+def test_teacher_escalation_with_low_quality_pdf(low_quality_table_image, ml_detector):
+    """Test teacher escalation is triggered by real low-quality image."""
+    if ml_detector is None:
+        pytest.skip("ML detector not available")
+
+    _, teacher_scores, reason = ml_detector.run_pipeline(low_quality_table_image, ...)
+    # Low quality should trigger escalation
+    assert teacher_scores is not None or reason is not None
+```
+
+---
+
+## 4. Existing E2E Tests Analysis
+
+### test_pipeline_e2e.py - Synthetic Images
+
+**What it tests**:
+
+- `DocumentProcessor` class orchestration
+- IQA detection → DQS calculation → Routing
+- JSON output validation
+- Multi-page document handling
+
+**Fixtures used**:
+
+- `sample_document_image` - Synthetic white image with lines
+- `sample_blurry_image` - Gaussian blur applied
+- `sample_noisy_image` - Random noise added
+- `multi_issue_image` - Combined issues
+
+**Verdict**: ⚠️ **Good coverage but synthetic only**
+
+### test_real_fixtures.py - Real Documents
+
+**What it tests**:
+
+- Real DocLayNet PDFs (5 files)
+- Real TableBank images (5 files)
+- Full processing pipeline
+- Handoff JSON format
+
+**Fixtures used**:
+
+- `simple_text_pdf`, `tables_figures_pdf`, `multi_column_pdf`, `skewed_pdf`, `low_contrast_pdf`
+- `simple_table_image`, `complex_table_image`, `rotated_table_image`, `low_quality_table_image`
+
+**Verdict**: ✅ **Good real-world coverage**
+
+**BUT**: Tests are marked `@pytest.mark.real_data` and **may be skipped** in standard CI runs.
+
+### test_device_priority_e2e.py - Device Routing
+
+**What it tests**:
+
+- Device capability detection (GPU/CPU/Modal)
+- Fallback behavior
+- Full pipeline with device routing
+- Routing decisions
+
+**Fixtures used**: Mocked device capabilities
+
+**Verdict**: ✅ **Good for device logic, but mocked**
+
+---
+
+## 5. Recommendations
+
+### Immediate Actions (Priority 1)
+
+1. **Create Layout-Lite Tests**
+
+   ```bash
+   # Create test file
+   touch tests/unit/test_layout_lite.py
+   touch tests/integration/test_layout_fixtures_integration.py
+   ```
+
+2. **Enable Real Data Tests in CI**
+
+   ```yaml
+   # .github/workflows/ci.yml
+   - name: Run Real Data Tests
+     run: poetry run pytest -m real_data --tb=short
+   ```
+
+3. **Add ONNX Models to CI**
+
+   ```yaml
+   - name: Download Test Models
+     run: |
+       gsutil cp gs://image_detection_b/models/phase2_student/student.onnx models/iqa/onnx/
+   ```
+
+### Short-term Actions (Priority 2)
+
+4. **Expand Pre-flight Tests with Real PDFs**
+   - Add DocLayNet PDFs to DPI analysis tests
+   - Add scanned document samples (different scanners)
+
+5. **Add Teacher Escalation E2E with Real Data**
+   - Use IQA samples with known quality issues
+   - Verify escalation triggers correctly
+
+6. **Add Golden File Tests for JSON Output**
+   - Create expected output JSON for each real fixture
+   - Compare generated output against golden files
+
+### Medium-term Actions (Priority 3)
+
+7. **Performance Benchmark Tests**
+   - Time each workflow stage with real documents
+   - Compare against targets in workflow diagram
+
+8. **Regression Test Suite**
+   - Save outputs from current version
+   - Detect unintended changes in future versions
+
+---
+
+## 6. Test Coverage by Workflow Path
+
+### Path 1: Text-Detected Branch (Most Common)
+
+```
+Input → Pre-flight → Ingestion → Text Gate (YES) → Layout-Lite → ML IQA → Corrections → DQS → Routing → Output
+```
+
+| Stage | Unit Tests | Integration Tests | E2E Tests | Real Files |
+|-------|------------|-------------------|-----------|------------|
+| Pre-flight | ✅ | ⚠️ | ❌ | ❌ |
+| Ingestion | ✅ | ✅ | ✅ | ✅ |
+| Text Gate | ✅ | ⚠️ | ✅ | ⚠️ |
+| Layout-Lite | ❌ | ❌ | ❌ | ❌ |
+| ML IQA | ✅ | ⚠️ | ⚠️ | ❌ |
+| Corrections | ✅ | ✅ | ✅ | ❌ |
+| DQS | ✅ | ✅ | ✅ | ❌ |
+| Routing | ✅ | ✅ | ✅ | ❌ |
+| Output | ✅ | ✅ | ✅ | ✅ |
+
+**Coverage**: ~65% (Layout-Lite gap is critical)
+
+### Path 2: No-Text Branch (Image-Only)
+
+```
+Input → Pre-flight → Ingestion → Text Gate (NO) → Classical IQA → ML IQA → Corrections → DQS → Routing → Output
+```
+
+| Stage | Unit Tests | Integration Tests | E2E Tests | Real Files |
+|-------|------------|-------------------|-----------|------------|
+| Classical IQA | ✅ | ✅ | ✅ | ✅ |
+| (Other stages same as Path 1)
+
+**Coverage**: ~75% (Better because Classical IQA has real file tests)
+
+### Path 3: Teacher Escalation
+
+```
+... → ML IQA (Student) → Uncertainty Gate → Teacher → Merge → ...
+```
+
+| Stage | Unit Tests | Integration Tests | E2E Tests | Real Files |
+|-------|------------|-------------------|-----------|------------|
+| Student | ✅ | ⚠️ | ⚠️ | ❌ |
+| Uncertainty | ✅ | ❌ | ⚠️ | ❌ |
+| Teacher | ✅ | ⚠️ | ⚠️ | ❌ |
+| Merge | ✅ | ❌ | ❌ | ❌ |
+
+**Coverage**: ~40% (Needs improvement)
+
+---
+
+## 7. Summary
+
+### Strengths
+
+1. **Extensive test suite** (2,141 tests)
+2. **Good real fixture variety** (28 files across 5 categories)
+3. **Dedicated E2E test files** for pipeline validation
+4. **JSON handoff validation** tests exist
+5. **IQA samples with known labels** for validation
+
+### Weaknesses
+
+1. **Layout-Lite has NO tests** (critical gap)
+2. **Most tests use synthetic data** (not real scans)
+3. **ML tests skip when models unavailable**
+4. **Real data tests may be skipped in CI**
+5. **Code coverage at 29%** (below 80% target)
+
+### Priority Actions
+
+| Priority | Action | Impact |
+|----------|--------|--------|
+| **P0** | Create Layout-Lite tests | Closes critical gap |
+| **P1** | Enable real data tests in CI | Improves confidence |
+| **P1** | Add ONNX models to CI | Enables ML testing |
+| **P2** | Expand pre-flight real file tests | Better coverage |
+| **P2** | Add teacher escalation E2E | Validates complex path |
+| **P3** | Golden file regression tests | Prevents regressions |
+
+---
+
+## 8. Conclusion
+
+The test suite is **extensive but has critical gaps**:
+
+1. **Layout-Lite (Phase 6)** is completely untested despite being in the workflow
+2. **Most E2E tests use synthetic data** rather than real documents
+3. **ML IQA tests are conditional** on model availability
+4. **Real data tests may be skipped** in standard CI
+
+**Overall Assessment**: **70% workflow coverage** with significant gaps in Layout-Lite and real-file testing.
+
+**Recommendation**: Prioritize Layout-Lite tests and enable real data tests in CI before Phase 6 completion.
+
+---
+
+*Report generated by Claude Opus 4.5 on 2025-01-25*
