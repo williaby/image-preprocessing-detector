@@ -11,16 +11,19 @@ import fitz  # PyMuPDF
 import pytest
 from PIL import Image
 
+from image_preprocessing_detector.ingestion.document_processor import (
+    DocumentProcessor,
+    process_document,
+)
 from image_preprocessing_detector.schema import PDFType
 
-# Stubs for undefined names (Phase 8/9 features not yet implemented)
-# TODO(phase8): Import DocumentProcessor, process_pdf_document when implemented
-DocumentProcessor = None  # type: ignore
-process_pdf_document = None  # type: ignore
 
-pytestmark = pytest.mark.skip(
-    reason="DocumentProcessor not yet implemented - Phase 8/9 feature"
-)
+def process_pdf_document(pdf_path: Path):
+    """Helper function to process a PDF document.
+
+    Wraps the DocumentProcessor for backward compatibility with tests.
+    """
+    return process_document(pdf_path)
 
 
 class TestPDFClassificationIntegration:
@@ -149,15 +152,15 @@ class TestPDFClassificationIntegration:
         # Process with custom ID
         custom_id = "custom-doc-123"
         processor = DocumentProcessor()
-        metadata = processor.process_pdf(pdf_path, document_id=custom_id)
+        metadata = processor.process_document(pdf_path, document_id=custom_id)
 
         # Verify custom ID is used
         assert metadata.document_id == custom_id
 
-    def test_document_processor_generates_uuid_when_no_id_provided(
+    def test_document_processor_generates_id_when_no_id_provided(
         self, tmp_path: Path
     ) -> None:
-        """Test that document processor generates UUID when no ID provided."""
+        """Test that document processor generates an ID when no ID provided."""
         pdf_path = tmp_path / "test.pdf"
 
         # Create simple PDF
@@ -170,10 +173,11 @@ class TestPDFClassificationIntegration:
         # Process without ID
         metadata = process_pdf_document(pdf_path)
 
-        # Verify UUID is generated (basic check: non-empty string with hyphens)
+        # Verify ID is generated (format: doc_{filestem}_{timestamp})
         assert isinstance(metadata.document_id, str)
         assert len(metadata.document_id) > 0
-        assert "-" in metadata.document_id  # UUIDs have hyphens
+        assert metadata.document_id.startswith("doc_")
+        assert "test" in metadata.document_id  # File stem included
 
     def test_processing_version_includes_thresholds(self, tmp_path: Path) -> None:
         """Test that processing version includes classification thresholds."""

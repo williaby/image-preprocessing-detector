@@ -914,26 +914,128 @@ class TestPhase2PerformanceTargets:
     """
     Test Phase 2 performance targets.
 
-    NOTE: Performance targets assume ML models are deployed.
-    These tests will be updated when models are available.
+    Tests ML model loading and basic inference performance.
+    Uses deployed ONNX models from models/iqa/onnx/.
     """
 
-    @pytest.mark.skip(reason="Phase 2: ML models not yet deployed")
-    def test_inference_latency_under_150ms_per_page(self) -> None:
-        """Test that ML inference completes in <150ms per page (with GPU)."""
-        # Placeholder for future implementation
-        # Target: <150ms per page with T4 GPU
+    @pytest.fixture
+    def model_paths(self) -> dict[str, Path]:
+        """Get paths to deployed ONNX models."""
+        base_path = Path(__file__).parent.parent.parent / "models" / "iqa" / "onnx"
+        return {
+            "student": base_path / "resnet18_student.onnx",
+            "teacher": base_path / "resnet50_teacher_50epoch.onnx",
+        }
 
-    @pytest.mark.skip(reason="Phase 2: ML models not yet deployed")
-    def test_throughput_over_6_pages_per_second(self) -> None:
-        """Test throughput >6 pages/sec per GPU worker."""
-        # Placeholder for future implementation
+    @pytest.fixture
+    def sample_image(self) -> np.ndarray:
+        """Create a sample test image for inference."""
+        # Create a realistic document-like image (grayscale with text-like patterns)
+        img = np.ones((224, 224, 3), dtype=np.uint8) * 245  # Light background
+        # Add some "text-like" lines
+        for y in range(20, 200, 15):
+            cv2.line(img, (20, y), (200, y), (50, 50, 50), 1)
+        return img
 
-    @pytest.mark.skip(reason="Phase 2: ML model validation not yet complete")
-    def test_iqa_map_over_88_percent(self) -> None:
-        """Test that IQA mAP exceeds 0.88 on validation set."""
-        # Placeholder for future implementation
-        # Target: mAP > 0.88 for multi-label IQA classification
+    def test_onnx_models_exist(self, model_paths: dict[str, Path]) -> None:
+        """Test that ONNX models are deployed and accessible."""
+        student_path = model_paths["student"]
+        teacher_path = model_paths["teacher"]
+
+        assert student_path.exists(), f"Student model not found at {student_path}"
+        assert teacher_path.exists(), f"Teacher model not found at {teacher_path}"
+
+        # Verify file sizes are reasonable (not empty or corrupted)
+        student_size = student_path.stat().st_size
+        teacher_size = teacher_path.stat().st_size
+
+        assert student_size > 10_000_000, f"Student model too small: {student_size} bytes"
+        assert teacher_size > 50_000_000, f"Teacher model too small: {teacher_size} bytes"
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("onnxruntime", reason="ONNX Runtime required"),
+        reason="ONNX Runtime not installed",
+    )
+    def test_student_model_loads_and_infers(
+        self, model_paths: dict[str, Path], sample_image: np.ndarray
+    ) -> None:
+        """Test that student model loads and runs inference."""
+        import onnxruntime as ort
+
+        student_path = model_paths["student"]
+        if not student_path.exists():
+            pytest.skip(f"Student model not found at {student_path}")
+
+        # Load model
+        session = ort.InferenceSession(str(student_path), providers=["CPUExecutionProvider"])
+
+        # Prepare input (NCHW format, normalized)
+        img = cv2.resize(sample_image, (224, 224))
+        img = img.astype(np.float32) / 255.0
+        img = np.transpose(img, (2, 0, 1))  # HWC -> CHW
+        img = np.expand_dims(img, axis=0)  # Add batch dimension
+
+        # Run inference
+        input_name = session.get_inputs()[0].name
+        outputs = session.run(None, {input_name: img})
+
+        # Verify outputs exist and have expected structure
+        assert len(outputs) > 0, "No outputs from inference"
+        assert outputs[0].shape[0] == 1, "Batch size should be 1"
+
+    @pytest.mark.skipif(
+        not pytest.importorskip("onnxruntime", reason="ONNX Runtime required"),
+        reason="ONNX Runtime not installed",
+    )
+    def test_inference_latency_under_500ms_cpu(
+        self, model_paths: dict[str, Path], sample_image: np.ndarray
+    ) -> None:
+        """Test that student model inference completes in <500ms on CPU.
+
+        Note: Original target was <150ms with GPU. This tests <500ms on CPU.
+        """
+        import time
+
+        import onnxruntime as ort
+
+        student_path = model_paths["student"]
+        if not student_path.exists():
+            pytest.skip(f"Student model not found at {student_path}")
+
+        session = ort.InferenceSession(str(student_path), providers=["CPUExecutionProvider"])
+
+        # Prepare input
+        img = cv2.resize(sample_image, (224, 224))
+        img = img.astype(np.float32) / 255.0
+        img = np.transpose(img, (2, 0, 1))
+        img = np.expand_dims(img, axis=0)
+
+        # Warm up
+        input_name = session.get_inputs()[0].name
+        _ = session.run(None, {input_name: img})
+
+        # Measure latency (average of 5 runs)
+        latencies = []
+        for _ in range(5):
+            start = time.perf_counter()
+            _ = session.run(None, {input_name: img})
+            latencies.append((time.perf_counter() - start) * 1000)  # Convert to ms
+
+        avg_latency = sum(latencies) / len(latencies)
+
+        # Assert latency is under 500ms on CPU
+        assert avg_latency < 500, f"Average latency {avg_latency:.1f}ms exceeds 500ms target"
+
+    def test_model_metadata_exists(self, model_paths: dict[str, Path]) -> None:
+        """Test that training metadata files exist."""
+        base_path = model_paths["student"].parent
+
+        # Check for training summary files
+        student_summary = base_path / "training_summary_student.json"
+        teacher_summary = base_path / "training_summary_50epoch.json"
+
+        assert student_summary.exists(), f"Student training summary not found: {student_summary}"
+        assert teacher_summary.exists(), f"Teacher training summary not found: {teacher_summary}"
 
 
 class TestPhase2EndToEndIntegration:
