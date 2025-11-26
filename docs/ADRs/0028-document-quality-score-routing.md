@@ -176,7 +176,7 @@ class DocumentMetadata(BaseModel):
         None,
         description="Document quality score and routing recommendation"
     )
-```text
+```
 
 **DQS Calculator** (src/image_preprocessing_detector/scoring/dqs_calculator.py):
 
@@ -350,7 +350,7 @@ class DQSCalculator:
                 )
 
         return routing, confidence, rationale
-```text
+```
 
 **Configuration** (src/image_preprocessing_detector/core/config.py):
 
@@ -384,7 +384,7 @@ class Settings(BaseSettings):
     dqs_contrast_weight: float = Field(default=0.2, ge=0.0, le=1.0)
     dqs_skew_weight: float = Field(default=0.1, ge=0.0, le=1.0)
     dqs_resolution_weight: float = Field(default=0.1, ge=0.0, le=1.0)
-```text
+```
 
 ---
 
@@ -603,7 +603,7 @@ dqs_routing_confidence_p95 0.65
 # Problematic cases (Quadrant 2: high deg + high struct)
 dqs_challenging_docs_count 56
 dqs_challenging_docs_percent 2.1
-```text
+```
 
 **Quality Metrics** (Post-processing validation):
 
@@ -615,7 +615,7 @@ rag_accuracy_by_quadrant{quadrant="ocr_advanced"} 0.94
 # Pipeline utilization
 pipeline_usage_percent{pipeline="vision"} 35
 pipeline_usage_percent{pipeline="ocr"} 65
-```text
+```
 
 ### Alerts
 
@@ -646,7 +646,7 @@ if settings.enable_dqs:
     routing = quality_score.routing_recommendation
 else:
     routing = "ocr_fast"  # Default fallback
-```text
+```
 
 **Rollout Strategy**:
 
@@ -697,7 +697,7 @@ def test_dqs_quadrant_4():
     assert dqs.degradation_score >= 0.6  # Low degradation
     assert dqs.structural_score >= 0.5   # High complexity
     assert dqs.routing_recommendation == "ocr_advanced"
-```text
+```
 
 ### Integration Tests
 

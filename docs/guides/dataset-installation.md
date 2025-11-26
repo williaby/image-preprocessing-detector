@@ -50,7 +50,7 @@ The project includes a helper script for automatic GCS authentication using the 
 
 # Or source it to keep credentials for the session
 source ./scripts/auth_gcs.sh
-```text
+```
 
 **What it does**:
 
@@ -74,7 +74,7 @@ gcloud config set project image-detection-478105
 
 # Verify
 gsutil ls gs://image_detection_b/
-```text
+```
 
 ### GCS Helper Scripts
 
@@ -104,7 +104,7 @@ After authentication, use [scripts/gcs_helpers.sh](../scripts/gcs_helpers.sh) to
 
 # Upload final trained models
 ./scripts/gcs_helpers.sh upload-models phase2
-```text
+```
 
 **Typical Workflow**:
 
@@ -136,7 +136,7 @@ After authentication, use [scripts/gcs_helpers.sh](../scripts/gcs_helpers.sh) to
 ```bash
 ls -l data/benchmarks/doclaynet
 # Should show: documents/ and ground_truth/ directories
-```text
+```
 
 **No action needed** - Already available from data_ingestor project.
 
@@ -152,7 +152,7 @@ ls -l data/benchmarks/doclaynet
 ```bash
 ls -lh data/benchmarks/signatr6k
 # Should show dataset files
-```text
+```
 
 **No action needed** - Already present locally.
 
@@ -178,7 +178,7 @@ poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smo
 # Force regeneration
 rm -rf data/benchmarks/synthetic_iqa
 poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
-```text
+```
 
 **No manual download needed**.
 
@@ -212,7 +212,7 @@ unzip val2014.zip
 # ├── cocotext.v2.json
 # ├── train2014/
 # └── val2014/
-```text
+```
 
 **Citation**:
 
@@ -223,7 +223,7 @@ unzip val2014.zip
   booktitle={arXiv preprint arXiv:1601.07140},
   year={2016}
 }
-```text
+```
 
 ---
 
@@ -248,7 +248,7 @@ poetry run python scripts/download_omnidocbench.py
 # - Implements retry logic with exponential backoff
 # - Tracks download progress
 # - Saves to data/benchmarks/omnidocbench
-```text
+```
 
 **HuggingFace Token Setup** (One-time):
 
@@ -274,7 +274,7 @@ from datasets import load_dataset
 dataset = load_dataset('opendatalab/OmniDocBench', token=True)
 dataset.save_to_disk('data/benchmarks/omnidocbench')
 "
-```text
+```
 
 **Dataset Info**:
 
@@ -294,7 +294,7 @@ dataset.save_to_disk('data/benchmarks/omnidocbench')
   journal={arXiv preprint arXiv:2410.24195},
   year={2024}
 }
-```text
+```
 
 ### 6. TableBank (Phase 2 - Table Detection)
 
@@ -315,7 +315,7 @@ poetry run python scripts/download_table_datasets.py --datasets tablebank
 # - Verifies integrity
 # - Extracts contents
 # - Saves to data/benchmarks/tablebank
-```text
+```
 
 **Dataset Info**:
 
@@ -336,7 +336,7 @@ huggingface-cli download liminghao1630/TableBank \
 cd data/benchmarks/tablebank
 cat TableBank.zip.* > TableBank.zip
 unzip -q TableBank.zip
-```text
+```
 
 **Note**: The original GitHub releases (400MB subset) are no longer available.
 The full dataset is now hosted on HuggingFace (23.7 GB).
@@ -350,7 +350,7 @@ The full dataset is now hosted on HuggingFace (23.7 GB).
   journal={arXiv preprint arXiv:1903.01949},
   year={2020}
 }
-```text
+```
 
 ### 7. PubTabNet (Phase 2 - Table Structure Recognition)
 
@@ -367,7 +367,7 @@ poetry run python scripts/download_table_datasets.py --datasets pubtabnet
 
 # Or download all table datasets at once
 poetry run python scripts/download_table_datasets.py --all
-```text
+```
 
 **Dataset Details**:
 
@@ -393,7 +393,7 @@ huggingface-cli download ajimeno/PubTabNet \
 # Extract
 cd pubtabnet
 tar -xzf pubtabnet.tar.gz
-```text
+```
 
 **Expected structure**:
 
@@ -416,7 +416,7 @@ data/benchmarks/pubtabnet/
   journal={arXiv preprint arXiv:1911.10683},
   year={2020}
 }
-```text
+```
 
 ### 8. FinTabNet (Phase 2 - Financial Table Detection)
 
@@ -433,7 +433,7 @@ poetry run python scripts/download_table_datasets.py --datasets fintabnet
 
 # Or download all table datasets at once
 poetry run python scripts/download_table_datasets.py --all
-```text
+```
 
 **Dataset Details**:
 
@@ -468,7 +468,7 @@ huggingface-cli download bsmock/FinTabNet.c \
 cd fintabnet
 tar -xzf FinTabNet.c-PDF_Annotations.tar.gz
 tar -xzf FinTabNet.c-Structure.tar.gz
-```text
+```
 
 **Expected structure**:
 
@@ -493,7 +493,7 @@ data/benchmarks/fintabnet/
   journal={arXiv preprint arXiv:2005.00589},
   year={2021}
 }
-```text
+```
 
 ### 9. WiLI-2018 (Phase 2 - Language Identification)
 
@@ -520,7 +520,7 @@ unzip wili-2018.zip
 # ├── x_test.txt
 # ├── y_train.txt
 # └── y_test.txt
-```text
+```
 
 **Dataset Info**:
 
@@ -537,7 +537,7 @@ unzip wili-2018.zip
   booktitle={arXiv preprint arXiv:1801.07779},
   year={2018}
 }
-```text
+```
 
 ---
 
@@ -548,7 +548,7 @@ unzip wili-2018.zip
 ```gitignore
 # Benchmark datasets (large) - added 2025-11-05
 data/benchmarks/
-```text
+```
 
 This rule covers **ALL datasets** in `data/benchmarks/` directory.
 
@@ -562,7 +562,7 @@ This rule covers **ALL datasets** in `data/benchmarks/` directory.
 # Force add README despite gitignore
 git add -f data/benchmarks/README.md
 git commit -m "docs: Add benchmark datasets README"
-```text
+```
 
 **Verification**:
 
@@ -572,7 +572,7 @@ git ls-files data/benchmarks/
 
 # Should show only:
 # data/benchmarks/README.md
-```text
+```
 
 ---
 
@@ -583,7 +583,7 @@ git ls-files data/benchmarks/
 ```bash
 df -h /home/byron/dev/image_detection
 # Available: 798GB
-```text
+```
 
 ### Expected Dataset Sizes
 
@@ -620,7 +620,7 @@ rm -rf data/benchmarks/synthetic_iqa
 
 # Remove COCO images if not needed
 rm -rf data/benchmarks/cocotext/{train2014,val2014}
-```text
+```
 
 ---
 
@@ -637,7 +637,7 @@ ln -s /home/byron/dev/data_ingestor/data/benchmarks/doclaynet data/benchmarks/do
 
 # 2. Generate synthetic IQA
 poetry run python -m benchmarks.runners.run_smoke --suite synthetic-iqa-blur-smoke
-```text
+```
 
 ### High-Priority Datasets (Phase 3)
 
@@ -653,7 +653,7 @@ from datasets import load_dataset
 dataset = load_dataset('opendatalab/OmniDocBench', token=True)
 dataset.save_to_disk('data/benchmarks/omnidocbench')
 "
-```text
+```
 
 ### Medium-Priority Datasets (Phase 2)
 
@@ -672,7 +672,7 @@ tar -xzf pubtabnet.tar.gz
 cd ../wili_2018
 wget https://zenodo.org/record/841984/files/wili-2018.zip
 unzip wili-2018.zip
-```text
+```
 
 ---
 
@@ -705,7 +705,7 @@ git status data/benchmarks/
 
 # Test benchmark suite
 poetry run python -m benchmarks.runners.run_smoke --all
-```text
+```
 
 ---
 
@@ -721,7 +721,7 @@ ls -R data/benchmarks/doclaynet | head -20
 
 # Check registry configuration
 cat benchmarks/registry.yml | grep -A 5 "dataset: doclaynet"
-```text
+```
 
 ### Issue: HuggingFace rate limit (429 error)
 
@@ -730,7 +730,7 @@ cat benchmarks/registry.yml | grep -A 5 "dataset: doclaynet"
 ```bash
 poetry run huggingface-cli login
 # Paste your token from: https://huggingface.co/settings/tokens
-```text
+```
 
 ### Issue: Disk space full
 
@@ -743,7 +743,7 @@ df -h
 # Remove large optional datasets
 rm -rf data/benchmarks/cocotext/{train2014,val2014}  # 25GB
 rm -rf data/benchmarks/pubtabnet  # Use small subset instead
-```text
+```
 
 ### Issue: Symlink broken
 
@@ -758,7 +758,7 @@ ln -s /home/byron/dev/data_ingestor/data/benchmarks/doclaynet data/benchmarks/do
 
 # Verify
 ls -l data/benchmarks/doclaynet
-```text
+```
 
 ---
 

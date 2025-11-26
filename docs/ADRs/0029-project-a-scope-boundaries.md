@@ -258,7 +258,7 @@ image_detection   →    ocr-orchestrator →   fusion-trust   →    vector-ind
     }
   ]
 }
-```text
+```
 
 ### Forbidden Outputs
 

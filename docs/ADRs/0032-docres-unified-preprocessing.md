@@ -81,7 +81,7 @@ if camera_captured or severe_degradation:
 elif simple_quality_issues:
     # Simple corrections: use classical methods (faster, CPU-only)
     corrected = classical_corrections.apply(image, issues=["skew", "contrast", "blur"])
-```text
+```
 
 ## Decision
 
@@ -134,7 +134,7 @@ restored = docres_model.restore(
     tasks=docres_tasks,
     use_dtsprompt=True
 )
-```text
+```
 
 ### Five Unified Tasks
 
@@ -436,7 +436,7 @@ class DocResModel:
         restored = self.decoder(features)
 
         return restored
-```text
+```
 
 **Severity Classifier (Routing Logic):**
 
@@ -480,7 +480,7 @@ class DegradationSeverityClassifier:
         # Heuristics: perspective distortion, background clutter, uneven lighting
         # (Implementation details omitted)
         pass
-```text
+```
 
 **Dual-Track Pipeline:**
 
@@ -533,7 +533,7 @@ class PreprocessingPipeline:
             else:
                 # Rollback to classical if DocRes degraded quality
                 return classical_output
-```text
+```
 
 ### Guardrails Extension (ADR-021 Compatibility)
 
@@ -578,7 +578,7 @@ class DocResGuardrails:
 
         # All checks passed
         return True
-```text
+```
 
 ## References
 

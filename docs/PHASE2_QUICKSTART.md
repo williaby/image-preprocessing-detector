@@ -39,7 +39,7 @@ cd ../../..
 
 # Verify
 ls -lh data/raw/tobacco800/
-```text
+```
 
 **Production option**: DocBank or RVL-CDIP (see [DATASET_INSTALLATION.md](guides/dataset-installation.md))
 
@@ -63,7 +63,7 @@ poetry install --with dev
 # Verify output (when script is available)
 # du -sh datasets/iqa_phase2/  # Should show ~10GB
 # find datasets/iqa_phase2/train/images -name "*.png" | wc -l  # Should show 35000
-```text
+```
 
 **Output structure:**
 
@@ -87,7 +87,7 @@ gcloud config set project image-detection-478105
 
 # Verify bucket access
 gsutil ls gs://image_detection_b
-```text
+```
 
 ---
 
@@ -102,7 +102,7 @@ gsutil ls gs://image_detection_b
 
 # Verify upload
 ./scripts/gcs_helpers.sh info
-```text
+```
 
 Expected output:
 
@@ -193,7 +193,7 @@ Expected output:
 
 # List Modal secrets
 ./scripts/modal_helpers.sh secrets
-```text
+```
 
 ### GCS Commands
 
@@ -218,7 +218,7 @@ Expected output:
 
 # Show storage info and costs
 ./scripts/gcs_helpers.sh info
-```text
+```
 
 ---
 
@@ -234,7 +234,7 @@ find data/raw/tobacco800/ -name "*.png" | head -10
 # Dependencies missing
 poetry install --with dev
 poetry run python -c "import albumentations, cv2, numpy; print('✓ OK')"
-```text
+```
 
 ### GCS Upload Issues
 
@@ -247,7 +247,7 @@ gcloud config set project image-detection-478105
 gsutil ls gs://image_detection_b
 
 # Check internet speed (10 Mbps = 30-40 min, 100 Mbps = 15-20 min for 10GB)
-```text
+```
 
 ### Modal Training Issues
 
@@ -264,7 +264,7 @@ poetry run modal logs --tail 100  # View recent logs
 
 # GPU allocation failed - check Modal dashboard
 # Visit: https://modal.com/apps
-```text
+```
 
 ---
 

@@ -250,7 +250,7 @@ poetry run imgprep benchmark --pages 5000 --workers 4 --rate 50/s
 
 # Failure injection (should trigger critical)
 poetry run imgprep benchmark --pages 1000 --workers 1 --inject-errors 0.3
-```text
+```
 
 ---
 

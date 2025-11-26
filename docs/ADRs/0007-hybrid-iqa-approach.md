@@ -109,7 +109,7 @@ def process_text_document(page_image):
             )
 
     return elements
-```text
+```
 
 **Schema Update**: Added `quality_issues` field to `DocumentElement`:
 
@@ -122,7 +122,7 @@ class DocumentElement(BaseModel):
     quality_issues: list[DetectedIssue] = []  # Hybrid IQA support
     needs_correction: bool = False
     correction_applied: bool = False
-```text
+```
 
 ## Consequences
 
@@ -217,7 +217,7 @@ for element in detected_elements:
 
         # Record correction
         element.correction_applied = True
-```text
+```
 
 ## Validation
 

@@ -28,13 +28,13 @@ Install the package:
 
 ```bash
 pip install image-preprocessing-detector
-```text
+```
 
 Process a document:
 
 ```bash
 imgprep process input.pdf --output result.json
-```text
+```
 
 ## Architecture Overview
 

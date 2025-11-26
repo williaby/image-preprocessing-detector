@@ -187,7 +187,7 @@ class DocumentElement(BaseModel):
     bbox: list[float]  # [x, y, width, height] in COCO format
     confidence: float
     quality_issues: list[DetectedIssue] = []  # Hybrid IQA
-```text
+```
 
 See [Schema Documentation](../api/schema.md) for complete Pydantic models.
 

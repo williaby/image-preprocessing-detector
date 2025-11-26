@@ -60,7 +60,7 @@ output/
 {
   "pdf_type": "image_only" | "born_digital" | "hybrid"
 }
-```text
+```
 
 - `image_only`: Scanned document, all pages are images
 - `born_digital`: Digital-native PDF with embedded text
@@ -75,7 +75,7 @@ output/
     "structural_complexity_score": 0.40
   }
 }
-```text
+```
 
 - `degradation_score`: 0-1 where 0=worst quality, 1=pristine
 - `structural_complexity_score`: 0-1 where 0=simple, 1=very complex
@@ -86,7 +86,7 @@ output/
 {
   "ocr_routing_recommendation": "ocr_fast" | "ocr_advanced" | "vision_simple" | "vision_structured"
 }
-```text
+```
 
 | Strategy | When Used | Expected by Project B |
 |----------|-----------|----------------------|
@@ -114,7 +114,7 @@ output/
     }
   ]
 }
-```text
+```
 
 ### pages (Per-Page Metadata)
 
@@ -150,7 +150,7 @@ output/
     }
   ]
 }
-```text
+```
 
 ### processing_version
 
@@ -167,7 +167,7 @@ output/
     "timestamp": "2025-11-23T12:00:00Z"
   }
 }
-```text
+```
 
 ## Complete Example
 
@@ -265,7 +265,7 @@ output/
     }
   ]
 }
-```text
+```
 
 ## Project B Consumption Guidelines
 
@@ -321,7 +321,7 @@ try:
 except ValidationError as e:
     # Handle invalid metadata
     log_error(f"Invalid metadata: {e}")
-```text
+```
 
 ## Versioning
 

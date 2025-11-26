@@ -444,7 +444,7 @@ Output Package → Project B
     }
   ]
 }
-```text
+```
 
 ### New Schema Fields vs Original Plan
 
@@ -631,7 +631,7 @@ TEST: 15% (7,500 images - OHR-Bench real-world only)
 
 # Augmentation
 Albumentations pipeline (see Training Data Strategy)
-```text
+```
 
 **Optimization:**
 
@@ -2270,7 +2270,7 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 
 # Current approach: Both thresholded to 1.0 (INFORMATION LOSS)
 # Continuous approach: Preserves severity gradation (0.4 vs 0.8)
-```text
+```
 
 **Benefits of Continuous Labels**:
 

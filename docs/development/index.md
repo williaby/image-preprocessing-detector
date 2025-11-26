@@ -44,7 +44,7 @@ poetry run pre-commit install
 
 # Verify installation
 poetry run pytest -v
-```text
+```
 
 ### Development Workflow
 
@@ -119,7 +119,7 @@ poetry run safety check
 
 # Run all checks
 poetry run pre-commit run --all-files
-```text
+```
 
 See [Code Quality Guide](code-quality.md) for complete details.
 
@@ -139,7 +139,7 @@ poetry run pytest -m "not slow"     # Exclude slow tests
 
 # Run parallel
 poetry run pytest -n auto
-```text
+```
 
 See [Testing Guide](testing.md) for testing strategy.
 
@@ -258,7 +258,7 @@ mkdocs build
 
 # Deploy to GitHub Pages
 mkdocs gh-deploy
-```text
+```
 
 ## Useful Resources
 

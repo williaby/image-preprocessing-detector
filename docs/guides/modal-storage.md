@@ -98,7 +98,7 @@ poetry run modal secret create gcs-credentials \
 
 # Verify secret created
 poetry run modal secret list | grep gcs-credentials
-```text
+```
 
 **Expected Output**:
 
@@ -135,13 +135,13 @@ def test_gcs():
 if __name__ == "__main__":
     with stub.run():
         test_gcs.remote()
-```text
+```
 
 **Run test**:
 
 ```bash
 poetry run modal run modal/test_gcs_access.py
-```text
+```
 
 ### Step 3: Use GCS in Training Scripts
 
@@ -184,7 +184,7 @@ def train_iqa():
     checkpoint_blob.upload_from_filename("/tmp/checkpoint.pth")
 
     print("✅ Checkpoint uploaded to GCS")
-```text
+```
 
 ---
 
@@ -271,7 +271,7 @@ gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
 # Output: 18 GB
 
 # 4. Modal will automatically access this during training
-```text
+```
 
 ### Phase 3: Layout Detection Dataset
 
@@ -292,7 +292,7 @@ gsutil -m cp -r datasets/layout_phase3 gs://image_detection_b/datasets/
 # 4. Verify upload
 gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
 # Expected: ~40-50 GB
-```text
+```
 
 ---
 
@@ -345,7 +345,7 @@ def train_iqa():
     # Upload results back to GCS
     checkpoint_blob = bucket.blob("checkpoints/phase2_iqa/best.pth")
     checkpoint_blob.upload_from_filename("/tmp/best.pth")
-```text
+```
 
 **Pros**:
 
@@ -387,7 +387,7 @@ def train_iqa():
     dataset = ImageDataset(root="/data/iqa_phase2")
 
     # Training...
-```text
+```
 
 **Pros**:
 
@@ -415,7 +415,7 @@ gsutil cp configs/modal_phase3_yolov8.yaml gs://image_detection_b/configs/
 
 # Verify
 gsutil ls gs://image_detection_b/configs/
-```text
+```
 
 ### Access Config in Modal Function
 
@@ -440,7 +440,7 @@ def train_iqa():
 
     # Use config for training
     model = create_model(config['model'])
-```text
+```
 
 ---
 
@@ -499,7 +499,7 @@ poetry run modal secret create gcs-credentials \
 
 # Test access
 poetry run modal run modal/test_gcs_access.py
-```text
+```
 
 ### Slow Dataset Downloads
 
@@ -545,7 +545,7 @@ gcloud projects get-iam-policy image-detection-478105 \
 gcloud projects add-iam-policy-binding image-detection-478105 \
   --member="serviceAccount:YOUR_SERVICE_ACCOUNT@image-detection-478105.iam.gserviceaccount.com" \
   --role="roles/storage.objectViewer"
-```text
+```
 
 ### Out of Disk Space
 
@@ -564,7 +564,7 @@ for i in range(0, len(blobs), 1000):
 
 # Option 2: Increase Modal disk size (future feature)
 # Check Modal docs for custom disk sizes
-```text
+```
 
 ---
 
@@ -605,7 +605,7 @@ cat > lifecycle.json <<EOF
 EOF
 
 gsutil lifecycle set lifecycle.json gs://image_detection_b
-```text
+```
 
 ### 3. Efficient Uploads
 
@@ -617,7 +617,7 @@ gsutil -m cp -r datasets/iqa_phase2 gs://image_detection_b/datasets/
 
 # Monitor progress
 gsutil -m -o "GSUtil:parallel_process_count=16" cp -r ...
-```text
+```
 
 ### 4. Checkpoint Strategy
 
@@ -632,7 +632,7 @@ if epoch % 5 == 0:
     # Upload to GCS (async, non-blocking)
     bucket.blob(f"checkpoints/phase2_iqa/checkpoint_epoch_{epoch}.pth") \
         .upload_from_filename(f"/tmp/checkpoint_epoch_{epoch}.pth")
-```text
+```
 
 ---
 
@@ -658,7 +658,7 @@ gsutil -m rsync -r datasets/iqa_phase2 gs://image_detection_b/datasets/iqa_phase
 
 # Delete old checkpoints
 gsutil -m rm gs://image_detection_b/checkpoints/phase2_iqa/checkpoint_epoch_*.pth
-```text
+```
 
 ### Modal Secret Management
 
@@ -671,7 +671,7 @@ modal secret list
 
 # Delete secret
 modal secret delete gcs-credentials
-```text
+```
 
 ---
 

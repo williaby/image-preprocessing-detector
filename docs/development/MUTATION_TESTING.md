@@ -28,7 +28,7 @@ Mutation testing helps verify the quality of our test suite by introducing small
 
 # Generate HTML report
 ./scripts/run_mutation_tests.sh --report
-```text
+```
 
 ## Direct Commands
 
@@ -52,7 +52,7 @@ poetry run mutmut html
 
 # Show statistics
 poetry run mutmut show-stats
-```text
+```
 
 ## Configuration
 
@@ -65,7 +65,7 @@ backup = false
 runner = "uv run pytest -x --assert=plain -o addopts=''"
 tests_dir = "tests/"
 dict_synonyms = "Struct, NamedStruct"
-```text
+```
 
 ### Key Settings
 
@@ -148,7 +148,7 @@ def test_confidence_zero_is_valid():
         confidence=0.0,  # This should be valid!
     )
     assert issue.confidence == 0.0
-```text
+```
 
 ## CI Integration
 
@@ -164,7 +164,7 @@ mutation-testing:
     - run: poetry install --with dev
     - run: poetry run mutmut run --paths-to-mutate=src/image_preprocessing_detector/schema.py
     - run: poetry run mutmut results
-```text
+```
 
 ## Best Practices
 
@@ -192,7 +192,7 @@ poetry run mutmut run --paths-to-mutate=src/image_preprocessing_detector/schema.
 
 # Use parallel testing (if pytest-xdist installed)
 # Edit pyproject.toml runner to add -n auto
-```text
+```
 
 ### Cache Issues
 
@@ -200,7 +200,7 @@ poetry run mutmut run --paths-to-mutate=src/image_preprocessing_detector/schema.
 # Clear cache and restart
 rm .mutmut-cache
 poetry run mutmut run
-```text
+```
 
 ### False Positives
 

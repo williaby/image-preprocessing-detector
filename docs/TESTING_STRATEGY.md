@@ -68,7 +68,7 @@ auth.authenticate_user()
 
 # Download dataset
 !gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/tablebank /content/data/
-```text
+```
 
 ### GitHub Repository
 
@@ -137,7 +137,7 @@ data/
 - name: Run integration tests (fixtures only)
   run: |
     poetry run pytest tests/integration/ -v -m "not requires_full_dataset"
-```text
+```
 
 **Test markers**:
 
@@ -154,7 +154,7 @@ def test_pipeline_with_fixtures():
     """Uses test_fixtures/ - runs in CI."""
     # Runs in CI with small fixtures
     pass
-```text
+```
 
 ### Updating Test Fixtures
 
@@ -176,7 +176,7 @@ du -sh data/test_fixtures/  # Should be < 50 MB
 # Commit to GitHub
 git add data/test_fixtures/
 git commit -m "test: Update doclaynet fixtures with complex layout samples"
-```text
+```
 
 ---
 
@@ -192,7 +192,7 @@ poetry run pytest -v
 
 # Run specific benchmark
 poetry run python -m benchmarks.runners.run_smoke --suite doclaynet-layout-smoke
-```text
+```
 
 ### CI/CD (GitHub Actions)
 
@@ -201,7 +201,7 @@ poetry run python -m benchmarks.runners.run_smoke --suite doclaynet-layout-smoke
 ```bash
 # Automatically uses data/test_fixtures/
 poetry run pytest -v -m "not requires_full_dataset"
-```text
+```
 
 ### Google Colab Training
 
@@ -213,7 +213,7 @@ poetry run pytest -v -m "not requires_full_dataset"
 
 # Train model
 !poetry run python src/train_iqa_model.py --dataset tablebank
-```text
+```
 
 ---
 
@@ -236,7 +236,7 @@ rm -rf data/benchmarks/fintabnet
 
 # Re-download when needed
 gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/tablebank data/benchmarks/
-```text
+```
 
 ---
 

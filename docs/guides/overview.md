@@ -201,7 +201,7 @@ metadata = process_document("research_paper.pdf")
 for page in metadata.pages:
     if page.detected_issues:
         print(f"Page {page.page_number} needs preprocessing")
-```text
+```
 
 ### OCR Optimization
 
@@ -211,7 +211,7 @@ Identify documents that need correction before OCR:
 # Apply corrections if needed
 if any(issue.issue_type == "skew" for issue in page.detected_issues):
     corrected_image = apply_deskew(image, angle)
-```text
+```
 
 ### Document Quality Assurance
 
@@ -221,7 +221,7 @@ Validate document quality for archival:
 # Quality check
 if all(len(page.detected_issues) == 0 for page in metadata.pages):
     print("Document meets quality standards")
-```text
+```
 
 ## Integration Points
 

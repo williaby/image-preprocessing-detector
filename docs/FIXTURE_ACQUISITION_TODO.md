@@ -55,7 +55,7 @@ Copy **8 images** with known quality scores for IQA model validation:
   "contrast_low.png": {"dmos": 30.0, "blur": 0.0, "noise": 0.0, "contrast": 0.4},
   "combined_blur_noise.png": {"dmos": 75.0, "blur": 0.5, "noise": 0.4, "contrast": 0.9}
 }
-```text
+```
 
 **Estimated size**: ~2 MB
 

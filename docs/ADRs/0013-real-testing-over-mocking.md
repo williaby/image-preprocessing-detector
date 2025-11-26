@@ -136,7 +136,7 @@ def test_detect_blurred_image(self) -> None:
     assert result.is_blurred is True
     assert result.score < 200.0
     assert result.severity in [IssueSeverity.MEDIUM, IssueSeverity.HIGH]
-```text
+```
 
 ### Example: Mocking at External Boundary
 
@@ -160,7 +160,7 @@ def test_load_valid_jpeg(self, mock_pil_open: Mock, mock_cv2_imread: Mock) -> No
 
     assert metadata.dpi == 300.0
     assert img.shape == (1080, 1920, 3)
-```text
+```
 
 ## Consequences
 
@@ -202,7 +202,7 @@ def test_blur_detector(mock_laplacian, mock_blur):
     detector = BlurDetector()
     result = detector.detect(mock_image)
     assert result.score == 150.0
-```text
+```
 
 **Advantages**:
 
@@ -232,7 +232,7 @@ def test_blur_detector_real_image():
     detector = BlurDetector()
     result = detector.detect(img)
     assert result.is_blurred is True
-```text
+```
 
 **Advantages**:
 
@@ -261,7 +261,7 @@ def test_corrections_snapshot(snapshot):
     img = generate_test_image()
     corrected = apply_corrections(img)
     assert corrected == snapshot
-```text
+```
 
 **Advantages**:
 
@@ -314,7 +314,7 @@ def create_sharp_checkerboard(size=500, square_size=25):
             if (i // square_size + j // square_size) % 2 == 0:
                 img[i : i + square_size, j : j + square_size] = 255
     return img
-```text
+```
 
 **Pattern 2: Text Strokes for Text Detection**:
 
@@ -328,7 +328,7 @@ def create_text_document(num_lines=15):
             height = np.random.randint(8, 15)
             img[y : y + height, x : x + width] = 0
     return img
-```text
+```
 
 **Pattern 3: Low Contrast for Contrast Testing**:
 
@@ -339,7 +339,7 @@ def create_low_contrast_image():
     for y in range(100, 900, 40):
         cv2.line(img, (100, y), (700, y), (80, 80, 80), 2)
     return img
-```text
+```
 
 ### Mocking Guidelines
 
@@ -357,7 +357,7 @@ def test_load_image_dpi_extraction(mock_imread):
 @patch("image_preprocessing_detector.detection.iqa_classical.cv2.Laplacian")
 def test_blur_detector(mock_laplacian):
     mock_laplacian.return_value = ...  # DON'T DO THIS
-```text
+```
 
 ## Validation Results
 

@@ -82,7 +82,7 @@ poetry install
 
 # Verify
 poetry run modal --version
-```text
+```
 
 ---
 
@@ -94,7 +94,7 @@ poetry run modal --version
 cd /home/byron/dev/image_detection
 poetry add modal
 poetry install
-```text
+```
 
 ### Step 2: Authenticate
 
@@ -104,7 +104,7 @@ poetry run modal token new
 
 # Verify authentication
 poetry run modal token current
-```text
+```
 
 **Expected Output**:
 
@@ -122,14 +122,14 @@ poetry run modal secret create gcs-credentials \
 
 # Verify secret exists
 poetry run modal secret list | grep gcs-credentials
-```text
+```
 
 ### Step 4: Test GPU Access
 
 ```bash
 # Test GPU is accessible
 poetry run modal run modal/app.py::hello_gpu
-```text
+```
 
 **Expected Output**:
 
@@ -148,7 +148,7 @@ poetry run modal run modal/app.py::hello_gpu
 poetry run modal run modal/train_phase2_iqa.py
 
 # Monitor at: https://modal.com/apps
-```text
+```
 
 ---
 
@@ -181,7 +181,7 @@ poetry run python scripts/prepare_phase2_data.py \
 # 3. Verify upload
 gsutil du -sh gs://image_detection_b/datasets/iqa_phase2/
 # Expected: ~18 GB
-```text
+```
 
 **Dataset format** (already structured correctly):
 
@@ -216,7 +216,7 @@ training:
 modal:
   gpu: T4  # or A10 for 50% faster training
   timeout: 86400  # 24 hours
-```text
+```
 
 ### Run Training
 
@@ -229,7 +229,7 @@ poetry run modal run modal/train_phase2_iqa.py
 # - Real-time training logs
 # - GPU utilization
 # - Cost accumulation
-```text
+```
 
 **Training runs to completion** - no checkpoints needed for session management!
 
@@ -242,7 +242,7 @@ poetry run modal run modal/train_phase2_iqa.py
 open https://modal.com/apps
 # or
 xdg-open https://modal.com/apps
-```text
+```
 
 **Dashboard shows**:
 
@@ -256,7 +256,7 @@ xdg-open https://modal.com/apps
 ```bash
 # Stream logs from terminal
 poetry run modal app logs image-detection --follow
-```text
+```
 
 ### Training Output
 
@@ -297,7 +297,7 @@ print('Model loaded successfully!')
 print(f'Input shape: {sess.get_inputs()[0].shape}')
 print(f'Output shape: {sess.get_outputs()[0].shape}')
 "
-```text
+```
 
 ---
 
@@ -332,7 +332,7 @@ gsutil -m cp -r datasets/layout_phase3 gs://image_detection_b/datasets/
 
 # Verify upload (should be ~40-50GB)
 gsutil du -sh gs://image_detection_b/datasets/layout_phase3/
-```text
+```
 
 **Dataset format** (YOLO):
 
@@ -363,7 +363,7 @@ names:
   1: image
   2: handwriting
   3: formula
-```text
+```
 
 ### Configuration
 
@@ -381,7 +381,7 @@ training:
 modal:
   gpu: A10  # 24GB VRAM, faster than T4
   timeout: 259200  # 72 hours (3 days)
-```text
+```
 
 ### Run Training
 
@@ -390,7 +390,7 @@ modal:
 poetry run modal run modal/train_phase3_yolov8.py
 
 # Runs for 50-80 hours continuously (no manual resumption needed!)
-```text
+```
 
 **Key Advantage**: With Modal, YOLOv8 training completes in a **single run** vs 5-7 resumptions with Colab Pro's 12-hour limit.
 
@@ -418,7 +418,7 @@ gsutil cp gs://image_detection_b/models/phase3_yolov8/best_model.onnx models/
 
 # Download best checkpoint for fine-tuning
 gsutil cp gs://image_detection_b/models/phase3_yolov8/best.pt models/
-```text
+```
 
 ---
 
@@ -470,7 +470,7 @@ poetry run modal profile current
 
 # View detailed cost breakdown
 # (Visit dashboard: https://modal.com/usage)
-```text
+```
 
 **Create tracking log**: `docs/infrastructure/modal-cost-tracking.md`
 
@@ -483,7 +483,7 @@ poetry run modal profile current
 | ... | ... | ... | ... | ... | ... |
 
 **Monthly Total**: $10.63 / $30 free (35% used)
-```text
+```
 
 ---
 
@@ -504,7 +504,7 @@ poetry run modal token new
 
 # Check current token
 poetry run modal token current
-```text
+```
 
 ### GPU Unavailable
 
@@ -533,7 +533,7 @@ poetry run modal secret create gcs-credentials \
 
 # Test GCS access locally
 gsutil ls gs://image_detection_b/datasets/
-```text
+```
 
 ### Out of Memory (OOM)
 
@@ -599,7 +599,7 @@ poetry run modal app logs image-detection --follow
 
 # Restart training (Modal handles resumption via checkpoints)
 poetry run modal run modal/train_phase2_iqa.py
-```text
+```
 
 ---
 
@@ -646,7 +646,7 @@ poetry run modal run modal/train_phase2_iqa.py
 if checkpoint_exists():
     load_checkpoint()
     print(f"Resumed from epoch {last_epoch}")
-```text
+```
 
 ### Cost Optimization
 

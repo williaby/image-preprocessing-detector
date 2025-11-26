@@ -88,7 +88,7 @@ corrected, transform_info = apply_deskew(
 
 if transform_info["success"]:
     print(f"Deskewed by {angle}°")
-```text
+```
 
 ### Guardrails
 
@@ -142,7 +142,7 @@ corrected, transform_info = apply_contrast_enhancement(
 
 if transform_info["success"]:
     print("Contrast enhanced")
-```text
+```
 
 ### Guardrails
 
@@ -201,7 +201,7 @@ corrected, transform_info = apply_sharpening(
 
 if transform_info["success"]:
     print("Image sharpened")
-```text
+```
 
 ### Guardrails
 
@@ -264,7 +264,7 @@ corrected, transform_info = apply_denoising(
 
 if transform_info["success"]:
     print("Noise reduced")
-```text
+```
 
 ### Guardrails
 
@@ -341,7 +341,7 @@ def correct_document(image):
     # corrected, info = apply_denoising(corrected)
 
     return corrected, transforms
-```text
+```
 
 ## Transform History Tracking
 
@@ -365,7 +365,7 @@ for transform in transforms:
 
 # Export history
 print(metadata.model_dump_json(indent=2))
-```text
+```
 
 **Example Transform**:
 
@@ -376,7 +376,7 @@ print(metadata.model_dump_json(indent=2))
   "timestamp": "2025-11-08T12:00:00Z",
   "success": true
 }
-```text
+```
 
 ## Best Practices
 
@@ -404,7 +404,7 @@ if info["success"]:
 else:
     # Use original image
     print(f"Deskew failed: {info.get('error')}")
-```text
+```
 
 ### 3. Track History
 
@@ -417,7 +417,7 @@ for transform in transforms:
 
 # Enable audit trail
 metadata.to_json_file("output.json")
-```text
+```
 
 ### 4. Test Parameters
 
@@ -431,7 +431,7 @@ apply_sharpening(image, amount=1.0)
 apply_sharpening(image, amount=2.5)
 
 # Test and compare results
-```text
+```
 
 ### 5. Use Dry Run
 
@@ -439,7 +439,7 @@ apply_sharpening(image, amount=2.5)
 
 ```bash
 poetry run imgprep process input.pdf --output result.json --dry-run
-```text
+```
 
 ## Performance Optimization
 
@@ -473,7 +473,7 @@ apply_sharpening(image, amount=1.0)  # Instead of 1.5
 
 # Reduce CLAHE clip limit
 apply_contrast_enhancement(image, clip_limit=1.5)  # Instead of 2.0
-```text
+```
 
 ### Under-Correction
 
@@ -487,7 +487,7 @@ apply_sharpening(image, amount=2.0)
 
 # Higher clip limit
 apply_contrast_enhancement(image, clip_limit=3.0)
-```text
+```
 
 ### Guardrail Failures
 
@@ -501,7 +501,7 @@ corrected, info = apply_deskew(image, angle)
 if not info["success"]:
     print(f"Error: {info.get('error', 'Unknown')}")
     # Try alternative approach or skip correction
-```text
+```
 
 ## See Also
 

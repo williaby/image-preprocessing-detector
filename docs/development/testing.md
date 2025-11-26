@@ -52,7 +52,7 @@ def test_detected_issue_validation():
     )
     assert issue.severity == "high"
     assert issue.confidence == 0.92
-```text
+```
 
 **Coverage Target**: 90%+
 
@@ -80,7 +80,7 @@ def test_blur_detection_pipeline():
     is_blurry, variance = detect_blur(image)
     assert is_blurry is True
     assert variance < 100
-```text
+```
 
 **Coverage Target**: 80%+
 
@@ -111,7 +111,7 @@ def test_cli_process_pdf():
 
     assert result.returncode == 0
     assert Path("result.json").exists()
-```text
+```
 
 **Coverage Target**: Critical paths
 
@@ -156,7 +156,7 @@ def test_integration():
 @pytest.mark.slow
 def test_expensive_operation():
     pass
-```text
+```
 
 **Run specific markers**:
 
@@ -169,7 +169,7 @@ poetry run pytest -m "not slow"
 
 # Integration tests
 poetry run pytest -m integration
-```text
+```
 
 ## Running Tests
 
@@ -193,7 +193,7 @@ poetry run pytest -v
 
 # Stop on first failure
 poetry run pytest -x
-```text
+```
 
 ### Parallel Execution
 
@@ -203,14 +203,14 @@ poetry run pytest -n auto
 
 # Use 4 workers
 poetry run pytest -n 4
-```text
+```
 
 ### Watch Mode
 
 ```bash
 # Re-run on file changes (requires pytest-watch)
 poetry run ptw
-```text
+```
 
 ## Coverage Requirements
 
@@ -233,7 +233,7 @@ open htmlcov/index.html
 
 # Terminal report
 poetry run pytest --cov=src --cov-report=term-missing
-```text
+```
 
 ### Coverage Configuration
 
@@ -255,7 +255,7 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
-```text
+```
 
 ## Writing Good Tests
 
@@ -269,7 +269,7 @@ def test_detect_blur_returns_true_for_blurry_image():
 
 def test_apply_deskew_rejects_excessive_angle():
     pass
-```text
+```
 
 **Bad**:
 
@@ -279,7 +279,7 @@ def test_blur():
 
 def test_deskew_1():
     pass
-```text
+```
 
 ### 2. Arrange-Act-Assert Pattern
 
@@ -294,7 +294,7 @@ def test_contrast_enhancement():
     # Assert: Verify results
     assert info["success"] is True
     assert corrected.mean() != image.mean()
-```text
+```
 
 ### 3. Use Fixtures
 
@@ -313,7 +313,7 @@ def test_detect_blur(sample_image):
     """Test blur detection on sample image."""
     is_blurry, variance = detect_blur(sample_image)
     assert isinstance(is_blurry, bool)
-```text
+```
 
 ### 4. Test Edge Cases
 
@@ -327,7 +327,7 @@ def test_deskew_rejects_excessive_angle():
     """Test deskew rejects angle > 45 degrees."""
     corrected, info = apply_deskew(image, angle=90.0)
     assert info["success"] is False
-```text
+```
 
 ### 5. Use Parameterization
 
@@ -342,7 +342,7 @@ def test_deskew_angles(angle, expected):
     """Test deskew handles various angles."""
     corrected, info = apply_deskew(image, angle)
     assert info["success"] == expected
-```text
+```
 
 ## Test Data Management
 
@@ -370,7 +370,7 @@ def create_blurry_image(size=(300, 300), blur_kernel=15):
     image = np.random.randint(0, 256, size + (3,), dtype=np.uint8)
     # Apply blur...
     return image
-```text
+```
 
 ### Version Control
 
@@ -395,7 +395,7 @@ jobs:
       - run: poetry install
       - run: poetry run pytest --cov=src --cov-report=xml
       - uses: codecov/codecov-action@v3
-```text
+```
 
 ### Pre-commit Hooks
 
@@ -405,7 +405,7 @@ poetry run pre-commit install
 
 # Run manually
 poetry run pre-commit run --all-files
-```text
+```
 
 ### Quality Gates
 
@@ -431,7 +431,7 @@ def test_blur_detection_performance(sample_image):
     elapsed = time.time() - start
 
     assert elapsed < 0.1  # 100ms
-```text
+```
 
 ### Profiling
 
@@ -441,7 +441,7 @@ poetry run pytest --profile
 
 # Generate profile report
 poetry run pytest --profile-svg
-```text
+```
 
 ## Mocking and Stubbing
 
@@ -459,7 +459,7 @@ def test_pdf_loading_with_mock():
 
         pages = load_pdf_pages("test.pdf")
         assert len(pages) == 5
-```text
+```
 
 ### Using pytest-mock
 
@@ -471,7 +471,7 @@ def test_with_pytest_mock(mocker):
 
     result = process_image("test.jpg")
     assert mock_load.called
-```text
+```
 
 ## Troubleshooting
 
@@ -489,7 +489,7 @@ poetry install
 
 # Run with verbose output
 poetry run pytest -vv
-```text
+```
 
 ### Coverage Not Meeting Threshold
 
@@ -500,7 +500,7 @@ poetry run pytest --cov=src --cov-report=term-missing
 # Generate HTML report for detailed view
 poetry run pytest --cov=src --cov-report=html
 open htmlcov/index.html
-```text
+```
 
 ### Slow Tests
 
@@ -510,7 +510,7 @@ poetry run pytest --durations=10
 
 # Skip slow tests
 poetry run pytest -m "not slow"
-```text
+```
 
 ## Best Practices Summary
 

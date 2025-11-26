@@ -118,7 +118,7 @@ Based on the analysis, I recommend a **three-phase approach** that allows increm
 ```bash
 # Add .claude as subtree from williaby/.claude repository
 git subtree add --prefix .claude https://github.com/williaby/.claude.git main --squash
-```text
+```
 
 - Pros: Easy updates, shared maintenance, can contribute back
 - Cons: Requires separate repo setup
@@ -128,7 +128,7 @@ git subtree add --prefix .claude https://github.com/williaby/.claude.git main --
 ```bash
 # Copy from template-sample
 cp -r /home/byron/dev/template-sample/.claude/* /home/byron/dev/image_detection/.claude/
-```text
+```
 
 - Pros: Simple, no external dependencies
 - Cons: Manual updates, no upstream sync
@@ -180,7 +180,7 @@ cp -r /home/byron/dev/template-sample/.claude/* /home/byron/dev/image_detection/
 
 ```bash
 mkdir -p template_feedback
-```text
+```
 
 Create initial file: `template_feedback/11242025_template_feedback.md`
 
@@ -204,7 +204,7 @@ Initial template alignment for image_detection project.
 
 ## Pending Items
 - [Items deferred to future updates]
-```text
+```
 
 ---
 
@@ -224,7 +224,7 @@ Initial template alignment for image_detection project.
 python_version = "3.12"
 warn_return_any = true
 disallow_untyped_defs = true
-```text
+```
 
 **Target Configuration** (BasedPyright):
 
@@ -240,7 +240,7 @@ strictDictionaryInference = true
 strictSetInference = true
 reportMissingTypeStubs = "warning"
 reportUnknownMemberType = "warning"
-```text
+```
 
 **Migration Steps**:
 
@@ -264,7 +264,7 @@ reportUnknownMemberType = "warning"
 
 ```bash
 mkdir -p .qlty
-```text
+```
 
 **Files to Add**:
 
@@ -332,7 +332,7 @@ prerelease_token = "dev"
 allowed_tags = ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore"]
 minor_tags = ["feat"]
 patch_tags = ["fix", "perf"]
-```text
+```
 
 ---
 
@@ -367,7 +367,7 @@ patch_tags = ["fix", "perf"]
 cruft link /home/byron/dev/cookiecutter-python-template
 
 # This creates .cruft.json with current template reference
-```text
+```
 
 **If NO - Skip Cruft**:
 
@@ -544,4 +544,4 @@ docker build -t image-detection .
 
 # Run all pre-commit hooks
 uv run pre-commit run --all-files
-```text
+```

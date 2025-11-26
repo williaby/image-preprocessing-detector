@@ -80,7 +80,7 @@ model.load("models/resnet18-iqa-v1.0.0.pt")
 scores = model.predict(image_array)  # Returns dict with quality scores
 print(f"Blur: {scores['blur']:.2f}")
 print(f"Overall: {scores['overall']:.2f}")
-```text
+```
 
 ---
 
@@ -132,7 +132,7 @@ def should_use_teacher(student_scores, classical_scores, options):
     if abs(student_scores['overall'] - classical_scores['overall']) > DISCREPANCY_THRESHOLD:  # 0.3
         return True
     return False
-```text
+```
 
 ### CPU Blocking Policy
 
@@ -149,7 +149,7 @@ def should_use_teacher(student_scores, classical_scores, options):
 
 ```bash
 export IMGPREP_ALLOW_TEACHER_CPU=true
-```text
+```
 
 ### Cost Analysis
 
@@ -203,7 +203,7 @@ complexity = calculate_complexity(
     has_math=layout.has_dense_math,
     has_handwriting=layout.has_handwriting
 )
-```text
+```
 
 | Score Range | Interpretation | OCR Routing |
 |-------------|----------------|-------------|
@@ -285,7 +285,7 @@ DQS = (
     0.6 * degradation_score +      # IQA-derived
     0.4 * structural_complexity    # Layout-derived
 )
-```text
+```
 
 | DQS Range | Interpretation | Pre-OCR Risk |
 |-----------|----------------|--------------|
@@ -337,7 +337,7 @@ python scripts/export_onnx.py \
   --model resnet18-iqa-v1.0.0.pt \
   --output models/onnx/resnet18-iqa-v1.0.0.onnx \
   --opset 17
-```text
+```
 
 ---
 

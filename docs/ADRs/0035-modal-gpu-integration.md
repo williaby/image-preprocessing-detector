@@ -59,7 +59,7 @@ All ML training runs on Modal:
 )
 def train_teacher_model(config: TrainConfig) -> ModelArtifact:
     ...
-```text
+```
 
 ### 2. Inference Fallback (Secondary Use)
 
@@ -81,7 +81,7 @@ def select_device(prefer_gpu: bool, need_teacher: bool) -> Device:
     if allow_teacher_cpu():
         return Device.LOCAL_CPU
     raise TeacherBlockedError("Teacher requires GPU")
-```text
+```
 
 ### 3. Cost Control Mechanisms
 
@@ -102,7 +102,7 @@ Modal secrets stored separately from application secrets:
 ```bash
 modal secret create gcs-credentials \
   GOOGLE_APPLICATION_CREDENTIALS_JSON="$(cat service-account.json)"
-```text
+```
 
 ## Alternatives Considered
 
@@ -224,7 +224,7 @@ IMGPREP_MODAL_APP_NAME=image-detection
 # Budget controls
 IMGPREP_MODAL_DAILY_INFERENCE_LIMIT=1000
 IMGPREP_MODAL_MONTHLY_BUDGET_ALERT=30
-```text
+```
 
 ### Monitoring
 
@@ -235,7 +235,7 @@ def daily_cost_report():
     usage = modal.usage.get_daily_usage()
     if usage.cost_usd > BUDGET_THRESHOLD:
         send_alert(f"Modal daily cost ${usage.cost_usd}")
-```text
+```
 
 ## References
 

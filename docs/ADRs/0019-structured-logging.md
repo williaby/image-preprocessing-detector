@@ -41,7 +41,7 @@ The system needs logging for:
 setup_logging(level="DEBUG", json_format=False)
 logger.info("Processing page", page_num=1, width=2480, height=3509)
 # Output: [2025-11-05 10:23:45] INFO Processing page page_num=1 width=2480 height=3509
-```text
+```
 
 **Production Mode** (JSON):
 
@@ -49,7 +49,7 @@ logger.info("Processing page", page_num=1, width=2480, height=3509)
 setup_logging(level="INFO", json_format=True)
 logger.info("Processing page", page_num=1, width=2480)
 # Output: {"timestamp": "2025-11-05T10:23:45", "level": "info", "event": "Processing page", "page_num": 1, "width": 2480}
-```text
+```
 
 ### Key Features
 
@@ -58,7 +58,7 @@ logger.info("Processing page", page_num=1, width=2480)
 ```python
 logger = get_logger(__name__)
 logger.info("Detected skew", angle=5.2, confidence=0.85, severity="high")
-```text
+```
 
 **Performance Logging**:
 
@@ -66,7 +66,7 @@ logger.info("Detected skew", angle=5.2, confidence=0.85, severity="high")
 with log_performance("PDF rendering"):
     pages = pdf_loader.load("document.pdf")
 # Output: PDF rendering took 1.23s
-```text
+```
 
 **Exception Logging**:
 
@@ -75,7 +75,7 @@ try:
     result = detector.detect(image)
 except Exception as e:
     logger.exception("Detection failed", detector="blur", image_shape=image.shape)
-```text
+```
 
 ## Consequences
 
@@ -189,7 +189,7 @@ def setup_logging(
 def get_logger(name: str) -> BoundLogger:
     """Get a logger instance."""
     return structlog.get_logger(name)
-```text
+```
 
 ### Usage Patterns
 
@@ -201,7 +201,7 @@ logger.info("Starting processing", file_path=pdf_path)
 logger.debug("Loaded page", page_num=1, dpi=300, size=(2480, 3509))
 logger.warning("Low confidence", detector="skew", confidence=0.35)
 logger.error("Failed to load", file_path=pdf_path, error=str(e))
-```text
+```
 
 **Performance Monitoring**:
 
@@ -220,7 +220,7 @@ def log_performance(operation: str):
 # Usage
 with log_performance("Skew detection"):
     result = skew_detector.detect(image)
-```text
+```
 
 **Bind Context**:
 
@@ -228,7 +228,7 @@ with log_performance("Skew detection"):
 logger = get_logger(__name__).bind(document_id="doc_001", page_num=1)
 logger.info("Processing started")  # Includes document_id and page_num
 logger.info("Detected issue", issue_type="blur")  # Also includes document_id and page_num
-```text
+```
 
 ### Console Output Examples
 
@@ -248,7 +248,7 @@ logger.info("Detected issue", issue_type="blur")  # Also includes document_id an
 {"timestamp": "2025-11-05T10:23:46", "level": "debug", "event": "Loaded page", "page_num": 1, "dpi": 300, "size": [2480, 3509]}
 {"timestamp": "2025-11-05T10:23:47", "level": "warning", "event": "Low confidence", "detector": "skew", "confidence": 0.35}
 {"timestamp": "2025-11-05T10:23:48", "level": "info", "event": "Detected issues", "count": 3, "types": ["blur", "contrast", "skew"]}
-```text
+```
 
 ## Performance Impact
 

@@ -62,14 +62,14 @@ Multiple documents contradict each other on whether per-element IQA is in scope:
 ```markdown
 ### Deferred to Post-Benchmarking
 * Per-element (Hybrid) IQA on cropped regions
-```text
+```
 
 **Production Plan (IN SCOPE)**:
 
 ```markdown
 - **Light layout detection (YOLOv10-doc, 11 DocLayNet classes)**
   - Hybrid IQA: Per-element quality assessment on figures, tables, embedded images
-```text
+```
 
 **ADR-029 (Research Only)**:
 
@@ -79,7 +79,7 @@ Multiple documents contradict each other on whether per-element IQA is in scope:
   - Original design included `DocumentElement.bbox` for per-element IQA
   - **NEW**: Layout-lite provides page-level attributes only, no bounding boxes
   - **Exception**: Internal use for hybrid IQA research is acceptable, but not in production schema
-```text
+```
 
 **Schema (Field Exists)**:
 
@@ -89,7 +89,7 @@ class DocumentElement(BaseModel):
         default_factory=list,
         description="Quality issues detected in this element (hybrid IQA support)"
     )
-```text
+```
 
 ### Impact Assessment
 
@@ -149,7 +149,7 @@ def push_to_huggingface(
     token: str | None = None,
 ) -> str:
     """Push model to Hugging Face Hub."""
-```text
+```
 
 **Documentation Exists**: `docs/MODEL_STORAGE.md`
 
@@ -168,7 +168,7 @@ def push_to_huggingface(
 5. ✅ Create/update HF repository
 6. ✅ Upload model files and metadata
 7. ✅ Create semantic version tag
-```text
+```
 
 ### Impact Assessment
 
@@ -200,7 +200,7 @@ Add to `PROJECT_PLAN.md` as Phase 3.5 or appendix:
 **References**:
 - [MODEL_STORAGE.md](../MODEL_STORAGE.md)
 - [scripts/promote_to_hf.py](../../scripts/promote_to_hf.py)
-```text
+```
 
 ---
 

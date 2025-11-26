@@ -22,7 +22,7 @@ imgprep process <input_path> --output result.json
 
 # Batch processing
 imgprep batch <input_dir> --output-dir <output_dir>
-```text
+```
 
 ### Supported File Formats
 
@@ -183,7 +183,7 @@ The output schema is defined in `src/image_preprocessing_detector/schema.py`:
     }
   ]
 }
-```text
+```
 
 ### Key Output Fields
 

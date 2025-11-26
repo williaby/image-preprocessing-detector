@@ -325,7 +325,7 @@ class WebhookDispatcher:
                 method="POST",
             )
 
-            with urllib.request.urlopen(  # noqa: S310
+            with urllib.request.urlopen(  # noqa: S310  # nosec B310
                 request, timeout=self.timeout
             ) as response:
                 return bool(response.status == 200)
@@ -409,7 +409,7 @@ class SlackDispatcher:
                 method="POST",
             )
 
-            with urllib.request.urlopen(  # noqa: S310
+            with urllib.request.urlopen(  # noqa: S310  # nosec B310
                 request, timeout=30
             ) as response:
                 return bool(response.status == 200)

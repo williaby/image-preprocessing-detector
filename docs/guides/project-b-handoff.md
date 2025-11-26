@@ -97,7 +97,7 @@ output/
     "timestamp": "2025-01-15T10:30:00Z"
   }
 }
-```text
+```
 
 ---
 
@@ -204,7 +204,7 @@ output/
     "timestamp": "2025-01-15T10:30:00Z"
   }
 }
-```text
+```
 
 ### Low-Quality Scanned Document
 
@@ -270,7 +270,7 @@ output/
     "timestamp": "2025-01-15T10:32:00Z"
   }
 }
-```text
+```
 
 ### Form with Tables
 
@@ -320,7 +320,7 @@ output/
     "timestamp": "2025-01-15T10:35:00Z"
   }
 }
-```text
+```
 
 ---
 
@@ -385,7 +385,7 @@ def validate_handoff(json_path: Path) -> DocumentMetadata:
     with open(json_path) as f:
         data = json.load(f)
     return DocumentMetadata(**data)
-```text
+```
 
 ### JSON Schema (for external validators)
 
@@ -432,7 +432,7 @@ def validate_handoff(json_path: Path) -> DocumentMetadata:
     }
   }
 }
-```text
+```
 
 ---
 
@@ -489,7 +489,7 @@ DOCUMENT_ID=$(jq -r '.result.document_id' response.json)
 # Fetch full metadata (if stored)
 curl "http://project-a:8000/documents/${DOCUMENT_ID}/metadata" \
   -o metadata.json
-```text
+```
 
 ### Direct File Processing
 
@@ -504,7 +504,7 @@ print(f"Routing: {result.ocr_routing_recommendation}")
 print(f"DQS: {result.dqs.degradation_score}")
 
 # Files written to output/{document_id}/
-```text
+```
 
 ---
 
@@ -531,7 +531,7 @@ from image_preprocessing_detector.validation import validate_output
 issues = validate_output("output/doc_123/")
 for issue in issues:
     print(f"Validation issue: {issue}")
-```text
+```
 
 ---
 

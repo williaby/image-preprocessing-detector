@@ -211,7 +211,7 @@ suites:
       table_teds: 0.90
       formula_cdm: 0.85
       composite_score: 85.0
-```text
+```
 
 **Advantages**:
 
@@ -273,7 +273,7 @@ class BaseAdapter(ABC):
     def split_info(self) -> dict:
         """Split sizes: {'train': 1000, 'val': 200, 'test': 200}."""
         pass
-```text
+```
 
 **Example Implementation** ([doclaynet_adapter.py](../../benchmarks/adapters/doclaynet_adapter.py)):
 
@@ -312,7 +312,7 @@ class DocLayNetAdapter(BaseAdapter):
     @property
     def split_info(self) -> dict:
         return {"train": 80863, "val_docwise": 6489, "test": 6480}
-```text
+```
 
 **Available Adapters** (Phase 1-2: 9 datasets | Phase 3+: +5 datasets = 14 total):
 
@@ -392,7 +392,7 @@ class DocLayNetAdapter(BaseAdapter):
 # Run tests with fixtures (no downloads required)
 poetry run pytest -v -m "not requires_full_dataset"
 # Uses data/test_fixtures/ (828 KB committed)
-```text
+```
 
 **Validation Level 2: Smoke Tests** (CI/CD, PR Validation)
 
@@ -412,7 +412,7 @@ poetry run pytest -v -m "not requires_full_dataset"
 # Run all smoke tests (CI/CD mode)
 python -m benchmarks.runners.run_smoke --all
 # Expected runtime: <5 minutes
-```text
+```
 
 **Validation Level 3: Full Benchmarks** (Production Validation, Paper Baselines)
 
@@ -432,7 +432,7 @@ python -m benchmarks.runners.run_smoke --all
 # Run full benchmark on DocLayNet
 python -m benchmarks.runners.run_benchmark --suite doclaynet-layout-full
 # Expected runtime: 2-4 hours (6,489 samples)
-```text
+```
 
 **Decision Matrix**:
 
@@ -753,7 +753,7 @@ jobs:
         with:
           name: smoke-test-results
           path: reports/
-```text
+```
 
 ### Report Format
 
@@ -796,7 +796,7 @@ jobs:
     "improvement": "+12.5%"
   }
 }
-```text
+```
 
 **Markdown** (`reports/{suite}/{timestamp}/summary.md`):
 
@@ -829,7 +829,7 @@ jobs:
 |-------|--------------|-----------|
 | Mask R-CNN R50 | 0.720 | DocLayNet 2022 |
 | **Ours** | **0.810** | **+12.5%** |
-```text
+```
 
 ---
 
@@ -856,7 +856,7 @@ def test_registry_loading():
     registry = load_registry("benchmarks/registry.yml")
     assert len(registry.suites) > 0
     assert any(suite.name == "synthetic-iqa-blur-full" for suite in registry.suites)
-```text
+```
 
 ### Integration Tests
 
@@ -872,7 +872,7 @@ def test_smoke_test_runtime():
 
     elapsed = time.time() - start
     assert elapsed < 300, f"Smoke tests took {elapsed}s (expected <300s)"
-```text
+```
 
 ---
 

@@ -81,13 +81,13 @@ if need_teacher and not has_gpu and not modal_available:
         "Teacher model requires GPU. "
         "Set IMGPREP_ALLOW_TEACHER_CPU=true to override."
     )
-```text
+```
 
 **Override** (not recommended):
 
 ```bash
 export IMGPREP_ALLOW_TEACHER_CPU=true
-```text
+```
 
 #### Modal GPU: Budget-Limited
 
@@ -113,7 +113,7 @@ class ModalBudgetEnforcer:
             logger.warning("Modal monthly budget exhausted")
             return False
         return True
-```text
+```
 
 ### 4. Device Selection Implementation
 
@@ -153,7 +153,7 @@ class DeviceSelector:
 
         # Layout-lite: flexible
         return Device.LOCAL_GPU if prefer_gpu else Device.LOCAL_CPU
-```text
+```
 
 ### 5. Latency Budgets
 
@@ -177,7 +177,7 @@ if latency > ACCEPTABLE_LATENCY:
         budget_ms=ACCEPTABLE_LATENCY
     )
     metrics.increment("latency_budget_exceeded", tags=[model, device])
-```text
+```
 
 ## Alternatives Considered
 
@@ -298,7 +298,7 @@ class DeviceConfig:
     student_cpu_budget: int = 200
     teacher_gpu_budget: int = 50
     teacher_modal_budget: int = 500
-```text
+```
 
 ### Logging
 
@@ -319,7 +319,7 @@ logger.warning(
     current=950,
     limit=1000
 )
-```text
+```
 
 ### Metrics
 
@@ -342,7 +342,7 @@ inference_latency = Histogram(
     "Inference latency by model and device",
     ["model", "device"]
 )
-```text
+```
 
 ## References
 

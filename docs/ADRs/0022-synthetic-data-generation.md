@@ -107,7 +107,7 @@ multi_aug = A.Compose([
     A.RandomBrightnessContrast(p=0.3),               # Contrast
     A.GaussNoise(var_limit=(10, 30), p=0.2),         # Noise
 ])
-```text
+```
 
 ### Augmentation Distribution
 
@@ -302,7 +302,7 @@ class IQAAugmentationPipeline:
         }
 
         return augmented["image"], metadata
-```text
+```
 
 ### Dataset Generation Script
 
@@ -348,7 +348,7 @@ def generate_synthetic_dataset(
             save_json(metadata, meta_path)
 
     print(f"Generated {len(base_images) * num_augmentations} augmented images")
-```text
+```
 
 ## Dataset Management
 
@@ -366,7 +366,7 @@ git commit -m "Add synthetic IQA training dataset (50k images)"
 
 # Push to remote storage
 dvc push
-```text
+```
 
 ### Dataset Structure
 

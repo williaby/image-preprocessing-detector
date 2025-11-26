@@ -45,7 +45,7 @@ BATCH_SIZE = 8  # Conservative for 4GB VRAM (vs 32 in plan)
 INPUT_SIZE = 224  # Standard size (vs 320 for higher accuracy)
 NUM_WORKERS = 2  # Match physical cores, leave headroom
 ACCUMULATE_GRAD_BATCHES = 4  # Effective batch size = 32
-```text
+```
 
 **Alternative Strategies**:
 
@@ -112,7 +112,7 @@ config = TrainingConfig(
     num_workers=2,
     mixed_precision=True,  # Enable AMP for memory savings
 )
-```text
+```
 
 **Expected Performance**:
 
@@ -128,7 +128,7 @@ If GPU memory becomes an issue:
 # Force CPU training
 export CUDA_VISIBLE_DEVICES=""
 poetry run python scripts/train_iqa.py --device cpu --batch-size 16
-```text
+```
 
 **CPU Training Estimates**:
 
@@ -158,7 +158,7 @@ nvcc --version || echo "NVCC not installed (not required for inference)"
 
 # Memory available
 nvidia-smi --query-gpu=memory.total,memory.free --format=csv
-```text
+```
 
 ---
 

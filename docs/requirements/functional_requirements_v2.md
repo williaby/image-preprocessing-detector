@@ -659,7 +659,7 @@ The system shall detect and provide bounding boxes for the following layout clas
   "bounding_box": [120, 340, 450, 200],
   "confidence": 0.94
 }
-```text
+```
 
 **Reference:** ADR-0009 (COCO Bounding Box Format Standardization)
 
@@ -724,7 +724,7 @@ elif reading_order_confidence < 0.80:
 else:
     routing_recommendation = "standard_ocr_rag"
     rationale = "High quality document, standard OCR + semantic chunking"
-```text
+```
 
 **Output Extension:**
 
@@ -744,7 +744,7 @@ else:
     }
   }
 }
-```text
+```
 
 **Benchmark Integration:**
 
@@ -803,7 +803,7 @@ The system shall detect footnote regions and provide spatial metadata.
     "estimated_count": 3
   }
 }
-```text
+```
 
 **Out-of-Scope:** OCR text extraction, superscript detection, reference marker linking
 
@@ -841,7 +841,7 @@ The system shall detect Caption and Picture elements and provide spatial proximi
     "proximity": "below"
   }
 }
-```text
+```
 
 **Out-of-Scope:** OCR text extraction, pattern matching ("Figure N:"), semantic linking
 
@@ -940,7 +940,7 @@ The system shall assess table quality and provide complexity indicators to aid r
     "complexity_score": 0.62
   }
 }
-```text
+```
 
 **Out-of-Scope:** Row/column structure extraction, cell-level bounding boxes, table-to-JSON conversion
 
@@ -1006,7 +1006,7 @@ The system shall provide spatial layout hints to assist downstream reading order
     "layout_complexity": 0.68
   }
 }
-```text
+```
 
 **Out-of-Scope:** Sequential ordering, reading flow prediction, semantic element relationships
 
@@ -1551,7 +1551,7 @@ layout_model_path: Path = Field(
     default=Path("models/yolov8_doclaynet_v1.onnx"),
     description="Path to YOLOv8 ONNX model"
 )
-```text
+```
 
 #### NFR-3.3: Code Quality
 

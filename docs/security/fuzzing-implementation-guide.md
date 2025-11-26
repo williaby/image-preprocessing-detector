@@ -108,7 +108,7 @@ Create `fuzz/` directory with Python fuzz targets:
 
 ```bash
 mkdir -p fuzz
-```text
+```
 
 **Example: PDF Loader Fuzzer**
 
@@ -161,7 +161,7 @@ def TestOneInput(data):
 if __name__ == "__main__":
     atheris.Setup(sys.argv, TestOneInput)
     atheris.Fuzz()
-```text
+```
 
 **Example: Image Loader Fuzzer**
 
@@ -207,7 +207,7 @@ def TestOneInput(data):
 if __name__ == "__main__":
     atheris.Setup(sys.argv, TestOneInput)
     atheris.Fuzz()
-```text
+```
 
 **Example: Text Gate Fuzzer**
 
@@ -253,7 +253,7 @@ def TestOneInput(data):
 if __name__ == "__main__":
     atheris.Setup(sys.argv, TestOneInput)
     atheris.Fuzz()
-```text
+```
 
 #### Step 2: Create Project Configuration (30 minutes)
 
@@ -275,7 +275,7 @@ fuzzing_engines:
   - libfuzzer
 
 main_repo: "https://github.com/williaby/image-preprocessing-detector"
-```text
+```
 
 **Create `Dockerfile`**:
 
@@ -304,7 +304,7 @@ RUN pip3 install atheris
 
 # Copy build script
 COPY build.sh $SRC/
-```text
+```
 
 **Create `build.sh`**:
 
@@ -334,7 +334,7 @@ done
 
 # Copy dictionary files (optional)
 # cp fuzz/*.dict $OUT/ || true
-```text
+```
 
 #### Step 3: Register with OSS-Fuzz (1 week approval)
 
@@ -403,7 +403,7 @@ gh run list --workflow=cifuzzy.yml
 
 # View fuzzing results
 gh run view <run-id>
-```text
+```
 
 **Expected Output**:
 
@@ -494,7 +494,7 @@ jobs:
           name: clusterfuzzlite-crashes
           path: build/out/*/crashes
           retention-days: 7
-```text
+```
 
 #### Step 2: Create Fuzzing Harnesses (Same as Option 1)
 
@@ -509,7 +509,7 @@ language: python
 sanitizers:
   - address
   - undefined
-```text
+```
 
 **Create `.clusterfuzzlite/Dockerfile`**:
 
@@ -536,7 +536,7 @@ RUN for fuzzer in fuzz/fuzz_*.py; do \
         pyinstaller --onefile --name $fuzzer_basename $fuzzer; \
         cp dist/$fuzzer_basename $OUT/; \
     done
-```text
+```
 
 #### Step 4: Test Locally (15 minutes)
 
@@ -552,7 +552,7 @@ python -m clusterfuzzlite.run_fuzzers --fuzz-seconds 60
 
 # Check for crashes
 ls -la build/out/*/crashes
-```text
+```
 
 #### Step 5: Verify CI Integration (15 minutes)
 
@@ -565,7 +565,7 @@ git push origin main
 # Check workflow
 gh run list --workflow=cifuzzy.yml
 gh run view <run-id>
-```text
+```
 
 **Total Time**: 2-3 hours
 
@@ -600,7 +600,7 @@ def TestOneInput(data):
     except MemoryError:
         pass  # Expected for huge inputs
     # Let other exceptions crash (fuzzer will catch them)
-```text
+```
 
 #### 3. Add Input Validation
 
@@ -616,7 +616,7 @@ def TestOneInput(data):
 
     # Fuzzing logic
     ...
-```text
+```
 
 #### 4. Use Seed Corpus
 
@@ -630,7 +630,7 @@ mkdir -p fuzz/corpus/fuzz_pdf_loader/
 cp samples/valid_document.pdf fuzz/corpus/fuzz_pdf_loader/
 cp samples/scanned_image.pdf fuzz/corpus/fuzz_pdf_loader/
 cp samples/text_document.pdf fuzz/corpus/fuzz_pdf_loader/
-```text
+```
 
 #### 5. Create Dictionary Files
 
@@ -661,7 +661,7 @@ python fuzz/fuzz_pdf_loader.py -max_total_time=60 fuzz/corpus/fuzz_pdf_loader/
 
 # Test with dictionary
 python fuzz/fuzz_pdf_loader.py -max_total_time=60 -dict=fuzz/pdf.dict
-```text
+```
 
 ### Coverage Analysis
 
@@ -675,7 +675,7 @@ python fuzz/fuzz_pdf_loader.py -max_total_time=600 -print_final_stats=1
 # cov = code coverage (unique edges)
 # ft = features (code paths)
 # corp = corpus size (unique inputs)
-```text
+```
 
 **Goal**: Maximize `cov` and `ft` values
 
@@ -687,7 +687,7 @@ python fuzz/fuzz_pdf_loader.py crash-abc123
 
 # Debug with debugger
 python -m pdb fuzz/fuzz_pdf_loader.py crash-abc123
-```text
+```
 
 ---
 

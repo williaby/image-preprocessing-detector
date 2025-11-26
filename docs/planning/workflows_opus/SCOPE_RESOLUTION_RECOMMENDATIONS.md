@@ -56,7 +56,7 @@ This document provides specific recommendations to resolve the scope inconsisten
 ```markdown
 - **Light layout detection (YOLOv10-doc, 11 DocLayNet classes)**
   - Hybrid IQA: Per-element quality assessment on figures, tables, embedded images
-```text
+```
 
 **Proposed**:
 
@@ -65,7 +65,7 @@ This document provides specific recommendations to resolve the scope inconsisten
   - Page-level attributes only: layout_type, has_tables, has_figures, etc.
   - Structural complexity scoring for routing decisions
   - **Note**: Per-element Hybrid IQA deferred to Phase 12 (see ADR-029)
-```text
+```
 
 #### 2. Update schema.py
 
@@ -78,7 +78,7 @@ quality_issues: list[DetectedIssue] = Field(
     default_factory=list,
     description="Quality issues detected in this element (hybrid IQA support)"
 )
-```text
+```
 
 **Proposed**:
 
@@ -88,7 +88,7 @@ quality_issues: list[DetectedIssue] = Field(
     description="RESERVED: Per-element quality issues (Phase 12, currently deferred). "
                 "See ADR-029 for scope boundaries."
 )
-```text
+```
 
 #### 3. Move Tests to Research Directory
 
@@ -106,7 +106,7 @@ mv tests/integration/test_hybrid_iqa*.py tests/research/
 # markers = [
 #     "research: marks tests as research/experimental (deselect with '-m not research')"
 # ]
-```text
+```
 
 #### 4. Update ADR-029
 
@@ -126,7 +126,7 @@ Per-Element Hybrid IQA has been formally deferred to Phase 12.
 - Phase 10 benchmarking shows page-level IQA insufficient
 - User feedback indicates per-element quality is critical
 - Project B explicitly requests element-level quality metadata
-```text
+```
 
 ---
 
@@ -171,7 +171,6 @@ Per-Element Hybrid IQA has been formally deferred to Phase 12.
 
 **Workflow**:
 ```text
-
 Training (Modal GPU)
     ↓
 GCS Storage (canonical archive)
@@ -180,9 +179,10 @@ Validation (quality gates)
     ↓
 Hugging Face Hub (curated releases)
 
-```text
+```
 
 **Promotion Criteria**:
+
 - [ ] Performance meets baseline (mAP > 0.88)
 - [ ] Trained from clean git state
 - [ ] All required metadata files present
@@ -190,6 +190,7 @@ Hugging Face Hub (curated releases)
 - [ ] Semantic version assigned
 
 **Commands**:
+
 ```bash
 # List available runs
 python scripts/promote_to_hf.py --list-runs --model resnet50_teacher
@@ -199,16 +200,12 @@ python scripts/promote_to_hf.py --dry-run --run-id <run_id> --version v1.0.0
 
 # Promote to Hugging Face Hub
 python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --version v1.0.0
-```text
+```
 
 **References**:
 
 - [MODEL_STORAGE.md](../MODEL_STORAGE.md) - Complete documentation
 - [scripts/promote_to_hf.py](../../scripts/promote_to_hf.py) - Promotion script
-
----
-
-```text
 
 ---
 
@@ -225,6 +222,7 @@ python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --ver
 ### Recommendation: STANDARDIZE TO DocLayout-YOLO
 
 **Rationale**:
+
 1. Config file is authoritative for implementation
 2. DocLayout-YOLO is document-optimized
 3. Pre-trained models available on HuggingFace
@@ -234,10 +232,12 @@ python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --ver
 #### 1. Update PROJECT_PLAN.md
 
 **Replace all instances of**:
+
 - "YOLOv10-doc" → "DocLayout-YOLO"
 - "YOLOv8" → "DocLayout-YOLO"
 
 **Key locations**:
+
 - Line 103: Light layout detection description
 - Line 492: Light Layout Detection section
 - Line 619: Chosen Solution
@@ -245,9 +245,10 @@ python scripts/promote_to_hf.py --run-id <run_id> --hf-repo org/model-name --ver
 #### 2. Update ADR-015
 
 **Title change**:
+
 ```markdown
 # ADR-015: DocLayout-YOLO for Layout Detection (Updated from YOLOv8)
-```text
+```
 
 **Add update section**:
 
@@ -263,7 +264,7 @@ Original ADR selected YOLOv8. After evaluation, DocLayout-YOLO was chosen:
 4. Optimized for 11 DocLayNet classes
 
 **Model Configuration**: See `configs/models/doclayout_yolo.yaml`
-```text
+```
 
 ---
 
@@ -293,7 +294,7 @@ grep -r "Hybrid IQA" docs/planning/PROJECT_PLAN.md
 
 # Verify tests still pass
 poetry run pytest -v --ignore=tests/research/
-```text
+```
 
 ---
 

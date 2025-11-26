@@ -145,7 +145,7 @@ This document transfers **four functional requirements** from the preprocessing 
     }
   ]
 }
-```text
+```
 
 **What OCR Team Should Extract:**
 
@@ -175,7 +175,7 @@ This document transfers **four functional requirements** from the preprocessing 
     }
   ]
 }
-```text
+```
 
 ### Recommended Tools
 
@@ -312,7 +312,7 @@ This document transfers **four functional requirements** from the preprocessing 
     }
   ]
 }
-```text
+```
 
 **What OCR Team Should Extract:**
 
@@ -328,7 +328,7 @@ This document transfers **four functional requirements** from the preprocessing 
   "num_columns": 2,
   "reading_order_confidence": 0.92
 }
-```text
+```
 
 ### Recommended Tools
 
@@ -475,7 +475,7 @@ Result: Coherent text for RAG chunking
   ],
   "has_footnotes": true
 }
-```text
+```
 
 **What OCR Team Should Extract:**
 
@@ -492,7 +492,7 @@ Result: Coherent text for RAG chunking
     }
   ]
 }
-```text
+```
 
 ### Recommended Approach
 
@@ -580,7 +580,7 @@ Result: Coherent text for RAG chunking
     }
   ]
 }
-```text
+```
 
 **What OCR Team Should Extract:**
 
@@ -596,7 +596,7 @@ Result: Coherent text for RAG chunking
     }
   ]
 }
-```text
+```
 
 ### Recommended Approach
 
@@ -615,7 +615,7 @@ figure_patterns = [
     r"Fig\.\s+(\d+[a-z]?)",
     r"FIG\.\s+(\d+[a-z]?)"
 ]
-```text
+```
 
 ### Implementation Notes
 
@@ -766,7 +766,7 @@ figure_patterns = [
     "routing_rationale": "High quality with complex layout (tables, multi-column)"
   }
 }
-```text
+```
 
 ---
 
@@ -798,7 +798,7 @@ figure_patterns = [
   ],
   "structure_confidence": 0.92
 }
-```text
+```
 
 ### 2. Reading Order (FR-4.12)
 
@@ -822,7 +822,7 @@ figure_patterns = [
   "num_columns": 2,
   "reading_order_confidence": 0.92
 }
-```text
+```
 
 ### 3. Footnote Linking (FR-4.5)
 
@@ -844,7 +844,7 @@ figure_patterns = [
     }
   ]
 }
-```text
+```
 
 ### 4. Figure-Caption Linking (FR-4.6)
 
@@ -865,7 +865,7 @@ figure_patterns = [
     }
   ]
 }
-```text
+```
 
 ---
 
@@ -923,7 +923,7 @@ output/
   │   └── document_page_001.png (300 DPI, corrected)
   └── metadata/
       └── document.json (preprocessing metadata)
-```text
+```
 
 **Step 2: OCR team reads files → processes → writes output**
 
@@ -936,7 +936,7 @@ output/
   │   └── document_ocr.json (OCR output - NEW)
   └── structured/
       └── document_structured.json (final output - NEW)
-```text
+```
 
 **Step 3: RAG ingestion reads `document_structured.json`**
 

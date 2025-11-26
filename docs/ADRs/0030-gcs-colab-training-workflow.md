@@ -145,7 +145,7 @@ poetry run python scripts/prepare_phase2_data.py \
   --output-dir datasets/iqa_phase2 \
   --num-samples 50000 \
   --preset medium
-```text
+```
 
 **Output Structure**:
 
@@ -203,7 +203,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 gcloud projects add-iam-policy-binding image-detection-478105 \
   --member="serviceAccount:colab-training@image-detection-478105.iam.gserviceaccount.com" \
   --role="roles/storage.objectViewer"  # Read-only for Colab
-```text
+```
 
 **Upload Workflow**:
 
@@ -224,7 +224,7 @@ gsutil -m cp -r data/benchmarks/external_iqa/LIVE_Challenge gs://image-detection
 
 # Verify upload
 gsutil du -sh gs://image-detection-datasets/
-```text
+```
 
 **Advantages**:
 
@@ -298,14 +298,14 @@ def train_iqa():
 @stub.local_entrypoint()
 def main():
     train_iqa.remote()
-```text
+```
 
 **Run Training**:
 
 ```bash
 # Single command - runs to completion (no session management!)
 modal run modal/train_phase2_iqa.py
-```text
+```
 
 **Modal Features**:
 
@@ -342,7 +342,7 @@ graph LR
     K --> L[gs://image-detection-datasets/models/]
     L --> M[Local: Download model]
     M --> N[models/phase2_iqa/]
-```text
+```
 
 **Code Support**:
 
@@ -585,7 +585,7 @@ cat > lifecycle.json <<EOF
 }
 EOF
 gsutil lifecycle set lifecycle.json gs://image-detection-datasets
-```text
+```
 
 **Service Account Permissions**:
 
@@ -607,7 +607,7 @@ gcloud iam service-accounts create local-upload \
 # Grant storage.objectAdmin role (read-write)
 gsutil iam ch serviceAccount:local-upload@image-detection-478105.iam.gserviceaccount.com:objectAdmin \
   gs://image-detection-datasets
-```text
+```
 
 **Key Management**:
 
@@ -621,7 +621,7 @@ base64 -w 0 image-detection-478105-local-upload.json > image-detection-478105-lo
 
 # Use in scripts
 export GOOGLE_APPLICATION_CREDENTIALS="$(base64 -d image-detection-478105-local-upload.json.b64)"
-```text
+```
 
 ### Colab Integration
 
@@ -640,7 +640,7 @@ auth.authenticate_user()
 # [3] Verify download
 !du -sh /content/datasets/iqa_phase2
 # Expected: ~18 GB
-```text
+```
 
 **Monitoring Training**:
 
@@ -652,7 +652,7 @@ writer = SummaryWriter(log_dir="/content/logs")
 
 # Upload logs to GCS periodically
 !gsutil -m cp -r /content/logs gs://image-detection-datasets/models/training_logs/
-```text
+```
 
 ### Cost Breakdown
 
@@ -713,7 +713,7 @@ def test_gcs_upload_download():
     # Verify file integrity
     import filecmp
     assert filecmp.cmp(test_file, "/tmp/metadata.json")
-```text
+```
 
 ### Performance Tests
 
@@ -725,7 +725,7 @@ time gsutil -m cp -r datasets/iqa_phase2/train gs://image-detection-datasets/tes
 # Measure download speed (Colab)
 time gsutil -m cp -r gs://image-detection-datasets/iqa_phase2 /content/datasets/
 # Expected: ~3-5 min for 26 GB (80-140 MB/s)
-```text
+```
 
 ---
 

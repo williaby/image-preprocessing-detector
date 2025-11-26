@@ -30,7 +30,7 @@ When authentication is enabled (`IMGPREP_API_AUTH_ENABLED=true`), all protected 
 ```bash
 # Include API key in request header
 curl -H "X-API-Key: your-api-key-here" http://localhost:8000/process
-```text
+```
 
 **Public Endpoints** (no auth required):
 
@@ -55,7 +55,7 @@ Configure `IMGPREP_API_INTERNAL_CALLERS` with IP addresses that bypass authentic
 
 ```bash
 export IMGPREP_API_INTERNAL_CALLERS='["10.0.0.0/8", "172.16.0.0/12"]'
-```text
+```
 
 ---
 
@@ -82,7 +82,7 @@ X-RateLimit-Window: 60
   "retry_after_seconds": 45,
   "correlation_id": "abc123"
 }
-```text
+```
 
 ---
 
@@ -116,7 +116,7 @@ X-RateLimit-Window: 60
   },
   "correlation_id": "550e8400-e29b-41d4-a716-446655440000"
 }
-```text
+```
 
 ---
 
@@ -136,13 +136,13 @@ Returns service health status.
   "timestamp": "2025-01-15T10:30:00Z",
   "uptime_seconds": 3600.5
 }
-```text
+```
 
 **curl**:
 
 ```bash
 curl http://localhost:8000/health
-```text
+```
 
 ---
 
@@ -167,13 +167,13 @@ Returns readiness status with component checks.
     "memory_available_gb": 8.5
   }
 }
-```text
+```
 
 **curl**:
 
 ```bash
 curl http://localhost:8000/ready
-```text
+```
 
 ---
 
@@ -194,13 +194,13 @@ Returns API and pipeline version information.
     "layout_lite": "doclayout-yolo-v1.0.0"
   }
 }
-```text
+```
 
 **curl**:
 
 ```bash
 curl http://localhost:8000/version
-```text
+```
 
 ---
 
@@ -248,7 +248,7 @@ curl -X POST http://localhost:8000/process \
   -H "X-API-Key: your-key" \
   -F "file=@important.pdf" \
   -F "enable_teacher=true"
-```text
+```
 
 **Response (200 OK)**:
 
@@ -288,7 +288,7 @@ curl -X POST http://localhost:8000/process \
   "corrected_images_url": null,
   "error": null
 }
-```text
+```
 
 **Error Response (400 Bad Request)**:
 
@@ -301,7 +301,7 @@ curl -X POST http://localhost:8000/process \
   },
   "correlation_id": "550e8400-e29b-41d4-a716-446655440000"
 }
-```text
+```
 
 ---
 
@@ -334,7 +334,7 @@ curl -X POST http://localhost:8000/batch \
   -F "files=@doc1.pdf" \
   -F "files=@doc2.pdf" \
   -F "prefer_gpu=true"
-```text
+```
 
 **Response (200 OK)**:
 
@@ -350,7 +350,7 @@ curl -X POST http://localhost:8000/batch \
   "completed_at": null,
   "estimated_completion": "2025-01-15T10:35:00Z"
 }
-```text
+```
 
 ---
 
@@ -363,7 +363,7 @@ Get current status of a batch job.
 ```bash
 curl http://localhost:8000/batch/job_xyz789/status \
   -H "X-API-Key: your-key"
-```text
+```
 
 **Response (200 OK)**:
 
@@ -379,7 +379,7 @@ curl http://localhost:8000/batch/job_xyz789/status \
   "completed_at": null,
   "estimated_completion": "2025-01-15T10:34:00Z"
 }
-```text
+```
 
 **Response (404 Not Found)**:
 
@@ -389,7 +389,7 @@ curl http://localhost:8000/batch/job_xyz789/status \
   "message": "Job not found: job_invalid",
   "correlation_id": "..."
 }
-```text
+```
 
 ---
 
@@ -412,7 +412,7 @@ curl "http://localhost:8000/batch/job_xyz789/result" \
 # Paginated results
 curl "http://localhost:8000/batch/job_xyz789/result?offset=0&limit=10" \
   -H "X-API-Key: your-key"
-```text
+```
 
 **Response (200 OK)**:
 
@@ -447,7 +447,7 @@ curl "http://localhost:8000/batch/job_xyz789/result?offset=0&limit=10" \
   ],
   "total_processing_time_ms": 3500.5
 }
-```text
+```
 
 ---
 
@@ -460,7 +460,7 @@ Delete a batch job and its results.
 ```bash
 curl -X DELETE http://localhost:8000/batch/job_xyz789 \
   -H "X-API-Key: your-key"
-```text
+```
 
 **Response (200 OK)**:
 
@@ -469,7 +469,7 @@ curl -X DELETE http://localhost:8000/batch/job_xyz789 \
   "message": "Job deleted successfully",
   "job_id": "job_xyz789"
 }
-```text
+```
 
 ---
 
@@ -489,7 +489,7 @@ Check device status via `/ready` endpoint:
 
 ```bash
 curl http://localhost:8000/ready | jq '.device'
-```text
+```
 
 **GPU Available**:
 
@@ -499,7 +499,7 @@ curl http://localhost:8000/ready | jq '.device'
   "name": "NVIDIA GeForce RTX 3080",
   "memory_available_gb": 10.2
 }
-```text
+```
 
 **CPU Only**:
 
@@ -509,7 +509,7 @@ curl http://localhost:8000/ready | jq '.device'
   "name": "Intel Core i7-12700",
   "memory_available_gb": 32.0
 }
-```text
+```
 
 ### Processing Time Expectations
 
@@ -600,7 +600,7 @@ while True:
 results = client.get(f"/batch/{job['job_id']}/result").json()
 for r in results["results"]:
     print(f"{r['file_name']}: {r['ocr_routing_recommendation']}")
-```text
+```
 
 ---
 

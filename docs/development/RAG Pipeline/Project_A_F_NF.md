@@ -673,7 +673,7 @@ For documents containing layout elements (detected via FR-4.2), the system SHALL
   "needs_correction": true,
   "element_quality_score": 0.58
 }
-```text
+```
 
 **Rationale:**
 
@@ -808,7 +808,7 @@ The system SHALL detect and provide bounding boxes for ALL 11 DocLayNet classes:
   "confidence": 0.94,
   "page_number": 3
 }
-```text
+```
 
 **Validation:**
 
@@ -868,7 +868,7 @@ The system SHALL detect parasitic content (headers, footers, watermarks) that sh
     "estimated_count": 3
   }
 }
-```text
+```
 
 #### FR-4.6: Figure-Caption Detection
 
@@ -899,7 +899,7 @@ The system SHALL detect parasitic content (headers, footers, watermarks) that sh
     "distance_pixels": 12
   }
 }
-```text
+```
 
 #### FR-4.7: Vertical Text Orientation Detection (RESTORED)
 
@@ -984,7 +984,7 @@ The system SHALL detect handwritten text regions.
     "complexity_score": 0.62
   }
 }
-```text
+```
 
 **Project B Responsibility (Structure Extraction):**
 
@@ -1017,7 +1017,7 @@ The system SHALL detect handwritten text regions.
     "num_columns": 2
   }
 }
-```text
+```
 
 **Project B Responsibility (Reading Order Prediction):**
 
@@ -1061,7 +1061,7 @@ The system SHALL detect handwritten text regions.
   "confidence": 0.89,
   "quality_issues": []
 }
-```text
+```
 
 **Document Types:**
 
@@ -1118,7 +1118,7 @@ The system SHALL perform language detection.
     {"bbox": [300, 500, 200, 50], "confidence": 0.82}
   ]
 }
-```text
+```
 
 **Project B Responsibility:**
 
@@ -1155,7 +1155,7 @@ The system SHALL perform language detection.
     {"bbox": [400, 800, 100, 100], "confidence": 0.91, "shape": "circular"}
   ]
 }
-```text
+```
 
 **Project B Responsibility:**
 
@@ -1188,7 +1188,7 @@ The system SHALL perform language detection.
     {"bbox": [100, 1050, 200, 50], "confidence": 0.87}
   ]
 }
-```text
+```
 
 **Project B Responsibility:**
 
@@ -1223,7 +1223,7 @@ The system SHALL perform language detection.
     {"bbox": [10, 200, 40, 300], "confidence": 0.78, "position": "left_margin"}
   ]
 }
-```text
+```
 
 **Project B Responsibility:**
 
@@ -1443,7 +1443,7 @@ The system SHALL calculate a Document Quality Score with two orthogonal axes:
     }
   }
 }
-```text
+```
 
 #### FR-7.2: Pipeline Routing Recommendation
 
@@ -1482,7 +1482,7 @@ LOW DEGRADATION  │  ocr_fast            │  ocr_advanced        │
     "rationale": "Clean document with complex layout (tables, formulas). Use advanced OCR with structure preservation."
   }
 }
-```text
+```
 
 ---
 
@@ -1686,7 +1686,7 @@ student_model_path: Path = Field(
     default=Path("models/resnet18_iqa_student.onnx"),
     description="Path to ResNet-18 student ONNX model"
 )
-```text
+```
 
 ### NFR-4: Deployment & Operations (DETAILED RESTORATION)
 
@@ -1803,7 +1803,7 @@ All file inputs SHALL be validated:
 max_file_size_mb: int = 100
 max_pages_per_pdf: int = 1000
 allowed_input_directories: List[Path] = []
-```text
+```
 
 #### NFR-5.2: Dependency Scanning
 

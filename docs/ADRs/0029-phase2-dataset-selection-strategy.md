@@ -156,7 +156,7 @@ labels = {
     "skew": detect_skew(image).angle > 2.0,            # Hough transform
     # ... perspective, low_contrast, orientation
 }
-```text
+```
 
 **Dataset Structure**:
 
@@ -197,7 +197,7 @@ datasets/iqa_phase2/
     }
   ]
 }
-```text
+```
 
 **Advantages**:
 
@@ -244,7 +244,7 @@ from iqadataset import load_dataset
 live = load_dataset("LIVE", dataset_root="data/benchmarks/external_iqa/", download=True)
 csiq = load_dataset("CSIQ", dataset_root="data/benchmarks/external_iqa/", download=True)
 live_challenge = load_dataset("LIVE_Challenge", dataset_root="data/benchmarks/external_iqa/", download=True)
-```text
+```
 
 **Validation Workflow**:
 
@@ -306,7 +306,7 @@ fixtures = [
 # Save to test fixtures
 for i, sample in enumerate(fixtures):
     sample.save(f"data/test_fixtures/iqa_samples/live/{i}.jpg")
-```text
+```
 
 **Directory Structure**:
 
@@ -342,7 +342,7 @@ def test_iqa_validation_pipeline():
     # Expect reasonable correlation with ground-truth DMOS
     assert results["pearson_correlation"] > 0.6
     assert results["spearman_correlation"] > 0.6
-```text
+```
 
 **Advantages**:
 
@@ -984,7 +984,7 @@ def test_synthetic_dataset_structure():
     assert "defects" in sample
     assert all(defect in sample["defects"] for defect in
                ["blur", "noise", "skew", "perspective", "low_contrast", "orientation"])
-```text
+```
 
 ### Integration Tests
 
@@ -1000,7 +1000,7 @@ def test_validation_correlation():
 
     assert results["pearson_correlation"] > 0.75
     assert results["spearman_correlation"] > 0.75
-```text
+```
 
 ---
 

@@ -56,7 +56,7 @@ python scripts/data_collection/sample_rvlcdip.py \
     --output data/raw/selected/ \
     --num-samples 6000 \
     --stratify-by-category
-```text
+```
 
 **Selection Criteria**:
 
@@ -92,7 +92,7 @@ wget http://www.cs.cmu.edu/~aharley/tobacco800/Tobacco800.tar.gz
 tar -xzf Tobacco800.tar.gz -C data/raw/tobacco800/
 
 # Use all 1,290 images (already filtered)
-```text
+```
 
 **Usage**:
 
@@ -125,7 +125,7 @@ git clone https://github.com/doc-analysis/DocBank.git data/raw/docbank/
 
 # Download subset (requires manual selection)
 # Focus on papers with images/figures for realistic content
-```text
+```
 
 **Selection Criteria**:
 
@@ -142,7 +142,7 @@ python scripts/data_collection/rasterize_docbank.py \
     --output data/raw/selected/ \
     --dpi 300 \
     --num-samples 3000
-```text
+```
 
 **Storage**: 3,000 images × 500KB avg = ~1.5GB
 
@@ -213,7 +213,7 @@ image_path,source,category,resolution,width,height,file_size
 data/raw/selected/img_0001.tif,rvlcdip,letter,300,2550,3300,245120
 data/raw/selected/img_0002.tif,tobacco800,form,300,2200,2800,312458
 ...
-```text
+```
 
 **Train/Val/Test Split**:
 
@@ -245,7 +245,7 @@ data/raw/selected/img_0002.tif,tobacco800,form,300,2200,2800,312458
 - Perspective: 10% probability (skew, rotation, distortion)
 - Orientation: 5% probability (90/180/270 degree rotation)
 - Compression: 10% probability (JPEG artifacts)
-```text
+```
 
 **Generation Script**:
 
@@ -256,7 +256,7 @@ python scripts/data_collection/generate_augmented.py \
     --output data/augmented/ \
     --num-augmented-per-image 7 \
     --save-metadata
-```text
+```
 
 **Expected Output**:
 
@@ -309,7 +309,7 @@ python scripts/data_collection/weak_label.py \
     --input data/augmented/ \
     --output data/labels/ \
     --use-metrics brisque niqe laplacian rms_contrast
-```text
+```
 
 **Label Format** (JSON per image):
 
@@ -329,7 +329,7 @@ python scripts/data_collection/weak_label.py \
     "niqe": 7.8
   }
 }
-```text
+```
 
 **Deliverables**:
 
@@ -388,7 +388,7 @@ python scripts/data_collection/merge_validated_labels.py \
     --weak-labels data/labels/ \
     --manual-labels data/validated_labels.json \
     --output data/labels_final/
-```text
+```
 
 **Deliverables**:
 
@@ -449,7 +449,7 @@ git commit -m "Add Phase 2 dataset (10k base, 50k augmented, 2k test)"
 
 # Push datasets to remote
 poetry run dvc push
-```text
+```
 
 **DVC Benefits**:
 

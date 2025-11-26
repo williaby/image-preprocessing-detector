@@ -257,7 +257,7 @@ def text_detection_gate(image: np.ndarray) -> bool:
 
     # Require 2/3 consensus
     return sum(votes) >= 2
-```text
+```
 
 ### Performance Comparison
 
@@ -305,7 +305,7 @@ def process_document(pdf_path: str) -> DocumentMetadata:
             # Add empty page metadata, continue with next page
 
     return metadata
-```text
+```
 
 ## Validation
 

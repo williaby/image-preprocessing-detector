@@ -472,7 +472,7 @@ gsutil ls gs://image_detection_b/image-preprocessing-detector/datasets/
 
 # Show storage usage
 gsutil du -sh gs://image_detection_b/
-```text
+```
 
 **Authentication**: Service account key at `.gcp/service-account.json` (gitignored)
 
@@ -499,7 +499,7 @@ ls -lh /mnt/unraid/training_data/image_detection/benchmarks/
 
 # Check symlinks
 ls -l data/benchmarks/
-```text
+```
 
 ---
 
@@ -516,7 +516,7 @@ uv run python scripts/create_symlinks.py --benchmarks-only
 
 # Verify symlinks
 uv run python scripts/create_symlinks.py --verify
-```text
+```
 
 **Symlink Mappings**:
 
@@ -535,7 +535,7 @@ SYMLINK_MAPPINGS = [
     ("data/benchmarks/cocotext", "benchmarks/cocotext"),
     ("data/training/iqa_phase2_100k", "training/iqa_phase2_100k"),  # Future
 ]
-```text
+```
 
 ---
 
@@ -552,7 +552,7 @@ uv run python scripts/download_all_datasets.py --benchmarks-only
 
 # Download specific dataset
 uv run python scripts/download_all_datasets.py --dataset tablebank
-```text
+```
 
 **Download Sources**:
 
@@ -573,7 +573,7 @@ data/                           # 1.1M (symlinks + synthetic_iqa only)
 data/benchmarks/                # 1.0M (symlinks only)
 data/test_fixtures/             # 12K (README only)
 data/training/                  # 0B (not created yet)
-```text
+```
 
 **NFS (Unraid)**:
 
@@ -593,13 +593,13 @@ data/training/                  # 0B (not created yet)
 /mnt/unraid/training_data/image_detection/training/   # ~134GB (8 datasets downloaded)
   └── iqa_phase2_100k/          # ~10GB current (regeneration to ~50GB planned)
   # Additional training datasets stored alongside (receipts_hitl, docsynth300k, etc.)
-```text
+```
 
 **External Symlinks**:
 
 ```bash
 /home/byron/dev/data_ingestor/data/benchmarks/doclaynet/  # 42GB (shared dataset)
-```text
+```
 
 ---
 
@@ -661,7 +661,7 @@ DATASET_SOURCES = {
         "augmentation": "4.85x",
     },
 }
-```text
+```
 
 **Total**: 100,000 samples (70K train, 15K val, 15K test)
 **Augmentation**: Albumentations (blur, noise, skew, illumination, JPEG compression, color jitter)
@@ -717,7 +717,7 @@ sudo mount -t nfs 192.168.1.16:/mnt/user/training_data /mnt/unraid/training_data
 
 # Verify access
 ls -lh /mnt/unraid/training_data/image_detection/benchmarks/
-```text
+```
 
 ### 8.2 Symlink Verification
 
@@ -732,7 +732,7 @@ uv run python scripts/create_symlinks.py --verify
 
 # Fix broken symlinks
 uv run python scripts/create_symlinks.py --all
-```text
+```
 
 ### 8.3 Disk Space Issues
 
@@ -745,7 +745,7 @@ du -sh data/
 
 # Expected:
 # 1.1M  data/  (symlinks only, minimal local storage)
-```text
+```
 
 ---
 

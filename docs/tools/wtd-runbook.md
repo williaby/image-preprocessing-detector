@@ -77,7 +77,7 @@ wtd:summary
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] Coverage maintained above 80%
-```text
+```
 
 **Alternative:** AI Comments (auto-posted to PRs)
 
@@ -177,7 +177,7 @@ The project uses the `mcp__zen-core__pr_prepare` tool to automate PR creation wi
 ```bash
 # Claude Code automatically invokes:
 mcp__zen-core__pr_prepare --include_wtd=true --target_branch=main
-```text
+```
 
 **What happens:**
 
@@ -208,7 +208,7 @@ wtd:summary
 
 ## Related Issues
 Closes #42
-```text
+```
 
 **Important:** Place `wtd:summary` **before** detailed change descriptions to avoid duplicate content.
 
@@ -273,7 +273,7 @@ docs/_build/* linguist-generated=true
 
 # Temporary files
 tmp_cleanup/* linguist-generated=true
-```text
+```
 
 **Note:** This project's `.gitignore` already excludes most generated files, so `.gitattributes` is optional but recommended for any committed artifacts.
 

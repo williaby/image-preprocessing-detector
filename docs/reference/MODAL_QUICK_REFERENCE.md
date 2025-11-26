@@ -42,7 +42,7 @@ poetry run modal run tmp_cleanup/modal_gpu_test.py
 # device_name: Tesla T4
 # torch_version: 2.5.1+cu124
 # ==============================
-```text
+```
 
 **Test Results** (verified 2025-11-16):
 
@@ -64,7 +64,7 @@ open https://modal.com/apps                         # Dashboard
 # Alternatively, activate poetry shell first
 poetry shell
 modal run tmp_cleanup/modal_gpu_test.py  # Then use modal directly
-```text
+```
 
 **Helper script commands** (for reference):
 
@@ -74,7 +74,7 @@ modal run tmp_cleanup/modal_gpu_test.py  # Then use modal directly
 ./scripts/modal_helpers.sh monitor         # Open dashboard
 ./scripts/modal_helpers.sh costs           # Check usage
 ./scripts/modal_helpers.sh secrets         # List secrets
-```text
+```
 
 ### First-Time Setup (Reference Only - Already Done)
 
@@ -95,7 +95,7 @@ poetry run modal token new
 # This encodes the key to base64 and creates Modal secret with:
 #   Secret name: gcs-credentials
 #   Environment variable: GCP_SA_KEY (base64 encoded)
-```text
+```
 
 **Important**: GCS credentials are stored as base64-encoded in Modal for portability.
 The helper script handles encoding automatically.
@@ -144,7 +144,7 @@ with ThreadPoolExecutor(max_workers=32) as executor:
     futures = [executor.submit(download_blob, blob) for blob in blobs]
     for future in as_completed(futures):
         result = future.result()  # Handle result
-```text
+```
 
 **Performance**: ~3,500 files/min with 32 workers (50,000 files in ~14 minutes)
 
@@ -171,7 +171,7 @@ gcs_secret = modal.Secret.from_name("gcs-hmac-credentials")
 def train():
     # Dataset accessible at /dataset/* (streaming, no download)
     pass
-```text
+```
 
 **To create HMAC credentials**:
 
@@ -203,7 +203,7 @@ image = (
 )
 
 # Then use: gsutil -m rsync -r gs://bucket/path /tmp/data
-```text
+```
 
 **Not recommended**: Adds significant image build time and complexity.
 
@@ -227,7 +227,7 @@ poetry run modal run --detach modal/train_phase2_iqa.py
 
 # Monitor from CLI
 poetry run modal app logs iqa-phase2-training --follow
-```text
+```
 
 **CRITICAL**: Always use `--detach` flag when running training jobs. Without it, the job will stop if your local terminal disconnects.
 
@@ -264,7 +264,7 @@ poetry run modal app logs iqa-phase2-training --follow
 poetry run modal run modal/train_phase3_yolov8.py
 
 # Runs 50-80 hours continuously
-```text
+```
 
 **Key Details:**
 
@@ -356,7 +356,7 @@ gsutil cp gs://rag-pipeline-models/image-preprocessing-detector/resnet50_teacher
 
 # Verify upload
 gsutil du -sh gs://rag-pipeline-models/
-```text
+```
 
 ---
 
@@ -431,7 +431,7 @@ open https://modal.com/settings/billing
 
 # Warning: $10/month
 # Critical: $20/month
-```text
+```
 
 ### Check Usage
 
@@ -441,7 +441,7 @@ poetry run modal profile current
 
 # Dashboard
 open https://modal.com/usage
-```text
+```
 
 ---
 
@@ -455,7 +455,7 @@ poetry run modal app logs image-detection --follow
 
 # View last 100 lines
 poetry run modal app logs image-detection --tail 100
-```text
+```
 
 ### Check Status
 
@@ -465,7 +465,7 @@ poetry run modal app list
 
 # Check specific app
 poetry run modal app describe image-detection
-```text
+```
 
 ### Cancel Training
 
@@ -476,7 +476,7 @@ open https://modal.com/apps
 
 # Via CLI
 poetry run modal app stop image-detection
-```text
+```
 
 ---
 
@@ -490,7 +490,7 @@ poetry run modal token new
 
 # Verify
 poetry run modal token current
-```text
+```
 
 ### GCS Access Failed
 
@@ -504,7 +504,7 @@ poetry run modal secret create gcs-credentials \
 
 # Test GCS access
 gsutil ls gs://rag-pipeline-models/
-```text
+```
 
 ### GPU Unavailable
 
@@ -545,7 +545,7 @@ modal:
   gpu: L4  # Recommended: best speed/cost balance
   # Alternatives: T4 (budget), A10 (faster)
   timeout: 86400  # 24 hours
-```text
+```
 
 ### GCS Paths
 
@@ -577,7 +577,7 @@ open https://modal.com/apps                         # Dashboard
 # DEBUGGING
 poetry run modal secret list                        # List secrets
 poetry run modal app stop image-detection           # Cancel training
-```text
+```
 
 **Alternative: Use poetry shell to avoid `poetry run` prefix**
 
@@ -587,7 +587,7 @@ poetry shell  # Activate poetry environment
 modal run tmp_cleanup/modal_gpu_test.py
 modal app list
 modal secret list
-```text
+```
 
 ---
 

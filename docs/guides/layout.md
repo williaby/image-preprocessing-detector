@@ -155,7 +155,7 @@ element = DocumentElement(
     bbox=[100, 200, 800, 600],  # x, y, width, height
     confidence=0.95,
 )
-```text
+```
 
 **Why COCO?**
 
@@ -240,7 +240,7 @@ for element in detected_elements:
 
     # Store per-element quality
     element.quality_issues = quality_issues
-```text
+```
 
 ### Example Output
 
@@ -258,7 +258,7 @@ for element in detected_elements:
     }
   ]
 }
-```text
+```
 
 **Benefits**:
 
@@ -289,7 +289,7 @@ for element in metadata.pages[0].elements:
         score=element.confidence,
     )
     layout.append(block)
-```text
+```
 
 ### Table Extraction
 
@@ -304,7 +304,7 @@ for page in metadata.pages:
     for table in tables:
         x, y, w, h = table.bbox
         # Extract table region for processing
-```text
+```
 
 ## Performance Optimization
 
@@ -320,7 +320,7 @@ poetry install --with ml
 
 # Verify GPU
 python -c "import torch; print(torch.cuda.is_available())"
-```text
+```
 
 ### Batch Processing
 
@@ -342,7 +342,7 @@ pages = load_pdf_pages("document.pdf")
 for i in range(0, len(pages), batch_size):
     batch = pages[i:i+batch_size]
     results = model.predict(batch)  # GPU batch inference
-```text
+```
 
 ### ONNX Optimization
 

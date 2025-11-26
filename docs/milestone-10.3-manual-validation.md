@@ -50,7 +50,7 @@ poetry install --with dev
 streamlit run tools/manual_validation_ui.py -- \
     --input-dir data/annotation_queue \
     --output-dir data/corrected_labels
-```text
+```
 
 **Quality Issues**:
 
@@ -81,7 +81,7 @@ priority = 0.7 * uncertainty + 0.3 * edge_case_score
 
 # Uncertainty = 1 - mean(confidence)
 # Edge cases: borderline quality metrics near thresholds
-```text
+```
 
 **Usage**:
 
@@ -91,7 +91,7 @@ python scripts/sample_ambiguous_cases.py \
     --output-dir data/annotation_queue \
     --num-samples 2000 \
     --confidence-threshold 0.85
-```text
+```
 
 **Output**:
 
@@ -159,7 +159,7 @@ for images, labels in train_loader:
     # images: (B, C, H, W)
     # labels: (B, 6)
     pass
-```text
+```
 
 #### Dataset Merging (`scripts/create_final_dataset.py`)
 
@@ -182,7 +182,7 @@ python scripts/create_final_dataset.py \
     --val-ratio 0.1 \
     --test-ratio 0.1 \
     --random-seed 42
-```text
+```
 
 **Output Structure**:
 
@@ -254,7 +254,7 @@ Final Training Dataset (train/val/test splits)
     "edge_deviation_degrees": 3.4
   }
 }
-```text
+```
 
 ### Corrected Label Format
 
@@ -276,7 +276,7 @@ Final Training Dataset (train/val/test splits)
   "annotator_notes": "Visible noise but not severe",
   "annotation_source": "manual_validation_ui"
 }
-```text
+```
 
 ### Dataset Split Format
 
@@ -294,7 +294,7 @@ Final Training Dataset (train/val/test splits)
     }
   ]
 }
-```text
+```
 
 ## Quality Metrics
 
@@ -359,7 +359,7 @@ python scripts/create_final_dataset.py \
     --weak-supervision-dir data/weak_supervision_labels \
     --corrected-labels-dir data/corrected_labels \
     --output-dir data/final_training_dataset
-```text
+```
 
 ### Integration Tests
 
@@ -379,7 +379,7 @@ python scripts/create_final_dataset.py
 
 # 5. Test PyTorch loading
 python data/dataset.py data/final_training_dataset
-```text
+```
 
 ## Dependencies
 

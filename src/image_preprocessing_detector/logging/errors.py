@@ -10,11 +10,11 @@ Sprint 6.1.3: Provides:
 import os
 import traceback
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
 from image_preprocessing_detector.logging import get_correlation_id, get_logger
+from image_preprocessing_detector.utils.datetime_compat import UTC, datetime
 
 # ============================================================================
 # Error Taxonomy

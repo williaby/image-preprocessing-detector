@@ -176,7 +176,7 @@ data/benchmarks/external_iqa -> /mnt/unraid/training_data/image_detection/benchm
 
 # Training datasets
 data/training/iqa_phase2_100k -> /mnt/unraid/training_data/image_detection/training/iqa_phase2_100k
-```text
+```
 
 ### NFS Organization Principles
 
@@ -199,7 +199,7 @@ data/training/iqa_phase2_100k -> /mnt/unraid/training_data/image_detection/train
 
 ['remote "nfs"']
     url = /mnt/unraid/training_data/image_detection
-```text
+```
 
 ### Usage Patterns
 
@@ -216,7 +216,7 @@ dvc push data/training/iqa_phase2_100k
 # Push to NFS (for NFS-first workflow)
 dvc add data/training/iqa_phase2_100k
 dvc push --remote nfs data/training/iqa_phase2_100k
-```text
+```
 
 ## Storage Budget Tracking
 

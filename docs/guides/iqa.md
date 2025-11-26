@@ -47,7 +47,7 @@ if is_blurry:
     print(f"Blurry image (variance: {variance:.2f})")
 else:
     print(f"Sharp image (variance: {variance:.2f})")
-```text
+```
 
 **Performance**: ~50ms per image
 
@@ -85,7 +85,7 @@ angle, confidence = detect_skew(image, threshold=0.7)
 
 if abs(angle) > 0.5 and confidence > 0.7:
     print(f"Skew detected: {angle:.2f}° (confidence: {confidence:.2f})")
-```text
+```
 
 **Performance**: ~100ms per image
 
@@ -126,7 +126,7 @@ is_low, score = assess_contrast(image, threshold=0.3)
 
 if is_low:
     print(f"Low contrast (score: {score:.2f})")
-```text
+```
 
 **Performance**: ~20ms per image
 
@@ -181,7 +181,7 @@ element = DocumentElement(
         )
     ],
 )
-```text
+```
 
 **Benefits**:
 
@@ -300,7 +300,7 @@ poetry run imgprep process scan.pdf --output result.json \
 # More lenient for low-quality sources
 poetry run imgprep process photo.jpg --output result.json \
   --blur-threshold 0.6
-```text
+```
 
 ### 2. Dry Run Mode
 
@@ -308,7 +308,7 @@ Test detection without corrections:
 
 ```bash
 poetry run imgprep process input.pdf --output result.json --dry-run
-```text
+```
 
 ### 3. Validate Results
 
@@ -323,7 +323,7 @@ for page in metadata.pages:
     print(f"Page {page.page_number}: {len(page.detected_issues)} issues")
     for issue in page.detected_issues:
         print(f"  - {issue.issue_type}: {issue.severity} (confidence: {issue.confidence})")
-```text
+```
 
 ### 4. Selective Correction
 
@@ -335,7 +335,7 @@ high_severity = [
     issue for issue in page.detected_issues
     if issue.severity == "high"
 ]
-```text
+```
 
 ## Performance Considerations
 
@@ -386,7 +386,7 @@ high_severity = [
 ```bash
 poetry run imgprep process input.pdf --output result.json \
   --blur-threshold 0.7  # More lenient
-```text
+```
 
 ### False Negatives
 
@@ -397,7 +397,7 @@ poetry run imgprep process input.pdf --output result.json \
 ```bash
 poetry run imgprep process input.pdf --output result.json \
   --blur-threshold 0.9  # Stricter
-```text
+```
 
 ### Performance Issues
 

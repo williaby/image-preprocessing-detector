@@ -159,7 +159,7 @@ def test_complexity_score_calculation():
 def test_page_attribute_extraction():
     """Test has_tables, has_figures, etc. detection."""
     ...
-```text
+```
 
 ### Gap 2: Real File Coverage in Pre-flight/Ingestion
 
@@ -189,7 +189,7 @@ def test_preflight_with_doclaynet_pdfs(doclaynet_pdfs):
         analyzer = PDFDocumentAnalyzer()
         result = analyzer.analyze(pdf_path)
         assert result.resolution_analysis is not None
-```text
+```
 
 ### Gap 3: ML IQA Tests Conditional on Model Availability
 
@@ -206,7 +206,7 @@ def test_e2e_student_inference_with_high_confidence(
 ) -> None:
     if ml_detector is None:
         pytest.skip("ML detector not available")
-```text
+```
 
 **Impact**:
 
@@ -242,7 +242,7 @@ def test_teacher_escalation_with_low_quality_pdf(low_quality_table_image, ml_det
     _, teacher_scores, reason = ml_detector.run_pipeline(low_quality_table_image, ...)
     # Low quality should trigger escalation
     assert teacher_scores is not None or reason is not None
-```text
+```
 
 ---
 

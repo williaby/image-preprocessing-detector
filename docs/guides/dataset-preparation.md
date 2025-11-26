@@ -68,7 +68,7 @@ cd ../../..
 
 # Verify
 ls -lh data/raw/tobacco800/
-```text
+```
 
 **For complete download instructions**, see [DATASET_INSTALLATION.md](dataset-installation.md).
 
@@ -82,7 +82,7 @@ poetry install --with dev
 
 # Verify installation
 poetry run python -c "import albumentations, cv2, numpy; print('✓ Dependencies OK')"
-```text
+```
 
 ---
 
@@ -113,7 +113,7 @@ poetry run python scripts/prepare_phase2_data.py \
     --output-dir datasets/iqa_phase2 \
     --num-samples 50000 \
     --preset heavy
-```text
+```
 
 **Parameters:**
 
@@ -171,7 +171,7 @@ head -100 datasets/iqa_phase2/train/labels.json
 find datasets/iqa_phase2/train/images -name "*.png" | wc -l  # Should be 35,000
 find datasets/iqa_phase2/val/images -name "*.png" | wc -l    # Should be 7,500
 find datasets/iqa_phase2/test/images -name "*.png" | wc -l   # Should be 7,500
-```text
+```
 
 Expected output statistics (from script):
 
@@ -228,7 +228,7 @@ gcloud config set project image-detection-478105
 
 # Verify bucket access
 gsutil ls gs://image_detection_b
-```text
+```
 
 ### Step 4: Upload Configuration
 
@@ -236,7 +236,7 @@ Upload the Phase 2 training configuration:
 
 ```bash
 ./scripts/gcs_helpers.sh upload-configs
-```text
+```
 
 This uploads:
 
@@ -249,7 +249,7 @@ Use the GCS helper script to upload your generated dataset:
 ```bash
 # Upload Phase 2 dataset (takes 10-30 minutes for ~10GB)
 ./scripts/gcs_helpers.sh upload-phase2
-```text
+```
 
 **What this does:**
 
@@ -278,7 +278,7 @@ Copying file://datasets/iqa_phase2/train/images/img_000001.png [Content-Type=ima
 
 # Show storage usage and costs
 ./scripts/gcs_helpers.sh info
-```text
+```
 
 Expected output:
 
@@ -354,7 +354,7 @@ Each split (train/val/test) has a `labels.json` file with this structure:
     }
   }
 ]
-```text
+```
 
 **Field Descriptions:**
 
@@ -416,7 +416,7 @@ Labels are generated automatically using reference-free image quality metrics:
 ```bash
 ls -lh data/raw/tobacco800/
 find data/raw/tobacco800/ -name "*.png" | head -10
-```text
+```
 
 ### Issue: "ModuleNotFoundError: No module named 'albumentations'"
 
@@ -424,7 +424,7 @@ find data/raw/tobacco800/ -name "*.png" | head -10
 
 ```bash
 poetry install --with dev
-```text
+```
 
 ### Issue: Script runs slowly
 
@@ -448,7 +448,7 @@ poetry install --with dev
 gcloud auth login
 gcloud config set project image-detection-478105
 gsutil ls gs://image_detection_b  # Test access
-```text
+```
 
 ### Issue: GCS upload is slow
 
@@ -500,7 +500,7 @@ poetry run python scripts/prepare_phase2_data.py \
 
 # Start training
 # Open: notebooks/colab/phase2_iqa_training.ipynb
-```text
+```
 
 ---
 
