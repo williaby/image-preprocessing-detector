@@ -151,7 +151,7 @@ class OutcomeLogger:
             return True
 
         rate = self.batch_sample_rate if self._batch_mode else self.sample_rate
-        return random.random() < rate
+        return random.random() < rate  # noqa: S311
 
     def log_page_outcome(self, outcome: PageOutcome) -> None:
         """Log a page processing outcome.

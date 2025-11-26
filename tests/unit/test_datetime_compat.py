@@ -167,7 +167,7 @@ class TestToIso:
 
     def test_naive_datetime_converted_to_utc(self) -> None:
         """Naive datetime should be converted to UTC."""
-        dt = datetime(2023, 1, 15, 10, 30, 0)  # noqa: DTZ001 - intentional naive datetime
+        dt = datetime(2023, 1, 15, 10, 30, 0)
         iso = to_iso(dt)
         assert is_aware(parse_iso(iso))
 
@@ -200,7 +200,7 @@ class TestEnsureAware:
 
     def test_naive_becomes_aware(self) -> None:
         """Naive datetime should become aware."""
-        naive = datetime(2023, 1, 15, 10, 30, 0)  # noqa: DTZ001 - intentional naive datetime
+        naive = datetime(2023, 1, 15, 10, 30, 0)
         aware = ensure_aware(naive)
         assert is_aware(aware)
         assert aware.tzinfo == UTC
@@ -213,7 +213,7 @@ class TestEnsureAware:
 
     def test_custom_timezone(self) -> None:
         """Should use provided timezone."""
-        naive = datetime(2023, 1, 15, 10, 30, 0)  # noqa: DTZ001 - intentional naive datetime
+        naive = datetime(2023, 1, 15, 10, 30, 0)
         custom_tz = timezone(offset=timezone.utc.utcoffset(None))  # noqa: UP017 - Py3.10 compat
         aware = ensure_aware(naive, custom_tz)
         assert is_aware(aware)
@@ -224,7 +224,7 @@ class TestNaiveToAware:
 
     def test_converts_naive_to_aware(self) -> None:
         """Should convert naive to aware."""
-        naive = datetime(2023, 1, 15, 10, 30, 0)  # noqa: DTZ001 - intentional naive datetime
+        naive = datetime(2023, 1, 15, 10, 30, 0)
         aware = naive_to_aware(naive)
         assert is_aware(aware)
 
@@ -286,7 +286,7 @@ class TestSafeCompare:
 
     def test_compare_mixed_naive_aware(self) -> None:
         """Should handle comparison of mixed naive/aware datetimes."""
-        naive = datetime(2023, 1, 15, 10, 30, 0)  # noqa: DTZ001 - intentional naive datetime
+        naive = datetime(2023, 1, 15, 10, 30, 0)
         aware = datetime(2023, 1, 15, 10, 30, 0, tzinfo=UTC)
         # Should not raise - both normalized to UTC
         result = safe_compare(naive, aware)
@@ -304,7 +304,7 @@ class TestNormalizeForComparison:
 
     def test_naive_assumed_utc(self) -> None:
         """Naive datetime should be assumed UTC."""
-        dt = datetime(2023, 1, 15, 10, 30, 0)  # noqa: DTZ001 - intentional naive datetime
+        dt = datetime(2023, 1, 15, 10, 30, 0)
         normalized = _normalize_for_comparison(dt)
         assert is_aware(normalized)
 

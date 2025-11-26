@@ -18,11 +18,11 @@ from unittest.mock import MagicMock
 
 import torch.nn as nn
 
-from image_preprocessing_detector.models.resnet_student import (  # noqa: E402
+from image_preprocessing_detector.models.resnet_student import (
     ResNetStudent,
     StudentIQAHead,
 )
-from image_preprocessing_detector.models.resnet_teacher import (  # noqa: E402
+from image_preprocessing_detector.models.resnet_teacher import (
     IQAHead,
     ResNetTeacher,
 )

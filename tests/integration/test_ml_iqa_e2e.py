@@ -238,7 +238,7 @@ class TestMLIQAEndToEnd:
 
             # Add skew
             center = (400, 500)
-            M = cv2.getRotationMatrix2D(center, -8, 1.0)  # noqa: N806  # fmt: skip
+            M = cv2.getRotationMatrix2D(center, -8, 1.0)  # fmt: skip
             img = cv2.warpAffine(img, M, (800, 1000))
 
             # Apply blur

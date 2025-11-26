@@ -40,53 +40,65 @@ except ImportError:
     CollectorRegistry = None  # type: ignore[misc, assignment]
 
     class Counter:  # type: ignore[no-redef]
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            pass
+        """Stub Counter metric when prometheus_client unavailable."""
 
-        def labels(self, *args: Any, **kwargs: Any) -> "Counter":
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            """Initialize stub Counter (no-op)."""
+
+        def labels(self, *_args: Any, **_kwargs: Any) -> "Counter":
+            """Return self for method chaining (no-op)."""
             return self
 
-        def inc(self, amount: float = 1) -> None:
-            pass
+        def inc(self, _amount: float = 1) -> None:
+            """Increment counter (no-op)."""
 
     class Gauge:  # type: ignore[no-redef]
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            pass
+        """Stub Gauge metric when prometheus_client unavailable."""
 
-        def labels(self, *args: Any, **kwargs: Any) -> "Gauge":
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            """Initialize stub Gauge (no-op)."""
+
+        def labels(self, *_args: Any, **_kwargs: Any) -> "Gauge":
+            """Return self for method chaining (no-op)."""
             return self
 
-        def set(self, value: float) -> None:
-            pass
+        def set(self, _value: float) -> None:
+            """Set gauge value (no-op)."""
 
-        def inc(self, amount: float = 1) -> None:
-            pass
+        def inc(self, _amount: float = 1) -> None:
+            """Increment gauge (no-op)."""
 
-        def dec(self, amount: float = 1) -> None:
-            pass
+        def dec(self, _amount: float = 1) -> None:
+            """Decrement gauge (no-op)."""
 
     class Histogram:  # type: ignore[no-redef]
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            pass
+        """Stub Histogram metric when prometheus_client unavailable."""
 
-        def labels(self, *args: Any, **kwargs: Any) -> "Histogram":
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            """Initialize stub Histogram (no-op)."""
+
+        def labels(self, *_args: Any, **_kwargs: Any) -> "Histogram":
+            """Return self for method chaining (no-op)."""
             return self
 
-        def observe(self, amount: float) -> None:
-            pass
+        def observe(self, _amount: float) -> None:
+            """Observe value (no-op)."""
 
     class Info:  # type: ignore[no-redef]
-        def __init__(self, *args: Any, **kwargs: Any) -> None:
-            pass
+        """Stub Info metric when prometheus_client unavailable."""
 
-        def info(self, val: dict[str, str]) -> None:
-            pass
+        def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+            """Initialize stub Info (no-op)."""
 
-    def generate_latest(registry: Any = None) -> bytes:
+        def info(self, _val: dict[str, str]) -> None:
+            """Set info labels (no-op)."""
+
+    def generate_latest(_registry: Any = None) -> bytes:
+        """Generate empty metrics output (stub)."""
         return b""
 
-    def start_http_server(port: int, registry: Any = None) -> None:
-        pass
+    def start_http_server(_port: int, _registry: Any = None) -> None:
+        """Start HTTP server (no-op stub)."""
 
 
 # ============================================================================
@@ -198,6 +210,7 @@ class MetricsCollector:
     _initialized: bool = False
 
     def __new__(cls) -> "MetricsCollector":
+        """Create or return singleton instance."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance

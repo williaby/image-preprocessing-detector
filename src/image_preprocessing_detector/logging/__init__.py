@@ -31,8 +31,9 @@ from rich.logging import RichHandler
 correlation_id_var: ContextVar[str] = ContextVar("correlation_id", default="")
 
 # Additional context that flows through the pipeline
-request_context_var: ContextVar[dict[str, Any]] = ContextVar(
-    "request_context", default={}
+# NOTE: Default is None to avoid mutable default; use .set({}) to initialize
+request_context_var: ContextVar[dict[str, Any] | None] = ContextVar(
+    "request_context", default=None
 )
 
 
@@ -48,7 +49,7 @@ def set_correlation_id(correlation_id: str) -> None:
 
 def get_request_context() -> dict[str, Any]:
     """Get the current request context."""
-    return request_context_var.get()
+    return request_context_var.get() or {}
 
 
 def set_request_context(context: dict[str, Any]) -> None:
@@ -58,7 +59,7 @@ def set_request_context(context: dict[str, Any]) -> None:
 
 def update_request_context(**kwargs: Any) -> None:
     """Update request context with additional fields."""
-    current = request_context_var.get().copy()
+    current = (request_context_var.get() or {}).copy()
     current.update(kwargs)
     request_context_var.set(current)
 
@@ -219,7 +220,7 @@ class PIIRedactor:
 
 
 def add_correlation_id(
-    logger: Any, method_name: str, event_dict: dict[str, Any]
+    _logger: Any, _method_name: str, event_dict: dict[str, Any]
 ) -> dict[str, Any]:
     """Add correlation ID to log event."""
     correlation_id = get_correlation_id()
@@ -229,7 +230,7 @@ def add_correlation_id(
 
 
 def add_request_context(
-    logger: Any, method_name: str, event_dict: dict[str, Any]
+    _logger: Any, _method_name: str, event_dict: dict[str, Any]
 ) -> dict[str, Any]:
     """Add request context to log event."""
     config = get_logging_config()
@@ -241,7 +242,7 @@ def add_request_context(
 
 
 def redact_pii_processor(
-    logger: Any, method_name: str, event_dict: dict[str, Any]
+    _logger: Any, _method_name: str, event_dict: dict[str, Any]
 ) -> dict[str, Any]:
     """Redact PII from log event."""
     config = get_logging_config()
@@ -250,7 +251,7 @@ def redact_pii_processor(
 
 
 def add_service_info(
-    logger: Any, method_name: str, event_dict: dict[str, Any]
+    _logger: Any, _method_name: str, event_dict: dict[str, Any]
 ) -> dict[str, Any]:
     """Add service metadata to log event."""
     event_dict["service"] = "image-preprocessing-detector"
@@ -260,9 +261,13 @@ def add_service_info(
 
 
 def sample_logs(
-    logger: Any, method_name: str, event_dict: dict[str, Any]
+    _logger: Any, _method_name: str, event_dict: dict[str, Any]
 ) -> dict[str, Any]:
-    """Apply sampling to reduce log volume."""
+    """Apply sampling to reduce log volume.
+
+    Note: Uses standard random (not secrets) as this is for log sampling,
+    not for cryptographic purposes.
+    """
     import random
 
     config = get_logging_config()
@@ -272,10 +277,9 @@ def sample_logs(
     if level in config.always_log_levels:
         return event_dict
 
-    # Apply sampling
-    if config.sample_rate < 1.0:
-        if random.random() > config.sample_rate:
-            raise structlog.DropEvent
+    # Apply sampling (combined condition to satisfy SIM102)
+    if config.sample_rate < 1.0 and random.random() > config.sample_rate:  # noqa: S311
+        raise structlog.DropEvent
 
     return event_dict
 

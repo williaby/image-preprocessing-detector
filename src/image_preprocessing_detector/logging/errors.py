@@ -471,8 +471,6 @@ class SentryIntegration:
 
             cls._enabled = True
             cls._initialized = True
-            return True
-
         except ImportError:
             # sentry-sdk not installed
             cls._enabled = False
@@ -482,6 +480,8 @@ class SentryIntegration:
             cls._enabled = False
             cls._initialized = True
             return False
+        else:
+            return True
 
     @classmethod
     def capture_error(
