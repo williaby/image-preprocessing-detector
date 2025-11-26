@@ -89,7 +89,9 @@ class TestStudentModelLatency:
     """Benchmark tests for student model inference latency."""
 
     def test_student_cpu_latency_acceptable(
-        self, ml_detector_for_benchmark: "MLIQADetector | None", test_images: list[np.ndarray]
+        self,
+        ml_detector_for_benchmark: "MLIQADetector | None",
+        test_images: list[np.ndarray],
     ) -> None:
         """Test student CPU latency meets acceptable target (<100ms)."""
         if ml_detector_for_benchmark is None:
@@ -126,7 +128,9 @@ class TestStudentModelLatency:
             )
 
     def test_student_inference_consistency(
-        self, ml_detector_for_benchmark: "MLIQADetector | None", test_images: list[np.ndarray]
+        self,
+        ml_detector_for_benchmark: "MLIQADetector | None",
+        test_images: list[np.ndarray],
     ) -> None:
         """Test student inference produces consistent results."""
         if ml_detector_for_benchmark is None:
@@ -152,13 +156,13 @@ class TestClassicalIQALatency:
 
     def test_classical_iqa_latency(self, test_images: list[np.ndarray]) -> None:
         """Test classical IQA detectors meet latency expectations."""
+        import time
+
         from image_preprocessing_detector.detection.iqa_classical import (
             detect_blur,
             detect_contrast,
             detect_skew,
         )
-
-        import time
 
         # Warm-up
         for _ in range(3):
@@ -198,7 +202,9 @@ class TestThroughput:
     """Benchmark tests for processing throughput."""
 
     def test_cpu_throughput_target(
-        self, ml_detector_for_benchmark: "MLIQADetector | None", test_images: list[np.ndarray]
+        self,
+        ml_detector_for_benchmark: "MLIQADetector | None",
+        test_images: list[np.ndarray],
     ) -> None:
         """Test CPU throughput meets target (>2 pages/sec)."""
         if ml_detector_for_benchmark is None:
@@ -232,7 +238,9 @@ class TestMemoryUsage:
     """Benchmark tests for memory usage."""
 
     def test_memory_does_not_leak(
-        self, ml_detector_for_benchmark: "MLIQADetector | None", test_images: list[np.ndarray]
+        self,
+        ml_detector_for_benchmark: "MLIQADetector | None",
+        test_images: list[np.ndarray],
     ) -> None:
         """Test that repeated inference doesn't cause memory leaks."""
         if ml_detector_for_benchmark is None:
@@ -274,7 +282,9 @@ class TestEndToEndPipeline:
     """Benchmark tests for full pipeline latency."""
 
     def test_full_pipeline_cpu_latency(
-        self, ml_detector_for_benchmark: "MLIQADetector | None", test_images: list[np.ndarray]
+        self,
+        ml_detector_for_benchmark: "MLIQADetector | None",
+        test_images: list[np.ndarray],
     ) -> None:
         """Test full pipeline meets CPU latency target (<400ms)."""
         if ml_detector_for_benchmark is None:
@@ -335,17 +345,23 @@ class TestEndToEndPipeline:
             # Corrections
             corrected = img
             if skew_result.angle > 0.5:
-                result = deskew.correct(corrected, skew_result.angle, skew_result.confidence)
+                result = deskew.correct(
+                    corrected, skew_result.angle, skew_result.confidence
+                )
                 if result.applied:
                     corrected = result.corrected_image
 
             if contrast_result.score < 0.4:
-                result = contrast_enhancer.correct(corrected, contrast_result.score, Severity.MEDIUM)
+                result = contrast_enhancer.correct(
+                    corrected, contrast_result.score, Severity.MEDIUM
+                )
                 if result.applied:
                     corrected = result.corrected_image
 
             if blur_result.blur_score < 200:
-                result = sharpener.correct(corrected, blur_result.blur_score, Severity.MEDIUM)
+                result = sharpener.correct(
+                    corrected, blur_result.blur_score, Severity.MEDIUM
+                )
                 if result.applied:
                     corrected = result.corrected_image
 
@@ -364,6 +380,4 @@ class TestEndToEndPipeline:
         if p95_latency > CPU_LATENCY_TARGET_MS:
             import warnings
 
-            warnings.warn(
-                f"P95 latency ({p95_latency:.1f}ms) exceeds target"
-            )
+            warnings.warn(f"P95 latency ({p95_latency:.1f}ms) exceeds target")

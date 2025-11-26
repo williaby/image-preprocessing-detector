@@ -86,7 +86,9 @@ class AugraphyLabel:
     overall_quality: float = 1.0
     augmentation_params: dict[str, Any] = field(default_factory=dict)
     applied_augmentations: list[str] = field(default_factory=list)
-    generation_timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    generation_timestamp: str = field(
+        default_factory=lambda: datetime.utcnow().isoformat()
+    )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization.
@@ -268,7 +270,13 @@ AUGMENTATION_CATEGORIES = {
     "noise": ["NoiseTexturize", "Faxify", "BadPhotoCopy", "DottedLine"],
     "contrast": ["Gamma", "Brightness", "Lighting"],
     "compression": ["Jpeg"],
-    "ink": ["InkBleed", "InkMottling", "Letterpress", "LowInkPeriodicLines", "LowInkLine"],
+    "ink": [
+        "InkBleed",
+        "InkMottling",
+        "Letterpress",
+        "LowInkPeriodicLines",
+        "LowInkLine",
+    ],
     "paper": ["DirtyDrum", "WaterMark", "PaperFactory", "Markup"],
     "bleed": ["BleedThrough"],
 }
@@ -603,7 +611,9 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 3:
-        print("Usage: python augraphy_pipeline.py <input_dir> <output_dir> [preset] [augmentations_per_image]")
+        print(
+            "Usage: python augraphy_pipeline.py <input_dir> <output_dir> [preset] [augmentations_per_image]"
+        )
         print("Presets: light, medium, heavy")
         sys.exit(1)
 

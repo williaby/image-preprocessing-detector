@@ -58,7 +58,9 @@ class DocCreatorLabel:
     overall_quality: float = 1.0
     source_xml: str = ""
     raw_degradations: list[dict[str, Any]] = field(default_factory=list)
-    generation_timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    generation_timestamp: str = field(
+        default_factory=lambda: datetime.utcnow().isoformat()
+    )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization.
@@ -507,7 +509,7 @@ if __name__ == "__main__":
         # Parse directory
         dataset = DocCreatorDataset(path)
         stats = dataset.get_statistics()
-        print(f"\nDataset Statistics:")
+        print("\nDataset Statistics:")
         print(json.dumps(stats, indent=2))
     else:
         print(f"Error: {path} not found")

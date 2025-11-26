@@ -25,7 +25,8 @@ groups:
         annotations:
           summary: "High error rate in image preprocessing"
           description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
-          runbook_url: "https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/high_error_rate.md"
+          runbook_url: >-
+            https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/high_error_rate.md
 
       # Sustained errors alert
       - alert: ImagePrepSustainedErrors
@@ -102,7 +103,8 @@ groups:
         annotations:
           summary: "Document quality score drift detected"
           description: "Median DQS dropped >10% compared to 24h baseline"
-          runbook_url: "https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/quality_drift.md"
+          runbook_url: >-
+            https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/quality_drift.md
 
       # High teacher escalation rate
       - alert: ImagePrepHighEscalationRate
@@ -159,7 +161,8 @@ groups:
         annotations:
           summary: "Modal GPU daily budget exceeded"
           description: "Daily spend: ${{ $value | printf \"%.2f\" }} (limit: $10)"
-          runbook_url: "https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/budget_exceeded.md"
+          runbook_url: >-
+            https://github.com/williaby/image-preprocessing-detector/blob/main/docs/runbooks/budget_exceeded.md
 
       # Monthly budget warning
       - alert: ImagePrepMonthlyBudgetWarning

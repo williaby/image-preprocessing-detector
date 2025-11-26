@@ -712,9 +712,7 @@ class IlluminationNormalizer:
         ).astype(np.uint8)
 
         # Blend with original to preserve some texture
-        blended_gray = cv2.addWeighted(
-            normalized, alpha, gray, 1 - alpha, 0
-        )
+        blended_gray = cv2.addWeighted(normalized, alpha, gray, 1 - alpha, 0)
 
         # Convert back to BGR
         if len(image.shape) == 3:
@@ -851,9 +849,7 @@ class BleedThroughSuppressor:
 
         # Create mask for bleed-through regions
         # Bleed-through tends to be faint, so we look for low-intensity features
-        _, bleed_mask = cv2.threshold(
-            black_hat, 20, 255, cv2.THRESH_BINARY
-        )
+        _, bleed_mask = cv2.threshold(black_hat, 20, 255, cv2.THRESH_BINARY)
 
         # Dilate mask slightly to cover bleed-through edges
         bleed_mask = cv2.dilate(bleed_mask, kernel, iterations=1)
@@ -868,9 +864,7 @@ class BleedThroughSuppressor:
         suppressed_gray[bleed_mask > 0] = background[bleed_mask > 0]
 
         # Blend with original to prevent artifacts
-        blended = cv2.addWeighted(
-            suppressed_gray, alpha, gray, 1 - alpha, 0
-        )
+        blended = cv2.addWeighted(suppressed_gray, alpha, gray, 1 - alpha, 0)
 
         # Convert back to BGR
         if len(image.shape) == 3:
@@ -1132,7 +1126,9 @@ def correct_binarization(
 
     Example:
         >>> img = cv2.imread("faded_document.jpg")
-        >>> result = correct_binarization(img, binarization_score=0.3, severity=Severity.HIGH)
+        >>> result = correct_binarization(
+        ...     img, binarization_score=0.3, severity=Severity.HIGH
+        ... )
         >>> if result.applied:
         ...     cv2.imwrite("binarized.jpg", result.corrected_image)
     """
@@ -1155,7 +1151,9 @@ def normalize_illumination(
 
     Example:
         >>> img = cv2.imread("uneven_lighting.jpg")
-        >>> result = normalize_illumination(img, illumination_score=0.4, severity=Severity.MEDIUM)
+        >>> result = normalize_illumination(
+        ...     img, illumination_score=0.4, severity=Severity.MEDIUM
+        ... )
         >>> if result.applied:
         ...     cv2.imwrite("normalized.jpg", result.corrected_image)
     """
@@ -1178,7 +1176,9 @@ def suppress_bleed_through(
 
     Example:
         >>> img = cv2.imread("bleed_through_scan.jpg")
-        >>> result = suppress_bleed_through(img, bleed_score=0.3, severity=Severity.MEDIUM)
+        >>> result = suppress_bleed_through(
+        ...     img, bleed_score=0.3, severity=Severity.MEDIUM
+        ... )
         >>> if result.applied:
         ...     cv2.imwrite("cleaned.jpg", result.corrected_image)
     """

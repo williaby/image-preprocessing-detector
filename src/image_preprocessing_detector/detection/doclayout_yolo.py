@@ -10,21 +10,27 @@ detection, achieving state-of-the-art performance (70-80% mAP) at real-time spee
 
 Phase 6 Implementation:
 - Uses pre-trained models from HuggingFace (no additional training required)
-- Supports DocStructBench (general-purpose) and D4LA variants
+- Supports DocLayNet (11 classes, recommended), DocStructBench, and D4LA variants
 - Provides COCO-format bounding boxes for detected elements
 - Integrates with layout-lite analyzer for hybrid ML+heuristic detection
+
+Available Models:
+    - doclaynet_pretrained: Best accuracy (mAP 79.7), 11 classes - RECOMMENDED
+    - doclaynet_scratch: 11 classes without pre-training
+    - docstructbench: 10 classes, general-purpose
+    - d4la_pretrained/d4la_scratch: Alternative taxonomy
 
 Reference:
     - Paper: https://arxiv.org/abs/2410.12628
     - GitHub: https://github.com/opendatalab/DocLayout-YOLO
-    - Models: https://huggingface.co/juliozhao/DocLayout-YOLO-DocStructBench
+    - DocLayNet: https://github.com/DS4SD/DocLayNet
 
 Usage:
     >>> from image_preprocessing_detector.detection.doclayout_yolo import (
     ...     DocLayoutYOLODetector,
     ...     detect_layout,
     ... )
-    >>> detector = DocLayoutYOLODetector()
+    >>> detector = DocLayoutYOLODetector()  # Uses doclaynet_pretrained by default
     >>> result = detector.detect(image)
     >>> for element in result.elements:
     ...     print(f"{element.class_name}: {element.confidence:.2f}")
@@ -54,26 +60,52 @@ logger = get_logger(__name__)
 
 
 class DocLayoutClass(str, Enum):
-    """Document layout element classes from DocStructBench.
+    """Unified document layout element classes.
 
-    These are the 10 classes detected by the DocStructBench pre-trained model.
-    Note: DocLayNet has 11 classes but DocStructBench uses 10.
+    Supports both DocLayNet (11 classes) and DocStructBench (10 classes) taxonomies.
+    DocLayNet is recommended for full coverage with highest accuracy (mAP 79.7).
+
+    DocLayNet Classes (11):
+        Caption, Footnote, Formula, List-item, Page-footer, Page-header,
+        Picture, Section-header, Table, Text, Title
+
+    DocStructBench Classes (10):
+        title, plain text, abandon, figure, figure_caption, table,
+        table_caption, table_footnote, isolate_formula, formula_caption
     """
 
-    TITLE = "title"
-    PLAIN_TEXT = "plain text"
-    ABANDONED_TEXT = "abandon"  # Text marked for removal/ignore
-    FIGURE = "figure"
-    FIGURE_CAPTION = "figure_caption"
-    TABLE = "table"
-    TABLE_CAPTION = "table_caption"
-    TABLE_FOOTNOTE = "table_footnote"
-    ISOLATE_FORMULA = "isolate_formula"
-    FORMULA_CAPTION = "formula_caption"
+    # -------------------------------------------------------------------------
+    # DocLayNet classes (11) - IBM's standard document layout taxonomy
+    # -------------------------------------------------------------------------
+    CAPTION = "Caption"
+    FOOTNOTE = "Footnote"
+    FORMULA = "Formula"
+    LIST_ITEM = "List-item"
+    PAGE_FOOTER = "Page-footer"
+    PAGE_HEADER = "Page-header"
+    PICTURE = "Picture"
+    SECTION_HEADER = "Section-header"
+    TABLE = "Table"
+    TEXT = "Text"
+    TITLE = "Title"
+
+    # -------------------------------------------------------------------------
+    # DocStructBench additional/alternative classes (mapped to DocLayNet where possible)
+    # -------------------------------------------------------------------------
+    PLAIN_TEXT = "plain text"  # Maps to TEXT
+    ABANDONED_TEXT = "abandon"  # No DocLayNet equivalent
+    FIGURE = "figure"  # Maps to PICTURE
+    FIGURE_CAPTION = "figure_caption"  # Maps to CAPTION
+    TABLE_CAPTION = "table_caption"  # Maps to CAPTION
+    TABLE_FOOTNOTE = "table_footnote"  # Maps to FOOTNOTE
+    ISOLATE_FORMULA = "isolate_formula"  # Maps to FORMULA
+    FORMULA_CAPTION = "formula_caption"  # Maps to CAPTION
 
     @classmethod
     def from_model_output(cls, class_name: str) -> DocLayoutClass | None:
         """Convert model output class name to enum.
+
+        Handles both DocLayNet and DocStructBench class names.
 
         Args:
             class_name: Class name from model prediction
@@ -84,28 +116,81 @@ class DocLayoutClass(str, Enum):
         # Normalize: lowercase and handle variations
         normalized = class_name.lower().strip()
 
-        # Handle common variations
+        # Comprehensive mapping for both schemas
         mappings = {
+            # DocLayNet classes (primary)
+            "caption": cls.CAPTION,
+            "footnote": cls.FOOTNOTE,
+            "formula": cls.FORMULA,
+            "list-item": cls.LIST_ITEM,
+            "list_item": cls.LIST_ITEM,
+            "listitem": cls.LIST_ITEM,
+            "page-footer": cls.PAGE_FOOTER,
+            "page_footer": cls.PAGE_FOOTER,
+            "pagefooter": cls.PAGE_FOOTER,
+            "page-header": cls.PAGE_HEADER,
+            "page_header": cls.PAGE_HEADER,
+            "pageheader": cls.PAGE_HEADER,
+            "picture": cls.PICTURE,
+            "section-header": cls.SECTION_HEADER,
+            "section_header": cls.SECTION_HEADER,
+            "sectionheader": cls.SECTION_HEADER,
+            "table": cls.TABLE,
+            "text": cls.TEXT,
             "title": cls.TITLE,
+            # DocStructBench classes
             "plain text": cls.PLAIN_TEXT,
-            "text": cls.PLAIN_TEXT,
+            "plain_text": cls.PLAIN_TEXT,
+            "plaintext": cls.PLAIN_TEXT,
             "abandon": cls.ABANDONED_TEXT,
             "abandoned": cls.ABANDONED_TEXT,
             "abandoned_text": cls.ABANDONED_TEXT,
             "figure": cls.FIGURE,
-            "picture": cls.FIGURE,
             "image": cls.FIGURE,
             "figure_caption": cls.FIGURE_CAPTION,
-            "table": cls.TABLE,
             "table_caption": cls.TABLE_CAPTION,
             "table_footnote": cls.TABLE_FOOTNOTE,
             "isolate_formula": cls.ISOLATE_FORMULA,
-            "formula": cls.ISOLATE_FORMULA,
             "isolated_formula": cls.ISOLATE_FORMULA,
             "formula_caption": cls.FORMULA_CAPTION,
         }
 
         return mappings.get(normalized)
+
+    def to_doclaynet(self) -> DocLayoutClass:
+        """Map DocStructBench class to equivalent DocLayNet class.
+
+        Returns:
+            DocLayNet-equivalent class (may return self if already DocLayNet)
+        """
+        mapping = {
+            self.PLAIN_TEXT: self.TEXT,
+            self.FIGURE: self.PICTURE,
+            self.FIGURE_CAPTION: self.CAPTION,
+            self.TABLE_CAPTION: self.CAPTION,
+            self.TABLE_FOOTNOTE: self.FOOTNOTE,
+            self.ISOLATE_FORMULA: self.FORMULA,
+            self.FORMULA_CAPTION: self.CAPTION,
+        }
+        return mapping.get(self, self)
+
+    @property
+    def is_doclaynet_native(self) -> bool:
+        """Check if this class is native to DocLayNet schema."""
+        doclaynet_classes = {
+            self.CAPTION,
+            self.FOOTNOTE,
+            self.FORMULA,
+            self.LIST_ITEM,
+            self.PAGE_FOOTER,
+            self.PAGE_HEADER,
+            self.PICTURE,
+            self.SECTION_HEADER,
+            self.TABLE,
+            self.TEXT,
+            self.TITLE,
+        }
+        return self in doclaynet_classes
 
 
 @dataclass
@@ -200,9 +285,10 @@ class LayoutDetectionResult:
 
     @property
     def has_figures(self) -> bool:
-        """Check if any figures were detected."""
+        """Check if any figures/pictures were detected."""
+        figure_classes = {DocLayoutClass.FIGURE, DocLayoutClass.PICTURE}
         return any(
-            e.class_enum == DocLayoutClass.FIGURE
+            e.class_enum in figure_classes
             or e.class_name.lower() in ("figure", "picture", "image")
             for e in self.elements
         )
@@ -210,10 +296,32 @@ class LayoutDetectionResult:
     @property
     def has_formulas(self) -> bool:
         """Check if any formulas were detected."""
+        formula_classes = {
+            DocLayoutClass.FORMULA,
+            DocLayoutClass.ISOLATE_FORMULA,
+            DocLayoutClass.FORMULA_CAPTION,
+        }
         return any(
-            e.class_enum
-            in (DocLayoutClass.ISOLATE_FORMULA, DocLayoutClass.FORMULA_CAPTION)
-            or "formula" in e.class_name.lower()
+            e.class_enum in formula_classes or "formula" in e.class_name.lower()
+            for e in self.elements
+        )
+
+    @property
+    def has_list_items(self) -> bool:
+        """Check if any list items were detected (DocLayNet only)."""
+        return any(
+            e.class_enum == DocLayoutClass.LIST_ITEM
+            or e.class_name.lower() in ("list-item", "list_item", "listitem")
+            for e in self.elements
+        )
+
+    @property
+    def has_headers_footers(self) -> bool:
+        """Check if any page headers/footers were detected (DocLayNet only)."""
+        header_footer_classes = {DocLayoutClass.PAGE_HEADER, DocLayoutClass.PAGE_FOOTER}
+        return any(
+            e.class_enum in header_footer_classes
+            or e.class_name.lower() in ("page-header", "page-footer")
             for e in self.elements
         )
 
@@ -243,6 +351,8 @@ class LayoutDetectionResult:
             "has_tables": self.has_tables,
             "has_figures": self.has_figures,
             "has_formulas": self.has_formulas,
+            "has_list_items": self.has_list_items,
+            "has_headers_footers": self.has_headers_footers,
             "elements": [
                 {
                     "class_id": e.class_id,
@@ -260,7 +370,18 @@ class DocLayoutYOLODetector:
     """DocLayout-YOLO detector for document layout analysis.
 
     This detector uses pre-trained DocLayout-YOLO models to detect document
-    elements like titles, text blocks, tables, figures, and formulas.
+    elements like titles, text blocks, tables, figures, formulas, and more.
+
+    Available Models:
+        - doclaynet_pretrained: 11 classes, mAP 79.7 - RECOMMENDED
+        - doclaynet_scratch: 11 classes, mAP 77.7
+        - docstructbench: 10 classes, general-purpose
+        - d4la_pretrained: 10 classes, mAP 70.3
+        - d4la_scratch: 10 classes, mAP 69.8
+
+    DocLayNet Classes (11):
+        Caption, Footnote, Formula, List-item, Page-footer, Page-header,
+        Picture, Section-header, Table, Text, Title
 
     Features:
         - Lazy model loading (only loads when first detection is requested)
@@ -269,7 +390,7 @@ class DocLayoutYOLODetector:
         - ONNX export support for production deployment
 
     Example:
-        >>> detector = DocLayoutYOLODetector()
+        >>> detector = DocLayoutYOLODetector()  # Uses doclaynet_pretrained
         >>> result = detector.detect(image)
         >>> print(
         ...     f"Found {result.num_elements} elements in {result.inference_time_ms:.1f}ms"
@@ -289,7 +410,12 @@ class DocLayoutYOLODetector:
         """Initialize the DocLayout-YOLO detector.
 
         Args:
-            model_key: Model key from config (e.g., "docstructbench", "d4la_pretrained").
+            model_key: Model key from config. Options:
+                      - "doclaynet_pretrained" (default, recommended): 11 classes, mAP 79.7
+                      - "doclaynet_scratch": 11 classes, mAP 77.7
+                      - "docstructbench": 10 classes, general-purpose
+                      - "d4la_pretrained": 10 classes, mAP 70.3
+                      - "d4la_scratch": 10 classes, mAP 69.8
                       If None, uses the active model from config.
             device: Device to run inference on ("cpu", "cuda", "cuda:0", etc.).
                    If None, automatically selects based on availability.
@@ -637,7 +763,7 @@ def is_doclayout_yolo_available() -> bool:
         True if doclayout-yolo can be imported, False otherwise
     """
     try:
-        from doclayout_yolo import YOLOv10  # noqa: F401
+        from doclayout_yolo import YOLOv10  # noqa: F401  # pyright: ignore[reportUnusedImport]
     except ImportError:
         return False
     else:

@@ -13,7 +13,6 @@ populating quality_issues for elements that require separate assessment.
 
 from typing import TYPE_CHECKING
 
-import cv2
 import numpy as np
 
 from image_preprocessing_detector.detection.iqa_classical import (
@@ -35,7 +34,6 @@ from image_preprocessing_detector.utils import get_logger
 if TYPE_CHECKING:
     from image_preprocessing_detector.detection.iqa_ml import (
         MLIQADetector,
-        MLIQAScores,
     )
 
 logger = get_logger(__name__)
@@ -63,7 +61,9 @@ def extract_element_region(
 
     # Validate bounds
     if x < 0 or y < 0 or w <= 0 or h <= 0:
-        logger.warning("Negative bbox dimensions", element_id=element.id, bbox=element.bbox)
+        logger.warning(
+            "Negative bbox dimensions", element_id=element.id, bbox=element.bbox
+        )
         return None
 
     # Clip to page bounds
@@ -188,14 +188,30 @@ def assess_element_quality_ml(
         score_mappings = [
             (scores.blur_score, IssueType.BLUR, ActionType.SHARPEN, "ML blur"),
             (scores.noise_score, IssueType.NOISE, ActionType.DENOISE, "ML noise"),
-            (scores.contrast_score, IssueType.LOW_CONTRAST, ActionType.ENHANCE_CONTRAST, "ML contrast"),
-            (scores.compression_score, IssueType.COMPRESSION_ARTIFACTS, None, "ML compression"),
+            (
+                scores.contrast_score,
+                IssueType.LOW_CONTRAST,
+                ActionType.ENHANCE_CONTRAST,
+                "ML contrast",
+            ),
+            (
+                scores.compression_score,
+                IssueType.COMPRESSION_ARTIFACTS,
+                None,
+                "ML compression",
+            ),
         ]
 
         for score, issue_type, action, name in score_mappings:
             # ML scores: 0=bad, 1=good; threshold at 0.5
             if score < 0.5:
-                severity = Severity.CRITICAL if score < 0.3 else Severity.HIGH if score < 0.4 else Severity.MEDIUM
+                severity = (
+                    Severity.CRITICAL
+                    if score < 0.3
+                    else Severity.HIGH
+                    if score < 0.4
+                    else Severity.MEDIUM
+                )
                 issues.append(
                     DetectedIssue(
                         issue_type=issue_type,

@@ -164,7 +164,7 @@ def pull_from_gcs(dataset_name: str) -> bool:
     print()
 
     try:
-        # nosemgrep: dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
+        # nosemgrep: dangerous-subprocess-use-tainted-env-args
         # Security: gcs_path and nfs_path come from hardcoded DATASETS dictionary,
         # not from user input. Dataset names are validated via argparse choices.
         subprocess.run(cmd, env=env, check=True)  # nosec B603
@@ -258,7 +258,7 @@ def sync_to_gcs(dataset_name: str) -> bool:
     print()
 
     try:
-        # nosemgrep: dangerous-subprocess-use-tainted-env-args  # noqa: ERA001
+        # nosemgrep: dangerous-subprocess-use-tainted-env-args
         # Security: gcs_path and nfs_path come from hardcoded DATASETS dictionary,
         # not from user input. Dataset names are validated via argparse choices.
         subprocess.run(cmd, env=env, check=True)  # nosec B603

@@ -257,14 +257,30 @@ def detect_perspective(image: np.ndarray) -> PerspectiveResult:
 
     # Calculate perspective distortion
     # For a perfect rectangle: top edge = bottom edge, left edge = right edge
-    top_edge = np.sqrt((corners[1][0] - corners[0][0]) ** 2 + (corners[1][1] - corners[0][1]) ** 2)
-    bottom_edge = np.sqrt((corners[2][0] - corners[3][0]) ** 2 + (corners[2][1] - corners[3][1]) ** 2)
-    left_edge = np.sqrt((corners[3][0] - corners[0][0]) ** 2 + (corners[3][1] - corners[0][1]) ** 2)
-    right_edge = np.sqrt((corners[2][0] - corners[1][0]) ** 2 + (corners[2][1] - corners[1][1]) ** 2)
+    top_edge = np.sqrt(
+        (corners[1][0] - corners[0][0]) ** 2 + (corners[1][1] - corners[0][1]) ** 2
+    )
+    bottom_edge = np.sqrt(
+        (corners[2][0] - corners[3][0]) ** 2 + (corners[2][1] - corners[3][1]) ** 2
+    )
+    left_edge = np.sqrt(
+        (corners[3][0] - corners[0][0]) ** 2 + (corners[3][1] - corners[0][1]) ** 2
+    )
+    right_edge = np.sqrt(
+        (corners[2][0] - corners[1][0]) ** 2 + (corners[2][1] - corners[1][1]) ** 2
+    )
 
     # Calculate distortion ratios
-    h_ratio = min(top_edge, bottom_edge) / max(top_edge, bottom_edge) if max(top_edge, bottom_edge) > 0 else 1
-    v_ratio = min(left_edge, right_edge) / max(left_edge, right_edge) if max(left_edge, right_edge) > 0 else 1
+    h_ratio = (
+        min(top_edge, bottom_edge) / max(top_edge, bottom_edge)
+        if max(top_edge, bottom_edge) > 0
+        else 1
+    )
+    v_ratio = (
+        min(left_edge, right_edge) / max(left_edge, right_edge)
+        if max(left_edge, right_edge) > 0
+        else 1
+    )
 
     distortion_score = 1.0 - (h_ratio * v_ratio)
 
@@ -349,7 +365,9 @@ def detect_formulas(image: np.ndarray) -> FormulaResult:
     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
     # Find connected components (potential characters/symbols)
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(
+        binary, connectivity=8
+    )
 
     if num_labels < 2:  # Just background
         return FormulaResult(
@@ -366,12 +384,14 @@ def detect_formulas(image: np.ndarray) -> FormulaResult:
         x, y, comp_w, comp_h, area = stats[i]
         # Reasonable character size (adjust based on DPI)
         if 5 < comp_w < w // 3 and 5 < comp_h < h // 3 and area > 20:
-            char_components.append({
-                "bbox": (x, y, comp_w, comp_h),
-                "area": area,
-                "centroid": centroids[i],
-                "aspect_ratio": comp_w / comp_h if comp_h > 0 else 0,
-            })
+            char_components.append(
+                {
+                    "bbox": (x, y, comp_w, comp_h),
+                    "area": area,
+                    "centroid": centroids[i],
+                    "aspect_ratio": comp_w / comp_h if comp_h > 0 else 0,
+                }
+            )
 
     if len(char_components) < 5:
         return FormulaResult(
@@ -414,7 +434,11 @@ def detect_formulas(image: np.ndarray) -> FormulaResult:
         density_grid[gy, gx] += 1
 
     # Find high-density regions
-    threshold = np.percentile(density_grid[density_grid > 0], 75) if np.any(density_grid > 0) else 1
+    threshold = (
+        np.percentile(density_grid[density_grid > 0], 75)
+        if np.any(density_grid > 0)
+        else 1
+    )
     high_density_cells = np.argwhere(density_grid >= threshold)
 
     for gy, gx in high_density_cells:
@@ -497,7 +521,7 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
         x, y, cont_w, cont_h = cv2.boundingRect(contour)
         aspect = cont_w / cont_h if cont_h > 0 else 0
         perimeter = cv2.arcLength(contour, True)
-        circularity = (4 * np.pi * area) / (perimeter ** 2) if perimeter > 0 else 0
+        circularity = (4 * np.pi * area) / (perimeter**2) if perimeter > 0 else 0
 
         # Signature heuristics:
         # - Elongated (wide aspect ratio)
@@ -589,7 +613,9 @@ def detect_language_script(image: np.ndarray) -> LanguageResult:
     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
     # Find connected components
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(
+        binary, connectivity=8
+    )
 
     if num_labels < 10:
         return LanguageResult(
@@ -604,11 +630,13 @@ def detect_language_script(image: np.ndarray) -> LanguageResult:
     for i in range(1, num_labels):
         x, y, comp_w, comp_h, area = stats[i]
         if area > 20 and comp_w > 3 and comp_h > 3:
-            components.append({
-                "aspect": comp_w / comp_h,
-                "area": area,
-                "density": area / (comp_w * comp_h) if comp_w * comp_h > 0 else 0,
-            })
+            components.append(
+                {
+                    "aspect": comp_w / comp_h,
+                    "area": area,
+                    "density": area / (comp_w * comp_h) if comp_w * comp_h > 0 else 0,
+                }
+            )
 
     if not components:
         return LanguageResult(
@@ -646,7 +674,9 @@ def detect_language_script(image: np.ndarray) -> LanguageResult:
     if not scripts_detected:
         scripts_detected = [ScriptType.UNKNOWN]
 
-    primary_script = scripts_detected[0] if len(scripts_detected) == 1 else ScriptType.MIXED
+    primary_script = (
+        scripts_detected[0] if len(scripts_detected) == 1 else ScriptType.MIXED
+    )
     is_rtl = ScriptType.ARABIC in scripts_detected
 
     logger.debug(

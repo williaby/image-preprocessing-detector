@@ -16,10 +16,9 @@ Requirements:
 """
 
 import os
-import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -99,9 +98,10 @@ class TestDeviceDetection:
         )
 
         # Mock no GPU scenario
-        with patch(
-            "image_preprocessing_detector.utils.device_probe.torch", None
-        ), patch("image_preprocessing_detector.utils.device_probe.ort", None):
+        with (
+            patch("image_preprocessing_detector.utils.device_probe.torch", None),
+            patch("image_preprocessing_detector.utils.device_probe.ort", None),
+        ):
             clear_device_cache()
             device = get_recommended_device(prefer_gpu=True, allow_cpu_fallback=True)
             assert device == "cpu"
@@ -114,13 +114,13 @@ class TestDeviceDetection:
         )
 
         # Mock no resources scenario (this should be rare in practice)
-        with patch(
-            "image_preprocessing_detector.utils.device_probe.torch", None
-        ), patch(
-            "image_preprocessing_detector.utils.device_probe.ort", None
-        ), patch(
-            "image_preprocessing_detector.utils.device_probe.multiprocessing.cpu_count",
-            return_value=0,
+        with (
+            patch("image_preprocessing_detector.utils.device_probe.torch", None),
+            patch("image_preprocessing_detector.utils.device_probe.ort", None),
+            patch(
+                "image_preprocessing_detector.utils.device_probe.multiprocessing.cpu_count",
+                return_value=0,
+            ),
         ):
             clear_device_cache()
             with pytest.raises(RuntimeError, match="No compute resources available"):
@@ -421,9 +421,10 @@ class TestDevicePriorityPipeline:
         assert student_scores is not None
         assert student_scores.inference_time_ms > 0
         # Device should be reported correctly
-        assert student_scores.device in [
-            ml_detector.device
-        ] or student_scores.device is not None
+        assert (
+            student_scores.device in [ml_detector.device]
+            or student_scores.device is not None
+        )
 
     def test_pipeline_teacher_escalation_maintains_device(
         self, onnx_models_available: bool, onnxruntime_available: bool

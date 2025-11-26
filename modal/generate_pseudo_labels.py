@@ -102,7 +102,9 @@ class ContinuousQualityLabel:
     label_source: str = "mllm_pseudo"
     model_name: str = "qwen3-vl-8b-instruct"
     label_confidence: float = 0.85
-    generation_timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    generation_timestamp: str = field(
+        default_factory=lambda: datetime.utcnow().isoformat()
+    )
 
     # Raw model response for debugging
     raw_response: str = ""
@@ -268,7 +270,9 @@ class Qwen3VLLabeler:
         # Check GPU availability
         if torch.cuda.is_available():
             print(f"GPU: {torch.cuda.get_device_name(0)}")
-            print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+            print(
+                f"VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB"
+            )
         else:
             print("WARNING: No GPU available, inference will be slow")
 
@@ -506,9 +510,7 @@ def process_gcs_dataset(
     # List images
     image_extensions = {".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp"}
     blobs = list(bucket.list_blobs(prefix=prefix))
-    image_blobs = [
-        b for b in blobs if Path(b.name).suffix.lower() in image_extensions
-    ]
+    image_blobs = [b for b in blobs if Path(b.name).suffix.lower() in image_extensions]
 
     if max_images:
         image_blobs = image_blobs[:max_images]
@@ -526,9 +528,7 @@ def process_gcs_dataset(
         print(f"Found {len(processed_ids)} already processed images")
 
     # Filter out processed images
-    pending_blobs = [
-        b for b in image_blobs if Path(b.name).stem not in processed_ids
-    ]
+    pending_blobs = [b for b in image_blobs if Path(b.name).stem not in processed_ids]
     print(f"Processing {len(pending_blobs)} pending images")
 
     if not pending_blobs:
@@ -602,7 +602,7 @@ def process_gcs_dataset(
         content_type="application/json",
     )
 
-    print(f"\nProcessing complete!")
+    print("\nProcessing complete!")
     print(f"  Total: {stats['total']}")
     print(f"  Success: {stats['success']}")
     print(f"  Errors: {stats['errors']}")
@@ -646,9 +646,7 @@ def process_local_dataset(
         print(f"Found {len(processed_ids)} already processed images")
 
     # Filter out processed images
-    pending_paths = [
-        p for p in image_paths if Path(p).stem not in processed_ids
-    ]
+    pending_paths = [p for p in image_paths if Path(p).stem not in processed_ids]
     print(f"Processing {len(pending_paths)} pending images")
 
     if not pending_paths:
@@ -710,7 +708,7 @@ def process_local_dataset(
 
     output_volume.commit()
 
-    print(f"\nProcessing complete!")
+    print("\nProcessing complete!")
     print(f"  Total: {stats['total']}")
     print(f"  Success: {stats['success']}")
     print(f"  Errors: {stats['errors']}")
@@ -750,7 +748,9 @@ def process_image_chunk(
         if gcp_sa_key:
             import tempfile
 
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
                 f.write(base64.b64decode(gcp_sa_key).decode())
                 credentials_path = f.name
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
@@ -836,9 +836,7 @@ def process_dataset_parallel(
     # List images
     image_extensions = {".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp"}
     blobs = list(bucket.list_blobs(prefix=prefix))
-    image_blobs = [
-        b for b in blobs if Path(b.name).suffix.lower() in image_extensions
-    ]
+    image_blobs = [b for b in blobs if Path(b.name).suffix.lower() in image_extensions]
 
     if max_images:
         image_blobs = image_blobs[:max_images]
@@ -849,8 +847,7 @@ def process_dataset_parallel(
     # Create chunks for parallel processing
     blob_names = [(bucket_name, b.name) for b in image_blobs]
     chunks = [
-        blob_names[i : i + chunk_size]
-        for i in range(0, len(blob_names), chunk_size)
+        blob_names[i : i + chunk_size] for i in range(0, len(blob_names), chunk_size)
     ]
 
     print(f"Split into {len(chunks)} chunks of ~{chunk_size} images each")
@@ -883,7 +880,7 @@ def process_dataset_parallel(
         "chunk_size": chunk_size,
     }
 
-    print(f"\nParallel processing complete!")
+    print("\nParallel processing complete!")
     print(f"  Total: {stats['total']}")
     print(f"  Success: {stats['success']}")
     print(f"  Errors: {stats['errors']}")

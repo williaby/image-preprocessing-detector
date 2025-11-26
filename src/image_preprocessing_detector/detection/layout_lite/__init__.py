@@ -106,10 +106,12 @@ __all__ = [
 
 # Add DocLayout-YOLO integration exports if available
 if _has_doclayout_integration:
-    __all__.extend([
-        # DocLayout-YOLO integration (Phase 6)
-        "DocLayoutIntegration",
-        "HybridLayoutAnalyzer",
-        "LayoutAnalysisMetrics",
-        "analyze_layout_hybrid",
-    ])
+    __all__.extend(
+        [
+            # DocLayout-YOLO integration (Phase 6)
+            "DocLayoutIntegration",
+            "HybridLayoutAnalyzer",
+            "LayoutAnalysisMetrics",
+            "analyze_layout_hybrid",
+        ]
+    )

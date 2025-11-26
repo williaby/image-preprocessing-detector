@@ -21,7 +21,6 @@ from typing import Any
 import numpy as np
 import pytest
 
-
 # ============================================================================
 # Fixtures
 # ============================================================================
@@ -77,11 +76,36 @@ def sample_weak_supervision_label() -> dict[str, Any]:
     return {
         "image_path": "test_image.png",
         "labels": {
-            "blur": {"value": 1, "confidence": 0.85, "source": "laplacian", "severity": 0.45},
-            "noise": {"value": 0, "confidence": 0.90, "source": "brisque", "severity": 0.15},
-            "skew": {"value": 0, "confidence": 0.88, "source": "hough_transform", "severity": 0.05},
-            "illumination": {"value": 1, "confidence": 0.75, "source": "rms_contrast", "severity": 0.40},
-            "artifacts": {"value": 0, "confidence": 0.85, "source": "blockiness", "severity": 0.10},
+            "blur": {
+                "value": 1,
+                "confidence": 0.85,
+                "source": "laplacian",
+                "severity": 0.45,
+            },
+            "noise": {
+                "value": 0,
+                "confidence": 0.90,
+                "source": "brisque",
+                "severity": 0.15,
+            },
+            "skew": {
+                "value": 0,
+                "confidence": 0.88,
+                "source": "hough_transform",
+                "severity": 0.05,
+            },
+            "illumination": {
+                "value": 1,
+                "confidence": 0.75,
+                "source": "rms_contrast",
+                "severity": 0.40,
+            },
+            "artifacts": {
+                "value": 0,
+                "confidence": 0.85,
+                "source": "blockiness",
+                "severity": 0.10,
+            },
         },
         "quality_scores": {
             "laplacian_variance": 85.5,
@@ -187,8 +211,9 @@ class TestContinuousQualityLabel:
 
     def test_severity_validation(self):
         """Test that severity values are validated to [0, 1]."""
-        from data.continuous_labels import ContinuousQualityLabel
         from pydantic import ValidationError
+
+        from data.continuous_labels import ContinuousQualityLabel
 
         # Values > 1.0 should fail
         with pytest.raises(ValidationError):
@@ -363,10 +388,12 @@ class TestContinuousIQADataset:
                 with open(label_path, "w") as f:
                     json.dump(label, f)
 
-                samples.append({
-                    "image_path": str(image_path),
-                    "label_path": str(label_path),
-                })
+                samples.append(
+                    {
+                        "image_path": str(image_path),
+                        "label_path": str(label_path),
+                    }
+                )
 
             # Create split files
             for split_name, indices in [
@@ -376,10 +403,13 @@ class TestContinuousIQADataset:
             ]:
                 split_file = tmpdir / f"{split_name}_split.json"
                 with open(split_file, "w") as f:
-                    json.dump({
-                        "samples": [samples[i] for i in indices],
-                        "split": split_name,
-                    }, f)
+                    json.dump(
+                        {
+                            "samples": [samples[i] for i in indices],
+                            "split": split_name,
+                        },
+                        f,
+                    )
 
             yield tmpdir
 

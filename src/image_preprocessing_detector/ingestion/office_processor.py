@@ -52,7 +52,17 @@ OFFICE_MIME_TYPES: dict[str, DocumentType] = {
 }
 
 # Supported image formats within Office documents
-SUPPORTED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".tif", ".emf", ".wmf"}
+SUPPORTED_IMAGE_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".bmp",
+    ".tiff",
+    ".tif",
+    ".emf",
+    ".wmf",
+}
 
 
 @dataclass
@@ -120,7 +130,9 @@ class OfficeProcessor:
             use_docling: Whether to try using Docling for extraction (falls back if unavailable)
         """
         self.use_docling = use_docling
-        self._docling_available = self._check_docling_available() if use_docling else False
+        self._docling_available = (
+            self._check_docling_available() if use_docling else False
+        )
 
         logger.info(
             "Office processor initialized",
@@ -184,19 +196,27 @@ class OfficeProcessor:
         if doc_type is None:
             raise ValueError(f"Unsupported file type: {path.suffix}")
 
-        logger.info("Processing office document", file_path=str(path), document_type=doc_type.value)
+        logger.info(
+            "Processing office document",
+            file_path=str(path),
+            document_type=doc_type.value,
+        )
 
         # Try Docling first if available
         if self._docling_available:
             try:
                 return self._extract_with_docling(path, doc_type)
             except Exception as e:
-                logger.warning(f"Docling extraction failed, falling back to native: {e}")
+                logger.warning(
+                    f"Docling extraction failed, falling back to native: {e}"
+                )
 
         # Fallback to native extraction (ZIP-based for OOXML formats)
         return self._extract_from_zip(path, doc_type)
 
-    def _extract_with_docling(self, file_path: Path, doc_type: DocumentType) -> OfficeDocumentInfo:
+    def _extract_with_docling(
+        self, file_path: Path, doc_type: DocumentType
+    ) -> OfficeDocumentInfo:
         """Extract images using Docling library.
 
         Args:
@@ -237,7 +257,10 @@ class OfficeProcessor:
                                         image_index=idx,
                                         source_location=f"page_{getattr(picture, 'page', 0)}",
                                         original_filename=f"image_{idx}",
-                                        original_size=(np_image.shape[1], np_image.shape[0]),
+                                        original_size=(
+                                            np_image.shape[1],
+                                            np_image.shape[0],
+                                        ),
                                         format="unknown",
                                         metadata={"source": "docling"},
                                     )
@@ -264,7 +287,9 @@ class OfficeProcessor:
             logger.exception("Docling extraction failed")
             raise
 
-    def _extract_from_zip(self, file_path: Path, doc_type: DocumentType) -> OfficeDocumentInfo:
+    def _extract_from_zip(
+        self, file_path: Path, doc_type: DocumentType
+    ) -> OfficeDocumentInfo:
         """Extract images from OOXML documents using ZIP extraction.
 
         OOXML formats (.docx, .xlsx, .pptx) are ZIP archives containing
@@ -298,7 +323,9 @@ class OfficeProcessor:
 
                 for file_name in file_list:
                     # Check if file is in media directory
-                    if not any(file_name.startswith(prefix) for prefix in media_prefixes):
+                    if not any(
+                        file_name.startswith(prefix) for prefix in media_prefixes
+                    ):
                         continue
 
                     # Check if file is an image
@@ -316,7 +343,9 @@ class OfficeProcessor:
                         np_image = np_image[:, :, ::-1]  # RGB to BGR
 
                         # Determine source location from path
-                        source_location = self._determine_source_location(file_name, doc_type)
+                        source_location = self._determine_source_location(
+                            file_name, doc_type
+                        )
 
                         images.append(
                             EmbeddedImage(
@@ -358,7 +387,9 @@ class OfficeProcessor:
             errors=errors,
         )
 
-    def _determine_source_location(self, archive_path: str, doc_type: DocumentType) -> str:
+    def _determine_source_location(
+        self, archive_path: str, doc_type: DocumentType
+    ) -> str:
         """Determine the source location of an image within the document.
 
         Args:

@@ -52,14 +52,30 @@ class IssueSeverity(str, Enum):
 
 
 class ElementCategory(str, Enum):
-    """Categories of document elements that can be detected."""
+    """Categories of document elements that can be detected.
 
-    TABLE = "table"
-    IMAGE = "image"
-    HANDWRITING = "handwriting"
+    Includes all 11 DocLayNet classes plus additional project-specific categories.
+    Reference: https://github.com/DS4SD/DocLayNet
+    """
+
+    # DocLayNet standard classes (11 classes)
+    CAPTION = "caption"
+    FOOTNOTE = "footnote"
     FORMULA = "formula"
-    TEXT_BLOCK = "text_block"
-    FIGURE = "figure"
+    LIST_ITEM = "list_item"
+    PAGE_FOOTER = "page_footer"
+    PAGE_HEADER = "page_header"
+    PICTURE = "picture"
+    SECTION_HEADER = "section_header"
+    TABLE = "table"
+    TEXT = "text"
+    TITLE = "title"
+
+    # Additional project-specific categories
+    IMAGE = "image"  # Generic image element (legacy compatibility)
+    HANDWRITING = "handwriting"  # Handwritten content detection
+    TEXT_BLOCK = "text_block"  # Legacy text block (maps to TEXT)
+    FIGURE = "figure"  # DocStructBench figure class (maps to PICTURE)
 
 
 class PDFType(str, Enum):
@@ -217,7 +233,9 @@ class OrientationDetection(BaseModel):
     method_votes: dict[str, int] | None = Field(
         default=None,
         description="Votes from each detection method (for ensemble)",
-        examples=[{"text_line_analysis": 90, "edge_histogram": 90, "component_ratio": 90}],
+        examples=[
+            {"text_line_analysis": 90, "edge_histogram": 90, "component_ratio": 90}
+        ],
     )
 
 
@@ -268,6 +286,9 @@ class PageLayoutSummary(BaseModel):
 
     NOTE: This is NOT full semantic layout detection (which is Project B's responsibility).
     This provides only coarse page attributes for routing decisions.
+
+    DocLayNet classes detected: Caption, Footnote, Formula, List-item, Page-footer,
+    Page-header, Picture, Section-header, Table, Text, Title
     """
 
     page_number: int = Field(..., ge=1, description="1-based page number")
@@ -279,6 +300,13 @@ class PageLayoutSummary(BaseModel):
     )
     has_handwriting: bool = Field(
         default=False, description="Page contains handwritten content"
+    )
+    has_list_items: bool = Field(
+        default=False, description="Page contains list items (DocLayNet List-item class)"
+    )
+    has_headers_footers: bool = Field(
+        default=False,
+        description="Page contains headers or footers (DocLayNet Page-header/Page-footer)",
     )
     fuzzy_scan: bool = Field(
         default=False, description="Page is a low-quality fuzzy scan"

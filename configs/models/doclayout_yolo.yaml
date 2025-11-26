@@ -15,12 +15,47 @@
 # Active Model Selection
 # -----------------------------------------------------------------------------
 # Change this ONE value to switch models across all training pipelines
-active_model: docstructbench  # Options: docstructbench, d4la_scratch, d4la_pretrained
+# Options: doclaynet_pretrained (recommended), doclaynet_scratch, docstructbench, d4la_scratch, d4la_pretrained
+active_model: doclaynet_pretrained
 
 # -----------------------------------------------------------------------------
 # Available Models
 # -----------------------------------------------------------------------------
 models:
+  # -------------------------------------------------------------------------
+  # DocLayNet Models (11 classes) - RECOMMENDED for full layout coverage
+  # -------------------------------------------------------------------------
+  doclaynet_pretrained:
+    name: "DocLayNet (DocSynth300K pretrained)"
+    description: "Best accuracy - pre-trained on DocSynth300K, fine-tuned on DocLayNet"
+    huggingface_id: "juliozhao/DocLayout-YOLO-DocLayNet-DocSynth300K_pretrained"
+    recommended_image_size: 1024
+    confidence_threshold: 0.2
+    use_case: "Production use - full 11-class coverage with highest accuracy"
+    class_schema: "doclaynet"
+    performance:
+      dataset: "DocLayNet"
+      pretrained: true
+      ap50: 93.4
+      map: 79.7
+
+  doclaynet_scratch:
+    name: "DocLayNet (from scratch)"
+    description: "DocLayNet trained from scratch without pre-training"
+    huggingface_id: "juliozhao/DocLayout-YOLO-DocLayNet-from_scratch"
+    recommended_image_size: 1024
+    confidence_threshold: 0.2
+    use_case: "When you want to avoid pre-training bias"
+    class_schema: "doclaynet"
+    performance:
+      dataset: "DocLayNet"
+      pretrained: false
+      ap50: 93.0
+      map: 77.7
+
+  # -------------------------------------------------------------------------
+  # DocStructBench Model (10 classes) - General purpose
+  # -------------------------------------------------------------------------
   docstructbench:
     name: "DocStructBench"
     description: "General-purpose document layout detection"
@@ -28,10 +63,14 @@ models:
     recommended_image_size: 1024
     confidence_threshold: 0.2
     use_case: "General documents, mixed content types"
+    class_schema: "docstructbench"
     performance:
       dataset: "DocStructBench"
       pretrained: true
 
+  # -------------------------------------------------------------------------
+  # D4LA Models (alternative taxonomy)
+  # -------------------------------------------------------------------------
   d4la_scratch:
     name: "D4LA (from scratch)"
     description: "D4LA trained from scratch without pre-training"
@@ -39,6 +78,7 @@ models:
     recommended_image_size: 1600
     confidence_threshold: 0.2
     use_case: "When you want to avoid pre-training bias"
+    class_schema: "d4la"
     performance:
       dataset: "D4LA"
       pretrained: false
@@ -47,11 +87,12 @@ models:
 
   d4la_pretrained:
     name: "D4LA (DocSynth300K pretrained)"
-    description: "Best performance - pre-trained on DocSynth300K synthetic data"
+    description: "D4LA pre-trained on DocSynth300K synthetic data"
     huggingface_id: "juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained"
     recommended_image_size: 1600
     confidence_threshold: 0.2
-    use_case: "Production use where accuracy is critical"
+    use_case: "D4LA taxonomy with pre-training benefits"
+    class_schema: "d4la"
     performance:
       dataset: "D4LA"
       pretrained: true
@@ -105,21 +146,52 @@ common:
     tensorrt: false
 
 # -----------------------------------------------------------------------------
-# Element Classes (DocStructBench - 10 classes)
+# Element Classes by Schema
 # -----------------------------------------------------------------------------
-# NOTE: These are the classes detected by the DocStructBench pre-trained model.
-# DocLayNet has 11 classes, but DocStructBench uses these 10:
+# Different models use different class taxonomies. Use class_schema field to
+# determine which classes apply to each model.
+
 element_classes:
-  - title
-  - "plain text"
-  - abandon  # Text marked for removal/ignore
-  - figure
-  - figure_caption
-  - table
-  - table_caption
-  - table_footnote
-  - isolate_formula
-  - formula_caption
+  # DocLayNet schema (11 classes) - IBM's standard document layout taxonomy
+  # Reference: https://github.com/DS4SD/DocLayNet
+  doclaynet:
+    - Caption
+    - Footnote
+    - Formula
+    - List-item
+    - Page-footer
+    - Page-header
+    - Picture
+    - Section-header
+    - Table
+    - Text
+    - Title
+
+  # DocStructBench schema (10 classes) - Mixed document types
+  docstructbench:
+    - title
+    - "plain text"
+    - abandon  # Text marked for removal/ignore
+    - figure
+    - figure_caption
+    - table
+    - table_caption
+    - table_footnote
+    - isolate_formula
+    - formula_caption
+
+  # D4LA schema - Document for Layout Analysis (uses similar classes to DocStructBench)
+  d4la:
+    - title
+    - "plain text"
+    - abandon
+    - figure
+    - figure_caption
+    - table
+    - table_caption
+    - table_footnote
+    - isolate_formula
+    - formula_caption
 
 # -----------------------------------------------------------------------------
 # Helper: Get Active Model Config

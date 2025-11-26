@@ -15,9 +15,8 @@ Phase 4 - Device Priority Execution
 
 import json
 import os
-import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -47,8 +46,12 @@ class BudgetState:
     monthly_usage_dollars: float = 0.0
     daily_gpu_seconds: float = 0.0
     monthly_gpu_seconds: float = 0.0
-    last_reset_date: str = field(default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m-%d"))
-    last_month_reset: str = field(default_factory=lambda: datetime.now(timezone.utc).strftime("%Y-%m"))
+    last_reset_date: str = field(
+        default_factory=lambda: datetime.now(UTC).strftime("%Y-%m-%d")
+    )
+    last_month_reset: str = field(
+        default_factory=lambda: datetime.now(UTC).strftime("%Y-%m")
+    )
     warnings_issued: int = 0
 
 
@@ -169,7 +172,7 @@ class BudgetEnforcer:
         if self._state is None:
             return
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         today = now.strftime("%Y-%m-%d")
         this_month = now.strftime("%Y-%m")
 
@@ -216,7 +219,9 @@ class BudgetEnforcer:
         state = self.state
 
         daily_remaining = self.config.daily_limit_dollars - state.daily_usage_dollars
-        monthly_remaining = self.config.monthly_limit_dollars - state.monthly_usage_dollars
+        monthly_remaining = (
+            self.config.monthly_limit_dollars - state.monthly_usage_dollars
+        )
 
         # Check daily limit
         if state.daily_usage_dollars >= self.config.daily_limit_dollars:
@@ -254,14 +259,19 @@ class BudgetEnforcer:
         if daily_ratio >= self.config.warning_threshold:
             warning = f"Daily budget at {daily_ratio * 100:.1f}% (${state.daily_usage_dollars:.4f}/${self.config.daily_limit_dollars:.2f})"
             if state.warnings_issued == 0:
-                logger.warning("Approaching daily budget limit", ratio=f"{daily_ratio * 100:.1f}%")
+                logger.warning(
+                    "Approaching daily budget limit", ratio=f"{daily_ratio * 100:.1f}%"
+                )
                 self._state.warnings_issued += 1
                 self._save_state()
 
         elif monthly_ratio >= self.config.warning_threshold:
             warning = f"Monthly budget at {monthly_ratio * 100:.1f}% (${state.monthly_usage_dollars:.4f}/${self.config.monthly_limit_dollars:.2f})"
             if state.warnings_issued == 0:
-                logger.warning("Approaching monthly budget limit", ratio=f"{monthly_ratio * 100:.1f}%")
+                logger.warning(
+                    "Approaching monthly budget limit",
+                    ratio=f"{monthly_ratio * 100:.1f}%",
+                )
                 self._state.warnings_issued += 1
                 self._save_state()
 
@@ -319,16 +329,31 @@ class BudgetEnforcer:
             "daily": {
                 "usage_dollars": round(state.daily_usage_dollars, 6),
                 "limit_dollars": self.config.daily_limit_dollars,
-                "remaining_dollars": round(self.config.daily_limit_dollars - state.daily_usage_dollars, 6),
+                "remaining_dollars": round(
+                    self.config.daily_limit_dollars - state.daily_usage_dollars, 6
+                ),
                 "gpu_seconds": round(state.daily_gpu_seconds, 2),
-                "usage_percent": round(state.daily_usage_dollars / self.config.daily_limit_dollars * 100, 2) if self.config.daily_limit_dollars > 0 else 0,
+                "usage_percent": round(
+                    state.daily_usage_dollars / self.config.daily_limit_dollars * 100, 2
+                )
+                if self.config.daily_limit_dollars > 0
+                else 0,
             },
             "monthly": {
                 "usage_dollars": round(state.monthly_usage_dollars, 6),
                 "limit_dollars": self.config.monthly_limit_dollars,
-                "remaining_dollars": round(self.config.monthly_limit_dollars - state.monthly_usage_dollars, 6),
+                "remaining_dollars": round(
+                    self.config.monthly_limit_dollars - state.monthly_usage_dollars, 6
+                ),
                 "gpu_seconds": round(state.monthly_gpu_seconds, 2),
-                "usage_percent": round(state.monthly_usage_dollars / self.config.monthly_limit_dollars * 100, 2) if self.config.monthly_limit_dollars > 0 else 0,
+                "usage_percent": round(
+                    state.monthly_usage_dollars
+                    / self.config.monthly_limit_dollars
+                    * 100,
+                    2,
+                )
+                if self.config.monthly_limit_dollars > 0
+                else 0,
             },
             "config": {
                 "enabled": self.config.enabled,
@@ -351,7 +376,8 @@ def get_budget_enforcer() -> BudgetEnforcer:
         Configured BudgetEnforcer instance
     """
     config = BudgetConfig(
-        enabled=os.getenv("IMGPREP_MODAL_BUDGET_ENABLED", "true").lower() in ("true", "1", "yes"),
+        enabled=os.getenv("IMGPREP_MODAL_BUDGET_ENABLED", "true").lower()
+        in ("true", "1", "yes"),
         daily_limit_dollars=float(os.getenv("IMGPREP_MODAL_DAILY_BUDGET", "10.0")),
         monthly_limit_dollars=float(os.getenv("IMGPREP_MODAL_MONTHLY_BUDGET", "100.0")),
         cost_per_gpu_hour=float(os.getenv("IMGPREP_MODAL_GPU_COST_HOUR", "0.36")),

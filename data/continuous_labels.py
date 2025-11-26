@@ -94,24 +94,28 @@ class ContinuousQualityLabel(BaseModel):
     # =========================================================================
 
     blur_severity: float = Field(
-        ge=0.0, le=1.0, default=0.0,
-        description="Blur severity from Gaussian, motion, defocus blur"
+        ge=0.0,
+        le=1.0,
+        default=0.0,
+        description="Blur severity from Gaussian, motion, defocus blur",
     )
     noise_severity: float = Field(
-        ge=0.0, le=1.0, default=0.0,
-        description="Noise severity from Gaussian, salt-pepper, scanner noise"
+        ge=0.0,
+        le=1.0,
+        default=0.0,
+        description="Noise severity from Gaussian, salt-pepper, scanner noise",
     )
     skew_severity: float = Field(
-        ge=0.0, le=1.0, default=0.0,
-        description="Rotation/skew severity (angle normalized to [0,1])"
+        ge=0.0,
+        le=1.0,
+        default=0.0,
+        description="Rotation/skew severity (angle normalized to [0,1])",
     )
     contrast_severity: float = Field(
-        ge=0.0, le=1.0, default=0.0,
-        description="Poor contrast/illumination severity"
+        ge=0.0, le=1.0, default=0.0, description="Poor contrast/illumination severity"
     )
     compression_severity: float = Field(
-        ge=0.0, le=1.0, default=0.0,
-        description="JPEG/compression artifact severity"
+        ge=0.0, le=1.0, default=0.0, description="JPEG/compression artifact severity"
     )
 
     # =========================================================================
@@ -119,16 +123,19 @@ class ContinuousQualityLabel(BaseModel):
     # =========================================================================
 
     ink_degradation: float = Field(
-        ge=0.0, le=1.0, default=0.0,
-        description="Ink fading, bleeding, broken characters"
+        ge=0.0,
+        le=1.0,
+        default=0.0,
+        description="Ink fading, bleeding, broken characters",
     )
     paper_degradation: float = Field(
-        ge=0.0, le=1.0, default=0.0,
-        description="Paper aging, stains, watermarks, dirty drum"
+        ge=0.0,
+        le=1.0,
+        default=0.0,
+        description="Paper aging, stains, watermarks, dirty drum",
     )
     bleed_through: float = Field(
-        ge=0.0, le=1.0, default=0.0,
-        description="Show-through from reverse side"
+        ge=0.0, le=1.0, default=0.0, description="Show-through from reverse side"
     )
 
     # =========================================================================
@@ -136,12 +143,16 @@ class ContinuousQualityLabel(BaseModel):
     # =========================================================================
 
     overall_quality: float = Field(
-        ge=0.0, le=1.0, default=1.0,
-        description="Overall quality (1.0 = best, 0.0 = worst)"
+        ge=0.0,
+        le=1.0,
+        default=1.0,
+        description="Overall quality (1.0 = best, 0.0 = worst)",
     )
     dmos: float = Field(
-        ge=0.0, le=100.0, default=0.0,
-        description="Differential MOS score (for MOS datasets)"
+        ge=0.0,
+        le=100.0,
+        default=0.0,
+        description="Differential MOS score (for MOS datasets)",
     )
 
     # =========================================================================
@@ -149,17 +160,22 @@ class ContinuousQualityLabel(BaseModel):
     # =========================================================================
 
     label_source: Literal[
-        "doccreator", "augraphy", "mllm_pseudo",
-        "weak_supervision", "mos_crowdsourced", "mos_expert", "manual"
+        "doccreator",
+        "augraphy",
+        "mllm_pseudo",
+        "weak_supervision",
+        "mos_crowdsourced",
+        "mos_expert",
+        "manual",
     ] = Field(default="augraphy")
 
     label_confidence: float = Field(
-        ge=0.0, le=1.0, default=1.0,
-        description="Confidence in label accuracy"
+        ge=0.0, le=1.0, default=1.0, description="Confidence in label accuracy"
     )
     label_variance: float = Field(
-        ge=0.0, default=0.0,
-        description="Annotation variance for GDBC (from MOS datasets)"
+        ge=0.0,
+        default=0.0,
+        description="Annotation variance for GDBC (from MOS datasets)",
     )
 
     # =========================================================================
@@ -172,7 +188,7 @@ class ContinuousQualityLabel(BaseModel):
     )
     augmentation_params: dict[str, Any] = Field(
         default_factory=dict,
-        description="Raw augmentation parameters for reproducibility"
+        description="Raw augmentation parameters for reproducibility",
     )
 
     # =========================================================================
@@ -180,7 +196,7 @@ class ContinuousQualityLabel(BaseModel):
     # =========================================================================
 
     @model_validator(mode="after")
-    def compute_overall_if_missing(self) -> "ContinuousQualityLabel":
+    def compute_overall_if_missing(self) -> ContinuousQualityLabel:
         """Compute overall_quality if not explicitly set."""
         # If overall_quality is default and we have severity scores, compute it
         if self.overall_quality == 1.0:
@@ -346,6 +362,7 @@ def binary_to_continuous(
     Returns:
         ContinuousQualityLabel with soft severity values
     """
+
     # Handle both simple dict and nested dict formats
     def get_value(v: Any) -> int:
         if isinstance(v, dict):
@@ -454,10 +471,13 @@ def load_label_file(path: str | Path) -> ContinuousQualityLabel:
         # Phase 7 format or MLLM pseudo-label format
         if "continuous_labels" in data:
             data = {**data, **data["continuous_labels"]}
-        return ContinuousQualityLabel(**{
-            k: v for k, v in data.items()
-            if k in ContinuousQualityLabel.model_fields
-        })
+        return ContinuousQualityLabel(
+            **{
+                k: v
+                for k, v in data.items()
+                if k in ContinuousQualityLabel.model_fields
+            }
+        )
 
     # Weak supervision format (binary labels with quality_scores)
     if "labels" in data:
@@ -474,8 +494,11 @@ def load_label_file(path: str | Path) -> ContinuousQualityLabel:
             skew_severity=quality_scores.get("skew", 0.0)
             if isinstance(quality_scores.get("skew"), float)
             else float(data["labels"].get("skew", {}).get("severity", 0.0)),
-            contrast_severity=quality_scores.get("contrast", quality_scores.get("rms_contrast", 0.0)),
-            compression_severity=quality_scores.get("blockiness", 0.0) / 10.0,  # Normalize
+            contrast_severity=quality_scores.get(
+                "contrast", quality_scores.get("rms_contrast", 0.0)
+            ),
+            compression_severity=quality_scores.get("blockiness", 0.0)
+            / 10.0,  # Normalize
             overall_quality=quality_scores.get("overall", 1.0),
             label_source="weak_supervision",
             image_path=data.get("image_path", ""),

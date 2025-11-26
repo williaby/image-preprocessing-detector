@@ -396,7 +396,10 @@ class ContinuousIQADataset(Dataset):
 
     def __getitem__(
         self, idx: int
-    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> (
+        tuple[torch.Tensor, torch.Tensor]
+        | tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+    ):
         """Get image and continuous labels for given index.
 
         Returns:
@@ -499,14 +502,21 @@ class ContinuousIQADataset(Dataset):
                 if issue_name in label_data["labels"]:
                     label_entry = label_data["labels"][issue_name]
                     if isinstance(label_entry, dict):
-                        severity = float(label_entry.get("severity", label_entry.get("value", 0)))
+                        severity = float(
+                            label_entry.get("severity", label_entry.get("value", 0))
+                        )
                     else:
                         severity = float(label_entry) * 0.7  # Convert binary to soft
                     labels.append(severity)
                 # Check illumination -> contrast mapping
-                elif issue_name == "illumination" and "illumination" in label_data["labels"]:
+                elif (
+                    issue_name == "illumination"
+                    and "illumination" in label_data["labels"]
+                ):
                     label_entry = label_data["labels"]["illumination"]
-                    severity = float(label_entry.get("severity", label_entry.get("value", 0)))
+                    severity = float(
+                        label_entry.get("severity", label_entry.get("value", 0))
+                    )
                     labels.append(severity)
                 else:
                     labels.append(0.0)
@@ -525,7 +535,9 @@ class ContinuousIQADataset(Dataset):
                     val = scores.get("contrast", scores.get("rms_contrast", 0.0))
                 elif key == "compression":
                     # May be stored as blockiness
-                    val = scores.get("compression", scores.get("blockiness", 0.0) / 10.0)
+                    val = scores.get(
+                        "compression", scores.get("blockiness", 0.0) / 10.0
+                    )
                 else:
                     val = scores.get(key, 0.0)
                 labels.append(float(val))
@@ -651,7 +663,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python data/dataset.py <data_dir>")  # noqa: T201
+        print("Usage: python data/dataset.py <data_dir>")
         sys.exit(1)
 
     data_dir = sys.argv[1]
@@ -661,23 +673,23 @@ if __name__ == "__main__":
     val_dataset = IQADataset(data_dir, split="val")
     test_dataset = IQADataset(data_dir, split="test")
 
-    print("\nDataset Statistics:")  # noqa: T201
-    print(f"Train: {len(train_dataset)} samples")  # noqa: T201
-    print(f"Val: {len(val_dataset)} samples")  # noqa: T201
-    print(f"Test: {len(test_dataset)} samples")  # noqa: T201
+    print("\nDataset Statistics:")
+    print(f"Train: {len(train_dataset)} samples")
+    print(f"Val: {len(val_dataset)} samples")
+    print(f"Test: {len(test_dataset)} samples")
 
     # Print label distribution
-    print("\nTrain Label Distribution:")  # noqa: T201
+    print("\nTrain Label Distribution:")
     stats = train_dataset.get_label_statistics()
     for issue, percentage in stats["label_percentages"].items():
         count = stats["label_counts"][issue]
-        print(f"  {issue}: {count} ({percentage:.1f}%)")  # noqa: T201
+        print(f"  {issue}: {count} ({percentage:.1f}%)")
 
-    print(f"\nAverage issues per image: {stats['average_issues_per_image']:.2f}")  # noqa: T201
+    print(f"\nAverage issues per image: {stats['average_issues_per_image']:.2f}")
 
     # Test loading a sample
-    print("\nTesting data loading...")  # noqa: T201
+    print("\nTesting data loading...")
     image, labels = train_dataset[0]
-    print(f"Image shape: {image.shape}")  # noqa: T201
-    print(f"Labels shape: {labels.shape}")  # noqa: T201
-    print(f"Labels: {labels}")  # noqa: T201
+    print(f"Image shape: {image.shape}")
+    print(f"Labels shape: {labels.shape}")
+    print(f"Labels: {labels}")

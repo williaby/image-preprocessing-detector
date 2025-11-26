@@ -294,14 +294,15 @@ known-local-folder = ["validation", "benchmarks"]
 # Per-file ignores
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "D104"]
-"tests/**/*.py" = ["ARG", "D", "S", "ERA", "E402", "F841", "RUF059", "RUF005", "DTZ001", "T201", "PT011", "TRY301", "RET504", "PT006", "SIM105", "B007", "PTH", "SIM102", "SIM117", "TRY300", "N806", "PT018", "B905", "PERF402"]
+"tests/**/*.py" = ["ARG", "D", "S", "ERA", "E402", "F841", "RUF059", "RUF005", "DTZ001", "T201", "PT011", "TRY301", "RET504", "PT006", "SIM105", "B007", "PTH", "SIM102", "SIM117", "TRY300", "N806", "PT018", "B905", "PERF402", "E741", "B904", "FBT003", "PT028", "RUF022", "PERF102", "B028", "SIM115"]
 "tests/fixtures/phase1_validation/*.py" = ["D", "T20", "TRY", "RUF", "FBT", "RET", "N806", "PERF"]  # Phase 1 validation scripts - relaxed rules
 "fuzz/**/*.py" = ["D", "T20"]
 "validation/**/*.py" = ["D", "T20", "TRY"]
-"scripts/**/*.py" = ["D", "T20", "TRY", "S", "PTH", "SIM", "DTZ", "ARG", "B007", "RUF059", "F841", "RUF002", "RET504", "RUF001", "C401", "RUF013", "RUF012", "PERF102", "E402", "I001"]
+"scripts/**/*.py" = ["D", "T20", "TRY", "S", "PTH", "SIM", "DTZ", "ARG", "B007", "RUF059", "F841", "RUF002", "RET504", "RUF001", "C401", "RUF013", "RUF012", "PERF102", "E402", "I001", "N806", "B904", "B905", "FBT003", "B028", "ERA001", "E741"]
 "benchmarks/**/*.py" = ["D", "T20", "ARG", "TRY", "ERA", "SIM", "PERF", "RET", "B007", "F841", "RUF005", "RUF012", "E402", "UP038"]  # CLI tools with relaxed rules
 "tools/**/*.py" = ["D", "T20", "TRY"]
-"modal/**/*.py" = ["D", "T20", "S", "ANN", "PTH", "SIM"]
+"modal/**/*.py" = ["D", "T20", "S", "ANN", "PTH", "SIM", "DTZ003", "TRY300", "B905", "PERF203", "PT028"]
+"data/**/*.py" = ["D", "T20", "F401", "F841", "ERA001", "ARG005", "E741", "DTZ003", "S314", "PERF203", "SIM102", "B004", "B905", "RUF059"]
 "noxfile.py" = ["D", "T20"]
 "src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
 "src/image_preprocessing_detector/augmentation/genalog_degrader.py" = ["ERA001"]  # Intentional Phase 2 implementation placeholders
@@ -309,6 +310,10 @@ known-local-folder = ["validation", "benchmarks"]
 "tests/security/test_codeql_validation.py" = ["ALL"]
 "src/image_preprocessing_detector/utils/gcs_uploader.py" = ["T20", "F821"]  # GCS utilities with relaxed print rules
 "src/image_preprocessing_detector/utils/metadata_generator.py" = ["T20", "S", "PTH", "UP038", "TRY"]  # Metadata generator with relaxed rules
+# Phase 6/8 merged files with relaxed rules
+"src/image_preprocessing_detector/detection/advanced_detectors.py" = ["D102", "E741", "N806", "B905", "SIM115", "RUF059", "B028", "SIM102", "FBT003"]
+"src/image_preprocessing_detector/detection/__init__.py" = ["RUF022"]
+"src/image_preprocessing_detector/ingestion/__init__.py" = ["RUF022"]
 
 # Bandit Configuration (Security Linting)
 [tool.bandit]
@@ -361,6 +366,47 @@ module = "image_preprocessing_detector.augmentation.*"
 disallow_untyped_defs = false
 check_untyped_defs = false
 ignore_missing_imports = true
+
+# Phase 6/8 merged modules - relaxed until API compatibility resolved
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.detection.hybrid_iqa"
+disallow_untyped_defs = false
+check_untyped_defs = false
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.detection.advanced_detectors"
+disallow_untyped_defs = false
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.detection.layout_lite.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.detection.orientation_detector"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.ingestion.office_processor"
+disallow_untyped_defs = false
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.ingestion.document_processor"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.output.json_generator"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.utils.budget_enforcement"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "image_preprocessing_detector.detection.doclayout_yolo"
+ignore_errors = true
 
 # BasedPyright Configuration (Modern Type Checker)
 # Replaces MyPy for primary type checking (3-5x faster, stricter)

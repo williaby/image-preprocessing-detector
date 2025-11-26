@@ -139,9 +139,7 @@ class OrientationDetector:
             OrientationVote or None if detection fails
         """
         # Edge detection
-        edges = cv2.Canny(
-            gray, self.config.edge_canny_low, self.config.edge_canny_high
-        )
+        edges = cv2.Canny(gray, self.config.edge_canny_low, self.config.edge_canny_high)
 
         # Detect lines using Hough transform
         lines = cv2.HoughLinesP(
@@ -213,9 +211,7 @@ class OrientationDetector:
             },
         )
 
-    def _detect_180_rotation(
-        self, gray: np.ndarray, _line_angles: np.ndarray
-    ) -> bool:
+    def _detect_180_rotation(self, gray: np.ndarray, _line_angles: np.ndarray) -> bool:
         """Detect 180° rotation by analyzing text baseline position.
 
         In upright text, descenders (g, y, p) go below baseline.
@@ -307,7 +303,9 @@ class OrientationDetector:
             vertical_orientations = strong_orientations[
                 (np.abs(strong_orientations) > 60) & (np.abs(strong_orientations) < 120)
             ]
-            mean_vertical = np.mean(vertical_orientations) if len(vertical_orientations) > 0 else 90
+            mean_vertical = (
+                np.mean(vertical_orientations) if len(vertical_orientations) > 0 else 90
+            )
             detected_angle = 90 if mean_vertical > 0 else 270
             confidence = vertical_strength / total_strength
         else:
@@ -393,7 +391,9 @@ class OrientationDetector:
             confidence = tall_count / total
         elif wide_count > tall_count * 1.3:
             # More wide components → 90° or 270° rotated
-            detected_angle = 90  # Default to 90°, combine with other methods for direction
+            detected_angle = (
+                90  # Default to 90°, combine with other methods for direction
+            )
             confidence = wide_count / total
         else:
             # Mixed - no clear orientation
@@ -442,7 +442,12 @@ class OrientationDetector:
             )
 
         # Count votes per angle
-        angle_votes: dict[int, list[OrientationVote]] = {0: [], 90: [], 180: [], 270: []}
+        angle_votes: dict[int, list[OrientationVote]] = {
+            0: [],
+            90: [],
+            180: [],
+            270: [],
+        }
         for vote in votes:
             # Normalize angles to valid values
             normalized_angle = self._normalize_angle(vote.angle)
@@ -552,7 +557,9 @@ def detect_orientation(
         ... )
         >>> image = cv2.imread("document.jpg")
         >>> result = detect_orientation(image)
-        >>> print(f"Orientation: {result.detected_angle}°, Confidence: {result.confidence}")
+        >>> print(
+        ...     f"Orientation: {result.detected_angle}°, Confidence: {result.confidence}"
+        ... )
     """
     detector = OrientationDetector(config)
     return detector.detect(image)

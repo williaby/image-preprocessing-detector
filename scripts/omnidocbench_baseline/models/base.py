@@ -129,7 +129,6 @@ class BaseModel(ABC):
 
         Called once before inference. Should set self._is_loaded = True.
         """
-        pass
 
     @abstractmethod
     def predict(self, image: np.ndarray) -> ModelPrediction:
@@ -141,7 +140,6 @@ class BaseModel(ABC):
         Returns:
             ModelPrediction with scores/labels
         """
-        pass
 
     def predict_batch(self, images: list[np.ndarray]) -> list[ModelPrediction]:
         """Run inference on a batch of images.
@@ -203,7 +201,6 @@ class IQAModel(BaseModel):
         Returns:
             Dict of quality scores (0-1 range)
         """
-        pass
 
     def predict(self, image: np.ndarray) -> ModelPrediction:
         """Run IQA inference.
@@ -261,7 +258,6 @@ class LayoutModel(BaseModel):
         Returns:
             Dict with layout_type (str) and presence flags (bool)
         """
-        pass
 
     def predict(self, image: np.ndarray) -> ModelPrediction:
         """Run layout inference.
@@ -319,7 +315,6 @@ class PageAttributeModel(BaseModel):
         Returns:
             Dict of attribute names to boolean values
         """
-        pass
 
     def predict(self, image: np.ndarray) -> ModelPrediction:
         """Run attribute detection.

@@ -360,9 +360,7 @@ class TestOrientationCorrector:
 
     def test_init_custom_params(self) -> None:
         """Test OrientationCorrector initialization with custom parameters."""
-        corrector = OrientationCorrector(
-            min_confidence=0.8, auto_correct_threshold=0.9
-        )
+        corrector = OrientationCorrector(min_confidence=0.8, auto_correct_threshold=0.9)
 
         assert corrector.min_confidence == pytest.approx(0.8)
         assert corrector.auto_correct_threshold == pytest.approx(0.9)

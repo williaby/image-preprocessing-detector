@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from image_preprocessing_detector.detection.iqa_ml import MLIQADetector
+    pass
 
 
 def _is_onnxruntime_functional() -> bool:

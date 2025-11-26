@@ -25,12 +25,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-import cv2
 import numpy as np
 
 # Check for optional dependencies
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -381,17 +381,23 @@ def run_full_pipeline_benchmark(
         # Corrections (conditional)
         corrected = img
         if skew_result.angle > 0.5:
-            result = deskew.correct(corrected, skew_result.angle, skew_result.confidence)
+            result = deskew.correct(
+                corrected, skew_result.angle, skew_result.confidence
+            )
             if result.applied:
                 corrected = result.corrected_image
 
         if contrast_result.score < 0.4:
-            result = contrast_enhancer.correct(corrected, contrast_result.score, Severity.MEDIUM)
+            result = contrast_enhancer.correct(
+                corrected, contrast_result.score, Severity.MEDIUM
+            )
             if result.applied:
                 corrected = result.corrected_image
 
         if blur_result.blur_score < 200:
-            result = sharpener.correct(corrected, blur_result.blur_score, Severity.MEDIUM)
+            result = sharpener.correct(
+                corrected, blur_result.blur_score, Severity.MEDIUM
+            )
             if result.applied:
                 corrected = result.corrected_image
 
@@ -435,7 +441,9 @@ def run_full_pipeline_benchmark(
     )
 
 
-def print_results(name: str, result: BenchmarkResult, targets: BenchmarkTargets) -> None:
+def print_results(
+    name: str, result: BenchmarkResult, targets: BenchmarkTargets
+) -> None:
     """Print benchmark results in a formatted table."""
     print(f"\n{'=' * 60}")
     print(f"{name}")
@@ -561,8 +569,12 @@ def main() -> None:
         # Full pipeline
         try:
             print(f"\n[3/3] Full Pipeline Benchmark ({device})")
-            pipeline_result = run_full_pipeline_benchmark(images, device, args.model_dir)
-            print_results(f"Full Pipeline Results ({device.upper()})", pipeline_result, targets)
+            pipeline_result = run_full_pipeline_benchmark(
+                images, device, args.model_dir
+            )
+            print_results(
+                f"Full Pipeline Results ({device.upper()})", pipeline_result, targets
+            )
             results["results"][f"full_pipeline_{device}"] = asdict(pipeline_result)
         except FileNotFoundError as e:
             print(f"  ⚠️  Skipping full pipeline benchmark: {e}")

@@ -98,9 +98,7 @@ class ModelRegistry:
             List of model IDs
         """
         if status:
-            return [
-                mid for mid, cfg in self._configs.items() if cfg.status == status
-            ]
+            return [mid for mid, cfg in self._configs.items() if cfg.status == status]
         return list(self._configs.keys())
 
     def list_groups(self) -> list[str]:
@@ -159,34 +157,38 @@ def _get_adapter_class(model_type: str) -> type[BaseModel]:
         from scripts.omnidocbench_baseline.models.adapters.classical_cv import (
             ClassicalCVAdapter,
         )
+
         return ClassicalCVAdapter
 
-    elif model_type == "resnet":
+    if model_type == "resnet":
         from scripts.omnidocbench_baseline.models.adapters.resnet import (
             ResNetAdapter,
         )
+
         return ResNetAdapter
 
-    elif model_type == "heuristics":
+    if model_type == "heuristics":
         from scripts.omnidocbench_baseline.models.adapters.layout_lite import (
             LayoutLiteAdapter,
         )
+
         return LayoutLiteAdapter
 
-    elif model_type == "yolo":
+    if model_type == "yolo":
         from scripts.omnidocbench_baseline.models.adapters.doclayout_yolo import (
             DocLayoutYOLOAdapter,
         )
+
         return DocLayoutYOLOAdapter
 
-    elif model_type in ("fasttext", "library"):
+    if model_type in ("fasttext", "library"):
         from scripts.omnidocbench_baseline.models.adapters.language import (
             LanguageAdapter,
         )
+
         return LanguageAdapter
 
-    else:
-        raise ValueError(f"Unknown model type: {model_type}")
+    raise ValueError(f"Unknown model type: {model_type}")
 
 
 def load_model(
@@ -211,9 +213,7 @@ def load_model(
     config = registry.get_config(model_id)
     if config is None:
         available = registry.list_models()
-        raise ValueError(
-            f"Model '{model_id}' not found. Available: {available}"
-        )
+        raise ValueError(f"Model '{model_id}' not found. Available: {available}")
 
     if config.status == "planned":
         logger.warning(

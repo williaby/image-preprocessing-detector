@@ -15,7 +15,6 @@ import pytest
 
 from image_preprocessing_detector.schema import LayoutType, PageLayoutSummary
 
-
 # =============================================================================
 # Test Fixtures
 # =============================================================================
@@ -67,25 +66,73 @@ def mock_yolo_result() -> MagicMock:
     mock_boxes.xyxy.__len__ = MagicMock(return_value=3)
     mock_boxes.xyxy.__getitem__ = MagicMock(
         side_effect=[
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=MagicMock(tolist=MagicMock(return_value=[100, 50, 700, 80])))))),
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=MagicMock(tolist=MagicMock(return_value=[50, 100, 350, 400])))))),
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=MagicMock(tolist=MagicMock(return_value=[100, 420, 700, 570])))))),
+            MagicMock(
+                cpu=MagicMock(
+                    return_value=MagicMock(
+                        numpy=MagicMock(
+                            return_value=MagicMock(
+                                tolist=MagicMock(return_value=[100, 50, 700, 80])
+                            )
+                        )
+                    )
+                )
+            ),
+            MagicMock(
+                cpu=MagicMock(
+                    return_value=MagicMock(
+                        numpy=MagicMock(
+                            return_value=MagicMock(
+                                tolist=MagicMock(return_value=[50, 100, 350, 400])
+                            )
+                        )
+                    )
+                )
+            ),
+            MagicMock(
+                cpu=MagicMock(
+                    return_value=MagicMock(
+                        numpy=MagicMock(
+                            return_value=MagicMock(
+                                tolist=MagicMock(return_value=[100, 420, 700, 570])
+                            )
+                        )
+                    )
+                )
+            ),
         ]
     )
     mock_boxes.cls = MagicMock()
     mock_boxes.cls.__getitem__ = MagicMock(
         side_effect=[
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=0)))),  # title
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=1)))),  # plain text
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=5)))),  # table
+            MagicMock(
+                cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=0)))
+            ),  # title
+            MagicMock(
+                cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=1)))
+            ),  # plain text
+            MagicMock(
+                cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=5)))
+            ),  # table
         ]
     )
     mock_boxes.conf = MagicMock()
     mock_boxes.conf.__getitem__ = MagicMock(
         side_effect=[
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=0.95)))),
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=0.88)))),
-            MagicMock(cpu=MagicMock(return_value=MagicMock(numpy=MagicMock(return_value=0.92)))),
+            MagicMock(
+                cpu=MagicMock(
+                    return_value=MagicMock(numpy=MagicMock(return_value=0.95))
+                )
+            ),
+            MagicMock(
+                cpu=MagicMock(
+                    return_value=MagicMock(numpy=MagicMock(return_value=0.88))
+                )
+            ),
+            MagicMock(
+                cpu=MagicMock(
+                    return_value=MagicMock(numpy=MagicMock(return_value=0.92))
+                )
+            ),
         ]
     )
 
@@ -108,10 +155,15 @@ class TestDocLayoutClass:
         from image_preprocessing_detector.detection.doclayout_yolo import DocLayoutClass
 
         assert DocLayoutClass.from_model_output("title") == DocLayoutClass.TITLE
-        assert DocLayoutClass.from_model_output("plain text") == DocLayoutClass.PLAIN_TEXT
+        assert (
+            DocLayoutClass.from_model_output("plain text") == DocLayoutClass.PLAIN_TEXT
+        )
         assert DocLayoutClass.from_model_output("table") == DocLayoutClass.TABLE
         assert DocLayoutClass.from_model_output("figure") == DocLayoutClass.FIGURE
-        assert DocLayoutClass.from_model_output("isolate_formula") == DocLayoutClass.ISOLATE_FORMULA
+        assert (
+            DocLayoutClass.from_model_output("isolate_formula")
+            == DocLayoutClass.ISOLATE_FORMULA
+        )
 
     def test_from_model_output_case_insensitive(self) -> None:
         """Test case-insensitive conversion."""
@@ -119,7 +171,9 @@ class TestDocLayoutClass:
 
         assert DocLayoutClass.from_model_output("TITLE") == DocLayoutClass.TITLE
         assert DocLayoutClass.from_model_output("Table") == DocLayoutClass.TABLE
-        assert DocLayoutClass.from_model_output("PLAIN TEXT") == DocLayoutClass.PLAIN_TEXT
+        assert (
+            DocLayoutClass.from_model_output("PLAIN TEXT") == DocLayoutClass.PLAIN_TEXT
+        )
 
     def test_from_model_output_variations(self) -> None:
         """Test handling of common variations."""
@@ -129,9 +183,17 @@ class TestDocLayoutClass:
         assert DocLayoutClass.from_model_output("text") == DocLayoutClass.PLAIN_TEXT
         assert DocLayoutClass.from_model_output("picture") == DocLayoutClass.FIGURE
         assert DocLayoutClass.from_model_output("image") == DocLayoutClass.FIGURE
-        assert DocLayoutClass.from_model_output("formula") == DocLayoutClass.ISOLATE_FORMULA
-        assert DocLayoutClass.from_model_output("abandon") == DocLayoutClass.ABANDONED_TEXT
-        assert DocLayoutClass.from_model_output("abandoned") == DocLayoutClass.ABANDONED_TEXT
+        assert (
+            DocLayoutClass.from_model_output("formula")
+            == DocLayoutClass.ISOLATE_FORMULA
+        )
+        assert (
+            DocLayoutClass.from_model_output("abandon") == DocLayoutClass.ABANDONED_TEXT
+        )
+        assert (
+            DocLayoutClass.from_model_output("abandoned")
+            == DocLayoutClass.ABANDONED_TEXT
+        )
 
     def test_from_model_output_unknown(self) -> None:
         """Test handling of unknown class names."""
@@ -175,7 +237,9 @@ class TestDetectedElement:
 
     def test_from_prediction_unknown_class(self) -> None:
         """Test element with unknown class name."""
-        from image_preprocessing_detector.detection.doclayout_yolo import DetectedElement
+        from image_preprocessing_detector.detection.doclayout_yolo import (
+            DetectedElement,
+        )
 
         element = DetectedElement.from_prediction(
             class_id=99,
@@ -368,7 +432,10 @@ class TestDocLayoutYOLODetector:
 
         detector = DocLayoutYOLODetector(model_key="d4la_pretrained")
 
-        assert detector._model_id == "juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained"
+        assert (
+            detector._model_id
+            == "juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained"
+        )
 
     def test_initialization_custom_settings(self) -> None:
         """Test initialization with custom confidence and image size."""

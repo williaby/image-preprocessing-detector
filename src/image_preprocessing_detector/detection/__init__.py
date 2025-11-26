@@ -175,13 +175,15 @@ __all__ = [
 
 # Add DocLayout-YOLO exports if available
 if _has_doclayout_yolo:
-    __all__.extend([
-        # DocLayout-YOLO (Phase 6)
-        "DetectedElement",
-        "DocLayoutClass",
-        "DocLayoutYOLODetector",
-        "LayoutDetectionResult",
-        "detect_layout",
-        "get_doclayout_yolo_model_info",
-        "is_doclayout_yolo_available",
-    ])
+    __all__.extend(
+        [
+            # DocLayout-YOLO (Phase 6)
+            "DetectedElement",
+            "DocLayoutClass",
+            "DocLayoutYOLODetector",
+            "LayoutDetectionResult",
+            "detect_layout",
+            "get_doclayout_yolo_model_info",
+            "is_doclayout_yolo_available",
+        ]
+    )

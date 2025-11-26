@@ -37,7 +37,9 @@ class TestOfficeExtensionsAndMimeTypes:
 
     def test_word_mime_type_mapping(self) -> None:
         """Test Word MIME types map correctly."""
-        docx_mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        docx_mime = (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
         assert OFFICE_MIME_TYPES[docx_mime] == DocumentType.OFFICE_WORD
 
     def test_excel_mime_type_mapping(self) -> None:
@@ -47,7 +49,9 @@ class TestOfficeExtensionsAndMimeTypes:
 
     def test_powerpoint_mime_type_mapping(self) -> None:
         """Test PowerPoint MIME types map correctly."""
-        pptx_mime = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        pptx_mime = (
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        )
         assert OFFICE_MIME_TYPES[pptx_mime] == DocumentType.OFFICE_POWERPOINT
 
 
@@ -230,7 +234,9 @@ class TestOfficeProcessor:
         self, processor: OfficeProcessor
     ) -> None:
         """Test detection is case-insensitive."""
-        assert processor.detect_document_type("DOCUMENT.DOCX") == DocumentType.OFFICE_WORD
+        assert (
+            processor.detect_document_type("DOCUMENT.DOCX") == DocumentType.OFFICE_WORD
+        )
         assert processor.detect_document_type("file.XLSX") == DocumentType.OFFICE_EXCEL
 
     def test_is_office_document(self, processor: OfficeProcessor) -> None:
@@ -241,9 +247,7 @@ class TestOfficeProcessor:
         assert processor.is_office_document("test.pdf") is False
         assert processor.is_office_document("test.txt") is False
 
-    def test_process_docx(
-        self, processor: OfficeProcessor, sample_docx: Path
-    ) -> None:
+    def test_process_docx(self, processor: OfficeProcessor, sample_docx: Path) -> None:
         """Test processing a .docx file."""
         result = processor.process(sample_docx)
 
@@ -259,9 +263,7 @@ class TestOfficeProcessor:
         assert img.original_size == (100, 100)
         assert "document_" in img.source_location
 
-    def test_process_xlsx(
-        self, processor: OfficeProcessor, sample_xlsx: Path
-    ) -> None:
+    def test_process_xlsx(self, processor: OfficeProcessor, sample_xlsx: Path) -> None:
         """Test processing an .xlsx file."""
         result = processor.process(sample_xlsx)
 
@@ -274,9 +276,7 @@ class TestOfficeProcessor:
         assert img.original_size == (200, 150)
         assert "workbook_" in img.source_location
 
-    def test_process_pptx(
-        self, processor: OfficeProcessor, sample_pptx: Path
-    ) -> None:
+    def test_process_pptx(self, processor: OfficeProcessor, sample_pptx: Path) -> None:
         """Test processing a .pptx file."""
         result = processor.process(sample_pptx)
 
