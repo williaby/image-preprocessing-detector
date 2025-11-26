@@ -354,12 +354,8 @@ class TestThresholdTuner:
         # Use modern Generator API for reproducible random numbers
         rng = np.random.default_rng(seed=42)
         predictions_dict = {
-            "blur": np.concatenate(
-                [rng.uniform(0, 0.3, 30), rng.uniform(0.7, 1, 30)]
-            ),
-            "noise": np.concatenate(
-                [rng.uniform(0, 0.4, 30), rng.uniform(0.6, 1, 30)]
-            ),
+            "blur": np.concatenate([rng.uniform(0, 0.3, 30), rng.uniform(0.7, 1, 30)]),
+            "noise": np.concatenate([rng.uniform(0, 0.4, 30), rng.uniform(0.6, 1, 30)]),
         }
         labels_dict = {
             "blur": np.concatenate([np.zeros(30), np.ones(30)]),
