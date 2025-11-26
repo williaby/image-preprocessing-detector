@@ -5,6 +5,7 @@ Phase 2-3: ML-based IQA (teacher-student ResNet)
 Phase 4: Classical IQA detectors (blur, noise, skew, contrast, illumination, JPEG blockiness, binarization, bleed-through)
 Phase 4.9: Discrepancy threshold tuning for ML-classical comparison
 Phase 6: Layout-lite detection (YOLOv8-nano)
+Phase 8: Orientation detection (0°, 90°, 180°, 270°)
 
 Model configuration: configs/models/doclayout_yolo.yaml
 """
@@ -70,6 +71,13 @@ from image_preprocessing_detector.detection.iqa_ml import (
     teacher_iqa_to_dict,
     uncertainty_metrics_to_dict,
 )
+from image_preprocessing_detector.detection.orientation_detector import (
+    OrientationConfig,
+    OrientationDetector,
+    OrientationVote,
+    correct_orientation,
+    detect_orientation,
+)
 from image_preprocessing_detector.detection.text_gate import (
     TextDetectionResult,
     TextGate,
@@ -111,6 +119,10 @@ __all__ = [
     "NoiseDetector",
     "NoiseMetrics",
     "NoiseType",
+    # Orientation detection (Phase 8)
+    "OrientationConfig",
+    "OrientationDetector",
+    "OrientationVote",
     "ProblemRegion",
     "Severity",
     "SkewDetectionResult",
@@ -128,8 +140,10 @@ __all__ = [
     "detect_illumination",
     "detect_jpeg_blockiness",
     "detect_noise",
+    "detect_orientation",
     "detect_skew",
     "detect_text",
+    "correct_orientation",
     "discrepancy_metrics_to_dict",
     "estimate_noise_mad",
     "ml_iqa_scores_to_dict",

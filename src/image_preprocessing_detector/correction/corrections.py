@@ -5,6 +5,7 @@ Implements corrections for detected image quality issues:
 - Contrast enhancement (CLAHE)
 - Sharpening (unsharp mask)
 - Denoising
+- Orientation correction (90°, 180°, 270° rotation - Phase 8)
 """
 
 from dataclasses import dataclass
@@ -375,6 +376,119 @@ class Sharpener:
         )
 
 
+class OrientationCorrector:
+    """Corrects document orientation (90°, 180°, 270° rotation).
+
+    Phase 8 implementation for handling rotated scans/photos.
+    Includes guardrails based on confidence thresholds.
+    """
+
+    def __init__(
+        self,
+        min_confidence: float = 0.7,
+        auto_correct_threshold: float = 0.85,
+    ) -> None:
+        """Initialize orientation corrector.
+
+        Args:
+            min_confidence: Minimum confidence to apply correction
+            auto_correct_threshold: Confidence threshold for auto-correction
+        """
+        self.min_confidence = min_confidence
+        self.auto_correct_threshold = auto_correct_threshold
+
+        logger.info(
+            "Orientation corrector initialized",
+            min_confidence=min_confidence,
+            auto_correct_threshold=auto_correct_threshold,
+        )
+
+    def correct(
+        self,
+        image: np.ndarray,
+        angle: int,
+        confidence: float,
+        force: bool = False,
+    ) -> CorrectionResult:
+        """Apply orientation correction.
+
+        Args:
+            image: Input image (BGR format)
+            angle: Detected orientation angle (0, 90, 180, 270)
+            confidence: Detection confidence (0.0-1.0)
+            force: Force correction even if confidence is low
+
+        Returns:
+            CorrectionResult with corrected image and metadata
+
+        Raises:
+            ValueError: If image is invalid, empty, or angle is invalid
+        """
+        if image is None or image.size == 0:
+            raise ValueError(_INVALID_IMAGE_ERROR)
+
+        if angle not in (0, 90, 180, 270):
+            raise ValueError(f"Invalid orientation angle: {angle}. Must be 0, 90, 180, or 270.")
+
+        # No correction needed for upright images
+        if angle == 0:
+            logger.debug("Skipping orientation correction (already upright)")
+            return CorrectionResult(
+                corrected_image=image.copy(),
+                applied=False,
+                parameters={"angle": angle, "confidence": confidence},
+                skipped_reason="Image already upright (0°)",
+            )
+
+        # Guardrail: Check confidence threshold (unless forced)
+        if not force and confidence < self.min_confidence:
+            logger.warning(
+                "Skipping orientation correction (low confidence)",
+                angle=angle,
+                confidence=confidence,
+                min_confidence=self.min_confidence,
+            )
+            return CorrectionResult(
+                corrected_image=image.copy(),
+                applied=False,
+                parameters={"angle": angle, "confidence": confidence},
+                skipped_reason=f"Confidence {confidence:.2f} below threshold {self.min_confidence}",
+            )
+
+        # Apply rotation (counter-clockwise to correct)
+        rotation_map = {
+            90: cv2.ROTATE_90_COUNTERCLOCKWISE,
+            180: cv2.ROTATE_180,
+            270: cv2.ROTATE_90_CLOCKWISE,
+        }
+
+        corrected = cv2.rotate(image, rotation_map[angle])
+
+        original_h, original_w = image.shape[:2]
+        new_h, new_w = corrected.shape[:2]
+
+        logger.info(
+            "Orientation correction applied",
+            detected_angle=angle,
+            correction_applied=f"-{angle}°",
+            confidence=confidence,
+            original_size=(original_w, original_h),
+            new_size=(new_w, new_h),
+        )
+
+        return CorrectionResult(
+            corrected_image=corrected,
+            applied=True,
+            parameters={
+                "detected_angle": angle,
+                "correction_applied": -angle,
+                "confidence": confidence,
+                "original_size": (original_w, original_h),
+                "new_size": (new_w, new_h),
+            },
+        )
+
+
 # Convenience functions
 def correct_skew(
     image: np.ndarray, angle: float, confidence: float = 1.0
@@ -443,3 +557,33 @@ def sharpen_image(
     """
     sharpener = Sharpener()
     return sharpener.correct(image, blur_score, severity)
+
+
+def correct_orientation(
+    image: np.ndarray,
+    angle: int,
+    confidence: float,
+    force: bool = False,
+) -> CorrectionResult:
+    """Convenience function for orientation correction.
+
+    Corrects document orientation when pages are rotated 90°, 180°, or 270°.
+    Common in scanned/photographed documents.
+
+    Args:
+        image: Input image (BGR format)
+        angle: Detected orientation angle (0, 90, 180, 270 degrees)
+        confidence: Detection confidence (0.0-1.0)
+        force: Force correction even if confidence is low
+
+    Returns:
+        CorrectionResult with corrected image and metadata
+
+    Example:
+        >>> img = cv2.imread("rotated_scan.jpg")
+        >>> result = correct_orientation(img, angle=90, confidence=0.92)
+        >>> if result.applied:
+        ...     cv2.imwrite("corrected.jpg", result.corrected_image)
+    """
+    corrector = OrientationCorrector()
+    return corrector.correct(image, angle, confidence, force)
