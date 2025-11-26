@@ -393,6 +393,23 @@ def simple_text_pdf(doclaynet_fixtures_dir: Path) -> Path:
 
 
 @pytest.fixture
+def tables_figures_pdf(doclaynet_fixtures_dir: Path) -> Path:
+    """Return PDF with tables and figures fixture."""
+    pdf = doclaynet_fixtures_dir / "tables_figures_2.pdf"
+    if not pdf.exists():
+        pytest.skip("Tables/figures PDF fixture not available")
+    return pdf
+
+
+@pytest.fixture
+def all_doclaynet_pdfs(doclaynet_fixtures_dir: Path) -> list[Path]:
+    """Return list of all DocLayNet PDF fixture paths."""
+    if not doclaynet_fixtures_dir.exists():
+        return []
+    return list(doclaynet_fixtures_dir.glob("*.pdf"))
+
+
+@pytest.fixture
 def skewed_pdf(doclaynet_fixtures_dir: Path) -> Path:
     """Return skewed/rotated PDF fixture."""
     pdf = doclaynet_fixtures_dir / "skewed_4.pdf"
@@ -429,6 +446,46 @@ def complex_table_image(tablebank_fixtures_dir: Path) -> Path:
         if img.exists():
             return img
     pytest.skip("Complex table image fixture not available")
+
+
+@pytest.fixture
+def rotated_table_image(tablebank_fixtures_dir: Path) -> Path:
+    """Return rotated table image fixture."""
+    for ext in ["png", "jpg", "jpeg"]:
+        img = tablebank_fixtures_dir / f"rotated_3.{ext}"
+        if img.exists():
+            return img
+    pytest.skip("Rotated table image fixture not available")
+
+
+@pytest.fixture
+def low_quality_table_image(tablebank_fixtures_dir: Path) -> Path:
+    """Return low quality/blurry table image fixture."""
+    for ext in ["jpg", "jpeg", "png"]:
+        img = tablebank_fixtures_dir / f"low_quality_4.{ext}"
+        if img.exists():
+            return img
+    pytest.skip("Low quality table image fixture not available")
+
+
+@pytest.fixture
+def embedded_graphics_table_image(tablebank_fixtures_dir: Path) -> Path:
+    """Return table with embedded graphics image fixture."""
+    for ext in ["jpg", "jpeg", "png"]:
+        img = tablebank_fixtures_dir / f"embedded_graphics_5.{ext}"
+        if img.exists():
+            return img
+    pytest.skip("Embedded graphics table image fixture not available")
+
+
+@pytest.fixture
+def all_tablebank_images(tablebank_fixtures_dir: Path) -> list[Path]:
+    """Return list of all TableBank image fixture paths."""
+    if not tablebank_fixtures_dir.exists():
+        return []
+    images = list(tablebank_fixtures_dir.glob("*.png"))
+    images.extend(tablebank_fixtures_dir.glob("*.jpg"))
+    return images
 
 
 @pytest.fixture
