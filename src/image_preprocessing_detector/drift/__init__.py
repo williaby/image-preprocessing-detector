@@ -519,6 +519,7 @@ class DistributionTracker:
             feature_type = FeatureType(feature_name)
             bounds = FEATURE_BOUNDS.get(feature_type)
         except ValueError:
+            # Feature name is not a known FeatureType enum value; use unbounded histogram
             pass
 
         return compute_histogram(values, num_bins, bounds)

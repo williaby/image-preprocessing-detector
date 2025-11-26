@@ -236,7 +236,7 @@ class AlertDispatcherProtocol(Protocol):
 
     def dispatch(self, alert: DriftAlert) -> bool:
         """Dispatch an alert. Returns True if successful."""
-        ...
+        pass  # Protocol method stub
 
 
 # ============================================================================

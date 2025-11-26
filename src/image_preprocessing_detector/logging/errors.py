@@ -563,6 +563,7 @@ class SentryIntegration:
                 level=level,
             )
         except Exception:
+            # Sentry SDK may not be installed or configured; silently ignore
             pass
 
     @classmethod
@@ -581,6 +582,7 @@ class SentryIntegration:
 
             sentry_sdk.set_user({"id": user_id, **extra})
         except Exception:
+            # Sentry SDK may not be installed or configured; silently ignore
             pass
 
 
