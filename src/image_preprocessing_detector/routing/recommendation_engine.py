@@ -17,6 +17,29 @@ from image_preprocessing_detector.schema import (
 )
 
 
+def _build_structured_content_rationale(has_tables: bool, has_figures: bool) -> str:
+    """Build rationale string for structured content routing."""
+    content_types = []
+    if has_tables:
+        content_types.append("tables")
+    if has_figures:
+        content_types.append("figures")
+    return (
+        f"Document contains {' and '.join(content_types)}. "
+        f"Vision-based structured extraction recommended."
+    )
+
+
+def _build_advanced_ocr_rationale(pre_ocr_risk: float, has_handwriting: bool) -> str:
+    """Build rationale string for advanced OCR routing."""
+    reasons = []
+    if pre_ocr_risk > 0.6:
+        reasons.append(f"high OCR risk score ({pre_ocr_risk:.2f})")
+    if has_handwriting:
+        reasons.append("handwriting detected")
+    return f"Advanced OCR required due to: {', '.join(reasons)}."
+
+
 def recommend_ocr_routing(
     pdf_type: PDFType | None,
     dqs: DocumentQualityScore,
@@ -77,28 +100,13 @@ def recommend_ocr_routing(
 
     # Decision Tree Implementation
     # Rule 1: Documents with tables or figures → vision-based structured extraction
-    # (Evaluated first as it takes precedence over other rules)
     if has_tables or has_figures:
-        content_types = []
-        if has_tables:
-            content_types.append("tables")
-        if has_figures:
-            content_types.append("figures")
-        rationale = (
-            f"Document contains {' and '.join(content_types)}. "
-            f"Vision-based structured extraction recommended."
-        )
+        rationale = _build_structured_content_rationale(has_tables, has_figures)
         return OCRRoutingRecommendation.VISION_STRUCTURED, rationale
 
     # Rule 2: High-risk documents or handwriting → advanced OCR
-    # (Evaluated before born-digital fast path to ensure safety)
     if pre_ocr_risk > 0.6 or has_handwriting:
-        reasons = []
-        if pre_ocr_risk > 0.6:
-            reasons.append(f"high OCR risk score ({pre_ocr_risk:.2f})")
-        if has_handwriting:
-            reasons.append("handwriting detected")
-        rationale = f"Advanced OCR required due to: {', '.join(reasons)}."
+        rationale = _build_advanced_ocr_rationale(pre_ocr_risk, has_handwriting)
         return OCRRoutingRecommendation.OCR_ADVANCED, rationale
 
     # Rule 3: Born-digital PDFs with good quality and simple layout → fast OCR

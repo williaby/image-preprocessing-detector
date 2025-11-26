@@ -262,8 +262,8 @@ class TestJsonSchemaStructure:
 
         assert json_dict["type"] == "blur"
         assert json_dict["severity"] == "high"
-        assert json_dict["confidence"] == 0.9
-        assert json_dict["metrics"]["score"] == 80.0
+        assert json_dict["confidence"] == pytest.approx(0.9)
+        assert json_dict["metrics"]["score"] == pytest.approx(80.0)
 
     def test_planned_action_structure(self) -> None:
         """Test planned_action has correct structure."""
@@ -276,8 +276,8 @@ class TestJsonSchemaStructure:
         json_dict = json.loads(action.model_dump_json())
 
         assert json_dict["action"] == "deskew"
-        assert json_dict["params"]["angle"] == 3.5
-        assert json_dict["confidence"] == 0.85
+        assert json_dict["params"]["angle"] == pytest.approx(3.5)
+        assert json_dict["confidence"] == pytest.approx(0.85)
         assert json_dict["reason"] == "Skew detected"
 
     def test_document_element_bbox_format(self) -> None:
@@ -319,10 +319,10 @@ class TestFullDocumentSnapshot:
         json_dict = json.loads(metadata.model_dump_json())
 
         assert json_dict["pdf_type"] == "hybrid"
-        assert json_dict["pre_ocr_risk"] == 0.35
+        assert json_dict["pre_ocr_risk"] == pytest.approx(0.35)
         assert "dqs" in json_dict
-        assert json_dict["dqs"]["degradation_score"] == 0.72
-        assert json_dict["dqs"]["structural_complexity_score"] == 0.45
+        assert json_dict["dqs"]["degradation_score"] == pytest.approx(0.72)
+        assert json_dict["dqs"]["structural_complexity_score"] == pytest.approx(0.45)
         assert json_dict["ocr_routing_recommendation"] == "ocr_advanced"
 
     def test_upscaling_metadata_structure(self) -> None:

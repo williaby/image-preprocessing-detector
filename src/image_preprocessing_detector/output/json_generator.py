@@ -5,6 +5,7 @@ using Pydantic schema validation.
 """
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -235,7 +236,7 @@ class MetadataBuilder:
         self.document_id = document_id
         self.file_name = file_name
         self.pages: list[PageMetadata] = []
-        self.upscaling_metadata: dict | None = None
+        self.upscaling_metadata: dict[str, Any] | None = None
 
         logger.info(
             "Metadata builder initialized",
@@ -243,7 +244,7 @@ class MetadataBuilder:
             file_name=file_name,
         )
 
-    def set_upscaling_metadata(self, upscaling_result: dict) -> None:
+    def set_upscaling_metadata(self, upscaling_result: dict[str, Any]) -> None:
         """Set PDF upscaling metadata (Phase 1B).
 
         Args:
@@ -260,7 +261,7 @@ class MetadataBuilder:
         self,
         page_number: int,
         page_data: PageImage | tuple[np.ndarray, ImageMetadata],
-        text_result: TextDetectionResult | None = None,  # noqa: ARG002
+        _text_result: TextDetectionResult | None = None,  # Reserved for future use
         skew_result: SkewDetectionResult | None = None,
         blur_result: BlurDetectionResult | None = None,
         contrast_result: ContrastDetectionResult | None = None,
@@ -277,7 +278,7 @@ class MetadataBuilder:
         Args:
             page_number: Zero-based page index
             page_data: PageImage from PDF or (image, metadata) tuple from direct image
-            text_result: Text detection result (optional)
+            _text_result: Text detection result (reserved for future use)
             skew_result: Skew detection result (optional)
             blur_result: Blur detection result (optional)
             contrast_result: Contrast detection result (optional)

@@ -49,10 +49,11 @@ class TestBinarizationMLIQAIntegration:
         img = np.ones((600, 800, 3), dtype=np.uint8) * 128  # Gray background
 
         # Add "text-like" regions with poor binarization (gray, not crisp)
+        rng = np.random.default_rng(42)
         for y in range(50, 550, 30):
             for x in range(50, 750, 50):
                 # Poor binarization: text is gray (70-90) instead of black (0)
-                img[y : y + 20, x : x + 40] = np.random.randint(
+                img[y : y + 20, x : x + 40] = rng.integers(
                     70, 90, (20, 40, 3), dtype=np.uint8
                 )
 
@@ -68,7 +69,7 @@ class TestBinarizationMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img, classical_scores
         )
 
@@ -79,10 +80,7 @@ class TestBinarizationMLIQAIntegration:
 
         # Note: ML model doesn't predict binarization, so we can't compare
         # We just verify the pipeline completes successfully
-
-        # Log results for analysis
-        if teacher_scores:
-            pass
+        # teacher_scores available for debugging if needed
 
     def test_binarization_no_discrepancy_escalation(
         self, ml_detector: MLIQADetector | None
@@ -104,9 +102,8 @@ class TestBinarizationMLIQAIntegration:
             pytest.skip("ML detector not available")
 
         # Create image with poor binarization (too many gray levels)
-        img = np.random.randint(
-            50, 200, (600, 800, 3), dtype=np.uint8
-        )  # Many gray levels
+        rng = np.random.default_rng(42)
+        img = rng.integers(50, 200, (600, 800, 3), dtype=np.uint8)  # Many gray levels
 
         # Run classical binarization quality detector
         binarization_result = detect_binarization_quality(img)
@@ -120,7 +117,7 @@ class TestBinarizationMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img, classical_scores
         )
 
@@ -134,7 +131,7 @@ class TestBinarizationMLIQAIntegration:
         )
 
         # Verify binarization discrepancy is 0.0 (ML doesn't predict binarization)
-        assert discrepancy.binarization_discrepancy == 0.0, (
+        assert discrepancy.binarization_discrepancy == pytest.approx(0.0), (
             "Binarization discrepancy should be 0.0 since ML model doesn't predict binarization"
         )
 
@@ -149,9 +146,4 @@ class TestBinarizationMLIQAIntegration:
             assert "binarization" not in decision.reason.lower(), (
                 "Escalation should not be due to binarization (ML doesn't predict it)"
             )
-        else:
-            pass
-
-        # Log results
-        if teacher_scores:
-            pass
+        # teacher_scores available for debugging if needed

@@ -313,7 +313,8 @@ def compute_class_weights(
 
     for head_name, head_labels in labels.items():
         # Count occurrences of each class
-        unique, counts = torch.unique(head_labels, return_counts=True)
+        # dim=None means flatten tensor before finding unique values
+        unique, counts = torch.unique(head_labels, return_counts=True, dim=None)
 
         # Compute inverse frequency weights
         total = counts.sum()

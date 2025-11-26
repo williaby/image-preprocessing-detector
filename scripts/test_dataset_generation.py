@@ -49,8 +49,7 @@ def main():
     )
 
     try:
-        # nosec B603 - hardcoded uv command with controlled arguments
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)  # nosec B603 - hardcoded uv command with controlled arguments
     except subprocess.CalledProcessError as exc:
         print(f"\n❌ Test dataset generation failed: {exc}")
         return

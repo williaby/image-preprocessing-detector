@@ -12,6 +12,124 @@ import fitz  # PyMuPDF  # type: ignore[import-untyped]
 logger = logging.getLogger(__name__)
 
 
+def _analyze_single_image(
+    doc: Any, page: Any, img: tuple, img_index: int, page_num: int
+) -> tuple[float, float] | None:
+    """Analyze a single image to extract DPI values.
+
+    Args:
+        doc: PyMuPDF document
+        page: Page containing the image
+        img: Image info tuple from get_images
+        img_index: Image index on page
+        page_num: Page number (0-indexed)
+
+    Returns:
+        Tuple of (width_dpi, height_dpi) or None if analysis fails
+    """
+    try:
+        xref = img[0]
+        pix = fitz.Pixmap(doc, xref)
+        img_width = pix.width
+        img_height = pix.height
+
+        img_bbox_result = page.get_image_bbox(img, transform=False)
+        img_bbox: fitz.Rect = img_bbox_result  # pyright: ignore[reportAssignmentType]
+
+        bbox_width_inches = (img_bbox.x1 - img_bbox.x0) / 72.0
+        bbox_height_inches = (img_bbox.y1 - img_bbox.y0) / 72.0
+
+        del pix  # Release pixmap memory explicitly
+
+    except Exception as e:
+        logger.warning(f"Error analyzing image {img_index} on page {page_num + 1}: {e}")
+        return None
+    else:
+        if bbox_width_inches <= 0 or bbox_height_inches <= 0:
+            return None
+        dpi_width = img_width / bbox_width_inches
+        dpi_height = img_height / bbox_height_inches
+        return (dpi_width, dpi_height)
+
+
+def _build_empty_result() -> dict[str, Any]:
+    """Build result for PDFs with no images.
+
+    Returns:
+        Empty result dictionary
+    """
+    return {
+        "needs_upscaling": False,
+        "min_dpi": None,
+        "avg_dpi": None,
+        "max_dpi": None,
+        "image_count": 0,
+        "low_res_image_count": 0,
+        "details": [],
+    }
+
+
+def _calculate_page_stats(
+    page_dpi_values: list[tuple[float, float]], page_num: int
+) -> dict[str, Any] | None:
+    """Calculate statistics for a single page.
+
+    Args:
+        page_dpi_values: List of (width_dpi, height_dpi) tuples for page
+        page_num: Page number (0-indexed)
+
+    Returns:
+        Page statistics dict or None if no images
+    """
+    if not page_dpi_values:
+        return None
+
+    page_min_dpi = min(min(dpi) for dpi in page_dpi_values)
+    page_avg_dpi = sum(sum(dpi) for dpi in page_dpi_values) / (len(page_dpi_values) * 2)
+    page_max_dpi = max(max(dpi) for dpi in page_dpi_values)
+
+    return {
+        "page_number": page_num + 1,
+        "image_count": len(page_dpi_values),
+        "min_dpi": round(page_min_dpi, 2),
+        "avg_dpi": round(page_avg_dpi, 2),
+        "max_dpi": round(page_max_dpi, 2),
+    }
+
+
+def _process_page_images(
+    doc: Any,
+    page: Any,
+    page_num: int,
+    image_list: list,
+    min_dpi_threshold: int,
+) -> tuple[list[tuple[float, float]], int]:
+    """Process all images on a single page.
+
+    Args:
+        doc: PyMuPDF document
+        page: Page object
+        page_num: Page number (0-indexed)
+        image_list: List of images on the page
+        min_dpi_threshold: Minimum DPI threshold for low-res detection
+
+    Returns:
+        Tuple of (dpi_values list, low_res_count)
+    """
+    page_dpi_values: list[tuple[float, float]] = []
+    low_res_count = 0
+
+    for img_index, img in enumerate(image_list):
+        dpi_result = _analyze_single_image(doc, page, img, img_index, page_num)
+        if dpi_result:
+            page_dpi_values.append(dpi_result)
+            min_img_dpi = min(dpi_result)
+            if min_img_dpi < min_dpi_threshold:
+                low_res_count += 1
+
+    return page_dpi_values, low_res_count
+
+
 class PDFResolutionAnalyzer:
     """Analyzes PDF resolution to determine if upscaling is needed."""
 
@@ -65,89 +183,30 @@ class PDFResolutionAnalyzer:
 
             for page_num in range(len(doc)):
                 page = doc[page_num]
-                page_dpi_values: list[tuple[float, float]] = []
 
                 # Get all images on the page
                 # #CRITICAL: PyMuPDF API: get_images(full=True) required for complete image info
                 # #VERIFY: Without full=True, get_image_bbox may fail
                 image_list = page.get_images(full=True)
 
-                for img_index, img in enumerate(image_list):
-                    try:
-                        # Extract image XREF (cross-reference)
-                        xref = img[0]
+                # Process all images on this page using helper
+                page_dpi_values, page_low_res = _process_page_images(
+                    doc, page, page_num, image_list, self.min_dpi_threshold
+                )
+                dpi_values.extend(page_dpi_values)
+                low_res_count += page_low_res
 
-                        # Get image properties
-                        # #ASSUME: Image Metadata: PyMuPDF provides accurate image dimensions
-                        # #VERIFY: Check with various PDF types and image formats
-                        pix = fitz.Pixmap(doc, xref)
-
-                        # Get image dimensions
-                        img_width = pix.width
-                        img_height = pix.height
-
-                        # Get image bbox on page (in points, 72 points = 1 inch)
-                        img_bbox = page.get_image_bbox(img)
-
-                        # Calculate DPI (dots per inch)
-                        # bbox dimensions are in points (1/72 inch)
-                        bbox_width_inches = (img_bbox.x1 - img_bbox.x0) / 72.0
-                        bbox_height_inches = (img_bbox.y1 - img_bbox.y0) / 72.0
-
-                        # #EDGE: Division by Zero: Empty bounding boxes may have zero dimensions
-                        # #VERIFY: Skip images with invalid dimensions
-                        if bbox_width_inches > 0 and bbox_height_inches > 0:
-                            dpi_width = img_width / bbox_width_inches
-                            dpi_height = img_height / bbox_height_inches
-
-                            dpi_values.append((dpi_width, dpi_height))
-                            page_dpi_values.append((dpi_width, dpi_height))
-
-                            # Check if low resolution
-                            min_img_dpi = min(dpi_width, dpi_height)
-                            if min_img_dpi < self.min_dpi_threshold:
-                                low_res_count += 1
-
-                        pix = None  # Release memory
-
-                    except Exception as e:
-                        logger.warning(
-                            f"Error analyzing image {img_index} on page {page_num + 1}: {e}"
-                        )
-                        continue
-
-                # Store page-level details
-                if page_dpi_values:
-                    page_min_dpi = min(min(dpi) for dpi in page_dpi_values)
-                    page_avg_dpi = sum(sum(dpi) for dpi in page_dpi_values) / (
-                        len(page_dpi_values) * 2
-                    )
-                    page_max_dpi = max(max(dpi) for dpi in page_dpi_values)
-
-                    page_details.append(
-                        {
-                            "page_number": page_num + 1,
-                            "image_count": len(page_dpi_values),
-                            "min_dpi": round(page_min_dpi, 2),
-                            "avg_dpi": round(page_avg_dpi, 2),
-                            "max_dpi": round(page_max_dpi, 2),
-                        }
-                    )
+                # Store page-level details using helper
+                page_stats = _calculate_page_stats(page_dpi_values, page_num)
+                if page_stats:
+                    page_details.append(page_stats)
 
             doc.close()
 
             # Calculate overall statistics
             if not dpi_values:
                 logger.warning(f"No images found in PDF: {pdf_path}")
-                return {
-                    "needs_upscaling": False,
-                    "min_dpi": None,
-                    "avg_dpi": None,
-                    "max_dpi": None,
-                    "image_count": 0,
-                    "low_res_image_count": 0,
-                    "details": [],
-                }
+                return _build_empty_result()
 
             # Flatten DPI values (width and height)
             all_dpi_flat = [dpi for pair in dpi_values for dpi in pair]

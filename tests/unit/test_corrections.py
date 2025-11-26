@@ -25,16 +25,16 @@ class TestDeskewCorrector:
         """Test DeskewCorrector initialization with defaults."""
         corrector = DeskewCorrector()
 
-        assert corrector.min_angle == 0.5
-        assert corrector.max_angle == 45.0
+        assert corrector.min_angle == pytest.approx(0.5)
+        assert corrector.max_angle == pytest.approx(45.0)
         assert corrector.border_value == 255
 
     def test_init_custom_params(self) -> None:
         """Test DeskewCorrector initialization with custom parameters."""
         corrector = DeskewCorrector(min_angle=1.0, max_angle=30.0, border_value=128)
 
-        assert corrector.min_angle == 1.0
-        assert corrector.max_angle == 30.0
+        assert corrector.min_angle == pytest.approx(1.0)
+        assert corrector.max_angle == pytest.approx(30.0)
         assert corrector.border_value == 128
 
     def test_correct_small_angle_skipped(self) -> None:
@@ -82,8 +82,8 @@ class TestDeskewCorrector:
 
         assert result.applied is True
         assert result.skipped_reason is None
-        assert result.parameters["angle"] == 10.0
-        assert result.parameters["confidence"] == 0.9
+        assert result.parameters["angle"] == pytest.approx(10.0)
+        assert result.parameters["confidence"] == pytest.approx(0.9)
         # Image dimensions should change due to rotation
         assert result.corrected_image.shape != img.shape
 
@@ -120,9 +120,9 @@ class TestContrastEnhancer:
         """Test ContrastEnhancer initialization with defaults."""
         enhancer = ContrastEnhancer()
 
-        assert enhancer.clip_limit == 2.0
+        assert enhancer.clip_limit == pytest.approx(2.0)
         assert enhancer.tile_grid_size == (8, 8)
-        assert enhancer.min_score == 0.4
+        assert enhancer.min_score == pytest.approx(0.4)
 
     def test_init_custom_params(self) -> None:
         """Test ContrastEnhancer initialization with custom parameters."""
@@ -130,9 +130,9 @@ class TestContrastEnhancer:
             clip_limit=3.0, tile_grid_size=(16, 16), min_score=0.5
         )
 
-        assert enhancer.clip_limit == 3.0
+        assert enhancer.clip_limit == pytest.approx(3.0)
         assert enhancer.tile_grid_size == (16, 16)
-        assert enhancer.min_score == 0.5
+        assert enhancer.min_score == pytest.approx(0.5)
 
     def test_correct_good_contrast_skipped(self) -> None:
         """Test enhancement skipped for good contrast."""
@@ -160,7 +160,7 @@ class TestContrastEnhancer:
 
         assert result.applied is True
         assert result.skipped_reason is None
-        assert result.parameters["score"] == 0.2
+        assert result.parameters["score"] == pytest.approx(0.2)
         assert result.parameters["severity"] == "high"
         # Image should have better contrast
         assert result.corrected_image.std() >= img.std()
@@ -172,11 +172,13 @@ class TestContrastEnhancer:
 
         # Critical severity
         result_critical = enhancer.correct(img, score=0.15, severity=Severity.CRITICAL)
-        assert result_critical.parameters["clip_limit"] == 4.0  # 2.0 * 2.0
+        assert result_critical.parameters["clip_limit"] == pytest.approx(
+            4.0
+        )  # 2.0 * 2.0
 
         # Low severity
         result_low = enhancer.correct(img, score=0.35, severity=Severity.LOW)
-        assert result_low.parameters["clip_limit"] == 1.0  # 2.0 * 0.5
+        assert result_low.parameters["clip_limit"] == pytest.approx(1.0)  # 2.0 * 0.5
 
     def test_correct_empty_image_raises(self) -> None:
         """Test enhancement raises ValueError for empty image."""
@@ -193,10 +195,10 @@ class TestSharpener:
         """Test Sharpener initialization with defaults."""
         sharpener = Sharpener()
 
-        assert sharpener.amount == 1.0
+        assert sharpener.amount == pytest.approx(1.0)
         assert sharpener.kernel_size == 5
-        assert sharpener.sigma == 1.0
-        assert sharpener.min_blur_score == 200.0
+        assert sharpener.sigma == pytest.approx(1.0)
+        assert sharpener.min_blur_score == pytest.approx(200.0)
 
     def test_init_custom_params(self) -> None:
         """Test Sharpener initialization with custom parameters."""
@@ -204,10 +206,10 @@ class TestSharpener:
             amount=1.5, kernel_size=7, sigma=1.5, min_blur_score=150.0
         )
 
-        assert sharpener.amount == 1.5
+        assert sharpener.amount == pytest.approx(1.5)
         assert sharpener.kernel_size == 7
-        assert sharpener.sigma == 1.5
-        assert sharpener.min_blur_score == 150.0
+        assert sharpener.sigma == pytest.approx(1.5)
+        assert sharpener.min_blur_score == pytest.approx(150.0)
 
     def test_init_even_kernel_adjusted(self) -> None:
         """Test even kernel size is adjusted to odd."""
@@ -249,7 +251,7 @@ class TestSharpener:
 
         assert result.applied is True
         assert result.skipped_reason is None
-        assert result.parameters["blur_score"] == 80.0
+        assert result.parameters["blur_score"] == pytest.approx(80.0)
         assert result.parameters["severity"] == "high"
 
     def test_correct_adjusts_amount_by_severity(self) -> None:
@@ -261,11 +263,11 @@ class TestSharpener:
         result_critical = sharpener.correct(
             img, blur_score=30.0, severity=Severity.CRITICAL
         )
-        assert result_critical.parameters["amount"] == 1.5  # 1.0 * 1.5
+        assert result_critical.parameters["amount"] == pytest.approx(1.5)  # 1.0 * 1.5
 
         # Low severity
         result_low = sharpener.correct(img, blur_score=150.0, severity=Severity.LOW)
-        assert result_low.parameters["amount"] == 0.5  # 1.0 * 0.5
+        assert result_low.parameters["amount"] == pytest.approx(0.5)  # 1.0 * 0.5
 
     def test_correct_caps_amount_at_two(self) -> None:
         """Test sharpening amount is capped at 2.0."""
@@ -274,7 +276,7 @@ class TestSharpener:
 
         # Critical severity would make it 3.0 (2.0 * 1.5), but should cap at 2.0
         result = sharpener.correct(img, blur_score=30.0, severity=Severity.CRITICAL)
-        assert result.parameters["amount"] == 2.0  # Capped
+        assert result.parameters["amount"] == pytest.approx(2.0)  # Capped
 
     def test_correct_empty_image_raises(self) -> None:
         """Test sharpening raises ValueError for empty image."""
@@ -326,7 +328,7 @@ class TestCorrectionResult:
         )
 
         assert result.applied is True
-        assert result.parameters["angle"] == 5.0
+        assert result.parameters["angle"] == pytest.approx(5.0)
         assert result.skipped_reason is None
         assert result.corrected_image.shape == (100, 100, 3)
 

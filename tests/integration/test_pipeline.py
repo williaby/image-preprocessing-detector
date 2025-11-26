@@ -72,7 +72,7 @@ class TestEndToEndPipeline:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                     skew_result=skew_result,
                     blur_result=blur_result,
                     contrast_result=contrast_result,
@@ -129,7 +129,7 @@ class TestEndToEndPipeline:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                     skew_result=skew_result,
                     blur_result=blur_result,
                     contrast_result=contrast_result,
@@ -209,7 +209,7 @@ class TestEndToEndPipeline:
             builder.add_page(
                 page_number=0,
                 page_data=(image, metadata),
-                text_result=text_result,
+                _text_result=text_result,
                 skew_result=skew_result,
                 blur_result=blur_result,
                 contrast_result=contrast_result,
@@ -288,7 +288,7 @@ class TestEndToEndPipeline:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                     skew_result=skew_result,
                     blur_result=blur_result,
                     contrast_result=contrast_result,
@@ -358,7 +358,7 @@ class TestPipelineErrorHandling:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                     skew_result=skew_result,
                 )
 
@@ -432,7 +432,7 @@ class TestPhase1Completion:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                     skew_result=skew_result,
                     blur_result=blur_result,
                     contrast_result=contrast_result,
@@ -519,7 +519,7 @@ class TestPhase1Completion:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                 )
 
             # Build metadata
@@ -593,7 +593,7 @@ class TestPhase1Completion:
                 builder.add_page(
                     page_number=page_idx,
                     page_data=page_image,
-                    text_result=text_result,
+                    _text_result=text_result,
                 )
 
             # Build metadata

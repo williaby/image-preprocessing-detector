@@ -154,7 +154,7 @@ def count_files(path: Path, pattern: str = "*") -> int:
 
 
 def validate_dataset(
-    dataset_name: str, config: dict, data_root: Path
+    _dataset_name: str, config: dict, data_root: Path
 ) -> tuple[str, dict]:
     """
     Validate a single dataset.
@@ -227,6 +227,39 @@ def validate_dataset(
     }
 
 
+def _update_summary_for_status(
+    results: dict, status: str, details: dict, config: dict, name: str
+) -> None:
+    """Update summary counters based on dataset status."""
+    status_map = {
+        "found": "found",
+        "missing": "missing",
+        "empty": "empty",
+        "symlink_broken": "broken",
+    }
+    if status in status_map:
+        results["summary"][status_map[status]] += 1
+        if status == "found":
+            results["summary"]["total_size"] += details.get("size", 0)
+        elif status in ("missing", "symlink_broken") and config["required"]:
+            results["required_missing"].append(name)
+
+
+def _validate_dataset_category(
+    category: str, datasets: dict, data_root: Path, results: dict
+) -> None:
+    """Validate all datasets in a category and update results."""
+    for name, config in datasets.items():
+        results["summary"]["total"] += 1
+        status, details = validate_dataset(name, config, data_root)
+        results[category][name] = {
+            "status": status,
+            "details": details,
+            "description": config["description"],
+        }
+        _update_summary_for_status(results, status, details, config, name)
+
+
 def validate_all_datasets(data_root: Path) -> dict:
     """Validate all expected datasets."""
     results = {
@@ -243,55 +276,48 @@ def validate_all_datasets(data_root: Path) -> dict:
         "required_missing": [],
     }
 
-    # Validate benchmark datasets
-    for name, config in EXPECTED_DATASETS["benchmarks"].items():
-        results["summary"]["total"] += 1
-        status, details = validate_dataset(name, config, data_root)
-        results["benchmarks"][name] = {
-            "status": status,
-            "details": details,
-            "description": config["description"],
-        }
-
-        if status == "found":
-            results["summary"]["found"] += 1
-            results["summary"]["total_size"] += details.get("size", 0)
-        elif status == "missing":
-            results["summary"]["missing"] += 1
-            if config["required"]:
-                results["required_missing"].append(name)
-        elif status == "empty":
-            results["summary"]["empty"] += 1
-        elif status == "symlink_broken":
-            results["summary"]["broken"] += 1
-            if config["required"]:
-                results["required_missing"].append(name)
-
-    # Validate raw datasets
-    for name, config in EXPECTED_DATASETS["raw"].items():
-        results["summary"]["total"] += 1
-        status, details = validate_dataset(name, config, data_root)
-        results["raw"][name] = {
-            "status": status,
-            "details": details,
-            "description": config["description"],
-        }
-
-        if status == "found":
-            results["summary"]["found"] += 1
-            results["summary"]["total_size"] += details.get("size", 0)
-        elif status == "missing":
-            results["summary"]["missing"] += 1
-            if config["required"]:
-                results["required_missing"].append(name)
-        elif status == "empty":
-            results["summary"]["empty"] += 1
-        elif status == "symlink_broken":
-            results["summary"]["broken"] += 1
-            if config["required"]:
-                results["required_missing"].append(name)
+    _validate_dataset_category(
+        "benchmarks", EXPECTED_DATASETS["benchmarks"], data_root, results
+    )
+    _validate_dataset_category("raw", EXPECTED_DATASETS["raw"], data_root, results)
 
     return results
+
+
+def _get_status_display(
+    status: str, details: dict, include_type: bool = True
+) -> tuple[str, str, str]:
+    """Get display info for a dataset status."""
+    status_info = {
+        "found": (
+            "✅",
+            f" ({details.get('size_human', '')}, {details.get('file_count', 0)} files)",
+            f" [{details.get('type', '')}]" if include_type else "",
+        ),
+        "missing": ("❌", "", ""),
+        "empty": ("⚠️", " (empty directory)", ""),
+        "symlink_broken": ("🔗", " (broken symlink)", ""),
+    }
+    return status_info.get(status, ("❓", "", ""))
+
+
+def _print_dataset_entry(
+    name: str, info: dict, show_required: bool = True, show_type: bool = True
+) -> None:
+    """Print a single dataset entry."""
+    status = info["status"]
+    details = info["details"]
+    emoji, size_info, type_info = _get_status_display(status, details, show_type)
+
+    required_marker = " [REQUIRED]" if show_required and details.get("required") else ""
+    phase_info = f" [Phase {details.get('phase', '?')}]"
+
+    print(
+        f"  {emoji} {name:<20} {status:<15}{size_info}{type_info if show_type else ''}{phase_info}{required_marker}"
+    )
+    print(f"     {info['description']}")
+    if status == "found" and details.get("type") == "symlink":
+        print(f"     → {details.get('target', '')}")
 
 
 def print_validation_report(results: dict):
@@ -322,64 +348,13 @@ def print_validation_report(results: dict):
     print("\n📚 BENCHMARK DATASETS")
     print("-" * 80)
     for name, info in results["benchmarks"].items():
-        status = info["status"]
-        details = info["details"]
-
-        if status == "found":
-            emoji = "✅"
-            size_info = f" ({details['size_human']}, {details['file_count']} files)"
-            type_info = f" [{details['type']}]"
-        elif status == "missing":
-            emoji = "❌"
-            size_info = ""
-            type_info = ""
-        elif status == "empty":
-            emoji = "⚠️"
-            size_info = " (empty directory)"
-            type_info = ""
-        elif status == "symlink_broken":
-            emoji = "🔗"
-            size_info = " (broken symlink)"
-            type_info = ""
-        else:
-            emoji = "❓"
-            size_info = ""
-            type_info = ""
-
-        required_marker = " [REQUIRED]" if details["required"] else ""
-        phase_info = f" [Phase {details['phase']}]"
-
-        print(
-            f"  {emoji} {name:<20} {status:<15}{size_info}{type_info}{phase_info}{required_marker}"
-        )
-        print(f"     {info['description']}")
-        if status == "found" and details["type"] == "symlink":
-            print(f"     → {details['target']}")
+        _print_dataset_entry(name, info, show_required=True, show_type=True)
 
     # Raw datasets
     print("\n📁 RAW DATASETS")
     print("-" * 80)
     for name, info in results["raw"].items():
-        status = info["status"]
-        details = info["details"]
-
-        if status == "found":
-            emoji = "✅"
-            size_info = f" ({details['size_human']}, {details['file_count']} files)"
-        elif status == "missing":
-            emoji = "❌"
-            size_info = ""
-        elif status == "empty":
-            emoji = "⚠️"
-            size_info = " (empty directory)"
-        else:
-            emoji = "❓"
-            size_info = ""
-
-        phase_info = f" [Phase {details['phase']}]"
-
-        print(f"  {emoji} {name:<20} {status:<15}{size_info}{phase_info}")
-        print(f"     {info['description']}")
+        _print_dataset_entry(name, info, show_required=False, show_type=False)
 
     print("\n" + "=" * 80)
 

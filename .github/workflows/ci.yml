@@ -220,12 +220,16 @@ jobs:
 
       # Run comprehensive test suite using UV for faster execution
       # Python 3.14 is experimental - pyarrow doesn't support it yet (upstream issue)
+      - name: Create reports directory
+        run: mkdir -p reports
+
       - name: Run image processing test suite
         run: |
           echo "🧪 Running image quality assessment tests on Python ${{ matrix.python-version }}..."
           uv run pytest -v \
             --cov=src \
             --cov-report=xml:coverage.xml \
+            --cov-report=lcov:reports/lcov.info \
             --cov-report=term-missing \
             --cov-report=html:htmlcov \
             --junitxml=junit.xml \
@@ -237,7 +241,7 @@ jobs:
         # Python 3.14 is allowed to fail due to upstream dependency compatibility (pyarrow)
         continue-on-error: ${{ matrix.python-version == '3.14' }}
 
-      # Note: Coverage upload moved to dedicated codecov.yml workflow
+      # Note: Coverage upload moved to dedicated codecov.yml and qlty.yml workflows
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -246,6 +250,7 @@ jobs:
           path: |
             junit.xml
             coverage.xml
+            reports/lcov.info
             htmlcov/
 
   # Enhanced quality checks for image processing system

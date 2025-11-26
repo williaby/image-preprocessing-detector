@@ -71,7 +71,7 @@ class DistillationLoss(nn.Module):
             raise ValueError(f"Alpha must be in [0, 1], got {alpha}")
         if temperature <= 0:
             raise ValueError(f"Temperature must be > 0, got {temperature}")
-        if reduction not in ["mean", "sum", "none"]:
+        if reduction not in ("mean", "sum", "none"):
             raise ValueError(
                 f"Reduction must be 'mean', 'sum', or 'none', got {reduction}"
             )

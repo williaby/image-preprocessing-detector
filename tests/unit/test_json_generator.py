@@ -115,7 +115,7 @@ class TestMetadataBuilder:
         issue = page.detected_issues[0]
         assert issue.type.value == "skew"
         assert issue.severity.value == "medium"
-        assert issue.confidence == 0.85
+        assert issue.confidence == pytest.approx(0.85)
 
     def test_add_page_with_blur_detection(self) -> None:
         """Test adding page with blur detection results."""
@@ -205,7 +205,7 @@ class TestMetadataBuilder:
         assert len(page.transform_history) == 1
         transform = page.transform_history[0]
         assert transform.action == "deskew"
-        assert transform.params["angle"] == 3.5
+        assert transform.params["angle"] == pytest.approx(3.5)
 
     def test_add_multiple_pages(self) -> None:
         """Test adding multiple pages."""

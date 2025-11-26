@@ -19,6 +19,9 @@ from typing import Any, cast
 
 import yaml
 
+# Config file name constant to avoid duplication
+_DOCLAYOUT_YOLO_CONFIG = "doclayout_yolo.yaml"
+
 
 def _find_project_root() -> Path:
     """Find the project root directory by looking for pyproject.toml."""
@@ -65,7 +68,7 @@ def get_doclayout_yolo_config(
         'juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained'
     """
     project_root = _find_project_root()
-    config_path = project_root / "configs" / "models" / "doclayout_yolo.yaml"
+    config_path = project_root / "configs" / "models" / _DOCLAYOUT_YOLO_CONFIG
 
     full_config = _load_yaml_config(config_path)
 
@@ -91,7 +94,7 @@ def get_doclayout_yolo_common_config() -> dict[str, Any]:
         - training_defaults: Default training hyperparameters
     """
     project_root = _find_project_root()
-    config_path = project_root / "configs" / "models" / "doclayout_yolo.yaml"
+    config_path = project_root / "configs" / "models" / _DOCLAYOUT_YOLO_CONFIG
 
     full_config = _load_yaml_config(config_path)
     return cast(dict[str, Any], full_config["common"])
@@ -124,7 +127,7 @@ def list_available_doclayout_yolo_models() -> list[str]:
         ['docstructbench', 'd4la_scratch', 'd4la_pretrained']
     """
     project_root = _find_project_root()
-    config_path = project_root / "configs" / "models" / "doclayout_yolo.yaml"
+    config_path = project_root / "configs" / "models" / _DOCLAYOUT_YOLO_CONFIG
 
     full_config = _load_yaml_config(config_path)
     return list(full_config["models"].keys())

@@ -109,12 +109,18 @@ def test_reference_clean_has_zero_defects(iqa_labels: dict):
     """Test that reference_clean.png has all defect scores = 0.0."""
     ref_labels = iqa_labels["reference_clean.png"]
 
-    assert ref_labels["dmos"] == 0.0, "Reference should have DMOS = 0.0"
-    assert ref_labels["blur"] == 0.0, "Reference should have blur = 0.0"
-    assert ref_labels["noise"] == 0.0, "Reference should have noise = 0.0"
-    assert ref_labels["illumination"] == 0.0, "Reference should have illumination = 0.0"
-    assert ref_labels["artifacts"] == 0.0, "Reference should have artifacts = 0.0"
-    assert ref_labels["skew"] == 0.0, "Reference should have skew = 0.0"
+    assert ref_labels["dmos"] == pytest.approx(0.0), "Reference should have DMOS = 0.0"
+    assert ref_labels["blur"] == pytest.approx(0.0), "Reference should have blur = 0.0"
+    assert ref_labels["noise"] == pytest.approx(0.0), (
+        "Reference should have noise = 0.0"
+    )
+    assert ref_labels["illumination"] == pytest.approx(0.0), (
+        "Reference should have illumination = 0.0"
+    )
+    assert ref_labels["artifacts"] == pytest.approx(0.0), (
+        "Reference should have artifacts = 0.0"
+    )
+    assert ref_labels["skew"] == pytest.approx(0.0), "Reference should have skew = 0.0"
 
 
 @pytest.mark.integration

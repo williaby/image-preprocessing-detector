@@ -57,7 +57,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -70,7 +70,7 @@ jobs:
       - name: Generate checksums
         run: |
           cd dist
-          sha256sum * > SHA256SUMS
+          sha256sum ./* > SHA256SUMS
           cat SHA256SUMS
 
       - name: Extract version from tag
@@ -85,7 +85,7 @@ jobs:
           else
             VERSION="${GITHUB_REF#refs/tags/}"
           fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "📦 Release version: ${VERSION}"
 
       - name: Extract changelog for this version
@@ -150,14 +150,16 @@ jobs:
 
       - name: Release summary
         run: |
-          echo "## 🎉 Release ${{ steps.version.outputs.version }} Created!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📦 Artifacts" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          ls -lh dist/ >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔐 Checksums" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cat dist/SHA256SUMS >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🎉 Release ${{ steps.version.outputs.version }} Created!"
+            echo ""
+            echo "### 📦 Artifacts"
+            echo "\`\`\`"
+            ls -lh dist/
+            echo "\`\`\`"
+            echo ""
+            echo "### 🔐 Checksums"
+            echo "\`\`\`"
+            cat dist/SHA256SUMS
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"

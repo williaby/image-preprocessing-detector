@@ -33,7 +33,7 @@ class TestDetectedIssue:
             metrics={"laplacian_variance": 125.4},
         )
         assert issue.type == IssueType.BLUR
-        assert issue.confidence == 0.87
+        assert issue.confidence == pytest.approx(0.87)
         assert issue.severity == IssueSeverity.MEDIUM
 
     def test_confidence_validation(self) -> None:

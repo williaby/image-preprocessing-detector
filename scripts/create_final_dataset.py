@@ -29,6 +29,13 @@ from rich.console import Console
 from rich.progress import track
 from rich.table import Table
 
+from _path_security import (
+    PathValidationError,
+    validate_directory,
+    validate_input_path,
+    validate_output_path,
+)
+
 console = Console()
 
 # Quality issue types
@@ -50,8 +57,12 @@ def load_labels(label_path: Path) -> dict[str, Any]:
 
     Returns:
         Dictionary with labels and metadata
+
+    Raises:
+        PathValidationError: If path validation fails
     """
-    with open(label_path) as f:
+    validated_path = validate_input_path(label_path)
+    with open(validated_path) as f:
         return json.load(f)
 
 
@@ -205,10 +216,11 @@ def save_split(
     """Save dataset split to JSON file.
 
     Args:
-        output_dir: Output directory
+        output_dir: Output directory (must be validated before calling)
         split_name: Split name ("train", "val", or "test")
         samples: List of sample dictionaries
     """
+    # output_dir is already validated in main()
     split_file = output_dir / f"{split_name}_split.json"
 
     split_data = {
@@ -217,10 +229,14 @@ def save_split(
         "samples": samples,
     }
 
-    with open(split_file, "w") as f:
+    # Validate output path
+    validated_split_file = validate_output_path(split_file)
+    with open(validated_split_file, "w") as f:
         json.dump(split_data, f, indent=2)
 
-    console.print(f"[green]✅ Saved {split_name} split to {split_file}[/green]")
+    console.print(
+        f"[green]✅ Saved {split_name} split to {validated_split_file}[/green]"
+    )
 
 
 def calculate_label_distribution(samples: list[dict[str, Any]]) -> dict[str, Any]:
@@ -436,17 +452,26 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # Validate input directories
-    if not args.weak_supervision_dir.exists():
-        console.print(
-            f"[red]Error: Weak supervision directory not found: {args.weak_supervision_dir}[/red]"
-        )
+    # Validate input directories with path security
+    try:
+        validated_ws_dir = validate_directory(args.weak_supervision_dir)
+    except PathValidationError as e:
+        console.print(f"[red]Error: Invalid weak supervision directory: {e}[/red]")
         return
+
+    # Validate corrected labels dir if it exists
+    validated_corrected_dir = args.corrected_labels_dir
+    if args.corrected_labels_dir.exists():
+        try:
+            validated_corrected_dir = validate_directory(args.corrected_labels_dir)
+        except PathValidationError as e:
+            console.print(f"[red]Error: Invalid corrected labels directory: {e}[/red]")
+            return
 
     # Merge labels
     merged_labels = merge_labels(
-        args.weak_supervision_dir,
-        args.corrected_labels_dir,
+        validated_ws_dir,
+        validated_corrected_dir,
     )
 
     if not merged_labels:
@@ -504,10 +529,13 @@ def main() -> None:
     }
 
     metadata_file = args.output_dir / "dataset_metadata.json"
-    with open(metadata_file, "w") as f:
+    validated_metadata_file = validate_output_path(metadata_file)
+    with open(validated_metadata_file, "w") as f:
         json.dump(metadata, f, indent=2)
 
-    console.print(f"\n[green]✅ Saved dataset metadata to {metadata_file}[/green]")
+    console.print(
+        f"\n[green]✅ Saved dataset metadata to {validated_metadata_file}[/green]"
+    )
 
     # Success message
     console.print(

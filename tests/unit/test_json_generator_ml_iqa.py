@@ -10,6 +10,7 @@ from pathlib import Path
 import cv2
 import fitz  # PyMuPDF
 import numpy as np
+import pytest
 
 from image_preprocessing_detector.detection.iqa_ml import Device, MLIQAScores, ModelType
 from image_preprocessing_detector.ingestion.image_loader import ImageMetadata
@@ -78,11 +79,11 @@ class TestMetadataBuilderMLIQAIntegration:
             # Validate ml_iqa field is populated
             assert loaded.pages[0].ml_iqa is not None
             assert loaded.pages[0].ml_iqa["source"] == "student"
-            assert loaded.pages[0].ml_iqa["blur_score"] == 0.85
-            assert loaded.pages[0].ml_iqa["noise_score"] == 0.78
-            assert loaded.pages[0].ml_iqa["overall_quality"] == 0.85
+            assert loaded.pages[0].ml_iqa["blur_score"] == pytest.approx(0.85)
+            assert loaded.pages[0].ml_iqa["noise_score"] == pytest.approx(0.78)
+            assert loaded.pages[0].ml_iqa["overall_quality"] == pytest.approx(0.85)
             assert loaded.pages[0].ml_iqa["device"] == "cpu"
-            assert loaded.pages[0].ml_iqa["inference_time_ms"] == 89.5
+            assert loaded.pages[0].ml_iqa["inference_time_ms"] == pytest.approx(89.5)
 
             # Validate teacher_iqa is None
             assert loaded.pages[0].teacher_iqa is None
@@ -166,14 +167,14 @@ class TestMetadataBuilderMLIQAIntegration:
             # Student scores
             assert page.ml_iqa is not None
             assert page.ml_iqa["source"] == "student"
-            assert page.ml_iqa["overall_quality"] == 0.54
+            assert page.ml_iqa["overall_quality"] == pytest.approx(0.54)
 
             # Teacher scores with escalation reason
             assert page.teacher_iqa is not None
             assert page.teacher_iqa["source"] == "teacher"
-            assert page.teacher_iqa["overall_quality"] == 0.82
+            assert page.teacher_iqa["overall_quality"] == pytest.approx(0.82)
             assert page.teacher_iqa["escalation_reason"] == escalation_reason
-            assert page.teacher_iqa["inference_time_ms"] == 210.3
+            assert page.teacher_iqa["inference_time_ms"] == pytest.approx(210.3)
 
     def test_add_page_without_ml_iqa(self) -> None:
         """Test that add_page works when ML IQA scores are not provided."""
@@ -250,10 +251,10 @@ class TestMetadataBuilderMLIQAIntegration:
             ml_iqa = metadata.pages[0].ml_iqa
 
             # Validate precision (scores should be rounded to 4 decimal places)
-            assert ml_iqa["blur_score"] == 0.8512
-            assert ml_iqa["noise_score"] == 0.7891
-            assert ml_iqa["contrast_score"] == 0.8235
-            assert ml_iqa["overall_quality"] == 0.8497
+            assert ml_iqa["blur_score"] == pytest.approx(0.8512)
+            assert ml_iqa["noise_score"] == pytest.approx(0.7891)
+            assert ml_iqa["contrast_score"] == pytest.approx(0.8235)
+            assert ml_iqa["overall_quality"] == pytest.approx(0.8497)
 
             # Inference time should be rounded to 2 decimal places
-            assert ml_iqa["inference_time_ms"] == 15.35
+            assert ml_iqa["inference_time_ms"] == pytest.approx(15.35)

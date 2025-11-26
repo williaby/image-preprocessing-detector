@@ -27,8 +27,7 @@ from image_preprocessing_detector.ingestion.pdf_resolution import (
 
 logger = logging.getLogger(__name__)
 
-# DocumentRouter not yet implemented in this project - commenting out for Phase 1B
-# from image_preprocessing_detector.ingestion.router import DocumentRouter
+# TODO(phase1b): Import DocumentRouter when implemented
 
 
 @pytest.fixture
@@ -247,50 +246,7 @@ class TestPDFUpscaling:
         print("\n✓ High-res PDF correctly skipped upscaling")
 
 
-# Phase 1B: DocumentRouter not yet implemented - tests commented out
-# TODO: Uncomment when DocumentRouter is implemented in Phase 1C
-# class TestDocumentRouterIntegration:
-#     """Test integration with DocumentRouter."""
-#
-#     def test_router_automatically_upscales_low_res_pdf(self, low_res_pdf: Path) -> None:
-#         """Test that DocumentRouter automatically upscales low-res PDFs."""
-#         # #CRITICAL: Parser Registration: Router needs registered parsers to work
-#         # #VERIFY: This test may fail if no parsers are registered
-#
-#         # Create router with upscaling enabled
-#         settings = Settings(
-#             enable_pdf_upscaling=True,
-#             pdf_min_dpi=300,
-#             pdf_target_dpi=300,
-#         )
-#         router = DocumentRouter(settings=settings)
-#
-#         # Create document
-#         document = router.create_document(source_path=low_res_pdf)
-#
-#         # Verify metadata will be added (we can't fully test without parsers)
-#         assert document.format.value == "pdf", "Should detect PDF format"
-#
-#         print("\n✓ DocumentRouter integration:")
-#         print(f"  Document format: {document.format.value}")
-#         print(f"  Source path: {document.source_path}")
-#
-#     def test_router_respects_upscaling_config(self, low_res_pdf: Path) -> None:
-#         """Test that DocumentRouter respects upscaling configuration."""
-#         # Test with upscaling disabled
-#         settings = Settings(enable_pdf_upscaling=False)
-#         router = DocumentRouter(settings=settings)
-#
-#         analyzer = router.pdf_analyzer
-#         result = analyzer.analyze(low_res_pdf)
-#
-#         # Should still detect need for upscaling
-#         assert result.needs_upscaling is True, "Should detect low resolution"
-#
-#         # But should not create upscaled version
-#         assert result.upscaled_path is None, "Should NOT upscale when disabled"
-#
-#         print("\n✓ Router respects upscaling config (disabled)")
+# TODO(phase1c): Add TestDocumentRouterIntegration when DocumentRouter is implemented
 
 
 class TestValidationMetrics:

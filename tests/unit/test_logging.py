@@ -1,10 +1,9 @@
 """Tests for logging configuration."""
 
-# ruff: noqa: N803
-# Note: N803 (mock_basicConfig) follows unittest.mock naming convention
-
 import logging
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from image_preprocessing_detector.utils.log_config import (
     get_logger,
@@ -19,14 +18,14 @@ class TestSetupLogging:
     @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
     @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_default(
-        self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
+        self, mock_structlog_configure: MagicMock, mock_basic_config: MagicMock
     ) -> None:
         """Test setup_logging with default parameters."""
         setup_logging()
 
         # Verify basic config was called
-        assert mock_basicConfig.called
-        assert mock_basicConfig.call_args[1]["level"] == logging.INFO
+        assert mock_basic_config.called
+        assert mock_basic_config.call_args[1]["level"] == logging.INFO
 
         # Verify structlog was configured
         assert mock_structlog_configure.called
@@ -34,18 +33,18 @@ class TestSetupLogging:
     @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
     @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_debug_level(
-        self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
+        self, mock_structlog_configure: MagicMock, mock_basic_config: MagicMock
     ) -> None:
         """Test setup_logging with DEBUG level."""
         setup_logging(level="DEBUG")
 
         # Verify DEBUG level was set
-        assert mock_basicConfig.call_args[1]["level"] == logging.DEBUG
+        assert mock_basic_config.call_args[1]["level"] == logging.DEBUG
 
     @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
     @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_json_mode(
-        self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
+        self, mock_structlog_configure: MagicMock, mock_basic_config: MagicMock
     ) -> None:
         """Test setup_logging with JSON logging enabled."""
         setup_logging(json_logs=True)
@@ -61,7 +60,7 @@ class TestSetupLogging:
     @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
     @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_console_mode(
-        self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
+        self, mock_structlog_configure: MagicMock, mock_basic_config: MagicMock
     ) -> None:
         """Test setup_logging with console logging (default)."""
         setup_logging(json_logs=False)
@@ -77,13 +76,13 @@ class TestSetupLogging:
     @patch("image_preprocessing_detector.utils.log_config.logging.basicConfig")
     @patch("image_preprocessing_detector.utils.log_config.structlog.configure")
     def test_setup_logging_no_timestamp(
-        self, mock_structlog_configure: MagicMock, mock_basicConfig: MagicMock
+        self, mock_structlog_configure: MagicMock, mock_basic_config: MagicMock
     ) -> None:
         """Test setup_logging without timestamps."""
         setup_logging(include_timestamp=False)
 
         # Verify RichHandler was configured without timestamps
-        assert mock_basicConfig.called
+        assert mock_basic_config.called
 
 
 class TestGetLogger:
@@ -121,7 +120,7 @@ class TestLogPerformance:
 
         assert call_args[0][0] == "performance"
         assert call_args[1]["operation"] == "test_operation"
-        assert call_args[1]["duration_ms"] == 123.45
+        assert call_args[1]["duration_ms"] == pytest.approx(123.45)
         assert call_args[1]["success"] is True
         assert call_args[1]["extra_field"] == "value"
 
@@ -150,4 +149,6 @@ class TestLogPerformance:
 
         # Verify duration was rounded
         call_args = mock_logger.info.call_args
-        assert call_args[1]["duration_ms"] == 123.46  # Rounded to 2 decimals
+        assert call_args[1]["duration_ms"] == pytest.approx(
+            123.46
+        )  # Rounded to 2 decimals

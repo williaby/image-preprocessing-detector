@@ -69,7 +69,7 @@ class TestResNetTeacher:
         model = ResNetTeacher(num_heads=5, dropout=0.2, pretrained=True)
 
         assert model.num_heads == 5
-        assert model.dropout == 0.2
+        assert model.dropout == pytest.approx(0.2)
         assert model.pretrained is True
         assert len(model.heads) == 5
 
@@ -136,7 +136,7 @@ class TestResNetTeacher:
 
         assert info["architecture"] == "ResNet-50 Teacher"
         assert info["num_heads"] == 5
-        assert info["dropout"] == 0.3
+        assert info["dropout"] == pytest.approx(0.3)
         assert info["pretrained"] is False
         assert info["backbone_features"] == 2048
         assert "total_parameters" in info

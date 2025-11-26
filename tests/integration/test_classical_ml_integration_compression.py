@@ -73,7 +73,7 @@ class TestCompressionMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img, classical_scores
         )
 
@@ -81,10 +81,6 @@ class TestCompressionMLIQAIntegration:
         assert student_scores is not None
         assert student_scores.model_type == ModelType.STUDENT
         assert 0.0 <= student_scores.compression_score <= 1.0
-
-        # Log results for analysis
-        if teacher_scores:
-            pass
 
     def test_compression_discrepancy_analysis(
         self, ml_detector: MLIQADetector | None
@@ -124,7 +120,7 @@ class TestCompressionMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img, classical_scores
         )
 
@@ -138,5 +134,3 @@ class TestCompressionMLIQAIntegration:
         # Compression discrepancy should be calculated (ML predicts compression)
         # Note: We don't assert specific values since synthetic images may not trigger
         # strong responses from either detector
-        if teacher_scores:
-            pass

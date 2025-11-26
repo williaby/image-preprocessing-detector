@@ -92,7 +92,7 @@ class TestPDFResolutionAnalyzer:
         result = analyzer.analyze_pdf_resolution("/fake/path.pdf")
 
         assert result["needs_upscaling"] is False  # 300 DPI meets threshold
-        assert result["min_dpi"] == 300.0
+        assert result["min_dpi"] == pytest.approx(300.0)
         assert result["image_count"] == 1
         assert result["low_res_image_count"] == 0
 
@@ -135,7 +135,7 @@ class TestPDFResolutionAnalyzer:
         result = analyzer.analyze_pdf_resolution("/fake/path.pdf")
 
         assert result["needs_upscaling"] is True  # 150 DPI below threshold
-        assert result["min_dpi"] == 150.0
+        assert result["min_dpi"] == pytest.approx(150.0)
         assert result["image_count"] == 1
         assert result["low_res_image_count"] == 1
 
@@ -180,8 +180,8 @@ class TestPDFResolutionAnalyzer:
         result = analyzer.analyze_pdf_resolution("/fake/path.pdf")
 
         assert result["needs_upscaling"] is True  # Min is 150 DPI
-        assert result["min_dpi"] == 150.0  # Lowest DPI across all pages
-        assert result["max_dpi"] == 300.0  # Highest DPI
+        assert result["min_dpi"] == pytest.approx(150.0)  # Lowest DPI across all pages
+        assert result["max_dpi"] == pytest.approx(300.0)  # Highest DPI
         assert result["image_count"] == 2
         assert result["low_res_image_count"] == 1  # One image below threshold
         assert len(result["details"]) == 2  # Two pages analyzed

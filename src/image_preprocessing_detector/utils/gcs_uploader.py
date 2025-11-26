@@ -30,7 +30,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from google.cloud import storage
+from google.cloud import storage  # pyright: ignore[reportAttributeAccessIssue]
 
 
 @dataclass(frozen=True)

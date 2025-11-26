@@ -34,7 +34,7 @@ class TestBlurConfig:
         config = BlurConfig()
         assert config.enabled is True
         assert config.kernel_size == 3
-        assert config.sigma == 0.0
+        assert config.sigma == pytest.approx(0.0)
 
     def test_valid_odd_kernel_sizes(self) -> None:
         """Test that odd kernel sizes are accepted."""
@@ -68,7 +68,7 @@ class TestBlurConfig:
     def test_custom_sigma(self) -> None:
         """Test custom sigma values are accepted."""
         config = BlurConfig(sigma=2.5)
-        assert config.sigma == 2.5
+        assert config.sigma == pytest.approx(2.5)
 
 
 # =============================================================================
@@ -84,7 +84,7 @@ class TestBleedThroughConfig:
         """Test BleedThroughConfig has correct defaults."""
         config = BleedThroughConfig()
         assert config.enabled is False
-        assert config.alpha == 0.3
+        assert config.alpha == pytest.approx(0.3)
         assert config.offset_x == 0
         assert config.offset_y == 0
 
@@ -122,8 +122,8 @@ class TestSaltPepperConfig:
         """Test SaltPepperConfig has correct defaults."""
         config = SaltPepperConfig()
         assert config.enabled is False
-        assert config.amount == 0.01
-        assert config.salt_vs_pepper == 0.5
+        assert config.amount == pytest.approx(0.01)
+        assert config.salt_vs_pepper == pytest.approx(0.5)
 
     def test_amount_bounds(self) -> None:
         """Test amount must be between 0 and 1."""
@@ -254,7 +254,7 @@ class TestDegradationConfig:
         assert params["blur"] is not None
         assert params["blur"]["kernel_size"] == 5
         assert params["salt_pepper"] is not None
-        assert params["salt_pepper"]["amount"] == 0.02
+        assert params["salt_pepper"]["amount"] == pytest.approx(0.02)
         assert params["bleed_through"] is None  # Not enabled
         assert params["morphological"] is None  # Not enabled
 

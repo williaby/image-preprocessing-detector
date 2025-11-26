@@ -30,22 +30,22 @@ class TestNormalizeBlurScore:
     def test_minimum_variance(self) -> None:
         """Test score at minimum variance threshold."""
         score = normalize_blur_score(10.0, min_variance=10.0, max_variance=500.0)
-        assert score == 0.0
+        assert score == pytest.approx(0.0)
 
     def test_below_minimum_variance(self) -> None:
         """Test score below minimum variance returns 0."""
         score = normalize_blur_score(5.0, min_variance=10.0, max_variance=500.0)
-        assert score == 0.0
+        assert score == pytest.approx(0.0)
 
     def test_maximum_variance(self) -> None:
         """Test score at maximum variance threshold."""
         score = normalize_blur_score(500.0, min_variance=10.0, max_variance=500.0)
-        assert score == 1.0
+        assert score == pytest.approx(1.0)
 
     def test_above_maximum_variance(self) -> None:
         """Test score above maximum variance returns 1."""
         score = normalize_blur_score(1000.0, min_variance=10.0, max_variance=500.0)
-        assert score == 1.0
+        assert score == pytest.approx(1.0)
 
     def test_midpoint_variance(self) -> None:
         """Test score at midpoint."""
@@ -58,13 +58,13 @@ class TestNormalizeBlurScore:
         # 25% of the way from 10 to 500 should give ~0.25
         variance = 10.0 + 0.25 * (500.0 - 10.0)  # 132.5
         score = normalize_blur_score(variance, min_variance=10.0, max_variance=500.0)
-        assert pytest.approx(score, abs=0.05) == 0.25
+        assert pytest.approx(score, abs=0.05) == pytest.approx(0.25)
 
     def test_default_parameters(self) -> None:
         """Test with default min/max parameters."""
         # Default is 10.0 to 500.0
-        assert normalize_blur_score(10.0) == 0.0
-        assert normalize_blur_score(500.0) == 1.0
+        assert normalize_blur_score(10.0) == pytest.approx(0.0)
+        assert normalize_blur_score(500.0) == pytest.approx(1.0)
 
 
 class TestComputeLaplacianVariance:
@@ -112,11 +112,11 @@ class TestBlurDetectorInit:
         """Test default parameter values."""
         detector = BlurDetector()
 
-        assert detector.threshold_critical == 50.0
-        assert detector.threshold_high == 100.0
-        assert detector.threshold_medium == 200.0
-        assert detector.min_variance == 10.0
-        assert detector.max_variance == 500.0
+        assert detector.threshold_critical == pytest.approx(50.0)
+        assert detector.threshold_high == pytest.approx(100.0)
+        assert detector.threshold_medium == pytest.approx(200.0)
+        assert detector.min_variance == pytest.approx(10.0)
+        assert detector.max_variance == pytest.approx(500.0)
         assert detector.block_size == 64
 
     def test_custom_parameters(self) -> None:
@@ -130,11 +130,11 @@ class TestBlurDetectorInit:
             block_size=32,
         )
 
-        assert detector.threshold_critical == 30.0
-        assert detector.threshold_high == 80.0
-        assert detector.threshold_medium == 150.0
-        assert detector.min_variance == 5.0
-        assert detector.max_variance == 1000.0
+        assert detector.threshold_critical == pytest.approx(30.0)
+        assert detector.threshold_high == pytest.approx(80.0)
+        assert detector.threshold_medium == pytest.approx(150.0)
+        assert detector.min_variance == pytest.approx(5.0)
+        assert detector.max_variance == pytest.approx(1000.0)
         assert detector.block_size == 32
 
 
@@ -475,11 +475,11 @@ class TestBlurMetrics:
             edge_density=0.15,
         )
 
-        assert metrics.laplacian_variance == 100.0
-        assert metrics.blur_score == 0.5
-        assert metrics.local_variance_mean == 90.0
-        assert metrics.local_variance_std == 20.0
-        assert metrics.edge_density == 0.15
+        assert metrics.laplacian_variance == pytest.approx(100.0)
+        assert metrics.blur_score == pytest.approx(0.5)
+        assert metrics.local_variance_mean == pytest.approx(90.0)
+        assert metrics.local_variance_std == pytest.approx(20.0)
+        assert metrics.edge_density == pytest.approx(0.15)
 
     def test_blur_metrics_from_detection(self) -> None:
         """Test BlurMetrics from actual detection."""
@@ -555,7 +555,7 @@ class TestEdgeCases:
 
         assert isinstance(result, BlurDetectionResult)
         assert result.score < 1.0  # Very low variance
-        assert result.blur_score == 0.0  # Normalized to 0
+        assert result.blur_score == pytest.approx(0.0)  # Normalized to 0
         assert result.severity == Severity.CRITICAL
 
     def test_all_white_image(self) -> None:
@@ -567,11 +567,12 @@ class TestEdgeCases:
 
         assert isinstance(result, BlurDetectionResult)
         assert result.score < 1.0  # Very low variance
-        assert result.blur_score == 0.0
+        assert result.blur_score == pytest.approx(0.0)
 
     def test_high_frequency_noise(self) -> None:
         """Test detection on high-frequency noise."""
-        noise = np.random.randint(0, 256, (500, 500, 3), dtype=np.uint8)
+        rng = np.random.default_rng(42)
+        noise = rng.integers(0, 256, (500, 500, 3), dtype=np.uint8)
 
         detector = BlurDetector()
         result = detector.detect(noise)
@@ -579,7 +580,7 @@ class TestEdgeCases:
         # Random noise has very high variance
         assert result.is_blurred is False
         assert result.score > 500.0
-        assert result.blur_score == 1.0
+        assert result.blur_score == pytest.approx(1.0)
 
     def test_very_small_image(self) -> None:
         """Test detection on very small image."""

@@ -45,13 +45,13 @@ class TestClassicalIQAScores:
             contrast_score=0.7,
             skew_score=0.9,
         )
-        assert scores.blur_score == 0.8
-        assert scores.contrast_score == 0.7
-        assert scores.skew_score == 0.9
+        assert scores.blur_score == pytest.approx(0.8)
+        assert scores.contrast_score == pytest.approx(0.7)
+        assert scores.skew_score == pytest.approx(0.9)
         # Check defaults
-        assert scores.noise_score == 0.0
-        assert scores.illumination_score == 0.0
-        assert scores.compression_score == 0.0
+        assert scores.noise_score == pytest.approx(0.0)
+        assert scores.illumination_score == pytest.approx(0.0)
+        assert scores.compression_score == pytest.approx(0.0)
 
     def test_valid_scores_all_dimensions(self):
         """Test valid scores with all 8 dimensions."""
@@ -65,10 +65,10 @@ class TestClassicalIQAScores:
             binarization_score=0.95,
             bleed_through_score=0.5,
         )
-        assert scores.blur_score == 0.8
-        assert scores.noise_score == 0.6
-        assert scores.binarization_score == 0.95
-        assert scores.bleed_through_score == 0.5
+        assert scores.blur_score == pytest.approx(0.8)
+        assert scores.noise_score == pytest.approx(0.6)
+        assert scores.binarization_score == pytest.approx(0.95)
+        assert scores.bleed_through_score == pytest.approx(0.5)
 
     def test_invalid_blur_score_below_zero(self):
         """Test validation rejects blur_score < 0."""
@@ -168,8 +168,8 @@ class TestClassicalIQAScores:
             binarization_score=0.0,
             bleed_through_score=0.0,
         )
-        assert scores.blur_score == 0.0
-        assert scores.bleed_through_score == 0.0
+        assert scores.blur_score == pytest.approx(0.0)
+        assert scores.bleed_through_score == pytest.approx(0.0)
 
     def test_boundary_scores_one(self):
         """Test boundary case: all scores = 1.0 (valid)."""
@@ -183,8 +183,8 @@ class TestClassicalIQAScores:
             binarization_score=1.0,
             bleed_through_score=1.0,
         )
-        assert scores.blur_score == 1.0
-        assert scores.bleed_through_score == 1.0
+        assert scores.blur_score == pytest.approx(1.0)
+        assert scores.bleed_through_score == pytest.approx(1.0)
 
 
 class TestMLIQADetectorDeviceDetection:
@@ -380,9 +380,9 @@ class TestUncertaintyCalculation:
         uncertainty = detector.calculate_uncertainty(scores)
 
         # Should return zeros for empty confidences
-        assert uncertainty.entropy == 0.0
-        assert uncertainty.min_confidence == 0.0
-        assert uncertainty.mean_confidence == 0.0
+        assert uncertainty.entropy == pytest.approx(0.0)
+        assert uncertainty.min_confidence == pytest.approx(0.0)
+        assert uncertainty.mean_confidence == pytest.approx(0.0)
         assert uncertainty.head_confidences == {}
 
     def test_calculate_uncertainty_edge_case_zero_confidence(self):
@@ -405,8 +405,8 @@ class TestUncertaintyCalculation:
 
         # Should handle log(0) gracefully (entropy should be finite)
         assert 0.0 <= uncertainty.entropy <= 1.0
-        assert uncertainty.min_confidence == 0.0
-        assert uncertainty.mean_confidence == 0.25
+        assert uncertainty.min_confidence == pytest.approx(0.0)
+        assert uncertainty.mean_confidence == pytest.approx(0.25)
 
     def test_calculate_uncertainty_edge_case_one_confidence(self):
         """Test entropy calculation with confidence = 1.0 (certain prediction)."""
@@ -427,9 +427,9 @@ class TestUncertaintyCalculation:
         uncertainty = detector.calculate_uncertainty(scores)
 
         # Entropy should be 0 for certain predictions
-        assert uncertainty.entropy == 0.0
-        assert uncertainty.min_confidence == 1.0
-        assert uncertainty.mean_confidence == 1.0
+        assert uncertainty.entropy == pytest.approx(0.0)
+        assert uncertainty.min_confidence == pytest.approx(1.0)
+        assert uncertainty.mean_confidence == pytest.approx(1.0)
 
     def test_calculate_uncertainty_normal_case(self):
         """Test uncertainty calculation with typical confidence values."""
@@ -864,11 +864,13 @@ class TestDictConversionUtilities:
         result = ml_iqa_scores_to_dict(scores)
 
         assert result["source"] == "student"
-        assert result["blur_score"] == 0.8234
-        assert result["overall_quality"] == 0.8338
+        assert result["blur_score"] == pytest.approx(0.8234)
+        assert result["overall_quality"] == pytest.approx(0.8338)
         assert result["device"] == "cuda"
-        assert result["inference_time_ms"] == 12.35  # Rounded to 2 decimals
-        assert result["confidences"]["blur"] == 0.9234
+        assert result["inference_time_ms"] == pytest.approx(
+            12.35
+        )  # Rounded to 2 decimals
+        assert result["confidences"]["blur"] == pytest.approx(0.9234)
 
     def test_teacher_iqa_to_dict(self):
         """Test teacher IQA scores to dict conversion."""
@@ -889,8 +891,8 @@ class TestDictConversionUtilities:
 
         assert result["source"] == "teacher"
         assert result["escalation_reason"] == "high_entropy (0.856 >= 0.8)"
-        assert result["overall_quality"] == 0.9
-        assert result["inference_time_ms"] == 25.68
+        assert result["overall_quality"] == pytest.approx(0.9)
+        assert result["inference_time_ms"] == pytest.approx(25.68)
 
     def test_uncertainty_metrics_to_dict(self):
         """Test UncertaintyMetrics to dict conversion."""
@@ -907,10 +909,10 @@ class TestDictConversionUtilities:
 
         result = uncertainty_metrics_to_dict(metrics)
 
-        assert result["entropy"] == 0.8567
-        assert result["min_confidence"] == 0.6234
-        assert result["mean_confidence"] == 0.7890
-        assert result["head_confidences"]["blur"] == 0.9234
+        assert result["entropy"] == pytest.approx(0.8567)
+        assert result["min_confidence"] == pytest.approx(0.6234)
+        assert result["mean_confidence"] == pytest.approx(0.7890)
+        assert result["head_confidences"]["blur"] == pytest.approx(0.9234)
 
     def test_discrepancy_metrics_to_dict(self):
         """Test DiscrepancyMetrics to dict conversion."""
@@ -936,7 +938,7 @@ class TestDictConversionUtilities:
 
         result = discrepancy_metrics_to_dict(metrics)
 
-        assert result["blur_discrepancy"] == 0.3456
-        assert result["max_discrepancy"] == 0.3456
-        assert result["mean_discrepancy"] == 0.2387
-        assert result["per_head_discrepancies"]["blur"] == 0.3456
+        assert result["blur_discrepancy"] == pytest.approx(0.3456)
+        assert result["max_discrepancy"] == pytest.approx(0.3456)
+        assert result["mean_discrepancy"] == pytest.approx(0.2387)
+        assert result["per_head_discrepancies"]["blur"] == pytest.approx(0.3456)

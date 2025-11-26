@@ -23,13 +23,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def download_docbank(output_dir: Path, _use_cache: bool = True) -> None:
+def download_docbank(output_dir: Path, use_cache: bool = True) -> None:
     """
     Download DocBank dataset from HuggingFace.
 
     Args:
         output_dir: Directory to save dataset
-        use_cache: Use HuggingFace cache (default: True)
+        use_cache: Use HuggingFace cache (default: True) - reserved for future use
     """
     logger.info(f"Downloading DocBank dataset to {output_dir}")
     logger.info("Dataset size: 500K pages (train: 400K, val: 50K, test: 50K)")

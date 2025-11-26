@@ -34,6 +34,35 @@ from image_preprocessing_detector.classification import classify_pdf_type
 from image_preprocessing_detector.utils import setup_logging
 
 
+def _validate_path(path: Path, must_exist: bool = True) -> Path:
+    """
+    Validate and resolve a path to prevent path traversal attacks.
+
+    Args:
+        path: The path to validate
+        must_exist: Whether the path must already exist
+
+    Returns:
+        Resolved absolute path
+
+    Raises:
+        ValueError: If path validation fails
+    """
+    try:
+        resolved = path.resolve(strict=must_exist)
+    except (OSError, RuntimeError) as e:
+        msg = f"Invalid path: {path}"
+        raise ValueError(msg) from e
+
+    # Ensure path doesn't contain suspicious patterns
+    path_str = str(resolved)
+    if "\x00" in path_str:
+        msg = f"Path contains null bytes: {path}"
+        raise ValueError(msg)
+
+    return resolved
+
+
 def load_ground_truth(labels_file: Path) -> dict[str, list[str]]:
     """
     Load ground truth labels from JSON file.
@@ -43,9 +72,70 @@ def load_ground_truth(labels_file: Path) -> dict[str, list[str]]:
 
     Returns:
         Dictionary mapping PDF types to file names
+
+    Raises:
+        ValueError: If path validation fails
     """
-    with open(labels_file, encoding="utf-8") as f:
+    validated_path = _validate_path(labels_file, must_exist=True)
+    with open(validated_path, encoding="utf-8") as f:
         return json.load(f)
+
+
+def _find_expected_type(
+    filename: str, ground_truth: dict[str, list[str]]
+) -> str | None:
+    """Find expected PDF type from ground truth labels."""
+    for gt_type, file_names in ground_truth.items():
+        if filename in file_names:
+            return gt_type
+    return None
+
+
+def _process_single_pdf(
+    pdf_file: Path,
+    ground_truth: dict[str, list[str]],
+    results: dict[str, Any],
+    verbose: bool,
+) -> None:
+    """Process a single PDF file and update results."""
+    try:
+        pdf_type = classify_pdf_type(pdf_file)
+        results["classifications"][pdf_type.value] += 1
+
+        expected_type = _find_expected_type(pdf_file.name, ground_truth)
+        is_correct = None
+
+        if expected_type:
+            is_correct = pdf_type.value == expected_type
+            results["correct" if is_correct else "incorrect"] += 1
+
+        results["details"].append(
+            {
+                "file": pdf_file.name,
+                "predicted": pdf_type.value,
+                "expected": expected_type,
+                "correct": is_correct,
+            }
+        )
+
+        if verbose:
+            # Determine status icon based on correctness
+            if is_correct:
+                status = "✓"
+            elif is_correct is False:
+                status = "✗"
+            else:
+                status = ""
+            print(
+                f"{status:2} {pdf_file.name:40} → {pdf_type.value:15} "
+                f"(expected: {expected_type or 'N/A'})"
+            )
+
+    except Exception as e:
+        error_msg = f"Error processing {pdf_file.name}: {e!s}"
+        results["errors"].append(error_msg)
+        if verbose:
+            print(f"✗  {error_msg}")
 
 
 def validate_classifications(
@@ -64,7 +154,7 @@ def validate_classifications(
     Returns:
         Dictionary with validation results and metrics
     """
-    results = {
+    results: dict[str, Any] = {
         "total_pdfs": 0,
         "classifications": defaultdict(int),
         "correct": 0,
@@ -90,56 +180,10 @@ def validate_classifications(
     print(f"\nValidating {len(pdf_files)} PDF files...")
     print("-" * 80)
 
-    # Process each PDF
+    # Process each PDF using helper
     for pdf_file in sorted(pdf_files):
         results["total_pdfs"] += 1
-
-        try:
-            # Classify PDF
-            pdf_type = classify_pdf_type(pdf_file)
-            results["classifications"][pdf_type.value] += 1
-
-            # Check against ground truth if available
-            is_correct = None
-            expected_type = None
-            if ground_truth:
-                # Find expected type
-                for gt_type, file_names in ground_truth.items():
-                    if pdf_file.name in file_names:
-                        expected_type = gt_type
-                        break
-
-                if expected_type:
-                    is_correct = pdf_type.value == expected_type
-                    if is_correct:
-                        results["correct"] += 1
-                    else:
-                        results["incorrect"] += 1
-
-            # Record details
-            detail = {
-                "file": pdf_file.name,
-                "predicted": pdf_type.value,
-                "expected": expected_type,
-                "correct": is_correct,
-            }
-            results["details"].append(detail)
-
-            # Print if verbose
-            if verbose:
-                status = ""
-                if is_correct is not None:
-                    status = "✓" if is_correct else "✗"
-                print(
-                    f"{status:2} {pdf_file.name:40} → {pdf_type.value:15} "
-                    f"(expected: {expected_type or 'N/A'})"
-                )
-
-        except Exception as e:
-            error_msg = f"Error processing {pdf_file.name}: {e!s}"
-            results["errors"].append(error_msg)
-            if verbose:
-                print(f"✗  {error_msg}")
+        _process_single_pdf(pdf_file, ground_truth, results, verbose)
 
     return results
 
@@ -231,18 +275,20 @@ def main() -> None:
     log_level = "DEBUG" if args.debug else "INFO"
     setup_logging(level=log_level, json_logs=False)
 
-    # Validate input
-    if not args.pdf_dir.exists():
-        print(f"Error: PDF directory not found: {args.pdf_dir}")
+    # Validate input paths
+    try:
+        validated_pdf_dir = _validate_path(args.pdf_dir, must_exist=True)
+    except ValueError as e:
+        print(f"Error: Invalid PDF directory path: {e}")
         sys.exit(1)
 
-    if not args.pdf_dir.is_dir():
-        print(f"Error: Not a directory: {args.pdf_dir}")
+    if not validated_pdf_dir.is_dir():
+        print(f"Error: Not a directory: {validated_pdf_dir}")
         sys.exit(1)
 
     # Run validation
     results = validate_classifications(
-        pdf_dir=args.pdf_dir,
+        pdf_dir=validated_pdf_dir,
         labels_file=args.labels,
         verbose=args.verbose,
     )
@@ -252,9 +298,13 @@ def main() -> None:
 
     # Save detailed results if requested
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as f:
+        # Validate output path (parent must exist, file may not)
+        output_path = (
+            _validate_path(args.output.parent, must_exist=True) / args.output.name
+        )
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, default=str)
-        print(f"\nDetailed results saved to: {args.output}")
+        print(f"\nDetailed results saved to: {output_path}")
 
     # Exit with appropriate code
     if results["errors"]:

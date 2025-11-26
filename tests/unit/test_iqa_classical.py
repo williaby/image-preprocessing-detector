@@ -44,9 +44,9 @@ class TestSkewDetector:
         """Test SkewDetector initialization with defaults."""
         detector = SkewDetector()
 
-        assert detector.threshold_low == 0.5
-        assert detector.threshold_medium == 2.0
-        assert detector.threshold_high == 5.0
+        assert detector.threshold_low == pytest.approx(0.5)
+        assert detector.threshold_medium == pytest.approx(2.0)
+        assert detector.threshold_high == pytest.approx(5.0)
         assert detector.min_line_length == 100
         assert detector.max_line_gap == 10
 
@@ -60,9 +60,9 @@ class TestSkewDetector:
             max_line_gap=20,
         )
 
-        assert detector.threshold_low == 1.0
-        assert detector.threshold_medium == 3.0
-        assert detector.threshold_high == 7.0
+        assert detector.threshold_low == pytest.approx(1.0)
+        assert detector.threshold_medium == pytest.approx(3.0)
+        assert detector.threshold_high == pytest.approx(7.0)
         assert detector.min_line_length == 200
         assert detector.max_line_gap == 20
 
@@ -172,9 +172,9 @@ class TestBlurDetector:
         """Test BlurDetector initialization with defaults."""
         detector = BlurDetector()
 
-        assert detector.threshold_critical == 50.0
-        assert detector.threshold_high == 100.0
-        assert detector.threshold_medium == 200.0
+        assert detector.threshold_critical == pytest.approx(50.0)
+        assert detector.threshold_high == pytest.approx(100.0)
+        assert detector.threshold_medium == pytest.approx(200.0)
 
     def test_init_custom_params(self) -> None:
         """Test BlurDetector initialization with custom parameters."""
@@ -182,9 +182,9 @@ class TestBlurDetector:
             threshold_critical=30.0, threshold_high=80.0, threshold_medium=150.0
         )
 
-        assert detector.threshold_critical == 30.0
-        assert detector.threshold_high == 80.0
-        assert detector.threshold_medium == 150.0
+        assert detector.threshold_critical == pytest.approx(30.0)
+        assert detector.threshold_high == pytest.approx(80.0)
+        assert detector.threshold_medium == pytest.approx(150.0)
 
     def test_detect_sharp_image(self) -> None:
         """Test detection on sharp image."""
@@ -263,9 +263,9 @@ class TestContrastDetector:
         detector = ContrastDetector()
 
         # Real-world calibrated thresholds (DocLayNet validation)
-        assert detector.threshold_critical == 0.08
-        assert detector.threshold_high == 0.13
-        assert detector.threshold_medium == 0.18
+        assert detector.threshold_critical == pytest.approx(0.08)
+        assert detector.threshold_high == pytest.approx(0.13)
+        assert detector.threshold_medium == pytest.approx(0.18)
 
     def test_init_custom_params(self) -> None:
         """Test ContrastDetector initialization with custom parameters."""
@@ -273,9 +273,9 @@ class TestContrastDetector:
             threshold_critical=0.15, threshold_high=0.25, threshold_medium=0.35
         )
 
-        assert detector.threshold_critical == 0.15
-        assert detector.threshold_high == 0.25
-        assert detector.threshold_medium == 0.35
+        assert detector.threshold_critical == pytest.approx(0.15)
+        assert detector.threshold_high == pytest.approx(0.25)
+        assert detector.threshold_medium == pytest.approx(0.35)
 
     def test_detect_high_contrast(self) -> None:
         """Test detection on high contrast image."""
@@ -354,9 +354,9 @@ class TestNoiseDetector:
         """Test NoiseDetector initialization with defaults."""
         detector = NoiseDetector()
 
-        assert detector.threshold_critical == 20.0
-        assert detector.threshold_high == 12.0
-        assert detector.threshold_medium == 5.0
+        assert detector.threshold_critical == pytest.approx(20.0)
+        assert detector.threshold_high == pytest.approx(12.0)
+        assert detector.threshold_medium == pytest.approx(5.0)
 
     def test_init_custom_params(self) -> None:
         """Test NoiseDetector initialization with custom parameters."""
@@ -366,9 +366,9 @@ class TestNoiseDetector:
             threshold_medium=8.0,
         )
 
-        assert detector.threshold_critical == 25.0
-        assert detector.threshold_high == 15.0
-        assert detector.threshold_medium == 8.0
+        assert detector.threshold_critical == pytest.approx(25.0)
+        assert detector.threshold_high == pytest.approx(15.0)
+        assert detector.threshold_medium == pytest.approx(8.0)
 
     def test_detect_clean_image(self) -> None:
         """Test detection on clean image without noise."""
@@ -394,8 +394,9 @@ class TestNoiseDetector:
         # Create clean image
         img = np.ones((500, 500, 3), dtype=np.uint8) * 128
 
-        # Add Gaussian noise
-        noise = np.random.normal(0, 25, img.shape).astype(np.float32)
+        # Add Gaussian noise using modern Generator API
+        rng = np.random.default_rng(seed=42)
+        noise = rng.normal(0, 25, img.shape).astype(np.float32)
         noisy = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
 
         detector = NoiseDetector()
@@ -437,8 +438,9 @@ class TestNoiseDetector:
         # Create image with severe Gaussian noise
         img = np.ones((500, 500, 3), dtype=np.uint8) * 128
 
-        # Add severe Gaussian noise (sigma = 50)
-        noise = np.random.normal(0, 50, img.shape).astype(np.float32)
+        # Add severe Gaussian noise (sigma = 50) using modern Generator API
+        rng = np.random.default_rng(seed=42)
+        noise = rng.normal(0, 50, img.shape).astype(np.float32)
         noisy = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
 
         detector = NoiseDetector()
@@ -575,7 +577,7 @@ class TestSeverityEnum:
 
     def test_severity_comparison(self) -> None:
         """Test Severity enum can be compared."""
-        assert Severity.LOW == Severity.LOW
+        assert Severity("low") == Severity.LOW  # Compare enum from value
         assert Severity.HIGH != Severity.LOW
 
 
@@ -586,12 +588,12 @@ class TestIlluminationDetector:
         """Test IlluminationDetector initialization with defaults."""
         detector = IlluminationDetector()
 
-        assert detector.threshold_critical == 0.50
-        assert detector.threshold_high == 0.65
-        assert detector.threshold_medium == 0.80
+        assert detector.threshold_critical == pytest.approx(0.50)
+        assert detector.threshold_high == pytest.approx(0.65)
+        assert detector.threshold_medium == pytest.approx(0.80)
         assert detector.grid_size == 5
-        assert detector.shadow_percentile == 10.0
-        assert detector.hotspot_percentile == 95.0
+        assert detector.shadow_percentile == pytest.approx(10.0)
+        assert detector.hotspot_percentile == pytest.approx(95.0)
 
     def test_init_custom_params(self) -> None:
         """Test IlluminationDetector initialization with custom parameters."""
@@ -604,12 +606,12 @@ class TestIlluminationDetector:
             hotspot_percentile=98.0,
         )
 
-        assert detector.threshold_critical == 0.40
-        assert detector.threshold_high == 0.55
-        assert detector.threshold_medium == 0.70
+        assert detector.threshold_critical == pytest.approx(0.40)
+        assert detector.threshold_high == pytest.approx(0.55)
+        assert detector.threshold_medium == pytest.approx(0.70)
         assert detector.grid_size == 7
-        assert detector.shadow_percentile == 5.0
-        assert detector.hotspot_percentile == 98.0
+        assert detector.shadow_percentile == pytest.approx(5.0)
+        assert detector.hotspot_percentile == pytest.approx(98.0)
 
     def test_detect_uniform_image(self) -> None:
         """Test detection on uniformly lit image."""
@@ -790,7 +792,9 @@ class TestIlluminationDetector:
 
         # Should handle gracefully and return valid result
         assert isinstance(result, IlluminationDetectionResult)
-        assert result.uniformity == 1.0  # Falls back to uniform for small images
+        assert result.uniformity == pytest.approx(
+            1.0
+        )  # Falls back to uniform for small images
 
     def test_large_image_subsampling(self) -> None:
         """Test that large images are subsampled for performance."""
@@ -818,7 +822,9 @@ class TestIlluminationTypeEnum:
 
     def test_illumination_type_comparison(self) -> None:
         """Test IlluminationType enum can be compared."""
-        assert IlluminationType.UNIFORM == IlluminationType.UNIFORM
+        assert (
+            IlluminationType("uniform") == IlluminationType.UNIFORM
+        )  # Compare enum from value
         assert IlluminationType.SHADOWS != IlluminationType.HOTSPOTS
 
 
@@ -857,9 +863,9 @@ class TestJPEGBlockinessDetector:
         """Test JPEGBlockinessDetector initialization with defaults."""
         detector = JPEGBlockinessDetector()
 
-        assert detector.threshold_critical == 0.25
-        assert detector.threshold_high == 0.15
-        assert detector.threshold_medium == 0.08
+        assert detector.threshold_critical == pytest.approx(0.25)
+        assert detector.threshold_high == pytest.approx(0.15)
+        assert detector.threshold_medium == pytest.approx(0.08)
 
     def test_init_custom_params(self) -> None:
         """Test JPEGBlockinessDetector initialization with custom parameters."""
@@ -869,9 +875,9 @@ class TestJPEGBlockinessDetector:
             threshold_medium=0.10,
         )
 
-        assert detector.threshold_critical == 0.30
-        assert detector.threshold_high == 0.20
-        assert detector.threshold_medium == 0.10
+        assert detector.threshold_critical == pytest.approx(0.30)
+        assert detector.threshold_high == pytest.approx(0.20)
+        assert detector.threshold_medium == pytest.approx(0.10)
 
     def test_detect_clean_image(self) -> None:
         """Test detection on clean (non-JPEG) synthetic image."""
@@ -1034,11 +1040,11 @@ class TestBinarizationQualityDetector:
         """Test BinarizationQualityDetector initialization with defaults."""
         detector = BinarizationQualityDetector()
 
-        assert detector.threshold_critical == 0.40
-        assert detector.threshold_high == 0.55
-        assert detector.threshold_medium == 0.70
+        assert detector.threshold_critical == pytest.approx(0.40)
+        assert detector.threshold_high == pytest.approx(0.55)
+        assert detector.threshold_medium == pytest.approx(0.70)
         assert detector.grid_size == 4
-        assert detector.min_contrast == 0.15
+        assert detector.min_contrast == pytest.approx(0.15)
 
     def test_init_custom_params(self) -> None:
         """Test BinarizationQualityDetector initialization with custom parameters."""
@@ -1050,11 +1056,11 @@ class TestBinarizationQualityDetector:
             min_contrast=0.10,
         )
 
-        assert detector.threshold_critical == 0.35
-        assert detector.threshold_high == 0.50
-        assert detector.threshold_medium == 0.65
+        assert detector.threshold_critical == pytest.approx(0.35)
+        assert detector.threshold_high == pytest.approx(0.50)
+        assert detector.threshold_medium == pytest.approx(0.65)
         assert detector.grid_size == 6
-        assert detector.min_contrast == 0.10
+        assert detector.min_contrast == pytest.approx(0.10)
 
     def test_detect_good_document(self) -> None:
         """Test detection on document with good binarization potential."""
@@ -1104,9 +1110,10 @@ class TestBinarizationQualityDetector:
 
     def test_detect_noisy_image(self) -> None:
         """Test detection on noisy image."""
-        # Create image with noise
+        # Create image with noise using modern Generator API
+        rng = np.random.default_rng(seed=42)
         img = np.ones((500, 500, 3), dtype=np.uint8) * 200
-        noise = np.random.normal(0, 50, img.shape).astype(np.float32)
+        noise = rng.normal(0, 50, img.shape).astype(np.float32)
         img = np.clip(img.astype(np.float32) + noise, 0, 255).astype(np.uint8)
 
         detector = BinarizationQualityDetector()
@@ -1252,11 +1259,11 @@ class TestBleedThroughDetector:
         """Test BleedThroughDetector initialization with defaults."""
         detector = BleedThroughDetector()
 
-        assert detector.severity_threshold_low == 0.1
-        assert detector.severity_threshold_medium == 0.25
-        assert detector.severity_threshold_high == 0.5
+        assert detector.severity_threshold_low == pytest.approx(0.1)
+        assert detector.severity_threshold_medium == pytest.approx(0.25)
+        assert detector.severity_threshold_high == pytest.approx(0.5)
         assert detector.min_region_size == 100
-        assert detector.background_sample_ratio == 0.3
+        assert detector.background_sample_ratio == pytest.approx(0.3)
 
     def test_init_custom_params(self) -> None:
         """Test BleedThroughDetector initialization with custom parameters."""
@@ -1268,11 +1275,11 @@ class TestBleedThroughDetector:
             background_sample_ratio=0.4,
         )
 
-        assert detector.severity_threshold_low == 0.15
-        assert detector.severity_threshold_medium == 0.3
-        assert detector.severity_threshold_high == 0.6
+        assert detector.severity_threshold_low == pytest.approx(0.15)
+        assert detector.severity_threshold_medium == pytest.approx(0.3)
+        assert detector.severity_threshold_high == pytest.approx(0.6)
         assert detector.min_region_size == 200
-        assert detector.background_sample_ratio == 0.4
+        assert detector.background_sample_ratio == pytest.approx(0.4)
 
     def test_detect_clean_document(self) -> None:
         """Test detection on clean document without bleed-through."""
@@ -1401,7 +1408,8 @@ class TestBleedThroughDetector:
         # Create image with some patterns
         img = np.ones((500, 500, 3), dtype=np.uint8) * 255
         # Add some noise/patterns that might be detected as bleed-through
-        noise = np.random.randint(180, 220, (500, 500, 3), dtype=np.uint8)
+        rng = np.random.default_rng(42)
+        noise = rng.integers(180, 220, (500, 500, 3), dtype=np.uint8)
         img = cv2.addWeighted(img, 0.7, noise, 0.3, 0)
 
         detector = BleedThroughDetector()

@@ -81,7 +81,7 @@ class TestIlluminationMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img_vignette, classical_scores
         )
 
@@ -92,10 +92,7 @@ class TestIlluminationMLIQAIntegration:
 
         # Note: ML model doesn't predict illumination, so we can't compare
         # We just verify the pipeline completes successfully
-
-        # Log results for analysis
-        if teacher_scores:
-            pass
+        # teacher_scores available for debugging if needed
 
     def test_illumination_no_discrepancy_escalation(
         self, ml_detector: MLIQADetector | None
@@ -123,9 +120,7 @@ class TestIlluminationMLIQAIntegration:
         # Run classical illumination detector
         illum_result = detect_illumination(img)
 
-        # Classical should detect illumination issues
-        if illum_result.has_issues:
-            pass
+        # Classical should detect illumination issues (detection logged for debugging)
 
         # Create classical scores
         classical_scores = ClassicalIQAScores(
@@ -136,7 +131,7 @@ class TestIlluminationMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img, classical_scores
         )
 
@@ -150,7 +145,7 @@ class TestIlluminationMLIQAIntegration:
         )
 
         # Verify illumination discrepancy is 0.0 (ML doesn't predict illumination)
-        assert discrepancy.illumination_discrepancy == 0.0, (
+        assert discrepancy.illumination_discrepancy == pytest.approx(0.0), (
             "Illumination discrepancy should be 0.0 since ML model doesn't predict illumination"
         )
 
@@ -165,9 +160,4 @@ class TestIlluminationMLIQAIntegration:
             assert "illumination" not in decision.reason.lower(), (
                 "Escalation should not be due to illumination (ML doesn't predict it)"
             )
-        else:
-            pass
-
-        # Log results
-        if teacher_scores:
-            pass
+        # teacher_scores available for debugging if needed

@@ -150,7 +150,7 @@ class TestResNetTeacher:
         model = ResNetTeacher(pretrained=False)
 
         assert model.num_heads == 5
-        assert model.dropout == 0.2
+        assert model.dropout == pytest.approx(0.2)
         assert model.pretrained is False
         assert model.freeze_backbone is False
         assert model.hidden_features == 512
@@ -166,7 +166,7 @@ class TestResNetTeacher:
             hidden_features=256,
         )
 
-        assert model.dropout == 0.3
+        assert model.dropout == pytest.approx(0.3)
         assert model.freeze_backbone is True
         assert model.hidden_features == 256
 
@@ -209,7 +209,7 @@ class TestResNetTeacher:
         assert info["architecture"] == "ResNet-50 Teacher"
         assert info["num_heads"] == 5
         assert info["issue_types"] == ResNetTeacher.ISSUE_TYPES
-        assert info["dropout"] == 0.3
+        assert info["dropout"] == pytest.approx(0.3)
         assert info["backbone_features"] == 2048
         assert info["total_parameters"] > 0
         assert info["trainable_parameters"] > 0
@@ -300,7 +300,7 @@ class TestResNetStudent:
 
         assert model.num_heads == 5
         assert model.hidden_features == 256
-        assert model.dropout == 0.2
+        assert model.dropout == pytest.approx(0.2)
         assert model.feature_dim == 512
         assert len(model.heads) == 5
 
@@ -314,7 +314,7 @@ class TestResNetStudent:
         )
 
         assert model.hidden_features == 128
-        assert model.dropout == 0.4
+        assert model.dropout == pytest.approx(0.4)
 
     def test_invalid_num_heads_raises_error(self) -> None:
         """Test that invalid num_heads raises ValueError."""
@@ -404,7 +404,7 @@ class TestResNetStudent:
 
         assert student.num_heads == 5
         assert student.hidden_features == 128
-        assert student.dropout == 0.3
+        assert student.dropout == pytest.approx(0.3)
 
     def test_from_teacher_config_default_dropout(self) -> None:
         """Test from_teacher_config uses default dropout when not in teacher."""
@@ -418,7 +418,7 @@ class TestResNetStudent:
         )
 
         # Should use default 0.2
-        assert student.dropout == 0.2
+        assert student.dropout == pytest.approx(0.2)
 
 
 # =============================================================================

@@ -176,9 +176,7 @@ class TextGate:
         stroke_pixels = np.count_nonzero(gradient > MORPH_GRADIENT_THRESHOLD)
         total_pixels = gradient.size
 
-        density = stroke_pixels / total_pixels if total_pixels > 0 else 0.0
-
-        return float(density)
+        return float(stroke_pixels / total_pixels) if total_pixels > 0 else 0.0
 
     def _analyze_connected_components(self, gray: np.ndarray) -> float:
         """Analyze connected components for text-like structures.
@@ -223,13 +221,11 @@ class TextGate:
 
         # Normalize score: sigmoid-like function
         # Score approaches 1.0 as component count exceeds min_text_components
-        score = min(
+        return min(
             1.0,
             text_component_count
             / (self.min_text_components * COMPONENT_SCORE_MULTIPLIER),
         )
-
-        return float(score)
 
     def _compute_edge_density(self, gray: np.ndarray) -> float:
         """Compute edge density using Canny edge detection.
@@ -249,9 +245,7 @@ class TextGate:
         edge_pixels = np.count_nonzero(edges)
         total_pixels = edges.size
 
-        density = edge_pixels / total_pixels if total_pixels > 0 else 0.0
-
-        return float(density)
+        return float(edge_pixels / total_pixels) if total_pixels > 0 else 0.0
 
     def _compute_confidence(
         self, stroke_density: float, component_score: float, edge_score: float
@@ -275,7 +269,7 @@ class TextGate:
             + WEIGHT_EDGE * edge_score
         )
 
-        return float(min(1.0, max(0.0, confidence)))
+        return min(1.0, max(0.0, confidence))
 
 
 def detect_text(

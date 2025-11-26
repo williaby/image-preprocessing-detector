@@ -120,9 +120,11 @@ class PDFLoader:
 
         # Render page to pixmap
         mat = fitz.Matrix(zoom, zoom)
+        # Convert color space string to fitz.Colorspace
+        colorspace = fitz.csRGB if self.color_space == "RGB" else fitz.csGRAY
         pix = page.get_pixmap(
             matrix=mat,
-            colorspace=self.color_space,
+            colorspace=colorspace,
             alpha=self.alpha,
         )
 
@@ -200,7 +202,7 @@ class PDFLoader:
         # Try to get actual DPI from images in the page
         try:
             images = page.get_images()
-            if images:
+            if images and page.parent is not None:
                 # Get the first image's DPI
                 xref = images[0][0]
                 img_dict = page.parent.extract_image(xref)

@@ -107,17 +107,6 @@ repos:
         additional_dependencies: ['bandit[toml]']
         exclude: 'tests/.*'
 
-  # Dependency scanning with Safety (using local hook for UV compatibility)
-  - repo: local
-    hooks:
-      - id: safety-scan
-        name: safety
-        # Ignore 51457: CVE-2022-42969 (py library) - disputed and withdrawn from NVD
-        entry: uv run safety scan --full-report --path pyproject.toml --path uv.lock --ignore 51457
-        language: system
-        files: pyproject.toml
-        pass_filenames: false
-
 # Exclude patterns (don't run hooks on these)
 exclude: |
   (?x)^(

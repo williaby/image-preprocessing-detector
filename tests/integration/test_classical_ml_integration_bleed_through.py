@@ -77,7 +77,7 @@ class TestBleedThroughMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img, classical_scores
         )
 
@@ -88,10 +88,7 @@ class TestBleedThroughMLIQAIntegration:
 
         # Note: ML model doesn't predict bleed-through, so we can't compare
         # We just verify the pipeline completes successfully
-
-        # Log results for analysis
-        if teacher_scores:
-            pass
+        # teacher_scores available for debugging if needed
 
     def test_bleed_through_no_discrepancy_escalation(
         self, ml_detector: MLIQADetector | None
@@ -134,7 +131,7 @@ class TestBleedThroughMLIQAIntegration:
         )
 
         # Run ML IQA pipeline
-        student_scores, teacher_scores, _escalation_reason = ml_detector.run_pipeline(
+        student_scores, _teacher_scores, _escalation_reason = ml_detector.run_pipeline(
             img, classical_scores
         )
 
@@ -148,7 +145,7 @@ class TestBleedThroughMLIQAIntegration:
         )
 
         # Verify bleed-through discrepancy is 0.0 (ML doesn't predict bleed-through)
-        assert discrepancy.bleed_through_discrepancy == 0.0, (
+        assert discrepancy.bleed_through_discrepancy == pytest.approx(0.0), (
             "Bleed-through discrepancy should be 0.0 since ML model doesn't predict bleed-through"
         )
 
@@ -163,9 +160,4 @@ class TestBleedThroughMLIQAIntegration:
             assert "bleed" not in decision.reason.lower(), (
                 "Escalation should not be due to bleed-through (ML doesn't predict it)"
             )
-        else:
-            pass
-
-        # Log results
-        if teacher_scores:
-            pass
+        # teacher_scores available for debugging if needed

@@ -271,7 +271,7 @@ class TestColumnDetector:
         assert isinstance(result, ColumnDetectionResult)
         # Should detect 2 columns
         assert result.num_columns >= 1
-        assert len(result.column_boundaries) >= 0
+        assert isinstance(result.column_boundaries, list)
 
     def test_detect_column_invalid_image(self) -> None:
         """Test that invalid image raises ValueError."""

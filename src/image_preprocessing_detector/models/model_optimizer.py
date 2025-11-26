@@ -59,6 +59,7 @@ else:
         onnx: Any = None
         checker: Any = None
 
+# Use lowercase _has_ort to avoid BasedPyright reportConstantRedefinition
 try:
     import onnxruntime as ort
     from onnxruntime.quantization import (
@@ -67,13 +68,15 @@ try:
         quantize_static,
     )
 
-    HAS_ORT = True
+    _has_ort = True
 except ImportError:
-    HAS_ORT = False
+    _has_ort = False
     ort = None
     QuantType = None
     quantize_static = None
     CalibrationDataReader = object
+
+HAS_ORT = _has_ort
 
 
 @dataclass
@@ -241,7 +244,7 @@ class ModelManifest:
         )
 
 
-class CalibrationDataset(CalibrationDataReader):
+class CalibrationDataset(CalibrationDataReader):  # pyright: ignore[reportGeneralTypeIssues]
     """Calibration dataset reader for ONNX Runtime quantization.
 
     Provides representative data for INT8 calibration.
@@ -434,7 +437,7 @@ class ModelOptimizer:
                 "input": {0: "batch_size"},
             }
             # Add output dynamic axes for multi-head model
-            for head_name in ["blur", "noise", "skew", "illumination", "artifacts"]:
+            for head_name in ("blur", "noise", "skew", "illumination", "artifacts"):
                 dynamic_axes[f"{head_name}_logits"] = {0: "batch_size"}
                 dynamic_axes[f"{head_name}_confidence"] = {0: "batch_size"}
 
@@ -448,7 +451,7 @@ class ModelOptimizer:
 
         # Get output names from model architecture
         output_names = []
-        for head_name in ["blur", "noise", "skew", "illumination", "artifacts"]:
+        for head_name in ("blur", "noise", "skew", "illumination", "artifacts"):
             output_names.extend([f"{head_name}_logits", f"{head_name}_confidence"])
 
         torch.onnx.export(
@@ -504,6 +507,9 @@ class ModelOptimizer:
             logger.warning("ONNX Runtime not available, skipping verification")
             return True
 
+        # Type narrowing for BasedPyright - after HAS_ORT check, ort is guaranteed non-None
+        assert ort is not None  # nosec B101 - type narrowing, not runtime check
+
         # Get PyTorch output
         pytorch_model.eval()
         with torch.no_grad():
@@ -518,12 +524,13 @@ class ModelOptimizer:
 
         # Compare outputs (multi-head model returns dict)
         output_idx = 0
-        for head_name in ["blur", "noise", "skew", "illumination", "artifacts"]:
+        for head_name in ("blur", "noise", "skew", "illumination", "artifacts"):
             pt_logits = pytorch_output[head_name]["logits"].numpy()
             pt_conf = pytorch_output[head_name]["confidence"].numpy()
 
-            onnx_logits = onnx_outputs[output_idx]
-            onnx_conf = onnx_outputs[output_idx + 1]
+            # ONNX Runtime returns numpy arrays
+            onnx_logits: np.ndarray = onnx_outputs[output_idx]  # pyright: ignore[reportAssignmentType]
+            onnx_conf: np.ndarray = onnx_outputs[output_idx + 1]  # pyright: ignore[reportAssignmentType]
             output_idx += 2
 
             if not np.allclose(pt_logits, onnx_logits, rtol=rtol, atol=atol):
@@ -571,6 +578,10 @@ class ModelOptimizer:
         if not HAS_ORT:
             raise RuntimeError("ONNX Runtime not available for quantization")
 
+        # Type narrowing for BasedPyright - after HAS_ORT check, these are guaranteed non-None
+        assert QuantType is not None  # nosec B101 - type narrowing, not runtime check
+        assert quantize_static is not None  # nosec B101 - type narrowing, not runtime check
+
         config = config or QuantizationConfig()
         onnx_path = Path(onnx_path)
         output_path = Path(output_path)
@@ -587,8 +598,9 @@ class ModelOptimizer:
         # Generate synthetic calibration data if not provided
         if calibration_data is None:
             logger.info("Generating synthetic calibration data")
-            synthetic_data = np.random.randn(
-                config.num_calibration_samples, 3, 224, 224
+            rng = np.random.default_rng(seed=42)  # Fixed seed for reproducibility
+            synthetic_data = rng.standard_normal(
+                (config.num_calibration_samples, 3, 224, 224)
             ).astype(np.float32)
             calibration_data = CalibrationDataset(
                 precomputed_data=synthetic_data,
@@ -605,7 +617,7 @@ class ModelOptimizer:
             model_input=str(onnx_path),
             model_output=str(output_path),
             calibration_data_reader=calibration_data,
-            quant_format=quant_type,
+            quant_format=quant_type,  # pyright: ignore[reportArgumentType]  # ORT API variance
             per_channel=config.per_channel,
             weight_type=quant_type,
         )
@@ -764,6 +776,9 @@ class ModelOptimizer:
         if not HAS_ORT:
             raise RuntimeError("ONNX Runtime not available for benchmarking")
 
+        # Type narrowing for BasedPyright
+        assert ort is not None  # nosec B101 - type narrowing, not runtime check
+
         # Create session
         providers = (
             ["CUDAExecutionProvider", "CPUExecutionProvider"]
@@ -777,7 +792,8 @@ class ModelOptimizer:
 
         # Create dummy input
         input_name = session.get_inputs()[0].name
-        dummy_input = np.random.randn(batch_size, 3, 224, 224).astype(np.float32)
+        rng = np.random.default_rng(seed=42)  # Fixed seed for reproducibility
+        dummy_input = rng.standard_normal((batch_size, 3, 224, 224)).astype(np.float32)
 
         # Warmup
         for _ in range(warmup_iterations):
@@ -816,7 +832,7 @@ class ModelOptimizer:
     ) -> BenchmarkResult:
         """Benchmark TensorRT model."""
         try:
-            import pycuda.autoinit  # noqa: F401
+            import pycuda.autoinit  # noqa: F401  # pyright: ignore[reportUnusedImport]
             import pycuda.driver as cuda
             import tensorrt as trt
         except ImportError as e:
@@ -847,7 +863,8 @@ class ModelOptimizer:
                 d_outputs.append(cuda.mem_alloc(size))
 
         # Dummy input
-        dummy_input = np.random.randn(*input_shape).astype(np.float32)
+        rng = np.random.default_rng(seed=42)  # Fixed seed for reproducibility
+        dummy_input = rng.standard_normal(input_shape).astype(np.float32)
 
         stream = cuda.Stream()
 

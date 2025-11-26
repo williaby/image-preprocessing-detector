@@ -125,8 +125,7 @@ def download_file_with_hf_cli(
         logger.info(f"Downloading: {filename}")
 
         # Use huggingface_hub Python API
-        # nosec B615 - trusted dataset, consider revision pinning
-        hf_hub_download(
+        hf_hub_download(  # nosec B615 - trusted dataset
             repo_id=repo_id,
             filename=filename,
             repo_type="dataset",

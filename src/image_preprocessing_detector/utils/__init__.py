@@ -27,6 +27,7 @@ from image_preprocessing_detector.utils.device_probe import (
 from image_preprocessing_detector.utils.log_config import get_logger, setup_logging
 
 # Optional GCS utilities (Phase 2+) - require google-cloud-storage
+# Use lowercase to avoid BasedPyright reportConstantRedefinition
 try:
     from image_preprocessing_detector.utils.gcs_uploader import (
         download_run_from_gcs,
@@ -36,9 +37,9 @@ try:
         upload_run_to_gcs,
     )
 
-    _HAS_GCS = True
+    _has_gcs = True
 except ImportError:
-    _HAS_GCS = False
+    _has_gcs = False
 
 # Optional metadata utilities (Phase 2+) - require additional dependencies
 try:
@@ -52,9 +53,9 @@ try:
         generate_training_config_file,
     )
 
-    _HAS_METADATA = True
+    _has_metadata = True
 except ImportError:
-    _HAS_METADATA = False
+    _has_metadata = False
 
 # Build __all__ dynamically based on available imports
 __all__ = [
@@ -81,7 +82,7 @@ __all__ = [
     "utc_now",
 ]
 
-if _HAS_GCS:
+if _has_gcs:
     __all__.extend(
         [
             "download_run_from_gcs",
@@ -92,7 +93,7 @@ if _HAS_GCS:
         ]
     )
 
-if _HAS_METADATA:
+if _has_metadata:
     __all__.extend(
         [
             "generate_commit_hash_file",

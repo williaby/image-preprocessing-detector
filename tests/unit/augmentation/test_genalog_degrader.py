@@ -245,15 +245,15 @@ class TestCreateDefaultDegrader:
 
         assert degrader.config.blur.enabled is True
         assert degrader.config.blur.kernel_size == 3
-        assert degrader.config.blur.sigma == 1.0
+        assert degrader.config.blur.sigma == pytest.approx(1.0)
 
     def test_default_has_salt_pepper_enabled(self) -> None:
         """Test default degrader has salt_pepper enabled."""
         degrader = create_default_degrader()
 
         assert degrader.config.salt_pepper.enabled is True
-        assert degrader.config.salt_pepper.amount == 0.01
-        assert degrader.config.salt_pepper.salt_vs_pepper == 0.5
+        assert degrader.config.salt_pepper.amount == pytest.approx(0.01)
+        assert degrader.config.salt_pepper.salt_vs_pepper == pytest.approx(0.5)
 
     def test_reproducibility_with_same_seed(self) -> None:
         """Test that same seed produces reproducible RNG state."""

@@ -11,7 +11,8 @@ from typing import TYPE_CHECKING, Any
 # PyTorch is an optional dependency (installed via the `ml` extra). Provide a
 # lightweight stub so base installs can import the training package without the
 # heavy dependency.
-_TORCH_IMPORT_ERROR: ModuleNotFoundError | None = None
+# Use lowercase to avoid BasedPyright reportConstantRedefinition
+_torch_import_error: ModuleNotFoundError | None = None
 
 try:  # pragma: no cover - exercised indirectly via import checks
     from image_preprocessing_detector.training.teacher_trainer import (
@@ -20,7 +21,7 @@ try:  # pragma: no cover - exercised indirectly via import checks
 except ModuleNotFoundError as _exc:  # pragma: no cover - defensive for missing torch
     if _exc.name != "torch":
         raise
-    _TORCH_IMPORT_ERROR = _exc
+    _torch_import_error = _exc
     _TeacherTrainer = None  # type: ignore[assignment, misc]
 
 if TYPE_CHECKING:
@@ -38,7 +39,7 @@ else:
                     "TeacherTrainer requires the optional ML dependencies. "
                     "Install with `pip install image-preprocessing-detector[ml]` "
                     "or `poetry install --with ml`."
-                ) from _TORCH_IMPORT_ERROR
+                ) from _torch_import_error
 
 
 __all__ = ["TeacherTrainer"]

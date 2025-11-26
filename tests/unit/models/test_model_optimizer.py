@@ -70,7 +70,7 @@ class TestQuantizationConfig:
         assert config.per_channel is True
         assert config.calibration_method == "MinMax"
         assert config.num_calibration_samples == 1000
-        assert config.accuracy_tolerance == 0.02
+        assert config.accuracy_tolerance == pytest.approx(0.02)
 
     def test_custom_config(self):
         """Test custom quantization configuration."""
@@ -85,7 +85,7 @@ class TestQuantizationConfig:
         assert config.per_channel is False
         assert config.calibration_method == "Entropy"
         assert config.num_calibration_samples == 500
-        assert config.accuracy_tolerance == 0.05
+        assert config.accuracy_tolerance == pytest.approx(0.05)
 
 
 class TestBenchmarkResult:
@@ -109,8 +109,8 @@ class TestBenchmarkResult:
         assert result.model_path == "/path/to/model.onnx"
         assert result.model_format == "onnx"
         assert result.device == "cpu"
-        assert result.mean_latency_ms == 25.5
-        assert result.throughput_per_sec == 40.0
+        assert result.mean_latency_ms == pytest.approx(25.5)
+        assert result.throughput_per_sec == pytest.approx(40.0)
         assert result.num_samples == 100
 
 
@@ -120,11 +120,11 @@ class TestThresholdConfig:
     def test_default_thresholds(self):
         """Test default threshold values."""
         config = ThresholdConfig()
-        assert config.blur_threshold == 0.5
-        assert config.noise_threshold == 0.5
-        assert config.skew_threshold == 0.5
-        assert config.illumination_threshold == 0.5
-        assert config.artifacts_threshold == 0.5
+        assert config.blur_threshold == pytest.approx(0.5)
+        assert config.noise_threshold == pytest.approx(0.5)
+        assert config.skew_threshold == pytest.approx(0.5)
+        assert config.illumination_threshold == pytest.approx(0.5)
+        assert config.artifacts_threshold == pytest.approx(0.5)
         assert config.optimized_for == "f1"
 
     def test_custom_thresholds(self):
@@ -137,8 +137,8 @@ class TestThresholdConfig:
             artifacts_threshold=0.7,
             optimized_for="precision",
         )
-        assert config.blur_threshold == 0.6
-        assert config.noise_threshold == 0.4
+        assert config.blur_threshold == pytest.approx(0.6)
+        assert config.noise_threshold == pytest.approx(0.4)
         assert config.optimized_for == "precision"
 
     def test_to_dict(self):
@@ -148,8 +148,8 @@ class TestThresholdConfig:
             noise_threshold=0.4,
         )
         d = config.to_dict()
-        assert d["blur_threshold"] == 0.6
-        assert d["noise_threshold"] == 0.4
+        assert d["blur_threshold"] == pytest.approx(0.6)
+        assert d["noise_threshold"] == pytest.approx(0.4)
         assert "optimized_for" in d
 
     def test_from_dict(self):
@@ -163,16 +163,16 @@ class TestThresholdConfig:
             "optimized_for": "recall",
         }
         config = ThresholdConfig.from_dict(data)
-        assert config.blur_threshold == 0.7
-        assert config.noise_threshold == 0.3
+        assert config.blur_threshold == pytest.approx(0.7)
+        assert config.noise_threshold == pytest.approx(0.3)
         assert config.optimized_for == "recall"
 
     def test_from_dict_missing_keys(self):
         """Test creation from partial dictionary."""
         data = {"blur_threshold": 0.8}
         config = ThresholdConfig.from_dict(data)
-        assert config.blur_threshold == 0.8
-        assert config.noise_threshold == 0.5  # default
+        assert config.blur_threshold == pytest.approx(0.8)
+        assert config.noise_threshold == pytest.approx(0.5)  # default
 
 
 class TestModelManifest:
@@ -194,7 +194,7 @@ class TestModelManifest:
         assert manifest.model_name == "student_iqa_resnet18"
         assert manifest.version == "1.0.0"
         assert len(manifest.model_files) == 2
-        assert manifest.metrics["mAP"] == 0.88
+        assert manifest.metrics["mAP"] == pytest.approx(0.88)
 
     def test_manifest_to_dict(self):
         """Test manifest to dictionary conversion."""
@@ -211,8 +211,8 @@ class TestModelManifest:
         d = manifest.to_dict()
         assert d["model_name"] == "test_model"
         assert d["version"] == "1.0.0"
-        assert d["thresholds"]["blur_threshold"] == 0.6
-        assert d["metrics"]["accuracy"] == 0.95
+        assert d["thresholds"]["blur_threshold"] == pytest.approx(0.6)
+        assert d["metrics"]["accuracy"] == pytest.approx(0.95)
 
     def test_manifest_from_dict(self):
         """Test manifest from dictionary."""
@@ -229,8 +229,8 @@ class TestModelManifest:
         manifest = ModelManifest.from_dict(data)
         assert manifest.model_name == "test_model"
         assert manifest.version == "2.0.0"
-        assert manifest.thresholds.blur_threshold == 0.7
-        assert manifest.metrics["f1"] == 0.9
+        assert manifest.thresholds.blur_threshold == pytest.approx(0.7)
+        assert manifest.metrics["f1"] == pytest.approx(0.9)
 
 
 class TestCalibrationDataset:
@@ -238,7 +238,8 @@ class TestCalibrationDataset:
 
     def test_creation_with_precomputed_data(self):
         """Test creation with precomputed numpy data."""
-        data = np.random.randn(10, 1, 3, 224, 224).astype(np.float32)
+        rng = np.random.default_rng(42)
+        data = rng.standard_normal((10, 1, 3, 224, 224)).astype(np.float32)
         dataset = CalibrationDataset(
             precomputed_data=data,
             input_name="input",
@@ -247,7 +248,8 @@ class TestCalibrationDataset:
 
     def test_get_next_returns_dict(self):
         """Test that get_next returns proper dictionary."""
-        data = np.random.randn(3, 1, 3, 224, 224).astype(np.float32)
+        rng = np.random.default_rng(42)
+        data = rng.standard_normal((3, 1, 3, 224, 224)).astype(np.float32)
         dataset = CalibrationDataset(precomputed_data=data, input_name="input")
 
         result = dataset.get_next()
@@ -257,7 +259,8 @@ class TestCalibrationDataset:
 
     def test_get_next_exhaustion(self):
         """Test that get_next returns None when exhausted."""
-        data = np.random.randn(2, 1, 3, 224, 224).astype(np.float32)
+        rng = np.random.default_rng(42)
+        data = rng.standard_normal((2, 1, 3, 224, 224)).astype(np.float32)
         dataset = CalibrationDataset(precomputed_data=data, input_name="input")
 
         dataset.get_next()
@@ -267,7 +270,8 @@ class TestCalibrationDataset:
 
     def test_rewind(self):
         """Test rewind functionality."""
-        data = np.random.randn(2, 1, 3, 224, 224).astype(np.float32)
+        rng = np.random.default_rng(42)
+        data = rng.standard_normal((2, 1, 3, 224, 224)).astype(np.float32)
         dataset = CalibrationDataset(precomputed_data=data, input_name="input")
 
         dataset.get_next()
@@ -293,12 +297,12 @@ class TestThresholdTuner:
         tuner = ThresholdTuner(metric="f1", num_steps=21)
 
         # Create synthetic predictions and labels
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
         # Create separable data
         predictions = np.concatenate(
             [
-                np.random.uniform(0.0, 0.4, 50),  # Negatives
-                np.random.uniform(0.6, 1.0, 50),  # Positives
+                rng.uniform(0.0, 0.4, 50),  # Negatives
+                rng.uniform(0.6, 1.0, 50),  # Positives
             ]
         )
         labels = np.concatenate(
@@ -325,10 +329,10 @@ class TestThresholdTuner:
         labels = np.array([0, 0, 1, 1])
         metrics = tuner._compute_metrics(predictions, labels)
 
-        assert metrics["accuracy"] == 1.0
-        assert metrics["precision"] == 1.0
-        assert metrics["recall"] == 1.0
-        assert metrics["f1"] == 1.0
+        assert metrics["accuracy"] == pytest.approx(1.0)
+        assert metrics["precision"] == pytest.approx(1.0)
+        assert metrics["recall"] == pytest.approx(1.0)
+        assert metrics["f1"] == pytest.approx(1.0)
 
     def test_compute_metrics_with_errors(self):
         """Test metric computation with errors."""
@@ -339,7 +343,7 @@ class TestThresholdTuner:
         labels = np.array([0, 0, 1, 1])
         metrics = tuner._compute_metrics(predictions, labels)
 
-        assert metrics["accuracy"] == 0.5
+        assert metrics["accuracy"] == pytest.approx(0.5)
         assert 0.0 <= metrics["precision"] <= 1.0
         assert 0.0 <= metrics["recall"] <= 1.0
 
@@ -347,13 +351,11 @@ class TestThresholdTuner:
         """Test tuning all heads."""
         tuner = ThresholdTuner(metric="f1", num_steps=11)
 
+        # Use modern Generator API for reproducible random numbers
+        rng = np.random.default_rng(seed=42)
         predictions_dict = {
-            "blur": np.concatenate(
-                [np.random.uniform(0, 0.3, 30), np.random.uniform(0.7, 1, 30)]
-            ),
-            "noise": np.concatenate(
-                [np.random.uniform(0, 0.4, 30), np.random.uniform(0.6, 1, 30)]
-            ),
+            "blur": np.concatenate([rng.uniform(0, 0.3, 30), rng.uniform(0.7, 1, 30)]),
+            "noise": np.concatenate([rng.uniform(0, 0.4, 30), rng.uniform(0.6, 1, 30)]),
         }
         labels_dict = {
             "blur": np.concatenate([np.zeros(30), np.ones(30)]),
@@ -363,7 +365,11 @@ class TestThresholdTuner:
         config = tuner.tune_all_heads(predictions_dict, labels_dict)
 
         assert isinstance(config, ThresholdConfig)
-        assert config.blur_threshold != 0.5 or config.noise_threshold != 0.5
+        # At least one threshold should differ from default 0.5
+        assert not (
+            abs(config.blur_threshold - 0.5) < 1e-9
+            and abs(config.noise_threshold - 0.5) < 1e-9
+        )
         assert config.optimized_for == "f1"
 
 
@@ -466,7 +472,7 @@ class TestModelDeploymentPackage:
 
             assert loaded.model_name == "test_model"
             assert loaded.version == "1.0.0"
-            assert loaded.thresholds.blur_threshold == 0.6
+            assert loaded.thresholds.blur_threshold == pytest.approx(0.6)
 
     def test_verify_package_success(self):
         """Test package verification with valid checksums."""
@@ -601,7 +607,7 @@ class TestModelRegistry:
             info = registry.get_model_info("test_model", "1.0.0")
             assert info is not None
             assert info["manifest"]["model_name"] == "test_model"
-            assert info["manifest"]["metrics"]["accuracy"] == 0.95
+            assert info["manifest"]["metrics"]["accuracy"] == pytest.approx(0.95)
 
     def test_list_models(self):
         """Test listing all models."""
@@ -683,7 +689,7 @@ class TestIntegration:
     def test_full_threshold_tuning_workflow(self):
         """Test complete threshold tuning workflow."""
         # Generate synthetic data
-        np.random.seed(42)
+        rng = np.random.default_rng(42)
         heads = ["blur", "noise", "skew", "illumination", "artifacts"]
 
         predictions_dict = {}
@@ -692,8 +698,8 @@ class TestIntegration:
         for head in heads:
             predictions_dict[head] = np.concatenate(
                 [
-                    np.random.uniform(0.0, 0.4, 100),
-                    np.random.uniform(0.6, 1.0, 100),
+                    rng.uniform(0.0, 0.4, 100),
+                    rng.uniform(0.6, 1.0, 100),
                 ]
             )
             labels_dict[head] = np.concatenate(

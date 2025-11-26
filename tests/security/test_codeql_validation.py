@@ -16,7 +16,11 @@ This file ensures that the CodeQL security-extended query suite is:
 3. Generating accurate SARIF reports for GitHub Security
 
 CodeQL should flag every function in this file with appropriate severity.
+
+Note: Variables prefixed with underscore are intentionally unused - they exist
+solely to create detectable security patterns for CodeQL validation.
 """
+# ruff: noqa: F841  # Intentionally unused variables for security testing
 
 import pickle  # nosec B403 - required for security validation testing
 import subprocess  # nosec B404 - required for security validation testing
@@ -26,9 +30,11 @@ import sqlite3
 from pathlib import Path
 
 
+# Linter configuration for intentional security test file:
 # pylint: disable=all
-# ruff: noqa
 # mypy: ignore-errors
+# type: ignore
+# fmt: off
 
 
 class CodeQLValidationTests:
@@ -45,14 +51,15 @@ class CodeQLValidationTests:
         Severity: High
         """
         # Intentional hardcoded secrets - CodeQL should flag these
-        api_key = "sk-1234567890abcdef1234567890abcdef"  # nosec
-        database_password = "SuperSecretPassword123!"  # nosec
-        aws_secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"  # nosec
-        jwt_secret = "my-super-secret-jwt-key-do-not-share"  # nosec
+        # Using underscore prefix for intentionally unused variables
+        _api_key = "sk-1234567890abcdef1234567890abcdef"  # nosec
+        _database_password = "SuperSecretPassword123!"  # nosec
+        _aws_secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"  # nosec
+        _jwt_secret = "my-super-secret-jwt-key-do-not-share"  # nosec
 
         # CodeQL should detect credential usage
-        connection_string = f"postgresql://admin:{database_password}@localhost/db"  # nosec
-        headers = {"Authorization": f"Bearer {api_key}"}  # nosec
+        _connection_string = f"postgresql://admin:{_database_password}@localhost/db"  # nosec
+        _headers = {"Authorization": f"Bearer {_api_key}"}  # nosec
 
     def test_sql_injection(self) -> None:
         """Test: CodeQL should detect SQL injection vulnerabilities.
@@ -108,7 +115,7 @@ class CodeQLValidationTests:
         # VULNERABLE: Direct file access without validation
         try:
             with open(file_path, "r") as f:  # nosec
-                content = f.read()  # nosec
+                _content = f.read()  # nosec - intentionally unused
         except FileNotFoundError:
             pass
 
@@ -129,14 +136,14 @@ class CodeQLValidationTests:
 
         # VULNERABLE: pickle.loads on untrusted data
         try:
-            deserialized = pickle.loads(untrusted_data)  # nosec
+            _deserialized = pickle.loads(untrusted_data)  # nosec - intentionally unused
         except (pickle.UnpicklingError, EOFError, TypeError):
             pass
 
         # VULNERABLE: pickle.load from untrusted file
         try:
             with open("/tmp/untrusted_data.pkl", "rb") as f:  # nosec
-                data = pickle.load(f)  # nosec
+                _data = pickle.load(f)  # nosec - intentionally unused
         except (FileNotFoundError, pickle.UnpicklingError):
             pass
 
@@ -146,13 +153,13 @@ class CodeQLValidationTests:
         Expected: CWE-327: Use of Weak Cryptographic Algorithm
         Severity: Medium
         """
-        password = "user_password_123"  # nosec B105 - test fixture password
+        _password = "user_password_123"  # nosec B105 - test fixture password
 
         # VULNERABLE: MD5 is cryptographically broken
-        md5_hash = hashlib.md5(password.encode()).hexdigest()  # nosec
+        _md5_hash = hashlib.md5(_password.encode()).hexdigest()  # nosec - intentionally unused
 
         # VULNERABLE: SHA1 is deprecated for security
-        sha1_hash = hashlib.sha1(password.encode()).hexdigest()  # nosec
+        _sha1_hash = hashlib.sha1(_password.encode()).hexdigest()  # nosec - intentionally unused
 
         # CodeQL should recommend SHA-256 or better
         # Correct usage (not flagged):
@@ -168,7 +175,7 @@ class CodeQLValidationTests:
 
         # VULNERABLE: eval() with untrusted input
         try:
-            result = eval(user_input)  # nosec - CodeQL should flag
+            _result = eval(user_input)  # nosec - CodeQL should flag, intentionally unused
         except (SyntaxError, NameError):
             pass
 

@@ -420,7 +420,7 @@ def process_single_file(
             builder.add_page(
                 page_number=page_idx,
                 page_data=page_data_arg,
-                text_result=text_result,
+                _text_result=text_result,
                 skew_result=skew_result,
                 blur_result=blur_result,
                 contrast_result=contrast_result,

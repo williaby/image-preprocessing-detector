@@ -412,6 +412,70 @@ class DQSCalibrator:
 
         return total_error / len(samples)
 
+    def _copy_config(self, config: DQSWeightConfig) -> DQSWeightConfig:
+        """Create a copy of a weight configuration."""
+        return DQSWeightConfig(
+            blur_weight=config.blur_weight,
+            noise_weight=config.noise_weight,
+            contrast_weight=config.contrast_weight,
+            illumination_weight=config.illumination_weight,
+            artifacts_weight=config.artifacts_weight,
+        )
+
+    def _try_weight_adjustment(
+        self,
+        samples: list[CalibrationSample],
+        best_config: DQSWeightConfig,
+        best_mae: float,
+        weight_name: str,
+        delta: float,
+    ) -> tuple[DQSWeightConfig, float, bool]:
+        """Try adjusting a single weight and return result if improved.
+
+        Args:
+            samples: Calibration samples
+            best_config: Current best configuration
+            best_mae: Current best MAE
+            weight_name: Name of weight to adjust (without _weight suffix)
+            delta: Amount to adjust (positive or negative)
+
+        Returns:
+            Tuple of (new_config, new_mae, improved)
+        """
+        test_config = self._copy_config(best_config)
+        attr_name = f"{weight_name}_weight"
+        current_value = getattr(test_config, attr_name)
+        setattr(test_config, attr_name, max(0.0, current_value + delta))
+
+        test_mae = self._calculate_mae(samples, test_config)
+        if test_mae < best_mae:
+            return test_config, test_mae, True
+        return best_config, best_mae, False
+
+    def _optimize_single_weight(
+        self,
+        samples: list[CalibrationSample],
+        config: DQSWeightConfig,
+        mae: float,
+        weight_name: str,
+    ) -> tuple[DQSWeightConfig, float, bool]:
+        """Optimize a single weight by trying both directions.
+
+        Returns:
+            Tuple of (new_config, new_mae, improved)
+        """
+        # Try increasing the weight
+        new_config, new_mae, inc_improved = self._try_weight_adjustment(
+            samples, config, mae, weight_name, self.learning_rate
+        )
+        if inc_improved:
+            return new_config, new_mae, True
+
+        # Try decreasing the weight
+        return self._try_weight_adjustment(
+            samples, config, mae, weight_name, -self.learning_rate
+        )
+
     def calibrate(
         self,
         samples: list[CalibrationSample],
@@ -432,18 +496,9 @@ class DQSCalibrator:
         if not samples:
             raise ValueError("Cannot calibrate with empty samples list")
 
-        # Start with initial configuration
-        current_config = DQSWeightConfig(
-            blur_weight=self.initial_config.blur_weight,
-            noise_weight=self.initial_config.noise_weight,
-            contrast_weight=self.initial_config.contrast_weight,
-            illumination_weight=self.initial_config.illumination_weight,
-            artifacts_weight=self.initial_config.artifacts_weight,
-        )
-
-        initial_mae = self._calculate_mae(samples, current_config)
+        best_config = self._copy_config(self.initial_config)
+        initial_mae = self._calculate_mae(samples, best_config)
         best_mae = initial_mae
-        best_config = current_config
 
         weight_names = ["blur", "noise", "contrast", "illumination", "artifacts"]
         iteration = 0
@@ -454,47 +509,10 @@ class DQSCalibrator:
 
             # Coordinate descent: optimize one weight at a time
             for weight_name in weight_names:
-                # Try increasing the weight
-                test_config = DQSWeightConfig(
-                    blur_weight=best_config.blur_weight,
-                    noise_weight=best_config.noise_weight,
-                    contrast_weight=best_config.contrast_weight,
-                    illumination_weight=best_config.illumination_weight,
-                    artifacts_weight=best_config.artifacts_weight,
+                best_config, best_mae, weight_improved = self._optimize_single_weight(
+                    samples, best_config, best_mae, weight_name
                 )
-
-                current_value = getattr(test_config, f"{weight_name}_weight")
-                setattr(
-                    test_config,
-                    f"{weight_name}_weight",
-                    max(0.0, current_value + self.learning_rate),
-                )
-
-                test_mae = self._calculate_mae(samples, test_config)
-                if test_mae < best_mae:
-                    best_mae = test_mae
-                    best_config = test_config
-                    improved = True
-                    continue
-
-                # Try decreasing the weight
-                test_config = DQSWeightConfig(
-                    blur_weight=best_config.blur_weight,
-                    noise_weight=best_config.noise_weight,
-                    contrast_weight=best_config.contrast_weight,
-                    illumination_weight=best_config.illumination_weight,
-                    artifacts_weight=best_config.artifacts_weight,
-                )
-                setattr(
-                    test_config,
-                    f"{weight_name}_weight",
-                    max(0.0, current_value - self.learning_rate),
-                )
-
-                test_mae = self._calculate_mae(samples, test_config)
-                if test_mae < best_mae:
-                    best_mae = test_mae
-                    best_config = test_config
+                if weight_improved:
                     improved = True
 
             if verbose and iteration % 100 == 0:
@@ -1149,6 +1167,63 @@ class ExtendedIQAScores:
 # Default weight configuration for extended IQA (Phase 4.10)
 DEFAULT_DQS_WEIGHTS = DQSWeightConfig()
 
+# Severity to quality score mapping
+_SEVERITY_QUALITY_MAP: dict[str, float] = {
+    "low": 0.85,
+    "medium": 0.65,
+    "high": 0.40,
+    "critical": 0.15,
+}
+
+
+def _severity_to_quality(severity_value: str) -> float:
+    """Convert severity level to quality score.
+
+    Args:
+        severity_value: Severity enum value string
+
+    Returns:
+        Quality score (0-1, higher is better)
+    """
+    return _SEVERITY_QUALITY_MAP.get(severity_value, 0.5)
+
+
+def _normalize_blur_score(blur_result: BlurDetectionResult) -> float:
+    """Normalize blur detection result to quality score."""
+    if blur_result.is_blurred:
+        return _severity_to_quality(blur_result.severity.value)
+    return min(1.0, blur_result.score / 500.0)
+
+
+def _normalize_noise_score(noise_result: NoiseDetectionResult) -> float:
+    """Normalize noise detection result to quality score."""
+    if noise_result.is_noisy:
+        return _severity_to_quality(noise_result.severity.value)
+    return noise_result.noise_score
+
+
+def _normalize_contrast_score(contrast_result: ContrastDetectionResult) -> float:
+    """Normalize contrast detection result to quality score."""
+    if contrast_result.is_low_contrast:
+        return _severity_to_quality(contrast_result.severity.value)
+    return contrast_result.score
+
+
+def _normalize_illumination_score(
+    illumination_result: IlluminationDetectionResult,
+) -> float:
+    """Normalize illumination detection result to quality score."""
+    if illumination_result.has_issues:
+        return _severity_to_quality(illumination_result.severity.value)
+    return illumination_result.uniformity
+
+
+def _normalize_compression_score(compression_result: JPEGBlockinessResult) -> float:
+    """Normalize compression detection result to quality score."""
+    if compression_result.has_artifacts:
+        return _severity_to_quality(compression_result.severity.value)
+    return compression_result.compression_score
+
 
 def normalize_extended_iqa(
     blur_result: BlurDetectionResult | None = None,
@@ -1196,59 +1271,25 @@ def normalize_extended_iqa(
     """
     scores = ExtendedIQAScores()
 
-    # Blur: Normalize Laplacian variance (0-1000+ → 0-1)
+    # Normalize each detector result using helpers
     if blur_result is not None:
-        if blur_result.is_blurred:
-            # Use severity-based quality
-            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
-            scores.blur_score = severity_map.get(blur_result.severity.value, 0.5)
-        else:
-            # Normalize raw score
-            scores.blur_score = min(1.0, blur_result.score / 500.0)
+        scores.blur_score = _normalize_blur_score(blur_result)
 
-    # Noise: Use noise_score from result (already 0-1 where 1=clean)
     if noise_result is not None:
-        if noise_result.is_noisy:
-            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
-            scores.noise_score = severity_map.get(noise_result.severity.value, 0.5)
-        else:
-            scores.noise_score = noise_result.noise_score
+        scores.noise_score = _normalize_noise_score(noise_result)
 
-    # Contrast: Already 0-1 range
     if contrast_result is not None:
-        if contrast_result.is_low_contrast:
-            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
-            scores.contrast_score = severity_map.get(
-                contrast_result.severity.value, 0.5
-            )
-        else:
-            scores.contrast_score = contrast_result.score
+        scores.contrast_score = _normalize_contrast_score(contrast_result)
 
-    # Illumination: Use uniformity score
     if illumination_result is not None:
-        if illumination_result.has_issues:
-            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
-            scores.illumination_score = severity_map.get(
-                illumination_result.severity.value, 0.5
-            )
-        else:
-            scores.illumination_score = illumination_result.uniformity
+        scores.illumination_score = _normalize_illumination_score(illumination_result)
 
-    # Compression: Use compression_score (already 0-1)
     if compression_result is not None:
-        if compression_result.has_artifacts:
-            severity_map = {"low": 0.85, "medium": 0.65, "high": 0.40, "critical": 0.15}
-            scores.compression_score = severity_map.get(
-                compression_result.severity.value, 0.5
-            )
-        else:
-            scores.compression_score = compression_result.compression_score
+        scores.compression_score = _normalize_compression_score(compression_result)
 
-    # Binarization: Use binarization_score (already 0-1)
     if binarization_result is not None:
         scores.binarization_score = binarization_result.binarization_score
 
-    # Bleed-through: Invert severity (0=bleed-through, 1=clean)
     if bleed_through_result is not None:
         if bleed_through_result.bleed_through_detected:
             scores.bleed_through_score = 1.0 - bleed_through_result.severity

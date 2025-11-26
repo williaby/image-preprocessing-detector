@@ -8,6 +8,7 @@ Implements fast classical computer vision methods for detecting image quality is
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 import cv2
 import numpy as np
@@ -15,6 +16,9 @@ import numpy as np
 from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
+
+# Error message constant to avoid duplication
+_INVALID_IMAGE_ERROR = "Invalid or empty image provided"
 
 
 class Severity(str, Enum):
@@ -94,7 +98,7 @@ class SkewDetector:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         logger.debug("Running skew detection", image_shape=image.shape)
 
@@ -424,7 +428,7 @@ class BlurDetector:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         logger.debug("Running blur detection", image_shape=image.shape)
 
@@ -488,7 +492,7 @@ class BlurDetector:
             ValueError: If image or bbox is invalid
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         x, y, w, h = bbox
         if w <= 0 or h <= 0:
@@ -522,7 +526,7 @@ class BlurDetector:
             List of (bbox, BlurDetectionResult) tuples for each block
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         block_size = block_size or self.block_size
         gray = self._to_grayscale(image)
@@ -844,7 +848,7 @@ class NoiseDetector:
         import pywt
 
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         logger.debug("Running noise detection", image_shape=image.shape)
 
@@ -915,7 +919,7 @@ class NoiseDetector:
             ValueError: If image or bbox is invalid
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         x, y, w, h = bbox
         if w <= 0 or h <= 0:
@@ -996,7 +1000,7 @@ class NoiseDetector:
     def _compute_detailed_metrics(
         self,
         gray: np.ndarray,
-        coeffs: list,
+        coeffs: list[Any],
         noise_sigma: float,
         noise_score: float,
     ) -> NoiseMetrics:
@@ -1160,7 +1164,7 @@ class ContrastDetector:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         logger.debug("Running contrast detection", image_shape=image.shape)
 
@@ -1369,7 +1373,7 @@ class IlluminationDetector:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         logger.debug("Running illumination detection", image_shape=image.shape)
 
@@ -1746,7 +1750,7 @@ class JPEGBlockinessDetector:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         logger.debug("Running JPEG blockiness detection", image_shape=image.shape)
 
@@ -2054,7 +2058,7 @@ class BinarizationQualityDetector:
             ValueError: If image is invalid or empty
         """
         if image is None or image.size == 0:
-            raise ValueError("Invalid or empty image provided")
+            raise ValueError(_INVALID_IMAGE_ERROR)
 
         logger.debug("Running binarization quality detection", image_shape=image.shape)
 
@@ -2150,7 +2154,7 @@ class BinarizationQualityDetector:
             # Try to find actual peaks in histogram
             # This handles uniform or near-uniform images
             # Check histogram spread
-            non_zero_bins = np.where(hist > 0.001)[0]
+            non_zero_bins = np.nonzero(hist > 0.001)[0]
             if len(non_zero_bins) > 0:
                 spread = non_zero_bins[-1] - non_zero_bins[0]
                 # Spread of 0 = uniform, spread of 255 = full range
@@ -2170,6 +2174,67 @@ class BinarizationQualityDetector:
         bimodality_score = min(1.0, between_var / 3000.0)
 
         return float(bimodality_score), threshold
+
+    def _determine_contrast_issue_type(
+        self, cell_std: float, local_contrast: float
+    ) -> str:
+        """Determine the type of contrast issue for a cell.
+
+        Args:
+            cell_std: Standard deviation of cell pixel values
+            local_contrast: Normalized local contrast value
+
+        Returns:
+            Issue type string: 'uniform', 'low_contrast', or 'marginal_contrast'
+        """
+        if cell_std < 5:
+            return "uniform"
+        if local_contrast < 0.05:
+            return "low_contrast"
+        return "marginal_contrast"
+
+    def _create_problem_region(
+        self,
+        x1: int,
+        y1: int,
+        cell_w: int,
+        cell_h: int,
+        scale: float,
+        original_w: int,
+        original_h: int,
+        issue: str,
+        local_contrast: float,
+    ) -> ProblemRegion:
+        """Create a ProblemRegion for a low-contrast cell.
+
+        Args:
+            x1: Cell x-coordinate in subsampled image
+            y1: Cell y-coordinate in subsampled image
+            cell_w: Cell width in subsampled image
+            cell_h: Cell height in subsampled image
+            scale: Scale factor used for subsampling
+            original_w: Original image width
+            original_h: Original image height
+            issue: Issue type string
+            local_contrast: Normalized local contrast value
+
+        Returns:
+            ProblemRegion instance
+        """
+        orig_x = int(x1 / scale)
+        orig_y = int(y1 / scale)
+        orig_w = int(cell_w / scale)
+        orig_h_cell = int(cell_h / scale)
+        severity = 1.0 - (local_contrast / self.min_contrast)
+
+        return ProblemRegion(
+            x=orig_x,
+            y=orig_y,
+            width=min(orig_w, original_w - orig_x),
+            height=min(orig_h_cell, original_h - orig_y),
+            issue=issue,
+            severity=float(min(1.0, severity)),
+        )
 
     def _analyze_local_contrast(
         self, gray: np.ndarray, scale: float, original_h: int, original_w: int
@@ -2212,32 +2277,21 @@ class BinarizationQualityDetector:
 
                 # Identify problem regions
                 if local_contrast < self.min_contrast:
-                    # Map coordinates back to original image
-                    orig_x = int(x1 / scale)
-                    orig_y = int(y1 / scale)
-                    orig_w = int(cell_w / scale)
-                    orig_h_cell = int(cell_h / scale)
-
-                    # Determine issue type
-                    if cell_std < 5:
-                        issue = "uniform"
-                    elif local_contrast < 0.05:
-                        issue = "low_contrast"
-                    else:
-                        issue = "marginal_contrast"
-
-                    severity = 1.0 - (local_contrast / self.min_contrast)
-
-                    problem_regions.append(
-                        ProblemRegion(
-                            x=orig_x,
-                            y=orig_y,
-                            width=min(orig_w, original_w - orig_x),
-                            height=min(orig_h_cell, original_h - orig_y),
-                            issue=issue,
-                            severity=float(min(1.0, severity)),
-                        )
+                    issue = self._determine_contrast_issue_type(
+                        cell_std, local_contrast
                     )
+                    region = self._create_problem_region(
+                        x1,
+                        y1,
+                        cell_w,
+                        cell_h,
+                        scale,
+                        original_w,
+                        original_h,
+                        issue,
+                        local_contrast,
+                    )
+                    problem_regions.append(region)
 
         # Overall contrast score
         if contrast_scores:
@@ -2618,7 +2672,8 @@ class BleedThroughDetector:
         ratio_score = min(1.0, affected_ratio * 5)  # 20% coverage = max severity
 
         # Bleed intensity indicates how visible the bleed-through is
-        intensity_score = min(1.0, bleed_intensity * 4)  # 25% intensity = max
+        # 25% intensity reaches maximum severity
+        intensity_score = min(1.0, bleed_intensity * 4)
 
         # Low background uniformity suggests bleed-through
         uniformity_score = max(0.0, 1.0 - background_uniformity)

@@ -305,6 +305,8 @@ known-local-folder = ["validation", "benchmarks"]
 "noxfile.py" = ["D", "T20"]
 "src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
 "src/image_preprocessing_detector/augmentation/genalog_degrader.py" = ["ERA001"]  # Intentional Phase 2 implementation placeholders
+# Security validation test file with intentional vulnerabilities for CodeQL testing
+"tests/security/test_codeql_validation.py" = ["ALL"]
 "src/image_preprocessing_detector/utils/gcs_uploader.py" = ["T20", "F821"]  # GCS utilities with relaxed print rules
 "src/image_preprocessing_detector/utils/metadata_generator.py" = ["T20", "S", "PTH", "UP038", "TRY"]  # Metadata generator with relaxed rules
 

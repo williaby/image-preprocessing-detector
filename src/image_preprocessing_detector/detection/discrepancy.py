@@ -540,6 +540,67 @@ class MLScores:
         }
 
 
+def _calculate_head_discrepancy(
+    head: str,
+    ml_dict: dict[str, float],
+    classical_dict: dict[str, float],
+    thresholds: DiscrepancyThresholds,
+) -> tuple[float, bool, float, float]:
+    """Calculate discrepancy for a single head.
+
+    Args:
+        head: Head name (blur, contrast, etc.)
+        ml_dict: ML scores dictionary
+        classical_dict: Classical scores dictionary
+        thresholds: Discrepancy thresholds configuration
+
+    Returns:
+        Tuple of (discrepancy, exceeded, weighted_discrepancy, weight)
+    """
+    ml_val = ml_dict.get(head, 1.0)
+    classical_val = classical_dict.get(head, 1.0)
+
+    discrepancy = abs(ml_val - classical_val)
+    threshold = thresholds.get_threshold(head)
+    exceeded = discrepancy >= threshold
+    weight = thresholds.get_weight(head)
+    weighted_discrepancy = discrepancy * weight
+
+    return discrepancy, exceeded, weighted_discrepancy, weight
+
+
+def _collect_escalation_reasons(
+    per_head_exceeded: dict[str, bool],
+    weighted_mean: float,
+    thresholds: DiscrepancyThresholds,
+) -> list[EscalationReason]:
+    """Collect escalation reasons from discrepancy analysis.
+
+    Args:
+        per_head_exceeded: Per-head threshold exceeded flags
+        weighted_mean: Weighted mean discrepancy
+        thresholds: Discrepancy thresholds configuration
+
+    Returns:
+        List of escalation reasons
+    """
+    escalation_reasons: list[EscalationReason] = []
+
+    # Rule 1: Any head exceeds threshold
+    num_exceeded = sum(per_head_exceeded.values())
+    if num_exceeded >= thresholds.min_heads_exceeded:
+        for head, exceeded in per_head_exceeded.items():
+            if exceeded:
+                reason = EscalationReason(f"{head}_discrepancy")
+                escalation_reasons.append(reason)
+
+    # Rule 2: Weighted mean exceeds aggregate threshold
+    if weighted_mean >= thresholds.aggregate_threshold:
+        escalation_reasons.append(EscalationReason.MULTIPLE_ISSUES)
+
+    return escalation_reasons
+
+
 class DiscrepancyAnalyzer:
     """Analyzes discrepancies between ML student and classical IQA scores.
 
@@ -582,32 +643,21 @@ class DiscrepancyAnalyzer:
         """
         ml_dict = ml_scores.to_dict()
         classical_dict = classical_scores.to_dict()
-
-        # Heads to compare (intersection of available scores)
         compare_heads = ["blur", "contrast", "skew", "noise", "compression"]
 
-        # Calculate per-head discrepancies
+        # Calculate per-head discrepancies using helper
         per_head_discrepancies: dict[str, float] = {}
         per_head_exceeded: dict[str, bool] = {}
         weighted_discrepancies: list[float] = []
         weights: list[float] = []
 
         for head in compare_heads:
-            ml_val = ml_dict.get(head, 1.0)
-            classical_val = classical_dict.get(head, 1.0)
-
-            # Absolute discrepancy
-            discrepancy = abs(ml_val - classical_val)
+            discrepancy, exceeded, weighted_disc, weight = _calculate_head_discrepancy(
+                head, ml_dict, classical_dict, self.thresholds
+            )
             per_head_discrepancies[head] = discrepancy
-
-            # Check if exceeded threshold
-            threshold = self.thresholds.get_threshold(head)
-            exceeded = discrepancy >= threshold
             per_head_exceeded[head] = exceeded
-
-            # Weighted discrepancy for aggregate
-            weight = self.thresholds.get_weight(head)
-            weighted_discrepancies.append(discrepancy * weight)
+            weighted_discrepancies.append(weighted_disc)
             weights.append(weight)
 
         # Calculate aggregate metrics
@@ -623,20 +673,10 @@ class DiscrepancyAnalyzer:
         )
         num_exceeded = sum(per_head_exceeded.values())
 
-        # Determine escalation
-        escalation_reasons: list[EscalationReason] = []
-
-        # Rule 1: Any head exceeds threshold
-        if num_exceeded >= self.thresholds.min_heads_exceeded:
-            for head, exceeded in per_head_exceeded.items():
-                if exceeded:
-                    reason = EscalationReason(f"{head}_discrepancy")
-                    escalation_reasons.append(reason)
-
-        # Rule 2: Weighted mean exceeds aggregate threshold
-        if weighted_mean >= self.thresholds.aggregate_threshold:
-            escalation_reasons.append(EscalationReason.MULTIPLE_ISSUES)
-
+        # Collect escalation reasons using helper
+        escalation_reasons = _collect_escalation_reasons(
+            per_head_exceeded, weighted_mean, self.thresholds
+        )
         should_escalate = len(escalation_reasons) > 0
 
         if should_escalate:
