@@ -952,52 +952,106 @@ Establish model registry for Project B consumption.
 
 #### 9.8.1 ⬜ Registry Structure
 
+Each model includes both **full** and **light** variants for flexible deployment:
+
 ```text
 models/
 ├── doclayout_yolo_extended/
-│   ├── weights.onnx
-│   ├── config.yaml
-│   ├── class_mapping.json
-│   └── training_summary.json
+│   ├── full/
+│   │   ├── yolov10_17class.onnx           # ~100MB, 1600px input
+│   │   ├── config.yaml
+│   │   └── training_summary.json
+│   ├── light/
+│   │   ├── yolov10n_17class.onnx          # ~20MB, 1024px input
+│   │   ├── config.yaml
+│   │   └── training_summary.json
+│   ├── class_mapping.json                  # Shared between variants
+│   └── benchmarks.json                     # CPU/GPU/Modal L4 comparison
 ├── handwriting_classifier/
-│   ├── resnet18_handwriting.onnx
-│   ├── config.json
-│   └── training_summary.json
+│   ├── full/
+│   │   ├── resnet18_handwriting.onnx      # ~47MB
+│   │   └── training_summary.json
+│   ├── light/
+│   │   ├── mobilenetv3_handwriting.onnx   # ~10MB
+│   │   └── training_summary.json
+│   ├── config.json                         # Shared config
+│   └── benchmarks.json
 ├── table_type_classifier/
-│   ├── table_classifier.onnx
-│   ├── config.json
-│   └── training_summary.json
+│   ├── full/
+│   │   └── resnet18_table.onnx            # ~47MB
+│   ├── light/
+│   │   └── mobilenetv3_table.onnx         # ~10MB
+│   └── benchmarks.json
 ├── formula_complexity_classifier/
-│   ├── formula_complexity.onnx
-│   ├── config.json
-│   └── training_summary.json
+│   ├── full/
+│   │   └── resnet18_formula.onnx
+│   ├── light/
+│   │   └── mobilenetv3_formula.onnx
+│   └── benchmarks.json
 ├── parasitic_detector/
-│   ├── parasitic_detector.onnx
-│   ├── config.json
-│   └── training_summary.json
-└── registry.json  # Master index of all models
+│   ├── full/
+│   │   └── resnet18_parasitic.onnx
+│   ├── light/
+│   │   └── mobilenetv3_parasitic.onnx
+│   └── benchmarks.json
+└── registry.json  # Master index of all models + variants
 ```
 
 #### 9.8.2 ⬜ Registry Manifest
 
 ```json
 {
-  "registry_version": "1.0.0",
+  "registry_version": "2.0.0",
+  "default_variant": "light",
   "models": {
     "doclayout_yolo_extended": {
-      "version": "1.0.0",
-      "format": "onnx",
-      "path": "doclayout_yolo_extended/weights.onnx",
-      "input_size": [1600, 1600],
       "classes": 17,
-      "trained_date": "2025-12-01"
+      "class_mapping": "doclayout_yolo_extended/class_mapping.json",
+      "variants": {
+        "full": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "doclayout_yolo_extended/full/yolov10_17class.onnx",
+          "architecture": "yolov10",
+          "input_size": [1600, 1600],
+          "size_mb": 100,
+          "recommended_device": "modal_l4"
+        },
+        "light": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "doclayout_yolo_extended/light/yolov10n_17class.onnx",
+          "architecture": "yolov10n",
+          "input_size": [1024, 1024],
+          "size_mb": 20,
+          "recommended_device": "cpu"
+        }
+      },
+      "benchmarks": "doclayout_yolo_extended/benchmarks.json"
     },
     "handwriting_classifier": {
-      "version": "1.0.0",
-      "format": "onnx",
-      "path": "handwriting_classifier/resnet18_handwriting.onnx",
-      "input_size": [224, 224],
-      "classes": 2
+      "classes": 2,
+      "variants": {
+        "full": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "handwriting_classifier/full/resnet18_handwriting.onnx",
+          "architecture": "resnet18",
+          "input_size": [224, 224],
+          "size_mb": 47,
+          "recommended_device": "modal_l4"
+        },
+        "light": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "handwriting_classifier/light/mobilenetv3_handwriting.onnx",
+          "architecture": "mobilenetv3_small",
+          "input_size": [224, 224],
+          "size_mb": 10,
+          "recommended_device": "cpu"
+        }
+      },
+      "benchmarks": "handwriting_classifier/benchmarks.json"
     }
   }
 }
@@ -1011,16 +1065,141 @@ models/
 
 ---
 
+### 9.9 Light Model Variants for Local Benchmarking (HIGH PRIORITY)
+
+Train lightweight versions of each Phase 9 model for local CPU inference and benchmarking. Based on Phase 4 benchmarks, local GPUs (RTX A500, P2000) provide minimal benefit for small models—CPU is often faster due to transfer overhead elimination.
+
+#### 9.9.1 ⬜ Model Variant Strategy
+
+Each Phase 9 model ships in two variants:
+
+| Model | Full Version | Light Version | Use Case |
+|-------|-------------|---------------|----------|
+| DocLayout-YOLO | YOLOv10 (17 classes) | YOLOv10-nano | CPU inference, edge deployment |
+| Handwriting Classifier | ResNet-18 | MobileNetV3-small | CPU inference, high-throughput |
+| Table Type Classifier | ResNet-18 | MobileNetV3-small | CPU inference |
+| Formula Complexity | ResNet-18 | MobileNetV3-small | CPU inference |
+| Parasitic Detector | ResNet-18 | MobileNetV3-small | CPU inference |
+| Element Complexity | ResNet-18 multi-head | MobileNetV3-small multi-head | CPU inference |
+
+#### 9.9.2 ⬜ Light Model Specifications
+
+**DocLayout-YOLO-Nano:**
+
+```yaml
+# configs/models/doclayout_yolo_nano.yaml
+model:
+  base: yolov10n  # Nano variant
+  image_size: 1024  # Reduced from 1600
+  classes: 17
+
+training:
+  epochs: 100
+  batch_size: 32
+  gpu: Modal T4
+
+export:
+  path: models/doclayout_yolo_extended/yolov10n_17class.onnx
+  target_size: < 20MB
+  target_latency: < 100ms/page (CPU)
+```
+
+**MobileNetV3-small Classifiers:**
+
+```yaml
+# configs/models/handwriting_classifier_light.yaml
+model:
+  architecture: mobilenetv3_small
+  pretrained: true
+  num_classes: 2
+  dropout: 0.2
+
+training:
+  epochs: 30
+  batch_size: 128  # Larger batch for smaller model
+  gpu: Modal T4
+
+export:
+  path: models/handwriting_classifier/mobilenetv3_handwriting.onnx
+  target_size: < 10MB
+  target_latency: < 5ms/crop (CPU)
+```
+
+#### 9.9.3 ⬜ Accuracy vs Latency Tradeoffs
+
+| Model | Full Accuracy Target | Light Accuracy Target | Acceptable Degradation |
+|-------|---------------------|----------------------|------------------------|
+| DocLayout-YOLO | mAP ≥ 0.82 | mAP ≥ 0.75 | ≤ 8.5% |
+| Handwriting Classifier | F1 ≥ 0.95 | F1 ≥ 0.90 | ≤ 5% |
+| Table Type Classifier | Accuracy ≥ 0.85 | Accuracy ≥ 0.80 | ≤ 5.9% |
+| Formula Complexity | Accuracy ≥ 0.85 | Accuracy ≥ 0.80 | ≤ 5.9% |
+
+#### 9.9.4 ⬜ Benchmark Requirements
+
+Both full and light variants must be benchmarked on:
+
+| Device | Benchmark Requirement |
+|--------|----------------------|
+| CPU (8-core) | Required - primary deployment target |
+| Local GPU (P2000/RTX A500) | Required - compare against CPU |
+| Modal L4 | Required - cloud fallback baseline |
+
+**Benchmark Output Format:**
+
+```json
+{
+  "model": "handwriting_classifier",
+  "variant": "light",
+  "architecture": "mobilenetv3_small",
+  "benchmarks": {
+    "cpu": {"mean_ms": 4.2, "p95_ms": 5.8, "p99_ms": 6.1},
+    "gpu_local": {"mean_ms": 5.1, "p95_ms": 6.2, "p99_ms": 7.0},
+    "modal_l4": {"mean_ms": 0.8, "p95_ms": 1.2, "p99_ms": 1.4}
+  },
+  "accuracy": {
+    "f1_score": 0.92,
+    "vs_full_model_delta": -0.03
+  }
+}
+```
+
+#### 9.9.5 ⬜ Deployment Configuration
+
+```yaml
+# configs/inference/model_selection.yaml
+model_variants:
+  default: light  # Use light models by default for CPU
+
+  # Override rules
+  overrides:
+    - condition: "modal_l4_available"
+      variant: full
+    - condition: "accuracy_critical"
+      variant: full
+    - condition: "latency_critical"
+      variant: light
+
+  # Fallback chain
+  device_priority:
+    - modal_l4: full
+    - cpu: light
+    # Note: Local GPU not recommended (negative speedup for small models)
+```
+
+---
+
 ### Phase 9 Deliverables
 
 | Deliverable | Priority | Target |
 |-------------|----------|--------|
-| DocLayout-YOLO extended (17 classes) | High | Week 11 |
-| Handwriting classifier | High | Week 10 |
-| Table type classifier | Medium | Week 11 |
-| Formula complexity classifier | Medium | Week 11 |
-| Parasitic content detector | Medium | Week 12 |
+| DocLayout-YOLO extended (17 classes) - Full | High | Week 11 |
+| DocLayout-YOLO extended (17 classes) - Light (nano) | High | Week 11 |
+| Handwriting classifier - Full + Light | High | Week 10 |
+| Table type classifier - Full + Light | Medium | Week 11 |
+| Formula complexity classifier - Full + Light | Medium | Week 11 |
+| Parasitic content detector - Full + Light | Medium | Week 12 |
 | Model registry + GCS sync | High | Week 12 |
+| **Benchmark suite (CPU/GPU/Modal)** | **High** | **Week 12** |
 | Project A→B contract document | High | Week 10 |
 | Integration tests | High | Week 12 |
 

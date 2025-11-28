@@ -395,128 +395,230 @@ Page-level summary of parasitic content for quick filtering:
 
 ## 3. Model Handoff: Model Registry
 
-Project A trains and exports models that Project B loads for inference.
+Project A trains and exports models that Project B loads for inference. Each model ships in **full** and **light** variants for flexible deployment based on available compute resources.
 
 ### 3.1 Registry Location
 
 ```text
-# Local filesystem
+# Local filesystem - each model has full/ and light/ subdirectories
 models/
-├── registry.json                    # Master index
+├── registry.json                           # Master index with variant support
 ├── doclayout_yolo_extended/
+│   ├── full/yolov10_17class.onnx          # ~100MB, 1600px, Modal L4 target
+│   ├── light/yolov10n_17class.onnx        # ~20MB, 1024px, CPU target
+│   ├── class_mapping.json                  # Shared
+│   └── benchmarks.json                     # CPU/GPU/Modal L4 comparison
 ├── handwriting_classifier/
+│   ├── full/resnet18_handwriting.onnx     # ~47MB
+│   ├── light/mobilenetv3_handwriting.onnx # ~10MB
+│   └── benchmarks.json
 ├── table_type_classifier/
+│   ├── full/resnet18_table.onnx
+│   ├── light/mobilenetv3_table.onnx
+│   └── benchmarks.json
 ├── formula_complexity_classifier/
+│   ├── full/resnet18_formula.onnx
+│   ├── light/mobilenetv3_formula.onnx
+│   └── benchmarks.json
 └── parasitic_detector/
+    ├── full/resnet18_parasitic.onnx
+    ├── light/mobilenetv3_parasitic.onnx
+    └── benchmarks.json
 
 # GCS backup
 gs://image_detection_b/models/phase9/
 ```
 
-### 3.2 Registry Manifest (registry.json)
+### 3.2 Model Variant Strategy
+
+Based on Phase 4 benchmarks, local GPUs (P2000, RTX A500) provide minimal benefit for small models—CPU is often faster due to transfer overhead. Variants are selected automatically:
+
+| Device Available | Recommended Variant | Rationale |
+|-----------------|---------------------|-----------|
+| Modal L4 | `full` | True GPU acceleration (7-170x speedup) |
+| CPU only | `light` | MobileNetV3 optimized for CPU inference |
+| Local GPU (P2000/A500) | `light` | Negative speedup with full models |
+
+### 3.3 Registry Manifest (registry.json)
 
 ```json
 {
-  "registry_version": "1.0.0",
+  "registry_version": "2.0.0",
   "created_date": "2025-12-01",
+  "default_variant": "light",
   "models": {
     "doclayout_yolo_extended": {
-      "version": "1.0.0",
-      "format": "onnx",
-      "path": "doclayout_yolo_extended/weights.onnx",
-      "config_path": "doclayout_yolo_extended/config.yaml",
-      "input_size": [1600, 1600],
       "classes": 17,
       "class_mapping_path": "doclayout_yolo_extended/class_mapping.json",
-      "trained_date": "2025-12-01",
-      "training_dataset": "DocLayNet + custom",
-      "performance": {
-        "mAP_50": 0.85,
-        "inference_ms_gpu": 45,
-        "inference_ms_cpu": 180
+      "benchmarks_path": "doclayout_yolo_extended/benchmarks.json",
+      "variants": {
+        "full": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "doclayout_yolo_extended/full/yolov10_17class.onnx",
+          "architecture": "yolov10",
+          "input_size": [1600, 1600],
+          "size_mb": 100,
+          "recommended_device": "modal_l4",
+          "training_dataset": "DocLayNet + custom",
+          "performance": {
+            "mAP_50": 0.85,
+            "inference_ms_modal_l4": 15,
+            "inference_ms_cpu": 180
+          }
+        },
+        "light": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "doclayout_yolo_extended/light/yolov10n_17class.onnx",
+          "architecture": "yolov10n",
+          "input_size": [1024, 1024],
+          "size_mb": 20,
+          "recommended_device": "cpu",
+          "performance": {
+            "mAP_50": 0.78,
+            "inference_ms_cpu": 80
+          }
+        }
       }
     },
     "handwriting_classifier": {
-      "version": "1.0.0",
-      "format": "onnx",
-      "path": "handwriting_classifier/resnet18_handwriting.onnx",
-      "config_path": "handwriting_classifier/config.json",
-      "input_size": [224, 224],
       "classes": 2,
       "class_names": ["printed", "handwritten"],
-      "trained_date": "2025-11-15",
-      "training_dataset": "IAM + IMGUR5K + DocLayNet",
-      "performance": {
-        "accuracy": 0.96,
-        "inference_ms_gpu": 3,
-        "inference_ms_cpu": 15
+      "benchmarks_path": "handwriting_classifier/benchmarks.json",
+      "variants": {
+        "full": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "handwriting_classifier/full/resnet18_handwriting.onnx",
+          "architecture": "resnet18",
+          "input_size": [224, 224],
+          "size_mb": 47,
+          "recommended_device": "modal_l4",
+          "performance": {
+            "accuracy": 0.96,
+            "inference_ms_modal_l4": 1.5,
+            "inference_ms_cpu": 10
+          }
+        },
+        "light": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "handwriting_classifier/light/mobilenetv3_handwriting.onnx",
+          "architecture": "mobilenetv3_small",
+          "input_size": [224, 224],
+          "size_mb": 10,
+          "recommended_device": "cpu",
+          "performance": {
+            "accuracy": 0.92,
+            "inference_ms_cpu": 4
+          }
+        }
       }
     },
     "table_type_classifier": {
-      "version": "1.0.0",
-      "format": "onnx",
-      "path": "table_type_classifier/table_classifier.onnx",
-      "config_path": "table_type_classifier/config.json",
-      "input_size": [384, 384],
       "classes": 6,
-      "class_names": [
-        "simple_grid",
-        "merged_header",
-        "nested_rows",
-        "financial",
-        "form_like",
-        "scientific"
-      ],
-      "trained_date": "2025-11-20",
-      "training_dataset": "PubTables-1M + FinTabNet + TableBank"
+      "class_names": ["simple_grid", "merged_header", "nested_rows", "financial", "form_like", "scientific"],
+      "variants": {
+        "full": {
+          "path": "table_type_classifier/full/resnet18_table.onnx",
+          "architecture": "resnet18",
+          "input_size": [384, 384]
+        },
+        "light": {
+          "path": "table_type_classifier/light/mobilenetv3_table.onnx",
+          "architecture": "mobilenetv3_small",
+          "input_size": [384, 384]
+        }
+      }
     },
     "formula_complexity_classifier": {
-      "version": "1.0.0",
-      "format": "onnx",
-      "path": "formula_complexity_classifier/formula_complexity.onnx",
-      "config_path": "formula_complexity_classifier/config.json",
-      "input_size": [224, 224],
       "classes": 5,
-      "class_names": [
-        "simple_inline",
-        "block_equation",
-        "multi_line",
-        "matrix",
-        "handwritten_math"
-      ]
+      "class_names": ["simple_inline", "block_equation", "multi_line", "matrix", "handwritten_math"],
+      "variants": {
+        "full": {
+          "path": "formula_complexity_classifier/full/resnet18_formula.onnx",
+          "architecture": "resnet18"
+        },
+        "light": {
+          "path": "formula_complexity_classifier/light/mobilenetv3_formula.onnx",
+          "architecture": "mobilenetv3_small"
+        }
+      }
     }
   }
 }
 ```
 
-### 3.3 Model Loading Contract
+### 3.4 Model Loading Contract
 
-Project B MUST load models using this interface:
+Project B MUST load models using this interface with variant support:
 
 ```python
 from pathlib import Path
+from typing import Literal
 import onnxruntime as ort
 import json
 
-class ProjectAModelRegistry:
-    """Load and manage models trained by Project A."""
+VariantType = Literal["full", "light", "auto"]
 
-    def __init__(self, registry_path: Path):
+class ProjectAModelRegistry:
+    """Load and manage models trained by Project A with variant support."""
+
+    def __init__(self, registry_path: Path, default_variant: VariantType = "auto"):
         with open(registry_path / "registry.json") as f:
             self.manifest = json.load(f)
         self.registry_path = registry_path
+        self.default_variant = default_variant
         self._sessions = {}
+        self._device = self._detect_device()
 
-    def load_model(self, model_name: str) -> ort.InferenceSession:
-        """Load ONNX model by name."""
-        if model_name not in self._sessions:
+    def _detect_device(self) -> str:
+        """Detect best available device."""
+        try:
+            import modal
+            # Check if running on Modal
+            if hasattr(modal, 'is_local') and not modal.is_local():
+                return "modal_l4"
+        except ImportError:
+            pass
+        return "cpu"  # Default to CPU (local GPU not recommended)
+
+    def _select_variant(self, model_name: str, variant: VariantType) -> str:
+        """Select appropriate variant based on device and request."""
+        if variant != "auto":
+            return variant
+
+        # Auto-select based on device
+        if self._device == "modal_l4":
+            return "full"
+        return "light"  # CPU or local GPU -> use light
+
+    def load_model(
+        self,
+        model_name: str,
+        variant: VariantType = "auto"
+    ) -> ort.InferenceSession:
+        """Load ONNX model by name with variant selection."""
+        selected_variant = self._select_variant(model_name, variant)
+        cache_key = f"{model_name}:{selected_variant}"
+
+        if cache_key not in self._sessions:
             model_info = self.manifest["models"][model_name]
-            model_path = self.registry_path / model_info["path"]
-            self._sessions[model_name] = ort.InferenceSession(
+            variant_info = model_info["variants"][selected_variant]
+            model_path = self.registry_path / variant_info["path"]
+
+            # Select providers based on device
+            if self._device == "modal_l4":
+                providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            else:
+                providers = ["CPUExecutionProvider"]
+
+            self._sessions[cache_key] = ort.InferenceSession(
                 str(model_path),
-                providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+                providers=providers
             )
-        return self._sessions[model_name]
+        return self._sessions[cache_key]
 
     def get_class_mapping(self, model_name: str) -> dict:
         """Get class name to index mapping."""
@@ -528,12 +630,23 @@ class ProjectAModelRegistry:
             return {name: i for i, name in enumerate(model_info["class_names"])}
         return {}
 
-    def get_input_size(self, model_name: str) -> tuple[int, int]:
-        """Get expected input dimensions."""
-        return tuple(self.manifest["models"][model_name]["input_size"])
+    def get_input_size(self, model_name: str, variant: VariantType = "auto") -> tuple[int, int]:
+        """Get expected input dimensions for variant."""
+        selected_variant = self._select_variant(model_name, variant)
+        model_info = self.manifest["models"][model_name]
+        variant_info = model_info["variants"][selected_variant]
+        return tuple(variant_info["input_size"])
+
+    def get_benchmarks(self, model_name: str) -> dict:
+        """Load benchmark results for model (all variants)."""
+        model_info = self.manifest["models"][model_name]
+        if "benchmarks_path" in model_info:
+            with open(self.registry_path / model_info["benchmarks_path"]) as f:
+                return json.load(f)
+        return {}
 ```
 
-### 3.4 Version Compatibility
+### 3.5 Version Compatibility
 
 | Project A Model Version | Compatible Project B Versions |
 |------------------------|------------------------------|
