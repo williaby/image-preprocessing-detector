@@ -549,8 +549,7 @@ class ContinuousIQADataset(Dataset):
         """Parse label entry to extract severity value."""
         if isinstance(entry, dict):
             return float(entry.get("severity", entry.get("value", 0)))
-        else:
-            return float(entry) * 0.7  # Convert binary to soft label
+        return float(entry) * 0.7  # Convert binary to soft label
 
     def _extract_quality_scores_format(
         self, label_data: dict[str, Any]
@@ -571,10 +570,9 @@ class ContinuousIQADataset(Dataset):
         """Get quality score with key name variations."""
         if key == "contrast":
             return scores.get("contrast", scores.get("rms_contrast", 0.0))
-        elif key == "compression":
+        if key == "compression":
             return scores.get("compression", scores.get("blockiness", 0.0) / 10.0)
-        else:
-            return scores.get(key, 0.0)
+        return scores.get(key, 0.0)
 
     def _to_tensor(self, image: NDArray[np.uint8]) -> torch.Tensor:
         """Convert numpy image to PyTorch tensor."""

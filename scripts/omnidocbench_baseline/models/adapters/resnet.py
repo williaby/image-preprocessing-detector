@@ -7,8 +7,12 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    import torch
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "src"))
@@ -79,7 +83,7 @@ class ResNetAdapter(IQAModel):
             logger.info("Using placeholder predictions for unloaded model")
             self._is_loaded = True  # Mark as loaded to allow placeholder behavior
 
-    def _get_device(self, torch) -> "torch.device":
+    def _get_device(self, torch: "torch") -> "torch.device":
         """Determine compute device."""
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -93,14 +97,13 @@ class ResNetAdapter(IQAModel):
                 if weights == "imagenet"
                 else models.resnet18(weights=None)
             )
-        elif arch == "resnet50":
+        if arch == "resnet50":
             return (
                 models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
                 if weights == "imagenet"
                 else models.resnet50(weights=None)
             )
-        else:
-            raise ValueError(f"Unsupported architecture: {arch}")
+        raise ValueError(f"Unsupported architecture: {arch}")
 
     def _load_checkpoint_if_needed(
         self, checkpoint: str | None, weights: str, torch
