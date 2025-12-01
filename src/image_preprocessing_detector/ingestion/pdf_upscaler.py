@@ -40,7 +40,7 @@ class PDFUpscaler:
     ) -> None:
         """Initialize PDF upscaler.
 
-        # #CRITICAL: Target DPI: 300 DPI is standard for OCR, 600 for high-quality scans
+        # CRITICAL: Target DPI: 300 DPI is standard for OCR, 600 for high-quality scans
         # #VERIFY: Higher DPI increases file size and processing time
 
         Args:
@@ -59,10 +59,10 @@ class PDFUpscaler:
     ) -> dict[str, Any]:
         """Upscale a PDF file to target DPI.
 
-        # #CRITICAL: Memory Management: Large PDFs can exhaust memory during upscaling
+        # CRITICAL: Memory Management: Large PDFs can exhaust memory during upscaling
         # #VERIFY: Process page-by-page and monitor memory usage
 
-        # #CRITICAL: File Operations: Race condition if file is deleted during processing
+        # CRITICAL: File Operations: Race condition if file is deleted during processing
         # #VERIFY: Use file locking or copy to temp location
 
         Args:
@@ -103,7 +103,7 @@ class PDFUpscaler:
                 f"Starting PDF upscaling: {input_path.name} -> {output_path.name}"
             )
 
-            # #CRITICAL: PDF Operations: Document may be corrupted or password-protected
+            # CRITICAL: PDF Operations: Document may be corrupted or password-protected
             # #VERIFY: Handle encryption and corruption gracefully
             doc = fitz.open(input_path)
             new_doc = fitz.open()  # Create new PDF
@@ -117,7 +117,7 @@ class PDFUpscaler:
                         page = doc[page_num]
 
                         # Render page to high-resolution pixmap
-                        # #ASSUME: Scaling Factor: Calculate from target DPI
+                        # ASSUME: Scaling Factor: Calculate from target DPI
                         # #VERIFY: May need adjustment for very large or small pages
                         mat = fitz.Matrix(self.target_dpi / 72, self.target_dpi / 72)
                         pix = page.get_pixmap(matrix=mat)
@@ -129,7 +129,7 @@ class PDFUpscaler:
                         )
 
                         # Create new page with rendered image
-                        # #CRITICAL: Page Dimensions: Must match original page size
+                        # CRITICAL: Page Dimensions: Must match original page size
                         # #VERIFY: Preserve aspect ratio and page dimensions
                         img_pil = Image.fromarray(img_data)
 
@@ -163,7 +163,7 @@ class PDFUpscaler:
                         pages_processed += 1
                         logger.debug(f"Upscaled page {page_num + 1}/{len(doc)}")
 
-                        # #CRITICAL: Memory Management: Explicitly delete large objects
+                        # CRITICAL: Memory Management: Explicitly delete large objects
                         # #VERIFY: Monitor memory usage for large PDFs
                         # Delete pixmap and PIL image to free memory immediately
                         del pix
