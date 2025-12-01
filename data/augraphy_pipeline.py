@@ -28,8 +28,11 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 
+from image_preprocessing_detector.utils import get_logger
 from image_preprocessing_detector.utils.datetime_compat import utc_now
 from image_preprocessing_detector.utils.path_security import validate_safe_path
+
+logger = get_logger(__name__)
 
 # Augraphy imports - will raise ImportError if not installed
 try:
@@ -602,13 +605,17 @@ def batch_augment(
         image_paths.extend(input_dir.glob(f"*{ext}"))
         image_paths.extend(input_dir.glob(f"*{ext.upper()}"))
 
-    print(f"Found {len(image_paths)} images in {input_dir}")
-    print(f"Generating {augmentations_per_image} augmentations per image...")
+    logger.info(
+        "Found images for augmentation", count=len(image_paths), input_dir=str(input_dir)
+    )
+    logger.info(
+        "Starting batch augmentation", augmentations_per_image=augmentations_per_image
+    )
 
     for image_path in image_paths:
         image = cv2.imread(str(image_path))
         if image is None:
-            print(f"Warning: Could not load {image_path}")
+            logger.warning("Could not load image", path=str(image_path))
             continue
 
         for i in range(augmentations_per_image):
@@ -620,7 +627,9 @@ def batch_augment(
             )
             results.append((img_path, label_path))
 
-    print(f"Generated {len(results)} augmented images with labels")
+    logger.info(
+        "Batch augmentation complete", total_images=len(results), output_dir=str(output_dir)
+    )
     return results
 
 
