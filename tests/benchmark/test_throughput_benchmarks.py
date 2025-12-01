@@ -405,8 +405,8 @@ class TestEndToEndPipeline:
             )
             detector.run_pipeline(img, classical_scores)
 
-            # Correction phase
-            corrected = self._apply_corrections(
+            # Correction phase (result not needed for latency measurement)
+            _ = self._apply_corrections(
                 img,
                 blur_result,
                 contrast_result,

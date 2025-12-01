@@ -114,7 +114,9 @@ class ResNetAdapter(IQAModel):
 
         checkpoint_path = Path(checkpoint)
         if checkpoint_path.exists():
-            state_dict = torch.load(checkpoint_path, map_location=self._device)
+            state_dict = torch.load(
+                checkpoint_path, map_location=self._device, weights_only=True
+            )
             self._model.load_state_dict(state_dict)
             logger.info(f"Loaded checkpoint from {checkpoint_path}")
         else:
