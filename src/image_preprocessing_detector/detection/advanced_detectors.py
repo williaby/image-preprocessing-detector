@@ -500,51 +500,20 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
         raise ValueError("Invalid image")
 
     h, w = image.shape[:2]
-
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
-
-    # Binarize
-    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
-    # Find contours
-    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = _extract_contours(image)
 
     signature_regions = []
     stamp_regions = []
 
     for contour in contours:
-        area = cv2.contourArea(contour)
-        if area < 500 or area > (h * w * 0.3):  # Filter by size
+        if not _is_valid_region_size(contour, h, w):
             continue
 
-        x, y, cont_w, cont_h = cv2.boundingRect(contour)
-        aspect = cont_w / cont_h if cont_h > 0 else 0
-        perimeter = cv2.arcLength(contour, True)
-        circularity = (4 * np.pi * area) / (perimeter**2) if perimeter > 0 else 0
-
-        # Signature heuristics:
-        # - Elongated (wide aspect ratio)
-        # - Low fill ratio (not solid)
-        # - Complex perimeter (many curves)
-        hull = cv2.convexHull(contour)
-        hull_area = cv2.contourArea(hull)
-        fill_ratio = area / hull_area if hull_area > 0 else 0
-
-        if 2.0 < aspect < 8.0 and fill_ratio < 0.5:
-            signature_regions.append((x, y, cont_w, cont_h))
-
-        # Stamp heuristics:
-        # - Roughly circular or square
-        # - High circularity or aspect ratio ~1
-        # - Located in typical stamp positions (bottom corners)
-        if 0.5 < circularity < 1.0 or (0.8 < aspect < 1.2 and area > 1000):
-            # Check position (stamps often in bottom third)
-            if y > h * 0.5:
-                stamp_regions.append((x, y, cont_w, cont_h))
-
-    has_signature = len(signature_regions) > 0
-    has_stamp = len(stamp_regions) > 0
+        region = _analyze_contour(contour, h)
+        if region.is_signature:
+            signature_regions.append(region.bbox)
+        if region.is_stamp:
+            stamp_regions.append(region.bbox)
 
     logger.debug(
         "Signature/stamp detection complete",
@@ -553,11 +522,60 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
     )
 
     return SignatureStampResult(
-        has_signature=has_signature,
-        has_stamp=has_stamp,
+        has_signature=len(signature_regions) > 0,
+        has_stamp=len(stamp_regions) > 0,
         signature_regions=signature_regions,
         stamp_regions=stamp_regions,
         confidence=0.5,  # Heuristic-based, moderate confidence
+    )
+
+
+def _extract_contours(image: np.ndarray) -> list[np.ndarray]:
+    """Extract contours from image."""
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return list(contours)
+
+
+def _is_valid_region_size(contour: np.ndarray, h: int, w: int) -> bool:
+    """Check if contour area is within valid range."""
+    area = cv2.contourArea(contour)
+    return bool(500 <= area <= (h * w * 0.3))
+
+
+@dataclass
+class _RegionAnalysis:
+    """Internal class for region analysis results."""
+
+    bbox: tuple[int, int, int, int]
+    is_signature: bool
+    is_stamp: bool
+
+
+def _analyze_contour(contour: np.ndarray, image_height: int) -> _RegionAnalysis:
+    """Analyze contour to determine if it's a signature or stamp."""
+    x, y, cont_w, cont_h = cv2.boundingRect(contour)
+    area = cv2.contourArea(contour)
+    aspect = cont_w / cont_h if cont_h > 0 else 0
+    perimeter = cv2.arcLength(contour, True)
+    circularity = (4 * np.pi * area) / (perimeter**2) if perimeter > 0 else 0
+
+    # Check signature heuristics
+    hull = cv2.convexHull(contour)
+    hull_area = cv2.contourArea(hull)
+    fill_ratio = area / hull_area if hull_area > 0 else 0
+    is_signature = 2.0 < aspect < 8.0 and fill_ratio < 0.5
+
+    # Check stamp heuristics (circular/square shape in bottom half)
+    is_circular_or_square = 0.5 < circularity < 1.0 or (
+        0.8 < aspect < 1.2 and area > 1000
+    )
+    is_in_stamp_position = y > image_height * 0.5
+    is_stamp = is_circular_or_square and is_in_stamp_position
+
+    return _RegionAnalysis(
+        bbox=(x, y, cont_w, cont_h), is_signature=is_signature, is_stamp=is_stamp
     )
 
 
