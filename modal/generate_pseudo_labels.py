@@ -38,6 +38,8 @@ from typing import Any
 
 import modal
 
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+
 # ============================================================================
 # Modal App Configuration
 # ============================================================================
@@ -103,7 +105,7 @@ class ContinuousQualityLabel:
     model_name: str = "qwen3-vl-8b-instruct"
     label_confidence: float = 0.85
     generation_timestamp: str = field(
-        default_factory=lambda: datetime.utcnow().isoformat()
+        default_factory=lambda: utc_now().isoformat()
     )
 
     # Raw model response for debugging
@@ -543,7 +545,7 @@ def process_gcs_dataset(
         "success": 0,
         "errors": 0,
         "total": len(pending_blobs),
-        "start_time": datetime.utcnow().isoformat(),
+        "start_time": utc_now().isoformat(),
     }
 
     for i in tqdm(range(0, len(pending_blobs), batch_size), desc="Processing batches"):
@@ -591,7 +593,7 @@ def process_gcs_dataset(
                 content_type="application/json",
             )
 
-    stats["end_time"] = datetime.utcnow().isoformat()
+    stats["end_time"] = utc_now().isoformat()
     stats["status"] = "complete"
 
     # Save final stats
@@ -661,7 +663,7 @@ def process_local_dataset(
         "success": 0,
         "errors": 0,
         "total": len(pending_paths),
-        "start_time": datetime.utcnow().isoformat(),
+        "start_time": utc_now().isoformat(),
     }
 
     for i in tqdm(range(0, len(pending_paths), batch_size), desc="Processing batches"):
@@ -698,7 +700,7 @@ def process_local_dataset(
 
                 stats["processed"] += 1
 
-    stats["end_time"] = datetime.utcnow().isoformat()
+    stats["end_time"] = utc_now().isoformat()
     stats["status"] = "complete"
 
     # Save final stats

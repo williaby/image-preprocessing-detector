@@ -22,6 +22,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+
 
 class LabelSource(str, Enum):
     """Source of quality labels."""
@@ -184,7 +186,7 @@ class ContinuousQualityLabel(BaseModel):
 
     image_path: str = Field(default="", description="Path to source image")
     generation_timestamp: str = Field(
-        default_factory=lambda: datetime.utcnow().isoformat()
+        default_factory=lambda: utc_now().isoformat()
     )
     augmentation_params: dict[str, Any] = Field(
         default_factory=dict,

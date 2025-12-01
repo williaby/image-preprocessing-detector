@@ -24,6 +24,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+
 import cv2
 import numpy as np
 from numpy.typing import NDArray
@@ -87,7 +89,7 @@ class AugraphyLabel:
     augmentation_params: dict[str, Any] = field(default_factory=dict)
     applied_augmentations: list[str] = field(default_factory=list)
     generation_timestamp: str = field(
-        default_factory=lambda: datetime.utcnow().isoformat()
+        default_factory=lambda: utc_now().isoformat()
     )
 
     def to_dict(self) -> dict[str, Any]:

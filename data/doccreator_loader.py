@@ -26,6 +26,8 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
 
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+
 
 @dataclass
 class DocCreatorLabel:
@@ -59,7 +61,7 @@ class DocCreatorLabel:
     source_xml: str = ""
     raw_degradations: list[dict[str, Any]] = field(default_factory=list)
     generation_timestamp: str = field(
-        default_factory=lambda: datetime.utcnow().isoformat()
+        default_factory=lambda: utc_now().isoformat()
     )
 
     def to_dict(self) -> dict[str, Any]:
