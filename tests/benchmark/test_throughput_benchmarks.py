@@ -185,8 +185,13 @@ class TestClassicalIQALatency:
 
         # Classical IQA should be fast (<100ms combined for 3 detectors)
         # Note: CI environments may be slower than production hardware
-        assert avg_latency < 100.0, (
-            f"Classical IQA latency {avg_latency:.1f}ms exceeds 100ms target"
+        # CI threshold increased to 200ms to account for shared runner overhead
+        import os
+
+        ci_threshold = 200.0 if os.getenv("CI") else 100.0
+
+        assert avg_latency < ci_threshold, (
+            f"Classical IQA latency {avg_latency:.1f}ms exceeds {ci_threshold:.0f}ms target"
         )
 
         # Warn if above ideal target (50ms)
