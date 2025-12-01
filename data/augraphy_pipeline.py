@@ -514,8 +514,8 @@ class AugraphyContinuousLabeler:
         # Validate paths to prevent directory traversal
         output_image_path = validate_safe_path(output_image_path)
         if output_label_path is None:
-            output_label_path = output_image_path.with_name(
-                f"{output_image_path.stem}_labels.json"
+            output_label_path = validate_safe_path(
+                output_image_path.with_name(f"{output_image_path.stem}_labels.json")
             )
         else:
             output_label_path = validate_safe_path(output_label_path)
