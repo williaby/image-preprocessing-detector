@@ -28,11 +28,12 @@ on:
   workflow_dispatch:
     inputs:
       force_release:
-        description: 'Force release type (leave empty for auto)'
+        description: 'Force release type'
         required: false
         type: choice
+        default: 'auto'
         options:
-          - ''  # Auto-determine from commits
+          - auto  # Auto-determine from commits
           - patch  # Force 0.0.X bump
           - minor  # Force 0.X.0 bump
           - major  # Force X.0.0 bump
@@ -69,8 +70,8 @@ jobs:
       # Enable semantic versioning (Conventional Commits)
       semantic-release: true
 
-      # Force release type (if manual dispatch)
-      force-release: ${{ github.event.inputs.force_release || '' }}
+      # Force release type (if manual dispatch, convert 'auto' to empty string for reusable workflow)
+      force-release: ${{ github.event.inputs.force_release == 'auto' && '' || github.event.inputs.force_release || '' }}
 
       # PyPI publishing configuration
       publish-to-pypi: true

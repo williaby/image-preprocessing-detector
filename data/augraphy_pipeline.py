@@ -465,7 +465,7 @@ class AugraphyContinuousLabeler:
                 if param_name in aug_params:
                     param_value = aug_params[param_name]
                     # Handle range tuples
-                    if isinstance(param_value, (tuple, list)):
+                    if isinstance(param_value, tuple | list):
                         param_value = sum(param_value) / len(param_value)
                     severity = mapping["mapping"](param_value, mapping["max_value"])
 

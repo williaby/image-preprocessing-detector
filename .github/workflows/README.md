@@ -4,7 +4,7 @@ This project uses a **hybrid approach** combining org-level reusable workflows w
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │  image_detection        │
 │  (This Repository)                      │
@@ -315,7 +315,7 @@ act -l
 
 **Solution**: Ensure org-level `.github` repository exists at:
 
-```
+```text
 ByronWilliamsCPA/.github/.github/workflows/*.yml
 ```
 
