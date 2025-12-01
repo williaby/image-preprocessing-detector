@@ -39,6 +39,7 @@ from typing import Any
 import modal
 
 from image_preprocessing_detector.utils.datetime_compat import utc_now
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 # ============================================================================
 # Modal App Configuration
@@ -673,7 +674,9 @@ def process_local_dataset(
         batch_data = []
         for image_path in batch_paths:
             try:
-                with open(image_path, "rb") as f:
+                # Validate path to prevent directory traversal
+                validated_path = validate_safe_path(image_path, must_exist=True)
+                with open(validated_path, "rb") as f:
                     image_bytes = f.read()
                 image_id = Path(image_path).stem
                 batch_data.append((image_bytes, image_id))
@@ -691,7 +694,9 @@ def process_local_dataset(
                 label_path = output_path / f"{image_id}_labels.json"
 
                 try:
-                    with open(label_path, "w") as f:
+                    # Validate path to prevent directory traversal
+                    validated_path = validate_safe_path(label_path)
+                    with open(validated_path, "w") as f:
                         json.dump(result, f, indent=2)
                     stats["success"] += 1
                 except Exception as e:
@@ -705,7 +710,9 @@ def process_local_dataset(
 
     # Save final stats
     stats_path = output_path / "_final_stats.json"
-    with open(stats_path, "w") as f:
+    # Validate path to prevent directory traversal
+    validated_stats_path = validate_safe_path(stats_path)
+    with open(validated_stats_path, "w") as f:
         json.dump(stats, f, indent=2)
 
     output_volume.commit()
@@ -772,7 +779,9 @@ def process_image_chunk(
         else:
             image_path = item[0]
             image_id = item[1] if len(item) > 1 else Path(item[0]).stem
-            with open(image_path, "rb") as f:
+            # Validate path to prevent directory traversal
+            validated_path = validate_safe_path(image_path, must_exist=True)
+            with open(validated_path, "rb") as f:
                 image_bytes = f.read()
 
         # Generate label

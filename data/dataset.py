@@ -20,6 +20,8 @@ import torch
 from numpy.typing import NDArray
 from torch.utils.data import DataLoader, Dataset
 
+from image_preprocessing_detector.utils.path_security import validate_safe_path
+
 # Quality issue types (from data/weak_supervision.py)
 QUALITY_ISSUES = [
     "noise",
@@ -385,6 +387,8 @@ class ContinuousIQADataset(Dataset):
             msg = f"Split file not found: {split_file}"
             raise FileNotFoundError(msg)
 
+        # Validate path to prevent directory traversal
+        split_file = validate_safe_path(split_file, must_exist=True)
         with open(split_file) as f:
             self.split_metadata = json.load(f)
 
@@ -425,8 +429,8 @@ class ContinuousIQADataset(Dataset):
         # Convert BGR to RGB
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Load labels
-        label_path = Path(sample["label_path"])
+        # Load labels - validate path to prevent directory traversal
+        label_path = validate_safe_path(sample["label_path"], must_exist=True)
         with open(label_path) as f:
             label_data = json.load(f)
 
@@ -558,7 +562,8 @@ class ContinuousIQADataset(Dataset):
         all_labels = []
 
         for sample in self.samples:
-            label_path = Path(sample["label_path"])
+            # Validate path to prevent directory traversal
+            label_path = validate_safe_path(sample["label_path"], must_exist=True)
             with open(label_path) as f:
                 label_data = json.load(f)
             labels, _ = self._extract_continuous_labels(label_data)

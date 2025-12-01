@@ -23,6 +23,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from image_preprocessing_detector.utils.datetime_compat import utc_now
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 
 class LabelSource(str, Enum):
@@ -464,7 +465,8 @@ def load_label_file(path: str | Path) -> ContinuousQualityLabel:
     """
     import json
 
-    path = Path(path)
+    # Validate path to prevent directory traversal
+    path = validate_safe_path(path, must_exist=True)
     with open(path) as f:
         data = json.load(f)
 
@@ -525,7 +527,8 @@ def save_label_file(
     """
     import json
 
-    path = Path(path)
+    # Validate path to prevent directory traversal
+    path = validate_safe_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "w") as f:

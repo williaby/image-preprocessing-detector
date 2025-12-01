@@ -25,6 +25,7 @@ from image_preprocessing_detector.utils.device_probe import (
     probe_device_capabilities,
 )
 from image_preprocessing_detector.utils.log_config import get_logger, setup_logging
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 # Optional GCS utilities (Phase 2+) - require google-cloud-storage
 # Use lowercase to avoid BasedPyright reportConstantRedefinition
@@ -80,6 +81,7 @@ __all__ = [
     "to_iso",
     "utc_from_timestamp",
     "utc_now",
+    "validate_safe_path",
 ]
 
 if _has_gcs:

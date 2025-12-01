@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from image_preprocessing_detector.utils.datetime_compat import utc_now
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 import cv2
 import numpy as np
@@ -510,13 +511,14 @@ class AugraphyContinuousLabeler:
         Returns:
             Tuple of (image_path, label_path)
         """
-        output_image_path = Path(output_image_path)
+        # Validate paths to prevent directory traversal
+        output_image_path = validate_safe_path(output_image_path)
         if output_label_path is None:
             output_label_path = output_image_path.with_name(
                 f"{output_image_path.stem}_labels.json"
             )
         else:
-            output_label_path = Path(output_label_path)
+            output_label_path = validate_safe_path(output_label_path)
 
         # Create directories
         output_image_path.parent.mkdir(parents=True, exist_ok=True)
