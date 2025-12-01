@@ -311,21 +311,58 @@ class TestEndToEndPipeline:
             Sharpener,
         )
         from image_preprocessing_detector.detection.iqa_classical import (
-            Severity,
             detect_blur,
             detect_contrast,
             detect_skew,
         )
-        from image_preprocessing_detector.detection.iqa_ml import ClassicalIQAScores
         from image_preprocessing_detector.detection.text_gate import detect_text
 
         detector = ml_detector_for_benchmark
-        deskew = DeskewCorrector()
-        contrast_enhancer = ContrastEnhancer()
-        sharpener = Sharpener()
+        correctors = (DeskewCorrector(), ContrastEnhancer(), Sharpener())
 
         # Warm-up
-        img = test_images[0]
+        self._warmup_pipeline(
+            test_images[0],
+            detector,
+            detect_text,
+            detect_blur,
+            detect_contrast,
+            detect_skew,
+        )
+
+        # Measure full pipeline latency
+        latencies = self._measure_pipeline_latencies(
+            test_images[:10],
+            detector,
+            correctors,
+            detect_text,
+            detect_blur,
+            detect_contrast,
+            detect_skew,
+            time,
+        )
+
+        avg_latency = statistics.mean(latencies)
+        p95_latency = float(np.percentile(latencies, 95))
+
+        # Assert latency target
+        assert avg_latency < CPU_LATENCY_TARGET_MS, (
+            f"Full pipeline latency {avg_latency:.1f}ms exceeds target {CPU_LATENCY_TARGET_MS}ms"
+        )
+
+        # Warn if P95 is concerning
+        self._check_p95_latency(p95_latency)
+
+    def _warmup_pipeline(
+        self,
+        img: np.ndarray,
+        detector: "MLIQADetector",
+        detect_text,
+        detect_blur,
+        detect_contrast,
+        detect_skew,
+    ) -> None:
+        """Run warmup iterations to stabilize timings."""
         for _ in range(3):
             detect_text(img)
             detect_blur(img)
@@ -334,15 +371,28 @@ class TestEndToEndPipeline:
             detector.run_student_inference(img)
         gc.collect()
 
-        # Measure full pipeline latency
+    def _measure_pipeline_latencies(
+        self,
+        images: list[np.ndarray],
+        detector: "MLIQADetector",
+        correctors: tuple,
+        detect_text,
+        detect_blur,
+        detect_contrast,
+        detect_skew,
+        time,
+    ) -> list[float]:
+        """Measure latencies for full pipeline execution."""
+        from image_preprocessing_detector.detection.iqa_ml import ClassicalIQAScores
+
+        deskew, contrast_enhancer, sharpener = correctors
         latencies = []
-        for img in test_images[:10]:
+
+        for img in images:
             start = time.perf_counter()
 
-            # Text gate
+            # Detection phase
             detect_text(img)
-
-            # Classical IQA
             blur_result = detect_blur(img)
             contrast_result = detect_contrast(img)
             skew_result = detect_skew(img)
@@ -355,41 +405,65 @@ class TestEndToEndPipeline:
             )
             detector.run_pipeline(img, classical_scores)
 
-            # Corrections
-            corrected = img
-            if skew_result.angle > 0.5:
-                result = deskew.correct(
-                    corrected, skew_result.angle, skew_result.confidence
-                )
-                if result.applied:
-                    corrected = result.corrected_image
-
-            if contrast_result.score < 0.4:
-                result = contrast_enhancer.correct(
-                    corrected, contrast_result.score, Severity.MEDIUM
-                )
-                if result.applied:
-                    corrected = result.corrected_image
-
-            if blur_result.blur_score < 200:
-                result = sharpener.correct(
-                    corrected, blur_result.blur_score, Severity.MEDIUM
-                )
-                if result.applied:
-                    corrected = result.corrected_image
+            # Correction phase
+            corrected = self._apply_corrections(
+                img,
+                blur_result,
+                contrast_result,
+                skew_result,
+                deskew,
+                contrast_enhancer,
+                sharpener,
+            )
 
             end = time.perf_counter()
             latencies.append((end - start) * 1000)
 
-        avg_latency = statistics.mean(latencies)
-        p95_latency = float(np.percentile(latencies, 95))
+        return latencies
 
-        # Assert latency target
-        assert avg_latency < CPU_LATENCY_TARGET_MS, (
-            f"Full pipeline latency {avg_latency:.1f}ms exceeds target {CPU_LATENCY_TARGET_MS}ms"
-        )
+    def _apply_corrections(
+        self,
+        img: np.ndarray,
+        blur_result,
+        contrast_result,
+        skew_result,
+        deskew,
+        contrast_enhancer,
+        sharpener,
+    ) -> np.ndarray:
+        """Apply corrections based on detection results."""
+        from image_preprocessing_detector.detection.iqa_classical import Severity
 
-        # Warn if P95 is concerning
+        corrected = img
+
+        # Deskew if needed
+        if skew_result.angle > 0.5:
+            result = deskew.correct(
+                corrected, skew_result.angle, skew_result.confidence
+            )
+            if result.applied:
+                corrected = result.corrected_image
+
+        # Enhance contrast if needed
+        if contrast_result.score < 0.4:
+            result = contrast_enhancer.correct(
+                corrected, contrast_result.score, Severity.MEDIUM
+            )
+            if result.applied:
+                corrected = result.corrected_image
+
+        # Sharpen if blurry
+        if blur_result.blur_score < 200:
+            result = sharpener.correct(
+                corrected, blur_result.blur_score, Severity.MEDIUM
+            )
+            if result.applied:
+                corrected = result.corrected_image
+
+        return corrected
+
+    def _check_p95_latency(self, p95_latency: float) -> None:
+        """Check P95 latency and warn if exceeds target."""
         if p95_latency > CPU_LATENCY_TARGET_MS:
             import warnings
 
