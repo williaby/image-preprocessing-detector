@@ -132,6 +132,77 @@ DocumentMetadata.json           OCRDocument.json        FusedDocument.json     V
 6. **Testing**: Maintain high test coverage and run tests before commits
 7. **Collaboration**: Use consistent Git workflows and clear commit messages
 
+## Security-First Development (CRITICAL)
+
+Claude MUST adopt a security-first approach in all development:
+
+### 1. Proactive Security Suggestions
+
+When working on this project, always suggest appropriate security measures:
+- **Dependencies**: Vulnerability scanning (safety, osv-scanner)
+- **Image Processing**: Input validation, sanitization, DoS protection (large images)
+- **PDF Handling**: Path traversal prevention, memory limits, malicious PDF detection
+- **APIs**: Authentication, rate limiting, input validation
+- **Data**: Encryption at rest and in transit, access controls
+
+### 2. Never Bypass Security Issues
+
+- **ALL security findings** from scanners (Semgrep, Bandit, Safety, OSV) must be addressed
+- False positives must be documented with inline comments explaining WHY
+- Use baseline files (`osv-scanner.toml`) only for unavoidable exceptions with justification
+
+### 3. Code Quality Standards
+
+- Treat linting warnings as errors to fix, not ignore
+- Address ALL type checker warnings (BasedPyright strict mode)
+- Don't accumulate technical debt by deferring quality issues
+
+### 4. Default to Strictest Settings
+
+- Security scanners: fail on HIGH/CRITICAL by default (configured)
+- Type checking: strict mode on `src/` (already configured)
+- Linting: no ignored rules without documented reason
+
+## Project Planning Documents
+
+> **Planning Documents**: This project uses planning documents for complex features
+
+**Location**: `docs/development/RAG Pipeline/`
+- [project-a-project-plan.md](docs/development/RAG%20Pipeline/project-a-project-plan.md) - Phased implementation plan
+- Phase tracking with detailed implementation steps
+- Architecture decisions documented inline
+
+### Quick Start
+
+```bash
+# Review current phase implementation
+cat "docs/development/RAG Pipeline/project-a-project-plan.md" | grep "Phase.*:"
+
+# Start new phase implementation
+/plan implement Phase X from project-a-project-plan.md
+```
+
+## Third-Party Integrations
+
+### CodeRabbit (AI Code Reviews)
+
+Configuration: `.coderabbit.yaml`
+
+**Commands**:
+
+```bash
+@coderabbitai summary      # Get high-level PR summary
+@coderabbitai review       # Request re-review after changes
+@coderabbitai resolve      # Mark conversation resolved
+```
+
+**Features**:
+
+- Automatic PR reviews on all pull requests
+- Line-by-line code suggestions
+- Security vulnerability detection
+- Test coverage analysis
+
 ## Naming Conventions (MANDATORY COMPLIANCE)
 
 **Core Components:**

@@ -6,8 +6,8 @@ name: OpenSSF Scorecard
 on:
   branch_protection_rule:
   schedule:
-    # Weekly on Tuesdays at 21:21 UTC
-    - cron: '21 21 * * 2'
+    # Weekly on Monday at 9:00 AM UTC (aligned with template)
+    - cron: '0 9 * * 1'
   push:
     branches:
       - main
