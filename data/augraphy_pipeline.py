@@ -24,12 +24,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from image_preprocessing_detector.utils.datetime_compat import utc_now
-from image_preprocessing_detector.utils.path_security import validate_safe_path
-
 import cv2
 import numpy as np
 from numpy.typing import NDArray
+
+from image_preprocessing_detector.utils.datetime_compat import utc_now
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 # Augraphy imports - will raise ImportError if not installed
 try:
