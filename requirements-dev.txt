@@ -262,8 +262,10 @@ flatten-dict==0.4.2
     # via dvc
 flufl-lock==8.2.0
     # via dvc
-fonttools==4.60.1
-    # via matplotlib
+fonttools==4.61.0
+    # via
+    #   image-preprocessing-detector
+    #   matplotlib
 fqdn==1.5.1
     # via jsonschema
 frozenlist==1.8.0
