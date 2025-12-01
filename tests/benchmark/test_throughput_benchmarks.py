@@ -188,11 +188,18 @@ class TestClassicalIQALatency:
         # CI threshold increased to 200ms to account for shared runner overhead
         import os
 
-        is_ci = os.getenv("CI") or os.getenv("GITHUB_ACTIONS")
+        # Check for CI environment - handle both None and empty string cases
+        # GitHub Actions sets both CI=true and GITHUB_ACTIONS=true
+        ci_env = os.getenv("CI", "")
+        github_actions_env = os.getenv("GITHUB_ACTIONS", "")
+        is_ci = bool(ci_env and ci_env.lower() in ("true", "1")) or bool(
+            github_actions_env and github_actions_env.lower() in ("true", "1")
+        )
         ci_threshold = 200.0 if is_ci else 100.0
 
         assert avg_latency < ci_threshold, (
-            f"Classical IQA latency {avg_latency:.1f}ms exceeds {ci_threshold:.0f}ms target"
+            f"Classical IQA latency {avg_latency:.1f}ms exceeds {ci_threshold:.0f}ms target "
+            f"(CI={ci_env!r}, GITHUB_ACTIONS={github_actions_env!r}, is_ci={is_ci})"
         )
 
         # Warn if above ideal target (50ms)
