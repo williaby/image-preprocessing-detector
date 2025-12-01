@@ -132,6 +132,77 @@ DocumentMetadata.json           OCRDocument.json        FusedDocument.json     V
 6. **Testing**: Maintain high test coverage and run tests before commits
 7. **Collaboration**: Use consistent Git workflows and clear commit messages
 
+## Security-First Development (CRITICAL)
+
+Claude MUST adopt a security-first approach in all development:
+
+### 1. Proactive Security Suggestions
+
+When working on this project, always suggest appropriate security measures:
+- **Dependencies**: Vulnerability scanning (safety, osv-scanner)
+- **Image Processing**: Input validation, sanitization, DoS protection (large images)
+- **PDF Handling**: Path traversal prevention, memory limits, malicious PDF detection
+- **APIs**: Authentication, rate limiting, input validation
+- **Data**: Encryption at rest and in transit, access controls
+
+### 2. Never Bypass Security Issues
+
+- **ALL security findings** from scanners (Semgrep, Bandit, Safety, OSV) must be addressed
+- False positives must be documented with inline comments explaining WHY
+- Use baseline files (`osv-scanner.toml`) only for unavoidable exceptions with justification
+
+### 3. Code Quality Standards
+
+- Treat linting warnings as errors to fix, not ignore
+- Address ALL type checker warnings (BasedPyright strict mode)
+- Don't accumulate technical debt by deferring quality issues
+
+### 4. Default to Strictest Settings
+
+- Security scanners: fail on HIGH/CRITICAL by default (configured)
+- Type checking: strict mode on `src/` (already configured)
+- Linting: no ignored rules without documented reason
+
+## Project Planning Documents
+
+> **Planning Documents**: This project uses planning documents for complex features
+
+**Location**: `docs/development/RAG Pipeline/`
+- [project-a-project-plan.md](docs/development/RAG%20Pipeline/project-a-project-plan.md) - Phased implementation plan
+- Phase tracking with detailed implementation steps
+- Architecture decisions documented inline
+
+### Quick Start
+
+```bash
+# Review current phase implementation
+cat "docs/development/RAG Pipeline/project-a-project-plan.md" | grep "Phase.*:"
+
+# Start new phase implementation
+/plan implement Phase X from project-a-project-plan.md
+```
+
+## Third-Party Integrations
+
+### CodeRabbit (AI Code Reviews)
+
+Configuration: `.coderabbit.yaml`
+
+**Commands**:
+
+```bash
+@coderabbitai summary      # Get high-level PR summary
+@coderabbitai review       # Request re-review after changes
+@coderabbitai resolve      # Mark conversation resolved
+```
+
+**Features**:
+
+- Automatic PR reviews on all pull requests
+- Line-by-line code suggestions
+- Security vulnerability detection
+- Test coverage analysis
+
 ## Naming Conventions (MANDATORY COMPLIANCE)
 
 **Core Components:**
@@ -498,11 +569,13 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
   - **DPI upscaling integration** (from data_ingestor Phase 1C)
   - Source: `/home/byron/dev/data_ingestor/src/data_ingestor/utils/`
 
-- **Phase 6** (Week 6-8): Layout-Lite Detection - **PLANNED**
-  - DocLayout-YOLO or YOLOv8-nano for coarse page attributes (NOT full semantic layout)
-  - Model selection: `configs/models/doclayout_yolo.yaml`
-  - Handwriting presence classifier, structural complexity scorer
-  - OmniDocBench-style page attributes
+- **Phase 6** (Week 6-8): Layout-Lite Detection - **IN PROGRESS**
+  - DocLayout-YOLO (YOLOv10-based) for coarse page attributes (NOT full semantic layout)
+  - **Pre-trained models from HuggingFace - NO ADDITIONAL TRAINING REQUIRED**
+  - Model config: `configs/models/doclayout_yolo.yaml`
+  - 10 DocStructBench classes: title, text, table, figure, formula, captions
+  - Hybrid ML + heuristic detection (HybridLayoutAnalyzer)
+  - Handwriting presence classifier (TODO), structural complexity scorer
 
 - **Phase 8** (Week 9): DQS & Routing - **PLANNED**
   - Document Quality Score (degradation + complexity)
@@ -554,8 +627,10 @@ See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/R
 - PyTorch 2.0+: Model training and knowledge distillation
 - **ResNet-50/ResNet-18**: Teacher-student ML IQA (NOT MobileNetV3/EfficientNet)
 - **DocLayout-YOLO**: Layout detection (YOLOv10-based, document-optimized)
-  - Model selection: `configs/models/doclayout_yolo.yaml`
-  - Training: `modal run modal/train_phase3_doclayout_yolo.py`
+  - Model config: `configs/models/doclayout_yolo.yaml`
+  - **Pre-trained models available (no training required)**
+  - Models: DocStructBench (general), D4LA (higher accuracy)
+  - Performance: 85+ FPS, 70-80% mAP
 - ONNX Runtime: Production inference optimization
 - Modal: Serverless GPU training platform
 

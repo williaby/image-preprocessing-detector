@@ -1,7 +1,7 @@
 @startuml Unified Primary Workflow - Project A
 !theme blueprint
-title Project A - Unified Document Processing Pipeline
-caption Consolidated from Planning Docs + Copilot + Gemini + Sonnet analyses (Opus synthesis)
+title Project A - Unified Document Processing Pipeline (Phase 6-8)
+caption Updated with Phase 6 DocLayout-YOLO, Phase 8 Office/Orientation support (2025-01)
 
 skinparam BackgroundColor transparent
 skinparam defaultTextAlignment center
@@ -41,25 +41,32 @@ note right
   **Components:**
   - DocumentProcessor
   - PDFDocumentAnalyzer
+  - OfficeProcessor (Phase 8)
+  - OrientationDetector (Phase 8)
   - TextGate
   - ClassicalIQADetector (7 detectors)
   - MLIQADetector (ONNX Runtime)
-  - LayoutLiteAnalyzer
-  - CorrectionPipeline
+  - DocLayoutYOLODetector (Phase 6)
+  - HybridIQAAnalyzer (Phase 6)
+  - CorrectionPipeline (enhanced)
+  - BudgetEnforcer (Phase 4)
   - DQSCalculator
   - RoutingEngine
 end note
 
 |#FFF3E0|Pre-flight|
-:Input Document (PDF/Image)<<Input>>;
+:Input Document<<Input>>;
 note right
-  **Supported:**
+  **Supported (Phase 8 expanded):**
   PDF, PNG, JPEG, TIFF
+  **Office (Phase 8):**
+  DOCX, XLSX, PPTX
 
   **Validation:**
   - File existence
   - MIME type detection
   - Size limits
+  - DocumentType classification
 end note
 
 partition "DPI Analysis & Upscaling (Phase 4)" {
@@ -111,7 +118,26 @@ partition "DPI Analysis & Upscaling (Phase 4)" {
 
 |#E3F2FD|Ingestion|
 partition "Document Loading" {
-  if (PDF?) then (yes)
+  if (Office Document?) then (yes)
+    :OfficeProcessor.extract_images()<<Input>>;
+    note right
+      **Module:** ingestion/office_processor.py
+      **Phase 8:** Office Document Support
+
+      **Supports:**
+      - DOCX (Word)
+      - XLSX (Excel)
+      - PPTX (PowerPoint)
+
+      **Process:**
+      1. Open document archive (ZIP)
+      2. Extract embedded images
+      3. Parse source locations
+
+      **Output:** List[EmbeddedImage]
+      **Method:** Docling or zipfile fallback
+    end note
+  elseif (PDF?) then (yes)
     :PDFLoader.load_pages()<<Input>>;
     note right
       **Module:** ingestion/pdf_loader.py
@@ -140,6 +166,7 @@ partition "Document Loading" {
     - Standardize color space (BGR)
     - COCO coordinate format
     - Generate document_id
+    - Set DocumentType enum
   end note
 }
 
@@ -158,6 +185,35 @@ partition "PDF Type Classification (Phase 8)" {
 
     **Accuracy:** >99%
   end note
+}
+
+partition "Orientation Detection (Phase 8)" {
+  :OrientationDetector.detect()<<Gate>>;
+  note right
+    **Module:** detection/orientation_detector.py
+    **Phase 8:** Rotated scan/photo detection
+
+    **Ensemble Methods (consensus 2/3):**
+    1. Text Line Analysis (Hough transform)
+    2. Edge Histogram (orientation distribution)
+    3. Component Ratio (aspect ratio analysis)
+
+    **Detects:** 0°, 90°, 180°, 270° rotation
+    **Auto-correct threshold:** confidence >= 0.8
+    **Time:** <50ms
+  end note
+
+  if (needs_correction?) then (yes)
+    :Apply Rotation Correction<<Correction>>;
+    note right
+      **ActionType:** ORIENTATION_CORRECTION
+      - cv2.rotate() with ROTATE_*
+      - Track in transform_history
+      - Update OrientationDetection.auto_corrected
+    end note
+  else (no)
+    :Skip (Upright);
+  endif
 }
 
 partition "Text Gate Routing" {
@@ -207,28 +263,31 @@ fork
   else (yes)
     |#F3E5F5|Text Path|
     partition "Layout-Lite Detection (Phase 6)" {
-      :DocLayout-YOLO Inference<<Detection>>;
+      :DocLayoutYOLODetector.detect()<<Detection>>;
       note right
-        **Module:** detection/layout_lite/analyzer.py
-        **Model:** DocLayout-YOLO (ONNX)
+        **Module:** detection/doclayout_yolo.py
+        **Model:** DocLayout-YOLO-DocLayNet (HuggingFace)
         **Config:** configs/models/doclayout_yolo.yaml
 
-        **11 DocLayNet Classes:**
-        Caption, Footnote, Formula, List-Item,
-        Page-Footer, Page-Header, Picture,
-        Section-Header, Table, Text, Title
+        **11 DocLayNet Classes (default):**
+        Caption, Footnote, Formula, List-item,
+        Page-footer, Page-header, Picture,
+        Section-header, Table, Text, Title
 
+        **Performance:** 85+ FPS, mAP 79.7
         **Time:** <30ms GPU, <100ms CPU
       end note
 
       :Extract Page Attributes<<Detection>>;
       note right
-        **Coarse Classification:**
+        **PageLayoutSummary (Coarse Classification):**
         - layout_type: single/multi/complex
         - has_tables: bool
         - has_figures: bool
         - has_dense_math: bool
         - has_handwriting: bool
+        - has_list_items: bool (DocLayNet List-item)
+        - has_headers_footers: bool (Page-header/footer)
 
         **NOT Semantic Layout:**
         - No reading order
@@ -245,8 +304,27 @@ fork
               + 0.15 * has_figures
               + 0.15 * has_dense_math
               + 0.10 * has_handwriting
+              + 0.05 * has_list_items
+              + 0.05 * has_headers_footers
 
         **Range:** [0, 1]
+      end note
+    }
+
+    partition "Hybrid IQA (Per-Element) (Phase 6)" {
+      :HybridIQA.assess_elements()<<Detection>>;
+      note right
+        **Module:** detection/hybrid_iqa.py
+        **FR-3.14:** Per-element quality assessment
+
+        **Process:**
+        1. Extract element regions (COCO bbox)
+        2. Run Classical IQA on each element
+        3. Optional: Student ML IQA
+        4. Populate quality_issues field
+
+        **Targets:** figures, tables, formulas
+        **Time:** <20ms GPU, <50ms CPU per element
       end note
     }
   endif
@@ -319,8 +397,13 @@ fork again
       - force_teacher_inference: true
 
       **5. Budget Check (BLOCKING):**
-      - max_pages_for_teacher exceeded
-      - Modal budget exceeded
+      **Module:** utils/budget_enforcement.py
+      - BudgetEnforcer.check() validates:
+        - daily_limit_dollars (default: $10)
+        - monthly_limit_dollars (default: $100)
+      - warning_threshold: 80% triggers logging
+      - Automatic fallback to CPU when exceeded
+      - Persistent tracking in ~/.cache/imgprep/
 
       **6. Device Check (BLOCKING):**
       - No GPU available (local or Modal)
@@ -379,7 +462,7 @@ note right
 end note
 
 |#FFF9C4|Correction|
-partition "Apply Corrections (Phase 5)" {
+partition "Apply Corrections (Phase 5 Enhanced)" {
   if (is_skewed AND angle > 0.5°?) then (yes)
     :DeskewCorrector.apply()<<Correction>>;
     note right
@@ -408,11 +491,45 @@ partition "Apply Corrections (Phase 5)" {
   endif
 
   if (has_noise?) then (yes)
-    :Denoiser.apply()<<Correction>>;
+    :Denoiser.correct()<<Correction>>;
     note right
-      **OpenCV fastNlMeans:**
-      - h: 10
-      - Skip if blur_score < 0.3
+      **Module:** correction/corrections.py
+      **NLMeans Denoising:**
+      - h_luminance: 10.0
+      - h_color: 10.0
+      - Skip if noise_score > 0.7
+      - Severity-based strength adjustment
+    end note
+  endif
+
+  if (poor_binarization?) then (yes)
+    :BinarizationCorrector.correct()<<Correction>>;
+    note right
+      **Phase 8 Enhanced:**
+      **Adaptive Thresholding:**
+      - block_size: 11
+      - c_offset: 2
+      - Preserves color information
+    end note
+  endif
+
+  if (uneven_illumination?) then (yes)
+    :IlluminationNormalizer.correct()<<Correction>>;
+    note right
+      **Phase 8 Enhanced:**
+      **Morphological normalization:**
+      - Background estimation
+      - Foreground preservation
+    end note
+  endif
+
+  if (bleed_through?) then (yes)
+    :BleedThroughSuppressor.correct()<<Correction>>;
+    note right
+      **Phase 8 Enhanced:**
+      **Cross-channel filtering:**
+      - Detects verso text bleeding
+      - Preserves recto content
     end note
   endif
 
@@ -499,18 +616,31 @@ partition "DocumentMetadata Assembly" {
   note right
     **Module:** schema.py (Pydantic v2)
 
-    **Fields:**
-    - document_id, file_name
+    **Core Fields:**
+    - document_id, file_name, source_mime
+    - document_type: DocumentType (Phase 8)
+      (IMAGE, PDF, OFFICE_WORD, OFFICE_EXCEL, OFFICE_POWERPOINT)
     - pdf_type: PDFType
     - num_pages: int
+
+    **Quality & Routing:**
     - pre_ocr_risk: float
     - dqs: DQSMetadata
     - ocr_routing_recommendation
-    - page_layout_summary: list
+
+    **Page-Level (per PageMetadata):**
+    - orientation: OrientationDetection (Phase 8)
+      (detected_angle, confidence, needs_correction)
+    - quality_issues: list[DetectedIssue]
+    - elements: list[DocumentElement]
+      (with per-element quality_issues)
+      ElementCategory: 11 DocLayNet classes + legacy
+      (caption, footnote, formula, list_item, etc.)
+
+    **Processing Metadata:**
     - upscaling: UpscalingMetadata
     - teacher_usage: TeacherUsageMetadata
     - processing_version
-    - pages: list[PageMetadata]
   end note
 
   :Serialize to JSON<<Output>>;
@@ -556,37 +686,50 @@ legend right
   |= Stage |= GPU |= CPU |
   | Pre-flight | <100ms | <100ms |
   | DPI Upscaling | 310-360ms | 310-360ms |
+  | Office Extraction | N/A | <200ms |
+  | Orientation Detection | <50ms | <50ms |
   | Text Gate | <10ms | <10ms |
   | Classical IQA | <25ms | <25ms |
   | Student ML IQA | <10ms | <40ms |
   | Teacher ML IQA | <30ms | N/A |
-  | Layout-Lite | <30ms | <100ms |
-  | Corrections | <100ms | <100ms |
-  | **Total** | **<150ms** | **<500ms** |
+  | DocLayout-YOLO | <30ms | <100ms |
+  | Hybrid IQA (per-elem) | <20ms | <50ms |
+  | Corrections (enhanced) | <150ms | <150ms |
+  | **Total** | **<200ms** | **<600ms** |
 
   **Quality Targets:**
   - IQA mAP: >0.88
+  - Layout mAP: 79.7% (DocLayNet pretrained)
   - Routing accuracy: >90%
   - Teacher escalation: <10%
   - Coverage: >80%
 
-  **Key Modules:**
-  - ingestion/ - PDF/image loading
-  - detection/ - IQA + layout
-  - correction/ - Image transforms
-  - metrics/ - DQS calculation
+  **Key Modules (Phase 6-8):**
+  - ingestion/ - PDF/image/office loading
+  - detection/ - IQA + layout + orientation
+  - correction/ - Enhanced transforms
+  - utils/ - Budget enforcement
   - routing/ - Recommendation engine
   - output/ - JSON + image export
 
+  **Phase 8 Additions:**
+  - Office document support (.docx, .xlsx, .pptx)
+  - Orientation detection (0°, 90°, 180°, 270°)
+  - Enhanced corrections (binarization, illumination, bleed-through)
+  - Budget enforcement for Modal GPU
+
+  **Phase D (Deferred - advanced_detectors.py):**
+  - Warping/Curvature (FR-3.12)
+  - Perspective Distortion (FR-3.13)
+  - Formula Detection (FR-5.1)
+  - Signature/Stamp (FR-5.5/5.6)
+  - Language Detection (FR-5.3)
+  - Vertical Text (FR-4.7)
+
   **Synthesized from:**
   - Planning docs (official)
-  - Copilot (artifact promotion)
-  - Sonnet (comprehensive detail)
+  - Phase 6-8 implementation
   - ADR-029 (scope boundaries)
-
-  **Excluded:**
-  - Per-element Hybrid IQA (ADR-029: deferred)
-  - Gemini per-element approach
 endlegend
 
 @enduml

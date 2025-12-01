@@ -136,7 +136,7 @@ class PDFResolutionAnalyzer:
     def __init__(self, min_dpi_threshold: int = 300) -> None:
         """Initialize PDF resolution analyzer.
 
-        # #CRITICAL: DPI Threshold: 300 DPI is standard for high-quality OCR
+        # CRITICAL: DPI Threshold: 300 DPI is standard for high-quality OCR
         # #VERIFY: Threshold may need adjustment based on OCR engine requirements
 
         Args:
@@ -147,7 +147,7 @@ class PDFResolutionAnalyzer:
     def analyze_pdf_resolution(self, pdf_path: str | Path) -> dict[str, Any]:
         """Analyze PDF to determine image resolutions.
 
-        # #CRITICAL: External Resources: PDF may be corrupted or password-protected
+        # CRITICAL: External Resources: PDF may be corrupted or password-protected
         # #VERIFY: Handle encryption and corruption gracefully
 
         Args:
@@ -173,7 +173,7 @@ class PDFResolutionAnalyzer:
             raise FileNotFoundError(msg)
 
         try:
-            # #CRITICAL: Memory Management: Large PDFs can exhaust memory
+            # CRITICAL: Memory Management: Large PDFs can exhaust memory
             # #VERIFY: Process page-by-page to limit memory usage
             doc = fitz.open(pdf_path)
 
@@ -185,7 +185,7 @@ class PDFResolutionAnalyzer:
                 page = doc[page_num]
 
                 # Get all images on the page
-                # #CRITICAL: PyMuPDF API: get_images(full=True) required for complete image info
+                # CRITICAL: PyMuPDF API: get_images(full=True) required for complete image info
                 # #VERIFY: Without full=True, get_image_bbox may fail
                 image_list = page.get_images(full=True)
 
@@ -216,7 +216,7 @@ class PDFResolutionAnalyzer:
             max_dpi = max(all_dpi_flat)
 
             # Determine if upscaling is needed
-            # #ASSUME: Upscaling Decision: Use minimum DPI as threshold
+            # ASSUME: Upscaling Decision: Use minimum DPI as threshold
             # #VERIFY: May want to use average or weighted threshold
             needs_upscaling = min_dpi < self.min_dpi_threshold
 

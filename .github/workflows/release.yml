@@ -1,165 +1,127 @@
-# Signed Release Workflow
-# Creates signed releases with artifacts for image-preprocessing-detector
+# Semantic Release for Image Preprocessing Detector
+# Automated release with semantic versioning, changelog generation, and SLSA provenance
 #
-# Triggered by: version tags (v*.*.*)
-# Produces: GitHub Release with signed tag and build artifacts
+# This workflow uses the org-level reusable python-release.yml workflow for:
+# - Automatic version bumping based on Conventional Commits
+# - Auto-generated CHANGELOG from commit messages
+# - SLSA provenance generation (supply chain security)
+# - PyPI publishing with OIDC trusted publishing
+# - GitHub Release creation with artifacts
+#
+# Conventional Commit Format:
+# - feat: triggers MINOR version bump (0.X.0)
+# - fix: triggers PATCH version bump (0.0.X)
+# - feat!: or fix!: triggers MAJOR version bump (X.0.0)
+# - docs/chore/test/refactor: no version bump, changelog only
+#
+# Migration from Manual Tags:
+# - Previous workflow required manual git tags (v*.*.*)
+# - New workflow automatically determines version from commits
+# - Force release options available for manual control
 
-name: Release
+name: Semantic Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main  # Auto-release on merge to main
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Release tag (e.g., v0.1.0)'
-        required: true
-        type: string
+      force_release:
+        description: 'Force release type'
+        required: false
+        type: choice
+        default: 'auto'
+        options:
+          - auto  # Auto-determine from commits
+          - patch  # Force 0.0.X bump
+          - minor  # Force 0.X.0 bump
+          - major  # Force X.0.0 bump
 
-permissions: read-all
+# Prevent concurrent releases
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write  # Required for creating releases and tags
+  issues: write  # Required for semantic-release
+  pull-requests: write  # Required for semantic-release
+  id-token: write  # Required for OIDC/SLSA
+  attestations: write  # Required for SLSA provenance
 
 jobs:
-  create-release:
-    name: Create Signed Release
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+  release:
+    name: Semantic Release Pipeline
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-release.yml@3bf8bf5
     permissions:
-      contents: write  # Required for creating releases
-      id-token: write  # Required for sigstore signing
-      actions: read    # Explicitly restrict other permissions
-      checks: read
-      deployments: read
-      discussions: read
-      issues: read
-      packages: read
-      pages: read
-      pull-requests: read
-      repository-projects: read
-      security-events: read
-      statuses: read
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+      attestations: write
+    with:
+      # Python version for building
+      python-version: '3.12'
 
+      # Project structure
+      source-directory: 'src'
+
+      # Enable semantic versioning (Conventional Commits)
+      semantic-release: true
+
+      # Force release type (if manual dispatch, convert 'auto' to empty string for reusable workflow)
+      force-release: ${{ github.event.inputs.force_release == 'auto' && '' || github.event.inputs.force_release || '' }}
+
+      # PyPI publishing configuration
+      publish-to-pypi: true
+      pypi-package-name: 'image-preprocessing-detector'
+
+      # Run tests before release
+      run-tests: true
+      coverage-threshold: 80
+
+      # SLSA provenance generation
+      generate-slsa-provenance: true
+
+      # Changelog generation
+      changelog-generator: 'auto'  # Auto-generate from commits
+
+  release-summary:
+    name: Release Summary
+    needs: release
+    runs-on: ubuntu-latest
+    if: always()
     steps:
-      - name: Harden the runner (Audit outbound calls)
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
-        with:
-          egress-policy: audit
-
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          fetch-depth: 0  # Full history for changelog generation
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
-        with:
-          python-version: '3.12'
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-
-      - name: Build distribution packages
+      - name: Report release status
         run: |
-          uv build
-          ls -lh dist/
+          echo "## Semantic Release Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ needs.release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-      - name: Generate checksums
-        run: |
-          cd dist
-          sha256sum ./* > SHA256SUMS
-          cat SHA256SUMS
-
-      - name: Extract version from tag
-        id: version
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_TAG: ${{ github.event.inputs.tag }}
-          GITHUB_REF: ${{ github.ref }}
-        run: |
-          if [ "${EVENT_NAME}" == "workflow_dispatch" ]; then
-            VERSION="${INPUT_TAG}"
+          if [ "${{ needs.release.result }}" == "success" ]; then
+            echo "### Release Published ✅" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- Version automatically determined from Conventional Commits" >> $GITHUB_STEP_SUMMARY
+            echo "- CHANGELOG.md updated with release notes" >> $GITHUB_STEP_SUMMARY
+            echo "- SLSA provenance generated for supply chain security" >> $GITHUB_STEP_SUMMARY
+            echo "- Package published to PyPI (if version bumped)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.release.result }}" == "skipped" ]; then
+            echo "### No Release Required ℹ️" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No commits since last release require a version bump." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To force a release, use workflow_dispatch with force_release input." >> $GITHUB_STEP_SUMMARY
           else
-            VERSION="${GITHUB_REF#refs/tags/}"
-          fi
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "📦 Release version: ${VERSION}"
-
-      - name: Extract changelog for this version
-        id: changelog
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-
-          # Extract changelog section for this version
-          if grep -q "## \[${VERSION}\]" CHANGELOG.md; then
-            awk "/## \[${VERSION}\]/,/## \[.*\]/{
-              if (/## \[${VERSION}\]/) print;
-              else if (/## \[.*\]/) exit;
-              else print
-            }" CHANGELOG.md > release_notes.md
-          else
-            echo "## ${VERSION}" > release_notes.md
-            echo "" >> release_notes.md
-            echo "See [CHANGELOG.md](CHANGELOG.md) for full details." \
-              >> release_notes.md
+            echo "### Release Failed ❌" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check workflow logs for details." >> $GITHUB_STEP_SUMMARY
           fi
 
-          echo "📝 Release notes:"
-          cat release_notes.md
-
-      - name: Verify tag signature
-        run: |
-          # Verify that the tag is signed (SSH or GPG)
-          git tag -v "${{ steps.version.outputs.version }}" 2>&1 || \
-          git verify-tag "${{ steps.version.outputs.version }}" 2>&1 || \
-          echo "⚠️  Tag signature verification not available (expected for SSH-signed tags)"
-
-      - name: Create GitHub Release
-        # v2.2.0
-        uses: >-
-          softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8
-        with:
-          tag_name: ${{ steps.version.outputs.version }}
-          name: Release ${{ steps.version.outputs.version }}
-          body_path: release_notes.md
-          draft: false
-          prerelease: >-
-            ${{
-              contains(steps.version.outputs.version, 'alpha') ||
-              contains(steps.version.outputs.version, 'beta') ||
-              contains(steps.version.outputs.version, 'rc')
-            }}
-          files: |
-            dist/*
-            dist/SHA256SUMS
-          fail_on_unmatched_files: true
-          generate_release_notes: true
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
-        with:
-          name: release-artifacts-${{ steps.version.outputs.version }}
-          path: |
-            dist/
-            release_notes.md
-          retention-days: 90
-          if-no-files-found: error
-
-      - name: Release summary
-        run: |
-          {
-            echo "## 🎉 Release ${{ steps.version.outputs.version }} Created!"
-            echo ""
-            echo "### 📦 Artifacts"
-            echo "\`\`\`"
-            ls -lh dist/
-            echo "\`\`\`"
-            echo ""
-            echo "### 🔐 Checksums"
-            echo "\`\`\`"
-            cat dist/SHA256SUMS
-            echo "\`\`\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Conventional Commit Types" >> $GITHUB_STEP_SUMMARY
+          echo "- \`feat:\` - New feature (MINOR bump)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`fix:\` - Bug fix (PATCH bump)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`feat!:\` or \`fix!:\` - Breaking change (MAJOR bump)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`docs:\`, \`chore:\`, \`test:\` - No version bump" >> $GITHUB_STEP_SUMMARY

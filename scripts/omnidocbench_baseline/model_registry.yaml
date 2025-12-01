@@ -1,0 +1,307 @@
+# Model Registry for OmniDocBench Baseline Evaluation
+#
+# This registry defines all model variants that can be benchmarked.
+# Each model has a unique ID, version, and configuration.
+#
+# Usage:
+#   python scripts/omnidocbench_baseline/run_baseline_evaluation.py --model resnet18_student_v1
+#   python scripts/omnidocbench_baseline/run_baseline_evaluation.py --model resnet50_teacher_baseline
+#   python scripts/omnidocbench_baseline/compare_results.py --models resnet18_baseline,resnet18_v1,resnet18_v2
+
+version: "1.0"
+metadata:
+  created: "2025-01-25"
+  description: "Model variants for OmniDocBench baseline evaluation"
+
+# =============================================================================
+# IQA Models (Image Quality Assessment)
+# =============================================================================
+
+iqa_models:
+  # ---------------------------------------------------------------------------
+  # Classical CV Baseline (no ML)
+  # ---------------------------------------------------------------------------
+  - id: classical_cv_baseline
+    name: "Classical CV Baseline"
+    version: "1.0.0"
+    type: classical_cv
+    description: "OpenCV-based heuristics (Laplacian blur, FFT watermark, etc.)"
+    config:
+      blur_method: laplacian_variance
+      watermark_method: fft_low_frequency
+      noise_method: connected_components
+      contrast_method: histogram_bimodality
+    benchmarkable_attributes:
+      - fuzzy_scan
+      - watermark
+      - colorful_background
+    status: active
+
+  # ---------------------------------------------------------------------------
+  # ResNet-50 Teacher Variants
+  # ---------------------------------------------------------------------------
+  - id: resnet50_teacher_baseline
+    name: "ResNet-50 Teacher (Baseline)"
+    version: "0.0.0"
+    type: resnet
+    description: "Pre-trained ResNet-50 without IQA fine-tuning (ImageNet weights)"
+    config:
+      architecture: resnet50
+      weights: imagenet
+      checkpoint: null
+      input_size: 224
+      normalize: imagenet
+    benchmarkable_attributes:
+      - fuzzy_scan  # correlation with IQA scores
+    status: active
+
+  - id: resnet50_teacher_v1
+    name: "ResNet-50 Teacher v1"
+    version: "1.0.0"
+    type: resnet
+    description: "ResNet-50 trained on OHR-Bench with binary IQA labels"
+    config:
+      architecture: resnet50
+      weights: custom
+      checkpoint: "models/iqa/resnet50_teacher_v1.pth"
+      input_size: 224
+      normalize: imagenet
+      training:
+        dataset: ohr_bench
+        labels: binary
+        epochs: 50
+    benchmarkable_attributes:
+      - fuzzy_scan
+    status: planned
+
+  - id: resnet50_teacher_v2
+    name: "ResNet-50 Teacher v2"
+    version: "2.0.0"
+    type: resnet
+    description: "ResNet-50 trained with continuous IQA labels (regression)"
+    config:
+      architecture: resnet50
+      weights: custom
+      checkpoint: "models/iqa/resnet50_teacher_v2.pth"
+      input_size: 224
+      normalize: imagenet
+      training:
+        dataset: ohr_bench_extended
+        labels: continuous
+        epochs: 100
+        loss: mse
+    benchmarkable_attributes:
+      - fuzzy_scan
+    status: planned
+
+  # ---------------------------------------------------------------------------
+  # ResNet-18 Student Variants
+  # ---------------------------------------------------------------------------
+  - id: resnet18_student_baseline
+    name: "ResNet-18 Student (Baseline)"
+    version: "0.0.0"
+    type: resnet
+    description: "Pre-trained ResNet-18 without IQA fine-tuning (ImageNet weights)"
+    config:
+      architecture: resnet18
+      weights: imagenet
+      checkpoint: null
+      input_size: 224
+      normalize: imagenet
+    benchmarkable_attributes:
+      - fuzzy_scan
+    status: active
+
+  - id: resnet18_student_v1
+    name: "ResNet-18 Student v1"
+    version: "1.0.0"
+    type: resnet
+    description: "ResNet-18 distilled from resnet50_teacher_v1"
+    config:
+      architecture: resnet18
+      weights: custom
+      checkpoint: "models/iqa/resnet18_student_v1.pth"
+      input_size: 224
+      normalize: imagenet
+      training:
+        teacher: resnet50_teacher_v1
+        method: knowledge_distillation
+        epochs: 30
+        temperature: 3.0
+    benchmarkable_attributes:
+      - fuzzy_scan
+    status: planned
+
+  - id: resnet18_student_v2
+    name: "ResNet-18 Student v2"
+    version: "2.0.0"
+    type: resnet
+    description: "ResNet-18 distilled from resnet50_teacher_v2 (continuous labels)"
+    config:
+      architecture: resnet18
+      weights: custom
+      checkpoint: "models/iqa/resnet18_student_v2.pth"
+      input_size: 224
+      normalize: imagenet
+      training:
+        teacher: resnet50_teacher_v2
+        method: knowledge_distillation
+        labels: continuous
+        epochs: 30
+    benchmarkable_attributes:
+      - fuzzy_scan
+    status: planned
+
+# =============================================================================
+# Layout Detection Models
+# =============================================================================
+
+layout_models:
+  # ---------------------------------------------------------------------------
+  # Layout-Lite Heuristics (Project A)
+  # ---------------------------------------------------------------------------
+  - id: layout_lite_baseline
+    name: "Layout-Lite Heuristics"
+    version: "1.0.0"
+    type: heuristics
+    description: "Classical CV heuristics for coarse layout (column, table, figure detection)"
+    config:
+      column_method: projection_profile
+      table_method: hough_lines
+      figure_method: connected_components
+    benchmarkable_attributes:
+      - layout_type
+      - has_tables
+      - has_figures
+    status: active
+
+  # ---------------------------------------------------------------------------
+  # DocLayout-YOLO Variants (Project A routing)
+  # ---------------------------------------------------------------------------
+  - id: doclayout_yolo_docstructbench
+    name: "DocLayout-YOLO (DocStructBench)"
+    version: "1.0.0"
+    type: yolo
+    description: "DocLayout-YOLO pre-trained on DocStructBench (general)"
+    config:
+      weights: "juliozhao/DocLayout-YOLO-DocStructBench"
+      image_size: 1024
+      confidence_threshold: 0.2
+    benchmarkable_attributes:
+      - layout_type
+      - has_tables
+      - has_figures
+      - has_dense_math
+    status: planned
+
+  - id: doclayout_yolo_d4la
+    name: "DocLayout-YOLO (D4LA)"
+    version: "1.0.0"
+    type: yolo
+    description: "DocLayout-YOLO pre-trained on D4LA + DocSynth300K (high accuracy)"
+    config:
+      weights: "juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained"
+      image_size: 1600
+      confidence_threshold: 0.2
+    benchmarkable_attributes:
+      - layout_type
+      - has_tables
+      - has_figures
+      - has_dense_math
+    status: planned
+
+# =============================================================================
+# Handwriting Detection Models
+# =============================================================================
+
+handwriting_models:
+  - id: handwriting_heuristics
+    name: "Handwriting Heuristics"
+    version: "1.0.0"
+    type: heuristics
+    description: "Stroke width and regularity analysis"
+    config:
+      method: stroke_analysis
+    benchmarkable_attributes:
+      - has_handwriting
+    status: planned
+
+  - id: handwriting_resnet_v1
+    name: "Handwriting ResNet Classifier v1"
+    version: "1.0.0"
+    type: resnet
+    description: "ResNet-18 trained on IAM/SignaTR6K for handwriting detection"
+    config:
+      architecture: resnet18
+      weights: custom
+      checkpoint: "models/handwriting/handwriting_resnet_v1.pth"
+    benchmarkable_attributes:
+      - has_handwriting
+    status: planned
+
+# =============================================================================
+# Language Detection Models
+# =============================================================================
+
+language_models:
+  - id: fasttext_langid
+    name: "FastText Language ID"
+    version: "1.0.0"
+    type: fasttext
+    description: "FastText-based language identification"
+    config:
+      model: lid.176.bin
+    benchmarkable_attributes:
+      - language
+    status: planned
+
+  - id: py3langid
+    name: "py3langid"
+    version: "1.0.0"
+    type: library
+    description: "py3langid library-based classifier"
+    config: {}
+    benchmarkable_attributes:
+      - language
+    status: planned
+
+# =============================================================================
+# Composite Model Groups (for batch evaluation)
+# =============================================================================
+
+model_groups:
+  - id: all_iqa_baselines
+    name: "All IQA Baselines"
+    description: "Compare all IQA model baselines"
+    models:
+      - classical_cv_baseline
+      - resnet50_teacher_baseline
+      - resnet18_student_baseline
+
+  - id: resnet_progression
+    name: "ResNet Training Progression"
+    description: "Track ResNet improvement from baseline → v1 → v2"
+    models:
+      - resnet50_teacher_baseline
+      - resnet50_teacher_v1
+      - resnet50_teacher_v2
+      - resnet18_student_baseline
+      - resnet18_student_v1
+      - resnet18_student_v2
+
+  - id: layout_comparison
+    name: "Layout Detection Comparison"
+    description: "Compare heuristics vs YOLO for layout detection"
+    models:
+      - layout_lite_baseline
+      - doclayout_yolo_docstructbench
+      - doclayout_yolo_d4la
+
+  - id: project_a_full
+    name: "Project A Full Evaluation"
+    description: "All Project A models for complete benchmark"
+    models:
+      - classical_cv_baseline
+      - resnet18_student_v1
+      - layout_lite_baseline
+      - fasttext_langid

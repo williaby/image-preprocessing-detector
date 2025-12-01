@@ -1,0 +1,873 @@
+[
+  {
+    "file": "docs/ADRs/0001-consolidate-linting-with-ruff.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0002-separate-mutation-testing-workflow.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0003-adopt-property-based-testing.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0004-github-actions-security-hardening.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0005-mkdocs-documentation-system.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0006-synthetic-validation-dataset-strategy.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0007-hybrid-iqa-approach.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0008-multi-stage-pipeline-architecture.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0009-coco-bounding-box-format.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0010-300-dpi-normalization.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0011-hybrid-validation-strategy.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0012-defer-handwriting-detection.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0013-real-testing-over-mocking.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0014-classical-ml-hybrid-iqa.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0015-yolov8-layout-detection.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0016-defer-superscript-footnote-detection.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0017-pydantic-v2-json-schema.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0018-poetry-dependency-management.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0019-structured-logging.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0020-cpu-first-deployment-strategy.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0021-do-no-harm-guardrails.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0022-synthetic-data-generation.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0023-weak-supervision-brisque-niqe.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0024-active-learning-annotation.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0025-mobilenetv3-vs-efficientnet.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0026-transfer-learning-imagenet-coco.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0027-int8-quantization-onnx.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0028-document-quality-score-routing.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0028-resnet-teacher-student-architecture.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0029-phase2-dataset-selection-strategy.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0029-project-a-scope-boundaries.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0030-document-quality-score-design.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0030-gcs-colab-training-workflow.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0031-comprehensive-benchmarking-framework.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0032-docres-unified-preprocessing.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0033-delegate-semantic-features-to-ocr.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0034-resnet18-phase2-iqa.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0035-modal-gpu-integration.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/0036-device-priority-enforcement.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/ADRs/README.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/DATASET_GENERATION_GUIDE.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/DATASET_LOCATIONS.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/DUAL_STORAGE_STRATEGY.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/FIXTURE_ACQUISITION_PLAN.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/FIXTURE_ACQUISITION_TODO.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/MODEL_STORAGE.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/PHASE2_QUICKSTART.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/PRIORITY2_EDGE_CASES_OPTIONS.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/REPOSITORY_STRUCTURE.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/TESTING_STRATEGY.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/TEST_IMPROVEMENT_TRACKER.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/TEST_THRESHOLDS_REFERENCE.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/api/correction.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/api/detection.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/api/index.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/api/ingestion.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/api/output.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/api/rest-api.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/api/schema.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/benchmarks/phase4-isolated-benchmarks.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/MUTATION_TESTING.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/RAG Pipeline/MODELS.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/RAG Pipeline/Project_A_F_NF.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/RAG Pipeline/RAG-pipeline-project-overview.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/RAG Pipeline/project-a-project-plan.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/RAG Pipeline/project-ab-contract.md",
+    "ok": false,
+    "errors": [
+      "redundant H1 found: '# Project A → Project B Interface Contract' — remove it; 'title' renders automatically",
+      "common/version: Extra inputs are not permitted",
+      "unknown tag(s): ['contract', 'interface']"
+    ],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/RAG Pipeline/project-b-f-nf.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/RAG Pipeline/project-c-f-nf.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/RAG Pipeline/training-data-targets.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/architecture.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/code-quality.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/contributing.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/critical-path-mvp.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/handoff-specification.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/index.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/licenses-directory.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/phase-7-continuous-labels-strategy.md",
+    "ok": false,
+    "errors": [
+      "redundant H1 found: '# Phase 7: Continuous Labels Strategy' — remove it; 'title' renders automatically",
+      ": Unable to extract tag using discriminator 'schema_type'"
+    ],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/phase-sprint-details.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/development/testing.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/dvc-workflow.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/configuration.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/correction.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/data-collection.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/dataset-installation.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/dataset-preparation.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/deployment.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/document-workflow.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/index.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/installation.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/iqa.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/layout.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/log-aggregation.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/modal-storage.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/modal-training.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/overview.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/project-b-handoff.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/guides/quick-start.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/handoff/OCR_TEAM_HANDOFF_SEMANTIC_FEATURES.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/handoff/PROJECT_A_OUTPUT_SPECIFICATION.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/index.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/milestone-10.3-manual-validation.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/baseline-metrics.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/drift-detection.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/drift-faq.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/runbooks/README.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/runbooks/cost.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/runbooks/errors.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/runbooks/infrastructure.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/runbooks/latency.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/runbooks/model.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/sops.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/monitoring/thresholds.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/planning/PROJECT_PLAN.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/planning/TEMPLATE_ALIGNMENT_PLAN.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/planning/project-a-test-coverage-analysis.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/planning/workflows_opus/E2E_TESTING_EVALUATION.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/planning/workflows_opus/README.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/planning/workflows_opus/SCOPE_RESOLUTION_RECOMMENDATIONS.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/planning/workflows_opus/TEST_GAP_REMEDIATION_PLAN.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/planning/workflows_opus/WORKFLOW_ANALYSIS_FINDINGS.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/project/RELEASE_CHECKLIST.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/project/changelog.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/project/decision-matrix.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/project/improvement-opportunities.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/project/license.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/project/roadmap.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/reference/CITATIONS.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/reference/DATASET_SUFFICIENCY_REPORT.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/reference/MODAL_QUICK_REFERENCE.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/reference/MODEL_CARDS.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/reference/README.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/reference/detection-taxonomy.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/reference/document-type-coverage.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/reports/QA_QC_PRODUCTION_READINESS_REPORT.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/requirements/functional_requirements_v2.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/research/README.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/security/LICENSE-EXCEPTIONS.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/security/codeql-python-scanning-guide.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/security/fuzzing-implementation-guide.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/setup/hardware-config.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/tools/README.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/tools/wtd-runbook.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/validation/PHASE5_REPORT.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  },
+  {
+    "file": "docs/validation/phase2_complete_validation_summary.md",
+    "ok": true,
+    "errors": [],
+    "fixed": false
+  }
+]

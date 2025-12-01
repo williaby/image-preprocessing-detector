@@ -132,6 +132,28 @@ class APISettings(BaseSettings):
         description="IP addresses allowed without auth",
     )
 
+    # Modal GPU Budget Settings (Phase 4 - Device Priority)
+    modal_budget_enabled: bool = Field(
+        default=True,
+        description="Enable Modal GPU budget enforcement",
+    )
+    modal_daily_budget_dollars: float = Field(
+        default=10.0,
+        description="Maximum daily spend on Modal GPU in dollars",
+    )
+    modal_monthly_budget_dollars: float = Field(
+        default=100.0,
+        description="Maximum monthly spend on Modal GPU in dollars",
+    )
+    modal_cost_per_gpu_hour: float = Field(
+        default=0.36,
+        description="Cost per GPU hour (T4 default)",
+    )
+    modal_budget_warning_threshold: float = Field(
+        default=0.8,
+        description="Warn when budget usage exceeds this ratio (0-1)",
+    )
+
     def get_openapi_tags(self) -> list[dict[str, Any]]:
         """Get OpenAPI tag metadata."""
         return [

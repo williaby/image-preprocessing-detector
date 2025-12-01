@@ -23,6 +23,25 @@ class IssueType(str, Enum):
     LOW_DPI = "low_dpi"
 
 
+class DocumentType(str, Enum):
+    """Document type classification (Phase 8 + Office Support)."""
+
+    IMAGE = "image"
+    PDF = "pdf"
+    OFFICE_WORD = "office_word"
+    OFFICE_EXCEL = "office_excel"
+    OFFICE_POWERPOINT = "office_powerpoint"
+
+
+class OrientationAngle(int, Enum):
+    """Detected document orientation angles (degrees clockwise from upright)."""
+
+    UPRIGHT = 0
+    ROTATED_90 = 90
+    ROTATED_180 = 180
+    ROTATED_270 = 270
+
+
 class IssueSeverity(str, Enum):
     """Severity levels for detected issues."""
 
@@ -33,14 +52,30 @@ class IssueSeverity(str, Enum):
 
 
 class ElementCategory(str, Enum):
-    """Categories of document elements that can be detected."""
+    """Categories of document elements that can be detected.
 
-    TABLE = "table"
-    IMAGE = "image"
-    HANDWRITING = "handwriting"
+    Includes all 11 DocLayNet classes plus additional project-specific categories.
+    Reference: https://github.com/DS4SD/DocLayNet
+    """
+
+    # DocLayNet standard classes (11 classes)
+    CAPTION = "caption"
+    FOOTNOTE = "footnote"
     FORMULA = "formula"
-    TEXT_BLOCK = "text_block"
-    FIGURE = "figure"
+    LIST_ITEM = "list_item"
+    PAGE_FOOTER = "page_footer"
+    PAGE_HEADER = "page_header"
+    PICTURE = "picture"
+    SECTION_HEADER = "section_header"
+    TABLE = "table"
+    TEXT = "text"
+    TITLE = "title"
+
+    # Additional project-specific categories
+    IMAGE = "image"  # Generic image element (legacy compatibility)
+    HANDWRITING = "handwriting"  # Handwritten content detection
+    TEXT_BLOCK = "text_block"  # Legacy text block (maps to TEXT)
+    FIGURE = "figure"  # DocStructBench figure class (maps to PICTURE)
 
 
 class PDFType(str, Enum):
@@ -81,6 +116,7 @@ class ActionType(str, Enum):
     BACKGROUND_NORMALIZATION = "background_normalization"
     UPSAMPLE = "upsample"
     ROTATE = "rotate"
+    ORIENTATION_CORRECTION = "orientation_correction"
 
 
 class DetectedIssue(BaseModel):
@@ -164,6 +200,45 @@ class LanguageInfo(BaseModel):
     )
 
 
+class OrientationDetection(BaseModel):
+    """Document orientation detection result (Phase 8 - Orientation Detection).
+
+    Detects if document pages are rotated 90°, 180°, or 270° from upright orientation.
+    Common in scanned/photographed documents where the scanner or camera orientation
+    doesn't match the document orientation.
+    """
+
+    detected_angle: OrientationAngle = Field(
+        default=OrientationAngle.UPRIGHT,
+        description="Detected orientation angle in degrees clockwise (0, 90, 180, 270)",
+    )
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score for orientation detection",
+    )
+    detection_method: str = Field(
+        ...,
+        description="Detection method used (text_line_analysis, edge_histogram, ensemble)",
+    )
+    auto_corrected: bool = Field(
+        default=False,
+        description="Whether automatic orientation correction was applied",
+    )
+    needs_correction: bool = Field(
+        default=False,
+        description="Whether the page needs orientation correction (angle != 0)",
+    )
+    method_votes: dict[str, int] | None = Field(
+        default=None,
+        description="Votes from each detection method (for ensemble)",
+        examples=[
+            {"text_line_analysis": 90, "edge_histogram": 90, "component_ratio": 90}
+        ],
+    )
+
+
 class TransformHistory(BaseModel):
     """Records a single transformation applied to the image."""
 
@@ -211,6 +286,9 @@ class PageLayoutSummary(BaseModel):
 
     NOTE: This is NOT full semantic layout detection (which is Project B's responsibility).
     This provides only coarse page attributes for routing decisions.
+
+    DocLayNet classes detected: Caption, Footnote, Formula, List-item, Page-footer,
+    Page-header, Picture, Section-header, Table, Text, Title
     """
 
     page_number: int = Field(..., ge=1, description="1-based page number")
@@ -222,6 +300,14 @@ class PageLayoutSummary(BaseModel):
     )
     has_handwriting: bool = Field(
         default=False, description="Page contains handwritten content"
+    )
+    has_list_items: bool = Field(
+        default=False,
+        description="Page contains list items (DocLayNet List-item class)",
+    )
+    has_headers_footers: bool = Field(
+        default=False,
+        description="Page contains headers or footers (DocLayNet Page-header/Page-footer)",
     )
     fuzzy_scan: bool = Field(
         default=False, description="Page is a low-quality fuzzy scan"
@@ -291,6 +377,12 @@ class PageMetadata(BaseModel):
                 "inference_time_ms": 28.7,
             }
         ],
+    )
+
+    # Phase 8: Orientation detection (for rotated scans/photos)
+    orientation: OrientationDetection | None = Field(
+        None,
+        description="Phase 8: Orientation detection result (0°, 90°, 180°, 270° rotation)",
     )
 
     detected_issues: list[DetectedIssue] = Field(
@@ -369,6 +461,10 @@ class DocumentMetadata(BaseModel):
     document_id: str = Field(..., description="Unique document identifier")
     file_name: str = Field(..., description="Original filename")
     source_mime: str = Field(..., description="Source MIME type")
+    document_type: DocumentType = Field(
+        default=DocumentType.PDF,
+        description="Document type classification (image, pdf, office_word, office_excel, office_powerpoint)",
+    )
     num_pages: int = Field(..., gt=0, description="Total number of pages")
 
     # Phase 4: DPI Upscaling (optional - only if upscaling was performed)

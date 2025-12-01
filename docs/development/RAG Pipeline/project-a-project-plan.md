@@ -549,7 +549,678 @@ Calibrates quality scoring and routing logic.
 
 ---
 
-## PHASE 10 — Validation & Benchmarking (Week 10–11)
+## PHASE 9 — Specialized Element Training for Project B (Week 10–12)
+
+Trains and exports specialized models that Project B will consume for element-specific processing. Project A centralizes all ML training infrastructure (Modal GPU, datasets, model registry) while Project B focuses on orchestration and inference.
+
+### Rationale
+
+With DocLayout-YOLO providing accurate bounding boxes, Project B can route detected elements to specialized processors. However, effective routing requires additional classifiers trained on domain-specific data. Project A trains these models and exports them for Project B consumption.
+
+### 9.1 DocLayout-YOLO Extended Classes (HIGH PRIORITY)
+
+Extend the standard DocLayNet 11 classes with additional element types needed for specialist routing.
+
+#### 9.1.1 ⬜ Custom Class Training
+
+**Base Model:** `juliozhao/DocLayout-YOLO-DocStructBench` (recommended) or `juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained`
+
+**Extended Classes (17 total):**
+
+| Class | Source | Purpose |
+|-------|--------|---------|
+| Caption | DocLayNet | Standard |
+| Footnote | DocLayNet | Standard |
+| Formula | DocLayNet | Standard (split into subtypes below) |
+| List-Item | DocLayNet | Standard |
+| Page-Footer | DocLayNet | Parasitic content |
+| Page-Header | DocLayNet | Parasitic content |
+| Picture | DocLayNet | Standard |
+| Section-Header | DocLayNet | Standard |
+| Table | DocLayNet | Standard |
+| Text | DocLayNet | Standard |
+| Title | DocLayNet | Standard |
+| **Handwriting** | New | Route to TrOCR |
+| **Watermark** | New | Flag as parasitic |
+| **Stamp** | New | Flag as parasitic |
+| **Signature** | New | May need special handling |
+| **Code-Block** | New | Preserve formatting |
+| **Chart** | New | May need chart-to-data extraction |
+
+**Training Dataset:**
+
+| Source | Classes Covered | Annotation Status |
+|--------|-----------------|-------------------|
+| DocLayNet | 11 standard classes | Pre-annotated |
+| IAM Handwriting Database | Handwriting regions | Needs bbox conversion |
+| SignaTR6K | Signatures | Pre-annotated |
+| Custom annotation | Watermarks, stamps, code | Manual annotation required |
+| GitHub code screenshots | Code-Block | Synthetic generation |
+
+**Training Configuration:**
+
+```yaml
+# configs/models/doclayout_yolo_extended.yaml
+model:
+  base: juliozhao/DocLayout-YOLO-DocStructBench
+  architecture: YOLOv10
+  image_size: 1600
+
+training:
+  epochs: 100
+  batch_size: 16
+  gpu: Modal A10 (24GB)
+  optimizer: AdamW
+  lr: 0.001
+  warmup_epochs: 5
+
+classes:
+  # DocLayNet standard (11)
+  - caption
+  - footnote
+  - formula
+  - list_item
+  - page_footer
+  - page_header
+  - picture
+  - section_header
+  - table
+  - text
+  - title
+  # Extended (6 new)
+  - handwriting
+  - watermark
+  - stamp
+  - signature
+  - code_block
+  - chart
+
+augmentation:
+  - random_rotate: [-5, 5]
+  - random_brightness: [0.8, 1.2]
+  - random_noise: gaussian
+  - jpeg_compression: [60, 100]
+```
+
+**Export:**
+
+* ONNX format for production inference
+* Target size: < 100MB
+* Target latency: < 50ms/page (GPU), < 200ms/page (CPU)
+
+#### 9.1.2 ⬜ Annotation Pipeline for Custom Classes
+
+* Streamlit-based annotation UI (extend Phase 3 tooling)
+* Target: 2,000 annotated samples per custom class
+* Source: Internal document corpus + public datasets
+
+---
+
+### 9.2 Handwriting vs Printed Classifier (HIGH PRIORITY)
+
+Binary classifier to determine if detected text regions contain handwriting.
+
+#### 9.2.1 ⬜ Model Training
+
+**Architecture:** ResNet-18 (lightweight, fast inference)
+
+**Base Model:** `torchvision.models.resnet18(pretrained=True)`
+
+**Training Dataset:**
+
+| Dataset | Type | Samples | Source |
+|---------|------|---------|--------|
+| IAM Handwriting Database | Handwritten | ~13,000 lines | Public |
+| IMGUR5K | Printed | ~5,000 images | Public |
+| CVL Database | Handwritten | ~7,000 pages | Public |
+| DocLayNet text crops | Printed | ~50,000 crops | Derived |
+| Synthetic printed | Printed | ~20,000 | Generated |
+
+**Training Configuration:**
+
+```yaml
+# configs/models/handwriting_classifier.yaml
+model:
+  architecture: resnet18
+  pretrained: true
+  num_classes: 2  # [printed, handwritten]
+  dropout: 0.3
+
+training:
+  epochs: 30
+  batch_size: 64
+  gpu: Modal T4 (16GB)
+  optimizer: AdamW
+  lr: 0.0001
+  scheduler: CosineAnnealingLR
+
+input:
+  size: [224, 224]
+  normalize: imagenet
+
+augmentation:
+  - random_rotation: [-10, 10]
+  - random_affine: true
+  - color_jitter: [0.1, 0.1, 0.1]
+  - gaussian_blur: [0.1]
+```
+
+**Output Schema:**
+
+```json
+{
+  "is_handwritten": true,
+  "confidence": 0.92,
+  "model_version": "handwriting_clf_v1.0"
+}
+```
+
+**Export:**
+
+* ONNX format: `models/handwriting_classifier/resnet18_handwriting.onnx`
+* Target size: < 50MB
+* Target latency: < 5ms/crop (GPU), < 20ms/crop (CPU)
+
+---
+
+### 9.3 Table Type Classifier (MEDIUM PRIORITY)
+
+Multi-class classifier to identify table structure patterns for specialist routing.
+
+#### 9.3.1 ⬜ Model Training
+
+**Architecture:** ResNet-18 or EfficientNet-B0
+
+**Base Model:** `torchvision.models.resnet18(pretrained=True)`
+
+**Classes:**
+
+| Class | Description | Specialist Routing |
+|-------|-------------|-------------------|
+| `simple_grid` | Regular rows/columns | Docling TableFormer |
+| `merged_header` | Header spans columns | StructEqTable |
+| `nested_rows` | Hierarchical structure | StructEqTable + VLM |
+| `financial` | Numbers with totals | TableFormer + calculation validation |
+| `form_like` | Key-value pairs | Docling standard |
+| `scientific` | LaTeX-style | StructEqTable |
+
+**Training Dataset:**
+
+| Dataset | Samples | Classes Covered |
+|---------|---------|-----------------|
+| PubTables-1M | ~950,000 | Scientific, simple_grid |
+| FinTabNet | ~113,000 | Financial |
+| TableBank | ~417,000 | Mixed |
+| ICDAR 2019 | ~2,000 | Complex tables |
+| Custom forms | ~5,000 | Form-like (annotate) |
+
+**Training Configuration:**
+
+```yaml
+# configs/models/table_type_classifier.yaml
+model:
+  architecture: resnet18
+  pretrained: true
+  num_classes: 6
+
+training:
+  epochs: 50
+  batch_size: 32
+  gpu: Modal T4
+  class_weights: balanced  # Handle imbalanced classes
+
+input:
+  size: [384, 384]  # Larger for table structure
+```
+
+**Output Schema:**
+
+```json
+{
+  "table_type": "financial",
+  "confidence": 0.85,
+  "structural_features": {
+    "has_merged_cells": true,
+    "appears_numeric": true,
+    "estimated_rows": 12,
+    "estimated_cols": 5
+  },
+  "recommended_specialist": "structeqtable",
+  "validate_calculations": true
+}
+```
+
+**Export:**
+
+* ONNX format: `models/table_type_classifier/table_classifier.onnx`
+* Target size: < 50MB
+* Target latency: < 10ms/table (GPU)
+
+---
+
+### 9.4 Formula Complexity Classifier (MEDIUM PRIORITY)
+
+Classify mathematical formulas for appropriate specialist routing.
+
+#### 9.4.1 ⬜ Model Training
+
+**Architecture:** ResNet-18
+
+**Classes:**
+
+| Class | Description | Specialist Routing |
+|-------|-------------|-------------------|
+| `simple_inline` | Single-line, basic operators | Granite-Docling |
+| `block_equation` | Display-style equation | Texify |
+| `multi_line` | Multi-line derivation | Texify + VLM validation |
+| `matrix` | Matrix notation | UniMERNet |
+| `handwritten_math` | Handwritten formulas | UniMERNet |
+
+**Training Dataset:**
+
+| Dataset | Samples | Source |
+|---------|---------|--------|
+| im2latex-100k | ~100,000 | arXiv formulas |
+| UniMER-1M | ~1,000,000 | Diverse formulas |
+| CROHME | ~10,000 | Handwritten math |
+| Custom inline | ~10,000 | Synthetic from LaTeX |
+
+**Training Configuration:**
+
+```yaml
+# configs/models/formula_complexity_classifier.yaml
+model:
+  architecture: resnet18
+  pretrained: true
+  num_classes: 5
+
+training:
+  epochs: 40
+  batch_size: 64
+  gpu: Modal T4
+```
+
+**Export:**
+
+* ONNX format: `models/formula_classifier/formula_complexity.onnx`
+* Target size: < 50MB
+
+---
+
+### 9.5 Parasitic Content Detector (MEDIUM PRIORITY)
+
+Detect watermarks, stamps, and background elements that should be excluded from RAG chunks.
+
+#### 9.5.1 ⬜ Watermark Detection Enhancement
+
+**Approach:** Extend DocLayout-YOLO OR train separate lightweight detector
+
+**Detection Targets:**
+
+| Type | Examples | Action |
+|------|----------|--------|
+| Text watermark | "DRAFT", "CONFIDENTIAL" | Skip OCR |
+| Logo watermark | Company logos in background | Skip OCR |
+| Stamp | Approval stamps, date stamps | Extract metadata only |
+| Background pattern | Decorative backgrounds | Ignore |
+
+**Training Dataset:**
+
+| Source | Samples | Annotation |
+|--------|---------|------------|
+| Custom watermarked docs | ~5,000 | Manual annotation |
+| Synthetic watermarks | ~20,000 | Generated overlay |
+| Stamp datasets | ~3,000 | Public + custom |
+
+**Output Schema:**
+
+```json
+{
+  "parasitic_elements": [
+    {
+      "type": "text_watermark",
+      "bbox": [100, 100, 400, 400],
+      "confidence": 0.82,
+      "is_parasitic": true,
+      "ocr_action": "skip"
+    }
+  ]
+}
+```
+
+---
+
+### 9.6 Element Complexity Scorer (LOWER PRIORITY)
+
+Unified model to predict whether any element needs specialist processing.
+
+#### 9.6.1 ⬜ Multi-Task Model
+
+**Architecture:** ResNet-18 with multi-head output
+
+**Input:** Cropped element image + element_type embedding
+
+**Outputs:**
+
+* `complexity_level`: simple | moderate | complex
+* `specialist_needed`: bool
+* `recommended_specialist`: string (optional)
+* `vlm_validation_recommended`: bool
+
+**Training:** After 9.2, 9.3, 9.4 are complete, train unified model on combined dataset.
+
+---
+
+### 9.7 Domain-Specific TrOCR Fine-Tuning (OPTIONAL - DEFERRED)
+
+Fine-tune TrOCR on domain-specific handwriting if off-the-shelf models underperform.
+
+#### 9.7.1 ⬜ Evaluation Phase
+
+* Run standard TrOCR on sample handwriting from target domain
+* Measure CER/WER on held-out test set
+* If CER > 10%, proceed with fine-tuning
+
+#### 9.7.2 ⬜ Fine-Tuning (if needed)
+
+**Base Model:** `microsoft/trocr-base-handwritten`
+
+**Training Data:** Annotated handwriting samples from target domain (500+ samples minimum)
+
+**Training Configuration:**
+
+```yaml
+# configs/models/trocr_domain_finetuned.yaml
+model:
+  base: microsoft/trocr-base-handwritten
+
+training:
+  epochs: 10
+  batch_size: 8
+  gpu: Modal A10
+  lr: 5e-5
+
+export:
+  path: models/trocr_domain_finetuned/
+```
+
+---
+
+### 9.8 Model Registry & Export (HIGH PRIORITY)
+
+Establish model registry for Project B consumption.
+
+#### 9.8.1 ⬜ Registry Structure
+
+Each model includes both **full** and **light** variants for flexible deployment:
+
+```text
+models/
+├── doclayout_yolo_extended/
+│   ├── full/
+│   │   ├── yolov10_17class.onnx           # ~100MB, 1600px input
+│   │   ├── config.yaml
+│   │   └── training_summary.json
+│   ├── light/
+│   │   ├── yolov10n_17class.onnx          # ~20MB, 1024px input
+│   │   ├── config.yaml
+│   │   └── training_summary.json
+│   ├── class_mapping.json                  # Shared between variants
+│   └── benchmarks.json                     # CPU/GPU/Modal L4 comparison
+├── handwriting_classifier/
+│   ├── full/
+│   │   ├── resnet18_handwriting.onnx      # ~47MB
+│   │   └── training_summary.json
+│   ├── light/
+│   │   ├── mobilenetv3_handwriting.onnx   # ~10MB
+│   │   └── training_summary.json
+│   ├── config.json                         # Shared config
+│   └── benchmarks.json
+├── table_type_classifier/
+│   ├── full/
+│   │   └── resnet18_table.onnx            # ~47MB
+│   ├── light/
+│   │   └── mobilenetv3_table.onnx         # ~10MB
+│   └── benchmarks.json
+├── formula_complexity_classifier/
+│   ├── full/
+│   │   └── resnet18_formula.onnx
+│   ├── light/
+│   │   └── mobilenetv3_formula.onnx
+│   └── benchmarks.json
+├── parasitic_detector/
+│   ├── full/
+│   │   └── resnet18_parasitic.onnx
+│   ├── light/
+│   │   └── mobilenetv3_parasitic.onnx
+│   └── benchmarks.json
+└── registry.json  # Master index of all models + variants
+```
+
+#### 9.8.2 ⬜ Registry Manifest
+
+```json
+{
+  "registry_version": "2.0.0",
+  "default_variant": "light",
+  "models": {
+    "doclayout_yolo_extended": {
+      "classes": 17,
+      "class_mapping": "doclayout_yolo_extended/class_mapping.json",
+      "variants": {
+        "full": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "doclayout_yolo_extended/full/yolov10_17class.onnx",
+          "architecture": "yolov10",
+          "input_size": [1600, 1600],
+          "size_mb": 100,
+          "recommended_device": "modal_l4"
+        },
+        "light": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "doclayout_yolo_extended/light/yolov10n_17class.onnx",
+          "architecture": "yolov10n",
+          "input_size": [1024, 1024],
+          "size_mb": 20,
+          "recommended_device": "cpu"
+        }
+      },
+      "benchmarks": "doclayout_yolo_extended/benchmarks.json"
+    },
+    "handwriting_classifier": {
+      "classes": 2,
+      "variants": {
+        "full": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "handwriting_classifier/full/resnet18_handwriting.onnx",
+          "architecture": "resnet18",
+          "input_size": [224, 224],
+          "size_mb": 47,
+          "recommended_device": "modal_l4"
+        },
+        "light": {
+          "version": "1.0.0",
+          "format": "onnx",
+          "path": "handwriting_classifier/light/mobilenetv3_handwriting.onnx",
+          "architecture": "mobilenetv3_small",
+          "input_size": [224, 224],
+          "size_mb": 10,
+          "recommended_device": "cpu"
+        }
+      },
+      "benchmarks": "handwriting_classifier/benchmarks.json"
+    }
+  }
+}
+```
+
+#### 9.8.3 ⬜ GCS Sync
+
+* Upload trained models to `gs://image_detection_b/models/phase9/`
+* Version tagging for rollback capability
+* Checksum verification
+
+---
+
+### 9.9 Light Model Variants for Local Benchmarking (HIGH PRIORITY)
+
+Train lightweight versions of each Phase 9 model for local CPU inference and benchmarking. Based on Phase 4 benchmarks, local GPUs (RTX A500, P2000) provide minimal benefit for small models—CPU is often faster due to transfer overhead elimination.
+
+#### 9.9.1 ⬜ Model Variant Strategy
+
+Each Phase 9 model ships in two variants:
+
+| Model | Full Version | Light Version | Use Case |
+|-------|-------------|---------------|----------|
+| DocLayout-YOLO | YOLOv10 (17 classes) | YOLOv10-nano | CPU inference, edge deployment |
+| Handwriting Classifier | ResNet-18 | MobileNetV3-small | CPU inference, high-throughput |
+| Table Type Classifier | ResNet-18 | MobileNetV3-small | CPU inference |
+| Formula Complexity | ResNet-18 | MobileNetV3-small | CPU inference |
+| Parasitic Detector | ResNet-18 | MobileNetV3-small | CPU inference |
+| Element Complexity | ResNet-18 multi-head | MobileNetV3-small multi-head | CPU inference |
+
+#### 9.9.2 ⬜ Light Model Specifications
+
+**DocLayout-YOLO-Nano:**
+
+```yaml
+# configs/models/doclayout_yolo_nano.yaml
+model:
+  base: yolov10n  # Nano variant
+  image_size: 1024  # Reduced from 1600
+  classes: 17
+
+training:
+  epochs: 100
+  batch_size: 32
+  gpu: Modal T4
+
+export:
+  path: models/doclayout_yolo_extended/yolov10n_17class.onnx
+  target_size: < 20MB
+  target_latency: < 100ms/page (CPU)
+```
+
+**MobileNetV3-small Classifiers:**
+
+```yaml
+# configs/models/handwriting_classifier_light.yaml
+model:
+  architecture: mobilenetv3_small
+  pretrained: true
+  num_classes: 2
+  dropout: 0.2
+
+training:
+  epochs: 30
+  batch_size: 128  # Larger batch for smaller model
+  gpu: Modal T4
+
+export:
+  path: models/handwriting_classifier/mobilenetv3_handwriting.onnx
+  target_size: < 10MB
+  target_latency: < 5ms/crop (CPU)
+```
+
+#### 9.9.3 ⬜ Accuracy vs Latency Tradeoffs
+
+| Model | Full Accuracy Target | Light Accuracy Target | Acceptable Degradation |
+|-------|---------------------|----------------------|------------------------|
+| DocLayout-YOLO | mAP ≥ 0.82 | mAP ≥ 0.75 | ≤ 8.5% |
+| Handwriting Classifier | F1 ≥ 0.95 | F1 ≥ 0.90 | ≤ 5% |
+| Table Type Classifier | Accuracy ≥ 0.85 | Accuracy ≥ 0.80 | ≤ 5.9% |
+| Formula Complexity | Accuracy ≥ 0.85 | Accuracy ≥ 0.80 | ≤ 5.9% |
+
+#### 9.9.4 ⬜ Benchmark Requirements
+
+Both full and light variants must be benchmarked on:
+
+| Device | Benchmark Requirement |
+|--------|----------------------|
+| CPU (8-core) | Required - primary deployment target |
+| Local GPU (P2000/RTX A500) | Required - compare against CPU |
+| Modal L4 | Required - cloud fallback baseline |
+
+**Benchmark Output Format:**
+
+```json
+{
+  "model": "handwriting_classifier",
+  "variant": "light",
+  "architecture": "mobilenetv3_small",
+  "benchmarks": {
+    "cpu": {"mean_ms": 4.2, "p95_ms": 5.8, "p99_ms": 6.1},
+    "gpu_local": {"mean_ms": 5.1, "p95_ms": 6.2, "p99_ms": 7.0},
+    "modal_l4": {"mean_ms": 0.8, "p95_ms": 1.2, "p99_ms": 1.4}
+  },
+  "accuracy": {
+    "f1_score": 0.92,
+    "vs_full_model_delta": -0.03
+  }
+}
+```
+
+#### 9.9.5 ⬜ Deployment Configuration
+
+```yaml
+# configs/inference/model_selection.yaml
+model_variants:
+  default: light  # Use light models by default for CPU
+
+  # Override rules
+  overrides:
+    - condition: "modal_l4_available"
+      variant: full
+    - condition: "accuracy_critical"
+      variant: full
+    - condition: "latency_critical"
+      variant: light
+
+  # Fallback chain
+  device_priority:
+    - modal_l4: full
+    - cpu: light
+    # Note: Local GPU not recommended (negative speedup for small models)
+```
+
+---
+
+### Phase 9 Deliverables
+
+| Deliverable | Priority | Target |
+|-------------|----------|--------|
+| DocLayout-YOLO extended (17 classes) - Full | High | Week 11 |
+| DocLayout-YOLO extended (17 classes) - Light (nano) | High | Week 11 |
+| Handwriting classifier - Full + Light | High | Week 10 |
+| Table type classifier - Full + Light | Medium | Week 11 |
+| Formula complexity classifier - Full + Light | Medium | Week 11 |
+| Parasitic content detector - Full + Light | Medium | Week 12 |
+| Model registry + GCS sync | High | Week 12 |
+| **Benchmark suite (CPU/GPU/Modal)** | **High** | **Week 12** |
+| Project A→B contract document | High | Week 10 |
+| Integration tests | High | Week 12 |
+
+### Phase 9 Dependencies
+
+* **Requires:** Phase 6 DocLayout-YOLO base training complete
+* **Requires:** Modal GPU infrastructure (Phase 0)
+* **Enables:** Project B specialist routing
+
+### Phase 9 Risks
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Insufficient training data for custom classes | High | Start annotation early, use synthetic augmentation |
+| Model accuracy below threshold | Medium | Iterate on architecture, increase data |
+| ONNX export issues | Low | Test export early, use standard ops |
+| GCS sync failures | Low | Retry logic, checksum verification |
+
+---
+
+## PHASE 10 — Validation & Benchmarking (Week 12–13)
 
 Comprehensive testing and documentation.
 
@@ -706,8 +1377,9 @@ Each deferred feature will be evaluated based on:
 | Phase 5 | Week 7-8 | ⬜ Planned | Corrections enhancement (3 new correctors) |
 | Phase 6 | Week 8-9 | ⬜ Planned | Layout-lite (DocLayout-YOLO, handwriting) |
 | Phase 8 | Week 9-10 | ⬜ Planned | DQS calibration, routing tuning |
-| Phase 10 | Week 10-11 | ⬜ Planned | Benchmarking, documentation |
+| Phase 9 | Week 10-12 | ⬜ Planned | Specialized element training for Project B |
+| Phase 10 | Week 12-13 | ⬜ Planned | Benchmarking, documentation |
 
-**Total Timeline**: ~11 weeks to benchmarking
+**Total Timeline**: ~13 weeks to benchmarking
 
 ---

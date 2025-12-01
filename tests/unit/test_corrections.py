@@ -10,7 +10,9 @@ from image_preprocessing_detector.correction.corrections import (
     ContrastEnhancer,
     CorrectionResult,
     DeskewCorrector,
+    OrientationCorrector,
     Sharpener,
+    correct_orientation,
     correct_skew,
     enhance_contrast,
     sharpen_image,
@@ -344,3 +346,140 @@ class TestCorrectionResult:
 
         assert result.applied is False
         assert result.skipped_reason == "Angle too small"
+
+
+class TestOrientationCorrector:
+    """Test OrientationCorrector class (Phase 8)."""
+
+    def test_init_default_params(self) -> None:
+        """Test OrientationCorrector initialization with defaults."""
+        corrector = OrientationCorrector()
+
+        assert corrector.min_confidence == pytest.approx(0.7)
+        assert corrector.auto_correct_threshold == pytest.approx(0.85)
+
+    def test_init_custom_params(self) -> None:
+        """Test OrientationCorrector initialization with custom parameters."""
+        corrector = OrientationCorrector(min_confidence=0.8, auto_correct_threshold=0.9)
+
+        assert corrector.min_confidence == pytest.approx(0.8)
+        assert corrector.auto_correct_threshold == pytest.approx(0.9)
+
+    def test_correct_upright_skipped(self) -> None:
+        """Test correction skipped for upright images (0 degrees)."""
+        img = np.ones((500, 400, 3), dtype=np.uint8) * 255
+        corrector = OrientationCorrector()
+
+        result = corrector.correct(img, angle=0, confidence=0.95)
+
+        assert result.applied is False
+        assert result.skipped_reason is not None
+        assert "upright" in result.skipped_reason.lower()
+
+    def test_correct_low_confidence_skipped(self) -> None:
+        """Test correction skipped for low confidence."""
+        img = np.ones((500, 400, 3), dtype=np.uint8) * 255
+        corrector = OrientationCorrector(min_confidence=0.7)
+
+        result = corrector.correct(img, angle=90, confidence=0.5)
+
+        assert result.applied is False
+        assert result.skipped_reason is not None
+        assert "below threshold" in result.skipped_reason
+
+    def test_correct_90_degrees(self) -> None:
+        """Test correction for 90-degree rotation."""
+        img = np.ones((500, 400, 3), dtype=np.uint8) * 255
+        cv2.rectangle(img, (50, 50), (350, 150), (0, 0, 0), 2)  # Marker
+
+        corrector = OrientationCorrector()
+        result = corrector.correct(img, angle=90, confidence=0.9)
+
+        assert result.applied is True
+        assert result.skipped_reason is None
+        assert result.parameters["detected_angle"] == 90
+        assert result.parameters["correction_applied"] == -90
+        # 90° rotation swaps dimensions
+        assert result.corrected_image.shape[0] == img.shape[1]
+        assert result.corrected_image.shape[1] == img.shape[0]
+
+    def test_correct_180_degrees(self) -> None:
+        """Test correction for 180-degree rotation."""
+        img = np.ones((500, 400, 3), dtype=np.uint8) * 255
+        corrector = OrientationCorrector()
+
+        result = corrector.correct(img, angle=180, confidence=0.85)
+
+        assert result.applied is True
+        # 180° rotation preserves dimensions
+        assert result.corrected_image.shape == img.shape
+
+    def test_correct_270_degrees(self) -> None:
+        """Test correction for 270-degree rotation."""
+        img = np.ones((500, 400, 3), dtype=np.uint8) * 255
+        corrector = OrientationCorrector()
+
+        result = corrector.correct(img, angle=270, confidence=0.9)
+
+        assert result.applied is True
+        assert result.parameters["detected_angle"] == 270
+        # 270° rotation swaps dimensions
+        assert result.corrected_image.shape[0] == img.shape[1]
+        assert result.corrected_image.shape[1] == img.shape[0]
+
+    def test_correct_force_low_confidence(self) -> None:
+        """Test force correction bypasses confidence threshold."""
+        img = np.ones((500, 400, 3), dtype=np.uint8) * 255
+        corrector = OrientationCorrector(min_confidence=0.9)
+
+        # Without force, should skip
+        result_no_force = corrector.correct(img, angle=90, confidence=0.5)
+        assert result_no_force.applied is False
+
+        # With force, should apply
+        result_force = corrector.correct(img, angle=90, confidence=0.5, force=True)
+        assert result_force.applied is True
+
+    def test_correct_invalid_angle_raises(self) -> None:
+        """Test correction raises ValueError for invalid angles."""
+        img = np.ones((500, 400, 3), dtype=np.uint8) * 255
+        corrector = OrientationCorrector()
+
+        with pytest.raises(ValueError, match="Invalid orientation angle"):
+            corrector.correct(img, angle=45, confidence=0.9)
+
+        with pytest.raises(ValueError, match="Invalid orientation angle"):
+            corrector.correct(img, angle=135, confidence=0.9)
+
+    def test_correct_empty_image_raises(self) -> None:
+        """Test correction raises ValueError for empty image."""
+        corrector = OrientationCorrector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            corrector.correct(np.array([]), angle=90, confidence=0.9)
+
+    def test_correct_none_image_raises(self) -> None:
+        """Test correction raises ValueError for None image."""
+        corrector = OrientationCorrector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            corrector.correct(None, angle=90, confidence=0.9)  # type: ignore
+
+    def test_correct_preserves_dimensions_info(self) -> None:
+        """Test correction preserves original and new dimensions in params."""
+        img = np.ones((600, 400, 3), dtype=np.uint8) * 255
+        corrector = OrientationCorrector()
+
+        result = corrector.correct(img, angle=90, confidence=0.9)
+
+        assert result.applied is True
+        assert result.parameters["original_size"] == (400, 600)
+        assert result.parameters["new_size"] == (600, 400)
+
+    def test_correct_orientation_convenience(self) -> None:
+        """Test correct_orientation convenience function."""
+        img = np.ones((500, 400, 3), dtype=np.uint8) * 255
+        result = correct_orientation(img, angle=180, confidence=0.9)
+
+        assert isinstance(result, CorrectionResult)
+        assert result.applied is True

@@ -129,7 +129,7 @@ class PDFDocumentAnalyzer:
     ) -> PDFPreflightResult:
         """Analyze PDF and optionally upscale if needed.
 
-        # #CRITICAL: File Operations: May create temporary files that need cleanup
+        # CRITICAL: File Operations: May create temporary files that need cleanup
         # #VERIFY: Implement proper cleanup and error handling
 
         Args:
@@ -155,7 +155,7 @@ class PDFDocumentAnalyzer:
         logger.info(f"Starting PDF pre-flight analysis: {pdf_path.name}")
 
         # Perform resolution analysis
-        # #CRITICAL: Analysis Time: Must complete quickly for pre-flight (<100ms target)
+        # CRITICAL: Analysis Time: Must complete quickly for pre-flight (<100ms target)
         # #VERIFY: Monitor analysis time and optimize if needed
         try:
             resolution_analysis = self.resolution_analyzer.analyze_pdf_resolution(
@@ -190,7 +190,7 @@ class PDFDocumentAnalyzer:
 
             try:
                 # Create temporary file for upscaled version
-                # #ASSUME: Temporary Files: System temp directory has sufficient space
+                # ASSUME: Temporary Files: System temp directory has sufficient space
                 # #VERIFY: Check disk space before upscaling large files
                 temp_dir = Path(tempfile.gettempdir()) / "data_ingestor_upscaled"
                 temp_dir.mkdir(parents=True, exist_ok=True)
