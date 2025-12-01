@@ -128,18 +128,18 @@ def _calculate_curvature_metrics(
     """Calculate curvature score and related metrics."""
     # Y-position variance of line centers
     y_centers = [(y1 + y2) / 2 for x1, y1, x2, y2 in horizontal_lines]
-    y_variance = np.std(y_centers) / image_height if y_centers else 0
+    y_variance = float(np.std(y_centers) / image_height) if y_centers else 0.0
 
     # Maximum line deviation (curvature indicator)
     max_deviation = 0.0
     for x1, y1, x2, y2 in horizontal_lines:
-        line_length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        line_length = float(np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))
         if line_length > 0:
             deviation = abs(y2 - y1) / line_length
             max_deviation = max(max_deviation, deviation)
 
     curvature_score = min(1.0, y_variance * 10 + max_deviation)
-    estimated_angle = np.arctan(max_deviation) * 180 / np.pi
+    estimated_angle = float(np.arctan(max_deviation) * 180 / np.pi)
 
     return curvature_score, estimated_angle, y_variance, max_deviation
 
@@ -808,11 +808,11 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
             orientation=TextOrientation.UNKNOWN,
             vertical_ratio=0.0,
             confidence=0.3,
-            dominant_angle=np.mean(angles) if angles else 0.0,
+            dominant_angle=float(np.mean(angles)) if angles else 0.0,
         )
 
     vertical_ratio = vertical_lines / total_classified
-    dominant_angle = np.mean(angles)
+    dominant_angle = float(np.mean(angles))
 
     # Determine orientation
     if vertical_ratio < 0.2:
