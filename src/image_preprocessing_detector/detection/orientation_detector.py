@@ -177,7 +177,7 @@ class OrientationDetector:
         if horizontal_count > vertical_count:
             # Document appears upright or 180° rotated
             # Use text baseline analysis for 180° detection
-            orientation_180 = self._detect_180_rotation(gray, angles)
+            orientation_180 = self._detect_180_rotation(gray)
             if orientation_180:
                 detected_angle = 180
                 confidence = 0.7  # 180° is harder to detect reliably
@@ -211,7 +211,7 @@ class OrientationDetector:
             },
         )
 
-    def _detect_180_rotation(self, gray: np.ndarray, _line_angles: np.ndarray) -> bool:
+    def _detect_180_rotation(self, gray: np.ndarray) -> bool:
         """Detect 180° rotation by analyzing text baseline position.
 
         In upright text, descenders (g, y, p) go below baseline.
@@ -219,7 +219,6 @@ class OrientationDetector:
 
         Args:
             gray: Grayscale image
-            line_angles: Array of detected line angles
 
         Returns:
             True if 180° rotation is detected
