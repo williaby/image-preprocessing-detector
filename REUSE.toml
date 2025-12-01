@@ -32,6 +32,7 @@ path = [
     "*.md",
     "tmp_cleanup/**/*.md",  # Temporary reference files
     "benchmarks/*.md",  # Benchmark documentation (not reports)
+    "scripts/**/*.md",  # Script documentation (including omnidocbench_baseline)
     "!LICENSES/*.txt",  # Exclude actual license text files
 ]
 SPDX-License-Identifier = "CC-BY-4.0"
@@ -55,6 +56,9 @@ path = [
     "requirements.txt",  # Generated from uv export
     "requirements-dev.txt",  # Generated from uv export
     "benchmarks/labelmaps/**/*.yaml",  # Benchmark label mappings
+    "configs/**/*.yaml",  # Configuration files (modal, monitoring, etc.)
+    "configs/**/*.json",  # Configuration files (Grafana dashboards, etc.)
+    "scripts/omnidocbench_baseline/model_registry.yaml",  # Model registry config
     ".zenodo.json",  # Zenodo metadata for DOI
     ".dvc/**",  # DVC configuration and metadata files
     ".dvcignore",  # DVC ignore patterns
