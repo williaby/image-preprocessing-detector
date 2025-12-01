@@ -1023,7 +1023,8 @@ def test_single_image(image_url: str = "") -> dict[str, Any]:
                 f"Invalid URL scheme '{parsed.scheme}'. Only HTTP/HTTPS URLs are allowed."
             )
         print(f"Downloading image from {image_url}...")
-        with urllib.request.urlopen(image_url) as response:  # noqa: S310
+        # URL scheme validated above - only HTTP/HTTPS allowed
+        with urllib.request.urlopen(image_url) as response:  # nosec B310
             image_bytes = response.read()
 
     print("Generating labels...")
