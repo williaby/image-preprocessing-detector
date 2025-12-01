@@ -9,20 +9,13 @@
 # Format: [[IgnoredVulns]] with id and reason fields
 
 # ============================================================================
-# py Library - CVE Withdrawn
+# No Active Exceptions
 # ============================================================================
-# CVE-2022-42969 was WITHDRAWN on 2024-05-07 as not reproducible
-# The vulnerability was disputed by multiple third parties and withdrawn from NVD
-
-[[IgnoredVulns]]
-id = "GHSA-w596-4wvx-j9j6"
-reason = "CVE-2022-42969 withdrawn 2024-05-07. Not a valid vulnerability."
-
-# ============================================================================
-# Notes
-# ============================================================================
-# All other vulnerabilities from previous versions have been removed as they
-# are no longer reported by osv-scanner (dependencies updated to fixed versions).
+# Previously ignored GHSA-w596-4wvx-j9j6 (CVE-2022-42969) is no longer detected
+# (dependencies updated, vulnerability withdrawn, or package no longer used).
 #
-# Last verified: 2025-11-22
-# Next review: 2026-01-22 (or when dependencies updated)
+# All vulnerabilities from previous versions have been resolved through dependency
+# updates or are no longer detected by osv-scanner.
+#
+# Last verified: 2025-12-01
+# Next review: 2026-02-01 (or when dependencies updated)
