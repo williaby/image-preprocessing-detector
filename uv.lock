@@ -2789,7 +2789,7 @@ requires-dist = [
     { name = "doclayout-yolo", marker = "extra == 'ml'" },
     { name = "dvc", extras = ["ssh"], marker = "extra == 'dev'", specifier = ">=3.64.0" },
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115.0" },
-    { name = "fonttools", specifier = ">=4.60.2" },
+    { name = "fonttools", specifier = ">=4.60.2,<5.0.0" },
     { name = "gdown", marker = "extra == 'colab'", specifier = ">=4.7.0" },
     { name = "gitpython", specifier = ">=3.1.45,<4.0.0" },
     { name = "google-cloud-storage", marker = "extra == 'ml'", specifier = ">=2.10.0" },
