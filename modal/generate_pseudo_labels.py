@@ -994,6 +994,7 @@ def test_single_image(image_url: str = "") -> dict[str, Any]:
         modal run modal/generate_pseudo_labels.py::test_single_image
     """
     import io
+    import urllib.parse
     import urllib.request
 
     from PIL import Image
@@ -1015,8 +1016,14 @@ def test_single_image(image_url: str = "") -> dict[str, Any]:
         img.save(buffer, format="PNG")
         image_bytes = buffer.getvalue()
     else:
+        # Validate URL scheme to prevent file:// and other dangerous schemes
+        parsed = urllib.parse.urlparse(image_url)
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError(
+                f"Invalid URL scheme '{parsed.scheme}'. Only HTTP/HTTPS URLs are allowed."
+            )
         print(f"Downloading image from {image_url}...")
-        with urllib.request.urlopen(image_url) as response:
+        with urllib.request.urlopen(image_url) as response:  # noqa: S310
             image_bytes = response.read()
 
     print("Generating labels...")
