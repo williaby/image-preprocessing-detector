@@ -174,6 +174,9 @@ class AugraphyLabel:
             overall_quality=data.get("overall_quality", 1.0),
             augmentation_params=data.get("augmentation_params", {}),
             applied_augmentations=data.get("applied_augmentations", []),
+            generation_timestamp=data.get(
+                "generation_timestamp", utc_now().isoformat()
+            ),
         )
 
 
@@ -312,6 +315,16 @@ class AugraphyContinuousLabeler:
 
         self.severity_preset = severity_preset
         self.random_seed = random_seed
+
+        # Apply random seed for reproducibility
+        if random_seed is not None:
+            import random
+
+            import numpy as np
+
+            random.seed(random_seed)
+            np.random.seed(random_seed)
+
         self._configure_pipeline()
 
     def _configure_pipeline(self) -> None:
@@ -526,7 +539,9 @@ class AugraphyContinuousLabeler:
         augmented, labels = self.augment(image)
 
         # Save image
-        cv2.imwrite(str(output_image_path), augmented)
+        success = cv2.imwrite(str(output_image_path), augmented)
+        if not success:
+            raise OSError(f"Failed to write image: {output_image_path}")
 
         # Save labels
         with open(output_label_path, "w") as f:
