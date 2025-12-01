@@ -1,0 +1,77 @@
+# Python Multi-Version Compatibility Testing
+# Tests image preprocessing detector across Python 3.10-3.14
+#
+# This workflow uses the org-level reusable python-compatibility.yml workflow
+# for standardized multi-version testing across all supported Python versions.
+#
+# Why separate from ci.yml?
+# - Dedicated multi-version testing matrix
+# - Cleaner separation of concerns
+# - Can test on multiple OS platforms
+# - Python 3.14 experimental support with allowed failures
+
+name: Python Compatibility
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  compatibility:
+    name: Multi-Version Testing
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-compatibility.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    with:
+      # Test all supported Python versions
+      python-versions: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
+
+      # Allow Python 3.14 experimental testing (pyarrow upstream compatibility)
+      allow-prereleases: true
+
+      # OS matrix - can expand to Windows/macOS later
+      os-matrix: '["ubuntu-latest"]'
+
+      # Project structure
+      source-directory: 'src'
+      test-directory: 'tests'
+
+      # Coverage threshold (80% minimum)
+      coverage-threshold: 80
+
+      # Run all test types
+      run-integration-tests: true
+      run-security-tests: true
+
+      # Fail fast disabled to see all version results
+      fail-fast: false
+
+  # Note: Python 3.14 failures are expected and allowed
+  # due to upstream pyarrow compatibility issues
+  compatibility-summary:
+    name: Compatibility Summary
+    needs: compatibility
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate compatibility summary
+        run: |
+          echo "## Python Compatibility Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Multi-version testing completed for Python 3.10-3.14" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ needs.compatibility.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note**: Python 3.14 failures are expected (pyarrow upstream)" >> $GITHUB_STEP_SUMMARY

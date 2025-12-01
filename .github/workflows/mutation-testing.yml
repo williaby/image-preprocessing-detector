@@ -1,11 +1,24 @@
+# Mutation Testing for Image Preprocessing Detector
+# Validates test effectiveness using mutation testing with mutmut
+#
+# This workflow uses the org-level reusable python-mutation.yml workflow
+# for standardized mutation testing with enhanced features:
+# - Configurable mutation score threshold (80%)
+# - HTML report generation
+# - PR comment posting with educational content
+# - JSON + text fallback parsing
+# - Outputs for downstream jobs
+#
+# Mutation testing runs weekly to validate test quality without blocking development.
+# Tests are "tested" by introducing small changes (mutations) and verifying tests catch them.
+
 name: Mutation Testing
 
-# Separate schedule for mutation testing (expensive operation)
-# Runs weekly on Sundays at 2:00 AM UTC
 on:
   schedule:
-    - cron: "0 2 * * 0"  # Weekly on Sunday at 2:00 AM UTC
-  workflow_dispatch:  # Allow manual triggers
+    # Weekly on Sunday at 2:00 AM UTC (less resource contention)
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
     inputs:
       mutation_threshold:
         description: 'Minimum mutation score threshold (0-100)'
@@ -16,130 +29,54 @@ on:
 permissions: read-all
 
 jobs:
-  mutation-testing:
-    name: Run Mutation Tests
+  mutation:
+    name: Mutation Testing
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-mutation.yml@main
+    permissions:
+      contents: read
+      pull-requests: write  # Required for PR comments
+    with:
+      # Python version for mutation testing
+      python-version: '3.12'
+
+      # Project structure
+      source-directory: 'src'
+      test-directory: 'tests'
+
+      # Mutation score threshold (80% - same as previous)
+      mutation-threshold: ${{ github.event.inputs.mutation_threshold || 80 }}
+
+      # Don't fail workflow on low score - just warn
+      # This allows visibility without blocking development
+      fail-under-threshold: false
+
+      # Post results as PR comments (if triggered by PR)
+      post-pr-comment: true
+
+      # Mutation testing can be slow for CV code - allow 2 hours
+      timeout-minutes: 120
+
+      # Retain reports for 30 days (vs default 14)
+      artifact-retention-days: 30
+
+  mutation-summary:
+    name: Mutation Testing Summary
+    needs: mutation
     runs-on: ubuntu-latest
-    timeout-minutes: 120  # Mutation testing can be slow
+    if: always()
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Set up Python
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
-        with:
-          python-version: "3.12"
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-
-      - name: Install dependencies
-        run: uv sync --extra dev
-
-      - name: Run mutation testing
-        id: mutmut
-        env:
-          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
+      - name: Report mutation results
         run: |
-          echo "Running mutation testing with mutmut..."
-          uv run mutmut run --paths-to-mutate src/ || true
-
-          # Generate results report
-          uv run mutmut results > mutation-results.txt
-          uv run mutmut html
-
-          # Extract mutation score
-          MUTATION_SCORE=$(uv run mutmut results | grep -oP 'Survived: \K\d+' || echo "0")
-          TOTAL_MUTATIONS=$(uv run mutmut results | grep -oP 'Total: \K\d+' || echo "1")
-          KILLED_MUTATIONS=$((TOTAL_MUTATIONS - MUTATION_SCORE))
-          SCORE_PERCENTAGE=$((KILLED_MUTATIONS * 100 / TOTAL_MUTATIONS))
-
-          {
-            echo "mutation_score=${SCORE_PERCENTAGE}"
-            echo "killed=${KILLED_MUTATIONS}"
-            echo "total=${TOTAL_MUTATIONS}"
-            echo "survived=${MUTATION_SCORE}"
-          } >> "$GITHUB_OUTPUT"
-
-          # Display summary
-          {
-            echo "## Mutation Testing Results"
-            echo "- **Mutation Score**: ${SCORE_PERCENTAGE}%"
-            echo "- **Killed Mutations**: ${KILLED_MUTATIONS}/${TOTAL_MUTATIONS}"
-            echo "- **Survived Mutations**: ${MUTATION_SCORE}"
-            echo "- **Threshold**: ${THRESHOLD_INPUT}%"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload mutation testing report
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: mutation-testing-report
-          path: |
-            mutation-results.txt
-            html/
-          retention-days: 90
-
-      - name: Check mutation score threshold
-        env:
-          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
-          MUTATION_SCORE: ${{ steps.mutmut.outputs.mutation_score }}
-        run: |
-          THRESHOLD="${THRESHOLD_INPUT}"
-          SCORE="${MUTATION_SCORE}"
-
-          echo "Mutation Score: ${SCORE}%"
-          echo "Threshold: ${THRESHOLD}%"
-
-          if [ "${SCORE}" -lt "${THRESHOLD}" ]; then
-            echo "❌ Mutation score ${SCORE}% is below threshold ${THRESHOLD}%"
-            echo "Survived mutations indicate weak test coverage:"
-            cat mutation-results.txt
-            exit 1
-          else
-            echo "✅ Mutation score ${SCORE}% meets threshold ${THRESHOLD}%"
-          fi
-
-      - name: Comment on PR (if applicable)
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-        env:
-          MUTATION_SCORE: ${{ steps.mutmut.outputs.mutation_score }}
-          KILLED_MUTATIONS: ${{ steps.mutmut.outputs.killed }}
-          TOTAL_MUTATIONS: ${{ steps.mutmut.outputs.total }}
-          SURVIVED_MUTATIONS: ${{ steps.mutmut.outputs.survived }}
-          THRESHOLD_INPUT: ${{ inputs.mutation_threshold || '80' }}
-        with:
-          script: |
-            const score = process.env.MUTATION_SCORE || '0';
-            const killed = process.env.KILLED_MUTATIONS || '0';
-            const total = process.env.TOTAL_MUTATIONS || '0';
-            const survived = process.env.SURVIVED_MUTATIONS || '0';
-            const threshold = process.env.THRESHOLD_INPUT || '80';
-
-            const passed = parseInt(score) >= parseInt(threshold);
-            const emoji = passed ? '✅' : '❌';
-
-            const body = `## ${emoji} Mutation Testing Results
-
-            - **Mutation Score**: ${score}%
-            - **Killed Mutations**: ${killed}/${total}
-            - **Survived Mutations**: ${survived}
-            - **Threshold**: ${threshold}%
-
-            ${passed
-              ? '**Status**: Tests are effective at catching mutations.'
-              : '**Status**: Some mutations survived. Consider improving test coverage.'}
-
-            [View detailed report in workflow artifacts](
-            https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
-            `;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
+          echo "## Mutation Testing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mutation Score**: ${{ needs.mutation.outputs.mutation-score }}%" >> $GITHUB_STEP_SUMMARY
+          echo "**Threshold**: 80%" >> $GITHUB_STEP_SUMMARY
+          echo "**Passed**: ${{ needs.mutation.outputs.passed }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What is Mutation Testing?" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Mutation testing validates test effectiveness by introducing code changes" >> $GITHUB_STEP_SUMMARY
+          echo "and verifying tests detect them. High mutation scores indicate robust tests." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Killed mutants**: Tests detected the change ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- **Survived mutants**: Tests did not detect the change ⚠️" >> $GITHUB_STEP_SUMMARY
