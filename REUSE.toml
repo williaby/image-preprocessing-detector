@@ -192,6 +192,7 @@ path = [
     "benchmarks/LICENSES.md",
     "benchmarks/registry.yml",
     "notebooks/**/*.ipynb",  # Jupyter notebooks (Colab training examples)
+    "front-matter-report.json",  # Front matter validation report
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2024 Byron Williams"
