@@ -25,7 +25,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from defusedxml import ElementTree as ET
+from defusedxml import ElementTree
 
 from image_preprocessing_detector.utils.datetime_compat import utc_now
 
@@ -232,7 +232,7 @@ def parse_doccreator_xml(xml_path: str | Path) -> DocCreatorLabel:
 
     Raises:
         FileNotFoundError: If XML file doesn't exist
-        ET.ParseError: If XML is malformed
+        ElementTree.ParseError: If XML is malformed
 
     Example:
         >>> label = parse_doccreator_xml("degraded_001_gt.xml")
@@ -244,7 +244,7 @@ def parse_doccreator_xml(xml_path: str | Path) -> DocCreatorLabel:
     if not xml_path.exists():
         raise FileNotFoundError(f"DocCreator XML not found: {xml_path}")
 
-    tree = ET.parse(xml_path)
+    tree = ElementTree.parse(xml_path)
     root = tree.getroot()
 
     # Initialize severity accumulators
@@ -354,7 +354,7 @@ def parse_doccreator_directory(
         try:
             label = parse_doccreator_xml(xml_path)
             results.append((xml_path, label))
-        except (ET.ParseError, FileNotFoundError) as e:
+        except (ElementTree.ParseError, FileNotFoundError) as e:
             print(f"Warning: Failed to parse {xml_path}: {e}")
 
     return results
@@ -453,7 +453,7 @@ class DocCreatorDataset:
                 try:
                     label = parse_doccreator_xml(xml_path)
                     self._samples.append((image_path, xml_path, label))
-                except ET.ParseError as e:
+                except ElementTree.ParseError as e:
                     print(f"Warning: Failed to parse {xml_path}: {e}")
 
         print(f"Loaded {len(self._samples)} DocCreator samples from {root_dir}")
