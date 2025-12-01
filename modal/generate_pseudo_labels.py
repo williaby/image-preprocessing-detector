@@ -103,9 +103,7 @@ class ContinuousQualityLabel:
     label_source: str = "mllm_pseudo"
     model_name: str = "qwen3-vl-8b-instruct"
     label_confidence: float = 0.85
-    generation_timestamp: str = field(
-        default_factory=lambda: utc_now().isoformat()
-    )
+    generation_timestamp: str = field(default_factory=lambda: utc_now().isoformat())
 
     # Raw model response for debugging
     raw_response: str = ""

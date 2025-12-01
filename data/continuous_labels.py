@@ -186,9 +186,7 @@ class ContinuousQualityLabel(BaseModel):
     # =========================================================================
 
     image_path: str = Field(default="", description="Path to source image")
-    generation_timestamp: str = Field(
-        default_factory=lambda: utc_now().isoformat()
-    )
+    generation_timestamp: str = Field(default_factory=lambda: utc_now().isoformat())
     augmentation_params: dict[str, Any] = Field(
         default_factory=dict,
         description="Raw augmentation parameters for reproducibility",

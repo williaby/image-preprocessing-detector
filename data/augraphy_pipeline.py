@@ -89,9 +89,7 @@ class AugraphyLabel:
     overall_quality: float = 1.0
     augmentation_params: dict[str, Any] = field(default_factory=dict)
     applied_augmentations: list[str] = field(default_factory=list)
-    generation_timestamp: str = field(
-        default_factory=lambda: utc_now().isoformat()
-    )
+    generation_timestamp: str = field(default_factory=lambda: utc_now().isoformat())
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization.
