@@ -606,7 +606,9 @@ def batch_augment(
         image_paths.extend(input_dir.glob(f"*{ext.upper()}"))
 
     logger.info(
-        "Found images for augmentation", count=len(image_paths), input_dir=str(input_dir)
+        "Found images for augmentation",
+        count=len(image_paths),
+        input_dir=str(input_dir),
     )
     logger.info(
         "Starting batch augmentation", augmentations_per_image=augmentations_per_image
@@ -628,7 +630,9 @@ def batch_augment(
             results.append((img_path, label_path))
 
     logger.info(
-        "Batch augmentation complete", total_images=len(results), output_dir=str(output_dir)
+        "Batch augmentation complete",
+        total_images=len(results),
+        output_dir=str(output_dir),
     )
     return results
 
