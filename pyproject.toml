@@ -468,10 +468,16 @@ pythonpath = [".", "src", "benchmarks"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+# Default addopts optimized for LOCAL development speed:
+# - Skip slow/benchmark tests by default (-m "not (slow or benchmark)")
+# - Coverage enabled (parallel + coverage is slower due to merge overhead)
+# CI overrides with: -m "" to run ALL tests including slow/benchmark
+# For fast parallel runs WITHOUT coverage: pytest -n auto --no-cov -m ""
 addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
+    "-m", "not (slow or benchmark)",
     "--cov=src/image_preprocessing_detector",
     "--cov-report=html",
     "--cov-report=term-missing:skip-covered",
