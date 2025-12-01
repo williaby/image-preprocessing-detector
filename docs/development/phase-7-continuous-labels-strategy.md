@@ -1,4 +1,12 @@
-# Phase 7: Continuous Labels Strategy
+---
+schema_type: common
+title: "Phase 7: Continuous Labels Strategy"
+description: "Strategy for transitioning from binary to continuous severity labels in IQA training"
+tags: [planning, training, development]
+status: published
+owner: "core-maintainer"
+purpose: "Document the strategy for implementing continuous severity labels in the IQA pipeline."
+---
 
 ## Executive Summary
 
@@ -28,6 +36,7 @@ Phase 7 transitions the IQA training pipeline from **binary labels (0/1)** to **
 ### 1.2 Key Insight
 
 The current pipeline **already outputs continuous scores** but trains on binary labels. The transition requires:
+
 1. Preserving augmentation parameters as continuous labels
 2. Modifying loss functions for regression
 3. Adding correlation-based objectives (PLCC, SRCC)
@@ -68,6 +77,7 @@ DocCreator provides **physics-based document degradation** with 7 degradation mo
 ```
 
 **XML Ground Truth Schema:**
+
 ```xml
 <document>
   <degradation type="blur" severity="0.65" method="adaptive">
@@ -1240,21 +1250,25 @@ evaluation:
 ## References
 
 ### Core Papers
+
 1. DocCreator: A Tool for Creating Synthetic Documents (Kieu et al., 2013)
 2. Augraphy: Data Augmentation Library for Document Images (Augraphy, 2023)
 3. GDBC: Gated Dual-Bias Calibration for IQA (CVPR 2023)
 
 ### Benchmarks (MLLM Model Selection)
+
 4. [Q-Doc: Benchmarking Document Image Quality Assessment Capabilities in MLLMs](https://arxiv.org/html/2511.11410v1) - Document-specific IQA benchmark with coarse/middle/fine evaluation levels
 5. [DeQA-Doc: Adapting DeQA-Score to Document Image Quality Assessment](https://arxiv.org/html/2507.12796) - State-of-the-art DIQA using Qwen2.5-VL (Final Score: 0.9235)
 6. [Q-Bench: General-Purpose Foundation Models on Low-level Vision](https://q-future.github.io/Q-Bench/) - ICLR 2024 Spotlight, comprehensive IQA benchmark
 7. [OmniDocBench: Benchmarking Diverse PDF Document Parsing](https://github.com/opendatalab/OmniDocBench) - CVPR 2025, document parsing quality benchmark
 
 ### Datasets
+
 8. DIQA-5000: Document Image Quality Assessment dataset with 5,000 images rated across 3 dimensions
 9. OHR-Bench: Document Quality Assessment Benchmark (ICDAR 2021)
 
 ### Recommended Models (from benchmark analysis)
+
 10. [DeepSeek-VL2: Mixture-of-Experts Vision-Language Models](https://arxiv.org/html/2412.10302v1) - Most consistent across quality assessment tasks
 11. [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) - Best backbone for DeQA-Doc quality regression
 
@@ -1307,6 +1321,7 @@ Cost breakdown:
 ### A.4 Cost Calculation for 150k Images
 
 **Scenario A: Budget (Qwen2.5-VL-72B only)**
+
 ```
 Input:  180M × $0.08/M  = $14.40
 Output: 22.5M × $0.33/M = $7.43
@@ -1315,6 +1330,7 @@ TOTAL: $21.83 for 150k images
 ```
 
 **Scenario B: Hybrid (Qwen for quality + GPT-4o-mini for distortion)**
+
 ```
 Qwen2.5-VL-72B (150k images):
   Input:  180M × $0.08/M  = $14.40
@@ -1330,6 +1346,7 @@ TOTAL: $29.93 for 150k images (hybrid)
 ```
 
 **Scenario C: Premium (GPT-4o for all)**
+
 ```
 Input:  180M × $2.50/M  = $450.00
 Output: 22.5M × $10.00/M = $225.00
@@ -1387,6 +1404,7 @@ Running open-source VLMs on Modal provides **significant cost savings** over API
 ### B.3 Cost Calculation for 150k Images
 
 **Scenario A: Qwen3-VL-8B on A10G (RECOMMENDED)**
+
 ```
 Model: Qwen3-VL-8B-Instruct
 GPU: A10G (24GB)
@@ -1401,6 +1419,7 @@ Cost breakdown:
 ```
 
 **Scenario B: Qwen3-VL-8B-Thinking on A10G (Enhanced Reasoning)**
+
 ```
 Model: Qwen3-VL-8B-Thinking
 GPU: A10G (24GB)
@@ -1415,6 +1434,7 @@ Cost breakdown:
 ```
 
 **Scenario C: Qwen2.5-VL-72B on A100 (Highest Accuracy)**
+
 ```
 Model: Qwen2.5-VL-72B-Instruct
 GPU: A100-80GB

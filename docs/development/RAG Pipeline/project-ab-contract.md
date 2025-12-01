@@ -3,17 +3,12 @@ schema_type: common
 title: "Project A → Project B Interface Contract"
 description: "Comprehensive contract defining all handoffs between Project A (Preprocessing & IQA) and Project B (OCR Orchestration)"
 tags:
-  - contract
-  - interface
   - pipeline
   - integration
 status: published
 owner: core-maintainer
-version: "2.0.0"
 purpose: "Define the complete interface contract between Project A and Project B, including data formats, model registry, and processing recommendations."
 ---
-
-# Project A → Project B Interface Contract
 
 Version 2.0.0 | Last Updated: 2025-11
 
