@@ -59,81 +59,22 @@ def detect_warping(image: np.ndarray) -> WarpingResult:
         raise ValueError("Invalid image")
 
     h, w = image.shape[:2]
-
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
-
-    # Edge detection
-    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-
-    # Detect horizontal lines using Hough Transform
-    lines = cv2.HoughLinesP(
-        edges,
-        rho=1,
-        theta=np.pi / 180,
-        threshold=100,
-        minLineLength=w // 4,
-        maxLineGap=10,
-    )
+    lines = _detect_hough_lines(image, w)
 
     if lines is None or len(lines) < 5:
-        return WarpingResult(
-            is_warped=False,
-            severity=Severity.LOW,
-            curvature_score=0.0,
-            estimated_curvature_angle=0.0,
-            confidence=0.5,
-            metrics={"lines_detected": 0},
-        )
+        return _create_no_warping_result(lines_detected=0)
 
-    # Analyze line curvature by checking if horizontal lines are actually curved
-    # In a warped page, "horizontal" text lines will have varying y-positions
-    horizontal_lines = []
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-        angle = abs(np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi)
-        if angle < 10:  # Nearly horizontal
-            horizontal_lines.append(line[0])
-
+    horizontal_lines = _filter_horizontal_lines(lines)
     if len(horizontal_lines) < 5:
-        return WarpingResult(
-            is_warped=False,
-            severity=Severity.LOW,
-            curvature_score=0.0,
-            estimated_curvature_angle=0.0,
-            confidence=0.5,
-            metrics={"horizontal_lines": len(horizontal_lines)},
-        )
+        return _create_no_warping_result(horizontal_lines=len(horizontal_lines))
 
-    # Calculate curvature by analyzing Y-position variance of line centers
-    y_centers = [(y1 + y2) / 2 for x1, y1, x2, y2 in horizontal_lines]
-    y_variance = np.std(y_centers) / h if y_centers else 0
+    # Calculate curvature metrics
+    curvature_score, estimated_angle, y_variance, max_deviation = (
+        _calculate_curvature_metrics(horizontal_lines, h)
+    )
 
-    # Estimate curvature angle from line deviation
-    max_deviation = 0
-    for x1, y1, x2, y2 in horizontal_lines:
-        # Check midpoint deviation from line endpoints
-        line_length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-        if line_length > 0:
-            deviation = abs(y2 - y1) / line_length
-            max_deviation = max(max_deviation, deviation)
-
-    curvature_score = min(1.0, y_variance * 10 + max_deviation)
-    estimated_angle = np.arctan(max_deviation) * 180 / np.pi
-
-    # Determine severity
-    if curvature_score < 0.1:
-        severity = Severity.LOW
-        is_warped = False
-    elif curvature_score < 0.2:
-        severity = Severity.MEDIUM
-        is_warped = True
-    elif curvature_score < 0.4:
-        severity = Severity.HIGH
-        is_warped = True
-    else:
-        severity = Severity.CRITICAL
-        is_warped = True
+    # Determine severity and warping status
+    severity, is_warped = _classify_warping_severity(curvature_score)
 
     logger.debug(
         "Warping detection complete",
@@ -153,6 +94,76 @@ def detect_warping(image: np.ndarray) -> WarpingResult:
             "y_variance": y_variance,
             "max_deviation": max_deviation,
         },
+    )
+
+
+def _detect_hough_lines(image: np.ndarray, width: int) -> np.ndarray | None:
+    """Detect lines in image using Hough Transform."""
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+    return cv2.HoughLinesP(
+        edges,
+        rho=1,
+        theta=np.pi / 180,
+        threshold=100,
+        minLineLength=width // 4,
+        maxLineGap=10,
+    )
+
+
+def _filter_horizontal_lines(lines: np.ndarray) -> list[tuple[int, int, int, int]]:
+    """Filter for nearly horizontal lines (angle < 10 degrees)."""
+    horizontal = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        angle = abs(np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi)
+        if angle < 10:
+            horizontal.append(line[0])
+    return horizontal
+
+
+def _calculate_curvature_metrics(
+    horizontal_lines: list[tuple[int, int, int, int]], image_height: int
+) -> tuple[float, float, float, float]:
+    """Calculate curvature score and related metrics."""
+    # Y-position variance of line centers
+    y_centers = [(y1 + y2) / 2 for x1, y1, x2, y2 in horizontal_lines]
+    y_variance = np.std(y_centers) / image_height if y_centers else 0
+
+    # Maximum line deviation (curvature indicator)
+    max_deviation = 0.0
+    for x1, y1, x2, y2 in horizontal_lines:
+        line_length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        if line_length > 0:
+            deviation = abs(y2 - y1) / line_length
+            max_deviation = max(max_deviation, deviation)
+
+    curvature_score = min(1.0, y_variance * 10 + max_deviation)
+    estimated_angle = np.arctan(max_deviation) * 180 / np.pi
+
+    return curvature_score, estimated_angle, y_variance, max_deviation
+
+
+def _classify_warping_severity(curvature_score: float) -> tuple[Severity, bool]:
+    """Classify warping severity based on curvature score."""
+    if curvature_score < 0.1:
+        return Severity.LOW, False
+    if curvature_score < 0.2:
+        return Severity.MEDIUM, True
+    if curvature_score < 0.4:
+        return Severity.HIGH, True
+    return Severity.CRITICAL, True
+
+
+def _create_no_warping_result(**metrics: Any) -> WarpingResult:
+    """Create result for non-warped image."""
+    return WarpingResult(
+        is_warped=False,
+        severity=Severity.LOW,
+        curvature_score=0.0,
+        estimated_curvature_angle=0.0,
+        confidence=0.5,
+        metrics=metrics,
     )
 
 

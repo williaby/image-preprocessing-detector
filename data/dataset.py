@@ -477,79 +477,104 @@ class ContinuousIQADataset(Dataset):
         Returns:
             Tuple of (labels, variances) as lists of floats
         """
-        labels = []
-        variances = []
-
-        # Check for continuous_labels field (Phase 7 format)
+        # Try each format in priority order
         if "continuous_labels" in label_data:
-            cont = label_data["continuous_labels"]
-            for dim in CONTINUOUS_DIMENSIONS:
-                labels.append(float(cont.get(dim, 0.0)))
-                variances.append(float(label_data.get("label_variance", 0.0)))
-            return labels, variances
+            return self._extract_phase7_format(label_data)
 
-        # Check for direct severity fields (MLLM/Augraphy format)
         if "blur_severity" in label_data:
-            for dim in CONTINUOUS_DIMENSIONS:
-                labels.append(float(label_data.get(dim, 0.0)))
-                variances.append(float(label_data.get("label_variance", 0.0)))
-            return labels, variances
+            return self._extract_mllm_format(label_data)
 
-        # Weak supervision format with severity in nested labels
         if "labels" in label_data:
-            issue_to_dim = {v: k for k, v in DIMENSION_TO_ISSUE.items()}
+            return self._extract_weak_supervision_format(label_data)
 
-            for dim in CONTINUOUS_DIMENSIONS:
-                issue_name = DIMENSION_TO_ISSUE.get(dim, dim.replace("_severity", ""))
-
-                # Try to get severity from nested labels
-                if issue_name in label_data["labels"]:
-                    label_entry = label_data["labels"][issue_name]
-                    if isinstance(label_entry, dict):
-                        severity = float(
-                            label_entry.get("severity", label_entry.get("value", 0))
-                        )
-                    else:
-                        severity = float(label_entry) * 0.7  # Convert binary to soft
-                    labels.append(severity)
-                # Check illumination -> contrast mapping
-                elif (
-                    issue_name == "illumination"
-                    and "illumination" in label_data["labels"]
-                ):
-                    label_entry = label_data["labels"]["illumination"]
-                    severity = float(
-                        label_entry.get("severity", label_entry.get("value", 0))
-                    )
-                    labels.append(severity)
-                else:
-                    labels.append(0.0)
-
-                variances.append(0.0)
-
-            return labels, variances
-
-        # Fallback: quality_scores format
         if "quality_scores" in label_data:
-            scores = label_data["quality_scores"]
-            for dim in CONTINUOUS_DIMENSIONS:
-                key = dim.replace("_severity", "")
-                if key == "contrast":
-                    # May be stored as rms_contrast
-                    val = scores.get("contrast", scores.get("rms_contrast", 0.0))
-                elif key == "compression":
-                    # May be stored as blockiness
-                    val = scores.get(
-                        "compression", scores.get("blockiness", 0.0) / 10.0
-                    )
-                else:
-                    val = scores.get(key, 0.0)
-                labels.append(float(val))
-                variances.append(0.0)
-            return labels, variances
+            return self._extract_quality_scores_format(label_data)
 
         # Default: zeros
         return [0.0] * len(CONTINUOUS_DIMENSIONS), [0.0] * len(CONTINUOUS_DIMENSIONS)
+
+    def _extract_phase7_format(
+        self, label_data: dict[str, Any]
+    ) -> tuple[list[float], list[float]]:
+        """Extract Phase 7 continuous_labels format."""
+        cont = label_data["continuous_labels"]
+        variance = float(label_data.get("label_variance", 0.0))
+
+        labels = [float(cont.get(dim, 0.0)) for dim in CONTINUOUS_DIMENSIONS]
+        variances = [variance] * len(CONTINUOUS_DIMENSIONS)
+
+        return labels, variances
+
+    def _extract_mllm_format(
+        self, label_data: dict[str, Any]
+    ) -> tuple[list[float], list[float]]:
+        """Extract MLLM/Augraphy direct severity format."""
+        variance = float(label_data.get("label_variance", 0.0))
+
+        labels = [float(label_data.get(dim, 0.0)) for dim in CONTINUOUS_DIMENSIONS]
+        variances = [variance] * len(CONTINUOUS_DIMENSIONS)
+
+        return labels, variances
+
+    def _extract_weak_supervision_format(
+        self, label_data: dict[str, Any]
+    ) -> tuple[list[float], list[float]]:
+        """Extract weak supervision format with nested labels."""
+        labels = []
+        nested_labels = label_data["labels"]
+
+        for dim in CONTINUOUS_DIMENSIONS:
+            issue_name = DIMENSION_TO_ISSUE.get(dim, dim.replace("_severity", ""))
+            severity = self._get_nested_severity(nested_labels, issue_name)
+            labels.append(severity)
+
+        variances = [0.0] * len(labels)
+        return labels, variances
+
+    def _get_nested_severity(
+        self, nested_labels: dict[str, Any], issue_name: str
+    ) -> float:
+        """Extract severity value from nested label structure."""
+        # Direct match
+        if issue_name in nested_labels:
+            return self._parse_label_entry(nested_labels[issue_name])
+
+        # Illumination -> contrast fallback
+        if issue_name == "illumination" and "illumination" in nested_labels:
+            return self._parse_label_entry(nested_labels["illumination"])
+
+        return 0.0
+
+    def _parse_label_entry(self, entry: dict | float | int) -> float:
+        """Parse label entry to extract severity value."""
+        if isinstance(entry, dict):
+            return float(entry.get("severity", entry.get("value", 0)))
+        else:
+            return float(entry) * 0.7  # Convert binary to soft label
+
+    def _extract_quality_scores_format(
+        self, label_data: dict[str, Any]
+    ) -> tuple[list[float], list[float]]:
+        """Extract quality_scores format (fallback)."""
+        scores = label_data["quality_scores"]
+        labels = []
+
+        for dim in CONTINUOUS_DIMENSIONS:
+            key = dim.replace("_severity", "")
+            val = self._get_quality_score(scores, key)
+            labels.append(float(val))
+
+        variances = [0.0] * len(labels)
+        return labels, variances
+
+    def _get_quality_score(self, scores: dict[str, Any], key: str) -> float:
+        """Get quality score with key name variations."""
+        if key == "contrast":
+            return scores.get("contrast", scores.get("rms_contrast", 0.0))
+        elif key == "compression":
+            return scores.get("compression", scores.get("blockiness", 0.0) / 10.0)
+        else:
+            return scores.get(key, 0.0)
 
     def _to_tensor(self, image: NDArray[np.uint8]) -> torch.Tensor:
         """Convert numpy image to PyTorch tensor."""
