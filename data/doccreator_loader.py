@@ -24,7 +24,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from xml.etree import ElementTree as ET
+
+from defusedxml import ElementTree as ET
 
 from image_preprocessing_detector.utils.datetime_compat import utc_now
 
@@ -190,6 +191,36 @@ DEGRADATION_TYPE_MAPPING = {
     "stamp": "watermark",
     "background_pattern": "watermark",
 }
+
+
+def validate_safe_path(
+    file_path: str | Path, allowed_base: str | Path | None = None
+) -> Path:
+    """Validate file path to prevent directory traversal attacks.
+
+    Args:
+        file_path: Path to validate
+        allowed_base: Optional base directory to restrict access to
+
+    Returns:
+        Resolved absolute path
+
+    Raises:
+        ValueError: If path contains traversal patterns or escapes allowed_base
+    """
+    path = Path(file_path).resolve()
+
+    # Check for path traversal patterns
+    if ".." in str(file_path):
+        raise ValueError(f"Path traversal detected: {file_path}")
+
+    # If allowed_base specified, ensure path is within it
+    if allowed_base:
+        base = Path(allowed_base).resolve()
+        if not str(path).startswith(str(base)):
+            raise ValueError(f"Path {path} is outside allowed base {base}")
+
+    return path
 
 
 def parse_doccreator_xml(xml_path: str | Path) -> DocCreatorLabel:
@@ -379,12 +410,14 @@ def create_label_file(
     else:
         output_path = Path(output_path)
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    # Validate path to prevent directory traversal
+    validated_path = validate_safe_path(output_path)
+    validated_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, "w") as f:
+    with open(validated_path, "w") as f:
         json.dump(label.to_dict(), f, indent=2)
 
-    return output_path
+    return validated_path
 
 
 class DocCreatorDataset:
@@ -487,9 +520,11 @@ class DocCreatorDataset:
         created_files = []
         for image_path, _xml_path, label in self._samples:
             label_path = output_dir / f"{image_path.stem}_labels.json"
-            with open(label_path, "w") as f:
+            # Validate path to prevent directory traversal
+            validated_path = validate_safe_path(label_path, allowed_base=output_dir)
+            with open(validated_path, "w") as f:
                 json.dump(label.to_dict(), f, indent=2)
-            created_files.append(label_path)
+            created_files.append(validated_path)
 
         return created_files
 
