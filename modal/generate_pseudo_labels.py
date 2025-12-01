@@ -36,7 +36,6 @@ from pathlib import Path
 from typing import Any
 
 import modal
-
 from image_preprocessing_detector.utils.datetime_compat import utc_now
 from image_preprocessing_detector.utils.path_security import validate_safe_path
 
