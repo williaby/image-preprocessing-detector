@@ -89,7 +89,7 @@ class TestLayoutLiteToDQS:
         column_result = result.get("column")
         table_result = result.get("table")
         figure_result = result.get("figure")
-        fuzzy_result = result.get("fuzzy_scan")
+        _ = result.get("fuzzy_scan")
 
         # Map column type to LayoutType
         layout_type = LayoutType.SINGLE_COLUMN
@@ -121,7 +121,7 @@ class TestLayoutLiteToDQS:
         self, layout_analyzer, sample_document_image
     ):
         """Test structural complexity score calculation from layout."""
-        result = layout_analyzer.analyze(sample_document_image)
+        _ = layout_analyzer.analyze(sample_document_image)
 
         # Create basic PageLayoutSummary
         layout_summary = PageLayoutSummary(
@@ -144,7 +144,7 @@ class TestLayoutLiteToDQS:
     ):
         """Test that table detection increases complexity score."""
         result = layout_analyzer.analyze(synthetic_table_image)
-        table_result = result.get("table")
+        _ = result.get("table")
 
         # Create layout summaries with and without tables
         no_tables = PageLayoutSummary(
@@ -184,7 +184,7 @@ class TestLayoutLiteToRouting:
 
     def test_simple_layout_routes_to_fast(self, layout_analyzer, sample_document_image):
         """Test simple document routes to fast OCR."""
-        result = layout_analyzer.analyze(sample_document_image)
+        _ = layout_analyzer.analyze(sample_document_image)
 
         layout_summary = PageLayoutSummary(
             page_number=1,
@@ -201,7 +201,7 @@ class TestLayoutLiteToRouting:
             structural_complexity_score=0.1,  # Low complexity
         )
 
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _ = recommend_ocr_routing(
             PDFType.BORN_DIGITAL, dqs, 0.1, [layout_summary]
         )
 
@@ -216,7 +216,7 @@ class TestLayoutLiteToRouting:
     ):
         """Test document with tables routes to structured vision."""
         result = layout_analyzer.analyze(synthetic_table_image)
-        table_result = result.get("table")
+        _ = result.get("table")
 
         layout_summary = PageLayoutSummary(
             page_number=1,
@@ -233,7 +233,7 @@ class TestLayoutLiteToRouting:
             structural_complexity_score=0.5,
         )
 
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _ = recommend_ocr_routing(
             PDFType.IMAGE_ONLY, dqs, 0.3, [layout_summary]
         )
 
@@ -295,9 +295,9 @@ class TestLayoutLiteFullPipeline:
         column_result = result.get("column")
         table_result = result.get("table")
         figure_result = result.get("figure")
-        fuzzy_result = result.get("fuzzy_scan")
-        watermark_result = result.get("watermark")
-        background_result = result.get("colorful_background")
+        _ = result.get("fuzzy_scan")
+        _ = result.get("watermark")
+        _ = result.get("colorful_background")
 
         # Determine layout type
         layout_type = LayoutType.SINGLE_COLUMN
@@ -326,7 +326,7 @@ class TestLayoutLiteFullPipeline:
         )
 
         # Get routing recommendation
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _ = recommend_ocr_routing(
             PDFType.IMAGE_ONLY, dqs, 0.2, [layout_summary]
         )
 
@@ -396,9 +396,8 @@ class TestLayoutLiteFullPipeline:
 
             # Determine layout type
             layout_type = LayoutType.SINGLE_COLUMN
-            if column_result:
-                if column_result.column_type == "multi_column":
-                    layout_type = LayoutType.MULTI_COLUMN
+            if column_result and column_result.column_type == "multi_column":
+                layout_type = LayoutType.MULTI_COLUMN
 
             # Create layout summary
             layout_summary = PageLayoutSummary(
@@ -430,7 +429,7 @@ class TestLayoutLiteFullPipeline:
         )
 
         # Get routing recommendation
-        recommendation, rationale = recommend_ocr_routing(
+        recommendation, _ = recommend_ocr_routing(
             PDFType.IMAGE_ONLY, dqs, 0.2, page_layouts
         )
 
