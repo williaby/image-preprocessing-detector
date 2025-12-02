@@ -11,15 +11,11 @@ These tests verify the WiLI sample extraction correctly:
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from extract_wili_samples import (
     LANGUAGE_CODE_MAP,
     TARGET_LANGUAGES,

@@ -5,9 +5,11 @@ This module provides:
 - Test fixture paths for real dataset samples
 - Pytest markers for different test categories
 - Shared fixtures for common test resources
+- Path configuration for testing scripts directory
 """
 
 import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
@@ -20,6 +22,12 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 FIXTURES_DIR = PROJECT_ROOT / "data" / "test_fixtures"
 BENCHMARKS_DIR = PROJECT_ROOT / "data" / "benchmarks"
+SCRIPTS_DIR = PROJECT_ROOT / "scripts"
+
+# Add scripts directory to Python path for testing script modules
+# This eliminates the need for inline sys.path manipulation in test files
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
 
 # Glob patterns - extracted to constants to avoid duplication (S1192)
 PDF_GLOB_PATTERN = "*.pdf"

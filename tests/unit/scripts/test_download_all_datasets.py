@@ -10,15 +10,12 @@ These tests verify the dataset download script correctly:
 - Validates arguments
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from download_all_datasets import (
     BENCHMARK_DATASETS,
     TRAINING_DATASETS,

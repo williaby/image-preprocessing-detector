@@ -10,17 +10,14 @@ These tests verify the path security module correctly prevents:
 - Access to non-existent paths when required
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from _path_security import (
     PathValidationError,
     validate_directory,

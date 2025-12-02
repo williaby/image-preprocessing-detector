@@ -10,18 +10,15 @@ These tests verify the dataset validation script correctly:
 - Generates validation reports
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from validate_datasets import (
     EXPECTED_DATASETS,
     count_files,

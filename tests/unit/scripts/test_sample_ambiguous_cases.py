@@ -11,19 +11,16 @@ These tests verify the ambiguous case sampling correctly:
 - Samples high-priority cases for annotation
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from sample_ambiguous_cases import (
     CONFIDENCE_VARIANCE_THRESHOLD,
     LAPLACIAN_BLUR_MAX,

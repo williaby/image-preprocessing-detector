@@ -11,6 +11,7 @@ These tests verify the Google Drive sync utilities correctly:
 - Create dataset info files
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import json
@@ -24,9 +25,7 @@ import pytest
 # Mock gdown before importing gdrive_sync
 sys.modules["gdown"] = MagicMock()
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+# Scripts directory added to sys.path via tests/conftest.py
 
 import gdrive_sync
 from gdrive_sync import (
@@ -49,17 +48,27 @@ class TestMountGoogleDrive:
         result = mount_google_drive()
         assert result is False
 
+    @pytest.mark.skip(
+        reason="TODO: Implement Colab mount testing - requires complex module mocking"
+    )
     def test_mount_with_mock_colab(self) -> None:
-        """Test mount with mocked Colab environment."""
+        """Test mount with mocked Colab environment.
 
+        TODO: Complete implementation of Colab mount testing.
+        Requires:
+        - Mock google.colab.drive.mount() call
+        - Verify mount is called with correct path
+        - Test error handling when mount fails
+        """
         mock_drive = MagicMock()
 
         with patch.dict(sys.modules, {"google.colab": MagicMock()}):
             with patch.dict(
                 sys.modules, {"google.colab.drive": mock_drive, "google": MagicMock()}
             ):
-                # Need to re-import to pick up mock
-                pass
+                # Need to re-import gdrive_sync module to pick up mocked modules
+                # Then call mount_google_drive() and assert mock_drive.mount was called
+                pytest.fail("Test implementation incomplete")
 
 
 class TestDownloadDataset:

@@ -9,6 +9,7 @@ These tests verify the DocBank download script correctly:
 - Handles errors appropriately
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import sys
@@ -20,9 +21,7 @@ import pytest
 # Mock huggingface_hub before importing
 sys.modules["huggingface_hub"] = MagicMock()
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+# Scripts directory added to sys.path via tests/conftest.py
 
 from download_docbank import download_docbank
 

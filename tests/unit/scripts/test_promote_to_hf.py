@@ -10,10 +10,10 @@ These tests verify the model promotion script correctly:
 - Uploads to HuggingFace Hub
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -24,9 +24,7 @@ import yaml
 # Skip entire module if google-cloud-storage is not installed
 pytest.importorskip("google.cloud.storage", reason="google-cloud-storage not installed")
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+# Scripts directory added to sys.path via tests/conftest.py
 
 from promote_to_hf import (
     check_promotion_criteria,

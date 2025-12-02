@@ -10,18 +10,14 @@ These tests verify the DQS correlation validation script correctly:
 - Validates correlation thresholds
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import numpy as np
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from validate_dqs_correlation import (
     pearson_correlation,
     simulate_ocr_accuracy,

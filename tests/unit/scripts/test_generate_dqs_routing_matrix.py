@@ -11,20 +11,17 @@ These tests verify the DQS routing matrix generation correctly:
 - Maps to routing bins
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import cv2
 import numpy as np
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from generate_dqs_routing_matrix import (
     DOCLAYNET_CLASSES,
     _score_metric,

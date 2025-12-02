@@ -11,18 +11,16 @@ These tests verify the weak supervision labeler correctly:
 - Handles errors gracefully
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+# Scripts directory added to sys.path via tests/conftest.py
 
 # Skip tests if OpenCV is not available
 cv2 = pytest.importorskip("cv2")

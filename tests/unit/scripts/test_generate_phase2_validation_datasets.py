@@ -11,17 +11,14 @@ These tests verify the Phase 2 validation dataset generation script correctly:
 - Creates routing accuracy datasets
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from generate_phase2_validation_datasets import Phase2DatasetGenerator
 
 

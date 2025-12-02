@@ -10,6 +10,7 @@ These tests verify the 100K IQA dataset generation script correctly:
 - Generates weak supervision labels
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import sys
@@ -24,9 +25,7 @@ from PIL import Image
 sys.modules["albumentations"] = MagicMock()
 sys.modules["datasets"] = MagicMock()
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+# Scripts directory added to sys.path via tests/conftest.py
 
 from generate_100k_iqa_dataset import (
     AugmentationPipeline,

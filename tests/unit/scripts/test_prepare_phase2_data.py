@@ -10,6 +10,7 @@ These tests verify the Phase 2 dataset preparation script correctly:
 - Prints dataset summaries
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import sys
@@ -25,9 +26,7 @@ sys.modules["data"] = MagicMock()
 sys.modules["data.augmentation"] = MagicMock()
 sys.modules["data.weak_supervision"] = MagicMock()
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+# Scripts directory added to sys.path via tests/conftest.py
 
 from prepare_phase2_data import (
     VALID_IMAGE_EXTENSIONS,

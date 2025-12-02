@@ -11,9 +11,9 @@ These tests verify the download script correctly:
 - Handles download errors gracefully
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
-import sys
 import tarfile
 import zipfile
 from pathlib import Path
@@ -21,10 +21,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from download_table_datasets import (
     DATASETS,
     _is_extractable_archive,

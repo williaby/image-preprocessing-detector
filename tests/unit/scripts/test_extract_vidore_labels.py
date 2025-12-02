@@ -12,16 +12,12 @@ These tests verify the label extraction utilities correctly:
 - Map to routing bins (DQS routing matrix)
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
-
-import sys
-from pathlib import Path
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+# Scripts directory added to sys.path via tests/conftest.py
 
 # Skip all tests if cv2 or numpy is not available
 cv2 = pytest.importorskip("cv2", reason="cv2 not installed")

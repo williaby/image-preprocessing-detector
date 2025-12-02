@@ -11,17 +11,15 @@ These tests verify the Colab utilities correctly:
 - Handle session health monitoring
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
+# Scripts directory added to sys.path via tests/conftest.py
 
 # Skip all tests if torch is not available
 torch = pytest.importorskip("torch", reason="torch not installed")

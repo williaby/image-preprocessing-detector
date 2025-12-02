@@ -13,20 +13,16 @@ These tests verify the checkpoint manager correctly:
 from __future__ import annotations
 
 import json
-import sys
 import time
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
 # Skip tests if torch is not available
 torch = pytest.importorskip("torch")
 
+# Scripts directory added to sys.path via tests/conftest.py
 from checkpoint_manager import (
     CHECKPOINT_BEST_FILENAME,
     CHECKPOINT_LATEST_FILENAME,

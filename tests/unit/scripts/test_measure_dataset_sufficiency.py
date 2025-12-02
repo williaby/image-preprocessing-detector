@@ -10,19 +10,16 @@ These tests verify the dataset sufficiency measurement script correctly:
 - Generates reports
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from measure_dataset_sufficiency import (
     DatasetInventory,
     DatasetSufficiencyMeasurer,

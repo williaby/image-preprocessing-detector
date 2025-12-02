@@ -10,20 +10,17 @@ These tests verify the artifact validation script correctly:
 - Reports validation results with proper error handling
 """
 
+# Scripts directory added to sys.path via tests/conftest.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import yaml
 
-# Add scripts directory to path for import
-SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
-sys.path.insert(0, str(SCRIPTS_DIR))
-
+# Scripts directory added to sys.path via tests/conftest.py
 from validate_artifacts import (
     validate_artifacts,
     validate_metadata_file,
