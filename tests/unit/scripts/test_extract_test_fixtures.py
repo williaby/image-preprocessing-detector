@@ -27,8 +27,8 @@ from extract_test_fixtures import (
     DATASET_CONFIGS,
     MAX_TOTAL_SIZE_MB,
     MB_TO_BYTES,
-    _filter_files_by_size,
     _fill_remaining_samples,
+    _filter_files_by_size,
     _sample_from_quartiles,
     extract_all_fixtures,
     extract_fixtures_for_dataset,
@@ -77,7 +77,14 @@ class TestDatasetConfigs:
 
     def test_all_configs_have_required_fields(self) -> None:
         """Test all configs have required fields."""
-        required_fields = ["source_dir", "target_dir", "extensions", "count", "max_size_mb", "criteria"]
+        required_fields = [
+            "source_dir",
+            "target_dir",
+            "extensions",
+            "count",
+            "max_size_mb",
+            "criteria",
+        ]
         for name, config in DATASET_CONFIGS.items():
             for field in required_fields:
                 assert field in config, f"{name} missing {field}"

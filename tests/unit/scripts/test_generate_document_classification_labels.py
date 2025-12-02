@@ -47,11 +47,11 @@ class TestDocLayNetClasses:
         """Test TEXT_CLASSES includes expected classes."""
         # All except Picture (7)
         expected = {1, 2, 3, 4, 5, 6, 8, 9, 10, 11}
-        assert TEXT_CLASSES == expected
+        assert expected == TEXT_CLASSES
 
     def test_image_classes_defined(self) -> None:
         """Test IMAGE_CLASSES includes only Picture."""
-        assert IMAGE_CLASSES == {7}
+        assert {7} == IMAGE_CLASSES
 
     def test_text_and_image_classes_no_overlap(self) -> None:
         """Test that text and image classes don't overlap."""
@@ -221,9 +221,7 @@ class TestGenerateClassificationLabels:
 
         return doclaynet_dir
 
-    def test_generates_output_file(
-        self, mock_doclaynet: Path, tmp_path: Path
-    ) -> None:
+    def test_generates_output_file(self, mock_doclaynet: Path, tmp_path: Path) -> None:
         """Test that output file is generated."""
         output_dir = tmp_path / "output"
 
@@ -259,7 +257,9 @@ class TestGenerateClassificationLabels:
         with open(output_file) as f:
             data = json.load(f)
 
-        classifications = {c["image_id"]: c["classification"] for c in data["classifications"]}
+        classifications = {
+            c["image_id"]: c["classification"] for c in data["classifications"]
+        }
 
         # doc1 has only text -> born_digital
         assert classifications[1] == "born_digital"
@@ -300,9 +300,7 @@ class TestGenerateClassificationLabels:
         with pytest.raises(FileNotFoundError):
             generate_classification_labels(fake_doclaynet, output_dir, "train")
 
-    def test_info_metadata_complete(
-        self, mock_doclaynet: Path, tmp_path: Path
-    ) -> None:
+    def test_info_metadata_complete(self, mock_doclaynet: Path, tmp_path: Path) -> None:
         """Test info metadata is complete."""
         output_dir = tmp_path / "output"
 
@@ -419,9 +417,7 @@ class TestOutputFormat:
         assert "width" in entry
         assert "height" in entry
 
-    def test_classes_list_complete(
-        self, mock_doclaynet: Path, tmp_path: Path
-    ) -> None:
+    def test_classes_list_complete(self, mock_doclaynet: Path, tmp_path: Path) -> None:
         """Test classes list contains all classification types."""
         output_dir = tmp_path / "output"
 
@@ -434,9 +430,7 @@ class TestOutputFormat:
         expected_classes = ["image_only", "born_digital", "hybrid"]
         assert data["classes"] == expected_classes
 
-    def test_file_name_preserved(
-        self, mock_doclaynet: Path, tmp_path: Path
-    ) -> None:
+    def test_file_name_preserved(self, mock_doclaynet: Path, tmp_path: Path) -> None:
         """Test file name from COCO is preserved."""
         output_dir = tmp_path / "output"
 
@@ -448,9 +442,7 @@ class TestOutputFormat:
 
         assert data["classifications"][0]["file_name"] == "test.png"
 
-    def test_doc_name_extracted(
-        self, mock_doclaynet: Path, tmp_path: Path
-    ) -> None:
+    def test_doc_name_extracted(self, mock_doclaynet: Path, tmp_path: Path) -> None:
         """Test doc_name is extracted from COCO or file name."""
         output_dir = tmp_path / "output"
 

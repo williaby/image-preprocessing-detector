@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -28,9 +27,9 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 torch = pytest.importorskip("torch", reason="torch not installed")
 
 from colab_utils import (
+    _GPU_TIERS,
     COLAB_CONTENT_ROOT,
     COLAB_DRIVE_ROOT,
-    _GPU_TIERS,
     _detect_colab_tier,
     _get_nvidia_smi_info,
     check_session_health,
@@ -169,13 +168,13 @@ class TestGetGpuInfo:
 
         with patch.object(torch.cuda, "is_available", return_value=True):
             with patch.object(torch.cuda, "device_count", return_value=1):
-                with patch.object(torch.cuda, "get_device_name", return_value="Tesla T4"):
+                with patch.object(
+                    torch.cuda, "get_device_name", return_value="Tesla T4"
+                ):
                     with patch.object(
                         torch.cuda, "get_device_properties", return_value=mock_props
                     ):
-                        with patch(
-                            "colab_utils._get_nvidia_smi_info", return_value={}
-                        ):
+                        with patch("colab_utils._get_nvidia_smi_info", return_value={}):
                             result = get_gpu_info()
 
                             assert result["gpu_available"] is True
@@ -267,7 +266,9 @@ class TestCheckSessionHealth:
 
         with patch.object(torch.cuda, "is_available", return_value=True):
             with patch("colab_utils.get_gpu_memory_usage", return_value=mock_gpu_usage):
-                with patch("colab_utils.get_disk_space", return_value=(100.0, 50.0, 50.0)):
+                with patch(
+                    "colab_utils.get_disk_space", return_value=(100.0, 50.0, 50.0)
+                ):
                     with patch("colab_utils.is_colab_environment", return_value=False):
                         result = check_session_health()
 
@@ -288,7 +289,9 @@ class TestCheckSessionHealth:
 
         with patch.object(torch.cuda, "is_available", return_value=True):
             with patch("colab_utils.get_gpu_memory_usage", return_value=mock_gpu_usage):
-                with patch("colab_utils.get_disk_space", return_value=(100.0, 50.0, 50.0)):
+                with patch(
+                    "colab_utils.get_disk_space", return_value=(100.0, 50.0, 50.0)
+                ):
                     with patch("colab_utils.is_colab_environment", return_value=False):
                         result = check_session_health()
 
@@ -349,9 +352,7 @@ class TestDownloadFromUrl:
         mock_response.raise_for_status = MagicMock()
 
         with patch("requests.get", return_value=mock_response):
-            result = download_from_url(
-                "https://example.com/test.txt", str(output_path)
-            )
+            result = download_from_url("https://example.com/test.txt", str(output_path))
 
             assert result == output_path
             assert output_path.exists()
@@ -368,9 +369,7 @@ class TestDownloadFromUrl:
         mock_response.raise_for_status = MagicMock()
 
         with patch("requests.get", return_value=mock_response):
-            result = download_from_url(
-                "https://example.com/test.txt", str(output_path)
-            )
+            result = download_from_url("https://example.com/test.txt", str(output_path))
 
             assert output_path.parent.exists()
             assert result == output_path

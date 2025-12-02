@@ -17,7 +17,6 @@ import sys
 import tarfile
 import zipfile
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -88,14 +87,18 @@ class TestResolveHfToken:
 
     def test_argument_token_takes_precedence(self) -> None:
         """Test that argument token takes precedence."""
-        with patch("download_table_datasets.load_token_from_env", return_value="env_token"):
+        with patch(
+            "download_table_datasets.load_token_from_env", return_value="env_token"
+        ):
             with patch.dict("os.environ", {"HF_TOKEN": "os_token"}):
                 result = _resolve_hf_token("arg_token")
                 assert result == "arg_token"
 
     def test_env_file_token_used_when_no_arg(self) -> None:
         """Test that .env token is used when no argument provided."""
-        with patch("download_table_datasets.load_token_from_env", return_value="env_token"):
+        with patch(
+            "download_table_datasets.load_token_from_env", return_value="env_token"
+        ):
             result = _resolve_hf_token(None)
             assert result == "env_token"
 
@@ -112,6 +115,7 @@ class TestResolveHfToken:
             with patch.dict("os.environ", {}, clear=True):
                 # Need to explicitly remove HF_TOKEN if present
                 import os
+
                 old_token = os.environ.pop("HF_TOKEN", None)
                 try:
                     result = _resolve_hf_token(None)
@@ -317,9 +321,7 @@ class TestDownloadDataset:
         with patch(
             "download_table_datasets._download_all_files", return_value=True
         ) as mock_download:
-            with patch(
-                "download_table_datasets._extract_archives"
-            ):
+            with patch("download_table_datasets._extract_archives"):
                 result = download_dataset(
                     dataset_name="pubtabnet",
                     output_base_dir=str(tmp_path),
@@ -331,9 +333,7 @@ class TestDownloadDataset:
 
     def test_download_failure_returns_false(self, tmp_path: Path) -> None:
         """Test that download failure returns False."""
-        with patch(
-            "download_table_datasets._download_all_files", return_value=False
-        ):
+        with patch("download_table_datasets._download_all_files", return_value=False):
             result = download_dataset(
                 dataset_name="pubtabnet",
                 output_base_dir=str(tmp_path),
@@ -344,9 +344,7 @@ class TestDownloadDataset:
 
     def test_tablebank_triggers_multipart_handling(self, tmp_path: Path) -> None:
         """Test that TableBank triggers multi-part zip handling."""
-        with patch(
-            "download_table_datasets._download_all_files", return_value=True
-        ):
+        with patch("download_table_datasets._download_all_files", return_value=True):
             with patch(
                 "download_table_datasets._handle_tablebank_postprocess",
                 return_value=True,
@@ -361,12 +359,8 @@ class TestDownloadDataset:
 
     def test_extract_false_skips_extraction(self, tmp_path: Path) -> None:
         """Test that extract=False skips extraction."""
-        with patch(
-            "download_table_datasets._download_all_files", return_value=True
-        ):
-            with patch(
-                "download_table_datasets._extract_archives"
-            ) as mock_extract:
+        with patch("download_table_datasets._download_all_files", return_value=True):
+            with patch("download_table_datasets._extract_archives") as mock_extract:
                 download_dataset(
                     dataset_name="pubtabnet",
                     output_base_dir=str(tmp_path),

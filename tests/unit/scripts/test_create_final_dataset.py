@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-import numpy as np
 import pytest
 
 # Add scripts directory to path for import
@@ -39,7 +38,14 @@ class TestQualityIssuesConfig:
 
     def test_quality_issues_contains_expected(self) -> None:
         """Test that QUALITY_ISSUES contains expected issue types."""
-        expected = ["noise", "blur", "skew", "perspective", "low_contrast", "orientation"]
+        expected = [
+            "noise",
+            "blur",
+            "skew",
+            "perspective",
+            "low_contrast",
+            "orientation",
+        ]
 
         for issue in expected:
             assert issue in QUALITY_ISSUES, f"Missing quality issue: {issue}"
@@ -183,7 +189,7 @@ class TestSplitDataset:
 
     def test_split_invalid_ratios_raises(self, sample_labels: list[dict]) -> None:
         """Test that invalid ratios raise ValueError."""
-        with pytest.raises(ValueError, match="sum to 1.0"):
+        with pytest.raises(ValueError, match=r"sum to 1\.0"):
             split_dataset(
                 sample_labels,
                 train_ratio=0.5,
@@ -223,15 +229,24 @@ class TestVerifyDatasetIntegrity:
             (tmp_path / f"label{i}.json").write_text("{}")
 
         train = [
-            {"image_path": str(tmp_path / f"image{i}.jpg"), "label_path": str(tmp_path / f"label{i}.json")}
+            {
+                "image_path": str(tmp_path / f"image{i}.jpg"),
+                "label_path": str(tmp_path / f"label{i}.json"),
+            }
             for i in range(6)
         ]
         val = [
-            {"image_path": str(tmp_path / f"image{i}.jpg"), "label_path": str(tmp_path / f"label{i}.json")}
+            {
+                "image_path": str(tmp_path / f"image{i}.jpg"),
+                "label_path": str(tmp_path / f"label{i}.json"),
+            }
             for i in range(6, 8)
         ]
         test = [
-            {"image_path": str(tmp_path / f"image{i}.jpg"), "label_path": str(tmp_path / f"label{i}.json")}
+            {
+                "image_path": str(tmp_path / f"image{i}.jpg"),
+                "label_path": str(tmp_path / f"label{i}.json"),
+            }
             for i in range(8, 10)
         ]
 
@@ -247,8 +262,18 @@ class TestVerifyDatasetIntegrity:
         (tmp_path / "label0.json").write_text("{}")
 
         # Same image in both train and val
-        train = [{"image_path": str(tmp_path / "image0.jpg"), "label_path": str(tmp_path / "label0.json")}]
-        val = [{"image_path": str(tmp_path / "image0.jpg"), "label_path": str(tmp_path / "label0.json")}]
+        train = [
+            {
+                "image_path": str(tmp_path / "image0.jpg"),
+                "label_path": str(tmp_path / "label0.json"),
+            }
+        ]
+        val = [
+            {
+                "image_path": str(tmp_path / "image0.jpg"),
+                "label_path": str(tmp_path / "label0.json"),
+            }
+        ]
         test: list[dict] = []
 
         with patch("rich.console.Console.print"):
@@ -259,7 +284,10 @@ class TestVerifyDatasetIntegrity:
     def test_missing_image_fails(self, tmp_path: Path) -> None:
         """Test verification fails for missing image files."""
         train = [
-            {"image_path": str(tmp_path / "nonexistent.jpg"), "label_path": str(tmp_path / "label.json")}
+            {
+                "image_path": str(tmp_path / "nonexistent.jpg"),
+                "label_path": str(tmp_path / "label.json"),
+            }
         ]
         val: list[dict] = []
         test: list[dict] = []

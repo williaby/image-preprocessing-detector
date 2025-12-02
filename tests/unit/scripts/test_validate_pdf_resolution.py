@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -42,32 +41,32 @@ class TestFormatBytes:
     def test_format_kilobytes(self) -> None:
         """Test formatting kilobytes."""
         result = format_bytes(1024)
-        assert "1.00 KB" == result
+        assert result == "1.00 KB"
 
     def test_format_megabytes(self) -> None:
         """Test formatting megabytes."""
         result = format_bytes(1024 * 1024)
-        assert "1.00 MB" == result
+        assert result == "1.00 MB"
 
     def test_format_gigabytes(self) -> None:
         """Test formatting gigabytes."""
         result = format_bytes(1024 * 1024 * 1024)
-        assert "1.00 GB" == result
+        assert result == "1.00 GB"
 
     def test_format_terabytes(self) -> None:
         """Test formatting terabytes."""
         result = format_bytes(1024 * 1024 * 1024 * 1024)
-        assert "1.00 TB" == result
+        assert result == "1.00 TB"
 
     def test_format_fractional(self) -> None:
         """Test formatting fractional values."""
         result = format_bytes(1536)  # 1.5 KB
-        assert "1.50 KB" == result
+        assert result == "1.50 KB"
 
     def test_format_zero(self) -> None:
         """Test formatting zero bytes."""
         result = format_bytes(0)
-        assert "0.00 B" == result
+        assert result == "0.00 B"
 
     def test_format_float_input(self) -> None:
         """Test formatting with float input."""
@@ -142,8 +141,18 @@ class TestPrintResolutionAnalysis:
             "avg_dpi": 300.0,
             "max_dpi": 300.0,
             "details": [
-                {"page_number": 1, "min_dpi": 300.0, "avg_dpi": 300.0, "image_count": 1},
-                {"page_number": 2, "min_dpi": 300.0, "avg_dpi": 300.0, "image_count": 1},
+                {
+                    "page_number": 1,
+                    "min_dpi": 300.0,
+                    "avg_dpi": 300.0,
+                    "image_count": 1,
+                },
+                {
+                    "page_number": 2,
+                    "min_dpi": 300.0,
+                    "avg_dpi": 300.0,
+                    "image_count": 1,
+                },
             ],
         }
 
@@ -370,16 +379,12 @@ class TestMainFunction:
         mock_upscale_result.upscaled_path = None
         mock_upscale_result.to_dict.return_value = {}
 
-        with patch(
-            "validate_pdf_resolution.PDFResolutionAnalyzer"
-        ) as mock_res_class:
+        with patch("validate_pdf_resolution.PDFResolutionAnalyzer") as mock_res_class:
             mock_res_analyzer = MagicMock()
             mock_res_analyzer.analyze_pdf_resolution.return_value = mock_analysis
             mock_res_class.return_value = mock_res_analyzer
 
-            with patch(
-                "validate_pdf_resolution.PDFDocumentAnalyzer"
-            ) as mock_doc_class:
+            with patch("validate_pdf_resolution.PDFDocumentAnalyzer") as mock_doc_class:
                 mock_doc_analyzer = MagicMock()
                 mock_doc_analyzer.analyze.return_value = mock_upscale_result
                 mock_doc_class.return_value = mock_doc_analyzer
@@ -417,13 +422,9 @@ class TestArgumentParsing:
 
     def test_parse_basic_args(self) -> None:
         """Test parsing basic arguments."""
-        import argparse
-
-        from validate_pdf_resolution import main
 
         # The main function creates its own parser, so we test indirectly
         # through the main function behavior
-        pass
 
     def test_default_values(self) -> None:
         """Test that default values are set correctly."""
@@ -431,4 +432,3 @@ class TestArgumentParsing:
         # Default target-dpi: 300
         # Default algorithm: lanczos
         # These are tested through the main function behavior
-        pass

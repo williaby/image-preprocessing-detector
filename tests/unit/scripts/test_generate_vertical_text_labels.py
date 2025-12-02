@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import cv2
 import numpy as np
@@ -304,8 +303,18 @@ class TestGenerateDataset:
                 {"id": 2, "file_name": "doc2.png", "width": 800, "height": 1000},
             ],
             "annotations": [
-                {"id": 1, "image_id": 1, "category_id": 10, "bbox": [100, 100, 600, 100]},
-                {"id": 2, "image_id": 2, "category_id": 10, "bbox": [100, 200, 600, 100]},
+                {
+                    "id": 1,
+                    "image_id": 1,
+                    "category_id": 10,
+                    "bbox": [100, 100, 600, 100],
+                },
+                {
+                    "id": 2,
+                    "image_id": 2,
+                    "category_id": 10,
+                    "bbox": [100, 200, 600, 100],
+                },
             ],
             "categories": [
                 {"id": 10, "name": "Text"},
@@ -368,9 +377,7 @@ class TestGenerateDataset:
         images = list((output_dir / "images").glob("*.png"))
         assert len(images) >= 4  # At least 4 orientations
 
-    def test_output_json_structure(
-        self, mock_doclaynet: Path, tmp_path: Path
-    ) -> None:
+    def test_output_json_structure(self, mock_doclaynet: Path, tmp_path: Path) -> None:
         """Test output JSON structure."""
         from generate_vertical_text_labels import generate_dataset
 

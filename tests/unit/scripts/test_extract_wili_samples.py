@@ -75,7 +75,7 @@ class TestLoadLabelsMapping:
     def test_load_valid_labels(self, tmp_path: Path) -> None:
         """Test loading valid labels CSV."""
         labels_file = tmp_path / "labels.csv"
-        labels_file.write_text('Label;English\neng;English\nfra;French\n')
+        labels_file.write_text("Label;English\neng;English\nfra;French\n")
 
         result = load_labels_mapping(labels_file)
 
@@ -85,7 +85,7 @@ class TestLoadLabelsMapping:
     def test_load_empty_file(self, tmp_path: Path) -> None:
         """Test loading empty labels file."""
         labels_file = tmp_path / "labels.csv"
-        labels_file.write_text('Label;English\n')
+        labels_file.write_text("Label;English\n")
 
         result = load_labels_mapping(labels_file)
 
@@ -120,7 +120,18 @@ class TestExtractLanguageSamples:
             "이것은 한국어 텍스트입니다.",
             "यह हिंदी पाठ है।",
         ]
-        y_content = ["eng", "fra", "deu", "spa", "zho", "ara", "rus", "jpn", "kor", "hin"]
+        y_content = [
+            "eng",
+            "fra",
+            "deu",
+            "spa",
+            "zho",
+            "ara",
+            "rus",
+            "jpn",
+            "kor",
+            "hin",
+        ]
 
         x_file.write_text("\n".join(x_content) + "\n")
         y_file.write_text("\n".join(y_content) + "\n")

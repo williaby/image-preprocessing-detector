@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -100,7 +99,7 @@ class TestHasTextContent:
         # Uniform gray region (no edges)
         uniform_region = np.full((100, 100), 128, dtype=np.uint8)
         result = has_text_content(uniform_region)
-        assert result == False  # Use == for numpy bool comparison
+        assert not result  # Use == for numpy bool comparison
 
     def test_high_contrast_region_has_text(self) -> None:
         """Test high contrast region detected as text."""
@@ -111,7 +110,7 @@ class TestHasTextContent:
             region[:, i] = 255
 
         result = has_text_content(region)
-        assert result == True  # Use == for numpy bool comparison
+        assert result  # Use == for numpy bool comparison
 
     def test_rgb_image_converted(self) -> None:
         """Test that RGB image is converted to grayscale."""
@@ -135,8 +134,8 @@ class TestHasTextContent:
         # Low threshold should accept
         result_low = has_text_content(region, threshold=0.01)
 
-        assert result_high == False  # Use == for numpy bool comparison
-        assert result_low == True
+        assert not result_high  # Use == for numpy bool comparison
+        assert result_low
 
 
 class TestDetectParasiticContentSpatial:
@@ -167,7 +166,9 @@ class TestDetectParasiticContentSpatial:
             image, corpus_id=1, doc_id="test", page_num=1
         )
 
-        header_elements = [e for e in result["parasitic_elements"] if e["type"] == "header"]
+        header_elements = [
+            e for e in result["parasitic_elements"] if e["type"] == "header"
+        ]
         assert len(header_elements) > 0
 
     def test_footer_detection(self) -> None:
@@ -182,7 +183,9 @@ class TestDetectParasiticContentSpatial:
             image, corpus_id=1, doc_id="test", page_num=1
         )
 
-        footer_elements = [e for e in result["parasitic_elements"] if e["type"] == "footer"]
+        footer_elements = [
+            e for e in result["parasitic_elements"] if e["type"] == "footer"
+        ]
         assert len(footer_elements) > 0
 
     def test_page_number_detection(self) -> None:
@@ -510,11 +513,13 @@ class TestExtractDocumentClassification:
 
     def test_info_metadata(self) -> None:
         """Test info metadata is correct."""
-        mock_corpus = [{
-            "corpus_id": 1,
-            "doc_id": "test",
-            "page_number_in_doc": 1,
-        }]
+        mock_corpus = [
+            {
+                "corpus_id": 1,
+                "doc_id": "test",
+                "page_number_in_doc": 1,
+            }
+        ]
 
         result = extract_document_classification(mock_corpus)
 

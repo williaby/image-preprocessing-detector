@@ -141,9 +141,7 @@ class TestValidateClassifications:
 
     def test_counts_pdfs(self, mock_pdf_dir: Path) -> None:
         """Test that PDFs are counted correctly."""
-        with patch(
-            "validate_pdf_classification.classify_pdf_type"
-        ) as mock_classify:
+        with patch("validate_pdf_classification.classify_pdf_type") as mock_classify:
             mock_type = MagicMock()
             mock_type.value = "born_digital"
             mock_classify.return_value = mock_type
@@ -154,9 +152,7 @@ class TestValidateClassifications:
 
     def test_records_classifications(self, mock_pdf_dir: Path) -> None:
         """Test that classifications are recorded."""
-        with patch(
-            "validate_pdf_classification.classify_pdf_type"
-        ) as mock_classify:
+        with patch("validate_pdf_classification.classify_pdf_type") as mock_classify:
             mock_type = MagicMock()
             mock_type.value = "born_digital"
             mock_classify.return_value = mock_type
@@ -165,7 +161,9 @@ class TestValidateClassifications:
 
             assert result["classifications"]["born_digital"] == 2
 
-    def test_tracks_correct_predictions(self, mock_pdf_dir: Path, tmp_path: Path) -> None:
+    def test_tracks_correct_predictions(
+        self, mock_pdf_dir: Path, tmp_path: Path
+    ) -> None:
         """Test tracking of correct predictions."""
         labels_file = tmp_path / "labels.json"
         labels_data = {
@@ -173,9 +171,7 @@ class TestValidateClassifications:
         }
         labels_file.write_text(json.dumps(labels_data))
 
-        with patch(
-            "validate_pdf_classification.classify_pdf_type"
-        ) as mock_classify:
+        with patch("validate_pdf_classification.classify_pdf_type") as mock_classify:
             mock_type = MagicMock()
             mock_type.value = "born_digital"
             mock_classify.return_value = mock_type
@@ -185,7 +181,9 @@ class TestValidateClassifications:
             assert result["correct"] == 2
             assert result["incorrect"] == 0
 
-    def test_tracks_incorrect_predictions(self, mock_pdf_dir: Path, tmp_path: Path) -> None:
+    def test_tracks_incorrect_predictions(
+        self, mock_pdf_dir: Path, tmp_path: Path
+    ) -> None:
         """Test tracking of incorrect predictions."""
         labels_file = tmp_path / "labels.json"
         labels_data = {
@@ -193,9 +191,7 @@ class TestValidateClassifications:
         }
         labels_file.write_text(json.dumps(labels_data))
 
-        with patch(
-            "validate_pdf_classification.classify_pdf_type"
-        ) as mock_classify:
+        with patch("validate_pdf_classification.classify_pdf_type") as mock_classify:
             mock_type = MagicMock()
             mock_type.value = "born_digital"  # But predicted born_digital
             mock_classify.return_value = mock_type
@@ -206,9 +202,7 @@ class TestValidateClassifications:
 
     def test_handles_classification_errors(self, mock_pdf_dir: Path) -> None:
         """Test handling of classification errors."""
-        with patch(
-            "validate_pdf_classification.classify_pdf_type"
-        ) as mock_classify:
+        with patch("validate_pdf_classification.classify_pdf_type") as mock_classify:
             mock_classify.side_effect = Exception("Classification failed")
 
             result = validate_classifications(mock_pdf_dir)

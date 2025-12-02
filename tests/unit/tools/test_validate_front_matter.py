@@ -13,10 +13,8 @@ These tests verify the front matter validator correctly:
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -284,7 +282,9 @@ Content without redundant H1.
         assert result["ok"] is True
         assert len(result["errors"]) == 0
 
-    def test_unknown_tag_error(self, tmp_path: Path, allowlists: tuple[set, set]) -> None:
+    def test_unknown_tag_error(
+        self, tmp_path: Path, allowlists: tuple[set, set]
+    ) -> None:
         """Test validation fails for unknown tag."""
         allowed_tags, allowed_owners = allowlists
 
@@ -307,7 +307,9 @@ Content.
         assert result["ok"] is False
         assert any("unknown tag" in err.lower() for err in result["errors"])
 
-    def test_unknown_owner_error(self, tmp_path: Path, allowlists: tuple[set, set]) -> None:
+    def test_unknown_owner_error(
+        self, tmp_path: Path, allowlists: tuple[set, set]
+    ) -> None:
         """Test validation fails for unknown owner."""
         allowed_tags, allowed_owners = allowlists
 
@@ -329,7 +331,9 @@ Content.
         assert result["ok"] is False
         assert any("unknown owner" in err.lower() for err in result["errors"])
 
-    def test_redundant_h1_warning(self, tmp_path: Path, allowlists: tuple[set, set]) -> None:
+    def test_redundant_h1_warning(
+        self, tmp_path: Path, allowlists: tuple[set, set]
+    ) -> None:
         """Test detection of redundant H1 heading."""
         allowed_tags, allowed_owners = allowlists
 

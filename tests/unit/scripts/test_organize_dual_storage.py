@@ -15,9 +15,7 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 # Add scripts directory to path for import
 SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
@@ -45,9 +43,15 @@ class TestDatasetsConfig:
     def test_dataset_paths_are_relative(self) -> None:
         """Test that dataset paths are relative."""
         for name, config in DATASETS.items():
-            assert not config["nfs_path"].startswith("/"), f"{name} has absolute nfs_path"
-            assert not config["local_path"].startswith("/"), f"{name} has absolute local_path"
-            assert not config["gcs_path"].startswith("/"), f"{name} has absolute gcs_path"
+            assert not config["nfs_path"].startswith("/"), (
+                f"{name} has absolute nfs_path"
+            )
+            assert not config["local_path"].startswith("/"), (
+                f"{name} has absolute local_path"
+            )
+            assert not config["gcs_path"].startswith("/"), (
+                f"{name} has absolute gcs_path"
+            )
 
     def test_all_sizes_are_positive(self) -> None:
         """Test that all dataset sizes are positive numbers."""
@@ -61,7 +65,9 @@ class TestCheckPrerequisites:
     def test_prerequisites_with_missing_nfs(self, tmp_path: Path) -> None:
         """Test prerequisites check fails when NFS is missing."""
         with patch("organize_dual_storage.NFS_ROOT", tmp_path / "nonexistent"):
-            with patch("organize_dual_storage.GCS_CREDENTIALS", tmp_path / "creds.json"):
+            with patch(
+                "organize_dual_storage.GCS_CREDENTIALS", tmp_path / "creds.json"
+            ):
                 # Create credentials file
                 (tmp_path / "creds.json").write_text("{}")
 
@@ -76,7 +82,9 @@ class TestCheckPrerequisites:
         nfs_dir.mkdir()
 
         with patch("organize_dual_storage.NFS_ROOT", nfs_dir):
-            with patch("organize_dual_storage.GCS_CREDENTIALS", tmp_path / "nonexistent.json"):
+            with patch(
+                "organize_dual_storage.GCS_CREDENTIALS", tmp_path / "nonexistent.json"
+            ):
                 with patch("builtins.print"):
                     result = check_prerequisites()
 
@@ -222,9 +230,7 @@ class TestShowStatus:
 
         # Should contain table headers
         assert "Dataset" in output or "dataset" in output.lower()
-        assert "Storage Status" in output or any(
-            name in output for name in DATASETS.keys()
-        )
+        assert "Storage Status" in output or any(name in output for name in DATASETS)
 
 
 class TestPullFromGCS:

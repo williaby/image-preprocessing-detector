@@ -13,7 +13,7 @@ These tests verify the OmniDocBench download script correctly:
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -68,7 +68,7 @@ class TestRateLimitHandler:
         handler = RateLimitHandler(window_minutes=5)
         handler.request_count = 100
         # Set window start to past
-        handler.window_start = datetime.now() - timedelta(minutes=6)
+        handler.window_start = datetime.now(tz=UTC) - timedelta(minutes=6)
 
         handler.check_and_wait()
 

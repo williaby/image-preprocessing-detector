@@ -317,14 +317,47 @@ class TestGenerateDataset:
         # Create COCO JSON with header/footer annotations
         coco_data = {
             "images": [
-                {"id": 1, "file_name": "doc1_p1.png", "doc_name": "doc1", "width": 800, "height": 1000},
-                {"id": 2, "file_name": "doc1_p2.png", "doc_name": "doc1", "width": 800, "height": 1000},
-                {"id": 3, "file_name": "doc1_p3.png", "doc_name": "doc1", "width": 800, "height": 1000},
+                {
+                    "id": 1,
+                    "file_name": "doc1_p1.png",
+                    "doc_name": "doc1",
+                    "width": 800,
+                    "height": 1000,
+                },
+                {
+                    "id": 2,
+                    "file_name": "doc1_p2.png",
+                    "doc_name": "doc1",
+                    "width": 800,
+                    "height": 1000,
+                },
+                {
+                    "id": 3,
+                    "file_name": "doc1_p3.png",
+                    "doc_name": "doc1",
+                    "width": 800,
+                    "height": 1000,
+                },
             ],
             "annotations": [
-                {"id": 1, "image_id": 1, "category_id": 6, "bbox": [100, 10, 600, 50]},  # Header
-                {"id": 2, "image_id": 2, "category_id": 6, "bbox": [100, 10, 600, 50]},  # Header
-                {"id": 3, "image_id": 3, "category_id": 6, "bbox": [100, 10, 600, 50]},  # Header
+                {
+                    "id": 1,
+                    "image_id": 1,
+                    "category_id": 6,
+                    "bbox": [100, 10, 600, 50],
+                },  # Header
+                {
+                    "id": 2,
+                    "image_id": 2,
+                    "category_id": 6,
+                    "bbox": [100, 10, 600, 50],
+                },  # Header
+                {
+                    "id": 3,
+                    "image_id": 3,
+                    "category_id": 6,
+                    "bbox": [100, 10, 600, 50],
+                },  # Header
             ],
             "categories": [
                 {"id": 5, "name": "page-footer"},

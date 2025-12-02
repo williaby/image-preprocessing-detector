@@ -157,7 +157,7 @@ class TestDownloadFromGithub:
 
     def test_validates_github_url(self, tmp_path: Path) -> None:
         """Test that non-GitHub URLs are rejected."""
-        with pytest.raises(ValueError, match="Only https://github.com URLs"):
+        with pytest.raises(ValueError, match=r"Only https://github\.com URLs"):
             download_from_github(
                 repo_url="https://gitlab.com/test/repo",
                 local_dir=tmp_path / "test",
@@ -166,7 +166,7 @@ class TestDownloadFromGithub:
 
     def test_validates_https_scheme(self, tmp_path: Path) -> None:
         """Test that non-HTTPS URLs are rejected."""
-        with pytest.raises(ValueError, match="Only https://github.com URLs"):
+        with pytest.raises(ValueError, match=r"Only https://github\.com URLs"):
             download_from_github(
                 repo_url="http://github.com/test/repo",
                 local_dir=tmp_path / "test",

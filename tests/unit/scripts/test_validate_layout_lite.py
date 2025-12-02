@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
 # Add scripts directory to path for import

@@ -16,8 +16,7 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -350,9 +349,7 @@ class TestHasCheckpoint:
 
         assert not manager.has_checkpoint()
 
-    def test_has_checkpoint_after_save(
-        self, tmp_path: Path, simple_model
-    ) -> None:
+    def test_has_checkpoint_after_save(self, tmp_path: Path, simple_model) -> None:
         """Test has_checkpoint returns True after saving."""
         manager = CheckpointManager(str(tmp_path))
         optimizer = torch.optim.SGD(simple_model.parameters(), lr=0.01)
@@ -382,9 +379,7 @@ class TestGetBestCheckpointPath:
 
         assert manager.get_best_checkpoint_path() is None
 
-    def test_best_checkpoint_after_save(
-        self, tmp_path: Path, simple_model
-    ) -> None:
+    def test_best_checkpoint_after_save(self, tmp_path: Path, simple_model) -> None:
         """Test returns path after saving checkpoint with val_loss."""
         manager = CheckpointManager(str(tmp_path))
         optimizer = torch.optim.SGD(simple_model.parameters(), lr=0.01)

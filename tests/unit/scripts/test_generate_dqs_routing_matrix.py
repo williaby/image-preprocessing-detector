@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import cv2
 import numpy as np
@@ -463,7 +462,12 @@ class TestClassifyStructuralComplexity:
 
     def test_complexity_returns_valid_string(self) -> None:
         """Test that complexity always returns valid string."""
-        metrics = {"column_count": 1, "table_count": 0, "formula_count": 0, "picture_count": 0}
+        metrics = {
+            "column_count": 1,
+            "table_count": 0,
+            "formula_count": 0,
+            "picture_count": 0,
+        }
 
         result = classify_structural_complexity(metrics)
 
@@ -530,9 +534,16 @@ class TestGenerateDqsRoutingLabels:
 
         # Create COCO JSON
         coco_data = {
-            "images": [{"id": 1, "file_name": "doc1.png", "width": 800, "height": 1000}],
+            "images": [
+                {"id": 1, "file_name": "doc1.png", "width": 800, "height": 1000}
+            ],
             "annotations": [
-                {"id": 1, "image_id": 1, "category_id": 10, "bbox": [100, 100, 600, 100]},
+                {
+                    "id": 1,
+                    "image_id": 1,
+                    "category_id": 10,
+                    "bbox": [100, 100, 600, 100],
+                },
             ],
             "categories": [{"id": 10, "name": "Text"}],
         }

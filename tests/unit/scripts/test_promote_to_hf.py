@@ -46,10 +46,12 @@ class TestValidateArtifacts:
 
         # Create required metadata files
         (artifact_dir / "training_config.yaml").write_text(
-            yaml.dump({
-                "model": {"architecture": "resnet50", "num_classes": 10},
-                "training": {"epochs": 100, "batch_size": 32},
-            })
+            yaml.dump(
+                {
+                    "model": {"architecture": "resnet50", "num_classes": 10},
+                    "training": {"epochs": 100, "batch_size": 32},
+                }
+            )
         )
         (artifact_dir / "commit_hash.txt").write_text("abc123def456")
         (artifact_dir / "dataset_version.txt").write_text("v1.0.0")

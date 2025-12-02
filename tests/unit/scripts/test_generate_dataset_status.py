@@ -16,8 +16,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 # Add scripts directory to path for import
 SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))

@@ -17,9 +17,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
 
-import numpy as np
 import pytest
 
 # Add scripts directory to path for import
@@ -272,7 +270,9 @@ class TestCalculateCompositePriority:
     def test_priority_high_uncertainty_low_edge(self) -> None:
         """Test priority with high uncertainty but low edge case score."""
         labels_data = {
-            "labels": {"blur": {"confidence": 0.2}},  # Low confidence = high uncertainty
+            "labels": {
+                "blur": {"confidence": 0.2}
+            },  # Low confidence = high uncertainty
             "quality_scores": {"laplacian_variance": 200},  # Not borderline
         }
 

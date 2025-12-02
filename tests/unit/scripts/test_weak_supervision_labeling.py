@@ -16,8 +16,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -125,9 +124,7 @@ class TestDetectLowContrast:
         assert result["value"] == 0  # Not low contrast
         assert result["source"] == "rms_contrast"
 
-    def test_low_contrast_image_detected(
-        self, labeler: WeakSupervisionLabeler
-    ) -> None:
+    def test_low_contrast_image_detected(self, labeler: WeakSupervisionLabeler) -> None:
         """Test that low contrast image is detected."""
         # Create uniform gray image (very low contrast)
         image = np.full((100, 100, 3), 128, dtype=np.uint8)
@@ -376,9 +373,7 @@ class TestLabelDataset:
         input_dir, output_dir = sample_dataset
 
         with patch("builtins.print"):
-            stats = labeler.label_dataset(
-                input_dir, output_dir, metrics=["laplacian"]
-            )
+            stats = labeler.label_dataset(input_dir, output_dir, metrics=["laplacian"])
 
         # Check label files only have blur labels
         label_file = next(output_dir.glob("*.json"))
@@ -454,9 +449,7 @@ class TestLabelFileFormat:
 
         return label_file, data
 
-    def test_label_file_has_image_path(
-        self, labeled_image: tuple[Path, dict]
-    ) -> None:
+    def test_label_file_has_image_path(self, labeled_image: tuple[Path, dict]) -> None:
         """Test that label file contains image path."""
         _, data = labeled_image
 

@@ -18,7 +18,6 @@ from unittest.mock import MagicMock, patch
 
 import cv2
 import numpy as np
-import pytest
 
 # Mock albumentations and data modules before importing
 sys.modules["albumentations"] = MagicMock()

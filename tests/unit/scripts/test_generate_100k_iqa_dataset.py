@@ -14,10 +14,9 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
-import pytest
 from PIL import Image
 
 # Mock albumentations and datasets before importing

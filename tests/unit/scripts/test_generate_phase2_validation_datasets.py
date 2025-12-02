@@ -13,10 +13,8 @@ These tests verify the Phase 2 validation dataset generation script correctly:
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 

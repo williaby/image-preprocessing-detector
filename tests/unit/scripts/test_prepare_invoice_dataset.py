@@ -70,12 +70,20 @@ class TestCombineAnnotations:
             (
                 tmp_path / "img1.png",
                 tmp_path / "batch1.csv",
-                {"File Name": "img1.png", "Json Data": '{"a": 1}', "OCRed Text": "text"},
+                {
+                    "File Name": "img1.png",
+                    "Json Data": '{"a": 1}',
+                    "OCRed Text": "text",
+                },
             ),
             (
                 tmp_path / "img2.png",
                 tmp_path / "batch2.csv",
-                {"File Name": "img2.png", "Json Data": '{"b": 2}', "OCRed Text": "more"},
+                {
+                    "File Name": "img2.png",
+                    "Json Data": '{"b": 2}',
+                    "OCRed Text": "more",
+                },
             ),
         ]
 
@@ -99,8 +107,7 @@ class TestSplitDataset:
     def test_correct_split_ratio(self, tmp_path: Path) -> None:
         """Test that split respects the ratio."""
         pairs = [
-            (tmp_path / f"img{i}.png", tmp_path / "batch.csv", {})
-            for i in range(100)
+            (tmp_path / f"img{i}.png", tmp_path / "batch.csv", {}) for i in range(100)
         ]
 
         train, val = split_dataset(pairs, (0.7, 0.3), seed=42)
@@ -111,8 +118,7 @@ class TestSplitDataset:
     def test_deterministic_with_seed(self, tmp_path: Path) -> None:
         """Test that same seed produces same split."""
         pairs = [
-            (tmp_path / f"img{i}.png", tmp_path / "batch.csv", {})
-            for i in range(10)
+            (tmp_path / f"img{i}.png", tmp_path / "batch.csv", {}) for i in range(10)
         ]
 
         train1, val1 = split_dataset(pairs, (0.7, 0.3), seed=42)
@@ -124,8 +130,7 @@ class TestSplitDataset:
     def test_different_ratios(self, tmp_path: Path) -> None:
         """Test different split ratios."""
         pairs = [
-            (tmp_path / f"img{i}.png", tmp_path / "batch.csv", {})
-            for i in range(100)
+            (tmp_path / f"img{i}.png", tmp_path / "batch.csv", {}) for i in range(100)
         ]
 
         train, val = split_dataset(pairs, (0.8, 0.2), seed=42)

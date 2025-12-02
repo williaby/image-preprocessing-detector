@@ -18,8 +18,6 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-import pytest
-
 # Add scripts directory to path for import
 SCRIPTS_DIR = Path(__file__).parent.parent.parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
@@ -395,11 +393,15 @@ class TestExpectedDatasetsConfig:
         for category, datasets in EXPECTED_DATASETS.items():
             for name, config in datasets.items():
                 missing = required_fields - set(config.keys())
-                assert not missing, f"Dataset {category}/{name} missing fields: {missing}"
+                assert not missing, (
+                    f"Dataset {category}/{name} missing fields: {missing}"
+                )
 
     def test_dataset_paths_are_relative(self) -> None:
         """Test that dataset paths are relative (not absolute)."""
         for category, datasets in EXPECTED_DATASETS.items():
             for name, config in datasets.items():
                 path = config["path"]
-                assert not path.startswith("/"), f"Dataset {name} has absolute path: {path}"
+                assert not path.startswith("/"), (
+                    f"Dataset {name} has absolute path: {path}"
+                )

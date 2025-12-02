@@ -15,7 +15,6 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -46,11 +45,11 @@ class TestClassConstants:
         """Test text classes are defined correctly."""
         # All except Picture (7)
         expected = {1, 2, 3, 4, 5, 6, 8, 9, 10, 11}
-        assert TEXT_CLASSES == expected
+        assert expected == TEXT_CLASSES
 
     def test_image_classes(self) -> None:
         """Test image classes contain Picture."""
-        assert IMAGE_CLASSES == {7}
+        assert {7} == IMAGE_CLASSES
 
     def test_class_names(self) -> None:
         """Test some class names."""
@@ -151,8 +150,14 @@ class TestSampleDoclaynetByClass:
                 # First 5 images: text only (born_digital)
                 *[{"id": i, "image_id": i, "category_id": 10} for i in range(1, 6)],
                 # Last 5 images: text + picture (hybrid)
-                *[{"id": i + 10, "image_id": i, "category_id": 10} for i in range(6, 11)],
-                *[{"id": i + 20, "image_id": i, "category_id": 7} for i in range(6, 11)],
+                *[
+                    {"id": i + 10, "image_id": i, "category_id": 10}
+                    for i in range(6, 11)
+                ],
+                *[
+                    {"id": i + 20, "image_id": i, "category_id": 7}
+                    for i in range(6, 11)
+                ],
             ],
         }
 
@@ -255,8 +260,14 @@ class TestGenerateCombinedClassificationLabels:
             ],
             "annotations": [
                 *[{"id": i, "image_id": i, "category_id": 10} for i in range(1, 11)],
-                *[{"id": i + 20, "image_id": i, "category_id": 10} for i in range(11, 21)],
-                *[{"id": i + 40, "image_id": i, "category_id": 7} for i in range(11, 21)],
+                *[
+                    {"id": i + 20, "image_id": i, "category_id": 10}
+                    for i in range(11, 21)
+                ],
+                *[
+                    {"id": i + 40, "image_id": i, "category_id": 7}
+                    for i in range(11, 21)
+                ],
             ],
         }
         with open(coco_dir / "train.json", "w") as f:

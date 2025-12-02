@@ -22,11 +22,12 @@ import pytest
 fastapi = pytest.importorskip("fastapi", reason="FastAPI required for API tests")
 httpx = pytest.importorskip("httpx", reason="httpx required for API tests")
 
+from datetime import UTC
+
 from fastapi.testclient import TestClient
 
 from image_preprocessing_detector.api.app import create_app
 from image_preprocessing_detector.api.config import APISettings, get_api_settings
-
 
 # ============================================================================
 # Test Fixtures
@@ -316,7 +317,7 @@ class TestProcessingModels:
             ProcessingStatus,
         )
 
-        now = datetime.now()
+        now = datetime.now(tz=UTC)
         status = BatchJobStatus(
             job_id="job-123",
             status=ProcessingStatus.PROCESSING,
@@ -501,7 +502,6 @@ class TestPDFProcessingLimits:
     @pytest.mark.skip(reason="Requires full OpenCV DNN module - tested in integration")
     def test_pdf_processing_respects_page_limit(self, client: TestClient) -> None:
         """PDF processing respects the 100 page limit."""
-        pass
 
 
 class TestRoutingRecommendations:
@@ -616,7 +616,6 @@ class TestTempFileCleanup:
 
     def test_temp_file_cleanup_code_path(self) -> None:
         """Test the temp file cleanup logic pattern."""
-        import tempfile
 
         # Create a temp file to test cleanup behavior
         tmp_path = None
@@ -913,4 +912,3 @@ class TestProcessDocumentFunction:
     @pytest.mark.skip(reason="Requires full OpenCV DNN module - tested in integration")
     def test_process_document_with_image(self) -> None:
         """process_document handles image files correctly."""
-        pass

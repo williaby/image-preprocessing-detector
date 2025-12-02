@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -190,7 +190,9 @@ class TestValidateArtifacts:
 
         # Create required metadata files
         (artifact_dir / "training_config.yaml").write_text(
-            yaml.dump({"model": {"architecture": "resnet50"}, "training": {"epochs": 100}})
+            yaml.dump(
+                {"model": {"architecture": "resnet50"}, "training": {"epochs": 100}}
+            )
         )
         (artifact_dir / "commit_hash.txt").write_text("abc123def456 (clean)")
         (artifact_dir / "dataset_version.txt").write_text("v1.0.0")
@@ -266,7 +268,9 @@ class TestValidateArtifacts:
 
         assert any("dirty" in warning.lower() for warning in results["warnings"])
 
-    def test_validate_strict_mode_fails_on_warnings(self, valid_artifact_dir: Path) -> None:
+    def test_validate_strict_mode_fails_on_warnings(
+        self, valid_artifact_dir: Path
+    ) -> None:
         """Test that strict mode treats warnings as errors."""
         # Add dirty git state to generate warning
         (valid_artifact_dir / "commit_hash.txt").write_text("abc123def456 (dirty)")
@@ -278,15 +282,18 @@ class TestValidateArtifacts:
         # The results should have warnings
         assert len(results["warnings"]) > 0
 
-    def test_validate_missing_optional_metrics(self, minimal_artifact_dir: Path) -> None:
+    def test_validate_missing_optional_metrics(
+        self, minimal_artifact_dir: Path
+    ) -> None:
         """Test validation warns but doesn't fail for missing optional files."""
         with patch("builtins.print"):
             results = validate_artifacts(str(minimal_artifact_dir), strict=False)
 
         # Should have warning about missing metrics.json
-        assert any(
-            "metrics" in warning.lower() for warning in results["warnings"]
-        ) or len(results["errors"]) == 0
+        assert (
+            any("metrics" in warning.lower() for warning in results["warnings"])
+            or len(results["errors"]) == 0
+        )
 
     def test_validate_nonexistent_directory(self, tmp_path: Path) -> None:
         """Test validation exits for non-existent directory."""
@@ -299,7 +306,9 @@ class TestValidateArtifacts:
     def test_validate_multiple_model_files(self, valid_artifact_dir: Path) -> None:
         """Test validation handles multiple model files."""
         # Add additional model files
-        (valid_artifact_dir / "checkpoint_best.pth").write_bytes(b"y" * (2 * 1024 * 1024))
+        (valid_artifact_dir / "checkpoint_best.pth").write_bytes(
+            b"y" * (2 * 1024 * 1024)
+        )
         (valid_artifact_dir / "model.onnx").write_bytes(b"z" * (2 * 1024 * 1024))
 
         with patch("builtins.print"):

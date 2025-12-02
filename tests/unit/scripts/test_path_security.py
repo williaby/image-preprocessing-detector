@@ -76,7 +76,9 @@ class TestValidatePath:
         with pytest.raises((PathValidationError, ValueError)):
             validate_path(malicious_path, must_exist=False)
 
-    def test_relative_path_resolved_to_absolute(self, tmp_path: Path, monkeypatch) -> None:
+    def test_relative_path_resolved_to_absolute(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
         """Test that relative paths are resolved to absolute paths."""
         # Create a file in tmp_path
         test_file = tmp_path / "relative_test.txt"

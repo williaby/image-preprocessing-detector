@@ -45,7 +45,9 @@ class TestSymlinkMappings:
     def test_local_paths_start_with_data(self) -> None:
         """Test that local paths start with data/."""
         for local_path, _ in SYMLINK_MAPPINGS:
-            assert local_path.startswith("data/"), f"Path {local_path} doesn't start with data/"
+            assert local_path.startswith("data/"), (
+                f"Path {local_path} doesn't start with data/"
+            )
 
     def test_contains_benchmark_mappings(self) -> None:
         """Test that benchmarks mappings exist."""
@@ -396,9 +398,7 @@ class TestCreateSymlinkEdgeCases:
         nfs_target = nfs_root / "a" / "b" / "c" / "d" / "dataset"
         nfs_target.mkdir(parents=True)
 
-        success, message = create_symlink(
-            "data/a/b/c/d/dataset", "a/b/c/d/dataset"
-        )
+        success, message = create_symlink("data/a/b/c/d/dataset", "a/b/c/d/dataset")
 
         assert success is True
         local_path = project_root / "data" / "a" / "b" / "c" / "d" / "dataset"
@@ -431,4 +431,6 @@ class TestSymlinkCategories:
         # Check for some expected datasets
         expected = ["tablebank", "pubtabnet", "omnidocbench", "iqa_phase2"]
         for expected_name in expected:
-            assert expected_name in dataset_names, f"Missing expected dataset: {expected_name}"
+            assert expected_name in dataset_names, (
+                f"Missing expected dataset: {expected_name}"
+            )

@@ -51,7 +51,6 @@ class TestMountGoogleDrive:
 
     def test_mount_with_mock_colab(self) -> None:
         """Test mount with mocked Colab environment."""
-        from gdrive_sync import mount_google_drive
 
         mock_drive = MagicMock()
 
@@ -253,7 +252,9 @@ class TestSyncCheckpointsToDrive:
         (local_dir / "checkpoint_2.pt").write_text("checkpoint 2")
         (local_dir / "metrics.json").write_text("{}")
 
-        sync_checkpoints_to_drive(str(local_dir), str(drive_dir), sync_mode="incremental")
+        sync_checkpoints_to_drive(
+            str(local_dir), str(drive_dir), sync_mode="incremental"
+        )
 
         assert (drive_dir / "checkpoint_1.pt").exists()
         assert (drive_dir / "checkpoint_2.pt").exists()
@@ -279,7 +280,9 @@ class TestSyncCheckpointsToDrive:
         time.sleep(0.1)
         drive_file.write_text("drive version - newer updated")
 
-        sync_checkpoints_to_drive(str(local_dir), str(drive_dir), sync_mode="incremental")
+        sync_checkpoints_to_drive(
+            str(local_dir), str(drive_dir), sync_mode="incremental"
+        )
 
         # Drive file should NOT be overwritten (it's newer)
         content = drive_file.read_text()
