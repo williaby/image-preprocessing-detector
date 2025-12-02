@@ -1,0 +1,670 @@
+# Phase 4 Evaluation Report: Device-Priority Execution & Production Hardening
+
+**Report Date:** December 2, 2025
+**Evaluator:** Claude Code (Automated Analysis)
+**Branch:** `claude/evaluate-phase-4-01Mdix4qdKmExXrs1dMrJSFo`
+**Reference:** `docs/planning/PROJECT_PLAN.md`
+
+---
+
+## Executive Summary
+
+Phase 4 focuses on implementing intelligent device selection (Local GPU → Local CPU → Modal GPU) with cost controls and production hardening. This evaluation found that **core infrastructure is substantially complete** (~75% overall), with critical gaps in Modal remote inference and distributed task processing.
+
+| Category | Completion | Assessment |
+|----------|------------|------------|
+| Device Probing & Priority | 90% | Strong |
+| Budget Enforcement | 100% | Complete (tests missing) |
+| Batch Processing | 80% | Functional (not production-ready) |
+| Metrics/Observability | 100% | Complete |
+| Model Optimization (TensorRT/INT8) | 100% | Complete |
+| Modal Remote Inference | 0% | **Critical Gap** |
+| Worker Pool | 0% | **Critical Gap** |
+
+**Total Test Coverage:** 222 tests across Phase 4 components
+
+---
+
+## Table of Contents
+
+1. [Phase 4 Requirements](#1-phase-4-requirements)
+2. [Implementation Status](#2-implementation-status)
+3. [Detailed Component Analysis](#3-detailed-component-analysis)
+4. [Gap Analysis](#4-gap-analysis)
+5. [Test Coverage](#5-test-coverage)
+6. [Risk Assessment](#6-risk-assessment)
+7. [Recommendations](#7-recommendations)
+8. [Appendix: File Locations](#appendix-file-locations)
+
+---
+
+## 1. Phase 4 Requirements
+
+Per `docs/planning/PROJECT_PLAN.md`, Phase 4 spans 3 weeks (15 working days) with the following objectives:
+
+### Week 15: Device Probing & Priority Rules
+- Hardware detection (GPU/CPU/Modal) with caching
+- Device priority policy configuration
+- Student device selector (ONNX GPU → CPU fallback)
+- Teacher device selector (Local GPU → Modal GPU → CPU BLOCK)
+- Page-level teacher budget enforcement
+- Gate integration (uncertainty/discrepancy triggers)
+
+### Week 16: Modal GPU Integration & Metrics
+- Containerized teacher deployment on Modal
+- Serverless endpoint hardening (auth, timeouts, retries)
+- Resilience patterns (circuit breaker, exponential backoff)
+- Cost management and budget guards
+- Structured logging and Prometheus metrics
+
+### Week 17: Performance Optimization & Worker Pool
+- Batch processing with micro-batching
+- Async I/O and concurrency controls
+- Caching strategy (tensor/page cache, LRU eviction)
+- TensorRT acceleration (optional)
+- Task queue integration (Celery/RQ)
+- Performance benchmarking (P95/P99 latency)
+
+### Success Criteria (from PROJECT_PLAN.md)
+
+| Criterion | Target |
+|-----------|--------|
+| Device selection compliance | 100% follows priority rules |
+| Modal budget adherence | Within configured limits |
+| Teacher CPU blocking (production) | 100% enforcement |
+| Latency p95 (GPU) | <150ms per page |
+| Latency p95 (CPU) | <400ms per page |
+| Throughput (GPU worker) | >6 pages/second |
+| Throughput (CPU worker) | >2 pages/second |
+| Batch inference speedup | >2x vs single inference |
+| Module test coverage | >80% |
+
+---
+
+## 2. Implementation Status
+
+### Summary Matrix
+
+| Component | Status | File Location | Tests |
+|-----------|--------|---------------|-------|
+| Device Probing | ✅ Complete | `utils/device_probe.py` | 14 |
+| ML IQA Device Priority | ✅ Complete | `detection/iqa_ml.py` | 20+15 |
+| Discrepancy Analysis | ✅ Complete | `detection/discrepancy.py` | 24 |
+| Budget Enforcement | ✅ Complete | `utils/budget_enforcement.py` | 0 ❌ |
+| Batch Processing API | ✅ Complete | `api/routes/batch.py` | 40 |
+| Metrics/Observability | ✅ Complete | `monitoring/__init__.py` | 53 |
+| Structured Logging | ✅ Complete | `utils/log_config.py` | - |
+| TensorRT Conversion | ✅ Complete | `models/model_optimizer.py` | 41 |
+| INT8 Quantization | ✅ Complete | `models/model_optimizer.py` | (included) |
+| Model Registry | ✅ Complete | `models/model_optimizer.py` | (included) |
+| Modal Remote Inference | ❌ Missing | - | 15 (simulation only) |
+| Circuit Breaker | ❌ Missing | - | - |
+| Worker Pool (Celery/RQ) | ❌ Missing | - | - |
+| Redis Persistent Store | ❌ Missing | - | - |
+| Micro-Batching | ❌ Missing | - | - |
+| Tensor/Page Caching | ❌ Missing | - | - |
+| ONNX Session Pooling | ❌ Missing | - | - |
+
+---
+
+## 3. Detailed Component Analysis
+
+### 3.1 Device Probing & Priority Rules ✅
+
+**Status:** 90% Complete
+
+#### Core Device Detection
+**File:** `src/image_preprocessing_detector/utils/device_probe.py`
+
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `DeviceCapabilities` | 15-35 | Dataclass: GPU availability, VRAM, CPU count, Modal status |
+| `probe_device_capabilities()` | 38-95 | LRU-cached hardware detection |
+| `get_recommended_device()` | 98-110 | Returns "cuda" or "cpu" based on availability |
+| `clear_device_cache()` | 113-118 | Cache invalidation for testing |
+
+**Detection Priority:**
+1. PyTorch CUDA (`torch.cuda.is_available()`)
+2. ONNX Runtime CUDAExecutionProvider
+3. CPU fallback (always available)
+4. Modal environment detection via `MODAL_TOKEN_ID`, `MODAL_ENVIRONMENT`
+
+#### ML IQA Device Priority
+**File:** `src/image_preprocessing_detector/detection/iqa_ml.py` (927 lines)
+
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `Device` enum | 45-48 | GPU, CPU, MODAL constants |
+| `ModelType` enum | 51-53 | STUDENT, TEACHER identifiers |
+| `EscalationDecision` | 56-65 | Tracks escalation reason/metadata |
+| `MLIQADetector.__init__()` | 120-180 | Detector initialization with device preference |
+| `_detect_device()` | 183-210 | Auto-detection: Local GPU → CPU → Modal |
+| `run_student_inference()` | 350-420 | ResNet-18 inference with timing |
+| `run_teacher_inference()` | 423-495 | ResNet-50 high-capacity inference |
+| `should_escalate_to_teacher()` | 500-560 | Uncertainty-based escalation |
+| `should_escalate_due_to_discrepancy()` | 563-620 | Classical vs ML discrepancy check |
+| `run_pipeline()` | 700-800 | Main orchestration pipeline |
+
+**ONNX Provider Configuration (lines 215-225):**
+```python
+providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]  # GPU path
+providers = ["CPUExecutionProvider"]  # CPU-only path
+```
+
+#### Discrepancy Analysis
+**File:** `src/image_preprocessing_detector/detection/discrepancy.py`
+
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `DiscrepancyThresholds` | 25-85 | Per-head threshold config |
+| `ClassicalScores` | 90-120 | 8-dimensional classical IQA scores |
+| `MLScores` | 123-150 | ML model quality scores |
+| `DiscrepancyAnalyzer` | 155-280 | Weighted discrepancy computation |
+| `EscalationReason` | 20-23 | UNCERTAINTY, DISCREPANCY, FORCED, NONE |
+
+**Default Thresholds:**
+- Blur: 0.25, Contrast: 0.30, Skew: 0.20
+- Noise: 0.35, Compression: 0.35, Illumination: 0.30
+- Aggregate threshold: 0.25, Min heads exceeded: 1
+
+#### Configuration
+**Files:** `configs/modal_phase2.yaml`, `configs/modal_phase3.yaml`
+
+```yaml
+device_priority: ["cuda:0", "cpu", "modal"]
+teacher_inference:
+  enabled: true
+  uncertainty_threshold: 0.3
+  discrepancy_threshold: 0.25
+```
+
+---
+
+### 3.2 Budget Enforcement ✅
+
+**Status:** 100% Complete (tests missing)
+
+**File:** `src/image_preprocessing_detector/utils/budget_enforcement.py` (388 lines)
+
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `BudgetConfig` | 20-45 | Daily/monthly limits, cost per GPU hour |
+| `BudgetState` | 48-75 | Persistent state with reset dates |
+| `BudgetCheckResult` | 78-95 | Allowed/denied with remaining budget |
+| `BudgetEnforcer.__init__()` | 100-140 | Loads config and state from disk |
+| `check_budget()` | 145-200 | Returns check result with daily/monthly remaining |
+| `record_usage()` | 203-250 | Records GPU seconds, calculates cost |
+| `get_usage_summary()` | 253-290 | Returns usage statistics |
+| `_auto_reset()` | 293-330 | Daily/monthly auto-reset logic |
+| `_save_state()` | 333-355 | JSON persistence |
+
+**State File:** `~/.cache/imgprep/modal_budget.json`
+
+**Environment Variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `IMGPREP_MODAL_BUDGET_ENABLED` | `true` | Enable/disable enforcement |
+| `IMGPREP_MODAL_DAILY_BUDGET` | `10` | Daily limit ($) |
+| `IMGPREP_MODAL_MONTHLY_BUDGET` | `100` | Monthly limit ($) |
+| `IMGPREP_MODAL_GPU_COST_HOUR` | `0.36` | T4 hourly rate ($) |
+
+**Gap:** No unit tests exist for `BudgetEnforcer`
+
+---
+
+### 3.3 Batch Processing ✅
+
+**Status:** 80% Complete
+
+**File:** `src/image_preprocessing_detector/api/routes/batch.py` (411 lines)
+
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `BatchJob` | 25-45 | Job state dataclass |
+| `BatchRequest` | 48-70 | Pydantic input validation |
+| `BatchResponse` | 73-90 | Response with job_id, status |
+| `BATCH_JOBS` | 95 | In-memory job storage |
+| `POST /batch` | 100-160 | Submit batch job |
+| `GET /batch/{job_id}/status` | 165-195 | Get job progress |
+| `GET /batch/{job_id}/result` | 200-250 | Get results (paginated) |
+| `DELETE /batch/{job_id}` | 255-280 | Delete job |
+| `process_batch_job()` | 285-380 | Async processing function |
+| `process_single_file()` | 383-411 | Per-file processing |
+
+**Processing Options** (from `api/config.py`):
+- `max_batch_size`: 100
+- `max_file_size_mb`: 50
+- `prefer_gpu`: true
+- `enable_corrections`: true
+- `enable_teacher`: false
+
+**Limitations:**
+- Line 42: `# In-memory job store (replace with Redis for production)`
+- Uses FastAPI `BackgroundTasks` (single-threaded, sequential)
+- No adaptive batch sizing
+
+---
+
+### 3.4 Metrics & Observability ✅
+
+**Status:** 100% Complete
+
+**File:** `src/image_preprocessing_detector/monitoring/__init__.py` (687 lines)
+
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `MetricsConfig` | 30-55 | Environment-based configuration |
+| `CardinalityGuard` | 60-100 | Label explosion prevention (max 100 values) |
+| `MetricsCollector` | 105-450 | Singleton metrics manager |
+| `_setup_metrics()` | 150-280 | Prometheus metric creation |
+| `record_processing()` | 285-320 | Page/document processing |
+| `record_latency()` | 323-355 | Operation latency |
+| `record_teacher_usage()` | 358-390 | Teacher invocations/blocks |
+| `record_cost()` | 393-420 | GPU seconds and cost |
+| `generate_latest()` | 500-520 | Prometheus export |
+| `@timed()` decorator | 550-600 | Automatic operation timing |
+
+**Prometheus Metrics Defined:**
+
+| Metric | Type | Labels |
+|--------|------|--------|
+| `imgprep_processing_duration_seconds` | Histogram | operation, device |
+| `imgprep_gate_duration_seconds` | Histogram | gate_type |
+| `imgprep_iqa_duration_seconds` | Histogram | model_type, device |
+| `imgprep_correction_duration_seconds` | Histogram | correction_type |
+| `imgprep_pages_processed_total` | Counter | status, device |
+| `imgprep_documents_processed_total` | Counter | status |
+| `imgprep_errors_total` | Counter | error_type |
+| `imgprep_corrections_applied_total` | Counter | correction_type |
+| `imgprep_teacher_invocations_total` | Counter | reason |
+| `imgprep_teacher_blocked_total` | Counter | reason |
+| `imgprep_queue_depth` | Gauge | queue_name |
+| `imgprep_active_workers` | Gauge | worker_type |
+| `imgprep_gpu_memory_bytes` | Gauge | device |
+| `imgprep_model_loaded` | Gauge | model_name |
+| `imgprep_modal_gpu_seconds_total` | Counter | - |
+| `imgprep_estimated_cost_dollars_total` | Counter | - |
+| `imgprep_quality_score` | Histogram | quality_type |
+| `imgprep_escalation_rate` | Gauge | - |
+
+**Structured Logging**
+**File:** `src/image_preprocessing_detector/utils/log_config.py` (218 lines)
+
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `setup_logging()` | 30-100 | JSON (prod) or rich console (dev) |
+| `get_logger()` | 105-125 | Module-specific structlog instances |
+| `log_performance()` | 130-165 | Standardized operation timing |
+| `LogContext` | 170-200 | Contextual logging |
+
+**Environment Variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `IMGPREP_ENV` | `development` | Namespace |
+| `IMGPREP_METRICS_ENABLED` | `true` | Enable metrics |
+| `IMGPREP_METRICS_SERVER` | `false` | HTTP endpoint |
+| `IMGPREP_MODAL_COST_PER_GPU_SEC` | `0.0001` | Cost tracking |
+
+---
+
+### 3.5 Model Optimization ✅
+
+**Status:** 100% Complete
+
+**File:** `src/image_preprocessing_detector/models/model_optimizer.py` (1436 lines)
+
+#### ONNX Export
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `ONNXExportConfig` | 82-99 | Export configuration |
+| `ModelOptimizer.export_to_onnx()` | 396-484 | PyTorch → ONNX conversion |
+| `_verify_onnx_output()` | 486-555 | Output verification |
+
+#### INT8 Quantization
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `QuantizationConfig` | 101-118 | Quantization settings |
+| `CalibrationDataset` | 247-361 | Calibration data reader |
+| `quantize_int8()` | 557-637 | ONNX Runtime static quantization |
+
+#### TensorRT Acceleration
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `convert_to_tensorrt()` | 639-734 | ONNX → TensorRT engine |
+| `_benchmark_tensorrt()` | 826-905 | TensorRT inference benchmarking |
+
+**TensorRT Features:**
+- FP16/INT8 precision modes (lines 689-692)
+- Dynamic batch optimization profiles (lines 707-715)
+- Memory pool configuration (line 686)
+
+#### Benchmarking
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `BenchmarkResult` | 121-149 | P50/P95/P99 latency, throughput |
+| `benchmark_model()` | 736-766 | Model benchmarking entry point |
+| `_benchmark_onnx()` | 768-824 | ONNX Runtime benchmarking |
+
+#### Threshold Tuning
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `ThresholdConfig` | 151-193 | Per-head decision thresholds |
+| `ThresholdTuner` | 908-1056 | F1/precision/recall optimization |
+| `tune_all_heads()` | 1015-1056 | Multi-head threshold tuning |
+
+#### Deployment & Registry
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `ModelManifest` | 195-245 | Deployment manifest with checksums |
+| `ModelDeploymentPackage` | 1059-1245 | Package creation and verification |
+| `ModelRegistry` | 1247-1436 | Version management and comparison |
+
+---
+
+### 3.6 Modal Integration ⚠️
+
+**Status:** 50% Complete (Infrastructure only)
+
+**File:** `modal/app.py` (72 lines)
+
+| Component | Lines | Description |
+|-----------|-------|-------------|
+| `app` definition | 10 | `modal.App("image-detection")` |
+| `ml_image` | 15-35 | Docker image with ML dependencies |
+| `gcs_secret` | 38 | GCS credentials secret |
+| `dataset_volume` | 41 | Persistent dataset volume |
+| `checkpoint_volume` | 44 | Model checkpoint volume |
+| `hello_gpu()` | 50-70 | GPU availability test |
+
+**File:** `modal/train_phase2_iqa.py`
+- ResNet-50 teacher model training
+- GCS integration for datasets
+- T4/A10 GPU configuration
+
+**Missing:**
+- No `@modal.function` decorators for inference endpoints
+- No remote teacher inference routing
+- No serverless hardening (auth, timeouts, retries)
+
+---
+
+## 4. Gap Analysis
+
+### 4.1 Critical Gaps
+
+#### Gap 1: Modal Remote Inference ❌
+
+**Impact:** Teacher model cannot fall back to Modal GPU when local GPU unavailable
+
+**Searched patterns:** `remote.?inference|ModalInference|modal.?function|@modal\.function`
+**Result:** No files found in `src/`
+
+**Required implementation:**
+```python
+# modal/inference.py (proposed)
+@modal.function(gpu="T4", timeout=30, retries=3)
+def run_teacher_inference(image_bytes: bytes) -> dict:
+    """Remote teacher inference on Modal GPU."""
+    ...
+```
+
+**Effort estimate:** Medium (1-2 days)
+
+---
+
+#### Gap 2: Worker Pool / Task Queue ❌
+
+**Impact:** Cannot scale batch processing across multiple workers
+
+**Searched patterns:** `celery|Celery`, `rq\.|RQ|redis.?queue`, `worker.?pool|TaskQueue`
+**Result:** Only found in docs/planning, not in `src/`
+
+**Evidence:**
+- `batch.py:42`: `# In-memory job store (replace with Redis for production)`
+- Uses FastAPI `BackgroundTasks` (single-threaded)
+
+**Required implementation:**
+- Celery workers with Redis broker
+- Per-queue device caps
+- Graceful degradation on queue depth
+- Worker health checks
+
+**Effort estimate:** High (3-5 days)
+
+---
+
+#### Gap 3: Circuit Breaker Pattern ❌
+
+**Impact:** No resilience when Modal service is unavailable
+
+**Searched patterns:** `circuit.?breaker|CircuitBreaker`
+**Result:** Found in test comments only, not implemented
+
+**Evidence:** `tests/integration/test_modal_outage_simulation.py` mentions circuit breaker but only simulates outages
+
+**Required implementation:**
+- State machine: CLOSED → OPEN → HALF_OPEN
+- Failure threshold tracking
+- Automatic recovery with exponential backoff
+
+**Effort estimate:** Low-Medium (1 day)
+
+---
+
+### 4.2 High Priority Gaps
+
+#### Gap 4: Budget Enforcement Tests ❌
+
+**Impact:** No test coverage for critical cost control logic
+
+**Searched patterns:** `test_budget|BudgetEnforcer|budget_enforcement` in `tests/`
+**Result:** No files found
+
+**Risk:** Budget enforcement bugs could lead to unexpected Modal costs
+
+**Effort estimate:** Low (0.5 day)
+
+---
+
+#### Gap 5: Redis Persistent Store ❌
+
+**Impact:** Batch jobs lost on server restart
+
+**Evidence:**
+- `batch.py:42`: `# In-memory job store (replace with Redis for production)`
+- `middleware.py:283`: `For production, consider Redis-based rate limiting.`
+- `middleware.py:312`: `# For precise distributed rate limiting, use Redis or similar.`
+
+**Effort estimate:** Medium (1-2 days)
+
+---
+
+### 4.3 Medium Priority Gaps
+
+#### Gap 6: Micro-Batching / Adaptive Batch Size ❌
+
+**Searched patterns:** `micro.?batch|MicroBatch|adaptive.?batch`
+**Result:** Only in `docs/planning/PROJECT_PLAN.md`
+
+**Impact:** Cannot achieve 2x throughput target
+
+---
+
+#### Gap 7: Tensor/Page Caching ❌
+
+**Searched patterns:** `tensor.?cache|TensorCache|page.?cache|PageCache`
+**Result:** No files found
+
+**Current caching:** Only `@lru_cache(maxsize=1)` on `probe_device_capabilities()`
+
+---
+
+#### Gap 8: ONNX Session Pooling ❌
+
+**Searched patterns:** `session.?reuse|SessionPool|onnx.?session.?cache`
+**Result:** No files found
+
+**Impact:** Cold start overhead on each inference request
+
+---
+
+## 5. Test Coverage
+
+### 5.1 Phase 4 Test Summary
+
+| Test File | Test Count | Component |
+|-----------|------------|-----------|
+| `tests/unit/utils/test_device_probe.py` | 14 | Device detection |
+| `tests/integration/test_device_priority.py` | 20 | Device priority rules |
+| `tests/e2e/test_device_priority_e2e.py` | 15 | End-to-end device selection |
+| `tests/unit/detection/test_discrepancy.py` | 24 | Discrepancy analysis |
+| `tests/api/test_batch.py` | 13 | Batch API endpoints |
+| `tests/api/test_batch_coverage.py` | 18 | Batch edge cases |
+| `tests/integration/test_batch_regression.py` | 9 | Batch regression |
+| `tests/integration/test_modal_outage_simulation.py` | 15 | Modal outage scenarios |
+| `tests/unit/monitoring/test_metrics.py` | 42 | Prometheus metrics |
+| `tests/unit/monitoring/test_metrics_stubs.py` | 11 | Metric stubs |
+| `tests/unit/models/test_model_optimizer.py` | 41 | Model optimization |
+| **Total** | **222** | |
+
+### 5.2 Coverage Gaps
+
+| Component | Has Tests | Notes |
+|-----------|-----------|-------|
+| `device_probe.py` | ✅ Yes | 14 unit tests |
+| `iqa_ml.py` | ✅ Yes | Via integration tests |
+| `discrepancy.py` | ✅ Yes | 24 unit tests |
+| `budget_enforcement.py` | ❌ **No** | **Critical gap** |
+| `batch.py` | ✅ Yes | 40 tests total |
+| `monitoring/__init__.py` | ✅ Yes | 53 tests |
+| `model_optimizer.py` | ✅ Yes | 41 tests |
+
+---
+
+## 6. Risk Assessment
+
+### 6.1 Production Readiness Risks
+
+| Risk | Severity | Likelihood | Mitigation |
+|------|----------|------------|------------|
+| Modal inference unavailable | High | Medium | Implement circuit breaker |
+| Budget exceeded | High | Low | Add budget enforcement tests |
+| Batch jobs lost | Medium | High | Implement Redis persistence |
+| Single-threaded bottleneck | Medium | High | Implement worker pool |
+| Cold start latency | Low | Medium | Implement session pooling |
+
+### 6.2 Success Criteria Assessment
+
+| Criterion | Target | Current Status | Gap |
+|-----------|--------|----------------|-----|
+| Device selection compliance | 100% | ✅ Implemented | Needs validation |
+| Modal budget adherence | Within limits | ✅ Implemented | Needs tests |
+| Teacher CPU blocking | 100% | ⚠️ QA override exists | Document behavior |
+| Latency p95 (GPU) | <150ms | ❓ Not measured | Add benchmark gate |
+| Latency p95 (CPU) | <400ms | ❓ Not measured | Add benchmark gate |
+| Throughput (GPU) | >6 pages/sec | ❓ Not measured | Add benchmark gate |
+| Throughput (CPU) | >2 pages/sec | ❓ Not measured | Add benchmark gate |
+| Batch speedup | >2x | ❌ No micro-batching | Implement batching |
+| Test coverage | >80% | ⚠️ Budget tests missing | Add tests |
+
+---
+
+## 7. Recommendations
+
+### 7.1 Immediate Actions (Blocking Production)
+
+| Priority | Action | Effort | Owner |
+|----------|--------|--------|-------|
+| P0 | Add Modal remote inference endpoint | 1-2 days | TBD |
+| P0 | Add budget enforcement unit tests | 0.5 day | TBD |
+| P0 | Implement circuit breaker for Modal | 1 day | TBD |
+
+### 7.2 Short-Term Actions (Before Production)
+
+| Priority | Action | Effort | Owner |
+|----------|--------|--------|-------|
+| P1 | Implement Redis persistence for batch jobs | 1-2 days | TBD |
+| P1 | Add Celery worker pool | 3-5 days | TBD |
+| P1 | Add P95/P99 latency benchmark gate | 1 day | TBD |
+
+### 7.3 Medium-Term Actions (Post-Production)
+
+| Priority | Action | Effort | Owner |
+|----------|--------|--------|-------|
+| P2 | Implement micro-batching | 2-3 days | TBD |
+| P2 | Add tensor/page caching | 2-3 days | TBD |
+| P2 | Implement ONNX session pooling | 1-2 days | TBD |
+
+### 7.4 Suggested Sprint Breakdown
+
+**Sprint 1 (Week 1):** Critical Infrastructure
+- [ ] Modal remote inference endpoint
+- [ ] Circuit breaker pattern
+- [ ] Budget enforcement tests
+
+**Sprint 2 (Week 2):** Production Hardening
+- [ ] Redis persistence
+- [ ] Celery worker integration
+- [ ] Latency benchmarks
+
+**Sprint 3 (Week 3):** Performance Optimization
+- [ ] Micro-batching
+- [ ] Caching strategy
+- [ ] Session pooling
+
+---
+
+## Appendix: File Locations
+
+### Source Files
+
+| Component | Path |
+|-----------|------|
+| Device Probing | `src/image_preprocessing_detector/utils/device_probe.py` |
+| ML IQA | `src/image_preprocessing_detector/detection/iqa_ml.py` |
+| Discrepancy Analysis | `src/image_preprocessing_detector/detection/discrepancy.py` |
+| Budget Enforcement | `src/image_preprocessing_detector/utils/budget_enforcement.py` |
+| Batch API | `src/image_preprocessing_detector/api/routes/batch.py` |
+| API Config | `src/image_preprocessing_detector/api/config.py` |
+| Monitoring | `src/image_preprocessing_detector/monitoring/__init__.py` |
+| Logging | `src/image_preprocessing_detector/utils/log_config.py` |
+| Model Optimizer | `src/image_preprocessing_detector/models/model_optimizer.py` |
+| Modal App | `modal/app.py` |
+| Modal Training | `modal/train_phase2_iqa.py` |
+
+### Configuration Files
+
+| Config | Path |
+|--------|------|
+| Modal Phase 2 | `configs/modal_phase2.yaml` |
+| Modal Phase 3 | `configs/modal_phase3.yaml` |
+
+### Test Files
+
+| Test | Path |
+|------|------|
+| Device Probe | `tests/unit/utils/test_device_probe.py` |
+| Device Priority | `tests/integration/test_device_priority.py` |
+| Device E2E | `tests/e2e/test_device_priority_e2e.py` |
+| Discrepancy | `tests/unit/detection/test_discrepancy.py` |
+| Batch API | `tests/api/test_batch.py` |
+| Batch Coverage | `tests/api/test_batch_coverage.py` |
+| Batch Regression | `tests/integration/test_batch_regression.py` |
+| Modal Outage | `tests/integration/test_modal_outage_simulation.py` |
+| Metrics | `tests/unit/monitoring/test_metrics.py` |
+| Metrics Stubs | `tests/unit/monitoring/test_metrics_stubs.py` |
+| Model Optimizer | `tests/unit/models/test_model_optimizer.py` |
+
+---
+
+## Document History
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0 | 2025-12-02 | Claude Code | Initial evaluation |
+
+---
+
+*Generated by automated codebase analysis. Verify findings before implementation.*
