@@ -66,10 +66,12 @@ DocumentMetadata.json          OCRDocument.json         FusedDocument.json    Ve
 | **Phase 1C**: Enhanced Classical IQA | ✅ COMPLETE | 100% | 5 additional IQA detectors + discrepancy framework + DQS weight calibration |
 | **Phase 2**: Core Components | ✅ MOSTLY COMPLETE | ~95% | Schema, PDF type, layout-lite, DQS, routing - integration testing remaining |
 | **Phase 3**: ML IQA | ✅ COMPLETE | 100% | **BOTH MODELS TRAINED** - Teacher (50 epochs, val_loss=0.27) & Student (30 epochs, val_loss=0.14) |
-| **Phase 4**: Device Priority | ⏳ NOT STARTED | 0% | Ready to begin - Phase 3 complete |
-| **Phase 5**: Testing & Deploy | ⏳ NOT STARTED | 0% | Blocked by Phase 4 |
-| **Phase 6**: Monitoring | ⏳ NOT STARTED | 0% | Blocked by Phase 4-5 |
-| **Phase 7**: ML IQA Optimization | ⏳ PLANNED | 0% | Optimization phase - not blocking MVP |
+| **Phase 4**: Device Priority | ⚠️ PARTIAL | 25% | Device probing complete (184 lines), orchestrator missing - 9-11 days remaining |
+| **Phase 5**: Testing & Deploy | ⚠️ PARTIAL | 40% | API framework + E2E tests (2000+ lines), endpoints stub - 25-30 days remaining |
+| **Phase 6**: Monitoring | ✅ INFRASTRUCTURE | 70% | **3000+ lines ready** (drift, alerting, active learning), integration missing - 10-12 days |
+| **Phase 7**: ML IQA Optimization | ❌ NOT STARTED | 0% | Optimization phase - not blocking MVP |
+| **Phase 8**: DQS & Routing | ⚠️ PARTIAL | 50% | DQS logic complete, PDF classification missing (integrated into Phase 2) |
+| **Phase 9**: Element Classifiers | ❌ NOT STARTED | 0% | Migrated from Project B - dataset acquisition needed, 20-25 days estimated |
 
 **Phase 3 Training Complete (Nov 22, 2025)**:
 
@@ -2582,6 +2584,155 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - Current binary-trained models (v1.0) are production-ready and should be used initially
 - Continuous retraining provides incremental improvement (~10-20% better calibration, severity prediction)
 - Can be deferred until after initial production deployment and feedback collection
+
+---
+
+### Phase 8: Document Quality Score (DQS) & Routing (Integrated into Phase 2)
+
+**Status**: ⚠️ ~50% COMPLETE - DQS Implemented, PDF Classification Missing (December 2025 audit)
+
+**Note**: Phase 8 functionality is integrated into Phase 2 deliverables, documented here for completeness.
+
+#### Completed Deliverables (50%)
+
+- ✅ DQS Calculation (routing/dqs.py - ~200 lines)
+  - Degradation score (IQA metric aggregation)
+  - Structural complexity score (layout-based)
+  - Pre-OCR risk (combined DQS metric)
+- ✅ Routing Logic (routing/recommendation.py - ~150 lines)
+  - 4 strategies defined: ocr_fast, ocr_advanced, vision_simple, vision_structured
+
+#### Outstanding Issues (50%)
+
+- ❌ PDF Type Classification (routing/pdf_classifier.py - stub only)
+  - Image-only detection
+  - Born-digital detection
+  - Hybrid classification
+  - Text layer analysis
+- ❌ CLI integration (DQS not calculated in `imgprep`)
+- ❌ API integration (routing not exposed in endpoints)
+- ❌ JSON output (schema exists, not populated)
+
+**Test Coverage**: 28% (needs improvement to 80%)
+
+**Completion Estimate**: 8-10 developer days remaining (~50% of phase)
+
+**See Phase 2 for detailed sprint breakdown and integration work.**
+
+---
+
+### Phase 9: Element Classification Models ❌ NOT STARTED
+
+**Status**: ❌ 0% COMPLETE - Not Started (Migrated from Project B) (December 2025 audit)
+
+**Priority**: LOW - Not blocking MVP deployment
+
+**Timeline**: 3-4 weeks (after Phases 4-8 complete)
+
+**Purpose**: Train specialized classifiers for element-level routing decisions and content analysis. Originally planned for Project B but migrated to Project A for better preprocessing integration.
+
+#### Overview
+
+These classifiers enhance routing decisions and quality assessment by providing element-specific metadata. They inform downstream processing (Project B) about which specialist OCR engines to use for different document components.
+
+**Key Models**:
+
+- Handwriting Classifier (binary: printed vs handwritten)
+- Table Type Classifier (6-class: simple_grid, merged_header, nested_rows, financial, form_like, scientific)
+- Formula Complexity Classifier (5-class: simple_inline, block_equation, multi_line, matrix, handwritten_math)
+- Parasitic Element Detector (4-class: watermark, stamp, signature, clean)
+
+#### Deliverables
+
+**9.1 Handwriting Classifier**
+
+- **Architecture**: ResNet-18 (full variant), MobileNetV3 (light variant)
+- **Classes**: 2 (printed, handwritten)
+- **Dataset**: IAM Handwriting Database + custom scanned documents
+- **Target Accuracy**: >96% (full), >92% (light)
+- **Use Case**: Route handwritten forms to ICR engines vs standard OCR
+- **Performance Target**: <5ms CPU (light), <2ms GPU (full)
+
+**9.2 Table Type Classifier**
+
+- **Architecture**: ResNet-18 (full variant), MobileNetV3 (light variant)
+- **Classes**: 6 (simple_grid, merged_header, nested_rows, financial, form_like, scientific)
+- **Dataset**: PubTables-1M + custom annotations
+- **Target Accuracy**: >90%
+- **Use Case**: Route to TableFormer (simple) vs StructEqTable (complex)
+- **Performance Target**: <5ms CPU (light), <2ms GPU (full)
+
+**9.3 Formula Complexity Classifier**
+
+- **Architecture**: ResNet-18 (full variant), MobileNetV3 (light variant)
+- **Classes**: 5 (simple_inline, block_equation, multi_line, matrix, handwritten_math)
+- **Dataset**: IM2LATEX-100K + arXiv papers
+- **Target Accuracy**: >88%
+- **Use Case**: Route to Texify (simple) vs UniMERNet (complex)
+- **Performance Target**: <5ms CPU (light), <2ms GPU (full)
+
+**9.4 Parasitic Content Detector**
+
+- **Architecture**: ResNet-18 (full variant), MobileNetV3 (light variant)
+- **Classes**: 4 (watermark, stamp, signature, clean)
+- **Dataset**: Synthetic watermarks + real scanned documents
+- **Target Accuracy**: >95% (watermark detection critical)
+- **Use Case**: Flag non-content elements for exclusion from RAG indexing
+- **Performance Target**: <5ms CPU (light), <2ms GPU (full)
+
+#### Integration
+
+**Model Registry**:
+
+- Export to ONNX (full and light variants)
+- Register in `models/registry.json` with metadata
+- Version control with semantic versioning (v1.0.0, v1.1.0, etc.)
+
+**JSON Output Enhancement**:
+
+- Populate `detected_elements[].classifications` field
+- Add confidence scores for each classifier
+- Include variant used (full vs light)
+
+**Project B Handoff**:
+
+- Element-level classifications enable specialist routing
+- Handwriting → ICR engines
+- Complex tables → StructEqTable
+- Complex formulas → UniMERNet
+- Parasitic elements → exclude from RAG
+
+#### Training Infrastructure
+
+**Reuse Phase 3 Setup**:
+
+- Modal GPU training (T4/A10)
+- Knowledge distillation (full → light)
+- ONN X export pipeline
+- Model registry integration
+
+**Estimated Cost**: ~$15-20 (4 models × ~$4 each on Modal GPU)
+
+#### Blockers
+
+- **Dataset Acquisition**: Labeled datasets for all 4 classifiers not yet acquired
+  - IAM Handwriting: Available (free)
+  - PubTables-1M: Available (free)
+  - IM2LATEX-100K: Available (free)
+  - Watermark dataset: Needs creation (synthetic generation)
+
+- **Low Priority**: Phases 4-8 must be production-ready first
+
+**Completion Estimate**: 20-25 developer days + dataset acquisition time
+
+#### Success Metrics
+
+- **Handwriting Classifier Accuracy**: > 96% (full), > 92% (light)
+- **Table Type Classifier Accuracy**: > 90%
+- **Formula Complexity Correlation**: > 0.85 (Pearson correlation with human judgments)
+- **Parasitic Element Recall**: > 95% (detect all watermarks/stamps)
+- **Inference Latency (per classifier)**: < 5ms CPU (light), < 2ms GPU (full)
+- **Model Size**: < 25MB (ONNX optimized, per model)
 
 ---
 
