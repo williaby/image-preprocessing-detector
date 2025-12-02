@@ -71,9 +71,10 @@ class TestValidatePath:
         # in C-based libraries, potentially accessing different files
         malicious_path = tmp_path / "test.txt\x00malicious"
 
-        # Python's pathlib will raise ValueError for null bytes,
-        # which is caught and re-raised as PathValidationError
-        with pytest.raises((PathValidationError, ValueError)):
+        # Python's pathlib may raise ValueError for null bytes; our public
+        # API converts that to PathValidationError so callers see a
+        # consistent exception type.
+        with pytest.raises(PathValidationError):
             validate_path(malicious_path, must_exist=False)
 
     def test_relative_path_resolved_to_absolute(
