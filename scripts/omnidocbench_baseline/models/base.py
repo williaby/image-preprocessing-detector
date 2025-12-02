@@ -277,7 +277,7 @@ class LayoutModel(BaseModel):
         for key, value in layout.items():
             if isinstance(value, bool):
                 labels[key] = value
-            elif isinstance(value, int | float):
+            elif isinstance(value, (int, float)):
                 scores[key] = float(value)
             elif key == "layout_type":
                 labels[key] = value  # Keep string value

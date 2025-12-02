@@ -44,6 +44,8 @@ filelock==3.20.0
     # via huggingface-hub
 flatbuffers==25.9.23
     # via onnxruntime-gpu
+fonttools==4.61.0
+    # via image-preprocessing-detector
 frozenlist==1.8.0
     # via
     #   aiohttp

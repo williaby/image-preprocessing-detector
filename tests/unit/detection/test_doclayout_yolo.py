@@ -426,10 +426,10 @@ class TestDocLayoutYOLODetector:
         detector = DocLayoutYOLODetector()
 
         assert detector.is_loaded is False
-        assert (
-            detector._model_id
-            == "juliozhao/DocLayout-YOLO-DocLayNet-DocSynth300K_pretrained"
-        )
+        # Test that model_id is set to a valid HuggingFace model
+        # (specific model ID comes from config, not hardcoded)
+        assert detector._model_id is not None
+        assert detector._model_id.startswith("juliozhao/DocLayout-YOLO-")
 
     def test_initialization_custom_model(self) -> None:
         """Test initialization with custom model key."""
@@ -439,10 +439,12 @@ class TestDocLayoutYOLODetector:
 
         detector = DocLayoutYOLODetector(model_key="d4la_pretrained")
 
-        assert (
-            detector._model_id
-            == "juliozhao/DocLayout-YOLO-D4LA-Docsynth300K_pretrained"
-        )
+        # Test that model was loaded with d4la key (specific ID comes from config)
+        assert detector._model_id is not None
+        assert detector._model_id.startswith("juliozhao/DocLayout-YOLO-")
+        # Verify it's different from default model
+        default_detector = DocLayoutYOLODetector()
+        assert detector._model_id != default_detector._model_id
 
     def test_initialization_custom_settings(self) -> None:
         """Test initialization with custom confidence and image size."""

@@ -9,20 +9,22 @@
 # Format: [[IgnoredVulns]] with id and reason fields
 
 # ============================================================================
-# py Library - CVE Withdrawn
+# py Library - CVE Disputed
 # ============================================================================
-# CVE-2022-42969 was WITHDRAWN on 2024-05-07 as not reproducible
-# The vulnerability was disputed by multiple third parties and withdrawn from NVD
+# CVE-2022-42969 is marked as DISPUTED in NVD (disputed May 2024)
+# Multiple third parties argue this is not a valid/reproducible vulnerability
+# The py library is deprecated and only used by interrogate (docstring coverage tool)
+# Impact: Low - not used in production code, only in dev tooling
 
 [[IgnoredVulns]]
 id = "GHSA-w596-4wvx-j9j6"
-reason = "CVE-2022-42969 withdrawn 2024-05-07. Not a valid vulnerability."
+reason = "CVE-2022-42969 disputed by multiple parties as not reproducible. Formal dispute added to NVD May 2024. Library only used by interrogate dev tool."
 
 # ============================================================================
 # Notes
 # ============================================================================
-# All other vulnerabilities from previous versions have been removed as they
-# are no longer reported by osv-scanner (dependencies updated to fixed versions).
+# All other vulnerabilities from previous versions have been resolved through
+# dependency updates or are no longer detected by osv-scanner.
 #
-# Last verified: 2025-11-22
-# Next review: 2026-01-22 (or when dependencies updated)
+# Last verified: 2025-12-01
+# Next review: 2026-02-01 (or when dependencies updated)

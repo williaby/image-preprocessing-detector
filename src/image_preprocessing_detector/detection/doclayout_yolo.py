@@ -160,17 +160,25 @@ class DocLayoutClass(str, Enum):
     def to_doclaynet(self) -> DocLayoutClass:
         """Map DocStructBench class to equivalent DocLayNet class.
 
+        This mapping translates between two document layout taxonomies:
+        - DocStructBench: Used by DocLayout-YOLO training dataset
+        - DocLayNet: Canonical schema used by downstream pipeline
+
         Returns:
             DocLayNet-equivalent class (may return self if already DocLayNet)
         """
+        # Taxonomy translation map (DocStructBench → DocLayNet)
+        # Each entry maps DocStructBench terminology to its DocLayNet equivalent
         mapping = {
-            self.PLAIN_TEXT: self.TEXT,
+            self.PLAIN_TEXT: self.TEXT,  # "plain text" → "text"
+            # FIGURE is DocStructBench's term for images/diagrams (maps to DocLayNet's PICTURE)
+            # Both represent the same concept: non-textual visual content
             self.FIGURE: self.PICTURE,
-            self.FIGURE_CAPTION: self.CAPTION,
-            self.TABLE_CAPTION: self.CAPTION,
-            self.TABLE_FOOTNOTE: self.FOOTNOTE,
-            self.ISOLATE_FORMULA: self.FORMULA,
-            self.FORMULA_CAPTION: self.CAPTION,
+            self.FIGURE_CAPTION: self.CAPTION,  # Caption for figures/images
+            self.TABLE_CAPTION: self.CAPTION,  # Caption for tables
+            self.TABLE_FOOTNOTE: self.FOOTNOTE,  # Table footnotes
+            self.ISOLATE_FORMULA: self.FORMULA,  # Standalone equations
+            self.FORMULA_CAPTION: self.CAPTION,  # Caption for formulas
         }
         return mapping.get(self, self)
 

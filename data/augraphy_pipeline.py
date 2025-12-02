@@ -28,8 +28,11 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 
+from image_preprocessing_detector.utils import get_logger
 from image_preprocessing_detector.utils.datetime_compat import utc_now
 from image_preprocessing_detector.utils.path_security import validate_safe_path
+
+logger = get_logger(__name__)
 
 # Augraphy imports - will raise ImportError if not installed
 try:
@@ -174,6 +177,9 @@ class AugraphyLabel:
             overall_quality=data.get("overall_quality", 1.0),
             augmentation_params=data.get("augmentation_params", {}),
             applied_augmentations=data.get("applied_augmentations", []),
+            generation_timestamp=data.get(
+                "generation_timestamp", utc_now().isoformat()
+            ),
         )
 
 
@@ -312,6 +318,16 @@ class AugraphyContinuousLabeler:
 
         self.severity_preset = severity_preset
         self.random_seed = random_seed
+
+        # Apply random seed for reproducibility
+        if random_seed is not None:
+            import random
+
+            import numpy as np
+
+            random.seed(random_seed)
+            np.random.seed(random_seed)
+
         self._configure_pipeline()
 
     def _configure_pipeline(self) -> None:
@@ -526,7 +542,9 @@ class AugraphyContinuousLabeler:
         augmented, labels = self.augment(image)
 
         # Save image
-        cv2.imwrite(str(output_image_path), augmented)
+        success = cv2.imwrite(str(output_image_path), augmented)
+        if not success:
+            raise OSError(f"Failed to write image: {output_image_path}")
 
         # Save labels
         with open(output_label_path, "w") as f:
@@ -587,13 +605,19 @@ def batch_augment(
         image_paths.extend(input_dir.glob(f"*{ext}"))
         image_paths.extend(input_dir.glob(f"*{ext.upper()}"))
 
-    print(f"Found {len(image_paths)} images in {input_dir}")
-    print(f"Generating {augmentations_per_image} augmentations per image...")
+    logger.info(
+        "Found images for augmentation",
+        count=len(image_paths),
+        input_dir=str(input_dir),
+    )
+    logger.info(
+        "Starting batch augmentation", augmentations_per_image=augmentations_per_image
+    )
 
     for image_path in image_paths:
         image = cv2.imread(str(image_path))
         if image is None:
-            print(f"Warning: Could not load {image_path}")
+            logger.warning("Could not load image", path=str(image_path))
             continue
 
         for i in range(augmentations_per_image):
@@ -605,7 +629,11 @@ def batch_augment(
             )
             results.append((img_path, label_path))
 
-    print(f"Generated {len(results)} augmented images with labels")
+    logger.info(
+        "Batch augmentation complete",
+        total_images=len(results),
+        output_dir=str(output_dir),
+    )
     return results
 
 

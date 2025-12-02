@@ -7,8 +7,12 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    import torch
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent / "src"))
@@ -49,76 +53,27 @@ class ResNetAdapter(IQAModel):
 
         try:
             import torch
-            import torchvision.models as models
             import torchvision.transforms as transforms
 
-            # Determine device
-            if torch.cuda.is_available():
-                self._device = torch.device("cuda")
-            else:
-                self._device = torch.device("cpu")
-
+            self._device = self._get_device(torch)
             logger.info(f"Loading {self.config.name} on {self._device}")
 
-            # Get architecture
             arch = self.config.config.get("architecture", "resnet18")
             weights = self.config.config.get("weights", "imagenet")
             checkpoint = self.config.config.get("checkpoint")
 
             # Load base model
-            if arch == "resnet18":
-                if weights == "imagenet":
-                    self._model = models.resnet18(
-                        weights=models.ResNet18_Weights.IMAGENET1K_V1
-                    )
-                else:
-                    self._model = models.resnet18(weights=None)
-            elif arch == "resnet50":
-                if weights == "imagenet":
-                    self._model = models.resnet50(
-                        weights=models.ResNet50_Weights.IMAGENET1K_V1
-                    )
-                else:
-                    self._model = models.resnet50(weights=None)
-            else:
-                raise ValueError(f"Unsupported architecture: {arch}")
+            self._model = self._load_base_model(arch, weights)
 
             # Load custom checkpoint if specified
-            if checkpoint and weights == "custom":
-                checkpoint_path = Path(checkpoint)
-                if checkpoint_path.exists():
-                    state_dict = torch.load(checkpoint_path, map_location=self._device)
-                    self._model.load_state_dict(state_dict)
-                    logger.info(f"Loaded checkpoint from {checkpoint_path}")
-                else:
-                    logger.warning(
-                        f"Checkpoint not found: {checkpoint_path}. "
-                        f"Using random weights."
-                    )
+            self._load_checkpoint_if_needed(checkpoint, weights, torch)
 
             # Move to device and set eval mode
             self._model = self._model.to(self._device)
             self._model.eval()
 
             # Setup transforms
-            input_size = self.config.config.get("input_size", 224)
-            normalize = self.config.config.get("normalize", "imagenet")
-
-            if normalize == "imagenet":
-                norm_mean = [0.485, 0.456, 0.406]
-                norm_std = [0.229, 0.224, 0.225]
-            else:
-                norm_mean = [0.5, 0.5, 0.5]
-                norm_std = [0.5, 0.5, 0.5]
-
-            self._transform = transforms.Compose(
-                [
-                    transforms.ToPILImage(),
-                    transforms.Resize((input_size, input_size)),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean=norm_mean, std=norm_std),
-                ]
-            )
+            self._transform = self._create_transforms(transforms)
 
             self._is_loaded = True
             logger.info(f"Loaded {self.config.name} ({arch})")
@@ -127,6 +82,67 @@ class ResNetAdapter(IQAModel):
             logger.error(f"PyTorch not available: {e}")
             logger.info("Using placeholder predictions for unloaded model")
             self._is_loaded = True  # Mark as loaded to allow placeholder behavior
+
+    def _get_device(self, torch: "torch") -> "torch.device":
+        """Determine compute device."""
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def _load_base_model(self, arch: str, weights: str):
+        """Load base ResNet model with specified architecture and weights."""
+        import torchvision.models as models
+
+        if arch == "resnet18":
+            return (
+                models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+                if weights == "imagenet"
+                else models.resnet18(weights=None)
+            )
+        if arch == "resnet50":
+            return (
+                models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+                if weights == "imagenet"
+                else models.resnet50(weights=None)
+            )
+        raise ValueError(f"Unsupported architecture: {arch}")
+
+    def _load_checkpoint_if_needed(
+        self, checkpoint: str | None, weights: str, torch
+    ) -> None:
+        """Load custom checkpoint if specified and weights mode is 'custom'."""
+        if not (checkpoint and weights == "custom"):
+            return
+
+        checkpoint_path = Path(checkpoint)
+        if checkpoint_path.exists():
+            state_dict = torch.load(
+                checkpoint_path, map_location=self._device, weights_only=True
+            )
+            self._model.load_state_dict(state_dict)
+            logger.info(f"Loaded checkpoint from {checkpoint_path}")
+        else:
+            logger.warning(
+                f"Checkpoint not found: {checkpoint_path}. Using random weights."
+            )
+
+    def _create_transforms(self, transforms):
+        """Create image preprocessing transforms."""
+        input_size = self.config.config.get("input_size", 224)
+        normalize = self.config.config.get("normalize", "imagenet")
+
+        norm_mean, norm_std = (
+            ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            if normalize == "imagenet"
+            else ([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        )
+
+        return transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.Resize((input_size, input_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=norm_mean, std=norm_std),
+            ]
+        )
 
     def predict_quality_scores(self, image: np.ndarray) -> dict[str, float]:
         """Predict IQA scores using ResNet features.

@@ -59,81 +59,22 @@ def detect_warping(image: np.ndarray) -> WarpingResult:
         raise ValueError("Invalid image")
 
     h, w = image.shape[:2]
-
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
-
-    # Edge detection
-    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-
-    # Detect horizontal lines using Hough Transform
-    lines = cv2.HoughLinesP(
-        edges,
-        rho=1,
-        theta=np.pi / 180,
-        threshold=100,
-        minLineLength=w // 4,
-        maxLineGap=10,
-    )
+    lines = _detect_hough_lines(image, w)
 
     if lines is None or len(lines) < 5:
-        return WarpingResult(
-            is_warped=False,
-            severity=Severity.LOW,
-            curvature_score=0.0,
-            estimated_curvature_angle=0.0,
-            confidence=0.5,
-            metrics={"lines_detected": 0},
-        )
+        return _create_no_warping_result(lines_detected=0)
 
-    # Analyze line curvature by checking if horizontal lines are actually curved
-    # In a warped page, "horizontal" text lines will have varying y-positions
-    horizontal_lines = []
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-        angle = abs(np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi)
-        if angle < 10:  # Nearly horizontal
-            horizontal_lines.append(line[0])
-
+    horizontal_lines = _filter_horizontal_lines(lines)
     if len(horizontal_lines) < 5:
-        return WarpingResult(
-            is_warped=False,
-            severity=Severity.LOW,
-            curvature_score=0.0,
-            estimated_curvature_angle=0.0,
-            confidence=0.5,
-            metrics={"horizontal_lines": len(horizontal_lines)},
-        )
+        return _create_no_warping_result(horizontal_lines=len(horizontal_lines))
 
-    # Calculate curvature by analyzing Y-position variance of line centers
-    y_centers = [(y1 + y2) / 2 for x1, y1, x2, y2 in horizontal_lines]
-    y_variance = np.std(y_centers) / h if y_centers else 0
+    # Calculate curvature metrics
+    curvature_score, estimated_angle, y_variance, max_deviation = (
+        _calculate_curvature_metrics(horizontal_lines, h)
+    )
 
-    # Estimate curvature angle from line deviation
-    max_deviation = 0
-    for x1, y1, x2, y2 in horizontal_lines:
-        # Check midpoint deviation from line endpoints
-        line_length = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-        if line_length > 0:
-            deviation = abs(y2 - y1) / line_length
-            max_deviation = max(max_deviation, deviation)
-
-    curvature_score = min(1.0, y_variance * 10 + max_deviation)
-    estimated_angle = np.arctan(max_deviation) * 180 / np.pi
-
-    # Determine severity
-    if curvature_score < 0.1:
-        severity = Severity.LOW
-        is_warped = False
-    elif curvature_score < 0.2:
-        severity = Severity.MEDIUM
-        is_warped = True
-    elif curvature_score < 0.4:
-        severity = Severity.HIGH
-        is_warped = True
-    else:
-        severity = Severity.CRITICAL
-        is_warped = True
+    # Determine severity and warping status
+    severity, is_warped = _classify_warping_severity(curvature_score)
 
     logger.debug(
         "Warping detection complete",
@@ -153,6 +94,76 @@ def detect_warping(image: np.ndarray) -> WarpingResult:
             "y_variance": y_variance,
             "max_deviation": max_deviation,
         },
+    )
+
+
+def _detect_hough_lines(image: np.ndarray, width: int) -> np.ndarray | None:
+    """Detect lines in image using Hough Transform."""
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+    return cv2.HoughLinesP(
+        edges,
+        rho=1,
+        theta=np.pi / 180,
+        threshold=100,
+        minLineLength=width // 4,
+        maxLineGap=10,
+    )
+
+
+def _filter_horizontal_lines(lines: np.ndarray) -> list[tuple[int, int, int, int]]:
+    """Filter for nearly horizontal lines (angle < 10 degrees)."""
+    horizontal = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        angle = abs(np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi)
+        if angle < 10:
+            horizontal.append(line[0])
+    return horizontal
+
+
+def _calculate_curvature_metrics(
+    horizontal_lines: list[tuple[int, int, int, int]], image_height: int
+) -> tuple[float, float, float, float]:
+    """Calculate curvature score and related metrics."""
+    # Y-position variance of line centers
+    y_centers = [(y1 + y2) / 2 for x1, y1, x2, y2 in horizontal_lines]
+    y_variance = float(np.std(y_centers) / image_height) if y_centers else 0.0
+
+    # Maximum line deviation (curvature indicator)
+    max_deviation = 0.0
+    for x1, y1, x2, y2 in horizontal_lines:
+        line_length = float(np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))
+        if line_length > 0:
+            deviation = abs(y2 - y1) / line_length
+            max_deviation = max(max_deviation, deviation)
+
+    curvature_score = min(1.0, y_variance * 10 + max_deviation)
+    estimated_angle = float(np.arctan(max_deviation) * 180 / np.pi)
+
+    return curvature_score, estimated_angle, y_variance, max_deviation
+
+
+def _classify_warping_severity(curvature_score: float) -> tuple[Severity, bool]:
+    """Classify warping severity based on curvature score."""
+    if curvature_score < 0.1:
+        return Severity.LOW, False
+    if curvature_score < 0.2:
+        return Severity.MEDIUM, True
+    if curvature_score < 0.4:
+        return Severity.HIGH, True
+    return Severity.CRITICAL, True
+
+
+def _create_no_warping_result(**metrics: Any) -> WarpingResult:
+    """Create result for non-warped image."""
+    return WarpingResult(
+        is_warped=False,
+        severity=Severity.LOW,
+        curvature_score=0.0,
+        estimated_curvature_angle=0.0,
+        confidence=0.5,
+        metrics=metrics,
     )
 
 
@@ -500,51 +511,20 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
         raise ValueError("Invalid image")
 
     h, w = image.shape[:2]
-
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
-
-    # Binarize
-    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
-    # Find contours
-    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = _extract_contours(image)
 
     signature_regions = []
     stamp_regions = []
 
     for contour in contours:
-        area = cv2.contourArea(contour)
-        if area < 500 or area > (h * w * 0.3):  # Filter by size
+        if not _is_valid_region_size(contour, h, w):
             continue
 
-        x, y, cont_w, cont_h = cv2.boundingRect(contour)
-        aspect = cont_w / cont_h if cont_h > 0 else 0
-        perimeter = cv2.arcLength(contour, True)
-        circularity = (4 * np.pi * area) / (perimeter**2) if perimeter > 0 else 0
-
-        # Signature heuristics:
-        # - Elongated (wide aspect ratio)
-        # - Low fill ratio (not solid)
-        # - Complex perimeter (many curves)
-        hull = cv2.convexHull(contour)
-        hull_area = cv2.contourArea(hull)
-        fill_ratio = area / hull_area if hull_area > 0 else 0
-
-        if 2.0 < aspect < 8.0 and fill_ratio < 0.5:
-            signature_regions.append((x, y, cont_w, cont_h))
-
-        # Stamp heuristics:
-        # - Roughly circular or square
-        # - High circularity or aspect ratio ~1
-        # - Located in typical stamp positions (bottom corners)
-        if 0.5 < circularity < 1.0 or (0.8 < aspect < 1.2 and area > 1000):
-            # Check position (stamps often in bottom third)
-            if y > h * 0.5:
-                stamp_regions.append((x, y, cont_w, cont_h))
-
-    has_signature = len(signature_regions) > 0
-    has_stamp = len(stamp_regions) > 0
+        region = _analyze_contour(contour, h)
+        if region.is_signature:
+            signature_regions.append(region.bbox)
+        if region.is_stamp:
+            stamp_regions.append(region.bbox)
 
     logger.debug(
         "Signature/stamp detection complete",
@@ -553,11 +533,60 @@ def detect_signature_stamp(image: np.ndarray) -> SignatureStampResult:
     )
 
     return SignatureStampResult(
-        has_signature=has_signature,
-        has_stamp=has_stamp,
+        has_signature=len(signature_regions) > 0,
+        has_stamp=len(stamp_regions) > 0,
         signature_regions=signature_regions,
         stamp_regions=stamp_regions,
         confidence=0.5,  # Heuristic-based, moderate confidence
+    )
+
+
+def _extract_contours(image: np.ndarray) -> list[np.ndarray]:
+    """Extract contours from image."""
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return list(contours)
+
+
+def _is_valid_region_size(contour: np.ndarray, h: int, w: int) -> bool:
+    """Check if contour area is within valid range."""
+    area = cv2.contourArea(contour)
+    return bool(500 <= area <= (h * w * 0.3))
+
+
+@dataclass
+class _RegionAnalysis:
+    """Internal class for region analysis results."""
+
+    bbox: tuple[int, int, int, int]
+    is_signature: bool
+    is_stamp: bool
+
+
+def _analyze_contour(contour: np.ndarray, image_height: int) -> _RegionAnalysis:
+    """Analyze contour to determine if it's a signature or stamp."""
+    x, y, cont_w, cont_h = cv2.boundingRect(contour)
+    area = cv2.contourArea(contour)
+    aspect = cont_w / cont_h if cont_h > 0 else 0
+    perimeter = cv2.arcLength(contour, True)
+    circularity = (4 * np.pi * area) / (perimeter**2) if perimeter > 0 else 0
+
+    # Check signature heuristics
+    hull = cv2.convexHull(contour)
+    hull_area = cv2.contourArea(hull)
+    fill_ratio = area / hull_area if hull_area > 0 else 0
+    is_signature = 2.0 < aspect < 8.0 and fill_ratio < 0.5
+
+    # Check stamp heuristics (circular/square shape in bottom half)
+    is_circular_or_square = 0.5 < circularity < 1.0 or (
+        0.8 < aspect < 1.2 and area > 1000
+    )
+    is_in_stamp_position = y > image_height * 0.5
+    is_stamp = is_circular_or_square and is_in_stamp_position
+
+    return _RegionAnalysis(
+        bbox=(x, y, cont_w, cont_h), is_signature=is_signature, is_stamp=is_stamp
     )
 
 
@@ -779,11 +808,11 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
             orientation=TextOrientation.UNKNOWN,
             vertical_ratio=0.0,
             confidence=0.3,
-            dominant_angle=np.mean(angles) if angles else 0.0,
+            dominant_angle=float(np.mean(angles)) if angles else 0.0,
         )
 
     vertical_ratio = vertical_lines / total_classified
-    dominant_angle = np.mean(angles)
+    dominant_angle = float(np.mean(angles))
 
     # Determine orientation
     if vertical_ratio < 0.2:
