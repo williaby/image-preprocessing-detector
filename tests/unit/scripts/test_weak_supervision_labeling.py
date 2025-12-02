@@ -38,9 +38,9 @@ class TestWeakSupervisionLabelerInit:
         """Test default threshold values."""
         labeler = WeakSupervisionLabeler()
 
-        assert labeler.blur_threshold == 200.0
-        assert labeler.low_contrast_threshold == 0.3
-        assert labeler.skew_threshold == 0.5
+        assert labeler.blur_threshold == pytest.approx(200.0)
+        assert labeler.low_contrast_threshold == pytest.approx(0.3)
+        assert labeler.skew_threshold == pytest.approx(0.5)
 
     def test_custom_thresholds(self) -> None:
         """Test custom threshold values."""
@@ -50,9 +50,9 @@ class TestWeakSupervisionLabelerInit:
             skew_threshold=1.0,
         )
 
-        assert labeler.blur_threshold == 100.0
-        assert labeler.low_contrast_threshold == 0.2
-        assert labeler.skew_threshold == 1.0
+        assert labeler.blur_threshold == pytest.approx(100.0)
+        assert labeler.low_contrast_threshold == pytest.approx(0.2)
+        assert labeler.skew_threshold == pytest.approx(1.0)
 
 
 class TestDetectBlurLaplacian:
@@ -163,7 +163,7 @@ class TestDetectSkewHough:
         result = labeler.detect_skew_hough(image)
 
         assert result["value"] == 0  # No skew detected
-        assert result["confidence"] == 0.0
+        assert result["confidence"] == pytest.approx(0.0)
         assert result["source"] == "hough_lines"
 
     def test_result_structure(self, labeler: WeakSupervisionLabeler) -> None:

@@ -192,7 +192,7 @@ class TestCalculateSkewScore:
         score = calculate_skew_score(image)
 
         # No lines detected should return 0
-        assert score == 0.0
+        assert score == pytest.approx(0.0)
 
     def test_skew_score_horizontal_lines(self) -> None:
         """Test skew score for horizontal lines."""

@@ -109,13 +109,13 @@ class TestRoutingValidationResult:
                 rationale="Test",
             )
 
-        assert result.accuracy == 0.6  # 3/5
+        assert result.accuracy == pytest.approx(0.6)  # 3/5
 
     def test_accuracy_zero_documents(self) -> None:
         """Test accuracy with zero documents."""
         result = RoutingValidationResult()
 
-        assert result.accuracy == 0.0
+        assert result.accuracy == pytest.approx(0.0)
 
     def test_confusion_matrix_updated(self) -> None:
         """Test confusion matrix is updated on predictions."""

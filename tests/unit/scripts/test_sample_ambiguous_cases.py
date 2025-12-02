@@ -96,7 +96,7 @@ class TestCalculateUncertainty:
 
         result = calculate_uncertainty(labels_data)
 
-        assert result == 1.0
+        assert result == pytest.approx(1.0)
 
     def test_uncertainty_missing_labels(self) -> None:
         """Test uncertainty is maximum for missing labels key."""
@@ -104,7 +104,7 @@ class TestCalculateUncertainty:
 
         result = calculate_uncertainty(labels_data)
 
-        assert result == 1.0
+        assert result == pytest.approx(1.0)
 
     def test_uncertainty_high_confidence(self) -> None:
         """Test low uncertainty for high confidence labels."""
@@ -182,7 +182,7 @@ class TestCalculateEdgeCaseScore:
 
         result = calculate_edge_case_score(labels_data)
 
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_edge_case_borderline_blur(self) -> None:
         """Test edge case score for borderline blur."""
@@ -261,7 +261,7 @@ class TestCalculateEdgeCaseScore:
 
         result = calculate_edge_case_score(labels_data)
 
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
 
 class TestCalculateCompositePriority:

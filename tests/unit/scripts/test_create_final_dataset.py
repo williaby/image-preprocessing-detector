@@ -339,7 +339,7 @@ class TestCalculateLabelDistribution:
 
         stats = calculate_label_distribution(samples)
 
-        assert stats["label_percentages"]["blur"] == 50.0
+        assert stats["label_percentages"]["blur"] == pytest.approx(50.0)
 
     def test_distribution_empty_samples(self) -> None:
         """Test distribution with empty samples."""
@@ -358,4 +358,4 @@ class TestCalculateLabelDistribution:
 
         stats = calculate_label_distribution(samples)
 
-        assert stats["average_issues_per_image"] == 2.0
+        assert stats["average_issues_per_image"] == pytest.approx(2.0)

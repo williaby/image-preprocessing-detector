@@ -98,7 +98,7 @@ class TestSufficiencyReport:
         assert report.layout_class_coverage == {}
         assert isinstance(report.dqs_routing_matrix, np.ndarray)
         assert report.dqs_routing_matrix.shape == (3, 3)
-        assert report.total_cost_estimate == 0.0
+        assert report.total_cost_estimate == pytest.approx(0.0)
         assert report.overall_status == SufficiencyStatus.NOT_MEASURED
 
 

@@ -118,7 +118,7 @@ class TestGetFileSizeMb:
 
         size = get_file_size_mb(test_file)
 
-        assert size == 0.0
+        assert size == pytest.approx(0.0)
 
 
 class TestFindFilesByExtension:

@@ -115,10 +115,10 @@ class TestAPISettingsConfig:
         settings = APISettings()
 
         assert settings.modal_budget_enabled is True
-        assert settings.modal_daily_budget_dollars == 10.0
-        assert settings.modal_monthly_budget_dollars == 100.0
-        assert settings.modal_cost_per_gpu_hour == 0.36
-        assert settings.modal_budget_warning_threshold == 0.8
+        assert settings.modal_daily_budget_dollars == pytest.approx(10.0)
+        assert settings.modal_monthly_budget_dollars == pytest.approx(100.0)
+        assert settings.modal_cost_per_gpu_hour == pytest.approx(0.36)
+        assert settings.modal_budget_warning_threshold == pytest.approx(0.8)
 
     def test_get_openapi_tags(self) -> None:
         """get_openapi_tags returns proper tag metadata."""
@@ -248,8 +248,8 @@ class TestProcessingModels:
             contrast_score=0.9,
             skew_angle=1.5,
         )
-        assert summary.blur_score == 0.8
-        assert summary.skew_angle == 1.5
+        assert summary.blur_score == pytest.approx(0.8)
+        assert summary.skew_angle == pytest.approx(1.5)
 
     def test_dqs_summary_model(self) -> None:
         """DQSSummary model validates required fields."""
@@ -261,9 +261,9 @@ class TestProcessingModels:
             pre_ocr_risk=0.4,
         )
 
-        assert dqs.degradation_score == 0.5
-        assert dqs.structural_complexity_score == 0.3
-        assert dqs.pre_ocr_risk == 0.4
+        assert dqs.degradation_score == pytest.approx(0.5)
+        assert dqs.structural_complexity_score == pytest.approx(0.3)
+        assert dqs.pre_ocr_risk == pytest.approx(0.4)
 
     def test_page_summary_model(self) -> None:
         """PageSummary model validates correctly."""
@@ -282,7 +282,7 @@ class TestProcessingModels:
         assert page.width_px == 1920
         assert page.issues_detected == 2
         assert page.iqa_scores is not None
-        assert page.iqa_scores.blur_score == 0.7
+        assert page.iqa_scores.blur_score == pytest.approx(0.7)
 
     def test_processing_result_model(self) -> None:
         """ProcessingResult model validates correctly."""
@@ -838,7 +838,7 @@ class TestMiddlewareIntegration:
         app = create_app(settings=full_middleware_settings)
         client = TestClient(app)
 
-        response = client.get("/health")
+        _ = client.get("/health")
         # Health is not in limit_paths by default, so no rate limit headers
         # But for process endpoint with valid auth...
 

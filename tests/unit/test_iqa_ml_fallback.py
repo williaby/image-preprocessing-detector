@@ -160,7 +160,7 @@ class TestEscalationLogicWithoutModels:
 
         assert decision.should_escalate is False
         assert decision.reason is None
-        assert decision.uncertainty_metrics.entropy == 0.5
+        assert decision.uncertainty_metrics.entropy == pytest.approx(0.5)
 
     def test_high_uncertainty_should_escalate(self):
         """Test that high uncertainty metrics would trigger escalation."""
@@ -219,9 +219,9 @@ class TestClassicalIQAScores:
             skew_score=0.95,
         )
 
-        assert scores.blur_score == 0.8
-        assert scores.contrast_score == 0.9
-        assert scores.skew_score == 0.95
+        assert scores.blur_score == pytest.approx(0.8)
+        assert scores.contrast_score == pytest.approx(0.9)
+        assert scores.skew_score == pytest.approx(0.95)
 
     def test_classical_scores_with_optional_fields(self):
         """Test ClassicalIQAScores with all fields."""
@@ -236,9 +236,9 @@ class TestClassicalIQAScores:
             bleed_through_score=0.95,
         )
 
-        assert scores.noise_score == 0.85
-        assert scores.illumination_score == 0.7
-        assert scores.compression_score == 0.9
+        assert scores.noise_score == pytest.approx(0.85)
+        assert scores.illumination_score == pytest.approx(0.7)
+        assert scores.compression_score == pytest.approx(0.9)
 
     def test_classical_scores_defaults(self):
         """Test ClassicalIQAScores default values."""
@@ -249,9 +249,9 @@ class TestClassicalIQAScores:
         )
 
         # Optional fields should default to 0.0
-        assert scores.noise_score == 0.0
-        assert scores.illumination_score == 0.0
-        assert scores.compression_score == 0.0
+        assert scores.noise_score == pytest.approx(0.0)
+        assert scores.illumination_score == pytest.approx(0.0)
+        assert scores.compression_score == pytest.approx(0.0)
 
     def test_classical_scores_validation(self):
         """Test ClassicalIQAScores validates score ranges."""
@@ -294,10 +294,10 @@ class TestMLIQAScores:
             inference_time_ms=15.5,
         )
 
-        assert scores.blur_score == 0.85
+        assert scores.blur_score == pytest.approx(0.85)
         assert scores.model_type == ModelType.STUDENT
         assert scores.device == Device.CPU
-        assert scores.inference_time_ms == 15.5
+        assert scores.inference_time_ms == pytest.approx(15.5)
 
     def test_ml_scores_teacher_model(self):
         """Test MLIQAScores from teacher model."""
@@ -331,7 +331,7 @@ class TestDiscrepancyDetection:
         detector = MLIQADetector()
 
         # Default threshold
-        assert detector.discrepancy_threshold == 0.3
+        assert detector.discrepancy_threshold == pytest.approx(0.3)
 
     def test_no_discrepancy_with_similar_scores(self):
         """Test no discrepancy when scores are similar."""
@@ -470,9 +470,9 @@ class TestThresholdConfiguration:
         """Test default threshold values."""
         detector = MLIQADetector()
 
-        assert detector.entropy_threshold == 0.8
-        assert detector.min_confidence_threshold == 0.6
-        assert detector.mean_confidence_threshold == 0.7
+        assert detector.entropy_threshold == pytest.approx(0.8)
+        assert detector.min_confidence_threshold == pytest.approx(0.6)
+        assert detector.mean_confidence_threshold == pytest.approx(0.7)
 
     def test_custom_thresholds(self):
         """Test custom threshold configuration."""
@@ -482,9 +482,9 @@ class TestThresholdConfiguration:
             mean_confidence_threshold=0.8,
         )
 
-        assert detector.entropy_threshold == 0.9
-        assert detector.min_confidence_threshold == 0.5
-        assert detector.mean_confidence_threshold == 0.8
+        assert detector.entropy_threshold == pytest.approx(0.9)
+        assert detector.min_confidence_threshold == pytest.approx(0.5)
+        assert detector.mean_confidence_threshold == pytest.approx(0.8)
 
     def test_threshold_validation(self):
         """Test that thresholds are used for escalation decisions."""

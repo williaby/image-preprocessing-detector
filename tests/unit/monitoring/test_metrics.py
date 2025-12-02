@@ -88,7 +88,7 @@ class TestMetricsConfig:
             clear=True,
         ):
             config = MetricsConfig.from_environment()
-            assert config.modal_cost_per_gpu_second == 0.0002
+            assert config.modal_cost_per_gpu_second == pytest.approx(0.0002)
 
 
 class TestMetricsNamespace:

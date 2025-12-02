@@ -274,7 +274,7 @@ class TestCalculateComplexityMetrics:
         assert result["table_count"] == 0
         assert result["picture_count"] == 0
         assert result["column_count"] == 1
-        assert result["text_density"] == 0.0
+        assert result["text_density"] == pytest.approx(0.0)
         assert result["formula_count"] == 0
         assert result["text_blocks"] == 0
 

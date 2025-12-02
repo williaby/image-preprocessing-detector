@@ -87,9 +87,9 @@ class TestCalculatePresenceFlagMetrics:
 
         result = calculate_presence_flag_metrics(y_true, y_pred, "test_flag")
 
-        assert result["f1"] == 1.0
-        assert result["precision"] == 1.0
-        assert result["recall"] == 1.0
+        assert result["f1"] == pytest.approx(1.0)
+        assert result["precision"] == pytest.approx(1.0)
+        assert result["recall"] == pytest.approx(1.0)
 
     def test_all_wrong_predictions(self) -> None:
         """Test metrics for all wrong predictions."""
@@ -98,16 +98,16 @@ class TestCalculatePresenceFlagMetrics:
 
         result = calculate_presence_flag_metrics(y_true, y_pred, "test_flag")
 
-        assert result["f1"] == 0.0
-        assert result["recall"] == 0.0
+        assert result["f1"] == pytest.approx(0.0)
+        assert result["recall"] == pytest.approx(0.0)
 
     def test_empty_samples(self) -> None:
         """Test metrics for empty sample list."""
         result = calculate_presence_flag_metrics([], [], "test_flag")
 
-        assert result["f1"] == 0.0
-        assert result["precision"] == 0.0
-        assert result["recall"] == 0.0
+        assert result["f1"] == pytest.approx(0.0)
+        assert result["precision"] == pytest.approx(0.0)
+        assert result["recall"] == pytest.approx(0.0)
 
     def test_all_same_label(self) -> None:
         """Test metrics when all samples have same label."""
@@ -117,7 +117,7 @@ class TestCalculatePresenceFlagMetrics:
         result = calculate_presence_flag_metrics(y_true, y_pred, "test_flag")
 
         # All predictions match, so perfect score
-        assert result["f1"] == 1.0
+        assert result["f1"] == pytest.approx(1.0)
 
     def test_partial_correct(self) -> None:
         """Test metrics for partially correct predictions."""

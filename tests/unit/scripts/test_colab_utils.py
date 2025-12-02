@@ -94,7 +94,7 @@ class TestDetectColabTier:
         """Test unknown GPU uses fallback memory."""
         tier, memory = _detect_colab_tier("Unknown GPU XYZ", fallback_memory=8.0)
         assert tier == "Unknown"
-        assert memory == 8.0
+        assert memory == pytest.approx(8.0)
 
     def test_case_insensitive_detection(self) -> None:
         """Test that detection is case-insensitive."""
@@ -180,7 +180,7 @@ class TestGetGpuInfo:
                             assert result["gpu_available"] is True
                             assert result["gpu_count"] == 1
                             assert result["gpu_name"] == "Tesla T4"
-                            assert result["gpu_memory_total_gb"] == 16.0
+                            assert result["gpu_memory_total_gb"] == pytest.approx(16.0)
                             assert result["colab_tier"] == "Free/Pro (T4)"
 
 
@@ -202,9 +202,9 @@ class TestGetDiskSpace:
         """Test disk space for invalid path."""
         total, used, free = get_disk_space("/nonexistent/path/that/does/not/exist")
 
-        assert total == 0.0
-        assert used == 0.0
-        assert free == 0.0
+        assert total == pytest.approx(0.0)
+        assert used == pytest.approx(0.0)
+        assert free == pytest.approx(0.0)
 
     def test_get_disk_space_default_path(self) -> None:
         """Test disk space with default Colab path."""
@@ -244,11 +244,11 @@ class TestGetGpuMemoryUsage:
                     ):
                         result = get_gpu_memory_usage()
 
-                        assert result["allocated_gb"] == 2.0
-                        assert result["reserved_gb"] == 4.0
-                        assert result["total_gb"] == 16.0
-                        assert result["free_gb"] == 12.0
-                        assert result["usage_percent"] == 25.0
+                        assert result["allocated_gb"] == pytest.approx(2.0)
+                        assert result["reserved_gb"] == pytest.approx(4.0)
+                        assert result["total_gb"] == pytest.approx(16.0)
+                        assert result["free_gb"] == pytest.approx(12.0)
+                        assert result["usage_percent"] == pytest.approx(25.0)
 
 
 class TestCheckSessionHealth:

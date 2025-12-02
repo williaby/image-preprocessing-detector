@@ -232,7 +232,7 @@ class TestDetectedElement:
         assert element.class_id == 0
         assert element.class_name == "title"
         assert element.class_enum == DocLayoutClass.TITLE
-        assert element.confidence == 0.95
+        assert element.confidence == pytest.approx(0.95)
         # Check COCO format conversion [x, y, width, height]
         # xyxy: [100.5, 50.2, 700.8, 80.9] -> rounded [100, 50, 701, 81]
         # width = 701 - 100 = 601, height = 81 - 50 = 31
@@ -402,7 +402,7 @@ class TestLayoutDetectionResult:
         data = result.to_dict()
 
         assert data["num_elements"] == 1
-        assert data["inference_time_ms"] == 10.0
+        assert data["inference_time_ms"] == pytest.approx(10.0)
         assert data["image_size"] == [600, 800]
         assert data["success"] is True
         assert len(data["elements"]) == 1
@@ -458,7 +458,7 @@ class TestDocLayoutYOLODetector:
             device="cpu",
         )
 
-        assert detector._confidence_threshold == 0.5
+        assert detector._confidence_threshold == pytest.approx(0.5)
         assert detector._image_size == 640
         assert detector._requested_device == "cpu"
 
@@ -552,7 +552,7 @@ class TestDocLayoutIntegration:
         metrics = integration.analyze_detection(result, (600, 800))
 
         assert metrics.total_elements == 0
-        assert metrics.complexity_score == 0.0
+        assert metrics.complexity_score == pytest.approx(0.0)
         assert metrics.has_tables is False
 
     def test_analyze_with_elements(self) -> None:

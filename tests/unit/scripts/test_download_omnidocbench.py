@@ -161,7 +161,7 @@ class TestGetDirectorySize:
         """Test size of empty directory."""
         result = get_directory_size(tmp_path)
 
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_directory_with_files(self, tmp_path: Path) -> None:
         """Test size calculation with files."""
@@ -190,7 +190,7 @@ class TestGetDirectorySize:
         """Test size of nonexistent directory."""
         result = get_directory_size(tmp_path / "nonexistent")
 
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
 
 class TestDownloadOmnidocbench:

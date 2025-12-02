@@ -77,7 +77,7 @@ class TestPatternConfig:
             min_occurrences=3,
         )
 
-        assert config.similarity_threshold == 0.85
+        assert config.similarity_threshold == pytest.approx(0.85)
         assert config.min_occurrences == 3
 
 
@@ -88,7 +88,7 @@ class TestComputeSimilarity:
         """Test similarity of identical strings."""
         result = compute_similarity("hello world", "hello world")
 
-        assert result == 1.0
+        assert result == pytest.approx(1.0)
 
     def test_completely_different(self) -> None:
         """Test similarity of completely different strings."""
@@ -106,19 +106,19 @@ class TestComputeSimilarity:
         """Test similarity with empty first string."""
         result = compute_similarity("", "hello")
 
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_empty_string_second(self) -> None:
         """Test similarity with empty second string."""
         result = compute_similarity("hello", "")
 
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_both_empty(self) -> None:
         """Test similarity with both strings empty."""
         result = compute_similarity("", "")
 
-        assert result == 0.0
+        assert result == pytest.approx(0.0)
 
     def test_case_sensitivity(self) -> None:
         """Test that similarity is case sensitive."""

@@ -249,7 +249,7 @@ class TestValidatePdfResolution:
             result = validate_pdf_resolution(pdf_file)
 
             assert result["needs_upscaling"] is True
-            assert result["min_dpi"] == 150.0
+            assert result["min_dpi"] == pytest.approx(150.0)
 
     def test_validate_handles_error(self, tmp_path: Path) -> None:
         """Test validation handles errors gracefully."""

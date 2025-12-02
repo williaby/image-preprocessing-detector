@@ -1,11 +1,21 @@
-# Phase 4 Evaluation Report: Device-Priority Execution & Production Hardening
+---
+schema_type: common
+title: "Phase 4 Evaluation Report: Device-Priority Execution & Production Hardening"
+description: "Evaluation report for Phase 4 implementation status."
+tags:
+  - evaluation
+  - quality_assurance
+  - documentation
+status: published
+owner: core-maintainer
+authors:
+  - name: "Claude Code (Automated Analysis)"
+purpose: "Document Phase 4 implementation completion and gaps."
+---
 
 **Report Date:** December 2, 2025
-**Evaluator:** Claude Code (Automated Analysis)
 **Branch:** `claude/evaluate-phase-4-01Mdix4qdKmExXrs1dMrJSFo`
 **Reference:** `docs/planning/PROJECT_PLAN.md`
-
----
 
 ## Executive Summary
 
@@ -43,6 +53,7 @@ Phase 4 focuses on implementing intelligent device selection (Local GPU → Loca
 Per `docs/planning/PROJECT_PLAN.md`, Phase 4 spans 3 weeks (15 working days) with the following objectives:
 
 ### Week 15: Device Probing & Priority Rules
+
 - Hardware detection (GPU/CPU/Modal) with caching
 - Device priority policy configuration
 - Student device selector (ONNX GPU → CPU fallback)
@@ -51,6 +62,7 @@ Per `docs/planning/PROJECT_PLAN.md`, Phase 4 spans 3 weeks (15 working days) wit
 - Gate integration (uncertainty/discrepancy triggers)
 
 ### Week 16: Modal GPU Integration & Metrics
+
 - Containerized teacher deployment on Modal
 - Serverless endpoint hardening (auth, timeouts, retries)
 - Resilience patterns (circuit breaker, exponential backoff)
@@ -58,6 +70,7 @@ Per `docs/planning/PROJECT_PLAN.md`, Phase 4 spans 3 weeks (15 working days) wit
 - Structured logging and Prometheus metrics
 
 ### Week 17: Performance Optimization & Worker Pool
+
 - Batch processing with micro-batching
 - Async I/O and concurrency controls
 - Caching strategy (tensor/page cache, LRU eviction)
@@ -114,6 +127,7 @@ Per `docs/planning/PROJECT_PLAN.md`, Phase 4 spans 3 weeks (15 working days) wit
 **Status:** 90% Complete
 
 #### Core Device Detection
+
 **File:** `src/image_preprocessing_detector/utils/device_probe.py`
 
 | Component | Lines | Description |
@@ -124,12 +138,14 @@ Per `docs/planning/PROJECT_PLAN.md`, Phase 4 spans 3 weeks (15 working days) wit
 | `clear_device_cache()` | 113-118 | Cache invalidation for testing |
 
 **Detection Priority:**
+
 1. PyTorch CUDA (`torch.cuda.is_available()`)
 2. ONNX Runtime CUDAExecutionProvider
 3. CPU fallback (always available)
 4. Modal environment detection via `MODAL_TOKEN_ID`, `MODAL_ENVIRONMENT`
 
 #### ML IQA Device Priority
+
 **File:** `src/image_preprocessing_detector/detection/iqa_ml.py` (927 lines)
 
 | Component | Lines | Description |
@@ -146,12 +162,15 @@ Per `docs/planning/PROJECT_PLAN.md`, Phase 4 spans 3 weeks (15 working days) wit
 | `run_pipeline()` | 700-800 | Main orchestration pipeline |
 
 **ONNX Provider Configuration (lines 215-225):**
+
 ```python
 providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]  # GPU path
 providers = ["CPUExecutionProvider"]  # CPU-only path
+
 ```
 
 #### Discrepancy Analysis
+
 **File:** `src/image_preprocessing_detector/detection/discrepancy.py`
 
 | Component | Lines | Description |
@@ -163,11 +182,13 @@ providers = ["CPUExecutionProvider"]  # CPU-only path
 | `EscalationReason` | 20-23 | UNCERTAINTY, DISCREPANCY, FORCED, NONE |
 
 **Default Thresholds:**
+
 - Blur: 0.25, Contrast: 0.30, Skew: 0.20
 - Noise: 0.35, Compression: 0.35, Illumination: 0.30
 - Aggregate threshold: 0.25, Min heads exceeded: 1
 
 #### Configuration
+
 **Files:** `configs/modal_phase2.yaml`, `configs/modal_phase3.yaml`
 
 ```yaml
@@ -176,6 +197,7 @@ teacher_inference:
   enabled: true
   uncertainty_threshold: 0.3
   discrepancy_threshold: 0.25
+
 ```
 
 ---
@@ -233,6 +255,7 @@ teacher_inference:
 | `process_single_file()` | 383-411 | Per-file processing |
 
 **Processing Options** (from `api/config.py`):
+
 - `max_batch_size`: 100
 - `max_file_size_mb`: 50
 - `prefer_gpu`: true
@@ -240,6 +263,7 @@ teacher_inference:
 - `enable_teacher`: false
 
 **Limitations:**
+
 - Line 42: `# In-memory job store (replace with Redis for production)`
 - Uses FastAPI `BackgroundTasks` (single-threaded, sequential)
 - No adaptive batch sizing
@@ -316,6 +340,7 @@ teacher_inference:
 **File:** `src/image_preprocessing_detector/models/model_optimizer.py` (1436 lines)
 
 #### ONNX Export
+
 | Component | Lines | Description |
 |-----------|-------|-------------|
 | `ONNXExportConfig` | 82-99 | Export configuration |
@@ -323,6 +348,7 @@ teacher_inference:
 | `_verify_onnx_output()` | 486-555 | Output verification |
 
 #### INT8 Quantization
+
 | Component | Lines | Description |
 |-----------|-------|-------------|
 | `QuantizationConfig` | 101-118 | Quantization settings |
@@ -330,17 +356,20 @@ teacher_inference:
 | `quantize_int8()` | 557-637 | ONNX Runtime static quantization |
 
 #### TensorRT Acceleration
+
 | Component | Lines | Description |
 |-----------|-------|-------------|
 | `convert_to_tensorrt()` | 639-734 | ONNX → TensorRT engine |
 | `_benchmark_tensorrt()` | 826-905 | TensorRT inference benchmarking |
 
 **TensorRT Features:**
+
 - FP16/INT8 precision modes (lines 689-692)
 - Dynamic batch optimization profiles (lines 707-715)
 - Memory pool configuration (line 686)
 
 #### Benchmarking
+
 | Component | Lines | Description |
 |-----------|-------|-------------|
 | `BenchmarkResult` | 121-149 | P50/P95/P99 latency, throughput |
@@ -348,6 +377,7 @@ teacher_inference:
 | `_benchmark_onnx()` | 768-824 | ONNX Runtime benchmarking |
 
 #### Threshold Tuning
+
 | Component | Lines | Description |
 |-----------|-------|-------------|
 | `ThresholdConfig` | 151-193 | Per-head decision thresholds |
@@ -355,6 +385,7 @@ teacher_inference:
 | `tune_all_heads()` | 1015-1056 | Multi-head threshold tuning |
 
 #### Deployment & Registry
+
 | Component | Lines | Description |
 |-----------|-------|-------------|
 | `ModelManifest` | 195-245 | Deployment manifest with checksums |
@@ -379,11 +410,13 @@ teacher_inference:
 | `hello_gpu()` | 50-70 | GPU availability test |
 
 **File:** `modal/train_phase2_iqa.py`
+
 - ResNet-50 teacher model training
 - GCS integration for datasets
 - T4/A10 GPU configuration
 
 **Missing:**
+
 - No `@modal.function` decorators for inference endpoints
 - No remote teacher inference routing
 - No serverless hardening (auth, timeouts, retries)
@@ -402,12 +435,16 @@ teacher_inference:
 **Result:** No files found in `src/`
 
 **Required implementation:**
+
 ```python
+
 # modal/inference.py (proposed)
+
 @modal.function(gpu="T4", timeout=30, retries=3)
 def run_teacher_inference(image_bytes: bytes) -> dict:
     """Remote teacher inference on Modal GPU."""
     ...
+
 ```
 
 **Effort estimate:** Medium (1-2 days)
@@ -422,10 +459,12 @@ def run_teacher_inference(image_bytes: bytes) -> dict:
 **Result:** Only found in docs/planning, not in `src/`
 
 **Evidence:**
+
 - `batch.py:42`: `# In-memory job store (replace with Redis for production)`
 - Uses FastAPI `BackgroundTasks` (single-threaded)
 
 **Required implementation:**
+
 - Celery workers with Redis broker
 - Per-queue device caps
 - Graceful degradation on queue depth
@@ -445,6 +484,7 @@ def run_teacher_inference(image_bytes: bytes) -> dict:
 **Evidence:** `tests/integration/test_modal_outage_simulation.py` mentions circuit breaker but only simulates outages
 
 **Required implementation:**
+
 - State machine: CLOSED → OPEN → HALF_OPEN
 - Failure threshold tracking
 - Automatic recovery with exponential backoff
@@ -473,6 +513,7 @@ def run_teacher_inference(image_bytes: bytes) -> dict:
 **Impact:** Batch jobs lost on server restart
 
 **Evidence:**
+
 - `batch.py:42`: `# In-memory job store (replace with Redis for production)`
 - `middleware.py:283`: `For production, consider Redis-based rate limiting.`
 - `middleware.py:312`: `# For precise distributed rate limiting, use Redis or similar.`
@@ -600,16 +641,19 @@ def run_teacher_inference(image_bytes: bytes) -> dict:
 ### 7.4 Suggested Sprint Breakdown
 
 **Sprint 1 (Week 1):** Critical Infrastructure
+
 - [ ] Modal remote inference endpoint
 - [ ] Circuit breaker pattern
 - [ ] Budget enforcement tests
 
 **Sprint 2 (Week 2):** Production Hardening
+
 - [ ] Redis persistence
 - [ ] Celery worker integration
 - [ ] Latency benchmarks
 
 **Sprint 3 (Week 3):** Performance Optimization
+
 - [ ] Micro-batching
 - [ ] Caching strategy
 - [ ] Session pooling

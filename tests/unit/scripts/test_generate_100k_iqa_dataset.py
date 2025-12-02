@@ -17,6 +17,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import numpy as np
+import pytest
 from PIL import Image
 
 # Mock albumentations and datasets before importing
@@ -49,7 +50,7 @@ class TestDatasetConfig:
         """Test composition sums to total samples."""
         total = sum(DatasetConfig.COMPOSITION.values())
 
-        assert total == DatasetConfig.TOTAL_SAMPLES
+        assert total == pytest.approx(DatasetConfig.TOTAL_SAMPLES)
 
     def test_distributions_defined(self) -> None:
         """Test distributions are defined."""
@@ -192,9 +193,9 @@ class TestDatasetGenerator:
         image = np.zeros((100, 100, 3), dtype=np.uint8)
         labels = generator.generate_weak_supervision_labels(image, ["blur", "noise"])
 
-        assert labels["blur"] == 1.0
-        assert labels["noise"] == 1.0
-        assert labels["skew"] == 0.0
+        assert labels["blur"] == pytest.approx(1.0)
+        assert labels["noise"] == pytest.approx(1.0)
+        assert labels["skew"] == pytest.approx(0.0)
 
 
 class TestMain:

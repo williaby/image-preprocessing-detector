@@ -41,7 +41,7 @@ class TestCheckpointManagerInit:
         """Test that checkpoint directory is created on init."""
         checkpoint_dir = tmp_path / "checkpoints"
 
-        manager = CheckpointManager(str(checkpoint_dir))
+        _ = CheckpointManager(str(checkpoint_dir))
 
         assert checkpoint_dir.exists()
         assert checkpoint_dir.is_dir()
@@ -52,7 +52,7 @@ class TestCheckpointManagerInit:
 
         assert manager.save_interval_epochs == 5
         assert manager.save_interval_minutes == 30
-        assert manager.max_session_hours == 11.5
+        assert manager.max_session_hours == pytest.approx(11.5)
         assert manager.keep_last_n == 3
 
     def test_custom_parameters(self, tmp_path: Path) -> None:
@@ -67,7 +67,7 @@ class TestCheckpointManagerInit:
 
         assert manager.save_interval_epochs == 10
         assert manager.save_interval_minutes == 60
-        assert manager.max_session_hours == 10.0
+        assert manager.max_session_hours == pytest.approx(10.0)
         assert manager.keep_last_n == 5
 
 
@@ -187,7 +187,7 @@ class TestSaveCheckpoint:
                 metrics={"val_loss": 0.5},
             )
 
-            assert manager.best_metric_value == 0.5
+            assert manager.best_metric_value == pytest.approx(0.5)
 
             # Save second checkpoint with lower loss
             manager.save_checkpoint(
@@ -197,7 +197,7 @@ class TestSaveCheckpoint:
                 metrics={"val_loss": 0.3},
             )
 
-            assert manager.best_metric_value == 0.3
+            assert manager.best_metric_value == pytest.approx(0.3)
             assert (tmp_path / CHECKPOINT_BEST_FILENAME).exists()
 
     def test_save_checkpoint_with_scheduler(
@@ -262,7 +262,7 @@ class TestSaveCheckpoint:
             metadata = json.load(f)
 
         assert metadata["epoch"] == 5
-        assert metadata["metrics"]["val_loss"] == 0.4
+        assert metadata["metrics"]["val_loss"] == pytest.approx(0.4)
 
 
 class TestLoadCheckpoint:
@@ -301,7 +301,7 @@ class TestLoadCheckpoint:
             result = manager.load_checkpoint(model=new_model, optimizer=new_optimizer)
 
         assert result["resume_epoch"] == 6  # epoch + 1
-        assert result["metrics"]["val_loss"] == 0.4
+        assert result["metrics"]["val_loss"] == pytest.approx(0.4)
 
     def test_load_specific_checkpoint(
         self, tmp_path: Path, simple_model, simple_optimizer
@@ -464,4 +464,4 @@ class TestPrintSessionWarning:
 
         # Should print time remaining message
         print_calls = "".join(str(call) for call in mock_print.call_args_list)
-        assert "remaining" in print_calls.lower() or len(mock_print.call_args_list) >= 0
+        assert "remaining" in print_calls.lower() or len(mock_print.call_args_list) > 0

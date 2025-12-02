@@ -39,20 +39,20 @@ class TestCalculateStatistics:
 
         result = calculate_statistics(scores)
 
-        assert result["mean"] == 3.0
-        assert result["median"] == 3.0
-        assert result["min"] == 1.0
-        assert result["max"] == 5.0
+        assert result["mean"] == pytest.approx(3.0)
+        assert result["median"] == pytest.approx(3.0)
+        assert result["min"] == pytest.approx(1.0)
+        assert result["max"] == pytest.approx(5.0)
 
     def test_empty_scores(self) -> None:
         """Test statistics for empty scores list."""
         result = calculate_statistics([])
 
-        assert result["mean"] == 0.0
-        assert result["median"] == 0.0
-        assert result["std"] == 0.0
-        assert result["min"] == 0.0
-        assert result["max"] == 0.0
+        assert result["mean"] == pytest.approx(0.0)
+        assert result["median"] == pytest.approx(0.0)
+        assert result["std"] == pytest.approx(0.0)
+        assert result["min"] == pytest.approx(0.0)
+        assert result["max"] == pytest.approx(0.0)
 
     def test_single_value(self) -> None:
         """Test statistics for single value."""
@@ -60,9 +60,9 @@ class TestCalculateStatistics:
 
         result = calculate_statistics(scores)
 
-        assert result["mean"] == 0.5
-        assert result["median"] == 0.5
-        assert result["std"] == 0.0
+        assert result["mean"] == pytest.approx(0.5)
+        assert result["median"] == pytest.approx(0.5)
+        assert result["std"] == pytest.approx(0.0)
 
     def test_quartiles(self) -> None:
         """Test quartile calculations."""
@@ -70,8 +70,8 @@ class TestCalculateStatistics:
 
         result = calculate_statistics(scores)
 
-        assert result["q25"] == 25.75
-        assert result["q75"] == 75.25
+        assert result["q25"] == pytest.approx(25.75)
+        assert result["q75"] == pytest.approx(75.25)
 
     def test_std_calculation(self) -> None:
         """Test standard deviation calculation."""
