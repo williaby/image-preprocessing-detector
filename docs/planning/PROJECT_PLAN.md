@@ -1854,11 +1854,33 @@ Albumentations pipeline (see Training Data Strategy)
 
 ---
 
-### Phase 4: Device-Priority Execution & Production Hardening (Weeks 15-17) ⏳ NOT STARTED
+### Phase 4: Device-Priority Execution & Production Hardening (Weeks 15-17) ⚠️ 25% COMPLETE
 
-**Status**: ⏳ NOT STARTED (November 2025 audit) - Blocked by Phase 3 training completion
+**Status**: ⚠️ 25% COMPLETE - Scaffolding Only (December 2025 audit)
 
-**Priority: MEDIUM - Cost optimization and production readiness**
+**Priority: HIGH - Critical for ML model integration**
+
+**Completed Deliverables (25%)**:
+
+- ✅ Device capability probing module (utils/device_probe.py - 184 lines)
+- ✅ Device recommendation logic with priority fallback (CUDA → CPU)
+- ✅ LRU-cached device probing for efficiency
+- ✅ E2E test suite (test_device_priority_e2e.py - 420+ lines)
+- ✅ API device preload in lifespan context manager
+- ✅ Mock testing patterns for all device scenarios
+
+**Outstanding Issues (75% - Critical Gaps)**:
+
+- ❌ Device-priority orchestrator/router (core Phase 4 component)
+- ❌ Model Registry integration
+- ❌ Fallback handling for Modal failures
+- ❌ Performance monitoring per device type
+- ❌ Budget enforcement for Modal GPU usage
+- ❌ Selective teacher inference triggering
+- ❌ Configuration system for device preferences
+- ❌ Integration into inference pipeline (iqa_ml.py)
+
+**Completion Estimate**: 9-11 developer days remaining (~75% of phase)
 
 **Duration**: 15 working days (3 weeks)
 **Total Sprints**: 24 sprints (~82 hours of implementation work)
