@@ -99,13 +99,13 @@ class TestValidateArtifacts:
 
     def test_validate_multiple_model_formats(self, valid_artifact_dir: Path) -> None:
         """Test detection of multiple model file formats."""
-        # Add additional model formats
-        (valid_artifact_dir / "model.onnx").write_bytes(b"y" * (2 * 1024 * 1024))
+        # Add additional PyTorch model format (.pt)
+        (valid_artifact_dir / "model.pt").write_bytes(b"y" * (2 * 1024 * 1024))
 
         with patch("builtins.print"):
             metadata = validate_artifacts(str(valid_artifact_dir))
 
-        # Should find both .pth and .onnx
+        # Should find both .pth and .pt
         assert len(metadata["model_files"]) >= 2
 
 
