@@ -252,7 +252,7 @@ class TestProcessingModels:
         assert summary.skew_angle == pytest.approx(1.5)
 
     def test_dqs_summary_model(self) -> None:
-        """DQSSummary model validates required fields."""
+        """DQSSummary model validates fields (pre_ocr_risk is optional)."""
         from image_preprocessing_detector.api.models import DQSSummary
 
         dqs = DQSSummary(
@@ -306,6 +306,8 @@ class TestProcessingModels:
         assert result.num_pages == 5
         assert result.pdf_type == "born_digital"
         assert result.dqs is not None
+        # pre_ocr_risk is optional on the model and should default to None
+        assert result.dqs.pre_ocr_risk is None
         assert result.ocr_routing_recommendation == "ocr_fast"
 
     def test_batch_job_status_model(self) -> None:
