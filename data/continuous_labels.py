@@ -199,8 +199,10 @@ class ContinuousQualityLabel(BaseModel):
     @model_validator(mode="after")
     def compute_overall_if_missing(self) -> ContinuousQualityLabel:
         """Compute overall_quality if not explicitly set."""
+        import math
+
         # If overall_quality is default and we have severity scores, compute it
-        if self.overall_quality == 1.0:
+        if math.isclose(self.overall_quality, 1.0, rel_tol=1e-9):
             max_severity = max(
                 self.blur_severity,
                 self.noise_severity,

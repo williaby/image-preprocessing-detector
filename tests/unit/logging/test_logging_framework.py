@@ -387,7 +387,7 @@ class TestLogSampling:
             sample_rate=1.0,
         )
         # Sampling rate 1.0 means nothing should be dropped
-        assert config.sample_rate == 1.0
+        assert config.sample_rate == pytest.approx(1.0)
         # Verify the config allows all levels through
         assert "WARNING" in config.always_log_levels
         assert "ERROR" in config.always_log_levels
@@ -429,7 +429,7 @@ class TestConvenienceFunctions:
                 log_entry = json.loads(output.strip())
                 assert log_entry["event"] == "performance"
                 assert log_entry["operation"] == "iqa_inference"
-                assert log_entry["duration_ms"] == 15.5
+                assert log_entry["duration_ms"] == pytest.approx(15.5)
                 assert log_entry["success"] is True
                 assert log_entry["model"] == "resnet18"
 
@@ -458,7 +458,7 @@ class TestConvenienceFunctions:
                 assert log_entry["device_used"] == "gpu"
                 assert log_entry["model_used"] == "student"
                 assert log_entry["corrections_applied"] == ["deskew", "contrast"]
-                assert log_entry["quality_score"] == 0.85
+                assert log_entry["quality_score"] == pytest.approx(0.85)
 
     def test_log_teacher_usage_structure(self) -> None:
         """log_teacher_usage outputs correct structure."""
@@ -481,8 +481,8 @@ class TestConvenienceFunctions:
                 assert log_entry["event"] == "teacher_usage"
                 assert log_entry["document_id"] == "doc_456"
                 assert log_entry["reason"] == "low_confidence"
-                assert log_entry["student_confidence"] == 0.45
-                assert log_entry["teacher_confidence"] == 0.92
+                assert log_entry["student_confidence"] == pytest.approx(0.45)
+                assert log_entry["teacher_confidence"] == pytest.approx(0.92)
 
 
 # ============================================================================
@@ -513,7 +513,7 @@ class TestLoggingConfiguration:
         assert config.json_logs is False
         assert config.log_level == "INFO"
         assert config.redact_pii is True
-        assert config.sample_rate == 1.0
+        assert config.sample_rate == pytest.approx(1.0)
         assert config.log_to_file is False
 
     def test_config_validation(self) -> None:
@@ -525,7 +525,7 @@ class TestLoggingConfiguration:
             max_bytes=1024,
             backup_count=3,
         )
-        assert config.sample_rate == 0.5
+        assert config.sample_rate == pytest.approx(0.5)
 
     def test_set_and_get_config(self) -> None:
         """Configuration can be set and retrieved."""

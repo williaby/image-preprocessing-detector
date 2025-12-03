@@ -138,9 +138,9 @@ class TestDocCreatorLoader:
 
         label = parse_doccreator_xml(temp_xml_file)
 
-        assert label.blur_severity == 0.45
-        assert label.noise_severity == 0.30
-        assert label.ink_degradation == 0.25
+        assert label.blur_severity == pytest.approx(0.45)
+        assert label.noise_severity == pytest.approx(0.30)
+        assert label.ink_degradation == pytest.approx(0.25)
         # Overall quality should be 1 - max(severities)
         assert label.overall_quality == pytest.approx(0.55, rel=0.01)
 
@@ -160,7 +160,7 @@ class TestDocCreatorLoader:
         assert "quality_scores" in result
         assert "labels" in result
         assert result["label_source"] == "doccreator"
-        assert result["label_confidence"] == 1.0
+        assert result["label_confidence"] == pytest.approx(1.0)
 
     def test_binary_labels_threshold(self, temp_xml_file: Path):
         """Test binary label conversion with threshold."""
@@ -204,9 +204,9 @@ class TestContinuousQualityLabel:
 
         label = ContinuousQualityLabel()
 
-        assert label.blur_severity == 0.0
-        assert label.noise_severity == 0.0
-        assert label.overall_quality == 1.0
+        assert label.blur_severity == pytest.approx(0.0)
+        assert label.noise_severity == pytest.approx(0.0)
+        assert label.overall_quality == pytest.approx(1.0)
         assert label.label_source == "augraphy"
 
     def test_severity_validation(self):
@@ -245,9 +245,9 @@ class TestContinuousQualityLabel:
         vector = label.get_severity_vector()
 
         assert len(vector) == 5
-        assert vector[0] == 0.35  # blur
-        assert vector[1] == 0.20  # noise
-        assert vector[2] == 0.10  # skew
+        assert vector[0] == pytest.approx(0.35)  # blur
+        assert vector[1] == pytest.approx(0.20)  # noise
+        assert vector[2] == pytest.approx(0.10)  # skew
 
     def test_training_dict_format(self, sample_continuous_label: dict[str, Any]):
         """Test training dictionary format."""
@@ -263,7 +263,7 @@ class TestContinuousQualityLabel:
         assert "label_source" in result
 
         # Check continuous_labels structure
-        assert result["continuous_labels"]["blur_severity"] == 0.35
+        assert result["continuous_labels"]["blur_severity"] == pytest.approx(0.35)
 
 
 class TestLabelConversions:
@@ -283,9 +283,9 @@ class TestLabelConversions:
 
         label = binary_to_continuous(binary, confidence=0.7)
 
-        assert label.blur_severity == 0.7
-        assert label.noise_severity == 0.0
-        assert label.skew_severity == 0.7
+        assert label.blur_severity == pytest.approx(0.7)
+        assert label.noise_severity == pytest.approx(0.0)
+        assert label.skew_severity == pytest.approx(0.7)
         assert label.label_source == "weak_supervision"
 
     def test_aggregate_labels_mean(self):
@@ -314,7 +314,7 @@ class TestLabelConversions:
 
         result = aggregate_labels(labels, method="max")
 
-        assert result.blur_severity == 0.8
+        assert result.blur_severity == pytest.approx(0.8)
 
     def test_load_label_file_continuous(self, sample_continuous_label: dict[str, Any]):
         """Test loading continuous label file."""
@@ -326,7 +326,7 @@ class TestLabelConversions:
 
         label = load_label_file(temp_path)
 
-        assert label.blur_severity == 0.35
+        assert label.blur_severity == pytest.approx(0.35)
         assert label.label_source == "augraphy"
 
     def test_load_label_file_weak_supervision(
@@ -342,8 +342,8 @@ class TestLabelConversions:
         label = load_label_file(temp_path)
 
         # Should extract severity from nested labels
-        assert label.blur_severity == 0.45
-        assert label.contrast_severity == 0.40
+        assert label.blur_severity == pytest.approx(0.45)
+        assert label.contrast_severity == pytest.approx(0.40)
         assert label.label_source == "weak_supervision"
 
 
@@ -523,6 +523,6 @@ class TestAugraphyPipeline:
 
         result = label.to_dict()
 
-        assert result["blur_severity"] == 0.3
+        assert result["blur_severity"] == pytest.approx(0.3)
         assert result["label_source"] == "augraphy"
         assert "labels" in result  # Backward-compatible binary labels
