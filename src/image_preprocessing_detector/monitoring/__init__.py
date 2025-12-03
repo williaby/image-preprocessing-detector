@@ -388,6 +388,69 @@ class MetricsCollector:
         )
 
         # ----------------------------------------------------------------
+        # Drift Detection Metrics
+        # ----------------------------------------------------------------
+
+        # KL divergence by feature
+        self.drift_kl_divergence = Gauge(
+            f"{ns}_drift_kl_divergence",
+            "KL divergence from reference distribution",
+            ["feature"],
+        )
+
+        # PSI (Population Stability Index) by feature
+        self.drift_psi = Gauge(
+            f"{ns}_drift_psi",
+            "Population Stability Index from reference distribution",
+            ["feature"],
+        )
+
+        # Drift severity (0=none, 1=warning, 2=critical)
+        self.drift_severity = Gauge(
+            f"{ns}_drift_severity",
+            "Drift severity level (0=none, 1=warning, 2=critical)",
+            ["feature"],
+        )
+
+        # Drift check timestamp
+        self.drift_last_check = Gauge(
+            f"{ns}_drift_last_check_timestamp",
+            "Unix timestamp of last drift check",
+        )
+
+        # ----------------------------------------------------------------
+        # Model Performance Metrics
+        # ----------------------------------------------------------------
+
+        # Model mAP
+        self.model_map = Gauge(
+            f"{ns}_model_map",
+            "Model mean Average Precision",
+            ["model_name", "dataset"],
+        )
+
+        # Model F1 score
+        self.model_f1 = Gauge(
+            f"{ns}_model_f1",
+            "Model F1 score",
+            ["model_name", "dataset"],
+        )
+
+        # Model precision
+        self.model_precision = Gauge(
+            f"{ns}_model_precision",
+            "Model precision",
+            ["model_name", "dataset"],
+        )
+
+        # Model recall
+        self.model_recall = Gauge(
+            f"{ns}_model_recall",
+            "Model recall",
+            ["model_name", "dataset"],
+        )
+
+        # ----------------------------------------------------------------
         # Info Metric
         # ----------------------------------------------------------------
 
@@ -528,6 +591,54 @@ class MetricsCollector:
         """
         self.active_workers.labels(worker_type=worker_type).set(count)
 
+    def record_drift_result(
+        self,
+        feature: str,
+        kl_divergence: float,
+        psi: float,
+        severity: int,
+    ) -> None:
+        """Record drift detection result.
+
+        Args:
+            feature: Feature name (e.g., quality_score, blur_score).
+            kl_divergence: KL divergence value.
+            psi: PSI value.
+            severity: Severity level (0=none, 1=warning, 2=critical).
+        """
+        self.drift_kl_divergence.labels(feature=feature).set(kl_divergence)
+        self.drift_psi.labels(feature=feature).set(psi)
+        self.drift_severity.labels(feature=feature).set(severity)
+        self.drift_last_check.set(time.time())
+
+    def record_model_performance(
+        self,
+        model_name: str,
+        dataset: str,
+        map_score: float,
+        f1_score: float,
+        precision: float | None = None,
+        recall: float | None = None,
+    ) -> None:
+        """Record model performance metrics.
+
+        Args:
+            model_name: Name of the model (student, teacher).
+            dataset: Dataset used for evaluation.
+            map_score: Mean Average Precision.
+            f1_score: F1 score.
+            precision: Precision score (optional).
+            recall: Recall score (optional).
+        """
+        self.model_map.labels(model_name=model_name, dataset=dataset).set(map_score)
+        self.model_f1.labels(model_name=model_name, dataset=dataset).set(f1_score)
+        if precision is not None:
+            self.model_precision.labels(model_name=model_name, dataset=dataset).set(
+                precision
+            )
+        if recall is not None:
+            self.model_recall.labels(model_name=model_name, dataset=dataset).set(recall)
+
     @contextmanager
     def time_operation(
         self,
@@ -638,6 +749,46 @@ def record_correction(correction_type: str, duration_seconds: float) -> None:
 def record_quality_score(score: float, gate_result: str) -> None:
     """Record a quality score."""
     get_metrics().record_quality_score(score, gate_result)
+
+
+def record_drift_result(
+    feature: str,
+    kl_divergence: float,
+    psi: float,
+    severity: int,
+) -> None:
+    """Record drift detection result.
+
+    Args:
+        feature: Feature name.
+        kl_divergence: KL divergence value.
+        psi: PSI value.
+        severity: Severity level (0=none, 1=warning, 2=critical).
+    """
+    get_metrics().record_drift_result(feature, kl_divergence, psi, severity)
+
+
+def record_model_performance(
+    model_name: str,
+    dataset: str,
+    map_score: float,
+    f1_score: float,
+    precision: float | None = None,
+    recall: float | None = None,
+) -> None:
+    """Record model performance metrics.
+
+    Args:
+        model_name: Name of the model.
+        dataset: Dataset used for evaluation.
+        map_score: Mean Average Precision.
+        f1_score: F1 score.
+        precision: Precision score (optional).
+        recall: Recall score (optional).
+    """
+    get_metrics().record_model_performance(
+        model_name, dataset, map_score, f1_score, precision, recall
+    )
 
 
 T = TypeVar("T")
