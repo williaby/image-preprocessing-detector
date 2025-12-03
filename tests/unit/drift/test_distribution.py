@@ -99,8 +99,8 @@ class TestComputeHistogram:
         values = [0.0, 0.25, 0.5, 0.75, 1.0]
         histogram, bin_edges = compute_histogram(values, bounds=(0, 1))
 
-        assert bin_edges[0] == 0.0
-        assert bin_edges[-1] == 1.0
+        assert bin_edges[0] == pytest.approx(0.0)
+        assert bin_edges[-1] == pytest.approx(1.0)
 
     def test_values_outside_bounds_clipped(self) -> None:
         """Test values outside bounds are clipped."""
@@ -116,8 +116,8 @@ class TestComputeHistogram:
         histogram, bin_edges = compute_histogram(values)
 
         # All values should be in one bin
-        assert max(histogram) == 1.0
-        assert sum(histogram) == 1.0
+        assert max(histogram) == pytest.approx(1.0)
+        assert sum(histogram) == pytest.approx(1.0)
 
     def test_reproducibility(self) -> None:
         """Test histogram computation is deterministic."""
@@ -138,18 +138,18 @@ class TestComputeStats:
         stats = compute_stats([])
 
         assert stats.count == 0
-        assert stats.mean == 0.0
-        assert stats.std == 0.0
+        assert stats.mean == pytest.approx(0.0)
+        assert stats.std == pytest.approx(0.0)
 
     def test_single_value(self) -> None:
         """Test stats with single value."""
         stats = compute_stats([0.5])
 
         assert stats.count == 1
-        assert stats.mean == 0.5
-        assert stats.std == 0.0
-        assert stats.min_val == 0.5
-        assert stats.max_val == 0.5
+        assert stats.mean == pytest.approx(0.5)
+        assert stats.std == pytest.approx(0.0)
+        assert stats.min_val == pytest.approx(0.5)
+        assert stats.max_val == pytest.approx(0.5)
 
     def test_known_values(self) -> None:
         """Test stats with known values."""
@@ -157,10 +157,10 @@ class TestComputeStats:
         stats = compute_stats(values)
 
         assert stats.count == 5
-        assert stats.mean == 3.0
-        assert stats.median == 3.0
-        assert stats.min_val == 1.0
-        assert stats.max_val == 5.0
+        assert stats.mean == pytest.approx(3.0)
+        assert stats.median == pytest.approx(3.0)
+        assert stats.min_val == pytest.approx(1.0)
+        assert stats.max_val == pytest.approx(5.0)
 
     def test_percentiles(self) -> None:
         """Test percentile calculations."""
@@ -249,7 +249,7 @@ class TestKLDivergence:
 
     def test_empty_distributions(self) -> None:
         """Test empty distributions return zero."""
-        assert kl_divergence([], []) == 0.0
+        assert kl_divergence([], []) == pytest.approx(0.0)
 
     def test_epsilon_handling(self) -> None:
         """Test epsilon prevents log(0) errors."""
@@ -450,7 +450,7 @@ class TestDistributionTracker:
         stats = tracker.compute_stats("test")
 
         assert stats.count == 5
-        assert stats.mean == 3.0
+        assert stats.mean == pytest.approx(3.0)
 
     def test_clear_specific_feature(self) -> None:
         """Test clearing specific feature."""
@@ -728,7 +728,7 @@ class TestDriftDetector:
             result = detector.detect_drift("nonexistent", [0.5, 0.5])
 
             assert result.severity == DriftSeverity.NONE
-            assert result.kl_divergence == 0.0
+            assert result.kl_divergence == pytest.approx(0.0)
             assert result.reference_stats is None
 
     def test_detect_drift_from_tracker(self) -> None:
@@ -838,8 +838,8 @@ class TestDriftResult:
         d = result.to_dict()
 
         assert d["feature"] == "test"
-        assert d["kl_divergence"] == 0.15
-        assert d["psi"] == 0.12
+        assert d["kl_divergence"] == pytest.approx(0.15)
+        assert d["psi"] == pytest.approx(0.12)
         assert d["severity"] == "warning"
         assert d["sample_ids"] == ["a", "b"]
 
@@ -934,7 +934,7 @@ class TestConvenienceFunctions:
         tracker = create_tracker(sample_rate=0.5, max_samples=500)
 
         assert isinstance(tracker, DistributionTracker)
-        assert tracker.sample_rate == 0.5
+        assert tracker.sample_rate == pytest.approx(0.5)
         assert tracker.max_samples == 500
 
 
@@ -1017,7 +1017,7 @@ class TestFeatureTypeBounds:
         """Test skew angle bounds are reasonable."""
         bounds = FEATURE_BOUNDS[FeatureType.SKEW_ANGLE]
         assert bounds[0] == -45.0
-        assert bounds[1] == 45.0
+        assert bounds[1] == pytest.approx(45.0)
 
 
 class TestThresholdConstants:

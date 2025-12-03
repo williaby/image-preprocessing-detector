@@ -654,8 +654,8 @@ class TestSentryEnabled:
             assert call_kwargs["dsn"] == "https://custom@sentry.io/456"
             assert call_kwargs["environment"] == "production"
             assert call_kwargs["release"] == "1.0.0"
-            assert call_kwargs["sample_rate"] == 0.5
-            assert call_kwargs["traces_sample_rate"] == 0.2
+            assert call_kwargs["sample_rate"] == pytest.approx(0.5)
+            assert call_kwargs["traces_sample_rate"] == pytest.approx(0.2)
 
     def test_capture_error_with_structured_error(self) -> None:
         """Test capture_error with StructuredError."""

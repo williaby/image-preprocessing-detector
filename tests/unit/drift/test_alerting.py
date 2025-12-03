@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 from image_preprocessing_detector.drift.alerting import (
     F1_DROP_CRITICAL_THRESHOLD,
     F1_DROP_WARNING_THRESHOLD,
@@ -55,7 +57,7 @@ class TestDriftSample:
         d = sample.to_dict()
 
         assert d["sample_id"] == "sample_001"
-        assert d["value"] == 0.85
+        assert d["value"] == pytest.approx(0.85)
         assert d["metadata"]["source"] == "test"
 
 
@@ -87,7 +89,7 @@ class TestDriftAlert:
         assert d["alert_type"] == "kl_divergence"
         assert d["severity"] == "warning"
         assert d["feature"] == "quality_score"
-        assert d["current_value"] == 0.35
+        assert d["current_value"] == pytest.approx(0.35)
 
     def test_from_dict(self) -> None:
         """Test deserialization."""
@@ -168,8 +170,8 @@ class TestAlertConfig:
 
         config = AlertConfig.from_dict(data)
 
-        assert config.kl_warning == 0.20
-        assert config.kl_critical == 0.40
+        assert config.kl_warning == pytest.approx(0.20)
+        assert config.kl_critical == pytest.approx(0.40)
         assert config.dry_run is True
 
     def test_enabled_channels(self) -> None:
@@ -712,11 +714,11 @@ class TestConstants:
 
     def test_kl_critical_is_03(self) -> None:
         """Test KL critical threshold is 0.3 as specified."""
-        assert KL_CRITICAL_THRESHOLD == 0.30
+        assert pytest.approx(0.30) == KL_CRITICAL_THRESHOLD
 
     def test_map_critical_is_5_percent(self) -> None:
         """Test mAP critical threshold is 5% as specified."""
-        assert MAP_DROP_CRITICAL_THRESHOLD == 0.05
+        assert pytest.approx(0.05) == MAP_DROP_CRITICAL_THRESHOLD
 
     def test_max_samples_reasonable(self) -> None:
         """Test max samples is reasonable."""

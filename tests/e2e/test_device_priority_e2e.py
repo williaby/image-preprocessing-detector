@@ -515,7 +515,7 @@ class TestDocumentMetadataSnapshot:
         data = issue.model_dump()
 
         assert data["type"] == "blur"
-        assert data["confidence"] == 0.85
+        assert data["confidence"] == pytest.approx(0.85)
         assert data["severity"] == "high"
         assert "metrics" in data
-        assert data["metrics"]["laplacian_variance"] == 42.5
+        assert data["metrics"]["laplacian_variance"] == pytest.approx(42.5)

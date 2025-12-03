@@ -65,7 +65,7 @@ class TestPageOutcome:
             correction_time_ms=8.1,
             total_time_ms=28.6,
         )
-        assert outcome.teacher_confidence == 0.92
+        assert outcome.teacher_confidence == pytest.approx(0.92)
         assert len(outcome.corrections_applied) == 2
 
 
@@ -183,7 +183,7 @@ class TestOutcomeLogger:
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args
         assert call_args[0][0] == "correction_outcome"
-        assert call_args[1]["improvement"] == 0.2
+        assert call_args[1]["improvement"] == pytest.approx(0.2)
 
 
 # ============================================================================
@@ -460,10 +460,10 @@ class TestGetOutcomeLogger:
         """Factory creates logger with default config."""
         logger = get_outcome_logger()
         assert logger is not None
-        assert logger.sample_rate == 1.0  # Default from LoggingConfig
+        assert logger.sample_rate == pytest.approx(1.0)  # Default from LoggingConfig
 
     def test_accepts_custom_rates(self) -> None:
         """Factory accepts custom sample rates."""
         logger = get_outcome_logger(sample_rate=0.5, batch_sample_rate=0.1)
-        assert logger.sample_rate == 0.5
-        assert logger.batch_sample_rate == 0.1
+        assert logger.sample_rate == pytest.approx(0.5)
+        assert logger.batch_sample_rate == pytest.approx(0.1)
