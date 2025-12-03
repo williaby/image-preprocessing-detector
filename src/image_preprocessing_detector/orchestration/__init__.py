@@ -16,10 +16,22 @@ from image_preprocessing_detector.orchestration.device_orchestrator import (
     DevicePolicyConfig,
     InferenceMode,
 )
+from image_preprocessing_detector.orchestration.modal_client import (
+    CircuitBreakerConfig,
+    CircuitState,
+    ModalClient,
+    ModalInferenceRequest,
+    ModalInferenceResponse,
+)
 
 __all__ = [
+    "CircuitBreakerConfig",
+    "CircuitState",
     "DeviceChoice",
     "DeviceOrchestrator",
     "DevicePolicyConfig",
     "InferenceMode",
+    "ModalClient",
+    "ModalInferenceRequest",
+    "ModalInferenceResponse",
 ]
