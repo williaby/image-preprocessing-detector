@@ -259,7 +259,8 @@ class DocLayoutIntegration:
             return self._column_type_to_layout(heuristic_column_type)
 
         # Simple column inference based on x-position clustering
-        x_range = max(x_positions) - min(x_positions) if x_positions else 0
+        # x_positions is guaranteed non-empty here due to check above
+        x_range = max(x_positions) - min(x_positions)
         image_width = result.image_size[1] if result.image_size[1] > 0 else 1
 
         # If text spans less than 60% of width, likely single column

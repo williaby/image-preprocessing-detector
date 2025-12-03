@@ -58,7 +58,7 @@ The current pipeline **already outputs continuous scores** but trains on binary 
 
 DocCreator provides **physics-based document degradation** with 7 degradation models:
 
-```
+```python
 ┌─────────────────────────────────────────────────────────────────┐
 │ DocCreator Degradation Pipeline                                 │
 ├─────────────────────────────────────────────────────────────────┤
@@ -150,7 +150,7 @@ def parse_doccreator_xml(xml_path: Path) -> DocCreatorLabel:
 
 Augraphy provides a **Python-native layered augmentation pipeline** with continuous parameter extraction:
 
-```
+```python
 ┌─────────────────────────────────────────────────────────────────┐
 │ Augraphy Layered Architecture                                   │
 ├─────────────────────────────────────────────────────────────────┤
@@ -388,7 +388,7 @@ def binary_to_continuous(binary_labels: dict, confidence: float = 0.7) -> Contin
 
 ### 4.1 Loss Architecture
 
-```
+```python
 ┌─────────────────────────────────────────────────────────────────┐
 │ Hybrid Loss Function for Continuous IQA                         │
 ├─────────────────────────────────────────────────────────────────┤
@@ -737,7 +737,7 @@ Based on comprehensive analysis of [Q-Doc](https://arxiv.org/html/2511.11410v1),
 
 Based on benchmark analysis, we recommend a **tiered approach**:
 
-```
+```python
 ┌─────────────────────────────────────────────────────────────────┐
 │ MLLM Selection Strategy for Phase 7 Pseudo-Labels              │
 ├─────────────────────────────────────────────────────────────────┤
@@ -796,7 +796,7 @@ Based on benchmark analysis, we recommend a **tiered approach**:
 
 ### 5.2 Recommended Implementation Pipeline
 
-```
+```python
 ┌─────────────────────────────────────────────────────────────────┐
 │ MLLM Teacher Distillation Pipeline (Updated)                    │
 ├─────────────────────────────────────────────────────────────────┤
@@ -1257,20 +1257,20 @@ evaluation:
 
 ### Benchmarks (MLLM Model Selection)
 
-4. [Q-Doc: Benchmarking Document Image Quality Assessment Capabilities in MLLMs](https://arxiv.org/html/2511.11410v1) - Document-specific IQA benchmark with coarse/middle/fine evaluation levels
-5. [DeQA-Doc: Adapting DeQA-Score to Document Image Quality Assessment](https://arxiv.org/html/2507.12796) - State-of-the-art DIQA using Qwen2.5-VL (Final Score: 0.9235)
-6. [Q-Bench: General-Purpose Foundation Models on Low-level Vision](https://q-future.github.io/Q-Bench/) - ICLR 2024 Spotlight, comprehensive IQA benchmark
-7. [OmniDocBench: Benchmarking Diverse PDF Document Parsing](https://github.com/opendatalab/OmniDocBench) - CVPR 2025, document parsing quality benchmark
+1. [Q-Doc: Benchmarking Document Image Quality Assessment Capabilities in MLLMs](https://arxiv.org/html/2511.11410v1) - Document-specific IQA benchmark with coarse/middle/fine evaluation levels
+2. [DeQA-Doc: Adapting DeQA-Score to Document Image Quality Assessment](https://arxiv.org/html/2507.12796) - State-of-the-art DIQA using Qwen2.5-VL (Final Score: 0.9235)
+3. [Q-Bench: General-Purpose Foundation Models on Low-level Vision](https://q-future.github.io/Q-Bench/) - ICLR 2024 Spotlight, comprehensive IQA benchmark
+4. [OmniDocBench: Benchmarking Diverse PDF Document Parsing](https://github.com/opendatalab/OmniDocBench) - CVPR 2025, document parsing quality benchmark
 
 ### Datasets
 
-8. DIQA-5000: Document Image Quality Assessment dataset with 5,000 images rated across 3 dimensions
-9. OHR-Bench: Document Quality Assessment Benchmark (ICDAR 2021)
+1. DIQA-5000: Document Image Quality Assessment dataset with 5,000 images rated across 3 dimensions
+2. OHR-Bench: Document Quality Assessment Benchmark (ICDAR 2021)
 
 ### Recommended Models (from benchmark analysis)
 
-10. [DeepSeek-VL2: Mixture-of-Experts Vision-Language Models](https://arxiv.org/html/2412.10302v1) - Most consistent across quality assessment tasks
-11. [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) - Best backbone for DeQA-Doc quality regression
+1. [DeepSeek-VL2: Mixture-of-Experts Vision-Language Models](https://arxiv.org/html/2412.10302v1) - Most consistent across quality assessment tasks
+2. [Qwen2.5-VL](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct) - Best backbone for DeQA-Doc quality regression
 
 ---
 
@@ -1303,7 +1303,7 @@ evaluation:
 
 **Scenario: Single-model approach using Qwen2.5-VL-72B-Instruct**
 
-```
+```python
 Images: 100,000
 Input tokens/image: 1,200 (image + prompt)
 Output tokens/image: 150 (JSON response)
@@ -1322,7 +1322,7 @@ Cost breakdown:
 
 **Scenario A: Budget (Qwen2.5-VL-72B only)**
 
-```
+```python
 Input:  180M × $0.08/M  = $14.40
 Output: 22.5M × $0.33/M = $7.43
 ─────────────────────────────────
@@ -1331,7 +1331,7 @@ TOTAL: $21.83 for 150k images
 
 **Scenario B: Hybrid (Qwen for quality + GPT-4o-mini for distortion)**
 
-```
+```python
 Qwen2.5-VL-72B (150k images):
   Input:  180M × $0.08/M  = $14.40
   Output: 22.5M × $0.33/M = $7.43
@@ -1347,7 +1347,7 @@ TOTAL: $29.93 for 150k images (hybrid)
 
 **Scenario C: Premium (GPT-4o for all)**
 
-```
+```python
 Input:  180M × $2.50/M  = $450.00
 Output: 22.5M × $10.00/M = $225.00
 ─────────────────────────────────
@@ -1405,7 +1405,7 @@ Running open-source VLMs on Modal provides **significant cost savings** over API
 
 **Scenario A: Qwen3-VL-8B on A10G (RECOMMENDED)**
 
-```
+```python
 Model: Qwen3-VL-8B-Instruct
 GPU: A10G (24GB)
 Inference time: ~0.8 sec/image (batched)
@@ -1420,7 +1420,7 @@ Cost breakdown:
 
 **Scenario B: Qwen3-VL-8B-Thinking on A10G (Enhanced Reasoning)**
 
-```
+```python
 Model: Qwen3-VL-8B-Thinking
 GPU: A10G (24GB)
 Inference time: ~2.0 sec/image (CoT reasoning)
@@ -1435,7 +1435,7 @@ Cost breakdown:
 
 **Scenario C: Qwen2.5-VL-72B on A100 (Highest Accuracy)**
 
-```
+```python
 Model: Qwen2.5-VL-72B-Instruct
 GPU: A100-80GB
 Inference time: ~2.5 sec/image
