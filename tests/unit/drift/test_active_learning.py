@@ -9,6 +9,8 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 from image_preprocessing_detector.drift.active_learning import (
     DEFAULT_AGREEMENT_THRESHOLD,
     DEFAULT_ENTROPY_THRESHOLD,
@@ -58,7 +60,7 @@ class TestHarvestedSample:
 
         assert d["sample_id"] == "sample_001"
         assert d["harvest_reason"] == "high_entropy"
-        assert d["entropy"] == 0.85
+        assert d["entropy"] == pytest.approx(0.85)
         assert d["privacy_status"] == "approved"
 
     def test_from_dict(self) -> None:
@@ -200,7 +202,7 @@ class TestHarvesterConfig:
         d = config.to_dict()
 
         assert d["output_dir"] == "/custom/path"
-        assert d["entropy_threshold"] == 0.8
+        assert d["entropy_threshold"] == pytest.approx(0.8)
 
 
 # ============================================================================
@@ -398,7 +400,7 @@ class TestSampleHarvester:
             )
 
             assert sample.sample_id.startswith("sample_")
-            assert sample.entropy == 0.85
+            assert sample.entropy == pytest.approx(0.85)
             assert sample.harvest_reason == HarvestReason.HIGH_ENTROPY
             assert sample.checksum  # Should have checksum
 
@@ -621,7 +623,7 @@ class TestConvenienceFunctions:
             )
 
             assert harvester is not None
-            assert harvester.config.entropy_threshold == 0.8
+            assert harvester.config.entropy_threshold == pytest.approx(0.8)
 
     def test_harvest_and_manifest(self) -> None:
         """Test combined harvest and manifest generation."""

@@ -30,7 +30,7 @@ try:
     from modal.generate_pseudo_labels import ContinuousQualityLabel  # noqa: F401
 
     MODAL_IMPORT_AVAILABLE = True
-except (ImportError, ModuleNotFoundError, AttributeError):
+except (ModuleNotFoundError, AttributeError):
     # Modal SDK is installed and shadows our local modal/ directory
     # or the module doesn't exist
     MODAL_IMPORT_AVAILABLE = False
@@ -116,15 +116,15 @@ class TestContinuousQualityLabel:
 
         label = ContinuousQualityLabel()
 
-        assert label.blur_severity == 0.0
-        assert label.noise_severity == 0.0
-        assert label.skew_severity == 0.0
-        assert label.contrast_severity == 0.0
-        assert label.compression_severity == 0.0
-        assert label.overall_quality == 1.0
+        assert label.blur_severity == pytest.approx(0.0)
+        assert label.noise_severity == pytest.approx(0.0)
+        assert label.skew_severity == pytest.approx(0.0)
+        assert label.contrast_severity == pytest.approx(0.0)
+        assert label.compression_severity == pytest.approx(0.0)
+        assert label.overall_quality == pytest.approx(1.0)
         assert label.label_source == "mllm_pseudo"
         assert label.model_name == "qwen3-vl-8b-instruct"
-        assert label.label_confidence == 0.85
+        assert label.label_confidence == pytest.approx(0.85)
 
     def test_from_model_response_valid(self, valid_json_response):
         """Test creating label from valid model response."""
@@ -136,12 +136,12 @@ class TestContinuousQualityLabel:
             raw_response="test response",
         )
 
-        assert label.blur_severity == 0.25
-        assert label.noise_severity == 0.15
-        assert label.skew_severity == 0.05
-        assert label.contrast_severity == 0.10
-        assert label.compression_severity == 0.20
-        assert label.overall_quality == 0.85
+        assert label.blur_severity == pytest.approx(0.25)
+        assert label.noise_severity == pytest.approx(0.15)
+        assert label.skew_severity == pytest.approx(0.05)
+        assert label.contrast_severity == pytest.approx(0.10)
+        assert label.compression_severity == pytest.approx(0.20)
+        assert label.overall_quality == pytest.approx(0.85)
         assert label.model_name == "test-model"
         assert label.raw_response == "test response"
 
@@ -158,10 +158,10 @@ class TestContinuousQualityLabel:
 
         label = ContinuousQualityLabel.from_model_response(response)
 
-        assert label.blur_severity == 1.0  # Clamped to max
-        assert label.noise_severity == 0.0  # Clamped to min
-        assert label.contrast_severity == 0.5  # Unchanged
-        assert label.overall_quality == 1.0  # Clamped to max
+        assert label.blur_severity == pytest.approx(1.0)  # Clamped to max
+        assert label.noise_severity == pytest.approx(0.0)  # Clamped to min
+        assert label.contrast_severity == pytest.approx(0.5)  # Unchanged
+        assert label.overall_quality == pytest.approx(1.0)  # Clamped to max
 
     def test_from_model_response_invalid_types(self):
         """Test handling of invalid types in response."""
@@ -176,9 +176,9 @@ class TestContinuousQualityLabel:
         label = ContinuousQualityLabel.from_model_response(response)
 
         # Should use defaults for invalid values
-        assert label.blur_severity == 0.0
-        assert label.noise_severity == 0.0
-        assert label.contrast_severity == 0.0
+        assert label.blur_severity == pytest.approx(0.0)
+        assert label.noise_severity == pytest.approx(0.0)
+        assert label.contrast_severity == pytest.approx(0.0)
 
     def test_to_dict_structure(self, valid_json_response):
         """Test that to_dict produces expected structure."""
@@ -194,8 +194,8 @@ class TestContinuousQualityLabel:
 
         # Check backward-compatible quality_scores
         assert "quality_scores" in result
-        assert result["quality_scores"]["blur"] == 0.25
-        assert result["quality_scores"]["overall"] == 0.85
+        assert result["quality_scores"]["blur"] == pytest.approx(0.25)
+        assert result["quality_scores"]["overall"] == pytest.approx(0.85)
 
         # Check backward-compatible binary labels
         assert "labels" in result
@@ -252,9 +252,9 @@ class TestJsonParsing:
 
         result = labeler._parse_json_response(labeler, json_without_markers)
 
-        assert result["blur_severity"] == 0.40
-        assert result["noise_severity"] == 0.35
-        assert result["overall_quality"] == 0.65
+        assert result["blur_severity"] == pytest.approx(0.40)
+        assert result["noise_severity"] == pytest.approx(0.35)
+        assert result["overall_quality"] == pytest.approx(0.65)
 
     def test_parse_json_with_code_block(self, json_with_code_block):
         """Test parsing JSON wrapped in markdown code block."""
@@ -265,9 +265,9 @@ class TestJsonParsing:
 
         result = labeler._parse_json_response(labeler, json_with_code_block)
 
-        assert result["blur_severity"] == 0.30
-        assert result["noise_severity"] == 0.20
-        assert result["overall_quality"] == 0.75
+        assert result["blur_severity"] == pytest.approx(0.30)
+        assert result["noise_severity"] == pytest.approx(0.20)
+        assert result["overall_quality"] == pytest.approx(0.75)
 
     def test_parse_malformed_json_returns_defaults(self, malformed_json_response):
         """Test that malformed JSON returns default values."""
@@ -280,8 +280,8 @@ class TestJsonParsing:
 
         # Should return defaults with parse_error flag
         assert result.get("parse_error", False) is True
-        assert result["blur_severity"] == 0.5
-        assert result["overall_quality"] == 0.5
+        assert result["blur_severity"] == pytest.approx(0.5)
+        assert result["overall_quality"] == pytest.approx(0.5)
 
     def test_parse_json_with_surrounding_text(self):
         """Test parsing JSON embedded in surrounding text."""
@@ -298,8 +298,8 @@ class TestJsonParsing:
 
         result = labeler._parse_json_response(labeler, response)
 
-        assert result["blur_severity"] == 0.5
-        assert result["noise_severity"] == 0.3
+        assert result["blur_severity"] == pytest.approx(0.5)
+        assert result["noise_severity"] == pytest.approx(0.3)
 
     def test_parse_nested_json_block(self):
         """Test parsing with nested json code block marker."""
@@ -314,8 +314,8 @@ class TestJsonParsing:
 
         result = labeler._parse_json_response(labeler, response)
 
-        assert result["blur_severity"] == 0.6
-        assert result["overall_quality"] == 0.4
+        assert result["blur_severity"] == pytest.approx(0.6)
+        assert result["overall_quality"] == pytest.approx(0.4)
 
 
 # ============================================================================
@@ -336,8 +336,8 @@ class TestLabelSerialization:
         deserialized = json.loads(serialized)
 
         # Verify all fields survived
-        assert deserialized["blur_severity"] == 0.25
-        assert deserialized["overall_quality"] == 0.85
+        assert deserialized["blur_severity"] == pytest.approx(0.25)
+        assert deserialized["overall_quality"] == pytest.approx(0.85)
         assert "quality_scores" in deserialized
         assert "labels" in deserialized
 
@@ -394,8 +394,8 @@ class TestEdgeCases:
         label = ContinuousQualityLabel.from_model_response({})
 
         # Should use all defaults
-        assert label.blur_severity == 0.0
-        assert label.overall_quality == 1.0
+        assert label.blur_severity == pytest.approx(0.0)
+        assert label.overall_quality == pytest.approx(1.0)
 
     def test_extra_fields_ignored(self):
         """Test that extra fields in response are ignored."""
@@ -409,7 +409,7 @@ class TestEdgeCases:
 
         label = ContinuousQualityLabel.from_model_response(response)
 
-        assert label.blur_severity == 0.5
+        assert label.blur_severity == pytest.approx(0.5)
         # Extra fields should not cause errors
 
     def test_all_maximum_values(self):

@@ -61,6 +61,7 @@ dependencies = [
     "onnxruntime-gpu (>=1.23.2,<2.0.0)",
     "defusedxml>=0.7.1",
     "fonttools>=4.60.2,<5.0.0",
+    "werkzeug>=3.1.4",
 ]
 
 [project.optional-dependencies]
@@ -457,7 +458,7 @@ exclude = [
 [tool.pytest.ini_options]
 minversion = "7.0"
 testpaths = ["tests"]
-pythonpath = [".", "src", "benchmarks"]
+pythonpath = [".", "src", "benchmarks", "scripts"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

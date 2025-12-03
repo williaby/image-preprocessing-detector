@@ -438,23 +438,23 @@ class TestThresholdDocumentation:
     def test_latency_thresholds_documented(self) -> None:
         """Verify latency thresholds match alert rules."""
         # These values must match alert-rules.yml
-        assert LATENCY_THRESHOLDS["p50_warning"] == 0.2
-        assert LATENCY_THRESHOLDS["p95_warning"] == 0.5
-        assert LATENCY_THRESHOLDS["p99_critical"] == 2.0
-        assert LATENCY_THRESHOLDS["student_p95"] == 0.1
+        assert LATENCY_THRESHOLDS["p50_warning"] == pytest.approx(0.2)
+        assert LATENCY_THRESHOLDS["p95_warning"] == pytest.approx(0.5)
+        assert LATENCY_THRESHOLDS["p99_critical"] == pytest.approx(2.0)
+        assert LATENCY_THRESHOLDS["student_p95"] == pytest.approx(0.1)
 
     def test_error_thresholds_documented(self) -> None:
         """Verify error thresholds match alert rules."""
-        assert ERROR_THRESHOLDS["rate_warning"] == 0.05
-        assert ERROR_THRESHOLDS["rate_critical"] == 0.20
+        assert ERROR_THRESHOLDS["rate_warning"] == pytest.approx(0.05)
+        assert ERROR_THRESHOLDS["rate_critical"] == pytest.approx(0.20)
         assert ERROR_THRESHOLDS["processing_spike"] == 50
         assert ERROR_THRESHOLDS["infra_spike"] == 10
 
     def test_cost_thresholds_documented(self) -> None:
         """Verify cost thresholds match alert rules."""
-        assert COST_THRESHOLDS["daily_warning"] == 5.0
-        assert COST_THRESHOLDS["monthly_warning"] == 20.0
-        assert COST_THRESHOLDS["monthly_critical"] == 28.0
+        assert COST_THRESHOLDS["daily_warning"] == pytest.approx(5.0)
+        assert COST_THRESHOLDS["monthly_warning"] == pytest.approx(20.0)
+        assert COST_THRESHOLDS["monthly_critical"] == pytest.approx(28.0)
 
 
 # ============================================================================

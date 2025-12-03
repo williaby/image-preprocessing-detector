@@ -213,35 +213,35 @@ def get_installed_packages() -> dict[str, str]:
     try:
         import torch
 
-        packages["torch"] = torch.__version__
+        packages["torch"] = getattr(torch, "__version__", "N/A")
     except ImportError:
         packages["torch"] = "N/A"
 
     try:
         import torchvision
 
-        packages["torchvision"] = torchvision.__version__
+        packages["torchvision"] = getattr(torchvision, "__version__", "N/A")
     except ImportError:
         packages["torchvision"] = "N/A"
 
     try:
         import timm
 
-        packages["timm"] = timm.__version__
+        packages["timm"] = getattr(timm, "__version__", "N/A")
     except ImportError:
         packages["timm"] = "N/A"
 
     try:
         import albumentations
 
-        packages["albumentations"] = albumentations.__version__
+        packages["albumentations"] = getattr(albumentations, "__version__", "N/A")
     except ImportError:
         packages["albumentations"] = "N/A"
 
     try:
         import onnx
 
-        packages["onnx"] = onnx.__version__
+        packages["onnx"] = getattr(onnx, "__version__", "N/A")
     except ImportError:
         packages["onnx"] = "N/A"
 

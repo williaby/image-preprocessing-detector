@@ -42,7 +42,9 @@ def validate_path(path: Path, *, must_exist: bool = True) -> Path:
     """
     try:
         resolved = path.resolve(strict=must_exist)
-    except (OSError, RuntimeError) as e:
+    except (OSError, RuntimeError, ValueError) as e:
+        # pathlib may raise ValueError for certain inputs (e.g. null bytes)
+        # Convert low-level exceptions to the public PathValidationError
         msg = f"Invalid path: {path}"
         raise PathValidationError(msg) from e
 

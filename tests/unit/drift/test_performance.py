@@ -60,7 +60,7 @@ class TestEvaluationResult:
 
         assert d["model_version"] == "v1.0.0"
         assert d["dataset_name"] == "test_dataset"
-        assert d["metrics"]["mAP"] == 0.85
+        assert d["metrics"]["mAP"] == pytest.approx(0.85)
         assert d["sample_count"] == 1000
         assert d["metadata"]["device"] == "gpu"
 
@@ -79,7 +79,7 @@ class TestEvaluationResult:
         result = EvaluationResult.from_dict(data)
 
         assert result.model_version == "v1.0.0"
-        assert result.metrics["mAP"] == 0.85
+        assert result.metrics["mAP"] == pytest.approx(0.85)
 
     def test_get_metric(self) -> None:
         """Test getting specific metric."""
@@ -93,8 +93,8 @@ class TestEvaluationResult:
             evaluation_duration_seconds=10,
         )
 
-        assert result.get_metric(MetricType.MAP) == 0.85
-        assert result.get_metric("F1") == 0.88
+        assert result.get_metric(MetricType.MAP) == pytest.approx(0.85)
+        assert result.get_metric("F1") == pytest.approx(0.88)
         assert result.get_metric("nonexistent") is None
 
 
@@ -412,8 +412,8 @@ class TestPerformanceEvaluator:
 
             result = evaluator.evaluate()
 
-            assert result.metrics["mAP"] == 0.90
-            assert result.metrics["F1"] == 0.92
+            assert result.metrics["mAP"] == pytest.approx(0.90)
+            assert result.metrics["F1"] == pytest.approx(0.92)
 
     def test_analyze_trends_stable(self) -> None:
         """Test trend analysis with stable performance."""
@@ -804,7 +804,7 @@ class TestPerformanceTrend:
         d = trend.to_dict()
 
         assert d["metric"] == "mAP"
-        assert d["current_value"] == 0.82
+        assert d["current_value"] == pytest.approx(0.82)
         assert d["severity"] == "warning"
         assert len(d["history"]) == 3
 
