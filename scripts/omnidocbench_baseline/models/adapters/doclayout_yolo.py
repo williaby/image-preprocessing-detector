@@ -85,7 +85,7 @@ class DocLayoutYOLOAdapter(LayoutModel):
         labels = {
             k: v
             for k, v in layout.items()
-            if isinstance(v, (bool, str)) and not k.startswith("_")
+            if isinstance(v, bool | str) and not k.startswith("_")
         }
 
         return ModelPrediction(
