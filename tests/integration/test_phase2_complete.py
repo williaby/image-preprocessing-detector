@@ -692,11 +692,13 @@ class TestPhase2MLInference:
         )
 
         # Test detector initialization (without models - tests the class structure)
+        # Use legacy mode for this test to access device attribute
         detector = MLIQADetector(
             student_model_path=None,
             teacher_model_path=None,
             device=Device.CPU,
             enable_modal_fallback=False,
+            use_orchestrator=False,
         )
 
         # Verify detector configuration

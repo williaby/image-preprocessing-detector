@@ -1,0 +1,348 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options: [dev, staging, prod]
+      image_tag:
+        description: 'Docker image tag (leave empty for auto)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0.20.10
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  deploy-dev:
+    name: Deploy to Development
+    needs: build
+    if: >-
+      github.ref == 'refs/heads/main' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+      url: https://imgprep-api-dev.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.13.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Extract image tag
+        id: image
+        env:
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
+          SHA_TAG: ${{ github.sha }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            echo "tag=$INPUT_TAG" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$SHA_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install imgprep-api ./charts/image-preprocessing-detector \
+            -f charts/image-preprocessing-detector/values-dev.yaml \
+            --namespace imgprep-dev \
+            --create-namespace \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ steps.image.outputs.tag }} \
+            --wait \
+            --timeout 5m
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/imgprep-api -n imgprep-dev --timeout=5m
+          kubectl get pods -n imgprep-dev -l app.kubernetes.io/name=image-preprocessing-detector
+
+      - name: Run smoke tests
+        run: |
+          # Port forward for testing
+          kubectl port-forward svc/imgprep-api 8080:80 -n imgprep-dev &
+          sleep 5
+
+          # Health check
+          curl -f http://localhost:8080/health || exit 1
+
+          # Readiness check
+          curl -f http://localhost:8080/ready || exit 1
+
+          echo "Smoke tests passed!"
+
+      - name: Cleanup kubeconfig
+        if: always()
+        run: |
+          rm -f $HOME/.kube/config
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://imgprep-api-staging.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.13.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Extract image tag
+        id: image
+        env:
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
+          GIT_REF: ${{ github.ref }}
+          SHA_TAG: ${{ github.sha }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            echo "tag=$INPUT_TAG" >> $GITHUB_OUTPUT
+          elif [[ "$GIT_REF" == refs/tags/* ]]; then
+            echo "tag=${GIT_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$SHA_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install imgprep-api ./charts/image-preprocessing-detector \
+            --namespace imgprep-staging \
+            --create-namespace \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ steps.image.outputs.tag }} \
+            --wait \
+            --timeout 10m
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/imgprep-api -n imgprep-staging --timeout=10m
+          kubectl get pods -n imgprep-staging -l app.kubernetes.io/name=image-preprocessing-detector
+
+      - name: Cleanup kubeconfig
+        if: always()
+        run: |
+          rm -f $HOME/.kube/config
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: [build, deploy-staging]
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://api.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.28.0'
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.13.0'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Extract image tag
+        id: image
+        env:
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
+          GIT_REF: ${{ github.ref }}
+          SHA_TAG: ${{ github.sha }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            echo "tag=$INPUT_TAG" >> $GITHUB_OUTPUT
+          elif [[ "$GIT_REF" == refs/tags/* ]]; then
+            echo "tag=${GIT_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$SHA_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy with Helm (Blue/Green strategy)
+        run: |
+          helm upgrade --install imgprep-api ./charts/image-preprocessing-detector \
+            -f charts/image-preprocessing-detector/values-prod.yaml \
+            --namespace imgprep-prod \
+            --create-namespace \
+            --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+            --set image.tag=${{ steps.image.outputs.tag }} \
+            --wait \
+            --timeout 15m
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/imgprep-api -n imgprep-prod --timeout=15m
+          kubectl get pods -n imgprep-prod -l app.kubernetes.io/name=image-preprocessing-detector
+
+      - name: Run production smoke tests
+        run: |
+          # Port forward for testing
+          kubectl port-forward svc/imgprep-api 8080:80 -n imgprep-prod &
+          sleep 5
+
+          # Health check
+          curl -f http://localhost:8080/health || exit 1
+
+          # Readiness check
+          curl -f http://localhost:8080/ready || exit 1
+
+          # Version check
+          curl -f http://localhost:8080/version || exit 1
+
+          echo "Production smoke tests passed!"
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Production deployment successful: ${{ steps.image.outputs.tag }}"
+          # Add Slack/email notification here if needed
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed, initiating rollback..."
+          helm rollback imgprep-api -n imgprep-prod
+          exit 1
+
+      - name: Cleanup kubeconfig
+        if: always()
+        run: |
+          rm -f $HOME/.kube/config
+
+  security-scan:
+    name: Security Scan
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'

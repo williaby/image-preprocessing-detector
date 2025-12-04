@@ -29,9 +29,9 @@ class TestMLIQADetector:
     """Test MLIQADetector class."""
 
     def test_init_default_params(self) -> None:
-        """Test MLIQADetector initialization with defaults."""
+        """Test MLIQADetector initialization with defaults (legacy mode)."""
         with patch.object(MLIQADetector, "_detect_device", return_value=Device.CPU):
-            detector = MLIQADetector()
+            detector = MLIQADetector(use_orchestrator=False)
 
             assert detector.student_model_path is None
             assert detector.teacher_model_path is None
@@ -46,6 +46,7 @@ class TestMLIQADetector:
                 teacher_model_path="models/iqa/teacher.onnx",
                 device=Device.GPU,
                 enable_modal_fallback=False,
+                use_orchestrator=False,
             )
 
             assert str(detector.student_model_path) == "models/iqa/student.onnx"
@@ -61,7 +62,7 @@ class TestMLIQADetector:
             "CPUExecutionProvider",
         ]
 
-        detector = MLIQADetector()
+        detector = MLIQADetector(use_orchestrator=False)
         assert detector.device == Device.GPU
 
     @patch("image_preprocessing_detector.detection.iqa_ml.ort")
@@ -69,7 +70,7 @@ class TestMLIQADetector:
         """Test device detection when only CPU is available."""
         mock_ort.get_available_providers.return_value = ["CPUExecutionProvider"]
 
-        detector = MLIQADetector()
+        detector = MLIQADetector(use_orchestrator=False)
         assert detector.device == Device.CPU
 
     def test_detect_device_onnxruntime_not_available(self) -> None:
@@ -77,13 +78,13 @@ class TestMLIQADetector:
         with patch(
             "image_preprocessing_detector.detection.iqa_ml.ort", side_effect=ImportError
         ):
-            detector = MLIQADetector()
+            detector = MLIQADetector(use_orchestrator=False)
             assert detector.device == Device.CPU
 
     def test_get_ort_providers_gpu(self) -> None:
         """Test ONNX Runtime provider selection for GPU."""
         with patch.object(MLIQADetector, "_detect_device", return_value=Device.GPU):
-            detector = MLIQADetector(device=Device.GPU)
+            detector = MLIQADetector(device=Device.GPU, use_orchestrator=False)
             providers = detector._get_ort_providers()
 
             assert providers == ["CUDAExecutionProvider", "CPUExecutionProvider"]
@@ -91,7 +92,7 @@ class TestMLIQADetector:
     def test_get_ort_providers_cpu(self) -> None:
         """Test ONNX Runtime provider selection for CPU."""
         with patch.object(MLIQADetector, "_detect_device", return_value=Device.CPU):
-            detector = MLIQADetector(device=Device.CPU)
+            detector = MLIQADetector(device=Device.CPU, use_orchestrator=False)
             providers = detector._get_ort_providers()
 
             assert providers == ["CPUExecutionProvider"]
@@ -244,7 +245,9 @@ class TestMLIQADetector:
         mock_load_session.return_value = mock_session
 
         with patch.object(MLIQADetector, "_detect_device", return_value=Device.CPU):
-            detector = MLIQADetector(student_model_path="models/iqa/student.onnx")
+            detector = MLIQADetector(
+                student_model_path="models/iqa/student.onnx", use_orchestrator=False
+            )
 
             # Create test image
             rng = np.random.default_rng(seed=42)

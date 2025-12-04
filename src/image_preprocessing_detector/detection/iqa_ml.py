@@ -13,10 +13,19 @@ Phase 2 Integration - Milestone 14.2
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+if TYPE_CHECKING:
+    from typing import Literal
+
+from image_preprocessing_detector.orchestration import (
+    DeviceOrchestrator,
+    DevicePolicyConfig,
+    ModalClient,
+    ModalInferenceRequest,
+)
 from image_preprocessing_detector.utils import get_logger
 
 logger = get_logger(__name__)
@@ -212,17 +221,24 @@ class MLIQADetector:
         entropy_threshold: float = 0.8,
         min_confidence_threshold: float = 0.6,
         mean_confidence_threshold: float = 0.7,
+        # Phase 4: Device orchestration parameters
+        device_policy: DevicePolicyConfig | None = None,
+        modal_endpoint: str | None = None,
+        use_orchestrator: bool = True,
     ) -> None:
         """Initialize ML IQA detector.
 
         Args:
             student_model_path: Path to student ONNX model (ResNet-18)
             teacher_model_path: Path to teacher ONNX model (ResNet-50)
-            device: Preferred device (auto-detect if None)
-            enable_modal_fallback: Allow fallback to Modal GPU if local unavailable
+            device: Preferred device (auto-detect if None) - LEGACY, use device_policy instead
+            enable_modal_fallback: Allow fallback to Modal GPU if local unavailable - LEGACY
             entropy_threshold: Entropy threshold for escalation (default: 0.8)
             min_confidence_threshold: Min confidence threshold for escalation (default: 0.6)
             mean_confidence_threshold: Mean confidence threshold for escalation (default: 0.7)
+            device_policy: Device policy configuration (Phase 4)
+            modal_endpoint: Modal serverless endpoint URL (Phase 4)
+            use_orchestrator: Enable Phase 4 device orchestration (default: True)
         """
         self.student_model_path = student_model_path
         self.teacher_model_path = teacher_model_path
@@ -236,19 +252,39 @@ class MLIQADetector:
         # Discrepancy check threshold (default: 0.3 for 30% difference)
         self.discrepancy_threshold = 0.3
 
-        # Auto-detect device if not specified
-        self.device = device or self._detect_device()
+        # Phase 4: Device orchestration
+        self.use_orchestrator = use_orchestrator
+        self.orchestrator: DeviceOrchestrator | None
+        self.modal_client: ModalClient | None
 
-        # Lazy-load inference sessions
-        self._student_session: Any = None
-        self._teacher_session: Any = None
+        if use_orchestrator:
+            # Use DeviceOrchestrator for device selection
+            self.device_policy = device_policy or DevicePolicyConfig()
+            self.orchestrator = DeviceOrchestrator(config=self.device_policy)
+            self.modal_client = (
+                ModalClient(modal_endpoint=modal_endpoint) if modal_endpoint else None
+            )
+            logger.info(
+                "Device orchestrator enabled",
+                mode=self.device_policy.mode.value,
+                modal_endpoint=modal_endpoint,
+            )
+        else:
+            # Legacy mode: manual device selection
+            self.device = device or self._detect_device()
+            self.orchestrator = None
+            self.modal_client = None
+            logger.info("Legacy device mode", device=self.device.value)
+
+        # Lazy-load inference sessions (per-device caching in Phase 4)
+        self._student_sessions: dict[str, Any] = {}
+        self._teacher_sessions: dict[str, Any] = {}
 
         logger.info(
             "ML IQA detector initialized",
             student_model=str(student_model_path) if student_model_path else "None",
             teacher_model=str(teacher_model_path) if teacher_model_path else "None",
-            device=self.device.value,
-            modal_fallback=enable_modal_fallback,
+            orchestrator_enabled=use_orchestrator,
             entropy_threshold=entropy_threshold,
             min_confidence_threshold=min_confidence_threshold,
             mean_confidence_threshold=mean_confidence_threshold,
@@ -277,8 +313,11 @@ class MLIQADetector:
         logger.info("Using CPU inference")
         return Device.CPU
 
-    def _load_student_session(self) -> Any:
+    def _load_student_session(self, device: str | None = None) -> Any:
         """Load student model ONNX session (lazy initialization).
+
+        Args:
+            device: Device for session (cuda/cpu, None for legacy mode)
 
         Returns:
             ONNX InferenceSession
@@ -287,8 +326,15 @@ class MLIQADetector:
             FileNotFoundError: If model file doesn't exist
             RuntimeError: If ONNX Runtime not available
         """
-        if self._student_session is not None:
-            return self._student_session
+        if self.use_orchestrator and device is not None:
+            # Phase 4: Per-device caching
+            if device in self._student_sessions:
+                return self._student_sessions[device]
+        elif not self.use_orchestrator:
+            # Legacy mode: single session
+            if self._student_sessions.get("legacy"):
+                return self._student_sessions["legacy"]
+            device = "legacy"
 
         if self.student_model_path is None:
             raise ValueError("Student model path not set")
@@ -300,15 +346,22 @@ class MLIQADetector:
         if ort is None:
             raise RuntimeError("ONNX Runtime not installed")
 
-        providers = self._get_ort_providers()
-        self._student_session = ort.InferenceSession(
-            str(model_path), providers=providers
-        )
-        logger.info("Student model loaded", path=str(model_path), providers=providers)
-        return self._student_session
+        providers = self._get_ort_providers(device)
+        session = ort.InferenceSession(str(model_path), providers=providers)
 
-    def _load_teacher_session(self) -> Any:
+        if self.use_orchestrator and device:
+            self._student_sessions[device] = session
+        else:
+            self._student_sessions["legacy"] = session
+
+        logger.info("Student model loaded", path=str(model_path), providers=providers)
+        return session
+
+    def _load_teacher_session(self, device: str | None = None) -> Any:
         """Load teacher model ONNX session (lazy initialization).
+
+        Args:
+            device: Device for session (cuda/cpu/modal, None for legacy mode)
 
         Returns:
             ONNX InferenceSession
@@ -317,8 +370,15 @@ class MLIQADetector:
             FileNotFoundError: If model file doesn't exist
             RuntimeError: If ONNX Runtime not available
         """
-        if self._teacher_session is not None:
-            return self._teacher_session
+        if self.use_orchestrator and device is not None:
+            # Phase 4: Per-device caching
+            if device in self._teacher_sessions:
+                return self._teacher_sessions[device]
+        elif not self.use_orchestrator:
+            # Legacy mode: single session
+            if self._teacher_sessions.get("legacy"):
+                return self._teacher_sessions["legacy"]
+            device = "legacy"
 
         if self.teacher_model_path is None:
             raise ValueError("Teacher model path not set")
@@ -330,20 +390,33 @@ class MLIQADetector:
         if ort is None:
             raise RuntimeError("ONNX Runtime not installed")
 
-        providers = self._get_ort_providers()
-        self._teacher_session = ort.InferenceSession(
-            str(model_path), providers=providers
-        )
-        logger.info("Teacher model loaded", path=str(model_path), providers=providers)
-        return self._teacher_session
+        providers = self._get_ort_providers(device)
+        session = ort.InferenceSession(str(model_path), providers=providers)
 
-    def _get_ort_providers(self) -> list[str]:
+        if self.use_orchestrator and device:
+            self._teacher_sessions[device] = session
+        else:
+            self._teacher_sessions["legacy"] = session
+
+        logger.info("Teacher model loaded", path=str(model_path), providers=providers)
+        return session
+
+    def _get_ort_providers(self, device: str | None = None) -> list[str]:
         """Get ONNX Runtime execution providers based on device.
+
+        Args:
+            device: Device string (cuda/cpu/legacy, None for auto-detect)
 
         Returns:
             List of provider names in priority order
         """
-        if self.device == Device.GPU:
+        if self.use_orchestrator and device:
+            # Phase 4: Device from orchestrator
+            if device == "cuda":
+                return ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            return ["CPUExecutionProvider"]
+        # Legacy mode
+        if hasattr(self, "device") and self.device == Device.GPU:
             return ["CUDAExecutionProvider", "CPUExecutionProvider"]
         return ["CPUExecutionProvider"]
 
@@ -413,6 +486,54 @@ class MLIQADetector:
 
         return scores, confidences
 
+    def _run_modal_teacher_inference(
+        self, image: np.ndarray, doc_id: str | None = None
+    ) -> MLIQAScores | None:
+        """Run teacher inference on Modal GPU.
+
+        Args:
+            image: Input image (BGR format)
+            doc_id: Optional document ID for tracking
+
+        Returns:
+            MLIQAScores from Modal or None if Modal unavailable
+        """
+        if not self.modal_client:
+            logger.warning("Modal client not configured")
+            return None
+
+        # Create Modal request
+        request = ModalInferenceRequest(
+            image_array=image, model_version="v1.0", request_id=doc_id
+        )
+
+        # Execute Modal inference
+        response = self.modal_client.predict(request)
+        if response is None:
+            logger.warning("Modal inference failed (circuit breaker open or error)")
+            return None
+
+        # Convert Modal response to MLIQAScores
+        # Calculate overall quality with division by zero protection
+        overall_quality = (
+            sum(response.scores.values()) / len(response.scores)
+            if response.scores
+            else 0.0
+        )
+
+        return MLIQAScores(
+            blur_score=response.scores.get("blur", 0.0),
+            noise_score=response.scores.get("noise", 0.0),
+            contrast_score=response.scores.get("contrast", 0.0),
+            skew_score=response.scores.get("skew", 0.0),
+            compression_score=response.scores.get("compression", 0.0),
+            overall_quality=overall_quality,
+            confidences=response.confidences,
+            model_type=ModelType.TEACHER,
+            device=Device.MODAL,
+            inference_time_ms=response.inference_time_ms,
+        )
+
     def run_student_inference(self, image: np.ndarray) -> MLIQAScores:
         """Run student model inference.
 
@@ -433,11 +554,27 @@ class MLIQADetector:
 
         start_time = time.perf_counter()
 
+        # Phase 4: Device selection via orchestrator
+        if self.use_orchestrator and self.orchestrator:
+            device_choice = self.orchestrator.select_device_for_student()
+            if device_choice.device is None:
+                msg = f"No device available for student: {device_choice.blocked_reason}"
+                raise RuntimeError(msg)
+            selected_device = device_choice.device
+            logger.debug(
+                "Student device selected",
+                device=selected_device,
+                rationale=device_choice.rationale,
+            )
+        else:
+            # Legacy mode
+            selected_device = None
+
         # Preprocess
         input_tensor = self._preprocess_image(image)
 
-        # Load model session
-        session = self._load_student_session()
+        # Load model session for selected device
+        session = self._load_student_session(device=selected_device)
 
         # Run inference
         input_name = session.get_inputs()[0].name
@@ -461,10 +598,17 @@ class MLIQADetector:
 
         inference_time = (time.perf_counter() - start_time) * 1000  # Convert to ms
 
+        # Map device to Device enum
+        if self.use_orchestrator:
+            device_enum = Device.GPU if selected_device == "cuda" else Device.CPU
+        else:
+            device_enum = self.device
+
         logger.debug(
             "Student inference complete",
             overall_quality=f"{overall:.3f}",
             inference_time_ms=f"{inference_time:.1f}",
+            device=device_enum.value,
         )
 
         return MLIQAScores(
@@ -476,22 +620,67 @@ class MLIQADetector:
             overall_quality=overall,
             confidences=confidences,
             model_type=ModelType.STUDENT,
-            device=self.device,
+            device=device_enum,
             inference_time_ms=inference_time,
         )
 
-    def run_teacher_inference(self, image: np.ndarray) -> MLIQAScores:
+    def _select_teacher_device(
+        self, image: np.ndarray, doc_id: str | None
+    ) -> tuple[str | None, MLIQAScores | None]:
+        """Select device for teacher and optionally route to Modal.
+
+        Args:
+            image: Input image for potential Modal inference
+            doc_id: Optional document ID for budget tracking
+
+        Returns:
+            Tuple of (device_string, modal_scores_or_none)
+
+        Raises:
+            RuntimeError: If no device available
+        """
+        if not (self.use_orchestrator and self.orchestrator):
+            return None, None
+
+        device_choice = self.orchestrator.select_device_for_teacher(doc_id=doc_id)
+        if device_choice.device is None:
+            msg = f"No device available for teacher: {device_choice.blocked_reason}"
+            raise RuntimeError(msg)
+
+        selected_device = device_choice.device
+        logger.debug(
+            "Teacher device selected",
+            device=selected_device,
+            rationale=device_choice.rationale,
+            doc_id=doc_id,
+        )
+
+        if selected_device == "modal":
+            modal_scores = self._run_modal_teacher_inference(image, doc_id)
+            if modal_scores is not None:
+                return selected_device, modal_scores
+            # Modal failed, fall back to next available device
+            logger.warning("Modal inference failed, falling back to local")
+            has_gpu = self.orchestrator.capabilities.has_local_gpu
+            selected_device = "cuda" if has_gpu else "cpu"
+
+        return selected_device, None
+
+    def run_teacher_inference(
+        self, image: np.ndarray, doc_id: str | None = None
+    ) -> MLIQAScores:
         """Run teacher model inference (for high-risk pages).
 
         Args:
             image: Input image (BGR format)
+            doc_id: Optional document ID for budget tracking
 
         Returns:
             MLIQAScores with teacher predictions
 
         Raises:
             ValueError: If image is invalid
-            RuntimeError: If model not loaded
+            RuntimeError: If model not loaded or device unavailable
         """
         if image is None or image.size == 0:
             raise ValueError("Invalid or empty image")
@@ -500,11 +689,16 @@ class MLIQADetector:
 
         start_time = time.perf_counter()
 
+        # Phase 4: Device selection via orchestrator
+        selected_device, modal_scores = self._select_teacher_device(image, doc_id)
+        if modal_scores is not None:
+            return modal_scores
+
         # Preprocess
         input_tensor = self._preprocess_image(image)
 
-        # Load model session
-        session = self._load_teacher_session()
+        # Load model session for selected device
+        session = self._load_teacher_session(device=selected_device)
 
         # Run inference
         input_name = session.get_inputs()[0].name
@@ -528,11 +722,28 @@ class MLIQADetector:
 
         inference_time = (time.perf_counter() - start_time) * 1000  # Convert to ms
 
+        # Map device to Device enum
+        if self.use_orchestrator:
+            device_enum = Device.GPU if selected_device == "cuda" else Device.CPU
+        else:
+            device_enum = self.device
+
         logger.debug(
             "Teacher inference complete",
             overall_quality=f"{overall:.3f}",
             inference_time_ms=f"{inference_time:.1f}",
+            device=device_enum.value,
         )
+
+        # Record actual inference for budget tracking
+        if self.use_orchestrator and self.orchestrator and selected_device:
+            # Type narrowing: selected_device is guaranteed to be one of the literals here
+            from typing import cast
+
+            device_literal = cast("Literal['cuda', 'cpu', 'modal']", selected_device)
+            self.orchestrator.record_teacher_inference(
+                device=device_literal, inference_time_ms=inference_time
+            )
 
         return MLIQAScores(
             blur_score=scores.get("blur_score", 0.0),
@@ -543,7 +754,7 @@ class MLIQADetector:
             overall_quality=overall,
             confidences=confidences,
             model_type=ModelType.TEACHER,
-            device=self.device,
+            device=device_enum,
             inference_time_ms=inference_time,
         )
 
@@ -817,6 +1028,7 @@ class MLIQADetector:
         self,
         image: np.ndarray,
         classical_scores: ClassicalIQAScores | None = None,
+        doc_id: str | None = None,
     ) -> tuple[MLIQAScores, MLIQAScores | None, str | None]:
         """Run complete ML IQA pipeline with automatic teacher escalation.
 
@@ -830,6 +1042,7 @@ class MLIQADetector:
         Args:
             image: Input image (BGR format)
             classical_scores: Optional classical IQA scores for discrepancy check
+            doc_id: Optional document ID for budget tracking (Phase 4)
 
         Returns:
             Tuple of (student_scores, teacher_scores_or_none, escalation_reason_or_none)
@@ -838,7 +1051,7 @@ class MLIQADetector:
             >>> detector = MLIQADetector(
             ...     student_path="student.onnx", teacher_path="teacher.onnx"
             ... )
-            >>> student, teacher, reason = detector.run_pipeline(image)
+            >>> student, teacher, reason = detector.run_pipeline(image, doc_id="doc123")
             >>> if teacher is not None:
             ...     print(f"Teacher used: {reason}")
         """
@@ -872,23 +1085,26 @@ class MLIQADetector:
         teacher_scores = None
         if should_escalate and self.teacher_model_path is not None:
             try:
-                teacher_scores = self.run_teacher_inference(image)
+                teacher_scores = self.run_teacher_inference(image, doc_id=doc_id)
                 logger.info(
                     "Pipeline complete with teacher escalation",
                     reason=escalation_reason,
                     student_quality=f"{student_scores.overall_quality:.3f}",
                     teacher_quality=f"{teacher_scores.overall_quality:.3f}",
+                    doc_id=doc_id,
                 )
             except Exception as e:
                 logger.warning(
                     "Teacher inference failed, using student scores",
                     error=str(e),
+                    doc_id=doc_id,
                 )
                 escalation_reason = f"teacher_failed: {e}"
         else:
             logger.debug(
                 "Pipeline complete (student only)",
                 quality=f"{student_scores.overall_quality:.3f}",
+                doc_id=doc_id,
             )
 
         return student_scores, teacher_scores, escalation_reason

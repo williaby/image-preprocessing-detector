@@ -122,8 +122,8 @@ class TestMLIQADetector:
         assert detector.mean_confidence_threshold == pytest.approx(0.8)
 
     def test_device_detection_cpu_fallback(self):
-        """Test device detection falls back to CPU."""
-        detector = MLIQADetector()
+        """Test device detection falls back to CPU (legacy mode)."""
+        detector = MLIQADetector(use_orchestrator=False)
         # Without GPU, should default to CPU
         assert detector.device in [Device.CPU, Device.GPU]
 

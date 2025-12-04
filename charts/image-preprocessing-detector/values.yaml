@@ -1,0 +1,165 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
+# Default values for image-preprocessing-detector
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2
+
+image:
+  repository: image-preprocessing-detector
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false  # Models need to be loaded
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    - host: imgprep-api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: imgprep-api-tls
+  #    hosts:
+  #      - imgprep-api.example.com
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+# GPU support (requires nvidia-device-plugin)
+gpu:
+  enabled: false
+  count: 1
+  type: "nvidia.com/gpu"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Application configuration
+config:
+  # API Settings
+  title: "Image Preprocessing Detector API"
+  description: "Document preprocessing and quality assessment for RAG pipelines"
+  version: "0.1.0"
+
+  # File limits
+  maxFileSizeMb: 50
+  maxBatchSize: 100
+
+  # CORS
+  corsEnabled: true
+  corsOrigins: '["*"]'
+  corsAllowCredentials: false
+
+  # Rate limiting
+  rateLimitEnabled: true
+  rateLimitRequests: 100
+  rateLimitWindowSeconds: 60
+
+  # Authentication
+  authEnabled: true
+  # API keys managed via secret
+
+  # Logging
+  logLevel: "INFO"
+  logRequestBody: false
+  logResponseBody: false
+
+# Secrets (create a separate secret in your cluster)
+secrets:
+  # API keys for authentication (comma-separated)
+  apiKeys: "api-key-1,api-key-2"
+  # Internal caller IP ranges (JSON array)
+  internalCallers: '["10.0.0.0/8", "172.16.0.0/12"]'
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Persistence (for model storage)
+persistence:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  mountPath: /app/models
+
+# External services
+externalServices:
+  # Modal GPU integration
+  modal:
+    enabled: false
+    apiKeySecret: ""  # Name of secret containing Modal API key

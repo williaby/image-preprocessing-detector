@@ -46,28 +46,32 @@ class TestMLIQAModelUnavailable:
         detector = MLIQADetector(
             student_model_path="/nonexistent/path/student.onnx",
             teacher_model_path="/nonexistent/path/teacher.onnx",
+            use_orchestrator=False,
         )
 
-        # Sessions should remain unloaded for nonexistent paths
-        assert detector._student_session is None
-        assert detector._teacher_session is None
+        # Sessions should remain unloaded for nonexistent paths (Phase 4: dict-based storage)
+        assert "legacy" not in detector._student_sessions
+        assert "legacy" not in detector._teacher_sessions
 
     def test_student_session_not_loaded(self):
         """Test student session is not loaded for missing model."""
         detector = MLIQADetector(
             student_model_path="/nonexistent/student.onnx",
+            use_orchestrator=False,
         )
 
-        # Session should remain None until explicitly loaded
-        assert detector._student_session is None
+        # Session should remain None until explicitly loaded (Phase 4: dict-based storage)
+        assert "legacy" not in detector._student_sessions
 
     def test_teacher_session_not_loaded(self):
         """Test teacher session is not loaded for missing model."""
         detector = MLIQADetector(
             teacher_model_path="/nonexistent/teacher.onnx",
+            use_orchestrator=False,
         )
 
-        assert detector._teacher_session is None
+        # Phase 4: Sessions stored in dict, keyed by device
+        assert "legacy" not in detector._teacher_sessions
 
 
 # =============================================================================
@@ -84,14 +88,14 @@ class TestDeviceDetectionFallback:
             # Simulate no GPU providers
             mock_ort.get_available_providers.return_value = ["CPUExecutionProvider"]
 
-            detector = MLIQADetector()
+            detector = MLIQADetector(use_orchestrator=False)
 
             # Should fall back to CPU
             assert detector.device in [Device.CPU, Device.GPU, Device.MODAL]
 
     def test_explicit_device_selection(self):
         """Test explicit device selection overrides auto-detection."""
-        detector = MLIQADetector(device=Device.CPU)
+        detector = MLIQADetector(device=Device.CPU, use_orchestrator=False)
 
         assert detector.device == Device.CPU
 
@@ -411,7 +415,8 @@ class TestONNXRuntimeAvailability:
         with patch("image_preprocessing_detector.detection.iqa_ml.ort", None):
             # Should not crash during creation
             detector = MLIQADetector()
-            assert detector is not None
+            # Verify detector was created successfully
+            assert hasattr(detector, "use_orchestrator")
 
 
 # =============================================================================
@@ -437,24 +442,24 @@ class TestPipelineIntegrationWithoutModels:
 
         # Pipeline should not crash, may return None or raise
         try:
-            result = detector.run_pipeline(img, classical)
-            # If it returns, should indicate no model
+            _ = detector.run_pipeline(img, classical)
+            # If it returns without error, pipeline handled missing models gracefully
         except (RuntimeError, ValueError, AttributeError):
             # Expected - no model loaded
             pass
 
     def test_device_priority_respected(self):
         """Test device priority is respected in configuration."""
-        # GPU preference
-        detector_gpu = MLIQADetector(device=Device.GPU)
+        # GPU preference (legacy mode)
+        detector_gpu = MLIQADetector(device=Device.GPU, use_orchestrator=False)
         assert detector_gpu.device == Device.GPU
 
-        # CPU preference
-        detector_cpu = MLIQADetector(device=Device.CPU)
+        # CPU preference (legacy mode)
+        detector_cpu = MLIQADetector(device=Device.CPU, use_orchestrator=False)
         assert detector_cpu.device == Device.CPU
 
-        # Modal preference
-        detector_modal = MLIQADetector(device=Device.MODAL)
+        # Modal preference (legacy mode)
+        detector_modal = MLIQADetector(device=Device.MODAL, use_orchestrator=False)
         assert detector_modal.device == Device.MODAL
 
 
