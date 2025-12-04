@@ -415,7 +415,8 @@ class TestONNXRuntimeAvailability:
         with patch("image_preprocessing_detector.detection.iqa_ml.ort", None):
             # Should not crash during creation
             detector = MLIQADetector()
-            assert detector is not None
+            # Verify detector was created successfully
+            assert hasattr(detector, "use_orchestrator")
 
 
 # =============================================================================
@@ -441,24 +442,24 @@ class TestPipelineIntegrationWithoutModels:
 
         # Pipeline should not crash, may return None or raise
         try:
-            result = detector.run_pipeline(img, classical)
-            # If it returns, should indicate no model
+            _ = detector.run_pipeline(img, classical)
+            # If it returns without error, pipeline handled missing models gracefully
         except (RuntimeError, ValueError, AttributeError):
             # Expected - no model loaded
             pass
 
     def test_device_priority_respected(self):
         """Test device priority is respected in configuration."""
-        # GPU preference
-        detector_gpu = MLIQADetector(device=Device.GPU)
+        # GPU preference (legacy mode)
+        detector_gpu = MLIQADetector(device=Device.GPU, use_orchestrator=False)
         assert detector_gpu.device == Device.GPU
 
-        # CPU preference
-        detector_cpu = MLIQADetector(device=Device.CPU)
+        # CPU preference (legacy mode)
+        detector_cpu = MLIQADetector(device=Device.CPU, use_orchestrator=False)
         assert detector_cpu.device == Device.CPU
 
-        # Modal preference
-        detector_modal = MLIQADetector(device=Device.MODAL)
+        # Modal preference (legacy mode)
+        detector_modal = MLIQADetector(device=Device.MODAL, use_orchestrator=False)
         assert detector_modal.device == Device.MODAL
 
 
