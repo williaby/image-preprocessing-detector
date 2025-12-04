@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+
+SPDX-License-Identifier: MIT
+-->
+
 # Image Preprocessing Detector Helm Chart
 
 Helm chart for deploying the Image Preprocessing Detector API to Kubernetes.

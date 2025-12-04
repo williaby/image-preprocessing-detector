@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+#
+# SPDX-License-Identifier: MIT
+
 # Default values for image-preprocessing-detector
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
@@ -38,7 +42,7 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: false  # Models need to be loaded
 
 service:

@@ -1,4 +1,10 @@
 {{/*
+SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+
+SPDX-License-Identifier: MIT
+*/}}
+
+{{/*
 Expand the name of the chart.
 */}}
 {{- define "image-preprocessing-detector.name" -}}

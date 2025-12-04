@@ -4,6 +4,8 @@ This module provides functions to pre-load ML models during API startup
 to eliminate first-request cold-start latency.
 """
 
+# ruff: noqa: TRY300  # Early return pattern preferred for clarity
+
 import time
 from pathlib import Path
 from typing import Any
@@ -161,7 +163,8 @@ def warmup_models(
     stats: dict[str, float] = {}
 
     # Create dummy input (typical image size: 224x224x3)
-    dummy_input = np.random.randn(1, 3, 224, 224).astype(np.float32)
+    rng = np.random.default_rng(seed=42)
+    dummy_input = rng.standard_normal((1, 3, 224, 224)).astype(np.float32)
 
     # Warmup student model
     if student_model is not None:
