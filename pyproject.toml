@@ -308,6 +308,28 @@ known-local-folder = ["validation", "benchmarks"]
 "src/image_preprocessing_detector/detection/advanced_detectors.py" = ["D102", "E741", "N806", "B905", "SIM115", "RUF059", "B028", "SIM102", "FBT003"]
 "src/image_preprocessing_detector/detection/__init__.py" = ["RUF022"]
 "src/image_preprocessing_detector/ingestion/__init__.py" = ["RUF022"]
+# Files with __main__ blocks - T201 (print) used for CLI examples
+"src/image_preprocessing_detector/classification/pdf_image_detector.py" = ["T201"]
+"src/image_preprocessing_detector/classification/pdf_text_extractor.py" = ["T201"]
+"src/image_preprocessing_detector/classification/pdf_type_classifier.py" = ["T201"]
+"src/image_preprocessing_detector/detection/text_gate.py" = ["T201"]
+"src/image_preprocessing_detector/ingestion/image_loader.py" = ["T201", "A002"]  # format parameter shadows builtin (intentional API)
+"src/image_preprocessing_detector/ingestion/pdf_loader.py" = ["T201", "S110", "RUF001"]  # CLI example, DPI fallback, Unicode × symbol
+# Webhook/alerting files - legitimate URL usage
+"src/image_preprocessing_detector/drift/alerting.py" = ["S310", "ERA001"]  # Webhook URLs validated, nosemgrep comments
+# Logging files - sampling (not crypto)
+"src/image_preprocessing_detector/logging/__init__.py" = ["S311"]  # Random for sampling, not crypto
+"src/image_preprocessing_detector/logging/outcomes.py" = ["S311"]  # Random for sampling, not crypto
+"src/image_preprocessing_detector/logging/errors.py" = ["S110"]  # Sentry optional, silent failure OK
+# Model files - PyTorch conventions
+"src/image_preprocessing_detector/models/loss_functions.py" = ["N812"]  # F alias is PyTorch convention
+"src/image_preprocessing_detector/models/model_optimizer.py" = ["F401"]  # pycuda.autoinit availability check
+# Compatibility layer
+"src/image_preprocessing_detector/utils/datetime_compat.py" = ["N811", "UP017"]  # Python <3.11 compat
+# Schema - example path in docstring
+"src/image_preprocessing_detector/schema.py" = ["S108"]  # Example path in docstring
+# Office processor - availability check
+"src/image_preprocessing_detector/ingestion/office_processor.py" = ["F401"]  # docling availability check
 
 # Bandit Configuration (Security Linting)
 [tool.bandit]
