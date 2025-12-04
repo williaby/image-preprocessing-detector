@@ -74,12 +74,12 @@ class TestPipelineHooksSingleton:
 
     def test_singleton_reset(self) -> None:
         """Test singleton reset for testing."""
-        hooks1 = PipelineHooks()
+        PipelineHooks()  # Create initial instance
         PipelineHooks.reset_instance()
-        hooks2 = PipelineHooks()
+        hooks_after_reset = PipelineHooks()
 
         # After reset, should be new instance
-        assert hooks2._initialized is True
+        assert hooks_after_reset._initialized is True
 
     def test_get_pipeline_hooks_returns_singleton(self) -> None:
         """Test module-level get_pipeline_hooks returns singleton."""
@@ -123,7 +123,7 @@ class TestPipelineHooksInitialization:
         hooks = PipelineHooks()
         hooks.configure(sample_rate=0.5)
 
-        assert hooks._sample_rate == 0.5
+        assert hooks._sample_rate == pytest.approx(0.5)
 
     def test_configure_alert_manager(self) -> None:
         """Test configuration with alert manager."""
@@ -162,7 +162,7 @@ class TestDocumentProcessing:
         assert ctx.page_count == 1
         assert ctx.gate_result == "text_detected"
         assert len(ctx.quality_scores) == 1
-        assert ctx.quality_scores[0] == 0.85
+        assert ctx.quality_scores[0] == pytest.approx(0.85)
 
     def test_record_multiple_pages(self) -> None:
         """Test recording multiple pages."""
@@ -250,7 +250,7 @@ class TestModuleLevelFunctions:
         record_page_metrics(ctx, quality_score=0.9, gate_result="no_text")
 
         assert ctx.page_count == 1
-        assert ctx.quality_scores[0] == 0.9
+        assert ctx.quality_scores[0] == pytest.approx(0.9)
 
     def test_finish_document_processing(self) -> None:
         """Test module-level finish_document_processing."""
@@ -274,7 +274,7 @@ class TestPipelineMetrics:
         assert metrics.total_errors == 0
         assert metrics.total_corrections == 0
         assert metrics.teacher_invocations == 0
-        assert metrics.avg_quality_score == 0.0
+        assert metrics.avg_quality_score == pytest.approx(0.0)
 
     def test_metrics_accumulation(self) -> None:
         """Test metrics accumulation across documents."""
@@ -459,8 +459,8 @@ class TestPipelineMetricsDataclass:
         assert metrics.total_errors == 0
         assert metrics.total_corrections == 0
         assert metrics.teacher_invocations == 0
-        assert metrics.avg_quality_score == 0.0
-        assert metrics.avg_processing_time_ms == 0.0
+        assert metrics.avg_quality_score == pytest.approx(0.0)
+        assert metrics.avg_processing_time_ms == pytest.approx(0.0)
         assert metrics.drift_warnings == 0
         assert metrics.drift_critical == 0
 
@@ -474,4 +474,4 @@ class TestPipelineMetricsDataclass:
 
         assert metrics.total_pages_processed == 100
         assert metrics.total_errors == 5
-        assert metrics.avg_quality_score == 0.85
+        assert metrics.avg_quality_score == pytest.approx(0.85)

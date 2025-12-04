@@ -12,7 +12,6 @@ This module provides:
 
 from __future__ import annotations
 
-import logging
 import time
 from dataclasses import dataclass, field
 from threading import Lock
@@ -49,7 +48,6 @@ if TYPE_CHECKING:
     )
 
 logger = structlog.get_logger(__name__)
-_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -393,6 +391,18 @@ class PipelineHooks:
 
         return elapsed_ms
 
+    def _update_drift_metrics(self, severity: DriftSeverity) -> None:
+        """Update pipeline metrics for a drift result.
+
+        Args:
+            severity: The severity of the detected drift.
+        """
+        with self._metrics_lock:
+            if severity == DriftSeverity.WARNING:
+                self._pipeline_metrics.drift_warnings += 1
+            elif severity == DriftSeverity.CRITICAL:
+                self._pipeline_metrics.drift_critical += 1
+
     def check_drift(self) -> list[DriftResult]:
         """Check for drift in tracked feature distributions.
 
@@ -405,38 +415,30 @@ class PipelineHooks:
         if not self._enable_drift or not self._tracker or not self._detector:
             return []
 
-        # Use the detect_drift_from_tracker method
         drift_results = self._detector.detect_drift_from_tracker(self._tracker)
 
-        # Filter to only significant drift and process
         significant_results: list[DriftResult] = []
         kl_values: dict[str, float] = {}
         psi_values: dict[str, float] = {}
 
         for result in drift_results:
-            if result.severity != DriftSeverity.NONE:
-                significant_results.append(result)
+            if result.severity == DriftSeverity.NONE:
+                continue
 
-                # Collect values for alerting
-                kl_values[result.feature] = result.kl_divergence
-                psi_values[result.feature] = result.psi
+            significant_results.append(result)
+            kl_values[result.feature] = result.kl_divergence
+            psi_values[result.feature] = result.psi
 
-                # Update metrics
-                with self._metrics_lock:
-                    if result.severity == DriftSeverity.WARNING:
-                        self._pipeline_metrics.drift_warnings += 1
-                    elif result.severity == DriftSeverity.CRITICAL:
-                        self._pipeline_metrics.drift_critical += 1
+            self._update_drift_metrics(result.severity)
 
-                logger.warning(
-                    "drift_detected",
-                    feature=result.feature,
-                    severity=result.severity.value,
-                    kl_divergence=result.kl_divergence,
-                    psi=result.psi,
-                )
+            logger.warning(
+                "drift_detected",
+                feature=result.feature,
+                severity=result.severity.value,
+                kl_divergence=result.kl_divergence,
+                psi=result.psi,
+            )
 
-        # Send alerts if manager is configured
         if self._alert_manager and (kl_values or psi_values):
             check_drift_and_alert(
                 self._alert_manager,

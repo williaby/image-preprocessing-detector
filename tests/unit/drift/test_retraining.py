@@ -66,9 +66,9 @@ class TestRetrainingConfig:
         config = RetrainingConfig()
 
         assert config.min_samples == 50
-        assert config.train_ratio == 0.8
-        assert config.val_ratio == 0.1
-        assert config.test_ratio == 0.1
+        assert config.train_ratio == pytest.approx(0.8)
+        assert config.val_ratio == pytest.approx(0.1)
+        assert config.test_ratio == pytest.approx(0.1)
         assert config.auto_trigger_on_drift is True
 
     def test_custom_config(self) -> None:
@@ -81,7 +81,7 @@ class TestRetrainingConfig:
         )
 
         assert config.min_samples == 100
-        assert config.train_ratio == 0.7
+        assert config.train_ratio == pytest.approx(0.7)
 
     def test_config_to_dict(self) -> None:
         """Test configuration serialization."""
@@ -279,7 +279,7 @@ class TestRetrainingOrchestrator:
         )
 
         assert job.status == RetrainingStatus.COMPLETED
-        assert job.metrics["accuracy"] == 0.95
+        assert job.metrics["accuracy"] == pytest.approx(0.95)
         assert job.completed_at is not None
 
     def test_complete_job_failure(self, temp_dir: Path) -> None:
@@ -328,9 +328,9 @@ class TestRetrainingOrchestrator:
         orchestrator = RetrainingOrchestrator(config)
 
         # Create jobs with different statuses
-        job1 = orchestrator.create_job(trigger=RetrainingTrigger.MANUAL)
-        job2 = orchestrator.create_job(trigger=RetrainingTrigger.MANUAL)
-        orchestrator.cancel_job(job2)
+        orchestrator.create_job(trigger=RetrainingTrigger.MANUAL)
+        job_to_cancel = orchestrator.create_job(trigger=RetrainingTrigger.MANUAL)
+        orchestrator.cancel_job(job_to_cancel)
 
         pending = orchestrator.list_jobs(status=RetrainingStatus.PENDING)
         cancelled = orchestrator.list_jobs(status=RetrainingStatus.CANCELLED)
