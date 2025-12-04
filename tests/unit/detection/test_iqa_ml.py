@@ -193,7 +193,7 @@ class TestMLIQADetectorDeviceDetection:
     @patch("image_preprocessing_detector.detection.iqa_ml.ort", None)
     def test_device_detection_no_onnxruntime(self):
         """Test device detection when ONNX Runtime not installed."""
-        detector = MLIQADetector(device=None)
+        detector = MLIQADetector(device=None, use_orchestrator=False)
         # Should fall back to CPU when ort is None
         assert detector.device == Device.CPU
 
@@ -204,14 +204,14 @@ class TestMLIQADetectorDeviceDetection:
             "CUDAExecutionProvider",
             "CPUExecutionProvider",
         ]
-        detector = MLIQADetector(device=None)
+        detector = MLIQADetector(device=None, use_orchestrator=False)
         assert detector.device == Device.GPU
 
     @patch("image_preprocessing_detector.detection.iqa_ml.ort")
     def test_device_detection_gpu_unavailable(self, mock_ort):
         """Test device detection when GPU unavailable."""
         mock_ort.get_available_providers.return_value = ["CPUExecutionProvider"]
-        detector = MLIQADetector(device=None)
+        detector = MLIQADetector(device=None, use_orchestrator=False)
         assert detector.device == Device.CPU
 
     @patch("image_preprocessing_detector.detection.iqa_ml.ort")
@@ -220,13 +220,13 @@ class TestMLIQADetectorDeviceDetection:
         mock_ort.get_available_providers.side_effect = RuntimeError(
             "Provider detection failed"
         )
-        detector = MLIQADetector(device=None)
+        detector = MLIQADetector(device=None, use_orchestrator=False)
         # Should fall back to CPU on exception
         assert detector.device == Device.CPU
 
     def test_explicit_device_selection(self):
         """Test explicit device selection overrides auto-detection."""
-        detector = MLIQADetector(device=Device.MODAL)
+        detector = MLIQADetector(device=Device.MODAL, use_orchestrator=False)
         assert detector.device == Device.MODAL
 
 
@@ -287,7 +287,7 @@ class TestMLIQADetectorModelLoading:
 
     @patch("image_preprocessing_detector.detection.iqa_ml.ort")
     def test_load_student_session_caching(self, mock_ort):
-        """Test student session is cached after first load."""
+        """Test student session is cached after first load (legacy mode)."""
         # Create a fake model file
         fake_model = Path("fake_student.onnx")
         fake_model.touch()
@@ -296,7 +296,10 @@ class TestMLIQADetectorModelLoading:
             mock_session = MagicMock()
             mock_ort.InferenceSession.return_value = mock_session
 
-            detector = MLIQADetector(student_model_path=str(fake_model))
+            # Use legacy mode for consistent caching behavior
+            detector = MLIQADetector(
+                student_model_path=str(fake_model), use_orchestrator=False
+            )
             # First load
             session1 = detector._load_student_session()
             # Second load (should return cached session)
@@ -310,7 +313,7 @@ class TestMLIQADetectorModelLoading:
 
     @patch("image_preprocessing_detector.detection.iqa_ml.ort")
     def test_load_teacher_session_caching(self, mock_ort):
-        """Test teacher session is cached after first load."""
+        """Test teacher session is cached after first load (legacy mode)."""
         fake_model = Path("fake_teacher.onnx")
         fake_model.touch()
 
@@ -318,7 +321,10 @@ class TestMLIQADetectorModelLoading:
             mock_session = MagicMock()
             mock_ort.InferenceSession.return_value = mock_session
 
-            detector = MLIQADetector(teacher_model_path=str(fake_model))
+            # Use legacy mode for consistent caching behavior
+            detector = MLIQADetector(
+                teacher_model_path=str(fake_model), use_orchestrator=False
+            )
             session1 = detector._load_teacher_session()
             session2 = detector._load_teacher_session()
 

@@ -29,9 +29,9 @@ class TestMLIQADetector:
     """Test MLIQADetector class."""
 
     def test_init_default_params(self) -> None:
-        """Test MLIQADetector initialization with defaults."""
+        """Test MLIQADetector initialization with defaults (legacy mode)."""
         with patch.object(MLIQADetector, "_detect_device", return_value=Device.CPU):
-            detector = MLIQADetector()
+            detector = MLIQADetector(use_orchestrator=False)
 
             assert detector.student_model_path is None
             assert detector.teacher_model_path is None
