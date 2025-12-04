@@ -614,6 +614,48 @@ class MLIQADetector:
             inference_time_ms=inference_time,
         )
 
+    def _select_teacher_device(
+        self, image: np.ndarray, doc_id: str | None
+    ) -> tuple[str | None, MLIQAScores | None]:
+        """Select device for teacher and optionally route to Modal.
+
+        Args:
+            image: Input image for potential Modal inference
+            doc_id: Optional document ID for budget tracking
+
+        Returns:
+            Tuple of (device_string, modal_scores_or_none)
+
+        Raises:
+            RuntimeError: If no device available
+        """
+        if not (self.use_orchestrator and self.orchestrator):
+            return None, None
+
+        device_choice = self.orchestrator.select_device_for_teacher(doc_id=doc_id)
+        if device_choice.device is None:
+            msg = f"No device available for teacher: {device_choice.blocked_reason}"
+            raise RuntimeError(msg)
+
+        selected_device = device_choice.device
+        logger.debug(
+            "Teacher device selected",
+            device=selected_device,
+            rationale=device_choice.rationale,
+            doc_id=doc_id,
+        )
+
+        if selected_device == "modal":
+            modal_scores = self._run_modal_teacher_inference(image, doc_id)
+            if modal_scores is not None:
+                return selected_device, modal_scores
+            # Modal failed, fall back to next available device
+            logger.warning("Modal inference failed, falling back to local")
+            has_gpu = self.orchestrator.capabilities.has_local_gpu
+            selected_device = "cuda" if has_gpu else "cpu"
+
+        return selected_device, None
+
     def run_teacher_inference(
         self, image: np.ndarray, doc_id: str | None = None
     ) -> MLIQAScores:
@@ -638,29 +680,9 @@ class MLIQADetector:
         start_time = time.perf_counter()
 
         # Phase 4: Device selection via orchestrator
-        selected_device: str | None = None
-        if self.use_orchestrator and self.orchestrator:
-            device_choice = self.orchestrator.select_device_for_teacher(doc_id=doc_id)
-            if device_choice.device is None:
-                msg = f"No device available for teacher: {device_choice.blocked_reason}"
-                raise RuntimeError(msg)
-            selected_device = device_choice.device
-            logger.debug(
-                "Teacher device selected",
-                device=selected_device,
-                rationale=device_choice.rationale,
-                doc_id=doc_id,
-            )
-
-            # If Modal selected, use Modal client
-            if selected_device == "modal":
-                modal_scores = self._run_modal_teacher_inference(image, doc_id)
-                if modal_scores is not None:
-                    return modal_scores
-                # Modal failed, fall back to next available device
-                logger.warning("Modal inference failed, falling back to local")
-                has_gpu = self.orchestrator.capabilities.has_local_gpu
-                selected_device = "cuda" if has_gpu else "cpu"
+        selected_device, modal_scores = self._select_teacher_device(image, doc_id)
+        if modal_scores is not None:
+            return modal_scores
 
         # Preprocess
         input_tensor = self._preprocess_image(image)

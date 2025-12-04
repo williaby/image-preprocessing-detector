@@ -121,16 +121,22 @@ class DocumentProcessorUser(HttpUser):
         selected_files = random.sample(available_files, num_files)
 
         # Submit batch job
-        files = [
-            ("files", (f.name, open(f, "rb"), self._get_mime_type(f)))
-            for f in selected_files
-        ]
+        # Open files and ensure they're closed properly
+        file_handles = []
+        files = []
+        try:
+            for f in selected_files:
+                fh = open(f, "rb")
+                file_handles.append(fh)
+                files.append(("files", (f.name, fh, self._get_mime_type(f))))
 
-        response = self.client.post("/batch", files=files, name="/batch [2-5 files]")
-
-        # Close file handles
-        for _, (_, file_handle, _) in files:
-            file_handle.close()
+            response = self.client.post(
+                "/batch", files=files, name="/batch [2-5 files]"
+            )
+        finally:
+            # Close all file handles
+            for fh in file_handles:
+                fh.close()
 
         if response.status_code != 200:
             return
@@ -182,16 +188,20 @@ class DocumentProcessorUser(HttpUser):
         selected_files = [random.choice(available_files) for _ in range(num_files)]
 
         # Submit batch job (don't poll - just fire and forget)
-        files = [
-            ("files", (f.name, open(f, "rb"), self._get_mime_type(f)))
-            for f in selected_files
-        ]
+        # Open files and ensure they're closed properly
+        file_handles = []
+        files = []
+        try:
+            for f in selected_files:
+                fh = open(f, "rb")
+                file_handles.append(fh)
+                files.append(("files", (f.name, fh, self._get_mime_type(f))))
 
-        self.client.post("/batch", files=files, name="/batch [10-20 files]")
-
-        # Close file handles
-        for _, (_, file_handle, _) in files:
-            file_handle.close()
+            self.client.post("/batch", files=files, name="/batch [10-20 files]")
+        finally:
+            # Close all file handles
+            for fh in file_handles:
+                fh.close()
 
     @task(15)
     def check_health(self) -> None:

@@ -32,7 +32,7 @@ class TestCircuitBreakerConfig:
         config = CircuitBreakerConfig()
         assert config.failure_threshold == 3
         assert config.success_threshold == 2
-        assert config.timeout_seconds == 60.0
+        assert abs(config.timeout_seconds - 60.0) < 1e-9
         assert config.request_timeout_ms == 5000
         assert config.max_retries == 3
         assert config.base_backoff_ms == 1000
@@ -48,7 +48,7 @@ class TestCircuitBreakerConfig:
         )
         assert config.failure_threshold == 5
         assert config.success_threshold == 3
-        assert config.timeout_seconds == 120.0
+        assert abs(config.timeout_seconds - 120.0) < 1e-9
         assert config.max_retries == 5
 
 
@@ -89,9 +89,9 @@ class TestModalInferenceResponse:
             request_id="req123",
         )
 
-        assert response.scores["blur"] == 0.85
-        assert response.confidences["blur"] == 0.95
-        assert response.inference_time_ms == 150.0
+        assert abs(response.scores["blur"] - 0.85) < 1e-9
+        assert abs(response.confidences["blur"] - 0.95) < 1e-9
+        assert abs(response.inference_time_ms - 150.0) < 1e-9
         assert response.device_tag == "T4"
         assert response.model_version == "v1.0"
         assert response.request_id == "req123"
@@ -157,7 +157,7 @@ class TestCircuitBreakerStates:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
 
         # Trigger circuit to open
-        for i in range(2):
+        for _ in range(2):
             request = ModalInferenceRequest(image_array=img)
             client.predict(request)
 
@@ -180,7 +180,7 @@ class TestCircuitBreakerStates:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
 
         # Open circuit
-        for i in range(2):
+        for _ in range(2):
             request = ModalInferenceRequest(image_array=img)
             client.predict(request)
 
@@ -208,7 +208,7 @@ class TestCircuitBreakerStates:
 
         # Open circuit with failures
         with patch.object(client, "_execute_request", side_effect=RuntimeError("fail")):
-            for i in range(2):
+            for _ in range(2):
                 request = ModalInferenceRequest(image_array=img)
                 client.predict(request)
 
@@ -218,7 +218,7 @@ class TestCircuitBreakerStates:
         time.sleep(0.15)
 
         # Successful requests should close circuit
-        for i in range(2):
+        for _ in range(2):
             request = ModalInferenceRequest(image_array=img)
             response = client.predict(request)
             assert response is not None
@@ -236,7 +236,7 @@ class TestCircuitBreakerStates:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
 
         # Open circuit
-        for i in range(2):
+        for _ in range(2):
             request = ModalInferenceRequest(image_array=img)
             client.predict(request)
 
@@ -326,7 +326,7 @@ class TestRetryLogic:
             response = client.predict(request)
 
             assert response is not None
-            assert response.scores["blur"] == 0.85
+            assert abs(response.scores["blur"] - 0.85) < 1e-9
             assert call_count == 3
             assert client.breaker_state.total_successes == 1
 
@@ -343,7 +343,7 @@ class TestStatisticsReporting:
         assert stats["total_requests"] == 0
         assert stats["total_successes"] == 0
         assert stats["total_failures"] == 0
-        assert stats["success_rate"] == 0.0
+        assert abs(stats["success_rate"] - 0.0) < 1e-9
         assert stats["consecutive_failures"] == 0
 
     def test_get_stats_after_operations(self) -> None:
@@ -353,7 +353,7 @@ class TestStatisticsReporting:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
 
         # 2 successful requests
-        for i in range(2):
+        for _ in range(2):
             request = ModalInferenceRequest(image_array=img)
             client.predict(request)
 
@@ -376,7 +376,7 @@ class TestStatisticsReporting:
         img = np.zeros((100, 100, 3), dtype=np.uint8)
 
         # Open circuit
-        for i in range(2):
+        for _ in range(2):
             request = ModalInferenceRequest(image_array=img)
             client.predict(request)
 

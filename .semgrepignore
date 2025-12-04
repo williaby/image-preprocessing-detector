@@ -1,0 +1,5 @@
+# Semgrep ignore file
+# False positives for generic-api-key rule in Helm chart TLS secretName references
+charts/**/README.md
+charts/**/values.yaml
+charts/**/values-*.yaml

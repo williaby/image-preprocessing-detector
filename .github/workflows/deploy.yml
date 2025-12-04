@@ -120,11 +120,14 @@ jobs:
 
       - name: Extract image tag
         id: image
+        env:
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
+          SHA_TAG: ${{ github.sha }}
         run: |
-          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          if [ -n "$INPUT_TAG" ]; then
+            echo "tag=$INPUT_TAG" >> $GITHUB_OUTPUT
           else
-            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "tag=$SHA_TAG" >> $GITHUB_OUTPUT
           fi
 
       - name: Deploy with Helm
@@ -190,13 +193,17 @@ jobs:
 
       - name: Extract image tag
         id: image
+        env:
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
+          GIT_REF: ${{ github.ref }}
+          SHA_TAG: ${{ github.sha }}
         run: |
-          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          if [ -n "$INPUT_TAG" ]; then
+            echo "tag=$INPUT_TAG" >> $GITHUB_OUTPUT
+          elif [[ "$GIT_REF" == refs/tags/* ]]; then
+            echo "tag=${GIT_REF#refs/tags/}" >> $GITHUB_OUTPUT
           else
-            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "tag=$SHA_TAG" >> $GITHUB_OUTPUT
           fi
 
       - name: Deploy with Helm
@@ -247,13 +254,17 @@ jobs:
 
       - name: Extract image tag
         id: image
+        env:
+          INPUT_TAG: ${{ github.event.inputs.image_tag }}
+          GIT_REF: ${{ github.ref }}
+          SHA_TAG: ${{ github.sha }}
         run: |
-          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          if [ -n "$INPUT_TAG" ]; then
+            echo "tag=$INPUT_TAG" >> $GITHUB_OUTPUT
+          elif [[ "$GIT_REF" == refs/tags/* ]]; then
+            echo "tag=${GIT_REF#refs/tags/}" >> $GITHUB_OUTPUT
           else
-            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "tag=$SHA_TAG" >> $GITHUB_OUTPUT
           fi
 
       - name: Deploy with Helm (Blue/Green strategy)
