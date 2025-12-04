@@ -473,8 +473,9 @@ class SampleHarvester:
         try:
             shutil.copy2(source, dest)
             sample.metadata["harvested_path"] = str(dest)
-        except Exception:
-            logger.exception("Failed to copy sample file")
+        except OSError:
+            # OSError covers PermissionError, FileNotFoundError, and other file system errors
+            logger.exception("Failed to copy sample file %s to %s", source, dest)
             return False
         else:
             return True

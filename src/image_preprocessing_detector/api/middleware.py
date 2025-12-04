@@ -400,7 +400,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 status_code=429,
                 content={
                     "error": "rate_limit_exceeded",
-                    "message": f"Rate limit exceeded. Max {self.requests_per_window} requests per {self.window_seconds} seconds.",
+                    "message": (
+                        f"Rate limit exceeded. "
+                        f"Max {self.requests_per_window} requests "
+                        f"per {self.window_seconds} seconds."
+                    ),
                     "retry_after_seconds": retry_after,
                     "correlation_id": get_correlation_id(),
                 },

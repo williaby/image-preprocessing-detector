@@ -318,20 +318,23 @@ class WebhookDispatcher:
             import urllib.request
 
             payload = json.dumps(alert.to_dict()).encode("utf-8")
-            request = urllib.request.Request(  # noqa: S310
+            request = urllib.request.Request(
                 self.webhook_url,
                 data=payload,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
 
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: ERA001
-            with urllib.request.urlopen(  # noqa: S310  # nosec B310
+            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+            with urllib.request.urlopen(  # nosec B310
                 request, timeout=self.timeout
             ) as response:
                 return bool(response.status == 200)
 
-        except Exception:
+        except (OSError, ValueError):
+            # OSError covers urllib.error.URLError, socket errors, and timeouts
+            # (TimeoutError is a subclass of OSError in Python 3.10+)
+            # ValueError for malformed URLs
             logger.exception("Failed to dispatch alert to webhook")
             return False
 
@@ -403,20 +406,23 @@ class SlackDispatcher:
                 )
 
             data = json.dumps(payload).encode("utf-8")
-            request = urllib.request.Request(  # noqa: S310
+            request = urllib.request.Request(
                 self.webhook_url,
                 data=data,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
 
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: ERA001
-            with urllib.request.urlopen(  # noqa: S310  # nosec B310
+            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+            with urllib.request.urlopen(  # nosec B310
                 request, timeout=30
             ) as response:
                 return bool(response.status == 200)
 
-        except Exception:
+        except (OSError, ValueError):
+            # OSError covers urllib.error.URLError, socket errors, and timeouts
+            # (TimeoutError is a subclass of OSError in Python 3.10+)
+            # ValueError for malformed URLs or JSON encoding
             logger.exception("Failed to dispatch alert to Slack")
             return False
 
@@ -929,8 +935,10 @@ class AlertManager:
                         logger.warning(
                             f"Failed to dispatch alert {alert.alert_id} to {channel.value}"
                         )
-                except Exception:
-                    logger.exception(f"Error dispatching alert to {channel.value}")
+                except (OSError, ValueError):
+                    # Catch network errors (OSError includes TimeoutError in 3.10+)
+                    # and encoding errors from dispatchers
+                    logger.exception("Error dispatching alert to %s", channel.value)
 
     def get_dry_run_alerts(self) -> list[DriftAlert]:
         """Get alerts from dry-run mode.

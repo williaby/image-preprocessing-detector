@@ -170,7 +170,10 @@ class PDFUpscaler:
                         del img_pil
                         del img_data
 
-                    except Exception:
+                    except (OSError, RuntimeError, ValueError):
+                        # OSError: file access errors
+                        # RuntimeError: PyMuPDF internal errors
+                        # ValueError: invalid image/page parameters
                         logger.exception("Error upscaling page %d", page_num + 1)
                         # Copy original page if upscaling fails
                         if self.preserve_original and page is not None:

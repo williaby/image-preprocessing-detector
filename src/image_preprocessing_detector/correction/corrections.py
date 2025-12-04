@@ -561,7 +561,10 @@ class BinarizationCorrector:
                 corrected_image=image.copy(),
                 applied=False,
                 parameters={"binarization_score": binarization_score},
-                skipped_reason=f"Binarization score {binarization_score:.2f} above threshold {self.min_binarization_score}",
+                skipped_reason=(
+                    f"Binarization score {binarization_score:.2f} "
+                    f"above threshold {self.min_binarization_score}"
+                ),
             )
 
         # Convert to grayscale
@@ -678,7 +681,10 @@ class IlluminationNormalizer:
                 corrected_image=image.copy(),
                 applied=False,
                 parameters={"illumination_score": illumination_score},
-                skipped_reason=f"Illumination score {illumination_score:.2f} above threshold {self.min_illumination_score}",
+                skipped_reason=(
+                    f"Illumination score {illumination_score:.2f} "
+                    f"above threshold {self.min_illumination_score}"
+                ),
             )
 
         # Adjust parameters based on severity

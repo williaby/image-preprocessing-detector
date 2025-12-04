@@ -302,7 +302,6 @@ def detect_text(
 
 
 # Example usage
-# ruff: noqa: T201
 if __name__ == "__main__":  # pragma: no cover
     import sys
 

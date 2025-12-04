@@ -1,9 +1,28 @@
 """Classical image quality assessment (IQA) detectors.
 
 Implements fast classical computer vision methods for detecting image quality issues:
-- Skew detection (Hough Transform + Projection Profile)
-- Blur detection (Laplacian variance)
-- Low contrast detection (Histogram analysis)
+- SkewDetector: Hough Transform + Projection Profile analysis
+- BlurDetector: Laplacian variance with multi-scale analysis
+- NoiseDetector: Wavelet-based noise estimation
+- ContrastDetector: Histogram analysis for contrast issues
+- IlluminationDetector: Lighting uniformity assessment
+- JPEGBlockinessDetector: DCT block artifact detection
+- BinarizationQualityDetector: Document binarization quality
+- BleedThroughDetector: Ink bleed-through detection
+
+Note: This module has low maintainability index (MI ~4.5) due to its size (2800+ LOC).
+Future refactoring should split this into separate modules per detector:
+    detection/iqa_classical/
+    ├── __init__.py        # Public exports
+    ├── severity.py        # Severity enum
+    ├── skew.py           # SkewDetector
+    ├── blur.py           # BlurDetector
+    ├── noise.py          # NoiseDetector
+    ├── contrast.py       # ContrastDetector
+    ├── illumination.py   # IlluminationDetector
+    ├── jpeg.py           # JPEGBlockinessDetector
+    ├── binarization.py   # BinarizationQualityDetector
+    └── bleed.py          # BleedThroughDetector
 """
 
 from dataclasses import dataclass

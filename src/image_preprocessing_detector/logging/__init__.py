@@ -278,7 +278,7 @@ def sample_logs(
         return event_dict
 
     # Apply sampling (combined condition to satisfy SIM102)
-    if config.sample_rate < 1.0 and random.random() > config.sample_rate:  # noqa: S311  # nosec B311
+    if config.sample_rate < 1.0 and random.random() > config.sample_rate:  # nosec B311
         raise structlog.DropEvent
 
     return event_dict

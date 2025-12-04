@@ -9,6 +9,8 @@ FROM python:3.11-slim AS builder
 WORKDIR /app
 
 # Install build dependencies
+# hadolint ignore=DL3008
+# Justification: Version pinning system packages reduces reproducibility for security updates
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
@@ -47,6 +49,8 @@ RUN groupadd -r imgprep && useradd -r -g imgprep imgprep
 WORKDIR /app
 
 # Install runtime dependencies
+# hadolint ignore=DL3008
+# Justification: Version pinning system packages reduces reproducibility for security updates
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libgl1-mesa-glx \

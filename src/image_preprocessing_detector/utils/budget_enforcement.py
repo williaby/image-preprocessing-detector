@@ -232,7 +232,11 @@ class BudgetEnforcer:
             )
             return BudgetCheckResult(
                 allowed=False,
-                reason=f"Daily budget exceeded (${state.daily_usage_dollars:.4f} >= ${self.config.daily_limit_dollars:.2f})",
+                reason=(
+                    f"Daily budget exceeded "
+                    f"(${state.daily_usage_dollars:.4f} >= "
+                    f"${self.config.daily_limit_dollars:.2f})"
+                ),
                 daily_remaining=0.0,
                 monthly_remaining=monthly_remaining,
             )
@@ -246,7 +250,11 @@ class BudgetEnforcer:
             )
             return BudgetCheckResult(
                 allowed=False,
-                reason=f"Monthly budget exceeded (${state.monthly_usage_dollars:.4f} >= ${self.config.monthly_limit_dollars:.2f})",
+                reason=(
+                    f"Monthly budget exceeded "
+                    f"(${state.monthly_usage_dollars:.4f} >= "
+                    f"${self.config.monthly_limit_dollars:.2f})"
+                ),
                 daily_remaining=daily_remaining,
                 monthly_remaining=0.0,
             )
@@ -257,7 +265,11 @@ class BudgetEnforcer:
         monthly_ratio = state.monthly_usage_dollars / self.config.monthly_limit_dollars
 
         if daily_ratio >= self.config.warning_threshold:
-            warning = f"Daily budget at {daily_ratio * 100:.1f}% (${state.daily_usage_dollars:.4f}/${self.config.daily_limit_dollars:.2f})"
+            warning = (
+                f"Daily budget at {daily_ratio * 100:.1f}% "
+                f"(${state.daily_usage_dollars:.4f}/"
+                f"${self.config.daily_limit_dollars:.2f})"
+            )
             if state.warnings_issued == 0:
                 logger.warning(
                     "Approaching daily budget limit", ratio=f"{daily_ratio * 100:.1f}%"
@@ -266,7 +278,11 @@ class BudgetEnforcer:
                 self._save_state()
 
         elif monthly_ratio >= self.config.warning_threshold:
-            warning = f"Monthly budget at {monthly_ratio * 100:.1f}% (${state.monthly_usage_dollars:.4f}/${self.config.monthly_limit_dollars:.2f})"
+            warning = (
+                f"Monthly budget at {monthly_ratio * 100:.1f}% "
+                f"(${state.monthly_usage_dollars:.4f}/"
+                f"${self.config.monthly_limit_dollars:.2f})"
+            )
             if state.warnings_issued == 0:
                 logger.warning(
                     "Approaching monthly budget limit",

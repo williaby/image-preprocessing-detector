@@ -474,7 +474,7 @@ class DocumentMetadata(BaseModel):
         examples=[
             {
                 "performed": True,
-                "upscaled_path": "/tmp/upscaled_doc.pdf",  # nosec B108  # noqa: S108
+                "upscaled_path": "/tmp/upscaled_doc.pdf",  # nosec B108
                 "original_dpi": 150,
                 "target_dpi": 300,
                 "algorithm": "lanczos",

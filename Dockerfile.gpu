@@ -10,6 +10,7 @@ WORKDIR /app
 
 # Install build dependencies
 # hadolint ignore=DL3008
+# Justification: Version pinning system packages reduces reproducibility for security updates
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
@@ -47,6 +48,8 @@ RUN groupadd -r imgprep && useradd -r -g imgprep imgprep
 WORKDIR /app
 
 # Install Python and runtime dependencies
+# hadolint ignore=DL3008
+# Justification: Version pinning system packages reduces reproducibility for security updates
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
     python3.11-venv \

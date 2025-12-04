@@ -772,7 +772,7 @@ def is_doclayout_yolo_available() -> bool:
     """
     try:
         from doclayout_yolo import (
-            YOLOv10,  # noqa: F401  # pyright: ignore[reportUnusedImport]
+            YOLOv10,  # noqa: F401  # Import to check availability
         )
     except ImportError:
         return False

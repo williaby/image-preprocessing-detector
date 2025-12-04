@@ -143,7 +143,7 @@ class OfficeProcessor:
     def _check_docling_available(self) -> bool:
         """Check if Docling library is available."""
         try:
-            import docling  # noqa: F401
+            import docling
         except ImportError:
             logger.debug("Docling not available, using fallback extraction")
             return False
@@ -283,8 +283,11 @@ class OfficeProcessor:
                 errors=errors,
             )
 
-        except Exception:
-            logger.exception("Docling extraction failed")
+        except (OSError, RuntimeError, ValueError):
+            # OSError: file access errors
+            # RuntimeError: Docling internal errors
+            # ValueError: invalid document format
+            logger.exception("Docling extraction failed for %s", file_path)
             raise
 
     def _extract_from_zip(

@@ -5,6 +5,7 @@ FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:122afa48603810a0c6b495ab2e1
 
 # Install system dependencies for image/PDF processing
 # hadolint ignore=DL3008
+# Justification: Version pinning system packages reduces reproducibility for security updates
 RUN apt-get update && apt-get install -y --no-install-recommends \
     clang \
     libgl1-mesa-glx \

@@ -292,7 +292,9 @@ class TestQuickResolutionCheck:
     def test_quick_check_error_handling(self, mock_analyzer_class: Mock) -> None:
         """Test quick check error handling."""
         mock_analyzer = MagicMock()
-        mock_analyzer.analyze_pdf_resolution.side_effect = Exception("Analysis failed")
+        mock_analyzer.analyze_pdf_resolution.side_effect = RuntimeError(
+            "Analysis failed"
+        )
         mock_analyzer_class.return_value = mock_analyzer
 
         result = quick_resolution_check("/fake/path.pdf")

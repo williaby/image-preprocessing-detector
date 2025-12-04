@@ -153,6 +153,7 @@ colorama==0.4.6
     #   mkdocs
     #   mkdocs-material
     #   pytest
+    #   radon
     #   tqdm
 coloredlogs==15.0.1
     # via onnxruntime-gpu
@@ -480,6 +481,8 @@ libcst==1.8.6
     # via mutmut
 linkify-it-py==2.0.3
     # via markdown-it-py
+mando==0.7.1
+    # via radon
 markdown==3.10
     # via
     #   mkdocs
@@ -889,6 +892,8 @@ pyzmq==27.1.0
     #   jupyter-client
     #   jupyter-console
     #   jupyter-server
+radon==6.0.1
+    # via image-preprocessing-detector
 referencing==0.37.0
     # via
     #   jsonschema
@@ -988,6 +993,7 @@ six==1.17.0
     # via
     #   flatten-dict
     #   kaggle
+    #   mando
     #   python-dateutil
     #   rfc3339-validator
 smmap==5.0.2
