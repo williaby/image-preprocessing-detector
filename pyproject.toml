@@ -132,6 +132,9 @@ dev = [
     "datasets>=4.4.1",
     "dvc[ssh]>=3.64.0",
     "kaggle>=1.7.4",
+
+    # Code complexity analysis
+    "radon>=6.0.1",
 ]
 
 ml = [
@@ -586,8 +589,3 @@ tests_dir = "tests/"
 # Mutation score threshold: percentage of mutations that must be killed
 # Score below 80% indicates weak test coverage
 dict_synonyms = "Struct, NamedStruct"
-
-[dependency-groups]
-dev = [
-    "radon>=6.0.1",
-]

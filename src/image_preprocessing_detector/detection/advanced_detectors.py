@@ -37,7 +37,7 @@ def _validate_and_preprocess(
     """Validate image and return grayscale + binary versions.
 
     Args:
-        image: Input image (BGR or grayscale)
+        image: Input image (BGR, BGRA, or grayscale)
 
     Returns:
         Tuple of (grayscale, binary, height, width)
@@ -49,7 +49,15 @@ def _validate_and_preprocess(
         raise ValueError("Invalid image")
 
     h, w = image.shape[:2]
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+
+    # Handle grayscale, 3-channel (BGR), and 4-channel (BGRA/RGBA) images
+    if len(image.shape) == 2:
+        gray = image
+    elif image.shape[2] == 4:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+    else:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
     return gray, binary, h, w
@@ -433,9 +441,7 @@ def _empty_formula_result(confidence: float = 0.5) -> FormulaResult:
     )
 
 
-def _count_formula_indicators(
-    components: list[dict[str, Any]], h: int
-) -> int:
+def _count_formula_indicators(components: list[dict[str, Any]], h: int) -> int:
     """Count formula indicators from component analysis.
 
     Checks for:
@@ -481,8 +487,10 @@ def _find_high_density_regions(
     )
     high_density_cells = np.argwhere(density_grid >= threshold)
 
-    return [(gx * grid_size, gy * grid_size, grid_size, grid_size)
-            for gy, gx in high_density_cells]
+    return [
+        (gx * grid_size, gy * grid_size, grid_size, grid_size)
+        for gy, gx in high_density_cells
+    ]
 
 
 def detect_formulas(image: np.ndarray) -> FormulaResult:

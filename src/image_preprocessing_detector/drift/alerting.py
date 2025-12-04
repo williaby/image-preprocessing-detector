@@ -331,9 +331,9 @@ class WebhookDispatcher:
             ) as response:
                 return bool(response.status == 200)
 
-        except (OSError, TimeoutError, ValueError):
-            # OSError covers urllib.error.URLError and socket errors
-            # TimeoutError for request timeouts
+        except (OSError, ValueError):
+            # OSError covers urllib.error.URLError, socket errors, and timeouts
+            # (TimeoutError is a subclass of OSError in Python 3.10+)
             # ValueError for malformed URLs
             logger.exception("Failed to dispatch alert to webhook")
             return False
@@ -419,9 +419,9 @@ class SlackDispatcher:
             ) as response:
                 return bool(response.status == 200)
 
-        except (OSError, TimeoutError, ValueError):
-            # OSError covers urllib.error.URLError and socket errors
-            # TimeoutError for request timeouts
+        except (OSError, ValueError):
+            # OSError covers urllib.error.URLError, socket errors, and timeouts
+            # (TimeoutError is a subclass of OSError in Python 3.10+)
             # ValueError for malformed URLs or JSON encoding
             logger.exception("Failed to dispatch alert to Slack")
             return False
@@ -935,8 +935,9 @@ class AlertManager:
                         logger.warning(
                             f"Failed to dispatch alert {alert.alert_id} to {channel.value}"
                         )
-                except (OSError, TimeoutError, ValueError):
-                    # Catch network and encoding errors from dispatchers
+                except (OSError, ValueError):
+                    # Catch network errors (OSError includes TimeoutError in 3.10+)
+                    # and encoding errors from dispatchers
                     logger.exception("Error dispatching alert to %s", channel.value)
 
     def get_dry_run_alerts(self) -> list[DriftAlert]:

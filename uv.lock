@@ -2752,6 +2752,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
     { name = "python-frontmatter" },
+    { name = "radon" },
     { name = "ruamel-yaml" },
     { name = "ruff" },
     { name = "safety" },
@@ -2776,11 +2777,6 @@ ml = [
     { name = "torch" },
     { name = "torchvision" },
     { name = "ultralytics" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "radon" },
 ]
 
 [package.metadata]
@@ -2840,6 +2836,7 @@ requires-dist = [
     { name = "pywavelets", specifier = ">=1.4.0" },
     { name = "pyyaml", marker = "extra == 'colab'", specifier = ">=6.0" },
     { name = "pyyaml", marker = "extra == 'ml'", specifier = ">=6.0" },
+    { name = "radon", marker = "extra == 'dev'", specifier = ">=6.0.1" },
     { name = "rich", specifier = ">=13.5.0" },
     { name = "ruamel-yaml", marker = "extra == 'dev'", specifier = ">=0.18.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.0,<1.0.0" },
@@ -2868,9 +2865,6 @@ requires-dist = [
     { name = "werkzeug", specifier = ">=3.1.4" },
 ]
 provides-extras = ["dev", "ml", "api", "colab"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "radon", specifier = ">=6.0.1" }]
 
 [[package]]
 name = "imageio"

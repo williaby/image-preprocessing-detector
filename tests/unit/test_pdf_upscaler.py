@@ -70,12 +70,12 @@ class TestPDFUpscaler:
     @patch("image_preprocessing_detector.ingestion.pdf_upscaler.cv2")
     @patch("image_preprocessing_detector.ingestion.pdf_upscaler.Image")
     @patch("image_preprocessing_detector.ingestion.pdf_upscaler.Path")
-    @patch(
-        "image_preprocessing_detector.ingestion.pdf_upscaler.tempfile.NamedTemporaryFile"
-    )
+    @patch("image_preprocessing_detector.ingestion.pdf_upscaler.tempfile.mkstemp")
+    @patch("image_preprocessing_detector.ingestion.pdf_upscaler.os.close")
     def test_upscale_pdf_success(
         self,
-        mock_tempfile: Mock,
+        mock_os_close: Mock,
+        mock_mkstemp: Mock,
         mock_path_class: Mock,
         mock_image: Mock,
         mock_cv2: Mock,
@@ -95,8 +95,18 @@ class TestPDFUpscaler:
         mock_output_path.stat.return_value.st_size = 2000
         mock_output_path.name = "test_upscaled.pdf"
 
-        # Mock Path class to return our mocks
-        mock_path_class.side_effect = [mock_input_path, mock_output_path]
+        # Mock temp path for cleanup (Path(tmp_img_path).unlink())
+        mock_temp_path = MagicMock(spec=Path)
+
+        # Mock Path class to return our mocks for each call:
+        # 1. Path(input_path)
+        # 2. Path(output_path)
+        # 3. Path(tmp_img_path) for unlink
+        mock_path_class.side_effect = [
+            mock_input_path,
+            mock_output_path,
+            mock_temp_path,
+        ]
 
         # Mock PyMuPDF document
         mock_doc = MagicMock()
@@ -135,10 +145,8 @@ class TestPDFUpscaler:
         mock_pil_img.tobytes.return_value = b"fake_image_data"
         mock_image.fromarray.return_value = mock_pil_img
 
-        # Mock temp file
-        mock_temp = MagicMock()
-        mock_temp.name = "/tmp/fake.png"  # nosec B108 - test fixture mock path
-        mock_tempfile.return_value.__enter__.return_value = mock_temp
+        # Mock tempfile.mkstemp - returns (file_descriptor, path)
+        mock_mkstemp.return_value = (5, "/tmp/fake.png")  # nosec B108 - test fixture
 
         upscaler = PDFUpscaler(target_dpi=300)
         result = upscaler.upscale_pdf(
@@ -151,6 +159,10 @@ class TestPDFUpscaler:
         assert result["before_size"] == 1000
         assert result["after_size"] == 2000
         assert "processing_time" in result
+
+        # Verify temp file cleanup was called
+        mock_temp_path.unlink.assert_called_once_with(missing_ok=True)
+        mock_os_close.assert_called_once_with(5)
 
     @patch("image_preprocessing_detector.ingestion.pdf_upscaler.fitz")
     @patch("image_preprocessing_detector.ingestion.pdf_upscaler.Path")
