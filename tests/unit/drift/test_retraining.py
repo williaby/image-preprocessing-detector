@@ -8,10 +8,9 @@ from pathlib import Path
 import pytest
 
 from image_preprocessing_detector.drift.active_learning import (
-    HarvestManifest,
     HarvestedSample,
+    HarvestManifest,
     HarvestReason,
-    ManifestGenerator,
     PrivacyStatus,
 )
 from image_preprocessing_detector.drift.retraining import (
@@ -97,7 +96,9 @@ class TestRetrainingConfig:
 class TestDatasetBuilder:
     """Tests for DatasetBuilder."""
 
-    def test_build_dataset(self, temp_dir: Path, sample_manifest: HarvestManifest) -> None:
+    def test_build_dataset(
+        self, temp_dir: Path, sample_manifest: HarvestManifest
+    ) -> None:
         """Test building a dataset from manifest."""
         config = RetrainingConfig(
             dataset_dir=str(temp_dir / "datasets"),
@@ -146,7 +147,9 @@ class TestDatasetBuilder:
 
         assert dataset is None  # Not enough samples
 
-    def test_dataset_split_ratios(self, temp_dir: Path, sample_manifest: HarvestManifest) -> None:
+    def test_dataset_split_ratios(
+        self, temp_dir: Path, sample_manifest: HarvestManifest
+    ) -> None:
         """Test dataset split ratios are correct."""
         config = RetrainingConfig(
             dataset_dir=str(temp_dir / "datasets"),
@@ -224,7 +227,9 @@ class TestRetrainingOrchestrator:
         assert job.status == RetrainingStatus.PENDING
         assert job.model_name == "student"
 
-    def test_prepare_job(self, temp_dir: Path, sample_manifest: HarvestManifest) -> None:
+    def test_prepare_job(
+        self, temp_dir: Path, sample_manifest: HarvestManifest
+    ) -> None:
         """Test preparing a job with dataset."""
         config = RetrainingConfig(
             output_dir=str(temp_dir / "retraining"),

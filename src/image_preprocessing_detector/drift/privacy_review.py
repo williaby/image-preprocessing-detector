@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Any
 
 from image_preprocessing_detector.drift.active_learning import (
-    HarvestManifest,
     HarvestedSample,
     ManifestGenerator,
     PrivacyStatus,
@@ -97,7 +96,9 @@ class ReviewSession:
             "reviewer": self.reviewer,
             "manifest_ids": self.manifest_ids,
             "reviews": [r.to_dict() for r in self.reviews],
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "total_reviewed": self.total_reviewed,
             "approved_count": self.approved_count,
             "rejected_count": self.rejected_count,
@@ -246,9 +247,7 @@ class PrivacyReviewManager:
                 if sample.privacy_status in [
                     PrivacyStatus.PENDING,
                     PrivacyStatus.REQUIRES_REVIEW,
-                ]:
-                    samples_to_review.append((manifest.manifest_id, sample))
-                elif include_flagged and sample.privacy_notes.startswith("FLAGGED:"):
+                ] or (include_flagged and sample.privacy_notes.startswith("FLAGGED:")):
                     samples_to_review.append((manifest.manifest_id, sample))
 
                 if len(samples_to_review) >= limit:
@@ -274,7 +273,9 @@ class PrivacyReviewManager:
             ReviewSession object
         """
         self._session_counter += 1
-        session_id = f"review_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._session_counter:04d}"
+        session_id = (
+            f"review_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._session_counter:04d}"
+        )
 
         # Get manifests with pending samples if not specified
         if manifest_ids is None:
@@ -290,7 +291,9 @@ class PrivacyReviewManager:
 
         self._current_session = session
 
-        logger.info(f"Started review session {session_id} for {len(manifest_ids)} manifests")
+        logger.info(
+            f"Started review session {session_id} for {len(manifest_ids)} manifests"
+        )
 
         return session
 
@@ -316,9 +319,7 @@ class PrivacyReviewManager:
         """
         # Find manifest
         manifest_paths = [
-            p
-            for p in self.manifest_generator.list_manifests()
-            if manifest_id in p.name
+            p for p in self.manifest_generator.list_manifests() if manifest_id in p.name
         ]
 
         if not manifest_paths:
@@ -345,13 +346,23 @@ class PrivacyReviewManager:
         # Update sample status based on decision
         if decision == ReviewDecision.APPROVE:
             sample.privacy_status = PrivacyStatus.APPROVED
-            sample.privacy_notes = f"Approved by {reviewer}: {notes}" if notes else f"Approved by {reviewer}"
+            sample.privacy_notes = (
+                f"Approved by {reviewer}: {notes}"
+                if notes
+                else f"Approved by {reviewer}"
+            )
         elif decision == ReviewDecision.REJECT:
             sample.privacy_status = PrivacyStatus.REJECTED
-            sample.privacy_notes = f"Rejected by {reviewer}: {notes}" if notes else f"Rejected by {reviewer}"
+            sample.privacy_notes = (
+                f"Rejected by {reviewer}: {notes}"
+                if notes
+                else f"Rejected by {reviewer}"
+            )
         elif decision == ReviewDecision.FLAG:
             sample.privacy_status = PrivacyStatus.REQUIRES_REVIEW
-            sample.privacy_notes = f"FLAGGED: {notes}" if notes else "FLAGGED by reviewer"
+            sample.privacy_notes = (
+                f"FLAGGED: {notes}" if notes else "FLAGGED by reviewer"
+            )
         # SKIP doesn't change status
 
         # Update manifest counts
@@ -372,9 +383,7 @@ class PrivacyReviewManager:
             )
             self._current_session.add_review(record)
 
-        logger.info(
-            f"Reviewed sample {sample_id}: {decision.value} by {reviewer}"
-        )
+        logger.info(f"Reviewed sample {sample_id}: {decision.value} by {reviewer}")
 
         return True
 
@@ -402,9 +411,7 @@ class PrivacyReviewManager:
 
         # Find manifest
         manifest_paths = [
-            p
-            for p in self.manifest_generator.list_manifests()
-            if manifest_id in p.name
+            p for p in self.manifest_generator.list_manifests() if manifest_id in p.name
         ]
 
         if not manifest_paths:
@@ -525,18 +532,17 @@ class PrivacyReviewManager:
         """Create session from dictionary."""
         from image_preprocessing_detector.utils.datetime_compat import ensure_aware
 
-        reviews = []
-        for r in data.get("reviews", []):
-            reviews.append(
-                ReviewRecord(
-                    sample_id=r["sample_id"],
-                    decision=ReviewDecision(r["decision"]),
-                    reviewer=r["reviewer"],
-                    reviewed_at=ensure_aware(datetime.fromisoformat(r["reviewed_at"])),
-                    notes=r.get("notes", ""),
-                    previous_status=PrivacyStatus(r.get("previous_status", "pending")),
-                )
+        reviews = [
+            ReviewRecord(
+                sample_id=r["sample_id"],
+                decision=ReviewDecision(r["decision"]),
+                reviewer=r["reviewer"],
+                reviewed_at=ensure_aware(datetime.fromisoformat(r["reviewed_at"])),
+                notes=r.get("notes", ""),
+                previous_status=PrivacyStatus(r.get("previous_status", "pending")),
             )
+            for r in data.get("reviews", [])
+        ]
 
         return ReviewSession(
             session_id=data["session_id"],
@@ -570,9 +576,7 @@ class PrivacyReviewManager:
             "summary": summary.to_dict(),
             "recent_sessions": [s.to_dict() for s in sessions],
             "active_session": (
-                self._current_session.to_dict()
-                if self._current_session
-                else None
+                self._current_session.to_dict() if self._current_session else None
             ),
         }
 
@@ -641,14 +645,14 @@ def format_review_summary(summary: ReviewSummary) -> str:
         "By Harvest Reason:",
     ]
 
-    for reason, count in sorted(summary.by_reason.items()):
-        lines.append(f"  {reason}: {count}")
+    lines.extend(
+        f"  {reason}: {count}" for reason, count in sorted(summary.by_reason.items())
+    )
 
     if summary.manifests_with_pending:
         lines.append("")
         lines.append("Manifests with Pending Samples:")
-        for mid in summary.manifests_with_pending[:10]:
-            lines.append(f"  - {mid}")
+        lines.extend(f"  - {mid}" for mid in summary.manifests_with_pending[:10])
         if len(summary.manifests_with_pending) > 10:
             lines.append(f"  ... and {len(summary.manifests_with_pending) - 10} more")
 

@@ -188,7 +188,9 @@ class PipelineHooks:
         if alert_manager is not None:
             self._alert_manager = alert_manager
 
-    def start_document(self, document_id: str, device: str = "cpu") -> ProcessingContext:
+    def start_document(
+        self, document_id: str, device: str = "cpu"
+    ) -> ProcessingContext:
         """Start processing a document.
 
         Args:

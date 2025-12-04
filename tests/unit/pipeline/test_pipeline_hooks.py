@@ -14,7 +14,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from image_preprocessing_detector.drift import DriftSeverity, FeatureType
 from image_preprocessing_detector.pipeline import (
     PipelineHooks,
     PipelineMetrics,
@@ -290,7 +289,9 @@ class TestPipelineMetrics:
         # Process second document
         ctx2 = hooks.start_document("doc-2")
         hooks.record_page(ctx2, quality_score=0.7, gate_result="no_text")
-        hooks.record_correction_applied(ctx2, correction_type="deskew", duration_ms=10.0)
+        hooks.record_correction_applied(
+            ctx2, correction_type="deskew", duration_ms=10.0
+        )
         hooks.finish_document(ctx2)
 
         metrics = hooks.get_pipeline_metrics()
@@ -359,6 +360,8 @@ class TestDistributionTracking:
     def test_quality_score_tracking(self) -> None:
         """Test that quality scores are tracked for drift detection."""
         hooks = PipelineHooks()
+        # Use sample_rate=1.0 to ensure all samples are tracked for testing
+        hooks.configure(sample_rate=1.0)
 
         ctx = hooks.start_document("doc-1")
         for _ in range(10):
@@ -373,6 +376,8 @@ class TestDistributionTracking:
     def test_multiple_feature_tracking(self) -> None:
         """Test that multiple features are tracked."""
         hooks = PipelineHooks()
+        # Use sample_rate=1.0 to ensure all samples are tracked for testing
+        hooks.configure(sample_rate=1.0)
 
         ctx = hooks.start_document("doc-1")
         hooks.record_page(

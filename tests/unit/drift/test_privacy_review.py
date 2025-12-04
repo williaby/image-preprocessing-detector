@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from image_preprocessing_detector.drift.active_learning import (
-    HarvestManifest,
     HarvestedSample,
     HarvestReason,
     ManifestGenerator,
@@ -51,7 +50,9 @@ def manifest_generator(temp_dir: Path) -> ManifestGenerator:
             sample_id=f"sample_{i:04d}",
             source_path=f"/data/sample_{i:04d}.png",
             harvest_time=utc_now(),
-            harvest_reason=HarvestReason.HIGH_ENTROPY if i % 2 == 0 else HarvestReason.LOW_AGREEMENT,
+            harvest_reason=HarvestReason.HIGH_ENTROPY
+            if i % 2 == 0
+            else HarvestReason.LOW_AGREEMENT,
             entropy=0.8,
             privacy_status=status,
         )
@@ -64,7 +65,9 @@ def manifest_generator(temp_dir: Path) -> ManifestGenerator:
 
 
 @pytest.fixture
-def review_manager(temp_dir: Path, manifest_generator: ManifestGenerator) -> PrivacyReviewManager:
+def review_manager(
+    temp_dir: Path, manifest_generator: ManifestGenerator
+) -> PrivacyReviewManager:
     """Create privacy review manager."""
     return PrivacyReviewManager(
         manifest_generator,

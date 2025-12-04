@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Any
 
 from image_preprocessing_detector.drift.active_learning import (
-    HarvestManifest,
     HarvestedSample,
+    HarvestManifest,
     ManifestGenerator,
     PrivacyStatus,
 )
@@ -151,7 +151,9 @@ class RetrainingJob:
             "metrics": self.metrics,
             "error_message": self.error_message,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "metadata": self.metadata,
         }
 
@@ -226,9 +228,11 @@ class DatasetBuilder:
 
         for manifest in manifests:
             manifest_ids.append(manifest.manifest_id)
-            for sample in manifest.samples:
-                if sample.privacy_status == PrivacyStatus.APPROVED:
-                    approved_samples.append(sample)
+            approved_samples.extend(
+                sample
+                for sample in manifest.samples
+                if sample.privacy_status == PrivacyStatus.APPROVED
+            )
 
         if len(approved_samples) < self.config.min_samples:
             logger.warning(
@@ -238,7 +242,9 @@ class DatasetBuilder:
 
         # Generate dataset ID
         self._dataset_counter += 1
-        dataset_id = f"dataset_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._dataset_counter:04d}"
+        dataset_id = (
+            f"dataset_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._dataset_counter:04d}"
+        )
 
         # Create dataset directory
         dataset_path = self.output_path / dataset_id
@@ -463,7 +469,9 @@ class RetrainingOrchestrator:
             RetrainingJob object
         """
         self._job_counter += 1
-        job_id = f"retrain_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._job_counter:04d}"
+        job_id = (
+            f"retrain_{utc_now().strftime('%Y%m%d_%H%M%S')}_{self._job_counter:04d}"
+        )
 
         job = RetrainingJob(
             job_id=job_id,
@@ -519,7 +527,6 @@ class RetrainingOrchestrator:
             self._save_job(job)
 
             logger.info(f"Job {job.job_id} prepared with dataset {dataset.dataset_id}")
-            return True
 
         except Exception as e:
             job.status = RetrainingStatus.FAILED
@@ -527,6 +534,9 @@ class RetrainingOrchestrator:
             self._save_job(job)
             logger.exception(f"Failed to prepare job {job.job_id}")
             return False
+
+        else:
+            return True
 
     def start_job(self, job: RetrainingJob) -> bool:
         """Start a retraining job.
@@ -585,9 +595,7 @@ class RetrainingOrchestrator:
 
         self._save_job(job)
 
-        logger.info(
-            f"Job {job.job_id} completed with status {job.status.value}"
-        )
+        logger.info(f"Job {job.job_id} completed with status {job.status.value}")
 
     def cancel_job(self, job: RetrainingJob, reason: str = "") -> None:
         """Cancel a retraining job.
