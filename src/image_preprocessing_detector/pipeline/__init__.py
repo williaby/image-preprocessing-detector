@@ -4,6 +4,7 @@ Sprint 6.3.x: Integrates drift detection and Prometheus metrics
 into the document processing pipeline.
 
 This module provides:
+
 - PipelineHooks: Central integration point for monitoring and drift detection
 - Automatic metric recording during document processing
 - Distribution tracking for drift detection
