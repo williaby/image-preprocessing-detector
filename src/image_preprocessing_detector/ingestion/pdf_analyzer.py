@@ -250,6 +250,7 @@ class PDFDocumentAnalyzer:
                 pdf_path
             )
             return bool(resolution_analysis.get("needs_upscaling", False))
-        except Exception:
-            logger.exception("Quick resolution check failed")
+        except (OSError, RuntimeError, ValueError):
+            # OSError: file access errors, RuntimeError: PDF parsing errors
+            logger.exception("Quick resolution check failed for %s", pdf_path)
             return False

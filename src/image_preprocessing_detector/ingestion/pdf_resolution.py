@@ -258,6 +258,7 @@ def quick_resolution_check(pdf_path: str | Path, min_dpi: int = 300) -> bool:
     try:
         result = analyzer.analyze_pdf_resolution(pdf_path)
         return bool(result["needs_upscaling"])
-    except Exception:
-        logger.exception("Quick resolution check failed")
+    except (OSError, RuntimeError, ValueError):
+        # OSError: file access errors, RuntimeError: PDF parsing errors
+        logger.exception("Quick resolution check failed for %s", pdf_path)
         return False

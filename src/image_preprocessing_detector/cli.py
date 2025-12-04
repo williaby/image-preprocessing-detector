@@ -498,6 +498,7 @@ def process(
         click.echo(f"✓ Processing complete: {output}")
 
     except Exception as e:
+        # CLI entry point: catch all exceptions to provide user-friendly error message
         logger.error("Processing failed", error=str(e), exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
@@ -607,6 +608,7 @@ def batch(
                 click.echo(f"  ✓ Success: {output_path.name}")
 
             except Exception as e:
+                # Per-file handler: continue processing other files on error
                 error_count += 1
                 logger.exception("Failed to process file: %s", file_path)
                 click.echo(f"  ✗ Error: {e}", err=True)
@@ -621,6 +623,7 @@ def batch(
             sys.exit(1)
 
     except Exception as e:
+        # CLI entry point: catch all exceptions to provide user-friendly error message
         logger.error("Batch processing failed", error=str(e), exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
@@ -729,6 +732,7 @@ def blur_check(
         _output_check_result(output_data, json_output, _print_blur_results)
 
     except Exception as e:
+        # CLI entry point: catch all exceptions to provide user-friendly error message
         logger.error("Blur check failed", error=str(e), exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
@@ -849,6 +853,7 @@ def noise_check(
         )
 
     except Exception as e:
+        # CLI entry point: catch all exceptions to provide user-friendly error message
         logger.error("Noise check failed", error=str(e), exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)

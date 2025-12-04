@@ -37,6 +37,7 @@ spec:
       containers:
         - name: api
           image: image-preprocessing-detector:latest
+          # NOTE: Use 'Always' in production; 'IfNotPresent' for local dev
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -72,6 +73,8 @@ spec:
             failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false
+            # NOTE: Set to 'true' in production; 'false' needed for pip/Python cache
+            # Writable dirs (/app/tmp, /app/logs) are provided via emptyDir mounts
             readOnlyRootFilesystem: false
             capabilities:
               drop:

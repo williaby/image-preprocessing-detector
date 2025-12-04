@@ -213,5 +213,6 @@ if __name__ == "__main__":
 
     try:
         _raise_example_error()
-    except Exception:
+    except ValueError:
+        # Demo code: catching the specific ValueError raised by _raise_example_error
         logger.exception("Unexpected error during processing")

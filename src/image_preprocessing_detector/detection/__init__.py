@@ -2,7 +2,8 @@
 
 Phase 1: Text gate and classical IQA methods
 Phase 2-3: ML-based IQA (teacher-student ResNet)
-Phase 4: Classical IQA detectors (blur, noise, skew, contrast, illumination, JPEG blockiness, binarization, bleed-through)
+Phase 4: Classical IQA detectors (blur, noise, skew, contrast, illumination,
+         JPEG blockiness, binarization, bleed-through)
 Phase 4.9: Discrepancy threshold tuning for ML-classical comparison
 Phase 6: Layout-lite detection (DocLayout-YOLO + heuristics)
 Phase 8: Orientation detection (0°, 90°, 180°, 270°)
