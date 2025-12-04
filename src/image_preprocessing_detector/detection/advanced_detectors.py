@@ -27,6 +27,81 @@ logger = get_logger(__name__)
 
 
 # ============================================================================
+# Common Helper Functions (reduces cyclomatic complexity)
+# ============================================================================
+
+
+def _validate_and_preprocess(
+    image: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, int, int]:
+    """Validate image and return grayscale + binary versions.
+
+    Args:
+        image: Input image (BGR or grayscale)
+
+    Returns:
+        Tuple of (grayscale, binary, height, width)
+
+    Raises:
+        ValueError: If image is invalid
+    """
+    if image is None or image.size == 0:
+        raise ValueError("Invalid image")
+
+    h, w = image.shape[:2]
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    return gray, binary, h, w
+
+
+def _get_filtered_components(
+    binary: np.ndarray,
+    h: int,
+    w: int,
+    min_area: int = 20,
+    min_size: int = 5,
+) -> list[dict[str, Any]]:
+    """Get connected components filtered by size.
+
+    Args:
+        binary: Binary image
+        h: Image height
+        w: Image width
+        min_area: Minimum component area
+        min_size: Minimum component width/height
+
+    Returns:
+        List of component dictionaries with bbox, area, centroid, aspect_ratio
+    """
+    num_labels, _labels, stats, centroids = cv2.connectedComponentsWithStats(
+        binary, connectivity=8
+    )
+
+    components = []
+    for i in range(1, num_labels):  # Skip background
+        x, y, comp_w, comp_h, area = stats[i]
+        if (
+            comp_w > min_size
+            and comp_h > min_size
+            and comp_w < w // 3
+            and comp_h < h // 3
+            and area > min_area
+        ):
+            components.append(
+                {
+                    "bbox": (x, y, comp_w, comp_h),
+                    "area": area,
+                    "centroid": centroids[i],
+                    "aspect_ratio": comp_w / comp_h if comp_h > 0 else 0,
+                    "density": area / (comp_w * comp_h) if comp_w * comp_h > 0 else 0,
+                }
+            )
+
+    return components
+
+
+# ============================================================================
 # Warping/Curvature Detection (FR-3.12)
 # ============================================================================
 
@@ -347,6 +422,69 @@ class FormulaResult:
     confidence: float
 
 
+def _empty_formula_result(confidence: float = 0.5) -> FormulaResult:
+    """Return empty formula result for edge cases."""
+    return FormulaResult(
+        has_formulas=False,
+        formula_density=0.0,
+        formula_count=0,
+        regions=[],
+        confidence=confidence,
+    )
+
+
+def _count_formula_indicators(
+    components: list[dict[str, Any]], h: int
+) -> int:
+    """Count formula indicators from component analysis.
+
+    Checks for:
+    - Unusual aspect ratios (subscripts, superscripts, operators)
+    - High vertical position variance (multi-level text)
+    """
+    indicators = 0
+
+    # Analyze aspect ratio distribution
+    aspect_ratios = [c["aspect_ratio"] for c in components]
+    unusual_aspects = sum(1 for ar in aspect_ratios if ar < 0.5 or ar > 2.0)
+    if unusual_aspects / len(components) > 0.2:
+        indicators += 1
+
+    # Check for vertical positioning variations
+    y_positions = [c["centroid"][1] for c in components]
+    y_variance = np.std(y_positions) / h if y_positions else 0
+    if y_variance > 0.1:
+        indicators += 1
+
+    return indicators
+
+
+def _find_high_density_regions(
+    components: list[dict[str, Any]], h: int, w: int, grid_size: int = 50
+) -> list[tuple[int, int, int, int]]:
+    """Find high-density component regions using grid analysis."""
+    grid_h = (h + grid_size - 1) // grid_size
+    grid_w = (w + grid_size - 1) // grid_size
+    density_grid = np.zeros((grid_h, grid_w))
+
+    for comp in components:
+        cx, cy = int(comp["centroid"][0]), int(comp["centroid"][1])
+        gx = min(cx // grid_size, grid_w - 1)
+        gy = min(cy // grid_size, grid_h - 1)
+        density_grid[gy, gx] += 1
+
+    # Find high-density regions (75th percentile threshold)
+    threshold = (
+        np.percentile(density_grid[density_grid > 0], 75)
+        if np.any(density_grid > 0)
+        else 1
+    )
+    high_density_cells = np.argwhere(density_grid >= threshold)
+
+    return [(gx * grid_size, gy * grid_size, grid_size, grid_size)
+            for gy, gx in high_density_cells]
+
+
 def detect_formulas(image: np.ndarray) -> FormulaResult:
     """Detect mathematical formulas in STEM documents.
 
@@ -364,98 +502,20 @@ def detect_formulas(image: np.ndarray) -> FormulaResult:
     Returns:
         FormulaResult with detected formula regions
     """
-    if image is None or image.size == 0:
-        raise ValueError("Invalid image")
+    # Preprocess image
+    _gray, binary, h, w = _validate_and_preprocess(image)
 
-    h, w = image.shape[:2]
+    # Get filtered components
+    components = _get_filtered_components(binary, h, w, min_area=20, min_size=5)
 
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+    if len(components) < 5:
+        return _empty_formula_result()
 
-    # Binarize
-    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    # Analyze formula indicators
+    formula_indicators = _count_formula_indicators(components, h)
 
-    # Find connected components (potential characters/symbols)
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(
-        binary, connectivity=8
-    )
-
-    if num_labels < 2:  # Just background
-        return FormulaResult(
-            has_formulas=False,
-            formula_density=0.0,
-            formula_count=0,
-            regions=[],
-            confidence=0.5,
-        )
-
-    # Filter components by size (potential characters)
-    char_components = []
-    for i in range(1, num_labels):  # Skip background
-        x, y, comp_w, comp_h, area = stats[i]
-        # Reasonable character size (adjust based on DPI)
-        if 5 < comp_w < w // 3 and 5 < comp_h < h // 3 and area > 20:
-            char_components.append(
-                {
-                    "bbox": (x, y, comp_w, comp_h),
-                    "area": area,
-                    "centroid": centroids[i],
-                    "aspect_ratio": comp_w / comp_h if comp_h > 0 else 0,
-                }
-            )
-
-    if len(char_components) < 5:
-        return FormulaResult(
-            has_formulas=False,
-            formula_density=0.0,
-            formula_count=0,
-            regions=[],
-            confidence=0.5,
-        )
-
-    # Detect formula-like regions:
-    # 1. Regions with unusual vertical character distribution (subscripts/superscripts)
-    # 2. Regions with special symbol-like components (wide/tall aspect ratios)
-
-    formula_regions = []
-    formula_indicators = 0
-
-    # Analyze aspect ratio distribution (formulas often have unusual shaped symbols)
-    aspect_ratios = [c["aspect_ratio"] for c in char_components]
-    unusual_aspects = sum(1 for ar in aspect_ratios if ar < 0.5 or ar > 2.0)
-    if unusual_aspects / len(char_components) > 0.2:
-        formula_indicators += 1
-
-    # Check for vertical positioning variations (subscripts/superscripts)
-    y_positions = [c["centroid"][1] for c in char_components]
-    y_variance = np.std(y_positions) / h if y_positions else 0
-    if y_variance > 0.1:  # High variance suggests multi-level text (formulas)
-        formula_indicators += 1
-
-    # Cluster nearby components to find formula regions
-    # Simple approach: find regions with high component density
-    grid_size = 50
-    grid_h = (h + grid_size - 1) // grid_size
-    grid_w = (w + grid_size - 1) // grid_size
-    density_grid = np.zeros((grid_h, grid_w))
-
-    for comp in char_components:
-        cx, cy = int(comp["centroid"][0]), int(comp["centroid"][1])
-        gx, gy = min(cx // grid_size, grid_w - 1), min(cy // grid_size, grid_h - 1)
-        density_grid[gy, gx] += 1
-
-    # Find high-density regions
-    threshold = (
-        np.percentile(density_grid[density_grid > 0], 75)
-        if np.any(density_grid > 0)
-        else 1
-    )
-    high_density_cells = np.argwhere(density_grid >= threshold)
-
-    for gy, gx in high_density_cells:
-        x = gx * grid_size
-        y = gy * grid_size
-        formula_regions.append((x, y, grid_size, grid_size))
+    # Find formula regions
+    formula_regions = _find_high_density_regions(components, h, w)
 
     # Calculate formula density
     formula_area = sum(reg[2] * reg[3] for reg in formula_regions)
@@ -617,6 +677,43 @@ class LanguageResult:
     confidence: float
 
 
+def _unknown_language_result(confidence: float = 0.3) -> LanguageResult:
+    """Return unknown language result for edge cases."""
+    return LanguageResult(
+        primary_script=ScriptType.UNKNOWN,
+        scripts_detected=[ScriptType.UNKNOWN],
+        is_rtl=False,
+        confidence=confidence,
+    )
+
+
+def _classify_scripts(
+    avg_aspect: float, avg_density: float, aspect_variance: float
+) -> list[ScriptType]:
+    """Classify scripts based on component statistics.
+
+    Script detection heuristics:
+    - CJK: Square characters (aspect ~1), high density
+    - Latin: Varied aspect ratios, moderate density
+    - Arabic: Connected scripts, high variance
+    """
+    scripts: list[ScriptType] = []
+
+    # CJK detection: Square characters with high density
+    if 0.7 < avg_aspect < 1.3 and avg_density > 0.3:
+        scripts.append(ScriptType.CJK)
+
+    # Latin detection: Varied characters
+    if 0.3 < avg_aspect < 3.0 and aspect_variance > 0.3:
+        scripts.append(ScriptType.LATIN)
+
+    # Arabic/RTL detection: Connected text, specific patterns
+    if aspect_variance > 0.5 and avg_density > 0.4:
+        scripts.append(ScriptType.ARABIC)
+
+    return scripts if scripts else [ScriptType.UNKNOWN]
+
+
 def detect_language_script(image: np.ndarray) -> LanguageResult:
     """Detect language script from visual features.
 
@@ -630,79 +727,27 @@ def detect_language_script(image: np.ndarray) -> LanguageResult:
     Returns:
         LanguageResult with detected script information
     """
-    if image is None or image.size == 0:
-        raise ValueError("Invalid image")
+    # Preprocess image
+    _gray, binary, h, w = _validate_and_preprocess(image)
 
-    h, w = image.shape[:2]
+    # Get filtered components (need at least 10 for reliable detection)
+    components = _get_filtered_components(binary, h, w, min_area=20, min_size=3)
 
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
+    if len(components) < 10:
+        return _unknown_language_result()
 
-    # Binarize
-    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    # Calculate statistics
+    aspects = [c["aspect_ratio"] for c in components]
+    densities = [c["density"] for c in components]
 
-    # Find connected components
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(
-        binary, connectivity=8
-    )
+    avg_aspect = float(np.mean(aspects))
+    avg_density = float(np.mean(densities))
+    aspect_variance = float(np.std(aspects))
 
-    if num_labels < 10:
-        return LanguageResult(
-            primary_script=ScriptType.UNKNOWN,
-            scripts_detected=[ScriptType.UNKNOWN],
-            is_rtl=False,
-            confidence=0.3,
-        )
+    # Classify scripts based on statistics
+    scripts_detected = _classify_scripts(avg_aspect, avg_density, aspect_variance)
 
-    # Analyze component statistics
-    components = []
-    for i in range(1, num_labels):
-        x, y, comp_w, comp_h, area = stats[i]
-        if area > 20 and comp_w > 3 and comp_h > 3:
-            components.append(
-                {
-                    "aspect": comp_w / comp_h,
-                    "area": area,
-                    "density": area / (comp_w * comp_h) if comp_w * comp_h > 0 else 0,
-                }
-            )
-
-    if not components:
-        return LanguageResult(
-            primary_script=ScriptType.UNKNOWN,
-            scripts_detected=[ScriptType.UNKNOWN],
-            is_rtl=False,
-            confidence=0.3,
-        )
-
-    # Calculate averages
-    avg_aspect = np.mean([c["aspect"] for c in components])
-    avg_density = np.mean([c["density"] for c in components])
-    aspect_variance = np.std([c["aspect"] for c in components])
-
-    # Script detection heuristics:
-    # CJK: More square characters (aspect ~1), high density
-    # Latin: Varied aspect ratios, moderate density
-    # Arabic: Connected scripts, high variance
-
-    scripts_detected = []
-
-    # CJK detection: Square characters with high density
-    if 0.7 < avg_aspect < 1.3 and avg_density > 0.3:
-        scripts_detected.append(ScriptType.CJK)
-
-    # Latin detection: Varied characters
-    if 0.3 < avg_aspect < 3.0 and aspect_variance > 0.3:
-        scripts_detected.append(ScriptType.LATIN)
-
-    # Arabic/RTL detection: Connected text, specific patterns
-    # (This is a simplified heuristic)
-    if aspect_variance > 0.5 and avg_density > 0.4:
-        scripts_detected.append(ScriptType.ARABIC)
-
-    if not scripts_detected:
-        scripts_detected = [ScriptType.UNKNOWN]
-
+    # Determine primary script
     primary_script = (
         scripts_detected[0] if len(scripts_detected) == 1 else ScriptType.MIXED
     )
