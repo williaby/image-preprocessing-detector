@@ -1,15 +1,11 @@
 ---
 title: Phase 4 Implementation Summary
-created: 2025-01-25
-updated: 2025-01-25
-status: in_progress
-tags: [phase4, device_priority, implementation, summary]
-owner: Claude Code
+status: draft
+tags: [development, architecture]
+owner: "core-maintainer"
 purpose: Document Phase 4 Device-Priority Execution implementation progress and remaining work.
 schema_type: common
 ---
-
-# Phase 4 Device-Priority Execution - Implementation Summary
 
 ## Executive Summary
 

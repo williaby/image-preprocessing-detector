@@ -62,8 +62,70 @@ async def lifespan(_app: FastAPI) -> Any:
             cpu_count=caps.cpu_count,
             modal_available=caps.modal_available,
         )
+
+        # Pre-load ML models to eliminate first-request cold-start latency
+        try:
+            from image_preprocessing_detector.models.model_loader import (
+                get_model_info,
+                load_student_model,
+                load_teacher_model,
+                warmup_models,
+            )
+
+            # Determine device for model loading
+            model_device = "cuda" if caps.has_local_gpu else "cpu"
+
+            # Always pre-load student model (used for all requests)
+            logger.info("preloading_student_model", device=model_device)
+            student_model = load_student_model(device=model_device)
+
+            # Pre-load teacher model if GPU available (optional optimization)
+            teacher_model = None
+            if caps.has_local_gpu:
+                logger.info("preloading_teacher_model", device="cuda")
+                teacher_model = load_teacher_model(device="cuda")
+            else:
+                logger.info(
+                    "skipping_teacher_preload",
+                    reason="No local GPU available, teacher will lazy-load if needed",
+                )
+
+            # Warmup models with dummy inference (avoids first-request penalty)
+            if student_model is not None or teacher_model is not None:
+                logger.info("warming_up_models")
+                warmup_stats = warmup_models(student_model, teacher_model)
+                logger.info("model_warmup_complete", stats=warmup_stats)
+
+            # Store models in app state for request handlers
+            _app.state.student_model = student_model
+            _app.state.teacher_model = teacher_model
+            _app.state.model_device = model_device
+
+            # Log model info
+            if student_model:
+                student_info = get_model_info(student_model)
+                logger.info("student_model_ready", info=student_info)
+            if teacher_model:
+                teacher_info = get_model_info(teacher_model)
+                logger.info("teacher_model_ready", info=teacher_info)
+
+        except Exception as e:
+            logger.warning(
+                "model_preload_failed",
+                error=str(e),
+                fallback="Models will be lazy-loaded on first request",
+            )
+            # Initialize app state with None (lazy loading will occur)
+            _app.state.student_model = None
+            _app.state.teacher_model = None
+            _app.state.model_device = "cpu"
+
     except Exception as e:
         logger.warning("device_probe_failed_on_startup", error=str(e))
+        # Initialize app state with defaults
+        _app.state.student_model = None
+        _app.state.teacher_model = None
+        _app.state.model_device = "cpu"
 
     logger.info("application_started")
 
