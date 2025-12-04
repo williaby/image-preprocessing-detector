@@ -46,6 +46,7 @@ class TestMLIQAModelUnavailable:
         detector = MLIQADetector(
             student_model_path="/nonexistent/path/student.onnx",
             teacher_model_path="/nonexistent/path/teacher.onnx",
+            use_orchestrator=False,
         )
 
         # Sessions should remain unloaded for nonexistent paths
@@ -56,6 +57,7 @@ class TestMLIQAModelUnavailable:
         """Test student session is not loaded for missing model."""
         detector = MLIQADetector(
             student_model_path="/nonexistent/student.onnx",
+            use_orchestrator=False,
         )
 
         # Session should remain None until explicitly loaded
@@ -65,6 +67,7 @@ class TestMLIQAModelUnavailable:
         """Test teacher session is not loaded for missing model."""
         detector = MLIQADetector(
             teacher_model_path="/nonexistent/teacher.onnx",
+            use_orchestrator=False,
         )
 
         assert detector._teacher_session is None
@@ -84,14 +87,14 @@ class TestDeviceDetectionFallback:
             # Simulate no GPU providers
             mock_ort.get_available_providers.return_value = ["CPUExecutionProvider"]
 
-            detector = MLIQADetector()
+            detector = MLIQADetector(use_orchestrator=False)
 
             # Should fall back to CPU
             assert detector.device in [Device.CPU, Device.GPU, Device.MODAL]
 
     def test_explicit_device_selection(self):
         """Test explicit device selection overrides auto-detection."""
-        detector = MLIQADetector(device=Device.CPU)
+        detector = MLIQADetector(device=Device.CPU, use_orchestrator=False)
 
         assert detector.device == Device.CPU
 
