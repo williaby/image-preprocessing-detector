@@ -75,7 +75,7 @@ jobs:
           platforms: linux/amd64
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0.20.10
         with:
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
           format: spdx-json
@@ -160,6 +160,11 @@ jobs:
 
           echo "Smoke tests passed!"
 
+      - name: Cleanup kubeconfig
+        if: always()
+        run: |
+          rm -f $HOME/.kube/config
+
   deploy-staging:
     name: Deploy to Staging
     needs: build
@@ -220,6 +225,11 @@ jobs:
         run: |
           kubectl rollout status deployment/imgprep-api -n imgprep-staging --timeout=10m
           kubectl get pods -n imgprep-staging -l app.kubernetes.io/name=image-preprocessing-detector
+
+      - name: Cleanup kubeconfig
+        if: always()
+        run: |
+          rm -f $HOME/.kube/config
 
   deploy-prod:
     name: Deploy to Production
@@ -313,6 +323,11 @@ jobs:
           helm rollback imgprep-api -n imgprep-prod
           exit 1
 
+      - name: Cleanup kubeconfig
+        if: always()
+        run: |
+          rm -f $HOME/.kube/config
+
   security-scan:
     name: Security Scan
     needs: build
@@ -320,7 +335,7 @@ jobs:
 
     steps:
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: 'sarif'

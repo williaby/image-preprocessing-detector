@@ -95,11 +95,12 @@ spec:
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
+            {{- if .Values.gpu.enabled }}
+            {{- $resources := merge (dict "limits" (dict .Values.gpu.type .Values.gpu.count)) .Values.resources }}
+            {{- toYaml $resources | nindent 12 }}
+            {{- else }}
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.gpu.enabled }}
-            limits:
-              {{ .Values.gpu.type }}: {{ .Values.gpu.count }}
-          {{- end }}
+            {{- end }}
           {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: models

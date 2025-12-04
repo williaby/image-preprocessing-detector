@@ -13,9 +13,12 @@ Phase 2 Integration - Milestone 14.2
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from typing import Literal
 
 from image_preprocessing_detector.orchestration import (
     DeviceOrchestrator,
@@ -511,13 +514,20 @@ class MLIQADetector:
             return None
 
         # Convert Modal response to MLIQAScores
+        # Calculate overall quality with division by zero protection
+        overall_quality = (
+            sum(response.scores.values()) / len(response.scores)
+            if response.scores
+            else 0.0
+        )
+
         return MLIQAScores(
             blur_score=response.scores.get("blur", 0.0),
             noise_score=response.scores.get("noise", 0.0),
             contrast_score=response.scores.get("contrast", 0.0),
             skew_score=response.scores.get("skew", 0.0),
             compression_score=response.scores.get("compression", 0.0),
-            overall_quality=sum(response.scores.values()) / len(response.scores),
+            overall_quality=overall_quality,
             confidences=response.confidences,
             model_type=ModelType.TEACHER,
             device=Device.MODAL,
@@ -725,7 +735,15 @@ class MLIQADetector:
             device=device_enum.value,
         )
 
-        # Budget tracking is handled by orchestrator.select_device_for_teacher()
+        # Record actual inference for budget tracking
+        if self.use_orchestrator and self.orchestrator and selected_device:
+            # Type narrowing: selected_device is guaranteed to be one of the literals here
+            from typing import cast
+
+            device_literal = cast("Literal['cuda', 'cpu', 'modal']", selected_device)
+            self.orchestrator.record_teacher_inference(
+                device=device_literal, inference_time_ms=inference_time
+            )
 
         return MLIQAScores(
             blur_score=scores.get("blur_score", 0.0),
