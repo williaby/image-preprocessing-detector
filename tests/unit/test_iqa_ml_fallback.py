@@ -49,9 +49,9 @@ class TestMLIQAModelUnavailable:
             use_orchestrator=False,
         )
 
-        # Sessions should remain unloaded for nonexistent paths
-        assert detector._student_session is None
-        assert detector._teacher_session is None
+        # Sessions should remain unloaded for nonexistent paths (Phase 4: dict-based storage)
+        assert "legacy" not in detector._student_sessions
+        assert "legacy" not in detector._teacher_sessions
 
     def test_student_session_not_loaded(self):
         """Test student session is not loaded for missing model."""
@@ -60,8 +60,8 @@ class TestMLIQAModelUnavailable:
             use_orchestrator=False,
         )
 
-        # Session should remain None until explicitly loaded
-        assert detector._student_session is None
+        # Session should remain None until explicitly loaded (Phase 4: dict-based storage)
+        assert "legacy" not in detector._student_sessions
 
     def test_teacher_session_not_loaded(self):
         """Test teacher session is not loaded for missing model."""
@@ -70,7 +70,8 @@ class TestMLIQAModelUnavailable:
             use_orchestrator=False,
         )
 
-        assert detector._teacher_session is None
+        # Phase 4: Sessions stored in dict, keyed by device
+        assert "legacy" not in detector._teacher_sessions
 
 
 # =============================================================================
