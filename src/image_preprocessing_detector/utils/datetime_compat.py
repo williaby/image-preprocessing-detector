@@ -21,13 +21,13 @@ PY_311_PLUS = PY_VERSION >= (3, 11)
 if PY_311_PLUS:
     try:
         from datetime import (  # type: ignore[attr-defined,unused-ignore]  # mypy 3.10 target
-            UTC as _utc,  # noqa: N811
+            UTC as _utc,
         )
     except ImportError:
         # Fallback if datetime.UTC unavailable
-        _utc = timezone.utc  # noqa: UP017
+        _utc = timezone.utc
 else:
-    _utc = timezone.utc  # noqa: UP017 - Python 3.10 compat: datetime.UTC unavailable
+    _utc = timezone.utc
 
 # Export as uppercase constant
 UTC = _utc

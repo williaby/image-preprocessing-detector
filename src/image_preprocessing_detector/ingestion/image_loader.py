@@ -35,7 +35,7 @@ class ImageMetadata:
         dpi_x: float | None = None,
         dpi_y: float | None = None,
         color_mode: str = "RGB",
-        format: str = "UNKNOWN",  # noqa: A002
+        format: str = "UNKNOWN",
         has_exif: bool = False,
     ) -> None:
         """Initialize image metadata."""
@@ -245,7 +245,6 @@ def load_image(
 
 
 # Example usage
-# ruff: noqa: T201
 if __name__ == "__main__":  # pragma: no cover
     import sys
 

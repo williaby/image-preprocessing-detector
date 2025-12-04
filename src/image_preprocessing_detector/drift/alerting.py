@@ -318,15 +318,15 @@ class WebhookDispatcher:
             import urllib.request
 
             payload = json.dumps(alert.to_dict()).encode("utf-8")
-            request = urllib.request.Request(  # noqa: S310
+            request = urllib.request.Request(
                 self.webhook_url,
                 data=payload,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
 
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: ERA001
-            with urllib.request.urlopen(  # noqa: S310  # nosec B310
+            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+            with urllib.request.urlopen(  # nosec B310
                 request, timeout=self.timeout
             ) as response:
                 return bool(response.status == 200)
@@ -406,15 +406,15 @@ class SlackDispatcher:
                 )
 
             data = json.dumps(payload).encode("utf-8")
-            request = urllib.request.Request(  # noqa: S310
+            request = urllib.request.Request(
                 self.webhook_url,
                 data=data,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
 
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: ERA001
-            with urllib.request.urlopen(  # noqa: S310  # nosec B310
+            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+            with urllib.request.urlopen(  # nosec B310
                 request, timeout=30
             ) as response:
                 return bool(response.status == 200)

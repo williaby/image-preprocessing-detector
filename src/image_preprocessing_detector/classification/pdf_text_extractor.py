@@ -106,7 +106,7 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python pdf_text_extractor.py <pdf_path>")  # noqa: T201
+        print("Usage: python pdf_text_extractor.py <pdf_path>")
         sys.exit(1)
 
     from image_preprocessing_detector.utils import setup_logging
@@ -116,7 +116,7 @@ if __name__ == "__main__":  # pragma: no cover
     pdf_path = sys.argv[1]
     text = extract_text_from_pdf(pdf_path)
 
-    print(f"\nExtracted text from {pdf_path}:")  # noqa: T201
-    print(f"Length: {len(text)} characters")  # noqa: T201
-    print("\nFirst 500 characters:")  # noqa: T201
-    print(text[:500])  # noqa: T201
+    print(f"\nExtracted text from {pdf_path}:")
+    print(f"Length: {len(text)} characters")
+    print("\nFirst 500 characters:")
+    print(text[:500])

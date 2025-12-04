@@ -212,7 +212,7 @@ class PDFLoader:
                     estimated_dpi = (
                         (img_width / width_inches) if width_inches > 0 else 72.0
                     )
-        except Exception:  # nosec B110  # noqa: S110 (DPI fallback to 72.0)
+        except Exception:  # nosec B110
             # Legitimate fallback: DPI estimation is optional, defaults to 72.0 if metadata extraction fails
             pass
 
@@ -242,7 +242,6 @@ def load_pdf(
 
 
 # Example usage
-# ruff: noqa: T201, RUF001
 if __name__ == "__main__":  # pragma: no cover
     import sys
 

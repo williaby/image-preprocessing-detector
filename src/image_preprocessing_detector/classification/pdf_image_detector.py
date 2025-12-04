@@ -175,7 +175,7 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python pdf_image_detector.py <pdf_path>")  # noqa: T201
+        print("Usage: python pdf_image_detector.py <pdf_path>")
         sys.exit(1)
 
     from image_preprocessing_detector.utils import setup_logging
@@ -185,9 +185,9 @@ if __name__ == "__main__":  # pragma: no cover
     pdf_path = sys.argv[1]
     images = detect_embedded_images(pdf_path)
 
-    print(f"\nDetected {len(images)} embedded images in {pdf_path}:")  # noqa: T201
+    print(f"\nDetected {len(images)} embedded images in {pdf_path}:")
     for img in images:
-        print(  # noqa: T201
+        print(
             f"  Page {img['page_number'] + 1}, Image {img['image_index']}: "
             f"{img['width']}x{img['height']} ({img['colorspace']}, "
             f"{img['bits_per_component']} bpc)"

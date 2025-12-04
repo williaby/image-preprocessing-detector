@@ -114,7 +114,7 @@ if __name__ == "__main__":  # pragma: no cover
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python pdf_type_classifier.py <pdf_path>")  # noqa: T201
+        print("Usage: python pdf_type_classifier.py <pdf_path>")
         sys.exit(1)
 
     from image_preprocessing_detector.utils import setup_logging
@@ -124,12 +124,12 @@ if __name__ == "__main__":  # pragma: no cover
     pdf_path = sys.argv[1]
     pdf_type = classify_pdf_type(pdf_path)
 
-    print(f"\nPDF Classification for {pdf_path}:")  # noqa: T201
-    print(f"  Type: {pdf_type.value}")  # noqa: T201
+    print(f"\nPDF Classification for {pdf_path}:")
+    print(f"  Type: {pdf_type.value}")
 
     if pdf_type == PDFType.BORN_DIGITAL:
-        print("  → Text-based document (born digital)")  # noqa: T201
+        print("  → Text-based document (born digital)")
     elif pdf_type == PDFType.IMAGE_ONLY:
-        print("  → Scanned document (image only)")  # noqa: T201
+        print("  → Scanned document (image only)")
     else:
-        print("  → Hybrid document (text + images)")  # noqa: T201
+        print("  → Hybrid document (text + images)")

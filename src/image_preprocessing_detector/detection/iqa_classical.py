@@ -233,7 +233,7 @@ class SkewDetector:
 
             for angle in angles_to_test:
                 # Rotate image
-                M = cv2.getRotationMatrix2D(center, float(angle), 1.0)  # noqa: N806  # fmt: skip
+                M = cv2.getRotationMatrix2D(center, float(angle), 1.0)  # fmt: skip
                 rotated = cv2.warpAffine(binary, M, (w, h), flags=cv2.INTER_CUBIC)
 
                 # Calculate horizontal projection

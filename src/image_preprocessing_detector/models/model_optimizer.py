@@ -832,7 +832,7 @@ class ModelOptimizer:
     ) -> BenchmarkResult:
         """Benchmark TensorRT model."""
         try:
-            import pycuda.autoinit  # noqa: F401  # pyright: ignore[reportUnusedImport]
+            import pycuda.autoinit  # pyright: ignore[reportUnusedImport]
             import pycuda.driver as cuda
             import tensorrt as trt
         except ImportError as e:

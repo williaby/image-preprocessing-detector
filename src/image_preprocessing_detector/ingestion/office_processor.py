@@ -143,7 +143,7 @@ class OfficeProcessor:
     def _check_docling_available(self) -> bool:
         """Check if Docling library is available."""
         try:
-            import docling  # noqa: F401
+            import docling
         except ImportError:
             logger.debug("Docling not available, using fallback extraction")
             return False
