@@ -11,8 +11,13 @@ This module implements a circuit breaker client for Modal serverless GPU:
 - Cost estimation and request timeout handling
 
 Sprint 4.2.3: Client Stub with Circuit Breaker (Phase 4B)
+Sprint 4.2.1: Wire real Modal SDK calls (Phase 4B)
 """
 
+from __future__ import annotations
+
+import base64
+import io
 import random
 import time
 from dataclasses import dataclass
@@ -268,8 +273,6 @@ class ModalClient:
             msg = "Modal endpoint not configured"
             raise RuntimeError(msg)
 
-        # TODO: Replace with actual Modal SDK call
-        # For now, simulate successful response
         logger.debug(
             "Executing Modal request",
             attempt=attempt + 1,
@@ -279,12 +282,160 @@ class ModalClient:
             request_id=request.request_id,
         )
 
-        # TODO(Phase 4B): Replace mock with actual Modal SDK call
-        # See sprint 4.2.1 for Modal endpoint implementation
-        # Will integrate Modal SDK to call remote teacher inference
+        # Use mock mode for testing when configured
+        if self._use_mock_mode():
+            return self._get_mock_response(request)
 
-        # Mock response for testing (remove in production)
+        # Call real Modal endpoint via SDK
+        response_dict = self._call_modal_function(request)
+
+        # Check for errors
+        if "error" in response_dict:
+            error_msg = response_dict["error"]
+            raise RuntimeError(f"Modal inference error: {error_msg}")
+
+        # Map response to dataclass
+        # Note: Model outputs blur, noise, skew, illumination, artifacts
+        # Client interface uses contrast, compression for backwards compat
+        scores = response_dict.get("scores", {})
+        confidences = response_dict.get("confidences", {})
+
         response = ModalInferenceResponse(
+            scores={
+                "blur": scores.get("blur", 0.0),
+                "noise": scores.get("noise", 0.0),
+                "contrast": scores.get(
+                    "illumination", 0.0
+                ),  # Map illumination→contrast
+                "skew": scores.get("skew", 0.0),
+                "compression": scores.get(
+                    "artifacts", 0.0
+                ),  # Map artifacts→compression
+            },
+            confidences={
+                "blur": confidences.get("blur", 0.0),
+                "noise": confidences.get("noise", 0.0),
+                "contrast": confidences.get("illumination", 0.0),
+                "skew": confidences.get("skew", 0.0),
+                "compression": confidences.get("artifacts", 0.0),
+            },
+            inference_time_ms=response_dict.get("inference_time_ms", 0.0),
+            device_tag=response_dict.get("device_tag", "unknown"),
+            model_version=response_dict.get("model_version", request.model_version),
+            request_id=response_dict.get("request_id", request.request_id),
+        )
+
+        logger.debug(
+            "Modal request succeeded",
+            inference_time_ms=response.inference_time_ms,
+            device_tag=response.device_tag,
+            request_id=request.request_id,
+        )
+
+        return response
+
+    def _use_mock_mode(self) -> bool:
+        """Check if mock mode is enabled for testing.
+
+        Mock mode is enabled when:
+        - IMGPREP_MODAL_MOCK=true environment variable is set
+        - Modal SDK is not available
+
+        Returns:
+            True if mock mode should be used
+        """
+        import os
+
+        if os.getenv("IMGPREP_MODAL_MOCK", "").lower() in ("true", "1", "yes"):
+            return True
+
+        # Check if Modal SDK is available
+        try:
+            import modal  # noqa: F401
+        except ImportError:
+            logger.warning("Modal SDK not available, using mock mode")
+            return True
+        else:
+            return False
+
+    def _call_modal_function(self, request: ModalInferenceRequest) -> dict[str, Any]:
+        """Call Modal function with image data.
+
+        Args:
+            request: Inference request with image
+
+        Returns:
+            Response dictionary from Modal
+
+        Raises:
+            RuntimeError: If Modal call fails
+        """
+        import modal
+
+        # Encode image as base64 for transfer
+        image_b64 = self._encode_image(request.image_array)
+
+        # Look up the deployed Modal function
+        try:
+            teacher_cls = modal.Cls.lookup("iqa-teacher-inference", "TeacherInference")
+            teacher = teacher_cls()
+
+            # Call the predict method
+            return teacher.predict.remote(
+                image_b64=image_b64,
+                request_id=request.request_id,
+                model_version=request.model_version,
+            )
+
+        except modal.exception.NotFoundError as e:
+            raise RuntimeError(
+                "Modal app 'iqa-teacher-inference' not deployed. "
+                "Run: modal deploy modal/teacher_inference.py"
+            ) from e
+        except Exception as e:
+            raise RuntimeError(f"Modal call failed: {e}") from e
+
+    def _encode_image(self, image_array: np.ndarray) -> str:
+        """Encode numpy image array as base64 JPEG.
+
+        Args:
+            image_array: Image as numpy array (H, W, C) uint8
+
+        Returns:
+            Base64-encoded JPEG string
+        """
+        from PIL import Image as PILImage
+
+        # Convert to PIL Image
+        if image_array.dtype != np.uint8:
+            image_array = (image_array * 255).astype(np.uint8)
+
+        img = PILImage.fromarray(image_array)
+
+        # Encode as JPEG (smaller than PNG)
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG", quality=95)
+        buffer.seek(0)
+
+        return base64.b64encode(buffer.read()).decode("utf-8")
+
+    def _get_mock_response(
+        self, request: ModalInferenceRequest
+    ) -> ModalInferenceResponse:
+        """Generate mock response for testing.
+
+        Args:
+            request: Inference request
+
+        Returns:
+            Mock ModalInferenceResponse
+        """
+        logger.debug(
+            "Using mock Modal response",
+            request_id=request.request_id,
+        )
+
+        return ModalInferenceResponse(
             scores={
                 "blur": 0.85,
                 "noise": 0.90,
@@ -300,19 +451,10 @@ class ModalClient:
                 "compression": 0.89,
             },
             inference_time_ms=150.0,
-            device_tag="T4",
+            device_tag="T4-mock",
             model_version=request.model_version,
             request_id=request.request_id,
         )
-
-        logger.debug(
-            "Modal request succeeded",
-            inference_time_ms=response.inference_time_ms,
-            device_tag=response.device_tag,
-            request_id=request.request_id,
-        )
-
-        return response
 
     def _calculate_backoff(self, attempt: int) -> int:
         """Calculate exponential backoff with jitter.
