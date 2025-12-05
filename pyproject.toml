@@ -177,6 +177,14 @@ colab = [
     "onnx>=1.17.0",         # ONNX model verification (CVE-2024-7776 fixed in 1.17.0)
 ]
 
+workers = [
+    # Distributed Worker Dependencies (Phase 4 - Week 17)
+    # Requires Redis server to be available (docker, local install, or cloud)
+    "celery>=5.4.0",        # Distributed task queue
+    "redis>=5.0.0",         # Redis client for broker/backend
+    "flower>=2.0.0",        # Celery monitoring dashboard (optional)
+]
+
 [project.scripts]
 imgprep = "image_preprocessing_detector.cli:cli"
 
