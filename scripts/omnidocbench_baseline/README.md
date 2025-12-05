@@ -39,10 +39,10 @@ scripts/omnidocbench_baseline/
 |----------|------|-------------|--------|
 | `classical_cv_baseline` | Heuristics | OpenCV Laplacian, FFT, histogram | ✅ Active |
 | `resnet50_teacher_baseline` | ResNet-50 | ImageNet pre-trained (no IQA training) | ✅ Active |
-| `resnet50_teacher_v1` | ResNet-50 | Trained on OHR-Bench (binary labels) | ⏳ Planned |
+| `resnet50_teacher_v1` | ResNet-50 | Trained on iqa_phase2_100k (50 epochs, val_loss=0.2694) | ✅ Active |
 | `resnet50_teacher_v2` | ResNet-50 | Trained with continuous labels | ⏳ Planned |
 | `resnet18_student_baseline` | ResNet-18 | ImageNet pre-trained | ✅ Active |
-| `resnet18_student_v1` | ResNet-18 | Distilled from teacher_v1 | ⏳ Planned |
+| `resnet18_student_v1` | ResNet-18 | Distilled from teacher_v1 (30 epochs, val_loss=0.1386) | ✅ Active |
 | `resnet18_student_v2` | ResNet-18 | Distilled from teacher_v2 | ⏳ Planned |
 
 ### Layout Models
@@ -215,6 +215,7 @@ Summary:
 ## Adding New Models
 
 1. **Define in registry** (`model_registry.yaml`):
+
 ```yaml
 - id: my_new_model_v1
   name: "My New Model v1"
@@ -227,12 +228,14 @@ Summary:
     - fuzzy_scan
 ```
 
-2. **Run benchmark**:
+1. **Run benchmark**:
+
 ```bash
 python scripts/omnidocbench_baseline/benchmark_runner.py --model my_new_model_v1
 ```
 
-3. **Compare to baseline**:
+1. **Compare to baseline**:
+
 ```bash
 python scripts/omnidocbench_baseline/compare_results.py \
     --baseline resnet18_student_baseline \

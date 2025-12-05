@@ -134,6 +134,7 @@ iqa_models:
         alpha: 0.7
         val_loss: 0.1386
         training_time_hours: 1.94
+        gpu: A10
         compression_ratio: 2.47
     benchmarkable_attributes:
       - fuzzy_scan
