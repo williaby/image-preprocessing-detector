@@ -324,3 +324,127 @@ class TestModuleExports:
         assert hasattr(workers, "process_single_document")
         assert hasattr(workers, "process_batch_documents")
         assert hasattr(workers, "run_iqa_analysis")
+
+
+class TestTaskHelperFunctions:
+    """Tests for task helper functions with full coverage."""
+
+    def test_preprocess_image_normalization(self) -> None:
+        """Test image preprocessing with ImageNet normalization."""
+        from image_preprocessing_detector.workers.tasks import _preprocess_image
+
+        # Create a specific image to verify normalization
+        image = np.ones((100, 100, 3), dtype=np.uint8) * 128  # Gray image
+
+        result = _preprocess_image(image)
+
+        # Check shape
+        assert result.shape == (1, 3, 224, 224)
+        # Check dtype
+        assert result.dtype == np.float32
+        # Check that values are normalized (not in 0-255 range)
+        assert result.min() < 0 or result.max() < 1
+
+    def test_preprocess_image_channel_order(self) -> None:
+        """Test BGR to RGB conversion in preprocessing."""
+        from image_preprocessing_detector.workers.tasks import _preprocess_image
+
+        # Create BGR image where B=255, G=0, R=0
+        image = np.zeros((100, 100, 3), dtype=np.uint8)
+        image[:, :, 0] = 255  # Blue channel in BGR
+
+        result = _preprocess_image(image)
+
+        # After BGR->RGB, the blue should be in the third channel position
+        # of the CHW tensor (index 2)
+        assert result.shape == (1, 3, 224, 224)
+
+    def test_postprocess_outputs_partial(self) -> None:
+        """Test postprocessing with partial outputs."""
+        from image_preprocessing_detector.workers.tasks import _postprocess_outputs
+
+        # Only provide 3 heads instead of 5
+        outputs = {}
+        for i in range(3):
+            outputs[f"head_{i}"] = np.array([[0.5, 0.5]])
+
+        scores, confidences = _postprocess_outputs(outputs)
+
+        # Should have scores for available heads
+        assert "blur_score" in scores
+        assert "noise_score" in scores
+        assert "contrast_score" in scores
+        # Should not have scores for missing heads
+        assert "skew_score" not in scores
+        assert "compression_score" not in scores
+
+    def test_postprocess_outputs_extreme_logits(self) -> None:
+        """Test postprocessing with extreme logit values."""
+        from image_preprocessing_detector.workers.tasks import _postprocess_outputs
+
+        outputs = {}
+        # Very high logit for class 1 (good quality)
+        outputs["head_0"] = np.array([[-100.0, 100.0]])
+        # Very high logit for class 0 (bad quality)
+        outputs["head_1"] = np.array([[100.0, -100.0]])
+
+        scores, confidences = _postprocess_outputs(outputs)
+
+        # First head should have score close to 1
+        assert scores["blur_score"] > 0.99
+        # Second head should have score close to 0
+        assert scores["noise_score"] < 0.01
+        # Confidences should be high for both
+        assert confidences["blur"] > 0.99
+        assert confidences["noise"] > 0.99
+
+
+class TestIQATaskProperties:
+    """Tests for IQATask model loading properties."""
+
+    def test_teacher_session_property(self) -> None:
+        """Test teacher session property with mocked loader."""
+        from image_preprocessing_detector.workers.tasks import IQATask
+
+        task = IQATask()
+
+        with patch(
+            "image_preprocessing_detector.models.model_loader.load_teacher_model"
+        ) as mock_load:
+            mock_session = MagicMock()
+            mock_load.return_value = mock_session
+
+            session = task.teacher_session
+
+            mock_load.assert_called_once()
+            assert session is mock_session
+
+    def test_student_session_load_failure(self) -> None:
+        """Test student session handles load failure gracefully."""
+        from image_preprocessing_detector.workers.tasks import IQATask
+
+        task = IQATask()
+
+        with patch(
+            "image_preprocessing_detector.models.model_loader.load_student_model"
+        ) as mock_load:
+            mock_load.side_effect = ImportError("model_loader not available")
+
+            # Should return None on failure, not raise
+            session = task.student_session
+            assert session is None
+
+    def test_teacher_session_load_failure(self) -> None:
+        """Test teacher session handles load failure gracefully."""
+        from image_preprocessing_detector.workers.tasks import IQATask
+
+        task = IQATask()
+
+        with patch(
+            "image_preprocessing_detector.models.model_loader.load_teacher_model"
+        ) as mock_load:
+            mock_load.side_effect = ImportError("model_loader not available")
+
+            # Should return None on failure, not raise
+            session = task.teacher_session
+            assert session is None
