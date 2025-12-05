@@ -168,3 +168,4 @@ modal_cache/
 tmp_comments.json
 tests/fixtures/phase2_validation/*.pdf
 tests/fixtures/phase2_validation/**/*.pdf
+data/drift_references/
