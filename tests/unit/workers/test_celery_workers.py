@@ -448,3 +448,162 @@ class TestIQATaskProperties:
             # Should return None on failure, not raise
             session = task.teacher_session
             assert session is None
+
+
+class TestRunIQAAnalysisTask:
+    """Tests for run_iqa_analysis task execution."""
+
+    def test_run_iqa_analysis_success(self) -> None:
+        """Test successful IQA analysis with mocked components."""
+        import cv2
+
+        from image_preprocessing_detector.workers.tasks import IQATask, run_iqa_analysis
+
+        # Create a real test image
+        test_image = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+        _, encoded = cv2.imencode(".png", test_image)
+        image_b64 = base64.b64encode(encoded.tobytes()).decode()
+
+        # Create mock ONNX session
+        mock_session = MagicMock()
+        mock_input = MagicMock()
+        mock_input.name = "input"
+        mock_session.get_inputs.return_value = [mock_input]
+
+        mock_outputs = [MagicMock(name=f"head_{i}") for i in range(5)]
+        for i, out in enumerate(mock_outputs):
+            out.name = f"head_{i}"
+        mock_session.get_outputs.return_value = mock_outputs
+
+        # Return mock logits for each head
+        mock_session.run.return_value = [np.array([[0.3, 0.7]]) for _ in range(5)]
+
+        # Mock the student session property on IQATask class
+        with patch.object(IQATask, "student_session", new_callable=lambda: mock_session):
+            # Call the task directly (synchronous execution)
+            result = run_iqa_analysis(
+                image_b64, request_id="test-123", enable_teacher=False
+            )
+
+        assert result["request_id"] == "test-123"
+        assert result["model"] == "student"
+        assert "scores" in result
+        assert "confidences" in result
+        assert "overall_quality" in result
+        assert "inference_time_ms" in result
+
+    def test_run_iqa_analysis_invalid_image(self) -> None:
+        """Test IQA analysis with invalid image data."""
+        from image_preprocessing_detector.workers.tasks import run_iqa_analysis
+
+        # Invalid base64 that decodes but isn't a valid image
+        invalid_b64 = base64.b64encode(b"not an image").decode()
+
+        # Mock retry to raise an exception (simulating max retries exceeded)
+        with patch(
+            "image_preprocessing_detector.workers.tasks.run_iqa_analysis.retry",
+            side_effect=ValueError("Max retries exceeded"),
+        ):
+            with pytest.raises(ValueError, match="Max retries exceeded"):
+                run_iqa_analysis(invalid_b64, request_id="test-456")
+
+    def test_run_iqa_analysis_no_model(self) -> None:
+        """Test IQA analysis when model is not available."""
+        import cv2
+
+        from image_preprocessing_detector.workers.tasks import IQATask, run_iqa_analysis
+
+        # Create valid test image
+        test_image = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+        _, encoded = cv2.imencode(".png", test_image)
+        image_b64 = base64.b64encode(encoded.tobytes()).decode()
+
+        # Mock student_session to return None
+        with patch.object(IQATask, "student_session", None):
+            # Mock retry to raise an exception
+            with patch(
+                "image_preprocessing_detector.workers.tasks.run_iqa_analysis.retry",
+                side_effect=RuntimeError("Student model not available"),
+            ):
+                with pytest.raises(RuntimeError, match="Student model not available"):
+                    run_iqa_analysis(image_b64)
+
+
+class TestProcessSingleDocumentTask:
+    """Tests for process_single_document task execution."""
+
+    def test_process_single_document_success(self) -> None:
+        """Test successful document processing."""
+        from image_preprocessing_detector.workers.tasks import process_single_document
+
+        # Create simple text content
+        content = b"Hello, World!"
+        content_b64 = base64.b64encode(content).decode()
+
+        # Call task directly (synchronous execution)
+        result = process_single_document(content_b64, "test.txt", options={})
+
+        assert result["filename"] == "test.txt"
+        assert result["file_size"] == len(content)
+        assert result["file_type"] == ".txt"
+        assert result["status"] == "completed"
+        assert "processing_time_ms" in result
+
+    def test_process_single_document_pdf(self) -> None:
+        """Test processing a PDF document."""
+        from image_preprocessing_detector.workers.tasks import process_single_document
+
+        # Create minimal PDF content (just the header)
+        pdf_content = b"%PDF-1.4\n%%EOF\n"
+        content_b64 = base64.b64encode(pdf_content).decode()
+
+        result = process_single_document(content_b64, "test.pdf", options={})
+
+        assert result["filename"] == "test.pdf"
+        assert result["file_type"] == ".pdf"
+        assert result["status"] == "completed"
+        # page_count might not be present for invalid PDF
+
+    def test_process_single_document_no_options(self) -> None:
+        """Test processing with None options."""
+        from image_preprocessing_detector.workers.tasks import process_single_document
+
+        content = b"Test content"
+        content_b64 = base64.b64encode(content).decode()
+
+        result = process_single_document(content_b64, "file.dat", options=None)
+
+        assert result["status"] == "completed"
+
+
+class TestProcessBatchDocumentsTask:
+    """Tests for process_batch_documents task execution."""
+
+    def test_process_batch_empty(self) -> None:
+        """Test batch processing with empty file list."""
+        from image_preprocessing_detector.workers.tasks import process_batch_documents
+
+        # Call task directly
+        result = process_batch_documents(files_data=[], options={}, job_id="batch-001")
+
+        assert result["job_id"] == "batch-001"
+        assert result["total_files"] == 0
+        assert result["successful"] == 0
+        assert result["failed"] == 0
+        assert result["avg_time_per_file_ms"] == 0
+
+    def test_process_batch_result_structure(self) -> None:
+        """Test batch result has expected structure."""
+        from image_preprocessing_detector.workers.tasks import process_batch_documents
+
+        # Empty batch to verify structure without infrastructure
+        result = process_batch_documents(files_data=[], options=None, job_id=None)
+
+        assert "job_id" in result
+        assert "total_files" in result
+        assert "successful" in result
+        assert "failed" in result
+        assert "results" in result
+        assert "errors" in result
+        assert "total_processing_time_ms" in result
+        assert "avg_time_per_file_ms" in result
