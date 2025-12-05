@@ -607,3 +607,141 @@ class TestProcessBatchDocumentsTask:
         assert "errors" in result
         assert "total_processing_time_ms" in result
         assert "avg_time_per_file_ms" in result
+
+
+class TestCeleryAppFunctions:
+    """Tests for Celery app utility functions."""
+
+    def test_ping_task(self) -> None:
+        """Test ping health check task."""
+        from image_preprocessing_detector.workers.celery_app import ping
+
+        result = ping()
+        assert result == "pong"
+
+    def test_get_celery_app(self) -> None:
+        """Test get_celery_app returns Celery instance."""
+        from celery import Celery
+
+        from image_preprocessing_detector.workers.celery_app import get_celery_app
+
+        app = get_celery_app()
+        assert isinstance(app, Celery)
+        assert app.main == "image_preprocessing_detector"
+
+    def test_check_broker_connection_failure(self) -> None:
+        """Test check_broker_connection handles failures."""
+        from image_preprocessing_detector.workers.celery_app import (
+            celery_app,
+            check_broker_connection,
+        )
+
+        # Mock connection to fail
+        with patch.object(celery_app, "connection") as mock_conn:
+            mock_connection = MagicMock()
+            mock_connection.ensure_connection.side_effect = Exception("Connection refused")
+            mock_conn.return_value = mock_connection
+
+            result = check_broker_connection()
+            assert result is False
+
+    def test_get_worker_stats_success(self) -> None:
+        """Test get_worker_stats with mocked inspect."""
+        from image_preprocessing_detector.workers.celery_app import (
+            celery_app,
+            get_worker_stats,
+        )
+
+        with patch.object(celery_app.control, "inspect") as mock_inspect:
+            mock_inspector = MagicMock()
+            mock_inspector.stats.return_value = {"worker1": {"pool": {"processes": 4}}}
+            mock_inspector.active.return_value = {"worker1": [{"id": "task1"}]}
+            mock_inspector.reserved.return_value = {"worker1": []}
+            mock_inspect.return_value = mock_inspector
+
+            result = get_worker_stats()
+
+            assert result["worker_count"] == 1
+            assert "worker1" in result["workers"]
+            assert result["active_tasks"] == 1
+            assert result["reserved_tasks"] == 0
+
+    def test_get_worker_stats_failure(self) -> None:
+        """Test get_worker_stats handles exceptions."""
+        from image_preprocessing_detector.workers.celery_app import (
+            celery_app,
+            get_worker_stats,
+        )
+
+        with patch.object(celery_app.control, "inspect") as mock_inspect:
+            mock_inspect.side_effect = Exception("Cannot connect to broker")
+
+            result = get_worker_stats()
+
+            assert result["worker_count"] == 0
+            assert result["workers"] == []
+            assert "error" in result
+
+    def test_get_queue_lengths_failure(self) -> None:
+        """Test get_queue_lengths handles exceptions."""
+        from image_preprocessing_detector.workers.celery_app import (
+            celery_app,
+            get_queue_lengths,
+        )
+
+        with patch.object(celery_app, "connection") as mock_conn:
+            mock_conn.side_effect = Exception("Connection failed")
+
+            result = get_queue_lengths()
+
+            assert "error" in result
+
+
+class TestCelerySignalHandlers:
+    """Tests for Celery signal handlers."""
+
+    def test_on_worker_ready(self) -> None:
+        """Test worker ready signal handler."""
+        from image_preprocessing_detector.workers.celery_app import on_worker_ready
+
+        # Should not raise, just logs
+        on_worker_ready(sender="test-worker")
+
+    def test_on_worker_shutdown(self) -> None:
+        """Test worker shutdown signal handler."""
+        from image_preprocessing_detector.workers.celery_app import on_worker_shutdown
+
+        # Should not raise, just logs
+        on_worker_shutdown(sender="test-worker")
+
+    def test_on_task_prerun(self) -> None:
+        """Test task prerun signal handler."""
+        from image_preprocessing_detector.workers.celery_app import on_task_prerun
+
+        mock_task = MagicMock()
+        mock_task.name = "test.task"
+
+        # Should not raise, just logs
+        on_task_prerun(task_id="task-123", task=mock_task)
+
+    def test_on_task_postrun(self) -> None:
+        """Test task postrun signal handler."""
+        from image_preprocessing_detector.workers.celery_app import on_task_postrun
+
+        mock_task = MagicMock()
+        mock_task.name = "test.task"
+
+        # Should not raise, just logs
+        on_task_postrun(
+            task_id="task-123",
+            task=mock_task,
+            retval={"result": "success"},
+            state="SUCCESS",
+        )
+
+    def test_on_task_failure(self) -> None:
+        """Test task failure signal handler."""
+        from image_preprocessing_detector.workers.celery_app import on_task_failure
+
+        # Should not raise, just logs the error
+        on_task_failure(task_id="task-123", exception=ValueError("Test error"))
