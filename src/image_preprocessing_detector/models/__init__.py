@@ -28,6 +28,14 @@ from image_preprocessing_detector.models.model_optimizer import (
     ThresholdTuner,
 )
 
+# Batch inference utilities (no torch dependency)
+from image_preprocessing_detector.models.batch_inference import (
+    BatchInferenceEngine,
+    BatchInferenceMetrics,
+    InferenceRequest,
+    run_batch_inference,
+)
+
 __all__ = [
     # Model optimization (no torch required)
     "BenchmarkResult",
@@ -40,6 +48,11 @@ __all__ = [
     "QuantizationConfig",
     "ThresholdConfig",
     "ThresholdTuner",
+    # Batch inference (no torch required)
+    "BatchInferenceEngine",
+    "BatchInferenceMetrics",
+    "InferenceRequest",
+    "run_batch_inference",
 ]
 
 # PyTorch-dependent imports (optional)

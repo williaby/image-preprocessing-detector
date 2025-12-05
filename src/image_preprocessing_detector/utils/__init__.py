@@ -24,6 +24,18 @@ from image_preprocessing_detector.utils.device_probe import (
     get_recommended_device,
     probe_device_capabilities,
 )
+from image_preprocessing_detector.utils.tensor_cache import (
+    CacheMetrics,
+    LRUCache,
+    clear_all_caches,
+    compute_page_key,
+    compute_tensor_key,
+    get_array_size_bytes,
+    get_combined_cache_metrics,
+    get_page_cache,
+    get_tensor_cache,
+    reset_cache_instances,
+)
 from image_preprocessing_detector.utils.log_config import get_logger, setup_logging
 from image_preprocessing_detector.utils.path_security import validate_safe_path
 
@@ -61,13 +73,22 @@ except ImportError:
 # Build __all__ dynamically based on available imports
 __all__ = [
     "UTC",
+    "CacheMetrics",
     "DeviceCapabilities",
+    "LRUCache",
     "MockDatetime",
     "aware_to_naive",
+    "clear_all_caches",
     "clear_device_cache",
+    "compute_page_key",
+    "compute_tensor_key",
     "ensure_aware",
+    "get_array_size_bytes",
+    "get_combined_cache_metrics",
     "get_logger",
+    "get_page_cache",
     "get_recommended_device",
+    "get_tensor_cache",
     "is_aware",
     "is_naive",
     "local_now",
@@ -75,6 +96,7 @@ __all__ = [
     "naive_to_aware",
     "parse_iso",
     "probe_device_capabilities",
+    "reset_cache_instances",
     "safe_compare",
     "setup_logging",
     "timestamp_now",
