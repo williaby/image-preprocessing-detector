@@ -290,6 +290,114 @@ class MLIQADetector:
             mean_confidence_threshold=mean_confidence_threshold,
         )
 
+        # Phase 4 Sprint 4.3.1: Batch inference engine (lazy initialization)
+        self._batch_engine: Any = None
+
+    def get_batch_engine(self, device: str = "cuda") -> Any:
+        """Get or create batch inference engine for student model.
+
+        Sprint 4.3.1: BatchInferenceEngine integration for throughput optimization.
+
+        Args:
+            device: Device to use for batch inference
+
+        Returns:
+            BatchInferenceEngine instance
+
+        Raises:
+            RuntimeError: If student model not available
+        """
+        if self._batch_engine is None:
+            from image_preprocessing_detector.models.batch_inference import (
+                BatchInferenceEngine,
+            )
+
+            session = self._load_student_session(device=device)
+            self._batch_engine = BatchInferenceEngine(
+                model_session=session,
+                batch_size=8,  # Default batch size, configurable later
+                batch_timeout_ms=50,
+                enable_cache=True,
+                model_name="student",
+            )
+            self._batch_engine.start()
+            logger.info("BatchInferenceEngine initialized", device=device)
+
+        return self._batch_engine
+
+    def run_batch_inference(
+        self,
+        images: list[np.ndarray],
+        request_ids: list[str] | None = None,
+    ) -> list[MLIQAScores]:
+        """Run batch student inference for multiple images.
+
+        Sprint 4.3.1: High-throughput batch processing with caching.
+
+        Args:
+            images: List of input images (BGR format)
+            request_ids: Optional request IDs for each image
+
+        Returns:
+            List of MLIQAScores (one per image)
+
+        Raises:
+            ValueError: If images is empty
+            RuntimeError: If model not available
+        """
+        if not images:
+            raise ValueError("Images list cannot be empty")
+
+        request_ids = request_ids or [f"batch_{i}" for i in range(len(images))]
+
+        # Preprocess all images
+        preprocessed = [self._preprocess_image(img) for img in images]
+
+        # Get batch engine (initializes if needed)
+        device = (
+            "cuda"
+            if self.orchestrator and self.orchestrator.capabilities.has_local_gpu
+            else "cpu"
+        )
+        batch_engine = self.get_batch_engine(device=device)
+
+        # Submit batch for inference
+        results = []
+        for preprocessed_img, request_id in zip(
+            preprocessed, request_ids, strict=False
+        ):
+            try:
+                result = batch_engine.submit_sync(
+                    image=preprocessed_img,
+                    request_id=request_id,
+                    timeout=5.0,
+                )
+                # Convert result dict to MLIQAScores
+                scores = MLIQAScores(
+                    blur_score=result["scores"]["blur_score"],
+                    noise_score=result["scores"]["noise_score"],
+                    contrast_score=result["scores"]["contrast_score"],
+                    skew_score=result["scores"]["skew_score"],
+                    compression_score=result["scores"]["compression_score"],
+                    overall_quality=result["overall_quality"],
+                    confidences=result["confidences"],
+                    model_type=ModelType.STUDENT,
+                    device=Device(device),
+                    inference_time_ms=0.0,  # Batch time split across images
+                )
+                results.append(scores)
+            except Exception as e:
+                logger.warning(
+                    "Batch inference failed for image",
+                    request_id=request_id,
+                    error=str(e),
+                )
+                # Fallback to single inference
+                fallback_score = self.run_student_inference(images[len(results)])
+                results.append(fallback_score)
+
+        return results
+
     def _detect_device(self) -> Device:
         """Auto-detect best available device.
 
