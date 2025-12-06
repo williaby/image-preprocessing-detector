@@ -97,6 +97,7 @@ jobs:
         run: |
           uv run python - <<'EOF'
           import json
+          import os
           import sys
           from pathlib import Path
 
@@ -122,7 +123,8 @@ jobs:
           print(f"Status: {'FAIL' if regression_detected else 'PASS'}")
 
           # Write to GitHub output
-          with open(str(Path(sys.argv[1])), "a") as f:
+          github_output = os.getenv("GITHUB_OUTPUT", "/tmp/github_output.txt")
+          with open(github_output, "a") as f:
               f.write(f"baseline_p95={baseline_p95:.2f}\n")
               f.write(f"pr_p95={pr_p95:.2f}\n")
               f.write(f"regression_pct={regression_pct:+.1f}\n")
@@ -131,7 +133,6 @@ jobs:
           # Exit with error if regression detected
           sys.exit(1 if regression_detected else 0)
           EOF
-          python "$GITHUB_OUTPUT"
 
       - name: Post PR comment
         if: always()
@@ -155,13 +156,14 @@ jobs:
 
             | Metric | Baseline (main) | PR Branch | Change |
             |--------|-----------------|-----------|--------|
-            | p95 Latency | ${baseline_p95}ms | ${pr_p95}ms | ${regression_pct}% |
+            | p95 Latency | ${baseline_p95}ms | ${pr_p95}ms |
+              ${regression_pct}% |
 
             **Threshold**: ±10% allowed regression
 
             ${regression_detected ?
-              '⚠️ **Action Required**: Regression exceeds threshold.' :
-              '✅ Performance within acceptable range.'}
+              '⚠️ **Action Required**: Regression detected.' :
+              '✅ Performance OK.'}
 
             <details>
             <summary>About Performance Regression Gates</summary>
