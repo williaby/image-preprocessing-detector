@@ -9,15 +9,26 @@
 # Format: [[IgnoredVulns]] with id and reason fields
 
 # ============================================================================
+# py Library - CVE Disputed
+# ============================================================================
+# CVE-2022-42969 is marked as DISPUTED in NVD (disputed May 2024)
+# Multiple third parties argue this is not a valid/reproducible vulnerability
+# The py library is deprecated and only used by interrogate (docstring coverage tool)
+# Impact: Low - not used in production code, only in dev tooling
+#
+# Note: Both GHSA and PYSEC IDs must be ignored as OSV reports both
+
+[[IgnoredVulns]]
+id = "GHSA-w596-4wvx-j9j6"
+reason = "CVE-2022-42969 disputed by multiple parties. Formal dispute in NVD May 2024. Only used by interrogate dev tool."
+
+[[IgnoredVulns]]
+id = "PYSEC-2022-42969"
+reason = "CVE-2022-42969 disputed by multiple parties. Formal dispute in NVD May 2024. Only used by interrogate dev tool."
+
+# ============================================================================
 # Notes
 # ============================================================================
-# py Library - CVE Disputed (GHSA-w596-4wvx-j9j6 / CVE-2022-42969)
-#   - Marked as DISPUTED in NVD (disputed May 2024)
-#   - Not reproducible per multiple security researchers
-#   - Only used by interrogate dev tool, not production code
-#   - OSV-Scanner automatically filters this vulnerability
-#   - No manual ignore entry needed
-#
 # Werkzeug vulnerability GHSA-hgf8-39gv-g3f2 resolved by upgrading to 3.1.4
 #
 # Last verified: 2025-12-05
