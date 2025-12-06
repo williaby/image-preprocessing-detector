@@ -81,9 +81,15 @@ class TestContinuousBCEMSELoss:
         loss_mse = ContinuousBCEMSELoss(alpha=0.1, beta=0.9)
         result_mse = loss_mse(predictions, targets)
 
-        # The total loss should differ due to different weighting
-        # BCE and MSE components individually stay the same, but total changes
-        assert result_bce["total_loss"].item() != result_mse["total_loss"].item()
+        # BCE and MSE components individually stay the same
+        assert result_bce["bce_loss"].item() == result_mse["bce_loss"].item()
+        assert result_bce["mse_loss"].item() == result_mse["mse_loss"].item()
+
+        # But total loss should differ due to different weighting
+        # total = alpha * BCE + beta * MSE
+        bce_total = result_bce["total_loss"].item()
+        mse_total = result_mse["total_loss"].item()
+        assert bce_total != mse_total, f"Total losses should differ: {bce_total} vs {mse_total}"
 
     def test_binary_threshold(self):
         """Test binary threshold for BCE component."""
