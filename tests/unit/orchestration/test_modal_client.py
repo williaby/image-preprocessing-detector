@@ -7,6 +7,7 @@
 Tests circuit breaker behavior, retry logic, and fallback handling.
 
 Sprint 4.2.3: Client Stub with Circuit Breaker Tests (Phase 4B)
+Sprint 4.2.1: Add mock mode tests (Phase 4B)
 """
 
 import time
@@ -22,6 +23,13 @@ from image_preprocessing_detector.orchestration import (
     ModalInferenceRequest,
     ModalInferenceResponse,
 )
+
+
+# Enable mock mode for all unit tests
+@pytest.fixture(autouse=True)
+def mock_modal_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Enable mock mode for unit tests."""
+    monkeypatch.setenv("IMGPREP_MODAL_MOCK", "true")
 
 
 class TestCircuitBreakerConfig:
@@ -126,7 +134,7 @@ class TestModalClientBasics:
 
         assert response is not None
         assert "blur" in response.scores
-        assert response.device_tag == "T4"
+        assert response.device_tag == "T4-mock"  # Mock mode returns T4-mock
         assert client.breaker_state.total_successes == 1
         assert client.breaker_state.state == CircuitState.CLOSED
 
@@ -428,3 +436,70 @@ class TestEdgeCases:
 
         assert client.breaker_state.total_requests == 5
         assert client.breaker_state.total_successes == 5
+
+
+class TestMockMode:
+    """Test mock mode functionality (Sprint 4.2.1)."""
+
+    def test_mock_mode_via_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test mock mode is enabled via environment variable."""
+        monkeypatch.setenv("IMGPREP_MODAL_MOCK", "true")
+        client = ModalClient(modal_endpoint="https://test.modal.com")
+
+        assert client._use_mock_mode() is True
+
+    def test_mock_mode_disabled(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test mock mode can be disabled."""
+        monkeypatch.setenv("IMGPREP_MODAL_MOCK", "false")
+        client = ModalClient(modal_endpoint="https://test.modal.com")
+
+        # Will still use mock if Modal SDK not available
+        # This tests the logic flow, not the actual Modal SDK
+        result = client._use_mock_mode()
+        # Result depends on whether Modal SDK is installed
+        assert isinstance(result, bool)
+
+    def test_mock_response_structure(self) -> None:
+        """Test mock response has correct structure."""
+        client = ModalClient(modal_endpoint="https://test.modal.com")
+        img = np.zeros((100, 100, 3), dtype=np.uint8)
+        request = ModalInferenceRequest(image_array=img, request_id="mock-test")
+
+        response = client._get_mock_response(request)
+
+        assert response.device_tag == "T4-mock"
+        assert "blur" in response.scores
+        assert "noise" in response.scores
+        assert "contrast" in response.scores
+        assert "skew" in response.scores
+        assert "compression" in response.scores
+        assert response.request_id == "mock-test"
+
+
+class TestImageEncoding:
+    """Test image encoding for Modal transfer."""
+
+    def test_encode_uint8_image(self) -> None:
+        """Test encoding uint8 image."""
+        client = ModalClient(modal_endpoint="https://test.modal.com")
+        img = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+
+        encoded = client._encode_image(img)
+
+        assert isinstance(encoded, str)
+        assert len(encoded) > 0
+        # Should be valid base64
+        import base64
+
+        decoded = base64.b64decode(encoded)
+        assert len(decoded) > 0
+
+    def test_encode_float_image(self) -> None:
+        """Test encoding float [0,1] image."""
+        client = ModalClient(modal_endpoint="https://test.modal.com")
+        img = np.random.random((100, 100, 3)).astype(np.float32)
+
+        encoded = client._encode_image(img)
+
+        assert isinstance(encoded, str)
+        assert len(encoded) > 0

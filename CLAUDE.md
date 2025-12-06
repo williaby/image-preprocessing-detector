@@ -326,6 +326,50 @@ uv run modal secret list | grep gcs-credentials # Check GCS credentials
 
 **Quick Reference includes**: Complete training workflow, monitoring, debugging, cost management, troubleshooting
 
+### Celery Workers (Phase 4 - Week 17)
+
+**Status**: ✅ Worker pool implementation complete
+
+**Prerequisites**:
+- Redis server (broker + result backend)
+- Python dependencies: `uv sync --extra workers`
+
+```bash
+# Install worker dependencies
+uv sync --extra dev --extra workers
+
+# Start Redis (via Docker - recommended)
+docker run -d --name redis -p 6379:6379 redis:7-alpine
+
+# Or use local Redis
+# macOS: brew install redis && brew services start redis
+# Ubuntu: sudo apt install redis-server && sudo systemctl start redis
+
+# Verify Redis connection
+redis-cli ping  # Should return PONG
+
+# Start Celery worker (default queue)
+celery -A image_preprocessing_detector.workers worker -l info
+
+# Start GPU worker (IQA inference)
+celery -A image_preprocessing_detector.workers worker -l info -Q gpu -c 2
+
+# Start batch worker
+celery -A image_preprocessing_detector.workers worker -l info -Q batch
+
+# Monitor with Flower (optional)
+celery -A image_preprocessing_detector.workers flower --port=5555
+```text
+
+**Environment Variables**:
+- `CELERY_BROKER_URL`: Redis broker URL (default: `redis://localhost:6379/0`)
+- `CELERY_RESULT_BACKEND`: Redis result backend (default: `redis://localhost:6379/1`)
+
+**Queue Configuration**:
+- `default`: Standard document processing
+- `gpu`: IQA analysis (GPU-optimized, priority queue)
+- `batch`: Batch document processing (high timeout)
+
 ### Security Requirements (MANDATORY)
 
 ```bash

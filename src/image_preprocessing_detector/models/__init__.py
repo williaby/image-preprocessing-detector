@@ -15,6 +15,13 @@ Note:
 """
 
 # Model optimization utilities (no torch dependency)
+# Batch inference utilities (no torch dependency)
+from image_preprocessing_detector.models.batch_inference import (
+    BatchInferenceEngine,
+    BatchInferenceMetrics,
+    InferenceRequest,
+    run_batch_inference,
+)
 from image_preprocessing_detector.models.model_optimizer import (
     BenchmarkResult,
     CalibrationDataset,
@@ -29,9 +36,11 @@ from image_preprocessing_detector.models.model_optimizer import (
 )
 
 __all__ = [
-    # Model optimization (no torch required)
+    "BatchInferenceEngine",
+    "BatchInferenceMetrics",
     "BenchmarkResult",
     "CalibrationDataset",
+    "InferenceRequest",
     "ModelDeploymentPackage",
     "ModelManifest",
     "ModelOptimizer",
@@ -40,6 +49,7 @@ __all__ = [
     "QuantizationConfig",
     "ThresholdConfig",
     "ThresholdTuner",
+    "run_batch_inference",
 ]
 
 # PyTorch-dependent imports (optional)

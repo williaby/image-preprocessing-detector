@@ -200,6 +200,8 @@ typing-inspection==0.4.2
     # via
     #   pydantic
     #   pydantic-settings
+urllib3==2.6.0
+    # via image-preprocessing-detector
 watchfiles==1.1.1
     # via modal
 werkzeug==3.1.4
