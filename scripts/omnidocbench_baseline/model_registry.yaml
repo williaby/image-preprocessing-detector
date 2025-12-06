@@ -59,20 +59,23 @@ iqa_models:
     name: "ResNet-50 Teacher v1"
     version: "1.0.0"
     type: resnet
-    description: "ResNet-50 trained on OHR-Bench with binary IQA labels"
+    description: "ResNet-50 trained on iqa_phase2_100k dataset (99,630 samples)"
     config:
       architecture: resnet50
       weights: custom
-      checkpoint: "models/iqa/resnet50_teacher_v1.pth"
+      checkpoint: "models/iqa/onnx/resnet50_teacher_50epoch.onnx"
       input_size: 224
       normalize: imagenet
       training:
-        dataset: ohr_bench
-        labels: binary
+        dataset: iqa_phase2_100k
+        labels: multi_head
         epochs: 50
+        val_loss: 0.2694
+        training_time_hours: 1.91
+        gpu: A10
     benchmarkable_attributes:
       - fuzzy_scan
-    status: planned
+    status: active
 
   - id: resnet50_teacher_v2
     name: "ResNet-50 Teacher v2"
@@ -116,21 +119,26 @@ iqa_models:
     name: "ResNet-18 Student v1"
     version: "1.0.0"
     type: resnet
-    description: "ResNet-18 distilled from resnet50_teacher_v1"
+    description: "ResNet-18 distilled from resnet50_teacher_v1 (30 epochs)"
     config:
       architecture: resnet18
       weights: custom
-      checkpoint: "models/iqa/resnet18_student_v1.pth"
+      checkpoint: "models/iqa/onnx/resnet18_student.onnx"
       input_size: 224
       normalize: imagenet
       training:
         teacher: resnet50_teacher_v1
         method: knowledge_distillation
         epochs: 30
-        temperature: 3.0
+        temperature: 4.0
+        alpha: 0.7
+        val_loss: 0.1386
+        training_time_hours: 1.94
+        gpu: A10
+        compression_ratio: 2.47
     benchmarkable_attributes:
       - fuzzy_scan
-    status: planned
+    status: active
 
   - id: resnet18_student_v2
     name: "ResNet-18 Student v2"
