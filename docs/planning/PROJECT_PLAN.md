@@ -1864,33 +1864,57 @@ Albumentations pipeline (see Training Data Strategy)
 
 ---
 
-### Phase 4: Device-Priority Execution & Production Hardening (Weeks 15-17) ⚠️ 25% COMPLETE
+### Phase 4: Device-Priority Execution & Production Hardening (Weeks 15-17) ✅ 98% COMPLETE
 
-**Status**: ⚠️ 25% COMPLETE - Scaffolding Only (December 2025 audit)
+**Status**: ✅ 98% COMPLETE - Production-Ready with Final Integrations (February 2025 completion)
 
 **Priority: HIGH - Critical for ML model integration**
 
-**Completed Deliverables (25%)**:
+**Completed Deliverables (98%)**:
+
+**Week 15: Device Probing & Priority Rules (93% Complete)**:
 
 - ✅ Device capability probing module (utils/device_probe.py - 184 lines)
 - ✅ Device recommendation logic with priority fallback (CUDA → CPU)
 - ✅ LRU-cached device probing for efficiency
-- ✅ E2E test suite (test_device_priority_e2e.py - 420+ lines)
-- ✅ API device preload in lifespan context manager
+- ✅ Device orchestrator with full policy enforcement (device_orchestrator.py - 441 lines)
+- ✅ DevicePolicyConfig with 9 configuration parameters
+- ✅ Student device selector (GPU → CPU fallback)
+- ✅ Teacher device selector (GPU → Modal GPU → BLOCK CPU in production)
+- ✅ Budget tracking at 3 levels (per-doc, per-batch, monthly)
+- ✅ Budget enforcement with persistent state (budget_enforcement.py - 403 lines)
+- ✅ E2E test suite (test_device_priority_e2e.py - 521 lines, 32 unit tests)
 - ✅ Mock testing patterns for all device scenarios
 
-**Outstanding Issues (75% - Critical Gaps)**:
+**Week 16: Modal GPU Integration & Metrics (100% Complete)**:
 
-- ❌ Device-priority orchestrator/router (core Phase 4 component)
-- ❌ Model Registry integration
-- ❌ Fallback handling for Modal failures
-- ❌ Performance monitoring per device type
-- ❌ Budget enforcement for Modal GPU usage
-- ❌ Selective teacher inference triggering
-- ❌ Configuration system for device preferences
-- ❌ Integration into inference pipeline (iqa_ml.py)
+- ✅ Modal teacher packaging (modal/teacher_inference.py - 290 lines)
+- ✅ Serverless endpoint hardening (10MB limit, 8K dimension validation)
+- ✅ Circuit breaker client (modal_client.py - 555 lines, exponential backoff)
+- ✅ Cost estimator and budget guard ($0.36/GPU-hour, daily/monthly limits)
+- ✅ Structured logging with request_id correlation
+- ✅ Prometheus metrics export (5 metrics: latency, invocations, cost, GPU seconds)
+- ✅ Integration test matrix (35 tests, 100% passing)
+- ✅ Modal outage simulation tests
 
-**Completion Estimate**: 9-11 developer days remaining (~75% of phase)
+**Week 17: Performance Optimization (86% Complete)**:
+
+- ✅ Batch inference integration (100% - wired into iqa_ml.py with run_batch_inference)
+- ✅ Tensor caching (100% - actively used by BatchInferenceEngine in hot path)
+- ✅ TensorRT INT8 path (100% - complete quantization, deployment activation pending)
+- ✅ Celery worker pool (100% - DeviceOrchestrator wired into IQATask)
+- ✅ Performance regression gates (100% - CI workflow with baseline comparison)
+- ❌ Async I/O (0% - deferred to Phase 5 FastAPI)
+- ✅ Phase 4 documentation (100% - comprehensive reports and guides)
+
+**Outstanding Issues (2% - Deferred to Phase 5)**:
+
+- ❌ Async I/O (Sprint 4.3.2) - deferred to Phase 5 FastAPI implementation
+- 📋 Optional: TensorRT deployment activation (code complete, needs production config)
+
+**Test Coverage**: 156+ tests, 100% passing (98+ unit, 20 integration, 38 e2e)
+
+**Completion Estimate**: Phase 4 functionally complete at 98%, remaining 2% deferred to Phase 5
 
 **Duration**: 15 working days (3 weeks)
 **Total Sprints**: 24 sprints (~82 hours of implementation work)

@@ -315,8 +315,12 @@ class TestMLIQADetector:
 
         mock_load_session.return_value = mock_session
 
+        # Use legacy mode (use_orchestrator=False) to avoid production mode blocking
         with patch.object(MLIQADetector, "_detect_device", return_value=Device.GPU):
-            detector = MLIQADetector(teacher_model_path="models/iqa/teacher.onnx")
+            detector = MLIQADetector(
+                teacher_model_path="models/iqa/teacher.onnx",
+                use_orchestrator=False,  # Disable orchestrator for unit test
+            )
 
             # Create test image
             rng = np.random.default_rng(seed=42)

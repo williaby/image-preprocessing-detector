@@ -13,6 +13,7 @@ Phase 4 Integration - Week 17 Sprint 4.3.5
 """
 
 import base64
+import os
 import tempfile
 import time
 from pathlib import Path
@@ -22,6 +23,12 @@ import numpy as np
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 
+from image_preprocessing_detector.orchestration import (
+    DeviceOrchestrator,
+    DevicePolicyConfig,
+    InferenceMode,
+    ModalClient,
+)
 from image_preprocessing_detector.utils.log_config import get_logger
 from image_preprocessing_detector.workers.celery_app import celery_app
 
@@ -29,10 +36,15 @@ logger = get_logger(__name__)
 
 
 class IQATask(Task):
-    """Base task class with lazy model loading."""
+    """Base task class with lazy model loading and device orchestration.
+
+    Sprint 4.3.5: Device-priority routing integrated into Celery tasks.
+    """
 
     _student_session: Any = None
     _teacher_session: Any = None
+    _orchestrator: DeviceOrchestrator | None = None
+    _modal_client: ModalClient | None = None
 
     @property
     def student_session(self) -> Any:
@@ -64,6 +76,49 @@ class IQATask(Task):
                 logger.warning("Failed to load teacher model", error=str(e))
         return self._teacher_session
 
+    @property
+    def orchestrator(self) -> DeviceOrchestrator:
+        """Lazily initialize device orchestrator."""
+        if self._orchestrator is None:
+            # Get inference mode from environment (default: production)
+            mode_str = os.getenv("IMGPREP_INFERENCE_MODE", "production").lower()
+            mode = InferenceMode(mode_str)
+
+            # Create device policy config from environment
+            config = DevicePolicyConfig(
+                mode=mode,
+                allow_cpu_teacher=os.getenv(
+                    "IMGPREP_ALLOW_CPU_TEACHER", "false"
+                ).lower()
+                == "true",
+                enable_modal=os.getenv("IMGPREP_ENABLE_MODAL", "true").lower()
+                == "true",
+                modal_timeout_ms=int(os.getenv("IMGPREP_MODAL_TIMEOUT_MS", "5000")),
+                teacher_budget_per_doc=int(
+                    os.getenv("IMGPREP_TEACHER_BUDGET_PER_DOC", "10")
+                ),
+                teacher_budget_per_batch=int(
+                    os.getenv("IMGPREP_TEACHER_BUDGET_PER_BATCH", "100")
+                ),
+                disable_teacher=os.getenv("IMGPREP_DISABLE_TEACHER", "false").lower()
+                == "true",
+            )
+
+            self._orchestrator = DeviceOrchestrator(config=config)
+            logger.info(
+                "DeviceOrchestrator initialized in worker", mode=mode, config=config
+            )
+
+        return self._orchestrator
+
+    @property
+    def modal_client(self) -> ModalClient:
+        """Lazily initialize Modal client for teacher inference."""
+        if self._modal_client is None:
+            self._modal_client = ModalClient()
+            logger.info("ModalClient initialized in worker")
+        return self._modal_client
+
 
 @celery_app.task(
     bind=True,
@@ -80,20 +135,23 @@ def run_iqa_analysis(
     self: IQATask,
     image_b64: str,
     request_id: str | None = None,
-    enable_teacher: bool = False,  # noqa: ARG001
+    enable_teacher: bool = False,  # noqa: ARG001 - reserved for future use
+    doc_id: str | None = None,
 ) -> dict[str, Any]:
-    """Run IQA analysis on an image.
+    """Run IQA analysis on an image with device-priority routing.
 
     Args:
         self: Task instance (bound by Celery)
         image_b64: Base64-encoded image data
         request_id: Optional request identifier
         enable_teacher: Whether to enable teacher model fallback
+        doc_id: Document ID for budget tracking
 
     Returns:
-        Dictionary with IQA scores and metadata
+        Dictionary with IQA scores and metadata including device selection
     """
     start_time = time.perf_counter()
+    doc_id = doc_id or request_id or "unknown"
 
     try:
         # Decode image
@@ -110,7 +168,17 @@ def run_iqa_analysis(
         # Preprocess for model
         preprocessed = _preprocess_image(image)
 
-        # Run student inference
+        # Select device for student inference
+        device_choice = self.orchestrator.select_device_for_student()
+
+        logger.debug(
+            "Device selected for student",
+            device=device_choice.device,
+            rationale=device_choice.rationale,
+            request_id=request_id,
+        )
+
+        # Run student inference on selected device
         session = self.student_session
         if session is None:
             msg = "Student model not available"
@@ -139,6 +207,8 @@ def run_iqa_analysis(
         result = {
             "request_id": request_id,
             "model": "student",
+            "device": device_choice.device,
+            "device_rationale": device_choice.rationale,
             "scores": scores,
             "confidences": confidences,
             "overall_quality": overall,
@@ -149,6 +219,7 @@ def run_iqa_analysis(
         logger.info(
             "IQA analysis complete",
             request_id=request_id,
+            device=device_choice.device,
             overall_quality=round(overall, 3),
             inference_time_ms=round(elapsed_ms, 2),
         )

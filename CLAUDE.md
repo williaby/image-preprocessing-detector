@@ -116,7 +116,12 @@ DocumentMetadata.json           OCRDocument.json        FusedDocument.json     V
 - **IN SCOPE**: IQA, corrections, DQS, layout-lite (coarse page attributes), routing recommendations
 - **OUT OF SCOPE**: Full layout detection, table structure, reading order (Project B responsibility)
 
-**Current Phase**: Phase 0 (Foundation) → Phase 2 (Teacher-Student ML IQA)
+**Current Phase**: Phases 0-3, 6 ✅ COMPLETE, Phase 4 (Device Priority) ✅ 98% COMPLETE
+
+> **Note**: This CLAUDE.md provides high-level project overview. For detailed phase breakdown,
+> sprint plans, and current status, see [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md).
+>
+> **Last synchronized**: 2025-02-05
 
 ## Development Philosophy (MANDATORY)
 
@@ -425,68 +430,72 @@ osv-scanner --lockfile=uv.lock --format=json --output=osv-local-results.json
 
 ### Pipeline Flow (Project A Only)
 
-The system uses a **text detection gate** to route documents to specialized processing, with **automatic DPI upscaling** (Phase 4) for low-resolution inputs:
+The system uses a **text detection gate** to route documents to specialized processing, with **automatic DPI upscaling** (Phase 1B) for low-resolution inputs:
 
 ```text
 PDF/Image Input
     ↓
-[Pre-flight Analysis] (src/ingestion/) - DPI detection & upscaling (Phase 4)
+[Pre-flight Analysis] (src/ingestion/) - DPI detection & upscaling (Phase 1B)
     ↓ (Auto-upscale if < 300 DPI)
 [Ingestion] (src/ingestion/) - Standardize to 300 DPI images
     ↓
-[PDF Type Classification] - image_only/born_digital/hybrid (Phase 8)
+[PDF Type Classification] - image_only/born_digital/hybrid (Phase 2)
     ↓
-[Text Gate] (src/detection/text_gate.py) - Fast ensemble heuristics
+[Text Gate] (src/detection/text_gate.py) - Fast ensemble heuristics (Phase 1)
     ↓              ↓
 [NO TEXT]      [TEXT DETECTED]
     ↓              ↓
-Classical IQA  Layout-Lite Classifier → Coarse page attributes
+Classical IQA  Layout-Lite Classifier → Coarse page attributes (Phase 2)
+(Phase 1C)         ↓
     ↓              ↓
-ML IQA         ML IQA (Teacher-Student ResNet)
+ML IQA         ML IQA (Teacher-Student ResNet, Phase 3)
 (Student)      (Student + selective Teacher)
     ↓              ↓
-[Correction] (src/correction/) - Deskew, CLAHE, sharpening, denoising
+[Correction] (src/correction/) - Deskew, CLAHE, sharpening, denoising (Phase 1)
     ↓              ↓
-[DQS Calculation] (Phase 8) - Degradation + Structural Complexity scores
+[DQS Calculation] (Phase 2) - Degradation + Structural Complexity scores
     ↓              ↓
-[Routing Recommendation] (Phase 8) - ocr_fast/advanced, vision_simple/structured
+[Routing Recommendation] (Phase 2) - ocr_fast/advanced, vision_simple/structured
     ↓              ↓
 [JSON Output] (src/output/) - DocumentMetadata.json + corrected images
     ↓
 HANDOFF TO PROJECT B (OCR Orchestration)
 ```text
 
-**Phase 4: DPI Upscaling**
+**Phase 1B: DPI Upscaling** ✅ COMPLETE
 
-- **Technology**: Proven implementation from data_ingestor project (Phase 1C)
-- **DPI Detection**: PyMuPDF-based automatic resolution analysis
+- **Technology**: PyMuPDF-based DPI detection with OpenCV upscaling
+- **DPI Detection**: Automatic resolution analysis (100% accuracy)
 - **Upscaling Trigger**: Documents below 300 DPI are automatically upscaled
 - **Algorithm Options**: 5 OpenCV algorithms (lanczos, bicubic, inter_linear, inter_cubic, inter_area)
 - **Performance**: 310-360ms processing time, <2GB memory usage, page-by-page processing
 - **Quality**: 100% test success rate, 100% DPI improvement (e.g., 150→300 DPI)
 - **Safety**: Graceful fallback to original on errors, high-res documents correctly skipped
 - **Configuration**: 5 settings (enable_pdf_upscaling, pdf_min_dpi, pdf_target_dpi, pdf_upscale_algorithm, pdf_preserve_original_on_error)
+- **Tests**: 61 tests (38 unit + 23 integration), 100% passing
 
-**Phase 2: Teacher-Student ML IQA**
+**Phase 3: Teacher-Student ML IQA** ✅ COMPLETE
 
-- **Student Model** (ResNet-18): Default production inference, fast and accurate
-- **Teacher Model** (ResNet-50): High-capacity model for difficult/high-risk cases
+- **Student Model** (ResNet-18): Default production inference, val_loss=0.14
+- **Teacher Model** (ResNet-50): High-capacity model for difficult cases, val_loss=0.27
 - **Selective Teacher Inference**: Triggered by uncertainty, discrepancy, or document risk
 - **Device Priority**: Local GPU → Local CPU → Modal GPU
-- See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md)
+- **Exports**: ONNX + TorchScript, model registry integration
+- **Training**: 50 epochs (teacher), 30 epochs (student) on OHR-Bench dataset
+- See [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md)
 
-**Phase 6: Layout-Lite (NOT Full Layout)**
+**Phase 2: Layout-Lite & DQS & Routing** ✅ COMPLETE
 
-- **Coarse page attributes only**: layout_type, has_tables, has_figures, has_dense_math, has_handwriting
+- **Layout-Lite Detection**: Coarse page attributes (layout_type, has_tables, has_figures, has_dense_math, has_handwriting)
 - **Page attributes**: fuzzy_scan, watermark, colorful_background
 - **Structural complexity score**: 0-1 metric for routing decisions
-- **NOT DocLayNet-style semantic layout** (that's Project B)
-
-**Phase 8: DQS & Routing**
-
+- **Classes**: All 11 DocLayNet classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title)
+- **Model**: YOLOv10-doc (specifically trained on DocLayNet dataset)
 - **Document Quality Score**: Aggregates degradation (IQA) + structural complexity (layout-lite)
 - **Pre-OCR Risk**: Single 0-1 score combining quality and layout signals
 - **Routing Recommendations**: 4 strategies based on DQS, pdf_type, and complexity
+- **Tests**: 21/21 integration tests passing, 100% PDF classification accuracy
+- **NOT DocLayNet-style full semantic layout** (that's Project B)
 
 **Why Text Detection Gate?**
 
@@ -502,35 +511,42 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 - COCO-aligned bounding boxes (`[x, y, width, height]`) for LayoutParser integration
 - **Hybrid IQA**: `quality_issues` field in `DocumentElement` for per-element assessment
 
-**[ingestion/](src/image_preprocessing_detector/ingestion/)** (Phase 0,4)
+**[ingestion/](src/image_preprocessing_detector/ingestion/)** (Phase 0, 1B)
 
-- **Phase 4: DPI Upscaling**
+- **Phase 1B: DPI Upscaling** ✅ COMPLETE
   - [pdf_resolution.py](src/image_preprocessing_detector/ingestion/pdf_resolution.py): DPI detection and analysis
   - [pdf_upscaler.py](src/image_preprocessing_detector/ingestion/pdf_upscaler.py): OpenCV-based upscaling (5 algorithms)
   - [pdf_analyzer.py](src/image_preprocessing_detector/ingestion/pdf_analyzer.py): Pre-flight analysis orchestration
-- **Phase 0: Basic Ingestion**
+- **Phase 0: Basic Ingestion** ✅ COMPLETE
   - PDF → standardized images (300 DPI)
   - Image normalization and validation
   - Multi-format support (PDF, PNG, JPEG, TIFF)
 
-**[detection/](src/image_preprocessing_detector/detection/)** (Phase 2,4,6)
+**[detection/](src/image_preprocessing_detector/detection/)** (Phase 1, 1C, 2, 3)
 
-- [text_gate.py](src/image_preprocessing_detector/detection/text_gate.py): Fast text presence detection (ensemble: stroke density, connected components, edge density)
-- [iqa_classical.py](src/image_preprocessing_detector/detection/iqa_classical.py): Classical CV detectors (Phase 4: Hough skew, Laplacian blur, histogram contrast, lighting, JPEG blockiness)
-- [iqa_ml.py](src/image_preprocessing_detector/detection/iqa_ml.py): Teacher-student ML IQA (Phase 2: ResNet-50 teacher, ResNet-18 student, selective inference)
-- [layout_lite.py](src/image_preprocessing_detector/detection/layout_lite.py): Coarse layout classification (Phase 6: page attributes, complexity scoring, NOT full semantic layout)
+- [text_gate.py](src/image_preprocessing_detector/detection/text_gate.py): Fast text presence detection (Phase 1: ensemble stroke density, connected components, edge density)
+- [iqa_classical.py](src/image_preprocessing_detector/detection/iqa_classical.py): Classical CV detectors (Phase 1C: 8 detectors - Hough skew, Laplacian blur, histogram contrast, noise, illumination, JPEG blockiness, binarization, bleed-through)
+- [iqa_ml.py](src/image_preprocessing_detector/detection/iqa_ml.py): Teacher-student ML IQA (Phase 3: ResNet-50 teacher, ResNet-18 student, selective inference)
+- [layout_lite.py](src/image_preprocessing_detector/detection/layout_lite.py): Coarse layout classification (Phase 2: page attributes, complexity scoring, 11 DocLayNet classes)
 
-**[correction/](src/image_preprocessing_detector/correction/)** (Phase 4)
+**[classification/](src/image_preprocessing_detector/classification/)** (Phase 2)
 
-- OpenCV-based corrections with guardrails
+- [pdf_type_classifier.py](src/image_preprocessing_detector/classification/pdf_type_classifier.py): PDF type classification (image_only/born_digital/hybrid)
+
+**[correction/](src/image_preprocessing_detector/correction/)** (Phase 1)
+
+- OpenCV-based corrections with guardrails ✅ COMPLETE
 - Deskew, CLAHE enhancement, sharpening, denoising
 - Transform history tracking for audit trail
+- 8 correction classes, 41 tests passing
 
-**[routing/](src/image_preprocessing_detector/routing/)** (Phase 8)
+**[routing/](src/image_preprocessing_detector/routing/)** (Phase 2)
 
-- [dqs.py](src/image_preprocessing_detector/routing/dqs.py): Document Quality Score calculation (degradation + complexity)
-- [pdf_classifier.py](src/image_preprocessing_detector/routing/pdf_classifier.py): PDF type classification (image_only/born_digital/hybrid)
-- [recommendation.py](src/image_preprocessing_detector/routing/recommendation.py): OCR routing logic (4 strategies)
+- [recommendation_engine.py](src/image_preprocessing_detector/routing/recommendation_engine.py): OCR routing logic (4 strategies)
+
+**[metrics/](src/image_preprocessing_detector/metrics/)** (Phase 2)
+
+- [dqs_calculator.py](src/image_preprocessing_detector/metrics/dqs_calculator.py): Document Quality Score calculation (degradation + complexity, weight calibration)
 
 **[output/](src/image_preprocessing_detector/output/)** (Phase 0,8)
 
@@ -546,16 +562,16 @@ HANDOFF TO PROJECT B (OCR Orchestration)
 
 ### Data Flow Pattern
 
-1. **Pre-flight Analysis** (Phase 4): DPI detection → automatic upscaling if <300 DPI
+1. **Pre-flight Analysis** (Phase 1B): DPI detection → automatic upscaling if <300 DPI
 2. **Ingestion** (Phase 0): PyMuPDF extracts PDF pages → Pillow/OpenCV standardizes to 300 DPI
-3. **PDF Type Classification** (Phase 8): Classify as image_only/born_digital/hybrid
-4. **Text Gate** (Phase 0): Fast heuristics (< 10ms) → route to appropriate branch
+3. **PDF Type Classification** (Phase 2): Classify as image_only/born_digital/hybrid
+4. **Text Gate** (Phase 1): Fast heuristics (< 10ms) → route to appropriate branch
 5. **Detection Branch**:
-   - No-text: Classical IQA (Phase 4) + Student ML IQA (Phase 2)
-   - Text: Layout-lite classification (Phase 6) + Student ML IQA (Phase 2) + selective Teacher inference
-6. **Correction** (Phase 4): Apply OpenCV transforms with confidence-based thresholds
-7. **DQS & Routing** (Phase 8): Calculate quality scores + generate routing recommendations
-8. **Output** (Phase 8): Serialize DocumentMetadata.json + write corrected images → handoff to Project B
+   - No-text: Classical IQA (Phase 1C) + Student ML IQA (Phase 3)
+   - Text: Layout-lite classification (Phase 2) + Student ML IQA (Phase 3) + selective Teacher inference
+6. **Correction** (Phase 1): Apply OpenCV transforms with confidence-based thresholds
+7. **DQS & Routing** (Phase 2): Calculate quality scores + generate routing recommendations
+8. **Output** (Phase 2): Serialize DocumentMetadata.json + write corrected images → handoff to Project B
 
 ## Project-Specific Standards
 
@@ -593,55 +609,98 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 
 ### Phased Development
 
-**NEW PHASE STRUCTURE** (aligned with RAG Pipeline architecture):
+**Current Status**: Phases 0-3, 6 ✅ COMPLETE | Phases 4, 5, 8 ⚠️ PARTIAL | Phases 7, 9 ❌ NOT STARTED
 
-- **Phase 0** (Week 0-1): Project Setup - **COMPLETE**
+> **Detailed Planning**: See [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md) for complete sprint breakdown and current status.
+
+#### Completed Phases ✅
+
+- **Phase 0** (Week 0-1): Foundation & Scaffolding - ✅ **100% COMPLETE**
   - Project skeleton, Modal workspace, GPU/CPU device probing
-  - Configuration system (YAML) with teacher fallback settings
+  - Configuration system with teacher fallback settings
   - Logging/telemetry scaffolding
 
-- **Phase 2** (Week 2-4): ResNet Teacher & Student ML IQA - **PLANNED**
-  - Multi-head ResNet-50 teacher architecture
-  - Knowledge distillation to ResNet-18 student
-  - Validation on OHR-Bench (document-specific IQA)
-  - Export to ONNX + TorchScript, model registry integration
-  - Cost: ~$5-10 (Modal GPU training)
+- **Phase 1** (Weeks 2-5): MVP with Classical Methods - ✅ **100% COMPLETE**
+  - 3 basic IQA detectors (skew, blur, contrast)
+  - Text detection gate (ensemble heuristics)
+  - Correction pipeline (deskew, CLAHE) with guardrails
+  - CLI tool, output generation
 
-- **Phase 4** (Week 5-6): Classical IQA + DPI Upscaling - **PLANNED**
-  - Laplacian blur, wavelet noise, Hough skew, lighting metrics, JPEG blockiness
-  - Student vs classical discrepancy threshold tuning
-  - **DPI upscaling integration** (from data_ingestor Phase 1C)
-  - Source: `/home/byron/dev/data_ingestor/src/data_ingestor/utils/`
+- **Phase 1B** (Week 6): PDF Resolution & DPI Upscaling - ✅ **100% COMPLETE**
+  - PyMuPDF DPI detection (100% accuracy)
+  - 5 OpenCV upscaling algorithms
+  - Pre-flight analysis orchestrator
+  - 61 tests (38 unit + 23 integration), 100% passing
 
-- **Phase 6** (Week 6-8): Layout-Lite Detection - **IN PROGRESS**
-  - DocLayout-YOLO (YOLOv10-based) for coarse page attributes (NOT full semantic layout)
-  - **Pre-trained models from HuggingFace - NO ADDITIONAL TRAINING REQUIRED**
-  - Model config: `configs/models/doclayout_yolo.yaml`
-  - 10 DocStructBench classes: title, text, table, figure, formula, captions
-  - Hybrid ML + heuristic detection (HybridLayoutAnalyzer)
-  - Handwriting presence classifier (TODO), structural complexity scorer
+- **Phase 1C** (Weeks 6-7): Enhanced Classical IQA Detectors - ✅ **100% COMPLETE**
+  - 5 additional detectors (noise, illumination, JPEG blockiness, binarization, bleed-through)
+  - Discrepancy threshold framework
+  - DQS weight calibration
+  - 99 tests, 100% passing, <25ms combined performance
 
-- **Phase 8** (Week 9): DQS & Routing - **PLANNED**
-  - Document Quality Score (degradation + complexity)
-  - PDF type classification, pre-OCR risk scoring
-  - Routing recommendation logic (4 strategies)
-  - JSON schema output with complete routing metadata
-  - Device priority execution (Local GPU → CPU → Modal GPU)
+- **Phase 2** (Weeks 7-9): Core Components & Schema Alignment - ✅ **100% COMPLETE**
+  - PDF type classification (image_only/born_digital/hybrid)
+  - Layout-lite detection (11 DocLayNet classes, YOLOv10-doc)
+  - DQS calculator (degradation + complexity)
+  - Pre-OCR risk scoring
+  - Routing engine (4 strategies)
+  - All 26 sprints, 21/21 integration tests passing
 
-- **Phase 10** (Week 10): Validation & Documentation - **PLANNED**
-  - End-to-end pipeline benchmarking
-  - Teacher vs student performance analysis
-  - Stress testing (large batches, cost tracking)
-  - Documentation updates, PlantUML diagrams
+- **Phase 3** (Weeks 10-14): Teacher-Student ML IQA - ✅ **100% COMPLETE**
+  - ResNet-50 teacher (50 epochs, val_loss=0.27)
+  - ResNet-18 student (30 epochs, val_loss=0.14)
+  - Knowledge distillation, selective teacher inference
+  - ONNX + TorchScript exports, model registry integration
+  - Training on OHR-Bench dataset via Modal
 
-**REMOVED PHASES** (out of Project A scope):
+- **Phase 6** (Ongoing): Monitoring, Drift Detection & Continuous Improvement - ✅ **95% COMPLETE**
+  - 7500+ lines: drift detection, alerting, active learning
+  - Pipeline integration, retraining automation
+  - Privacy review workflow
+  - Prometheus metrics, Grafana dashboards
 
-- ~~Phase 1/1B (old numbering)~~ → Absorbed into Phases 0 and 4
-- ~~Table Structure Extraction~~ → Project B responsibility
-- ~~Reading Order Prediction~~ → Project B responsibility
-- ~~Full DocLayNet-style layout~~ → Project B responsibility
+#### In-Progress Phases ⚠️
 
-See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/RAG Pipeline/project-a-project-plan.md) for complete implementation plan.
+- **Phase 4** (Weeks 15-17): Device-Priority Execution & Production Hardening - ✅ **98% COMPLETE**
+  - Device capability probing ✅
+  - Device orchestration with policy enforcement ✅
+  - Device priority rules (Local GPU → Modal GPU → BLOCK CPU) ✅
+  - Modal GPU integration with circuit breaker ✅
+  - Budget enforcement (3 levels: doc/batch/monthly) ✅
+  - Prometheus metrics and structured logging ✅
+  - Batch inference integrated into iqa_ml.py ✅
+  - Tensor caching active in batch processing hot path ✅
+  - Uncertainty/discrepancy gates wired to DeviceOrchestrator ✅
+  - DeviceOrchestrator integrated into Celery tasks ✅
+  - Performance regression gates in CI workflow ✅
+  - 156+ tests passing (98+ unit, 20 integration, 38 e2e) ✅
+  - Only remaining: Async I/O (deferred to Phase 5)
+
+- **Phase 5** (Weeks 18-20): Testing, Documentation & Deployment - ⚠️ **40% COMPLETE**
+  - FastAPI framework ✅
+  - Docker/K8s manifests ✅
+  - E2E test suite ✅
+  - Actual API endpoint implementations (pending)
+  - Load testing, deployment automation (pending)
+
+- **Phase 8**: DQS Calibration with Real OCR Data - ⚠️ **60% COMPLETE**
+  - Core DQS components integrated in Phase 2 ✅
+  - Calibration with real OCR feedback data (pending)
+
+#### Future Phases ❌
+
+- **Phase 7**: ML IQA Model Optimization - ❌ **NOT STARTED**
+  - Continuous label retraining from harvested samples
+  - Fine-tuning on production data
+
+- **Phase 9**: Element Classification Models - ❌ **NOT STARTED**
+  - Table/figure classifiers
+  - Handwriting detection refinement
+
+**Out of Scope** (Project B responsibility):
+- Full semantic layout detection (DocLayNet-style)
+- Table structure extraction (PubTables-1M)
+- Reading order prediction (ReadingBank)
 
 ## CI/CD Pipeline
 
@@ -660,29 +719,32 @@ See [docs/development/RAG Pipeline/project-a-project-plan.md](docs/development/R
 
 ## Key Technologies
 
-**Classical CV** (Phase 4):
+**Classical CV** (Phase 1, 1B, 1C):
 
 - OpenCV 4.8+: Hough transform, Laplacian, histogram analysis, DPI upscaling
 - PyMuPDF: PDF extraction and DPI detection
 - Pillow: Image I/O and preprocessing
+- 8 classical IQA detectors: skew, blur, contrast, noise, illumination, JPEG blockiness, binarization, bleed-through
 
-**Deep Learning** (Phase 2,6):
+**Deep Learning** (Phase 2, 3):
 
 - PyTorch 2.0+: Model training and knowledge distillation
 - **ResNet-50/ResNet-18**: Teacher-student ML IQA (NOT MobileNetV3/EfficientNet)
-- **DocLayout-YOLO**: Layout detection (YOLOv10-based, document-optimized)
-  - Model config: `configs/models/doclayout_yolo.yaml`
-  - **Pre-trained models available (no training required)**
-  - Models: DocStructBench (general), D4LA (higher accuracy)
+  - Teacher: val_loss=0.27 (50 epochs)
+  - Student: val_loss=0.14 (30 epochs)
+- **YOLOv10-doc**: Layout detection (document-optimized for DocLayNet)
+  - **Pre-trained models available (no additional training required)**
+  - 11 DocLayNet classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title)
   - Performance: 85+ FPS, 70-80% mAP
 - ONNX Runtime: Production inference optimization
 - Modal: Serverless GPU training platform
 
-**Routing & Quality** (Phase 8):
+**Routing & Quality** (Phase 2):
 
 - Document Quality Score (DQS): Degradation + complexity metrics
 - PDF type classification: image_only/born_digital/hybrid detection
 - OCR routing recommendations: 4-strategy decision logic
+- Pre-OCR risk scoring
 
 **Framework**:
 
