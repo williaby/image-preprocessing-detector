@@ -80,11 +80,12 @@ def run_iqa_analysis(
     self: IQATask,
     image_b64: str,
     request_id: str | None = None,
-    enable_teacher: bool = False,
+    enable_teacher: bool = False,  # noqa: ARG001
 ) -> dict[str, Any]:
     """Run IQA analysis on an image.
 
     Args:
+        self: Task instance (bound by Celery)
         image_b64: Base64-encoded image data
         request_id: Optional request identifier
         enable_teacher: Whether to enable teacher model fallback
@@ -103,7 +104,8 @@ def run_iqa_analysis(
 
         image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
         if image is None:
-            raise ValueError("Failed to decode image")
+            msg = "Failed to decode image"
+            raise ValueError(msg)  # noqa: TRY301
 
         # Preprocess for model
         preprocessed = _preprocess_image(image)
@@ -111,7 +113,8 @@ def run_iqa_analysis(
         # Run student inference
         session = self.student_session
         if session is None:
-            raise RuntimeError("Student model not available")
+            msg = "Student model not available"
+            raise RuntimeError(msg)  # noqa: TRY301
 
         input_name = session.get_inputs()[0].name
         output_names = [out.name for out in session.get_outputs()]
@@ -150,14 +153,14 @@ def run_iqa_analysis(
             inference_time_ms=round(elapsed_ms, 2),
         )
 
-        return result
-
     except SoftTimeLimitExceeded:
         logger.warning("IQA analysis soft time limit exceeded", request_id=request_id)
         raise
     except Exception as e:
         logger.exception("IQA analysis failed", request_id=request_id, error=str(e))
-        raise self.retry(exc=e)
+        raise self.retry(exc=e) from e
+    else:
+        return result
 
 
 @celery_app.task(
@@ -178,6 +181,7 @@ def process_single_document(
     """Process a single document.
 
     Args:
+        self: Task instance (bound by Celery)
         file_content_b64: Base64-encoded file content
         filename: Original filename
         options: Processing options
@@ -219,7 +223,8 @@ def process_single_document(
                     with fitz.open(tmp_path) as doc:
                         result["page_count"] = len(doc)
                 except Exception:
-                    pass
+                    # PDF parsing failed, continue without page count
+                    logger.debug("Failed to extract PDF page count", filename=filename)
 
             logger.info(
                 "Document processed",
@@ -234,7 +239,9 @@ def process_single_document(
             tmp_path.unlink(missing_ok=True)
 
     except SoftTimeLimitExceeded:
-        logger.warning("Document processing soft time limit exceeded", filename=filename)
+        logger.warning(
+            "Document processing soft time limit exceeded", filename=filename
+        )
         return {
             "filename": filename,
             "status": "timeout",
@@ -242,7 +249,7 @@ def process_single_document(
         }
     except Exception as e:
         logger.exception("Document processing failed", filename=filename, error=str(e))
-        raise self.retry(exc=e)
+        raise self.retry(exc=e) from e
 
 
 @celery_app.task(
@@ -261,6 +268,7 @@ def process_batch_documents(
     """Process a batch of documents.
 
     Args:
+        self: Task instance (bound by Celery)
         files_data: List of {"filename": str, "content_b64": str} dicts
         options: Processing options
         job_id: Optional job identifier
@@ -299,10 +307,12 @@ def process_batch_documents(
             logger.exception(
                 "Batch file failed", job_id=job_id, filename=filename, error=str(e)
             )
-            errors.append({
-                "filename": filename,
-                "error": str(e),
-            })
+            errors.append(
+                {
+                    "filename": filename,
+                    "error": str(e),
+                }
+            )
 
     elapsed_ms = (time.perf_counter() - start_time) * 1000
 
@@ -364,7 +374,7 @@ def _preprocess_image(image: np.ndarray) -> np.ndarray:
 
 
 def _postprocess_outputs(
-    outputs: dict[str, np.ndarray]
+    outputs: dict[str, np.ndarray],
 ) -> tuple[dict[str, float], dict[str, float]]:
     """Postprocess model outputs to scores.
 

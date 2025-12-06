@@ -84,7 +84,7 @@ class CacheMetrics:
 
 
 @dataclass
-class CacheEntry(Generic[T]):
+class CacheEntry(Generic[T]):  # noqa: UP046
     """Individual cache entry with metadata.
 
     Attributes:
@@ -107,7 +107,7 @@ class CacheEntry(Generic[T]):
         self.access_count += 1
 
 
-class LRUCache(Generic[T]):
+class LRUCache(Generic[T]):  # noqa: UP046
     """Thread-safe LRU cache with size-based eviction.
 
     This cache implementation:
@@ -301,7 +301,8 @@ def compute_page_key(
 
 def get_array_size_bytes(array: np.ndarray) -> int:
     """Get size of numpy array in bytes."""
-    return array.nbytes
+    size: int = array.nbytes
+    return size
 
 
 # Global cache instances (singleton pattern)
@@ -325,7 +326,9 @@ def get_tensor_cache() -> LRUCache[np.ndarray]:
                 size_mb = int(
                     os.getenv("IMGPREP_TENSOR_CACHE_MB", str(DEFAULT_TENSOR_CACHE_MB))
                 )
-                ttl = int(os.getenv("IMGPREP_CACHE_TTL_SECONDS", str(DEFAULT_TTL_SECONDS)))
+                ttl = int(
+                    os.getenv("IMGPREP_CACHE_TTL_SECONDS", str(DEFAULT_TTL_SECONDS))
+                )
                 _tensor_cache = LRUCache[np.ndarray](
                     max_size_mb=size_mb,
                     ttl_seconds=ttl,
@@ -354,7 +357,9 @@ def get_page_cache() -> LRUCache[np.ndarray]:
                 size_mb = int(
                     os.getenv("IMGPREP_PAGE_CACHE_MB", str(DEFAULT_PAGE_CACHE_MB))
                 )
-                ttl = int(os.getenv("IMGPREP_CACHE_TTL_SECONDS", str(DEFAULT_TTL_SECONDS)))
+                ttl = int(
+                    os.getenv("IMGPREP_CACHE_TTL_SECONDS", str(DEFAULT_TTL_SECONDS))
+                )
                 _page_cache = LRUCache[np.ndarray](
                     max_size_mb=size_mb,
                     ttl_seconds=ttl,

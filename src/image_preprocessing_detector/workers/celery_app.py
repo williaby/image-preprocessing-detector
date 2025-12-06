@@ -28,6 +28,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from celery import Celery
+from celery.signals import (
+    task_failure,
+    task_postrun,
+    task_prerun,
+    worker_ready,
+    worker_shutdown,
+)
 from kombu import Exchange, Queue
 
 from image_preprocessing_detector.utils.log_config import get_logger
@@ -53,7 +60,9 @@ class CeleryConfig:
     """
 
     broker_url: str = field(
-        default_factory=lambda: os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+        default_factory=lambda: os.getenv(
+            "CELERY_BROKER_URL", "redis://localhost:6379/0"
+        )
     )
     result_backend: str = field(
         default_factory=lambda: os.getenv(
@@ -96,7 +105,12 @@ class CeleryConfig:
 
         return (
             Queue("default", default_exchange, routing_key="default"),
-            Queue("gpu", gpu_exchange, routing_key="gpu", queue_arguments={"x-max-priority": 10}),
+            Queue(
+                "gpu",
+                gpu_exchange,
+                routing_key="gpu",
+                queue_arguments={"x-max-priority": 10},
+            ),
             Queue("batch", batch_exchange, routing_key="batch"),
         )
 
@@ -128,19 +142,9 @@ celery_app.config_from_object(config.to_dict())
 
 # Task lifecycle hooks
 @celery_app.task(bind=True, name="celery.ping")
-def ping(self: Any) -> str:
+def ping(_self: Any) -> str:
     """Health check task."""
     return "pong"
-
-
-# Worker lifecycle hooks
-from celery.signals import (
-    task_failure,
-    task_postrun,
-    task_prerun,
-    worker_ready,
-    worker_shutdown,
-)
 
 
 @worker_ready.connect
@@ -156,31 +160,26 @@ def on_worker_shutdown(**kwargs: Any) -> None:
 
 
 @task_prerun.connect
-def on_task_prerun(task_id: str, task: Any, **kwargs: Any) -> None:
+def on_task_prerun(task_id: str, task: Any, **_kwargs: Any) -> None:
     """Handle task start."""
     logger.debug("Task starting", task_id=task_id, task_name=task.name)
 
 
 @task_postrun.connect
 def on_task_postrun(
-    task_id: str, task: Any, retval: Any, state: str, **kwargs: Any
+    task_id: str, task: Any, _retval: Any, state: str, **_kwargs: Any
 ) -> None:
     """Handle task completion."""
-    logger.debug(
-        "Task completed", task_id=task_id, task_name=task.name, state=state
-    )
+    logger.debug("Task completed", task_id=task_id, task_name=task.name, state=state)
 
 
 @task_failure.connect
-def on_task_failure(
-    task_id: str, exception: Exception, **kwargs: Any
-) -> None:
+def on_task_failure(task_id: str, exception: Exception, **_kwargs: Any) -> None:
     """Handle task failure."""
-    logger.error(
+    logger.exception(
         "Task failed",
         task_id=task_id,
         error=str(exception),
-        exc_info=True,
     )
 
 
@@ -193,10 +192,11 @@ def check_broker_connection() -> bool:
     """Check if broker connection is available."""
     try:
         celery_app.connection().ensure_connection(max_retries=1)
-        return True
     except Exception as e:
         logger.warning("Broker connection failed", error=str(e))
         return False
+    else:
+        return True
 
 
 def get_worker_stats() -> dict[str, Any]:
@@ -229,15 +229,15 @@ def get_worker_stats() -> dict[str, Any]:
         }
 
 
-def get_queue_lengths() -> dict[str, int]:
+def get_queue_lengths() -> dict[str, int | str]:
     """Get message counts for each queue.
 
     Returns:
-        Dictionary mapping queue names to message counts
+        Dictionary mapping queue names to message counts or error message
     """
     try:
         with celery_app.connection() as conn:
-            lengths = {}
+            lengths: dict[str, int | str] = {}
             for queue in ["default", "gpu", "batch"]:
                 try:
                     queue_obj = conn.channel().queue_declare(queue=queue, passive=True)

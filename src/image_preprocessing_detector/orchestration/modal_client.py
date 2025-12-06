@@ -377,23 +377,24 @@ class ModalClient:
 
         # Look up the deployed Modal function
         try:
-            teacher_cls = modal.Cls.lookup("iqa-teacher-inference", "TeacherInference")
+            teacher_cls = modal.Cls.lookup("iqa-teacher-inference", "TeacherInference")  # type: ignore[attr-defined]
             teacher = teacher_cls()
 
             # Call the predict method
-            return teacher.predict.remote(
+            result: dict[str, Any] = teacher.predict.remote(
                 image_b64=image_b64,
                 request_id=request.request_id,
                 model_version=request.model_version,
             )
-
-        except modal.exception.NotFoundError as e:
+        except modal.exception.NotFoundError as e:  # type: ignore[attr-defined]
             raise RuntimeError(
                 "Modal app 'iqa-teacher-inference' not deployed. "
                 "Run: modal deploy modal/teacher_inference.py"
             ) from e
         except Exception as e:
             raise RuntimeError(f"Modal call failed: {e}") from e
+        else:
+            return result
 
     def _encode_image(self, image_array: np.ndarray) -> str:
         """Encode numpy image array as base64 JPEG.

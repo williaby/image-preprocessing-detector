@@ -193,8 +193,10 @@ class TestGetDiskSpace:
         assert total > 0
         assert used >= 0
         assert free >= 0
-        # Total should be sum of used and free (approximately)
-        assert abs(total - (used + free)) < 1  # Allow 1 GB tolerance
+        # Total should be reasonably close to used + free
+        # Note: Filesystems have reserved space, so allow generous tolerance
+        assert used + free <= total  # Used + free should not exceed total
+        assert (used + free) / total >= 0.8  # At least 80% accounted for
 
     def test_get_disk_space_invalid_path(self) -> None:
         """Test disk space for invalid path."""

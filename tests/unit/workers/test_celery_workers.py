@@ -75,9 +75,7 @@ class TestCeleryConfig:
         config = CeleryConfig()
         routes = config._get_routes()
 
-        assert (
-            "image_preprocessing_detector.workers.tasks.run_iqa_analysis" in routes
-        )
+        assert "image_preprocessing_detector.workers.tasks.run_iqa_analysis" in routes
         assert (
             "image_preprocessing_detector.workers.tasks.process_single_document"
             in routes
@@ -193,9 +191,7 @@ class TestDocumentProcessingTask:
         """Test document processing task is registered."""
         from image_preprocessing_detector.workers.celery_app import celery_app
 
-        task_name = (
-            "image_preprocessing_detector.workers.tasks.process_single_document"
-        )
+        task_name = "image_preprocessing_detector.workers.tasks.process_single_document"
         assert task_name in celery_app.tasks
 
     def test_task_config(self) -> None:
@@ -214,9 +210,7 @@ class TestBatchProcessingTask:
         """Test batch processing task is registered."""
         from image_preprocessing_detector.workers.celery_app import celery_app
 
-        task_name = (
-            "image_preprocessing_detector.workers.tasks.process_batch_documents"
-        )
+        task_name = "image_preprocessing_detector.workers.tasks.process_batch_documents"
         assert task_name in celery_app.tasks
 
     def test_task_config(self) -> None:
@@ -479,7 +473,9 @@ class TestRunIQAAnalysisTask:
         mock_session.run.return_value = [np.array([[0.3, 0.7]]) for _ in range(5)]
 
         # Mock the student session property on IQATask class
-        with patch.object(IQATask, "student_session", new_callable=lambda: mock_session):
+        with patch.object(
+            IQATask, "student_session", new_callable=lambda: mock_session
+        ):
             # Call the task directly (synchronous execution)
             result = run_iqa_analysis(
                 image_b64, request_id="test-123", enable_teacher=False
@@ -639,7 +635,9 @@ class TestCeleryAppFunctions:
         # Mock connection to fail
         with patch.object(celery_app, "connection") as mock_conn:
             mock_connection = MagicMock()
-            mock_connection.ensure_connection.side_effect = Exception("Connection refused")
+            mock_connection.ensure_connection.side_effect = Exception(
+                "Connection refused"
+            )
             mock_conn.return_value = mock_connection
 
             result = check_broker_connection()
@@ -732,10 +730,11 @@ class TestCelerySignalHandlers:
         mock_task.name = "test.task"
 
         # Should not raise, just logs
+        # Note: _retval parameter name has underscore prefix (unused)
         on_task_postrun(
             task_id="task-123",
             task=mock_task,
-            retval={"result": "success"},
+            _retval={"result": "success"},
             state="SUCCESS",
         )
 

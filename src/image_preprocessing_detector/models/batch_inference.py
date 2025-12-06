@@ -20,8 +20,9 @@ Phase 4 Integration - Week 17 Sprint 4.3.1
 import queue
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
@@ -307,7 +308,9 @@ class BatchInferenceEngine:
                 self._metrics.cache_misses += 1
 
         # Create request with callback
-        request = InferenceRequest(image=image, request_id=request_id, callback=callback)
+        request = InferenceRequest(
+            image=image, request_id=request_id, callback=callback
+        )
 
         # Submit to queue
         try:
@@ -394,7 +397,9 @@ class BatchInferenceEngine:
                             [single_outputs[name][0] for name in self._output_names]
                         )
                         cache.put(
-                            cache_key, cache_data, size_bytes=get_array_size_bytes(cache_data)
+                            cache_key,
+                            cache_data,
+                            size_bytes=get_array_size_bytes(cache_data),
                         )
 
                     # Notify completion
@@ -434,7 +439,9 @@ class BatchInferenceEngine:
                 if request.callback:
                     request.callback(None, e)
                 request.event.set()
-            logger.exception("Batch inference failed", batch_size=len(batch), error=str(e))
+            logger.exception(
+                "Batch inference failed", batch_size=len(batch), error=str(e)
+            )
 
     def _postprocess_outputs(self, outputs: dict[str, np.ndarray]) -> dict[str, Any]:
         """Postprocess model outputs to scores.
@@ -576,7 +583,9 @@ def run_batch_inference(
 
         # Extract individual results
         for j in range(len(batch_images)):
-            single_outputs = {name: arr[j : j + 1] for name, arr in outputs_dict.items()}
+            single_outputs = {
+                name: arr[j : j + 1] for name, arr in outputs_dict.items()
+            }
             result = _postprocess_batch_outputs(single_outputs)
             results.append(result)
 

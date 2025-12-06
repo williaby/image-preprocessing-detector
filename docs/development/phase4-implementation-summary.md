@@ -1,6 +1,6 @@
 ---
 title: Phase 4 Implementation Summary
-status: complete
+status: published
 tags: [development, architecture]
 owner: "core-maintainer"
 purpose: Document Phase 4 Device-Priority Execution implementation progress and remaining work.
@@ -104,7 +104,7 @@ Phase 4 Device-Priority Execution is **~85% complete** (20 of 24 planned sprints
   - Modal latency and cost logging
 
 - ✅ **Sprint 4.2.6**: Metrics Export (2 hours)
-  - Prometheus counters/histograms in monitoring/__init__.py
+  - Prometheus counters/histograms in monitoring/**init**.py
   - `record_teacher_usage()` with device, reason, cost labels
   - Modal GPU seconds and estimated cost tracking
   - Cardinality guards for labels
@@ -267,17 +267,17 @@ From PROJECT_PLAN.md Phase 4 Success Criteria:
 
 ### High Priority (for production readiness)
 
-4. **Sprint 4.2.5: Structured Logging** (3 hours)
-5. **Sprint 4.2.6: Metrics Export** (2 hours)
-6. **Sprint 4.3.1: Batch Inference** (3 hours)
-7. **Sprint 4.3.6: Latency Benchmarking** (2 hours)
+1. **Sprint 4.2.5: Structured Logging** (3 hours)
+2. **Sprint 4.2.6: Metrics Export** (2 hours)
+3. **Sprint 4.3.1: Batch Inference** (3 hours)
+4. **Sprint 4.3.6: Latency Benchmarking** (2 hours)
 
 **Total High Priority**: 10 developer hours
 
 ### Optional (performance optimization)
 
-8. **Sprint 4.3.2-4.3.5**: Async I/O, Caching, TensorRT, Worker Pool (10 hours)
-9. **Sprint 4.2.2, 4.2.4**: Endpoint hardening, cost estimator (5 hours)
+1. **Sprint 4.3.2-4.3.5**: Async I/O, Caching, TensorRT, Worker Pool (10 hours)
+2. **Sprint 4.2.2, 4.2.4**: Endpoint hardening, cost estimator (5 hours)
 
 **Total Optional**: 15 developer hours
 

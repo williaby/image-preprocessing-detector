@@ -24,6 +24,8 @@ from image_preprocessing_detector.utils.device_probe import (
     get_recommended_device,
     probe_device_capabilities,
 )
+from image_preprocessing_detector.utils.log_config import get_logger, setup_logging
+from image_preprocessing_detector.utils.path_security import validate_safe_path
 from image_preprocessing_detector.utils.tensor_cache import (
     CacheMetrics,
     LRUCache,
@@ -36,8 +38,6 @@ from image_preprocessing_detector.utils.tensor_cache import (
     get_tensor_cache,
     reset_cache_instances,
 )
-from image_preprocessing_detector.utils.log_config import get_logger, setup_logging
-from image_preprocessing_detector.utils.path_security import validate_safe_path
 
 # Optional GCS utilities (Phase 2+) - require google-cloud-storage
 # Use lowercase to avoid BasedPyright reportConstantRedefinition
