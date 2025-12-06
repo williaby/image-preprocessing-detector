@@ -386,7 +386,7 @@ class ModalClient:
                 request_id=request.request_id,
                 model_version=request.model_version,
             )
-        except modal.exception.NotFoundError as e:  # type: ignore[attr-defined]
+        except modal.exception.NotFoundError as e:
             raise RuntimeError(
                 "Modal app 'iqa-teacher-inference' not deployed. "
                 "Run: modal deploy modal/teacher_inference.py"
