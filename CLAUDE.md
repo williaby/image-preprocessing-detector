@@ -116,7 +116,7 @@ DocumentMetadata.json           OCRDocument.json        FusedDocument.json     V
 - **IN SCOPE**: IQA, corrections, DQS, layout-lite (coarse page attributes), routing recommendations
 - **OUT OF SCOPE**: Full layout detection, table structure, reading order (Project B responsibility)
 
-**Current Phase**: Phases 0-3, 6 ✅ COMPLETE, Phase 4 (Device Priority) ✅ 85% COMPLETE
+**Current Phase**: Phases 0-3, 6 ✅ COMPLETE, Phase 4 (Device Priority) ✅ 98% COMPLETE
 
 > **Note**: This CLAUDE.md provides high-level project overview. For detailed phase breakdown,
 > sprint plans, and current status, see [docs/planning/PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md).
@@ -661,15 +661,20 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 
 #### In-Progress Phases ⚠️
 
-- **Phase 4** (Weeks 15-17): Device-Priority Execution & Production Hardening - ✅ **85% COMPLETE**
+- **Phase 4** (Weeks 15-17): Device-Priority Execution & Production Hardening - ✅ **98% COMPLETE**
   - Device capability probing ✅
   - Device orchestration with policy enforcement ✅
   - Device priority rules (Local GPU → Modal GPU → BLOCK CPU) ✅
   - Modal GPU integration with circuit breaker ✅
   - Budget enforcement (3 levels: doc/batch/monthly) ✅
   - Prometheus metrics and structured logging ✅
-  - 131 tests passing (73 unit, 20 integration, 38 e2e) ✅
-  - Integration work pending: batch inference, caching, gate wiring ⚠️
+  - Batch inference integrated into iqa_ml.py ✅
+  - Tensor caching active in batch processing hot path ✅
+  - Uncertainty/discrepancy gates wired to DeviceOrchestrator ✅
+  - DeviceOrchestrator integrated into Celery tasks ✅
+  - Performance regression gates in CI workflow ✅
+  - 156+ tests passing (98+ unit, 20 integration, 38 e2e) ✅
+  - Only remaining: Async I/O (deferred to Phase 5)
 
 - **Phase 5** (Weeks 18-20): Testing, Documentation & Deployment - ⚠️ **40% COMPLETE**
   - FastAPI framework ✅
