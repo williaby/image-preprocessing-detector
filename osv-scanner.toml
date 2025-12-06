@@ -16,11 +16,7 @@
 # The py library is deprecated and only used by interrogate (docstring coverage tool)
 # Impact: Low - not used in production code, only in dev tooling
 #
-# Note: Both GHSA and PYSEC IDs must be ignored as OSV reports both
-
-[[IgnoredVulns]]
-id = "GHSA-w596-4wvx-j9j6"
-reason = "CVE-2022-42969 disputed by multiple parties. Formal dispute in NVD May 2024. Only used by interrogate dev tool."
+# Note: GHSA ID is auto-filtered but PYSEC ID must be manually ignored
 
 [[IgnoredVulns]]
 id = "PYSEC-2022-42969"
@@ -29,7 +25,11 @@ reason = "CVE-2022-42969 disputed by multiple parties. Formal dispute in NVD May
 # ============================================================================
 # Notes
 # ============================================================================
-# Werkzeug vulnerability GHSA-hgf8-39gv-g3f2 resolved by upgrading to 3.1.4
+# urllib3 vulnerabilities (GHSA-2xpw-w6gg-jr37, GHSA-gm62-xv2j-4w53)
+#   - Fixed by upgrading to urllib3 >= 2.6.0
+#
+# Werkzeug vulnerability GHSA-hgf8-39gv-g3f2
+#   - Fixed by upgrading to werkzeug >= 3.1.4
 #
 # Last verified: 2025-12-05
 # Next review: 2026-03-01 (or when dependencies updated)
