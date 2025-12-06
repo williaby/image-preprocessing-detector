@@ -626,6 +626,271 @@ class WeakSupervisionLabeler:
         return all_labels
 
 
+class ContinuousWeakSupervisionLabeler:
+    """Phase 7 weak supervision labeler with continuous severity scores.
+
+    Generates continuous [0, 1] severity labels instead of binary labels.
+    Preserves severity gradation for better model calibration.
+
+    Features:
+    - Normalized severity scores in [0, 1] range
+    - Label smoothing to reduce overconfidence
+    - Outlier filtering for extreme detector disagreement
+    - Integration with ContinuousQualityLabel schema
+
+    Example:
+        >>> labeler = ContinuousWeakSupervisionLabeler()
+        >>> image = cv2.imread("document.png")
+        >>> label = labeler.label_image(image, "document.png")
+        >>> print(f"Blur severity: {label['blur_severity']:.2f}")
+    """
+
+    def __init__(
+        self,
+        label_smoothing: float = 0.0,
+        smooth_clip_min: float = 0.0,
+        smooth_clip_max: float = 1.0,
+        outlier_threshold: float = 0.5,
+    ) -> None:
+        """Initialize continuous labeler.
+
+        Args:
+            label_smoothing: Smoothing factor (0=none, clips to [min, max])
+            smooth_clip_min: Minimum value after smoothing (default: 0.0)
+            smooth_clip_max: Maximum value after smoothing (default: 1.0)
+            outlier_threshold: Max allowed variance between detectors
+        """
+        self.label_smoothing = label_smoothing
+        self.smooth_clip_min = smooth_clip_min
+        self.smooth_clip_max = smooth_clip_max
+        self.outlier_threshold = outlier_threshold
+
+        # Normalization parameters for each metric
+        # These map raw metric values to [0, 1] severity
+        self.normalization: dict[str, dict[str, Any]] = {
+            # Laplacian variance: high = sharp (good), low = blurry (bad)
+            # severity = 1 - normalized_sharpness
+            "laplacian": {"min": 50, "max": 500, "invert": True},
+            # BRISQUE: lower is better (0-100 scale)
+            "brisque": {"min": 0, "max": 100, "invert": False},
+            # Skew angle: 0 = no skew, higher = more skew
+            "skew": {"min": 0, "max": 15, "invert": False},  # degrees
+            # RMS contrast: higher is better (0-0.5 typical range)
+            "rms_contrast": {"min": 0.1, "max": 0.5, "invert": True},
+            # Blockiness: higher = more JPEG artifacts
+            "blockiness": {"min": 0, "max": 15, "invert": False},
+        }
+
+    def _normalize_metric(
+        self,
+        value: float,
+        metric_name: str,
+    ) -> float:
+        """Normalize a raw metric value to [0, 1] severity.
+
+        Args:
+            value: Raw metric value
+            metric_name: Name of the metric for normalization params
+
+        Returns:
+            Normalized severity in [0, 1] (0=good, 1=bad)
+        """
+        params = self.normalization.get(metric_name, {"min": 0, "max": 1, "invert": False})
+
+        min_val = params["min"]
+        max_val = params["max"]
+        invert = params["invert"]
+
+        # Clip to valid range
+        value = max(min_val, min(max_val, value))
+
+        # Normalize to [0, 1]
+        normalized = (value - min_val) / (max_val - min_val) if max_val > min_val else 0.0
+
+        # Invert if needed (for metrics where higher = better)
+        if invert:
+            normalized = 1.0 - normalized
+
+        # Apply label smoothing
+        if self.label_smoothing > 0:
+            normalized = float(np.clip(
+                normalized,
+                self.smooth_clip_min,
+                self.smooth_clip_max,
+            ))
+
+        return float(normalized)
+
+    def label_image(
+        self,
+        image: NDArray[np.uint8],
+        image_path: str = "",
+    ) -> dict[str, Any]:
+        """Generate continuous severity labels for image.
+
+        Args:
+            image: Input image (H, W, C) in BGR format
+            image_path: Path to image (for metadata)
+
+        Returns:
+            Dictionary with continuous severity scores compatible with
+            ContinuousQualityLabel schema
+        """
+        # Use the binary labeler's detection methods
+        binary_labeler = WeakSupervisionLabeler()
+
+        # Compute raw metrics
+        laplacian_var = binary_labeler._compute_laplacian_variance(image)
+        brisque_score = binary_labeler._compute_brisque(image)
+        skew_angle = binary_labeler._detect_skew(image)
+        rms_contrast = binary_labeler._compute_rms_contrast(image)
+        blockiness = binary_labeler._detect_blockiness(image)
+
+        # Convert to continuous severity scores
+        blur_severity = self._normalize_metric(laplacian_var, "laplacian")
+        noise_severity = self._normalize_metric(brisque_score, "brisque")
+        skew_severity = self._normalize_metric(skew_angle, "skew")
+        contrast_severity = self._normalize_metric(rms_contrast, "rms_contrast")
+        compression_severity = self._normalize_metric(blockiness, "blockiness")
+
+        # Compute overall quality (1 - max severity)
+        max_severity = max(
+            blur_severity,
+            noise_severity,
+            skew_severity,
+            contrast_severity,
+            compression_severity,
+        )
+        overall_quality = 1.0 - max_severity
+
+        # Check for outliers (high disagreement between detectors)
+        severities = [blur_severity, noise_severity, skew_severity, contrast_severity, compression_severity]
+        severity_variance = float(np.var(severities))
+        is_outlier = severity_variance > self.outlier_threshold
+
+        # Build result in ContinuousQualityLabel format
+        return {
+            # Continuous severity scores
+            "blur_severity": blur_severity,
+            "noise_severity": noise_severity,
+            "skew_severity": skew_severity,
+            "contrast_severity": contrast_severity,
+            "compression_severity": compression_severity,
+            "overall_quality": overall_quality,
+            # Document-specific (not computed by weak supervision)
+            "ink_degradation": 0.0,
+            "paper_degradation": 0.0,
+            "bleed_through": 0.0,
+            # Metadata
+            "label_source": "weak_supervision",
+            "label_confidence": 0.7 if not is_outlier else 0.4,
+            "label_variance": severity_variance,
+            "image_path": image_path,
+            "is_outlier": is_outlier,
+            # Raw quality scores for debugging
+            "quality_scores": {
+                "laplacian_variance": laplacian_var,
+                "brisque": brisque_score,
+                "skew_angle_degrees": skew_angle,
+                "rms_contrast": rms_contrast,
+                "blockiness": blockiness,
+            },
+            # Backward-compatible binary labels
+            "labels": {
+                "blur": {
+                    "value": int(blur_severity >= 0.3),
+                    "confidence": 0.7,
+                    "source": "laplacian",
+                    "severity": blur_severity,
+                },
+                "noise": {
+                    "value": int(noise_severity >= 0.3),
+                    "confidence": 0.7,
+                    "source": "brisque",
+                    "severity": noise_severity,
+                },
+                "skew": {
+                    "value": int(skew_severity >= 0.3),
+                    "confidence": 0.7,
+                    "source": "hough_transform",
+                    "severity": skew_severity,
+                },
+                "illumination": {
+                    "value": int(contrast_severity >= 0.3),
+                    "confidence": 0.7,
+                    "source": "rms_contrast",
+                    "severity": contrast_severity,
+                },
+                "artifacts": {
+                    "value": int(compression_severity >= 0.3),
+                    "confidence": 0.7,
+                    "source": "blockiness",
+                    "severity": compression_severity,
+                },
+            },
+        }
+
+    def label_batch(
+        self,
+        image_paths: list[str | Path],
+        output_dir: str | Path,
+        filter_outliers: bool = True,
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Label batch of images with continuous scores.
+
+        Args:
+            image_paths: List of image paths
+            output_dir: Directory to save JSON labels
+            filter_outliers: If True, separate outliers from main dataset
+
+        Returns:
+            Tuple of (valid_labels, outlier_labels)
+        """
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        valid_labels: list[dict[str, Any]] = []
+        outlier_labels: list[dict[str, Any]] = []
+
+        for image_path in image_paths:
+            image = cv2.imread(str(image_path))
+            if image is None:
+                continue
+
+            label = self.label_image(image, str(image_path))
+
+            # Separate outliers
+            if filter_outliers and label.get("is_outlier", False):
+                outlier_labels.append(label)
+                continue
+
+            valid_labels.append(label)
+
+            # Save to JSON
+            output_path = output_dir / f"{Path(image_path).stem}_continuous_labels.json"
+            with open(output_path, "w") as f:
+                json.dump(label, f, indent=2)
+
+        return valid_labels, outlier_labels
+
+    def get_severity_vector(self, label: dict[str, Any]) -> list[float]:
+        """Extract severity vector from label dict.
+
+        Args:
+            label: Label dictionary from label_image
+
+        Returns:
+            List of 5 severity values [blur, noise, skew, contrast, compression]
+        """
+        return [
+            label["blur_severity"],
+            label["noise_severity"],
+            label["skew_severity"],
+            label["contrast_severity"],
+            label["compression_severity"],
+        ]
+
+
 if __name__ == "__main__":
     # Example usage
     import sys
@@ -641,14 +906,18 @@ if __name__ == "__main__":
     if image is None:
         sys.exit(1)
 
-    # Generate labels
-    labeler = WeakSupervisionLabeler()
-    labels = labeler.label_image(image, input_path)
+    # Check for continuous mode flag
+    continuous_mode = "--continuous" in sys.argv
+
+    if continuous_mode:
+        # Phase 7: Continuous labels
+        cont_labeler = ContinuousWeakSupervisionLabeler()
+        labels = cont_labeler.label_image(image, input_path)
+    else:
+        # Original: Binary labels
+        labeler = WeakSupervisionLabeler()
+        labels = labeler.label_image(image, input_path).to_dict()
 
     # Save to JSON
     with open(output_path, "w") as f:
-        json.dump(labels.to_dict(), f, indent=2)
-
-    for label in labels.labels.values():
-        if label.value == 1:
-            pass
+        json.dump(labels, f, indent=2)

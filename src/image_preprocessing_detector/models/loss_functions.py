@@ -297,6 +297,228 @@ class WeightedMSELoss(nn.Module):
         return mse
 
 
+class ContinuousBCEMSELoss(nn.Module):
+    """Combined BCE+MSE loss for Phase 7 continuous label training.
+
+    This hybrid loss combines:
+    1. BCE component: Strong classification signal (defect present/absent)
+    2. MSE component: Severity gradation (how much defect, 0-1 scale)
+
+    The BCE component uses a binarized version of the target (threshold > 0.5)
+    while MSE operates on the full continuous target for severity learning.
+
+    Benefits over pure BCE:
+    - Better model calibration (ECE improvement from ~0.18 to <0.10)
+    - Severity-aware predictions (mild vs severe defects)
+    - Meaningful quality scores for DQS calculation
+
+    Args:
+        alpha: Weight for BCE classification component (default: 0.6)
+        beta: Weight for MSE severity component (default: 0.4)
+        binary_threshold: Threshold for converting continuous to binary (default: 0.5)
+        label_smoothing: Apply label smoothing to BCE targets (default: 0.0)
+        reduction: Reduction method: 'mean', 'sum', or 'none' (default: 'mean')
+
+    Example:
+        >>> loss_fn = ContinuousBCEMSELoss(alpha=0.6, beta=0.4)
+        >>> predictions = model(images)  # Shape: (batch, num_classes)
+        >>> targets = torch.tensor([[0.3, 0.7, 0.1, 0.0, 0.5]])  # Continuous [0,1]
+        >>> loss = loss_fn(predictions, targets)
+
+    Reference:
+        Phase 7 Strategy: docs/planning/PROJECT_PLAN.md (Sprint 7.2.1)
+    """
+
+    def __init__(
+        self,
+        alpha: float = 0.6,
+        beta: float = 0.4,
+        binary_threshold: float = 0.5,
+        label_smoothing: float = 0.0,
+        reduction: str = "mean",
+    ) -> None:
+        super().__init__()
+
+        if not (0.0 <= alpha <= 1.0):
+            raise ValueError(f"alpha must be in [0, 1], got {alpha}")
+        if not (0.0 <= beta <= 1.0):
+            raise ValueError(f"beta must be in [0, 1], got {beta}")
+        if not (0.0 <= binary_threshold <= 1.0):
+            raise ValueError(f"binary_threshold must be in [0, 1], got {binary_threshold}")
+
+        self.alpha = alpha
+        self.beta = beta
+        self.binary_threshold = binary_threshold
+        self.label_smoothing = label_smoothing
+        self.reduction = reduction
+
+        # Loss components
+        self.bce_loss = nn.BCEWithLogitsLoss(reduction="none")
+        self.mse_loss = nn.MSELoss(reduction="none")
+
+    def forward(
+        self,
+        predictions: torch.Tensor,
+        targets: torch.Tensor,
+    ) -> dict[str, torch.Tensor]:
+        """Compute combined BCE+MSE loss.
+
+        Args:
+            predictions: Model logits of shape (batch_size, num_classes)
+            targets: Continuous targets [0, 1] of shape (batch_size, num_classes)
+
+        Returns:
+            Dictionary containing:
+                - total_loss: Combined weighted loss
+                - bce_loss: Binary classification loss component
+                - mse_loss: Severity regression loss component
+                - severity_mae: Mean absolute error for severity (metric)
+        """
+        # Convert continuous targets to binary for BCE
+        binary_targets = (targets >= self.binary_threshold).float()
+
+        # Apply label smoothing if configured
+        if self.label_smoothing > 0:
+            binary_targets = binary_targets * (1 - self.label_smoothing) + 0.5 * self.label_smoothing
+
+        # BCE loss on binary targets (classification signal)
+        bce = self.bce_loss(predictions, binary_targets)
+
+        # MSE loss on continuous targets (severity signal)
+        # Apply sigmoid to get predictions in [0, 1] for comparison with targets
+        pred_probs = torch.sigmoid(predictions)
+        mse = self.mse_loss(pred_probs, targets)
+
+        # Combine losses
+        combined = self.alpha * bce + self.beta * mse
+
+        # Apply reduction
+        if self.reduction == "mean":
+            total_loss = combined.mean()
+            bce_reduced = bce.mean()
+            mse_reduced = mse.mean()
+        elif self.reduction == "sum":
+            total_loss = combined.sum()
+            bce_reduced = bce.sum()
+            mse_reduced = mse.sum()
+        else:
+            total_loss = combined
+            bce_reduced = bce
+            mse_reduced = mse
+
+        # Compute severity MAE as a metric (not for backprop)
+        with torch.no_grad():
+            severity_mae = torch.abs(pred_probs - targets).mean()
+
+        return {
+            "total_loss": total_loss,
+            "bce_loss": bce_reduced,
+            "mse_loss": mse_reduced,
+            "severity_mae": severity_mae,
+        }
+
+    def get_config(self) -> dict[str, Any]:
+        """Get loss function configuration."""
+        return {
+            "alpha": self.alpha,
+            "beta": self.beta,
+            "binary_threshold": self.binary_threshold,
+            "label_smoothing": self.label_smoothing,
+            "reduction": self.reduction,
+        }
+
+
+class GDBCLoss(nn.Module):
+    """Gaussian Distribution-Based Calibration Loss for uncertainty-aware training.
+
+    GDBC extends the continuous BCE+MSE loss with variance-based weighting,
+    giving lower weight to samples with high annotation variance (noisy labels).
+
+    This is particularly useful when combining labels from multiple sources:
+    - DocCreator (ground truth, variance=0)
+    - Augraphy (synthetic, low variance)
+    - MLLM pseudo-labels (medium variance)
+    - Crowdsourced MOS (high variance)
+
+    Args:
+        base_loss: Base loss function (ContinuousBCEMSELoss)
+        variance_weight: How much to weight by variance (default: 1.0)
+        min_weight: Minimum sample weight to prevent zero gradients (default: 0.1)
+
+    Example:
+        >>> base_loss = ContinuousBCEMSELoss()
+        >>> gdbc_loss = GDBCLoss(base_loss)
+        >>> predictions = model(images)
+        >>> targets = torch.tensor([[0.3, 0.7]])
+        >>> variances = torch.tensor([[0.0, 0.2]])  # Low variance = reliable
+        >>> loss = gdbc_loss(predictions, targets, variances)
+
+    Reference:
+        - Phase 7 Strategy: Label aggregation with variance
+    """
+
+    def __init__(
+        self,
+        base_loss: ContinuousBCEMSELoss | None = None,
+        variance_weight: float = 1.0,
+        min_weight: float = 0.1,
+    ) -> None:
+        super().__init__()
+
+        self.base_loss = base_loss or ContinuousBCEMSELoss(reduction="none")
+        self.variance_weight = variance_weight
+        self.min_weight = min_weight
+
+    def forward(
+        self,
+        predictions: torch.Tensor,
+        targets: torch.Tensor,
+        variances: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        """Compute GDBC loss with variance weighting.
+
+        Args:
+            predictions: Model logits of shape (batch_size, num_classes)
+            targets: Continuous targets [0, 1] of shape (batch_size, num_classes)
+            variances: Optional label variances (batch_size, num_classes)
+
+        Returns:
+            Dictionary containing loss components
+        """
+        # Get base loss (unreduced)
+        base_result = self.base_loss(predictions, targets)
+
+        if variances is None:
+            # No variance weighting - just reduce
+            return {
+                "total_loss": base_result["total_loss"].mean(),
+                "bce_loss": base_result["bce_loss"].mean(),
+                "mse_loss": base_result["mse_loss"].mean(),
+                "severity_mae": base_result["severity_mae"],
+            }
+
+        # Compute variance-based weights: w = 1 / (1 + variance_weight * variance)
+        # Higher variance = lower weight
+        weights = 1.0 / (1.0 + self.variance_weight * variances)
+        weights = torch.clamp(weights, min=self.min_weight)
+
+        # Normalize weights
+        weights = weights / weights.mean()
+
+        # Apply weighted reduction
+        weighted_loss = (base_result["total_loss"] * weights).mean()
+        weighted_bce = (base_result["bce_loss"] * weights).mean()
+        weighted_mse = (base_result["mse_loss"] * weights).mean()
+
+        return {
+            "total_loss": weighted_loss,
+            "bce_loss": weighted_bce,
+            "mse_loss": weighted_mse,
+            "severity_mae": base_result["severity_mae"],
+            "mean_weight": weights.mean(),
+        }
+
+
 def compute_class_weights(
     labels: dict[str, torch.Tensor], num_classes: int = 2
 ) -> dict[str, torch.Tensor]:
