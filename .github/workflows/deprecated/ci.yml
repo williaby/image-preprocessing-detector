@@ -3,27 +3,26 @@
 #
 # CI FOCUS: Code Quality & Multi-Version Testing
 # This workflow focuses on code quality, formatting, and comprehensive testing
-# across multiple Python versions (3.10, 3.11, 3.12, 3.13, 3.14) using nox + uv.
-# Security scanning has been consolidated in security-analysis.yml workflow.
+# with TIERED TESTING STRATEGY for cost optimization.
 #
-# MULTI-VERSION TESTING (This Workflow):
-#   - Python 3.10, 3.11, 3.12, 3.13 support via nox (required to pass)
-#   - Python 3.14 experimental (allowed to fail - pyarrow upstream compatibility)
-#   - uv backend for 10-100x faster package installation
-#   - Isolated test environments per Python version
+# TIERED TESTING STRATEGY (Cost Optimization):
+#   PR TESTING (Fast Feedback):
+#     - Python 3.11, 3.12 only (2 versions)
+#     - Duration: ~10-15 minutes
+#     - Cost: ~$0.08-0.12 per PR
 #
-# QUALITY CHECKS (This Workflow):
-#   - MyPy: Strict type checking across all Python versions
-#   - Ruff: Code formatting validation and enhanced linting
-#   - Pytest: Comprehensive test suite with 80%+ coverage per version
+#   WEEKLY COMPREHENSIVE (Main Branch + Schedule):
+#     - Python 3.10, 3.11, 3.12, 3.13, 3.14 (all 5 versions)
+#     - Duration: ~20-25 minutes
+#     - Cost: ~$0.16-0.20 per run (4 runs/month = $0.64-0.80/month)
+#
+#   Savings: 50% reduction in CI minutes for PRs
 #
 # SECURITY SCANS (See security-analysis.yml):
 #   - Bandit: Python static security analysis
 #   - Safety: Python dependency CVE scanning
 #   - CodeQL: Advanced security analysis
 #   - Dependency Review: PR-based vulnerability detection
-#
-# This separation improves CI performance by ~10-12 minutes per PR
 
 name: CI
 
@@ -34,10 +33,18 @@ on:
       - main
       - develop
       - 'feature/**'
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/ci.yml'
   push:
     branches:
       - main
       - develop
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly Monday 2 AM UTC (comprehensive testing)
 
 permissions: read-all
 
@@ -159,6 +166,9 @@ jobs:
           df -h
 
   # Comprehensive testing with image processing focus - Multi-version testing with nox
+  # COST OPTIMIZATION: Tiered testing strategy
+  # - PR: Test only 3.11, 3.12 (fast feedback)
+  # - Main/Schedule: Test all versions 3.10-3.14 (comprehensive)
   test:
     name: Test Suite (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -166,7 +176,8 @@ jobs:
     needs: setup-optimized
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        # Conditional matrix based on event type
+        python-version: ${{ github.event_name == 'pull_request' && fromJson('["3.11", "3.12"]') || fromJson('["3.10", "3.11", "3.12", "3.13", "3.14"]') }}
       fail-fast: false
 
     steps:

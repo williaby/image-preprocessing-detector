@@ -1,0 +1,39 @@
+# Weekly Fuzzing for Image Preprocessing Detector
+# Uses org reusable python-fuzzing.yml workflow
+#
+# COST OPTIMIZATION: Weekly schedule instead of per-PR
+# - Was: 95 runs/month ($13.14/month)
+# - Now: ~5 runs/month (~$1/month)
+# - Savings: ~$12/month (92% reduction)
+#
+# Manual trigger available for security-critical PRs
+
+name: Fuzzing (Weekly)
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly Monday 3 AM UTC
+  workflow_dispatch:  # Manual trigger for critical security PRs
+  push:
+    branches:
+      - main  # Only on main branch merges
+
+permissions: read-all
+
+jobs:
+  fuzzing:
+    name: ClusterFuzzLite
+    uses: williaby/.github/.github/workflows/python-fuzzing.yml@main
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      fuzz-seconds: 1200  # 20 minutes for weekly runs (vs 10 min for PR)
+      sanitizer: 'address'
+      upload-sarif: true
+      crash-retention-days: 14  # Keep for 2 weeks
+      python-version: '3.12'
+      dry-run: false
+      timeout-minutes: 30
+      fail-on-crash: true
+      enable-corpus-prune: false
