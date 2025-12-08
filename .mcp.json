@@ -1,0 +1,85 @@
+{
+  "mcpServers": {
+    "zen": {
+      "comment": "Zen MCP Server - Core orchestration and analysis tools (Tier 1: always loaded)",
+      "command": "/home/byron/dev/zen-mcp-server/.zen_venv/bin/python",
+      "args": ["/home/byron/dev/zen-mcp-server/server.py"],
+      "env": {
+        "OPENAI_API_KEY": "sk-dummy-key-for-mcp-mode"
+      }
+    },
+    "context7": {
+      "comment": "Context7 - Library documentation and resolution (Tier 1: always loaded)",
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"],
+      "env": {}
+    },
+    "github": {
+      "comment": "GitHub MCP - Repository operations and PR management (Tier 2: loaded with code-reviewer agent)",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "playwright": {
+      "comment": "Playwright - E2E testing and browser automation (Tier 3: keyword-triggered)",
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "env": {
+        "PLAYWRIGHT_HEADLESS": "true"
+      }
+    },
+    "postgres": {
+      "comment": "PostgreSQL - Database operations and query analysis (Tier 3: keyword-triggered)",
+      "command": "npx",
+      "args": ["-y", "@crystaldba/postgres-mcp"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}"
+      }
+    },
+    "sentry": {
+      "comment": "Sentry - Error monitoring and exception tracking (Tier 3: keyword-triggered)",
+      "command": "npx",
+      "args": ["-y", "@sentry/mcp-server"],
+      "env": {
+        "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}",
+        "SENTRY_ORG": "${SENTRY_ORG}"
+      }
+    },
+    "mermaid": {
+      "comment": "Mermaid - Diagram generation (Tier 3: keyword-triggered)",
+      "command": "npx",
+      "args": ["-y", "mermaid-mcp-server"],
+      "env": {}
+    },
+    "docker": {
+      "comment": "Docker Hub - Container operations (Tier 3: keyword-triggered)",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "mcp/docker-hub"
+      ],
+      "env": {}
+    },
+    "uml-mcp-server": {
+      "comment": "UML MCP - UML diagram generation (Tier 3: keyword-triggered)",
+      "command": "/home/byron/dev/uml-mcp-server/.venv/bin/python",
+      "args": [
+        "/home/byron/dev/uml-mcp-server/uml_mcp_server.py"
+      ],
+      "env": {
+        "UML_OUTPUT_DIR": "${HOME}/.claude/tmp_cleanup/diagrams"
+      }
+    }
+  }
+}

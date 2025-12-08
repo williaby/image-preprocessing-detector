@@ -1,3 +1,8 @@
+---
+name: security-auditor
+description: Security analysis specialist for vulnerability detection and threat assessment
+---
+
 # Security Auditor Agent
 
 Security analysis specialist for vulnerability detection, threat assessment, and compliance validation.

@@ -1,3 +1,8 @@
+---
+name: code-reviewer
+description: Automated code review specialist focused on quality and standards compliance
+---
+
 # Code Reviewer Agent
 
 Automated code review specialist focused on code quality, standards compliance, and best practices.

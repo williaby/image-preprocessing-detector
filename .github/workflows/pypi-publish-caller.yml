@@ -1,0 +1,46 @@
+---
+# PyPI Publishing Workflow
+# Uses org reusable python-publish-pypi.yml workflow
+#
+# MAINTENANCE BENEFIT: Standardized PyPI publishing across org
+# - Zero cost impact (only runs on releases)
+# - Consistent OIDC trusted publishing setup
+# - Easier to maintain security best practices
+# - SLSA provenance generation included
+
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      use_testpypi:
+        description: 'Publish to TestPyPI instead of PyPI'
+        required: false
+        default: true
+        type: boolean
+
+permissions: read-all
+
+jobs:
+  publish:
+    name: Build and Publish to PyPI
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-publish-pypi.yml@main
+    permissions:
+      contents: read
+      id-token: write  # Required for OIDC trusted publishing
+    with:
+      python-version: '3.12'
+      package-name: 'image-preprocessing-detector'
+      source-directory: 'src'
+      build-backend: 'uv'  # Use UV for builds
+      use-testpypi: ${{ github.event_name == 'workflow_dispatch' && inputs.use_testpypi || false }}
+      verify-tag-version: true  # Ensure tag matches package version
+      # Note: Uses OIDC trusted publishing (no API token needed)
+      # Setup at: https://pypi.org/manage/account/publishing/
+    secrets:
+      # OIDC publishing doesn't need tokens
+      # But org workflow supports fallback for repos not using OIDC
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}

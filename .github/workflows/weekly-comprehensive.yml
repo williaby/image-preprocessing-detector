@@ -1,0 +1,169 @@
+# Weekly Comprehensive Testing
+# Uses org reusable workflows for full multi-version validation
+#
+# COST OPTIMIZATION: Runs weekly + on main branch only
+# - Python versions: 3.10, 3.11, 3.12, 3.13, 3.14 (all 5 versions)
+# - Duration: ~25-30 minutes
+# - Cost: ~$0.20-0.24 per run (4 runs/month = $0.80-0.96/month)
+#
+# This provides comprehensive quality assurance without running on every PR
+
+name: Comprehensive Testing (Weekly)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly Monday 2 AM UTC
+  workflow_dispatch:  # Manual trigger
+
+permissions: read-all
+
+jobs:
+  # Full Python version matrix
+  test-python-310:
+    name: CI (Python 3.10)
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    with:
+      python-version: '3.10'
+      coverage-threshold: 80
+      source-directory: 'src'
+      test-directory: 'tests'
+      run-integration-tests: true
+      run-security-tests: true
+      enable-codecov: false
+
+  test-python-311:
+    name: CI (Python 3.11)
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    with:
+      python-version: '3.11'
+      coverage-threshold: 80
+      source-directory: 'src'
+      test-directory: 'tests'
+      run-integration-tests: true
+      run-security-tests: true
+      enable-codecov: true  # Upload from 3.11
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  test-python-312:
+    name: CI (Python 3.12)
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    with:
+      python-version: '3.12'
+      coverage-threshold: 80
+      source-directory: 'src'
+      test-directory: 'tests'
+      run-integration-tests: true
+      run-security-tests: true
+      enable-codecov: false
+
+  test-python-313:
+    name: CI (Python 3.13)
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    with:
+      python-version: '3.13'
+      coverage-threshold: 80
+      source-directory: 'src'
+      test-directory: 'tests'
+      run-integration-tests: true
+      run-security-tests: true
+      enable-codecov: false
+
+  test-python-314:
+    name: CI (Python 3.14 - Experimental)
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    continue-on-error: true  # Allow 3.14 to fail (pyarrow compatibility)
+    with:
+      python-version: '3.14'
+      coverage-threshold: 80
+      source-directory: 'src'
+      test-directory: 'tests'
+      run-integration-tests: true
+      run-security-tests: true
+      enable-codecov: false
+
+  # Full security analysis (CodeQL + scans)
+  security-comprehensive:
+    name: Security Analysis (Full)
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-security-analysis.yml@main
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+  # OpenSSF Scorecard
+  scorecard:
+    name: OpenSSF Scorecard
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-scorecard.yml@main
+    permissions:
+      contents: read
+      security-events: write
+      id-token: write
+
+  # SBOM Generation
+  sbom:
+    name: SBOM Generation
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-sbom.yml@main
+    permissions:
+      contents: write
+
+  # Summary
+  comprehensive-summary:
+    name: Weekly Testing Summary
+    needs:
+      - test-python-310
+      - test-python-311
+      - test-python-312
+      - test-python-313
+      - test-python-314
+      - security-comprehensive
+      - scorecard
+      - sbom
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Weekly Comprehensive Testing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Python Version Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Python 3.10: ${{ needs.test-python-310.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Python 3.11: ${{ needs.test-python-311.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Python 3.12: ${{ needs.test-python-312.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Python 3.13: ${{ needs.test-python-313.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Python 3.14 (experimental): ${{ needs.test-python-314.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Additional Checks" >> $GITHUB_STEP_SUMMARY
+          echo "- Security Analysis: ${{ needs.security-comprehensive.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- OpenSSF Scorecard: ${{ needs.scorecard.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- SBOM Generation: ${{ needs.sbom.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note**: Python 3.14 failures are expected (pyarrow upstream compatibility)" >> $GITHUB_STEP_SUMMARY

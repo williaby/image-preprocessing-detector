@@ -2430,6 +2430,16 @@ After initial setup, ongoing operations include:
 
 **Context**: Current models trained on binary labels (0.0/1.0) achieve excellent classification (F1=0.88) but have moderate calibration quality (ECE=0.18). Retraining with continuous labels from classical detectors will improve calibration (target ECE<0.10) and enable severity-aware quality scoring.
 
+**Implementation Decision (2025-02-06)**: Proceeding directly to 150K continuous-label dataset with **enhanced methodology**:
+
+- ✅ **Adaptive label smoothing** (confidence-based clipping) instead of uniform [0.2, 0.8]
+- ✅ **Sample weighting** (down-weight high-disagreement) instead of outlier removal
+- ✅ **Focal loss + Smooth L1** instead of fixed BCE+MSE weights
+- ✅ **Multi-tier validation** (automated + human pairwise ranking)
+- ✅ **Guardrails**: F1 must stay ≥0.85, abort if validation fails
+
+**Rationale**: While analysis suggests 120K may suffice, maintaining 150K provides robust safety margin against label noise while incorporating efficiency improvements through better loss functions and validation strategies.
+
 ---
 
 #### Background & Rationale
@@ -2481,12 +2491,18 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - Maintain backward compatibility with optional defaults
 - Update Pydantic validation (enforce [0, 1] range)
 
-**Sprint 7.1.2: Update weak supervision labeler** (4 hours)
+**Sprint 7.1.2: Update weak supervision labeler** (6 hours)
 
 - Modify `WeakSupervisionLabeler` to output continuous scores instead of binary labels
 - Normalize classical detector outputs to [0, 1] scale (0=good, 1=bad)
-- Implement label smoothing (clip to [0.2, 0.8] to reduce overconfidence)
-- Add outlier filtering (remove samples with extreme detector disagreement)
+- **Implement adaptive label smoothing** (based on detector confidence):
+  - High confidence (>0.9): clip to [0.05, 0.95] - preserve extremes
+  - Medium confidence (0.7-0.9): clip to [0.15, 0.85] - moderate smoothing
+  - Low confidence (<0.7): clip to [0.25, 0.75] - strong smoothing
+- **Replace outlier filtering with sample weighting**:
+  - Compute detector variance as uncertainty measure
+  - Weight samples: `w = detector_confidence / (1.0 + detector_variance)`
+  - Down-weight high-disagreement samples without discarding them
 
 **Sprint 7.1.3: Generate 150K continuous-label dataset** (2 days)
 
@@ -2495,23 +2511,39 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - 70/15/15 train/val/test split (105K / 22.5K / 22.5K)
 - Upload to GCS: `gs://image_detection_b/training/iqa_phase2_150k_continuous/`
 
-**Sprint 7.1.4: Dataset validation** (3 hours)
+**Sprint 7.1.4: Dataset validation** (4 hours)
 
 - Verify label distribution (continuous scores, not just 0/1)
-- Check outlier removal effectiveness
+- **Validate adaptive smoothing**: Check that extremes [0-0.1, 0.9-1.0] preserved for high-confidence detectors
+- **Analyze sample weights**: Verify high-disagreement samples down-weighted (not removed)
 - Validate normalization ranges ([0, 1] for all scores)
+- **Cross-detector consistency**: Hold out 1 detector, measure correlation with other 7 (target: >0.75)
 - Compare with binary dataset (same source images, different labels)
 
 ---
 
 #### Week 2: Model Training with Combined Loss (Day 6-12)
 
-**Sprint 7.2.1: Implement combined BCE+MSE loss** (3 hours)
+**Sprint 7.2.1: Implement improved loss function** (5 hours)
 
-- Design hybrid loss function: `α * BCE(pred, target>0.5) + β * MSE(pred, target)`
-- BCE component: Strong classification signal (defect present/absent)
-- MSE component: Severity gradation (how much defect)
-- Hyperparameter tuning: α=0.6, β=0.4 (favor classification, add severity)
+- **Primary: Focal loss + Smooth L1** (recommended for calibration):
+
+  ```python
+  focal_bce = -(1-pt)^gamma * [target*log(pred) + (1-target)*log(1-pred)]
+  smooth_l1 = huber_loss(pred, target, delta=0.1)
+  loss = focal_bce + lambda * smooth_l1
+  ```
+
+- **Fallback: Uncertainty-weighted BCE+MSE**:
+
+  ```python
+  precision = exp(-log_var)
+  loss = precision[0]*BCE + precision[1]*MSE + log_var.sum()
+  # Learns optimal weights from data
+  ```
+
+- Hyperparameter grid search: γ ∈ [1.0, 2.0], λ ∈ [0.3, 0.5]
+- **Sample weighting integration**: Use computed weights from Sprint 7.1.2
 
 **Sprint 7.2.2: Update training loop** (2 hours)
 
@@ -2547,13 +2579,28 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 - Export to `resnet18_student_continuous.onnx`
 - Validate ONNX inference parity with PyTorch
 
-**Sprint 7.3.3: Calibration validation** (4 hours)
+**Sprint 7.3.3: Multi-tier calibration validation** (6 hours)
+
+**Tier 1: Automated Statistical Validation**
 
 - Compute Expected Calibration Error (ECE) on test set
 - Compare binary vs continuous models:
   - Binary ECE: ~0.18
   - Continuous ECE target: <0.10
 - Generate calibration plots (reliability diagrams)
+- **Cross-detector holdout validation**: Train with 7 detectors, validate on held-out 8th (correlation >0.75)
+- **Inter-model agreement**: Train 3 models with different seeds, measure prediction variance
+- **Calibration curve analysis**: Bin predictions, compare to mean classical detector scores
+
+**Tier 2: Human Validation (Minimal Effort)**
+
+- **Pairwise comparison validation** (500 samples, ~3 hours):
+  - Human annotator ranks image quality: "Which is worse?"
+  - Measure ranking accuracy (target: >85% agreement with model ordering)
+- **Extreme cases validation** (100 samples, ~1 hour):
+  - Sample 50 images with pred<0.2 (should be high quality)
+  - Sample 50 images with pred>0.8 (should be low quality)
+  - Binary human judgment: "Good/Bad quality?" (target: >90% agreement)
 
 **Sprint 7.3.4: Severity prediction validation** (4 hours)
 
@@ -2620,9 +2667,11 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 
 - **Calibration improvement**: ECE <0.10 (from 0.18 with binary training)
 - **Binary classification maintained**: F1 >0.82 (≤6% degradation acceptable)
-- **Severity prediction**: MAE <0.18 on continuous scale
+  - **Guardrail**: If F1 <0.85, re-evaluate loss function weights or abort
+- **Severity prediction**: MAE <0.18 on continuous scale (relaxed from 0.15)
 - **Production validation**: A/B test shows -20% false escalation rate
 - **Performance**: <5% latency increase vs binary models
+- **Validation tiers**: Pass all Tier 1 automated checks + Tier 2 human validation (>85% pairwise agreement)
 
 **Phase 7 Cost Estimate:**
 
@@ -2694,6 +2743,28 @@ laplacian_var = 50   # Severe blur → normalized score 0.8
 
 These classifiers enhance routing decisions and quality assessment by providing element-specific metadata. They inform downstream processing (Project B) about which specialist OCR engines to use for different document components.
 
+**Architecture Strategy**: ✅ **Shared Backbone + Task-Specific Heads**
+
+Instead of training 4 separate ResNet-18 models from scratch, Phase 9 uses a **shared frozen IQA-trained backbone** with lightweight task-specific heads. This approach provides:
+
+- **4x faster inference**: 13ms vs 50ms (single backbone pass vs 5 separate models)
+- **5x smaller deployment**: 75MB vs 300MB total model size
+- **Better transfer learning**: IQA backbone already trained on 136K tables, scientific papers, formulas
+- **Simple training**: Each head trained independently (no multi-task complexity)
+
+**Model Architecture**:
+
+```text
+Phase 7 IQA Student ResNet-18 (frozen backbone, 11.7M params)
+    ├─> IQA Heads (5 heads: blur, noise, skew, contrast, compression) - Phase 7
+    ├─> Handwriting Head (66K params: 512→128→2) - Phase 9.1
+    ├─> Table Type Head (133K params: 512→256→6) - Phase 9.2
+    ├─> Formula Head (131K params: 512→256→5) - Phase 9.3
+    └─> Parasitic Head (133K params: 512→256→4) - Phase 9.4
+
+Total: 11.7M (backbone) + 463K (4 heads) = 12.2M params vs 58.5M for 5 separate models
+```
+
 **Key Models**:
 
 - Handwriting Classifier (binary: printed vs handwritten)
@@ -2705,39 +2776,51 @@ These classifiers enhance routing decisions and quality assessment by providing 
 
 **9.1 Handwriting Classifier**
 
-- **Architecture**: ResNet-18 (full variant), MobileNetV3 (light variant)
+- **Architecture**: Frozen IQA ResNet-18 backbone + 2-class head (66K params)
+- **Initialization**: Phase 7 continuous IQA student (document-optimized)
 - **Classes**: 2 (printed, handwritten)
-- **Dataset**: IAM Handwriting Database + custom scanned documents
-- **Target Accuracy**: >96% (full), >92% (light)
+- **Dataset**: IAM Handwriting Database (254MB, ~13K samples) + custom scanned documents
+- **Training Strategy**: Frozen backbone (10 epochs) → Fine-tune backbone (10 epochs, low LR)
+- **Target Accuracy**: >96% (ResNet-18), >92% (MobileNetV3 light via distillation)
 - **Use Case**: Route handwritten forms to ICR engines vs standard OCR
-- **Performance Target**: <5ms CPU (light), <2ms GPU (full)
+- **Performance Target**: <3ms GPU (ResNet-18), <2ms CPU (MobileNetV3)
+- **Phase 7 Dataset Coverage**: ~5% handwriting exposure (acceptable gap, fine-tuning fills)
 
 **9.2 Table Type Classifier**
 
-- **Architecture**: ResNet-18 (full variant), MobileNetV3 (light variant)
+- **Architecture**: Frozen IQA ResNet-18 backbone + 6-class head (133K params)
+- **Initialization**: Phase 7 continuous IQA student (⭐ TRAINED ON 136K TABLES!)
 - **Classes**: 6 (simple_grid, merged_header, nested_rows, financial, form_like, scientific)
-- **Dataset**: PubTables-1M + custom annotations
-- **Target Accuracy**: >90%
+- **Dataset**: PubTables-1M (subset with table type annotations) + custom annotations
+- **Training Strategy**: Frozen backbone (10 epochs) → Fine-tune backbone (10 epochs) - backbone already excellent
+- **Target Accuracy**: >90% (ResNet-18), >85% (MobileNetV3 light via distillation)
 - **Use Case**: Route to TableFormer (simple) vs StructEqTable (complex)
-- **Performance Target**: <5ms CPU (light), <2ms GPU (full)
+- **Performance Target**: <3ms GPU (ResNet-18), <2ms CPU (MobileNetV3)
+- **Phase 7 Dataset Coverage**: ⭐ 91% table exposure (136K samples - EXCELLENT transfer learning advantage!)
 
 **9.3 Formula Complexity Classifier**
 
-- **Architecture**: ResNet-18 (full variant), MobileNetV3 (light variant)
+- **Architecture**: Frozen IQA ResNet-18 backbone + 5-class head (131K params)
+- **Initialization**: Phase 7 continuous IQA student (trained on scientific papers with formulas)
 - **Classes**: 5 (simple_inline, block_equation, multi_line, matrix, handwritten_math)
-- **Dataset**: IM2LATEX-100K + arXiv papers
-- **Target Accuracy**: >88%
+- **Dataset**: IM2LATEX-100K + arXiv papers from OHR-Bench
+- **Training Strategy**: Frozen backbone (10 epochs) → Fine-tune backbone (10 epochs, low LR)
+- **Target Accuracy**: >88% (ResNet-18), >84% (MobileNetV3 light via distillation)
 - **Use Case**: Route to Texify (simple) vs UniMERNet (complex)
-- **Performance Target**: <5ms CPU (light), <2ms GPU (full)
+- **Performance Target**: <3ms GPU (ResNet-18), <2ms CPU (MobileNetV3)
+- **Phase 7 Dataset Coverage**: ~25% formula exposure (37.5K PubTabNet + OHR-Bench scientific papers)
 
 **9.4 Parasitic Content Detector**
 
-- **Architecture**: ResNet-18 (full variant), MobileNetV3 (light variant)
+- **Architecture**: Frozen IQA ResNet-18 backbone + 4-class head (133K params)
+- **Initialization**: Phase 7 continuous IQA student (quality awareness helps detect overlays)
 - **Classes**: 4 (watermark, stamp, signature, clean)
-- **Dataset**: Synthetic watermarks + real scanned documents
-- **Target Accuracy**: >95% (watermark detection critical)
+- **Dataset**: Synthetic watermarks + SignaTR6K (6K signatures) + real scanned documents
+- **Training Strategy**: Frozen backbone (10 epochs) → Fine-tune backbone (10 epochs, low LR)
+- **Target Accuracy**: >95% (ResNet-18 - watermark detection critical), >90% (MobileNetV3 light)
 - **Use Case**: Flag non-content elements for exclusion from RAG indexing
-- **Performance Target**: <5ms CPU (light), <2ms GPU (full)
+- **Performance Target**: <3ms GPU (ResNet-18), <2ms CPU (MobileNetV3)
+- **Phase 7 Dataset Coverage**: 0% parasitic content (acceptable - synthetic generation for Phase 9)
 
 #### Integration
 
@@ -2763,26 +2846,114 @@ These classifiers enhance routing decisions and quality assessment by providing 
 
 #### Training Infrastructure
 
+**Phase 9 Training Approach - Shared Backbone Strategy**:
+
+**Step 1: Extract Phase 7 IQA Backbone**
+
+```python
+# Load Phase 7 continuous IQA student
+from image_preprocessing_detector.models import ResNetStudent
+
+iqa_model = ResNetStudent.load("resnet18_student_continuous_v2.pt")
+backbone = iqa_model.backbone_features  # 512-dim feature extractor
+
+# Freeze backbone for initial training
+for param in backbone.parameters():
+    param.requires_grad = False
+```
+
+**Step 2: Train Each Classifier Head Independently**
+
+```python
+# Example: Handwriting classifier
+class HandwritingHead(nn.Module):
+    def __init__(self):
+        self.classifier = nn.Sequential(
+            nn.Linear(512, 128),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(128, 2)  # printed, handwritten
+        )
+
+# Train with frozen backbone first (fast, ~10 epochs)
+# Then optionally fine-tune backbone (slower, +10 epochs)
+```
+
+**Step 3: Knowledge Distillation to MobileNetV3 Light**
+
+```python
+# Distill each ResNet-18 classifier → MobileNetV3 for edge deployment
+# Reuse Phase 3 distillation pipeline (T=4.0, α=0.7)
+```
+
+**Deployment Options**:
+
+1. **Unified Analyzer** (recommended for batch processing):
+   - Single ONNX model with shared backbone + all 4 heads
+   - One forward pass, all outputs (~13ms GPU total)
+   - Model size: ~75MB
+
+2. **Modular Heads** (recommended for selective deployment):
+   - Separate ONNX models: backbone + individual heads
+   - Load only needed classifiers based on document type
+   - Backbone (60MB) + per-head (2-5MB each)
+
+**Inference Performance Comparison**:
+
+| Architecture | GPU Latency | CPU Latency | Model Size | Deployment |
+|--------------|-------------|-------------|------------|------------|
+| 5 Separate ResNet-18 | ~50ms | ~200ms | 300MB | Inflexible |
+| Single Multi-Task | ~12ms | ~50ms | 60MB | All-or-nothing |
+| **Shared Backbone + Heads** | **~13ms** ⭐ | **~50ms** ⭐ | **75MB** ⭐ | **Flexible** ⭐ |
+
 **Reuse Phase 3 Setup**:
 
-- Modal GPU training (T4/A10)
-- Knowledge distillation (full → light)
-- ONN X export pipeline
+- Modal GPU training (T4/A10) for head fine-tuning
+- Knowledge distillation (ResNet-18 → MobileNetV3)
+- ONNX export pipeline
 - Model registry integration
 
-**Estimated Cost**: ~$15-20 (4 models × ~$4 each on Modal GPU)
+**Estimated Cost**: ~$8-12 (4 heads × ~$2 each for fine-tuning, vs $15-20 for training from scratch)
+
+#### Phase 7 Dataset Coverage & Transfer Learning
+
+**Critical Insight**: Phase 7 IQA training provides significant head start for Phase 9 classifiers.
+
+| Classifier | Phase 7 Coverage | Transfer Learning Advantage |
+|------------|------------------|----------------------------|
+| **Table Type** | ⭐ 91% (136K tables) | EXCELLENT - Backbone already knows table grids, borders, structures |
+| **Formula** | ⚠️ 25% (37.5K formulas) | GOOD - Scientific papers in PubTabNet + OHR-Bench arXiv |
+| **Handwriting** | ⚠️ 5% (7.5K samples) | MODERATE - Document structure learned, handwriting details via fine-tuning |
+| **Parasitic** | ❌ 0% (none) | MODERATE - Quality/artifact awareness helps, but needs synthetic data |
+
+**Key Recommendation**: ✅ **Keep Phase 7 dataset IQA-focused** (150K samples, no Phase 9 additions)
+
+**Rationale**:
+
+- Table classifier has exceptional foundation (136K table exposures in Phase 7)
+- Gaps are acceptable - Phase 9 uses specialized datasets with proper annotations
+- Adding unrelated content may dilute Phase 7's ECE < 0.10 calibration goal
+- Transfer learning works well even with gaps (document-aware backbone >> ImageNet initialization)
+
+**Expected Improvement vs ImageNet Initialization**:
+
+- Table classifier: +7-12% accuracy (massive data overlap)
+- Formula classifier: +3-5% accuracy (moderate formula exposure)
+- Handwriting classifier: +3-5% accuracy (document structure learned)
+- Parasitic detector: +2-3% accuracy (quality awareness)
 
 #### Blockers
 
 - **Dataset Acquisition**: Labeled datasets for all 4 classifiers not yet acquired
-  - IAM Handwriting: Available (free)
-  - PubTables-1M: Available (free)
-  - IM2LATEX-100K: Available (free)
+  - IAM Handwriting: ✅ Available on NFS (254MB, ~13K samples)
+  - PubTables-1M: Available (free, requires download)
+  - IM2LATEX-100K: Available (free, requires download)
   - Watermark dataset: Needs creation (synthetic generation)
 
+- **Dependencies**: Phase 7 IQA student must be trained first (provides backbone)
 - **Low Priority**: Phases 4-8 must be production-ready first
 
-**Completion Estimate**: 20-25 developer days + dataset acquisition time
+**Completion Estimate**: 12-15 developer days (reduced from 20-25 via shared backbone approach)
 
 #### Success Metrics
 

@@ -1,18 +1,22 @@
 # ClusterFuzzLite for Image Preprocessing Detector
-# Continuous fuzzing for image/PDF processing security vulnerabilities
+# Weekly fuzzing for image/PDF processing security vulnerabilities
+#
+# OPTIMIZATION: Moved from per-PR to weekly schedule
+# - Was: Running on every PR/push (95 runs/month, $13.14/month)
+# - Now: Weekly + main branch only (~5 runs/month, ~$1/month)
+# - Savings: ~$12/month (92% reduction)
+#
+# Manual trigger available for security-critical PRs
 
-name: ClusterFuzzLite
+name: ClusterFuzzLite (Weekly)
 
 on:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly Monday 3 AM UTC
+  workflow_dispatch:  # Manual trigger for critical security PRs
   push:
     branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
-  workflow_dispatch:
+      - main  # Only on main branch merges
 
 permissions: read-all
 
@@ -44,7 +48,7 @@ jobs:
         uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         if: steps.build.outcome == 'success'
         with:
-          fuzz-seconds: 600
+          fuzz-seconds: 1200  # Extended to 20 minutes for weekly run (was 10 min)
           language: python
           output-sarif: true
           sanitizer: address
@@ -53,9 +57,9 @@ jobs:
         if: failure() && steps.build.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: fuzzing-crashes
+          name: fuzzing-crashes-${{ github.run_id }}
           path: out/artifacts
-          retention-days: 7
+          retention-days: 14  # Extended for weekly runs
 
       - name: Upload SARIF Report
         if: always() && steps.build.outcome == 'success'
@@ -67,13 +71,15 @@ jobs:
       - name: Fuzzing Summary
         if: always()
         run: |
-          echo "🔍 ClusterFuzzLite Fuzzing Analysis Complete"
+          echo "🔍 ClusterFuzzLite Weekly Fuzzing Analysis Complete"
           echo "Build Status: ${{ steps.build.outcome }}"
           if [[ "${{ steps.build.outcome }}" == "success" ]]; then
-            echo "✅ Fuzzers built and executed for 600 seconds"
+            echo "✅ Fuzzers built and executed for 1200 seconds (20 minutes)"
             echo "📸 Image/PDF processing modules tested for edge cases"
             echo "🔐 Security vulnerabilities detection active"
             echo "📊 Fuzzing harnesses: fuzz_pdf_loader, fuzz_image_loader, fuzz_text_gate"
+            echo ""
+            echo "💡 Cost optimization: Weekly schedule saves ~\$12/month vs per-PR"
           else
             echo "⚠️  Fuzzer build failed"
             echo "ℹ️  Check logs above for build errors"

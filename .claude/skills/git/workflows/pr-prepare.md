@@ -18,23 +18,68 @@ Fully automated PR creation workflow:
 5. **GitHub Integration**: Creates draft PR with comprehensive description
 6. **Size Analysis**: Analyzes PR size and suggests splitting if needed
 
-## **CRITICAL: ALWAYS Use MCP Tool**
+## **CRITICAL: ALWAYS Use MCP Tool + Draft PR Workflow**
 
-**DO NOT** manually create PRs. **ALWAYS** use `mcp__zen-core__pr_prepare`:
+**MANDATORY**: All PRs MUST be created as **DRAFT** first for cost optimization.
+
+### Standard Workflow (REQUIRED)
 
 ```bash
-# Standard PR creation (RECOMMENDED)
-mcp__zen-core__pr_prepare --include_wtd=true --target_branch=main
+# Step 1: Local validation (catch issues before push)
+./scripts/validate-before-push.sh
 
-# Force What the Diff for large PRs
-mcp__zen-core__pr_prepare --include_wtd=true --force_wtd=true
+# Step 2: Create PR as DRAFT using MCP tool
+mcp__zen-core__pr_prepare \
+  --include_wtd=true \
+  --target_branch=main \
+  --draft=true
 
-# Custom parameters
+# Step 3: Verify essential checks pass
+gh pr checks --watch
+
+# Step 4: Mark ready when development complete
+gh pr ready <pr-number>
+```
+
+### Why Draft PRs? (Cost Savings)
+
+Draft PRs skip expensive workflows saving $0.50-1.00 per PR:
+
+- Python compatibility matrix (12 jobs → 1 job)
+- ClusterFuzzLite fuzzing (30 min → skipped)
+- Mutation testing (60 min → skipped)
+- SonarCloud analysis (10 min → skipped)
+- Container security scans (12 min → skipped)
+
+**Essential checks still run**: Linting, tests, security scans, REUSE, SBOM
+
+### Quick Commands
+
+```bash
+# Standard PR creation as DRAFT (RECOMMENDED)
+mcp__zen-core__pr_prepare --include_wtd=true --draft=true
+
+# Force What the Diff for large PRs (still draft)
+mcp__zen-core__pr_prepare --include_wtd=true --force_wtd=true --draft=true
+
+# Custom parameters (draft)
 mcp__zen-core__pr_prepare \
   --include_wtd=true \
   --target_branch=develop \
   --change_type=feat \
-  --title="Custom PR title"
+  --title="Custom PR title" \
+  --draft=true
+```
+
+### Exception: Critical Hotfixes Only
+
+Skip draft PR only for production emergencies:
+
+```bash
+# No --draft flag for critical fixes
+mcp__zen-core__pr_prepare \
+  --include_wtd=true \
+  --title="fix: critical security patch CVE-2024-XXXXX"
 ```
 
 ## What the Diff Integration

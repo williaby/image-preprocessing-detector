@@ -1,0 +1,116 @@
+# PR Checks - Fast Essential Validation
+# Uses org reusable workflows for standardized quality checks
+#
+# COST OPTIMIZATION: Tiered testing strategy
+# - Runs on: Every PR
+# - Python versions: 3.11, 3.12 only (2 versions)
+# - Duration: ~10-15 minutes
+# - Cost: ~$0.08-0.12 per PR
+#
+# For comprehensive testing (all Python versions), see weekly-comprehensive.yml
+
+name: PR Checks (Fast)
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/pr-checks.yml'
+
+permissions: read-all
+
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Test on Python 3.11 (fast feedback)
+  ci-python-311:
+    name: CI (Python 3.11)
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    with:
+      python-version: '3.11'
+      coverage-threshold: 80
+      source-directory: 'src'
+      test-directory: 'tests'
+      run-integration-tests: true
+      run-security-tests: true
+      enable-codecov: true
+      enable-sonarcloud: false
+      fail-on-llm-tags: false
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # Test on Python 3.12 (current stable)
+  ci-python-312:
+    name: CI (Python 3.12)
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    with:
+      python-version: '3.12'
+      coverage-threshold: 80
+      source-directory: 'src'
+      test-directory: 'tests'
+      run-integration-tests: true
+      run-security-tests: true
+      enable-codecov: false  # Only upload from 3.11
+      enable-sonarcloud: false
+      fail-on-llm-tags: false
+
+  # PR Validation - Requirements sync
+  pr-validation:
+    name: PR Validation
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-pr-validation.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+
+  # License Compliance
+  reuse:
+    name: REUSE Compliance
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-reuse.yml@main
+    permissions:
+      contents: read
+
+  # All checks must pass
+  pr-gate:
+    name: PR Gate (All Checks)
+    needs: [ci-python-311, ci-python-312, pr-validation, reuse]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          echo "### PR Checks Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Python 3.11 CI: ${{ needs.ci-python-311.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Python 3.12 CI: ${{ needs.ci-python-312.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- PR Validation: ${{ needs.pr-validation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- REUSE Compliance: ${{ needs.reuse.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.ci-python-311.result }}" != "success" ]] || \
+             [[ "${{ needs.ci-python-312.result }}" != "success" ]] || \
+             [[ "${{ needs.pr-validation.result }}" != "success" ]] || \
+             [[ "${{ needs.reuse.result }}" != "success" ]]; then
+            echo "❌ One or more PR checks failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          echo "✅ All PR checks passed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 Weekly comprehensive testing (all Python versions) runs on main branch" >> $GITHUB_STEP_SUMMARY
