@@ -92,12 +92,13 @@ This section provides comprehensive quantitative and qualitative analysis of the
 | **TableBank** | 23.7 GB | 417,234 tables | JPG | 200-4000px | Tables (Word/LaTeX) | CC-BY-4.0 |
 | **PubTabNet** | 10.5 GB | 568,454 tables | PNG | 300-2000px | Scientific tables | CDLA-Permissive-2.0 |
 | **DocLayNet** | 41 GB | 80,863 pages | PNG | 1024-3000px | Multi-domain | CDLA-Permissive-2.0 |
-| **NIST DB2** | ~2 GB | 5,590 forms | PNG | 300 DPI | Tax forms | Public Domain |
+| **NIST DB2** | ~900 MB | 5,590 forms | PNG | 300 DPI | Tax forms | Public Domain |
+| **NIST SD-6** | ~925 MB | 5,595 forms | PNG | 300 DPI | Census forms | Public Domain |
 | **DIQA-5000** | ~8 GB | 5,000 images | JPG | Variable | Real degraded | Academic |
 | **FUNSD+** | ~1 GB | 3,000+ forms | PNG | Variable | Generic forms | CC-BY-4.0 |
 | **im2latex-100k** | ~3 GB | 100,000+ formulas | PNG | 100-800px | LaTeX equations | MIT |
 | **IAM Handwriting** | ~2 GB | 13,353 lines | PNG | 300 DPI | Handwriting | Academic |
-| **Multimodal Textbook** | Streaming | 500K+ frames | JPG | Variable | Educational | Apache-2.0 |
+| **Multimodal Textbook** | ~600 GB | 6.5M frames | JPG | Variable | Educational | Apache-2.0 |
 | **MathVerse** | ~500 MB | 2,612 diagrams | PNG | Variable | Geometry | CC-BY-4.0 |
 | **OHR-Bench** | ~1.2 GB | 1,358 pages | PDF→PNG | Variable | Multi-domain | CC-BY-NC-4.0 |
 
@@ -107,13 +108,14 @@ This section provides comprehensive quantitative and qualitative analysis of the
 
 | Document Type | Percentage | Primary Sources | IQA Relevance |
 |--------------|------------|-----------------|---------------|
-| **Tables** | 70.4% | TableBank, PubTabNet | Grid structure sensitive to blur/noise |
+| **Tables** | 70.4% | TableBank, PubTabNet, FinTabNet | Grid structure sensitive to blur/noise |
 | **Scientific** | 35.2% | PubTabNet | Math formulas, fine print |
-| **Forms** | 7.7% | NIST DB2, FUNSD+ | Field alignment, handwriting |
+| **Forms** | 7.7% | NIST DB2, NIST SD-6, FUNSD+ | Field alignment, handwriting |
 | **Figures/Diagrams** | 10.3% | DocLayNet | Mixed text/graphics |
-| **Handwriting** | 6.8% | IAM, FUNSD+ | Line quality, stroke clarity |
+| **Handwriting** | 6.8% | IAM, FUNSD+, NIST SD-6 | Line quality, stroke clarity |
 | **Formulas** | 6.7% | im2latex, MathVerse | Symbol clarity, subscripts |
-| **Degraded Real** | 2.7% | DIQA-5000 | Ground truth severity |
+| **Degraded Real** | 2.7% | DIQA-5000, DIBCO | Ground truth severity |
+| **Educational** | TBD | Multimodal Textbook | Mixed diagrams, equations, tables |
 
 #### 2.0.3 Individual Dataset Analysis
 
