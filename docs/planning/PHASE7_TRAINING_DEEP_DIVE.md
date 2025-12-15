@@ -196,6 +196,28 @@ This section provides comprehensive quantitative and qualitative analysis of the
   - **Source**: <https://www.nist.gov/srd/nist-special-database-2>
 - **Status**: ⏳ Downloading - will help fill Forms domain gap
 
+##### NIST SD-6 (SFRS2) (3.7% of Phase 7)
+
+- **Origin**: NIST Special Database 6 - Structured Forms Reference Set 2
+- **Composition**: 5,595 form images with handwritten content
+- **Resolution**: 300 DPI (standardized binary images)
+- **Key Characteristics**:
+  - Structured form fields with handwritten entries
+  - Binary document images (clean black/white)
+  - Handwritten content in constrained fields
+  - 2-page forms from 1988 Census
+- **IQA Implications**:
+  - Tests skew detection on form grids
+  - Handwriting quality variation in field boxes
+  - Binary format simplifies noise detection
+  - Field alignment critical for OCR accuracy
+- **Storage**:
+  - **Local**: `/mnt/e/image_detection/benchmarks/nist_sd6/` (downloading)
+  - **GCS**: `gs://image_detection_b/datasets/benchmarks/nist_sd6/`
+  - **Source**: <https://www.nist.gov/srd/nist-special-database-6>
+- **License**: Public Domain (US Government)
+- **Status**: ⏳ Downloading - combined with DB2 provides ~11K forms
+
 ##### DIQA-5000 (2.7% of Phase 7 - Ground Truth)
 
 - **Origin**: Document Image Quality Assessment benchmark
@@ -1558,8 +1580,25 @@ gs://image_detection_b/
 | Dataset | Domain | Estimated Size | Priority | Action |
 |---------|--------|---------------|----------|--------|
 | **NIST DB2** | Forms | 5,590 | ⏳ DOWNLOADING | [NIST SRD-2](https://www.nist.gov/srd/nist-special-database-2) |
+| **NIST SD-6** | Forms | 5,595 | ⏳ DOWNLOADING | [NIST SRD-6](https://www.nist.gov/srd/nist-special-database-6) |
 | **IAM Handwriting** | Handwriting | 13,353 | 🟡 MEDIUM | Academic access required |
-| **Multimodal Textbook** | Mixed | 500K+ | 🟢 LOW | Stream from HuggingFace |
+| **Multimodal Textbook** | Mixed | 6.5M | ⏳ SAMPLE DOWNLOADED | [HuggingFace](https://huggingface.co/datasets/DAMO-NLP-SG/multimodal_textbook) |
+
+### Forms Domain Gap Projection
+
+| Source | Count | Status | Notes |
+|--------|-------|--------|-------|
+| v4_staging/forms | 2,043 | ✅ Staged | Current baseline |
+| NIST DB2 | ~5,590 | ⏳ Downloading | 1992 tax forms |
+| NIST SD-6 | ~5,595 | ⏳ Downloading | Census forms |
+| FUNSD+ | ~3,000 | ✅ Available | Generic forms |
+| **Projected Total** | **~16,228** | - | 81% of 20K target |
+
+**Gap**: ~3,772 more forms needed to reach 20K target. Options:
+
+- Augmentation diversity (flip, rotate) can increase effective count
+- Generate synthetic forms from templates
+- Use FUNSD original + XFUND multilingual variants
 
 ---
 
