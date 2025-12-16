@@ -21,6 +21,8 @@ wheels/
 *.egg
 MANIFEST
 
+data/
+
 # Virtual Environment
 venv/
 env/
@@ -83,6 +85,7 @@ data/promptcraft/
 data/raw/
 data/training/*
 datasets/
+data/phase7_mvp/
 
 # DVC tracking
 # *.dvc  # Commented to allow .dvc tracking files
