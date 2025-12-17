@@ -6,21 +6,85 @@ DIQA-style label generation for external datasets.
 Project C is the only workstream that performs learning - no benchmarking
 or quantization is done here.
 
+Architecture:
+    Vision Encoder (frozen) → LoRA Adapters → Regression Head → [3 scores]
+
+Output Scores:
+    - overall: Overall document quality [0, 1]
+    - sharpness: Text and image clarity [0, 1]
+    - color: Color reproduction accuracy [0, 1]
+
 Key Components:
     - DIQATrainer: Main training loop with PEFT/LoRA
-    - LabelGenerator: Generate DIQA scores for external datasets
-    - ModelCardGenerator: Create model cards for trained artifacts
+    - DIQARegressionModel: Vision encoder + regression head
+    - DIQATrainingDataset: Dataset adapter with split discipline
+    - TrainingManifest: Full provenance tracking
+    - ModelExporter: Export to PyTorch/ONNX/TorchScript
 
 Example:
-    >>> from image_preprocessing_detector.labeling.finetuning import DIQATrainer
+    >>> from image_preprocessing_detector.labeling.finetuning import (
+    ...     DIQATrainer,
+    ...     TrainingConfig,
+    ... )
     >>>
-    >>> config = DIQATrainingConfig(
-    ...     base_model="meta-llama/Llama-4-Maverick",
-    ...     peft_method="lora",
-    ...     output_dir="./checkpoints/",
+    >>> config = TrainingConfig(
+    ...     base_model_id="HuggingFaceTB/SmolVLM-256M-Instruct",
+    ...     num_epochs=30,
+    ...     use_lora=True,
     ... )
     >>> trainer = DIQATrainer(config)
-    >>> result = trainer.train(train_dataset, val_dataset)
+    >>> metrics = trainer.train(data_dir="/data/diqa5000")
+    >>> trainer.export_model("exports/", formats=["pytorch", "onnx"])
 """
 
-__all__: list[str] = []
+from image_preprocessing_detector.labeling.finetuning.dataset import (
+    DIQASample,
+    DIQATrainingDataset,
+    create_data_loaders,
+    get_default_transforms,
+)
+from image_preprocessing_detector.labeling.finetuning.manifest import (
+    DatasetManifest,
+    ManifestBuilder,
+    ModelExporter,
+    ModelManifest,
+    TrainingManifest,
+    create_arena_model_spec,
+)
+from image_preprocessing_detector.labeling.finetuning.regression_head import (
+    DIQAOutput,
+    DIQARegressionHead,
+    DIQARegressionModel,
+    RegressionHeadConfig,
+)
+from image_preprocessing_detector.labeling.finetuning.trainer import (
+    DIQATrainer,
+    TrainingConfig,
+    TrainingMetrics,
+    train_diqa_model,
+)
+
+__all__ = [
+    # Dataset
+    "DIQASample",
+    "DIQATrainingDataset",
+    "create_data_loaders",
+    "get_default_transforms",
+    # Regression Head
+    "DIQAOutput",
+    "DIQARegressionHead",
+    "DIQARegressionModel",
+    "RegressionHeadConfig",
+    # Trainer
+    "DIQATrainer",
+    "TrainingConfig",
+    "TrainingMetrics",
+    "train_diqa_model",
+    # Manifest
+    "DatasetManifest",
+    "ManifestBuilder",
+    "ModelExporter",
+    "ModelManifest",
+    "TrainingManifest",
+    "create_arena_model_spec",
+]

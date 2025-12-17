@@ -1,23 +1,74 @@
-"""Project B: Quantization Factory using Unsloth.
+"""Project B: Quantization Factory.
 
 This module provides standardized quantization of candidate models into
-8-bit and 4-bit variants with consistent packaging and metadata.
+INT8 and INT4 variants with consistent packaging and metadata.
 
 The Quantization Factory is transformation-only - no benchmarking or
 training is performed here.
 
+Supported Backends:
+    - bitsandbytes: NVIDIA GPU quantization (llm.int8, nf4)
+    - auto-gptq: GPTQ quantization
+    - autoawq: AWQ quantization
+
 Key Components:
     - QuantizationPipeline: Main quantization orchestration
-    - QuantizationRecipe: Model-family-specific recipes
-    - ArtifactPackager: Standardized artifact packaging
+    - QuantizationRecipe: Pre-configured model-family recipes
+    - QuantizationConfig: Fine-grained configuration
+    - recommend_recipe: Auto-select best recipe for a model
 
 Example:
-    >>> from image_preprocessing_detector.labeling import ModelSpec
-    >>> from image_preprocessing_detector.labeling.quantization import QuantizationPipeline
+    >>> from image_preprocessing_detector.labeling import ModelSpec, ModelSource
+    >>> from image_preprocessing_detector.labeling.quantization import (
+    ...     QuantizationPipeline,
+    ...     recommend_recipe,
+    ... )
     >>>
-    >>> spec = ModelSpec.from_yaml("base_model.yaml")
+    >>> spec = ModelSpec(
+    ...     source=ModelSource.HUGGINGFACE,
+    ...     id="HuggingFaceTB/SmolVLM-256M-Instruct",
+    ...     revision="main",
+    ... )
+    >>> recipe = recommend_recipe(spec.id, bits=4)
     >>> pipeline = QuantizationPipeline()
-    >>> artifact = pipeline.quantize(spec, bits=8, output_dir="./artifacts/")
+    >>> result = pipeline.quantize(spec, bits=4, config=recipe.config)
+    >>> print(f"Compression: {result.compression_ratio:.1f}x")
 """
 
-__all__: list[str] = []
+from image_preprocessing_detector.labeling.quantization.pipeline import (
+    QuantizationBackend,
+    QuantizationConfig,
+    QuantizationPipeline,
+    QuantizationResult,
+    QuantizationType,
+)
+from image_preprocessing_detector.labeling.quantization.recipes import (
+    ALL_RECIPES,
+    ModelFamily,
+    QuantizationRecipe,
+    RecipeOptimization,
+    create_custom_recipe,
+    detect_model_family,
+    get_recipe,
+    list_recipes,
+    recommend_recipe,
+)
+
+__all__ = [
+    # Pipeline
+    "QuantizationBackend",
+    "QuantizationConfig",
+    "QuantizationPipeline",
+    "QuantizationResult",
+    "QuantizationType",
+    # Recipes
+    "ALL_RECIPES",
+    "ModelFamily",
+    "QuantizationRecipe",
+    "RecipeOptimization",
+    "create_custom_recipe",
+    "detect_model_family",
+    "get_recipe",
+    "list_recipes",
+    "recommend_recipe",
+]

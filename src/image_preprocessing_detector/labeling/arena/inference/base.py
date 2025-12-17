@@ -258,5 +258,12 @@ def create_backend(source: str, **kwargs: Any) -> InferenceBackend:
 
         return ModalBackend(**kwargs)
 
-    msg = f"Unknown backend source: {source}. Must be 'huggingface', 'local', 'api', or 'modal'"
+    if source == "regression":
+        from image_preprocessing_detector.labeling.arena.inference.regression import (
+            RegressionBackend,
+        )
+
+        return RegressionBackend(**kwargs)
+
+    msg = f"Unknown backend source: {source}. Must be 'huggingface', 'local', 'api', 'modal', or 'regression'"
     raise ValueError(msg)
