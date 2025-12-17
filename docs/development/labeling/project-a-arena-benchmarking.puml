@@ -1,0 +1,104 @@
+@startuml project-a-arena-benchmarking
+!theme plain
+skinparam backgroundColor white
+skinparam actorBackgroundColor LightBlue
+skinparam participantBackgroundColor LightYellow
+skinparam databaseBackgroundColor LightGreen
+
+title Project A: Arena Benchmarking Workflow
+footer DIQA-5000 Model Evaluation Pipeline
+
+actor Developer as dev
+participant "ModelSpec" as spec
+participant "ArenaRunner" as runner
+participant "InferenceBackend" as backend
+participant "BenchmarkDataset\n(DIQA-5000)" as dataset
+participant "ArenaMetrics" as metrics
+participant "LeaderboardGenerator" as leaderboard
+database "Results\nStorage" as storage
+
+== Model Setup ==
+dev -> spec : Create ModelSpec
+note right of spec
+  source: huggingface/local/api
+  id: model identifier
+  variant: base/int8/int4/finetuned
+  revision: commit/tag
+end note
+
+== Benchmark Execution ==
+dev -> runner : run(model_spec, dataset)
+activate runner
+
+runner -> backend : create_backend(source)
+activate backend
+backend -> backend : load(spec, config)
+backend --> runner : backend ready
+
+runner -> backend : warmup(iterations)
+note right of backend
+  3 warmup passes
+  for stable timing
+end note
+
+runner -> dataset : iterate samples
+activate dataset
+
+loop For each batch
+  dataset --> runner : batch of images + labels
+  runner -> backend : predict_batch(images)
+  backend -> backend : VLM Inference
+  note right of backend
+    overall: 0-1
+    sharpness: 0-1
+    color: 0-1
+  end note
+  backend --> runner : DIQAPrediction[]
+  runner -> runner : record_result()
+end
+
+deactivate dataset
+
+== Metrics Computation ==
+runner -> metrics : compute(predictions, ground_truth)
+activate metrics
+metrics -> metrics : Calculate per-dimension
+note right of metrics
+  PLCC: Pearson correlation
+  SRCC: Spearman correlation
+  MAE: Mean absolute error
+  RMSE: Root mean square error
+end note
+metrics -> metrics : Calculate aggregate
+metrics --> runner : ArenaMetrics
+deactivate metrics
+
+== Result Generation ==
+runner -> runner : build_result()
+note right of runner
+  BenchmarkResult:
+  - run_id
+  - status
+  - model_spec
+  - dataset info
+  - metrics
+  - execution info
+  - provenance
+end note
+
+runner -> storage : save result JSON
+runner -> storage : save manifest YAML
+deactivate backend
+runner --> dev : BenchmarkResult
+deactivate runner
+
+== Leaderboard Generation ==
+dev -> leaderboard : add_results_from_directory()
+activate leaderboard
+leaderboard -> storage : load result JSONs
+leaderboard -> leaderboard : build_entries()
+leaderboard -> leaderboard : sort by metric
+leaderboard --> dev : to_markdown() / to_html()
+deactivate leaderboard
+
+@enduml
