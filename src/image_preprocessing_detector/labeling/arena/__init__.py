@@ -32,6 +32,12 @@ from image_preprocessing_detector.labeling.arena.inference.base import (
     ModelNotLoadedError,
     create_backend,
 )
+from image_preprocessing_detector.labeling.arena.modal_client import (
+    ArenaInferenceRequest,
+    ArenaInferenceResponse,
+    ArenaModalClient,
+    CircuitBreakerConfig,
+)
 from image_preprocessing_detector.labeling.arena.metrics import (
     ArenaMetrics,
     DimensionMetrics,
@@ -78,6 +84,11 @@ __all__ = [
     "ModelLoadError",
     "ModelNotLoadedError",
     "create_backend",
+    # Modal Client
+    "ArenaInferenceRequest",
+    "ArenaInferenceResponse",
+    "ArenaModalClient",
+    "CircuitBreakerConfig",
     # Schemas
     "BenchmarkResult",
     "DatasetInfo",

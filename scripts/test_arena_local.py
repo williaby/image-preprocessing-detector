@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Local test script for Arena framework with vision-language models.
 
-This script tests the Arena benchmarking framework locally without Modal.com
-using small VLMs optimized for limited VRAM.
+This script tests the Arena benchmarking framework locally, including:
+- Framework tests (schemas, metrics, backends)
+- Modal.com integration (mock mode)
+- Local VLM loading (optional)
 
 Supported Models (for 4GB VRAM):
     - SmolVLM-256M: < 1GB VRAM (smallest VLM in the world)
@@ -24,6 +26,13 @@ Usage:
 
     # Run on CPU (slower but no VRAM needed)
     uv run python scripts/test_arena_local.py --model smolvlm-256m --device cpu
+
+Modal Integration:
+    The script tests Modal client and backend in mock mode by default.
+    To test with actual Modal deployment:
+    1. Deploy: modal deploy modal/arena_benchmark.py
+    2. Unset mock mode: export ARENA_MODAL_MOCK=false
+    3. Run: uv run python scripts/test_arena_local.py --skip-model
 """
 
 from __future__ import annotations
@@ -311,7 +320,7 @@ def test_inference_backend_factory() -> bool:
         )
 
         # Test creating backends (without loading models)
-        for source in ["huggingface", "local", "api"]:
+        for source in ["huggingface", "local", "api", "modal"]:
             try:
                 if source == "api":
                     backend = create_backend(source, provider="openai")
@@ -326,6 +335,142 @@ def test_inference_backend_factory() -> bool:
 
     except Exception as e:
         print(f"  Backend factory test failed: {e}")
+        return False
+
+
+def test_modal_client() -> bool:
+    """Test Arena Modal client (mock mode)."""
+    print("\n--- Testing Modal Client (Mock Mode) ---")
+    try:
+        import os
+        os.environ["ARENA_MODAL_MOCK"] = "true"
+
+        from image_preprocessing_detector.labeling.arena.modal_client import (
+            ArenaInferenceRequest,
+            ArenaModalClient,
+        )
+
+        client = ArenaModalClient()
+        print(f"  Client initialized: app={client.app_name}")
+
+        # Test mock prediction
+        test_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        request = ArenaInferenceRequest(
+            image=test_image,
+            prompt="Rate this document quality",
+            request_id="test-001",
+        )
+
+        response = client.predict(request)
+        assert response is not None
+        assert "Overall:" in response.text
+        print(f"  Mock response: {response.text[:50]}...")
+        print(f"  Inference time: {response.inference_time_ms:.1f}ms")
+
+        # Test batch prediction
+        batch_requests = [
+            ArenaInferenceRequest(
+                image=np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8),
+                prompt="Rate quality",
+                request_id=f"batch-{i}",
+            )
+            for i in range(3)
+        ]
+        responses = client.batch_predict(batch_requests)
+        assert len(responses) == 3
+        print(f"  Batch predict: {len(responses)} responses")
+
+        # Test circuit breaker stats
+        stats = client.get_stats()
+        print(f"  Circuit state: {stats['state']}")
+        print(f"  Success rate: {stats['success_rate']:.2f}")
+
+        print("  Modal client: OK")
+        return True
+
+    except Exception as e:
+        print(f"  Modal client test failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_modal_backend() -> bool:
+    """Test Modal inference backend (mock mode)."""
+    print("\n--- Testing Modal Backend (Mock Mode) ---")
+    try:
+        import os
+        os.environ["ARENA_MODAL_MOCK"] = "true"
+
+        from image_preprocessing_detector.labeling.arena.inference.base import (
+            InferenceConfig,
+        )
+        from image_preprocessing_detector.labeling.arena.inference.modal import (
+            ModalBackend,
+        )
+        from image_preprocessing_detector.labeling.model_spec import (
+            ModelSource,
+            ModelSpec,
+            ModelVariant,
+        )
+
+        # Create backend
+        backend = ModalBackend()
+        assert not backend.is_loaded()
+        print("  Backend created")
+
+        # Load with model spec
+        spec = ModelSpec(
+            source=ModelSource.HUGGINGFACE,
+            id="unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit",
+            variant=ModelVariant.INT4,
+            revision="main",
+        )
+        config = InferenceConfig(batch_size=4, device="modal")
+
+        backend.load(spec, config)
+        assert backend.is_loaded()
+        print("  Backend loaded")
+
+        # Test single prediction
+        test_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        prediction = backend.predict(test_image)
+        assert 0 <= prediction.overall <= 1
+        assert 0 <= prediction.sharpness <= 1
+        assert 0 <= prediction.color <= 1
+        print(f"  Prediction: overall={prediction.overall:.2f}, sharpness={prediction.sharpness:.2f}")
+
+        # Test batch prediction
+        images = [
+            np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+            for _ in range(4)
+        ]
+        predictions = backend.predict_batch(images)
+        assert len(predictions) == 4
+        print(f"  Batch predict: {len(predictions)} predictions")
+
+        # Test model info
+        info = backend.get_model_info()
+        assert info["backend"] == "modal"
+        print(f"  Model info: {info['model_id']}")
+
+        # Test provenance
+        provenance = backend.get_provenance()
+        assert provenance.model_checksum.startswith("modal-model:")
+        print(f"  Provenance: {provenance.model_checksum}")
+
+        # Cleanup
+        backend.unload()
+        assert not backend.is_loaded()
+        print("  Backend unloaded")
+
+        print("  Modal backend: OK")
+        return True
+
+    except Exception as e:
+        print(f"  Modal backend test failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
@@ -717,6 +862,8 @@ Examples:
     results["dataset_adapter"] = test_dataset_adapter()
     results["backend_factory"] = test_inference_backend_factory()
     results["leaderboard"] = test_leaderboard_generator()
+    results["modal_client"] = test_modal_client()
+    results["modal_backend"] = test_modal_backend()
 
     if not args.skip_model:
         if args.model.startswith("smolvlm"):
