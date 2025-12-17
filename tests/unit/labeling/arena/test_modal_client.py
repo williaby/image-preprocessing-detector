@@ -4,17 +4,15 @@ from __future__ import annotations
 
 import os
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
-import pytest
 
 from image_preprocessing_detector.labeling.arena.modal_client import (
     ArenaInferenceRequest,
     ArenaInferenceResponse,
     ArenaModalClient,
     CircuitBreakerConfig,
-    CircuitBreakerState,
     CircuitState,
 )
 

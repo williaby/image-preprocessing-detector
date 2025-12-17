@@ -7,6 +7,7 @@ reproducibility manifest generation.
 
 from __future__ import annotations
 
+import contextlib
 import platform
 import subprocess
 import sys
@@ -120,8 +121,13 @@ class ArenaRunner:
 
     Example:
         >>> from image_preprocessing_detector.labeling.arena.runner import ArenaRunner
-        >>> from image_preprocessing_detector.labeling.arena.datasets.diqa5000 import DIQA5000Dataset
-        >>> from image_preprocessing_detector.labeling.model_spec import ModelSpec, ModelSource
+        >>> from image_preprocessing_detector.labeling.arena.datasets.diqa5000 import (
+        ...     DIQA5000Dataset,
+        ... )
+        >>> from image_preprocessing_detector.labeling.model_spec import (
+        ...     ModelSpec,
+        ...     ModelSource,
+        ... )
         >>>
         >>> spec = ModelSpec(
         ...     source=ModelSource.HUGGINGFACE,
@@ -223,16 +229,26 @@ class ArenaRunner:
             return result
 
         except ModelLoadError as e:
-            logger.error("arena_run_failed_load", run_id=context.run_id, error=str(e))
-            return self._build_error_result(context, model_spec, dataset, config, str(e))
+            logger.exception(
+                "arena_run_failed_load", run_id=context.run_id, error=str(e)
+            )
+            return self._build_error_result(
+                context, model_spec, dataset, config, str(e)
+            )
 
         except InferenceError as e:
-            logger.error("arena_run_failed_inference", run_id=context.run_id, error=str(e))
-            return self._build_error_result(context, model_spec, dataset, config, str(e))
+            logger.exception(
+                "arena_run_failed_inference", run_id=context.run_id, error=str(e)
+            )
+            return self._build_error_result(
+                context, model_spec, dataset, config, str(e)
+            )
 
         except Exception as e:
             logger.exception("arena_run_failed_unexpected", run_id=context.run_id)
-            return self._build_error_result(context, model_spec, dataset, config, str(e))
+            return self._build_error_result(
+                context, model_spec, dataset, config, str(e)
+            )
 
         finally:
             self._unload_model()
@@ -249,10 +265,8 @@ class ArenaRunner:
     def _unload_model(self) -> None:
         """Unload the model and free resources."""
         if self._backend is not None:
-            try:
+            with contextlib.suppress(Exception):
                 self._backend.unload()
-            except Exception:  # noqa: BLE001
-                pass
             self._backend = None
 
     def _warmup(self, iterations: int) -> None:
@@ -333,7 +347,7 @@ class ArenaRunner:
         predictions = self._backend.predict_batch(images)
 
         # Record results
-        for sample, pred in zip(samples, predictions):
+        for sample, pred in zip(samples, predictions, strict=False):
             self._record_result(sample, pred, context, save_sample_results)
 
     def _load_image(self, sample: DatasetSample) -> NDArray[np.uint8] | None:
@@ -421,10 +435,8 @@ class ArenaRunner:
         # Get provenance from backend
         provenance = ProvenanceInfo()
         if self._backend is not None:
-            try:
+            with contextlib.suppress(Exception):
                 provenance = self._backend.get_provenance()
-            except Exception:  # noqa: BLE001
-                pass
 
         # Build execution info
         execution = ExecutionInfo(
@@ -556,7 +568,7 @@ class ArenaRunner:
             )
             if result.returncode == 0:
                 return f"driver:{result.stdout.strip()}"
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
         return None
@@ -587,7 +599,9 @@ def run_benchmark(
 
     Example:
         >>> from image_preprocessing_detector.labeling.arena.runner import run_benchmark
-        >>> from image_preprocessing_detector.labeling.arena.datasets.diqa5000 import DIQA5000Dataset
+        >>> from image_preprocessing_detector.labeling.arena.datasets.diqa5000 import (
+        ...     DIQA5000Dataset,
+        ... )
         >>>
         >>> dataset = DIQA5000Dataset("/data/diqa5000")
         >>> spec = {"source": "huggingface", "id": "model/name", "revision": "main"}

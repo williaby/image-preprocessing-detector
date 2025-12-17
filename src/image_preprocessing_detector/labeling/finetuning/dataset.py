@@ -15,9 +15,10 @@ Enforces strict train/val/test split discipline:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, ClassVar
 
 import numpy as np
 import structlog
@@ -53,7 +54,9 @@ class DIQASample:
         Returns:
             Tensor of shape [3] with [overall, sharpness, color]
         """
-        return torch.tensor([self.overall, self.sharpness, self.color], dtype=torch.float32)
+        return torch.tensor(
+            [self.overall, self.sharpness, self.color], dtype=torch.float32
+        )
 
 
 class DIQATrainingDataset(Dataset):
@@ -68,10 +71,12 @@ class DIQATrainingDataset(Dataset):
 
     Example:
         >>> from torchvision import transforms
-        >>> transform = transforms.Compose([
-        ...     transforms.Resize((224, 224)),
-        ...     transforms.ToTensor(),
-        ... ])
+        >>> transform = transforms.Compose(
+        ...     [
+        ...         transforms.Resize((224, 224)),
+        ...         transforms.ToTensor(),
+        ...     ]
+        ... )
         >>> dataset = DIQATrainingDataset(
         ...     data_dir="/data/diqa5000",
         ...     split="train",
@@ -81,8 +86,8 @@ class DIQATrainingDataset(Dataset):
     """
 
     # Block test split to prevent accidental data leakage
-    BLOCKED_SPLITS = {"test"}
-    ALLOWED_SPLITS = {"train", "val", "validation"}
+    BLOCKED_SPLITS: ClassVar[set[str]] = {"test"}
+    ALLOWED_SPLITS: ClassVar[set[str]] = {"train", "val", "validation"}
 
     def __init__(
         self,
@@ -115,8 +120,8 @@ class DIQATrainingDataset(Dataset):
         # Block test split
         if self.split in self.BLOCKED_SPLITS:
             msg = (
-                f"Test split is blocked for training datasets to preserve "
-                f"evaluation integrity. Use 'train' or 'val' splits only."
+                "Test split is blocked for training datasets to preserve "
+                "evaluation integrity. Use 'train' or 'val' splits only."
             )
             raise ValueError(msg)
 
@@ -387,25 +392,28 @@ def get_default_transforms(
     from torchvision import transforms
 
     if is_training:
-        return transforms.Compose([
+        return transforms.Compose(
+            [
+                transforms.Resize((image_size, image_size)),
+                transforms.RandomHorizontalFlip(p=0.5),
+                transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225],
+                ),
+            ]
+        )
+    return transforms.Compose(
+        [
             transforms.Resize((image_size, image_size)),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1),
             transforms.ToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
                 std=[0.229, 0.224, 0.225],
             ),
-        ])
-    else:
-        return transforms.Compose([
-            transforms.Resize((image_size, image_size)),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225],
-            ),
-        ])
+        ]
+    )
 
 
 def create_data_loaders(

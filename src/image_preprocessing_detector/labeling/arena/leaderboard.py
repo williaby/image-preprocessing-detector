@@ -8,13 +8,15 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import structlog
 
-from image_preprocessing_detector.labeling.arena.metrics import ArenaMetrics, compare_models
+from image_preprocessing_detector.labeling.arena.metrics import (
+    ArenaMetrics,
+)
 from image_preprocessing_detector.labeling.arena.schemas import BenchmarkResult
 
 logger = structlog.get_logger(__name__)
@@ -111,7 +113,9 @@ class LeaderboardGenerator:
         """Get the current configuration."""
         return self._config
 
-    def add_result(self, result: BenchmarkResult, model_name: str | None = None) -> None:
+    def add_result(
+        self, result: BenchmarkResult, model_name: str | None = None
+    ) -> None:
         """Add a benchmark result to the leaderboard.
 
         Args:
@@ -283,19 +287,23 @@ class LeaderboardGenerator:
         if cfg.description:
             lines.extend([cfg.description, ""])
 
-        lines.extend([
-            f"*Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}*",
-            f"*Sort: {cfg.sort_by} (higher is better for correlation, lower for error)*",
-            "",
-        ])
+        lines.extend(
+            [
+                f"*Generated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}*",
+                f"*Sort: {cfg.sort_by} (higher is better for correlation, lower for error)*",
+                "",
+            ]
+        )
 
         # Summary table
-        lines.extend([
-            "## Rankings",
-            "",
-            "| Rank | Model | Variant | PLCC | SRCC | MAE | RMSE |",
-            "|------|-------|---------|------|------|-----|------|",
-        ])
+        lines.extend(
+            [
+                "## Rankings",
+                "",
+                "| Rank | Model | Variant | PLCC | SRCC | MAE | RMSE |",
+                "|------|-------|---------|------|------|-----|------|",
+            ]
+        )
 
         for entry in entries:
             agg = entry.metrics.aggregate
@@ -306,19 +314,23 @@ class LeaderboardGenerator:
             )
 
         # Detailed metrics per dimension
-        lines.extend([
-            "",
-            "## Detailed Metrics",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Detailed Metrics",
+                "",
+            ]
+        )
 
         for entry in entries:
-            lines.extend([
-                f"### {entry.rank}. {entry.model_name}",
-                "",
-                f"- **Model ID**: `{entry.model_id}`",
-                f"- **Variant**: {entry.variant}",
-            ])
+            lines.extend(
+                [
+                    f"### {entry.rank}. {entry.model_name}",
+                    "",
+                    f"- **Model ID**: `{entry.model_id}`",
+                    f"- **Variant**: {entry.variant}",
+                ]
+            )
 
             if cfg.show_run_ids:
                 lines.append(f"- **Run ID**: `{entry.run_id}`")
@@ -326,28 +338,30 @@ class LeaderboardGenerator:
             if cfg.show_timestamps:
                 lines.append(f"- **Timestamp**: {entry.timestamp}")
 
-            lines.extend([
-                "",
-                "| Dimension | PLCC | SRCC | MAE | RMSE |",
-                "|-----------|------|------|-----|------|",
-                f"| Overall | {entry.metrics.overall.plcc:.{dp}f} | "
-                f"{entry.metrics.overall.srcc:.{dp}f} | "
-                f"{entry.metrics.overall.mae:.{dp}f} | "
-                f"{entry.metrics.overall.rmse:.{dp}f} |",
-                f"| Sharpness | {entry.metrics.sharpness.plcc:.{dp}f} | "
-                f"{entry.metrics.sharpness.srcc:.{dp}f} | "
-                f"{entry.metrics.sharpness.mae:.{dp}f} | "
-                f"{entry.metrics.sharpness.rmse:.{dp}f} |",
-                f"| Color | {entry.metrics.color.plcc:.{dp}f} | "
-                f"{entry.metrics.color.srcc:.{dp}f} | "
-                f"{entry.metrics.color.mae:.{dp}f} | "
-                f"{entry.metrics.color.rmse:.{dp}f} |",
-                f"| **Aggregate** | **{entry.metrics.aggregate.plcc:.{dp}f}** | "
-                f"**{entry.metrics.aggregate.srcc:.{dp}f}** | "
-                f"**{entry.metrics.aggregate.mae:.{dp}f}** | "
-                f"**{entry.metrics.aggregate.rmse:.{dp}f}** |",
-                "",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "| Dimension | PLCC | SRCC | MAE | RMSE |",
+                    "|-----------|------|------|-----|------|",
+                    f"| Overall | {entry.metrics.overall.plcc:.{dp}f} | "
+                    f"{entry.metrics.overall.srcc:.{dp}f} | "
+                    f"{entry.metrics.overall.mae:.{dp}f} | "
+                    f"{entry.metrics.overall.rmse:.{dp}f} |",
+                    f"| Sharpness | {entry.metrics.sharpness.plcc:.{dp}f} | "
+                    f"{entry.metrics.sharpness.srcc:.{dp}f} | "
+                    f"{entry.metrics.sharpness.mae:.{dp}f} | "
+                    f"{entry.metrics.sharpness.rmse:.{dp}f} |",
+                    f"| Color | {entry.metrics.color.plcc:.{dp}f} | "
+                    f"{entry.metrics.color.srcc:.{dp}f} | "
+                    f"{entry.metrics.color.mae:.{dp}f} | "
+                    f"{entry.metrics.color.rmse:.{dp}f} |",
+                    f"| **Aggregate** | **{entry.metrics.aggregate.plcc:.{dp}f}** | "
+                    f"**{entry.metrics.aggregate.srcc:.{dp}f}** | "
+                    f"**{entry.metrics.aggregate.mae:.{dp}f}** | "
+                    f"**{entry.metrics.aggregate.rmse:.{dp}f}** |",
+                    "",
+                ]
+            )
 
         return "\n".join(lines)
 
@@ -463,7 +477,7 @@ class LeaderboardGenerator:
 <body>
     <h1>{cfg.title}</h1>
     <div class="meta">
-        Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}<br>
+        Generated: {datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")}<br>
         Sort: {cfg.sort_by}
     </div>
 """
@@ -587,7 +601,7 @@ class LeaderboardGenerator:
 
         data = {
             "title": self._config.title,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "sort_by": self._config.sort_by,
             "entries": [entry.to_dict() for entry in entries],
         }

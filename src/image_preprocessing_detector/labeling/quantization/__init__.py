@@ -55,16 +55,16 @@ from image_preprocessing_detector.labeling.quantization.recipes import (
 )
 
 __all__ = [
+    # Recipes
+    "ALL_RECIPES",
+    "ModelFamily",
     # Pipeline
     "QuantizationBackend",
     "QuantizationConfig",
     "QuantizationPipeline",
+    "QuantizationRecipe",
     "QuantizationResult",
     "QuantizationType",
-    # Recipes
-    "ALL_RECIPES",
-    "ModelFamily",
-    "QuantizationRecipe",
     "RecipeOptimization",
     "create_custom_recipe",
     "detect_model_family",

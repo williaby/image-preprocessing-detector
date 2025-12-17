@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import pytest
 
+from image_preprocessing_detector.labeling.quantization.pipeline import (
+    QuantizationBackend,
+    QuantizationType,
+)
 from image_preprocessing_detector.labeling.quantization.recipes import (
     ALL_RECIPES,
     INT4_NF4_BALANCED_RECIPE,
@@ -20,10 +24,6 @@ from image_preprocessing_detector.labeling.quantization.recipes import (
     get_recipe,
     list_recipes,
     recommend_recipe,
-)
-from image_preprocessing_detector.labeling.quantization.pipeline import (
-    QuantizationBackend,
-    QuantizationType,
 )
 
 
@@ -246,4 +246,7 @@ class TestQuantizationRecipe:
     def test_int4_higher_speedup_than_int8(self):
         """Test INT4 generally has higher speedup than INT8."""
         # This is expected behavior for most cases
-        assert INT4_NF4_BALANCED_RECIPE.expected_speedup >= INT8_SPEED_RECIPE.expected_speedup
+        assert (
+            INT4_NF4_BALANCED_RECIPE.expected_speedup
+            >= INT8_SPEED_RECIPE.expected_speedup
+        )

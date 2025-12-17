@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -150,7 +150,7 @@ class ExecutionInfo:
     def __post_init__(self) -> None:
         """Set timestamp if not provided."""
         if not self.timestamp:
-            self.timestamp = datetime.now(timezone.utc).isoformat()
+            self.timestamp = datetime.now(UTC).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
@@ -215,7 +215,9 @@ class SampleResult:
         if not self.per_dimension_error:
             self.per_dimension_error = {
                 "overall": abs(self.prediction.overall - self.ground_truth.overall),
-                "sharpness": abs(self.prediction.sharpness - self.ground_truth.sharpness),
+                "sharpness": abs(
+                    self.prediction.sharpness - self.ground_truth.sharpness
+                ),
                 "color": abs(self.prediction.color - self.ground_truth.color),
             }
 
@@ -386,7 +388,7 @@ class ReproducibilityManifest:
     def __post_init__(self) -> None:
         """Set created_at if not provided."""
         if not self.created_at:
-            self.created_at = datetime.now(timezone.utc).isoformat()
+            self.created_at = datetime.now(UTC).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
@@ -462,7 +464,8 @@ class ReproducibilityManifest:
                 "provenance": result.provenance.to_dict(),
             },
             dataset=result.dataset.to_dict(),
-            environment=environment or {
+            environment=environment
+            or {
                 "hardware": result.execution.hardware,
                 "python_version": result.execution.python_version,
                 "cuda_version": result.execution.cuda_version,

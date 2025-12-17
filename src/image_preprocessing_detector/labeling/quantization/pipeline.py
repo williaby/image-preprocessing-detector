@@ -21,9 +21,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -31,8 +30,6 @@ from typing import TYPE_CHECKING, Any
 import structlog
 
 if TYPE_CHECKING:
-    import torch
-
     from image_preprocessing_detector.labeling.model_spec import ModelSpec
 
 logger = structlog.get_logger(__name__)
@@ -167,7 +164,9 @@ class QuantizationPipeline:
             cache_dir: Directory for caching models.
             device: Device for quantization ("auto", "cuda", "cpu").
         """
-        self.cache_dir = Path(cache_dir) if cache_dir else Path.home() / ".cache" / "diqa_quant"
+        self.cache_dir = (
+            Path(cache_dir) if cache_dir else Path.home() / ".cache" / "diqa_quant"
+        )
         self.device = device
 
         # Ensure cache directory exists
@@ -220,7 +219,7 @@ class QuantizationPipeline:
                 result = self._quantize_gguf(spec, config, output_dir)
             else:
                 msg = f"Unsupported backend: {config.backend}"
-                raise ValueError(msg)
+                raise ValueError(msg)  # noqa: TRY301
 
             # Package the result
             if result.success:
@@ -233,7 +232,7 @@ class QuantizationPipeline:
                 compression=f"{result.compression_ratio:.1f}x",
             )
 
-            return result
+            return result  # noqa: TRY300
 
         except Exception as e:
             logger.exception("quantization_failed", model_id=spec.id, error=str(e))
@@ -252,13 +251,13 @@ class QuantizationPipeline:
                 quant_type=QuantizationType.INT8,
                 use_double_quant=False,
             )
-        else:  # 4-bit default
-            return QuantizationConfig(
-                bits=4,
-                backend=QuantizationBackend.BITSANDBYTES,
-                quant_type=QuantizationType.NF4,
-                use_double_quant=True,
-            )
+        # 4-bit default
+        return QuantizationConfig(
+            bits=4,
+            backend=QuantizationBackend.BITSANDBYTES,
+            quant_type=QuantizationType.NF4,
+            use_double_quant=True,
+        )
 
     def _quantize_bitsandbytes(
         self,
@@ -512,9 +511,9 @@ class QuantizationPipeline:
 
     def _quantize_gguf(
         self,
-        spec: ModelSpec,
+        _spec: ModelSpec,
         config: QuantizationConfig,
-        output_dir: str | Path,
+        _output_dir: str | Path,
     ) -> QuantizationResult:
         """Quantize to GGUF format for llama.cpp.
 
@@ -536,7 +535,7 @@ class QuantizationPipeline:
 
     def _generate_calibration_data(
         self,
-        tokenizer: Any,
+        _tokenizer: Any,
         num_samples: int = 128,
     ) -> list[str]:
         """Generate calibration data for GPTQ/AWQ.
@@ -574,7 +573,8 @@ class QuantizationPipeline:
             info = model_info(model_id)
             # Convert safetensors/bin sizes to MB
             total_bytes = sum(
-                s.size for s in (info.siblings or [])
+                s.size
+                for s in (info.siblings or [])
                 if s.rfilename.endswith((".safetensors", ".bin"))
             )
             return total_bytes / (1024 * 1024)
@@ -622,7 +622,7 @@ class QuantizationPipeline:
         # Create artifact metadata
         metadata = {
             "artifact_type": "quantized_model",
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "source_model": {
                 "id": spec.id,
                 "revision": spec.revision,

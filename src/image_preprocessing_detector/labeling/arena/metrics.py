@@ -441,5 +441,4 @@ def compare_models(
         dim_metrics = getattr(metrics, dimension)
         return getattr(dim_metrics, metric)
 
-    sorted_results = sorted(results.items(), key=get_value, reverse=reverse)
-    return sorted_results
+    return sorted(results.items(), key=get_value, reverse=reverse)

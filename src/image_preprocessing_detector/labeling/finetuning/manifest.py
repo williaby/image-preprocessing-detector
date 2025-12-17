@@ -20,7 +20,7 @@ import hashlib
 import json
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -132,7 +132,7 @@ class TrainingManifest:
     def __post_init__(self) -> None:
         """Set timestamp if not provided."""
         if not self.timestamp:
-            self.timestamp = datetime.now(timezone.utc).isoformat()
+            self.timestamp = datetime.now(UTC).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -232,7 +232,7 @@ class ManifestBuilder:
 
     def _generate_run_id(self) -> str:
         """Generate a unique run ID."""
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         hash_suffix = hashlib.sha256(str(timestamp).encode()).hexdigest()[:8]
         return f"diqa_{timestamp}_{hash_suffix}"
 
@@ -422,7 +422,7 @@ class ManifestBuilder:
         # Git information
         try:
             result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
+                ["git", "rev-parse", "HEAD"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -432,7 +432,7 @@ class ManifestBuilder:
                 env["git_commit"] = result.stdout.strip()
 
             result = subprocess.run(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -440,7 +440,8 @@ class ManifestBuilder:
             )
             if result.returncode == 0:
                 env["git_branch"] = result.stdout.strip()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: S110
+            # Git info is optional, failures are non-critical
             pass
 
         return env

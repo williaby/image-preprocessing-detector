@@ -474,8 +474,7 @@ def recommend_recipe(
         # Filter by VRAM if specified
         if available_vram_gb is not None:
             model_specific = [
-                r for r in model_specific
-                if r.min_vram_gb <= available_vram_gb
+                r for r in model_specific if r.min_vram_gb <= available_vram_gb
             ]
 
         if model_specific:

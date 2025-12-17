@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import hashlib
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -118,7 +117,7 @@ class HuggingFaceBackend(InferenceBackend):
                     revision=spec.revision,
                     trust_remote_code=True,
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # Fall back to tokenizer
                 self._tokenizer = AutoTokenizer.from_pretrained(
                     spec.id,
@@ -190,11 +189,11 @@ class HuggingFaceBackend(InferenceBackend):
                     ),
                     "device_map": "auto",
                 }
-            else:  # 8-bit
-                return {
-                    "quantization_config": BitsAndBytesConfig(load_in_8bit=True),
-                    "device_map": "auto",
-                }
+            # 8-bit
+            return {
+                "quantization_config": BitsAndBytesConfig(load_in_8bit=True),
+                "device_map": "auto",
+            }
 
         except ImportError:
             logger.warning("bitsandbytes_not_available")
@@ -236,7 +235,7 @@ class HuggingFaceBackend(InferenceBackend):
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
 
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 logger.warning("unload_error", error=str(e))
 
         self._model = None
@@ -293,7 +292,6 @@ class HuggingFaceBackend(InferenceBackend):
             raise ModelNotLoadedError(msg)
 
         try:
-            import torch
             from PIL import Image as PILImage
 
             predictions = []
@@ -353,7 +351,9 @@ class HuggingFaceBackend(InferenceBackend):
                 std_intensity = img_array.std() / 255.0
 
                 # Deterministic mapping (placeholder)
-                overall = float(np.clip(0.5 + 0.3 * mean_intensity + 0.2 * std_intensity, 0, 1))
+                overall = float(
+                    np.clip(0.5 + 0.3 * mean_intensity + 0.2 * std_intensity, 0, 1)
+                )
                 sharpness = float(np.clip(0.4 + 0.4 * std_intensity, 0, 1))
                 color = float(np.clip(0.6 + 0.2 * mean_intensity, 0, 1))
 
@@ -408,7 +408,7 @@ class HuggingFaceBackend(InferenceBackend):
 
             return f"sha256:{hash_obj.hexdigest()[:16]}"
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("checksum_computation_failed", error=str(e))
             return ""
 
@@ -422,7 +422,7 @@ class HuggingFaceBackend(InferenceBackend):
             config_str = str(sorted(config.items()))
             return f"sha256:{hashlib.sha256(config_str.encode()).hexdigest()[:16]}"
 
-        except Exception:  # noqa: BLE001
+        except Exception:
             return ""
 
     def _compute_tokenizer_hash(self) -> str:
@@ -438,7 +438,7 @@ class HuggingFaceBackend(InferenceBackend):
             vocab = str(sorted(tokenizer.get_vocab().items()))
             return f"sha256:{hashlib.sha256(vocab.encode()).hexdigest()[:16]}"
 
-        except Exception:  # noqa: BLE001
+        except Exception:
             return ""
 
     def _get_code_version(self) -> str:
@@ -456,7 +456,7 @@ class HuggingFaceBackend(InferenceBackend):
             if result.returncode == 0:
                 return f"git:{result.stdout.strip()[:8]}"
 
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
         return ""

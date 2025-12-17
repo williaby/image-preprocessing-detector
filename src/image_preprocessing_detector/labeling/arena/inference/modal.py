@@ -264,7 +264,9 @@ class ModalBackend(InferenceBackend):
         start_time = time.perf_counter()
         responses = self._client.batch_predict(requests)
 
-        for idx, (request, response) in enumerate(zip(requests, responses)):
+        for idx, (request, response) in enumerate(
+            zip(requests, responses, strict=False)
+        ):
             if response is None:
                 # Inference failed, use fallback scores
                 logger.warning(
@@ -398,7 +400,7 @@ class ModalBackend(InferenceBackend):
             if result.returncode == 0:
                 return f"git:{result.stdout.strip()[:8]}"
 
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
         return ""

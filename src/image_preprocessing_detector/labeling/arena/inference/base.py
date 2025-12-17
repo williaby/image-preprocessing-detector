@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -182,7 +181,7 @@ class InferenceBackend(ABC):
         for _ in range(num_iterations):
             try:
                 _ = self.predict(dummy_image)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 # Warmup failures are not critical
                 pass
 
@@ -190,25 +189,17 @@ class InferenceBackend(ABC):
 class ModelLoadError(Exception):
     """Raised when a model cannot be loaded."""
 
-    pass
-
 
 class IncompatibleModelError(Exception):
     """Raised when a model is not compatible with the backend."""
-
-    pass
 
 
 class InferenceError(Exception):
     """Raised when inference fails."""
 
-    pass
-
 
 class ModelNotLoadedError(Exception):
     """Raised when attempting inference without a loaded model."""
-
-    pass
 
 
 def create_backend(source: str, **kwargs: Any) -> InferenceBackend:

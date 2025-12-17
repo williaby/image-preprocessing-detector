@@ -180,9 +180,15 @@ class TestArenaMetrics:
 
     def test_aggregate_is_mean(self) -> None:
         """Test that aggregate metrics are means of dimensions."""
-        overall = DimensionMetrics(plcc=0.9, srcc=0.8, mae=0.1, rmse=0.12, num_samples=10)
-        sharpness = DimensionMetrics(plcc=0.8, srcc=0.7, mae=0.15, rmse=0.18, num_samples=10)
-        color = DimensionMetrics(plcc=0.85, srcc=0.75, mae=0.12, rmse=0.15, num_samples=10)
+        overall = DimensionMetrics(
+            plcc=0.9, srcc=0.8, mae=0.1, rmse=0.12, num_samples=10
+        )
+        sharpness = DimensionMetrics(
+            plcc=0.8, srcc=0.7, mae=0.15, rmse=0.18, num_samples=10
+        )
+        color = DimensionMetrics(
+            plcc=0.85, srcc=0.75, mae=0.12, rmse=0.15, num_samples=10
+        )
 
         metrics = ArenaMetrics(overall=overall, sharpness=sharpness, color=color)
 
@@ -268,14 +274,26 @@ class TestCompareModels:
     def test_ranking_by_plcc(self) -> None:
         """Test ranking models by PLCC."""
         metrics_a = ArenaMetrics(
-            overall=DimensionMetrics(plcc=0.9, srcc=0.8, mae=0.1, rmse=0.12, num_samples=10),
-            sharpness=DimensionMetrics(plcc=0.85, srcc=0.75, mae=0.12, rmse=0.15, num_samples=10),
-            color=DimensionMetrics(plcc=0.88, srcc=0.78, mae=0.11, rmse=0.14, num_samples=10),
+            overall=DimensionMetrics(
+                plcc=0.9, srcc=0.8, mae=0.1, rmse=0.12, num_samples=10
+            ),
+            sharpness=DimensionMetrics(
+                plcc=0.85, srcc=0.75, mae=0.12, rmse=0.15, num_samples=10
+            ),
+            color=DimensionMetrics(
+                plcc=0.88, srcc=0.78, mae=0.11, rmse=0.14, num_samples=10
+            ),
         )
         metrics_b = ArenaMetrics(
-            overall=DimensionMetrics(plcc=0.95, srcc=0.85, mae=0.08, rmse=0.10, num_samples=10),
-            sharpness=DimensionMetrics(plcc=0.92, srcc=0.82, mae=0.09, rmse=0.11, num_samples=10),
-            color=DimensionMetrics(plcc=0.93, srcc=0.83, mae=0.08, rmse=0.10, num_samples=10),
+            overall=DimensionMetrics(
+                plcc=0.95, srcc=0.85, mae=0.08, rmse=0.10, num_samples=10
+            ),
+            sharpness=DimensionMetrics(
+                plcc=0.92, srcc=0.82, mae=0.09, rmse=0.11, num_samples=10
+            ),
+            color=DimensionMetrics(
+                plcc=0.93, srcc=0.83, mae=0.08, rmse=0.10, num_samples=10
+            ),
         )
 
         results = {"model_a": metrics_a, "model_b": metrics_b}
@@ -288,14 +306,26 @@ class TestCompareModels:
     def test_ranking_by_mae(self) -> None:
         """Test ranking models by MAE (lower is better)."""
         metrics_a = ArenaMetrics(
-            overall=DimensionMetrics(plcc=0.9, srcc=0.8, mae=0.05, rmse=0.07, num_samples=10),
-            sharpness=DimensionMetrics(plcc=0.85, srcc=0.75, mae=0.06, rmse=0.08, num_samples=10),
-            color=DimensionMetrics(plcc=0.88, srcc=0.78, mae=0.05, rmse=0.07, num_samples=10),
+            overall=DimensionMetrics(
+                plcc=0.9, srcc=0.8, mae=0.05, rmse=0.07, num_samples=10
+            ),
+            sharpness=DimensionMetrics(
+                plcc=0.85, srcc=0.75, mae=0.06, rmse=0.08, num_samples=10
+            ),
+            color=DimensionMetrics(
+                plcc=0.88, srcc=0.78, mae=0.05, rmse=0.07, num_samples=10
+            ),
         )
         metrics_b = ArenaMetrics(
-            overall=DimensionMetrics(plcc=0.95, srcc=0.85, mae=0.10, rmse=0.12, num_samples=10),
-            sharpness=DimensionMetrics(plcc=0.92, srcc=0.82, mae=0.11, rmse=0.13, num_samples=10),
-            color=DimensionMetrics(plcc=0.93, srcc=0.83, mae=0.10, rmse=0.12, num_samples=10),
+            overall=DimensionMetrics(
+                plcc=0.95, srcc=0.85, mae=0.10, rmse=0.12, num_samples=10
+            ),
+            sharpness=DimensionMetrics(
+                plcc=0.92, srcc=0.82, mae=0.11, rmse=0.13, num_samples=10
+            ),
+            color=DimensionMetrics(
+                plcc=0.93, srcc=0.83, mae=0.10, rmse=0.12, num_samples=10
+            ),
         )
 
         results = {"model_a": metrics_a, "model_b": metrics_b}

@@ -29,7 +29,7 @@ import io
 import os
 import random
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
@@ -37,7 +37,7 @@ import numpy as np
 import structlog
 
 if TYPE_CHECKING:
-    from PIL import Image
+    pass
 
 logger = structlog.get_logger(__name__)
 
@@ -257,7 +257,7 @@ class ArenaModalClient:
             self._record_success()
             return responses
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Modal batch request failed",
                 error=str(e),
                 batch_size=len(requests),
@@ -504,9 +504,7 @@ class ArenaModalClient:
     def get_stats(self) -> dict[str, Any]:
         """Get circuit breaker statistics."""
         total = self.breaker_state.total_requests
-        success_rate = (
-            self.breaker_state.total_successes / total if total > 0 else 0.0
-        )
+        success_rate = self.breaker_state.total_successes / total if total > 0 else 0.0
 
         return {
             "state": self.breaker_state.state.value,

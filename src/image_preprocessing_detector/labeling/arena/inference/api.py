@@ -251,7 +251,9 @@ No other text or explanation."""
 
         return predictions
 
-    def _call_api(self, image: NDArray[np.uint8] | Image.Image, idx: int) -> DIQAPrediction:
+    def _call_api(
+        self, image: NDArray[np.uint8] | Image.Image, idx: int
+    ) -> DIQAPrediction:
         """Make API call for a single image."""
         from PIL import Image as PILImage
 
@@ -276,13 +278,12 @@ No other text or explanation."""
         # Call appropriate provider
         if self._provider == "openai":
             return self._call_openai(image_b64, idx)
-        elif self._provider == "google":
+        if self._provider == "google":
             return self._call_google(pil_image, idx)
-        elif self._provider == "anthropic":
+        if self._provider == "anthropic":
             return self._call_anthropic(image_b64, idx)
-        else:
-            msg = f"Unknown provider: {self._provider}"
-            raise InferenceError(msg)
+        msg = f"Unknown provider: {self._provider}"
+        raise InferenceError(msg)
 
     def _call_openai(self, image_b64: str, idx: int) -> DIQAPrediction:
         """Call OpenAI API."""
@@ -346,7 +347,9 @@ No other text or explanation."""
 
         # Track usage
         if hasattr(response, "usage"):
-            self._total_tokens += response.usage.input_tokens + response.usage.output_tokens
+            self._total_tokens += (
+                response.usage.input_tokens + response.usage.output_tokens
+            )
 
         return self._parse_response(response.content[0].text, idx)
 

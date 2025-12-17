@@ -143,7 +143,6 @@ class RegressionBackend(InferenceBackend):
             spec: Model specification.
             config: Inference configuration.
         """
-        import torch
         from image_preprocessing_detector.labeling.model_spec import ModelSource
 
         if spec.source == ModelSource.LOCAL:
@@ -197,9 +196,7 @@ class RegressionBackend(InferenceBackend):
                 trust_remote_code=True,
             )
 
-    def _load_huggingface_model(
-        self, spec: ModelSpec, config: InferenceConfig
-    ) -> None:
+    def _load_huggingface_model(self, spec: ModelSpec, config: InferenceConfig) -> None:
         """Load regression model from HuggingFace.
 
         This assumes the model has been uploaded with the regression head
@@ -209,7 +206,6 @@ class RegressionBackend(InferenceBackend):
             spec: Model specification.
             config: Inference configuration.
         """
-        import torch
         from transformers import AutoModel, AutoProcessor
 
         # For regression models, we expect a custom model class
@@ -243,8 +239,6 @@ class RegressionBackend(InferenceBackend):
         Returns:
             Loaded model.
         """
-        import torch
-
         # Import the regression head model class
         from image_preprocessing_detector.labeling.finetuning.regression_head import (
             DIQARegressionModel,
@@ -276,7 +270,7 @@ class RegressionBackend(InferenceBackend):
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
 
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 logger.warning("unload_error", error=str(e))
 
         self._model = None
@@ -332,7 +326,6 @@ class RegressionBackend(InferenceBackend):
             raise ModelNotLoadedError(msg)
 
         try:
-            import torch
             from PIL import Image as PILImage
 
             predictions = []
@@ -389,14 +382,16 @@ class RegressionBackend(InferenceBackend):
             # Fallback: basic preprocessing
             from torchvision import transforms
 
-            transform = transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225],
-                ),
-            ])
+            transform = transforms.Compose(
+                [
+                    transforms.Resize((224, 224)),
+                    transforms.ToTensor(),
+                    transforms.Normalize(
+                        mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225],
+                    ),
+                ]
+            )
             tensors = [transform(img) for img in images]
             inputs = {"pixel_values": torch.stack(tensors)}
             if self._device != "cpu":
@@ -415,7 +410,11 @@ class RegressionBackend(InferenceBackend):
                 scores = outputs.get("scores", outputs.get("logits"))
 
             # Ensure scores are in [0, 1] range
-            scores = torch.sigmoid(scores) if scores.min() < 0 or scores.max() > 1 else scores
+            scores = (
+                torch.sigmoid(scores)
+                if scores.min() < 0 or scores.max() > 1
+                else scores
+            )
             scores = scores.cpu().numpy()
 
         elapsed_ms = (time.perf_counter() - start_time) * 1000
@@ -470,7 +469,7 @@ class RegressionBackend(InferenceBackend):
 
             return f"sha256:{hash_obj.hexdigest()[:16]}"
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning("checksum_computation_failed", error=str(e))
             return ""
 
@@ -497,7 +496,7 @@ class RegressionBackend(InferenceBackend):
             if result.returncode == 0:
                 return f"git:{result.stdout.strip()[:8]}"
 
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
 
         return ""

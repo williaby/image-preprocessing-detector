@@ -129,12 +129,12 @@ class DIQARegressionHead(nn.Module):
         if self.config.pooling_strategy == "cls":
             # Use CLS token (first token)
             return hidden_states[:, 0, :]
-        elif self.config.pooling_strategy == "max":
+        if self.config.pooling_strategy == "max":
             # Max pooling over sequence
             return hidden_states.max(dim=1).values
-        else:  # mean
-            # Mean pooling over sequence
-            return hidden_states.mean(dim=1)
+        # mean
+        # Mean pooling over sequence
+        return hidden_states.mean(dim=1)
 
     def forward(self, hidden_states: Tensor) -> Tensor:
         """Forward pass through the regression head.
@@ -160,9 +160,7 @@ class DIQARegressionHead(nn.Module):
         x = self.fc2(x)
 
         # Sigmoid to constrain to [0, 1]
-        x = torch.sigmoid(x)
-
-        return x
+        return torch.sigmoid(x)
 
 
 class DIQARegressionModel(nn.Module):
@@ -178,7 +176,9 @@ class DIQARegressionModel(nn.Module):
     - Full fine-tuning
 
     Example:
-        >>> model = DIQARegressionModel(base_model_id="HuggingFaceTB/SmolVLM-256M-Instruct")
+        >>> model = DIQARegressionModel(
+        ...     base_model_id="HuggingFaceTB/SmolVLM-256M-Instruct"
+        ... )
         >>> images = processor(images=[img], return_tensors="pt")
         >>> scores = model(**images)
         >>> print(scores.overall, scores.sharpness, scores.color)
@@ -286,8 +286,7 @@ class DIQARegressionModel(nn.Module):
                 logger.warning("bitsandbytes_not_available", falling_back="fp16")
                 load_kwargs["torch_dtype"] = torch.float16
 
-        encoder = AutoModel.from_pretrained(model_id, **load_kwargs)
-        return encoder
+        return AutoModel.from_pretrained(model_id, **load_kwargs)
 
     def _get_hidden_size(self) -> int:
         """Get the hidden size from the encoder config."""
@@ -345,9 +344,7 @@ class DIQARegressionModel(nn.Module):
             hidden_states = encoder_outputs
 
         # Pass through regression head
-        scores = self.head(hidden_states)
-
-        return scores
+        return self.head(hidden_states)
 
     def get_trainable_parameters(self) -> int:
         """Get number of trainable parameters."""

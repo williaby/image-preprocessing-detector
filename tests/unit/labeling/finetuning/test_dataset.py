@@ -255,4 +255,6 @@ class TestDefaultTransforms:
         # Values should be normalized - not raw [0, 255] values
         # After ImageNet normalization, gray (128) becomes different values per channel
         # Check channels have different values (normalized by different means)
-        assert not torch.allclose(result[0], result[1])  # R and G channels differ after normalization
+        assert not torch.allclose(
+            result[0], result[1]
+        )  # R and G channels differ after normalization

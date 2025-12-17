@@ -210,7 +210,7 @@ class LocalBackend(InferenceBackend):
                 tokenizer = AutoTokenizer.from_pretrained(
                     str(path), local_files_only=True
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:
                 tokenizer = None
 
             self._model = {"model": model, "tokenizer": tokenizer, "type": "hf"}
@@ -229,7 +229,7 @@ class LocalBackend(InferenceBackend):
 
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
 
         self._model = None
@@ -267,11 +267,10 @@ class LocalBackend(InferenceBackend):
 
             if model_type == "onnx":
                 return self._predict_onnx(images)
-            elif model_type == "hf":
+            if model_type == "hf":
                 return self._predict_hf(images)
-            else:
-                # Fallback: placeholder predictions
-                return self._predict_placeholder(images)
+            # Fallback: placeholder predictions
+            return self._predict_placeholder(images)
 
         except Exception as e:
             msg = f"Inference failed: {e}"
@@ -295,7 +294,6 @@ class LocalBackend(InferenceBackend):
 
             # Preprocess for ONNX (assuming standard input format)
             # Resize to 224x224 and normalize
-            from PIL import Image as PILImage
 
             pil_img = PILImage.fromarray(img)
             pil_img = pil_img.resize((224, 224))

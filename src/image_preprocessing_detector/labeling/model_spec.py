@@ -16,7 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -131,7 +131,7 @@ class ModelSpec:
 
         # Set created_at if not provided
         if self.created_at is None:
-            self.created_at = datetime.now(timezone.utc).isoformat()
+            self.created_at = datetime.now(UTC).isoformat()
 
     @property
     def spec_id(self) -> str:
@@ -145,7 +145,11 @@ class ModelSpec:
     @property
     def is_quantized(self) -> bool:
         """Check if this is a quantized model."""
-        return self.variant in (ModelVariant.INT4, ModelVariant.INT8, ModelVariant.MIXED)
+        return self.variant in (
+            ModelVariant.INT4,
+            ModelVariant.INT8,
+            ModelVariant.MIXED,
+        )
 
     @property
     def is_finetuned(self) -> bool:

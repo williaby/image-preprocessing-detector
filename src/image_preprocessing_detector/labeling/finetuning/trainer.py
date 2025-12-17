@@ -34,12 +34,9 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 
 from image_preprocessing_detector.labeling.finetuning.dataset import (
-    DIQATrainingDataset,
     create_data_loaders,
-    get_default_transforms,
 )
 from image_preprocessing_detector.labeling.finetuning.regression_head import (
-    DIQARegressionHead,
     DIQARegressionModel,
     RegressionHeadConfig,
 )
@@ -289,7 +286,11 @@ class DIQATrainer:
 
         # Setup mixed precision
         if self.config.mixed_precision != "no" and self.device.type == "cuda":
-            dtype = torch.float16 if self.config.mixed_precision == "fp16" else torch.bfloat16
+            dtype = (
+                torch.float16
+                if self.config.mixed_precision == "fp16"
+                else torch.bfloat16
+            )
             self.scaler = torch.amp.GradScaler("cuda")
             self._autocast_dtype = dtype
         else:
@@ -339,10 +340,10 @@ class DIQATrainer:
         """Create the loss function based on configuration."""
         if self.config.loss_function == "huber":
             return nn.HuberLoss(delta=self.config.huber_delta)
-        elif self.config.loss_function == "smooth_l1":
+        if self.config.loss_function == "smooth_l1":
             return nn.SmoothL1Loss()
-        else:  # mse
-            return nn.MSELoss()
+        # mse
+        return nn.MSELoss()
 
     def _setup_scheduler(self, num_training_steps: int) -> None:
         """Setup learning rate scheduler with warmup."""
@@ -608,7 +609,10 @@ class DIQATrainer:
             return False
 
         self.metrics.epochs_without_improvement += 1
-        return self.metrics.epochs_without_improvement >= self.config.early_stopping_patience
+        return (
+            self.metrics.epochs_without_improvement
+            >= self.config.early_stopping_patience
+        )
 
     def save_checkpoint(self, name: str) -> Path:
         """Save a training checkpoint.
@@ -667,9 +671,7 @@ class DIQATrainer:
         checkpoint_dir = Path(checkpoint_path)
 
         # Load model
-        self.model = DIQARegressionModel.from_pretrained(
-            str(checkpoint_dir / "model")
-        )
+        self.model = DIQARegressionModel.from_pretrained(str(checkpoint_dir / "model"))
         self.model = self.model.to(self.device)
 
         # Load training state

@@ -9,17 +9,17 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Any
 
 import click
 import structlog
 
-from image_preprocessing_detector.labeling.arena.datasets.diqa5000 import DIQA5000Dataset
+from image_preprocessing_detector.labeling.arena.datasets.diqa5000 import (
+    DIQA5000Dataset,
+)
 from image_preprocessing_detector.labeling.arena.inference.base import InferenceConfig
 from image_preprocessing_detector.labeling.arena.leaderboard import (
     LeaderboardConfig,
     LeaderboardGenerator,
-    generate_leaderboard,
 )
 from image_preprocessing_detector.labeling.arena.runner import ArenaRunner, RunConfig
 from image_preprocessing_detector.labeling.arena.schemas import (
@@ -35,7 +35,7 @@ logger = structlog.get_logger(__name__)
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
 @click.pass_context
 def arena(ctx: click.Context, verbose: bool) -> None:
-    """Benchmarking Arena - Model evaluation on DIQA-5000.
+    r"""Benchmarking Arena - Model evaluation on DIQA-5000.
 
     The Arena provides standardized, repeatable evaluation of document
     quality assessment models.
@@ -133,7 +133,7 @@ def run(
     save_samples: bool,
     no_manifest: bool,
 ) -> None:
-    """Run benchmark evaluation on a model.
+    r"""Run benchmark evaluation on a model.
 
     \b
     Loads the model specification, runs inference on the DIQA-5000 test split,
@@ -143,7 +143,7 @@ def run(
     Example:
         arena run -m model.yaml -d /data/diqa5000 -o ./results
     """
-    verbose = ctx.obj.get("verbose", False)
+    ctx.obj.get("verbose", False)
 
     click.echo(f"Loading model spec from: {model}")
 
@@ -159,7 +159,9 @@ def run(
     # Load dataset
     click.echo(f"Loading dataset from: {dataset}")
     dataset_obj = DIQA5000Dataset(dataset, split=split)
-    click.echo(f"Dataset: {dataset_obj.name}, Split: {split}, Samples: {len(dataset_obj)}")
+    click.echo(
+        f"Dataset: {dataset_obj.name}, Split: {split}, Samples: {len(dataset_obj)}"
+    )
 
     # Create configs
     inference_config = InferenceConfig(
@@ -256,7 +258,7 @@ def run(
 )
 @click.pass_context
 def leaderboard(
-    ctx: click.Context,
+    _ctx: click.Context,
     results: str,
     output: str,
     sort_by: str,
@@ -265,7 +267,7 @@ def leaderboard(
     filter_variant: tuple[str, ...],
     max_entries: int | None,
 ) -> None:
-    """Generate leaderboard from benchmark results.
+    r"""Generate leaderboard from benchmark results.
 
     \b
     Reads all result files from a directory, ranks models by the specified
@@ -338,12 +340,12 @@ def leaderboard(
 )
 @click.pass_context
 def validate(
-    ctx: click.Context,
+    _ctx: click.Context,
     manifest: str,
     result: str | None,
     strict: bool,
 ) -> None:
-    """Validate benchmark reproducibility.
+    r"""Validate benchmark reproducibility.
 
     \b
     Checks that a manifest contains valid configuration and optionally
@@ -386,12 +388,16 @@ def validate(
             click.echo(click.style("Hash MATCH", fg="green"))
         else:
             click.echo(click.style("Hash MISMATCH", fg="red"))
-            issues.append(f"Hash mismatch: expected {manifest_obj.result_hash}, got {computed_hash}")
+            issues.append(
+                f"Hash mismatch: expected {manifest_obj.result_hash}, got {computed_hash}"
+            )
 
         # Check run IDs
         if result_obj.run_id != manifest_obj.run_id:
             click.echo(click.style("Run ID mismatch", fg="yellow"))
-            issues.append(f"Run ID mismatch: expected {manifest_obj.run_id}, got {result_obj.run_id}")
+            issues.append(
+                f"Run ID mismatch: expected {manifest_obj.run_id}, got {result_obj.run_id}"
+            )
 
     # Report issues
     if issues:
@@ -422,11 +428,11 @@ def validate(
 )
 @click.pass_context
 def show(
-    ctx: click.Context,
+    _ctx: click.Context,
     result: str,
-    format: str,
+    output_format: str,
 ) -> None:
-    """Display benchmark result details.
+    r"""Display benchmark result details.
 
     \b
     Example:
@@ -435,7 +441,7 @@ def show(
     """
     result_obj = BenchmarkResult.from_json(result)
 
-    if format == "json":
+    if output_format == "json":
         click.echo(json.dumps(result_obj.to_dict(), indent=2, default=str))
         return
 
@@ -455,10 +461,12 @@ def show(
     click.echo(f"\nDuration: {result_obj.execution.duration_seconds:.2f}s")
     click.echo(f"Hardware: {result_obj.execution.hardware}")
 
-    if format == "table":
+    if output_format == "table":
         click.echo("\nMetrics:")
         click.echo("-" * 60)
-        click.echo(f"{'Dimension':<12} {'PLCC':>10} {'SRCC':>10} {'MAE':>10} {'RMSE':>10}")
+        click.echo(
+            f"{'Dimension':<12} {'PLCC':>10} {'SRCC':>10} {'MAE':>10} {'RMSE':>10}"
+        )
         click.echo("-" * 60)
 
         for dim in ["overall", "sharpness", "color", "aggregate"]:
@@ -494,11 +502,11 @@ def show(
 )
 @click.pass_context
 def compare(
-    ctx: click.Context,
+    _ctx: click.Context,
     results: tuple[str, ...],
     metric: str,
 ) -> None:
-    """Compare multiple benchmark results.
+    r"""Compare multiple benchmark results.
 
     \b
     Example:
@@ -534,7 +542,7 @@ def compare(
     click.echo(f"\n{'Rank':<6} {'Model':<30} {metric:>15}")
     click.echo("-" * 55)
 
-    for i, (path, r) in enumerate(loaded, 1):
+    for i, (_path, r) in enumerate(loaded, 1):
         model_id = r.model_spec.get("id", "unknown")
         if len(model_id) > 28:
             model_id = "..." + model_id[-25:]
