@@ -27,7 +27,8 @@ from pathlib import Path
 from huggingface_hub import hf_hub_download, list_repo_files
 
 REPO_ID = "DAMO-NLP-SG/multimodal_textbook"
-TARGET_DIR = Path("/mnt/e/image_detection/benchmarks/multimodal_textbook")
+# E: drive reorganized 2025-12-16: educational datasets in 01_base_data/educational/
+TARGET_DIR = Path("/mnt/e/image_detection/01_base_data/educational/multimodal_textbook")
 
 
 @dataclass
@@ -104,7 +105,7 @@ def show_available_files(parser: argparse.ArgumentParser, dataset: DatasetFiles)
 def print_extraction_steps() -> None:
     """Print post-download extraction instructions."""
     print("\nNext steps to extract images:")
-    print("  cd /mnt/e/image_detection/benchmarks/multimodal_textbook")
+    print(f"  cd {TARGET_DIR}")
     print(
         "  cat dataset_images_interval_7.tar.gz.part_* > dataset_images_interval_7.tar.gz"
     )

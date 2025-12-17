@@ -1,0 +1,115 @@
+@startuml dataset_generation_pipeline
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam activityBorderColor #333333
+skinparam activityBackgroundColor #E8F4FD
+skinparam arrowColor #333333
+
+title IQA Training Dataset Generation Pipeline
+footer Dataset Version: phase7_mvp v1.0 | Seed: 42
+
+|#LightBlue|Source Data|
+start
+:Source Images\n(E: drive);
+note right
+  16 source datasets:
+  * DIQA-5000 (3,500)
+  * RVL-CDIP (3,500)
+  * TableBank (2,500)
+  * DocLayNet (2,500)
+  * PubTabNet (2,000)
+  * + 11 more sources
+  ----
+  Total: ~1.04M available
+end note
+
+|#LightGreen|Step 1: Consolidation|
+:consolidate_base_images.py;
+note right
+  **Parameters:**
+  * Seed: 42
+  * Target: 25,000 samples
+  ----
+  **Outputs:**
+  * 00_base_images/{source}/
+  * manifest.json (SHA256 hashes)
+end note
+:Random sample 25K images\nfrom 16 sources;
+:Create symlinks to source files;
+:Compute SHA256 hash (first 64KB)\nper source image;
+:Generate manifest.json\nwith full lineage;
+
+|#LightYellow|Step 2: Augmentation|
+:generate_iqa_dataset.py;
+note right
+  **Parameters:**
+  * Seed: 42
+  * Resolution: 384x384
+  * Resize: Lanczos
+  ----
+  **Defect Types:**
+  * Blur (Gaussian/motion/median)
+  * Noise (Gaussian/salt-pepper)
+  * Compression (JPEG quality)
+  * Lighting (brightness/contrast)
+  * Geometric (rotation/perspective)
+end note
+:Resize to 384x384 (Lanczos);
+:Apply synthetic degradations\n(5 defect types, 4 severity levels);
+:Calculate continuous severity labels\n[0.0, 0.95] per dimension;
+:Calculate DQS score\n(aggregate quality metric);
+:Generate metadata.json\nwith augmentation params;
+
+|#LightCoral|Step 3: Splitting|
+:create_phase7_splits.py;
+note right
+  **Split Ratios:**
+  * Train: 70% (17,469)
+  * Val: 15% (3,719)
+  * Test: 15% (3,812)
+  ----
+  **Stratification:**
+  * By source dataset
+  * Prevents leakage
+end note
+:Stratified split by source dataset;
+:Prevent same-source leakage\nacross splits;
+:Generate per-split metadata:\n* train_metadata.json\n* val_metadata.json\n* test_metadata.json;
+
+|#Lavender|Step 4: Packaging|
+:create_phase7_tar_archives.py;
+note right
+  **Archives Created:**
+  * phase7_mvp_train.tar.gz
+  * phase7_mvp_val.tar.gz
+  * phase7_mvp_test.tar.gz
+  ----
+  **Contents per archive:**
+  * images/ folder
+  * {split}_metadata.json
+end note
+:Compress images + metadata\ninto tar.gz archives;
+:Generate manifest.json\nwith archive sizes;
+
+|#LightGray|Upload|
+:Upload to GCS;
+note right
+  **Location:**
+  gs://image_detection_b/
+    datasets/phase7_mvp/
+  ----
+  **Total Size:** 858 MB
+end note
+:gs://image_detection_b/datasets/phase7_mvp/;
+stop
+
+legend right
+  |= Stage |= Output Directory |
+  | Consolidation | data/phase7_mvp/00_base_images/ |
+  | Augmentation | data/phase7_mvp/01_augmented/ |
+  | Splitting | data/phase7_mvp/02_splits/ |
+  | Packaging | data/phase7_mvp/03_archives/ |
+endlegend
+
+@enduml

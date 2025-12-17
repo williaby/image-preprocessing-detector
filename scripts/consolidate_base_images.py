@@ -6,7 +6,9 @@ Creates:
 - data/phase7_mvp/00_base_images/{source}/ - symlinks to source images
 - data/phase7_mvp/00_base_images/manifest.json - tracking metadata
 
-Updated 2025-12-15 for E: drive datasets (benchmarks + v4_datasets).
+Updated 2025-12-16: E: drive reorganized to category-based structure.
+- 01_base_data/{category}/{dataset}/ - Training data by category
+- 02_benchmark_only/{dataset}/ - Evaluation-only datasets (human MOS)
 """
 import hashlib
 import json
@@ -18,8 +20,12 @@ from typing import Any
 from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).parent.parent
-BENCHMARKS = Path("/mnt/e/image_detection/benchmarks")
-V4_DATASETS = Path("/mnt/e/image_detection/v4_datasets")
+
+# E: drive base paths (reorganized 2025-12-16)
+E_DRIVE_ROOT = Path("/mnt/e/image_detection")
+BASE_DATA = E_DRIVE_ROOT / "01_base_data"        # Training data by category
+BENCHMARK_ONLY = E_DRIVE_ROOT / "02_benchmark_only"  # Evaluation-only datasets
+
 OUTPUT_DIR = PROJECT_ROOT / "data/phase7_mvp/00_base_images"
 
 # Target composition - 25,000 samples total for MVP
@@ -52,27 +58,34 @@ COMPOSITION = {
     "multimodal_textbook": 648,  # Educational (1,113 available)
 }
 
-# Source paths (E: drive via WSL - two locations)
-# File extensions verified 2025-12-15
+# Source paths (E: drive reorganized 2025-12-16)
+# Structure: 01_base_data/{category}/{dataset}/ and 02_benchmark_only/{dataset}/
+# File extensions verified 2025-12-16
 SOURCE_PATHS: dict[str, tuple[Path, str]] = {
-    # From BENCHMARKS folder
-    "diqa_5000": (BENCHMARKS / "diqa-5000", "**/*.jpg"),
-    "nist_db2": (BENCHMARKS / "nist_db2", "**/*.png"),
-    "nist_sd6": (BENCHMARKS / "nist_sd6", "**/*.png"),
-    "tablebank": (BENCHMARKS / "tablebank/TableBank/Detection/images", "*.jpg"),
-    "pubtabnet": (BENCHMARKS / "pubtabnet", "**/*.png"),
-    "doclaynet": (BENCHMARKS / "doclaynet", "**/*.png"),
-    "multimodal_textbook": (BENCHMARKS / "sample_100_images", "*.jpg"),
-    # From V4_DATASETS folder (all have /images subfolder)
-    "tobacco_800": (V4_DATASETS / "tobacco800/images", "*.png"),
-    "dibco": (V4_DATASETS / "dibco/images", "*.*"),
-    "historical_degraded": (V4_DATASETS / "historical_degraded", "**/*.png"),
-    "rvl_cdip": (V4_DATASETS / "rvl_cdip/images", "*.jpg"),
-    "funsd_plus": (V4_DATASETS / "funsd_plus/images", "*.jpg"),
-    "sroie": (V4_DATASETS / "sroie", "**/*.jpg"),
-    "nist_sd19": (V4_DATASETS / "nist_sd19_pages", "**/*.png"),
-    "mathverse": (V4_DATASETS / "mathverse/images", "*.jpg"),
-    "maths_handwriting": (V4_DATASETS / "maths_handwriting", "**/*.png"),
+    # === 02_benchmark_only (evaluation-only, human MOS) ===
+    "diqa_5000": (BENCHMARK_ONLY / "diqa-5000", "**/*.jpg"),
+    "dibco": (BENCHMARK_ONLY / "dibco", "**/*.*"),
+    # === 01_base_data/degraded (real degradation) ===
+    "tobacco_800": (BASE_DATA / "degraded/tobacco800/images", "*.png"),
+    "historical_degraded": (BASE_DATA / "degraded/historical_degraded", "**/*.png"),
+    # === 01_base_data/documents (multi-category) ===
+    "rvl_cdip": (BASE_DATA / "documents/rvl_cdip/images", "*.jpg"),
+    "doclaynet": (BASE_DATA / "documents/doclaynet", "**/*.png"),
+    # === 01_base_data/forms (structured forms) ===
+    "nist_db2": (BASE_DATA / "forms/nist_db2", "**/*.png"),
+    "nist_sd6": (BASE_DATA / "forms/nist_sd6", "**/*.png"),
+    "funsd_plus": (BASE_DATA / "forms/funsd_plus/images", "*.jpg"),
+    "sroie": (BASE_DATA / "forms/sroie", "**/*.jpg"),
+    # === 01_base_data/tables (tabular data) ===
+    "tablebank": (BASE_DATA / "tables/tablebank/TableBank/Detection/images", "*.jpg"),
+    "pubtabnet": (BASE_DATA / "tables/pubtabnet", "**/*.png"),
+    # === 01_base_data/handwriting ===
+    "nist_sd19": (BASE_DATA / "handwriting/nist_sd19_pages", "**/*.png"),
+    "maths_handwriting": (BASE_DATA / "handwriting/maths_handwriting", "**/*.png"),
+    # === 01_base_data/formulas (math content) ===
+    "mathverse": (BASE_DATA / "formulas/mathverse/images", "*.jpg"),
+    # === 01_base_data/educational ===
+    "multimodal_textbook": (BASE_DATA / "educational/sample_100_images", "*.jpg"),
 }
 
 
