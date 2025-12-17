@@ -114,13 +114,13 @@ class LeaderboardGenerator:
         return self._config
 
     def add_result(
-        self, result: BenchmarkResult, model_name: str | None = None
+        self, result: BenchmarkResult, _model_name: str | None = None
     ) -> None:
         """Add a benchmark result to the leaderboard.
 
         Args:
             result: BenchmarkResult to add.
-            model_name: Optional display name (defaults to model_id).
+            _model_name: Optional display name (defaults to model_id). Reserved for future use.
         """
         if result.status.value != "completed":
             logger.warning(
@@ -173,9 +173,11 @@ class LeaderboardGenerator:
         for run_id, result in self._results.items():
             # Apply filters
             variant = result.model_spec.get("variant", "base")
-            if self._config.filter_variant:
-                if variant not in self._config.filter_variant:
-                    continue
+            if (
+                self._config.filter_variant
+                and variant not in self._config.filter_variant
+            ):
+                continue
 
             model_id = result.model_spec.get("id", "unknown")
             if self._config.filter_family:

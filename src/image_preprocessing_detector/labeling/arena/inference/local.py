@@ -79,7 +79,7 @@ class LocalBackend(InferenceBackend):
 
             if not artifact_path.exists():
                 msg = f"Artifact path does not exist: {artifact_path}"
-                raise ModelLoadError(msg)
+                raise ModelLoadError(msg)  # noqa: TRY301
 
             logger.info(
                 "loading_local_artifact",
@@ -125,10 +125,9 @@ class LocalBackend(InferenceBackend):
             msg = f"Failed to load local artifact {spec.id}: {e}"
             raise ModelLoadError(msg) from e
 
-    def _load_safetensors(self, path: Path, config: InferenceConfig) -> None:
+    def _load_safetensors(self, path: Path, _config: InferenceConfig) -> None:
         """Load model from safetensors format."""
         try:
-            import torch
             from safetensors.torch import load_file
 
             weights_path = path / "model.safetensors"
@@ -229,7 +228,7 @@ class LocalBackend(InferenceBackend):
 
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
         self._model = None

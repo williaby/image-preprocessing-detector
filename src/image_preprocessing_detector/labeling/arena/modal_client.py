@@ -255,7 +255,7 @@ class ArenaModalClient:
         try:
             responses = self._execute_batch_request(requests)
             self._record_success()
-            return responses
+            return responses  # noqa: TRY300
         except Exception as e:
             logger.exception(
                 "Modal batch request failed",

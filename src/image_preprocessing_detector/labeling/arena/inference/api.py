@@ -11,7 +11,7 @@ import hashlib
 import io
 import os
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 import structlog
@@ -59,7 +59,7 @@ class APIBackend(InferenceBackend):
         >>> prediction = backend.predict(image)
     """
 
-    SUPPORTED_PROVIDERS = {"openai", "google", "anthropic"}
+    SUPPORTED_PROVIDERS: ClassVar[set[str]] = {"openai", "google", "anthropic"}
 
     # Prompt template for DIQA scoring
     DIQA_PROMPT = """Analyze this document image and provide quality scores.
@@ -132,7 +132,7 @@ No other text or explanation."""
             msg = f"Failed to initialize API client: {e}"
             raise ModelLoadError(msg) from e
 
-    def _init_openai_client(self, spec: ModelSpec) -> None:
+    def _init_openai_client(self, _spec: ModelSpec) -> None:
         """Initialize OpenAI client."""
         try:
             from openai import OpenAI
@@ -165,7 +165,7 @@ No other text or explanation."""
             msg = "google-generativeai library required for Google backend"
             raise ModelLoadError(msg) from e
 
-    def _init_anthropic_client(self, spec: ModelSpec) -> None:
+    def _init_anthropic_client(self, _spec: ModelSpec) -> None:
         """Initialize Anthropic client."""
         try:
             from anthropic import Anthropic

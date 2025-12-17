@@ -226,7 +226,7 @@ class ArenaRunner:
                 aggregate_plcc=f"{metrics.aggregate.plcc:.4f}",
             )
 
-            return result
+            return result  # noqa: TRY300
 
         except ModelLoadError as e:
             logger.exception(
@@ -561,14 +561,14 @@ class ArenaRunner:
         # Try nvidia-smi fallback
         try:
             result = subprocess.run(
-                ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
+                ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 check=False,
             )
             if result.returncode == 0:
                 return f"driver:{result.stdout.strip()}"
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         return None

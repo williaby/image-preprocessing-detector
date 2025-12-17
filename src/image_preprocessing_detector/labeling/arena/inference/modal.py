@@ -222,7 +222,7 @@ class ModalBackend(InferenceBackend):
                 batch_predictions = self._process_batch(batch, start_idx=i)
                 predictions.extend(batch_predictions)
 
-            return predictions
+            return predictions  # noqa: TRY300
 
         except Exception as e:
             msg = f"Modal inference failed: {e}"
@@ -391,7 +391,7 @@ class ModalBackend(InferenceBackend):
             import subprocess
 
             result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
+                ["git", "rev-parse", "HEAD"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -400,7 +400,7 @@ class ModalBackend(InferenceBackend):
             if result.returncode == 0:
                 return f"git:{result.stdout.strip()[:8]}"
 
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         return ""

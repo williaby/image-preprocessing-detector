@@ -153,12 +153,12 @@ class RegressionBackend(InferenceBackend):
             msg = f"Unsupported source for regression backend: {spec.source}"
             raise ModelLoadError(msg)
 
-    def _load_local_model(self, spec: ModelSpec, config: InferenceConfig) -> None:
+    def _load_local_model(self, spec: ModelSpec, _config: InferenceConfig) -> None:
         """Load model from local path.
 
         Args:
             spec: Model specification with local path.
-            config: Inference configuration.
+            _config: Inference configuration (unused).
         """
         import torch
 
@@ -196,7 +196,9 @@ class RegressionBackend(InferenceBackend):
                 trust_remote_code=True,
             )
 
-    def _load_huggingface_model(self, spec: ModelSpec, config: InferenceConfig) -> None:
+    def _load_huggingface_model(
+        self, spec: ModelSpec, _config: InferenceConfig
+    ) -> None:
         """Load regression model from HuggingFace.
 
         This assumes the model has been uploaded with the regression head
@@ -204,7 +206,7 @@ class RegressionBackend(InferenceBackend):
 
         Args:
             spec: Model specification.
-            config: Inference configuration.
+            _config: Inference configuration (unused).
         """
         from transformers import AutoModel, AutoProcessor
 
@@ -345,7 +347,7 @@ class RegressionBackend(InferenceBackend):
                 batch_predictions = self._process_batch(batch, start_idx=i)
                 predictions.extend(batch_predictions)
 
-            return predictions
+            return predictions  # noqa: TRY300
 
         except Exception as e:
             msg = f"Regression inference failed: {e}"
@@ -487,7 +489,7 @@ class RegressionBackend(InferenceBackend):
             import subprocess
 
             result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
+                ["git", "rev-parse", "HEAD"],  # noqa: S607
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -496,7 +498,7 @@ class RegressionBackend(InferenceBackend):
             if result.returncode == 0:
                 return f"git:{result.stdout.strip()[:8]}"
 
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         return ""

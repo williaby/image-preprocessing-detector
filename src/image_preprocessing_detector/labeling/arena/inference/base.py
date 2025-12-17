@@ -6,6 +6,7 @@ must implement for consistent model evaluation in the Arena.
 
 from __future__ import annotations
 
+import contextlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -179,11 +180,8 @@ class InferenceBackend(ABC):
         dummy_image = np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
 
         for _ in range(num_iterations):
-            try:
+            with contextlib.suppress(Exception):
                 _ = self.predict(dummy_image)
-            except Exception:
-                # Warmup failures are not critical
-                pass
 
 
 class ModelLoadError(Exception):
