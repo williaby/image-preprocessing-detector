@@ -22,12 +22,14 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import structlog
+
+from image_preprocessing_detector.utils.datetime_compat import UTC
 
 if TYPE_CHECKING:
     from image_preprocessing_detector.labeling.model_spec import ModelSpec

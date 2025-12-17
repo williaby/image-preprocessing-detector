@@ -20,12 +20,14 @@ import hashlib
 import json
 import subprocess
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import structlog
 import torch
+
+from image_preprocessing_detector.utils.datetime_compat import UTC
 
 logger = structlog.get_logger(__name__)
 

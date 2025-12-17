@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +18,7 @@ from image_preprocessing_detector.labeling.arena.metrics import (
     ArenaMetrics,
 )
 from image_preprocessing_detector.labeling.arena.schemas import BenchmarkResult
+from image_preprocessing_detector.utils.datetime_compat import UTC
 
 logger = structlog.get_logger(__name__)
 
