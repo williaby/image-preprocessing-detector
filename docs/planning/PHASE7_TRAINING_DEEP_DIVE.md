@@ -15,8 +15,9 @@ owner: core-maintainer
 authors:
   - name: "Byron Williams"
   - name: "Claude Code"
-purpose: "Systematic evaluation of training methodology with dataset lineage tracking,
-  labeling evolution, and improvement recommendations for Phase 7 continuous label IQA"
+purpose: Systematic evaluation of training methodology with dataset lineage tracking and labeling evolution.
+component: Strategy
+source: Manual creation
 ---
 
 > **Created**: 2025-12-14

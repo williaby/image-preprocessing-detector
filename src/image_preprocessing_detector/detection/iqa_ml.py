@@ -397,7 +397,7 @@ class MLIQADetector:
         else:
             import random
 
-            threshold = random.randint(0, 99)
+            threshold = random.randint(0, 99)  # noqa: S311 # nosec B311
 
         return threshold < self.v2_rollout_percentage
 
@@ -428,7 +428,9 @@ class MLIQADetector:
                 raw_output = outputs[output_key][0]  # Remove batch dimension
                 if len(raw_output.shape) > 0:
                     # If multi-dimensional, take first value
-                    severity = float(raw_output[0] if raw_output.size > 1 else raw_output)
+                    severity = float(
+                        raw_output[0] if raw_output.size > 1 else raw_output
+                    )
                 else:
                     severity = float(raw_output)
 
@@ -448,7 +450,9 @@ class MLIQADetector:
 
         return scores, confidences, severities
 
-    def get_effective_model_version(self, request_id: str | None = None) -> ModelVersion:
+    def get_effective_model_version(
+        self, request_id: str | None = None
+    ) -> ModelVersion:
         """Get the effective model version for a request.
 
         Args:

@@ -6,7 +6,7 @@ tags:
   - planning
   - phase7
   - iqa
-  - project-plan
+  - project_plan
   - mvp
 status: draft
 owner: core-maintainer

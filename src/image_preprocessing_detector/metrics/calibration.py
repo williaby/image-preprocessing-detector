@@ -303,9 +303,7 @@ def generate_reliability_diagram_data(
         - ece: ECE value for annotation
     """
     bin_width = 1.0 / result.num_bins
-    bin_midpoints = [
-        (i + 0.5) * bin_width for i in range(result.num_bins)
-    ]
+    bin_midpoints = [(i + 0.5) * bin_width for i in range(result.num_bins)]
 
     return {
         "bin_midpoints": bin_midpoints,
@@ -331,22 +329,20 @@ if __name__ == "__main__":
     predictions = np.clip(predictions, 0, 1)
 
     result = compute_ece(predictions, labels)
-    print(f"Well-calibrated model:")
-    print(f"  ECE: {result.ece:.4f}")
-    print(f"  MCE: {result.mce:.4f}")
+    print("Well-calibrated model:")  # noqa: T201
+    print(f"  ECE: {result.ece:.4f}")  # noqa: T201
+    print(f"  MCE: {result.mce:.4f}")  # noqa: T201
 
     # Simulate overconfident predictions
     overconfident_preds = np.where(predictions > 0.5, 0.9, 0.1)
     result_overconf = compute_ece(overconfident_preds, labels)
-    print(f"\nOverconfident model:")
-    print(f"  ECE: {result_overconf.ece:.4f}")
-    print(f"  MCE: {result_overconf.mce:.4f}")
+    print("\nOverconfident model:")  # noqa: T201
+    print(f"  ECE: {result_overconf.ece:.4f}")  # noqa: T201
+    print(f"  MCE: {result_overconf.mce:.4f}")  # noqa: T201
 
     # Multi-class example
     multi_preds = np.column_stack([predictions, 1 - predictions])
     multi_labels = np.column_stack([labels, 1 - labels])
-    multi_result = compute_multiclass_ece(
-        multi_preds, multi_labels, ["blur", "noise"]
-    )
-    print(f"\nMulti-class ECE: {multi_result.ece:.4f}")
-    print(f"Per-class: {multi_result.per_class_ece}")
+    multi_result = compute_multiclass_ece(multi_preds, multi_labels, ["blur", "noise"])
+    print(f"\nMulti-class ECE: {multi_result.ece:.4f}")  # noqa: T201
+    print(f"Per-class: {multi_result.per_class_ece}")  # noqa: T201

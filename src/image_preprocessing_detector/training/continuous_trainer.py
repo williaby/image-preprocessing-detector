@@ -14,7 +14,10 @@ continuous severity labels [0, 1] instead of binary labels:
 
 Usage:
     >>> from image_preprocessing_detector.training import ContinuousTeacherTrainer
-    >>> from image_preprocessing_detector.models import ResNetTeacher, ContinuousBCEMSELoss
+    >>> from image_preprocessing_detector.models import (
+    ...     ResNetTeacher,
+    ...     ContinuousBCEMSELoss,
+    ... )
     >>>
     >>> model = ResNetTeacher(num_heads=5)
     >>> loss_fn = ContinuousBCEMSELoss(alpha=0.6, beta=0.4)
@@ -46,7 +49,6 @@ from image_preprocessing_detector.metrics.calibration import (
     compute_multiclass_ece,
     compute_severity_metrics,
 )
-from image_preprocessing_detector.models.loss_functions import ContinuousBCEMSELoss
 from image_preprocessing_detector.training.checkpoint_utils import (
     cleanup_old_checkpoints,
     load_checkpoint_safe,
@@ -342,7 +344,9 @@ class ContinuousTeacherTrainer:
             epoch_loss += loss.item() * self.gradient_accumulation_steps
             epoch_bce_loss += loss_dict.get("bce_loss", torch.tensor(0.0)).item()
             epoch_mse_loss += loss_dict.get("mse_loss", torch.tensor(0.0)).item()
-            epoch_severity_mae += loss_dict.get("severity_mae", torch.tensor(0.0)).item()
+            epoch_severity_mae += loss_dict.get(
+                "severity_mae", torch.tensor(0.0)
+            ).item()
             num_batches += 1
 
             # Logging
@@ -443,7 +447,7 @@ class ContinuousTeacherTrainer:
         all_tgts = np.concatenate(all_targets, axis=0)
 
         ece_result = compute_multiclass_ece(
-            all_preds, all_tgts, class_names=SEVERITY_DIMENSIONS[:all_preds.shape[1]]
+            all_preds, all_tgts, class_names=SEVERITY_DIMENSIONS[: all_preds.shape[1]]
         )
         severity_metrics = compute_severity_metrics(all_preds, all_tgts)
 
@@ -526,10 +530,7 @@ class ContinuousTeacherTrainer:
         self.best_ece = checkpoint.get("best_ece", float("inf"))
         self.training_history = checkpoint.get("training_history", {})
 
-        logger.info(
-            f"Resumed from epoch {self.epoch}, "
-            f"best ECE: {self.best_ece:.4f}"
-        )
+        logger.info(f"Resumed from epoch {self.epoch}, best ECE: {self.best_ece:.4f}")
 
     def _check_early_stopping(self, val_loss: float, ece: float) -> bool:
         """Check for improvement and update early stopping state.
@@ -568,9 +569,7 @@ class ContinuousTeacherTrainer:
 
         return is_best
 
-    def train(
-        self, train_loader: DataLoader, val_loader: DataLoader
-    ) -> dict[str, Any]:
+    def train(self, train_loader: DataLoader, val_loader: DataLoader) -> dict[str, Any]:
         """Main training loop for continuous labels.
 
         Args:
@@ -623,7 +622,11 @@ class ContinuousTeacherTrainer:
             # Update learning rate
             if self.scheduler:
                 if isinstance(self.scheduler, ReduceLROnPlateau):
-                    metric = val_metrics["ece"] if self.use_ece_early_stopping else val_metrics["loss"]
+                    metric = (
+                        val_metrics["ece"]
+                        if self.use_ece_early_stopping
+                        else val_metrics["loss"]
+                    )
                     self.scheduler.step(metric)
                 else:
                     self.scheduler.step()
@@ -635,7 +638,9 @@ class ContinuousTeacherTrainer:
             self.writer.add_scalar("train/epoch_loss", train_metrics["loss"], epoch)
             self.writer.add_scalar("val/epoch_loss", val_metrics["loss"], epoch)
             self.writer.add_scalar("val/ece", val_metrics["ece"], epoch)
-            self.writer.add_scalar("val/severity_mae", val_metrics["severity_mae"], epoch)
+            self.writer.add_scalar(
+                "val/severity_mae", val_metrics["severity_mae"], epoch
+            )
             self.writer.add_scalar("train/learning_rate", current_lr, epoch)
 
             # Update training history
@@ -646,7 +651,9 @@ class ContinuousTeacherTrainer:
             self.training_history["learning_rate"].append(current_lr)
 
             # Early stopping check
-            is_best = self._check_early_stopping(val_metrics["loss"], val_metrics["ece"])
+            is_best = self._check_early_stopping(
+                val_metrics["loss"], val_metrics["ece"]
+            )
 
             # Check if we've hit target ECE
             if val_metrics["ece"] <= self.target_ece:
@@ -654,7 +661,9 @@ class ContinuousTeacherTrainer:
 
             # Save checkpoint
             if (epoch + 1) % self.save_interval_epochs == 0 or is_best:
-                self.save_checkpoint(epoch, val_metrics["loss"], val_metrics["ece"], is_best)
+                self.save_checkpoint(
+                    epoch, val_metrics["loss"], val_metrics["ece"], is_best
+                )
 
             # Early stopping
             if self.patience_counter >= self.early_stopping_patience:

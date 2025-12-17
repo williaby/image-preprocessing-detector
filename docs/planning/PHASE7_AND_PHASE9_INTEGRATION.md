@@ -7,7 +7,7 @@ tags:
   - phase7
   - phase9
   - integration
-  - transfer-learning
+  - transfer_learning
 status: draft
 owner: core-maintainer
 authors:

@@ -19,6 +19,8 @@ Phase 7: Model Calibration Metrics
 
 from image_preprocessing_detector.metrics.calibration import (
     CalibrationResult as ModelCalibrationResult,
+)
+from image_preprocessing_detector.metrics.calibration import (
     compute_ece,
     compute_multiclass_ece,
     compute_severity_metrics,
@@ -42,27 +44,23 @@ from image_preprocessing_detector.metrics.dqs_calculator import (
 )
 
 __all__ = [
-    # Phase 4.10: Extended DQS
     "DEFAULT_DQS_WEIGHTS",
-    # Milestone 8.1: Calibration framework
     "CalibrationResult",
     "CalibrationSample",
     "DQSCalibrator",
     "DQSWeightConfig",
     "ExtendedIQAScores",
-    # Core DQS functions
+    "ModelCalibrationResult",
     "aggregate_dqs",
     "calculate_degradation_score",
     "calculate_dqs",
     "calculate_extended_degradation_score",
     "calculate_pre_ocr_risk",
     "calculate_structural_complexity_score",
-    "normalize_classical_iqa",
-    "normalize_extended_iqa",
-    # Phase 7: Model Calibration Metrics
-    "ModelCalibrationResult",
     "compute_ece",
     "compute_multiclass_ece",
     "compute_severity_metrics",
     "generate_reliability_diagram_data",
+    "normalize_classical_iqa",
+    "normalize_extended_iqa",
 ]

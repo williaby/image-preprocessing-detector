@@ -29,7 +29,6 @@ from image_preprocessing_detector.models.loss_functions import (
     GDBCLoss,
 )
 
-
 # ============================================================================
 # ContinuousBCEMSELoss Tests
 # ============================================================================
@@ -89,7 +88,9 @@ class TestContinuousBCEMSELoss:
         # total = alpha * BCE + beta * MSE
         bce_total = result_bce["total_loss"].item()
         mse_total = result_mse["total_loss"].item()
-        assert bce_total != mse_total, f"Total losses should differ: {bce_total} vs {mse_total}"
+        assert bce_total != mse_total, (
+            f"Total losses should differ: {bce_total} vs {mse_total}"
+        )
 
     def test_binary_threshold(self):
         """Test binary threshold for BCE component."""
@@ -312,16 +313,20 @@ class TestMulticlassECE:
 
     def test_multiclass_basic(self):
         """Test multi-class ECE computation."""
-        predictions = np.array([
-            [0.9, 0.2],
-            [0.8, 0.7],
-            [0.3, 0.1],
-        ])
-        labels = np.array([
-            [1, 0],
-            [1, 1],
-            [0, 0],
-        ])
+        predictions = np.array(
+            [
+                [0.9, 0.2],
+                [0.8, 0.7],
+                [0.3, 0.1],
+            ]
+        )
+        labels = np.array(
+            [
+                [1, 0],
+                [1, 1],
+                [0, 0],
+            ]
+        )
 
         result = compute_multiclass_ece(
             predictions, labels, class_names=["blur", "noise"]
@@ -414,6 +419,7 @@ class TestContinuousWeakSupervisionLabeler:
     def sample_image(self) -> np.ndarray:
         """Create a sample test image."""
         import cv2
+
         # Create a simple grayscale image with some texture
         np.random.seed(42)
         image = np.random.randint(50, 200, (100, 100), dtype=np.uint8)

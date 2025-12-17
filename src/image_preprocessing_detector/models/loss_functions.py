@@ -344,7 +344,9 @@ class ContinuousBCEMSELoss(nn.Module):
         if not (0.0 <= beta <= 1.0):
             raise ValueError(f"beta must be in [0, 1], got {beta}")
         if not (0.0 <= binary_threshold <= 1.0):
-            raise ValueError(f"binary_threshold must be in [0, 1], got {binary_threshold}")
+            raise ValueError(
+                f"binary_threshold must be in [0, 1], got {binary_threshold}"
+            )
 
         self.alpha = alpha
         self.beta = beta
@@ -379,7 +381,9 @@ class ContinuousBCEMSELoss(nn.Module):
 
         # Apply label smoothing if configured
         if self.label_smoothing > 0:
-            binary_targets = binary_targets * (1 - self.label_smoothing) + 0.5 * self.label_smoothing
+            binary_targets = (
+                binary_targets * (1 - self.label_smoothing) + 0.5 * self.label_smoothing
+            )
 
         # BCE loss on binary targets (classification signal)
         bce = self.bce_loss(predictions, binary_targets)
