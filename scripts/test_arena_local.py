@@ -1,18 +1,29 @@
 #!/usr/bin/env python
-"""Local test script for Arena framework with Qwen2.5-VL model.
+"""Local test script for Arena framework with vision-language models.
 
 This script tests the Arena benchmarking framework locally without Modal.com
-using the unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit model.
+using small VLMs optimized for limited VRAM.
+
+Supported Models (for 4GB VRAM):
+    - SmolVLM-256M: < 1GB VRAM (smallest VLM in the world)
+    - SmolVLM-500M: ~1-2GB VRAM
+    - Qwen2.5-VL-3B: ~2-3GB VRAM with 4-bit quantization
 
 Usage:
     # Install dependencies first
     uv sync --extra labeling --extra dev
 
-    # Run the test
-    uv run python scripts/test_arena_local.py
+    # Run framework tests only (no model loading)
+    uv run python scripts/test_arena_local.py --skip-model
 
-    # Run with specific options
-    uv run python scripts/test_arena_local.py --num-samples 5 --device cpu
+    # Run with SmolVLM-256M (recommended for 4GB VRAM)
+    uv run python scripts/test_arena_local.py --model smolvlm-256m
+
+    # Run with Qwen2.5-VL-3B (requires ~3GB VRAM)
+    uv run python scripts/test_arena_local.py --model qwen-3b
+
+    # Run on CPU (slower but no VRAM needed)
+    uv run python scripts/test_arena_local.py --model smolvlm-256m --device cpu
 """
 
 from __future__ import annotations
@@ -318,17 +329,33 @@ def test_inference_backend_factory() -> bool:
         return False
 
 
-def test_qwen_model_loading(device: str = "cuda") -> bool:
-    """Test loading the Qwen2.5-VL model."""
-    print("\n--- Testing Qwen Model Loading ---")
+def test_smolvlm_model_loading(device: str = "cuda", model_size: str = "256M") -> bool:
+    """Test loading SmolVLM model (optimized for low VRAM).
+
+    SmolVLM models are tiny vision-language models from HuggingFace:
+    - 256M: < 1GB VRAM (smallest VLM in the world)
+    - 500M: ~1-2GB VRAM
+    - 2B: ~5.7GB VRAM (too big for 4GB GPU)
+
+    Args:
+        device: "cuda" or "cpu"
+        model_size: "256M", "500M", or "2B"
+    """
+    print(f"\n--- Testing SmolVLM-{model_size} Model Loading ---")
 
     try:
         import torch
-        from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
+        from transformers import AutoModelForVision2Seq, AutoProcessor
 
-        model_id = "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit"
+        # Select model based on size
+        model_ids = {
+            "256M": "HuggingFaceTB/SmolVLM-256M-Instruct",
+            "500M": "HuggingFaceTB/SmolVLM-500M-Instruct",
+            "2B": "HuggingFaceTB/SmolVLM-Instruct",
+        }
 
-        print(f"  Loading model: {model_id}")
+        model_id = model_ids.get(model_size, model_ids["256M"])
+        print(f"  Model: {model_id}")
         print(f"  Device: {device}")
 
         # Check CUDA availability
@@ -336,37 +363,146 @@ def test_qwen_model_loading(device: str = "cuda") -> bool:
             print("  CUDA not available, falling back to CPU")
             device = "cpu"
 
+        # Show GPU memory if available
+        if device == "cuda":
+            gpu_mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+            print(f"  GPU memory: {gpu_mem:.1f}GB")
+
         start_time = time.time()
 
-        # Load with 4-bit quantization config for the bnb model
+        # Load model - SmolVLM is small enough to not need quantization
         if device == "cuda":
-            try:
-                from transformers import BitsAndBytesConfig
-
-                bnb_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    bnb_4bit_compute_dtype=torch.float16,
-                    bnb_4bit_use_double_quant=True,
-                    bnb_4bit_quant_type="nf4",
-                )
-
-                model = Qwen2VLForConditionalGeneration.from_pretrained(
-                    model_id,
-                    quantization_config=bnb_config,
-                    device_map="auto",
-                    trust_remote_code=True,
-                )
-            except Exception as e:
-                print(f"  4-bit loading failed: {e}")
-                print("  Trying without quantization...")
-                model = Qwen2VLForConditionalGeneration.from_pretrained(
-                    model_id,
-                    torch_dtype=torch.float16,
-                    device_map="auto",
-                    trust_remote_code=True,
-                )
+            model = AutoModelForVision2Seq.from_pretrained(
+                model_id,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                trust_remote_code=True,
+            )
         else:
-            # CPU loading
+            model = AutoModelForVision2Seq.from_pretrained(
+                model_id,
+                torch_dtype=torch.float32,
+                device_map="cpu",
+                trust_remote_code=True,
+                low_cpu_mem_usage=True,
+            )
+
+        processor = AutoProcessor.from_pretrained(model_id, trust_remote_code=True)
+
+        load_time = time.time() - start_time
+        print(f"  Model loaded in {load_time:.2f}s")
+
+        # Show memory usage
+        if device == "cuda":
+            mem_used = torch.cuda.memory_allocated() / 1e9
+            print(f"  GPU memory used: {mem_used:.2f}GB")
+
+        # Test inference on a simple image
+        print("  Running test inference...")
+        test_image = Image.fromarray(
+            np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
+        )
+
+        # SmolVLM uses a simpler chat format
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image"},
+                    {"type": "text", "text": "Rate this image quality from 0 to 1. Reply with just a number."},
+                ],
+            }
+        ]
+
+        prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
+        inputs = processor(
+            text=prompt,
+            images=[test_image],
+            return_tensors="pt",
+        )
+
+        if device == "cuda":
+            inputs = {k: v.cuda() if hasattr(v, "cuda") else v for k, v in inputs.items()}
+
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=50,
+                do_sample=False,
+            )
+
+        response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
+        print(f"  Model response: {response[:100]}...")
+        print(f"  SmolVLM-{model_size}: OK")
+
+        # Cleanup
+        del model
+        del processor
+        if device == "cuda":
+            torch.cuda.empty_cache()
+
+        return True
+
+    except ImportError as e:
+        print(f"  Import error: {e}")
+        print("  Install with: uv sync --extra labeling")
+        return False
+    except Exception as e:
+        print(f"  Model loading failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_qwen_vlm_loading(device: str = "cuda") -> bool:
+    """Test loading Qwen2.5-VL-3B (requires ~2-3GB VRAM with 4-bit).
+
+    For 4GB VRAM, this should work but may be tight with long sequences.
+    """
+    print("\n--- Testing Qwen2.5-VL-3B Model Loading ---")
+
+    try:
+        import torch
+        from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
+
+        # The 3B model is the smallest Qwen VL
+        model_id = "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit"
+
+        print(f"  Model: {model_id}")
+        print(f"  Device: {device}")
+
+        # Check CUDA availability
+        if device == "cuda" and not torch.cuda.is_available():
+            print("  CUDA not available, falling back to CPU")
+            device = "cpu"
+
+        # Show GPU memory if available
+        if device == "cuda":
+            gpu_mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+            print(f"  GPU memory: {gpu_mem:.1f}GB")
+            if gpu_mem < 4.0:
+                print("  Warning: Model may not fit in available VRAM")
+
+        start_time = time.time()
+
+        # Load with 4-bit quantization
+        if device == "cuda":
+            from transformers import BitsAndBytesConfig
+
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4",
+            )
+
+            model = Qwen2VLForConditionalGeneration.from_pretrained(
+                model_id,
+                quantization_config=bnb_config,
+                device_map="auto",
+                trust_remote_code=True,
+            )
+        else:
             model = Qwen2VLForConditionalGeneration.from_pretrained(
                 model_id,
                 torch_dtype=torch.float32,
@@ -380,7 +516,12 @@ def test_qwen_model_loading(device: str = "cuda") -> bool:
         load_time = time.time() - start_time
         print(f"  Model loaded in {load_time:.2f}s")
 
-        # Test inference on a simple image
+        # Show memory usage
+        if device == "cuda":
+            mem_used = torch.cuda.memory_allocated() / 1e9
+            print(f"  GPU memory used: {mem_used:.2f}GB")
+
+        # Test inference
         print("  Running test inference...")
         test_image = Image.fromarray(
             np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
@@ -418,7 +559,13 @@ def test_qwen_model_loading(device: str = "cuda") -> bool:
 
         response = processor.batch_decode(outputs, skip_special_tokens=True)[0]
         print(f"  Model response: {response[:100]}...")
-        print("  Qwen model: OK")
+        print("  Qwen2.5-VL-3B: OK")
+
+        # Cleanup
+        del model
+        del processor
+        if device == "cuda":
+            torch.cuda.empty_cache()
 
         return True
 
@@ -510,7 +657,21 @@ def test_leaderboard_generator() -> bool:
 
 def main() -> int:
     """Run all tests."""
-    parser = argparse.ArgumentParser(description="Test Arena framework locally")
+    parser = argparse.ArgumentParser(
+        description="Test Arena framework locally",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Model Options for 4GB VRAM:
+  smolvlm-256m  - < 1GB VRAM (smallest VLM, recommended)
+  smolvlm-500m  - ~1-2GB VRAM
+  qwen-3b       - ~2-3GB VRAM with 4-bit quantization
+
+Examples:
+  uv run python scripts/test_arena_local.py --skip-model           # Framework only
+  uv run python scripts/test_arena_local.py --model smolvlm-256m   # Tiny model
+  uv run python scripts/test_arena_local.py --model qwen-3b        # Qwen 3B
+""",
+    )
     parser.add_argument(
         "--num-samples",
         type=int,
@@ -523,6 +684,13 @@ def main() -> int:
         default="cuda",
         choices=["cuda", "cpu"],
         help="Device to use for model testing",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="smolvlm-256m",
+        choices=["smolvlm-256m", "smolvlm-500m", "smolvlm-2b", "qwen-3b"],
+        help="Model to test (default: smolvlm-256m for 4GB VRAM)",
     )
     parser.add_argument(
         "--skip-model",
@@ -551,7 +719,19 @@ def main() -> int:
     results["leaderboard"] = test_leaderboard_generator()
 
     if not args.skip_model:
-        results["qwen_model"] = test_qwen_model_loading(device=args.device)
+        if args.model.startswith("smolvlm"):
+            # Map model arg to size
+            size_map = {
+                "smolvlm-256m": "256M",
+                "smolvlm-500m": "500M",
+                "smolvlm-2b": "2B",
+            }
+            model_size = size_map.get(args.model, "256M")
+            results["vlm_model"] = test_smolvlm_model_loading(
+                device=args.device, model_size=model_size
+            )
+        elif args.model == "qwen-3b":
+            results["vlm_model"] = test_qwen_vlm_loading(device=args.device)
     else:
         print("\n--- Skipping Model Loading Test ---")
 
