@@ -250,7 +250,7 @@ executing==2.2.1
     # via stack-data
 fastjsonschema==2.21.2
     # via nbformat
-filelock==3.20.0
+filelock==3.20.1
     # via
     #   datasets
     #   huggingface-hub
@@ -1066,7 +1066,7 @@ tomlkit==0.13.3
     # via
     #   dvc
     #   safety
-tornado==6.5.2
+tornado==6.5.3
     # via
     #   ipykernel
     #   jupyter-client
