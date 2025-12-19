@@ -48,16 +48,11 @@ vlm_image = (
 # Model cache volume for HuggingFace models
 model_volume = modal.Volume.from_name("arena-models", create_if_missing=True)
 
-# HuggingFace token secret (optional, for gated models)
-hf_secret = modal.Secret.from_name("huggingface-token", required=False)
-
-
 @app.function(
     image=vlm_image,
     gpu="T4",  # Start with T4 (16GB), can upgrade to A10 (24GB) if needed
     timeout=600,
     volumes={"/models": model_volume},
-    secrets=[hf_secret] if hf_secret else [],
 )
 def test_gpu() -> dict[str, Any]:
     """Test GPU access and CUDA availability.
@@ -85,8 +80,7 @@ def test_gpu() -> dict[str, Any]:
     gpu="T4",
     timeout=1800,  # 30 min for batch processing
     volumes={"/models": model_volume},
-    secrets=[hf_secret] if hf_secret else [],
-    container_idle_timeout=300,  # Keep warm for 5 minutes
+    scaledown_window=300,  # Keep warm for 5 minutes
 )
 class VLMInference:
     """Vision Language Model inference service for Arena benchmarking.
@@ -252,6 +246,27 @@ class VLMInference:
                 padding=True,
                 return_tensors="pt",
             ).to(self._model.device)
+        elif "smolvlm" in model_id.lower() or "smol" in model_id.lower():
+            # SmolVLM format - uses chat template with image placeholder
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image"},
+                        {"type": "text", "text": prompt},
+                    ],
+                }
+            ]
+
+            text = self._processor.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+
+            inputs = self._processor(
+                text=text,
+                images=[image],
+                return_tensors="pt",
+            ).to(self._model.device)
         else:
             # Generic VLM format
             inputs = self._processor(
@@ -281,6 +296,13 @@ class VLMInference:
                 skip_special_tokens=True,
                 clean_up_tokenization_spaces=True,
             )[0]
+        elif "smolvlm" in model_id.lower() or "smol" in model_id.lower():
+            # SmolVLM: skip input tokens
+            generated_ids = output_ids[0][len(inputs.input_ids[0]):]
+            output_text = self._processor.decode(
+                generated_ids,
+                skip_special_tokens=True,
+            )
         else:
             output_text = self._processor.decode(
                 output_ids[0],
