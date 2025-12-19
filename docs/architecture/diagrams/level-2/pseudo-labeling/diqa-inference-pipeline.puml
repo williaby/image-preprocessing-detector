@@ -1,0 +1,65 @@
+@startuml DIQA Inference Pipeline
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title DIQA Pseudo-Labeling Inference Pipeline\nBatch Processing Flow
+
+' ============================================================================
+' COMPONENT DIAGRAM: Inference Architecture
+' ============================================================================
+
+package "Modal Serverless Infrastructure" as Modal {
+
+  package "GPU Pool" as GPUPool {
+    node "A10G Instances\n(Track A light)" as A10G {
+      component "MUSIQ\n(27M params)" as MUSIQ_Inf
+      component "QualiCLIP\n(150M params)" as QualiCLIP_Inf
+    }
+
+    node "A100-80GB Instances\n(Track A heavy + Track B)" as A100 {
+      component "DocIQ-Replica\n(25M + masks)" as DocIQ_Inf
+      component "Qwen3-VL-8B\n(8B params)" as Qwen_Inf
+      component "InternVL3-8B\n(8B params)" as InternVL_Inf
+    }
+  }
+
+  package "Orchestration" as Orchestration {
+    component "Batch Scheduler" as Scheduler
+    component "Result Aggregator" as Aggregator
+    queue "Job Queue" as JobQueue
+  }
+}
+
+' ============================================================================
+' INPUT/OUTPUT
+' ============================================================================
+
+database "Input Images\n(GCS Bucket)" as InputBucket
+database "Layout Mask Cache\n(GCS)" as MaskCache
+database "Output Labels\n(GCS)" as OutputBucket
+
+' ============================================================================
+' CONNECTIONS
+' ============================================================================
+
+InputBucket --> Scheduler : Batch of images
+Scheduler --> JobQueue : Distribute jobs
+
+JobQueue --> MUSIQ_Inf : Image batch
+JobQueue --> QualiCLIP_Inf : Image batch
+JobQueue --> DocIQ_Inf : Image + mask batch
+JobQueue --> Qwen_Inf : Image + prompt
+JobQueue --> InternVL_Inf : Image + prompt
+
+MaskCache --> DocIQ_Inf : Pre-computed masks
+
+MUSIQ_Inf --> Aggregator : predictions
+QualiCLIP_Inf --> Aggregator : predictions
+DocIQ_Inf --> Aggregator : predictions
+Qwen_Inf --> Aggregator : predictions
+InternVL_Inf --> Aggregator : predictions
+
+Aggregator --> OutputBucket : Pseudo-labels JSON
+
+@enduml

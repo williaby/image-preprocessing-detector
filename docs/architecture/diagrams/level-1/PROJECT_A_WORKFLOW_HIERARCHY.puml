@@ -1,0 +1,381 @@
+@startuml Project_A_Workflow_Hierarchy
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Project A - Workflow Hierarchy & Data Dependencies\nHow Workstreams Connect
+footer Preprocessing, IQA & Routing Gateway | v2.0 | December 2025
+
+' ============================================================================
+' SWIMLANES BY WORKSTREAM
+' ============================================================================
+
+|#E8F5E9|Production Runtime|
+|#FFF3E0|Data Preparation|
+|#F3E5F5|Pseudo-Labeling|
+|#E3F2FD|Model Training|
+
+' ============================================================================
+' DATA PREPARATION WORKSTREAM
+' ============================================================================
+|Data Preparation|
+start
+
+partition "Dataset Collection" {
+  :Collect source datasets;
+  note right
+    **Sources:**
+    - OHR-Bench (IQA)
+    - DIQA-5000 (IQA)
+    - DocLayNet (Layout)
+    - LIVE/CSIQ (IQA reference)
+
+    **Workflow:**
+    [[project-a-training-data-ingestion.puml]]
+
+    **Documentation:**
+    [[docs/DATASET_CATALOG.md]]
+
+    **Scripts:**
+    - scripts/download_*.py
+    - scripts/annotate_base_metadata.py
+  end note
+
+  :Normalize to 300 DPI;
+  :Create train/val/test splits;
+  note right
+    **Scripts:**
+    - scripts/build_training_labels.py
+
+    **Three-Layer Pipeline:**
+    Layer 1: IMMUTABLE (annotate_base_metadata.py)
+    Layer 2: ENRICHMENT (in same script)
+    Layer 3: TRAINING (build_training_labels.py)
+  end note
+}
+
+:Processed datasets\n(GCS: image_detection_b);
+
+' ============================================================================
+' PSEUDO-LABELING WORKSTREAM
+' ============================================================================
+|Pseudo-Labeling|
+
+partition "Multi-Model Ensemble Training" {
+  :Train Track A IQA models;
+  note right
+    **Models (accuracy-optimized):**
+    - MUSIQ (sharpness specialist)
+    - QualiCLIP (color specialist)
+    - DocIQ-Replica (overall)
+
+    **Workflow:**
+    [[diqa-training-phases.puml]]
+    Phase 1: Track A Training
+  end note
+
+  :Train Track B VLM models;
+  note right
+    **Models:**
+    - Qwen3-VL-8B (LoRA)
+    - InternVL3-8B (LoRA)
+
+    **Workflow:**
+    [[diqa-training-phases.puml]]
+    Phase 2: Track B Training
+  end note
+}
+
+partition "Checkpoint Selection" {
+  :Select best checkpoints;
+  note right
+    **Algorithm:**
+    Weighted SRCC + ECE scoring
+    Band-based selection
+
+    **Workflow:**
+    [[diqa-checkpoint-selection.puml]]
+  end note
+}
+
+partition "Ensemble Stacking" {
+  :Train HierarchicalStacker;
+  :Apply temperature scaling;
+  note right
+    **Workflow:**
+    [[diqa-training-phases.puml]]
+    Phase 3: Stacker Training
+  end note
+}
+
+partition "Batch Inference" {
+  :Run 5-model ensemble\non all datasets;
+  note right
+    **Infrastructure:**
+    Modal serverless (A10G/A100)
+    Parallel batch processing
+
+    **Workflow:**
+    [[diqa-inference-pipeline.puml]]
+
+    **Scripts:**
+    - modal/arena_benchmark.py
+    - scripts/run_model_benchmark.py
+
+    **Source:**
+    - src/.../labeling/arena/runner.py
+    - src/.../labeling/arena/inference/*.py
+
+    **Documentation:**
+    [[docs/benchmarks/README.md]]
+  end note
+
+  :Generate pseudo-labels\nwith uncertainty;
+  note right
+    **Output:**
+    - overall/sharpness/color scores
+    - per-model predictions
+    - uncertainty flags
+
+    **Workflow:**
+    [[diqa-pseudo-labeling-workflow.puml]]
+
+    **Scripts:**
+    - modal/generate_pseudo_labels.py
+
+    **Results:**
+    - docs/benchmarks/*.csv
+  end note
+}
+
+:Consistent pseudo-labels\nacross all datasets;
+
+' ============================================================================
+' MODEL TRAINING WORKSTREAM
+' ============================================================================
+|Model Training|
+
+partition "Production Model Training" {
+  :Train ResNet-50 Teacher;
+  note right
+    **Purpose:**
+    High-capacity model for
+    difficult cases
+
+    **Data:**
+    Pseudo-labeled datasets
+
+    **Source:**
+    - src/.../training/teacher_trainer.py
+    - src/.../models/resnet_teacher.py
+
+    **Scripts:**
+    - modal/train_phase2_iqa.py
+  end note
+
+  :Knowledge Distillation;
+  note right
+    **Process:**
+    - Temperature-scaled soft targets
+    - Combined KL-div + CE loss
+    - Student mimics teacher
+
+    **Workflow:**
+    [[project-a-distillation.puml]]
+
+    **Source:**
+    - src/.../training/distillation_loss.py
+    - src/.../training/generate_soft_labels.py
+
+    **ADR:**
+    [[docs/ADRs/0028-resnet-teacher-student.md]]
+  end note
+
+  :Train ResNet-18 Student;
+  note right
+    **Purpose:**
+    Production-optimized model
+    Fast inference (≤40ms CPU)
+
+    **Source:**
+    - src/.../training/student_trainer.py
+    - src/.../models/resnet_student.py
+
+    **Scripts:**
+    - modal/train_student_distillation.py
+  end note
+}
+
+partition "Layout Model Training" {
+  :Fine-tune DocLayout-YOLO;
+  note right
+    **Dataset:**
+    DocLayNet (80K pages, 11 classes)
+
+    **Scope:**
+    Full layout analysis including
+    reading order and table structure
+    (moved from Project B)
+
+    **Scripts:**
+    - modal/train_phase3_doclayout_yolo.py
+
+    **GAP IDENTIFIED:**
+    No dedicated workflow diagram
+    for layout model training
+  end note
+}
+
+partition "Model Export" {
+  :Export to ONNX;
+  note right
+    **Scripts:**
+    - modal/export_phase7_onnx.py
+
+    **Source:**
+    - src/.../models/model_optimizer.py
+  end note
+  :Upload to Model Registry\n(GCS);
+  note right
+    **Source:**
+    - src/.../utils/gcs_uploader.py
+
+    **Documentation:**
+    [[docs/MODEL_STORAGE.md]]
+  end note
+}
+
+:Production-ready models;
+
+' ============================================================================
+' PRODUCTION RUNTIME
+' ============================================================================
+|Production Runtime|
+
+partition "Document Processing" {
+  :Receive document\n(PDF/Image);
+
+  :Pre-flight analysis;
+  note right
+    - DPI detection
+    - Upscaling if needed
+    - PDF type classification
+
+    **Workflow:**
+    [[project-a-primary-workflow-high-level.puml]]
+
+    **Source:**
+    - src/.../ingestion/pdf_analyzer.py
+    - src/.../ingestion/pdf_resolution.py
+    - src/.../ingestion/pdf_upscaler.py
+    - src/.../classification/pdf_type_classifier.py
+
+    **Documentation:**
+    [[docs/api/ingestion.md]]
+  end note
+
+  :Text Gate routing;
+  note right
+    Fast ensemble heuristics
+    <10ms per page
+
+    **Source:**
+    - src/.../detection/text_gate.py
+
+    **Documentation:**
+    [[docs/api/detection.md]]
+  end note
+
+  fork
+    :Classical IQA\n(7 detectors);
+    note left
+      **Source:**
+      src/.../detection/iqa_classical.py
+    end note
+  fork again
+    :ML IQA Student\n(ResNet-18);
+    note left
+      **Source:**
+      src/.../detection/iqa_ml.py
+    end note
+
+    if (High uncertainty?) then (yes)
+      :Teacher inference\n(ResNet-50);
+      note right
+        **Escalation Logic:**
+        [[project-a-device-selection-flow.puml]]
+
+        **Source:**
+        - src/.../orchestration/device_orchestrator.py
+
+        **ADR:**
+        [[docs/ADRs/0036-device-priority.md]]
+      end note
+    endif
+  fork again
+    :Layout Analysis\n(DocLayout-YOLO);
+    note right
+      **Full Layout Detection:**
+      - 11 DocLayNet classes
+      - Reading order prediction
+      - Table structure extraction
+
+      **Source:**
+      - src/.../detection/doclayout_yolo.py
+      - src/.../detection/layout_lite/*.py
+
+      **Scope Change:**
+      Layout moved from Project B
+      to Project A for efficiency
+    end note
+  end fork
+
+  :Apply corrections;
+  note left
+    **Source:**
+    src/.../correction/corrections.py
+
+    **Documentation:**
+    [[docs/api/correction.md]]
+  end note
+
+  :Calculate DQS + routing;
+  note right
+    **Source:**
+    - src/.../metrics/dqs_calculator.py
+    - src/.../routing/recommendation_engine.py
+
+    **ADR:**
+    [[docs/ADRs/0030-document-quality-score.md]]
+
+    **Detailed Implementation:**
+    [[project-a-primary-workflow-detailed.puml]]
+  end note
+}
+
+:DocumentMetadata.json\n+ Corrected images;
+
+:Handoff to Project B;
+note right
+  **AB Contract:**
+  - Quality assessment
+  - Layout detection results
+  - Reading order + table structure
+  - Routing recommendation
+  - Corrected page images
+
+  **Source:**
+  - src/.../schema.py
+  - src/.../output/json_generator.py
+
+  **Documentation:**
+  [[docs/api/schema.md]]
+  [[docs/guides/project-b-handoff.md]]
+
+  **Project B Focus:**
+  OCR orchestration only
+  (layout analysis now in A)
+end note
+
+stop
+
+@enduml

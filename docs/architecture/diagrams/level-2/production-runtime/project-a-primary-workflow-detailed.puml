@@ -1,0 +1,268 @@
+@startuml
+title Project A - Primary Document Processing Workflow (Detailed)
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+start
+
+
+' ====== INPUT STAGE ======
+
+:Receive raw document\n(PDF / PNG / JPEG / TIFF);
+note right: src/ingestion/
+
+
+' ====== PRE-FLIGHT ANALYSIS ======
+
+partition "DPI Detection" {
+  :Extract embedded DPI\n(PyMuPDF for PDFs);
+  :Detect effective resolution;
+  if (DPI < 300?) then (yes)
+    :Flag for upscaling;
+  else (no)
+    :Mark as adequate;
+  endif
+}
+note right: src/ingestion/pdf_resolution.py
+
+partition "DPI Upscaling" {
+  if (needs_upscaling?) then (yes)
+    :Select algorithm\n(lanczos/bicubic/inter_linear);
+    :Upscale to target DPI (300);
+    :Validate output quality;
+  endif
+}
+note right: src/ingestion/pdf_upscaler.py
+
+
+' ====== INGESTION ======
+
+partition "PDF Processing" {
+  :Open PDF with PyMuPDF;
+  :Iterate pages;
+  while (more pages?) is (yes)
+    :Render page to pixmap\n(RGB, 300 DPI);
+    :Convert to numpy array;
+    :Yield PageImage object;
+  endwhile (no)
+}
+note right: src/ingestion/pdf_loader.py
+
+partition "Image Normalization" {
+  :Load image (OpenCV/Pillow);
+  :Convert to BGR format;
+  :Normalize to 8-bit;
+  :Validate dimensions;
+}
+note right: src/ingestion/image_loader.py
+
+
+' ====== PDF TYPE CLASSIFICATION ======
+
+partition "PDF Classifier" {
+  :Analyze text layer presence;
+  :Check for embedded fonts;
+  :Detect image-only pages;
+  if (has text layer?) then (born_digital)
+    :pdf_type = BORN_DIGITAL;
+  elseif (mixed content?) then (hybrid)
+    :pdf_type = HYBRID;
+  else (image_only)
+    :pdf_type = IMAGE_ONLY;
+  endif
+}
+note right: src/routing/pdf_classifier.py
+
+
+' ====== TEXT GATE ======
+
+partition "Fast Text Detection" {
+  :Compute stroke density;
+  :Detect connected components;
+  :Calculate edge density;
+  :Ensemble vote (< 10ms);
+
+  if (text_score > threshold?) then (yes)
+    :has_text = True;
+  else (no)
+    :has_text = False;
+  endif
+}
+note right: src/detection/text_gate.py
+
+
+' ====== IQA DETECTION ======
+
+fork
+
+partition "Classical IQA" {
+  :Blur Detection\n(Laplacian variance);
+  note right: BlurDetector
+
+  :Noise Detection\n(Wavelet sigma estimation);
+  note right: NoiseDetector
+
+  :Contrast Detection\n(Histogram spread);
+  note right: ContrastDetector
+
+  :Skew Detection\n(Hough transform + Ensemble);
+  note right: SkewDetector
+
+  :Collect all DetectedIssues;
+}
+note right: src/detection/iqa_classical.py
+
+fork again
+
+partition "ML IQA (Student Model)" {
+  :Load ResNet-18 model;
+  :Preprocess image\n(resize, normalize);
+  :Forward pass;
+  :Extract multi-head predictions\n(blur, noise, contrast, skew, compression);
+  :Calculate confidence scores;
+
+  if (uncertainty > threshold\nOR discrepancy with classical?) then (yes)
+    :Flag for Teacher inference;
+  endif
+}
+note right: src/detection/iqa_ml.py
+
+end fork
+
+partition "Teacher Inference (Selective)" {
+  if (flagged_for_teacher?) then (yes)
+    :Load ResNet-50 Teacher;
+    :Forward pass on flagged pages;
+    :Override/supplement Student predictions;
+    :Log teacher usage metrics;
+  endif
+}
+note right: Phase 2 - Selective inference
+
+
+' ====== LAYOUT-LITE DETECTION ======
+
+partition "Coarse Layout Analysis" #LightBlue {
+  :Detect tables presence;
+  :Detect figures/images;
+  :Detect handwriting;
+  :Detect dense math;
+  :Calculate structural_complexity_score;
+
+  :Create PageLayoutSummary\n(layout_type, attributes);
+}
+note right
+  Phase 6 feature
+  src/detection/layout_lite.py
+end note
+
+
+' ====== CORRECTION ======
+
+partition "Image Corrections" {
+  if (skew detected?) then (yes)
+    :Apply deskew\n(rotate by -skew_angle);
+  endif
+
+  if (low contrast?) then (yes)
+    :Apply CLAHE enhancement;
+  endif
+
+  if (blur detected?) then (yes)
+    :Apply sharpening\n(unsharp mask);
+  endif
+
+  if (noise detected?) then (yes)
+    :Apply denoising\n(non-local means);
+  endif
+
+  :Track all transforms\nin correction_history;
+}
+note right: src/correction/
+
+
+' ====== QUALITY SCORING ======
+
+partition "DQS Calculation" {
+  :Normalize classical IQA scores\n(0-1 range);
+
+  :Calculate degradation_score\nweighted sum of:\n- blur (0.30)\n- noise (0.25)\n- contrast (0.20)\n- illumination (0.15)\n- artifacts (0.10);
+
+  :Calculate structural_complexity_score\nfrom layout-lite analysis;
+
+  :Blend with ML scores\n(ml_blend_ratio = 0.30);
+
+  :Create DQSMetadata;
+}
+note right: src/metrics/dqs_calculator.py
+
+partition "Pre-OCR Risk" {
+  :Calculate degradation_risk\n(1 - degradation_score);
+
+  :Calculate complexity_risk\n(structural_complexity * 0.3);
+
+  :Apply pdf_type_penalty\n(image_only = 0.2);
+
+  :Apply handwriting_penalty\n(if present = 0.15);
+
+  :total_risk = degradation_risk +\ncomplexity_risk + penalties;
+}
+
+
+' ====== ROUTING RECOMMENDATION ======
+
+partition "OCR Strategy Selection" {
+  if (dqs > 0.8 AND\nnot has_tables AND\npdf_type = born_digital?) then (fast)
+    :routing = OCR_FAST;
+  elseif (dqs > 0.6 AND\nnot has_handwriting?) then (advanced)
+    :routing = OCR_ADVANCED;
+  elseif (has_tables OR\nhas_figures?) then (structured)
+    :routing = VISION_STRUCTURED;
+  else (simple)
+    :routing = VISION_SIMPLE;
+  endif
+}
+note right: src/routing/recommendation.py
+
+
+' ====== OUTPUT ======
+
+partition "JSON Generation" {
+  :Create DocumentMetadata\nwith all fields:
+  - document_id
+  - file_name
+  - source_mime
+  - num_pages
+  - pdf_type
+  - dqs
+  - pre_ocr_risk
+  - ocr_routing_recommendation
+  - page_layout_summary
+  - pages (with detected_issues)
+  - processing_version;
+
+  :Serialize to JSON\n(Pydantic model_dump_json);
+  :Write DocumentMetadata.json;
+}
+note right: src/output/json_generator.py
+
+partition "Image Output" {
+  :Write corrected page images\nto output directory;
+  :Maintain page ordering;
+  :Record output paths;
+}
+
+:Handoff to Project B\n(OCR Orchestration);
+
+stop
+
+@enduml
