@@ -611,3 +611,12 @@ tests_dir = "tests/"
 # Mutation score threshold: percentage of mutations that must be killed
 # Score below 80% indicates weak test coverage
 dict_synonyms = "Struct, NamedStruct"
+
+[tool.uv.sources]
+byronwilliamscpa-gemini-image = { git = "https://github.com/ByronWilliamsCPA/python-libs.git", subdirectory = "packages/gemini-image" }
+
+[dependency-groups]
+dev = [
+    "byronwilliamscpa-gemini-image",
+    "mkdocs-kroki-plugin>=1.1.0",
+]
