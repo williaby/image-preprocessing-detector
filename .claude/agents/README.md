@@ -22,7 +22,7 @@ description: Context-optimized agent system documentation and development guidel
 ### Token Optimization Strategy
 
 **Before**: 12 agents × 300 lines avg = ~3,600 lines of context (~10% context window)
-**Current**: 20 agents × 75 lines avg + shared context = ~1,500 lines (~4% context window)
+**Current**: 22 agents × 75 lines avg + shared context = ~1,650 lines (~4% context window)
 
 ## Agent Categories
 
@@ -61,7 +61,7 @@ Operations and research capabilities:
 - **`devops-deployment-agent`** - CI/CD pipelines, infrastructure automation, deployment
 - **`research-agent`** - Web search, documentation research, information gathering
 
-### Contextual Agents (5)
+### Contextual Agents (7)
 
 Project or domain-specific capabilities:
 
@@ -70,6 +70,8 @@ Project or domain-specific capabilities:
 - **`journey-orchestrator`** - Multi-level user experience management
 - **`modularization-assistant`** - System decomposition, architectural refactoring
 - **`project-plan-synthesizer`** - Project planning, roadmap synthesis, task breakdown
+- **`model-card-agent`** - ML model documentation, HuggingFace-aligned cards, registry management
+- **`diagram-maintenance-agent`** - PlantUML workflow diagrams, source traceability, consistency enforcement
 
 ### Merged/Eliminated
 
