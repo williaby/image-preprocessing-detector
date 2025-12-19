@@ -386,7 +386,7 @@ Project B Handoff
 ### Initial Concept Documents
 
 - `docs/development/RAG Pipeline/project-a-project-plan.md`
-- `docs/development/RAG Pipeline/project-overview-a-to-d.puml`
+- `docs/architecture/diagrams/rag-pipeline-overview.puml`
 - `docs/development/RAG Pipeline/RAG-pipeline-project-overview.md`
 
 ### Production Planning
