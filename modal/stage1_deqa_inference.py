@@ -34,11 +34,12 @@ app = modal.App("stage1-deqa-inference")
 results_volume = modal.Volume.from_name("stage1-deqa-results", create_if_missing=True)
 
 # Docker image with DeQA-Score dependencies
+# Strategy: Use DeQA-Score's pinned versions but add bitsandbytes 0.43 (last compatible)
 deqa_image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("git")  # Install git for cloning DeQA-Score
     .pip_install(
-        "numpy<2.0",  # Pin to 1.x for compatibility with compiled extensions
+        "numpy<2.0",  # Pin to 1.x for compatibility
         "torch==2.0.1",
         "torchvision==0.15.2",
         "transformers==4.36.1",
@@ -46,7 +47,7 @@ deqa_image = (
         "sentencepiece==0.1.99",
         "accelerate==0.21.0",
         "peft==0.4.0",
-        "bitsandbytes==0.41.0",
+        "bitsandbytes==0.43.3",  # Upgraded from 0.41.0 for better NF4 (still torch 2.0 compat)
         "pydantic<2,>=1",
         "scipy",
         "Pillow",
@@ -111,6 +112,43 @@ LEVEL_NAMES = ["excellent", "good", "fair", "poor", "bad"]
 LEVEL_SCORES = [5.0, 4.0, 3.0, 2.0, 1.0]
 
 
+def get_quantization_config(quantize_mode: str | None):
+    """Get BitsAndBytesConfig for specified quantization mode.
+
+    Args:
+        quantize_mode: One of 'fp16', '8bit', '4bit', or None
+
+    Returns:
+        BitsAndBytesConfig or None for FP16 mode
+
+    Raises:
+        ValueError: If invalid quantization mode specified
+    """
+    if not quantize_mode or quantize_mode == "fp16":
+        return None
+
+    from transformers import BitsAndBytesConfig
+    import torch
+
+    if quantize_mode == "4bit":
+        return BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",  # Normal Float 4-bit (best quality)
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,  # Nested quantization for better compression
+        )
+    elif quantize_mode == "8bit":
+        return BitsAndBytesConfig(
+            load_in_8bit=True,
+            llm_int8_threshold=6.0,  # Outlier threshold for mixed precision
+        )
+    else:
+        raise ValueError(
+            f"Invalid quantize mode: {quantize_mode}. "
+            f"Use 'fp16', '8bit', or '4bit'"
+        )
+
+
 @app.function(
     image=deqa_image,
     gpu="A100",  # Use A100 for fastest inference
@@ -121,6 +159,7 @@ def run_deqa_inference_batch(
     entries: list[dict],  # List of {"image": path, "dataset": name, "root_dir": root}
     image_data: dict[str, bytes],  # "dataset|rel_path" -> image bytes
     output_name: str = "batch",
+    quantize_mode: str = "fp16",  # Quantization mode: 'fp16', '8bit', or '4bit'
 ) -> dict:
     """Run DeQA-Doc inference on a batch of images.
 
@@ -128,6 +167,7 @@ def run_deqa_inference_batch(
         entries: List of entries with image path, dataset name, and root_dir
         image_data: Dict mapping "dataset|rel_path" to image bytes
         output_name: Name for output file
+        quantize_mode: Quantization mode ('fp16', '8bit', '4bit'). Default: fp16
 
     Returns:
         Dict with results summary
@@ -155,12 +195,42 @@ def run_deqa_inference_batch(
     model_path = "zhiyuanyou/DeQA-Score-Mix3"
     model_name = get_model_name_from_path(model_path)
 
-    print(f"Loading model: {model_path}")
+    print(f"Loading model: {model_path} (quantization: {quantize_mode})")
     start_load = time.time()
-    tokenizer, model, image_processor, _ = load_pretrained_model(
-        model_path, None, model_name, device="cuda:0"
-    )
+
+    # Get quantization config
+    quant_config = get_quantization_config(quantize_mode)
+
+    if quant_config:
+        # Load with quantization - modify DeQA-Score's loader to accept quant_config
+        from transformers import AutoModelForCausalLM
+
+        print(f"Loading with quantization config: {quantize_mode}")
+
+        # Use DeQA-Score's load_pretrained_model but monkey-patch for quantization
+        # Load tokenizer and processor normally
+        tokenizer, _, image_processor, _ = load_pretrained_model(
+            model_path, None, model_name, device="cuda:0"
+        )
+
+        # Load model separately with quantization
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            quantization_config=quant_config,
+            device_map="auto",
+            trust_remote_code=True,
+            torch_dtype=torch.float16,
+        )
+    else:
+        # Original FP16 loading via DeQA-Score's load_pretrained_model
+        print("Loading in FP16 (full precision)")
+        tokenizer, model, image_processor, _ = load_pretrained_model(
+            model_path, None, model_name, device="cuda:0"
+        )
+
     print(f"Model loaded in {time.time() - start_load:.1f}s")
+    print(f"Model dtype: {next(model.parameters()).dtype}")
+    print(f"Model device: {next(model.parameters()).device}")
 
     # Setup prompt
     conv = conv_templates["mplug_owl2"].copy()
@@ -310,18 +380,125 @@ def run_deqa_inference_batch(
 def main(
     dataset: str = None,
     test: bool = False,
+    validation: bool = False,  # Use 400-sample validation set
     dry_run: bool = False,
+    quantize: str = "fp16",  # Quantization mode: 'fp16', '8bit', or '4bit'
 ):
     """Run Stage 1 inference on Modal.
 
     Args:
         dataset: Specific dataset to process (default: all)
         test: Run test with 100 samples only
+        validation: Run 400-sample stratified validation
         dry_run: Just print what would be done
+        quantize: Quantization mode ('fp16', '8bit', '4bit'). Default: fp16
     """
+    # ===== SAFETY WARNING FOR NON-DETACHED RUNS =====
+    import os
+
+    # Check if running in detached mode (Modal sets this env var)
+    is_detached = os.environ.get("MODAL_IS_REMOTE", "0") == "1"
+
+    if not test and not validation and not dry_run and not is_detached:
+        print("\n" + "=" * 70)
+        print("⚠️  WARNING: RUNNING PRODUCTION JOB WITHOUT --detach FLAG")
+        print("=" * 70)
+        print("Full inference takes 30-45 minutes. Without --detach:")
+        print("  • Terminal disconnect = lost progress")
+        print("  • Can't close laptop/terminal")
+        print("  • SSH timeouts kill the job")
+        print()
+        print("RECOMMENDED: Cancel (Ctrl+C) and restart with:")
+        print(f"  modal run --detach modal/stage1_deqa_inference.py --all --quantize {quantize}")
+        print("=" * 70)
+        print()
+
+        # Give user 10 seconds to cancel
+        for i in range(10, 0, -1):
+            print(f"Continuing in {i} seconds... (Ctrl+C to cancel)", end="\r")
+            time.sleep(1)
+        print("\nProceeding with attached mode (not recommended)...")
+    # ===== END SAFETY WARNING =====
+
     print("=" * 60)
     print("Stage 1 DeQA-Doc Inference (Modal)")
+    print(f"Quantization Mode: {quantize.upper()}")
     print("=" * 60)
+
+    if validation:
+        # Validation mode - use 400 sample stratified manifest
+        validation_manifest_path = Path(
+            "/mnt/e/image_detection/06_staging/stage1_manifests/validation_350_manifest.json"
+        )
+
+        if not validation_manifest_path.exists():
+            print(f"ERROR: Validation manifest not found: {validation_manifest_path}")
+            print("Run: uv run python scripts/create_stratified_validation.py")
+            return
+
+        with open(validation_manifest_path) as f:
+            entries = json.load(f)
+
+        print(f"Validation mode: {len(entries)} samples (stratified)")
+        print()
+
+        if dry_run:
+            print("Dry run - would process:")
+            for entry in entries[:5]:
+                print(f"  {entry['dataset']}: {entry['image']}")
+            print(f"  ... and {len(entries) - 5} more")
+            return
+
+        # Load images
+        print("Loading validation images...")
+        image_data = {}
+        missing = []
+
+        for entry in entries:
+            root_dir = Path(entry["root_dir"])
+            image_path = root_dir / entry["image"]
+            key = f"{entry['dataset']}|{entry['image']}"
+
+            if image_path.exists():
+                image_data[key] = image_path.read_bytes()
+            else:
+                missing.append(str(image_path))
+
+        print(f"Loaded {len(image_data)} images")
+        if missing:
+            print(f"Missing {len(missing)} images:")
+            for m in missing[:5]:
+                print(f"  {m}")
+
+        # Run inference
+        output_name = f"validation_{quantize}"
+        print(f"\nStarting Modal inference (output: {output_name})...")
+        result = run_deqa_inference_batch.remote(
+            entries=entries,
+            image_data=image_data,
+            output_name=output_name,
+            quantize_mode=quantize,
+        )
+
+        print("\n" + "=" * 60)
+        print("VALIDATION RESULTS")
+        print("=" * 60)
+        print(f"Total entries: {result['total_entries']}")
+        print(f"Processed: {result['processed']}")
+        print(f"Errors: {result['errors']}")
+        print(f"Inference time: {result['inference_time_seconds']:.1f}s")
+        print(f"Avg time/image: {result['avg_time_per_image']:.3f}s")
+        print(
+            f"\nResults saved to Modal volume: stage1-deqa-results/{result['output_name']}_deqa_labels.jsonl"
+        )
+
+        if result["errors"] == 0 and result["processed"] == result["total_entries"]:
+            print(f"\n✅ VALIDATION PASSED ({quantize.upper()}) - Ready for comparison!")
+            print(f"Download: modal volume get stage1-deqa-results {output_name}_deqa_labels.jsonl ./results/")
+        else:
+            print(f"\n⚠️ VALIDATION HAD ISSUES - Check errors before proceeding")
+
+        return
 
     if test:
         # Test mode - use 100 sample manifest
@@ -374,6 +551,7 @@ def main(
             entries=entries,
             image_data=image_data,
             output_name="sample_100_test",
+            quantize_mode=quantize,  # Pass quantization mode
         )
 
         print("\n" + "=" * 60)
@@ -462,6 +640,7 @@ def main(
             entries=entries,
             image_data=image_data,
             output_name=name,
+            quantize_mode=quantize,  # Pass quantization mode
         )
 
         all_results.append(result)
