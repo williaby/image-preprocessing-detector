@@ -15,12 +15,25 @@
 # Multiple third parties argue this is not a valid/reproducible vulnerability
 # The py library is deprecated and only used by interrogate (docstring coverage tool)
 # Impact: Low - not used in production code, only in dev tooling
-#
-# Note: GHSA ID is auto-filtered but PYSEC ID must be manually ignored
+# Note: Shows as both filtered AND "unused ignore" - OSV scanner quirk
 
 [[IgnoredVulns]]
 id = "PYSEC-2022-42969"
 reason = "CVE-2022-42969 disputed by multiple parties. Formal dispute in NVD May 2024. Only used by interrogate dev tool."
+
+# ============================================================================
+# nbconvert - GHSA-xm59-rqc7-hhvf / CVE-2024-52807
+# ============================================================================
+# ReDoS vulnerability in nbconvert HTML template system
+# No fix available as of 2025-12-21
+# Impact: Low - nbconvert only used in dev/testing for Jupyter notebook handling
+# This is a dev dependency not used in production code
+# Risk: Minimal - requires attacker-controlled notebook input
+# Note: Shows as both filtered AND "unused ignore" - OSV scanner quirk
+
+[[IgnoredVulns]]
+id = "GHSA-xm59-rqc7-hhvf"
+reason = "No fix available. Dev dependency only, not used in production. ReDoS requires attacker-controlled notebook input."
 
 # ============================================================================
 # Notes
