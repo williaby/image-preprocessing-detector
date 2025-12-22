@@ -1,0 +1,288 @@
+@startuml model-training-swimlane
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName "DejaVu Sans"
+skinparam defaultFontSize 11
+
+title Model Training Workstream (WS2) - Teacher-Student Pipeline
+caption Total LOC: 7,058 lines across 16 files | Generated: 2025-01-19 | See: layout-fusion-downsampler.md
+
+|Data Preparation|
+start
+:Load Training Labels;
+note right
+  **Input**: TrainingLabels parquet
+  From WS3 (Data Preparation)
+
+  **Contains**:
+  - 45-dim IQA vector
+  - Anchor scores
+  - Sample weights
+  - 108,000+ images
+end note
+
+:Create PyTorch Dataset;
+note left
+  **datasets/iqa_dataset.py**
+  LOC: 180 lines (2.5%)
+
+  **Functionality**:
+  - Load parquet files
+  - Apply transforms
+  - Return tensors
+  - Batch collation
+end note
+
+|Teacher Training (Phase 2)|
+
+:Initialize ResNet-50 Teacher;
+note right
+  **models/resnet_teacher.py**
+  LOC: 293 lines (4.2%)
+
+  **Architecture**:
+  - ResNet-50 backbone
+  - Multi-label head (45 degradations)
+  - Quality regression head
+
+  **Note**: For DocIQ-Replica (DIQA-5000),
+  this includes Layout Fusion Downsampler
+  to preserve document structure during
+  1600×1600 → 400×400 downsampling.
+  See: layout-fusion-downsampler.md
+end note
+
+:Configure Teacher Training;
+note left
+  **training/teacher_trainer.py**
+  LOC: 586 lines (8.3%)
+
+  **Training Config**:
+  - Optimizer: AdamW
+  - LR schedule: CosineAnnealing
+  - Loss: Multi-task (BCE + MSE)
+  - Epochs: 50
+  - Batch size: 32
+end note
+
+:Run Teacher Training (Modal GPU);
+note right
+  **modal/train_phase2_iqa.py**
+  LOC: 707 lines (10.0%)
+
+  **Modal Config**:
+  - GPU: T4 or A10
+  - Dataset: OHR-Bench (~18GB)
+  - Duration: 12-24 hours
+  - Checkpointing: Every 5 epochs
+end note
+
+:Save Teacher Checkpoint;
+note left
+  **training/checkpoint_utils.py**
+  LOC: 82 lines (1.2%)
+
+  **Saved**:
+  - Model state_dict
+  - Optimizer state
+  - Training metrics
+  - Best val_loss
+end note
+
+|Student Training (Phase 3)|
+
+:Initialize ResNet-18 Student;
+note right
+  **models/resnet_student.py**
+  LOC: 277 lines (3.9%)
+
+  **Architecture**:
+  - ResNet-18 backbone
+  - Multi-label head (45 degradations)
+  - Quality regression head
+  - Lighter than teacher
+end note
+
+:Generate Soft Labels (Teacher);
+note left
+  **training/generate_soft_labels.py**
+  LOC: 313 lines (4.4%)
+
+  **Process**:
+  - Load teacher checkpoint
+  - Run inference on all data
+  - Save soft predictions
+  - Temperature scaling
+end note
+
+:Configure Student Training;
+note right
+  **training/student_trainer.py**
+  LOC: 664 lines (9.4%)
+
+  **Training Config**:
+  - Knowledge distillation
+  - Distillation loss + hard loss
+  - Alpha: 0.7 (distill weight)
+  - Temperature: 3.0
+  - Epochs: 30
+end note
+
+:Compute Distillation Loss;
+note left
+  **training/distillation_loss.py**
+  LOC: 248 lines (3.5%)
+
+  **Loss Components**:
+  - KL divergence (soft targets)
+  - BCE loss (hard labels)
+  - MSE loss (regression)
+  - Weighted combination
+end note
+
+:Run Student Training (Modal GPU);
+note right
+  **modal/train_student_distillation.py**
+  LOC: 779 lines (11.0%)
+
+  **Modal Config**:
+  - GPU: T4 (sufficient for student)
+  - Uses teacher soft labels
+  - Duration: 8-12 hours
+  - Faster than teacher
+end note
+
+:Save Student Checkpoint;
+
+|Model Export (Phase 7)|
+
+:Load Best Student Checkpoint;
+
+:Optimize Model;
+note right
+  **models/model_optimizer.py**
+  LOC: 1,435 lines (20.3%)
+
+  **Optimizations**:
+  - Graph optimizations
+  - Constant folding
+  - Operator fusion
+  - Quantization-aware
+end note
+
+:Export to ONNX;
+note left
+  **modal/export_phase7_onnx.py**
+  LOC: 347 lines (4.9%)
+
+  **ONNX Export**:
+  - Dynamic batch size
+  - FP16 precision
+  - Optimized for inference
+  - Validate outputs
+end note
+
+:Export to TorchScript;
+note right
+  **Export Format**: TorchScript
+
+  **Use Cases**:
+  - C++ deployment
+  - Mobile deployment
+  - Faster inference
+end note
+
+:Validate Exported Models;
+note left
+  **Validation**:
+  - Compare outputs (PyTorch vs ONNX)
+  - Benchmark latency
+  - Check memory usage
+  - Verify numerical accuracy
+end note
+
+|Model Registry|
+
+:Register Model Versions;
+note right
+  **Model Registry**:
+  - Teacher: v2.0.0 (val_loss=0.27)
+  - Student: v2.1.0 (val_loss=0.14)
+  - ONNX: student-v2.1.0.onnx
+  - TorchScript: student-v2.1.0.pt
+end note
+
+:Deploy to Production;
+note left
+  **Deployment**:
+  - Copy to model registry
+  - Update version manifest
+  - Notify WS1 (Production Runtime)
+  - Archive old versions
+end note
+
+|Batch Inference|
+
+:Load Model for Inference;
+note right
+  **models/batch_inference.py**
+  LOC: 622 lines (8.8%)
+
+  **Capabilities**:
+  - Batch processing
+  - GPU/CPU fallback
+  - Tensor caching
+  - Progress tracking
+end note
+
+:Run Inference on Dataset;
+
+:Generate Predictions;
+
+stop
+
+legend right
+  |= Component |= Files |= LOC |= Percentage |
+  | **Modal Training Scripts** | 3 | 1,833 | 26.0% |
+  | - train_phase2_iqa.py | 1 | 707 | 10.0% |
+  | - train_student_distillation.py | 1 | 779 | 11.0% |
+  | - export_phase7_onnx.py | 1 | 347 | 4.9% |
+  | **Training Logic** | 6 | 1,938 | 27.5% |
+  | - teacher_trainer.py | 1 | 586 | 8.3% |
+  | - student_trainer.py | 1 | 664 | 9.4% |
+  | - distillation_loss.py | 1 | 248 | 3.5% |
+  | - generate_soft_labels.py | 1 | 313 | 4.4% |
+  | - checkpoint_utils.py | 1 | 82 | 1.2% |
+  | - __init__.py | 1 | 45 | 0.6% |
+  | **Model Architectures** | 7 | 3,287 | 46.6% |
+  | - model_optimizer.py | 1 | 1,435 | 20.3% |
+  | - batch_inference.py | 1 | 622 | 8.8% |
+  | - loss_functions.py | 1 | 330 | 4.7% |
+  | - resnet_teacher.py | 1 | 293 | 4.2% |
+  | - resnet_student.py | 1 | 277 | 3.9% |
+  | - model_loader.py | 1 | 244 | 3.5% |
+  | - __init__.py | 1 | 86 | 1.2% |
+  |= **Total** |= **16** |= **7,058** |= **100%** |
+
+  **Key Technologies**:
+  - PyTorch 2.0+ for training
+  - Modal for serverless GPU
+  - ONNX Runtime for inference
+  - Knowledge distillation (teacher-student)
+
+  **Training Duration**:
+  - Teacher: 12-24 hours (50 epochs)
+  - Student: 8-12 hours (30 epochs)
+  - Total: ~20-36 hours
+
+  **Model Performance**:
+  - Teacher val_loss: 0.27
+  - Student val_loss: 0.14
+  - Student is better (smaller, more robust)
+
+  **Workstream: WS2 - Model Training**
+  **Level 3 Documentation**
+  **Generated: 2025-01-19**
+endlegend
+
+@enduml
