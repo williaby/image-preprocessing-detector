@@ -1,0 +1,14 @@
+{
+  "generated_at": "2025-12-20T05:53:00Z",
+  "git_sha": "4dc216a",
+  "workstreams": {
+    "model_arena": {"loc": 6340, "status": "active"},
+    "model_training": {"loc": 7058, "status": "active"},
+    "labeling_benchmarking": {"loc": 0, "status": "active"},
+    "production_runtime": {"loc": 16910, "status": "active"},
+    "monitoring_drift": {"loc": 5348, "status": "active"},
+    "synthetic_generation": {"loc": 1066, "status": "active"},
+    "pseudo_labeling": {"loc": 2947, "status": "active"},
+    "data_preparation": {"loc": 4066, "status": "active"}
+  }
+}
