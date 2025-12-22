@@ -1,352 +1,181 @@
-@startuml Project_A_Architecture_Overview
+@startuml PROJECT_A_ARCHITECTURE_OVERVIEW
 !theme plain
-skinparam backgroundColor #FEFEFE
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontSize 10
+skinparam defaultFontName Arial
+skinparam arrowThickness 2
 skinparam packageStyle rectangle
-skinparam componentStyle rectangle
+skinparam ranksep 60
+skinparam nodesep 40
 
-title Project A - Complete System Architecture\nPreprocessing, IQA & Routing Gateway
-footer Document Image Quality Assessment Pipeline | v2.0 | December 2025
+title Project A (Prepare-Doc) - Production-Centric Architecture\n1 Primary Flow + 7 Supporting Workstreams
+
+footer Project A | 8 Workstreams | Last Updated: 2025-12-19
 
 ' ============================================================================
 ' LEGEND
 ' ============================================================================
 legend right
-  |= Color |= Meaning |
-  | <#E8F5E9> | Production Runtime |
-  | <#E3F2FD> | Model Training |
-  | <#FFF3E0> | Data Preparation |
-  | <#F3E5F5> | Pseudo-Labeling |
-  | <#FFEBEE> | External Systems |
-  | <#E0E0E0> | Not Yet Started |
+  |<#E8F5E9>  | **Production Runtime** (Primary) |
+  |<#E3F2FD>  | Model Training |
+  |<#FFF3E0>  | Data Preparation |
+  |<#F3E5F5>  | Pseudo-Labeling |
+  |<#E0F7FA>  | Labeling Models |
+  |<#FFF8E1>  | Arena Benchmarking |
+  |<#FFEBEE>  | Monitoring & Drift |
+  |<#FCE4EC>  | Synthetic Generation |
 endlegend
 
 ' ============================================================================
-' EXTERNAL CONTEXT - RAG PIPELINE ECOSYSTEM
+' UPSTREAM INPUT (Top)
 ' ============================================================================
-package "RAG Pipeline Ecosystem" as Ecosystem #FFEBEE {
-
-  rectangle "rag-processor\n(Pipeline Frontend)" as RagProcessor #DCEDC8 {
-    [Ingestion API]
-    [Job Orchestration]
-    [Status Tracking]
-  }
-
-  note right of RagProcessor
-    **Repository:**
-    github.com/ByronWilliamsCPA/rag-processor
-
-    **Status:** In Development
-    Unified interface for all
-    media processing tracks
-  end note
-
-  package "Media Processing Tracks" as Tracks {
-
-    rectangle "Image Track\n(THIS REPO)" as ImageTrack #E8F5E9 {
-      [Project A\nPreprocessing & IQA]
-    }
-
-    rectangle "Audio Track" as AudioTrack #E3F2FD {
-      [audio-processor\nTranscription & Diarization]
-    }
-
-    note bottom of AudioTrack
-      **Repository:**
-      github.com/ByronWilliamsCPA/audio-processor
-
-      **Status:** In Development
-      Parallel track for audio/video content
-    end note
-  }
-
-  rectangle "Project B\nOCR Orchestration" as ProjectB #E0E0E0 {
-    [NOT YET STARTED]
-  }
-
-  note left of ProjectB
-    **Scope Change:**
-    Layout analysis moved to Project A
-    (DocLayout-YOLO with 11 classes)
-
-    Project B now focused on:
-    - Multi-engine OCR
-    - Reading order
-    - Table structure extraction
-  end note
-
-  rectangle "Project C\nFusion & Chunking" as ProjectC #E0E0E0
-
-  rectangle "Project D\nVector Store" as ProjectD #E0E0E0
-
-  note bottom of Ecosystem
-    See: rag-pipeline-overview.puml
-    for complete multi-track pipeline design
-  end note
-}
-
-' Pipeline flow
-RagProcessor --> ImageTrack : Documents\n(PDF/Image)
-RagProcessor --> AudioTrack : Audio/Video
-ImageTrack --> ProjectB : DocumentMetadata +\nCorrected Images
-AudioTrack --> ProjectB : TranscriptMetadata +\nSegments
-ProjectB --> ProjectC
-ProjectC --> ProjectD
-ProjectD --> RagProcessor : RAG-ready\ncollection ID
-
-' ============================================================================
-' PROJECT A - PRODUCTION RUNTIME
-' ============================================================================
-package "Project A: Production Runtime" as Production #E8F5E9 {
-
-  component "Document Processing Pipeline" as Pipeline {
-    portin "PDF/Image\nInput" as DocInput
-    portout "DocumentMetadata.json\n+ Corrected Images" as DocOutput
-
-    rectangle "Ingestion & Pre-flight" as Ingestion {
-      [DPI Detection]
-      [PDF Upscaling]
-      [Page Extraction]
-    }
-
-    rectangle "Classification & Routing" as Classification {
-      [PDF Type Classifier]
-      [Text Gate]
-    }
-
-    rectangle "Quality Analysis" as Analysis {
-      [Classical IQA\n(7 detectors)]
-      [ML IQA Student\n(ResNet-18)]
-      [ML IQA Teacher\n(ResNet-50)]
-    }
-
-    rectangle "Layout Analysis" as Layout {
-      [DocLayout-YOLO\n(11 DocLayNet classes)]
-      [Reading Order\nPrediction]
-      [Table Structure\nExtraction]
-    }
-
-    rectangle "Correction & Scoring" as Correction {
-      [Deskew/CLAHE/Denoise]
-      [DQS Calculator]
-      [Routing Engine]
-    }
-  }
-
-  database "Model Registry\n(GCS)" as ModelRegistry
-
-  note bottom of Pipeline
-    **Primary Workflows:**
-    - project-a-primary-workflow-high-level.puml
-    - project-a-primary-workflow-detailed.puml
-
-    **Supporting Workflows:**
-    - project-a-device-selection-flow.puml (teacher escalation)
-  end note
+cloud "RAG Processor\nWeb UI" as UI #DDDDDD {
+  card "Document\nSubmission" as DocSubmit
 }
 
 ' ============================================================================
-' MODEL TRAINING WORKSTREAM
+' PRIMARY PRODUCTION FLOW (CENTER - Vertical Top-to-Bottom)
 ' ============================================================================
-package "Model Training Workstream" as Training #E3F2FD {
-
-  component "IQA Model Training" as IQATraining {
-    [ResNet-50 Teacher\nTraining]
-    [Knowledge Distillation]
-    [ResNet-18 Student\nTraining]
-    [ONNX Export]
+package "WS 1: Production Runtime\n<150ms/page (GPU) | ≥6 pages/sec" #E8F5E9 {
+  rectangle "Pre-flight &\nIngestion" as Preflight {
+    card "DPI Detection\n& Upscaling"
+    card "300 DPI\nStandardization"
   }
 
-  component "Layout Model Training" as LayoutTraining {
-    [DocLayout-YOLO\nFine-tuning]
-    [DocLayNet Dataset\n(11 classes)]
+  rectangle "Classification" as Class {
+    card "PDF Type\nClassifier"
+    card "Text Gate"
   }
 
-  artifact "Production Models" as ProdModels {
-    file "iqa_student.onnx"
-    file "iqa_teacher.onnx"
-    file "doclayout_yolo.onnx"
+  rectangle "Quality\nAnalysis" as QA {
+    card "Classical IQA"
+    card "ML IQA\n(Student/Teacher)"
+    card "Layout-Lite"
   }
 
-  note right of IQATraining
-    **Workflow:**
-    project-a-distillation.puml
-
-    **Design Goal:**
-    Production-optimized models via
-    knowledge distillation for
-    speed/accuracy trade-off
-  end note
+  rectangle "Correction &\nOutput" as Correction {
+    card "Correction\nPipeline"
+    card "DQS & Routing"
+  }
 }
 
 ' ============================================================================
-' DATA PREPARATION WORKSTREAM
+' DOWNSTREAM OUTPUT (Bottom)
 ' ============================================================================
-package "Data Preparation Workstream" as DataPrep #FFF3E0 {
-
-  component "Dataset Ingestion" as DataIngestion {
-    [Source Dataset\nCollection]
-    [Normalization\n(300 DPI)]
-    [Train/Val/Test\nSplits]
-  }
-
-  database "Raw Datasets" as RawData {
-    [OHR-Bench]
-    [DIQA-5000]
-    [DocLayNet]
-    [LIVE/CSIQ]
-  }
-
-  database "Processed Training Data\n(GCS)" as ProcessedData
-
-  note right of DataIngestion
-    **Workflow:**
-    project-a-training-data-ingestion.puml
-
-    **Purpose:**
-    Unified data pipeline for
-    heterogeneous source datasets
-  end note
+cloud "Downstream\nProjects" as Downstream #DDDDDD {
+  card "Project B\n(OCR)" as ProjectB
+  card "Project C\n(Fusion)" as ProjectC
+  card "Project D\n(Vector)" as ProjectD
 }
 
 ' ============================================================================
-' PSEUDO-LABELING WORKSTREAM
+' SUPPORTING WORKSTREAMS (Left Side)
 ' ============================================================================
-package "Pseudo-Labeling Workstream" as PseudoLabeling #F3E5F5 {
 
-  component "Multi-Model Ensemble" as Ensemble {
-    rectangle "Track A: IQA Models" as TrackA {
-      [MUSIQ\n(sharpness)]
-      [QualiCLIP\n(color)]
-      [DocIQ-Replica\n(overall)]
-    }
+' Model Training Support (Left)
+package "WS 2: Model Training\nModal GPU | 12-24hr" #E3F2FD {
+  card "Teacher-Student\nTraining" as Train
+  card "Model\nRegistry" as Registry
+}
 
-    rectangle "Track B: VLM Models" as TrackB {
-      [Qwen3-VL-8B\n(generalist)]
-      [InternVL3-8B\n(overall)]
-    }
-  }
+' Arena Support (Left)
+package "WS 6: Arena\nPLCC > 0.65 required" #FFF8E1 {
+  card "Phase 1:\nBase Eval" as Arena1
+  card "Phase 2:\nValidation" as Arena2
+  card "Phase 3:\nDrift Check" as Arena3
+}
 
-  component "Stacking & Calibration" as Stacking {
-    [HierarchicalStacker]
-    [Temperature Scaler]
-    [Uncertainty Calculator]
-  }
-
-  artifact "Pseudo-Labels" as Labels {
-    file "pseudo_labels.json"
-    file "uncertainty_report.csv"
-  }
-
-  note right of Ensemble
-    **Workflows:**
-    - diqa-pseudo-labeling-workflow.puml
-    - diqa-training-phases.puml
-    - diqa-checkpoint-selection.puml
-    - diqa-inference-pipeline.puml
-
-    **Design Goal:**
-    Maximum accuracy for label quality
-    (not production deployment)
-  end note
+' Monitoring Support (Left)
+package "WS 7: Monitoring\nAlert: PLCC drop > 5%" #FFEBEE {
+  card "Performance\nTracking" as PerfTrack
+  card "Drift Detection\n& Harvesting" as DriftHarvest
 }
 
 ' ============================================================================
-' CONNECTIONS - RUNTIME FLOW
+' SUPPORTING WORKSTREAMS (Right Side)
 ' ============================================================================
-Client --> DocInput : Source file
-DocOutput --> ProjectB : AB Contract
-ProjectB --> ProjectC
-ProjectC --> ProjectD
-ProjectD --> Client : RAG-ready ID
 
-' ============================================================================
-' CONNECTIONS - MODEL DEPLOYMENT
-' ============================================================================
-ProdModels --> ModelRegistry : Upload
-ModelRegistry --> Analysis : Load models
+' Data Preparation Support (Right)
+package "WS 3: Data Prep\nOHR-Bench ~18GB" #FFF3E0 {
+  card "Dataset\nIngestion" as DataIngest
+  card "Cataloging" as DataCatalog
+}
 
-' ============================================================================
-' CONNECTIONS - TRAINING PIPELINE
-' ============================================================================
-RawData --> DataIngestion
-DataIngestion --> ProcessedData
-ProcessedData --> IQATraining : Training data
-ProcessedData --> LayoutTraining : Training data
-ProcessedData --> Ensemble : Inference data
+' Synthetic Generation Support (Right)
+package "WS 8: Synthetic\n70% real + 30% synthetic" #FCE4EC {
+  card "Genalog\nDegradation" as Genalog
+  card "Auto Ground\nTruth" as GroundTruth
+}
 
-' ============================================================================
-' CONNECTIONS - LABELING PIPELINE
-' ============================================================================
-Labels --> ProcessedData : Enriched labels
-Ensemble --> Stacking
-Stacking --> Labels
-IQATraining --> ProdModels
+' Pseudo-Labeling Support (Right)
+package "WS 4: Pseudo-Label\nEnsemble > 0.85 agreement" #F3E5F5 {
+  card "Script +\nModel Ensemble" as Ensemble
+}
+
+' Labeling Models Support (Right)
+package "WS 5: Labeling\nModels" #E0F7FA {
+  card "Pretrained IQA\nModels" as LabelModels
+}
 
 ' ============================================================================
-' DIAGRAM HIERARCHY
+' PRIMARY PRODUCTION FLOW (BOLD ARROWS TOP-TO-BOTTOM)
 ' ============================================================================
-note as DiagramHierarchy
-  **Diagram Hierarchy:**
+DocSubmit -[#000000,thickness=4]down-> Preflight : **PDF/Image**
+Preflight -[#000000,thickness=4]down-> Class : **300 DPI Pages**
+Class -[#000000,thickness=4]down-> QA : **Routed**
+QA -[#000000,thickness=4]down-> Correction : **Analyzed**
+Correction -[#000000,thickness=4]down-> Downstream : **DocumentMetadata.json\n+ Corrected Images**
 
-  **Level 0: Context**
-  └── rag-pipeline-overview.puml (multi-track pipeline)
+Downstream -down-> ProjectB
+ProjectB -down-> ProjectC
+ProjectC -down-> ProjectD
 
-  **Level 1: This Diagram**
-  └── PROJECT_A_ARCHITECTURE_OVERVIEW.puml
+' ============================================================================
+' SUPPORTING WORKSTREAM CONNECTIONS
+' ============================================================================
 
-  **Level 2: Production Runtime**
-  ├── project-a-primary-workflow-high-level.puml
-  ├── project-a-primary-workflow-detailed.puml
-  └── project-a-device-selection-flow.puml
+' Model Deployment: Training → Production (Blue)
+Registry -[#0000FF]right-> QA : Deploy\nModels
+Train -down-> Registry
 
-  **Level 2: Training Workstream**
-  ├── project-a-distillation.puml
-  └── (layout training - gap identified)
+' Arena Validation Gates: Arena → Training/Production (Orange)
+Arena2 -[#FF6F00]right-> Registry : Graduate
+Arena1 -up-> Train : Select\nArchitectures
+Arena3 -up-> Train : Validate\nRecovery
 
-  **Level 2: Data Preparation**
-  └── project-a-training-data-ingestion.puml
+' Performance Monitoring: Production → Monitoring (Pink)
+QA -[#E91E63]left-> PerfTrack : Predictions\n& Metrics
+PerfTrack -down-> DriftHarvest
 
-  **Level 2: Pseudo-Labeling**
-  ├── diqa-pseudo-labeling-workflow.puml
-  ├── diqa-training-phases.puml
-  ├── diqa-checkpoint-selection.puml
-  └── diqa-inference-pipeline.puml
+' Sample Flow: Monitoring → Data → Training (Purple)
+DriftHarvest -[#9C27B0]right-> DataIngest : Difficult\nSamples
+DataIngest -down-> Genalog : Clean\nImages
+Genalog -down-> GroundTruth
+GroundTruth -down-> Ensemble : Synthetic\nDataset
+Ensemble -[#9C27B0]left-> Train : Labeled\nDataset
+
+' Labeling Models: Support Ensemble (Cyan)
+LabelModels -down-> Ensemble : Labeling\nTools
+LabelModels -[#00BCD4]up-> Arena1 : Baseline\nBenchmark
+DataCatalog -right-> LabelModels : Training\nData
+
+' ============================================================================
+' FEEDBACK LOOP (Retraining - Dashed Red)
+' ============================================================================
+DriftHarvest .[#FF0000,thickness=3].> Train : PLCC drop\n> 10%\n(Trigger Retrain)
+Arena3 .[#FF0000,thickness=3].> Registry : Recovery\nValidated\n(Re-Deploy)
+
+' ============================================================================
+' CONTEXT NOTES (Minimal)
+' ============================================================================
+note top of UI
+  **UPSTREAM**
+  RAG Web UI
 end note
 
-' ============================================================================
-' TRACEABILITY: SOURCE FILES & DOCUMENTATION
-' ============================================================================
-note as Traceability
-  **Source File & Documentation Traceability**
-  See: [[docs/DIAGRAM_INDEX.md]] for complete mapping
-
-  |= Component |= Source Files |= Documentation |
-  | **Data Preparation** |||
-  | Dataset Ingestion | scripts/annotate_base_metadata.py | docs/DATASET_CATALOG.md |
-  | Training Labels | scripts/build_training_labels.py | docs/DATASET_CATALOG.md |
-  | Dataset Downloads | scripts/download_*.py | docs/DATASET_LOCATIONS.md |
-  | **Pseudo-Labeling** |||
-  | Arena Runner | src/.../labeling/arena/runner.py | docs/benchmarks/README.md |
-  | Model Inference | src/.../labeling/arena/inference/*.py | - |
-  | Benchmark Scripts | scripts/run_model_benchmark.py | docs/benchmarks/*.csv |
-  | Modal Benchmark | modal/arena_benchmark.py | docs/reference/MODAL_QUICK_REFERENCE.md |
-  | **Model Training** |||
-  | Teacher Trainer | src/.../training/teacher_trainer.py | - |
-  | Student Trainer | src/.../training/student_trainer.py | - |
-  | Distillation Loss | src/.../training/distillation_loss.py | docs/ADRs/0028-resnet-teacher-student.md |
-  | Modal Training | modal/train_phase2_iqa.py | docs/reference/MODAL_QUICK_REFERENCE.md |
-  | **Production Runtime** |||
-  | Ingestion | src/.../ingestion/*.py | docs/api/ingestion.md |
-  | PDF Upscaling | src/.../ingestion/pdf_upscaler.py | - |
-  | Text Gate | src/.../detection/text_gate.py | docs/api/detection.md |
-  | Classical IQA | src/.../detection/iqa_classical.py | docs/api/detection.md |
-  | ML IQA | src/.../detection/iqa_ml.py | docs/api/detection.md |
-  | Layout Detection | src/.../detection/doclayout_yolo.py | - |
-  | Corrections | src/.../correction/corrections.py | docs/api/correction.md |
-  | DQS Calculator | src/.../metrics/dqs_calculator.py | docs/ADRs/0030-document-quality-score.md |
-  | Routing Engine | src/.../routing/recommendation_engine.py | docs/guides/project-b-handoff.md |
-  | Device Orchestrator | src/.../orchestration/device_orchestrator.py | docs/ADRs/0036-device-priority.md |
-  | Schema | src/.../schema.py | docs/api/schema.md |
+note bottom of Downstream
+  **DOWNSTREAM**
+  Projects B → C → D
 end note
 
 @enduml
