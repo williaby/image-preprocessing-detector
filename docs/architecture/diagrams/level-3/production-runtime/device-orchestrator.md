@@ -1,13 +1,21 @@
 ---
 schema_type: common
 title: "Level 3: Production Runtime - Device Orchestrator"
-description: "Detailed device orchestration specification including device selection, budget enforcement, and circuit breaker patterns"
-tags: [architecture, level-3, production-runtime, device-orchestration, modal, gpu]
+description: "Detailed device orchestration specification including device selection,
+  budget enforcement, and circuit breaker patterns"
+tags:
+- architecture
+- level_3
+- production_runtime
+- device_orchestration
+- modal
+- gpu
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the complete device orchestration implementation including selection algorithms, budget enforcement, circuit breakers, and performance characteristics."
+- name: "Byron Williams"
+purpose: "Document the complete device orchestration implementation including selection
+  algorithms, budget enforcement, circuit breakers, and performance characteristics."
 ---
 
 # Level 3: Production Runtime - Device Orchestrator
@@ -19,6 +27,7 @@ This document provides the complete specification for device orchestration in th
 > Device orchestration is **nearly complete** with the following status:
 >
 > **✅ Fully Implemented**:
+>
 > - Device probing and capability detection (utils/device_probe.py - 183 lines)
 > - GPU memory checking and CUDA detection
 > - Modal GPU client integration (detection/iqa_ml.py - 1,303 lines)
@@ -29,10 +38,12 @@ This document provides the complete specification for device orchestration in th
 > - Celery worker integration (workers/ - 748 lines)
 >
 > **⚠️ In Progress** (Phase 4 - Final 2%):
+>
 > - Async I/O optimization (deferred to Phase 5)
 > - Advanced load balancing across multiple workers
 >
 > **Source Files**:
+>
 > - Core device orchestration: detection/iqa_ml.py (1,303 lines) ✅
 > - Device probing: utils/device_probe.py (183 lines) ✅
 > - Worker tasks: workers/tasks.py (471 lines) ✅
@@ -693,6 +704,7 @@ def select_device_with_circuit_breaker(context: ProcessingContext):
 | **CPU (16-core)** | 40-100ms | 150-300ms | 20-30ms | 80-150ms | **300-500ms/page** |
 
 **Notes**:
+
 - Modal GPU includes network latency (5-10ms)
 - CPU performance varies by core count and load
 - Total pipeline includes all stages (ingestion, IQA, correction, output)
@@ -708,6 +720,7 @@ def select_device_with_circuit_breaker(context: ProcessingContext):
 | **CPU** | 10-25 | 40-100 | 14,400-36,000 |
 
 **Assumptions**:
+
 - Workers process pages in parallel
 - No I/O bottlenecks (GCS, Redis)
 - GPU not shared across workers
@@ -724,11 +737,13 @@ def select_device_with_circuit_breaker(context: ProcessingContext):
 | **CPU** | $0.00 | $0.00 | $0.00 | $0.00 |
 
 **Modal GPU Pricing** (source: Modal documentation):
+
 - T4 GPU: $0.000072/second (~$0.0043/minute)
 - A10 GPU: $0.000126/second (~$0.0076/minute)
 - Typical inference: 10s/page × $0.00072 = $0.0072/page
 
 **Budget Impact**:
+
 - $30/month free tier covers ~4,285 pages/month (T4)
 - Production workloads require local GPU or CPU fallback
 
@@ -751,6 +766,7 @@ DevicePolicy(
 ```
 
 **Behavior**:
+
 - Prefer local GPU if available
 - Allow Modal GPU for small-scale testing
 - Allow CPU fallback (4-10x slower, but acceptable for development)
@@ -774,6 +790,7 @@ DevicePolicy(
 ```
 
 **Behavior**:
+
 - Prefer local GPU or Modal GPU
 - Allow CPU fallback (with warning)
 - Enforce $30/month budget limit
@@ -797,6 +814,7 @@ DevicePolicy(
 ```
 
 **Behavior**:
+
 - **Require** local GPU or Modal GPU
 - **Block CPU** to enforce quality standards (CPU 4-10x slower)
 - Fail fast if no GPU available (no degraded quality)
@@ -981,12 +999,14 @@ iqa_circuit_breaker_blocks_total{service}
 **File**: [utils/device_probe.py:1-183](../../../../src/image_preprocessing_detector/utils/device_probe.py)
 
 **Responsibilities**:
+
 - Detect local GPU availability (CUDA, MPS, ROCm)
 - Query GPU memory (nvidia-smi, torch.cuda)
 - Check GPU utilization
 - Probe CPU capabilities
 
 **Key Functions**:
+
 - `has_local_gpu() -> bool`
 - `get_gpu_memory_available() -> int`
 - `get_gpu_utilization() -> float`
@@ -999,12 +1019,14 @@ iqa_circuit_breaker_blocks_total{service}
 **File**: [detection/iqa_ml.py:1-1303](../../../../src/image_preprocessing_detector/detection/iqa_ml.py)
 
 **Responsibilities**:
+
 - Orchestrate device selection
 - Run student/teacher inference
 - Handle device fallback
 - Track budget usage
 
 **Key Functions**:
+
 - `select_device(context, model_type) -> str`
 - `run_student_inference(image, context) -> IQAPrediction`
 - `run_teacher_inference(image, context) -> IQAPrediction`
@@ -1016,12 +1038,14 @@ iqa_circuit_breaker_blocks_total{service}
 **File**: [workers/tasks.py:1-471](../../../../src/image_preprocessing_detector/workers/tasks.py)
 
 **Responsibilities**:
+
 - Celery task definitions
 - Batch processing orchestration
 - Device policy enforcement
 - Error handling and retries
 
 **Key Functions**:
+
 - `process_document(document_id) -> Result`
 - `batch_process(document_ids) -> List[Result]`
 

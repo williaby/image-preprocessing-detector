@@ -1,21 +1,23 @@
 ---
 schema_type: planning
 title: "Phase 7 v4 Training Deep Dive - Root Cause Analysis & Redesign"
-description: "Comprehensive root cause analysis of DIQA-5000 benchmark failure and redesign of training methodology"
+description: "Comprehensive root cause analysis of DIQA-5000 benchmark failure and
+  redesign of training methodology"
 tags:
-  - planning
-  - phase7
-  - iqa
-  - training
-  - root_cause_analysis
-  - diqa-5000
-  - redesign
+- planning
+- phase7
+- iqa
+- training
+- root_cause_analysis
+- diqa_5000
+- redesign
 status: draft
 owner: core-maintainer
 authors:
-  - name: "Byron Williams"
-  - name: "Claude Code"
-purpose: Critical analysis of Phase 7 training failures with actionable redesign recommendations.
+- name: "Byron Williams"
+- name: "Claude Code"
+purpose: Critical analysis of Phase 7 training failures with actionable redesign
+  recommendations.
 component: Strategy
 source: Multi-model consensus analysis
 ---

@@ -1,13 +1,23 @@
 ---
 schema_type: common
 title: "Level 3: Monitoring & Drift Detection - End-to-End Lifecycle"
-description: "Complete lifecycle from drift detection through privacy review to model retraining and deployment"
-tags: [architecture, diagrams, level-3, monitoring, drift, lifecycle, state-machines, compliance]
+description: "Complete lifecycle from drift detection through privacy review to model
+  retraining and deployment"
+tags:
+- architecture
+- diagrams
+- level_3
+- monitoring
+- drift
+- lifecycle
+- state_machines
+- compliance
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the complete closed-loop lifecycle of drift detection, sample harvesting, privacy review, retraining orchestration, and validated deployment gates."
+- name: "Byron Williams"
+purpose: "Document the complete closed-loop lifecycle of drift detection, sample harvesting,
+  privacy review, retraining orchestration, and validated deployment gates."
 last_updated: "2025-12-19"
 parent_doc: "../../level-2/monitoring-drift/index.md"
 ---
@@ -1078,4 +1088,3 @@ def evaluate_deployment_gate(
 | Date | Version | Changes | Author |
 |------|---------|---------|--------|
 | 2025-12-19 | 1.0.0 | Initial Level 3 documentation | Byron Williams |
-

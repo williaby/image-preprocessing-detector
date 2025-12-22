@@ -1,13 +1,22 @@
 ---
 schema_type: common
 title: "Level 3: Model Training - Layout Fusion Downsampler"
-description: "Detailed specification of the Layout Fusion Downsampler architecture used to avoid naive downsampling while preserving semantic document structure for IQA training"
-tags: [architecture, level-3, model-training, layout-fusion, dociq, diqa-5000]
+description: "Detailed specification of the Layout Fusion Downsampler architecture
+  used to avoid naive downsampling while preserving semantic document structure for
+  IQA training"
+tags:
+- architecture
+- level_3
+- model_training
+- layout_fusion
+- dociq
+- diqa_5000
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the Layout Fusion Downsampler architecture, rationale, and implementation details for document-aware IQA model training"
+- name: "Byron Williams"
+purpose: "Document the Layout Fusion Downsampler architecture, rationale, and implementation
+  details for document-aware IQA model training."
 last_updated: "2025-01-19"
 ---
 
@@ -48,11 +57,13 @@ The Layout Fusion Downsampler is a specialized neural network module that fuses 
 Training document IQA models requires balancing two competing constraints:
 
 **Constraint 1: Full Resolution Needed**
+
 - Document degradations (blur, noise, JPEG artifacts) are **fine-grained** (1-3 pixel scale)
 - Naive downsampling to 400×400 **destroys** these quality signals
 - **Example**: 2-pixel Gaussian blur at 1600×1600 becomes imperceptible at 400×400
 
 **Constraint 2: GPU Memory Limits**
+
 - ResNet-50 on 1600×1600 images requires **32GB+ GPU memory** per batch
 - Training becomes prohibitively expensive (A100-80GB required)
 - Inference latency increases 16× (1600² vs 400²)
@@ -64,6 +75,7 @@ Training document IQA models requires balancing two competing constraints:
 **Key Insight**: Document quality assessment needs **semantic context** (e.g., "is this table blurry?"), not just pixel-level features.
 
 **Layout Fusion Approach**:
+
 1. Extract **semantic layout masks** via DocLayout-YOLO (11 classes)
 2. Encode layout masks in **parallel path** at full 1600×1600 resolution
 3. Encode RGB image in **parallel path** with 4× downsampling
@@ -136,6 +148,7 @@ self.layout_encoder = nn.Sequential(
 ```
 
 **Key Properties**:
+
 - **Two-stage downsampling**: stride=2 twice = 4× total
 - **Channel expansion**: 11 classes → 32 → 64 features
 - **Preserves layout semantics**: ConvNet learns document structure patterns
@@ -159,6 +172,7 @@ self.rgb_encoder = nn.Sequential(
 ```
 
 **Key Properties**:
+
 - **Single-step downsampling**: 7×7 conv with stride=4 achieves 4× in one layer
 - **Larger receptive field**: 7×7 kernel captures broader context than 3×3
 - **Matches layout encoder output**: Both produce [B, 64, 400, 400]
@@ -183,6 +197,7 @@ self.fusion = nn.Sequential(
 ```
 
 **Key Properties**:
+
 - **1×1 convolutions**: Pointwise fusion, no spatial mixing
 - **Channel reduction**: 128 → 64 → 3
 - **ResNet compatibility**: Output is 3-channel like standard ImageNet input
@@ -297,17 +312,20 @@ outputs = model(rgb_tensor, layout_tensor)
 ### Two-Phase Training Protocol
 
 **Phase 1: Head Warmup (Epochs 1-15)**
+
 - **Frozen**: ResNet-50 backbone + Layout Fusion Downsampler
 - **Trainable**: Multi-task head only
 - **Learning Rate**: 1e-3 with 5-epoch warmup
 - **Purpose**: Initialize head before full fine-tuning
 
 **Phase 2: Full Fine-Tuning (Epochs 16-60)**
+
 - **Trainable**: All parameters (backbone + downsampler + head)
 - **Learning Rate**: 1e-4 with cosine decay
 - **Purpose**: Adapt ResNet-50 to document-specific IQA
 
 **Loss Configuration**:
+
 ```python
 loss_weights = {
     "overall": 0.34,    # Generalist (balanced)
@@ -404,6 +422,7 @@ if rgb_feat.shape[2:] != layout_feat.shape[2:]:
 ### GPU Memory Usage
 
 **Training (batch_size=4)**:
+
 ```
 ResNet-50 baseline (400×400):         ~6GB
 + Layout Fusion Downsampler:          ~800MB
@@ -413,6 +432,7 @@ Total:                                ~7.3GB
 ```
 
 **Inference (batch_size=1)**:
+
 ```
 ResNet-50 baseline (400×400):         ~1.5GB
 + Layout Fusion Downsampler:          ~200MB
@@ -509,6 +529,7 @@ The Layout Fusion Downsampler is trained via Modal serverless GPU infrastructure
 **Modal Script**: [`modal/train_dociq_replica.py`](../../../../modal/train_dociq_replica.py) (planned)
 
 **Training Configuration**:
+
 ```python
 @app.function(
     gpu="A100-80GB",  # Required for 1600×1600 inputs
@@ -532,11 +553,13 @@ def train_dociq_replica():
 **Approach**: Resize 1600×1600 images to 400×400 before feeding to ResNet-50
 
 **Pros**:
+
 - Simple implementation (1 line: `F.interpolate()`)
 - No additional parameters
 - No layout mask generation overhead
 
 **Cons**:
+
 - **Loses fine-grained degradations**: Blur, noise, JPEG artifacts imperceptible at 400×400
 - **SRCC degradation**: -8.5% overall, -11.5% sharpness (see performance table above)
 - **No document awareness**: Treats all regions equally
@@ -548,10 +571,12 @@ def train_dociq_replica():
 **Approach**: Train ResNet-50 directly on 1600×1600 images (no downsampling)
 
 **Pros**:
+
 - Maximum quality signal preservation
 - No layout fusion complexity
 
 **Cons**:
+
 - **GPU memory explosion**: 16× more memory (1600² vs 400²)
 - **Requires A100-80GB**: 32GB+ per batch (vs 8GB with layout fusion)
 - **Training time 4-6× longer**: Dominated by convolution cost
@@ -564,10 +589,12 @@ def train_dociq_replica():
 **Approach**: Random 400×400 crops from 1600×1600 images during training
 
 **Pros**:
+
 - Preserves fine-grained degradations in crops
 - Lower GPU memory than full-resolution
 
 **Cons**:
+
 - **Loses document structure context**: Each crop is context-free
 - **No global quality assessment**: Can't evaluate full-page layout issues
 - **Training instability**: High variance from random crops
@@ -579,10 +606,12 @@ def train_dociq_replica():
 **Approach**: Extract features at multiple scales (1600×1600, 800×800, 400×400), concatenate
 
 **Pros**:
+
 - Captures both fine-grained and global features
 - No need for separate layout mask generation
 
 **Cons**:
+
 - **3-4× more FLOPs**: Multiple forward passes
 - **Parameter explosion**: 3× backbone size
 - **Training complexity**: Balancing loss across scales

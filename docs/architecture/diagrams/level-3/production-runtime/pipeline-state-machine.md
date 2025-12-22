@@ -1,13 +1,20 @@
 ---
 schema_type: common
 title: "Level 3: Production Runtime - Pipeline State Machine"
-description: "Detailed state machine specification for the production document processing pipeline"
-tags: [architecture, level-3, production-runtime, state-machine, error-handling]
+description: "Detailed state machine specification for the production document processing
+  pipeline"
+tags:
+- architecture
+- level_3
+- production_runtime
+- state_machine
+- error_handling
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the complete state machine implementation for production runtime pipeline including all 13 states, transitions, timeouts, and error recovery paths."
+- name: "Byron Williams"
+purpose: "Document the complete state machine implementation for production runtime
+  pipeline including all 13 states, transitions, timeouts, and error recovery paths."
 ---
 
 # Level 3: Production Runtime - Pipeline State Machine
@@ -20,6 +27,7 @@ This document provides the complete state machine specification for the producti
 > Advanced orchestration features (Phase 4) are **⚠️ 98% complete** with the following components:
 >
 > **Implemented** (Phases 0-3, 6):
+>
 > - ✅ Ingestion & Preflight (Phase 0, 1B)
 > - ✅ PDF Classification (Phase 2)
 > - ✅ Text Gate (Phase 1)
@@ -33,10 +41,12 @@ This document provides the complete state machine specification for the producti
 > - ✅ Monitoring & Drift Detection (Phase 6)
 >
 > **In Progress** (Phase 4):
+>
 > - ⚠️ Device Orchestration (98% complete - async I/O remaining)
 > - ⚠️ State machine orchestrator module (planned)
 >
 > **Source Files**:
+>
 > - Implemented: 43/44 files (16,727 lines)
 > - Planned: 1 file (~183 lines for state orchestrator)
 
@@ -458,6 +468,7 @@ stateDiagram-v2
 **Purpose**: Process as many pages as possible, isolate failures
 
 **Thresholds**:
+
 - **< 10% failed**: Continue, flag in metadata
 - **10-50% failed**: Set status to `partial_success`
 - **> 50% failed**: Abort, set status to `failed`
@@ -504,6 +515,7 @@ stateDiagram-v2
 **Purpose**: Prevent infinite loops, resource exhaustion
 
 **Behavior**:
+
 - Track cumulative time across all states
 - If total exceeds 600s, abort processing
 - Return partial results with error metadata
@@ -572,6 +584,7 @@ def handle_third_timeout(state: str, page: int):
 ### Category 1: Transient Errors
 
 **Examples**:
+
 - Network timeout connecting to Modal GPU
 - Temporary file system unavailable
 - Redis connection timeout
@@ -609,6 +622,7 @@ def retry_with_backoff(operation, max_retries=3):
 ### Category 2: Resource Errors
 
 **Examples**:
+
 - GPU out of memory (OOM)
 - Modal budget exhausted
 - CPU overload (> 90% utilization)
@@ -639,6 +653,7 @@ def handle_resource_error(error: ResourceError, context: ProcessingContext):
 ### Category 3: Data Errors
 
 **Examples**:
+
 - Corrupted PDF page
 - Invalid image format
 - Missing required metadata
@@ -672,6 +687,7 @@ def handle_data_error(error: DataError, page: int, context: ProcessingContext):
 ### Category 4: Critical Errors
 
 **Examples**:
+
 - Model file missing or corrupted
 - Configuration error (e.g., invalid DQS weights)
 - Database connection failure
@@ -710,6 +726,7 @@ def handle_critical_error(error: CriticalError, context: ProcessingContext):
 **Scenario**: 15 out of 100 pages fail processing
 
 **Thresholds**:
+
 - **< 10% pages failed**: `status: "success"`, flag failed pages
 - **10-50% pages failed**: `status: "partial_success"`, flag failed pages
 - **> 50% pages failed**: `status: "failed"`, abort processing
@@ -742,6 +759,7 @@ def determine_document_status(context: ProcessingContext):
 **Scenario**: Modal GPU has failed 5 consecutive requests
 
 **Circuit Breaker States**:
+
 - **CLOSED**: Normal operation, requests pass through
 - **OPEN**: Too many failures, block requests for 60s
 - **HALF_OPEN**: After 60s, allow 1 test request
@@ -788,6 +806,7 @@ CircuitBreakerConfig(
 **Scenario**: Monthly Modal GPU budget ($30) exhausted mid-document
 
 **Budget Tiers** (from [level-2/production-runtime/index.md:256-264](../../level-2/production-runtime/index.md#L256-L264)):
+
 - **Per-document**: $0.05
 - **Per-batch**: $5.00
 - **Monthly**: $30.00
@@ -855,6 +874,7 @@ def handle_all_devices_unavailable(context: ProcessingContext):
 ### INGESTION State
 
 **Source Files**:
+
 - [ingestion/document_processor.py:1-303](../../../../src/image_preprocessing_detector/ingestion/document_processor.py) - Entry point orchestrator
 - [ingestion/pdf_loader.py:1-265](../../../../src/image_preprocessing_detector/ingestion/pdf_loader.py) - PyMuPDF PDF extraction
 - [ingestion/image_loader.py:1-280](../../../../src/image_preprocessing_detector/ingestion/image_loader.py) - Pillow image loading
@@ -866,6 +886,7 @@ def handle_all_devices_unavailable(context: ProcessingContext):
 **Timeout**: 30 seconds
 
 **Failure Modes**:
+
 1. **Corrupted PDF**: Abort with `status: "failed"`, `error_code: "CORRUPTED_PDF"`
 2. **Unsupported format**: Abort with `status: "failed"`, `error_code: "UNSUPPORTED_FORMAT"`
 3. **Extraction timeout**: Abort with `status: "failed"`, `error_code: "INGESTION_TIMEOUT"`
@@ -875,6 +896,7 @@ def handle_all_devices_unavailable(context: ProcessingContext):
 ### ML_IQA_STUDENT State
 
 **Source Files**:
+
 - [detection/iqa_ml.py:1-1303](../../../../src/image_preprocessing_detector/detection/iqa_ml.py) - Inference orchestration
 - [models/resnet_student.py:1-277](../../../../src/image_preprocessing_detector/models/resnet_student.py) - ResNet-18 architecture
 - [utils/device_probe.py:1-183](../../../../src/image_preprocessing_detector/utils/device_probe.py) - Device selection
@@ -906,6 +928,7 @@ def select_device_for_student_inference():
 ```
 
 **Performance Targets** (from [level-2/production-runtime/index.md:280-285](../../level-2/production-runtime/index.md#L280-L285)):
+
 - Local GPU: 10-25ms/page
 - Modal GPU: 15-30ms/page
 - CPU: 40-100ms/page

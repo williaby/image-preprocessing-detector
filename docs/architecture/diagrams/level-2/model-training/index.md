@@ -2,12 +2,18 @@
 schema_type: common
 title: "Level 2: Model Training"
 description: "Detailed model training workflow diagrams for Project A"
-tags: [architecture, diagrams, plantuml, level-2, model-training]
+tags:
+- architecture
+- diagrams
+- plantuml
+- level_2
+- model_training
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the model training pipeline including knowledge distillation and high-level training workflows."
+- name: "Byron Williams"
+purpose: "Document the model training pipeline including knowledge distillation and
+  high-level training workflows."
 ---
 
 # Level 2: Model Training

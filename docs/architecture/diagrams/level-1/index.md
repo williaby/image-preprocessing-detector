@@ -2,12 +2,17 @@
 schema_type: common
 title: "Level 1: Project A Architecture"
 description: "System architecture and workstream data flow for Project A"
-tags: [architecture, diagrams, plantuml, level-1]
+tags:
+- architecture
+- diagrams
+- plantuml
+- level_1
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Provide system-level view of Project A architecture showing all eight workstreams and their interactions."
+- name: "Byron Williams"
+purpose: "Provide system-level view of Project A architecture showing all eight workstreams
+  and their interactions."
 ---
 
 # Level 1: Project A Architecture

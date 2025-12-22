@@ -1,13 +1,21 @@
 ---
 schema_type: common
 title: "Level 2: Data Preparation"
-description: "Detailed data preparation workflow for dataset ingestion, cataloging, and metadata management"
-tags: [architecture, diagrams, plantuml, level-2, data-preparation, workstream-3]
+description: "Detailed data preparation workflow for dataset ingestion, cataloging,
+  and metadata management"
+tags:
+- architecture
+- diagrams
+- plantuml
+- level_2
+- data_preparation
+- workstream_3
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the data preparation pipeline including dataset ingestion, three-layer metadata architecture, and storage strategy."
+- name: "Byron Williams"
+purpose: "Document the data preparation pipeline including dataset ingestion, three-layer
+  metadata architecture, and storage strategy."
 ---
 
 # Level 2: Data Preparation (Workstream 3)

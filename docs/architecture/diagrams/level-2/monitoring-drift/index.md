@@ -1,13 +1,24 @@
 ---
 schema_type: common
 title: "Level 2: Monitoring & Drift Detection"
-description: "Continuous performance monitoring, drift detection, active learning, and automated retraining infrastructure"
-tags: [architecture, diagrams, level-2, monitoring, drift, continuous-improvement, active-learning, retraining]
+description: "Continuous performance monitoring, drift detection, active learning,
+  and automated retraining infrastructure"
+tags:
+- architecture
+- diagrams
+- level_2
+- monitoring
+- drift
+- continuous_improvement
+- active_learning
+- retraining
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the monitoring and drift detection system that ensures production model quality through statistical drift detection, active learning, privacy-safe sample harvesting, and automated retraining triggers."
+- name: "Byron Williams"
+purpose: "Document the monitoring and drift detection system that ensures production
+  model quality through statistical drift detection, active learning, privacy-safe
+  sample harvesting, and automated retraining triggers."
 last_updated: "2025-12-19"
 ---
 

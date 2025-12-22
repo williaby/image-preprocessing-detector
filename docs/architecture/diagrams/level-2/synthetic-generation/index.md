@@ -1,13 +1,22 @@
 ---
 schema_type: common
 title: "Level 2: Synthetic Data Generation"
-description: "Controlled degradation and augmentation for training data expansion using Microsoft Genalog"
-tags: [architecture, diagrams, level-2, synthetic, augmentation, genalog, training-data]
+description: "Controlled degradation and augmentation for training data expansion
+  using Microsoft Genalog"
+tags:
+- architecture
+- diagrams
+- level_2
+- synthetic
+- augmentation
+- genalog
+- training_data
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the synthetic data generation infrastructure that expands training datasets through controlled, reproducible degradations."
+- name: "Byron Williams"
+purpose: "Document the synthetic data generation infrastructure that expands training
+  datasets through controlled, reproducible degradations."
 ---
 
 # Level 2: Synthetic Data Generation
@@ -31,6 +40,7 @@ The Synthetic Data Generation workstream provides **controlled document degradat
 ## Overview
 
 **Purpose**: Expand training datasets through:
+
 1. **Controlled Degradations** - Apply parametric blur, noise, morphological operations, bleed-through
 2. **Label Preservation** - Automatic ground truth generation from degradation parameters
 3. **Diversity** - Systematic coverage of degradation space
@@ -78,12 +88,14 @@ Training Dataset (Workstream 2: Production Model Training)
 | `DegradationConfig` | Top-level orchestration | Composes all degradation types, `seed` for reproducibility |
 
 **Key Features**:
+
 - **Type Safety**: Pydantic validation prevents invalid parameter ranges
 - **Composability**: Enable/disable degradations independently
 - **Reproducibility**: Seed control for deterministic generation
 - **Genalog Mapping**: `to_genalog_params()` converts to Genalog-compatible format
 
 **Example Usage**:
+
 ```python
 from image_preprocessing_detector.augmentation import (
     DegradationConfig,
@@ -117,6 +129,7 @@ enabled = config.get_enabled_degradations()  # ['blur', 'salt_pepper']
 | `generate_sensitivity_gradient()` | Sensitivity analysis for threshold tuning | 📋 Phase 2 Week 2+ |
 
 **Degradation Application Order** (Phase 2 implementation):
+
 1. **Blur** (if enabled) - Gaussian blur simulation
 2. **Morphological** (if enabled) - Ink spreading/overflow
 3. **Salt & Pepper** (if enabled) - Noise addition
@@ -125,6 +138,7 @@ enabled = config.get_enabled_degradations()  # ['blur', 'salt_pepper']
 **Current Behavior**: Returns copy of original image with warning (Genalog integration pending)
 
 **Example Usage**:
+
 ```python
 from image_preprocessing_detector.augmentation import GenalogDegrader, create_default_degrader
 
@@ -161,17 +175,20 @@ degraded_batch = degrader.apply_batch(clean_images)
 | `binarization` | Threshold testing | Intensity 50-200 (7 levels) | 7 samples |
 
 **Key Features**:
+
 - **Reproducible Generation**: Fixed seed (42) for deterministic benchmarks
 - **Ground Truth Metadata**: Automatic quality labels from parameters
 - **Manifest System**: JSON manifest tracks all samples
 - **Regeneration Control**: `regenerate=True` forces fresh generation
 
 **Use Cases**:
+
 1. **IQA Detector Validation**: Test classical detectors against known degradations
 2. **Threshold Tuning**: Determine optimal detection thresholds
 3. **Sensitivity Analysis**: Understand detector behavior across degradation ranges
 
 **Example Usage**:
+
 ```python
 from benchmarks.adapters import SyntheticIQAAdapter
 
@@ -210,6 +227,7 @@ for sample in adapter:
 | 5 | 9 | 5.0 | 1.0 | Severe blur (illegible) |
 
 **Benefits**:
+
 - **Coverage**: Ensure all severity levels represented
 - **Balanced Dataset**: Equal samples per degradation level
 - **Interpretable Labels**: Ground truth directly from parameters
@@ -219,6 +237,7 @@ for sample in adapter:
 ### Multi-Degradation Combinations
 
 **Combinatorial Degradations**:
+
 - Real-world documents exhibit **multiple** degradations simultaneously
 - Example: Scanned document may have **blur + noise + rotation + illumination**
 
@@ -292,6 +311,7 @@ def compute_ground_truth(config: DegradationConfig) -> dict:
 ```
 
 **Benefits**:
+
 - **No manual annotation** required
 - **Perfect ground truth** (no labeler disagreement)
 - **Scalable** to millions of samples
@@ -330,6 +350,7 @@ def compute_ground_truth(config: DegradationConfig) -> dict:
 ```
 
 **Dataset Composition** (Recommended):
+
 - **70% Real Data**: DIQA-5000, OHR-Bench (preserve real-world distribution)
 - **30% Synthetic Data**: Genalog-generated (fill gaps in degradation space)
 
@@ -384,6 +405,7 @@ seed: 42
 ```
 
 **Benefits**:
+
 - Reproducible dataset generation
 - Audit trail for model training
 - Versioned datasets for A/B testing
@@ -397,6 +419,7 @@ seed: 42
 **Goal**: Determine optimal degradation ranges for realistic synthetic data
 
 **Method**:
+
 1. Generate synthetic data with varying degradation levels
 2. Train IQA model on synthetic + real data
 3. Benchmark on real-world test set (DIQA-5000)
@@ -423,6 +446,7 @@ seed: 42
 **Training Output**: Models trained on real + synthetic data
 
 **Integration**:
+
 - Synthetic data merged with real datasets (70% real, 30% synthetic)
 - Improves coverage of rare degradation types
 - Balances dataset composition
@@ -435,6 +459,7 @@ seed: 42
 **Synthetic Output**: Expanded training dataset
 
 **Integration**:
+
 - Data Prep provides clean, high-quality source images
 - Synthetic Generation applies degradations
 - Augmented dataset registered back to Data Prep catalog
@@ -447,6 +472,7 @@ seed: 42
 **Synthetic Output**: Augmented retraining dataset
 
 **Integration**:
+
 - Active learning harvests 500-1000 difficult samples
 - Synthetic Generation applies degradations to expand 2-3x
 - Retraining dataset = original + harvested + synthetic
@@ -462,11 +488,13 @@ seed: 42
 | **Full Dataset Generation** (1000 images, 5 profiles) | ~10-15 min | 5000 degraded images total |
 
 **Optimization**:
+
 - CPU-based (Genalog does not require GPU)
 - Parallelize across cores for batch processing
 - Pre-compute degradation pipelines for efficiency
 
 **Cost Analysis**:
+
 - **Manual Annotation**: 50k images × $0.50 = $25,000
 - **Synthetic Generation**: GPU compute ~$500
 - **Cost Savings**: $24,500 (98% reduction)
@@ -476,6 +504,7 @@ seed: 42
 ## Current Status & Roadmap
 
 ### Implemented ✅
+
 - `DegradationConfig` type-safe configuration (~294 lines)
 - `GenalogDegrader` wrapper infrastructure (~314 lines)
 - Seed control for reproducibility
@@ -483,11 +512,13 @@ seed: 42
 - `SyntheticIQAAdapter` for benchmarking (~423 lines)
 
 ### In Progress 🚧
+
 - Genalog API integration (actual degradation calls)
 - Sensitivity analysis for parameter tuning
 - Dataset versioning and manifest generation
 
 ### Planned 📋
+
 - **Phase 2 Week 2+**: Full Genalog integration
 - **Phase 7**: Active learning + synthetic augmentation for retraining
 - **Multi-Stage Degradation**: Apply degradations in sequence (scan → photocopy → age)
@@ -562,6 +593,7 @@ print(f"Generated {len(clean_images) * len(profiles)} synthetic samples")
 ```
 
 **Output**:
+
 ```
 data/synthetic_v1/
 ├── doc_001_pristine.png (+ .json)
@@ -574,6 +606,7 @@ data/synthetic_v1/
 ```
 
 **Training Integration**:
+
 ```bash
 # Merge with real data
 cp data/diqa5000/train/*.png data/merged_train/
@@ -598,6 +631,7 @@ python -m image_preprocessing_detector.training.teacher_trainer \
 | **Dataset Versioning** | JSON manifests | ✅ COMPLETE |
 
 **Genalog Dependencies** (Phase 2 installation):
+
 ```bash
 # System dependencies (required for Genalog)
 # macOS: brew install pango cairo gdk-pixbuf
@@ -677,14 +711,17 @@ This section maps synthetic generation pipeline components to implementation fil
 ## Source Files
 
 **Core Implementation**:
+
 - [genalog_config.py](../../../../../src/image_preprocessing_detector/augmentation/genalog_config.py) - Configuration (~294 lines)
 - [genalog_degrader.py](../../../../../src/image_preprocessing_detector/augmentation/genalog_degrader.py) - Degrader wrapper (~314 lines)
-- [__init__.py](../../../../../src/image_preprocessing_detector/augmentation/__init__.py) - Public API (~39 lines)
+- [**init**.py](../../../../../src/image_preprocessing_detector/augmentation/__init__.py) - Public API (~39 lines)
 
 **Benchmarking**:
+
 - [synthetic_iqa_adapter.py](../../../../../benchmarks/adapters/synthetic_iqa_adapter.py) - Adapter (~423 lines)
 
 **Tests**:
+
 - `tests/unit/augmentation/test_genalog_config.py` - Configuration tests
 - `tests/unit/augmentation/test_genalog_degrader.py` - Degrader tests
 
@@ -694,9 +731,9 @@ This section maps synthetic generation pipeline components to implementation fil
 
 ## References
 
-- **Genalog Repository**: https://github.com/microsoft/genalog
+- **Genalog Repository**: <https://github.com/microsoft/genalog>
 - **Genalog Paper**: "Synthetic Document Generation for Training Document Image Classifiers" (Microsoft Research)
-- **Albumentations** (Alternative): https://albumentations.ai/ (used in ADR-022 initial planning)
+- **Albumentations** (Alternative): <https://albumentations.ai/> (used in ADR-022 initial planning)
 - **Project Plan**: [PROJECT_PLAN.md](../../../../planning/PROJECT_PLAN.md) - Phase 2 Week 1-2 (Genalog Integration)
 
 ---

@@ -2,12 +2,18 @@
 schema_type: common
 title: "Level 2: Pseudo-Labeling"
 description: "Detailed pseudo-labeling workflow diagrams for Project A"
-tags: [architecture, diagrams, plantuml, level-2, pseudo-labeling]
+tags:
+- architecture
+- diagrams
+- plantuml
+- level_2
+- pseudo_labeling
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the DIQA pseudo-labeling pipeline including multi-model ensemble, checkpoint selection, and training phases."
+- name: "Byron Williams"
+purpose: "Document the DIQA pseudo-labeling pipeline including multi-model ensemble,
+  checkpoint selection, and training phases."
 ---
 
 # Level 2: Pseudo-Labeling

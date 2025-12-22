@@ -1,12 +1,17 @@
 ---
 schema_type: common
 title: "Architecture Documentation Improvement Plan"
-description: "Comprehensive plan for addressing documentation gaps, inconsistencies, and standardization across the three-level architecture hierarchy"
-tags: [architecture, documentation, improvement-plan, action-items]
+description: "Comprehensive plan for addressing documentation gaps, inconsistencies,
+  and standardization across the three-level architecture hierarchy"
+tags:
+- architecture
+- documentation
+- improvement_plan
+- action_items
 status: active
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
+- name: "Byron Williams"
 created: "2025-01-16"
 last_updated: "2025-01-16"
 ---

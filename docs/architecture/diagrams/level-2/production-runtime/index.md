@@ -2,12 +2,18 @@
 schema_type: common
 title: "Level 2: Production Runtime"
 description: "Detailed production runtime workflow diagrams for Project A"
-tags: [architecture, diagrams, plantuml, level-2, production-runtime]
+tags:
+- architecture
+- diagrams
+- plantuml
+- level_2
+- production_runtime
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the detailed production runtime workflows including device selection, primary workflow, and processing details."
+- name: "Byron Williams"
+purpose: "Document the detailed production runtime workflows including device selection,
+  primary workflow, and processing details."
 ---
 
 # Level 2: Production Runtime

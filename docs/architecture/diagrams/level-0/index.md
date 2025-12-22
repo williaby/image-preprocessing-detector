@@ -2,12 +2,17 @@
 schema_type: common
 title: "Level 0: Pipeline Context"
 description: "High-level RAG pipeline architecture spanning multiple projects"
-tags: [architecture, diagrams, plantuml, level-0]
+tags:
+- architecture
+- diagrams
+- plantuml
+- level_0
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Provide pipeline-level context showing how Project A fits into the larger RAG system."
+- name: "Byron Williams"
+purpose: "Provide pipeline-level context showing how Project A fits into the larger
+  RAG system."
 ---
 
 # Level 0: Pipeline Context

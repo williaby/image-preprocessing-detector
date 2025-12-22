@@ -2,12 +2,18 @@
 schema_type: common
 title: "Level 2: Downstream Context"
 description: "Context diagrams for downstream projects (B, C, D) in the RAG pipeline"
-tags: [architecture, diagrams, plantuml, level-2, downstream-context]
+tags:
+- architecture
+- diagrams
+- plantuml
+- level_2
+- downstream_context
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the downstream projects that consume Project A output - OCR orchestration, fusion, and vector store."
+- name: "Byron Williams"
+purpose: "Document the downstream projects that consume Project A output - OCR orchestration,
+  fusion, and vector store."
 ---
 
 # Level 2: Downstream Context

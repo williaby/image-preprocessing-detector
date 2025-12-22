@@ -1,13 +1,21 @@
 ---
 schema_type: common
 title: "Level 2: Labeling & Benchmarking Models"
-description: "Training and benchmarking of labeling models for pseudo-labeling and baseline evaluation"
-tags: [architecture, diagrams, level-2, labeling-models, benchmarking, workstream-5]
+description: "Training and benchmarking of labeling models for pseudo-labeling and
+  baseline evaluation"
+tags:
+- architecture
+- diagrams
+- level_2
+- labeling_models
+- benchmarking
+- workstream_5
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the training pipeline for labeling models (MUSIQ, QualiCLIP, VLMs) used in pseudo-labeling and Arena baseline evaluation."
+- name: "Byron Williams"
+purpose: "Document the training pipeline for labeling models (MUSIQ, QualiCLIP, VLMs)
+  used in pseudo-labeling and Arena baseline evaluation."
 last_updated: "2025-01-16"
 ---
 
@@ -23,11 +31,13 @@ This workstream trains and benchmarks the labeling models used for pseudo-labeli
 ## Overview
 
 **Purpose**: Train specialized IQA and VLM models that:
+
 1. Generate pseudo-labels for unlabeled training data (consumed by Workstream 4)
 2. Establish baseline benchmarks in Model Arena (Workstream 6 Phase 1)
 3. Participate in ensemble labeling for high-confidence predictions
 
 **Key Distinction from Workstream 6 (Model Arena)**:
+
 - **Workstream 5**: Trains the labeling models themselves
 - **Workstream 6**: Benchmarks all models (labeling + production) in standardized Arena
 
@@ -61,6 +71,7 @@ This workstream trains and benchmarks the labeling models used for pseudo-labeli
 **Objective**: Select open-source pretrained models with strong zero-shot performance
 
 **Sources**:
+
 - **MUSIQ**: [Google Research GitHub](https://github.com/google-research/google-research/tree/master/musiq)
 - **QualiCLIP**: [PyIQA Library](https://github.com/chaofengc/IQA-PyTorch)
 - **DocIQ**: Custom replica based on [Mask R-CNN](https://github.com/matterport/Mask_RCNN)
@@ -74,6 +85,7 @@ This workstream trains and benchmarks the labeling models used for pseudo-labeli
 ### Phase 2: Fine-Tuning on Domain Data
 
 **Training Dataset Sources** (from Workstream 3: Data Preparation):
+
 - **Real Labeled Data**: DIQA-5000, OHR-Bench, LIVE, CSIQ
 - **Synthetic Data** (from Workstream 8): Genalog-generated degradations with ground truth
 - **Composition**: 70% real, 30% synthetic
@@ -95,11 +107,13 @@ This workstream trains and benchmarks the labeling models used for pseudo-labeli
 ### Phase 3: Checkpoint Selection for Pseudo-Labeling
 
 **Selection Criteria** (from Workstream 6 Arena):
+
 1. **Best PLCC** on DIQA-5000 test set (primary metric)
 2. **Calibration Error** (ECE < 0.1 preferred)
 3. **Inference Latency** (< 200ms/image for batch=32)
 
 **Weighted Score**:
+
 ```python
 score = 0.7 * SRCC + 0.3 * (1 - ECE)
 ```
@@ -115,12 +129,14 @@ score = 0.7 * SRCC + 0.3 * (1 - ECE)
 **Design Decision**: Use specialized models for different quality dimensions rather than a single monolithic model
 
 **Rationale**:
+
 - **Sharpness**: MUSIQ excels at multi-scale blur/focus detection
 - **Color**: QualiCLIP leverages CLIP embeddings for perceptual color fidelity
 - **Overall Quality**: VLMs provide holistic reasoning about document quality
 - **Ensemble Benefit**: Combining specialists improves pseudo-labeling confidence
 
 **Pseudo-Labeling Workflow** (Workstream 4):
+
 ```text
 Unlabeled Image
     ↓
@@ -210,6 +226,7 @@ def train_musiq(config: TrainingConfig):
 ### Phase 1: Base Evaluation (Pre-Training)
 
 **Workflow**:
+
 ```text
 Download Pretrained Models
     ↓
@@ -230,6 +247,7 @@ Select Top Models for Fine-Tuning
 ### Phase 2: Fine-Tuned Validation (Post-Training)
 
 **Workflow**:
+
 ```text
 Fine-Tune Models (this workstream)
     ↓
@@ -252,6 +270,7 @@ Graduate to Pseudo-Labeling (Workstream 4)
 ### Model Deployment
 
 **Model Registry Structure**:
+
 ```
 gs://image-detection-models/labeling/
 ├── musiq/
@@ -272,6 +291,7 @@ gs://image-detection-models/labeling/
 ```
 
 **Invocation in Pseudo-Labeling**:
+
 ```python
 # Workstream 4 loads models from registry
 musiq = load_model("gs://.../labeling/musiq/v1.0.0_finetuned.onnx")
@@ -288,15 +308,18 @@ ensemble_score = hierarchical_stacker([sharpness, color, ...])
 ## Current Status & Roadmap
 
 ### Implemented ✅
+
 - **Model selection**: 5 models identified (MUSIQ, QualiCLIP, DocIQ, Qwen3-VL, InternVL3)
 - **Arena Phase 1**: MUSIQ (PLCC=0.21), QualiCLIP (PLCC=0.22) benchmarked
 
 ### In Progress 🚧
+
 - **Fine-tuning scripts**: Modal training infrastructure
 - **Checkpoint selection**: Weighted SRCC + ECE scoring
 - **Model export**: ONNX/TorchScript conversion for production
 
 ### Planned 📋
+
 - **Phase 2 Arena validation**: Fine-tuned model benchmarks
 - **VLM integration**: Qwen3-VL and InternVL3 prompt tuning
 - **Continuous retraining**: Monthly fine-tuning on new labeled data
@@ -324,7 +347,9 @@ ensemble_score = hierarchical_stacker([sharpness, color, ...])
 **Is Level 3 Documentation Necessary?**
 
 ### Analysis
+
 Workstream 5 involves:
+
 - Standard fine-tuning workflows (PyTorch/HuggingFace)
 - Model selection via Arena benchmarks (well-documented in WS6)
 - Checkpoint export to registry (straightforward)
@@ -334,11 +359,13 @@ Workstream 5 involves:
 ### Recommendation: **Level 3 NOT REQUIRED** (at current scale)
 
 **Rationale**:
+
 1. **Standard Workflows**: Fine-tuning follows PyTorch conventions, no custom training loops
 2. **Documented Integration**: Arena benchmarking (WS6) and pseudo-labeling (WS4) already documented
 3. **Small Codebase**: ~1,000 lines total, each script <250 lines
 
-### When Level 3 WOULD Be Needed:
+### When Level 3 WOULD Be Needed
+
 - If ensemble training becomes more complex (multi-stage distillation, custom loss functions)
 - If model count grows beyond 10 models with diverse training strategies
 - If hyperparameter tuning becomes highly automated (AutoML, NAS)
@@ -400,6 +427,7 @@ This workstream is planned but has no implementation files yet. The labeling mod
 ## Source Files
 
 ### Training Scripts (To Be Created)
+
 - `modal/labeling_models/train_musiq.py` (~200 lines)
 - `modal/labeling_models/train_qualiclip.py` (~180 lines)
 - `modal/labeling_models/train_dociq.py` (~250 lines)
@@ -407,11 +435,13 @@ This workstream is planned but has no implementation files yet. The labeling mod
 - `modal/labeling_models/export_for_pseudo_labeling.py` (~150 lines)
 
 ### Model Wrappers
+
 - `src/image_preprocessing_detector/labeling/models/musiq_wrapper.py`
 - `src/image_preprocessing_detector/labeling/models/qualiclip_wrapper.py`
 - `src/image_preprocessing_detector/labeling/models/vlm_wrapper.py`
 
 ### Configuration
+
 - `configs/labeling_models/training_config.yaml`
 
 **Total Estimated Lines**: ~1,000 (training) + ~300 (wrappers) = **1,300 lines**

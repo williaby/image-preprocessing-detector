@@ -2,13 +2,19 @@
 schema_type: common
 title: "Level 2: Benchmarking (DEPRECATED)"
 description: "IQA model benchmarking workflow diagrams for Project A"
-tags: [architecture, diagrams, plantuml, level-2, benchmarking, deprecated]
+tags:
+- architecture
+- diagrams
+- plantuml
+- level_2
+- benchmarking
+- deprecated
 status: deprecated
 deprecated_date: "2025-01-16"
 superseded_by: "../level-2/model-arena/index.md"
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
+- name: "Byron Williams"
 purpose: "Document the IQA model benchmarking pipeline for evaluating model performance."
 ---
 

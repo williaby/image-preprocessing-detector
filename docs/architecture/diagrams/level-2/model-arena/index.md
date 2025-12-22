@@ -1,13 +1,22 @@
 ---
 schema_type: common
 title: "Level 2: Model Arena & Multi-Label Benchmarking"
-description: "Comprehensive benchmarking framework across model lifecycle phases and label types"
-tags: [architecture, diagrams, level-2, benchmarking, arena, evaluation]
+description: "Comprehensive benchmarking framework across model lifecycle phases and
+  label types"
+tags:
+- architecture
+- diagrams
+- level_2
+- benchmarking
+- arena
+- evaluation
 status: published
 owner: "core-maintainer"
 authors:
-  - name: "Byron Williams"
-purpose: "Document the Model Arena benchmarking infrastructure that validates models across three lifecycle phases: base evaluation, fine-tuned validation, and continuous improvement."
+- name: "Byron Williams"
+purpose: "Document the Model Arena benchmarking infrastructure that validates models
+  across three lifecycle phases: base evaluation, fine-tuned validation, and continuous
+  improvement."
 last_updated: "2025-12-19"
 ---
 
