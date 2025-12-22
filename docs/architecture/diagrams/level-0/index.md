@@ -108,7 +108,29 @@ The chunking algorithm produces overlapping text segments optimized for semantic
 
 Embed is the final processing stage, converting text chunks into dense vector representations and storing them for retrieval. It generates embeddings using state-of-the-art models optimized for semantic search, then indexes these vectors in a vector database. Each deployment of Embed owns its own vector database instance, enabling multi-tenant isolation.
 
+**Technical Stack [TBD]:**
+
+| Component | Decision | Status |
+|-----------|----------|--------|
+| **Embedding Model** | [TBD: OpenAI text-embedding-3-large, Cohere embed-v3, or custom?] | To Be Decided |
+| **Vector Dimensions** | [TBD: 1536, 3072, or model-dependent?] | To Be Decided |
+| **Vector Database** | [TBD: Qdrant, Pinecone, Weaviate, or Vertex AI Vector Search?] | To Be Decided |
+| **Index Type** | [TBD: HNSW, IVF, or database default?] | To Be Decided |
+| **Retrieval Strategy** | [TBD: Dense only, hybrid (dense + sparse), or with reranking?] | To Be Decided |
+
+**Multi-Tenancy**: Each `collection_id` provides logical isolation. Physical isolation strategy [TBD].
+
+**Performance Targets [TBD]:**
+
+| Metric | Target | Status |
+|--------|--------|--------|
+| Embedding throughput | [TBD] chunks/second | To Be Defined |
+| Query latency (P95) | [TBD] ms | To Be Defined |
+| Concurrent queries | [TBD] QPS | To Be Defined |
+
 The service exposes a retrieval API for semantic search queries, returning ranked chunks with similarity scores and full source attribution. The `EmbeddingManifest.json` records metadata about the embedding process (model version, dimensions, indexing parameters) for reproducibility. Upon completion, Embed returns the `collection_id` to Ingest, which the user can use for subsequent RAG queries against this document set.
+
+> **Note**: Embed requirements document (`embed-f-nf.md`) is pending. The [TBD] items above will be resolved during Embed project initiation.
 
 ---
 
@@ -280,6 +302,27 @@ The pipeline uses **polling** for completion notification due to long-running pr
 | End-to-end (born-digital) | 1000 files/hr | 10-page average |
 | End-to-end (scanned) | 200 files/hr | OCR-heavy processing |
 
+### Performance Degradation Scenarios
+
+Understanding how the pipeline degrades under stress or partial failures:
+
+| Scenario | Pipeline Impact | Detection | Mitigation |
+|----------|-----------------|-----------|------------|
+| **Prepare-Doc compute budget exhausted** | CPU-only mode: 2-5x latency increase, lower IQA accuracy | Budget alerts, metrics | Auto-scaling, budget increase, queue prioritization |
+| **Prepare-Doc Modal GPU unavailable** | Circuit breaker triggers CPU fallback | Health checks, error rates | Automatic fallback, alert on sustained outage |
+| **Unify layout detection failure** | Spatial fallback chunking (lower quality) | Low `layout_confidence` scores | Trust scores reflect degradation, flag for review |
+| **Unify OCR engine timeout** | Fallback to secondary engine | Engine-specific latency metrics | Engine rotation, deadline extension |
+| **Chunk OCR fusion high divergence** | Low-confidence chunks flagged | `fusion_divergence_score` > 0.5 | Embed weights retrieval accordingly |
+| **Embed vector DB overload** | Query latency increase, ingestion backpressure | P95 latency, queue depth | Read replicas, auto-scaling, rate limiting |
+| **GCS regional outage** | Pipeline halts for affected trace_ids | GCP status, error rates | Multi-region bucket replication (future) |
+
+**Degradation Principles:**
+
+1. **Graceful Fallback**: Each service has fallback modes that maintain functionality at reduced quality
+2. **Trust Propagation**: Quality degradation signals flow downstream via trust scores and confidence metrics
+3. **Observability**: All degradation scenarios are detectable via metrics and structured logs
+4. **No Silent Failures**: Degraded processing is always flagged in output metadata
+
 ---
 
 ## Data Management
@@ -338,6 +381,7 @@ Each project boundary has formal contract documentation defining inputs, outputs
 
 | Contract | Document | Status | Description |
 |----------|----------|--------|-------------|
+| **Ingest -> Prepare-Doc** | [rag-processor-project-a-contract.md](../../../development/RAG%20Pipeline/rag-processor-project-a-contract.md) | Defined | ProcessingRequest, callbacks, job lifecycle, security |
 | **Prepare-Doc -> Unify** | [prepare-doc-unify-contract.md](../../../development/RAG%20Pipeline/prepare-doc-unify-contract.md) | Defined | DocumentMetadata.json, corrected image URIs, routing |
 | **Prepare-Audio -> Unify** | TBD | To Be Defined | TranscriptMetadata.json schema, speaker segments |
 | **Unify -> Chunk** | TBD | To Be Defined | Docling DOM schema, page-level metadata |

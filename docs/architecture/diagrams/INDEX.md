@@ -348,13 +348,22 @@ docs/architecture/diagrams/
 
 ---
 
-## Benchmarking Workstream
+## ⚠️ Benchmarking Workstream (DEPRECATED)
 
 ### project-a-benchmark-workflow.puml
 
-**Location**: `level-2/benchmarking/`
+**Location**: `level-2/benchmarking/` → **MOVED** to `deprecated/benchmarking/`
 
-**Purpose**: IQA model benchmarking workflow.
+**Status**: **DEPRECATED as of 2025-01-16**
+
+**Superseded By**: [Model Arena & Multi-Label Benchmarking](level-2/model-arena/index.md)
+
+**Purpose**: Legacy IQA model benchmarking workflow (basic workflow only)
+
+**Migration Note**: For current benchmarking infrastructure, see:
+
+- **Level 2**: [model-arena/index.md](level-2/model-arena/index.md) - Comprehensive multi-phase benchmarking
+- **Level 2**: [labeling-benchmarking/index.md](level-2/labeling-benchmarking/index.md) - Labeling model training
 
 ---
 
