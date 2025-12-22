@@ -10,13 +10,13 @@ tags:
 status: draft
 owner: core-maintainer
 purpose: "Define the complete interface contract between rag-processor and Project A for document ingestion and processing."
-version: 1.1.0
-reviewed_by: "Multi-model consensus (Gemini 2.5 Pro, GPT-4.1)"
+version: 1.2.0
+reviewed_by: "Multi-model consensus (Gemini 2.5 Pro, Gemini 3 Pro, GPT-5.1, DeepSeek R1, Grok 4)"
 ---
 
 # RAG Processor → Project A Interface Contract
 
-**Version:** 1.1.0 | **Status:** Draft | **Last Updated:** 2025-12
+**Version:** 1.2.0 | **Status:** Draft | **Last Updated:** 2025-12
 
 > **Review Status**: Evaluated by Level 3 expert consensus. Critical security and reliability improvements applied.
 
@@ -134,7 +134,7 @@ RAG Processor sends this JSON payload when submitting a document for processing:
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "ProcessingRequest",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "object",
   "required": [
     "request_id",
@@ -149,7 +149,7 @@ RAG Processor sends this JSON payload when submitting a document for processing:
     "request_id": {
       "type": "string",
       "format": "uuid",
-      "description": "Client-generated unique identifier. Used as IDEMPOTENCY KEY - safe to retry with same request_id"
+      "description": "Client-generated unique identifier. Used as IDEMPOTENCY KEY (see Section 3.4)"
     },
     "tenant_id": {
       "type": "string",
@@ -200,6 +200,7 @@ RAG Processor sends this JSON payload when submitting a document for processing:
     },
     "output_location": {
       "type": "object",
+      "description": "Output storage location. If omitted, defaults to tenant-specific path (see below)",
       "properties": {
         "type": {
           "type": "string",
@@ -207,7 +208,7 @@ RAG Processor sends this JSON payload when submitting a document for processing:
         },
         "base_path": {
           "type": "string",
-          "description": "Base path for output files"
+          "description": "Base path for output files. {document_id}/ is always appended."
         }
       }
     },
@@ -280,7 +281,112 @@ RAG Processor sends this JSON payload when submitting a document for processing:
 }
 ```
 
-### 3.2 Example Request
+### 3.3 Default Output Location
+
+When `output_location` is omitted from the request, Project A uses a tenant-specific default:
+
+```python
+# Default output location resolution
+DEFAULT_OUTPUT_CONFIG = {
+    "gcs": {
+        "bucket": "rag-processor-outputs",
+        "path_template": "gs://rag-processor-outputs/{tenant_id}/{document_id}/"
+    },
+    "s3": {
+        "bucket": "rag-processor-outputs",
+        "path_template": "s3://rag-processor-outputs/{tenant_id}/{document_id}/"
+    },
+    "local": {
+        "path_template": "/data/outputs/{tenant_id}/{document_id}/"
+    }
+}
+
+def resolve_output_location(request: ProcessingRequest) -> OutputLocation:
+    """Resolve output location with tenant-specific defaults."""
+    if request.output_location:
+        # Use provided location, always append document_id
+        return OutputLocation(
+            type=request.output_location.type,
+            base_path=f"{request.output_location.base_path}/{request.document_id}/"
+        )
+
+    # Use default based on configured storage backend
+    storage_type = get_default_storage_type()  # From environment config
+    template = DEFAULT_OUTPUT_CONFIG[storage_type]["path_template"]
+    return OutputLocation(
+        type=storage_type,
+        base_path=template.format(
+            tenant_id=request.tenant_id,
+            document_id=request.document_id
+        )
+    )
+```
+
+**Output Location Rules:**
+
+| Scenario | Resulting Path |
+|----------|----------------|
+| `output_location` provided with `base_path` | `{base_path}/{document_id}/` |
+| `output_location` omitted (GCS default) | `gs://rag-processor-outputs/{tenant_id}/{document_id}/` |
+| `output_location` omitted (S3 default) | `s3://rag-processor-outputs/{tenant_id}/{document_id}/` |
+
+### 3.4 Idempotency Behavior
+
+The `request_id` field serves as an idempotency key enabling safe retries:
+
+**Idempotency Contract:**
+
+| Behavior | Specification |
+|----------|---------------|
+| **Storage Duration (TTL)** | Project A MUST remember `request_id` for at least 72 hours |
+| **Scope** | Per-tenant: `(tenant_id, request_id)` combination must be unique |
+| **Duplicate Detection** | Same `request_id` with identical payload returns existing `job_id` |
+| **Conflict Handling** | Same `request_id` with different payload returns `409 Conflict` |
+
+**Duplicate Request Handling:**
+
+```python
+# Project A idempotency logic
+def handle_request(request: ProcessingRequest) -> JobResponse:
+    key = f"{request.tenant_id}:{request.request_id}"
+    existing = idempotency_store.get(key)
+
+    if existing:
+        if existing.payload_hash == hash(request):
+            # Identical request - return existing job
+            return JobResponse(
+                job_id=existing.job_id,
+                request_id=request.request_id,
+                status=existing.current_status,
+                message="Duplicate request - returning existing job"
+            )
+        else:
+            # Same request_id but different payload - conflict
+            raise ConflictError(
+                code="IDEMPOTENCY_CONFLICT",
+                message="request_id already used with different payload",
+                existing_job_id=existing.job_id
+            )
+
+    # New request - process normally
+    job = create_job(request)
+    idempotency_store.set(key, job, ttl=72*3600)  # 72 hour TTL
+    return job
+```
+
+**HTTP Responses for Idempotency:**
+
+| Scenario | HTTP Status | Response |
+|----------|-------------|----------|
+| New request | 202 Accepted | `{"job_id": "...", "status": "queued"}` |
+| Duplicate (identical) | 200 OK | `{"job_id": "...", "status": "<current>", "message": "Duplicate request"}` |
+| Conflict (different payload) | 409 Conflict | `{"error": {"code": "IDEMPOTENCY_CONFLICT", ...}}` |
+
+**Callback Idempotency:**
+
+RAG Processor MUST also treat callbacks idempotently. The same callback may be delivered multiple times due to retries. Deduplicate using `(request_id, job_id, status)` tuple.
+
+### 3.5 Example Request
 
 ```json
 {
@@ -411,6 +517,34 @@ def sign_callback(payload: dict, secret: str, timestamp: int) -> str:
 1. `X-Webhook-Signature` matches computed HMAC
 2. `X-Timestamp` is within 5 minutes of current time (replay protection)
 3. `X-Request-ID` matches a known pending request
+4. Cache `X-Request-ID` for 5+ minutes and reject duplicates (stronger replay protection)
+
+**Callback Secret Management:**
+
+| Aspect | Specification |
+|--------|---------------|
+| **Secret Storage** | Secrets manager (same as Section 7.4) |
+| **Secret Scope** | Per-environment (dev/staging/prod) by default |
+| **Rotation Policy** | Rotate every 90 days minimum |
+| **Rotation Procedure** | Dual-key overlap: both old and new secrets valid for 24 hours during rotation |
+| **Secret Length** | Minimum 32 bytes (256 bits) |
+
+**Secret Rotation Procedure:**
+
+```python
+# During rotation window, accept either key
+def verify_callback_signature(payload: dict, signature: str, timestamp: int) -> bool:
+    """Verify HMAC with dual-key support for rotation."""
+    secrets = [
+        get_secret("callback-hmac-current"),
+        get_secret("callback-hmac-previous"),  # Valid during rotation window
+    ]
+
+    for secret in secrets:
+        if secret and compute_hmac(payload, secret, timestamp) == signature:
+            return True
+    return False
+```
 
 ### 4.3 Callback Retry Policy
 
@@ -446,6 +580,8 @@ If callback delivery fails, Project A MUST retry with exponential backoff:
 | `completed` | Processing finished successfully |
 | `failed` | Processing failed (see `error` field) |
 | `partial_failure` | Some pages failed, others succeeded |
+| `cancelling` | Cancellation requested, stopping at checkpoint |
+| `cancelled` | Job was cancelled |
 
 ### 4.4 Completion Notification
 
@@ -467,6 +603,105 @@ If callback delivery fails, Project A MUST retry with exponential backoff:
     }
   },
   "completed_at": "2024-12-19T10:31:45Z"
+}
+```
+
+### 4.5 Job Status Polling (GET /jobs/{job_id})
+
+RAG Processor can poll for job status instead of relying solely on callbacks:
+
+```http
+GET /api/v1/jobs/job_abc123 HTTP/1.1
+Authorization: Bearer <service-token>
+X-Tenant-ID: tenant_acme_corp
+```
+
+**Response Schema (JobStatus):**
+
+The response uses the same structure as callback payloads for consistency:
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JobStatus",
+  "type": "object",
+  "required": ["request_id", "job_id", "status", "updated_at"],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Original request identifier"
+    },
+    "job_id": {
+      "type": "string",
+      "description": "Project A assigned job identifier"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["queued", "processing", "completed", "failed", "partial_failure", "cancelling", "cancelled"],
+      "description": "Current job status"
+    },
+    "progress": {
+      "type": "object",
+      "properties": {
+        "current_page": {"type": "integer"},
+        "total_pages": {"type": "integer"},
+        "phase": {"type": "string"},
+        "percent_complete": {"type": "integer", "minimum": 0, "maximum": 100}
+      },
+      "description": "Progress details (present when status is 'processing')"
+    },
+    "result": {
+      "type": "object",
+      "description": "Processing result (present when status is 'completed' or 'partial_failure')"
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "details": {"type": "object"}
+      },
+      "description": "Error details (present when status is 'failed')"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last status update timestamp"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Job creation timestamp"
+    }
+  }
+}
+```
+
+**HTTP Status Codes:**
+
+| HTTP Status | Condition |
+|-------------|-----------|
+| 200 | Job found, status returned |
+| 404 | Job not found OR job belongs to different tenant (same response for security) |
+| 401 | Missing or invalid authorization |
+| 403 | Tenant mismatch between token and header |
+
+**Example Response (Processing):**
+
+```json
+{
+  "request_id": "550e8400-e29b-41d4-a716-446655440000",
+  "job_id": "job_abc123",
+  "status": "processing",
+  "progress": {
+    "current_page": 12,
+    "total_pages": 20,
+    "phase": "correction",
+    "percent_complete": 60
+  },
+  "updated_at": "2024-12-19T10:31:30Z",
+  "created_at": "2024-12-19T10:30:00Z"
 }
 ```
 
@@ -604,6 +839,25 @@ Authorization: Bearer <service-token>
 X-Tenant-ID: tenant_acme_corp
 ```
 
+**CRITICAL - Tenant Ownership Verification (IDOR Protection):**
+
+Project A MUST verify that the `job_id` belongs to the tenant identified in the JWT token before processing any cancellation request. This prevents cross-tenant access vulnerabilities (Insecure Direct Object Reference).
+
+```python
+# Required validation before cancellation
+def validate_job_ownership(job_id: str, tenant_id: str) -> bool:
+    """Verify job belongs to requesting tenant."""
+    job = get_job(job_id)
+    if job is None:
+        raise NotFoundError(f"Job {job_id} not found")
+    if job.tenant_id != tenant_id:
+        # Log security violation - do NOT reveal job exists
+        log.error("security_violation", event="idor_attempt",
+                  job_id=job_id, claimed_tenant=tenant_id)
+        raise NotFoundError(f"Job {job_id} not found")  # Same error as not found
+    return True
+```
+
 **Response:**
 
 ```json
@@ -672,11 +926,22 @@ X-Tenant-ID: <tenant_id>  # Must match request body tenant_id
 
 **CRITICAL**: All URLs (`file_location.path`, `callback_url`) MUST be validated to prevent SSRF attacks.
 
+**Important - Cloud Storage URI Handling:**
+
+Cloud storage URIs (`gs://`, `s3://`) are NOT validated by the SSRF HTTP scheme rules below. These URIs are:
+
+- Handled by cloud SDK libraries (not HTTP dereferencing)
+- Protected by IAM policies and bucket-level ACLs
+- Validated separately via `file_location_rules` bucket prefixes
+
+Only HTTP(S) URLs that will be dereferenced over the network (e.g., `callback_url`, `file_location.type: "url"`) require SSRF scheme validation.
+
 ```python
 # Project A URL validation rules
 URL_VALIDATION = {
-    # Allowed schemes
-    "allowed_schemes": ["https"],  # HTTP rejected
+    # Allowed schemes for HTTP dereferencing (callbacks, external URLs)
+    # NOTE: gs:// and s3:// are handled by SDK, not subject to scheme validation
+    "allowed_schemes": ["https"],  # HTTP rejected for network URLs
 
     # Blocked IP ranges (RFC 1918 + loopback)
     "blocked_ip_ranges": [
@@ -700,9 +965,40 @@ URL_VALIDATION = {
         "gcs": {"bucket_prefix": "rag-processor-"},
         "s3": {"bucket_prefix": "rag-processor-"},
         "url": "BLOCKED",  # External URLs rejected by default
-        "local": {"allowed_paths": ["/data/uploads/"]},
+        "local": {
+            "allowed_paths": ["/data/uploads/"],
+            "require_path_canonicalization": True,  # CRITICAL: Prevent path traversal
+        },
     },
 }
+```
+
+**Path Traversal Protection (Local Files):**
+
+When `file_location.type` is `"local"`, paths MUST be canonicalized before validation to prevent traversal attacks:
+
+```python
+import os
+
+def validate_local_path(path: str, allowed_paths: list[str]) -> str:
+    """Validate and canonicalize local file path.
+
+    CRITICAL: Prevents path traversal attacks like ../../etc/passwd
+    """
+    # Resolve all symlinks and .. components
+    canonical_path = os.path.realpath(path)
+
+    # Check against allowed directories
+    for allowed in allowed_paths:
+        allowed_canonical = os.path.realpath(allowed)
+        if canonical_path.startswith(allowed_canonical + os.sep):
+            return canonical_path
+
+    raise SecurityError(
+        code="PATH_TRAVERSAL_BLOCKED",
+        message=f"Path {path} resolves outside allowed directories",
+        canonical_path=canonical_path  # Log for security audit
+    )
 ```
 
 **Validation Errors:**
@@ -758,7 +1054,7 @@ CREDENTIAL_RESOLUTION = {
 
 ### 7.6 Content Validation (Malware Protection)
 
-Before processing, Project A SHOULD validate file content:
+Before processing, Project A MUST validate file content (security-critical for document upload pipelines):
 
 ```python
 CONTENT_VALIDATION = {
@@ -976,7 +1272,7 @@ GET /health/ready HTTP/1.1
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v1/process` | POST | Submit processing job |
-| `/api/v1/jobs/{job_id}` | GET | Get job status |
+| `/api/v1/jobs/{job_id}` | GET | Get job status (see 4.5) |
 | `/api/v1/jobs/{job_id}` | DELETE | Cancel job (see 6.4) |
 | `/health/live` | GET | Liveness check |
 | `/health/ready` | GET | Readiness check |
@@ -1009,6 +1305,17 @@ project-a.dlq                 # Dead letter queue
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2.0 | 2025-12 | **Multi-Model Consensus Review Improvements** (6-model evaluation): |
+| | | - **IDOR Protection**: Added tenant ownership verification for DELETE endpoint (Section 6.4) |
+| | | - **SSRF Clarification**: Documented that gs://s3:// URIs use SDK, not HTTP validation (Section 7.3) |
+| | | - **Job Status Schema**: Added formal GET /jobs/{job_id} response schema (Section 4.5) |
+| | | - **Idempotency Specification**: Added TTL (72h), conflict handling, duplicate detection (Section 3.4) |
+| | | - **Malware Scanning**: Changed from SHOULD to MUST (Section 7.6) |
+| | | - **Path Traversal Protection**: Added canonicalization requirement for local files (Section 7.3) |
+| | | - **Callback Secret Rotation**: Added 90-day rotation policy with dual-key overlap (Section 4.2) |
+| | | - **Default Output Location**: Added tenant-specific fallback paths (Section 3.3) |
+| | | - **Status Values**: Added `cancelling` and `cancelled` states (Section 4.2) |
+| | | - Schema version aligned to 1.2.0 |
 | 1.1.0 | 2025-12 | **Security & Reliability Improvements** (Level 3 Expert Review): |
 | | | - Added `tenant_id` as required field for multi-tenancy |
 | | | - Added HMAC callback authentication (Section 4.2) |

@@ -33,6 +33,26 @@ See [.claude/README.md](.claude/README.md) for full documentation.
 
 **Source**: [https://github.com/ByronWilliamsCPA/.claude](https://github.com/ByronWilliamsCPA/.claude)
 
+### Architecture Documentation System
+
+This project uses a **4-level architecture documentation hierarchy** with automated validation and traceability:
+
+- **Level 0**: Multi-project RAG pipeline context (6 projects)
+- **Level 1**: Project A architecture (8 workstreams overview)
+- **Level 2**: Workstream details ("Level 2.5" standard with code examples)
+- **Level 3**: Module implementation (state machines, detailed swimlanes with LOC annotations)
+
+**📖 Complete Maintenance Guide**: [docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md](docs/architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md)
+
+**Key Resources**:
+
+- [LEVEL_2_DOCUMENTATION_TEMPLATE.md](docs/architecture/LEVEL_2_DOCUMENTATION_TEMPLATE.md) - "Level 2.5" standard
+- [FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md](docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md) - 1,292 files mapped
+- [scripts/extract_workstream_loc.sh](scripts/extract_workstream_loc.sh) - Automated LOC counting
+- [scripts/validate_architecture_links.sh](scripts/validate_architecture_links.sh) - Link validation
+
+**When to Update Architecture Docs**: See maintenance guide for trigger events and step-by-step procedures
+
 ## Claude Code Supervisor Role (CRITICAL)
 
 **Claude Code acts as the SUPERVISOR for all development tasks and MUST:**

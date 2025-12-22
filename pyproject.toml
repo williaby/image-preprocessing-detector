@@ -63,6 +63,7 @@ dependencies = [
     "fonttools>=4.60.2,<5.0.0",
     "werkzeug>=3.1.4",
     "urllib3>=2.6.0",
+    "ultralytics>=8.3.230",
 ]
 
 [project.optional-dependencies]

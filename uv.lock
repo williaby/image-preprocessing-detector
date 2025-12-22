@@ -2846,6 +2846,7 @@ dependencies = [
     { name = "pywavelets", version = "1.9.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "rich" },
     { name = "structlog" },
+    { name = "ultralytics" },
     { name = "urllib3" },
     { name = "werkzeug" },
 ]
@@ -3038,6 +3039,7 @@ requires-dist = [
     { name = "transformers", marker = "extra == 'labeling'", specifier = ">=4.40.0" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.12" },
+    { name = "ultralytics", specifier = ">=8.3.230" },
     { name = "ultralytics", marker = "extra == 'colab'", specifier = ">=8.0.0" },
     { name = "ultralytics", marker = "extra == 'ml'", specifier = ">=8.0.0" },
     { name = "urllib3", specifier = ">=2.6.0" },
