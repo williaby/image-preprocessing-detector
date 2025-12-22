@@ -1,0 +1,158 @@
+@startuml model-arena-architecture
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam defaultFontName "SF Pro Display"
+skinparam defaultFontSize 11
+skinparam ArrowThickness 2
+skinparam rectangleBorderThickness 2
+
+' Title
+title Model Arena & Multi-Label Benchmarking Architecture
+caption Level 2: Component orchestration and three-phase workflow
+
+' Legend
+legend right
+  |= Phase |= Purpose |= Color |
+  | Phase 1 | Base Model Evaluation (Pre-Training) | <back:#E3F2FD>Blue</back> |
+  | Phase 2 | Fine-Tuned Validation (Post-Training) | <back:#FFF3E0>Orange</back> |
+  | Phase 3 | Continuous Improvement (Production) | <back:#E8F5E9>Green</back> |
+  | Integration | External Workstreams | <back:#F3E5F5>Purple</back> |
+endlegend
+
+' External Workstream Integration
+package "External Workstreams" <<Cloud>> #F3E5F5 {
+  component "Workstream 2\n(Production Training)" as WS2 #F3E5F5
+  component "Workstream 5\n(Labeling Models)" as WS5 #F3E5F5
+  component "Workstream 7\n(Monitoring & Drift)" as WS7 #F3E5F5
+}
+
+' Phase 1: Base Model Evaluation
+package "Phase 1: Base Model Evaluation" <<Rectangle>> #E3F2FD {
+  component "Pretrained Models\n(8+ candidates)" as Pretrained #E3F2FD
+  component "Baseline Leaderboard\nPLCC Ranking" as BaseLeaderboard #E3F2FD
+}
+
+' Phase 2: Fine-Tuned Validation
+package "Phase 2: Fine-Tuned Validation" <<Rectangle>> #FFF3E0 {
+  component "Fine-Tuned Models\n(from WS2)" as FineTuned #FFF3E0
+  component "Graduation Decision\nPLCC > 0.65" as Graduation #FFF3E0
+}
+
+' Phase 3: Continuous Improvement
+package "Phase 3: Continuous Improvement" <<Rectangle>> #E8F5E9 {
+  component "Production Model\n+ Difficult Samples" as ProductionModel #E8F5E9
+  component "Drift Detection\nPLCC Drop > 5%" as DriftDetection #E8F5E9
+  component "Retraining Trigger" as RetrainingTrigger #E8F5E9
+}
+
+' Core Arena Components
+package "Model Arena Core" <<Database>> #FAFAFA {
+  ' Central Orchestrator
+  component "ArenaRunner\nOrchestrator" as Runner #4CAF50 {
+    portin run_benchmark
+    portout benchmark_result
+  }
+
+  ' Component Layer
+  package "Component Layer" {
+    component "Dataset Adapters\n~200 lines" as Datasets #2196F3 {
+      component "DIQA5000Dataset" as DIQA5000
+      component "Abstract Interface" as DatasetBase
+      component "Future: DocLayNet,\nPubTables, ReadingBank" as FutureDatasets #DDDDDD
+    }
+
+    component "Inference Backends\n~600 lines" as Backends #2196F3 {
+      component "PyTorch Backend" as PyTorch
+      component "HuggingFace Backend" as HuggingFace
+      component "Modal GPU Backend" as Modal
+      component "API Backend" as API
+    }
+
+    component "Metrics Framework\n~445 lines" as Metrics #2196F3 {
+      component "PLCC/SRCC" as Correlation
+      component "MAE/RMSE" as Error
+      component "Bootstrap CIs" as Bootstrap
+    }
+
+    component "Schemas\n~482 lines" as Schemas #2196F3 {
+      component "DIQAPrediction" as Prediction
+      component "BenchmarkResult" as Result
+      component "ReproducibilityManifest" as Manifest
+    }
+  }
+
+  ' Output Layer
+  component "Leaderboard Generator\n~300 lines" as Leaderboard #FF9800
+  component "CLI Interface\n~200 lines" as CLI #FF9800
+}
+
+' Data Flow - Phase 1: Base Evaluation
+Pretrained --> Runner : load model
+Runner --> Datasets : read test split
+Datasets --> Backends : execute inference
+Backends --> Metrics : compute PLCC/SRCC
+Metrics --> Schemas : validate results
+Schemas --> Leaderboard : rank models
+Leaderboard --> BaseLeaderboard : output
+BaseLeaderboard --> WS2 : select top N\nfor fine-tuning
+
+' Data Flow - Phase 2: Fine-Tuned Validation
+WS2 --> FineTuned : newly trained\nmodel
+FineTuned --> Runner : benchmark
+Runner --> Graduation : compare to\nbaseline
+Graduation --> WS2 : deploy if\nPLCC > 0.65
+
+' Data Flow - Phase 3: Continuous Improvement
+WS7 --> DriftDetection : production\nmetrics
+DriftDetection --> ProductionModel : flag PLCC drop
+ProductionModel --> Runner : re-benchmark\nfailure cases
+Runner --> RetrainingTrigger : PLCC drop > 5%
+RetrainingTrigger --> WS2 : trigger\nretraining
+
+' Integration with Workstream 5 (Labeling Models)
+WS5 --> Pretrained : labeling models\n(MUSIQ, QualiCLIP)
+BaseLeaderboard --> WS5 : top performers\nfor pseudo-labeling
+
+' CLI Interface
+CLI -down-> Runner : arena run
+
+' Notes on reproducibility
+note right of Runner
+  **Reproducibility:**
+  • Fixed seed (42)
+  • Deterministic inference
+  • Git SHA tracking
+  • Hardware profiling
+end note
+
+note bottom of Metrics
+  **Statistical Rigor:**
+  • 1000 bootstrap iterations
+  • 95% confidence intervals
+  • Minimum 30 samples
+end note
+
+note bottom of Schemas
+  **Provenance:**
+  • Model checksum
+  • Config hash
+  • Code version
+  • Result hash
+end note
+
+' Traceability
+note as N1
+  **Source Traceability:**
+  • runner.py (630 lines)
+  • datasets/base.py, datasets/diqa5000.py (200 lines)
+  • inference/*.py (600 lines)
+  • metrics.py (445 lines)
+  • schemas.py (482 lines)
+  • leaderboard.py (300 lines)
+  • cli.py (200 lines)
+
+  **Total:** ~3,057 lines operational code
+end note
+
+@enduml

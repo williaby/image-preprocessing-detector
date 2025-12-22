@@ -1,0 +1,208 @@
+@startuml monitoring-drift-architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam noteFontSize 10
+skinparam legendFontSize 10
+
+' Monitoring & Drift Detection (Workstream 7) - Level 2 Architecture
+' Shows comprehensive drift detection and continuous improvement workflow
+
+title **Level 2: Monitoring & Drift Detection Architecture**\n(Workstream 7 - Phase 6: 95% Complete)
+
+' === COLOR SCHEME ===
+!define EXTERNAL_COLOR #E8F5E9
+!define MONITOR_COLOR #FFEBEE
+!define STORE_COLOR #E3F2FD
+!define ALERT_COLOR #FFF3E0
+
+' === EXTERNAL WORKSTREAMS ===
+
+rectangle "**External Workstreams**" as ext_boundary #white {
+    component "Production Runtime\n(WS 1)" as ws1 <<external>> EXTERNAL_COLOR
+    component "Model Training\n(WS 2)" as ws2 <<external>> EXTERNAL_COLOR
+    component "Model Arena\n(WS 6)" as ws6 <<external>> EXTERNAL_COLOR
+    component "Synthetic Generation\n(WS 8)" as ws8 <<external>> EXTERNAL_COLOR
+}
+
+' === MONITORING SYSTEM ===
+
+rectangle "**Monitoring & Drift Detection System**" as monitoring_boundary MONITOR_COLOR {
+
+    ' === METRICS COLLECTION LAYER ===
+    rectangle "Metrics Collection" as metrics_layer #FFCDD2 {
+        component "**Distribution Tracker**\n//drift/__init__.py//\n(985 lines)" as dist_tracker
+        note right of dist_tracker
+            • Reservoir sampling (10% rate)
+            • 10 feature types monitored
+            • Max 10,000 samples per feature
+        end note
+
+        component "**Performance Evaluator**\n//drift/performance.py//\n(1,027 lines)" as perf_eval
+        note right of perf_eval
+            • mAP, F1, precision, recall
+            • 90-day retention
+            • 7-day baseline window
+        end note
+    }
+
+    ' === DRIFT DETECTION LAYER ===
+    rectangle "Drift Analysis" as drift_layer #FFCDD2 {
+        component "**Drift Detector**\n//drift/__init__.py//" as drift_detector
+        note right of drift_detector
+            • KL Divergence (symmetric)
+            • PSI (Population Stability Index)
+            • Thresholds:
+              - WARNING: KL > 0.15, PSI > 0.10
+              - CRITICAL: KL > 0.30, PSI > 0.25
+        end note
+
+        component "**Reference Store**\n30-day rotation" as ref_store
+    }
+
+    ' === ALERTING LAYER ===
+    rectangle "Alert Management" as alert_layer ALERT_COLOR {
+        component "**Alert Manager**\n//drift/alerting.py//\n(1,061 lines)" as alert_mgr
+        note bottom of alert_mgr
+            **Alert Types**: 8 categories
+            **Channels**: Log, Slack, Webhook
+            **Cooldown**: 60 min default
+            **Severity**: INFO → WARNING → CRITICAL → EMERGENCY
+        end note
+
+        component "**Log Dispatcher**" as log_disp
+        component "**Slack Dispatcher**" as slack_disp
+        component "**Webhook Dispatcher**" as webhook_disp
+    }
+
+    ' === ACTIVE LEARNING LAYER ===
+    rectangle "Active Learning Pipeline" as al_layer #FFCDD2 {
+        component "**Sample Harvester**\n//drift/active_learning.py//\n(842 lines)" as harvester
+        note right of harvester
+            **Harvest Reasons**:
+            • HIGH_ENTROPY (> 0.7)
+            • LOW_AGREEMENT (gap > 0.15)
+            • TEACHER_ESCALATION
+            • QUALITY_OUTLIER
+            • DRIFT_DETECTED
+        end note
+
+        component "**Privacy Checker**\n//drift/privacy_review.py//\n(695 lines)" as privacy_check
+        note right of privacy_check
+            **PII Detection**:
+            • SSN, passport, credit card
+            • Sensitive path patterns
+            • Face detection (OpenCV)
+            • Signature detection
+        end note
+
+        component "**Manifest Generator**\nTrain/Val/Test splits" as manifest_gen
+    }
+
+    ' === PRIVACY REVIEW LAYER ===
+    rectangle "Privacy Review" as privacy_layer #FFCDD2 {
+        component "**Review Manager**\n//drift/privacy_review.py//" as review_mgr
+        note right of review_mgr
+            **Compliance**: GDPR, CCPA, HIPAA
+            **Status Flow**:
+            PENDING → APPROVED/REJECTED
+            REQUIRES_REVIEW → Manual
+        end note
+
+        component "**Review Session**\nAudit trail" as review_session
+    }
+
+    ' === RETRAINING LAYER ===
+    rectangle "Retraining Automation" as retrain_layer #FFCDD2 {
+        component "**Retraining Orchestrator**\n//drift/retraining.py//\n(743 lines)" as retrain_orch
+        note right of retrain_orch
+            **Triggers**:
+            • DRIFT_DETECTED (CRITICAL)
+            • SAMPLE_THRESHOLD (> 500)
+            • PERFORMANCE_DROP (> 10%)
+            • MANUAL / SCHEDULED
+        end note
+
+        component "**Dataset Builder**\nBase + Harvested samples" as dataset_builder
+        component "**Retraining Job**\nStatus tracking" as retrain_job
+    }
+}
+
+' === DATA STORES ===
+
+database "**Prometheus Metrics**\n35+ metrics\n(metrics/__init__.py)" as prometheus STORE_COLOR
+database "**Sample Repository**\nGCS Buckets" as sample_repo STORE_COLOR
+database "**Reference Distributions**\nJSON + SHA-256" as ref_db STORE_COLOR
+
+' === DATA FLOWS ===
+
+' From Production Runtime
+ws1 -down-> dist_tracker : "Predictions\n+ metrics"
+ws1 -down-> perf_eval : "Ground truth\n(when available)"
+ws1 -down-> harvester : "Uncertainty\nscores"
+
+' Metrics Collection
+dist_tracker -down-> prometheus : "Store samples"
+perf_eval -down-> prometheus : "Evaluation\nresults"
+
+' Drift Detection
+dist_tracker --> drift_detector : "Feature\nhistograms"
+drift_detector --> ref_store : "Compare to\nreference"
+ref_store --> ref_db : "Load/Save"
+drift_detector -down-> alert_mgr : "Drift severity"
+
+' Alert Dispatch
+alert_mgr --> log_disp
+alert_mgr --> slack_disp
+alert_mgr --> webhook_disp
+
+' Active Learning
+harvester --> privacy_check : "Pre-harvest\ncheck"
+privacy_check --> harvester : "Privacy\nstatus"
+harvester --> sample_repo : "Store\nsamples"
+harvester --> manifest_gen : "Create\nmanifest"
+
+' Privacy Review
+privacy_check --> review_mgr : "Flagged\nsamples"
+review_mgr --> review_session : "Track\ndecisions"
+review_session --> sample_repo : "Approved\nsamples"
+
+' Retraining Flow
+drift_detector --> retrain_orch : "CRITICAL\ndrift"
+perf_eval --> retrain_orch : "mAP/F1\ndrop > 10%"
+retrain_orch --> dataset_builder : "Prepare\ndataset"
+dataset_builder --> sample_repo : "Fetch\nsamples"
+retrain_orch --> retrain_job : "Track\njob"
+
+' External Integrations
+retrain_orch -right-> ws2 : "Trigger\nretraining"
+retrain_orch -right-> ws6 : "Validate\nmodel"
+ws6 --> retrain_orch : "PLCC > 0.65?\nDeploy"
+dataset_builder --> ws8 : "Request\naugmentation"
+
+' === LEGEND ===
+
+legend right
+    |= Color |= Component Type |
+    | <#E8F5E9> | External Workstream |
+    | <#FFEBEE> | Monitoring Component |
+    | <#E3F2FD> | Data Store |
+    | <#FFF3E0> | Alert Management |
+
+    **Implementation Status**: Phase 6 - 95% Complete
+    **Total Lines**: ~7,400 (implementation) + 5,400 (tests)
+
+    **Source Traceability**:
+    • [[src/image_preprocessing_detector/drift/__init__.py]]
+    • [[src/image_preprocessing_detector/drift/performance.py]]
+    • [[src/image_preprocessing_detector/drift/alerting.py]]
+    • [[src/image_preprocessing_detector/drift/active_learning.py]]
+    • [[src/image_preprocessing_detector/drift/privacy_review.py]]
+    • [[src/image_preprocessing_detector/drift/retraining.py]]
+endlegend
+
+footer Last Updated: 2025-12-19 | [[docs/architecture/diagrams/level-2/monitoring-drift/index.md|Documentation Index]]
+
+@enduml
