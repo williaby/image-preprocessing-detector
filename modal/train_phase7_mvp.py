@@ -109,7 +109,9 @@ class MVPTrainingConfig:
     # Early stopping (Sprint 4: ECE + correlation targets per IDEAL_STATE_PROJECT_PLAN_v2)
     ece_target: float = 0.08  # Primary target: ECE < 0.08
     mae_target: float = 0.15  # Secondary target: Severity MAE < 0.15
-    correlation_target: float = 0.70  # Correlation > 0.70 (relaxed from 0.85 for MVP)
+    # Correlation > 0.70 (original 0.85 per IDEAL_STATE_PROJECT_PLAN_v2; relaxed for
+    # MVP based on initial v3 runs showing ~0.77 as achievable target)
+    correlation_target: float = 0.70
     early_stop_patience: int = 10  # Stop if no improvement for N epochs
     num_ece_bins: int = 15  # Number of bins for ECE computation
     min_epochs: int = 10  # Minimum epochs before early stopping (prevent premature stop)

@@ -9,18 +9,19 @@
 # Format: [[IgnoredVulns]] with id and reason fields
 
 # ============================================================================
-# py Library - CVE Disputed
+# py Library - CVE Disputed (AUTO-FILTERED)
 # ============================================================================
 # CVE-2022-42969 is marked as DISPUTED in NVD (disputed May 2024)
 # Multiple third parties argue this is not a valid/reproducible vulnerability
 # The py library is deprecated and only used by interrogate (docstring coverage tool)
 # Impact: Low - not used in production code, only in dev tooling
 #
-# Note: GHSA ID is auto-filtered but PYSEC ID must be manually ignored
-
-[[IgnoredVulns]]
-id = "PYSEC-2022-42969"
-reason = "CVE-2022-42969 disputed by multiple parties. Formal dispute in NVD May 2024. Only used by interrogate dev tool."
+# NOTE: As of OSV-Scanner v2.x, disputed CVEs are auto-filtered based on NVD metadata.
+# The explicit ignore was removed to prevent "unused ignores" warnings.
+# If this vulnerability resurfaces, add the ignore back:
+#   [[IgnoredVulns]]
+#   id = "PYSEC-2022-42969"
+#   reason = "CVE-2022-42969 disputed. Only used by interrogate dev tool."
 
 # ============================================================================
 # Notes

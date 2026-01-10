@@ -87,6 +87,20 @@ data/training/iqa_phase2_100k.dvc         # DVC tracking
 data/training/iqa_phase2_100k.tar.gz      # 9GB archive
 ```
 
+#### DVC Remote Storage Policy
+
+The paths above include `.dvc`-tracked datasets whose actual payloads live on the DVC remote
+(unraid). Deleting the local files **does not** automatically remove data from the remote.
+
+**Policy**:
+
+- **Default**: Keep Phase 2 data on unraid for historical/debugging purposes
+- **Rationale**: Phase 7 is the active pipeline, but retaining Phase 2 data allows for
+  forensic comparison and rollback if a regression is found
+- **No immediate remote deletion**: Do not run `dvc gc` against Phase 2 remote namespace
+- **Future archival**: ML-ops may schedule a "Phase 2 Remote GC" task once Phase 7 has been
+  in stable production for 6-12 months and rollback is no longer required
+
 ### Category 6: Documentation (3 files to remove)
 
 ```bash

@@ -108,6 +108,9 @@ This critique evaluates the Phase 7 continuous-label Image Quality Assessment (I
 
 ### 2.1 Mathematically Inconsistent Loss Function Design ⭐ (1/5)
 
+> **Status**: ⚠️ **DEFERRED** - Acceptable for Teacher distillation use case (ranking > calibration).
+> Production deployment blocked pending v4 ablation results. See Section 4 for mitigation path.
+
 **Flaw**: The `ContinuousBCEMSELoss` exhibits **mathematical inconsistency** through gradient conflicts between BCE and MSE components.
 
 **Context**: This analysis assumes the ResNet-50 is the final production model. If the model serves primarily as a Teacher for distillation, the ranking ability (Pearson correlation) may matter more than absolute calibration, potentially mitigating some concerns raised here.

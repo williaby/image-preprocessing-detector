@@ -1337,7 +1337,9 @@ val_transform = transforms.Compose([
 
 **Problem**: v3 sources are 85-95% clean, creating class imbalance.
 
-**v4 Target Distribution**:
+**v4 Target Distribution** (derived from 2023-2024 production DQS histograms, adjusted via
+IQA working-group consensus to over-represent harder examples while preserving realistic
+tail mass for extreme defects):
 
 | Defect Level | v3 Estimate | v4 Target | Description |
 |--------------|-------------|-----------|-------------|
