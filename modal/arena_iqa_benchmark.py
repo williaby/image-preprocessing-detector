@@ -33,304 +33,33 @@ Usage:
 
 from __future__ import annotations
 
-import base64
-import csv
-import os
-import tarfile
 import time
 from pathlib import Path
 from typing import Any
 
 import modal
 
+# Import shared utilities
+from modal.shared import (
+    DATASET_CACHE_DIR,
+    compute_metrics,
+    download_dataset_from_gcs,
+    gcs_secret,
+    print_results,
+    setup_gcs_credentials,
+)
+from modal.shared import (
+    arena_data_volume as data_volume,
+)
+from modal.shared import (
+    arena_model_volume as model_volume,
+)
+from modal.shared import (
+    load_diqa5000_dataset as load_dataset,
+)
+
 # Create Modal app
 app = modal.App("arena-iqa-benchmark")
-
-# GCS configuration
-GCS_BUCKET = "assured-oss-457903-diqa5000"
-GCS_ARCHIVE = "diqa5000-test.tar.gz"
-DATASET_CACHE_DIR = "/data/diqa5000"
-
-# Volumes for caching
-model_volume = modal.Volume.from_name("arena-models", create_if_missing=True)
-data_volume = modal.Volume.from_name("arena-data", create_if_missing=True)
-
-# GCS credentials secret
-gcs_secret = modal.Secret.from_name("gcs-credentials")
-
-
-def setup_gcs_credentials() -> None:
-    """Setup GCS credentials from Modal secret."""
-    import tempfile
-
-    gcp_sa_key_b64 = os.environ.get("GCP_SA_KEY")
-    if not gcp_sa_key_b64:
-        print("Warning: GCP_SA_KEY not found, trying default credentials")
-        return
-
-    gcp_sa_key_json = base64.b64decode(gcp_sa_key_b64).decode("utf-8")
-
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", delete=False, prefix="gcp-sa-key-"
-    ) as f:
-        f.write(gcp_sa_key_json)
-        f.flush()
-        credentials_path = f.name
-
-    os.chmod(credentials_path, 0o600)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-    print(f"GCS credentials configured at {credentials_path}")
-
-
-def download_dataset_from_gcs(cache_dir: str) -> Path:
-    """Download and extract DIQA-5000 dataset from GCS."""
-    from google.cloud import storage
-
-    cache_path = Path(cache_dir)
-    test_dir = cache_path / "test"
-    csv_path = test_dir / "test.csv"
-
-    if csv_path.exists():
-        print(f"Dataset already cached at {cache_path}")
-        return cache_path
-
-    setup_gcs_credentials()
-
-    print(f"Downloading dataset from gs://{GCS_BUCKET}/{GCS_ARCHIVE}...")
-    start = time.time()
-
-    cache_path.mkdir(parents=True, exist_ok=True)
-    archive_path = cache_path / GCS_ARCHIVE
-
-    client = storage.Client()
-    bucket = client.bucket(GCS_BUCKET)
-    blob = bucket.blob(GCS_ARCHIVE)
-    blob.download_to_filename(str(archive_path))
-
-    download_time = time.time() - start
-    print(f"Downloaded in {download_time:.1f}s")
-
-    print("Extracting dataset...")
-    start = time.time()
-    with tarfile.open(archive_path, "r:gz") as tar:
-        tar.extractall(cache_path)
-    extract_time = time.time() - start
-    print(f"Extracted in {extract_time:.1f}s")
-
-    archive_path.unlink()
-    return cache_path
-
-
-def load_dataset(dataset_path: Path, verbose: bool = False) -> list[dict]:
-    """Load DIQA-5000 test samples."""
-    test_dir = dataset_path / "test"
-    csv_path = test_dir / "test.csv"
-    res_dir = test_dir / "res"
-
-    samples = []
-
-    with open(csv_path, newline="") as f:
-        reader = csv.DictReader(f)
-        # Print available columns on first load
-        if verbose:
-            print(f"CSV columns: {reader.fieldnames}")
-        for row in reader:
-            image_filename = row["res"]
-            image_path = res_dir / image_filename
-
-            if not image_path.exists():
-                continue
-
-            samples.append({
-                "sample_id": image_filename.replace(".jpg", ""),
-                "image_path": str(image_path),
-                "ground_truth": {
-                    "overall": float(row["overall"]),
-                    "sharpness": float(row["sharpness"]),
-                    "color": float(row["color_fidelity"]),
-                },
-            })
-
-    print(f"Loaded {len(samples)} samples")
-    return samples
-
-
-def bootstrap_correlation_ci(
-    gt_values: list[float],
-    pred_values: list[float],
-    n_bootstrap: int = 1000,
-    confidence: float = 0.95,
-) -> dict[str, dict[str, float]]:
-    """Compute bootstrapped confidence intervals for PLCC and SRCC.
-
-    Args:
-        gt_values: Ground truth values.
-        pred_values: Predicted values.
-        n_bootstrap: Number of bootstrap iterations.
-        confidence: Confidence level (default 95%).
-
-    Returns:
-        Dictionary with PLCC and SRCC confidence intervals.
-    """
-    import numpy as np
-    from scipy import stats
-
-    n = len(gt_values)
-    gt_arr = np.array(gt_values)
-    pred_arr = np.array(pred_values)
-
-    plcc_samples = []
-    srcc_samples = []
-
-    rng = np.random.default_rng(seed=42)  # Reproducible bootstrapping
-
-    for _ in range(n_bootstrap):
-        indices = rng.choice(n, size=n, replace=True)
-        gt_boot = gt_arr[indices]
-        pred_boot = pred_arr[indices]
-
-        # Skip if constant values (correlation undefined)
-        if np.std(gt_boot) > 0 and np.std(pred_boot) > 0:
-            plcc, _ = stats.pearsonr(gt_boot, pred_boot)
-            srcc, _ = stats.spearmanr(gt_boot, pred_boot)
-            plcc_samples.append(plcc)
-            srcc_samples.append(srcc)
-
-    alpha = 1 - confidence
-    lower_pct = (alpha / 2) * 100
-    upper_pct = (1 - alpha / 2) * 100
-
-    return {
-        "plcc_ci": {
-            "lower": float(np.percentile(plcc_samples, lower_pct)),
-            "upper": float(np.percentile(plcc_samples, upper_pct)),
-        },
-        "srcc_ci": {
-            "lower": float(np.percentile(srcc_samples, lower_pct)),
-            "upper": float(np.percentile(srcc_samples, upper_pct)),
-        },
-    }
-
-
-def compute_metrics(results: list[dict], model_id: str, model_load_time: float,
-                   inference_times: list[float]) -> dict[str, Any]:
-    """Compute benchmark metrics from results including bootstrapped CIs."""
-    from scipy import stats
-
-    successful = [r for r in results if r["success"]]
-    failed = [r for r in results if not r["success"]]
-
-    metrics: dict[str, Any] = {
-        "model_id": model_id,
-        "num_samples": len(results),
-        "successful": len(successful),
-        "failed": len(failed),
-        "success_rate": len(successful) / len(results) if results else 0,
-    }
-
-    if inference_times:
-        metrics["timing"] = {
-            "mean_ms": sum(inference_times) / len(inference_times),
-            "min_ms": min(inference_times),
-            "max_ms": max(inference_times),
-            "total_s": sum(inference_times) / 1000,
-            "model_load_s": model_load_time,
-        }
-
-    for dim in ["overall", "sharpness", "color"]:
-        gt_values = []
-        pred_values = []
-
-        for r in successful:
-            gt = r["ground_truth"].get(dim)
-            pred = r["predicted"].get(dim) if r["predicted"] else None
-
-            if gt is not None and pred is not None:
-                gt_values.append(gt)
-                pred_values.append(pred)
-
-        if len(gt_values) >= 30:  # Need sufficient samples for bootstrap
-            plcc, _ = stats.pearsonr(gt_values, pred_values)
-            srcc, _ = stats.spearmanr(gt_values, pred_values)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            rmse = mse ** 0.5
-
-            # Compute bootstrapped confidence intervals
-            ci = bootstrap_correlation_ci(gt_values, pred_values)
-
-            metrics[dim] = {
-                "plcc": plcc,
-                "plcc_ci_lower": ci["plcc_ci"]["lower"],
-                "plcc_ci_upper": ci["plcc_ci"]["upper"],
-                "srcc": srcc,
-                "srcc_ci_lower": ci["srcc_ci"]["lower"],
-                "srcc_ci_upper": ci["srcc_ci"]["upper"],
-                "mae": mae,
-                "rmse": rmse,
-                "num_valid": len(gt_values),
-            }
-        elif len(gt_values) >= 3:
-            # Fallback without bootstrap for small samples
-            plcc, _ = stats.pearsonr(gt_values, pred_values)
-            srcc, _ = stats.spearmanr(gt_values, pred_values)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            rmse = mse ** 0.5
-
-            metrics[dim] = {
-                "plcc": plcc,
-                "srcc": srcc,
-                "mae": mae,
-                "rmse": rmse,
-                "num_valid": len(gt_values),
-            }
-        else:
-            metrics[dim] = {
-                "plcc": None,
-                "srcc": None,
-                "mae": None,
-                "rmse": None,
-                "num_valid": len(gt_values),
-                "error": "Insufficient valid predictions",
-            }
-
-    return metrics
-
-
-def print_results(metrics: dict[str, Any]) -> None:
-    """Print benchmark results."""
-    print("\n" + "=" * 60)
-    print("BENCHMARK RESULTS")
-    print("=" * 60)
-    print(f"Model: {metrics['model_id']}")
-    print(f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)")
-    print(f"Success Rate: {metrics['success_rate']:.1%}")
-
-    if "timing" in metrics:
-        t = metrics["timing"]
-        print("\nTiming:")
-        print(f"  Mean inference: {t['mean_ms']:.0f}ms")
-        print(f"  Total inference: {t['total_s']:.1f}s")
-        print(f"  Model load: {t['model_load_s']:.1f}s")
-
-    for dim in ["overall", "sharpness", "color"]:
-        if dim in metrics and metrics[dim].get("plcc") is not None:
-            m = metrics[dim]
-            print(f"\n{dim.capitalize()}:")
-            # Print PLCC with CI if available
-            if "plcc_ci_lower" in m:
-                print(f"  PLCC: {m['plcc']:.4f} [{m['plcc_ci_lower']:.4f}, {m['plcc_ci_upper']:.4f}]")
-            else:
-                print(f"  PLCC: {m['plcc']:.4f}")
-            # Print SRCC with CI if available
-            if "srcc_ci_lower" in m:
-                print(f"  SRCC: {m['srcc']:.4f} [{m['srcc_ci_lower']:.4f}, {m['srcc_ci_upper']:.4f}]")
-            else:
-                print(f"  SRCC: {m['srcc']:.4f}")
-            print(f"  MAE:  {m['mae']:.4f}")
-            print(f"  RMSE: {m['rmse']:.4f}")
-            print(f"  Valid predictions: {m['num_valid']}")
 
 
 # =============================================================================
@@ -371,7 +100,7 @@ def run_resnet50_benchmark(num_samples: int = 0) -> dict[str, Any]:
     import torch.nn as nn
     from PIL import Image
     from torchvision import transforms
-    from torchvision.models import resnet50, ResNet50_Weights
+    from torchvision.models import ResNet50_Weights, resnet50
 
     model_id = "ResNet50-ImageNet-IQA"
 
@@ -513,7 +242,7 @@ def run_resnet34_benchmark(num_samples: int = 0) -> dict[str, Any]:
     import torch.nn as nn
     from PIL import Image
     from torchvision import transforms
-    from torchvision.models import resnet34, ResNet34_Weights
+    from torchvision.models import ResNet34_Weights, resnet34
 
     model_id = "ResNet34-ImageNet-IQA"
 
@@ -641,7 +370,7 @@ def run_resnet18_benchmark(num_samples: int = 0) -> dict[str, Any]:
     import torch.nn as nn
     from PIL import Image
     from torchvision import transforms
-    from torchvision.models import resnet18, ResNet18_Weights
+    from torchvision.models import ResNet18_Weights, resnet18
 
     model_id = "ResNet18-ImageNet-IQA"
 
@@ -769,7 +498,7 @@ def run_convnext_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
     import torch.nn as nn
     from PIL import Image
     from torchvision import transforms
-    from torchvision.models import convnext_tiny, ConvNeXt_Tiny_Weights
+    from torchvision.models import ConvNeXt_Tiny_Weights, convnext_tiny
 
     model_id = "ConvNeXt-Tiny-ImageNet-IQA"
 
@@ -897,7 +626,7 @@ def run_efficientnet_b4_benchmark(num_samples: int = 0) -> dict[str, Any]:
     import torch.nn as nn
     from PIL import Image
     from torchvision import transforms
-    from torchvision.models import efficientnet_b4, EfficientNet_B4_Weights
+    from torchvision.models import EfficientNet_B4_Weights, efficientnet_b4
 
     model_id = "EfficientNet-B4-ImageNet-IQA"
 
@@ -1026,7 +755,7 @@ def run_swin_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
     import torch.nn as nn
     from PIL import Image
     from torchvision import transforms
-    from torchvision.models import swin_t, Swin_T_Weights
+    from torchvision.models import Swin_T_Weights, swin_t
 
     model_id = "Swin-Tiny-ImageNet-IQA"
 
@@ -1169,8 +898,8 @@ def run_clip_iqa_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     Uses CLIP to compute similarity between image and quality-related text prompts.
     """
-    import torch
     import open_clip
+    import torch
     from PIL import Image
 
     model_id = "CLIP-ViT-B-32-IQA"
@@ -1333,8 +1062,8 @@ def run_pyiqa_benchmark(
 
     Available metrics: musiq, niqe, brisque, clipiqa, maniqa, topiq_nr, etc.
     """
-    import torch
     import pyiqa
+    import torch
     from PIL import Image
     from torchvision import transforms
 
@@ -1497,12 +1226,12 @@ def run_finetuned_musiq_benchmark(
     Returns:
         Benchmark metrics and sample results.
     """
+    import pyiqa
     import torch
     import torch.nn as nn
-    import pyiqa
+    from google.cloud import storage
     from PIL import Image
     from torchvision import transforms
-    from google.cloud import storage
 
     model_id = f"MUSIQ-Sharpness-Specialist-{model_version}"
 
@@ -1755,13 +1484,13 @@ def run_finetuned_maniqa_benchmark(
     Returns:
         Benchmark metrics with confidence intervals and sample results.
     """
+    import pyiqa
     import torch
     import torch.nn as nn
-    import pyiqa
+    from einops import rearrange
+    from google.cloud import storage
     from PIL import Image
     from torchvision import transforms
-    from google.cloud import storage
-    from einops import rearrange
 
     model_id = f"MANIQA-DIQA5000-Finetuned-{model_version}"
 

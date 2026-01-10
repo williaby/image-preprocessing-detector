@@ -13,25 +13,33 @@ Usage:
 
 from __future__ import annotations
 
-import base64
-import csv
-import io
 import json
 import os
-import tarfile
+import re
 import time
-from pathlib import Path
 from typing import Any
 
 import modal
 
+# Import shared utilities
+from modal.shared import (
+    DATASET_CACHE_DIR,
+    IQA_PROMPT,
+    download_dataset_from_gcs,
+    gcs_secret,
+)
+from modal.shared import (
+    arena_data_volume as data_volume,
+)
+from modal.shared import (
+    arena_model_volume as model_volume,
+)
+from modal.shared import (
+    load_diqa5000_dataset as load_dataset,
+)
+
 # Create Modal app
 app = modal.App("arena-full-benchmark")
-
-# GCS configuration
-GCS_BUCKET = "assured-oss-457903-diqa5000"
-GCS_ARCHIVE = "diqa5000-test.tar.gz"
-DATASET_CACHE_DIR = "/data/diqa5000"
 
 # Define image with VLM and GCS support
 benchmark_image = (
@@ -85,142 +93,6 @@ deepseek_image = (
     )
 )
 
-# Volumes for caching
-model_volume = modal.Volume.from_name("arena-models", create_if_missing=True)
-data_volume = modal.Volume.from_name("arena-data", create_if_missing=True)
-
-# GCS credentials secret
-gcs_secret = modal.Secret.from_name("gcs-credentials")
-
-# IQA prompt
-IQA_PROMPT = """Analyze this document image and rate its quality on a scale of 1-5 for each dimension:
-1. Overall quality (considering all aspects)
-2. Sharpness (text clarity, edge definition)
-3. Color fidelity (color accuracy, consistency)
-
-Provide your ratings in this exact format:
-Overall: X.X
-Sharpness: X.X
-Color: X.X
-
-Where X.X is a number between 1.0 and 5.0."""
-
-
-def setup_gcs_credentials() -> None:
-    """Setup GCS credentials from Modal secret."""
-    import tempfile
-
-    gcp_sa_key_b64 = os.environ.get("GCP_SA_KEY")
-    if not gcp_sa_key_b64:
-        print("Warning: GCP_SA_KEY not found, trying default credentials")
-        return
-
-    # Decode base64 credentials
-    gcp_sa_key_json = base64.b64decode(gcp_sa_key_b64).decode("utf-8")
-
-    # Write to temp file
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", delete=False, prefix="gcp-sa-key-"
-    ) as f:
-        f.write(gcp_sa_key_json)
-        f.flush()
-        credentials_path = f.name
-
-    os.chmod(credentials_path, 0o600)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-    print(f"GCS credentials configured at {credentials_path}")
-
-
-def download_dataset_from_gcs(cache_dir: str) -> Path:
-    """Download and extract DIQA-5000 dataset from GCS.
-
-    Args:
-        cache_dir: Directory to cache the dataset.
-
-    Returns:
-        Path to the extracted dataset.
-    """
-    from google.cloud import storage
-
-    cache_path = Path(cache_dir)
-    test_dir = cache_path / "test"
-    csv_path = test_dir / "test.csv"
-
-    # Check if already extracted
-    if csv_path.exists():
-        print(f"Dataset already cached at {cache_path}")
-        return cache_path
-
-    # Setup credentials
-    setup_gcs_credentials()
-
-    print(f"Downloading dataset from gs://{GCS_BUCKET}/{GCS_ARCHIVE}...")
-    start = time.time()
-
-    cache_path.mkdir(parents=True, exist_ok=True)
-    archive_path = cache_path / GCS_ARCHIVE
-
-    # Download from GCS
-    client = storage.Client()
-    bucket = client.bucket(GCS_BUCKET)
-    blob = bucket.blob(GCS_ARCHIVE)
-    blob.download_to_filename(str(archive_path))
-
-    download_time = time.time() - start
-    print(f"Downloaded in {download_time:.1f}s")
-
-    # Extract
-    print("Extracting dataset...")
-    start = time.time()
-    with tarfile.open(archive_path, "r:gz") as tar:
-        tar.extractall(cache_path)
-    extract_time = time.time() - start
-    print(f"Extracted in {extract_time:.1f}s")
-
-    # Cleanup archive
-    archive_path.unlink()
-
-    return cache_path
-
-
-def load_dataset(dataset_path: Path) -> list[dict]:
-    """Load DIQA-5000 test samples.
-
-    Args:
-        dataset_path: Path to the dataset root.
-
-    Returns:
-        List of sample dictionaries.
-    """
-    test_dir = dataset_path / "test"
-    csv_path = test_dir / "test.csv"
-    res_dir = test_dir / "res"
-
-    samples = []
-
-    with open(csv_path, newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            image_filename = row["res"]
-            image_path = res_dir / image_filename
-
-            if not image_path.exists():
-                continue
-
-            samples.append({
-                "sample_id": image_filename.replace(".jpg", ""),
-                "image_path": str(image_path),
-                "ground_truth": {
-                    "overall": float(row["overall"]),
-                    "sharpness": float(row["sharpness"]),
-                    "color": float(row["color_fidelity"]),
-                },
-            })
-
-    print(f"Loaded {len(samples)} samples")
-    return samples
-
-
 def parse_vlm_response(response: str) -> dict[str, float | None]:
     """Parse VLM response to extract quality scores.
 
@@ -241,8 +113,6 @@ def parse_vlm_response(response: str) -> dict[str, float | None]:
         line = line.strip()
         for key in scores:
             if key in line:
-                # Try to extract number
-                import re
                 match = re.search(r"(\d+\.?\d*)", line)
                 if match:
                     try:
@@ -532,7 +402,7 @@ def run_benchmark(
 
     if "timing" in metrics:
         t = metrics["timing"]
-        print(f"\nTiming:")
+        print("\nTiming:")
         print(f"  Mean inference: {t['mean_ms']:.0f}ms")
         print(f"  Total inference: {t['total_s']:.1f}s")
         print(f"  Model load: {t['model_load_s']:.1f}s")
@@ -585,7 +455,6 @@ def run_deepseek_benchmark(
     import tempfile
 
     import torch
-    from PIL import Image
     from scipy import stats
     from transformers import AutoModel, AutoTokenizer
 
@@ -770,7 +639,7 @@ def run_deepseek_benchmark(
 
     if "timing" in metrics:
         t = metrics["timing"]
-        print(f"\nTiming:")
+        print("\nTiming:")
         print(f"  Mean inference: {t['mean_ms']:.0f}ms")
         print(f"  Total inference: {t['total_s']:.1f}s")
         print(f"  Model load: {t['model_load_s']:.1f}s")
@@ -834,7 +703,7 @@ def run_qwen3_benchmark(
     import torch
     from PIL import Image
     from scipy import stats
-    from transformers import Qwen3VLForConditionalGeneration, AutoProcessor
+    from transformers import AutoProcessor, Qwen3VLForConditionalGeneration
 
     model_id = "Qwen/Qwen3-VL-8B-Instruct"
 
@@ -1057,7 +926,7 @@ Color: X.X"""
 
     if "timing" in metrics:
         t = metrics["timing"]
-        print(f"\nTiming:")
+        print("\nTiming:")
         print(f"  Mean inference: {t['mean_ms']:.0f}ms")
         print(f"  Total inference: {t['total_s']:.1f}s")
         print(f"  Model load: {t['model_load_s']:.1f}s")
@@ -1310,7 +1179,7 @@ Color: X.X"""
 
     if "timing" in metrics:
         t = metrics["timing"]
-        print(f"\nTiming:")
+        print("\nTiming:")
         print(f"  Mean inference: {t['mean_ms']:.0f}ms")
         print(f"  Total inference: {t['total_s']:.1f}s")
         print(f"  Model load: {t['model_load_s']:.1f}s")

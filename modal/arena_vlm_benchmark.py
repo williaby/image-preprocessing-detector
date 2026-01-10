@@ -14,137 +14,34 @@ Usage:
 
 from __future__ import annotations
 
-import base64
-import csv
 import os
 import re
-import tarfile
 import time
-from pathlib import Path
 from typing import Any
 
 import modal
 
+# Import shared utilities
+from modal.shared import (
+    DATASET_CACHE_DIR,
+    IQA_PROMPT,
+    compute_metrics,
+    download_dataset_from_gcs,
+    gcs_secret,
+    print_results,
+)
+from modal.shared import (
+    arena_data_volume as data_volume,
+)
+from modal.shared import (
+    arena_model_volume as model_volume,
+)
+from modal.shared import (
+    load_diqa5000_dataset as load_dataset,
+)
+
 # Create Modal app
 app = modal.App("arena-vlm-benchmark")
-
-# GCS configuration
-GCS_BUCKET = "assured-oss-457903-diqa5000"
-GCS_ARCHIVE = "diqa5000-test.tar.gz"
-DATASET_CACHE_DIR = "/data/diqa5000"
-
-# Volumes for caching
-model_volume = modal.Volume.from_name("arena-models", create_if_missing=True)
-data_volume = modal.Volume.from_name("arena-data", create_if_missing=True)
-
-# GCS credentials secret
-gcs_secret = modal.Secret.from_name("gcs-credentials")
-
-# IQA prompt for VLMs
-IQA_PROMPT = """Analyze this document image and rate its quality on a scale of 1-5 for each dimension.
-
-Rate the following:
-1. Overall quality (considering all aspects): a number from 1.0 to 5.0
-2. Sharpness (text clarity, edge definition): a number from 1.0 to 5.0
-3. Color fidelity (color accuracy, consistency): a number from 1.0 to 5.0
-
-Respond with ONLY three lines in this exact format:
-Overall: X.X
-Sharpness: X.X
-Color: X.X"""
-
-
-def setup_gcs_credentials() -> None:
-    """Setup GCS credentials from Modal secret."""
-    import tempfile
-
-    gcp_sa_key_b64 = os.environ.get("GCP_SA_KEY")
-    if not gcp_sa_key_b64:
-        print("Warning: GCP_SA_KEY not found, trying default credentials")
-        return
-
-    gcp_sa_key_json = base64.b64decode(gcp_sa_key_b64).decode("utf-8")
-
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", delete=False, prefix="gcp-sa-key-"
-    ) as f:
-        f.write(gcp_sa_key_json)
-        f.flush()
-        credentials_path = f.name
-
-    os.chmod(credentials_path, 0o600)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-    print(f"GCS credentials configured at {credentials_path}")
-
-
-def download_dataset_from_gcs(cache_dir: str) -> Path:
-    """Download and extract DIQA-5000 dataset from GCS."""
-    from google.cloud import storage
-
-    cache_path = Path(cache_dir)
-    test_dir = cache_path / "test"
-    csv_path = test_dir / "test.csv"
-
-    if csv_path.exists():
-        print(f"Dataset already cached at {cache_path}")
-        return cache_path
-
-    setup_gcs_credentials()
-
-    print(f"Downloading dataset from gs://{GCS_BUCKET}/{GCS_ARCHIVE}...")
-    start = time.time()
-
-    cache_path.mkdir(parents=True, exist_ok=True)
-    archive_path = cache_path / GCS_ARCHIVE
-
-    client = storage.Client()
-    bucket = client.bucket(GCS_BUCKET)
-    blob = bucket.blob(GCS_ARCHIVE)
-    blob.download_to_filename(str(archive_path))
-
-    download_time = time.time() - start
-    print(f"Downloaded in {download_time:.1f}s")
-
-    print("Extracting dataset...")
-    start = time.time()
-    with tarfile.open(archive_path, "r:gz") as tar:
-        tar.extractall(cache_path)
-    extract_time = time.time() - start
-    print(f"Extracted in {extract_time:.1f}s")
-
-    archive_path.unlink()
-    return cache_path
-
-
-def load_dataset(dataset_path: Path) -> list[dict]:
-    """Load DIQA-5000 test samples."""
-    test_dir = dataset_path / "test"
-    csv_path = test_dir / "test.csv"
-    res_dir = test_dir / "res"
-
-    samples = []
-
-    with open(csv_path, newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            image_filename = row["res"]
-            image_path = res_dir / image_filename
-
-            if not image_path.exists():
-                continue
-
-            samples.append({
-                "sample_id": image_filename.replace(".jpg", ""),
-                "image_path": str(image_path),
-                "ground_truth": {
-                    "overall": float(row["overall"]),
-                    "sharpness": float(row["sharpness"]),
-                    "color": float(row["color_fidelity"]),
-                },
-            })
-
-    print(f"Loaded {len(samples)} samples")
-    return samples
 
 
 def parse_vlm_response(response: str) -> dict[str, float | None]:
@@ -170,97 +67,6 @@ def parse_vlm_response(response: str) -> dict[str, float | None]:
                         pass
 
     return scores
-
-
-def compute_metrics(results: list[dict], model_id: str, model_load_time: float,
-                   inference_times: list[float]) -> dict[str, Any]:
-    """Compute benchmark metrics from results."""
-    from scipy import stats
-
-    successful = [r for r in results if r["success"]]
-    failed = [r for r in results if not r["success"]]
-
-    metrics: dict[str, Any] = {
-        "model_id": model_id,
-        "num_samples": len(results),
-        "successful": len(successful),
-        "failed": len(failed),
-        "success_rate": len(successful) / len(results) if results else 0,
-    }
-
-    if inference_times:
-        metrics["timing"] = {
-            "mean_ms": sum(inference_times) / len(inference_times),
-            "min_ms": min(inference_times),
-            "max_ms": max(inference_times),
-            "total_s": sum(inference_times) / 1000,
-            "model_load_s": model_load_time,
-        }
-
-    for dim in ["overall", "sharpness", "color"]:
-        gt_values = []
-        pred_values = []
-
-        for r in successful:
-            gt = r["ground_truth"].get(dim)
-            pred = r["predicted"].get(dim) if r["predicted"] else None
-
-            if gt is not None and pred is not None:
-                gt_values.append(gt)
-                pred_values.append(pred)
-
-        if len(gt_values) >= 3:
-            plcc, _ = stats.pearsonr(gt_values, pred_values)
-            srcc, _ = stats.spearmanr(gt_values, pred_values)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            rmse = mse ** 0.5
-
-            metrics[dim] = {
-                "plcc": plcc,
-                "srcc": srcc,
-                "mae": mae,
-                "rmse": rmse,
-                "num_valid": len(gt_values),
-            }
-        else:
-            metrics[dim] = {
-                "plcc": None,
-                "srcc": None,
-                "mae": None,
-                "rmse": None,
-                "num_valid": len(gt_values),
-                "error": "Insufficient valid predictions",
-            }
-
-    return metrics
-
-
-def print_results(metrics: dict[str, Any]) -> None:
-    """Print benchmark results."""
-    print("\n" + "=" * 60)
-    print("BENCHMARK RESULTS")
-    print("=" * 60)
-    print(f"Model: {metrics['model_id']}")
-    print(f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)")
-    print(f"Success Rate: {metrics['success_rate']:.1%}")
-
-    if "timing" in metrics:
-        t = metrics["timing"]
-        print(f"\nTiming:")
-        print(f"  Mean inference: {t['mean_ms']:.0f}ms")
-        print(f"  Total inference: {t['total_s']:.1f}s")
-        print(f"  Model load: {t['model_load_s']:.1f}s")
-
-    for dim in ["overall", "sharpness", "color"]:
-        if dim in metrics and metrics[dim].get("plcc") is not None:
-            m = metrics[dim]
-            print(f"\n{dim.capitalize()}:")
-            print(f"  PLCC: {m['plcc']:.4f}")
-            print(f"  SRCC: {m['srcc']:.4f}")
-            print(f"  MAE:  {m['mae']:.4f}")
-            print(f"  RMSE: {m['rmse']:.4f}")
-            print(f"  Valid predictions: {m['num_valid']}")
 
 
 # =============================================================================
@@ -299,7 +105,7 @@ def run_qwen3_benchmark(num_samples: int = 0) -> dict[str, Any]:
     """Run DIQA-5000 benchmark with Qwen3-VL-8B-Instruct model."""
     import torch
     from PIL import Image
-    from transformers import Qwen3VLForConditionalGeneration, AutoProcessor
+    from transformers import AutoProcessor, Qwen3VLForConditionalGeneration
 
     model_id = "Qwen/Qwen3-VL-8B-Instruct"
 
