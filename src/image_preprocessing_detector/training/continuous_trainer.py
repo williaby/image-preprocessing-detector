@@ -268,6 +268,10 @@ class ContinuousTeacherTrainer:
             head_pred = predictions[head_name]
             if isinstance(head_pred, dict):
                 logits = head_pred.get("logits", head_pred.get("output"))
+                if logits is None:
+                    raise ValueError(
+                        f"Missing logits/output in predictions for head '{head_name}'"
+                    )
             else:
                 logits = head_pred
             logits_list.append(logits.squeeze(-1))
