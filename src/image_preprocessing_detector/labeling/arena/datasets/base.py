@@ -170,23 +170,29 @@ class SyntheticDataset(BenchmarkDataset):
 
     @property
     def name(self) -> str:
+        """Return dataset name."""
         return "synthetic"
 
     @property
     def version(self) -> str:
+        """Return dataset version."""
         return "1.0.0"
 
     @property
     def split(self) -> str:
+        """Return dataset split."""
         return "test"
 
     def __len__(self) -> int:
+        """Return number of samples in dataset."""
         return len(self._samples)
 
     def __iter__(self) -> Iterator[DatasetSample]:
+        """Iterate over dataset samples."""
         return iter(self._samples)
 
     def __getitem__(self, idx: int) -> DatasetSample:
+        """Get sample by index."""
         return self._samples[idx]
 
 
@@ -311,21 +317,27 @@ class DIQA5000Dataset(BenchmarkDataset):
 
     @property
     def name(self) -> str:
+        """Return dataset name."""
         return "diqa5000"
 
     @property
     def version(self) -> str:
+        """Return dataset version."""
         return "1.0.0"
 
     @property
     def split(self) -> str:
+        """Return dataset split."""
         return self._split
 
     def __len__(self) -> int:
+        """Return number of samples in dataset."""
         return len(self._samples)
 
     def __iter__(self) -> Iterator[DatasetSample]:
+        """Iterate over dataset samples."""
         return iter(self._samples)
 
     def __getitem__(self, idx: int) -> DatasetSample:
+        """Get sample by index."""
         return self._samples[idx]
