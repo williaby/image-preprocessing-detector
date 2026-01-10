@@ -1,23 +1,21 @@
 ---
 schema_type: common
 title: "Model Cards & Registry"
-description: "Comprehensive model documentation, versioning, and inventory for all ML models in Project A"
+description: "Comprehensive model documentation, versioning, and inventory for all
+  ML models in Project A"
 tags:
-  - reference
-  - machine_learning
-  - documentation
-  - model_registry
-  - inventory
+- reference
+- machine_learning
+- documentation
+- model_registry
+- inventory
 status: published
 owner: core-maintainer
 authors:
-  - name: "Byron Williams"
-purpose: "Document model architectures, training data, performance metrics, and maintain complete model inventory."
-version: "2.0.0"
-last_updated: "2025-12-18"
+- name: "Byron Williams"
+purpose: "Document model architectures, training data, performance metrics, and maintain
+  complete model inventory."
 ---
-
-# Project A Model Cards & Registry
 
 ## Comprehensive Model Documentation & Inventory
 

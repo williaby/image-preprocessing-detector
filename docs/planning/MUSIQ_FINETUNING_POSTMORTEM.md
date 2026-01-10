@@ -1,4 +1,12 @@
-# MUSIQ Fine-Tuning Postmortem
+---
+owner: docs-team
+purpose: Documentation for MUSIQ Fine-Tuning Postmortem.
+schema_type: common
+status: draft
+tags:
+- planning
+title: MUSIQ Fine-Tuning Postmortem
+---
 
 **Status**: TABLED - Pivoting to alternative approach
 **Date**: 2025-12-18

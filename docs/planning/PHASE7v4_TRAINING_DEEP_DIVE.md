@@ -27,10 +27,6 @@ source: Multi-model consensus analysis
 > **Trigger**: DIQA-5000 benchmark failure (our model dramatically underperforms HyperIQA)
 > **Target**: Outperform HyperIQA on DIQA-5000 with production-ready IQA model
 
----
-
-# Phase 7 v4 Training Deep Dive: Root Cause Analysis
-
 ## Executive Summary
 
 **The Problem**: Our Phase 7 trained ResNet-50/18 IQA model performed **dramatically worse** on DIQA-5000 benchmark than HyperIQA and other published baselines. This calls into question:

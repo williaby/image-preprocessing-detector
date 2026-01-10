@@ -1,4 +1,13 @@
-# Model Selection and Labeling Workflows
+---
+owner: docs-team
+purpose: Documentation for Model Selection and Labeling Workflows.
+schema_type: common
+status: draft
+tags:
+- labeling
+- pipeline
+title: Model Selection and Labeling Workflows
+---
 
 > **Status**: Active
 > **Created**: 2025-12-18

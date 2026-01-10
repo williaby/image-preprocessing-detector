@@ -1,21 +1,18 @@
 ---
 schema_type: common
 title: "RAG Processor → Project A Interface Contract"
-description: "Contract defining the interface between rag-processor (upstream UI) and Project A (image_detection)"
+description: "Contract defining the interface between rag-processor (upstream UI)
+  and Project A (image_detection)"
 tags:
-  - pipeline
-  - integration
-  - contract
-  - api
+- pipeline
+- integration
+- contract
+- api
 status: draft
 owner: core-maintainer
-purpose: "Define the complete interface contract between rag-processor and Project A for document ingestion and processing."
-version: 1.2.0
-reviewed_by: "Multi-model consensus (Gemini 2.5 Pro, Gemini 3 Pro, GPT-5.1, DeepSeek R1, Grok 4)"
+purpose: "Define the complete interface contract between rag-processor and Project
+  A for document ingestion and processing."
 ---
-
-# RAG Processor → Project A Interface Contract
-
 **Version:** 1.2.0 | **Status:** Draft | **Last Updated:** 2025-12
 
 > **Review Status**: Evaluated by Level 3 expert consensus. Critical security and reliability improvements applied.

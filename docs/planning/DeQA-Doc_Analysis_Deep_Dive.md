@@ -1,4 +1,13 @@
-# DeQA-Doc Analysis: Implications for DIQA-5000 Pseudo-Labeling System
+---
+owner: docs-team
+purpose: 'Documentation for DeQA-Doc Analysis: Implications for DIQA-5000 Pseudo-Labeling
+  System.'
+schema_type: common
+status: draft
+tags:
+- planning
+title: 'DeQA-Doc Analysis: Implications for DIQA-5000 Pseudo-Labeling System'
+---
 
 **Date:** December 2025
 **Status:** Strategic Analysis Document

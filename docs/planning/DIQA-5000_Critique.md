@@ -1,4 +1,14 @@
-# DIQA-5000 Pseudo-Labeling Approach: Multi-Model Consensus Critique
+---
+owner: docs-team
+purpose: 'Documentation for DIQA-5000 Pseudo-Labeling Approach: Multi-Model Consensus
+  Critique.'
+schema_type: common
+status: draft
+tags:
+- planning
+- iqa
+title: 'DIQA-5000 Pseudo-Labeling Approach: Multi-Model Consensus Critique'
+---
 
 **Date:** 2025-01-17
 **Version:** 1.0

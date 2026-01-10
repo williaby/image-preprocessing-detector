@@ -1,4 +1,12 @@
-# Project B: Quantization Factory (Unsloth)
+---
+owner: docs-team
+purpose: 'Documentation for Project B: Quantization Factory (Unsloth).'
+schema_type: common
+status: draft
+tags:
+- planning
+title: 'Project B: Quantization Factory (Unsloth)'
+---
 
 > **Status**: Implementation Phase
 > **Created**: 2025-12-17

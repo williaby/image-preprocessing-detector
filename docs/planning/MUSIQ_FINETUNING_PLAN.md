@@ -1,4 +1,12 @@
-# MUSIQ Fine-Tuning Implementation Plan
+---
+owner: docs-team
+purpose: Documentation for MUSIQ Fine-Tuning Implementation Plan.
+schema_type: common
+status: draft
+tags:
+- planning
+title: MUSIQ Fine-Tuning Implementation Plan
+---
 
 ## Sub-Track A1: Sharpness Specialist for DIQA Pseudo-Labeling
 

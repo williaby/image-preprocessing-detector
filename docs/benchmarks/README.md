@@ -1,4 +1,12 @@
-# DIQA-5000 Benchmark Results
+---
+owner: docs-team
+purpose: Overview and documentation for DIQA-5000 Benchmark Results.
+schema_type: common
+status: draft
+tags:
+- benchmarking
+title: DIQA-5000 Benchmark Results
+---
 
 This directory contains benchmark results for models evaluated on the DIQA-5000 test set.
 

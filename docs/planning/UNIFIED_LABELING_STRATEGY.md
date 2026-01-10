@@ -1,4 +1,13 @@
-# Unified Labeling Strategy for Cross-Dataset Consistency
+---
+owner: docs-team
+purpose: Documentation for Unified Labeling Strategy for Cross-Dataset Consistency.
+schema_type: common
+status: draft
+tags:
+- planning
+- labeling
+title: Unified Labeling Strategy for Cross-Dataset Consistency
+---
 
 **Date:** December 2025
 **Status:** Strategic Planning Document

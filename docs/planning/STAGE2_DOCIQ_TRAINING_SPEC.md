@@ -1,4 +1,12 @@
-# Stage 2: DocIQ-Replica Training Specification
+---
+owner: docs-team
+purpose: 'Documentation for Stage 2: DocIQ-Replica Training Specification.'
+schema_type: common
+status: draft
+tags:
+- planning
+title: 'Stage 2: DocIQ-Replica Training Specification'
+---
 
 **Status**: Ready for Implementation
 **Created**: 2025-12-19

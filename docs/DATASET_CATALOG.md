@@ -1,4 +1,12 @@
-# Dataset Catalog
+---
+owner: docs-team
+purpose: Documentation for Dataset Catalog.
+schema_type: common
+status: draft
+tags:
+- datasets
+title: Dataset Catalog
+---
 
 > **Last Updated**: 2025-12-21
 > **Location**: `/mnt/e/image_detection/`

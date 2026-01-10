@@ -1,4 +1,12 @@
-# Dataset Documentation Template
+---
+owner: docs-team
+purpose: Template for creating consistent dataset documentation documents.
+schema_type: common
+status: draft
+tags:
+- datasets
+title: Dataset Documentation Template
+---
 
 > **Version**: 1.0.0
 > **Last Updated**: 2025-12-17

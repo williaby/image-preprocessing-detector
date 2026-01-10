@@ -1,4 +1,12 @@
-# Project C: Fine-Tuning & Label Generation
+---
+owner: docs-team
+purpose: 'Documentation for Project C: Fine-Tuning & Label Generation.'
+schema_type: common
+status: draft
+tags:
+- planning
+title: 'Project C: Fine-Tuning & Label Generation'
+---
 
 > **Status**: Implementation Phase
 > **Created**: 2025-12-17

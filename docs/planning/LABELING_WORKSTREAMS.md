@@ -1,4 +1,13 @@
-# Labeling Workstreams: Benchmarking, Quantization & Fine-Tuning
+---
+owner: docs-team
+purpose: 'Documentation for Labeling Workstreams: Benchmarking, Quantization & Fine-Tuning.'
+schema_type: common
+status: draft
+tags:
+- planning
+- labeling
+title: 'Labeling Workstreams: Benchmarking, Quantization & Fine-Tuning'
+---
 
 > **Status**: Planning Phase
 > **Created**: 2025-12-17

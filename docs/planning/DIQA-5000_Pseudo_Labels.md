@@ -1,4 +1,14 @@
-# Document Image Quality Assessment System
+---
+owner: docs-team
+purpose: Documentation for Document Image Quality Assessment System.
+schema_type: common
+status: draft
+tags:
+- planning
+- iqa
+- weak_supervision
+title: Document Image Quality Assessment System
+---
 
 ## Technical Implementation Handoff
 

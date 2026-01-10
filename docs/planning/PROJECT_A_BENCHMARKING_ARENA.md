@@ -1,4 +1,13 @@
-# Project A: Benchmarking Arena
+---
+owner: docs-team
+purpose: 'Documentation for Project A: Benchmarking Arena.'
+schema_type: common
+status: draft
+tags:
+- planning
+- benchmarking
+title: 'Project A: Benchmarking Arena'
+---
 
 > **Status**: Implementation Phase
 > **Created**: 2025-12-17

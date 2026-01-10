@@ -1,4 +1,13 @@
-# Labeling Workstreams: Functional & Non-Functional Requirements
+---
+owner: docs-team
+purpose: 'Documentation for Labeling Workstreams: Functional & Non-Functional Requirements.'
+schema_type: common
+status: draft
+tags:
+- planning
+- labeling
+title: 'Labeling Workstreams: Functional & Non-Functional Requirements'
+---
 
 > **Status**: Approved
 > **Created**: 2025-12-17
