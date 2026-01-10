@@ -55,6 +55,8 @@ path = [
     "requirements/**/*.txt",  # Generated from poetry export
     "requirements.txt",  # Generated from uv export
     "requirements-dev.txt",  # Generated from uv export
+    "requirements-ml.txt",  # Generated from uv export
+    "requirements-api.txt",  # Generated from uv export
     "benchmarks/labelmaps/**/*.yaml",  # Benchmark label mappings
     "configs/**/*.yaml",  # Configuration files (modal, monitoring, etc.)
     "configs/**/*.json",  # Configuration files (Grafana dashboards, etc.)
