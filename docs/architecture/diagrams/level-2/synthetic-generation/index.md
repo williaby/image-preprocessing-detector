@@ -18,9 +18,6 @@ authors:
 purpose: "Document the synthetic data generation infrastructure that expands training
   datasets through controlled, reproducible degradations."
 ---
-
-# Level 2: Synthetic Data Generation
-
 The Synthetic Data Generation workstream provides **controlled document degradation** to expand training datasets for IQA models. By applying parametric degradations to clean documents, we generate labeled training data at scale with perfect ground truth.
 
 **Technology**: Microsoft Genalog (synthetic analog document degradation)

@@ -1,15 +1,15 @@
 ---
-title: "Complete File Inventory with Workstream Mappings"
-description: "Comprehensive inventory of all git-tracked files mapped to workstreams
-  and workflow steps"
-generated: "2025-01-16"
-git_sha: "4dc216a"
-total_files: 1292
-purpose: "Bidirectional validation: Ensure all files are documented and all documentation
-  references exist."
+description: Comprehensive inventory of all git-tracked files mapped to workstreams
+  and workflow steps
+owner: docs-team
+purpose: 'Bidirectional validation: Ensure all files are documented and all documentation
+  references exist.'
+schema_type: common
+status: draft
+tags:
+- architecture
+title: Complete File Inventory with Workstream Mappings
 ---
-
-# Complete File Inventory with Workstream Mappings
 
 **Purpose**: Cross-validate that:
 

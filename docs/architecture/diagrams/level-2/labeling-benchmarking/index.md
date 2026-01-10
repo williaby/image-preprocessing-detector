@@ -16,10 +16,7 @@ authors:
 - name: "Byron Williams"
 purpose: "Document the training pipeline for labeling models (MUSIQ, QualiCLIP, VLMs)
   used in pseudo-labeling and Arena baseline evaluation."
-last_updated: "2025-01-16"
 ---
-
-# Level 2: Labeling & Benchmarking Models (Workstream 5)
 
 This workstream trains and benchmarks the labeling models used for pseudo-labeling (Workstream 4) and baseline evaluation (Workstream 6 - Model Arena). These models serve as the "tools" for automated dataset labeling and establish performance baselines for production model comparison.
 

@@ -17,9 +17,6 @@ authors:
 purpose: "Document the complete device orchestration implementation including selection
   algorithms, budget enforcement, circuit breakers, and performance characteristics."
 ---
-
-# Level 3: Production Runtime - Device Orchestrator
-
 This document provides the complete specification for device orchestration in the production runtime pipeline, including device selection algorithms, budget enforcement, circuit breaker patterns, and performance characteristics.
 
 > **Implementation Status**: ⚠️ **98% Complete (Phase 4)**

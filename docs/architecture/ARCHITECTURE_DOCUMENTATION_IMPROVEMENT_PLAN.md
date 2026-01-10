@@ -8,16 +8,12 @@ tags:
 - documentation
 - improvement_plan
 - action_items
-status: active
+status: draft
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-created: "2025-01-16"
-last_updated: "2025-01-16"
+purpose: Documentation for Architecture Documentation Improvement Plan.
 ---
-
-# Architecture Documentation Improvement Plan
-
 **Status**: 🟢 Active
 **Priority**: High
 **Target Completion**: 6 weeks

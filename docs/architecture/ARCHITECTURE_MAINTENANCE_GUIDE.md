@@ -1,12 +1,14 @@
 ---
-title: "Architecture Documentation Maintenance Guide"
-description: "Comprehensive guide for maintaining the 4-level architecture documentation system"
-version: "1.0"
-date: "2025-01-16"
-audience: ["developers", "architects", "documentation-writers"]
+description: Comprehensive guide for maintaining the 4-level architecture documentation
+  system
+owner: docs-team
+purpose: Guidance for architecture documentation maintenance.
+schema_type: common
+status: draft
+tags:
+- architecture
+title: Architecture Documentation Maintenance Guide
 ---
-
-# Architecture Documentation Maintenance Guide
 
 **Purpose**: Complete guide for maintaining the 4-level architecture documentation hierarchy (Level 0-3) with automated validation and traceability.
 

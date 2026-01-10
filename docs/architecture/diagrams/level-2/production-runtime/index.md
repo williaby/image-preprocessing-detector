@@ -15,9 +15,6 @@ authors:
 purpose: "Document the detailed production runtime workflows including device selection,
   primary workflow, and processing details."
 ---
-
-# Level 2: Production Runtime
-
 This level provides detailed diagrams for the Production Runtime workstream - the live document processing pipeline.
 
 ---

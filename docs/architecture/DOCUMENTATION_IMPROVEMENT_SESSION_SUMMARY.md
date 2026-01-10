@@ -1,11 +1,12 @@
 ---
-title: "Documentation Improvement Session Summary"
-date: "2025-01-16"
-session_duration: "~3 hours"
-completion_rate: "50% (9/18 issues)"
+owner: docs-team
+purpose: Documentation for Documentation Improvement Session Summary.
+schema_type: common
+status: draft
+tags:
+- architecture
+title: Documentation Improvement Session Summary
 ---
-
-# Documentation Improvement Session Summary
 
 **Date**: 2025-01-16
 **Session Type**: Architecture Documentation Improvement

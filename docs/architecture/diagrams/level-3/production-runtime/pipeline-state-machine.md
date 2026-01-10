@@ -16,9 +16,6 @@ authors:
 purpose: "Document the complete state machine implementation for production runtime
   pipeline including all 13 states, transitions, timeouts, and error recovery paths."
 ---
-
-# Level 3: Production Runtime - Pipeline State Machine
-
 This document provides the complete state machine specification for the production document processing pipeline, including all states, transitions, error handling, and edge cases.
 
 > **Implementation Status**: ⚠️ **Design Complete, Implementation In Progress**

@@ -15,9 +15,6 @@ authors:
 purpose: "Document the model training pipeline including knowledge distillation and
   high-level training workflows."
 ---
-
-# Level 2: Model Training
-
 This level provides detailed diagrams for the Model Training workstream - training and optimization of production ML models.
 
 ---

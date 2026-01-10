@@ -1,13 +1,13 @@
 ---
-title: "Level 3 Documentation + Swimlane Traceability - Implementation Roadmap"
-date: "2025-01-16"
-status: "approved"
-total_effort: "86 hours (54 Level 3 + 32 traceability)"
-execution_strategy: "parallel"
-target_completion: "4-6 weeks"
+owner: docs-team
+purpose: Documentation for Level 3 Documentation + Swimlane Traceability - 
+  Implementation Roadmap.
+schema_type: common
+status: draft
+tags:
+- architecture
+title: Level 3 Documentation + Swimlane Traceability - Implementation Roadmap
 ---
-
-# Level 3 Documentation + Swimlane Traceability Implementation Roadmap
 
 **Approved Approach**: Option C (Hybrid) - Traceability tables at Level 2, detailed swimlanes at Level 3
 

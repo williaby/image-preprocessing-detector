@@ -18,8 +18,6 @@ purpose: "Document the data preparation pipeline including dataset ingestion, th
   metadata architecture, and storage strategy."
 ---
 
-# Level 2: Data Preparation (Workstream 3)
-
 This level provides comprehensive documentation for the Data Preparation workstream, which handles dataset ingestion and cataloging. Datasets are kept in their **original form** without normalization to maintain standardization and reusability across different training configurations.
 
 ---

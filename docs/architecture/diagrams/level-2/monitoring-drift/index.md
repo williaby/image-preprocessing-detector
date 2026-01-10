@@ -19,11 +19,7 @@ authors:
 purpose: "Document the monitoring and drift detection system that ensures production
   model quality through statistical drift detection, active learning, privacy-safe
   sample harvesting, and automated retraining triggers."
-last_updated: "2025-12-19"
 ---
-
-# Level 2: Monitoring & Drift Detection
-
 The Monitoring & Drift Detection workstream provides **continuous quality assurance** for production models through statistical performance tracking, anomaly detection, intelligent sample harvesting, and automated retraining orchestration.
 
 **Status**: Phase 6 - 95% Complete (~7,400 lines of production code)

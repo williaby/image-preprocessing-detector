@@ -14,9 +14,6 @@ authors:
 purpose: "Provide pipeline-level context showing how Project A fits into the larger
   RAG system."
 ---
-
-# Level 0: Pipeline Context
-
 This level provides the highest-level view of the RAG document pipeline, showing how multiple projects work together.
 
 ---

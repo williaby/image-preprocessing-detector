@@ -1,14 +1,14 @@
 ---
-title: "Swimlane Diagram Traceability Proposal"
-description: "Proposal for Level 2/3 swimlane diagrams with script-to-workflow traceability for LOC validation"
-date: "2025-01-16"
-status: "proposal"
-priority: "high"
-related_issues: ["Issue 3.3", "Issue 3.4", "Future Level 3 docs"]
+description: Proposal for Level 2/3 swimlane diagrams with script-to-workflow 
+  traceability for LOC validation
+owner: docs-team
+purpose: Documentation for Swimlane Diagram Traceability Proposal.
+schema_type: common
+status: draft
+tags:
+- architecture
+title: Swimlane Diagram Traceability Proposal
 ---
-
-# Swimlane Diagram Traceability Proposal
-
 **Problem Statement**: Current LOC extraction script maps directories to workstreams, but there's no visual verification that all source files are accounted for in workflow diagrams.
 
 **Proposed Solution**: Create detailed swimlane diagrams at Level 2 (for each workstream) with **explicit script/source file annotations** on each workflow step. This creates bidirectional traceability:

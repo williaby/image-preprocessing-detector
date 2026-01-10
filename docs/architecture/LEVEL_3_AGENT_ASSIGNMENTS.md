@@ -1,13 +1,12 @@
 ---
-title: "Level 3 Documentation - Agent Task Assignments"
-date: "2025-01-16"
-status: "ready_to_execute"
-total_agents: 4
-total_effort: "86 hours"
+owner: docs-team
+purpose: Documentation for Level 3 Documentation - Agent Task Assignments.
+schema_type: common
+status: draft
+tags:
+- architecture
+title: Level 3 Documentation - Agent Task Assignments
 ---
-
-# Level 3 Documentation - Agent Task Assignments
-
 **Strategy**: Assign each Level 3 workstream to a specialized documentation-writer sub-agent to manage token limits and enable parallel execution.
 
 **Execution**: Each agent works independently with full context from reference documents.

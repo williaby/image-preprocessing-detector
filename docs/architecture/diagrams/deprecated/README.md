@@ -1,4 +1,13 @@
-# Deprecated Architecture Documentation
+---
+owner: docs-team
+purpose: Overview and documentation for Deprecated Architecture Documentation.
+schema_type: common
+status: draft
+tags:
+- architecture
+- documentation
+title: Deprecated Architecture Documentation
+---
 
 This directory contains architecture documentation that has been superseded by newer documents.
 

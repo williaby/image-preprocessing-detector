@@ -15,9 +15,6 @@ authors:
 purpose: "Document the downstream projects that consume Project A output - OCR orchestration,
   fusion, and vector store."
 ---
-
-# Level 2: Downstream Context
-
 This level provides context diagrams for the downstream projects in the RAG pipeline that consume Project A output.
 
 ---

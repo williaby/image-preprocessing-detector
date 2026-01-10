@@ -1,4 +1,13 @@
-# Level 3: Metadata Schema & Versioning System
+---
+owner: docs-team
+purpose: 'Documentation for Level 3: Metadata Schema & Versioning System.'
+schema_type: common
+status: draft
+tags:
+- architecture
+- documentation
+title: 'Level 3: Metadata Schema & Versioning System'
+---
 
 > **Workstream**: WS3 - Data Preparation
 > **Component**: Three-Layer Metadata Architecture

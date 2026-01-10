@@ -14,9 +14,6 @@ authors:
 purpose: "Provide system-level view of Project A architecture showing all eight workstreams
   and their interactions."
 ---
-
-# Level 1: Project A Architecture
-
 This level provides the complete system architecture for Project A (image-detection repository), showing how the eight workstreams interact to deliver the preprocessing, IQA, and routing gateway functionality.
 
 ---

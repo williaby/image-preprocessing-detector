@@ -15,9 +15,6 @@ authors:
 purpose: "Document the DIQA pseudo-labeling pipeline including multi-model ensemble,
   checkpoint selection, and training phases."
 ---
-
-# Level 2: Pseudo-Labeling
-
 This level provides detailed diagrams for the Pseudo-Labeling workstream - generating high-quality labels using multi-model ensembles.
 
 ---

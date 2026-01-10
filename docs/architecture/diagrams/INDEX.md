@@ -1,4 +1,13 @@
-# Diagram Index & Traceability Matrix
+---
+owner: docs-team
+purpose: Index and navigation for diagram  & traceability matrix.
+schema_type: common
+status: draft
+tags:
+- architecture
+- documentation
+title: Diagram Index & Traceability Matrix
+---
 
 **Date**: December 2025
 **Purpose**: Maps PlantUML diagrams to source files, scripts, and documentation

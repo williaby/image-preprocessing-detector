@@ -1,11 +1,13 @@
 ---
-title: "LOC Extraction Methodology"
-description: "Detailed explanation of how Lines of Code are counted and mapped to workstreams"
-date: "2025-01-16"
-script: "scripts/extract_workstream_loc.sh"
+description: Detailed explanation of how Lines of Code are counted and mapped to workstreams
+owner: docs-team
+purpose: Documentation for LOC Extraction Methodology.
+schema_type: common
+status: draft
+tags:
+- architecture
+title: LOC Extraction Methodology
 ---
-
-# LOC Extraction Methodology
 
 **Purpose**: Explain how the automated LOC extraction script divides source code among workstreams for accurate documentation metrics.
 

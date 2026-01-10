@@ -18,12 +18,7 @@ authors:
 - name: "Byron Williams"
 purpose: "Document the complete closed-loop lifecycle of drift detection, sample harvesting,
   privacy review, retraining orchestration, and validated deployment gates."
-last_updated: "2025-12-19"
-parent_doc: "../../level-2/monitoring-drift/index.md"
 ---
-
-# Level 3: Monitoring & Drift Detection - End-to-End Lifecycle
-
 This document provides **detailed implementation documentation** for the complete monitoring and drift detection lifecycle, including state machines, cross-component integration patterns, and compliance workflows.
 
 **Parent Documentation**: [Level 2: Monitoring & Drift Detection](../../level-2/monitoring-drift/index.md)

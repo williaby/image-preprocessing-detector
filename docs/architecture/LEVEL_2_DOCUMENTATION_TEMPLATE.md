@@ -9,15 +9,13 @@ tags:
 - template
 - standards
 - level_2
-status: active
+status: draft
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-created: "2025-01-16"
-last_updated: "2025-01-16"
+purpose: Documentation for Level 2 Documentation Template ('Level 2.5' 
+  Standard).
 ---
-
-# Level 2 Documentation Template ("Level 2.5" Standard)
 
 This template defines the "Level 2.5" documentation standard - a comprehensive Level 2 format that provides sufficient implementation context to eliminate the need for Level 3 documentation in most cases.
 

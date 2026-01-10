@@ -17,11 +17,7 @@ authors:
 - name: "Byron Williams"
 purpose: "Document the Layout Fusion Downsampler architecture, rationale, and implementation
   details for document-aware IQA model training."
-last_updated: "2025-01-19"
 ---
-
-# Level 3: Model Training - Layout Fusion Downsampler
-
 This document provides the complete specification for the **Layout Fusion Downsampler**, a critical component introduced in the original DIQA-5000 paper to enable training document IQA models at full 1600×1600 resolution while avoiding naive downsampling artifacts.
 
 ---

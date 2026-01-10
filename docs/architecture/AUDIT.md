@@ -1,4 +1,12 @@
-# PlantUML Diagram Audit and Recommendations
+---
+owner: docs-team
+purpose: Documentation for PlantUML Diagram Audit and Recommendations.
+schema_type: common
+status: draft
+tags:
+- architecture
+title: PlantUML Diagram Audit and Recommendations
+---
 
 **Date**: December 2025
 **Scope**: Project A - Preprocessing, IQA, Layout & Routing Gateway

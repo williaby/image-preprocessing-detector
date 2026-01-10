@@ -9,18 +9,14 @@ tags:
 - level_2
 - benchmarking
 - deprecated
-status: deprecated
-deprecated_date: "2025-01-16"
-superseded_by: "../level-2/model-arena/index.md"
+status: draft
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
 purpose: "Document the IQA model benchmarking pipeline for evaluating model performance."
 ---
 
-# ⚠️ DEPRECATED: Level 2: Benchmarking
-
-**This document is deprecated as of 2025-01-16.**
+> ⚠️ **This document is deprecated as of 2025-01-16.**
 
 **See [Model Arena & Multi-Label Benchmarking](../../level-2/model-arena/index.md) for current documentation.**
 
@@ -29,8 +25,6 @@ purpose: "Document the IQA model benchmarking pipeline for evaluating model perf
 ---
 
 ## Legacy Content Below
-
-# Level 2: Benchmarking (Legacy)
 
 This level provides detailed diagrams for the Benchmarking workstream - evaluating IQA model performance.
 

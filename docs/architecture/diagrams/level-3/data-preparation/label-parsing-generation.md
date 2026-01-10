@@ -1,4 +1,13 @@
-# Level 3: Label Parsing & Training Label Generation
+---
+owner: docs-team
+purpose: 'Documentation for Level 3: Label Parsing & Training Label Generation.'
+schema_type: common
+status: draft
+tags:
+- architecture
+- documentation
+title: 'Level 3: Label Parsing & Training Label Generation'
+---
 
 > **Workstream**: WS3 - Data Preparation
 > **Component**: Dataset Parsing & Training Label Builder

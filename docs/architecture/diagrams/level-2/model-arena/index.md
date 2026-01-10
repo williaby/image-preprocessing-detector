@@ -17,11 +17,7 @@ authors:
 purpose: "Document the Model Arena benchmarking infrastructure that validates models
   across three lifecycle phases: base evaluation, fine-tuned validation, and continuous
   improvement."
-last_updated: "2025-12-19"
 ---
-
-# Level 2: Model Arena & Multi-Label Benchmarking
-
 The Model Arena provides standardized, reproducible benchmarking across all label types throughout the model lifecycle. It serves as the **quality gate** for model deployment and the **quantitative feedback mechanism** for continuous improvement.
 
 ---

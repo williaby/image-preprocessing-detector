@@ -1,4 +1,13 @@
-# PlantUML Architecture Diagrams
+---
+owner: docs-team
+purpose: Overview and documentation for PlantUML Architecture Diagrams.
+schema_type: common
+status: draft
+tags:
+- architecture
+- documentation
+title: PlantUML Architecture Diagrams
+---
 
 > **Purpose**: Centralized location for all production PlantUML diagrams with consistent standards, traceability, and maintenance guidelines.
 

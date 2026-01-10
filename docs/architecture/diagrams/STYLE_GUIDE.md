@@ -1,4 +1,13 @@
-# PlantUML Style Guide
+---
+owner: docs-team
+purpose: Guidance for plantuml style.
+schema_type: common
+status: draft
+tags:
+- architecture
+- documentation
+title: PlantUML Style Guide
+---
 
 > **Purpose**: Comprehensive styling and notation standards for all Project A diagrams.
 
