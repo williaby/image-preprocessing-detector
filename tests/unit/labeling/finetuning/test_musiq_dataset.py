@@ -45,8 +45,11 @@ class TestGetPhase1Transforms:
 
     def test_returns_compose(self) -> None:
         """Test returns an Albumentations Compose."""
+        # Import fresh to avoid any module caching issues
+        import albumentations as albumentations_fresh
+
         transforms = get_phase1_transforms()
-        assert isinstance(transforms, alb.Compose)
+        assert isinstance(transforms, albumentations_fresh.Compose)
 
     def test_applies_normalization(self) -> None:
         """Test normalization is applied."""
@@ -78,8 +81,10 @@ class TestGetPhase2Transforms:
 
     def test_returns_compose(self) -> None:
         """Test returns an Albumentations Compose."""
+        import albumentations as albumentations_fresh
+
         transforms = get_phase2_transforms()
-        assert isinstance(transforms, alb.Compose)
+        assert isinstance(transforms, albumentations_fresh.Compose)
 
     def test_includes_augmentation(self) -> None:
         """Test Phase 2 has augmentation transforms."""
@@ -90,13 +95,15 @@ class TestGetPhase2Transforms:
 
     def test_output_shape(self) -> None:
         """Test output shape is correct."""
+        # Use default target_size=224 matching the function default
         transforms = get_phase2_transforms()
 
         rng = np.random.default_rng(42)
         image = rng.integers(0, 255, (384, 384, 3), dtype=np.uint8)
         result = transforms(image=image)
 
-        assert result["image"].shape == (3, 384, 384)
+        # Default target size is 224
+        assert result["image"].shape == (3, 224, 224)
 
 
 @requires_albumentations
@@ -105,8 +112,10 @@ class TestGetValidationTransforms:
 
     def test_returns_compose(self) -> None:
         """Test returns an Albumentations Compose."""
+        import albumentations as albumentations_fresh
+
         transforms = get_validation_transforms()
-        assert isinstance(transforms, alb.Compose)
+        assert isinstance(transforms, albumentations_fresh.Compose)
 
     def test_no_augmentation(self) -> None:
         """Test validation has no augmentation."""
