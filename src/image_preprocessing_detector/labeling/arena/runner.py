@@ -416,8 +416,8 @@ class ArenaRunner:
     def _compute_metrics(self, context: RunContext) -> ArenaMetrics:
         """Compute arena metrics from predictions."""
         return ArenaMetrics.compute(
-            predictions=context.predictions,
-            ground_truth=context.ground_truth,
+            predictions=context.predictions,  # type: ignore[arg-type]
+            ground_truth=context.ground_truth,  # type: ignore[arg-type]
         )
 
     def _build_result(

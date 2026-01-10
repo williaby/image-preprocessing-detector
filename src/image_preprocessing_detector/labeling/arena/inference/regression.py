@@ -247,7 +247,9 @@ class RegressionBackend(InferenceBackend):
         )
 
         # Determine base model from spec or state dict
-        base_model_id = spec.extra_params.get(
+        # Use quant_params for extra model metadata (if not available, use defaults)
+        extra_params = spec.quant_params or {}
+        base_model_id = extra_params.get(
             "base_model", "HuggingFaceTB/SmolVLM-256M-Instruct"
         )
 
@@ -394,7 +396,11 @@ class RegressionBackend(InferenceBackend):
                     ),
                 ]
             )
-            tensors = [transform(img) for img in images]
+            # ToTensor() returns Tensor for PIL Images; type annotation helps type checker
+            tensors: list[torch.Tensor] = [
+                transform(img)
+                for img in images  # type: ignore[misc]
+            ]
             inputs = {"pixel_values": torch.stack(tensors)}
             if self._device != "cpu":
                 inputs = {k: v.to(self._device) for k, v in inputs.items()}

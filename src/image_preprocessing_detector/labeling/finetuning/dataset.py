@@ -59,7 +59,7 @@ class DIQASample:
         )
 
 
-class DIQATrainingDataset(Dataset):
+class DIQATrainingDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
     """PyTorch Dataset for DIQA regression training.
 
     Loads images and targets from DIQA-5000 or compatible datasets.

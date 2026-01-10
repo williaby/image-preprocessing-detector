@@ -587,11 +587,11 @@ class ModelExporter:
         # Optimize if requested
         if optimize:
             try:
-                traced = torch.jit.optimize_for_inference(traced)
+                traced = torch.jit.optimize_for_inference(traced)  # type: ignore[arg-type]
             except Exception as e:
                 logger.warning("torchscript_optimization_failed", error=str(e))
 
-        traced.save(str(export_path))
+        traced.save(str(export_path))  # type: ignore[union-attr]
 
         logger.info("torchscript_export_complete", path=str(export_path))
         return export_path

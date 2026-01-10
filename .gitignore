@@ -82,7 +82,8 @@ data/labels/
 data/promptcraft/
 data/raw/
 data/training/*
-datasets/
+# Top-level datasets directory for training data (not src/*/datasets/ modules)
+/datasets/
 data/
 
 # DVC tracking

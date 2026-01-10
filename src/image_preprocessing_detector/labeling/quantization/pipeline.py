@@ -577,7 +577,7 @@ class QuantizationPipeline:
             total_bytes = sum(
                 s.size
                 for s in (info.siblings or [])
-                if s.rfilename.endswith((".safetensors", ".bin"))
+                if s.rfilename.endswith((".safetensors", ".bin")) and s.size is not None
             )
             return total_bytes / (1024 * 1024)
         except Exception:

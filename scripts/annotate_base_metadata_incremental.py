@@ -160,12 +160,16 @@ def process_single_dataset(dataset_name: str, use_yolo: bool = True) -> tuple[bo
         cmd.append("--no-yolo")
 
     try:
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use
+        # dataset_name is validated against DATASET_CONFIGS whitelist (see main())
+        # subprocess uses list format (no shell), safe against command injection
         result = subprocess.run(
             cmd,
             cwd=PROJECT_ROOT,
             capture_output=True,
             text=True,
             timeout=3600,  # 1 hour timeout per dataset
+            check=False,  # Handle return code explicitly below
         )
 
         if result.returncode == 0:

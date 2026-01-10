@@ -367,7 +367,10 @@ class ArenaModalClient:
             import modal
 
             try:
-                self._inference_cls = modal.Cls.lookup(self.app_name, self.class_name)
+                # Type ignore: modal.Cls.lookup exists at runtime but not in stubs
+                self._inference_cls = modal.Cls.lookup(  # type: ignore[attr-defined]
+                    self.app_name, self.class_name
+                )
             except modal.exception.NotFoundError as e:
                 raise RuntimeError(
                     f"Modal app '{self.app_name}' not deployed. "
@@ -430,7 +433,7 @@ class ArenaModalClient:
 
         # Check if Modal SDK is available
         try:
-            import modal  # noqa: F401
+            import modal  # noqa: F401  # pyright: ignore[reportUnusedImport]
         except ImportError:
             logger.warning("Modal SDK not available, using mock mode")
             return True

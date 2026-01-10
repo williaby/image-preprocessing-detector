@@ -17,12 +17,16 @@ Note:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
 from scipy import stats
+
+# Type alias for values that can be converted to arrays
+ArrayInput = Union[ArrayLike, Sequence[float], list[float]]
 
 
 def compute_plcc(
@@ -69,8 +73,8 @@ def compute_plcc(
     if np.std(preds) == 0 or np.std(gt) == 0:
         return 0.0
 
-    correlation, _ = stats.pearsonr(preds, gt)
-    return float(correlation)
+    correlation_and_pvalue = stats.pearsonr(preds, gt)
+    return float(correlation_and_pvalue[0])  # type: ignore[arg-type]
 
 
 def compute_srcc(
@@ -117,8 +121,8 @@ def compute_srcc(
     if np.std(preds) == 0 or np.std(gt) == 0:
         return 0.0
 
-    correlation, _ = stats.spearmanr(preds, gt)
-    return float(correlation)
+    correlation_and_pvalue = stats.spearmanr(preds, gt)
+    return float(correlation_and_pvalue.statistic)  # type: ignore[union-attr]
 
 
 def compute_mae(
@@ -282,10 +286,16 @@ class ArenaMetrics:
     def __post_init__(self) -> None:
         """Compute aggregate metrics after initialization."""
         self.aggregate = DimensionMetrics(
-            plcc=np.mean([self.overall.plcc, self.sharpness.plcc, self.color.plcc]),
-            srcc=np.mean([self.overall.srcc, self.sharpness.srcc, self.color.srcc]),
-            mae=np.mean([self.overall.mae, self.sharpness.mae, self.color.mae]),
-            rmse=np.mean([self.overall.rmse, self.sharpness.rmse, self.color.rmse]),
+            plcc=float(
+                np.mean([self.overall.plcc, self.sharpness.plcc, self.color.plcc])
+            ),
+            srcc=float(
+                np.mean([self.overall.srcc, self.sharpness.srcc, self.color.srcc])
+            ),
+            mae=float(np.mean([self.overall.mae, self.sharpness.mae, self.color.mae])),
+            rmse=float(
+                np.mean([self.overall.rmse, self.sharpness.rmse, self.color.rmse])
+            ),
             num_samples=self.overall.num_samples,
         )
 
@@ -301,8 +311,8 @@ class ArenaMetrics:
     @classmethod
     def compute(
         cls,
-        predictions: dict[str, ArrayLike],
-        ground_truth: dict[str, ArrayLike],
+        predictions: dict[str, ArrayInput],
+        ground_truth: dict[str, ArrayInput],
     ) -> ArenaMetrics:
         """Compute arena metrics from predictions and ground truth.
 

@@ -23,6 +23,7 @@ Output:
 """
 
 import argparse
+import ssl
 import subprocess
 import sys
 import urllib.request
@@ -43,7 +44,15 @@ def download_plantuml() -> bool:
 
     print(f"Downloading PlantUML to {PLANTUML_JAR}...")
     try:
-        urllib.request.urlretrieve(PLANTUML_URL, PLANTUML_JAR)
+        # Create SSL context with certificate verification
+        ssl_context = ssl.create_default_context()
+        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
+        # PLANTUML_URL is a hardcoded constant, not user-controlled
+        with urllib.request.urlopen(  # noqa: S310
+            PLANTUML_URL, context=ssl_context
+        ) as response:
+            with open(PLANTUML_JAR, "wb") as out_file:
+                out_file.write(response.read())
         print("Download complete.")
         return True
     except Exception as e:

@@ -287,6 +287,7 @@ No other text or explanation."""
 
     def _call_openai(self, image_b64: str, idx: int) -> DIQAPrediction:
         """Call OpenAI API."""
+        assert self._spec is not None  # Guaranteed by is_loaded() check
         response = self._client.chat.completions.create(
             model=self._spec.id,
             messages=[
@@ -324,6 +325,7 @@ No other text or explanation."""
 
     def _call_anthropic(self, image_b64: str, idx: int) -> DIQAPrediction:
         """Call Anthropic API."""
+        assert self._spec is not None  # Guaranteed by is_loaded() check
         response = self._client.messages.create(
             model=self._spec.id,
             max_tokens=50,

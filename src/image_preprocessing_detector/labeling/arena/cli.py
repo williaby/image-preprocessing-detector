@@ -51,7 +51,7 @@ def arena(ctx: click.Context, verbose: bool) -> None:
 
     if verbose:
         structlog.configure(
-            wrapper_class=structlog.make_filtering_bound_logger(level=10),
+            wrapper_class=structlog.make_filtering_bound_logger(min_level=10),
         )
 
 
@@ -313,6 +313,9 @@ def leaderboard(
         elif formats == "json":
             path = output_dir / "leaderboard.json"
             generator.to_json(path)
+        else:
+            msg = f"Unknown format: {formats}"
+            raise click.ClickException(msg)
 
         click.echo(f"Generated: {path}")
 

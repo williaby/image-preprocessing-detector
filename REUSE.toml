@@ -207,3 +207,39 @@ path = [
 ]
 SPDX-License-Identifier = "ODbL-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Generated/temporary files and results - CC0-1.0
+[[annotations]]
+path = [
+    ".annotate_progress.json",  # Progress tracking for annotation scripts
+    "pal_generated.code",  # PAL MCP generated code artifact
+    "results/**/*.json",  # Generated result files
+    "results/**/*.jsonl",  # Generated JSONL result files
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Generated images and binary artifacts - CC0-1.0
+[[annotations]]
+path = [
+    "rag_architecture.png",  # Generated architecture diagram
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Windows batch scripts - Apache-2.0
+[[annotations]]
+path = [
+    "scripts/**/*.bat",  # Windows batch scripts
+]
+SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Third-party model weights - MIT (YOLOv10 uses Apache-2.0)
+# Note: yolov10x.pt is from ultralytics/yolov10 (Apache-2.0 license)
+[[annotations]]
+path = [
+    "yolov10x.pt",  # Pre-trained YOLOv10 weights (Apache-2.0 from ultralytics)
+]
+SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileCopyrightText = "2024 Ultralytics"

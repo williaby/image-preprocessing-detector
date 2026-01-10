@@ -15,7 +15,7 @@ Reference: docs/planning/MUSIQ_FINETUNING_PLAN.md Section 6
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import torch
 from torch.utils.data import Dataset
@@ -123,7 +123,7 @@ def get_validation_transforms(target_size: int = 224) -> alb.Compose:
     )
 
 
-class DIQA5000TrainingDataset(Dataset):
+class DIQA5000TrainingDataset(Dataset[tuple[torch.Tensor, dict[str, torch.Tensor]]]):
     """PyTorch Dataset for DIQA-5000 with continuous labels.
 
     Wraps the existing DIQA5000Dataset for training with:
@@ -233,7 +233,7 @@ def create_dataloaders(
     num_workers: int = 4,
     phase: int = 1,
     target_size: tuple[int, int] | int | None = 224,
-) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
+) -> tuple[torch.utils.data.DataLoader[Any], torch.utils.data.DataLoader[Any]]:
     """Create train and validation dataloaders.
 
     Args:
