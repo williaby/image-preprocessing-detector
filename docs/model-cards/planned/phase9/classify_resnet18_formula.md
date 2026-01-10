@@ -1,4 +1,12 @@
-# Model Card: Formula Classifier
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: Formula Classifier.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: Formula Classifier'
+---
 
 ## Overview
 

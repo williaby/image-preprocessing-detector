@@ -1,4 +1,12 @@
-# Model Card: QualiCLIP
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: QualiCLIP.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: QualiCLIP'
+---
 
 ## Model Summary
 

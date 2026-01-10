@@ -1,4 +1,12 @@
-# Model Card: NIMA
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: NIMA.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: NIMA'
+---
 
 ## Model Summary
 

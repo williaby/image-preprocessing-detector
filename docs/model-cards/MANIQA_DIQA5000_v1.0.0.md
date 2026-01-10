@@ -1,4 +1,12 @@
-# Model Card: MANIQA-DIQA5000-Finetuned v1.0.0
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: MANIQA-DIQA5000-Finetuned v1.0.0.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: MANIQA-DIQA5000-Finetuned v1.0.0'
+---
 
 **Model ID**: `MANIQA-DIQA5000-Finetuned-v1.0.0`
 **Training Date**: 2025-12-19

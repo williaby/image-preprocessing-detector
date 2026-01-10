@@ -1,4 +1,13 @@
-# Model Card: IQA ResNet-18 Student
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: IQA ResNet-18 Student.'
+schema_type: common
+status: draft
+tags:
+- iqa
+- production
+title: 'Model Card: IQA ResNet-18 Student'
+---
 
 ## Overview
 

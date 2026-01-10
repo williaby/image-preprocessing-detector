@@ -3,18 +3,14 @@ schema_type: common
 title: "Model Registry"
 description: "Complete inventory of all ML models in Project A with status tracking"
 tags:
-  - reference
-  - machine_learning
-  - model_registry
-  - inventory
+- reference
+- machine_learning
+- model_registry
+- inventory
 status: published
 owner: core-maintainer
-version: "2.0.0"
-last_updated: "2025-12-18"
+purpose: Documentation for Model Registry.
 ---
-
-# Model Registry
-
 Complete inventory of all ML models used in Project A (Preprocessing, IQA & Coarse Layout Gateway).
 
 > **Schema Version**: 2.0 (Taxonomy-Aligned)

@@ -1,4 +1,12 @@
-# Model Card: Handwriting Classifier
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: Handwriting Classifier.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: Handwriting Classifier'
+---
 
 ## Overview
 

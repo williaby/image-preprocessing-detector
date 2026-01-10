@@ -1,4 +1,12 @@
-# Model Card: DIQA MUSIQ Sharpness
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: DIQA MUSIQ Sharpness.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: DIQA MUSIQ Sharpness'
+---
 
 ## Overview
 

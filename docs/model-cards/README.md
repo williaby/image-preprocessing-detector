@@ -3,18 +3,14 @@ schema_type: common
 title: "Model Cards Directory"
 description: "Centralized repository for all ML model documentation in Project A"
 tags:
-  - reference
-  - machine_learning
-  - documentation
-  - model_registry
+- reference
+- machine_learning
+- documentation
+- model_registry
 status: published
 owner: core-maintainer
-version: "1.0.0"
-last_updated: "2025-12-18"
+purpose: Documentation for Model Cards Directory.
 ---
-
-# Model Cards Directory
-
 This directory contains standardized documentation for all ML models used in Project A (Preprocessing, IQA & Coarse Layout Gateway).
 
 ## Directory Structure

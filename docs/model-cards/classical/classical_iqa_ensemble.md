@@ -1,4 +1,12 @@
-# Model Card: Classical IQA Ensemble
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: Classical IQA Ensemble.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: Classical IQA Ensemble'
+---
 
 ## Overview
 

@@ -1,4 +1,12 @@
-# Model Card: NIQE
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: NIQE.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: NIQE'
+---
 
 ## Model Summary
 

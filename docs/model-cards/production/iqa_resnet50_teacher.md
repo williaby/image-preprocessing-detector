@@ -1,4 +1,13 @@
-# Model Card: IQA ResNet-50 Teacher
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: IQA ResNet-50 Teacher.'
+schema_type: common
+status: draft
+tags:
+- iqa
+- production
+title: 'Model Card: IQA ResNet-50 Teacher'
+---
 
 ## Overview
 

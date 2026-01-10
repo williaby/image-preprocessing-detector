@@ -1,4 +1,12 @@
-# Model Card: CLIP-IQA
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: CLIP-IQA.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: CLIP-IQA'
+---
 
 ## Model Summary
 

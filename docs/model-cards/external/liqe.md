@@ -1,4 +1,12 @@
-# Model Card: LIQE
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: LIQE.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: LIQE'
+---
 
 ## Model Summary
 

@@ -1,4 +1,12 @@
-# Model Card: Layout YOLOv10 DocLayNet
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: Layout YOLOv10 DocLayNet.'
+schema_type: common
+status: draft
+tags:
+- production
+title: 'Model Card: Layout YOLOv10 DocLayNet'
+---
 
 ## Overview
 

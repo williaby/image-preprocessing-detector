@@ -1,4 +1,12 @@
-# Model Card: HyperIQA
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: HyperIQA.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: HyperIQA'
+---
 
 ## Model Summary
 

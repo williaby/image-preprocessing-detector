@@ -1,4 +1,12 @@
-# Model Card: Text Gate Heuristic
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: Text Gate Heuristic.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: Text Gate Heuristic'
+---
 
 ## Overview
 

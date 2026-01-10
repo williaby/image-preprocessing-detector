@@ -1,4 +1,12 @@
-# Model Card: EfficientNet-B4 ImageNet1K
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: EfficientNet-B4 ImageNet1K.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: EfficientNet-B4 ImageNet1K'
+---
 
 ## Model Summary
 

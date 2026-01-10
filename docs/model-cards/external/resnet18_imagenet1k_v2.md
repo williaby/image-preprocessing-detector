@@ -1,4 +1,12 @@
-# Model Card: ResNet-18 ImageNet1K V2
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: ResNet-18 ImageNet1K V2.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: ResNet-18 ImageNet1K V2'
+---
 
 ## Model Summary
 

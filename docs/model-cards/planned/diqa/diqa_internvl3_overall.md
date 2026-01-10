@@ -1,4 +1,12 @@
-# Model Card: DIQA InternVL3 Overall
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: DIQA InternVL3 Overall.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: DIQA InternVL3 Overall'
+---
 
 ## Overview
 

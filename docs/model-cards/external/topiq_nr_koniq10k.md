@@ -1,4 +1,12 @@
-# Model Card: TOPIQ-NR (KonIQ-10k)
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: TOPIQ-NR (KonIQ-10k).'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: TOPIQ-NR (KonIQ-10k)'
+---
 
 ## Model Summary
 

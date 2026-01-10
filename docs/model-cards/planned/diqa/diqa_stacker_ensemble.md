@@ -1,4 +1,12 @@
-# Model Card: DIQA Stacker Ensemble
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: DIQA Stacker Ensemble.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: DIQA Stacker Ensemble'
+---
 
 ## Overview
 

@@ -1,4 +1,12 @@
-# Model Card: {model_name}
+---
+owner: docs-team
+purpose: 'Template for creating consistent model card: documents.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card:'
+---
 
 <!--
 INSTRUCTIONS:

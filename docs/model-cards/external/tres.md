@@ -1,4 +1,12 @@
-# Model Card: TReS
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: TReS.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: TReS'
+---
 
 ## Model Summary
 

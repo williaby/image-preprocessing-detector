@@ -1,4 +1,12 @@
-# Model Card: ARNIQA
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: ARNIQA.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: ARNIQA'
+---
 
 ## Model Summary
 

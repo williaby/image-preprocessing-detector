@@ -1,4 +1,12 @@
-# Model Card: DIQA QualiCLIP Color
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: DIQA QualiCLIP Color.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: DIQA QualiCLIP Color'
+---
 
 ## Overview
 

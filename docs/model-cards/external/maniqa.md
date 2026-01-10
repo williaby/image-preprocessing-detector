@@ -1,4 +1,12 @@
-# Model Card: MANIQA
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: MANIQA.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: MANIQA'
+---
 
 ## Model Summary
 

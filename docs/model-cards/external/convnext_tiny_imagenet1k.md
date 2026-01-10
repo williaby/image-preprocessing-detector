@@ -1,4 +1,12 @@
-# Model Card: ConvNeXt-Tiny ImageNet1K
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: ConvNeXt-Tiny ImageNet1K.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: ConvNeXt-Tiny ImageNet1K'
+---
 
 ## Model Summary
 

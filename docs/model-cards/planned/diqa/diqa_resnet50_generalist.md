@@ -1,4 +1,12 @@
-# Model Card: DIQA ResNet-50 Generalist
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: DIQA ResNet-50 Generalist.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: DIQA ResNet-50 Generalist'
+---
 
 ## Overview
 

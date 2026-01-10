@@ -1,4 +1,12 @@
-# Model Card: Table Type Classifier
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: Table Type Classifier.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: Table Type Classifier'
+---
 
 ## Overview
 

@@ -1,4 +1,12 @@
-# Model Card: Parasitic Element Classifier
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: Parasitic Element Classifier.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: Parasitic Element Classifier'
+---
 
 ## Overview
 

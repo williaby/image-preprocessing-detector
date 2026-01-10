@@ -1,4 +1,12 @@
-# Model Card: DocLayout-YOLO
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: DocLayout-YOLO.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: DocLayout-YOLO'
+---
 
 ## Model Summary
 

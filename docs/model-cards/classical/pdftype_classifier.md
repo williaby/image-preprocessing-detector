@@ -1,4 +1,12 @@
-# Model Card: PDF Type Classifier
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: PDF Type Classifier.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: PDF Type Classifier'
+---
 
 ## Overview
 

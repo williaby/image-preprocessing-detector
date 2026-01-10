@@ -1,4 +1,12 @@
-# Model Card: PaQ-2-PiQ
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: PaQ-2-PiQ.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: PaQ-2-PiQ'
+---
 
 ## Model Summary
 

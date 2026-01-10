@@ -1,4 +1,12 @@
-# Model Card: DIQA Qwen2.5-VL Generalist
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: DIQA Qwen2.5-VL Generalist.'
+schema_type: common
+status: draft
+tags:
+- iqa
+title: 'Model Card: DIQA Qwen2.5-VL Generalist'
+---
 
 ## Overview
 

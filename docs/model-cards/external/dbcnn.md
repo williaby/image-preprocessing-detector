@@ -1,4 +1,12 @@
-# Model Card: DBCNN
+---
+owner: docs-team
+purpose: 'Documentation for Model Card: DBCNN.'
+schema_type: common
+status: draft
+tags:
+- documentation
+title: 'Model Card: DBCNN'
+---
 
 ## Model Summary
 
