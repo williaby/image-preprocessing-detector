@@ -295,7 +295,7 @@ class DIQARegressionModel(nn.Module):
         # Try various attribute names
         for attr in ["hidden_size", "d_model", "n_embd", "embed_dim"]:
             if hasattr(config, attr):
-                return getattr(config, attr)
+                return int(getattr(config, attr))
 
         # Fallback: try to infer from a forward pass
         logger.warning("could_not_determine_hidden_size", fallback=768)

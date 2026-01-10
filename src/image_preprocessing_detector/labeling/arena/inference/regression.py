@@ -397,10 +397,7 @@ class RegressionBackend(InferenceBackend):
                 ]
             )
             # ToTensor() returns Tensor for PIL Images; type annotation helps type checker
-            tensors: list[torch.Tensor] = [
-                transform(img)
-                for img in images  # type: ignore[misc]
-            ]
+            tensors: list[torch.Tensor] = [transform(img) for img in images]
             inputs = {"pixel_values": torch.stack(tensors)}
             if self._device != "cpu":
                 inputs = {k: v.to(self._device) for k, v in inputs.items()}
@@ -492,10 +489,10 @@ class RegressionBackend(InferenceBackend):
     def _get_code_version(self) -> str:
         """Get the current code version from git."""
         try:
-            import subprocess
+            import subprocess  # nosec B404
 
             result = subprocess.run(
-                ["git", "rev-parse", "HEAD"],  # noqa: S607
+                ["git", "rev-parse", "HEAD"],  # noqa: S607  # nosec B603, B607
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -504,7 +501,7 @@ class RegressionBackend(InferenceBackend):
             if result.returncode == 0:
                 return f"git:{result.stdout.strip()[:8]}"
 
-        except Exception:  # noqa: S110
+        except Exception:  # noqa: S110  # nosec B110
             pass
 
         return ""

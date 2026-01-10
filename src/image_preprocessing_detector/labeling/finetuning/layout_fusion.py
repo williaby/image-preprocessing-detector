@@ -712,7 +712,7 @@ class DocIQReplica(nn.Module):
 
         self.backbone = models.resnet50(weights=weights)
         # Remove final FC layer (we use custom head)
-        self.backbone.fc = nn.Identity()  # type: ignore[assignment]
+        self.backbone.fc = nn.Identity()
 
         # Track backbone frozen state
         self._backbone_frozen = freeze_backbone
@@ -843,5 +843,5 @@ def create_dociq_replica(
         head_dropout=head_dropout,
         pretrained_backbone=pretrained_backbone,
     )
-    result: DocIQReplica = model.to(device)  # type: ignore[assignment]
+    result: DocIQReplica = model.to(device)
     return result

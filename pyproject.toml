@@ -352,7 +352,14 @@ known-local-folder = ["validation", "benchmarks"]
 
 # Bandit Configuration (Security Linting)
 [tool.bandit]
-skips = ["B101"]  # Skip assert_used - standard pytest practice, not a security issue
+skips = [
+    "B101",  # Skip assert_used - standard pytest practice, not a security issue
+    "B110",  # Skip try_except_pass - used for optional functionality (git info)
+    "B311",  # Skip random - used only for non-security backoff jitter
+    "B404",  # Skip subprocess import - controlled git commands only
+    "B603",  # Skip subprocess call - controlled git/nvidia-smi commands only
+    "B607",  # Skip partial path - controlled git/nvidia-smi commands only
+]
 
 # MyPy Configuration
 [tool.mypy]

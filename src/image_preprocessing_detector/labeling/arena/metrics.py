@@ -19,14 +19,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Union
+from typing import Any, TypeAlias
 
 import numpy as np
 from numpy.typing import ArrayLike
 from scipy import stats
 
 # Type alias for values that can be converted to arrays
-ArrayInput = Union[ArrayLike, Sequence[float], list[float]]
+ArrayInput: TypeAlias = ArrayLike | Sequence[float] | list[float]  # noqa: UP040
 
 
 def compute_plcc(
@@ -74,7 +74,7 @@ def compute_plcc(
         return 0.0
 
     correlation_and_pvalue = stats.pearsonr(preds, gt)
-    return float(correlation_and_pvalue[0])  # type: ignore[arg-type]
+    return float(correlation_and_pvalue[0])
 
 
 def compute_srcc(
@@ -122,7 +122,7 @@ def compute_srcc(
         return 0.0
 
     correlation_and_pvalue = stats.spearmanr(preds, gt)
-    return float(correlation_and_pvalue.statistic)  # type: ignore[union-attr]
+    return float(correlation_and_pvalue.statistic)
 
 
 def compute_mae(
@@ -449,6 +449,6 @@ def compare_models(
     def get_value(item: tuple[str, ArenaMetrics]) -> float:
         _, metrics = item
         dim_metrics = getattr(metrics, dimension)
-        return getattr(dim_metrics, metric)
+        return float(getattr(dim_metrics, metric))
 
     return sorted(results.items(), key=get_value, reverse=reverse)

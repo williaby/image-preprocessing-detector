@@ -357,10 +357,11 @@ class DIQATrainingDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         # Adjust color based on color score
         if sample.color > 0.5:
             # Enhance color variation
-            img = img.astype(np.float32)
-            img[:, :, 0] *= 1.0 + (sample.color - 0.5) * 0.2  # R
-            img[:, :, 2] *= 1.0 + (sample.color - 0.5) * 0.2  # B
-            img = np.clip(img, 0, 255).astype(np.uint8)
+            img_float = img.astype(np.float32)
+            color_factor = float(1.0 + (sample.color - 0.5) * 0.2)
+            img_float[:, :, 0] = img_float[:, :, 0] * color_factor  # R
+            img_float[:, :, 2] = img_float[:, :, 2] * color_factor  # B
+            img = np.clip(img_float, 0, 255).astype(np.uint8)
 
         return Image.fromarray(img)
 
@@ -379,7 +380,7 @@ class DIQATrainingDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
 def get_default_transforms(
     is_training: bool = True,
     image_size: int = 224,
-) -> Callable[[Any], torch.Tensor]:
+) -> Callable[[Any], Any]:
     """Get default image transforms for DIQA training.
 
     Args:
@@ -392,7 +393,7 @@ def get_default_transforms(
     from torchvision import transforms
 
     if is_training:
-        return transforms.Compose(
+        return transforms.Compose(  # type: ignore[no-any-return]
             [
                 transforms.Resize((image_size, image_size)),
                 transforms.RandomHorizontalFlip(p=0.5),
@@ -404,7 +405,7 @@ def get_default_transforms(
                 ),
             ]
         )
-    return transforms.Compose(
+    return transforms.Compose(  # type: ignore[no-any-return]
         [
             transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),

@@ -6,6 +6,7 @@ in Arena benchmarking.
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from dataclasses import dataclass, field
@@ -14,6 +15,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray
@@ -259,16 +262,16 @@ class DIQA5000Dataset(BenchmarkDataset):
 
         # Check if dataset exists
         if not csv_path.exists():
-            print(
-                f"Warning: DIQA-5000 CSV not found at {csv_path}, using synthetic data"
+            logger.warning(
+                "DIQA-5000 CSV not found at %s, using synthetic data", csv_path
             )
             synthetic = SyntheticDataset(num_samples=100)
             self._samples = list(synthetic)
             return
 
         if not res_dir.exists():
-            print(
-                f"Warning: DIQA-5000 images not found at {res_dir}, using synthetic data"
+            logger.warning(
+                "DIQA-5000 images not found at %s, using synthetic data", res_dir
             )
             synthetic = SyntheticDataset(num_samples=100)
             self._samples = list(synthetic)
@@ -289,7 +292,7 @@ class DIQA5000Dataset(BenchmarkDataset):
                     img = Image.open(image_path).convert("RGB")
                     image_array = np.array(img)
                 except Exception as e:
-                    print(f"Warning: Failed to load {image_path}: {e}")
+                    logger.warning("Failed to load %s: %s", image_path, e)
                     continue
 
                 # Parse and normalize scores
@@ -313,7 +316,11 @@ class DIQA5000Dataset(BenchmarkDataset):
                 )
                 self._samples.append(sample)
 
-        print(f"Loaded {len(self._samples)} samples from DIQA-5000 {self._split} split")
+        logger.info(
+            "Loaded %d samples from DIQA-5000 %s split",
+            len(self._samples),
+            self._split,
+        )
 
     @property
     def name(self) -> str:

@@ -371,7 +371,7 @@ class ArenaModalClient:
                 self._inference_cls = modal.Cls.lookup(  # type: ignore[attr-defined]
                     self.app_name, self.class_name
                 )
-            except modal.exception.NotFoundError as e:
+            except modal.exception.NotFoundError as e:  # type: ignore[attr-defined]
                 raise RuntimeError(
                     f"Modal app '{self.app_name}' not deployed. "
                     "Run: modal deploy modal/arena_benchmark.py"
@@ -466,8 +466,8 @@ class ArenaModalClient:
             self.config.base_backoff_ms * (2**attempt),
             self.config.max_backoff_ms,
         )
-        # Add jitter (±25%)
-        jitter = random.uniform(0.75, 1.25)  # noqa: S311
+        # Add jitter (±25%) - not security-sensitive, just for backoff randomization
+        jitter = random.uniform(0.75, 1.25)  # noqa: S311  # nosec B311
         return int(backoff * jitter)
 
     def _record_success(self) -> None:

@@ -213,7 +213,7 @@ class DIQATrainer:
         self.model: DIQARegressionModel | None = None
         self.optimizer: AdamW | None = None
         self.scheduler: Any = None
-        self.scaler: torch.amp.GradScaler | None = None  # type: ignore[reportPrivateImportUsage]
+        self.scaler: torch.amp.GradScaler | None = None
         self.loss_fn: nn.Module | None = None
 
         # Set random seed
@@ -272,6 +272,7 @@ class DIQATrainer:
             self._apply_lora()
 
         self.model = self.model.to(self.device)
+        assert self.model is not None  # For type checker
 
         # Setup loss function
         self.loss_fn = self._create_loss_function()
@@ -291,7 +292,7 @@ class DIQATrainer:
                 if self.config.mixed_precision == "fp16"
                 else torch.bfloat16
             )
-            self.scaler = torch.amp.GradScaler("cuda")  # type: ignore[reportPrivateImportUsage]
+            self.scaler = torch.amp.GradScaler("cuda")
             self._autocast_dtype = dtype
         else:
             self.scaler = None
@@ -321,8 +322,8 @@ class DIQATrainer:
 
             if self.model is not None:
                 # Apply LoRA to encoder only
-                # Type ignore: encoder is a Module, but get_peft_model accepts PreTrainedModel (runtime compatible)
-                self.model.encoder = get_peft_model(self.model.encoder, lora_config)  # type: ignore[arg-type]
+                # Note: encoder is a Module, but get_peft_model accepts PreTrainedModel (runtime compatible)
+                self.model.encoder = get_peft_model(self.model.encoder, lora_config)
 
             logger.info(
                 "lora_applied",
@@ -501,7 +502,7 @@ class DIQATrainer:
             targets = targets.to(self.device)
 
             # Mixed precision forward pass
-            with torch.amp.autocast(  # type: ignore[reportPrivateImportUsage]
+            with torch.amp.autocast(
                 device_type=self.device.type,
                 dtype=self._autocast_dtype,
                 enabled=self.scaler is not None,
@@ -578,7 +579,7 @@ class DIQATrainer:
                 images = images.to(self.device)
                 targets = targets.to(self.device)
 
-                with torch.amp.autocast(  # type: ignore[reportPrivateImportUsage]
+                with torch.amp.autocast(
                     device_type=self.device.type,
                     dtype=self._autocast_dtype,
                     enabled=self.scaler is not None,
@@ -752,7 +753,7 @@ class DIQATrainer:
                     strict=False,
                 )
                 ts_path = export_path / "model.torchscript"
-                scripted.save(str(ts_path))  # type: ignore[union-attr]
+                scripted.save(str(ts_path))
                 exports["torchscript"] = ts_path
                 logger.info("model_exported", format="torchscript", path=str(ts_path))
             except Exception as e:

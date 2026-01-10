@@ -357,15 +357,16 @@ class ArenaRunner:
             return sample.image
 
         # Try to load from path
-        if sample.image_path.exists():
+        image_path = sample.image_path
+        if image_path is not None and Path(image_path).exists():
             try:
-                img = Image.open(sample.image_path)
+                img = Image.open(image_path)
                 return np.array(img.convert("RGB"))
             except Exception as e:
                 logger.warning(
                     "failed_to_load_image",
                     image_id=sample.image_id,
-                    path=str(sample.image_path),
+                    path=image_path,
                     error=str(e),
                 )
                 return None
@@ -554,7 +555,8 @@ class ArenaRunner:
             import torch
 
             if torch.cuda.is_available():
-                return torch.version.cuda
+                cuda_version = torch.version.cuda
+                return str(cuda_version) if cuda_version is not None else None
         except ImportError:
             pass
 
