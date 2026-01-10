@@ -136,6 +136,7 @@ class ProductionTrainingConfig:
 def set_seed(seed: int) -> None:
     """Set random seeds for reproducibility."""
     import random
+
     import numpy as np
     import torch
 
@@ -230,7 +231,8 @@ def prepare_dataset(bucket_name: str, gcs_prefix: str) -> Path:
     images_dir = dataset_dir / "images"
 
     if (dataset_dir / "train_metadata.json").exists():
-        train_count = len(json.load(open(dataset_dir / "train_metadata.json")))
+        with open(dataset_dir / "train_metadata.json") as f:
+            train_count = len(json.load(f))
         image_count = len(list(images_dir.glob("*.jpg"))) if images_dir.exists() else 0
         if image_count > train_count * 0.9:
             print(f"Dataset exists: {train_count} train, {image_count} images")
@@ -264,15 +266,15 @@ def train_production(seed: int = 42) -> dict[str, Any]:
 
     This is the FULL PRODUCTION training, not a baseline check.
     """
+    import albumentations as alb
     import numpy as np
     import torch
     import torch.nn as nn
     import torch.optim as optim
+    from albumentations.pytorch import ToTensorV2
+    from PIL import Image
     from scipy import stats
     from torch.utils.data import DataLoader, Dataset
-    from PIL import Image
-    import albumentations as A
-    from albumentations.pytorch import ToTensorV2
 
     print("=" * 60)
     print("PHASE 7 PRODUCTION TRAINING")
@@ -294,17 +296,17 @@ def train_production(seed: int = 42) -> dict[str, Any]:
 
     # Transforms for 384x384 resolution
     res = config.input_resolution
-    train_transform = A.Compose([
-        A.RandomResizedCrop(size=(res, res), scale=(0.5, 1.0)),
-        A.HorizontalFlip(p=0.5),
-        A.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0, p=0.3),
-        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    train_transform = alb.Compose([
+        alb.RandomResizedCrop(size=(res, res), scale=(0.5, 1.0)),
+        alb.HorizontalFlip(p=0.5),
+        alb.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0, p=0.3),
+        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2(),
     ])
 
-    val_transform = A.Compose([
-        A.Resize(height=res, width=res),
-        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    val_transform = alb.Compose([
+        alb.Resize(height=res, width=res),
+        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2(),
     ])
 
@@ -452,7 +454,7 @@ def train_production(seed: int = 42) -> dict[str, Any]:
 
     # Training loop
     print("\n🚀 Starting PRODUCTION training...")
-    print(f"Loss: Gaussian NLL")
+    print("Loss: Gaussian NLL")
     print(f"Targets: ECE<{config.ece_target}, MAE<{config.mae_target}, Corr>{config.correlation_target}")
     print(f"Uncertainty correlation target: >{config.uncertainty_correlation_target}")
 
@@ -613,7 +615,7 @@ def train_production(seed: int = 42) -> dict[str, Any]:
 
         # Early stopping (all targets + minimum epochs)
         if ece_met and mae_met and corr_met and unc_met and min_epochs_met:
-            print(f"\n🎯 ALL PRODUCTION TARGETS ACHIEVED!")
+            print("\n🎯 ALL PRODUCTION TARGETS ACHIEVED!")
             print(f"   ECE={current_ece:.4f} < {config.ece_target}")
             print(f"   MAE={severity_mae:.4f} < {config.mae_target}")
             print(f"   Corr={macro_correlation:.4f} > {config.correlation_target}")
@@ -634,7 +636,7 @@ def train_production(seed: int = 42) -> dict[str, Any]:
     print("\n" + "=" * 60)
     print("PRODUCTION TRAINING COMPLETE")
     print("=" * 60)
-    print(f"Loss Type: Gaussian NLL (uncertainty-aware)")
+    print("Loss Type: Gaussian NLL (uncertainty-aware)")
     print(f"Best ECE: {best_ece:.4f} (target: <{config.ece_target})")
     print(f"Best MAE: {best_mae:.4f} (target: <{config.mae_target})")
     print(f"Best Correlation: {best_correlation:.4f} (target: >{config.correlation_target})")

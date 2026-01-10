@@ -19,8 +19,6 @@ source: Manual creation
 
 ---
 
-## Executive Summary
-
 This report analyzes the current benchmarking approach for the Phase 7 IQA model and identifies significant gaps that undermine the validity of performance claims. The current approach relies primarily on **internal synthetic test sets**, which creates circular validation and prevents meaningful comparison with state-of-the-art methods.
 
 ### Key Findings
@@ -48,6 +46,7 @@ This report analyzes the current benchmarking approach for the Phase 7 IQA model
 ### 1.1 Existing Benchmark Infrastructure
 
 **Strengths:**
+
 - Well-structured benchmark framework in `benchmarks/` directory
 - PyIQA baselines script exists (`scripts/evaluate_pyiqa_baselines.py`)
 - DIQA-5000 dataset downloaded (5.4GB)
@@ -55,6 +54,7 @@ This report analyzes the current benchmarking approach for the Phase 7 IQA model
 - Multiple datasets available locally (~105GB total)
 
 **Weaknesses:**
+
 - Benchmark tracker shows most models as "pending"
 - Primary evaluation uses internal Phase7 MVP test set
 - No integration with external human-annotated benchmarks
@@ -91,6 +91,7 @@ From `data/benchmarks/IQA_MODEL_BENCHMARK_TRACKER.csv`:
 ### 2.1 CRITICAL: No Cross-Dataset Evaluation
 
 **Current Approach:**
+
 ```
 Train: Phase7 synthetic dataset (200K images)
 Test:  Phase7 held-out split (30K images)
@@ -99,17 +100,20 @@ Test:  Phase7 held-out split (30K images)
 **Problem:** Testing on the same distribution as training creates circular validation. The model may achieve excellent metrics on synthetic degradations but fail on real-world documents.
 
 **Industry Standard:**
+
 ```
 Train: Dataset A (e.g., Phase7 synthetic + DIQA-5000 fine-tune)
 Test:  Dataset B, C, D (e.g., SmartDoc-QA, SROIE, DocVQA)
 ```
 
 **Evidence from Literature:**
+
 - DocIQ reports SRCC on DIQA-5000 (0.870) AND SmartDoc-QA (0.909)
 - MUSIQ reports across LIVE, TID2013, KADID-10K, KONIQ-10K
 - Cross-dataset drop < 0.10 indicates good generalization
 
 **Required Action:**
+
 1. Evaluate trained model on DIQA-5000 test split
 2. Add SmartDoc-QA dataset for mobile capture validation
 3. Report SRCC drop between in-distribution and cross-dataset
@@ -117,6 +121,7 @@ Test:  Dataset B, C, D (e.g., SmartDoc-QA, SROIE, DocVQA)
 ### 2.2 HIGH: Human Perception Validation Missing
 
 **Current Approach:**
+
 - Severity labels computed from synthetic parameters (e.g., `blur_severity = tanh(σ/10)`)
 - No validation that these labels match human perception
 - No correlation with human Mean Opinion Scores (MOS)
@@ -126,12 +131,14 @@ Test:  Dataset B, C, D (e.g., SmartDoc-QA, SROIE, DocVQA)
 
 **Available Solution (Zero Cost):**
 DIQA-5000 provides exactly what a custom perceptual study would deliver:
+
 - 5,000 document images from 500 originals
 - 15 human annotators per image
 - Mean Opinion Scores (MOS) for quality assessment
 - Document-specific degradations (blur, shadows, creases, moiré)
 
 **Required Action:**
+
 1. Correlate Phase7 model predictions with DIQA-5000 MOS labels
 2. Target: Pearson correlation > 0.70 with human scores
 3. Report per-degradation breakdown (blur, noise, compression, etc.)
@@ -139,6 +146,7 @@ DIQA-5000 provides exactly what a custom perceptual study would deliver:
 ### 2.3 HIGH: Wrong Calibration Metric
 
 **Current Approach:**
+
 - Uses ECE (Expected Calibration Error) as primary calibration metric
 - Target: ECE < 0.08
 
@@ -154,6 +162,7 @@ DIQA-5000 provides exactly what a custom perceptual study would deliver:
 > "For regression tasks, ENCE measures whether predicted uncertainty (σ²) matches actual prediction error. Published ENCE values: before calibration 12-25%, after STD scaling 4-8%."
 
 **Required Action:**
+
 1. Implement ENCE calculation in `benchmarks/metrics/`
 2. Add MCE (Maximum Calibration Error) for worst-case analysis
 3. Report both ENCE and MCE alongside current ECE
@@ -161,6 +170,7 @@ DIQA-5000 provides exactly what a custom perceptual study would deliver:
 ### 2.4 HIGH: No OCR Correlation Metrics
 
 **Current Approach:**
+
 - IQA model predicts severity scores
 - No validation that scores correlate with OCR performance
 - No measurement of downstream task impact
@@ -170,6 +180,7 @@ DIQA-5000 provides exactly what a custom perceptual study would deliver:
 
 **The OCR "Cliff Function":**
 Research shows OCR accuracy follows a sigmoidal pattern:
+
 - **Plateau:** For blur σ < 1.5, CER ≈ 0%
 - **Cliff:** For 1.5 < σ < 2.5, CER spikes dramatically
 - **Tail:** For σ > 2.5, CER saturates at ~100%
@@ -177,6 +188,7 @@ Research shows OCR accuracy follows a sigmoidal pattern:
 Linear severity mappings miss this critical non-linearity.
 
 **Required Metrics:**
+
 ```python
 # Correlation between IQA severity and OCR performance
 cer_correlation = spearmanr(iqa_severity, character_error_rate)
@@ -189,6 +201,7 @@ ranking_agreement > 0.80
 ```
 
 **Required Action:**
+
 1. Create validation set with known CER/WER (use OHR-Bench or FUNSD)
 2. Run Tesseract/EasyOCR on validation images
 3. Compute correlation between IQA predictions and OCR error rates
@@ -218,6 +231,7 @@ uv run python scripts/evaluate_pyiqa_baselines.py \
 ```
 
 **Required Action:**
+
 1. Run PyIQA baselines script on DIQA-5000
 2. Update benchmark tracker with actual measurements
 3. Compare Phase7 model against SOTA (target: within 0.05 SRCC of MUSIQ)
@@ -225,12 +239,14 @@ uv run python scripts/evaluate_pyiqa_baselines.py \
 ### 2.6 MEDIUM: Missing Statistical Rigor
 
 **Current Approach:**
+
 - Single random seed (42)
 - Point estimates without confidence intervals
 - No significance testing for comparisons
 - No effect size reporting
 
 **Industry Standard:**
+
 ```
 Method: Phase7_ResNet50
 DIQA-5000 SRCC: 0.842 ± 0.015 (95% CI: 0.812-0.872)
@@ -239,6 +255,7 @@ Seeds: [42, 123, 456], n=3
 ```
 
 **Required Elements:**
+
 1. **Confidence Intervals:** Bootstrap with 1000 resamples, report 95% CI
 2. **Multi-seed Training:** Minimum 3 seeds, report mean ± std
 3. **Significance Testing:** Paired t-test or Wilcoxon signed-rank
@@ -246,6 +263,7 @@ Seeds: [42, 123, 456], n=3
 5. **Multiple Comparison Correction:** Bonferroni when comparing many methods
 
 **Required Action:**
+
 1. Implement bootstrap CI calculation in evaluation scripts
 2. Train with multiple seeds (add to training config)
 3. Add significance tests to benchmark comparison
@@ -287,6 +305,7 @@ Seeds: [42, 123, 456], n=3
 ### 3.4 Reporting Format
 
 **Per-Dataset Results Table:**
+
 ```markdown
 | Dataset | Split | N | SRCC (95% CI) | PLCC (95% CI) | ENCE | MCE |
 |---------|-------|---|---------------|---------------|------|-----|
@@ -296,6 +315,7 @@ Seeds: [42, 123, 456], n=3
 ```
 
 **Baseline Comparison Table:**
+
 ```markdown
 | Model | DIQA-5000 SRCC | Δ vs Ours | p-value | Significance |
 |-------|----------------|-----------|---------|--------------|
@@ -306,6 +326,7 @@ Seeds: [42, 123, 456], n=3
 ```
 
 **Per-Degradation Breakdown:**
+
 ```markdown
 | Degradation | SRCC | PLCC | Notes |
 |-------------|------|------|-------|
@@ -323,6 +344,7 @@ Seeds: [42, 123, 456], n=3
 ### Phase 1: Quick Wins (Week 1)
 
 **Task 1.1: Run PyIQA Baselines**
+
 ```bash
 # Already exists - just run it
 uv run python scripts/evaluate_pyiqa_baselines.py \
@@ -331,6 +353,7 @@ uv run python scripts/evaluate_pyiqa_baselines.py \
 ```
 
 **Task 1.2: Update Benchmark Tracker**
+
 - Populate DIQA-5000 columns with actual measurements
 - Add confidence intervals to results
 
@@ -339,6 +362,7 @@ uv run python scripts/evaluate_pyiqa_baselines.py \
 ### Phase 2: DIQA-5000 Integration (Week 2-3)
 
 **Task 2.1: Create DIQA-5000 Evaluation Script**
+
 ```python
 # scripts/evaluate_on_diqa5000.py
 def evaluate_phase7_on_diqa5000(model_path, diqa_path):
@@ -365,6 +389,7 @@ def evaluate_phase7_on_diqa5000(model_path, diqa_path):
 ```
 
 **Task 2.2: Add to Training Pipeline**
+
 - Include DIQA-5000 validation during training
 - Track SRCC on external benchmark, not just internal loss
 
@@ -373,6 +398,7 @@ def evaluate_phase7_on_diqa5000(model_path, diqa_path):
 ### Phase 3: OCR Correlation (Week 4-5)
 
 **Task 3.1: Create OCR Validation Set**
+
 ```python
 # scripts/create_ocr_validation_set.py
 def create_ocr_validation_set(ohr_bench_path, output_path):
@@ -397,6 +423,7 @@ def create_ocr_validation_set(ohr_bench_path, output_path):
 ```
 
 **Task 3.2: Compute IQA-OCR Correlation**
+
 ```python
 def validate_ocr_correlation(model, validation_set):
     """Validate IQA predictions correlate with OCR performance."""
@@ -422,6 +449,7 @@ def validate_ocr_correlation(model, validation_set):
 ### Phase 4: Statistical Rigor (Week 6)
 
 **Task 4.1: Implement Bootstrap CI**
+
 ```python
 def compute_bootstrap_ci(predictions, targets, metric_fn, n_bootstrap=1000):
     """Compute 95% confidence interval via bootstrap."""
@@ -444,6 +472,7 @@ def compute_bootstrap_ci(predictions, targets, metric_fn, n_bootstrap=1000):
 ```
 
 **Task 4.2: Multi-Seed Training**
+
 - Train with seeds [42, 123, 456]
 - Report mean ± std across seeds
 - Use for significance testing
@@ -453,11 +482,13 @@ def compute_bootstrap_ci(predictions, targets, metric_fn, n_bootstrap=1000):
 ### Phase 5: Cross-Dataset Validation (Week 7-8)
 
 **Task 5.1: Add SmartDoc-QA Dataset**
+
 - Download SmartDoc-QA benchmark
 - Create adapter for evaluation pipeline
 - Run cross-dataset evaluation
 
 **Task 5.2: Report Generalization Gap**
+
 ```python
 def report_generalization_gap(model, datasets):
     """Report SRCC drop across datasets."""
@@ -670,6 +701,7 @@ The current benchmarking approach has significant gaps that undermine confidence
 4. **No downstream validation** - IQA scores not linked to OCR performance
 
 The recommended protocol addresses all gaps with **zero additional cost** by leveraging:
+
 - Existing downloaded datasets (DIQA-5000, OHR-Bench)
 - Pre-trained baseline models (via PyIQA)
 - Standard evaluation metrics (SRCC, PLCC, ENCE)
@@ -681,6 +713,7 @@ Implementing this protocol requires approximately **2-3 weeks of engineering eff
 **Document Version**: 1.0
 **Last Updated**: 2025-12-15
 **Related Documents**:
+
 - [PHASE7_CRITICAL_EVALUATION.md](PHASE7_CRITICAL_EVALUATION.md)
 - [PHASE7_IDEAL_STATE_PROJECT_PLAN.md](PHASE7_IDEAL_STATE_PROJECT_PLAN.md)
 - [data/benchmarks/README.md](../../data/benchmarks/README.md)

@@ -1,8 +1,7 @@
 ---
 schema_type: planning
 title: "Phase 7 Training Methodology Deep Dive"
-description: "Comprehensive evaluation of Phase 7 IQA training methodology including dataset
-  analysis, labeling strategies, loss functions, and multi-model consensus validation"
+description: "Comprehensive evaluation of Phase 7 IQA training methodology including dataset analysis, labeling strategies, loss functions, and multi-model consensus validation"
 tags:
   - planning
   - phase7
@@ -25,8 +24,6 @@ source: Manual creation
 > **Purpose**: Systematic evaluation of training methodology with multi-model consensus validation
 
 ---
-
-## Table of Contents
 
 1. [Project Goals & Success Criteria](#1-project-goals--success-criteria)
 2. [Dataset Lineage & Sources](#2-dataset-lineage--sources)

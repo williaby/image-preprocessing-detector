@@ -52,12 +52,12 @@ distillation_volume = modal.Volume.from_name("phase7-distillation-checkpoints", 
 )
 def export_to_onnx(seed: int = 42):
     """Export student model to ONNX and benchmark."""
-    import torch
-    import torch.nn as nn
     import numpy as np
     import onnx
     import onnxruntime as ort
     import timm
+    import torch
+    import torch.nn as nn
     from google.cloud import storage
 
     print("=" * 60)

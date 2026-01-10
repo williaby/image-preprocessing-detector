@@ -27,8 +27,6 @@ source: Manual creation
 
 ---
 
-# Phase 7 IQA Training - MVP Project Plan v2
-
 ## Changelog (v1 → v2)
 
 | Change | v1 (Ideal State) | v2 (MVP) | Rationale |
@@ -68,6 +66,7 @@ IQA & Routing        Full Layout          Multi-Engine           Embeddings
 ```
 
 **Deployment Models**:
+
 - **ResNet-50 (Primary)**: Production model for all quality assessment and routing decisions
 - **ResNet-18 (Secondary)**: Resource-efficient model for low-complexity documents (CPU-only environments)
 
@@ -102,6 +101,7 @@ IQA & Routing        Full Layout          Multi-Engine           Embeddings
 ### 1.3 Out of Scope
 
 **This project does NOT**:
+
 - Perform full layout detection (Project B responsibility)
 - Extract table structure or reading order
 - Perform OCR (handled downstream)
@@ -134,6 +134,7 @@ IQA & Routing        Full Layout          Multi-Engine           Embeddings
 **Decision**: Phase 7 scope is **IQA ONLY** (blur, noise, skew, contrast, compression severity). Phase 9 classifiers are documented in [PHASE7_AND_PHASE9_INTEGRATION.md](PHASE7_AND_PHASE9_INTEGRATION.md) as a separate project phase.
 
 **Deployment Strategy**: "Sequential Training → Unified Inference"
+
 - Train Phase 7 and Phase 9 separately
 - Deploy as single ONNX model with shared backbone (75MB, 13ms GPU)
 - Phase 7 can deploy independently if Phase 9 is delayed
@@ -152,6 +153,7 @@ graph TD
 ```
 
 **Complexity Gate Heuristics** (to be validated):
+
 - Simple: Text-only, low layout complexity, DPI > 200, no visible degradation
 - Complex: Tables, forms, handwriting, mixed layouts, degradation detected
 
@@ -171,10 +173,12 @@ Phase 7 ML model focuses on **quantifiable severity dimensions** that benefit fr
 | **perspective_severity** | Perspective Distortion (P2) | Mobile captures, book spine curvature | Correction aggressiveness |
 
 **Remaining 13 taxonomy detectors** handled by:
+
 - **Classical CV** (8 detectors): Illumination, Binarization, Bleed-Through, JPEG Blockiness, Resolution, Warping, Background Patterns, etc.
 - **Phase 9 Classifiers** (5 detectors): Watermarks, Stamps, Signatures, Margin Annotations, Highlighted Text (binary presence/absence)
 
 **Architecture**:
+
 ```python
 class IQAResNet50(nn.Module):
     """Production IQA model with 6-head severity prediction."""
@@ -245,6 +249,7 @@ class SeverityHead(nn.Module):
 **Deployment**: CPU-optimized (ONNX export with quantization)
 
 **Distillation Strategy**:
+
 1. **Hard targets**: Ground truth severity labels (same as ResNet-50)
 2. **Soft targets**: ResNet-50 logits (before sigmoid) at temperature T=2
 3. **Combined loss**: `α * KLDiv(student, teacher) + (1-α) * MSE(student, ground_truth)`
@@ -393,6 +398,7 @@ data/phase7_mvp/
 5. **Debugging**: Easy to trace any training sample back to its source
 
 **Implementation** (in `scripts/generate_iqa_dataset.py`):
+
 ```python
 def consolidate_base_images(self):
     """Step 1: Copy/symlink selected images to 00_base_images/."""
@@ -483,6 +489,7 @@ def consolidate_base_images(self):
 **Input Resolution**: **384×384** (MANDATORY)
 
 **Rationale**:
+
 - 224×224 destroys JPEG 8×8 blocks (compression_severity ECE=0.26)
 - 384×384 preserves ~3px blocks, detectable by CNN
 - RandomResizedCrop(384, scale=(0.5, 1.0)) provides:
@@ -490,6 +497,7 @@ def consolidate_base_images(self):
   - Zoomed view at scale=0.5 (local defects: compression, noise)
 
 **Training Transform**:
+
 ```python
 train_transform = A.Compose([
     # Resolution: 384×384 with random crops
@@ -508,6 +516,7 @@ train_transform = A.Compose([
 ```
 
 **Validation/Test Transform**:
+
 ```python
 val_transform = A.Compose([
     A.Resize(384, 384),
@@ -525,12 +534,14 @@ val_transform = A.Compose([
 **Chosen Semantics**: **0.0 = Perfect Quality, 1.0 = Maximum Degradation**
 
 **Rationale**:
+
 - Aligns with intuitive "defect severity" concept
 - Matches DIQA-5000 MOS normalization (low score = good quality)
 - Simplifies loss function design (minimize severity)
 - DQS = geometric mean of (1 - severity) per defect type
 
 **Mapping**:
+
 ```python
 # Defect severity [0, 1]
 blur_severity = f(sigma)      # 0.0 = sharp, 1.0 = maximum blur
@@ -561,11 +572,13 @@ quality_score = geometric_mean([
 | **JPEG Compression** | q ∈ [20, 100] | `severity = (100-q)/80` | Linear quality loss |
 
 **Key Changes from v3**:
+
 - **Non-linear mappings**: `tanh`, `sqrt`, `^0.8` match perceptual studies
 - **Bounded outputs**: All formulas guarantee [0, 1] range
 - **No hard 0/1**: Smoothing already built into formulas
 
 **DQS Calculation** (Weighted Geometric Mean):
+
 ```python
 def compute_dqs(severities: dict, weights: dict) -> float:
     """
@@ -594,6 +607,7 @@ def compute_dqs(severities: dict, weights: dict) -> float:
 **Phase 1: Synthetic Validation** (Pre-Training)
 
 1. **Parameter Correlation Check**:
+
    ```python
    # For 10K synthetic images
    for image, params, labels in sample_dataset:
@@ -603,6 +617,7 @@ def compute_dqs(severities: dict, weights: dict) -> float:
    ```
 
 2. **DQS Distribution Validation**:
+
    ```python
    # Simulate 100K samples without generating images
    dqs_distribution = simulate_dqs_distribution(
@@ -618,6 +633,7 @@ def compute_dqs(severities: dict, weights: dict) -> float:
 **Phase 2: Ground Truth Validation** (Post-Training)
 
 1. **DIQA-5000 MOS Correlation**:
+
    ```python
    # DIQA-5000 has human Mean Opinion Scores
    correlation = pearsonr(
@@ -629,6 +645,7 @@ def compute_dqs(severities: dict, weights: dict) -> float:
    ```
 
 2. **BRISQUE Compression Validation**:
+
    ```python
    # Validate compression labels against established metric
    correlation = pearsonr(
@@ -656,6 +673,7 @@ def compute_dqs(severities: dict, weights: dict) -> float:
 ### 5.1 Primary Loss: Gaussian Negative Log-Likelihood (Recommended)
 
 **Formulation**:
+
 ```python
 class GaussianNLLLoss(nn.Module):
     """Uncertainty-aware regression loss for severity prediction.
@@ -687,18 +705,21 @@ class GaussianNLLLoss(nn.Module):
 ```
 
 **Advantages**:
+
 1. **Unified objective**: Regression with uncertainty (no BCE/MSE conflict)
 2. **Calibration-aware**: Model learns when it's uncertain
 3. **Theoretically grounded**: Maximum likelihood estimation
 4. **Prevents overconfidence**: Penalizes low variance on uncertain samples
 
 **Disadvantages**:
+
 - Requires model architecture modification (add uncertainty head)
 - More complex than pure MSE
 
 ### 5.2 Alternative: Pure MSE (Baseline)
 
 **Formulation**:
+
 ```python
 class SeverityMSELoss(nn.Module):
     """Simple MSE regression on severity scores."""
@@ -719,11 +740,13 @@ class SeverityMSELoss(nn.Module):
 ```
 
 **Advantages**:
+
 - Simple, well-understood
 - No architectural changes needed
 - Direct severity prediction
 
 **Disadvantages**:
+
 - No uncertainty quantification
 - May require post-hoc calibration
 
@@ -733,6 +756,7 @@ class SeverityMSELoss(nn.Module):
 **Phase 2**: Gaussian NLL with uncertainty heads (production model)
 
 **Ablation Study**:
+
 1. Pure MSE (baseline)
 2. Gaussian NLL (temperature T=1)
 3. Gaussian NLL + Temperature Scaling (calibration)
@@ -790,17 +814,20 @@ class Phase7OptimalConfig:
 **Objective**: Establish performance ceiling with pure MSE
 
 **Configuration**:
+
 - Loss: Pure MSE
 - Resolution: 384×384
 - Augmentation: RandomResizedCrop + HorizontalFlip + mild ColorJitter
 - Dataset: Full 200K samples
 
 **Success Criteria**:
+
 - Train/val loss convergence
 - ECE < 0.10 (acceptable baseline)
 - No overfitting (val loss stable)
 
 **Deliverables**:
+
 - Baseline model checkpoint
 - Training curves (TensorBoard)
 - Per-head ECE report
@@ -810,15 +837,18 @@ class Phase7OptimalConfig:
 **Objective**: Improve calibration with Gaussian NLL
 
 **Configuration**:
+
 - Loss: Gaussian NLL
 - Architecture: Add uncertainty heads
 - Resume from Phase 1 backbone (optional)
 
 **Success Criteria**:
+
 - ECE < 0.08 (target)
 - Uncertainty correlates with error (validation)
 
 **Deliverables**:
+
 - Production ResNet-50 checkpoint
 - Calibration plots (reliability diagrams)
 - Uncertainty vs. error analysis
@@ -828,6 +858,7 @@ class Phase7OptimalConfig:
 **Objective**: Train ResNet-18 from ResNet-50
 
 **Configuration**:
+
 ```python
 distillation_loss = (
     0.7 * kl_divergence(student_logits / T, teacher_logits / T) +
@@ -836,10 +867,12 @@ distillation_loss = (
 ```
 
 **Success Criteria**:
+
 - ResNet-18 ECE within +0.03 of ResNet-50
 - Latency < 60ms on 8-core CPU
 
 **Deliverables**:
+
 - ResNet-18 checkpoint (ONNX quantized)
 - Performance comparison report
 - Deployment benchmarks
@@ -847,6 +880,7 @@ distillation_loss = (
 ### 6.3 Data Augmentation (IQA-Safe)
 
 **Allowed Augmentations** (do not confound defect labels):
+
 ```python
 train_transform = A.Compose([
     # Spatial (IQA-safe)
@@ -869,6 +903,7 @@ train_transform = A.Compose([
 ```
 
 **Forbidden Augmentations** (confound severity labels):
+
 - ❌ **Rotation/Affine** (confounds skew_severity)
 - ❌ **GaussianBlur** (confounds blur_severity)
 - ❌ **GaussianNoise** (confounds noise_severity)
@@ -905,11 +940,13 @@ train_split = stratified_split(
 ```
 
 **Validation Set** (30K samples):
+
 - Representative of all domains
 - Balanced defect distribution
 - Used for early stopping, hyperparameter tuning
 
 **Test Set** (30K samples):
+
 - **Hold-out**: Never seen during training or validation
 - Production proxy: Emphasize real degradation (DIQA-5000, Tobacco-800)
 - Final evaluation only
@@ -975,6 +1012,7 @@ def compute_stratified_metrics(predictions, targets, metadata):
 ### 7.3 Calibration Visualization
 
 **Reliability Diagrams** (per head):
+
 ```python
 def plot_reliability_diagram(predictions, targets, num_bins=15):
     """
@@ -1059,6 +1097,7 @@ def validate_with_triangulation(predictions, images, metadata):
 | **HyperIQA** | PyTorch Hub | ECE, MAE (requires adaptation) |
 
 **Evaluation Protocol**:
+
 1. Run baselines on test set
 2. Compute ECE, MAE, correlation
 3. Report in final evaluation table
@@ -1260,11 +1299,13 @@ gantt
 **Checkpoint 1: Dataset Validation (End of Week 2)**
 
 **Criteria**:
+
 - [ ] Domain distribution within ±2% of targets
 - [ ] Defect distribution within ±3% of targets
 - [ ] BRISQUE compression correlation > 0.70
 
 **Decision**:
+
 - **GO**: Proceed to baseline training
 - **NO-GO**: Adjust dataset generation, re-validate
 
@@ -1273,11 +1314,13 @@ gantt
 **Checkpoint 2: Baseline Performance (End of Week 4)**
 
 **Criteria**:
+
 - [ ] ECE < 0.10 (acceptable baseline)
 - [ ] Compression ECE < 0.18 (improvement from v3)
 - [ ] No severe overfitting (val loss stable)
 
 **Decision**:
+
 - **GO**: Proceed to Gaussian NLL production training
 - **NO-GO**: Debug loss function, augmentation, or labels
 
@@ -1286,11 +1329,13 @@ gantt
 **Checkpoint 3: Production Model (End of Week 6)**
 
 **Criteria**:
+
 - [ ] **ECE < 0.08** (PRIMARY TARGET)
 - [ ] All per-head ECE targets met
 - [ ] Uncertainty calibration validated
 
 **Decision**:
+
 - **GO**: Proceed to student distillation
 - **NO-GO**: Iterate on loss function, collect more data, or adjust targets
 
@@ -1299,10 +1344,12 @@ gantt
 **Checkpoint 4: Student Model (End of Week 8)**
 
 **Criteria**:
+
 - [ ] ResNet-18 ECE within +0.03 of ResNet-50
 - [ ] CPU latency < 60ms/page
 
 **Decision**:
+
 - **GO**: Proceed to final validation
 - **NO-GO**: Architecture search, extended training
 
@@ -1311,11 +1358,13 @@ gantt
 **Checkpoint 5: Production Readiness (End of Week 10)**
 
 **Criteria**:
+
 - [ ] Test set ECE < 0.10 (generalization)
 - [ ] Human annotation correlation > 0.75
 - [ ] Outperforms BRISQUE baseline
 
 **Decision**:
+
 - **GO**: Deploy to production
 - **NO-GO**: Label refinement, collect v2 dataset
 
@@ -1326,6 +1375,7 @@ gantt
 ### Appendix A: Configuration Files
 
 **Dataset Generation Config**:
+
 ```yaml
 # config/phase7_v5_dataset.yaml
 dataset:
@@ -1357,6 +1407,7 @@ dataset:
 ```
 
 **Training Config**:
+
 ```yaml
 # config/phase7_v5_training.yaml
 model:
@@ -1393,6 +1444,7 @@ early_stopping:
 ### Appendix B: Evaluation Checklist
 
 **Pre-Deployment Validation**:
+
 - [ ] Overall ECE < 0.08
 - [ ] blur_severity ECE < 0.10
 - [ ] noise_severity ECE < 0.10

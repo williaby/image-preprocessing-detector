@@ -24,8 +24,6 @@ source: Manual creation
 
 ---
 
-# Phase 7 & Phase 9 Integration Strategy
-
 ## Executive Summary
 
 Phase 7 and Phase 9 are **tightly coupled** through a **shared backbone architecture**. Phase 7 trains ResNet-50 (production) and ResNet-18 (efficiency) for IQA, while Phase 9 **reuses the Phase 7 ResNet-18 backbone** as a frozen feature extractor for 4 specialized element classifiers.
@@ -52,6 +50,7 @@ graph TD
 ### 1.2 Unified Model Architecture
 
 **Phase 7 Output** (ResNet-18 Student):
+
 ```python
 class Phase7ResNet18IQA(nn.Module):
     """IQA student model trained via distillation from ResNet-50."""
@@ -88,6 +87,7 @@ class Phase7ResNet18IQA(nn.Module):
 ```
 
 **Phase 9 Extension** (Shared Backbone + Task Heads):
+
 ```python
 class Phase9UnifiedClassifier(nn.Module):
     """Unified classifier with frozen IQA backbone + 4 task-specific heads."""
@@ -164,6 +164,7 @@ class ParasiticDetectorHead(nn.Module):
 ```
 
 **Total Parameters**:
+
 - **Phase 7 IQA ResNet-18**: 11.7M (backbone) + 5 × ~10K (heads) = ~11.75M
 - **Phase 9 Classifiers**: 11.7M (shared frozen backbone) + 463K (4 heads) = **12.2M total**
 - **Alternative (5 separate ResNet-18s)**: 5 × 11.7M = **58.5M total** (4.8x larger!)
@@ -175,6 +176,7 @@ class ParasiticDetectorHead(nn.Module):
 ### 2.1 Dataset Overlap Analysis
 
 **Phase 7 Ideal Dataset** (from PHASE7_IDEAL_STATE_PROJECT_PLAN.md):
+
 - Total: 200K samples
 - Domain distribution: 30% Mixed, 25% Tables, 20% Forms, 10% Real Degraded, 10% Handwriting, 5% Formulas
 
@@ -190,6 +192,7 @@ class ParasiticDetectorHead(nn.Module):
 **Key Datasets Providing Phase 9 Foundation**:
 
 From Phase 7 (200K samples):
+
 - **TableBank** (50K in Phase 7 plan): Table grid structure, borders, cell patterns
 - **PubTabNet** (30K in Phase 7 plan): Scientific tables, formula-adjacent content
 - **FinTabNet** (10K in Phase 7 plan): Financial table structures
@@ -220,6 +223,7 @@ From Phase 7 (200K samples):
 **Timeline**: Weeks 1-8 (from PHASE7_IDEAL_STATE_PROJECT_PLAN.md)
 
 **Key Steps**:
+
 1. **Weeks 1-2**: Dataset preparation (200K samples, domain-balanced)
 2. **Weeks 3-4**: ResNet-50 baseline (Pure MSE → Gaussian NLL)
 3. **Weeks 5-6**: ResNet-50 production model (ECE < 0.08 target)
@@ -274,23 +278,27 @@ for param in backbone.parameters():
 ### 3.3 Phase 9 Datasets
 
 **9.1 Handwriting Classifier** (2-class: printed vs handwritten):
+
 - **Dataset**: IAM Handwriting Database (~13K samples) + custom scanned documents (5K)
 - **Augmentation**: RandomResizedCrop, HorizontalFlip, mild ColorJitter
 - **Target Accuracy**: >96% (ResNet-18), >92% (MobileNetV3)
 
 **9.2 Table Type Classifier** (6-class):
+
 - **Dataset**: PubTables-1M (subset with type annotations, ~50K samples)
 - **Classes**: simple_grid, merged_header, nested_rows, financial, form_like, scientific
 - **Augmentation**: RandomResizedCrop, HorizontalFlip
 - **Target Accuracy**: >90% (ResNet-18), >85% (MobileNetV3)
 
 **9.3 Formula Complexity Classifier** (5-class):
+
 - **Dataset**: IM2LATEX-100K (~100K samples) + arXiv papers from OHR-Bench (10K)
 - **Classes**: simple_inline, block_equation, multi_line, matrix, handwritten_math
 - **Augmentation**: RandomResizedCrop (formulas sensitive to cropping)
 - **Target Accuracy**: >88% (ResNet-18), >84% (MobileNetV3)
 
 **9.4 Parasitic Content Detector** (4-class):
+
 - **Dataset**: Synthetic watermarks (20K) + SignaTR6K (6K signatures) + real scans (5K)
 - **Classes**: watermark, stamp, signature, clean
 - **Augmentation**: RandomResizedCrop, HorizontalFlip, ColorJitter
@@ -303,6 +311,7 @@ for param in backbone.parameters():
 ### 4.1 Inference Pipeline Options
 
 **Option A: Unified Analyzer** (Recommended for batch processing):
+
 ```python
 # Single ONNX model: backbone + all heads
 # One forward pass, all outputs
@@ -324,6 +333,7 @@ outputs = model(image)  # Single pass
 **Model Size**: ~75MB
 
 **Option B: Modular Heads** (Recommended for selective deployment):
+
 ```python
 # Load backbone once, attach heads on demand
 backbone = BackboneFeatureExtractor.load("resnet18_backbone_v1.onnx")
@@ -345,6 +355,7 @@ output = handwriting_head(features)
 | **Shared Backbone + Heads** | **~13ms** ⭐ | **~50ms** ⭐ | **75MB** ⭐ | **Excellent** ⭐ |
 
 **Advantages of Shared Backbone**:
+
 - **4x faster** than separate models
 - **5x smaller** than separate models
 - **Modular**: Load only needed heads
@@ -377,6 +388,7 @@ graph TD
 ### 5.2 JSON Output Schema Enhancement
 
 **Before Phase 9** (Phase 7 only):
+
 ```json
 {
   "document_id": "doc_001",
@@ -400,6 +412,7 @@ graph TD
 ```
 
 **After Phase 9** (Phase 7 + Phase 9):
+
 ```json
 {
   "document_id": "doc_001",
@@ -482,6 +495,7 @@ graph TD
 | **Parasitic** | >95% (ResNet-18) | <3ms GPU | ❌ Not Started |
 
 **Unified Analyzer**:
+
 - Total Latency: <13ms GPU (all 4 classifiers + IQA)
 - Model Size: <75MB
 
@@ -532,6 +546,7 @@ graph TD
 **Risk**: If Phase 7 ResNet-18 fails to meet ECE < 0.10, Phase 9 transfer learning may be compromised.
 
 **Mitigation**:
+
 - Phase 7 is well-designed (Gaussian NLL, 384×384, domain-balanced)
 - If Phase 7 fails, fall back to ImageNet initialization for Phase 9
 - Expected accuracy loss: 3-12% depending on classifier
@@ -541,6 +556,7 @@ graph TD
 **Risk**: Phase 9 dataset annotations may be noisy (table type, formula complexity).
 
 **Mitigation**:
+
 - Manual annotation of 500-1000 samples per classifier
 - Active learning: Train initial model, correct worst errors, retrain
 - Cross-validation to detect label noise
@@ -550,6 +566,7 @@ graph TD
 **Risk**: Small Phase 9 datasets (5K-50K) may lead to overfitting.
 
 **Mitigation**:
+
 - Strong regularization (dropout=0.3, weight decay=0.02)
 - Data augmentation (RandomResizedCrop, HorizontalFlip)
 - Early stopping (patience=5)
@@ -560,6 +577,7 @@ graph TD
 ## 9. Summary
 
 **Phase 7 and Phase 9 are tightly integrated**:
+
 - Phase 7 provides a **document-optimized ResNet-18 backbone** (11.7M params)
 - Phase 9 adds **4 lightweight classification heads** (463K params total)
 - **Shared backbone reduces total parameters by 4.8x** (12.2M vs 58.5M)
@@ -568,11 +586,13 @@ graph TD
 **Critical Success Factor**: Phase 7 must achieve ECE < 0.08 with diverse dataset (200K samples, domain-balanced). The 91% table coverage in Phase 7 provides exceptional transfer learning for the table type classifier.
 
 **Timeline**:
+
 - **Phase 7**: Weeks 1-8 (dataset, training, distillation)
 - **Phase 9**: Weeks 9-12 (classifier training in parallel)
 - **Total**: 12 weeks from start to full deployment
 
 **Next Steps**:
+
 1. Execute Phase 7 Ideal State Project Plan
 2. Validate ResNet-18 backbone quality (ECE, latency)
 3. Begin Phase 9 dataset acquisition (parallel to Phase 7)

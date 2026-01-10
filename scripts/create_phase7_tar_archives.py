@@ -38,7 +38,7 @@ def create_tar_archive(
     # Create tar archive
     with tarfile.open(archive_full_path, "w:gz") as tar:
         # Add images
-        for item in tqdm(metadata_items, desc=f"  Adding images"):
+        for item in tqdm(metadata_items, desc="  Adding images"):
             img_filename = item["filename"]
             img_path = images_dir / img_filename
             if img_path.exists():
@@ -211,7 +211,7 @@ def main():
     print("# Upload all archives to GCS:")
     for archive in archives:
         print(f"gsutil -m cp {archive['path']} gs://doc-quality-evaluation/datasets/phase7_v3/")
-    print(f"\n# Or upload the entire archives directory:")
+    print("\n# Or upload the entire archives directory:")
     print(f"gsutil -m rsync -r {output_dir}/ gs://doc-quality-evaluation/datasets/phase7_v3/")
 
 

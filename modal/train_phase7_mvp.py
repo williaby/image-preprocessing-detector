@@ -30,7 +30,6 @@ Monitor:
 
 import json
 import os
-import shutil
 import tarfile
 import tempfile
 import time
@@ -96,7 +95,7 @@ class MVPTrainingConfig:
     dropout: float = 0.2
     pretrained: bool = True
 
-    # Loss (BCE + MSE)
+    # Loss function - BCE + MSE combined
     loss_alpha: float = 0.6  # BCE weight
     loss_beta: float = 0.4   # MSE weight
 
@@ -122,6 +121,7 @@ class MVPTrainingConfig:
 def set_seed(seed: int) -> None:
     """Set random seeds for reproducibility across all libraries."""
     import random
+
     import numpy as np
     import torch
 
@@ -151,8 +151,8 @@ def safe_extract_tar(tar_path: Path, extract_path: Path) -> None:
 
 
 def compute_ece_numpy(
-    predictions: "np.ndarray",
-    targets: "np.ndarray",
+    predictions: Any,
+    targets: Any,
     num_bins: int = 15,
 ) -> dict:
     """Compute Expected Calibration Error using numpy.
@@ -212,22 +212,22 @@ def compute_ece_numpy(
 def download_and_extract(bucket_name: str, blob_name: str, extract_dir: Path) -> None:
     """Download and extract a tar.gz from GCS."""
     from google.cloud import storage
-    
+
     print(f"Downloading: gs://{bucket_name}/{blob_name}")
-    
+
     with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
         tar_path = Path(tmp.name)
-    
+
     start = time.time()
     client = storage.Client()
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(blob_name)
     blob.download_to_filename(str(tar_path))
-    
+
     size_mb = tar_path.stat().st_size / (1024**2)
     elapsed = time.time() - start
     print(f"  Downloaded {size_mb:.1f} MB in {elapsed:.1f}s")
-    
+
     print("  Extracting...")
     safe_extract_tar(tar_path, extract_dir)
     tar_path.unlink()
@@ -237,56 +237,57 @@ def download_and_extract(bucket_name: str, blob_name: str, extract_dir: Path) ->
 def prepare_mvp_dataset(bucket_name: str, gcs_prefix: str) -> Path:
     """Download and prepare MVP dataset."""
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
-    
+
     dataset_dir = Path("/tmp/phase7_mvp")
     images_dir = dataset_dir / "images"
-    
+
     # Check if already downloaded
     if (dataset_dir / "train_metadata.json").exists():
-        train_count = len(json.load(open(dataset_dir / "train_metadata.json")))
+        with open(dataset_dir / "train_metadata.json") as f:
+            train_count = len(json.load(f))
         image_count = len(list(images_dir.glob("*.jpg"))) if images_dir.exists() else 0
         if image_count > train_count * 0.9:
             print(f"Dataset already exists: {train_count} train, {image_count} images")
             return dataset_dir
-    
+
     dataset_dir.mkdir(parents=True, exist_ok=True)
     images_dir.mkdir(parents=True, exist_ok=True)
-    
+
     all_train_samples = []
-    
+
     # Download train archive
     print("\n[Train]")
     download_and_extract(
-        bucket_name, 
+        bucket_name,
         f"{gcs_prefix}/phase7_mvp_train.tar.gz",
         dataset_dir
     )
-    
+
     # Move images and load metadata
-    for img in (dataset_dir / "images").glob("*.jpg"):
+    for _img in (dataset_dir / "images").glob("*.jpg"):
         # Already in place
         pass
-    
+
     train_meta = dataset_dir / "train_metadata.json"
     if train_meta.exists():
         with open(train_meta) as f:
             all_train_samples = json.load(f)
         print(f"  Train samples: {len(all_train_samples)}")
-    
-    # Download val archive  
+
+    # Download val archive
     print("\n[Val]")
     download_and_extract(
         bucket_name,
-        f"{gcs_prefix}/phase7_mvp_val.tar.gz", 
+        f"{gcs_prefix}/phase7_mvp_val.tar.gz",
         dataset_dir
     )
-    
+
     val_meta = dataset_dir / "val_metadata.json"
     if val_meta.exists():
         with open(val_meta) as f:
             val_samples = json.load(f)
         print(f"  Val samples: {len(val_samples)}")
-    
+
     # Download test archive
     print("\n[Test]")
     download_and_extract(
@@ -294,17 +295,17 @@ def prepare_mvp_dataset(bucket_name: str, gcs_prefix: str) -> Path:
         f"{gcs_prefix}/phase7_mvp_test.tar.gz",
         dataset_dir
     )
-    
+
     test_meta = dataset_dir / "test_metadata.json"
     if test_meta.exists():
         with open(test_meta) as f:
             test_samples = json.load(f)
         print(f"  Test samples: {len(test_samples)}")
-    
+
     # Verify
     image_count = len(list(images_dir.glob("*.jpg")))
     print(f"\nTotal images: {image_count}")
-    
+
     return dataset_dir
 
 
@@ -324,13 +325,13 @@ def train_mvp(seed: int = 42):
     import sys
     sys.path.insert(0, "/root")
 
+    import albumentations as alb
+    import timm
     import torch
     import torch.nn as nn
     import torch.optim as optim
-    from torch.utils.data import DataLoader
-    import timm
-    import albumentations as A
     from albumentations.pytorch import ToTensorV2
+    from torch.utils.data import DataLoader
 
     from data.dataset import ContinuousIQADataset
 
@@ -338,7 +339,7 @@ def train_mvp(seed: int = 42):
 
     # Set seeds for reproducibility
     set_seed(config.seed)
-    
+
     print("=" * 60)
     print("PHASE 7 MVP TRAINING")
     print("=" * 60)
@@ -348,44 +349,44 @@ def train_mvp(seed: int = 42):
     print(f"Epochs: {config.epochs}")
     print(f"Batch size: {config.batch_size}")
     print(f"Learning rate: {config.learning_rate}")
-    
+
     # Prepare dataset
     print("\n📦 Preparing dataset...")
     dataset_dir = prepare_mvp_dataset(config.gcs_bucket, config.gcs_prefix)
-    
+
     # Create transforms
-    train_transform = A.Compose([
-        A.Resize(384, 384),
-        A.HorizontalFlip(p=0.5),
-        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    train_transform = alb.Compose([
+        alb.Resize(384, 384),
+        alb.HorizontalFlip(p=0.5),
+        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2(),
     ])
-    
-    val_transform = A.Compose([
-        A.Resize(384, 384),
-        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+
+    val_transform = alb.Compose([
+        alb.Resize(384, 384),
+        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2(),
     ])
-    
+
     # Create datasets
     print("\n📊 Creating data loaders...")
     train_dataset = ContinuousIQADataset(dataset_dir, split="train", transform=train_transform)
     val_dataset = ContinuousIQADataset(dataset_dir, split="val", transform=val_transform)
-    
+
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4)
-    
+
     print(f"  Train batches: {len(train_loader)}")
     print(f"  Val batches: {len(val_loader)}")
-    
+
     # Create model
     print("\n🏗️ Creating model...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"  Device: {device}")
-    
+
     backbone = timm.create_model(config.model_architecture, pretrained=config.pretrained, num_classes=0)
     feature_dim = backbone.num_features
-    
+
     class MultiHeadIQA(nn.Module):
         def __init__(self, backbone, feature_dim, num_heads, dropout):
             super().__init__()
@@ -398,21 +399,21 @@ def train_mvp(seed: int = 42):
                 )
                 for _ in range(num_heads)
             ])
-        
+
         def forward(self, x):
             features = self.backbone(x)
             outputs = [head(features) for head in self.heads]
             return torch.cat(outputs, dim=1)
-    
+
     model = MultiHeadIQA(backbone, feature_dim, config.num_heads, config.dropout)
     model = model.to(device)
-    
+
     # Loss and optimizer
     bce_loss = nn.BCELoss()
     mse_loss = nn.MSELoss()
     optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.epochs)
-    
+
     # Training loop with ECE tracking (Sprint 4)
     print("\n🚀 Starting training...")
     print(f"ECE Target: {config.ece_target}")
@@ -564,7 +565,7 @@ def train_mvp(seed: int = 42):
 
         # All three targets must be met for early stop (plus minimum epochs)
         if ece_met and mae_met and corr_met and min_epochs_met:
-            print(f"\n🎯 ALL TARGETS ACHIEVED!")
+            print("\n🎯 ALL TARGETS ACHIEVED!")
             print(f"   ECE={current_ece:.4f} < {config.ece_target}")
             print(f"   MAE={severity_mae:.4f} < {config.mae_target}")
             print(f"   Corr={macro_correlation:.4f} > {config.correlation_target}")
@@ -596,7 +597,7 @@ def train_mvp(seed: int = 42):
     corr_met = best_correlation > config.correlation_target
     all_targets_met = ece_met and mae_met and corr_met
 
-    print(f"\nTarget Status:")
+    print("\nTarget Status:")
     print(f"  ECE: {'✅' if ece_met else '❌'} ({best_ece:.4f} vs <{config.ece_target})")
     print(f"  MAE: {'✅' if mae_met else '❌'} ({best_mae:.4f} vs <{config.mae_target})")
     print(f"  Correlation: {'✅' if corr_met else '❌'} ({best_correlation:.4f} vs >{config.correlation_target})")

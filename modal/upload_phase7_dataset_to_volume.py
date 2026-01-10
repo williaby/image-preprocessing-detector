@@ -40,7 +40,6 @@ training_volume = modal.Volume.from_name("phase7-training-data", create_if_missi
 )
 def upload_dataset():
     """Upload Phase 7 dataset from local NFS to Modal Volume."""
-    import shutil
 
     # The local dataset will be mounted by Modal
     # We just need to let Modal copy it to the volume

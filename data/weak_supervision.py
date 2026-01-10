@@ -665,6 +665,9 @@ class ContinuousWeakSupervisionLabeler:
         self.smooth_clip_max = smooth_clip_max
         self.outlier_threshold = outlier_threshold
 
+        # Reuse binary labeler instance for efficiency
+        self._binary_labeler = WeakSupervisionLabeler()
+
         # Normalization parameters for each metric
         # These map raw metric values to [0, 1] severity
         self.normalization: dict[str, dict[str, Any]] = {
@@ -736,15 +739,13 @@ class ContinuousWeakSupervisionLabeler:
             Dictionary with continuous severity scores compatible with
             ContinuousQualityLabel schema
         """
-        # Use the binary labeler's detection methods
-        binary_labeler = WeakSupervisionLabeler()
-
+        # Use the binary labeler's detection methods (reuse instance)
         # Compute raw metrics
-        laplacian_var = binary_labeler._compute_laplacian_variance(image)
-        brisque_score = binary_labeler._compute_brisque(image)
-        skew_angle = binary_labeler._detect_skew(image)
-        rms_contrast = binary_labeler._compute_rms_contrast(image)
-        blockiness = binary_labeler._detect_blockiness(image)
+        laplacian_var = self._binary_labeler._compute_laplacian_variance(image)
+        brisque_score = self._binary_labeler._compute_brisque(image)
+        skew_angle = self._binary_labeler._detect_skew(image)
+        rms_contrast = self._binary_labeler._compute_rms_contrast(image)
+        blockiness = self._binary_labeler._detect_blockiness(image)
 
         # Convert to continuous severity scores
         blur_severity = self._normalize_metric(laplacian_var, "laplacian")
@@ -753,18 +754,13 @@ class ContinuousWeakSupervisionLabeler:
         contrast_severity = self._normalize_metric(rms_contrast, "rms_contrast")
         compression_severity = self._normalize_metric(blockiness, "blockiness")
 
-        # Compute overall quality (1 - max severity)
-        max_severity = max(
-            blur_severity,
-            noise_severity,
-            skew_severity,
-            contrast_severity,
-            compression_severity,
-        )
-        overall_quality = 1.0 - max_severity
+        # Compute overall quality using 75th percentile of severities
+        # This is more robust than max for documents with multiple moderate defects
+        severities = [blur_severity, noise_severity, skew_severity, contrast_severity, compression_severity]
+        severity_75th = float(np.percentile(severities, 75))
+        overall_quality = 1.0 - severity_75th
 
         # Check for outliers (high disagreement between detectors)
-        severities = [blur_severity, noise_severity, skew_severity, contrast_severity, compression_severity]
         severity_variance = float(np.var(severities))
         is_outlier = severity_variance > self.outlier_threshold
 

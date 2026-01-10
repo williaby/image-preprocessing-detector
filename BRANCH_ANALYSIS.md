@@ -59,7 +59,7 @@ After a month away from the project, there are **7 active branches** with unmerg
 - ❌ **Removed**: Deprecated Phase 2 training assets (modal/train_phase2_iqa.py, scripts/prepare_phase2_data.py, etc.)
 - 🔧 **Modified**: Updated iqa_ml.py with new model handling (195 lines changed)
 
-**Recommendation**: **MERGE FIRST** - This is the most cohesive and complete Phase 7 implementation. Should be the foundation for Phase 7 work.
+**Recommendation**: **MERGE FIRST** - This is the most cohesive and complete Phase 7 implementation and should be the foundation for Phase 7 work.
 
 ---
 
@@ -323,7 +323,7 @@ After a month away from the project, there are **7 active branches** with unmerg
 
 ## Branch Relationship Diagram
 
-```
+```text
 main (ac84a96)
 ├── feat/phase7-continuous-training (12 commits ahead) ⭐ PRIMARY
 ├── claude/add-labeling-workstreams (23 commits ahead) 🎯 MAJOR FEATURE

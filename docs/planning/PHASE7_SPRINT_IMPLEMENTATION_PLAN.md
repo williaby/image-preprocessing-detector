@@ -25,8 +25,6 @@ source: Manual creation
 
 ---
 
-# Phase 7 IQA Training - Sprint Implementation Plan
-
 ## Executive Summary
 
 This document breaks down the Phase 7 MVP into **6 actionable sprints** with specific tasks, commands, acceptance criteria, and estimated durations. Each sprint builds on the previous and includes explicit go/no-go checkpoints.

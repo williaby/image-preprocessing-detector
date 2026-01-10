@@ -48,7 +48,7 @@ class DatasetFiles:
             annotations=[
                 f
                 for f in all_files
-                if f.endswith(".json") or f.endswith(".json.zip") or f == "README.md"
+                if f.endswith((".json", ".json.zip")) or f == "README.md"
             ],
             samples=[f for f in all_files if f.startswith("example_data/")],
             image_parts=sorted([f for f in all_files if "tar.gz.part_" in f]),

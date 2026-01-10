@@ -188,6 +188,7 @@ SPDX-FileCopyrightText = "2025 Byron Williams"
 path = [
     "benchmarks/reports/**/*.json",
     "benchmarks/reports/**/*.md",
+    "benchmarks/results/**/*.csv",  # Benchmark result CSVs
     "codemeta.json",
     "benchmarks/LICENSES.md",
     "benchmarks/registry.yml",
@@ -196,3 +197,11 @@ path = [
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2024 Byron Williams"
+
+# Stage 2 DIQA ensemble training data - ODbL-1.0
+[[annotations]]
+path = [
+    "stage2_diqa_ensemble/**/*.jsonl",  # Training/validation/test splits
+]
+SPDX-License-Identifier = "ODbL-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"

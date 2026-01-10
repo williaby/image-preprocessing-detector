@@ -399,11 +399,9 @@ class ContinuousTeacherTrainer:
 
         for batch in val_loader:
             if len(batch) == 3:
-                images, targets, variances = batch
-                variances = variances.to(self.device)
+                images, targets, _variances = batch  # Variances not used in validation
             else:
                 images, targets = batch
-                variances = None
 
             images = images.to(self.device)
             targets = targets.to(self.device)

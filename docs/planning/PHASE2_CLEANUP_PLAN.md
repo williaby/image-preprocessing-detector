@@ -7,7 +7,7 @@ tags:
 status: draft
 owner: core-maintainer
 purpose: Plan for removing deprecated Phase 2 IQA training assets.
-component: training
+component: Strategy
 source: internal
 ---
 

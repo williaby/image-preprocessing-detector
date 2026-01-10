@@ -103,7 +103,7 @@ class DistillationConfig:
     teacher_checkpoint: str = "production_model_seed42.pt"
     teacher_feature_dim: int = 2048
 
-    # Student (ResNet-18)
+    # Student model - ResNet-18 architecture
     student_architecture: str = "resnet18"
     student_feature_dim: int = 512
 
@@ -143,6 +143,7 @@ class DistillationConfig:
 def set_seed(seed: int) -> None:
     """Set random seeds for reproducibility."""
     import random
+
     import numpy as np
     import torch
 
@@ -237,7 +238,8 @@ def prepare_dataset(bucket_name: str, gcs_prefix: str) -> Path:
     images_dir = dataset_dir / "images"
 
     if (dataset_dir / "train_metadata.json").exists():
-        train_count = len(json.load(open(dataset_dir / "train_metadata.json")))
+        with open(dataset_dir / "train_metadata.json") as f:
+            train_count = len(json.load(f))
         image_count = len(list(images_dir.glob("*.jpg"))) if images_dir.exists() else 0
         if image_count > train_count * 0.9:
             print(f"Dataset exists: {train_count} train, {image_count} images")
@@ -271,16 +273,16 @@ def prepare_dataset(bucket_name: str, gcs_prefix: str) -> Path:
 )
 def train_distillation(seed: int = 42) -> dict[str, Any]:
     """Train ResNet-18 student via knowledge distillation from ResNet-50 teacher."""
+    import albumentations as alb
     import numpy as np
+    import timm
     import torch
     import torch.nn as nn
     import torch.optim as optim
+    from albumentations.pytorch import ToTensorV2
+    from PIL import Image
     from scipy import stats
     from torch.utils.data import DataLoader, Dataset
-    from PIL import Image
-    import albumentations as A
-    from albumentations.pytorch import ToTensorV2
-    import timm
 
     print("=" * 60)
     print("PHASE 7 KNOWLEDGE DISTILLATION")
@@ -416,17 +418,17 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
     dataset_dir = prepare_dataset(config.gcs_bucket, config.gcs_prefix)
 
     res = config.input_resolution
-    train_transform = A.Compose([
-        A.RandomResizedCrop(size=(res, res), scale=(0.5, 1.0)),
-        A.HorizontalFlip(p=0.5),
-        A.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0, p=0.3),
-        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    train_transform = alb.Compose([
+        alb.RandomResizedCrop(size=(res, res), scale=(0.5, 1.0)),
+        alb.HorizontalFlip(p=0.5),
+        alb.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0, p=0.3),
+        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2(),
     ])
 
-    val_transform = A.Compose([
-        A.Resize(height=res, width=res),
-        A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    val_transform = alb.Compose([
+        alb.Resize(height=res, width=res),
+        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ToTensorV2(),
     ])
 
@@ -495,7 +497,7 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
             self.var_min = var_min
             self.var_max = var_max
 
-        def forward(self, student_mu, student_log_var, teacher_mu, teacher_log_var, targets):
+        def forward(self, student_mu, student_log_var, teacher_mu, _teacher_log_var, targets):
             # Soft loss: MSE between teacher and student severity predictions
             # Scale by temperature squared (as in Hinton et al.)
             soft_loss = nn.functional.mse_loss(student_mu, teacher_mu) * (self.temperature ** 2)
@@ -711,7 +713,7 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
 
         # Early stopping
         if ece_met and mae_met and corr_met and min_epochs_met:
-            print(f"\n🎯 DISTILLATION TARGETS ACHIEVED!")
+            print("\n🎯 DISTILLATION TARGETS ACHIEVED!")
             print(f"   Student ECE={current_ece:.4f} < {ece_target:.4f} (teacher + {config.ece_tolerance})")
             print(f"   MAE={severity_mae:.4f} < {config.mae_target}")
             print(f"   Corr={macro_correlation:.4f} > {config.correlation_target}")

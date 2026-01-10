@@ -35,14 +35,10 @@ Reference:
 # mypy: ignore-errors
 
 import json
-import os
-import tempfile
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
-import yaml  # type: ignore[import-untyped]
 
 import modal
 
@@ -275,9 +271,7 @@ def train_phase7_teacher(config_override: dict[str, Any] | None = None) -> dict[
 
     sys.path.insert(0, "/root")
 
-    import numpy as np
     import torch
-    from torch.utils.data import DataLoader
 
     # Import our modules
     from image_preprocessing_detector.models.loss_functions import ContinuousBCEMSELoss
