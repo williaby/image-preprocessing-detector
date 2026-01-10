@@ -55,7 +55,9 @@ __all__ = [
 # PyTorch-dependent imports (optional)
 try:
     from image_preprocessing_detector.models.loss_functions import (
+        ContinuousBCEMSELoss,
         FocalLoss,
+        GDBCLoss,
         MultiHeadIQALoss,
         WeightedMSELoss,
         compute_class_weights,
@@ -71,7 +73,9 @@ try:
 
     __all__.extend(
         [
+            "ContinuousBCEMSELoss",
             "FocalLoss",
+            "GDBCLoss",
             "IQAHead",
             "MultiHeadIQALoss",
             "ResNetStudent",

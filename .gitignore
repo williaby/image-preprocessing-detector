@@ -83,6 +83,7 @@ data/promptcraft/
 data/raw/
 data/training/*
 datasets/
+data/
 
 # DVC tracking
 # *.dvc  # Commented to allow .dvc tracking files

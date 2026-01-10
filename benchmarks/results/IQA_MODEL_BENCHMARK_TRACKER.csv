@@ -1,0 +1,19 @@
+Model,Type,Source,Status,Phase7_MVP_Spearman,Phase7_MVP_Pearson,Phase7_MVP_MAE,Phase7_MVP_RMSE,Phase7_MVP_ENCE,Phase7_MVP_MCE,Blur_Spearman,Noise_Spearman,Compress_Spearman,Contrast_Spearman,DIQA5000_SRCC,DIQA5000_PLCC,DIQA5000_SRCC_CI_Lower,DIQA5000_SRCC_CI_Upper,OCR_CER_Correlation,OCR_WER_Correlation,OCR_Ranking_Agreement,CrossDataset_SRCC_Gap,Training_Seeds,Inference_ms,Notes
+# ===== DEEP LEARNING BASELINES (PyIQA - Modal GPU) =====,,,,,,,,,,,,,,,,,,,,,,,,
+HyperIQA,deep_learning,PyIQA,evaluated,0.322,0.375,0.295,0.328,N/A,N/A,0.679,0.406,0.282,0.246,0.475,0.416,0.422,0.522,pending,pending,pending,pending,N/A,76.2,Best overall on both datasets; no uncertainty output
+CLIP-IQA,vision_language,PyIQA,evaluated,0.310,0.332,0.308,0.356,N/A,N/A,0.687,0.300,0.268,0.294,0.341,0.376,0.286,0.391,pending,pending,pending,pending,N/A,38.9,Vision-language model; no uncertainty output
+MUSIQ,deep_learning,PyIQA,evaluated,0.308,0.348,0.310,0.347,N/A,N/A,0.693,0.318,0.269,0.258,0.153,0.161,0.092,0.214,pending,pending,pending,pending,N/A,24.0,Multi-scale attention; poor DIQA-5000 generalization
+DBCNN,deep_learning,PyIQA,evaluated,0.273,0.279,0.626,0.675,N/A,N/A,0.685,0.244,0.240,0.196,0.444,0.440,0.396,0.493,pending,pending,pending,pending,N/A,23.2,Bilinear pooling; strong DIQA-5000 performance
+BRISQUE_PyIQA,classical,PyIQA,evaluated,-0.120,-0.099,0.429,0.500,N/A,N/A,-0.179,-0.300,-0.093,-0.031,-0.036,-0.077,-0.103,0.028,pending,pending,pending,pending,N/A,21.2,No-reference classical; fails on documents
+NIQE_PyIQA,classical,PyIQA,evaluated,-0.117,-0.084,0.572,0.629,N/A,N/A,-0.206,-0.287,-0.084,-0.007,0.148,0.091,0.083,0.209,pending,pending,pending,pending,N/A,33.4,Natural scene statistics; weak on documents
+# ===== CLASSICAL BASELINES (CPU) =====,,,,,,,,,,,,,,,,,,,,,,,,
+Image_Entropy,classical,OpenCV,evaluated,0.191,0.194,0.304,0.357,N/A,N/A,0.198,0.401,0.220,0.134,pending,pending,pending,pending,pending,pending,pending,pending,N/A,1.7,Fast CPU metric; good noise detection
+NIQE_CPU,classical,OpenCV,evaluated,0.144,0.095,0.499,0.551,N/A,N/A,0.090,0.454,0.131,0.047,pending,pending,pending,pending,pending,pending,pending,pending,N/A,15.6,CPU implementation
+Gradient_Magnitude,classical,OpenCV,evaluated,-0.093,-0.110,0.455,0.521,N/A,N/A,-0.343,0.031,-0.032,-0.122,pending,pending,pending,pending,pending,pending,pending,pending,N/A,1.6,Edge-based metric; blur-specific
+BRISQUE_CPU,classical,OpenCV,evaluated,-0.150,-0.119,0.426,0.470,N/A,N/A,-0.144,-0.418,-0.135,-0.054,pending,pending,pending,pending,pending,pending,pending,pending,N/A,15.3,CPU implementation
+Laplacian_Variance,classical,OpenCV,evaluated,-0.226,-0.212,0.470,0.559,N/A,N/A,-0.625,-0.126,-0.167,-0.212,pending,pending,pending,pending,pending,pending,pending,pending,N/A,0.95,Blur-focused; inverted scale; best blur detector
+# ===== OUR MODELS (Evaluated) =====,,,,,,,,,,,,,,,,,,,,,,,,
+ResNet50_Teacher_v2,deep_learning,Ours,evaluated,0.367,0.372,0.293,0.386,0.164,N/A,0.191,0.335,0.435,0.330,pending,pending,pending,pending,-0.390,-0.399,pending,pending,42,6.5,Phase7 v3 clean; 5-head (blur/noise/skew/contrast/compress); Skew_SRCC=0.544 (best); SmartDoc-QA OCR correlation
+# ===== OUR MODELS (Targets) =====,,,,,,,,,,,,,,,,,,,,,,,,
+ResNet18_Student,deep_learning,Ours,target,0.400,0.420,0.250,0.290,<0.08,<0.15,0.750,0.500,0.400,0.350,>0.70,>0.70,pending,pending,>0.70,>0.70,>0.80,<0.10,"42,123,456",10.0,Target: beat HyperIQA; ≤10ms GPU
+ResNet50_Teacher,deep_learning,Ours,target,0.450,0.470,0.220,0.260,<0.08,<0.15,0.800,0.550,0.450,0.400,>0.85,>0.85,pending,pending,>0.70,>0.70,>0.80,<0.10,"42,123,456",30.0,Target multi-head specialist; ≤30ms GPU

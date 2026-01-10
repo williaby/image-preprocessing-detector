@@ -172,6 +172,26 @@ allowed:
   - phase_3
   - phase2
   - phase3
+  - phase4
+  - phase5
+  - phase6
+  - phase7
+  - phase8
+  - phase9
+  - phase_4
+  - phase_5
+  - phase_6
+  - phase_7
+  - phase_8
+  - phase_9
+  - sprints
+  - implementation
+  - critique
+  - methodology
+  - project_plan
+  - calibration
+  - cleanup
+  - maintenance
   - mvp
   - scope
   - boundaries

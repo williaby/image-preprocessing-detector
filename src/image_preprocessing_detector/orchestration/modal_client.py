@@ -386,12 +386,13 @@ class ModalClient:
                 request_id=request.request_id,
                 model_version=request.model_version,
             )
-        except modal.exception.NotFoundError as e:
-            raise RuntimeError(
-                "Modal app 'iqa-teacher-inference' not deployed. "
-                "Run: modal deploy modal/teacher_inference.py"
-            ) from e
         except Exception as e:
+            # Check if it's a NotFoundError from Modal (doesn't expose exception types cleanly)
+            if "NotFoundError" in type(e).__name__ or "not found" in str(e).lower():
+                raise RuntimeError(
+                    "Modal app 'iqa-teacher-inference' not deployed. "
+                    "Run: modal deploy modal/teacher_inference.py"
+                ) from e
             raise RuntimeError(f"Modal call failed: {e}") from e
         else:
             return result

@@ -342,6 +342,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 ### Core Documentation
 
 - **[PROJECT_PLAN.md](docs/planning/PROJECT_PLAN.md)**: Complete 114-page implementation plan with phased roadmap (Phases 1-5)
+- **[DATASET_METHODOLOGY.md](docs/DATASET_METHODOLOGY.md)**: IQA training dataset methodology with reproducibility instructions and validation criteria
 - **[ARCHITECTURE_SUMMARY.md](docs/architecture/ARCHITECTURE_SUMMARY.md)**: Quick reference for architecture and design decisions
 - **[ARCHITECTURE_CORRECTION.md](docs/architecture/ARCHITECTURE_CORRECTION.md)**: Hybrid IQA approach for embedded images
 - **[DETECTION_TAXONOMY.md](docs/DETECTION_TAXONOMY.md)**: Complete taxonomy of 30+ detection categories with priority levels

@@ -15,6 +15,9 @@ from typing import TYPE_CHECKING, Any
 _torch_import_error: ModuleNotFoundError | None = None
 
 try:  # pragma: no cover - exercised indirectly via import checks
+    from image_preprocessing_detector.training.continuous_trainer import (
+        ContinuousTeacherTrainer as _ContinuousTeacherTrainer,
+    )
     from image_preprocessing_detector.training.teacher_trainer import (
         TeacherTrainer as _TeacherTrainer,
     )
@@ -23,12 +26,17 @@ except ModuleNotFoundError as _exc:  # pragma: no cover - defensive for missing 
         raise
     _torch_import_error = _exc
     _TeacherTrainer = None  # type: ignore[assignment, misc]
+    _ContinuousTeacherTrainer = None  # type: ignore[assignment, misc]
 
 if TYPE_CHECKING:
+    from image_preprocessing_detector.training.continuous_trainer import (
+        ContinuousTeacherTrainer,
+    )
     from image_preprocessing_detector.training.teacher_trainer import TeacherTrainer
 else:
     if _TeacherTrainer is not None:
         TeacherTrainer = _TeacherTrainer
+        ContinuousTeacherTrainer = _ContinuousTeacherTrainer
     else:
 
         class TeacherTrainer:  # type: ignore[no-redef]
@@ -41,5 +49,15 @@ else:
                     "or `poetry install --with ml`."
                 ) from _torch_import_error
 
+        class ContinuousTeacherTrainer:  # type: ignore[no-redef]
+            """Stub for Phase 7 trainer when torch is absent."""
 
-__all__ = ["TeacherTrainer"]
+            def __init__(self, *_args: Any, **_kwargs: Any) -> None:
+                raise ImportError(
+                    "ContinuousTeacherTrainer requires the optional ML dependencies. "
+                    "Install with `pip install image-preprocessing-detector[ml]` "
+                    "or `poetry install --with ml`."
+                ) from _torch_import_error
+
+
+__all__ = ["ContinuousTeacherTrainer", "TeacherTrainer"]

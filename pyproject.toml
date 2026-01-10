@@ -61,8 +61,8 @@ dependencies = [
     "onnxruntime-gpu (>=1.23.2,<2.0.0)",
     "defusedxml>=0.7.1",
     "fonttools>=4.60.2,<5.0.0",
-    "werkzeug>=3.1.4",
-    "urllib3>=2.6.0",
+    "werkzeug>=3.1.5",
+    "urllib3>=2.6.3",
 ]
 
 [project.optional-dependencies]
@@ -73,7 +73,6 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-xdist>=3.3.0",
     "hypothesis>=6.82.0",
-
     # Code Quality
     "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",  # Legacy type checker (kept for reference)
@@ -81,10 +80,8 @@ dev = [
     "vulture>=2.11",  # Dead code detection
     "interrogate>=1.7.0",  # Docstring coverage checker
     "types-pyyaml>=6.0.0",  # Type stubs for PyYAML
-
     # Pre-commit
     "pre-commit>=3.3.0",
-
     # Documentation
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.1.0",
@@ -93,49 +90,40 @@ dev = [
     "mkdocs-git-revision-date-localized-plugin>=1.2.0",
     "mkdocs-gen-files>=0.5.0",
     "griffe-pydantic>=0.2.0",
-
     # Front matter validation tools
     "python-frontmatter>=1.1",
     "ruamel.yaml>=0.18.0",
-
     # Jupyter (for exploration)
     "jupyter>=1.0.0",
     "ipykernel>=6.25.0",
-
     # Manual validation UI (Milestone 10.3)
     "streamlit>=1.28.0",
-
     # Image metrics for benchmarking
     "scikit-image>=0.25.2",
     "scikit-learn>=1.7.2",  # ML utilities for metrics and evaluation
     "scipy>=1.14.0",  # v1.14.x supports Python 3.10-3.12
-
     # Safety for dependency scanning
     "safety>=3.7.0",
-
     # Nox for multi-version testing
     "nox>=2025.10.16",
     "uv>=0.5.0",  # Fast package manager for nox venv backend
-
     # Mutation testing
     "mutmut>=3.3.1",
-
     # Type stubs
     "types-pyyaml>=6.0.12",
-
     # ONNX for model export validation
     "onnx>=1.14.0",
-
     # Matplotlib for visualization
     "matplotlib>=3.10.0",
-
     # Dataset management
     "datasets>=4.4.1",
     "dvc[ssh]>=3.64.0",
     "kaggle>=1.7.4",
-
     # Code complexity analysis
     "radon>=6.0.1",
+    "cbor2>=5.8.0",
+    "filelock>=3.20.1",
+    "marshmallow>=4.1.2",
 ]
 
 ml = [

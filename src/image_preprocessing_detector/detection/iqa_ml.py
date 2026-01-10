@@ -44,6 +44,18 @@ class ModelType(str, Enum):
     TEACHER = "teacher"
 
 
+class ModelVersion(str, Enum):
+    """IQA model version for Phase 7 transition.
+
+    Supports gradual rollout from binary classification to continuous regression:
+    - BINARY_V1: Original binary classification (0/1 labels)
+    - CONTINUOUS_V2: Phase 7 continuous severity regression ([0,1] labels)
+    """
+
+    BINARY_V1 = "binary_v1"
+    CONTINUOUS_V2 = "continuous_v2"
+
+
 class Device(str, Enum):
     """Available compute devices for inference."""
 
@@ -56,17 +68,28 @@ class Device(str, Enum):
 class MLIQAScores:
     """Multi-head IQA scores from ML model.
 
+    For BINARY_V1 models (Phase 1-6):
+        - Scores are quality scores: 0=poor quality, 1=good quality
+        - confidences are softmax probabilities
+
+    For CONTINUOUS_V2 models (Phase 7+):
+        - Scores are severity scores: 0=no issue, 1=severe issue
+        - overall_quality is 1 - max(severities)
+        - severities dict provides raw [0,1] severity values
+
     Attributes:
-        blur_score: Blur quality score 0-1 (0=blurry, 1=sharp)
-        noise_score: Noise quality score 0-1 (0=noisy, 1=clean)
-        contrast_score: Contrast quality score 0-1 (0=low contrast, 1=good contrast)
-        skew_score: Skew quality score 0-1 (0=skewed, 1=straight)
-        compression_score: Compression artifact score 0-1 (0=artifacts, 1=clean)
-        overall_quality: Aggregated quality score 0-1
+        blur_score: Blur quality score 0-1 (v1: 0=blurry, v2: 0=none)
+        noise_score: Noise quality score 0-1
+        contrast_score: Contrast quality score 0-1
+        skew_score: Skew quality score 0-1
+        compression_score: Compression artifact score 0-1
+        overall_quality: Aggregated quality score 0-1 (higher=better for both versions)
         confidences: Per-head confidence scores (softmax max)
         model_type: Which model produced these scores (student/teacher)
         device: Device used for inference
         inference_time_ms: Inference latency in milliseconds
+        model_version: Model version (binary_v1 or continuous_v2)
+        severities: Raw severity scores for v2 models (optional)
     """
 
     blur_score: float
@@ -79,6 +102,37 @@ class MLIQAScores:
     model_type: ModelType
     device: Device
     inference_time_ms: float
+    model_version: ModelVersion = ModelVersion.BINARY_V1
+    severities: dict[str, float] | None = None
+
+    def get_severity_vector(self) -> list[float]:
+        """Get severity values as a vector (for v2 models).
+
+        For v1 models, inverts quality scores to approximate severity.
+
+        Returns:
+            List of [blur, noise, contrast, skew, compression] severities
+        """
+        if self.model_version == ModelVersion.CONTINUOUS_V2 and self.severities:
+            return [
+                self.severities.get("blur", 0.0),
+                self.severities.get("noise", 0.0),
+                self.severities.get("contrast", 0.0),
+                self.severities.get("skew", 0.0),
+                self.severities.get("compression", 0.0),
+            ]
+        # For v1, invert quality scores (1-quality = approximate severity)
+        return [
+            1.0 - self.blur_score,
+            1.0 - self.noise_score,
+            1.0 - self.contrast_score,
+            1.0 - self.skew_score,
+            1.0 - self.compression_score,
+        ]
+
+    def is_calibrated(self) -> bool:
+        """Check if this result is from a calibrated (v2) model."""
+        return self.model_version == ModelVersion.CONTINUOUS_V2
 
 
 @dataclass
@@ -225,6 +279,9 @@ class MLIQADetector:
         device_policy: DevicePolicyConfig | None = None,
         modal_endpoint: str | None = None,
         use_orchestrator: bool = True,
+        # Phase 7: Model versioning for gradual rollout
+        model_version: ModelVersion | str = ModelVersion.BINARY_V1,
+        v2_rollout_percentage: float = 0.0,
     ) -> None:
         """Initialize ML IQA detector.
 
@@ -239,6 +296,8 @@ class MLIQADetector:
             device_policy: Device policy configuration (Phase 4)
             modal_endpoint: Modal serverless endpoint URL (Phase 4)
             use_orchestrator: Enable Phase 4 device orchestration (default: True)
+            model_version: Model version (binary_v1 or continuous_v2) - Phase 7
+            v2_rollout_percentage: Percentage of requests to use v2 model (0-100) - Phase 7
         """
         self.student_model_path = student_model_path
         self.teacher_model_path = teacher_model_path
@@ -251,6 +310,19 @@ class MLIQADetector:
 
         # Discrepancy check threshold (default: 0.3 for 30% difference)
         self.discrepancy_threshold = 0.3
+
+        # Phase 7: Model versioning for gradual rollout
+        if isinstance(model_version, str):
+            self.model_version = ModelVersion(model_version)
+        else:
+            self.model_version = model_version
+        self.v2_rollout_percentage = max(0.0, min(100.0, v2_rollout_percentage))
+
+        logger.info(
+            "Phase 7 model versioning configured",
+            model_version=self.model_version.value,
+            v2_rollout_percentage=self.v2_rollout_percentage,
+        )
 
         # Phase 4: Device orchestration
         self.use_orchestrator = use_orchestrator
@@ -292,6 +364,106 @@ class MLIQADetector:
 
         # Phase 4 Sprint 4.3.1: Batch inference engine (lazy initialization)
         self._batch_engine: Any = None
+
+        # Phase 7: Track v2 model session paths (may differ from v1)
+        self._student_v2_model_path: Path | None = None
+        self._teacher_v2_model_path: Path | None = None
+
+    def _should_use_v2_model(self, request_id: str | None = None) -> bool:
+        """Determine if this request should use v2 (continuous) model.
+
+        Uses v2_rollout_percentage for gradual rollout. When percentage is:
+        - 0: Never use v2
+        - 100: Always use v2
+        - 1-99: Probabilistic selection based on request_id hash
+
+        Args:
+            request_id: Optional request ID for deterministic selection
+
+        Returns:
+            True if v2 model should be used
+        """
+        if self.v2_rollout_percentage <= 0:
+            return False
+        if self.v2_rollout_percentage >= 100:
+            return True
+
+        # Use hash for deterministic selection (same request = same version)
+        import hashlib
+
+        if request_id:
+            hash_val = int(hashlib.sha256(request_id.encode()).hexdigest()[:8], 16)
+            threshold = hash_val % 100
+        else:
+            import random
+
+            threshold = random.randint(0, 99)  # noqa: S311 # nosec B311
+
+        return threshold < self.v2_rollout_percentage
+
+    def _postprocess_v2_outputs(
+        self, outputs: dict[str, np.ndarray]
+    ) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
+        """Postprocess v2 (continuous) model outputs to scores and severities.
+
+        V2 models output severity predictions directly (0=no issue, 1=severe).
+        Quality scores are computed as 1 - severity for compatibility.
+
+        Args:
+            outputs: Raw model outputs (sigmoid outputs for continuous regression)
+
+        Returns:
+            Tuple of (scores_dict, confidences_dict, severities_dict)
+        """
+        scores = {}
+        confidences = {}
+        severities = {}
+
+        head_names = ["blur", "noise", "contrast", "skew", "compression"]
+
+        for i, head_name in enumerate(head_names):
+            output_key = f"head_{i}"
+            if output_key in outputs:
+                # V2 model outputs are sigmoid values (severity 0-1)
+                raw_output = outputs[output_key][0]  # Remove batch dimension
+                if len(raw_output.shape) > 0:
+                    # If multi-dimensional, take first value
+                    severity = float(
+                        raw_output[0] if raw_output.size > 1 else raw_output
+                    )
+                else:
+                    severity = float(raw_output)
+
+                # Clamp to [0, 1]
+                severity = max(0.0, min(1.0, severity))
+
+                # Store severity
+                severities[head_name] = severity
+
+                # Quality score is inverse of severity (for compatibility)
+                scores[f"{head_name}_score"] = 1.0 - severity
+
+                # Confidence for v2 is based on distance from 0.5 (uncertain)
+                # Higher confidence when severity is closer to 0 or 1
+                confidence = abs(severity - 0.5) * 2.0  # Scale to 0-1
+                confidences[head_name] = confidence
+
+        return scores, confidences, severities
+
+    def get_effective_model_version(
+        self, request_id: str | None = None
+    ) -> ModelVersion:
+        """Get the effective model version for a request.
+
+        Args:
+            request_id: Optional request ID for deterministic version selection
+
+        Returns:
+            ModelVersion to use for this request
+        """
+        if self._should_use_v2_model(request_id):
+            return ModelVersion.CONTINUOUS_V2
+        return self.model_version
 
     def get_batch_engine(self, device: str = "cuda") -> Any:
         """Get or create batch inference engine for student model.
@@ -1227,7 +1399,7 @@ def ml_iqa_scores_to_dict(scores: MLIQAScores) -> dict[str, Any]:
     Returns:
         Dictionary suitable for JSON serialization
     """
-    return {
+    result = {
         "source": scores.model_type.value,
         "blur_score": round(scores.blur_score, 4),
         "noise_score": round(scores.noise_score, 4),
@@ -1238,7 +1410,16 @@ def ml_iqa_scores_to_dict(scores: MLIQAScores) -> dict[str, Any]:
         "confidences": {k: round(v, 4) for k, v in scores.confidences.items()},
         "device": scores.device.value,
         "inference_time_ms": round(scores.inference_time_ms, 2),
+        # Phase 7: Model versioning
+        "model_version": scores.model_version.value,
+        "is_calibrated": scores.is_calibrated(),
     }
+
+    # Include severities for v2 models
+    if scores.severities is not None:
+        result["severities"] = {k: round(v, 4) for k, v in scores.severities.items()}
+
+    return result
 
 
 def teacher_iqa_to_dict(
