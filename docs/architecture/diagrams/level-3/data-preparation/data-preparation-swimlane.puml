@@ -1,0 +1,333 @@
+@startuml data-preparation-swimlane
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName "DejaVu Sans"
+skinparam defaultFontSize 11
+
+title Data Preparation Workstream (WS3) - Three-Layer Architecture
+caption Total LOC: 4,066 lines across 8 primary scripts | Generated: 2025-01-19
+
+|Layer 1: Immutable Original Data|
+start
+:Load Dataset Configurations;
+note right
+  **Dataset Configs:**
+  - DIQA-5000 (5,000 images, MOS)
+  - LIVE (779 images, DMOS)
+  - CSIQ (866 images, DMOS)
+  - SmartDoc-QA (smartphone captures)
+  - DocLayNet (COCO, 11 classes)
+  - TableBank (table structure)
+  - FUNSD (forms)
+  - SignaTR (writer IDs)
+  - DIBCO (binarization GT)
+
+  **Total**: 108,000+ images
+end note
+
+:Parse Dataset Labels;
+note left
+  **annotate_base_metadata.py**
+  LOC: 1,235 lines (30.4%)
+
+  **Components**:
+  - Dataset configs: Lines 101-361
+  - 9 label parsers: Lines 635-852
+  - COCO cache optimization
+  - Metadata generation
+
+  **Datasets**:
+  - DIQA: parse_diqa_labels()
+  - LIVE: parse_live_labels()
+  - CSIQ: parse_csiq_labels()
+  - SmartDoc: parse_smartdoc_labels()
+  - DocLayNet: parse_doclaynet_labels()
+  - TableBank: parse_tablebank_labels()
+  - FUNSD: parse_funsd_labels()
+  - SignaTR: parse_signatr_labels()
+  - DIBCO: parse_dibco_labels()
+end note
+
+:Generate OriginalFileMetadata;
+note right
+  **Schema Elements**:
+  - file_id (UUID)
+  - file_path, checksum_sha256
+  - image_width, image_height
+  - capture_method enum
+  - domain_level1 enum
+  - resolution_category
+
+  **Immutability**: Write-once semantics
+  **Validation**: Checksum verification
+end note
+
+:Normalize Quality Scores;
+note right
+  **Normalization Formulas**:
+  - DIQA MOS (1-5): (5-mos)/4
+  - LIVE DMOS (0-100): dmos/100
+  - CSIQ DMOS (0-1): dmos
+  - SmartDoc MOS (1-5): (5-mos)/4
+
+  **Output**: All scores 0-1 (0=best)
+  **Confidence**: From std dev or fixed
+end note
+
+:Store Layer 1 (Immutable);
+note left
+  **Storage Format**: Parquet
+  **Schema Version**: 1.0.0
+  **Write-Once**: Never modified
+  **Provenance**: Full source tracking
+end note
+
+|Layer 2: Enrichment Data|
+
+fork
+  :Run Classical IQA (8 Detectors);
+  note right
+    **iqa_classical.py**
+    LOC: 892 lines (21.9%)
+
+    **Detectors**:
+    1. Blur (Laplacian variance)
+    2. Contrast (histogram)
+    3. Noise (high-freq std dev)
+    4. Skew (Hough transform)
+    5. Illumination (brightness)
+    6. JPEG blockiness (DCT)
+    7. Binarization (Otsu)
+    8. Bleed-through (double-sided)
+
+    **Output**: 8-dim feature vector
+  end note
+
+fork again
+  :Run ML IQA (Teacher-Student);
+  note right
+    **iqa_ml.py**
+    LOC: 1,245 lines (30.6%)
+
+    **Models**:
+    - ResNet-50 teacher (selective)
+    - ResNet-18 student (default)
+
+    **Features**:
+    - Quality score predictions
+    - Distortion type (multi-label)
+    - Uncertainty estimates
+    - Ensemble scoring
+
+    **Output**: 12-dim feature vector
+  end note
+
+fork again
+  :Run Layout Analysis;
+  note right
+    **layout_lite.py**
+    LOC: 524 lines (12.9%)
+
+    **Model**: YOLOv10-doc
+
+    **Detection**:
+    - 11 DocLayNet classes
+    - Bounding boxes
+    - Element counts
+    - Structural complexity
+
+    **Output**: 15-dim feature vector
+  end note
+
+end fork
+
+:Merge IQA + Layout Features;
+note left
+  **Combined Features**:
+  - Classical IQA: 8 dims
+  - ML IQA: 12 dims
+  - Layout: 15 dims
+  - Complexity: 10 dims
+
+  **Total**: 45-dimensional vector
+end note
+
+:Calculate Document Quality Score (DQS);
+note right
+  **dqs_calculator.py**
+  LOC: 170 lines (4.2%)
+
+  **Formula**:
+  DQS = (degradation_score × 0.6)
+      + (structural_complexity × 0.4)
+
+  **Range**: 0-100 (higher = better quality)
+  **Use**: Pre-OCR risk assessment
+end note
+
+:Store Layer 2 (Enrichment);
+note left
+  **Storage Format**: Parquet
+  **Versioning**: enrichment_version field
+  **Evolution**: Models can be updated
+  **Linked**: file_id → Layer 1
+end note
+
+|Layer 3: Training Labels|
+
+:Load Layer 1 + Layer 2;
+note right
+  **build_training_labels.py**
+  LOC: 590 lines (14.5%)
+
+  **Inputs**:
+  - Original labels (Layer 1)
+  - Enrichment data (Layer 2)
+
+  **Processing**:
+  - Anchor score selection
+  - 45-dim vector assembly
+  - Training metadata generation
+end note
+
+:Select Anchor Score (Priority Algorithm);
+note left
+  **Priority Ranking**:
+  1. HUMAN (weight 1.0)
+  2. LLM_HIGH (weight 0.8, conf>0.8)
+  3. LLM_MEDIUM (weight 0.5, conf 0.5-0.8)
+  4. LLM_LOW (weight 0.3, conf<0.5)
+  5. SYNTHETIC (weight 0.3)
+  6. NONE (weight 0.0)
+
+  **Algorithm**: Lines 208-290
+  **Tie-Breaking**: Highest confidence wins
+end note
+
+:Assemble 45-Dim IQA Vector;
+note right
+  **DEGRADATION_INDEX** (Lines 60-114):
+
+  **8 Groups, 45 Degradations**:
+  - Blur/Focus (0-5): 6 types
+  - Noise (6-12): 7 types
+  - Geometric (13-18): 6 types
+  - Illumination (19-25): 7 types
+  - Compression (26-29): 4 types
+  - Physical (30-36): 7 types
+  - Text Quality (37-41): 5 types
+  - Scanner (42-44): 3 types
+
+  **Semantics**:
+  - iqa_vector: [0.0, 1.0] severity
+  - iqa_binary: {0, 1} presence/absence
+end note
+
+:Generate Training Metadata;
+note left
+  **TrainingLabels Dataclass** (Lines 145-171):
+
+  **Fields**:
+  - sample_id
+  - iqa_vector (45 floats)
+  - iqa_binary (45 bools)
+  - anchor_score, anchor_source, anchor_weight
+  - human_mos_normalized
+  - llm_mos_normalized, llm_confidence
+  - element_labels_json (Phase 9)
+  - dataset_name, has_annotations
+end note
+
+:Compute Sample Weights;
+note right
+  **Weight Assignment**:
+  - Based on anchor_source
+  - HUMAN sources: weight 1.0
+  - LLM_HIGH: weight 0.8
+  - LLM_MEDIUM: weight 0.5
+  - LLM_LOW / SYNTHETIC: weight 0.3
+
+  **Use**: Loss weighting in training
+end note
+
+:Track Provenance;
+note left
+  **Provenance Fields**:
+  - original_labels_used
+  - enrichment_versions
+  - anchor_selection_reason
+  - merge_timestamp
+
+  **Audit Trail**:
+  Complete lineage from source
+  datasets to training labels
+end note
+
+:Validate Training Labels;
+note right
+  **Validation**:
+  - iqa_vector shape = (45,)
+  - anchor_score in [0, 1] or None
+  - All weights match source type
+  - Provenance complete
+
+  **Errors**: Logged and skipped
+end note
+
+:Export to Parquet;
+note left
+  **Output Format**: Parquet
+  **Partitioning**: By dataset_name
+  **Compression**: Snappy
+  **Statistics**: Auto-generated
+
+  **Ready**: For PyTorch DataLoader
+end note
+
+|Training Pipeline|
+
+:Load Training Labels;
+
+:Create PyTorch Dataset;
+note right
+  **Dataset Class**:
+  - iqa_dataset.py (180 lines)
+  - Loads parquet files
+  - Applies transforms
+  - Returns tensors
+
+  **LOC**: Not counted in WS3
+  (belongs to WS2: Model Training)
+end note
+
+:Apply Data Augmentation;
+
+:Feed to Training Loop;
+
+stop
+
+legend right
+  |= Component |= LOC |= Percentage |= Layer |
+  | annotate_base_metadata.py | 1,235 | 30.4% | Layer 1 |
+  | iqa_ml.py | 1,245 | 30.6% | Layer 2 |
+  | iqa_classical.py | 892 | 21.9% | Layer 2 |
+  | build_training_labels.py | 590 | 14.5% | Layer 3 |
+  | layout_lite.py | 524 | 12.9% | Layer 2 |
+  | dqs_calculator.py | 170 | 4.2% | Layer 2 |
+  | (Supporting utilities) | (410) | (10.1%) | Various |
+  |= **Total** |= **4,066** |= **100%** |= — |
+
+  **Key Files**:
+  - annotate_base_metadata.py: 9 parsers, COCO cache, metadata gen
+  - build_training_labels.py: 45-dim vector, anchor selection
+  - iqa_ml.py: ResNet teacher-student, distortion detection
+  - iqa_classical.py: 8 CV detectors
+  - layout_lite.py: YOLOv10-doc, 11 classes
+  - dqs_calculator.py: Quality scoring
+
+  **Workstream: WS3 - Data Preparation**
+  **Level 3 Documentation**
+  **Generated: 2025-01-19**
+endlegend
+
+@enduml

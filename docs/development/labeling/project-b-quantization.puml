@@ -1,0 +1,131 @@
+@startuml project-b-quantization
+!theme plain
+skinparam backgroundColor white
+skinparam actorBackgroundColor LightBlue
+skinparam participantBackgroundColor LightYellow
+skinparam databaseBackgroundColor LightGreen
+
+title Project B: Quantization Pipeline Workflow
+footer INT8/INT4 Model Compression via Unsloth
+
+actor Developer as dev
+participant "ModelSpec" as spec
+participant "QuantizationPipeline" as pipeline
+participant "QuantizationRecipe" as recipe
+participant "Backend\n(bitsandbytes/GPTQ/AWQ)" as backend
+participant "PackagedModel" as packaged
+database "HuggingFace Hub\n/ Local Storage" as storage
+
+== Input Model ==
+dev -> spec : Create ModelSpec
+note right of spec
+  source: huggingface
+  id: "unsloth/Qwen2.5-VL-3B-Instruct"
+  variant: base
+end note
+
+== Pipeline Configuration ==
+dev -> pipeline : create(config)
+activate pipeline
+
+dev -> recipe : select_recipe()
+note right of recipe
+  QuantizationType:
+  - INT8 (8-bit integer)
+  - INT4_NF4 (4-bit normal float)
+  - INT4_FP4 (4-bit float)
+
+  Backend:
+  - bitsandbytes (NVIDIA)
+  - auto-gptq (GPTQ)
+  - autoawq (AWQ)
+  - gguf (llama.cpp)
+end note
+
+== Quantization Execution ==
+pipeline -> storage : load base model
+activate storage
+storage --> pipeline : model weights
+deactivate storage
+
+pipeline -> backend : quantize(model, recipe)
+activate backend
+
+alt bitsandbytes
+  backend -> backend : llm.int8() / nf4
+  note right of backend
+    Load in 4-bit
+    Compute in 16-bit
+    Automatic scaling
+  end note
+else auto-gptq
+  backend -> backend : GPTQ calibration
+  note right of backend
+    Calibration dataset
+    Weight grouping
+    Activation aware
+  end note
+else autoawq
+  backend -> backend : AWQ calibration
+  note right of backend
+    Activation aware
+    Weight quantization
+    Salient weight protection
+  end note
+else gguf
+  backend -> backend : Convert to GGUF
+  note right of backend
+    llama.cpp format
+    CPU inference
+    Q4_K_M / Q8_0
+  end note
+end
+
+backend --> pipeline : quantized model
+deactivate backend
+
+== Model Packaging ==
+pipeline -> packaged : create_package()
+activate packaged
+packaged -> packaged : compute checksum
+packaged -> packaged : generate config.json
+note right of packaged
+  QuantizationConfig:
+  - quant_type
+  - backend
+  - bits
+  - group_size
+  - calibration_info
+end note
+
+packaged -> packaged : create ModelSpec
+note right of packaged
+  New ModelSpec:
+  - variant: int8 / int4
+  - quantization metadata
+  - provenance chain
+end note
+
+packaged --> pipeline : PackagedModel
+deactivate packaged
+
+== Export & Registry ==
+pipeline -> storage : export(path)
+note right of storage
+  Files:
+  - model.safetensors
+  - config.json
+  - quantization_config.json
+  - model_spec.yaml
+end note
+
+pipeline --> dev : QuantizationResult
+deactivate pipeline
+
+note over dev
+  Ready for:
+  - Project A Arena evaluation
+  - Production deployment
+end note
+
+@enduml

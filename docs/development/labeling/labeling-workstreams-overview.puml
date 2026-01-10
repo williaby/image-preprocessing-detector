@@ -1,0 +1,114 @@
+@startuml labeling-workstreams-overview
+!theme plain
+skinparam backgroundColor white
+skinparam packageBackgroundColor LightYellow
+skinparam componentBackgroundColor LightBlue
+skinparam databaseBackgroundColor LightGreen
+skinparam arrowColor DarkBlue
+
+title DIQA Labeling Workstreams - Complete Pipeline Overview
+footer Three-Project Architecture for Document Image Quality Assessment
+
+package "Model Sources" {
+  [HuggingFace Hub] as hf
+  [Local Models] as local
+  [API Providers] as api
+}
+
+package "Shared Components" {
+  component "ModelSpec" as modelspec {
+    [source]
+    [id]
+    [variant]
+    [revision]
+    [checksum]
+  }
+
+  component "DIQA-5000\nDataset" as dataset {
+    [train split]
+    [val split]
+    [test split]
+  }
+}
+
+package "Project A: Arena Benchmarking" as arena #LightCoral {
+  [ArenaRunner] as runner
+  [InferenceBackend] as inference
+  [ArenaMetrics] as metrics
+  [LeaderboardGenerator] as leaderboard
+
+  runner --> inference : load model
+  runner --> metrics : compute
+  metrics --> leaderboard : aggregate
+}
+
+package "Project B: Quantization" as quant #LightGreen {
+  [QuantizationPipeline] as qpipeline
+  [QuantizationRecipe] as recipe
+  [Backend\n(bnb/GPTQ/AWQ)] as qbackend
+  [PackagedModel] as packaged
+
+  qpipeline --> recipe : configure
+  qpipeline --> qbackend : quantize
+  qbackend --> packaged : package
+}
+
+package "Project C: Fine-Tuning" as finetune #LightSkyBlue {
+  [DIQADatasetAdapter] as adapter
+  [DIQARegressionModel] as regmodel
+  [DIQATrainer] as trainer
+  [TrainingManifest] as manifest
+
+  adapter --> trainer : data
+  regmodel --> trainer : model
+  trainer --> manifest : export
+}
+
+database "Results\nStorage" as results
+database "Model\nRegistry" as registry
+
+' Model flow
+hf --> modelspec
+local --> modelspec
+api --> modelspec
+
+' Project A flow
+modelspec --> runner : base model
+dataset --> runner : test data
+leaderboard --> results : results
+
+' Project B flow
+modelspec --> qpipeline : base model
+packaged --> registry : quantized model
+
+' Project C flow
+modelspec --> regmodel : base encoder
+dataset --> adapter : train/val data
+manifest --> registry : finetuned model
+
+' Cross-project flows
+registry --> modelspec : quantized/finetuned
+note right of registry
+  All model variants
+  share ModelSpec format
+  for plug-and-play
+  evaluation
+end note
+
+' Evaluation feedback loops
+registry ..> runner : evaluate variants
+note bottom of runner
+  Compare:
+  - base vs int8 vs int4
+  - base vs finetuned
+  - quantized finetuned
+end note
+
+legend right
+  |= Workflow |= Purpose |
+  | Project A | Standardized benchmarking |
+  | Project B | Model compression |
+  | Project C | Task-specific training |
+endlegend
+
+@enduml

@@ -4,6 +4,10 @@ title: "Level 2: Pseudo-Labeling"
 description: "Detailed pseudo-labeling workflow diagrams for Project A"
 tags:
 - architecture
+- diagrams
+- plantuml
+- level_2
+- pseudo_labeling
 status: published
 owner: "core-maintainer"
 authors:
@@ -11,6 +15,8 @@ authors:
 purpose: "Document the DIQA pseudo-labeling pipeline including multi-model ensemble,
   checkpoint selection, and training phases."
 ---
+
+# Level 2: Pseudo-Labeling
 
 This level provides detailed diagrams for the Pseudo-Labeling workstream - generating high-quality labels using multi-model ensembles.
 

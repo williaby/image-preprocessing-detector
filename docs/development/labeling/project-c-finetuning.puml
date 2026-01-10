@@ -1,0 +1,167 @@
+@startuml project-c-finetuning
+!theme plain
+skinparam backgroundColor white
+skinparam actorBackgroundColor LightBlue
+skinparam participantBackgroundColor LightYellow
+skinparam databaseBackgroundColor LightGreen
+
+title Project C: Fine-Tuning Pipeline Workflow
+footer DIQA Regression Head Training
+
+actor Developer as dev
+participant "ModelSpec\n(Base VLM)" as spec
+participant "DIQADatasetAdapter" as adapter
+participant "DIQARegressionModel" as model
+participant "DIQATrainer" as trainer
+participant "TrainingManifest" as manifest
+database "Training\nCheckpoints" as checkpoints
+database "Model\nRegistry" as registry
+
+== Dataset Preparation ==
+dev -> adapter : load_dataset(config)
+activate adapter
+adapter -> adapter : load from source
+note right of adapter
+  Sources:
+  - Local directory
+  - HuggingFace datasets
+  - GCS bucket
+end note
+
+adapter -> adapter : validate splits
+note right of adapter
+  train / val only
+  (test blocked)
+end note
+
+adapter -> adapter : create collate_fn()
+note right of adapter
+  Image preprocessing
+  Label normalization
+  Batch assembly
+end note
+
+adapter --> dev : DataLoader ready
+deactivate adapter
+
+== Model Architecture ==
+dev -> model : create(config)
+activate model
+model -> model : load_encoder()
+note right of model
+  Frozen VLM encoder:
+  - Qwen2-VL
+  - SmolVLM
+  - LLaVA
+end note
+
+model -> model : create_regression_head()
+note right of model
+  RegressionHead:
+  - Linear(hidden, 512)
+  - LayerNorm
+  - GELU
+  - Dropout(0.1)
+  - Linear(512, 3)
+
+  Output: [overall, sharpness, color]
+end note
+
+model --> dev : DIQARegressionModel
+deactivate model
+
+== Training Loop ==
+dev -> trainer : train(model, train_loader, val_loader)
+activate trainer
+
+trainer -> trainer : setup_optimizer()
+note right of trainer
+  AdamW optimizer
+  Cosine LR scheduler
+  Weight decay: 0.01
+end note
+
+loop For each epoch
+  trainer -> trainer : train_epoch()
+
+  loop For each batch
+    trainer -> model : forward(images)
+    model --> trainer : predictions
+    trainer -> trainer : compute_loss()
+    note right of trainer
+      MSE Loss:
+      overall + sharpness + color
+    end note
+    trainer -> trainer : backward()
+    trainer -> trainer : optimizer.step()
+  end
+
+  trainer -> trainer : validate()
+  trainer -> trainer : log_metrics()
+
+  alt Best validation loss
+    trainer -> checkpoints : save_checkpoint()
+  end
+end
+
+trainer --> dev : training complete
+deactivate trainer
+
+== Model Export ==
+dev -> manifest : create_manifest()
+activate manifest
+
+manifest -> manifest : capture training_config
+note right of manifest
+  TrainingConfig:
+  - epochs, batch_size
+  - learning_rate
+  - optimizer settings
+  - loss weights
+end note
+
+manifest -> manifest : capture environment
+note right of manifest
+  Environment:
+  - Python version
+  - PyTorch version
+  - CUDA version
+  - Git commit
+end note
+
+manifest -> manifest : capture metrics
+note right of manifest
+  Final Metrics:
+  - train_loss
+  - val_loss
+  - best_epoch
+end note
+
+manifest -> manifest : export formats
+note right of manifest
+  Export:
+  - PyTorch (.pt)
+  - ONNX (.onnx)
+  - TorchScript (.pt)
+end note
+
+manifest -> registry : register_model()
+note right of registry
+  ModelSpec:
+  - variant: finetuned
+  - parent_model
+  - training manifest
+  - checksums
+end note
+
+manifest --> dev : TrainingManifest
+deactivate manifest
+
+note over dev
+  Ready for:
+  - Project A Arena evaluation
+  - Production deployment
+  - Project B quantization
+end note
+
+@enduml

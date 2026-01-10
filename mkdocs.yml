@@ -95,6 +95,16 @@ plugins:
 
   - section-index  # Section index pages
 
+  - kroki:
+      server_url: https://kroki.io
+      enable_block_diag: true
+      enable_bpmn: false
+      enable_excalidraw: false
+      enable_mermaid: false  # Already have mermaid via superfences
+      enable_diagramsnet: false
+      tag_format: svg  # Inline SVG for speed
+      fail_fast: false
+
   - git-revision-date-localized:
       enable_creation_date: true
       fallback_to_build_date: true
@@ -192,12 +202,26 @@ nav:
 
   - Architecture & Design:
       - System Architecture: development/architecture.md
+      - Architecture Diagrams:
+          - Overview: architecture/diagrams/README.md
+          - Level 0 - Pipeline Context: architecture/diagrams/level-0/index.md
+          - Level 1 - Project A Architecture: architecture/diagrams/level-1/index.md
+          - Level 2 - Workstreams:
+              - Production Runtime: architecture/diagrams/level-2/production-runtime/index.md
+              - Model Training: architecture/diagrams/level-2/model-training/index.md
+              - Data Preparation: architecture/diagrams/level-2/data-preparation/index.md
+              - Pseudo-Labeling: architecture/diagrams/level-2/pseudo-labeling/index.md
+              - Benchmarking: architecture/diagrams/level-2/benchmarking/index.md
+              - Downstream Context: architecture/diagrams/level-2/downstream-context/index.md
       - RAG Pipeline:
           - Overview: development/RAG Pipeline/RAG-pipeline-project-overview.md
+          - Contracts:
+              - RAG Processor → Project A: development/RAG Pipeline/rag-processor-project-a-contract.md
+              - Project A → Project B: development/RAG Pipeline/prepare-doc-unify-contract.md
           - Project A (This Project): development/RAG Pipeline/project-a-project-plan.md
-          - Project A F/NF Requirements: development/RAG Pipeline/Project_A_F_NF.md
-          - Project B (OCR): development/RAG Pipeline/project-b-f-nf.md
-          - Project C (Fusion): development/RAG Pipeline/project-c-f-nf.md
+          - Project A F/NF Requirements: development/RAG Pipeline/prepare-doc-f-nf.md
+          - Project B (OCR): development/RAG Pipeline/unify-f-nf.md
+          - Project C (Fusion): development/RAG Pipeline/chunk-f-nf.md
           - Models Reference: development/RAG Pipeline/MODELS.md
           - Training Data: development/RAG Pipeline/training-data-targets.md
       - Architecture Decisions:
