@@ -17,7 +17,9 @@ from tqdm import tqdm
 def split_list(lst: list, n_parts: int) -> list[list]:
     """Split a list into n roughly equal parts."""
     k, m = divmod(len(lst), n_parts)
-    return [lst[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)] for i in range(n_parts)]
+    return [
+        lst[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)] for i in range(n_parts)
+    ]
 
 
 def create_tar_archive(
@@ -132,12 +134,14 @@ def main():
             # Load existing archive info
             size_gb = round(archive_path.stat().st_size / (1024**3), 2)
             print(f"\nSkipping existing {archive_name} ({size_gb:.2f} GB)")
-            archives.append({
-                "name": archive_name,
-                "path": str(archive_path),
-                "samples": len(part),
-                "size_gb": size_gb,
-            })
+            archives.append(
+                {
+                    "name": archive_name,
+                    "path": str(archive_path),
+                    "samples": len(part),
+                    "size_gb": size_gb,
+                }
+            )
             continue
         archive_info = create_tar_archive(
             output_dir, images_dir, part, "train", part_num=i
@@ -149,12 +153,14 @@ def main():
     if args.skip_existing and val_archive_path.exists():
         size_gb = round(val_archive_path.stat().st_size / (1024**3), 2)
         print(f"\nSkipping existing phase7_v3_val.tar.gz ({size_gb:.2f} GB)")
-        archives.append({
-            "name": "phase7_v3_val.tar.gz",
-            "path": str(val_archive_path),
-            "samples": len(val_metadata),
-            "size_gb": size_gb,
-        })
+        archives.append(
+            {
+                "name": "phase7_v3_val.tar.gz",
+                "path": str(val_archive_path),
+                "samples": len(val_metadata),
+                "size_gb": size_gb,
+            }
+        )
     else:
         archive_info = create_tar_archive(output_dir, images_dir, val_metadata, "val")
         archives.append(archive_info)
@@ -164,12 +170,14 @@ def main():
     if args.skip_existing and test_archive_path.exists():
         size_gb = round(test_archive_path.stat().st_size / (1024**3), 2)
         print(f"\nSkipping existing phase7_v3_test.tar.gz ({size_gb:.2f} GB)")
-        archives.append({
-            "name": "phase7_v3_test.tar.gz",
-            "path": str(test_archive_path),
-            "samples": len(test_metadata),
-            "size_gb": size_gb,
-        })
+        archives.append(
+            {
+                "name": "phase7_v3_test.tar.gz",
+                "path": str(test_archive_path),
+                "samples": len(test_metadata),
+                "size_gb": size_gb,
+            }
+        )
     else:
         archive_info = create_tar_archive(output_dir, images_dir, test_metadata, "test")
         archives.append(archive_info)
@@ -182,7 +190,9 @@ def main():
     total_size = 0
     total_samples = 0
     for archive in archives:
-        print(f"  {archive['name']}: {archive['samples']:,} samples, {archive['size_gb']:.2f} GB")
+        print(
+            f"  {archive['name']}: {archive['samples']:,} samples, {archive['size_gb']:.2f} GB"
+        )
         total_size += archive["size_gb"]
         total_samples += archive["samples"]
 
@@ -210,9 +220,13 @@ def main():
     print("=" * 60)
     print("# Upload all archives to GCS:")
     for archive in archives:
-        print(f"gsutil -m cp {archive['path']} gs://doc-quality-evaluation/datasets/phase7_v3/")
+        print(
+            f"gsutil -m cp {archive['path']} gs://doc-quality-evaluation/datasets/phase7_v3/"
+        )
     print("\n# Or upload the entire archives directory:")
-    print(f"gsutil -m rsync -r {output_dir}/ gs://doc-quality-evaluation/datasets/phase7_v3/")
+    print(
+        f"gsutil -m rsync -r {output_dir}/ gs://doc-quality-evaluation/datasets/phase7_v3/"
+    )
 
 
 if __name__ == "__main__":

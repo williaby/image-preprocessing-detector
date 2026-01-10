@@ -73,9 +73,13 @@ def main():
         val_samples.extend(group[n_train : n_train + n_val])
         test_samples.extend(group[n_train + n_val :])
 
-    print(f"Train: {len(train_samples):,} ({len(train_samples) / len(samples) * 100:.1f}%)")
+    print(
+        f"Train: {len(train_samples):,} ({len(train_samples) / len(samples) * 100:.1f}%)"
+    )
     print(f"Val: {len(val_samples):,} ({len(val_samples) / len(samples) * 100:.1f}%)")
-    print(f"Test: {len(test_samples):,} ({len(test_samples) / len(samples) * 100:.1f}%)")
+    print(
+        f"Test: {len(test_samples):,} ({len(test_samples) / len(samples) * 100:.1f}%)"
+    )
 
     # Create split directories and symlinks
     for split_name, split_samples in [

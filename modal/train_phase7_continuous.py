@@ -201,7 +201,7 @@ def download_dataset_from_gcs(gcs_path: str, local_path: Path) -> Path:
 
     downloaded = 0
     for blob in blobs:
-        relative_path = blob.name[len(prefix):].lstrip("/")
+        relative_path = blob.name[len(prefix) :].lstrip("/")
         if not relative_path:
             continue
 
@@ -258,7 +258,9 @@ def upload_to_gcs(local_path: Path, gcs_path: str) -> None:
         "/checkpoints": checkpoint_volume,
     },
 )
-def train_phase7_teacher(config_override: dict[str, Any] | None = None) -> dict[str, Any]:
+def train_phase7_teacher(
+    config_override: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Train ResNet-50 teacher model with Phase 7 continuous labels.
 
     Args:

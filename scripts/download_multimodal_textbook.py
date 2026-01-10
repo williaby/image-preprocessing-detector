@@ -75,9 +75,7 @@ def download_files(files: list[str], target_dir: Path) -> None:
             print(f"  ✗ Failed: {filename} - {e}")
 
 
-def get_parts_files(
-    parts: list[int], dataset: DatasetFiles
-) -> tuple[list[str], str]:
+def get_parts_files(parts: list[int], dataset: DatasetFiles) -> tuple[list[str], str]:
     """Get files for specific parts download."""
     files = dataset.annotations.copy()
     for part_num in parts:
@@ -90,7 +88,9 @@ def get_parts_files(
     return files, msg
 
 
-def show_available_files(parser: argparse.ArgumentParser, dataset: DatasetFiles) -> None:
+def show_available_files(
+    parser: argparse.ArgumentParser, dataset: DatasetFiles
+) -> None:
     """Display help and available files."""
     parser.print_help()
     print("\n" + "-" * 60)

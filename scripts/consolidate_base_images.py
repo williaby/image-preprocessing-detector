@@ -10,6 +10,7 @@ Updated 2025-12-16: E: drive reorganized to category-based structure.
 - 01_base_data/{category}/{dataset}/ - Training data by category
 - 02_benchmark_only/{dataset}/ - Evaluation-only datasets (human MOS)
 """
+
 import hashlib
 import json
 import random
@@ -23,7 +24,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 # E: drive base paths (reorganized 2025-12-16)
 E_DRIVE_ROOT = Path("/mnt/e/image_detection")
-BASE_DATA = E_DRIVE_ROOT / "01_base_data"        # Training data by category
+BASE_DATA = E_DRIVE_ROOT / "01_base_data"  # Training data by category
 BENCHMARK_ONLY = E_DRIVE_ROOT / "02_benchmark_only"  # Evaluation-only datasets
 
 OUTPUT_DIR = PROJECT_ROOT / "data/phase7_mvp/00_base_images"
@@ -174,7 +175,9 @@ def main():
     print("PHASE 7 MVP - BASE IMAGE CONSOLIDATION")
     print("=" * 70)
     print(f"Output: {OUTPUT_DIR}")
-    print(f"Target: {sum(COMPOSITION.values()):,} images from {len(COMPOSITION)} sources")
+    print(
+        f"Target: {sum(COMPOSITION.values()):,} images from {len(COMPOSITION)} sources"
+    )
     print()
 
     # Initialize manifest
@@ -222,7 +225,12 @@ def main():
     # Domain distribution summary
     print("\nDomain Distribution:")
     domains = {
-        "Real Degradation": ["diqa_5000", "tobacco_800", "dibco", "historical_degraded"],
+        "Real Degradation": [
+            "diqa_5000",
+            "tobacco_800",
+            "dibco",
+            "historical_degraded",
+        ],
         "Multi-Category": ["rvl_cdip"],
         "Forms": ["nist_db2", "nist_sd6", "funsd_plus"],
         "Mobile/Receipts": ["sroie"],

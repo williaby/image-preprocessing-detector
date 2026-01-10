@@ -76,7 +76,9 @@ image = (
     .add_local_file("data/__init__.py", "/root/data/__init__.py", copy=True)
     .add_local_file("data/dataset.py", "/root/data/dataset.py", copy=True)
     .add_local_file("data/augmentation.py", "/root/data/augmentation.py", copy=True)
-    .add_local_file("data/continuous_labels.py", "/root/data/continuous_labels.py", copy=True)
+    .add_local_file(
+        "data/continuous_labels.py", "/root/data/continuous_labels.py", copy=True
+    )
     .add_local_file(
         ".gcp/service-account.json",
         "/root/.gcp/service-account.json",
@@ -86,8 +88,12 @@ image = (
 
 gcs_secret = modal.Secret.from_name("gcs-credentials")
 # Mount both production and distillation checkpoint volumes
-production_volume = modal.Volume.from_name("phase7-production-checkpoints", create_if_missing=True)
-distillation_volume = modal.Volume.from_name("phase7-distillation-checkpoints", create_if_missing=True)
+production_volume = modal.Volume.from_name(
+    "phase7-production-checkpoints", create_if_missing=True
+)
+distillation_volume = modal.Volume.from_name(
+    "phase7-distillation-checkpoints", create_if_missing=True
+)
 
 
 @dataclass
@@ -157,6 +163,7 @@ def set_seed(seed: int) -> None:
 
 def safe_extract_tar(tar_path: Path, extract_path: Path) -> None:
     """Safely extract tar.gz with path traversal protection."""
+
     def is_within_directory(directory: Path, target: Path) -> bool:
         abs_directory = directory.resolve()
         abs_target = target.resolve()
@@ -193,7 +200,11 @@ def compute_ece_numpy(predictions, targets, num_bins: int = 15):
 
         for i in range(num_bins):
             lower, upper = bin_boundaries[i], bin_boundaries[i + 1]
-            in_bin = (preds_c >= lower) & (preds_c < upper) if i < num_bins - 1 else (preds_c >= lower) & (preds_c <= upper)
+            in_bin = (
+                (preds_c >= lower) & (preds_c < upper)
+                if i < num_bins - 1
+                else (preds_c >= lower) & (preds_c <= upper)
+            )
             bin_size = in_bin.sum()
             if bin_size > 0:
                 bin_accuracy = targs_c[in_bin].mean()
@@ -202,7 +213,10 @@ def compute_ece_numpy(predictions, targets, num_bins: int = 15):
 
         per_head_ece.append(ece)
 
-    return {"macro_ece": float(np.mean(per_head_ece)), "per_head_ece": [float(e) for e in per_head_ece]}
+    return {
+        "macro_ece": float(np.mean(per_head_ece)),
+        "per_head_ece": [float(e) for e in per_head_ece],
+    }
 
 
 def download_and_extract(bucket_name: str, blob_name: str, extract_dir: Path) -> None:
@@ -220,7 +234,7 @@ def download_and_extract(bucket_name: str, blob_name: str, extract_dir: Path) ->
     blob = bucket.blob(blob_name)
     blob.download_to_filename(str(tar_path))
 
-    size_mb = tar_path.stat().st_size / (1024 ** 2)
+    size_mb = tar_path.stat().st_size / (1024**2)
     elapsed = time.time() - start
     print(f"  Downloaded {size_mb:.1f} MB in {elapsed:.1f}s")
 
@@ -250,7 +264,9 @@ def prepare_dataset(bucket_name: str, gcs_prefix: str) -> Path:
 
     for split in ["train", "val", "test"]:
         print(f"\n[{split.upper()}]")
-        download_and_extract(bucket_name, f"{gcs_prefix}/phase7_mvp_{split}.tar.gz", dataset_dir)
+        download_and_extract(
+            bucket_name, f"{gcs_prefix}/phase7_mvp_{split}.tar.gz", dataset_dir
+        )
 
         meta_path = dataset_dir / f"{split}_metadata.json"
         if meta_path.exists():
@@ -301,7 +317,10 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
 
     class UncertaintyHead(nn.Module):
         """Single head that outputs mean (mu) and log variance (log_var)."""
-        def __init__(self, in_features: int, hidden_dim: int = 256, dropout: float = 0.3):
+
+        def __init__(
+            self, in_features: int, hidden_dim: int = 256, dropout: float = 0.3
+        ):
             super().__init__()
             self.shared = nn.Sequential(
                 nn.Linear(in_features, hidden_dim),
@@ -328,13 +347,24 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
 
     class UncertaintyIQAModel(nn.Module):
         """IQA model with separate uncertainty heads for each defect type."""
-        def __init__(self, backbone, feature_dim: int, num_heads: int, dropout: float, hidden_dim: int = 256):
+
+        def __init__(
+            self,
+            backbone,
+            feature_dim: int,
+            num_heads: int,
+            dropout: float,
+            hidden_dim: int = 256,
+        ):
             super().__init__()
             self.backbone = backbone
             self.pool = nn.AdaptiveAvgPool2d(1)
-            self.heads = nn.ModuleList([
-                UncertaintyHead(feature_dim, hidden_dim, dropout) for _ in range(num_heads)
-            ])
+            self.heads = nn.ModuleList(
+                [
+                    UncertaintyHead(feature_dim, hidden_dim, dropout)
+                    for _ in range(num_heads)
+                ]
+            )
 
         def forward(self, x):
             features = self.backbone(x)
@@ -355,22 +385,30 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
     # =========================================================================
 
     print("\n🎓 Loading Teacher Model (ResNet-50)...")
-    teacher_checkpoint_path = Path(f"/production_checkpoints/{config.teacher_checkpoint}")
+    teacher_checkpoint_path = Path(
+        f"/production_checkpoints/{config.teacher_checkpoint}"
+    )
 
     if not teacher_checkpoint_path.exists():
-        raise FileNotFoundError(f"Teacher checkpoint not found: {teacher_checkpoint_path}")
+        raise FileNotFoundError(
+            f"Teacher checkpoint not found: {teacher_checkpoint_path}"
+        )
 
-    teacher_backbone = timm.create_model(config.teacher_architecture, pretrained=False, num_classes=0)
+    teacher_backbone = timm.create_model(
+        config.teacher_architecture, pretrained=False, num_classes=0
+    )
     teacher = UncertaintyIQAModel(
         teacher_backbone,
         config.teacher_feature_dim,
         config.num_heads,
         config.dropout,
-        hidden_dim=256
+        hidden_dim=256,
     )
 
     # Load teacher weights
-    checkpoint = torch.load(teacher_checkpoint_path, map_location=device, weights_only=False)
+    checkpoint = torch.load(  # nosec B614
+        teacher_checkpoint_path, map_location=device, weights_only=False
+    )
     teacher.load_state_dict(checkpoint["model_state_dict"])
     teacher = teacher.to(device)
     teacher.eval()
@@ -395,13 +433,15 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
     # =========================================================================
 
     print("\n📚 Creating Student Model (ResNet-18)...")
-    student_backbone = timm.create_model(config.student_architecture, pretrained=config.pretrained, num_classes=0)
+    student_backbone = timm.create_model(
+        config.student_architecture, pretrained=config.pretrained, num_classes=0
+    )
     student = UncertaintyIQAModel(
         student_backbone,
         config.student_feature_dim,
         config.num_heads,
         config.dropout,
-        hidden_dim=128  # Smaller hidden dim for student
+        hidden_dim=128,  # Smaller hidden dim for student
     )
     student = student.to(device)
 
@@ -418,19 +458,25 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
     dataset_dir = prepare_dataset(config.gcs_bucket, config.gcs_prefix)
 
     res = config.input_resolution
-    train_transform = alb.Compose([
-        alb.RandomResizedCrop(size=(res, res), scale=(0.5, 1.0)),
-        alb.HorizontalFlip(p=0.5),
-        alb.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0, p=0.3),
-        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ToTensorV2(),
-    ])
+    train_transform = alb.Compose(
+        [
+            alb.RandomResizedCrop(size=(res, res), scale=(0.5, 1.0)),
+            alb.HorizontalFlip(p=0.5),
+            alb.ColorJitter(
+                brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0, p=0.3
+            ),
+            alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ]
+    )
 
-    val_transform = alb.Compose([
-        alb.Resize(height=res, width=res),
-        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ToTensorV2(),
-    ])
+    val_transform = alb.Compose(
+        [
+            alb.Resize(height=res, width=res),
+            alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ]
+    )
 
     class Phase7Dataset(Dataset):
         def __init__(self, dataset_dir: Path, split: str, transform=None):
@@ -459,13 +505,16 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
             perspective = severity.get("perspective_severity", 0.0)
             geometric = max(skew, perspective)
 
-            labels = torch.tensor([
-                severity.get("blur_severity", 0.0),
-                severity.get("noise_severity", 0.0),
-                severity.get("compression_severity", 0.0),
-                severity.get("contrast_severity", 0.0),
-                geometric,
-            ], dtype=torch.float32)
+            labels = torch.tensor(
+                [
+                    severity.get("blur_severity", 0.0),
+                    severity.get("noise_severity", 0.0),
+                    severity.get("compression_severity", 0.0),
+                    severity.get("contrast_severity", 0.0),
+                    geometric,
+                ],
+                dtype=torch.float32,
+            )
 
             return image, labels
 
@@ -473,8 +522,20 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
     train_dataset = Phase7Dataset(dataset_dir, "train", train_transform)
     val_dataset = Phase7Dataset(dataset_dir, "val", val_transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=4, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config.batch_size,
+        shuffle=True,
+        num_workers=4,
+        pin_memory=True,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config.batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True,
+    )
 
     # =========================================================================
     # Distillation Loss
@@ -489,18 +550,28 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
         - soft_loss: MSE between teacher and student severity predictions
         - hard_loss: Gaussian NLL between student predictions and ground truth
         """
-        def __init__(self, alpha: float = 0.7, temperature: float = 2.0,
-                     var_min: float = 1e-4, var_max: float = 10.0):
+
+        def __init__(
+            self,
+            alpha: float = 0.7,
+            temperature: float = 2.0,
+            var_min: float = 1e-4,
+            var_max: float = 10.0,
+        ):
             super().__init__()
             self.alpha = alpha
             self.temperature = temperature
             self.var_min = var_min
             self.var_max = var_max
 
-        def forward(self, student_mu, student_log_var, teacher_mu, _teacher_log_var, targets):
+        def forward(
+            self, student_mu, student_log_var, teacher_mu, _teacher_log_var, targets
+        ):
             # Soft loss: MSE between teacher and student severity predictions
             # Scale by temperature squared (as in Hinton et al.)
-            soft_loss = nn.functional.mse_loss(student_mu, teacher_mu) * (self.temperature ** 2)
+            soft_loss = nn.functional.mse_loss(student_mu, teacher_mu) * (
+                self.temperature**2
+            )
 
             # Hard loss: Gaussian NLL for student on ground truth
             var = torch.exp(student_log_var).clamp(self.var_min, self.var_max)
@@ -520,14 +591,27 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
         alpha=config.distillation_alpha,
         temperature=config.temperature,
     )
-    optimizer = optim.AdamW(student.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
+    optimizer = optim.AdamW(
+        student.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+    )
 
     # Cosine annealing with warmup
     def lr_lambda(epoch):
         if epoch < config.warmup_epochs:
             return epoch / config.warmup_epochs
-        return config.min_lr / config.learning_rate + (1 - config.min_lr / config.learning_rate) * \
-               (1 + np.cos(np.pi * (epoch - config.warmup_epochs) / (config.epochs - config.warmup_epochs))) / 2
+        return (
+            config.min_lr / config.learning_rate
+            + (1 - config.min_lr / config.learning_rate)
+            * (
+                1
+                + np.cos(
+                    np.pi
+                    * (epoch - config.warmup_epochs)
+                    / (config.epochs - config.warmup_epochs)
+                )
+            )
+            / 2
+        )
 
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
@@ -568,7 +652,9 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
             student_mu, student_log_var = student(images)
 
             # Compute distillation loss
-            losses = loss_fn(student_mu, student_log_var, teacher_mu, teacher_log_var, labels)
+            losses = loss_fn(
+                student_mu, student_log_var, teacher_mu, teacher_log_var, labels
+            )
             loss = losses["total"]
 
             # Gradient clipping
@@ -581,8 +667,10 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
             train_hard_loss += losses["hard"].item()
 
             if batch_idx % 50 == 0:
-                print(f"  Epoch {epoch+1}/{config.epochs} | Batch {batch_idx}/{len(train_loader)} | "
-                      f"Loss: {loss.item():.4f} (soft: {losses['soft'].item():.4f}, hard: {losses['hard'].item():.4f})")
+                print(
+                    f"  Epoch {epoch + 1}/{config.epochs} | Batch {batch_idx}/{len(train_loader)} | "
+                    f"Loss: {loss.item():.4f} (soft: {losses['soft'].item():.4f}, hard: {losses['hard'].item():.4f})"
+                )
 
         train_loss /= len(train_loader)
         train_soft_loss /= len(train_loader)
@@ -604,7 +692,9 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
                 student_mu, student_log_var = student(images)
                 teacher_mu, teacher_log_var = teacher(images)
 
-                losses = loss_fn(student_mu, student_log_var, teacher_mu, teacher_log_var, labels)
+                losses = loss_fn(
+                    student_mu, student_log_var, teacher_mu, teacher_log_var, labels
+                )
                 val_loss += losses["total"].item()
 
                 all_mu.append(student_mu.cpu().numpy())
@@ -652,12 +742,18 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
         # ECE gap from teacher
         ece_gap = current_ece - config.teacher_ece
 
-        print(f"\nEpoch {epoch+1}/{config.epochs}:")
-        print(f"  Train Loss={train_loss:.4f} (soft={train_soft_loss:.4f}, hard={train_hard_loss:.4f})")
+        print(f"\nEpoch {epoch + 1}/{config.epochs}:")
+        print(
+            f"  Train Loss={train_loss:.4f} (soft={train_soft_loss:.4f}, hard={train_hard_loss:.4f})"
+        )
         print(f"  Val Loss={val_loss:.4f}")
-        print(f"  📊 ECE={current_ece:.4f} (teacher: {config.teacher_ece:.4f}, gap: {ece_gap:+.4f})")
+        print(
+            f"  📊 ECE={current_ece:.4f} (teacher: {config.teacher_ece:.4f}, gap: {ece_gap:+.4f})"
+        )
         print(f"  📊 MAE={severity_mae:.4f} (target: <{config.mae_target})")
-        print(f"  📊 Corr={macro_correlation:.4f} (target: >{config.correlation_target})")
+        print(
+            f"  📊 Corr={macro_correlation:.4f} (target: >{config.correlation_target})"
+        )
 
         # Track best metrics
         improved = False
@@ -675,27 +771,32 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
             epochs_without_improvement = 0
 
             # Save checkpoint
-            checkpoint_path = Path(f"/distillation_checkpoints/student_model_seed{config.seed}.pt")
-            torch.save({
-                "epoch": epoch,
-                "model_state_dict": student.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "val_loss": val_loss,
-                "macro_ece": current_ece,
-                "per_head_ece": ece_result["per_head_ece"],
-                "severity_mae": float(severity_mae),
-                "macro_correlation": float(macro_correlation),
-                "teacher_ece": config.teacher_ece,
-                "ece_gap": ece_gap,
-                "seed": config.seed,
-                "config": {
-                    "student_architecture": config.student_architecture,
-                    "input_resolution": config.input_resolution,
-                    "num_heads": config.num_heads,
-                    "distillation_alpha": config.distillation_alpha,
-                    "temperature": config.temperature,
+            checkpoint_path = Path(
+                f"/distillation_checkpoints/student_model_seed{config.seed}.pt"
+            )
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": student.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "val_loss": val_loss,
+                    "macro_ece": current_ece,
+                    "per_head_ece": ece_result["per_head_ece"],
+                    "severity_mae": float(severity_mae),
+                    "macro_correlation": float(macro_correlation),
+                    "teacher_ece": config.teacher_ece,
+                    "ece_gap": ece_gap,
+                    "seed": config.seed,
+                    "config": {
+                        "student_architecture": config.student_architecture,
+                        "input_resolution": config.input_resolution,
+                        "num_heads": config.num_heads,
+                        "distillation_alpha": config.distillation_alpha,
+                        "temperature": config.temperature,
+                    },
                 },
-            }, checkpoint_path)
+                checkpoint_path,
+            )
             distillation_volume.commit()
             print(f"  ✅ Saved checkpoint (ECE={current_ece:.4f}, gap={ece_gap:+.4f})")
         else:
@@ -709,22 +810,30 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
         corr_met = macro_correlation > config.correlation_target
         min_epochs_met = (epoch + 1) >= config.min_epochs
 
-        print(f"  Status: ECE{'✅' if ece_met else '❌'} MAE{'✅' if mae_met else '❌'} Corr{'✅' if corr_met else '❌'}")
+        print(
+            f"  Status: ECE{'✅' if ece_met else '❌'} MAE{'✅' if mae_met else '❌'} Corr{'✅' if corr_met else '❌'}"
+        )
 
         # Early stopping
         if ece_met and mae_met and corr_met and min_epochs_met:
             print("\n🎯 DISTILLATION TARGETS ACHIEVED!")
-            print(f"   Student ECE={current_ece:.4f} < {ece_target:.4f} (teacher + {config.ece_tolerance})")
+            print(
+                f"   Student ECE={current_ece:.4f} < {ece_target:.4f} (teacher + {config.ece_tolerance})"
+            )
             print(f"   MAE={severity_mae:.4f} < {config.mae_target}")
             print(f"   Corr={macro_correlation:.4f} > {config.correlation_target}")
             break
 
         if epochs_without_improvement >= config.early_stop_patience:
-            print(f"\n⏹️ Early stopping: No improvement for {config.early_stop_patience} epochs")
+            print(
+                f"\n⏹️ Early stopping: No improvement for {config.early_stop_patience} epochs"
+            )
             break
 
     # Save training history
-    history_path = Path(f"/distillation_checkpoints/distillation_history_seed{config.seed}.json")
+    history_path = Path(
+        f"/distillation_checkpoints/distillation_history_seed{config.seed}.json"
+    )
     with open(history_path, "w") as f:
         json.dump(training_history, f, indent=2)
     distillation_volume.commit()
@@ -749,9 +858,13 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
             return mu, var
 
     inference_model = StudentInference(student).to(device)
-    dummy_input = torch.randn(1, 3, config.input_resolution, config.input_resolution, device=device)
+    dummy_input = torch.randn(
+        1, 3, config.input_resolution, config.input_resolution, device=device
+    )
 
-    onnx_path = Path(f"/distillation_checkpoints/resnet18_student_seed{config.seed}.onnx")
+    onnx_path = Path(
+        f"/distillation_checkpoints/resnet18_student_seed{config.seed}.onnx"
+    )
     torch.onnx.export(
         inference_model,
         dummy_input,
@@ -769,7 +882,7 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
     )
     distillation_volume.commit()
 
-    onnx_size_mb = onnx_path.stat().st_size / (1024 ** 2)
+    onnx_size_mb = onnx_path.stat().st_size / (1024**2)
     print(f"  ONNX model size: {onnx_size_mb:.2f} MB")
 
     # =========================================================================
@@ -791,9 +904,11 @@ def train_distillation(seed: int = 42) -> dict[str, Any]:
     print(f"Epochs trained: {epoch + 1}/{config.epochs}")
 
     ece_target = config.teacher_ece + config.ece_tolerance
-    all_met = (best_ece < ece_target and
-               best_mae < config.mae_target and
-               best_correlation > config.correlation_target)
+    all_met = (
+        best_ece < ece_target
+        and best_mae < config.mae_target
+        and best_correlation > config.correlation_target
+    )
 
     if all_met:
         print("\n✅ STUDENT MODEL READY FOR DEPLOYMENT")

@@ -69,7 +69,9 @@ image = (
     .add_local_file("data/__init__.py", "/root/data/__init__.py", copy=True)
     .add_local_file("data/dataset.py", "/root/data/dataset.py", copy=True)
     .add_local_file("data/augmentation.py", "/root/data/augmentation.py", copy=True)
-    .add_local_file("data/continuous_labels.py", "/root/data/continuous_labels.py", copy=True)
+    .add_local_file(
+        "data/continuous_labels.py", "/root/data/continuous_labels.py", copy=True
+    )
     .add_local_file(
         ".gcp/service-account.json",
         "/root/.gcp/service-account.json",
@@ -78,7 +80,9 @@ image = (
 )
 
 gcs_secret = modal.Secret.from_name("gcs-credentials")
-checkpoint_volume = modal.Volume.from_name("phase7-mvp-checkpoints", create_if_missing=True)
+checkpoint_volume = modal.Volume.from_name(
+    "phase7-mvp-checkpoints", create_if_missing=True
+)
 
 
 @dataclass
@@ -97,7 +101,7 @@ class MVPTrainingConfig:
 
     # Loss function - BCE + MSE combined
     loss_alpha: float = 0.6  # BCE weight
-    loss_beta: float = 0.4   # MSE weight
+    loss_beta: float = 0.4  # MSE weight
 
     # Training
     epochs: int = 50  # Increased from 30 for better convergence
@@ -114,7 +118,9 @@ class MVPTrainingConfig:
     correlation_target: float = 0.70
     early_stop_patience: int = 10  # Stop if no improvement for N epochs
     num_ece_bins: int = 15  # Number of bins for ECE computation
-    min_epochs: int = 10  # Minimum epochs before early stopping (prevent premature stop)
+    min_epochs: int = (
+        10  # Minimum epochs before early stopping (prevent premature stop)
+    )
 
     # Output
     output_gcs_path: str = "gs://image_detection_b/models/phase7_mvp"
@@ -138,6 +144,7 @@ def set_seed(seed: int) -> None:
 
 def safe_extract_tar(tar_path: Path, extract_path: Path) -> None:
     """Safely extract tar.gz with path traversal protection."""
+
     def is_within_directory(directory: Path, target: Path) -> bool:
         abs_directory = directory.resolve()
         abs_target = target.resolve()
@@ -260,9 +267,7 @@ def prepare_mvp_dataset(bucket_name: str, gcs_prefix: str) -> Path:
     # Download train archive
     print("\n[Train]")
     download_and_extract(
-        bucket_name,
-        f"{gcs_prefix}/phase7_mvp_train.tar.gz",
-        dataset_dir
+        bucket_name, f"{gcs_prefix}/phase7_mvp_train.tar.gz", dataset_dir
     )
 
     # Move images and load metadata
@@ -279,9 +284,7 @@ def prepare_mvp_dataset(bucket_name: str, gcs_prefix: str) -> Path:
     # Download val archive
     print("\n[Val]")
     download_and_extract(
-        bucket_name,
-        f"{gcs_prefix}/phase7_mvp_val.tar.gz",
-        dataset_dir
+        bucket_name, f"{gcs_prefix}/phase7_mvp_val.tar.gz", dataset_dir
     )
 
     val_meta = dataset_dir / "val_metadata.json"
@@ -293,9 +296,7 @@ def prepare_mvp_dataset(bucket_name: str, gcs_prefix: str) -> Path:
     # Download test archive
     print("\n[Test]")
     download_and_extract(
-        bucket_name,
-        f"{gcs_prefix}/phase7_mvp_test.tar.gz",
-        dataset_dir
+        bucket_name, f"{gcs_prefix}/phase7_mvp_test.tar.gz", dataset_dir
     )
 
     test_meta = dataset_dir / "test_metadata.json"
@@ -325,6 +326,7 @@ def train_mvp(seed: int = 42):
         seed: Random seed for reproducibility (default: 42)
     """
     import sys
+
     sys.path.insert(0, "/root")
 
     import albumentations as alb
@@ -357,26 +359,38 @@ def train_mvp(seed: int = 42):
     dataset_dir = prepare_mvp_dataset(config.gcs_bucket, config.gcs_prefix)
 
     # Create transforms
-    train_transform = alb.Compose([
-        alb.Resize(384, 384),
-        alb.HorizontalFlip(p=0.5),
-        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ToTensorV2(),
-    ])
+    train_transform = alb.Compose(
+        [
+            alb.Resize(384, 384),
+            alb.HorizontalFlip(p=0.5),
+            alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ]
+    )
 
-    val_transform = alb.Compose([
-        alb.Resize(384, 384),
-        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ToTensorV2(),
-    ])
+    val_transform = alb.Compose(
+        [
+            alb.Resize(384, 384),
+            alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ]
+    )
 
     # Create datasets
     print("\n📊 Creating data loaders...")
-    train_dataset = ContinuousIQADataset(dataset_dir, split="train", transform=train_transform)
-    val_dataset = ContinuousIQADataset(dataset_dir, split="val", transform=val_transform)
+    train_dataset = ContinuousIQADataset(
+        dataset_dir, split="train", transform=train_transform
+    )
+    val_dataset = ContinuousIQADataset(
+        dataset_dir, split="val", transform=val_transform
+    )
 
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4)
+    train_loader = DataLoader(
+        train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=4
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4
+    )
 
     print(f"  Train batches: {len(train_loader)}")
     print(f"  Val batches: {len(val_loader)}")
@@ -386,21 +400,23 @@ def train_mvp(seed: int = 42):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"  Device: {device}")
 
-    backbone = timm.create_model(config.model_architecture, pretrained=config.pretrained, num_classes=0)
+    backbone = timm.create_model(
+        config.model_architecture, pretrained=config.pretrained, num_classes=0
+    )
     feature_dim = backbone.num_features
 
     class MultiHeadIQA(nn.Module):
         def __init__(self, backbone, feature_dim, num_heads, dropout):
             super().__init__()
             self.backbone = backbone
-            self.heads = nn.ModuleList([
-                nn.Sequential(
-                    nn.Dropout(dropout),
-                    nn.Linear(feature_dim, 1),
-                    nn.Sigmoid()
-                )
-                for _ in range(num_heads)
-            ])
+            self.heads = nn.ModuleList(
+                [
+                    nn.Sequential(
+                        nn.Dropout(dropout), nn.Linear(feature_dim, 1), nn.Sigmoid()
+                    )
+                    for _ in range(num_heads)
+                ]
+            )
 
         def forward(self, x):
             features = self.backbone(x)
@@ -413,7 +429,9 @@ def train_mvp(seed: int = 42):
     # Loss and optimizer
     bce_loss = nn.BCELoss()
     mse_loss = nn.MSELoss()
-    optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
+    optimizer = optim.AdamW(
+        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+    )
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.epochs)
 
     # Training loop with ECE tracking (Sprint 4)
@@ -441,7 +459,9 @@ def train_mvp(seed: int = 42):
             outputs = model(images)
 
             # Combined loss
-            loss = config.loss_alpha * bce_loss(outputs, labels) + config.loss_beta * mse_loss(outputs, labels)
+            loss = config.loss_alpha * bce_loss(
+                outputs, labels
+            ) + config.loss_beta * mse_loss(outputs, labels)
 
             loss.backward()
             optimizer.step()
@@ -449,7 +469,9 @@ def train_mvp(seed: int = 42):
             train_loss += loss.item()
 
             if batch_idx % 50 == 0:
-                print(f"  Epoch {epoch+1}/{config.epochs} | Batch {batch_idx}/{len(train_loader)} | Loss: {loss.item():.4f}")
+                print(
+                    f"  Epoch {epoch + 1}/{config.epochs} | Batch {batch_idx}/{len(train_loader)} | Loss: {loss.item():.4f}"
+                )
 
         train_loss /= len(train_loader)
 
@@ -464,7 +486,9 @@ def train_mvp(seed: int = 42):
                 images = images.to(device)
                 labels = labels.to(device)
                 outputs = model(images)
-                loss = config.loss_alpha * bce_loss(outputs, labels) + config.loss_beta * mse_loss(outputs, labels)
+                loss = config.loss_alpha * bce_loss(
+                    outputs, labels
+                ) + config.loss_beta * mse_loss(outputs, labels)
                 val_loss += loss.item()
 
                 # Collect predictions for ECE
@@ -477,9 +501,12 @@ def train_mvp(seed: int = 42):
         # Compute ECE (Sprint 4 primary metric)
         import numpy as np
         from scipy import stats
+
         all_predictions = np.concatenate(all_predictions, axis=0)
         all_targets = np.concatenate(all_targets, axis=0)
-        ece_result = compute_ece_numpy(all_predictions, all_targets, config.num_ece_bins)
+        ece_result = compute_ece_numpy(
+            all_predictions, all_targets, config.num_ece_bins
+        )
         current_ece = ece_result["macro_ece"]
 
         # Compute severity MAE
@@ -506,11 +533,13 @@ def train_mvp(seed: int = 42):
         }
         training_history.append(epoch_metrics)
 
-        print(f"\nEpoch {epoch+1}/{config.epochs}:")
+        print(f"\nEpoch {epoch + 1}/{config.epochs}:")
         print(f"  Train Loss={train_loss:.4f}, Val Loss={val_loss:.4f}")
         print(f"  📊 ECE={current_ece:.4f} (target: <{config.ece_target})")
         print(f"  📊 MAE={severity_mae:.4f} (target: <{config.mae_target})")
-        print(f"  📊 Corr={macro_correlation:.4f} (target: >{config.correlation_target})")
+        print(
+            f"  📊 Corr={macro_correlation:.4f} (target: >{config.correlation_target})"
+        )
         print(f"  Per-head ECE: {[f'{e:.4f}' for e in ece_result['per_head_ece']]}")
         print(f"  Per-head Corr: {[f'{c:.4f}' for c in per_head_correlation]}")
 
@@ -534,21 +563,26 @@ def train_mvp(seed: int = 42):
             epochs_without_improvement = 0
             # Save best model
             checkpoint_path = Path(f"/checkpoints/best_model_seed{config.seed}.pt")
-            torch.save({
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "val_loss": val_loss,
-                "macro_ece": current_ece,
-                "per_head_ece": ece_result["per_head_ece"],
-                "severity_mae": float(severity_mae),
-                "macro_correlation": float(macro_correlation),
-                "per_head_correlation": per_head_correlation,
-                "seed": config.seed,
-                "config": config.__dict__,
-            }, checkpoint_path)
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "val_loss": val_loss,
+                    "macro_ece": current_ece,
+                    "per_head_ece": ece_result["per_head_ece"],
+                    "severity_mae": float(severity_mae),
+                    "macro_correlation": float(macro_correlation),
+                    "per_head_correlation": per_head_correlation,
+                    "seed": config.seed,
+                    "config": config.__dict__,
+                },
+                checkpoint_path,
+            )
             checkpoint_volume.commit()
-            print(f"  ✅ Saved best model (ECE={current_ece:.4f}, MAE={severity_mae:.4f}, Corr={macro_correlation:.4f})")
+            print(
+                f"  ✅ Saved best model (ECE={current_ece:.4f}, MAE={severity_mae:.4f}, Corr={macro_correlation:.4f})"
+            )
         else:
             epochs_without_improvement += 1
             print(f"  ⚠️ No improvement for {epochs_without_improvement} epochs")
@@ -575,7 +609,9 @@ def train_mvp(seed: int = 42):
             break
 
         if epochs_without_improvement >= config.early_stop_patience:
-            print(f"\n⏹️ Early stopping: No improvement for {config.early_stop_patience} epochs")
+            print(
+                f"\n⏹️ Early stopping: No improvement for {config.early_stop_patience} epochs"
+            )
             break
 
     # Save training history
@@ -589,7 +625,9 @@ def train_mvp(seed: int = 42):
     print("=" * 60)
     print(f"Best ECE: {best_ece:.4f} (target: <{config.ece_target})")
     print(f"Best MAE: {best_mae:.4f} (target: <{config.mae_target})")
-    print(f"Best Correlation: {best_correlation:.4f} (target: >{config.correlation_target})")
+    print(
+        f"Best Correlation: {best_correlation:.4f} (target: >{config.correlation_target})"
+    )
     print(f"Best Val Loss: {best_val_loss:.4f}")
     print(f"Epochs trained: {epoch + 1}/{config.epochs}")
 
@@ -600,9 +638,15 @@ def train_mvp(seed: int = 42):
     all_targets_met = ece_met and mae_met and corr_met
 
     print("\nTarget Status:")
-    print(f"  ECE: {'✅' if ece_met else '❌'} ({best_ece:.4f} vs <{config.ece_target})")
-    print(f"  MAE: {'✅' if mae_met else '❌'} ({best_mae:.4f} vs <{config.mae_target})")
-    print(f"  Correlation: {'✅' if corr_met else '❌'} ({best_correlation:.4f} vs >{config.correlation_target})")
+    print(
+        f"  ECE: {'✅' if ece_met else '❌'} ({best_ece:.4f} vs <{config.ece_target})"
+    )
+    print(
+        f"  MAE: {'✅' if mae_met else '❌'} ({best_mae:.4f} vs <{config.mae_target})"
+    )
+    print(
+        f"  Correlation: {'✅' if corr_met else '❌'} ({best_correlation:.4f} vs >{config.correlation_target})"
+    )
     print(f"\nSprint 4 ALL Targets Met: {'✅ YES' if all_targets_met else '❌ NO'}")
 
     return {
@@ -654,7 +698,9 @@ def main(seed: int = 42):
     print("Metrics:")
     print(f"  ECE: {result['best_ece']:.4f} {'✅' if result['ece_met'] else '❌'}")
     print(f"  MAE: {result['best_mae']:.4f} {'✅' if result['mae_met'] else '❌'}")
-    print(f"  Correlation: {result['best_correlation']:.4f} {'✅' if result['corr_met'] else '❌'}")
+    print(
+        f"  Correlation: {result['best_correlation']:.4f} {'✅' if result['corr_met'] else '❌'}"
+    )
     print(f"  Val Loss: {result['best_val_loss']:.4f}")
     print()
 
@@ -667,7 +713,9 @@ def main(seed: int = 42):
         if not result["mae_met"]:
             print(f"   - MAE {result['best_mae']:.4f} needs to be < 0.15")
         if not result["corr_met"]:
-            print(f"   - Correlation {result['best_correlation']:.4f} needs to be > 0.70")
+            print(
+                f"   - Correlation {result['best_correlation']:.4f} needs to be > 0.70"
+            )
         print("\nConsider:")
         print("   - More epochs (increase config.epochs)")
         print("   - Gaussian NLL loss (per plan recommendation)")

@@ -41,7 +41,9 @@ image = (
 )
 
 # Mount the distillation volume
-distillation_volume = modal.Volume.from_name("phase7-distillation-checkpoints", create_if_missing=False)
+distillation_volume = modal.Volume.from_name(
+    "phase7-distillation-checkpoints", create_if_missing=False
+)
 
 
 @stub.function(
@@ -70,7 +72,10 @@ def export_to_onnx(seed: int = 42):
 
     class UncertaintyHead(nn.Module):
         """Single head that outputs mean (mu) and log variance (log_var)."""
-        def __init__(self, in_features: int, hidden_dim: int = 256, dropout: float = 0.3):
+
+        def __init__(
+            self, in_features: int, hidden_dim: int = 256, dropout: float = 0.3
+        ):
             super().__init__()
             self.shared = nn.Sequential(
                 nn.Linear(in_features, hidden_dim),
@@ -97,13 +102,24 @@ def export_to_onnx(seed: int = 42):
 
     class UncertaintyIQAModel(nn.Module):
         """IQA model with separate uncertainty heads for each defect type."""
-        def __init__(self, backbone, feature_dim: int, num_heads: int, dropout: float, hidden_dim: int = 256):
+
+        def __init__(
+            self,
+            backbone,
+            feature_dim: int,
+            num_heads: int,
+            dropout: float,
+            hidden_dim: int = 256,
+        ):
             super().__init__()
             self.backbone = backbone
             self.pool = nn.AdaptiveAvgPool2d(1)
-            self.heads = nn.ModuleList([
-                UncertaintyHead(feature_dim, hidden_dim, dropout) for _ in range(num_heads)
-            ])
+            self.heads = nn.ModuleList(
+                [
+                    UncertaintyHead(feature_dim, hidden_dim, dropout)
+                    for _ in range(num_heads)
+                ]
+            )
 
         def forward(self, x):
             features = self.backbone(x)
@@ -199,7 +215,9 @@ def export_to_onnx(seed: int = 42):
     # Warmup
     print("  Warming up...")
     rng = np.random.default_rng(42)
-    test_input = rng.standard_normal((1, 3, input_resolution, input_resolution)).astype(np.float32)
+    test_input = rng.standard_normal((1, 3, input_resolution, input_resolution)).astype(
+        np.float32
+    )
     for _ in range(10):
         _ = ort_session.run(None, {"input": test_input})
 
@@ -227,11 +245,14 @@ def export_to_onnx(seed: int = 42):
     # Check against target
     target_latency = 60  # ms
     latency_met = avg_latency < target_latency
-    print(f"\n  Target: <{target_latency}ms | Status: {'✅ MET' if latency_met else '❌ NOT MET'}")
+    print(
+        f"\n  Target: <{target_latency}ms | Status: {'✅ MET' if latency_met else '❌ NOT MET'}"
+    )
 
     # Upload to GCS
     print("\n☁️ Uploading to GCS...")
     import os
+
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
 
     client = storage.Client()
@@ -240,12 +261,16 @@ def export_to_onnx(seed: int = 42):
     # Upload ONNX
     blob = bucket.blob(f"models/phase7_student_resnet18_seed{seed}.onnx")
     blob.upload_from_filename(str(onnx_path))
-    print(f"  ✅ Uploaded: gs://image_detection_b/models/phase7_student_resnet18_seed{seed}.onnx")
+    print(
+        f"  ✅ Uploaded: gs://image_detection_b/models/phase7_student_resnet18_seed{seed}.onnx"
+    )
 
     # Upload checkpoint
     blob = bucket.blob(f"models/phase7_student_resnet18_seed{seed}.pt")
     blob.upload_from_filename(str(checkpoint_path))
-    print(f"  ✅ Uploaded: gs://image_detection_b/models/phase7_student_resnet18_seed{seed}.pt")
+    print(
+        f"  ✅ Uploaded: gs://image_detection_b/models/phase7_student_resnet18_seed{seed}.pt"
+    )
 
     # Save volume
     distillation_volume.commit()
@@ -296,7 +321,9 @@ def main(seed: int = 42):
     latency = result["cpu_latency"]
     print(f"  Average: {latency['average_ms']:.2f}ms")
     print(f"  P95: {latency['p95_ms']:.2f}ms")
-    print(f"  Target: <{latency['target_ms']}ms | {'✅ MET' if latency['target_met'] else '❌ NOT MET'}")
+    print(
+        f"  Target: <{latency['target_ms']}ms | {'✅ MET' if latency['target_met'] else '❌ NOT MET'}"
+    )
 
     # Final summary
     print("\n" + "=" * 60)
@@ -304,17 +331,25 @@ def main(seed: int = 42):
     print("=" * 60)
 
     ece_target = 0.0214 + 0.03  # Teacher ECE + tolerance
-    ece_met = metrics['macro_ece'] < ece_target
-    mae_met = metrics['severity_mae'] < 0.12
-    corr_met = metrics['macro_correlation'] > 0.75
-    latency_met = latency['target_met']
-    size_met = result['onnx_size_mb'] < 50
+    ece_met = metrics["macro_ece"] < ece_target
+    mae_met = metrics["severity_mae"] < 0.12
+    corr_met = metrics["macro_correlation"] > 0.75
+    latency_met = latency["target_met"]
+    size_met = result["onnx_size_mb"] < 50
 
-    print(f"  ECE < {ece_target:.4f}: {'✅' if ece_met else '❌'} ({metrics['macro_ece']:.4f})")
+    print(
+        f"  ECE < {ece_target:.4f}: {'✅' if ece_met else '❌'} ({metrics['macro_ece']:.4f})"
+    )
     print(f"  MAE < 0.12: {'✅' if mae_met else '❌'} ({metrics['severity_mae']:.4f})")
-    print(f"  Corr > 0.75: {'✅' if corr_met else '❌'} ({metrics['macro_correlation']:.4f})")
-    print(f"  Latency < 60ms: {'✅' if latency_met else '❌'} ({latency['average_ms']:.2f}ms)")
-    print(f"  Size < 50MB: {'✅' if size_met else '❌'} ({result['onnx_size_mb']:.2f}MB)")
+    print(
+        f"  Corr > 0.75: {'✅' if corr_met else '❌'} ({metrics['macro_correlation']:.4f})"
+    )
+    print(
+        f"  Latency < 60ms: {'✅' if latency_met else '❌'} ({latency['average_ms']:.2f}ms)"
+    )
+    print(
+        f"  Size < 50MB: {'✅' if size_met else '❌'} ({result['onnx_size_mb']:.2f}MB)"
+    )
 
     all_met = all([ece_met, mae_met, corr_met, latency_met, size_met])
     print(f"\n  🎯 ALL TARGETS MET: {'✅ YES' if all_met else '❌ NO'}")

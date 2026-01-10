@@ -76,7 +76,9 @@ image = (
     .add_local_file("data/__init__.py", "/root/data/__init__.py", copy=True)
     .add_local_file("data/dataset.py", "/root/data/dataset.py", copy=True)
     .add_local_file("data/augmentation.py", "/root/data/augmentation.py", copy=True)
-    .add_local_file("data/continuous_labels.py", "/root/data/continuous_labels.py", copy=True)
+    .add_local_file(
+        "data/continuous_labels.py", "/root/data/continuous_labels.py", copy=True
+    )
     .add_local_file(
         ".gcp/service-account.json",
         "/root/.gcp/service-account.json",
@@ -85,7 +87,9 @@ image = (
 )
 
 gcs_secret = modal.Secret.from_name("gcs-credentials")
-checkpoint_volume = modal.Volume.from_name("phase7-production-checkpoints", create_if_missing=True)
+checkpoint_volume = modal.Volume.from_name(
+    "phase7-production-checkpoints", create_if_missing=True
+)
 
 
 @dataclass
@@ -124,7 +128,9 @@ class ProductionTrainingConfig:
     ece_target: float = 0.08  # Primary: ECE < 0.08
     mae_target: float = 0.15  # Secondary: Severity MAE < 0.15
     correlation_target: float = 0.85  # Production target: > 0.85
-    uncertainty_correlation_target: float = 0.50  # Uncertainty should correlate with error
+    uncertainty_correlation_target: float = (
+        0.50  # Uncertainty should correlate with error
+    )
     early_stop_patience: int = 15
     num_ece_bins: int = 15
     min_epochs: int = 20  # More epochs before early stopping
@@ -150,6 +156,7 @@ def set_seed(seed: int) -> None:
 
 def safe_extract_tar(tar_path: Path, extract_path: Path) -> None:
     """Safely extract tar.gz with path traversal protection."""
+
     def is_within_directory(directory: Path, target: Path) -> bool:
         abs_directory = directory.resolve()
         abs_target = target.resolve()
@@ -186,7 +193,11 @@ def compute_ece_numpy(predictions, targets, num_bins: int = 15):
 
         for i in range(num_bins):
             lower, upper = bin_boundaries[i], bin_boundaries[i + 1]
-            in_bin = (preds_c >= lower) & (preds_c < upper) if i < num_bins - 1 else (preds_c >= lower) & (preds_c <= upper)
+            in_bin = (
+                (preds_c >= lower) & (preds_c < upper)
+                if i < num_bins - 1
+                else (preds_c >= lower) & (preds_c <= upper)
+            )
             bin_size = in_bin.sum()
             if bin_size > 0:
                 bin_accuracy = targs_c[in_bin].mean()
@@ -195,7 +206,10 @@ def compute_ece_numpy(predictions, targets, num_bins: int = 15):
 
         per_head_ece.append(ece)
 
-    return {"macro_ece": float(np.mean(per_head_ece)), "per_head_ece": [float(e) for e in per_head_ece]}
+    return {
+        "macro_ece": float(np.mean(per_head_ece)),
+        "per_head_ece": [float(e) for e in per_head_ece],
+    }
 
 
 def download_and_extract(bucket_name: str, blob_name: str, extract_dir: Path) -> None:
@@ -213,7 +227,7 @@ def download_and_extract(bucket_name: str, blob_name: str, extract_dir: Path) ->
     blob = bucket.blob(blob_name)
     blob.download_to_filename(str(tar_path))
 
-    size_mb = tar_path.stat().st_size / (1024 ** 2)
+    size_mb = tar_path.stat().st_size / (1024**2)
     elapsed = time.time() - start
     print(f"  Downloaded {size_mb:.1f} MB in {elapsed:.1f}s")
 
@@ -243,7 +257,9 @@ def prepare_dataset(bucket_name: str, gcs_prefix: str) -> Path:
 
     for split in ["train", "val", "test"]:
         print(f"\n[{split.upper()}]")
-        download_and_extract(bucket_name, f"{gcs_prefix}/phase7_mvp_{split}.tar.gz", dataset_dir)
+        download_and_extract(
+            bucket_name, f"{gcs_prefix}/phase7_mvp_{split}.tar.gz", dataset_dir
+        )
 
         meta_path = dataset_dir / f"{split}_metadata.json"
         if meta_path.exists():
@@ -288,7 +304,9 @@ def train_production(seed: int = 42) -> dict[str, Any]:
     print(f"Resolution: {config.input_resolution}x{config.input_resolution}")
     print(f"Epochs: {config.epochs}")
     print(f"Batch Size: {config.batch_size}")
-    print(f"Targets: ECE<{config.ece_target}, MAE<{config.mae_target}, Corr>{config.correlation_target}")
+    print(
+        f"Targets: ECE<{config.ece_target}, MAE<{config.mae_target}, Corr>{config.correlation_target}"
+    )
 
     # Download dataset
     print("\n📥 Downloading dataset...")
@@ -296,19 +314,25 @@ def train_production(seed: int = 42) -> dict[str, Any]:
 
     # Transforms for 384x384 resolution
     res = config.input_resolution
-    train_transform = alb.Compose([
-        alb.RandomResizedCrop(size=(res, res), scale=(0.5, 1.0)),
-        alb.HorizontalFlip(p=0.5),
-        alb.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0, p=0.3),
-        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ToTensorV2(),
-    ])
+    train_transform = alb.Compose(
+        [
+            alb.RandomResizedCrop(size=(res, res), scale=(0.5, 1.0)),
+            alb.HorizontalFlip(p=0.5),
+            alb.ColorJitter(
+                brightness=0.1, contrast=0.1, saturation=0.0, hue=0.0, p=0.3
+            ),
+            alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ]
+    )
 
-    val_transform = alb.Compose([
-        alb.Resize(height=res, width=res),
-        alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ToTensorV2(),
-    ])
+    val_transform = alb.Compose(
+        [
+            alb.Resize(height=res, width=res),
+            alb.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ToTensorV2(),
+        ]
+    )
 
     # Dataset class
     class Phase7Dataset(Dataset):
@@ -343,13 +367,16 @@ def train_production(seed: int = 42) -> dict[str, Any]:
             perspective = severity.get("perspective_severity", 0.0)
             geometric = max(skew, perspective)  # Use max as proxy for geometric
 
-            labels = torch.tensor([
-                severity.get("blur_severity", 0.0),
-                severity.get("noise_severity", 0.0),
-                severity.get("compression_severity", 0.0),
-                severity.get("contrast_severity", 0.0),
-                geometric,
-            ], dtype=torch.float32)
+            labels = torch.tensor(
+                [
+                    severity.get("blur_severity", 0.0),
+                    severity.get("noise_severity", 0.0),
+                    severity.get("compression_severity", 0.0),
+                    severity.get("contrast_severity", 0.0),
+                    geometric,
+                ],
+                dtype=torch.float32,
+            )
 
             return image, labels
 
@@ -358,8 +385,20 @@ def train_production(seed: int = 42) -> dict[str, Any]:
     train_dataset = Phase7Dataset(dataset_dir, "train", train_transform)
     val_dataset = Phase7Dataset(dataset_dir, "val", val_transform)
 
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=4, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config.batch_size,
+        shuffle=True,
+        num_workers=4,
+        pin_memory=True,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config.batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True,
+    )
 
     # Build model with uncertainty heads
     print("\n🔧 Building model with uncertainty heads...")
@@ -368,12 +407,15 @@ def train_production(seed: int = 42) -> dict[str, Any]:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    backbone = timm.create_model(config.model_architecture, pretrained=config.pretrained, num_classes=0)
+    backbone = timm.create_model(
+        config.model_architecture, pretrained=config.pretrained, num_classes=0
+    )
     feature_dim = backbone.num_features
     print(f"Backbone: {config.model_architecture}, features: {feature_dim}")
 
     class UncertaintyHead(nn.Module):
         """Single head that outputs mean (mu) and log variance (log_var)."""
+
         def __init__(self, in_features: int, dropout: float = 0.3):
             super().__init__()
             self.shared = nn.Sequential(
@@ -401,13 +443,14 @@ def train_production(seed: int = 42) -> dict[str, Any]:
 
     class UncertaintyIQAModel(nn.Module):
         """ResNet-50 with separate uncertainty heads for each defect type."""
+
         def __init__(self, backbone, feature_dim: int, num_heads: int, dropout: float):
             super().__init__()
             self.backbone = backbone
             self.pool = nn.AdaptiveAvgPool2d(1)
-            self.heads = nn.ModuleList([
-                UncertaintyHead(feature_dim, dropout) for _ in range(num_heads)
-            ])
+            self.heads = nn.ModuleList(
+                [UncertaintyHead(feature_dim, dropout) for _ in range(num_heads)]
+            )
 
         def forward(self, x):
             features = self.backbone(x)
@@ -429,7 +472,9 @@ def train_production(seed: int = 42) -> dict[str, Any]:
 
     # Gaussian NLL Loss
     class GaussianNLLLoss(nn.Module):
-        def __init__(self, eps: float = 1e-6, var_min: float = 1e-4, var_max: float = 10.0):
+        def __init__(
+            self, eps: float = 1e-6, var_min: float = 1e-4, var_max: float = 10.0
+        ):
             super().__init__()
             self.eps = eps
             self.var_min = var_min
@@ -440,22 +485,39 @@ def train_production(seed: int = 42) -> dict[str, Any]:
             nll = 0.5 * (torch.log(var) + ((target - mu) ** 2) / var)
             return nll.mean()
 
-    loss_fn = GaussianNLLLoss(var_min=config.var_clamp_min, var_max=config.var_clamp_max)
-    optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay)
+    loss_fn = GaussianNLLLoss(
+        var_min=config.var_clamp_min, var_max=config.var_clamp_max
+    )
+    optimizer = optim.AdamW(
+        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+    )
 
     # Cosine annealing with warmup
     def lr_lambda(epoch):
         if epoch < config.warmup_epochs:
             return epoch / config.warmup_epochs
-        return config.min_lr / config.learning_rate + (1 - config.min_lr / config.learning_rate) * \
-               (1 + np.cos(np.pi * (epoch - config.warmup_epochs) / (config.epochs - config.warmup_epochs))) / 2
+        return (
+            config.min_lr / config.learning_rate
+            + (1 - config.min_lr / config.learning_rate)
+            * (
+                1
+                + np.cos(
+                    np.pi
+                    * (epoch - config.warmup_epochs)
+                    / (config.epochs - config.warmup_epochs)
+                )
+            )
+            / 2
+        )
 
     scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
     # Training loop
     print("\n🚀 Starting PRODUCTION training...")
     print("Loss: Gaussian NLL")
-    print(f"Targets: ECE<{config.ece_target}, MAE<{config.mae_target}, Corr>{config.correlation_target}")
+    print(
+        f"Targets: ECE<{config.ece_target}, MAE<{config.mae_target}, Corr>{config.correlation_target}"
+    )
     print(f"Uncertainty correlation target: >{config.uncertainty_correlation_target}")
 
     best_val_loss = float("inf")
@@ -487,7 +549,9 @@ def train_production(seed: int = 42) -> dict[str, Any]:
             train_loss += loss.item()
 
             if batch_idx % 50 == 0:
-                print(f"  Epoch {epoch+1}/{config.epochs} | Batch {batch_idx}/{len(train_loader)} | Loss: {loss.item():.4f}")
+                print(
+                    f"  Epoch {epoch + 1}/{config.epochs} | Batch {batch_idx}/{len(train_loader)} | Loss: {loss.item():.4f}"
+                )
 
         train_loss /= len(train_loader)
         scheduler.step()
@@ -557,12 +621,16 @@ def train_production(seed: int = 42) -> dict[str, Any]:
         }
         training_history.append(epoch_metrics)
 
-        print(f"\nEpoch {epoch+1}/{config.epochs}:")
+        print(f"\nEpoch {epoch + 1}/{config.epochs}:")
         print(f"  Train Loss={train_loss:.4f}, Val Loss={val_loss:.4f}")
         print(f"  📊 ECE={current_ece:.4f} (target: <{config.ece_target})")
         print(f"  📊 MAE={severity_mae:.4f} (target: <{config.mae_target})")
-        print(f"  📊 Corr={macro_correlation:.4f} (target: >{config.correlation_target})")
-        print(f"  📊 Uncertainty-Error Corr={uncertainty_corr:.4f} (target: >{config.uncertainty_correlation_target})")
+        print(
+            f"  📊 Corr={macro_correlation:.4f} (target: >{config.correlation_target})"
+        )
+        print(
+            f"  📊 Uncertainty-Error Corr={uncertainty_corr:.4f} (target: >{config.uncertainty_correlation_target})"
+        )
         print(f"  Mean Variance: {all_var.mean():.6f}")
 
         # Track best metrics
@@ -583,23 +651,30 @@ def train_production(seed: int = 42) -> dict[str, Any]:
             epochs_without_improvement = 0
 
             # Save checkpoint
-            checkpoint_path = Path(f"/checkpoints/production_model_seed{config.seed}.pt")
-            torch.save({
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "val_loss": val_loss,
-                "macro_ece": current_ece,
-                "per_head_ece": ece_result["per_head_ece"],
-                "severity_mae": float(severity_mae),
-                "macro_correlation": float(macro_correlation),
-                "uncertainty_correlation": float(uncertainty_corr),
-                "seed": config.seed,
-                "config": config.__dict__,
-                "loss_type": "gaussian_nll",
-            }, checkpoint_path)
+            checkpoint_path = Path(
+                f"/checkpoints/production_model_seed{config.seed}.pt"
+            )
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "val_loss": val_loss,
+                    "macro_ece": current_ece,
+                    "per_head_ece": ece_result["per_head_ece"],
+                    "severity_mae": float(severity_mae),
+                    "macro_correlation": float(macro_correlation),
+                    "uncertainty_correlation": float(uncertainty_corr),
+                    "seed": config.seed,
+                    "config": config.__dict__,
+                    "loss_type": "gaussian_nll",
+                },
+                checkpoint_path,
+            )
             checkpoint_volume.commit()
-            print(f"  ✅ Saved checkpoint (ECE={current_ece:.4f}, Corr={macro_correlation:.4f})")
+            print(
+                f"  ✅ Saved checkpoint (ECE={current_ece:.4f}, Corr={macro_correlation:.4f})"
+            )
         else:
             epochs_without_improvement += 1
             print(f"  ⚠️ No improvement for {epochs_without_improvement} epochs")
@@ -611,7 +686,9 @@ def train_production(seed: int = 42) -> dict[str, Any]:
         unc_met = uncertainty_corr > config.uncertainty_correlation_target
         min_epochs_met = (epoch + 1) >= config.min_epochs
 
-        print(f"  Status: ECE{'✅' if ece_met else '❌'} MAE{'✅' if mae_met else '❌'} Corr{'✅' if corr_met else '❌'} Unc{'✅' if unc_met else '❌'}")
+        print(
+            f"  Status: ECE{'✅' if ece_met else '❌'} MAE{'✅' if mae_met else '❌'} Corr{'✅' if corr_met else '❌'} Unc{'✅' if unc_met else '❌'}"
+        )
 
         # Early stopping (all targets + minimum epochs)
         if ece_met and mae_met and corr_met and unc_met and min_epochs_met:
@@ -619,11 +696,15 @@ def train_production(seed: int = 42) -> dict[str, Any]:
             print(f"   ECE={current_ece:.4f} < {config.ece_target}")
             print(f"   MAE={severity_mae:.4f} < {config.mae_target}")
             print(f"   Corr={macro_correlation:.4f} > {config.correlation_target}")
-            print(f"   Uncertainty Corr={uncertainty_corr:.4f} > {config.uncertainty_correlation_target}")
+            print(
+                f"   Uncertainty Corr={uncertainty_corr:.4f} > {config.uncertainty_correlation_target}"
+            )
             break
 
         if epochs_without_improvement >= config.early_stop_patience:
-            print(f"\n⏹️ Early stopping: No improvement for {config.early_stop_patience} epochs")
+            print(
+                f"\n⏹️ Early stopping: No improvement for {config.early_stop_patience} epochs"
+            )
             break
 
     # Save training history
@@ -639,13 +720,19 @@ def train_production(seed: int = 42) -> dict[str, Any]:
     print("Loss Type: Gaussian NLL (uncertainty-aware)")
     print(f"Best ECE: {best_ece:.4f} (target: <{config.ece_target})")
     print(f"Best MAE: {best_mae:.4f} (target: <{config.mae_target})")
-    print(f"Best Correlation: {best_correlation:.4f} (target: >{config.correlation_target})")
-    print(f"Best Uncertainty Corr: {best_uncertainty_corr:.4f} (target: >{config.uncertainty_correlation_target})")
+    print(
+        f"Best Correlation: {best_correlation:.4f} (target: >{config.correlation_target})"
+    )
+    print(
+        f"Best Uncertainty Corr: {best_uncertainty_corr:.4f} (target: >{config.uncertainty_correlation_target})"
+    )
     print(f"Epochs trained: {epoch + 1}/{config.epochs}")
 
-    all_met = (best_ece < config.ece_target and
-               best_mae < config.mae_target and
-               best_correlation > config.correlation_target)
+    all_met = (
+        best_ece < config.ece_target
+        and best_mae < config.mae_target
+        and best_correlation > config.correlation_target
+    )
 
     if all_met:
         print("\n✅ PRODUCTION MODEL READY FOR DEPLOYMENT")
