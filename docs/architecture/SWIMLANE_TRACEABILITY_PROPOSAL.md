@@ -1,5 +1,5 @@
 ---
-description: Proposal for Level 2/3 swimlane diagrams with script-to-workflow 
+description: Proposal for Level 2/3 swimlane diagrams with script-to-workflow
   traceability for LOC validation
 owner: docs-team
 purpose: Documentation for Swimlane Diagram Traceability Proposal.

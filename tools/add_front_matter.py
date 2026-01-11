@@ -13,7 +13,7 @@ from pathlib import Path
 import frontmatter
 
 
-def infer_tags(path: Path, content: str) -> list[str]:
+def infer_tags(path: Path, content: str) -> list[str]:  # noqa: ARG001
     """Infer appropriate tags based on file path and content."""
     tags = []
     path_str = str(path).lower()
@@ -97,13 +97,13 @@ def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
         return False
 
     # Extract existing content
-    content = post.content if hasattr(post, 'content') else text
+    content = post.content if hasattr(post, "content") else text
 
     # Remove existing front matter from content if partial
     if text.startswith("---"):
         match = re.match(r"^---\n.*?\n---\n", text, flags=re.DOTALL)
         if match:
-            content = text[match.end():]
+            content = text[match.end() :]
 
     # Extract title and create purpose
     title = meta.get("title") or extract_title(content)
@@ -128,7 +128,13 @@ def add_front_matter_to_file(path: Path, dry_run: bool = False) -> bool:
         new_meta["description"] = meta["description"]
 
     # Remove redundant H1 from content (since title is in front matter)
-    content_cleaned = re.sub(r"^\s*#\s+" + re.escape(title) + r"\s*$\n?", "", content, count=1, flags=re.MULTILINE)
+    content_cleaned = re.sub(
+        r"^\s*#\s+" + re.escape(title) + r"\s*$\n?",
+        "",
+        content,
+        count=1,
+        flags=re.MULTILINE,
+    )
 
     # Create new post
     new_post = frontmatter.Post(content_cleaned.lstrip(), **new_meta)
@@ -151,13 +157,21 @@ def main() -> int:
 
     # Get list of files with issues
     result = subprocess.run(
-        ["uv", "run", "python", "tools/validate_front_matter.py", "docs", "--emit-json"],
+        [  # noqa: S607
+            "uv",
+            "run",
+            "python",
+            "tools/validate_front_matter.py",
+            "docs",
+            "--emit-json",
+        ],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent,
     )
 
     import json
+
     try:
         data = json.loads(result.stdout)
     except json.JSONDecodeError:
@@ -170,7 +184,10 @@ def main() -> int:
         if not item["ok"]:
             errors = item.get("errors", [])
             for err in errors:
-                if "schema_type" in err or "Unable to extract tag using discriminator" in err:
+                if (
+                    "schema_type" in err
+                    or "Unable to extract tag using discriminator" in err
+                ):
                     files_to_fix.append(Path(item["file"]))
                     break
 
@@ -178,9 +195,8 @@ def main() -> int:
 
     fixed = 0
     for path in files_to_fix:
-        if path.exists():
-            if add_front_matter_to_file(path, dry_run=False):
-                fixed += 1
+        if path.exists() and add_front_matter_to_file(path, dry_run=False):
+            fixed += 1
 
     print(f"Fixed {fixed} files")
     return 0

@@ -13,7 +13,7 @@ status: draft
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-purpose: Documentation for Level 2 Documentation Template ('Level 2.5' 
+purpose: Documentation for Level 2 Documentation Template ('Level 2.5'
   Standard).
 ---
 

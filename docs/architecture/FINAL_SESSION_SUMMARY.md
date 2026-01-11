@@ -1,6 +1,6 @@
 ---
 owner: docs-team
-purpose: Documentation for Architecture Documentation Improvement - Final 
+purpose: Documentation for Architecture Documentation Improvement - Final
   Session Summary.
 schema_type: common
 status: draft

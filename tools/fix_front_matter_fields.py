@@ -52,8 +52,13 @@ def fix_file(path: Path) -> bool:
 
     # Remove extra inputs (any field not in CommonFM schema)
     extra_fields = [
-        "version", "last_updated", "created", "deprecated_date",
-        "superseded_by", "parent_doc", "reviewed_by"
+        "version",
+        "last_updated",
+        "created",
+        "deprecated_date",
+        "superseded_by",
+        "parent_doc",
+        "reviewed_by",
     ]
     for field in extra_fields:
         if field in data:
@@ -70,13 +75,15 @@ def fix_file(path: Path) -> bool:
         changed = True
 
     # Get the body content after front matter
-    body = text[match.end():]
+    body = text[match.end() :]
 
     # Check for redundant H1 if we have a title
     if "title" in data:
         title = data["title"]
         # Look for H1 heading that matches title
-        h1_pattern = re.compile(r"^\s*#\s+" + re.escape(title) + r"\s*$\n?", re.MULTILINE)
+        h1_pattern = re.compile(
+            r"^\s*#\s+" + re.escape(title) + r"\s*$\n?", re.MULTILINE
+        )
         if h1_pattern.search(body):
             print(f"  Removing redundant H1: # {title}")
             body = h1_pattern.sub("", body, count=1)
@@ -87,6 +94,7 @@ def fix_file(path: Path) -> bool:
 
     # Write changes back
     from io import StringIO
+
     out = StringIO()
     yrt.dump(data, out)
     new_yaml = out.getvalue().rstrip()
@@ -98,12 +106,19 @@ def fix_file(path: Path) -> bool:
 
 def main() -> int:
     """Fix remaining front matter issues."""
-    import subprocess
     import json
+    import subprocess
 
     # Get list of files with issues
     result = subprocess.run(
-        ["uv", "run", "python", "tools/validate_front_matter.py", "docs", "--emit-json"],
+        [  # noqa: S607
+            "uv",
+            "run",
+            "python",
+            "tools/validate_front_matter.py",
+            "docs",
+            "--emit-json",
+        ],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent,
@@ -116,10 +131,9 @@ def main() -> int:
         return 1
 
     # Find files with issues
-    files_to_fix = []
-    for item in data:
-        if not item["ok"]:
-            files_to_fix.append((Path(item["file"]), item.get("errors", [])))
+    files_to_fix = [
+        (Path(item["file"]), item.get("errors", [])) for item in data if not item["ok"]
+    ]
 
     print(f"Found {len(files_to_fix)} files with issues")
 
@@ -131,7 +145,7 @@ def main() -> int:
                 print(f"  Issue: {err}")
             if fix_file(path):
                 fixed += 1
-                print(f"  ✓ Fixed")
+                print("  ✓ Fixed")
 
     print(f"\nFixed {fixed} files")
     return 0

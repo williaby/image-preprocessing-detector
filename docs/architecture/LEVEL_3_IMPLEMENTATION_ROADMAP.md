@@ -1,6 +1,6 @@
 ---
 owner: docs-team
-purpose: Documentation for Level 3 Documentation + Swimlane Traceability - 
+purpose: Documentation for Level 3 Documentation + Swimlane Traceability -
   Implementation Roadmap.
 schema_type: common
 status: draft
