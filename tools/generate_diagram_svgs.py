@@ -46,13 +46,14 @@ def download_plantuml() -> bool:
     try:
         # Create SSL context with certificate verification
         ssl_context = ssl.create_default_context()
-        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
         # PLANTUML_URL is a hardcoded constant, not user-controlled
-        with urllib.request.urlopen(  # noqa: S310
-            PLANTUML_URL, context=ssl_context
-        ) as response:
-            with open(PLANTUML_JAR, "wb") as out_file:
-                out_file.write(response.read())
+        with (  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
+            urllib.request.urlopen(  # noqa: S310  # nosec B310
+                PLANTUML_URL, context=ssl_context
+            ) as response,
+            open(PLANTUML_JAR, "wb") as out_file,
+        ):
+            out_file.write(response.read())
         print("Download complete.")
         return True
     except Exception as e:
@@ -88,8 +89,8 @@ def generate_svg(puml_file: Path, jar_path: Path) -> bool:
             old_svg.unlink()
 
     try:
-        result = subprocess.run(
-            [
+        result = subprocess.run(  # noqa: S603
+            [  # noqa: S607
                 "java",
                 "-jar",
                 str(jar_path),

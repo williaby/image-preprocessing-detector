@@ -149,6 +149,8 @@ def process_single_dataset(dataset_name: str, use_yolo: bool = True) -> tuple[bo
     logger.info(f"Processing: {dataset_name}")
     logger.info(f"{'='*70}")
 
+    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args
+    # dataset_name is validated against DATASET_CONFIGS whitelist before reaching here
     cmd = [
         "uv", "run", "python",
         "scripts/annotate_base_metadata.py",
