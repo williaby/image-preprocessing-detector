@@ -7,9 +7,13 @@ import numpy as np
 import pytest
 
 from image_preprocessing_detector.correction.corrections import (
+    BinarizationCorrector,
+    BleedThroughSuppressor,
     ContrastEnhancer,
     CorrectionResult,
+    Denoiser,
     DeskewCorrector,
+    IlluminationNormalizer,
     OrientationCorrector,
     Sharpener,
     correct_orientation,
@@ -483,3 +487,411 @@ class TestOrientationCorrector:
 
         assert isinstance(result, CorrectionResult)
         assert result.applied is True
+
+
+class TestDenoiser:
+    """Test Denoiser class for noise reduction."""
+
+    def test_init_default_params(self) -> None:
+        """Test Denoiser initialization with defaults."""
+        denoiser = Denoiser()
+
+        assert denoiser.h_luminance == pytest.approx(10.0)
+        assert denoiser.h_color == pytest.approx(10.0)
+        assert denoiser.template_window_size == 7
+        assert denoiser.search_window_size == 21
+        assert denoiser.min_noise_score == pytest.approx(0.7)
+
+    def test_init_custom_params(self) -> None:
+        """Test Denoiser initialization with custom parameters."""
+        denoiser = Denoiser(
+            h_luminance=15.0,
+            h_color=12.0,
+            template_window_size=9,
+            search_window_size=25,
+            min_noise_score=0.8,
+        )
+
+        assert denoiser.h_luminance == pytest.approx(15.0)
+        assert denoiser.h_color == pytest.approx(12.0)
+        assert denoiser.template_window_size == 9
+        assert denoiser.search_window_size == 25
+        assert denoiser.min_noise_score == pytest.approx(0.8)
+
+    def test_correct_clean_image_skipped(self) -> None:
+        """Test denoising skipped for clean images."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+        denoiser = Denoiser(min_noise_score=0.7)
+
+        result = denoiser.correct(img, noise_score=0.8, severity=Severity.LOW)
+
+        assert result.applied is False
+        assert result.skipped_reason is not None
+        assert "above threshold" in result.skipped_reason
+
+    def test_correct_noisy_image(self) -> None:
+        """Test denoising applied for noisy images."""
+        # Create noisy image using modern numpy.random.Generator API
+        rng = np.random.default_rng(seed=42)
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+        noise = rng.normal(0, 30, img.shape).astype(np.int16)
+        noisy_img = np.clip(img.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+
+        denoiser = Denoiser()
+        result = denoiser.correct(noisy_img, noise_score=0.3, severity=Severity.HIGH)
+
+        assert result.applied is True
+        assert result.skipped_reason is None
+        assert result.parameters["noise_score"] == pytest.approx(0.3)
+        assert result.parameters["severity"] == "high"
+
+    def test_correct_adjusts_params_by_severity(self) -> None:
+        """Test filter strength adjustment based on severity."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+        denoiser = Denoiser(h_luminance=10.0, h_color=10.0)
+
+        # Critical severity increases filter strength
+        result_critical = denoiser.correct(
+            img, noise_score=0.2, severity=Severity.CRITICAL
+        )
+        assert result_critical.parameters["h_luminance"] == pytest.approx(
+            15.0
+        )  # 10.0 * 1.5
+        assert result_critical.parameters["h_color"] == pytest.approx(15.0)
+
+        # Low severity decreases filter strength
+        result_low = denoiser.correct(img, noise_score=0.5, severity=Severity.LOW)
+        assert result_low.parameters["h_luminance"] == pytest.approx(5.0)  # 10.0 * 0.5
+        assert result_low.parameters["h_color"] == pytest.approx(5.0)
+
+    def test_correct_caps_filter_strength(self) -> None:
+        """Test filter strength is capped to prevent over-smoothing."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+        denoiser = Denoiser(h_luminance=18.0, h_color=18.0)  # High base values
+
+        # Critical severity would make it 27 (18 * 1.5), but should cap at 20
+        result = denoiser.correct(img, noise_score=0.2, severity=Severity.CRITICAL)
+        assert result.parameters["h_luminance"] == pytest.approx(20.0)  # Capped
+        assert result.parameters["h_color"] == pytest.approx(20.0)
+
+    def test_correct_empty_image_raises(self) -> None:
+        """Test denoising raises ValueError for empty image."""
+        denoiser = Denoiser()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            denoiser.correct(np.array([]), noise_score=0.3, severity=Severity.HIGH)
+
+    def test_correct_none_image_raises(self) -> None:
+        """Test denoising raises ValueError for None image."""
+        denoiser = Denoiser()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            denoiser.correct(None, noise_score=0.3, severity=Severity.HIGH)  # type: ignore
+
+
+class TestBinarizationCorrector:
+    """Test BinarizationCorrector class for document binarization."""
+
+    def test_init_default_params(self) -> None:
+        """Test BinarizationCorrector initialization with defaults."""
+        corrector = BinarizationCorrector()
+
+        assert corrector.block_size == 11
+        assert corrector.c_offset == 2
+        assert corrector.min_binarization_score == pytest.approx(0.7)
+        assert corrector.apply_morphology is True
+
+    def test_init_custom_params(self) -> None:
+        """Test BinarizationCorrector initialization with custom parameters."""
+        corrector = BinarizationCorrector(
+            block_size=15,
+            c_offset=3,
+            min_binarization_score=0.8,
+            apply_morphology=False,
+        )
+
+        assert corrector.block_size == 15
+        assert corrector.c_offset == 3
+        assert corrector.min_binarization_score == pytest.approx(0.8)
+        assert corrector.apply_morphology is False
+
+    def test_init_even_block_size_adjusted(self) -> None:
+        """Test even block size is adjusted to odd."""
+        corrector = BinarizationCorrector(block_size=10)
+
+        assert corrector.block_size == 11  # Adjusted to odd
+
+    def test_correct_good_binarization_skipped(self) -> None:
+        """Test binarization skipped for good quality images."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 255
+        corrector = BinarizationCorrector(min_binarization_score=0.7)
+
+        result = corrector.correct(img, binarization_score=0.8, severity=Severity.LOW)
+
+        assert result.applied is False
+        assert result.skipped_reason is not None
+        assert "above threshold" in result.skipped_reason
+
+    def test_correct_poor_binarization(self) -> None:
+        """Test binarization applied for poor quality images."""
+        # Create image with text-like features
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 200
+        cv2.putText(
+            img, "Test", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 50), 2
+        )
+
+        corrector = BinarizationCorrector()
+        result = corrector.correct(img, binarization_score=0.3, severity=Severity.HIGH)
+
+        assert result.applied is True
+        assert result.skipped_reason is None
+        assert result.parameters["binarization_score"] == pytest.approx(0.3)
+        assert result.parameters["severity"] == "high"
+
+    def test_correct_adjusts_params_by_severity(self) -> None:
+        """Test parameter adjustment based on severity."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+        corrector = BinarizationCorrector(block_size=11, c_offset=2)
+
+        # Critical severity increases block size, decreases c_offset
+        result_critical = corrector.correct(
+            img, binarization_score=0.2, severity=Severity.CRITICAL
+        )
+        assert result_critical.parameters["block_size"] == 15  # 11 + 4
+        assert result_critical.parameters["c_offset"] == 1  # max(2-1, 0)
+
+        # Low severity increases c_offset
+        result_low = corrector.correct(
+            img, binarization_score=0.5, severity=Severity.LOW
+        )
+        assert result_low.parameters["c_offset"] == 3  # 2 + 1
+
+    def test_correct_grayscale_image(self) -> None:
+        """Test binarization works on grayscale input."""
+        img = np.ones((200, 200), dtype=np.uint8) * 128
+        corrector = BinarizationCorrector()
+
+        result = corrector.correct(
+            img, binarization_score=0.3, severity=Severity.MEDIUM
+        )
+
+        assert result.applied is True
+        # Output should be BGR format
+        assert len(result.corrected_image.shape) == 3
+        assert result.corrected_image.shape[2] == 3
+
+    def test_correct_without_morphology(self) -> None:
+        """Test binarization without morphological cleanup."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+        corrector = BinarizationCorrector(apply_morphology=False)
+
+        result = corrector.correct(
+            img, binarization_score=0.3, severity=Severity.MEDIUM
+        )
+
+        assert result.applied is True
+        assert result.parameters["apply_morphology"] is False
+
+    def test_correct_empty_image_raises(self) -> None:
+        """Test binarization raises ValueError for empty image."""
+        corrector = BinarizationCorrector()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            corrector.correct(
+                np.array([]), binarization_score=0.3, severity=Severity.HIGH
+            )
+
+
+class TestIlluminationNormalizer:
+    """Test IlluminationNormalizer class for uneven lighting correction."""
+
+    def test_init_default_params(self) -> None:
+        """Test IlluminationNormalizer initialization with defaults."""
+        normalizer = IlluminationNormalizer()
+
+        assert normalizer.kernel_size == 51
+        assert normalizer.min_illumination_score == pytest.approx(0.7)
+        assert normalizer.blend_alpha == pytest.approx(0.8)
+
+    def test_init_custom_params(self) -> None:
+        """Test IlluminationNormalizer initialization with custom parameters."""
+        normalizer = IlluminationNormalizer(
+            kernel_size=71,
+            min_illumination_score=0.6,
+            blend_alpha=0.9,
+        )
+
+        assert normalizer.kernel_size == 71
+        assert normalizer.min_illumination_score == pytest.approx(0.6)
+        assert normalizer.blend_alpha == pytest.approx(0.9)
+
+    def test_init_even_kernel_size_adjusted(self) -> None:
+        """Test even kernel size is adjusted to odd."""
+        normalizer = IlluminationNormalizer(kernel_size=50)
+
+        assert normalizer.kernel_size == 51  # Adjusted to odd
+
+    def test_correct_uniform_illumination_skipped(self) -> None:
+        """Test normalization skipped for uniformly lit images."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+        normalizer = IlluminationNormalizer(min_illumination_score=0.7)
+
+        result = normalizer.correct(img, illumination_score=0.8, severity=Severity.LOW)
+
+        assert result.applied is False
+        assert result.skipped_reason is not None
+        assert "above threshold" in result.skipped_reason
+
+    def test_correct_uneven_illumination(self) -> None:
+        """Test normalization applied for uneven lighting."""
+        # Create image with lighting gradient
+        img = np.zeros((200, 200, 3), dtype=np.uint8)
+        for x in range(200):
+            img[:, x] = int(50 + (x / 200) * 150)
+
+        normalizer = IlluminationNormalizer()
+        result = normalizer.correct(img, illumination_score=0.3, severity=Severity.HIGH)
+
+        assert result.applied is True
+        assert result.skipped_reason is None
+        assert result.parameters["illumination_score"] == pytest.approx(0.3)
+
+    def test_correct_adjusts_params_by_severity(self) -> None:
+        """Test parameter adjustment based on severity."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 128
+        normalizer = IlluminationNormalizer(kernel_size=51, blend_alpha=0.8)
+
+        # Critical severity increases kernel and alpha
+        result_critical = normalizer.correct(
+            img, illumination_score=0.2, severity=Severity.CRITICAL
+        )
+        assert result_critical.parameters["kernel_size"] == 71  # 51 + 20
+        assert result_critical.parameters["blend_alpha"] == pytest.approx(
+            0.9
+        )  # 0.8 + 0.1
+
+        # Low severity decreases kernel and alpha
+        result_low = normalizer.correct(
+            img, illumination_score=0.5, severity=Severity.LOW
+        )
+        assert result_low.parameters["kernel_size"] == 41  # 51 - 10
+        assert result_low.parameters["blend_alpha"] == pytest.approx(0.7)  # 0.8 - 0.1
+
+    def test_correct_grayscale_image(self) -> None:
+        """Test normalization works on grayscale input."""
+        img = np.ones((200, 200), dtype=np.uint8) * 128
+        normalizer = IlluminationNormalizer()
+
+        result = normalizer.correct(
+            img, illumination_score=0.3, severity=Severity.MEDIUM
+        )
+
+        assert result.applied is True
+        # Output should be BGR format
+        assert len(result.corrected_image.shape) == 3
+        assert result.corrected_image.shape[2] == 3
+
+    def test_correct_empty_image_raises(self) -> None:
+        """Test normalization raises ValueError for empty image."""
+        normalizer = IlluminationNormalizer()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            normalizer.correct(
+                np.array([]), illumination_score=0.3, severity=Severity.HIGH
+            )
+
+
+class TestBleedThroughSuppressor:
+    """Test BleedThroughSuppressor class for removing bleed-through artifacts."""
+
+    def test_init_default_params(self) -> None:
+        """Test BleedThroughSuppressor initialization with defaults."""
+        suppressor = BleedThroughSuppressor()
+
+        assert suppressor.kernel_size == 3
+        assert suppressor.min_bleed_score == pytest.approx(0.7)
+        assert suppressor.intensity_threshold == 200
+        assert suppressor.blend_alpha == pytest.approx(0.7)
+
+    def test_init_custom_params(self) -> None:
+        """Test BleedThroughSuppressor initialization with custom parameters."""
+        suppressor = BleedThroughSuppressor(
+            kernel_size=5,
+            min_bleed_score=0.6,
+            intensity_threshold=180,
+            blend_alpha=0.8,
+        )
+
+        assert suppressor.kernel_size == 5
+        assert suppressor.min_bleed_score == pytest.approx(0.6)
+        assert suppressor.intensity_threshold == 180
+        assert suppressor.blend_alpha == pytest.approx(0.8)
+
+    def test_init_even_kernel_size_adjusted(self) -> None:
+        """Test even kernel size is adjusted to odd."""
+        suppressor = BleedThroughSuppressor(kernel_size=4)
+
+        assert suppressor.kernel_size == 5  # Adjusted to odd
+
+    def test_correct_no_bleed_skipped(self) -> None:
+        """Test suppression skipped when no bleed-through."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 255
+        suppressor = BleedThroughSuppressor(min_bleed_score=0.7)
+
+        result = suppressor.correct(img, bleed_score=0.8, severity=Severity.LOW)
+
+        assert result.applied is False
+        assert result.skipped_reason is not None
+        assert "above threshold" in result.skipped_reason
+
+    def test_correct_bleed_through_detected(self) -> None:
+        """Test suppression applied for bleed-through."""
+        # Create image with simulated bleed-through (faint gray marks)
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 240
+        # Add faint marks to simulate bleed-through
+        img[50:150, 50:150] = 220
+
+        suppressor = BleedThroughSuppressor()
+        result = suppressor.correct(img, bleed_score=0.3, severity=Severity.HIGH)
+
+        assert result.applied is True
+        assert result.skipped_reason is None
+        assert result.parameters["bleed_score"] == pytest.approx(0.3)
+
+    def test_correct_adjusts_params_by_severity(self) -> None:
+        """Test parameter adjustment based on severity."""
+        img = np.ones((200, 200, 3), dtype=np.uint8) * 200
+        suppressor = BleedThroughSuppressor(intensity_threshold=200, blend_alpha=0.7)
+
+        # Critical severity decreases threshold, increases alpha
+        result_critical = suppressor.correct(
+            img, bleed_score=0.2, severity=Severity.CRITICAL
+        )
+        assert result_critical.parameters["intensity_threshold"] == 180  # 200 - 20
+        assert result_critical.parameters["blend_alpha"] == pytest.approx(
+            0.9
+        )  # 0.7 + 0.2
+
+        # Low severity increases threshold, decreases alpha
+        result_low = suppressor.correct(img, bleed_score=0.5, severity=Severity.LOW)
+        assert result_low.parameters["intensity_threshold"] == 220  # 200 + 20
+        assert result_low.parameters["blend_alpha"] == pytest.approx(0.6)  # 0.7 - 0.1
+
+    def test_correct_grayscale_image(self) -> None:
+        """Test suppression works on grayscale input."""
+        img = np.ones((200, 200), dtype=np.uint8) * 200
+        suppressor = BleedThroughSuppressor()
+
+        result = suppressor.correct(img, bleed_score=0.3, severity=Severity.MEDIUM)
+
+        assert result.applied is True
+        # Output should be BGR format
+        assert len(result.corrected_image.shape) == 3
+        assert result.corrected_image.shape[2] == 3
+
+    def test_correct_empty_image_raises(self) -> None:
+        """Test suppression raises ValueError for empty image."""
+        suppressor = BleedThroughSuppressor()
+
+        with pytest.raises(ValueError, match="Invalid or empty image"):
+            suppressor.correct(np.array([]), bleed_score=0.3, severity=Severity.HIGH)

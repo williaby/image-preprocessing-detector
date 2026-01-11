@@ -590,6 +590,23 @@ omit = [
     "src/image_preprocessing_detector/detection/advanced_detectors.py",
     # Phase 6: Hybrid IQA (requires DocLayout-YOLO, not yet implemented)
     "src/image_preprocessing_detector/detection/hybrid_iqa.py",
+    # Standalone tools and scripts (not core library, tested separately if needed)
+    "generate_architecture_diagram.py",
+    "tools/validate_front_matter.py",
+    # Labeling arena tools (standalone CLI tools, require external dependencies)
+    "src/image_preprocessing_detector/labeling/arena/cli.py",
+    "src/image_preprocessing_detector/labeling/arena/leaderboard.py",
+    "src/image_preprocessing_detector/labeling/arena/runner.py",
+    # Labeling arena inference backends (require external services/models)
+    "src/image_preprocessing_detector/labeling/arena/inference/api.py",
+    "src/image_preprocessing_detector/labeling/arena/inference/huggingface.py",
+    "src/image_preprocessing_detector/labeling/arena/inference/local.py",
+    "src/image_preprocessing_detector/labeling/arena/inference/regression.py",
+    # Labeling finetuning (require PyTorch/Modal, tested separately with ml dependencies)
+    "src/image_preprocessing_detector/labeling/finetuning/trainer.py",
+    "src/image_preprocessing_detector/labeling/finetuning/stages/*",
+    # Quantization pipeline (standalone tool, require PyTorch)
+    "src/image_preprocessing_detector/labeling/quantization/pipeline.py",
 ]
 
 [tool.coverage.report]
