@@ -680,6 +680,7 @@ class DIQATrainer:
         training_state = torch.load(
             checkpoint_dir / "training_state.pt",
             map_location=self.device,
+            weights_only=True,
         )
 
         # Restore metrics

@@ -79,7 +79,6 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
         Dict with processing statistics
     """
     import sys
-    import time
 
     import torch
     from PIL import Image
@@ -103,7 +102,7 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
     print(f"Extracting {tarball_filename} to {extract_dir}...")
     extract_start = time.time()
     with tarfile.open(tarball_path, "r:gz") as tar:
-        tar.extractall(extract_dir)
+        tar.extractall(extract_dir, filter="data")  # noqa: S202
     extract_time = time.time() - extract_start
     print(f"Extraction completed in {extract_time:.1f}s")
 
@@ -159,14 +158,13 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
         width, height = pil_img.size
         if width == height:
             return pil_img
-        elif width > height:
+        if width > height:
             result = Image.new(pil_img.mode, (width, width), background_color)
             result.paste(pil_img, (0, (width - height) // 2))
             return result
-        else:
-            result = Image.new(pil_img.mode, (height, height), background_color)
-            result.paste(pil_img, ((height - width) // 2, 0))
-            return result
+        result = Image.new(pil_img.mode, (height, height), background_color)
+        result.paste(pil_img, ((height - width) // 2, 0))
+        return result
 
     # Process images
     results = []
@@ -236,8 +234,7 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
     output_path = Path("/results") / output_filename
 
     with open(output_path, "w") as f:
-        for result in results:
-            f.write(json.dumps(result) + "\n")
+        f.writelines(json.dumps(result) + "\n" for result in results)
 
     results_volume.commit()  # Persist results
 
@@ -329,5 +326,5 @@ def main(
     print(f"Total errors: {total_errors}")
     print(f"Total time: {total_time/60:.1f} minutes")
     print(f"Avg time/image: {avg_time:.3f}s")
-    print(f"\nResults saved to Modal volume: stage1-deqa-results")
+    print("\nResults saved to Modal volume: stage1-deqa-results")
     print("=" * 80)

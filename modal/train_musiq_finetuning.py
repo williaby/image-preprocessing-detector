@@ -146,8 +146,8 @@ def download_diqa5000(bucket_name: str, target_dir: Path) -> Path:
             member_path = target_dir / member.name
             if not is_within_directory(target_dir, member_path):
                 raise ValueError(f"Path traversal detected: {member.name}")
-        # nosec B202: Path traversal validation performed above
-        tar.extractall(path=target_dir, members=members)
+        # noqa: S202, nosec B202: Path traversal validation performed above
+        tar.extractall(path=target_dir, members=members, filter="data")
 
     extract_time = time.time() - extract_start
     print(f"Extracted in {extract_time:.1f}s")
@@ -640,7 +640,7 @@ class MUSIQTrainer:
             print(f"  ECE_mean: {best_ckpt['ece_mean']:.4f}")
 
             # Load best checkpoint
-            best_ckpt_data = torch.load(best_ckpt["path"])
+            best_ckpt_data = torch.load(best_ckpt["path"], weights_only=True)
             model.load_state_dict(best_ckpt_data["model_state_dict"])
 
             # ============ Export ============

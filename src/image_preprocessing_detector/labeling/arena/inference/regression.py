@@ -175,6 +175,7 @@ class RegressionBackend(InferenceBackend):
             state_dict = torch.load(
                 model_path / "pytorch_model.bin",
                 map_location=self._device,
+                weights_only=True,
             )
             # Model architecture must be defined or loaded
             self._model = self._create_model_from_state_dict(state_dict, spec)

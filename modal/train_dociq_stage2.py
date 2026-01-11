@@ -361,9 +361,9 @@ def create_dataloaders(
 
 
 def kl_divergence_loss(
-    pred_logits: "torch.Tensor",
-    target_soft: "torch.Tensor",
-) -> "torch.Tensor":
+    pred_logits: torch.Tensor,
+    target_soft: torch.Tensor,
+) -> torch.Tensor:
     """KL-divergence loss for soft-label training.
 
     Args:
@@ -384,10 +384,10 @@ def kl_divergence_loss(
 
 
 def differentiable_rank_loss(
-    pred: "torch.Tensor",
-    target: "torch.Tensor",
+    pred: torch.Tensor,
+    target: torch.Tensor,
     margin: float = 0.1,
-) -> "torch.Tensor":
+) -> torch.Tensor:
     """Pairwise ranking loss for SRCC optimization."""
     import torch
     import torch.nn.functional as F
@@ -435,11 +435,11 @@ class DocIQLoss:
 
     def __call__(
         self,
-        pred_logits: dict[str, "torch.Tensor"],
-        pred_scores: dict[str, "torch.Tensor"],
-        soft_labels: dict[str, "torch.Tensor"],
-        point_labels: dict[str, "torch.Tensor"],
-    ) -> tuple["torch.Tensor", dict[str, float]]:
+        pred_logits: dict[str, torch.Tensor],
+        pred_scores: dict[str, torch.Tensor],
+        soft_labels: dict[str, torch.Tensor],
+        point_labels: dict[str, torch.Tensor],
+    ) -> tuple[torch.Tensor, dict[str, float]]:
         """Compute combined loss.
 
         Args:
@@ -487,7 +487,7 @@ class DocIQLoss:
 # ============================================================================
 
 
-def compute_srcc(pred: "np.ndarray", target: "np.ndarray") -> float:
+def compute_srcc(pred: np.ndarray, target: np.ndarray) -> float:
     """Compute Spearman's rank correlation coefficient."""
     from scipy.stats import spearmanr
 
@@ -497,7 +497,7 @@ def compute_srcc(pred: "np.ndarray", target: "np.ndarray") -> float:
     return float(corr) if not math.isnan(corr) else 0.0
 
 
-def compute_plcc(pred: "np.ndarray", target: "np.ndarray") -> float:
+def compute_plcc(pred: np.ndarray, target: np.ndarray) -> float:
     """Compute Pearson linear correlation coefficient."""
     from scipy.stats import pearsonr
 
@@ -508,8 +508,8 @@ def compute_plcc(pred: "np.ndarray", target: "np.ndarray") -> float:
 
 
 def compute_ece(
-    pred: "np.ndarray",
-    target: "np.ndarray",
+    pred: np.ndarray,
+    target: np.ndarray,
     n_bins: int = 10,
 ) -> float:
     """Compute Expected Calibration Error.
@@ -537,7 +537,7 @@ def compute_ece(
     return float(ece)
 
 
-def compute_output_metrics(predictions: "np.ndarray") -> dict[str, float]:
+def compute_output_metrics(predictions: np.ndarray) -> dict[str, float]:
     """Compute output distribution health metrics.
 
     These metrics detect MANIQA-style distribution collapse.
@@ -604,10 +604,10 @@ class EpochMetrics:
 
 
 def evaluate_epoch(
-    model: "torch.nn.Module",
-    dataloader: "DataLoader",
+    model: torch.nn.Module,
+    dataloader: DataLoader,
     device: str = "cuda",
-) -> tuple[EpochMetrics, dict[str, "np.ndarray"]]:
+) -> tuple[EpochMetrics, dict[str, np.ndarray]]:
     """Evaluate model on a dataloader.
 
     Args:
@@ -704,10 +704,10 @@ def evaluate_epoch(
 
 
 def validate_before_training(
-    train_loader: "DataLoader",
-    val_loader: "DataLoader",
-    test_loader: "DataLoader",
-    model: "torch.nn.Module",
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    test_loader: DataLoader,
+    model: torch.nn.Module,
     logger: Any,
 ) -> list[str]:
     """Run pre-training validation checks.
@@ -945,8 +945,8 @@ def check_epoch_health(
 
 def apply_escalation(
     state: TrainingState,
-    optimizer: "torch.optim.Optimizer",
-    model: "torch.nn.Module",
+    optimizer: torch.optim.Optimizer,
+    model: torch.nn.Module,
     ultra_config: UltraStrictConfig,
     logger: Any,
 ) -> None:
@@ -1055,9 +1055,9 @@ def should_save_checkpoint(
 
 
 def train_epoch(
-    model: "torch.nn.Module",
-    train_loader: "DataLoader",
-    optimizer: "torch.optim.Optimizer",
+    model: torch.nn.Module,
+    train_loader: DataLoader,
+    optimizer: torch.optim.Optimizer,
     loss_fn: DocIQLoss,
     device: str = "cuda",
     logger: Any = None,
@@ -1129,10 +1129,10 @@ def train_epoch(
 
 
 def train_with_monitoring(
-    model: "torch.nn.Module",
-    train_loader: "DataLoader",
-    val_loader: "DataLoader",
-    test_loader: "DataLoader",
+    model: torch.nn.Module,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    test_loader: DataLoader,
     phase: int,
     logger: Any,
 ) -> dict[str, Any]:
@@ -1472,20 +1472,20 @@ def _download_dataset_from_gcs() -> None:
     for tarball in tmp_dir.glob("stage2_*.tar.gz"):
         log.info(f"extracting_{tarball.name}")
         with tarfile.open(tarball, "r:gz") as tar:
-            tar.extractall(path=extract_dir)
+            tar.extractall(path=extract_dir, filter="data")  # noqa: S202
         # Remove tarball to save space
         tarball.unlink()
 
     log.info("dataset_download_complete")
 
 
-def _load_model(phase: int, resume_from: str | None) -> "torch.nn.Module":
+def _load_model(phase: int, resume_from: str | None) -> torch.nn.Module:
     """Load DocIQ-Replica model."""
     import torch
-    from torchvision import models
 
     # For Modal, we need to define the model inline since the package isn't installed
     from torch import nn
+    from torchvision import models
 
     class LayoutFusionDownsampler(nn.Module):
         """Fuses RGB image with semantic layout masks."""
@@ -1622,7 +1622,7 @@ def _load_model(phase: int, resume_from: str | None) -> "torch.nn.Module":
     freeze_backbone = phase == 1
 
     if resume_from:
-        checkpoint = torch.load(resume_from)
+        checkpoint = torch.load(resume_from, weights_only=True)
         model = DocIQReplica(freeze_backbone=freeze_backbone)
         model.load_state_dict(checkpoint["model_state_dict"])
     else:

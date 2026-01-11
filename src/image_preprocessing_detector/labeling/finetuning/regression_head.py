@@ -411,6 +411,7 @@ class DIQARegressionModel(nn.Module):
         state_dict = torch.load(
             load_path / "pytorch_model.bin",
             map_location="cpu",
+            weights_only=True,
         )
         model.load_state_dict(state_dict)
 

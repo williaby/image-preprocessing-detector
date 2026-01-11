@@ -325,7 +325,8 @@ def load_model(config: BenchmarkConfig) -> torch.nn.Module:
     import torch.nn as nn
 
     # Load checkpoint
-    checkpoint = torch.load(
+    # S6985: weights_only=False required to load config dict from checkpoint
+    checkpoint = torch.load(  # noqa: S6985  # nosec B614
         config.model_path, map_location=config.device, weights_only=False
     )
 
@@ -543,7 +544,8 @@ def create_phase7_dataloader(
     from albumentations.pytorch import ToTensorV2
 
     # Get input resolution from model checkpoint config
-    checkpoint = torch.load(
+    # S6985: weights_only=False required to load config dict from checkpoint
+    checkpoint = torch.load(  # noqa: S6985  # nosec B614
         config.model_path, map_location="cpu", weights_only=False
     )
     model_config = checkpoint.get("config", {})
@@ -795,7 +797,8 @@ def evaluate_diqa5000(
     print(f"DIQA-5000 test annotations: {len(annotations)} samples")
 
     # Get input resolution from model checkpoint config
-    checkpoint = torch.load(
+    # S6985: weights_only=False required to load config dict from checkpoint
+    checkpoint = torch.load(  # noqa: S6985  # nosec B614
         config.model_path, map_location="cpu", weights_only=False
     )
     model_config = checkpoint.get("config", {})
@@ -934,7 +937,8 @@ def evaluate_smartdoc_qa_ocr(
     import re
 
     # Get input resolution from model checkpoint config
-    checkpoint = torch.load(
+    # S6985: weights_only=False required to load config dict from checkpoint
+    checkpoint = torch.load(  # noqa: S6985  # nosec B614
         config.model_path, map_location="cpu", weights_only=False
     )
     model_config = checkpoint.get("config", {})
@@ -955,7 +959,8 @@ def evaluate_smartdoc_qa_ocr(
         try:
             content = filepath.read_text()
             # Look for "XX.XX%  Accuracy" pattern
-            match = re.search(r"(\d+\.\d+)%\s+Accuracy", content)
+            # noqa: S5852 - possessive quantifier not supported in Python re; pattern is safe
+            match = re.search(r"(\d+\.\d+)%\s{1,10}Accuracy", content)
             if match:
                 return float(match.group(1))
         except Exception:

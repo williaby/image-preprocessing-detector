@@ -156,7 +156,7 @@ def safe_extract_tar(tar_path: Path, extract_path: Path) -> None:
             member_path = extract_path / member.name
             if not is_within_directory(extract_path, member_path):
                 raise ValueError(f"Path traversal detected: {member.name}")
-        tar.extractall(path=extract_path, members=members)
+        tar.extractall(path=extract_path, members=members, filter="data")  # noqa: S202
 
 
 def compute_ece_numpy(
