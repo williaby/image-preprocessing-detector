@@ -45,6 +45,7 @@ pip3 install \
     "opencv-python-headless>=4.8.0,<5.0.0" \
     "pydantic>=2.0.0" \
     "structlog>=23.1.0" \
+    "rich>=13.0.0" \
     "atheris>=2.3.0"
 
 # Install project in editable mode without dependencies
