@@ -14,7 +14,7 @@ import torch
 
 # Check if albumentations is available
 try:
-    import albumentations as alb
+    import albumentations as alb  # noqa: F401
 
     HAS_ALBUMENTATIONS = True
 except ImportError:
