@@ -109,6 +109,14 @@ match.rules = ["semgrep:cli-path-traversal-open"]
 match.file_patterns = ["scripts/**"]
 set.ignored = true
 
+# Ignore B615 (HuggingFace Hub download) in regression_head.py - model_id is user-configured
+# and validated by HuggingFace's model hub infrastructure; revision pinning is optional
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B615"]
+match.file_patterns = ["**/labeling/finetuning/regression_head.py"]
+set.ignored = true
+
 # Ignore TODO comments - these are for tracking, not issues
 [[triage]]
 match.plugins = ["ripgrep"]

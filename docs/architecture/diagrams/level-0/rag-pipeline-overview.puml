@@ -1,0 +1,133 @@
+@startuml RAG_Pipeline_Overview
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+
+' Layout controls - increased for clearer vertical separation
+skinparam ranksep 150
+skinparam nodesep 100
+
+top to bottom direction
+
+title Foundry RAG Pipeline - Multi-Track Architecture\nLevel 0: Pipeline Context (Cloud Workflows Orchestrated)
+footer Foundry Pipeline Overview | v4.0 | December 2025
+
+' ============================================================================
+' ORCHESTRATION LAYER: CLOUD WORKFLOWS
+' ============================================================================
+
+cloud "Google Cloud Workflows\n<size:10>Orchestrator | trace_id propagation</size>" as Orchestrator #E3F2FD
+
+' ============================================================================
+' DATA STORE: GCS (positioned to side)
+' ============================================================================
+
+storage "GCS: gs://rag-pipeline-{env}/{trace_id}/\n<size:10>Canonical artifact store</size>" as GCS #FFF3E0
+
+' ============================================================================
+' ROW 1: INGEST (Single Entry Point)
+' ============================================================================
+
+package "Ingest (foundry-ingest)\n<size:10><color:green>■ Active</color></size>\n<size:10>POST /process | GET /status | 1000+ files/hr</size>" as Ingest #FFEBEE {
+  artifact "Document Track" as DocSources {
+    file "PDF, Office, Images"
+  }
+  artifact "Audio Track" as AudioSources {
+    file "Audio, Video"
+  }
+}
+
+' ============================================================================
+' ROW 2: PREPROCESSING LAYER (Parallel Tracks - side by side)
+' ============================================================================
+
+together {
+  rectangle "Prepare-Doc (foundry-prepare-doc)\n<size:10><color:green>■ Active</color></size>\n<size:10>10-page: <30s | 100-page: <2min</size>" as PrepareDoc #E8F5E9 {
+    component "IQA & Corrections" as IQA
+    component "Layout Detection" as Layout
+    component "DQS & Routing" as DQS
+  }
+
+  rectangle "Prepare-Audio (foundry-prepare-audio)\n<size:10><color:green>■ Active</color></size>\n<size:10><1 min per hour of audio</size>" as PrepareAudio #E8F5E9 {
+    component "FFmpeg Extraction" as FFmpeg
+    component "Deepgram Nova-2" as Deepgram
+    component "Diarization" as Diarize
+  }
+}
+
+' ============================================================================
+' ROW 3: UNIFY - OCR & DOM UNIFICATION
+' ============================================================================
+
+package "Unify (foundry-unify)\n<size:10><color:gray>○ Not Yet Started</color></size>\n<size:10>Multi-engine OCR | Docling DOM unification</size>" as Unify #E0E0E0 {
+  rectangle "OCR Orchestration" as OCRLayer {
+    component "Multi-Engine OCR" as OCR
+    component "Engine Selection" as EngineSelect
+    component "Result Fusion" as ResultFusion
+  }
+  database "Docling DOM\n(Unified Schema)" as DoclingDOM
+}
+
+' ============================================================================
+' ROW 4: CHUNK - TRUST & CHUNKING
+' ============================================================================
+
+together {
+  package "Chunk (foundry-chunk)\n<size:10><color:gray>○ Not Yet Started</color></size>\n<size:10>Identical chunking for all content types</size>" as Chunk #E0E0E0 {
+    component "Trust Scoring" as Trust
+    component "RAG Chunking" as Chunking
+    component "Normalization" as Normalize
+  }
+
+  package "Embed (foundry-embed)\n<size:10><color:gray>○ Not Yet Started</color></size>\n<size:10>Output: RAG-ready collection ID</size>" as Embed #E0E0E0 {
+    component "Embedding Gen" as Embedding
+    database "Vector DB" as VectorDB
+    component "Retrieval API" as Retrieval
+  }
+}
+
+' ============================================================================
+' MAIN FLOW CONNECTIONS (Top to Bottom)
+' ============================================================================
+
+' Orchestration
+Ingest -up-> Orchestrator : initiates workflow\n(POST /execute)
+
+' Row 1 → Row 2: Ingest to Preprocessing (fork to parallel tracks)
+DocSources -down-> PrepareDoc : Documents/Images
+AudioSources -down-> PrepareAudio : Audio/Video
+
+' Row 2 → Row 3: Preprocessing to Unify (merge from parallel tracks)
+PrepareDoc -down-> Unify : gs://.../01-preprocessed/
+PrepareAudio -down-> Unify : gs://.../02-transcribed/
+
+' Row 3 internal: OCR to DOM
+OCRLayer -right-> DoclingDOM
+
+' Row 3 → Row 4: Unify to Chunk
+DoclingDOM -down-> Chunk : gs://.../03-docling-dom/
+
+' Row 4 → Row 5: Chunk to Embed
+Chunk -right-> Embed : gs://.../04-chunks/
+
+' Note: Ingest polls GET /status/{trace_id} for completion (not shown to simplify layout)
+
+
+' ============================================================================
+' LEGEND
+' ============================================================================
+
+legend bottom
+  |= Color |= Meaning |
+  | <#E3F2FD> | Orchestration (Cloud Workflows) |
+  | <#FFF3E0> | Data Store (GCS) |
+  | <#FFEBEE> | Web UI Frontend (Ingest) |
+  | <#E8F5E9> | Active Development |
+  | <#E0E0E0> | Not Yet Started |
+endlegend
+
+' Note: Diagram hierarchy and traceability tables are documented in index.md
+' to keep the diagram focused on architecture flow
+
+@enduml

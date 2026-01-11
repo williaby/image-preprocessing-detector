@@ -88,7 +88,10 @@ class TestDownloadHandlers:
 
     def test_handle_local_source(self) -> None:
         """Test local source handler."""
-        result = _handle_local_source("test_dataset", {"nfs_path": Path("/tmp")})
+        result = _handle_local_source(
+            "test_dataset",
+            {"nfs_path": Path("/tmp")},  # nosec B108 - test fixture
+        )
 
         assert result is True
 
@@ -112,7 +115,7 @@ class TestDownloadDataset:
 
     def test_local_source_succeeds(self) -> None:
         """Test local source download."""
-        config = {"source": "local", "nfs_path": Path("/tmp")}
+        config = {"source": "local", "nfs_path": Path("/tmp")}  # nosec B108 - test fixture
 
         result = download_dataset("test", config)
 

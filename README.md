@@ -348,6 +348,16 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - **[DETECTION_TAXONOMY.md](docs/DETECTION_TAXONOMY.md)**: Complete taxonomy of 30+ detection categories with priority levels
 - **[DOCUMENT_TYPE_COVERAGE_MATRIX.md](docs/DOCUMENT_TYPE_COVERAGE_MATRIX.md)**: Document type support matrix across phases
 
+### Architecture Diagrams
+
+- **[docs/architecture/diagrams/](docs/architecture/diagrams/)**: Centralized PlantUML diagram repository
+  - [PROJECT_A_ARCHITECTURE_OVERVIEW.puml](docs/architecture/diagrams/PROJECT_A_ARCHITECTURE_OVERVIEW.puml): Complete system architecture
+  - [PROJECT_A_WORKFLOW_HIERARCHY.puml](docs/architecture/diagrams/PROJECT_A_WORKFLOW_HIERARCHY.puml): Workstream data flow
+  - [INDEX.md](docs/architecture/diagrams/INDEX.md): Diagram-to-source traceability matrix
+  - [STYLE_GUIDE.md](docs/architecture/diagrams/STYLE_GUIDE.md): Diagram styling standards
+- **[AUDIT.md](docs/architecture/AUDIT.md)**: Diagram gap analysis and recommendations
+- **[DATASET_CATALOG.md](docs/DATASET_CATALOG.md)**: Dataset documentation and metadata pipeline
+
 ### Technical Guides
 
 - **[docs/ADRs/](docs/ADRs/)**: Architecture Decision Records

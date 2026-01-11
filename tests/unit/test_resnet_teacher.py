@@ -17,6 +17,21 @@ torch = pytest.importorskip("torch", reason="PyTorch required for ResNet teacher
 from image_preprocessing_detector.models import IQAHead, ResNetTeacher
 
 
+# Module-level fixtures for expensive model initialization
+@pytest.fixture(scope="module")
+def teacher_model_no_pretrained():
+    """Shared teacher model without pretrained weights for multiple tests."""
+    model = ResNetTeacher(num_heads=5, pretrained=False)
+    model.eval()
+    return model
+
+
+@pytest.fixture(scope="module")
+def teacher_model_frozen():
+    """Shared teacher model with frozen backbone for multiple tests."""
+    return ResNetTeacher(num_heads=5, freeze_backbone=True)
+
+
 class TestIQAHead:
     """Test individual IQA head."""
 
@@ -89,9 +104,9 @@ class TestResNetTeacher:
         with pytest.raises(ValueError, match="num_heads must be"):
             ResNetTeacher(num_heads=3)  # Should be 5
 
-    def test_forward_pass_shape(self) -> None:
+    def test_forward_pass_shape(self, teacher_model_no_pretrained) -> None:
         """Test forward pass output shapes."""
-        model = ResNetTeacher(num_heads=5, pretrained=False)
+        model = teacher_model_no_pretrained
         batch_size = 4
         # RGB images, 224x224
         images = torch.randn(batch_size, 3, 224, 224)
@@ -116,10 +131,12 @@ class TestResNetTeacher:
             assert torch.all(head_output["confidence"] >= 0.0)
             assert torch.all(head_output["confidence"] <= 1.0)
 
-    def test_forward_pass_different_batch_sizes(self) -> None:
+    def test_forward_pass_different_batch_sizes(
+        self, teacher_model_no_pretrained
+    ) -> None:
         """Test forward pass with different batch sizes."""
-        model = ResNetTeacher(num_heads=5, pretrained=False)
-        model.eval()  # BatchNorm requires eval mode for batch_size=1
+        model = teacher_model_no_pretrained
+        # Model is already in eval mode from fixture
 
         for batch_size in [1, 2, 8, 16]:
             images = torch.randn(batch_size, 3, 224, 224)
@@ -143,9 +160,9 @@ class TestResNetTeacher:
         assert "trainable_parameters" in info
         assert info["total_parameters"] > 0
 
-    def test_freeze_backbone(self) -> None:
+    def test_freeze_backbone(self, teacher_model_frozen) -> None:
         """Test freezing backbone layers."""
-        model = ResNetTeacher(num_heads=5, freeze_backbone=True)
+        model = teacher_model_frozen
 
         # Check that backbone parameters are frozen
         for param in model.backbone_features.parameters():
@@ -192,9 +209,9 @@ class TestResNetTeacher:
                 # At least some parameters should be trainable
                 assert has_trainable
 
-    def test_get_predictions(self) -> None:
+    def test_get_predictions(self, teacher_model_no_pretrained) -> None:
         """Test prediction method with threshold."""
-        model = ResNetTeacher(num_heads=5, pretrained=False)
+        model = teacher_model_no_pretrained
         batch_size = 4
         images = torch.randn(batch_size, 3, 224, 224)
 
@@ -222,10 +239,10 @@ class TestResNetTeacher:
             assert torch.all(pred["probability"] >= 0.0)
             assert torch.all(pred["probability"] <= 1.0)
 
-    def test_model_eval_mode(self) -> None:
+    def test_model_eval_mode(self, teacher_model_no_pretrained) -> None:
         """Test model in evaluation mode."""
-        model = ResNetTeacher(num_heads=5, pretrained=False)
-        model.eval()
+        model = teacher_model_no_pretrained
+        # Model is already in eval mode from fixture
 
         batch_size = 4
         images = torch.randn(batch_size, 3, 224, 224)
@@ -238,9 +255,9 @@ class TestResNetTeacher:
         for issue_type in ResNetTeacher.ISSUE_TYPES:
             assert outputs[issue_type]["logits"].shape == (batch_size, 1)
 
-    def test_model_train_mode(self) -> None:
+    def test_model_train_mode(self, teacher_model_no_pretrained) -> None:
         """Test model in training mode."""
-        model = ResNetTeacher(num_heads=5, pretrained=False)
+        model = teacher_model_no_pretrained
         model.train()
 
         batch_size = 4
@@ -255,9 +272,12 @@ class TestResNetTeacher:
         for issue_type in ResNetTeacher.ISSUE_TYPES:
             assert outputs[issue_type]["logits"].requires_grad
 
-    def test_different_image_sizes(self) -> None:
+        # Reset to eval mode for other tests using this fixture
+        model.eval()
+
+    def test_different_image_sizes(self, teacher_model_no_pretrained) -> None:
         """Test model with different input image sizes."""
-        model = ResNetTeacher(num_heads=5, pretrained=False)
+        model = teacher_model_no_pretrained
 
         # ResNet can handle different input sizes
         for size in [224, 256, 320]:
@@ -294,9 +314,9 @@ class TestResNetTeacher:
             assert outputs[issue_type]["logits"].is_cuda
             assert outputs[issue_type]["confidence"].is_cuda
 
-    def test_model_parameters_count(self) -> None:
+    def test_model_parameters_count(self, teacher_model_no_pretrained) -> None:
         """Test that model has expected number of parameters."""
-        model = ResNetTeacher(num_heads=5, pretrained=False)
+        model = teacher_model_no_pretrained
         info = model.get_model_info()
 
         # ResNet-50 has ~25M parameters + our heads
@@ -306,9 +326,11 @@ class TestResNetTeacher:
         # When not frozen, all should be trainable
         assert info["trainable_parameters"] == info["total_parameters"]
 
-    def test_model_with_frozen_backbone_parameters_count(self) -> None:
+    def test_model_with_frozen_backbone_parameters_count(
+        self, teacher_model_frozen
+    ) -> None:
         """Test parameter count with frozen backbone."""
-        model = ResNetTeacher(num_heads=5, freeze_backbone=True)
+        model = teacher_model_frozen
         info = model.get_model_info()
 
         # Trainable should be much less than total (only heads)

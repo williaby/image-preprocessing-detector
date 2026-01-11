@@ -35,9 +35,10 @@ reason = "CVE-2022-42969 disputed. ReDoS in SVN parsing - not applicable (no SVN
 # ============================================================================
 # nbconvert - Uncontrolled Search Path on Windows (NOT APPLICABLE)
 # ============================================================================
-# GHSA-xm59-rqc7-hhvf: Unauthorized code execution via inkscape.bat on Windows
-# CVE: CVE-2024-XXXXX (HIGH severity, CVSS 8.5)
-# Affected: nbconvert <= 7.16.6 (all versions, no fix available yet)
+# GHSA-xm59-rqc7-hhvf / CVE-2025-53000: Unauthorized code execution via inkscape.bat on Windows
+# Severity: HIGH (CVSS 8.5)
+# Affected: nbconvert <= 7.16.6 (all versions, no fix available as of 2026-01-10)
+# Reference: https://github.com/advisories/GHSA-xm59-rqc7-hhvf
 #
 # JUSTIFICATION FOR EXCEPTION:
 # 1. Vulnerability only affects Windows systems (requires Windows batch file execution)
@@ -54,6 +55,10 @@ reason = "CVE-2022-42969 disputed. ReDoS in SVN parsing - not applicable (no SVN
 
 [[IgnoredVulns]]
 id = "GHSA-xm59-rqc7-hhvf"
+reason = "Windows-only vulnerability (inkscape.bat). Project runs Linux-only (WSL2/Docker/CI). Not used in production."
+
+[[IgnoredVulns]]
+id = "CVE-2025-53000"
 reason = "Windows-only vulnerability (inkscape.bat). Project runs Linux-only (WSL2/Docker/CI). Not used in production."
 
 # ============================================================================

@@ -43,16 +43,35 @@ class RealDocumentProcessor:
 
     Similar to DocumentProcessor in test_pipeline_e2e.py but handles
     PDF loading and real document processing.
+
+    Uses class-level detector instances shared across all instances for
+    faster test execution (detectors are expensive to initialize).
     """
+
+    # Class-level detector instances (shared across all instances)
+    _blur_detector: BlurDetector | None = None
+    _noise_detector: NoiseDetector | None = None
+    _contrast_detector: ContrastDetector | None = None
+    _skew_detector: SkewDetector | None = None
+    _pdf_loader: PDFLoader | None = None
 
     def __init__(self, config: DQSWeightConfig | None = None):
         """Initialize processor with optional custom config."""
         self.config = config or DQSWeightConfig()
-        self.blur_detector = BlurDetector()
-        self.noise_detector = NoiseDetector()
-        self.contrast_detector = ContrastDetector()
-        self.skew_detector = SkewDetector()
-        self.pdf_loader = PDFLoader()
+
+        # Lazy-initialize shared detectors (expensive to create)
+        if RealDocumentProcessor._blur_detector is None:
+            RealDocumentProcessor._blur_detector = BlurDetector()
+            RealDocumentProcessor._noise_detector = NoiseDetector()
+            RealDocumentProcessor._contrast_detector = ContrastDetector()
+            RealDocumentProcessor._skew_detector = SkewDetector()
+            RealDocumentProcessor._pdf_loader = PDFLoader()
+
+        self.blur_detector = RealDocumentProcessor._blur_detector
+        self.noise_detector = RealDocumentProcessor._noise_detector
+        self.contrast_detector = RealDocumentProcessor._contrast_detector
+        self.skew_detector = RealDocumentProcessor._skew_detector
+        self.pdf_loader = RealDocumentProcessor._pdf_loader
 
     def process_image(self, image):
         """Run IQA detection on a single image."""

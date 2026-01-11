@@ -16,10 +16,11 @@ Phase 4 - Device Priority Execution
 import json
 import os
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from image_preprocessing_detector.utils.datetime_compat import UTC
 from image_preprocessing_detector.utils.log_config import get_logger
 
 logger = get_logger(__name__)

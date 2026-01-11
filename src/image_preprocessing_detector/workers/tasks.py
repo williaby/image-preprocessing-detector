@@ -151,7 +151,7 @@ def run_iqa_analysis(
         Dictionary with IQA scores and metadata including device selection
     """
     start_time = time.perf_counter()
-    doc_id = doc_id or request_id or "unknown"
+    _doc_id = doc_id or request_id or "unknown"
 
     try:
         # Decode image
@@ -261,7 +261,7 @@ def process_single_document(
         Dictionary with processing results
     """
     start_time = time.perf_counter()
-    options = options or {}
+    _options = options or {}
 
     try:
         # Decode file content

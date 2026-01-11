@@ -1,0 +1,237 @@
+@startuml soft-label-pipeline-integration
+!theme plain
+title Hybrid DeQA-Doc → DocIQ-Replica Distillation Pipeline
+footer Unified Labeling Strategy - December 2025
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+' Color definitions
+skinparam component {
+    BackgroundColor<<immutable>> LightBlue
+    BackgroundColor<<enrichment>> LightGreen
+    BackgroundColor<<training>> LightYellow
+    BackgroundColor<<output>> LightGray
+    BackgroundColor<<model>> LightCoral
+    BackgroundColor<<new>> PaleGreen
+    BackgroundColor<<mllm>> Orchid
+}
+
+package "Data Sources" as sources {
+    database "DIQA-5000\n(5,500 images)\n3-dim MOS" as diqa <<immutable>>
+    database "SmartDoc-QA\n(4,270 images)\nOCR accuracy" as smartdoc <<immutable>>
+    database "Small Diverse\n(~2,600 images)\nDIBCO/FUNSD/SROIE/Tobacco" as diverse <<immutable>>
+    database "Other Datasets\n(~2.5M images)\nNo MOS labels" as other <<immutable>>
+}
+
+package "Layer 1: IMMUTABLE (unchanged)" as layer1 <<immutable>> {
+    component "Original Labels" as original {
+        [DIQA: overall, sharpness, color MOS]
+        [SmartDoc: OCR accuracy (proxy)]
+        [DocLayNet: COCO bboxes]
+    }
+
+    component "Original File Metadata" as file_meta {
+        [SHA256, dimensions, DPI]
+        [format, color_space]
+    }
+}
+
+package "Stage 1: DeQA-Doc MLLM Teacher Labels (~12K images)" as stage1 <<mllm>> {
+    component "DeQA-Doc Model" as deqa_model {
+        [mPLUG-Owl2-7B base]
+        [VQualA 2025 Champion]
+        [Accuracy: 0.929]
+    }
+
+    component "Stage 1 Datasets" as stage1_data {
+        [DIQA-5000: 5,500 (enrich MOS)]
+        [SmartDoc-QA: 4,270 (OCR correlation)]
+        [DIBCO: 131 (extreme degradation)]
+        [FUNSD: 199 (noisy forms)]
+        [SROIE: 973 (mobile/thermal)]
+        [Tobacco-800: 1,290 (archival)]
+    }
+
+    component "DeQA-Doc Output" as deqa_output {
+        [soft_label_overall: [10] bins]
+        [soft_label_sharpness: [10] bins]
+        [soft_label_color: [10] bins]
+        [logits + probs per dimension]
+    }
+
+    note right of deqa_model
+        **One-time cost**: ~10 hours GPU
+        **Output**: High-quality soft labels
+        **Purpose**: Teacher for distillation
+    end note
+}
+
+package "Phase 1: Train DocIQ-Replica (Student)" as phase1 <<model>> {
+    component "DocIQReplicaSoftLabel" as model {
+        [ResNet-50 backbone]
+        [Layout Fusion (1600x1600)]
+        [3 Distribution Heads\n(10 bins each)]
+    }
+
+    component "Training Config" as train_config {
+        [Loss: KL-Divergence]
+        [Epochs: 60]
+        [LR: 2e-4 with step decay]
+    }
+
+    component "Training Data Weights" as weights {
+        [DIQA+DeQA combined: 1.0]
+        [SmartDoc-QA DeQA: 0.85]
+        [DIBCO DeQA: 0.80]
+        [FUNSD/SROIE/Tobacco: 0.85]
+    }
+
+    note right of model
+        **Input**: ~12K images + DeQA labels
+        **Output**: Fast CNN (30ms/image)
+        **Target**: SRCC > 0.90
+    end note
+}
+
+package "Phase 2: Scale with DocIQ-Replica" as phase2 <<new>> {
+    component "Inference Pipeline" as inference {
+        [Batch inference on 2.5M images]
+        [Generate distribution per dimension]
+        [Compute uncertainty (variance)]
+    }
+
+    component "Confidence Tiering" as tiering {
+        [high: var < 0.015]
+        [medium: var < 0.0625]
+        [low: var >= 0.0625]
+    }
+
+    note right of inference
+        **Speed**: ~30ms/image
+        **Total time**: ~21 hours
+        **vs DeQA-Doc**: 29 days
+    end note
+}
+
+package "Layer 2: ENRICHMENT (extended)" as layer2 <<enrichment>> {
+    component "Existing Enrichments" as existing {
+        [capture_method, domain]
+        [Phase 9 flags]
+        [resolution analysis]
+    }
+
+    component "NEW: Soft-Label Enrichment" as soft_enrich <<new>> {
+        [soft_label_overall: [10] bins]
+        [soft_label_sharpness: [10] bins]
+        [soft_label_color: [10] bins]
+        [predicted_score_*: 0-1]
+        [prediction_uncertainty_*]
+        [prediction_confidence_tier]
+        [prediction_model_version]
+    }
+
+    component "Enrichment Version 4" as version {
+        [created_by: deqa-doc OR dociq-replica]
+        [method: mllm_teacher OR pseudo_label]
+    }
+}
+
+package "Layer 3: TRAINING (extended)" as layer3 <<training>> {
+    component "Updated Anchor Priority" as anchor <<new>> {
+        [1. HUMAN+DEQA_COMBINED - 1.0]
+        [2. DEQA_DOC_ONLY - 0.85]
+        [3. PSEUDO_HIGH - 0.9]
+        [4. PSEUDO_MEDIUM - 0.5]
+        [5. LLM_HIGH - 0.8]
+        [6. PSEUDO_LOW - 0.2]
+        [7. SYNTHETIC - 0.3]
+    }
+
+    component "Existing Training Fields" as existing_train {
+        [45-dim iqa_vector]
+        [iqa_binary]
+        [anchor_score, anchor_weight]
+    }
+
+    component "NEW: Soft-Label Training" as soft_train <<new>> {
+        [soft_label_overall/sharpness/color]
+        [has_soft_labels flag]
+        [use_kl_loss flag]
+    }
+}
+
+package "Output Artifacts" as outputs <<output>> {
+    file "metadata_registry/\nenriched/v4/" as registry_out
+    file "training_labels.parquet\n(with soft labels)" as training_out
+    file "model_checkpoints/\ndociq-replica-soft/" as model_out
+}
+
+' GCS locations
+note bottom of sources
+    **GCS Locations**:
+    DIQA-5000: gs://image_detection_b/datasets/diqa-5000/
+    SmartDoc-QA: gs://image_detection_b/datasets/benchmarks/smartdoc-qa/
+    Phase7 Training: gs://image_detection_b/training/
+end note
+
+' Flow connections - Stage 1 DeQA-Doc
+diqa --> stage1_data
+smartdoc --> stage1_data
+diverse --> stage1_data
+stage1_data --> deqa_model
+deqa_model --> deqa_output
+
+' Flow connections - Phase 1 Training
+deqa_output --> weights
+original --> weights : "DIQA human MOS"
+weights --> model
+model --> train_config
+train_config --> model_out : "trained weights"
+
+' Flow connections - Phase 2 Pseudo-labeling
+other --> inference
+model_out --> inference : "load weights"
+inference --> tiering
+tiering --> soft_enrich
+
+' Flow connections - Layer 2
+existing --> version
+soft_enrich --> version
+deqa_output --> version : "Stage 1 labels"
+version --> registry_out
+
+' Flow connections - Layer 3
+original --> anchor : "human labels"
+deqa_output --> anchor : "MLLM teacher labels"
+soft_enrich --> anchor : "pseudo labels"
+anchor --> existing_train
+existing_train --> soft_train
+soft_train --> training_out
+
+' Key insight note
+note bottom of stage1
+    **Key Innovation**:
+    Use VQualA 2025 champion (DeQA-Doc)
+    to create high-quality teacher labels,
+    then distill to fast CNN student
+end note
+
+note bottom of layer2
+    **Backward Compatible**:
+    Soft-label fields are optional.
+    Existing records continue to work.
+end note
+
+legend right
+    |= Color |= Meaning |
+    | <#LightBlue> | Immutable (unchanged) |
+    | <#Orchid> | MLLM Teacher (DeQA-Doc) |
+    | <#LightCoral> | Student Model Training |
+    | <#LightGreen> | Enrichment layer |
+    | <#LightYellow> | Training layer |
+    | <#PaleGreen> | NEW components |
+endlegend
+
+@enduml

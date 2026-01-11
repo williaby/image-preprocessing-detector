@@ -53,16 +53,18 @@ dependencies = [
     "structlog>=23.1.0",
     "rich>=13.5.0",
     "opencv-python-headless (>=4.8.0,<5.0.0)",
-    "huggingface-hub[cli] (>=1.1.4,<2.0.0)",
+    "huggingface-hub[cli]>=0.20.0,<1.0.0",  # <1.0 for transformers compatibility
     # pytesseract removed - not needed for Phase 1, will add back in Phase 2 for OCR analysis
     # "pytesseract (>=0.3.13,<0.4.0)",
     "gitpython (>=3.1.45,<4.0.0)",
     "pywavelets (>=1.4.0)",
-    "onnxruntime-gpu (>=1.23.2,<2.0.0)",
     "defusedxml>=0.7.1",
     "fonttools>=4.60.2,<5.0.0",
     "werkzeug>=3.1.5",
     "urllib3>=2.6.3",
+    "filelock>=3.20.1",
+    # Note: ultralytics and onnxruntime-gpu moved to [ml] extra to reduce base install size
+    # This allows fuzzing and lightweight installs without ~4GB of CUDA dependencies
 ]
 
 [project.optional-dependencies]
@@ -128,19 +130,27 @@ dev = [
 
 ml = [
     # Machine Learning Dependencies (install separately for Phase 2/3)
+    # Includes ~4GB of CUDA dependencies - use [fuzz] extra for lightweight installs
     "torch>=2.9.0",  # Updated to address GHSA-887c-mr87-cxwp (CVE-2025-3730)
     "torchvision>=0.24.0",  # Compatible with torch 2.9.0
     "doclayout-yolo",  # DocLayout-YOLO (YOLOv10-based) for Phase 3 layout detection
-    "ultralytics>=8.0.0",  # YOLOv8 for Phase 6 layout-lite (lightweight)
+    "ultralytics>=8.3.230",  # YOLOv8/YOLO11 for layout detection (moved from base)
     "timm>=0.9.0",
     "albumentations>=1.3.0",
-    "onnxruntime>=1.15.0",
+    "onnxruntime-gpu>=1.23.2,<2.0.0",  # GPU-accelerated inference (moved from base)
     "tensorboard>=2.12.0",  # Training monitoring
     # "genalog>=0.1.0",  # DISABLED: Conflicts with dev dependencies
     # Model artifact storage and versioning
     "google-cloud-storage>=2.10.0",
     "huggingface-hub>=0.20.0",
     "pyyaml>=6.0",
+]
+
+fuzz = [
+    # Minimal dependencies for ClusterFuzzLite fuzzing
+    # Excludes PyTorch/CUDA to fit in disk space constraints (~4GB saved)
+    "atheris>=2.3.0",
+    # Core deps already in base: pillow, numpy, pymupdf, opencv-python-headless
 ]
 
 api = [
@@ -174,15 +184,32 @@ workers = [
     "flower>=2.0.0",        # Celery monitoring dashboard (optional)
 ]
 
+labeling = [
+    # Labeling Workstreams Dependencies (Project A/B/C)
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "transformers>=4.40.0",  # HuggingFace transformers for model loading
+    "accelerate>=0.25.0",    # Device management and mixed precision
+    "bitsandbytes>=0.42.0",  # 4-bit/8-bit quantization (Linux only)
+    "safetensors>=0.4.0",    # Safe tensor serialization
+    "sentencepiece>=0.1.99", # Tokenizer for many models
+    "peft>=0.7.0",           # Parameter-efficient fine-tuning (LoRA)
+    "qwen-vl-utils>=0.0.8",  # Qwen VL image processing utilities
+]
+
 [project.scripts]
 imgprep = "image_preprocessing_detector.cli:cli"
+
+[tool.uv]
+# Ensure compatibility with Linux systems by resolving to compatible wheels
+constraint-dependencies = ["av<16.0.0; sys_platform == 'linux'"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/image_preprocessing_detector", "benchmarks"]
+packages = ["src/image_preprocessing_detector"]
 
 # Ruff Configuration - Consolidated Linting & Formatting
 # Replaces: Black (formatting), pydocstyle (docstrings), partial Bandit (security)
@@ -202,6 +229,9 @@ exclude = [
     "validation",
     "tmp_cleanup",
     "notebooks",
+    # Root-level one-off diagnostic/test scripts (not part of main codebase)
+    "test_maniqa_*.py",
+    "generate_architecture_diagram.py",
 ]
 
 # Enable Ruff formatter (Black-compatible)
@@ -292,10 +322,10 @@ known-local-folder = ["validation", "benchmarks"]
 "tests/fixtures/phase1_validation/*.py" = ["D", "T20", "TRY", "RUF", "FBT", "RET", "N806", "PERF"]  # Phase 1 validation scripts - relaxed rules
 "fuzz/**/*.py" = ["D", "T20"]
 "validation/**/*.py" = ["D", "T20", "TRY"]
-"scripts/**/*.py" = ["D", "T20", "TRY", "S", "PTH", "SIM", "DTZ", "ARG", "B007", "RUF059", "F841", "RUF002", "RET504", "RUF001", "C401", "RUF013", "RUF012", "PERF102", "E402", "I001", "N806", "B904", "B905", "FBT003", "B028", "ERA001", "E741"]
+"scripts/**/*.py" = ["D", "T20", "TRY", "S", "PTH", "SIM", "DTZ", "ARG", "B007", "RUF059", "F841", "RUF002", "RET504", "RUF001", "C401", "RUF013", "RUF012", "PERF102", "E402", "I001", "N806", "B904", "B905", "FBT003", "B028", "ERA001", "E741", "C416", "PERF401", "PT028"]
 "benchmarks/**/*.py" = ["D", "T20", "ARG", "TRY", "ERA", "SIM", "PERF", "RET", "B007", "F841", "RUF005", "RUF012", "E402", "UP038"]  # CLI tools with relaxed rules
 "tools/**/*.py" = ["D", "T20", "TRY"]
-"modal/**/*.py" = ["D", "T20", "S", "ANN", "PTH", "SIM", "DTZ003", "TRY300", "B905", "PERF203", "PT028"]
+"modal/**/*.py" = ["D", "T20", "S", "ANN", "PTH", "SIM", "DTZ003", "DTZ005", "TRY300", "TRY400", "B905", "PERF203", "PERF401", "PT028", "ARG001", "B007", "F841", "N812", "RUF013", "RUF059"]
 "data/**/*.py" = ["D", "T20", "F401", "F841", "ERA001", "ARG005", "E741", "DTZ003", "S314", "PERF203", "SIM102", "B004", "B905", "RUF059"]
 "noxfile.py" = ["D", "T20"]
 "src/image_preprocessing_detector/utils/logging.py" = ["A005"]  # Module intentionally shadows stdlib
@@ -333,7 +363,14 @@ known-local-folder = ["validation", "benchmarks"]
 
 # Bandit Configuration (Security Linting)
 [tool.bandit]
-skips = ["B101"]  # Skip assert_used - standard pytest practice, not a security issue
+skips = [
+    "B101",  # Skip assert_used - standard pytest practice, not a security issue
+    "B110",  # Skip try_except_pass - used for optional functionality (git info)
+    "B311",  # Skip random - used only for non-security backoff jitter
+    "B404",  # Skip subprocess import - controlled git commands only
+    "B603",  # Skip subprocess call - controlled git/nvidia-smi commands only
+    "B607",  # Skip partial path - controlled git/nvidia-smi commands only
+]
 
 # MyPy Configuration
 [tool.mypy]
@@ -512,15 +549,16 @@ markers = [
 
 # Coverage Configuration
 [tool.coverage.run]
-source = ["src"]
+source = ["src/image_preprocessing_detector"]
 branch = true
 omit = [
     "*/tests/*",
     "*/test_*.py",
     "*/__pycache__/*",
     "*/site-packages/*",
+    "scripts/*",  # Exclude utility scripts (not production code)
+    "benchmarks/*",  # Exclude benchmarking framework (not production code)
     "validation/*",  # Exclude standalone validation scripts
-    "benchmarks/*",  # Exclude benchmarking framework
     "data/*",  # Exclude data processing scripts
     # CLI - tested via integration but excluded from unit coverage
     "src/image_preprocessing_detector/cli.py",
@@ -552,6 +590,23 @@ omit = [
     "src/image_preprocessing_detector/detection/advanced_detectors.py",
     # Phase 6: Hybrid IQA (requires DocLayout-YOLO, not yet implemented)
     "src/image_preprocessing_detector/detection/hybrid_iqa.py",
+    # Standalone tools and scripts (not core library, tested separately if needed)
+    "generate_architecture_diagram.py",
+    "tools/validate_front_matter.py",
+    # Labeling arena tools (standalone CLI tools, require external dependencies)
+    "src/image_preprocessing_detector/labeling/arena/cli.py",
+    "src/image_preprocessing_detector/labeling/arena/leaderboard.py",
+    "src/image_preprocessing_detector/labeling/arena/runner.py",
+    # Labeling arena inference backends (require external services/models)
+    "src/image_preprocessing_detector/labeling/arena/inference/api.py",
+    "src/image_preprocessing_detector/labeling/arena/inference/huggingface.py",
+    "src/image_preprocessing_detector/labeling/arena/inference/local.py",
+    "src/image_preprocessing_detector/labeling/arena/inference/regression.py",
+    # Labeling finetuning (require PyTorch/Modal, tested separately with ml dependencies)
+    "src/image_preprocessing_detector/labeling/finetuning/trainer.py",
+    "src/image_preprocessing_detector/labeling/finetuning/stages/*",
+    # Quantization pipeline (standalone tool, require PyTorch)
+    "src/image_preprocessing_detector/labeling/quantization/pipeline.py",
 ]
 
 [tool.coverage.report]
@@ -586,3 +641,12 @@ tests_dir = "tests/"
 # Mutation score threshold: percentage of mutations that must be killed
 # Score below 80% indicates weak test coverage
 dict_synonyms = "Struct, NamedStruct"
+
+[tool.uv.sources]
+byronwilliamscpa-gemini-image = { git = "https://github.com/ByronWilliamsCPA/python-libs.git", subdirectory = "packages/gemini-image" }
+
+[dependency-groups]
+dev = [
+    "byronwilliamscpa-gemini-image",
+    "mkdocs-kroki-plugin>=1.1.0",
+]

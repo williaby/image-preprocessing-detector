@@ -1,0 +1,206 @@
+@startuml DIQA Inference Pipeline
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title DIQA Pseudo-Labeling Inference Pipeline\nBatch Processing Flow
+
+' ============================================================================
+' COMPONENT DIAGRAM: Inference Architecture
+' ============================================================================
+
+package "Modal Serverless Infrastructure" as Modal {
+
+  package "GPU Pool" as GPUPool {
+    node "A10G Instances\n(Track A light)" as A10G {
+      component "MUSIQ\n(27M params)" as MUSIQ_Inf
+      component "QualiCLIP\n(150M params)" as QualiCLIP_Inf
+    }
+
+    node "A100-80GB Instances\n(Track A heavy + Track B)" as A100 {
+      component "DocIQ-Replica\n(25M + masks)" as DocIQ_Inf
+      component "Qwen3-VL-8B\n(8B params)" as Qwen_Inf
+      component "InternVL3-8B\n(8B params)" as InternVL_Inf
+    }
+  }
+
+  package "Orchestration" as Orchestration {
+    component "Batch Scheduler" as Scheduler
+    component "Result Aggregator" as Aggregator
+    queue "Job Queue" as JobQueue
+  }
+}
+
+' ============================================================================
+' INPUT/OUTPUT
+' ============================================================================
+
+database "Input Images\n(GCS Bucket)" as InputBucket
+database "Layout Mask Cache\n(GCS)" as MaskCache
+database "Output Labels\n(GCS)" as OutputBucket
+
+' ============================================================================
+' CONNECTIONS
+' ============================================================================
+
+InputBucket --> Scheduler : Batch of images
+Scheduler --> JobQueue : Distribute jobs
+
+JobQueue --> MUSIQ_Inf : Image batch
+JobQueue --> QualiCLIP_Inf : Image batch
+JobQueue --> DocIQ_Inf : Image + mask batch
+JobQueue --> Qwen_Inf : Image + prompt
+JobQueue --> InternVL_Inf : Image + prompt
+
+MaskCache --> DocIQ_Inf : Pre-computed masks
+
+MUSIQ_Inf --> Aggregator : predictions
+QualiCLIP_Inf --> Aggregator : predictions
+DocIQ_Inf --> Aggregator : predictions
+Qwen_Inf --> Aggregator : predictions
+InternVL_Inf --> Aggregator : predictions
+
+Aggregator --> OutputBucket : Pseudo-labels JSON
+
+' ============================================================================
+' SEQUENCE DIAGRAM: Single Image Processing
+' ============================================================================
+
+newpage
+
+title DIQA Inference - Single Image Sequence
+
+actor "Batch Job" as Job
+participant "Image Loader" as Loader
+participant "Mask Generator" as MaskGen
+participant "Track A\n(IQA)" as TrackA
+participant "Track B\n(VLM)" as TrackB
+participant "Variance\nCalculator" as VarCalc
+participant "Hierarchical\nStacker" as Stacker
+participant "Temperature\nScaler" as TempScale
+participant "Output\nFormatter" as Output
+
+Job -> Loader : load_image(path)
+activate Loader
+Loader --> Job : rgb_tensor [3, H, W]
+deactivate Loader
+
+Job -> MaskGen : get_mask(image_hash)
+activate MaskGen
+alt Cache hit
+  MaskGen --> Job : cached_mask [11, 1600, 1600]
+else Cache miss
+  MaskGen -> MaskGen : DocLayout-YOLO inference
+  MaskGen -> MaskGen : cache_to_disk()
+  MaskGen --> Job : new_mask [11, 1600, 1600]
+end
+deactivate MaskGen
+
+par Track A Inference
+  Job -> TrackA : infer_musiq(rgb)
+  activate TrackA
+  TrackA --> Job : musiq_pred {o, s, c}
+  deactivate TrackA
+
+  Job -> TrackA : infer_qualiclip(rgb_224)
+  activate TrackA
+  TrackA --> Job : qualiclip_pred {o, s, c}
+  deactivate TrackA
+
+  Job -> TrackA : infer_dociq(rgb_1600, mask)
+  activate TrackA
+  TrackA --> Job : dociq_pred {o, s, c}
+  deactivate TrackA
+else Track B Inference
+  Job -> TrackB : infer_qwen(rgb, prompt)
+  activate TrackB
+  TrackB --> Job : qwen_pred {o, s, c}
+  deactivate TrackB
+
+  Job -> TrackB : infer_internvl(rgb, prompt)
+  activate TrackB
+  TrackB --> Job : internvl_pred {o, s, c}
+  deactivate TrackB
+end
+
+Job -> VarCalc : compute_variances(all_preds)
+activate VarCalc
+note right
+  For each dimension:
+  var = variance(specialist_preds)
+
+  Specialists:
+  - overall: [qwen, dociq, internvl]
+  - sharpness: [qwen, dociq, musiq]
+  - color: [qwen, dociq, qualiclip]
+end note
+VarCalc --> Job : variances {o, s, c}
+deactivate VarCalc
+
+Job -> Stacker : forward(all_preds, variances)
+activate Stacker
+Stacker --> Job : stacked_pred, stacked_var
+deactivate Stacker
+
+Job -> TempScale : calibrate(pred, var)
+activate TempScale
+TempScale --> Job : calibrated_pred, calibrated_var
+deactivate TempScale
+
+Job -> Output : format_output(pred, var, metadata)
+activate Output
+Output --> Job : DIQAPseudoLabel
+deactivate Output
+
+' ============================================================================
+' OUTPUT FORMAT
+' ============================================================================
+
+newpage
+
+title DIQA Output Schema
+
+object "DIQAPseudoLabel" as Label {
+  **Quality Scores (1-5)**
+  overall_score: 4.2
+  sharpness_score: 3.8
+  color_score: 4.5
+  --
+  **Calibrated Uncertainties**
+  overall_uncertainty: 0.15
+  sharpness_uncertainty: 0.22
+  color_uncertainty: 0.11
+  --
+  **Quality Flags**
+  high_uncertainty: false
+  model_disagreement: false
+  --
+  **Metadata**
+  inference_time_ms: 423
+  image_hash: "abc123..."
+}
+
+object "model_predictions" as ModelPreds {
+  qwen3_vl_8b: {o: 4.1, s: 3.9, c: 4.4}
+  dociq_replica: {o: 4.0, s: 3.7, c: 4.3}
+  musiq: {o: 4.2, s: 3.8, c: 4.5}
+  qualiclip: {o: 4.3, s: 3.6, c: 4.6}
+  internvl3_8b: {o: 4.2, s: 3.9, c: 4.4}
+}
+
+object "within_dim_variances" as Variances {
+  overall: 0.012
+  sharpness: 0.048
+  color: 0.006
+}
+
+Label *-- ModelPreds : contains
+Label *-- Variances : contains
+
+note bottom of Label
+  **Flag Thresholds:**
+  - high_uncertainty: any uncertainty > 0.5
+  - model_disagreement: any variance > 0.1
+end note
+
+@enduml

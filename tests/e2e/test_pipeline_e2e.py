@@ -4,6 +4,8 @@ These tests verify the full pipeline from image input to JSON output,
 ensuring the handoff format is correct for Project B consumption.
 """
 
+from __future__ import annotations
+
 import json
 from datetime import UTC, datetime
 
@@ -46,13 +48,27 @@ class DocumentProcessor:
     4. Metadata Generation
     """
 
+    # Class-level detector instances (shared across all DocumentProcessor instances)
+    _blur_detector: BlurDetector | None = None
+    _noise_detector: NoiseDetector | None = None
+    _contrast_detector: ContrastDetector | None = None
+    _skew_detector: SkewDetector | None = None
+
     def __init__(self, config: DQSWeightConfig | None = None):
         """Initialize processor with optional custom config."""
         self.config = config or DQSWeightConfig()
-        self.blur_detector = BlurDetector()
-        self.noise_detector = NoiseDetector()
-        self.contrast_detector = ContrastDetector()
-        self.skew_detector = SkewDetector()
+
+        # Lazy-initialize shared detectors (expensive to create)
+        if DocumentProcessor._blur_detector is None:
+            DocumentProcessor._blur_detector = BlurDetector()
+            DocumentProcessor._noise_detector = NoiseDetector()
+            DocumentProcessor._contrast_detector = ContrastDetector()
+            DocumentProcessor._skew_detector = SkewDetector()
+
+        self.blur_detector = DocumentProcessor._blur_detector
+        self.noise_detector = DocumentProcessor._noise_detector
+        self.contrast_detector = DocumentProcessor._contrast_detector
+        self.skew_detector = DocumentProcessor._skew_detector
 
     def process_image(self, image: np.ndarray, page_index: int = 0) -> dict:
         """Process a single image through the IQA pipeline.

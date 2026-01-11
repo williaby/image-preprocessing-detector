@@ -426,7 +426,7 @@ dataset_mount = modal.Mount.from_local_dir("/mnt/e/image_detection", remote_path
 
 ### After Production Run Completes
 
-1. **Download all 7 result files**
+4. **Download all 7 result files**
 2. **Verify total count = 13,890**
 3. **Archive to persistent storage**
 4. **Prepare for Stage 2 (DocIQ-Replica training)**

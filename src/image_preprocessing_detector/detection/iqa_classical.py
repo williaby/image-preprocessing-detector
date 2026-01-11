@@ -1871,8 +1871,8 @@ class JPEGBlockinessDetector:
         if inner_diff < 1e-6:
             return 0.0
 
-        blockiness = max(0.0, (boundary_diff - inner_diff) / (inner_diff + 1e-6))
-        return float(blockiness)
+        blockiness_value = (boundary_diff - inner_diff) / (inner_diff + 1e-6)
+        return max(0.0, float(blockiness_value))
 
     def _compute_vertical_blockiness(self, gray: np.ndarray) -> float:
         """Compute blockiness at vertical 8-pixel boundaries.
@@ -1904,8 +1904,8 @@ class JPEGBlockinessDetector:
         if inner_diff < 1e-6:
             return 0.0
 
-        blockiness = max(0.0, (boundary_diff - inner_diff) / (inner_diff + 1e-6))
-        return float(blockiness)
+        blockiness_value = (boundary_diff - inner_diff) / (inner_diff + 1e-6)
+        return max(0.0, float(blockiness_value))
 
     def _estimate_quality(self, blockiness_score: float) -> int:
         """Estimate JPEG quality factor from blockiness score.

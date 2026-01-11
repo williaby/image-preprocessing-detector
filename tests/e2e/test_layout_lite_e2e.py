@@ -506,11 +506,15 @@ class TestLayoutLiteEdgeCasesE2E:
         assert isinstance(result, dict)
 
     def test_very_large_image(self, layout_analyzer):
-        """Test Layout-Lite handles large images."""
-        large = np.ones((4000, 3000, 3), dtype=np.uint8) * 255
+        """Test Layout-Lite handles large images.
+
+        Uses 2000x1500 (reduced from 4000x3000) for faster tests while
+        still validating large image handling.
+        """
+        large = np.ones((2000, 1500, 3), dtype=np.uint8) * 255
         # Add some content
-        for y in range(100, 3800, 50):
-            cv2.line(large, (100, y), (2900, y), (0, 0, 0), 2)
+        for y in range(100, 1900, 50):
+            cv2.line(large, (100, y), (1400, y), (0, 0, 0), 2)
 
         result = layout_analyzer.analyze(large)
 

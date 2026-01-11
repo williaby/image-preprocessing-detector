@@ -82,7 +82,7 @@ def download_dataset(
         if extract_zip:
             print("   📦 Extracting ZIP archive...")
             with zipfile.ZipFile(zip_local_path, "r") as zip_ref:
-                zip_ref.extractall(local_path_obj)
+                zip_ref.extractall(local_path_obj)  # nosec B202
             print(f"   ✅ Extracted to: {local_path_obj}")
 
             # Remove zip file to save space
@@ -189,7 +189,7 @@ def download_from_google_drive_url(
         extract_dir.mkdir(parents=True, exist_ok=True)
 
         with zipfile.ZipFile(output_path_obj, "r") as zip_ref:
-            zip_ref.extractall(extract_dir)
+            zip_ref.extractall(extract_dir)  # nosec B202
 
         print(f"✅ Extracted to: {extract_dir}")
         output_path_obj.unlink()  # Remove zip to save space

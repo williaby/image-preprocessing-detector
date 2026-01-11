@@ -184,11 +184,12 @@ class TestMLIQADeviceSelection:
         model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
         student_path = model_dir / "resnet18_student.onnx"
 
-        # Create detector without specifying device
+        # Create detector without specifying device (legacy mode to access .device)
         detector = MLIQADetector(
             student_model_path=student_path,
             device=None,  # Auto-detect
             enable_modal_fallback=False,
+            use_orchestrator=False,  # Use legacy mode to test .device attribute
         )
 
         # Device should be auto-detected
@@ -211,11 +212,12 @@ class TestMLIQADeviceSelection:
         model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
         student_path = model_dir / "resnet18_student.onnx"
 
-        # Explicitly request CPU
+        # Explicitly request CPU (legacy mode to access .device)
         detector = MLIQADetector(
             student_model_path=student_path,
             device=Device.CPU,
             enable_modal_fallback=False,
+            use_orchestrator=False,  # Use legacy mode to test .device attribute
         )
 
         assert detector.device == Device.CPU
@@ -237,21 +239,23 @@ class TestMLIQADeviceSelection:
         model_dir = Path(__file__).parents[2] / "models" / "iqa" / "onnx"
         student_path = model_dir / "resnet18_student.onnx"
 
-        # Test CPU provider selection
+        # Test CPU provider selection (legacy mode)
         detector_cpu = MLIQADetector(
             student_model_path=student_path,
             device=Device.CPU,
             enable_modal_fallback=False,
+            use_orchestrator=False,  # Use legacy mode to test .device attribute
         )
         providers = detector_cpu._get_ort_providers()
         assert "CPUExecutionProvider" in providers
         assert "CUDAExecutionProvider" not in providers
 
-        # Test GPU provider selection
+        # Test GPU provider selection (legacy mode)
         detector_gpu = MLIQADetector(
             student_model_path=student_path,
             device=Device.GPU,
             enable_modal_fallback=False,
+            use_orchestrator=False,  # Use legacy mode to test .device attribute
         )
         providers = detector_gpu._get_ort_providers()
         assert "CUDAExecutionProvider" in providers
@@ -291,6 +295,7 @@ class TestDeviceFallbackChain:
                 student_model_path=student_path,
                 device=None,  # Auto-detect
                 enable_modal_fallback=False,
+                use_orchestrator=False,  # Use legacy mode to test .device attribute
             )
             # Should fall back to CPU
             assert detector.device == Device.CPU
@@ -335,6 +340,7 @@ class TestDeviceFallbackChain:
             teacher_model_path=teacher_path,
             device=Device.CPU,
             enable_modal_fallback=False,
+            use_orchestrator=False,  # Use legacy mode to test .device attribute
         )
 
         # Create test image
@@ -444,7 +450,7 @@ class TestDevicePriorityPipeline:
         student_path = model_dir / "resnet18_student.onnx"
         teacher_path = model_dir / "resnet50_teacher_50epoch.onnx"
 
-        # Create detector with low thresholds to force escalation
+        # Create detector with low thresholds to force escalation (legacy mode)
         detector = MLIQADetector(
             student_model_path=student_path,
             teacher_model_path=teacher_path,
@@ -452,6 +458,7 @@ class TestDevicePriorityPipeline:
             enable_modal_fallback=False,
             entropy_threshold=0.0,  # Force escalation
             min_confidence_threshold=1.0,  # Force escalation
+            use_orchestrator=False,  # Use legacy mode to test .device attribute
         )
 
         # Create ambiguous image

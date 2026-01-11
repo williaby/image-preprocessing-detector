@@ -3,6 +3,22 @@
 # SPDX-License-Identifier: MIT
 
 # Semgrep ignore file
+# See: https://semgrep.dev/docs/ignoring-files-folders-code/
+
+# ==============================================================================
+# Supply Chain: False Positives / Platform-Specific Vulnerabilities
+# ==============================================================================
+# Note: Semgrep supply chain findings in auto-generated requirements files
+# cannot use inline nosemgrep comments. See osv-scanner.toml for full
+# vulnerability documentation and justifications.
+#
+# CVE-2025-53000 (nbconvert): Windows-only vulnerability - inkscape.bat search
+# path injection. This project runs exclusively on Linux (WSL2/Docker/CI).
+# No fix available as of 2026-01-11. Tracked in osv-scanner.toml.
+
+# ==============================================================================
+# Helm Chart False Positives
+# ==============================================================================
 # False positives for generic-api-key rule in Helm chart TLS secretName references
 charts/**/README.md
 charts/**/values.yaml

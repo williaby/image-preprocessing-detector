@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 if TYPE_CHECKING:
-    from typing import Literal
+    pass  # Imports moved to runtime to avoid unused import warnings
 
 from image_preprocessing_detector.orchestration import (
     DeviceOrchestrator,
@@ -1018,9 +1018,9 @@ class MLIQADetector:
         # Record actual inference for budget tracking
         if self.use_orchestrator and self.orchestrator and selected_device:
             # Type narrowing: selected_device is guaranteed to be one of the literals here
-            from typing import cast
+            from typing import Literal, cast
 
-            device_literal = cast("Literal['cuda', 'cpu', 'modal']", selected_device)
+            device_literal = cast(Literal["cuda", "cpu", "modal"], selected_device)
             self.orchestrator.record_teacher_inference(
                 device=device_literal, inference_time_ms=inference_time
             )

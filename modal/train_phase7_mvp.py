@@ -128,12 +128,12 @@ class MVPTrainingConfig:
 
 def set_seed(seed: int) -> None:
     """Set random seeds for reproducibility across all libraries."""
-    import random
+    import random  # nosec B311 - used for ML reproducibility, not cryptographic
 
     import numpy as np
     import torch
 
-    random.seed(seed)
+    random.seed(seed)  # nosec B311
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -156,7 +156,7 @@ def safe_extract_tar(tar_path: Path, extract_path: Path) -> None:
             member_path = extract_path / member.name
             if not is_within_directory(extract_path, member_path):
                 raise ValueError(f"Path traversal detected: {member.name}")
-        tar.extractall(path=extract_path, members=members)
+        tar.extractall(path=extract_path, members=members, filter="data")
 
 
 def compute_ece_numpy(
@@ -247,7 +247,7 @@ def prepare_mvp_dataset(bucket_name: str, gcs_prefix: str) -> Path:
     """Download and prepare MVP dataset."""
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
 
-    dataset_dir = Path("/tmp/phase7_mvp")
+    dataset_dir = Path("/tmp/phase7_mvp")  # nosec B108 - Modal container isolation
     images_dir = dataset_dir / "images"
 
     # Check if already downloaded

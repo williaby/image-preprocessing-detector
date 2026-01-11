@@ -222,37 +222,13 @@ class TestBatchProcessingTask:
 
 
 class TestWorkerMonitoring:
-    """Tests for worker monitoring functions."""
+    """Tests for worker monitoring functions.
 
-    def test_check_broker_connection_failure(self) -> None:
-        """Test broker connection check handles failure."""
-        from image_preprocessing_detector.workers.celery_app import (
-            check_broker_connection,
-        )
+    Note: The actual connection failure tests are in TestCeleryAppFunctions
+    with proper mocking to avoid slow connection timeouts.
+    """
 
-        # Without Redis running, should return False
-        result = check_broker_connection()
-        assert result is False
-
-    def test_get_worker_stats_no_workers(self) -> None:
-        """Test getting stats when no workers running."""
-        from image_preprocessing_detector.workers.celery_app import get_worker_stats
-
-        stats = get_worker_stats()
-
-        # Should return empty stats, not crash
-        assert "workers" in stats
-        assert "worker_count" in stats
-        assert stats["worker_count"] == 0
-
-    def test_get_queue_lengths_no_connection(self) -> None:
-        """Test queue lengths when broker unavailable."""
-        from image_preprocessing_detector.workers.celery_app import get_queue_lengths
-
-        lengths = get_queue_lengths()
-
-        # Should return error info, not crash
-        assert "error" in lengths or all(v >= -1 for v in lengths.values())
+    # Monitoring tests with mocks are in TestCeleryAppFunctions below
 
 
 class TestIQATaskClass:

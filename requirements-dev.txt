@@ -14,7 +14,7 @@ aiohttp-retry==2.9.1
     #   scmrepo
 aiosignal==1.4.0
     # via aiohttp
-altair==5.5.0
+altair==6.0.0
     # via streamlit
 amqp==5.3.1
     # via kombu
@@ -24,8 +24,9 @@ antlr4-python3-runtime==4.9.3
     # via
     #   hydra-core
     #   omegaconf
-anyio==4.11.0
+anyio==4.12.1
     # via
+    #   google-genai
     #   httpx
     #   jupyter-server
     #   watchfiles
@@ -47,11 +48,11 @@ async-lru==2.0.5
     # via jupyterlab
 async-timeout==5.0.1 ; python_full_version < '3.11'
     # via aiohttp
-asyncssh==2.21.1
+asyncssh==2.22.0
     # via
     #   scmrepo
     #   sshfs
-atpublic==6.0.2
+atpublic==7.0.0
     # via flufl-lock
 attrs==25.4.0
     # via
@@ -76,15 +77,15 @@ backports-datetime-fromisoformat==2.0.3 ; python_full_version < '3.11'
     # via marshmallow
 backrefs==6.1
     # via mkdocs-material
-basedpyright==1.34.0
+basedpyright==1.37.1
     # via image-preprocessing-detector
 bcrypt==5.0.0
     # via asyncssh
-beautifulsoup4==4.14.2
+beautifulsoup4==4.14.3
     # via nbconvert
-billiard==4.2.3
+billiard==4.2.4
     # via celery
-black==25.11.0 ; python_full_version >= '3.11'
+black==25.12.0 ; python_full_version >= '3.11'
     # via kaggle
 bleach==6.3.0
     # via
@@ -92,17 +93,18 @@ bleach==6.3.0
     #   nbconvert
 blinker==1.9.0
     # via streamlit
-cachetools==6.2.2
+byronwilliamscpa-gemini-image @ git+https://github.com/ByronWilliamsCPA/python-libs.git@36fd2ad0dba8747993e0bf9bb0c372a694d72b3e#subdirectory=packages/gemini-image
+cachetools==6.2.4
     # via streamlit
 cbor2==5.8.0
     # via
     #   image-preprocessing-detector
     #   modal
-celery==5.5.3
+celery==5.6.2
     # via
     #   dvc
     #   dvc-task
-certifi==2025.11.12
+certifi==2026.1.4
     # via
     #   httpcore
     #   httpx
@@ -137,7 +139,6 @@ click==8.3.1
     #   safety
     #   streamlit
     #   typer
-    #   typer-slim
 click-didyoumean==0.3.1
     # via celery
 click-plugins==1.1.1.2
@@ -157,8 +158,6 @@ colorama==0.4.6
     #   pytest
     #   radon
     #   tqdm
-coloredlogs==15.0.1
-    # via onnxruntime-gpu
 colorlog==6.10.1
     # via nox
 comm==0.2.3
@@ -171,7 +170,7 @@ contourpy==1.3.2 ; python_full_version < '3.11'
     # via matplotlib
 contourpy==1.3.3 ; python_full_version >= '3.11'
     # via matplotlib
-coverage==7.12.0
+coverage==7.13.1
     # via
     #   mutmut
     #   pytest-cov
@@ -181,15 +180,16 @@ cryptography==46.0.3
     #   authlib
 cycler==0.12.1
     # via matplotlib
-datasets==4.4.1
+datasets==4.4.2
     # via image-preprocessing-detector
-debugpy==1.8.17
+debugpy==1.8.19
     # via ipykernel
 decorator==5.2.1
     # via ipython
 defusedxml==0.7.1
     # via
     #   image-preprocessing-detector
+    #   mkdocs-kroki-plugin
     #   nbconvert
 dependency-groups==1.3.1
     # via nox
@@ -206,6 +206,7 @@ distlib==0.4.0
 distro==1.9.0
     # via
     #   dvc
+    #   google-genai
     #   iterative-telemetry
 dparse==0.6.4
     # via
@@ -213,20 +214,20 @@ dparse==0.6.4
     #   safety-schemas
 dpath==2.2.0
     # via dvc
-dulwich==0.24.10
+dulwich==0.25.1
     # via
     #   dvc
     #   dvc-studio-client
     #   scmrepo
-dvc==3.64.0
+dvc==3.66.1
     # via
     #   dvc-ssh
     #   image-preprocessing-detector
-dvc-data==3.16.12
+dvc-data==3.18.2
     # via dvc
 dvc-http==2.32.0
     # via dvc
-dvc-objects==5.1.2
+dvc-objects==5.2.0
     # via
     #   dvc
     #   dvc-data
@@ -243,6 +244,7 @@ entrypoints==0.4
 exceptiongroup==1.3.1 ; python_full_version < '3.11'
     # via
     #   anyio
+    #   celery
     #   hypothesis
     #   ipython
     #   pytest
@@ -260,13 +262,11 @@ filelock==3.20.3
     #   iterative-telemetry
     #   safety
     #   virtualenv
-flatbuffers==25.9.23
-    # via onnxruntime-gpu
 flatten-dict==0.4.2
     # via dvc
-flufl-lock==8.2.0
+flufl-lock==9.0.0
     # via dvc
-fonttools==4.61.0
+fonttools==4.61.1
     # via
     #   image-preprocessing-detector
     #   matplotlib
@@ -298,12 +298,16 @@ ghp-import==2.1.0
     # via mkdocs
 gitdb==4.0.12
     # via gitpython
-gitpython==3.1.45
+gitpython==3.1.46
     # via
     #   image-preprocessing-detector
     #   mkdocs-git-revision-date-localized-plugin
     #   scmrepo
     #   streamlit
+google-auth==2.47.0
+    # via google-genai
+google-genai==1.57.0
+    # via byronwilliamscpa-gemini-image
 grandalf==0.8
     # via dvc
 griffe==1.15.0
@@ -312,7 +316,7 @@ griffe==1.15.0
     #   mkdocstrings-python
 griffe-pydantic==1.1.8
     # via image-preprocessing-detector
-grpclib==0.4.8
+grpclib==0.4.9
     # via modal
 gto==1.9.0
     # via dvc
@@ -320,7 +324,7 @@ h11==0.16.0
     # via httpcore
 h2==4.3.0
     # via grpclib
-hf-xet==1.2.0 ; platform_machine == 'AMD64' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
+hf-xet==1.2.0 ; platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
     # via huggingface-hub
 hpack==4.1.0
     # via h2
@@ -329,24 +333,21 @@ httpcore==1.0.9
 httpx==0.28.1
     # via
     #   datasets
-    #   huggingface-hub
+    #   google-genai
     #   jupyterlab
+    #   mkdocs-kroki-plugin
     #   safety
-huggingface-hub==1.1.5
+huggingface-hub==0.36.0
     # via
     #   datasets
     #   image-preprocessing-detector
-humanfriendly==10.0
-    # via coloredlogs
-humanize==4.14.0
+humanize==4.15.0
     # via nox
 hydra-core==1.3.2
     # via dvc
 hyperframe==6.1.0
     # via h2
-hypothesis==6.148.1 ; python_full_version < '3.10.2'
-    # via image-preprocessing-detector
-hypothesis==6.148.2 ; python_full_version >= '3.10.2'
+hypothesis==6.150.0
     # via image-preprocessing-detector
 identify==2.6.15
     # via pre-commit
@@ -362,6 +363,8 @@ imageio==2.37.2
     # via scikit-image
 iniconfig==2.3.0
     # via pytest
+inquirerpy==0.3.4
+    # via huggingface-hub
 interrogate==1.7.0
     # via image-preprocessing-detector
 ipykernel==7.1.0
@@ -370,12 +373,12 @@ ipykernel==7.1.0
     #   jupyter
     #   jupyter-console
     #   jupyterlab
-ipython==8.37.0 ; python_full_version < '3.11'
+ipython==8.38.0 ; python_full_version < '3.11'
     # via
     #   ipykernel
     #   ipywidgets
     #   jupyter-console
-ipython==9.7.0 ; python_full_version >= '3.11'
+ipython==9.9.0 ; python_full_version >= '3.11'
     # via
     #   ipykernel
     #   ipywidgets
@@ -402,15 +405,15 @@ jinja2==3.1.6
     #   nbconvert
     #   pydeck
     #   safety
-joblib==1.5.2
+joblib==1.5.3
     # via
     #   nltk
     #   scikit-learn
-json5==0.12.1
+json5==0.13.0
     # via jupyterlab-server
 jsonpointer==3.0.0
     # via jsonschema
-jsonschema==4.25.1
+jsonschema==4.26.0
     # via
     #   altair
     #   jupyter-events
@@ -420,7 +423,7 @@ jsonschema-specifications==2025.9.1
     # via jsonschema
 jupyter==1.1.1
     # via image-preprocessing-detector
-jupyter-client==8.6.3
+jupyter-client==8.8.0
     # via
     #   ipykernel
     #   jupyter-console
@@ -451,7 +454,7 @@ jupyter-server==2.17.0
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.5.0
+jupyterlab==4.5.1
     # via
     #   jupyter
     #   notebook
@@ -465,13 +468,13 @@ jupyterlab-widgets==3.0.16
     # via ipywidgets
 kaggle==1.7.4.5 ; python_full_version < '3.11'
     # via image-preprocessing-detector
-kaggle==1.8.0 ; python_full_version >= '3.11'
+kaggle==1.8.3 ; python_full_version >= '3.11'
     # via image-preprocessing-detector
-kagglesdk==0.1.13 ; python_full_version >= '3.11'
+kagglesdk==0.1.14 ; python_full_version >= '3.11'
     # via kaggle
 kiwisolver==1.4.9
     # via matplotlib
-kombu==5.5.4
+kombu==5.6.2
     # via
     #   celery
     #   dvc
@@ -482,6 +485,8 @@ lazy-loader==0.4
     # via scikit-image
 libcst==1.8.6
     # via mutmut
+librt==0.7.7 ; platform_python_implementation != 'PyPy'
+    # via mypy
 linkify-it-py==2.0.3
     # via markdown-it-py
 mando==0.7.1
@@ -510,7 +515,7 @@ marshmallow==4.2.0
     # via
     #   image-preprocessing-detector
     #   safety
-matplotlib==3.10.7
+matplotlib==3.10.8
     # via image-preprocessing-detector
 matplotlib-inline==0.2.1
     # via
@@ -524,7 +529,7 @@ mergedeep==1.3.4
     # via
     #   mkdocs
     #   mkdocs-get-deps
-mistune==3.1.4
+mistune==3.2.0
     # via nbconvert
 mkdocs==1.6.1
     # via
@@ -532,6 +537,7 @@ mkdocs==1.6.1
     #   mkdocs-autorefs
     #   mkdocs-gen-files
     #   mkdocs-git-revision-date-localized-plugin
+    #   mkdocs-kroki-plugin
     #   mkdocs-material
     #   mkdocs-section-index
     #   mkdocstrings
@@ -539,30 +545,29 @@ mkdocs-autorefs==1.4.3
     # via
     #   mkdocstrings
     #   mkdocstrings-python
-mkdocs-gen-files==0.5.0
+mkdocs-gen-files==0.6.0
     # via image-preprocessing-detector
 mkdocs-get-deps==0.2.0
     # via mkdocs
 mkdocs-git-revision-date-localized-plugin==1.5.0
     # via image-preprocessing-detector
-mkdocs-material==9.7.0
+mkdocs-kroki-plugin==1.1.0
+mkdocs-material==9.7.1
     # via image-preprocessing-detector
 mkdocs-material-extensions==1.3.1
     # via mkdocs-material
 mkdocs-section-index==0.3.10
     # via image-preprocessing-detector
-mkdocstrings==0.30.1
+mkdocstrings==1.0.0
     # via
     #   image-preprocessing-detector
     #   mkdocstrings-python
-mkdocstrings-python==1.19.0
+mkdocstrings-python==2.0.1
     # via mkdocstrings
 ml-dtypes==0.5.4
     # via onnx
-modal==1.2.4
+modal==1.3.0.post1
     # via image-preprocessing-detector
-mpmath==1.3.0
-    # via sympy
 multidict==6.7.0
     # via
     #   aiohttp
@@ -572,7 +577,7 @@ multiprocess==0.70.18
     # via datasets
 mutmut==3.4.0
     # via image-preprocessing-detector
-mypy==1.18.2
+mypy==1.19.1
     # via
     #   image-preprocessing-detector
     #   kaggle
@@ -580,9 +585,9 @@ mypy-extensions==1.1.0
     # via
     #   black
     #   mypy
-narwhals==2.12.0
+narwhals==2.15.0
     # via altair
-nbclient==0.10.2
+nbclient==0.10.4
     # via nbconvert
 nbconvert==7.16.6
     # via
@@ -599,17 +604,17 @@ networkx==3.4.2 ; python_full_version < '3.11'
     # via
     #   dvc
     #   scikit-image
-networkx==3.5 ; python_full_version >= '3.11'
+networkx==3.6.1 ; python_full_version >= '3.11'
     # via
     #   dvc
     #   scikit-image
 nltk==3.9.2
     # via safety
-nodeenv==1.9.1
+nodeenv==1.10.0
     # via pre-commit
-nodejs-wheel-binaries==24.11.1
+nodejs-wheel-binaries==24.12.0
     # via basedpyright
-notebook==7.5.0
+notebook==7.5.1
     # via jupyter
 notebook-shim==0.2.4
     # via
@@ -626,7 +631,6 @@ numpy==2.2.6 ; python_full_version < '3.11'
     #   matplotlib
     #   ml-dtypes
     #   onnx
-    #   onnxruntime-gpu
     #   opencv-python-headless
     #   pandas
     #   pydeck
@@ -636,7 +640,7 @@ numpy==2.2.6 ; python_full_version < '3.11'
     #   scipy
     #   streamlit
     #   tifffile
-numpy==2.3.5 ; python_full_version >= '3.11'
+numpy==2.4.1 ; python_full_version >= '3.11'
     # via
     #   contourpy
     #   datasets
@@ -645,7 +649,6 @@ numpy==2.3.5 ; python_full_version >= '3.11'
     #   matplotlib
     #   ml-dtypes
     #   onnx
-    #   onnxruntime-gpu
     #   opencv-python-headless
     #   pandas
     #   pydeck
@@ -659,13 +662,11 @@ omegaconf==2.3.0
     # via
     #   dvc
     #   hydra-core
-onnx==1.19.1
-    # via image-preprocessing-detector
-onnxruntime-gpu==1.23.2
+onnx==1.20.1
     # via image-preprocessing-detector
 opencv-python-headless==4.11.0.86
     # via image-preprocessing-detector
-orjson==3.11.4 ; implementation_name == 'cpython'
+orjson==3.11.5 ; implementation_name == 'cpython'
     # via
     #   dvc-data
     #   sqltrie
@@ -686,13 +687,13 @@ packaging==25.0
     #   jupyter-server
     #   jupyterlab
     #   jupyterlab-server
+    #   kaggle
     #   kombu
     #   lazy-loader
     #   matplotlib
     #   mkdocs
     #   nbconvert
     #   nox
-    #   onnxruntime-gpu
     #   pytest
     #   safety
     #   safety-schemas
@@ -717,14 +718,16 @@ pathspec==0.12.1
     #   scmrepo
 pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
     # via ipython
-pillow==12.0.0
+pfzy==0.3.4
+    # via inquirerpy
+pillow==12.1.0
     # via
     #   image-preprocessing-detector
     #   imageio
     #   matplotlib
     #   scikit-image
     #   streamlit
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via
     #   black
     #   dvc
@@ -736,28 +739,28 @@ pluggy==1.6.0
     # via
     #   pytest
     #   pytest-cov
-pre-commit==4.4.0
+pre-commit==4.5.1
     # via image-preprocessing-detector
 prometheus-client==0.23.1
     # via jupyter-server
 prompt-toolkit==3.0.52
     # via
     #   click-repl
+    #   inquirerpy
     #   ipython
     #   jupyter-console
 propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
-protobuf==6.33.1
+protobuf==6.33.3
     # via
     #   kaggle
     #   kagglesdk
     #   modal
     #   onnx
-    #   onnxruntime-gpu
     #   streamlit
-psutil==7.1.3
+psutil==7.2.1
     # via
     #   dvc
     #   flufl-lock
@@ -770,14 +773,21 @@ pure-eval==0.2.3
     # via stack-data
 py==1.11.0
     # via interrogate
-pyarrow==21.0.0
+pyarrow==22.0.0
     # via
     #   datasets
     #   streamlit
+pyasn1==0.6.1
+    # via
+    #   pyasn1-modules
+    #   rsa
+pyasn1-modules==0.4.2
+    # via google-auth
 pycparser==2.23 ; implementation_name != 'PyPy'
     # via cffi
-pydantic==2.12.4
+pydantic==2.12.5
     # via
+    #   google-genai
     #   gto
     #   image-preprocessing-detector
     #   pydantic-settings
@@ -795,7 +805,7 @@ pydot==4.0.1
     # via dvc
 pygit2==1.18.2 ; python_full_version < '3.11'
     # via scmrepo
-pygit2==1.19.0 ; python_full_version >= '3.11'
+pygit2==1.19.1 ; python_full_version >= '3.11'
     # via scmrepo
 pygments==2.19.2
     # via
@@ -813,21 +823,19 @@ pygtrie==2.5.0
     #   dvc-data
     #   scmrepo
     #   sqltrie
-pymdown-extensions==10.17.1
+pymdown-extensions==10.20
     # via
     #   mkdocs-material
     #   mkdocstrings
-pymupdf==1.26.6
+pymupdf==1.26.7
     # via image-preprocessing-detector
-pyparsing==3.2.5
+pyparsing==3.3.1
     # via
     #   dvc
     #   grandalf
     #   matplotlib
     #   pydot
-pyreadline3==3.5.4 ; sys_platform == 'win32'
-    # via humanfriendly
-pytest==9.0.1
+pytest==9.0.2
     # via
     #   image-preprocessing-detector
     #   mutmut
@@ -911,6 +919,9 @@ requests==2.32.5
     #   datasets
     #   dvc
     #   dvc-studio-client
+    #   google-auth
+    #   google-genai
+    #   huggingface-hub
     #   iterative-telemetry
     #   jupyterlab-server
     #   kaggle
@@ -918,6 +929,8 @@ requests==2.32.5
     #   mkdocs-material
     #   safety
     #   streamlit
+result==0.17.0
+    # via mkdocs-kroki-plugin
 rfc3339-validator==0.1.4
     # via
     #   jsonschema
@@ -936,46 +949,50 @@ rich==14.2.0
     #   modal
     #   textual
     #   typer
-rpds-py==0.29.0
+rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-ruamel-yaml==0.18.16
+rsa==4.9.1
+    # via google-auth
+ruamel-yaml==0.19.1
     # via
     #   dvc
     #   gto
     #   image-preprocessing-detector
     #   safety
     #   safety-schemas
-ruamel-yaml-clib==0.2.15 ; python_full_version < '3.14' and platform_python_implementation == 'CPython'
-    # via ruamel-yaml
-ruff==0.14.6
+ruff==0.14.11
     # via image-preprocessing-detector
 safety==3.7.0
     # via image-preprocessing-detector
 safety-schemas==0.0.16
     # via safety
-scikit-image==0.25.2
+scikit-image==0.25.2 ; python_full_version < '3.11'
     # via image-preprocessing-detector
-scikit-learn==1.7.2
+scikit-image==0.26.0 ; python_full_version >= '3.11'
+    # via image-preprocessing-detector
+scikit-learn==1.7.2 ; python_full_version < '3.11'
+    # via image-preprocessing-detector
+scikit-learn==1.8.0 ; python_full_version >= '3.11'
     # via image-preprocessing-detector
 scipy==1.15.3 ; python_full_version < '3.11'
     # via
     #   image-preprocessing-detector
     #   scikit-image
     #   scikit-learn
-scipy==1.16.3 ; python_full_version >= '3.11'
+scipy==1.17.0 ; python_full_version >= '3.11'
     # via
     #   image-preprocessing-detector
     #   scikit-image
     #   scikit-learn
-scmrepo==3.5.5
+scmrepo==3.6.1
     # via
     #   dvc
     #   gto
 semver==3.0.4
     # via gto
-send2trash==1.8.3
+send2trash==2.0.0
     # via jupyter-server
 setproctitle==1.3.7
     # via mutmut
@@ -985,9 +1002,7 @@ setuptools==80.9.0
     #   kaggle
     #   zc-lockfile
 shellingham==1.5.4
-    # via
-    #   huggingface-hub
-    #   typer
+    # via typer
 shortuuid==1.0.13
     # via
     #   dvc
@@ -1004,24 +1019,22 @@ six==1.17.0
 smmap==5.0.2
     # via gitdb
 sniffio==1.3.1
-    # via anyio
+    # via google-genai
 sortedcontainers==2.4.0
     # via hypothesis
-soupsieve==2.8
+soupsieve==2.8.1
     # via beautifulsoup4
 sqltrie==0.11.2
     # via dvc-data
-sshfs==2025.10.0
+sshfs==2025.11.0
     # via dvc-ssh
 stack-data==0.6.3
     # via ipython
-streamlit==1.51.0
+streamlit==1.52.2
     # via image-preprocessing-detector
 structlog==25.5.0
     # via image-preprocessing-detector
-sympy==1.14.0
-    # via onnxruntime-gpu
-synchronicity==0.10.4
+synchronicity==0.11.1
     # via modal
 tabulate==0.9.0
     # via
@@ -1030,6 +1043,7 @@ tabulate==0.9.0
     #   interrogate
 tenacity==9.1.2
     # via
+    #   google-genai
     #   safety
     #   streamlit
 terminado==0.18.1
@@ -1040,13 +1054,13 @@ text-unidecode==1.3
     # via
     #   kaggle
     #   python-slugify
-textual==6.6.0
+textual==7.1.0
     # via mutmut
 threadpoolctl==3.6.0
     # via scikit-learn
 tifffile==2025.5.10 ; python_full_version < '3.11'
     # via scikit-image
-tifffile==2025.10.16 ; python_full_version >= '3.11'
+tifffile==2025.12.20 ; python_full_version >= '3.11'
     # via scikit-image
 tinycss2==1.4.0
     # via bleach
@@ -1071,7 +1085,7 @@ tomlkit==0.13.3
     # via
     #   dvc
     #   safety
-tornado==6.5.2
+tornado==6.5.4
     # via
     #   ipykernel
     #   jupyter-client
@@ -1105,18 +1119,16 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-typer==0.20.0
+typer==0.21.1
     # via
     #   gto
     #   modal
     #   safety
-typer-slim==0.20.0
-    # via huggingface-hub
 types-certifi==2021.10.8.3
     # via modal
 types-pyyaml==6.0.12.20250915
     # via image-preprocessing-detector
-types-requests==2.32.4.20250913 ; python_full_version >= '3.11'
+types-requests==2.32.4.20260107 ; python_full_version >= '3.11'
     # via
     #   kaggle
     #   types-tqdm
@@ -1135,6 +1147,7 @@ typing-extensions==4.15.0
     #   cryptography
     #   dulwich
     #   exceptiongroup
+    #   google-genai
     #   huggingface-hub
     #   ipython
     #   marshmallow
@@ -1155,19 +1168,21 @@ typing-extensions==4.15.0
     #   synchronicity
     #   textual
     #   typer
-    #   typer-slim
     #   typing-inspection
     #   virtualenv
 typing-inspection==0.4.2
     # via
     #   pydantic
     #   pydantic-settings
-tzdata==2025.2
+tzdata==2025.3
     # via
     #   arrow
     #   kombu
     #   mkdocs-git-revision-date-localized-plugin
     #   pandas
+    #   tzlocal
+tzlocal==5.3.1
+    # via celery
 uc-micro-py==1.0.3
     # via linkify-it-py
 uri-template==1.3.0
@@ -1179,18 +1194,18 @@ urllib3==2.6.3
     #   kaggle
     #   requests
     #   types-requests
-uv==0.9.11
+uv==0.9.24
     # via image-preprocessing-detector
 vine==5.1.0
     # via
     #   amqp
     #   celery
     #   kombu
-virtualenv==20.35.4
+virtualenv==20.36.1
     # via
     #   nox
     #   pre-commit
-voluptuous==0.15.2
+voluptuous==0.16.0
     # via
     #   dvc
     #   dvc-studio-client
@@ -1213,6 +1228,8 @@ webencodings==0.5.1
     #   tinycss2
 websocket-client==1.9.0
     # via jupyter-server
+websockets==15.0.1
+    # via google-genai
 werkzeug==3.1.5
     # via image-preprocessing-detector
 widgetsnbextension==4.0.15
