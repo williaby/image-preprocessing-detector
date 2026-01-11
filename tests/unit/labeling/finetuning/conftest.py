@@ -9,32 +9,31 @@ to avoid interference between test classes.
 """
 
 import sys
+from unittest.mock import MagicMock
 
 import pytest
 
 
 @pytest.fixture(autouse=True)
-def reset_module_cache():
-    """Reset relevant modules from cache to ensure test isolation.
+def ensure_real_albumentations():
+    """Ensure albumentations is the real module, not a mock.
 
-    This prevents mocked modules from leaking between test classes.
-    The musiq_dataset module imports albumentations lazily, so clearing
-    it ensures fresh imports for each test.
+    Other test files (like test_generate_100k_iqa_dataset.py) mock
+    albumentations at module level. This fixture removes any mock
+    before running tests that need the real module.
     """
-    modules_to_reset = [
+    # Check if albumentations is mocked
+    if "albumentations" in sys.modules:
+        alb = sys.modules["albumentations"]
+        if isinstance(alb, MagicMock):
+            # Remove the mock so real import happens
+            del sys.modules["albumentations"]
+
+    # Also clear our module that imports albumentations
+    modules_to_clear = [
         "image_preprocessing_detector.labeling.finetuning.musiq_dataset",
-        "image_preprocessing_detector.labeling.arena.datasets.base",
     ]
-
-    # Store original modules
-    original_modules = {}
-    for mod in modules_to_reset:
+    for mod in modules_to_clear:
         if mod in sys.modules:
-            original_modules[mod] = sys.modules[mod]
-
-    yield
-
-    # Restore original modules after test
-    for mod, original in original_modules.items():
-        if original is not None:
-            sys.modules[mod] = original
+            del sys.modules[mod]
+    # No teardown needed - setup-only fixture
