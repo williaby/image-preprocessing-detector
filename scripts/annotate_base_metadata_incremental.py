@@ -23,6 +23,7 @@ Usage:
     # Reset state and start fresh
     python scripts/annotate_base_metadata_incremental.py --reset
 """
+
 import argparse
 import json
 import logging
@@ -120,12 +121,14 @@ class ProgressTracker:
         logger.info("PROGRESS SUMMARY")
         logger.info("=" * 70)
         logger.info(f"Total datasets: {total}")
-        logger.info(f"Completed: {completed} ({100*completed/total:.1f}%)")
+        logger.info(f"Completed: {completed} ({100 * completed / total:.1f}%)")
         logger.info(f"Failed: {failed}")
         logger.info(f"Pending: {pending}")
 
         if self.state["completed_datasets"]:
-            logger.info(f"\nCompleted datasets ({len(self.state['completed_datasets'])}):")
+            logger.info(
+                f"\nCompleted datasets ({len(self.state['completed_datasets'])}):"
+            )
             for ds in self.state["completed_datasets"]:
                 logger.info(f"  ✓ {ds}")
 
@@ -138,24 +141,29 @@ class ProgressTracker:
             logger.info(f"\nLast updated: {self.state['last_updated']}")
 
 
-def process_single_dataset(dataset_name: str, use_yolo: bool = True) -> tuple[bool, str]:
+def process_single_dataset(
+    dataset_name: str, use_yolo: bool = True
+) -> tuple[bool, str]:
     """
     Process a single dataset using the original script.
 
     Returns:
         (success: bool, message: str)
     """
-    logger.info(f"\n{'='*70}")
+    logger.info(f"\n{'=' * 70}")
     logger.info(f"Processing: {dataset_name}")
-    logger.info(f"{'='*70}")
+    logger.info(f"{'=' * 70}")
 
     # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args
     # dataset_name is validated against DATASET_CONFIGS whitelist before reaching here
     cmd = [
-        "uv", "run", "python",
+        "uv",
+        "run",
+        "python",
         "scripts/annotate_base_metadata.py",
         "--scan",
-        "--dataset", dataset_name,
+        "--dataset",
+        dataset_name,
     ]
 
     if not use_yolo:
@@ -197,10 +205,16 @@ def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Incremental dataset annotation")
     parser.add_argument("--dataset", type=str, help="Process specific dataset only")
-    parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint")
-    parser.add_argument("--reset", action="store_true", help="Reset progress and start over")
+    parser.add_argument(
+        "--resume", action="store_true", help="Resume from last checkpoint"
+    )
+    parser.add_argument(
+        "--reset", action="store_true", help="Reset progress and start over"
+    )
     parser.add_argument("--no-yolo", action="store_true", help="Disable YOLO inference")
-    parser.add_argument("--status", action="store_true", help="Show progress status and exit")
+    parser.add_argument(
+        "--status", action="store_true", help="Show progress status and exit"
+    )
 
     args = parser.parse_args()
 
@@ -252,7 +266,9 @@ def main() -> None:
     tracker.print_summary()
 
     if tracker.state["failed_datasets"]:
-        logger.warning("\nSome datasets failed. Review errors above and retry with --resume")
+        logger.warning(
+            "\nSome datasets failed. Review errors above and retry with --resume"
+        )
         sys.exit(1)
     else:
         logger.info("\n✓ All datasets processed successfully!")

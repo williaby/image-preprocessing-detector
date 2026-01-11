@@ -17,9 +17,9 @@ import numpy as np
 
 def analyze_soft_labels(split_file: Path) -> dict:
     """Analyze soft label distribution from JSONL split file."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Analyzing: {split_file.name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     samples = []
     with open(split_file) as f:
@@ -96,7 +96,7 @@ def analyze_soft_labels(split_file: Path) -> dict:
         print(f"\n  Histogram (1-5 scale):")
         for i, (count, start) in enumerate(zip(hist, bins[:-1])):
             bar = "█" * int(count / hist.max() * 30)
-            print(f"    {start:.1f}-{bins[i+1]:.1f}: {count:4d} {bar}")
+            print(f"    {start:.1f}-{bins[i + 1]:.1f}: {count:4d} {bar}")
 
     # Check human MOS
     if len(human_mos_scores) > 0:
@@ -118,8 +118,12 @@ def analyze_soft_labels(split_file: Path) -> dict:
         ]
         if dataset_deqa:
             dataset_deqa = np.array(dataset_deqa)
-            print(f"    DEQA mean: {dataset_deqa.mean():.3f} ± {dataset_deqa.std():.3f}")
-            print(f"    DEQA range: {dataset_deqa.min():.3f} - {dataset_deqa.max():.3f}")
+            print(
+                f"    DEQA mean: {dataset_deqa.mean():.3f} ± {dataset_deqa.std():.3f}"
+            )
+            print(
+                f"    DEQA range: {dataset_deqa.min():.3f} - {dataset_deqa.max():.3f}"
+            )
 
         # Check for potential issues
         has_mos = sum(
@@ -127,7 +131,9 @@ def analyze_soft_labels(split_file: Path) -> dict:
             for s in dataset_samples
             if s.get("human_mos") and isinstance(s.get("human_mos"), dict)
         )
-        print(f"    Human MOS: {has_mos}/{len(dataset_samples)} ({has_mos/len(dataset_samples)*100:.1f}%)")
+        print(
+            f"    Human MOS: {has_mos}/{len(dataset_samples)} ({has_mos / len(dataset_samples) * 100:.1f}%)"
+        )
 
     return {
         "total_samples": len(samples),
@@ -157,7 +163,9 @@ def main():
     if not splits_dir.exists():
         print(f"❌ Splits directory not found: {splits_dir}")
         print(f"\nTo download from Modal volume:")
-        print(f"  poetry run modal volume get stage2-training-data stage2_diqa_ensemble/splits ./stage2_diqa_ensemble/splits")
+        print(
+            f"  poetry run modal volume get stage2-training-data stage2_diqa_ensemble/splits ./stage2_diqa_ensemble/splits"
+        )
         return
 
     results = {}
@@ -167,9 +175,9 @@ def main():
             results[split] = analyze_soft_labels(split_file)
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("📋 SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     for split, stats in results.items():
         print(f"\n{split.upper()}:")

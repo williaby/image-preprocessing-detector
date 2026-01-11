@@ -446,7 +446,10 @@ def create_manifest(output_dir: Path, all_records: dict[str, list[ImageRecord]])
 
     for ds in sorted(all_datasets):
         total = sum(
-            1 for records in all_records.values() for r in records if r.source_dataset == ds
+            1
+            for records in all_records.values()
+            for r in records
+            if r.source_dataset == ds
         )
         has_mos = any(
             r.has_human_mos
@@ -478,7 +481,9 @@ def main():
     parser.add_argument(
         "--stage1-labels",
         type=Path,
-        default=Path("E:/image_detection/06_staging/stage1_deqa_results/stage1_deqa_all_labels.jsonl"),
+        default=Path(
+            "E:/image_detection/06_staging/stage1_deqa_results/stage1_deqa_all_labels.jsonl"
+        ),
         help="Path to Stage 1 DeQA labels JSONL",
     )
     parser.add_argument(

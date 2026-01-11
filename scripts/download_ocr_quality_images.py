@@ -24,7 +24,9 @@ RETRY_DELAY = 2  # seconds
 MAX_WORKERS = 5  # Conservative to avoid rate limiting
 
 
-def download_image(index: int, output_dir: Path, session: requests.Session) -> tuple[int, bool, str]:
+def download_image(
+    index: int, output_dir: Path, session: requests.Session
+) -> tuple[int, bool, str]:
     """Download a single image with retry logic.
 
     Args:
@@ -55,7 +57,7 @@ def download_image(index: int, output_dir: Path, session: requests.Session) -> t
 
         except requests.exceptions.HTTPError as e:
             if response.status_code == 429:  # Rate limited
-                wait_time = RETRY_DELAY * (2 ** attempt)
+                wait_time = RETRY_DELAY * (2**attempt)
                 time.sleep(wait_time)
             elif attempt == MAX_RETRIES - 1:
                 return (index, False, str(e))
@@ -74,19 +76,16 @@ def main():
         "--output",
         type=str,
         default="/mnt/e/image_detection/01_base_data/ocr_quality/pics",
-        help="Output directory for images"
+        help="Output directory for images",
     )
     parser.add_argument(
         "--workers",
         type=int,
         default=MAX_WORKERS,
-        help="Number of parallel download workers"
+        help="Number of parallel download workers",
     )
     parser.add_argument(
-        "--start",
-        type=int,
-        default=0,
-        help="Start index (for resuming)"
+        "--start", type=int, default=0, help="Start index (for resuming)"
     )
     args = parser.parse_args()
 
@@ -99,9 +98,9 @@ def main():
 
     # Create session for connection reuse
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (compatible; OCR-Quality-Downloader/1.0)"
-    })
+    session.headers.update(
+        {"User-Agent": "Mozilla/5.0 (compatible; OCR-Quality-Downloader/1.0)"}
+    )
 
     # Download images
     indices = range(args.start, TOTAL_IMAGES)
@@ -111,8 +110,7 @@ def main():
 
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = {
-            executor.submit(download_image, i, output_dir, session): i
-            for i in indices
+            executor.submit(download_image, i, output_dir, session): i for i in indices
         }
 
         with tqdm(total=len(futures), desc="Downloading") as pbar:

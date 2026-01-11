@@ -71,11 +71,13 @@ def create_tarballs_for_dataset(dataset_name: str, config: dict) -> list[dict]:
     for entry in entries:
         image_path = root_dir / entry["image"]
         if image_path.exists():
-            image_files.append({
-                "relative_path": entry["image"],
-                "full_path": str(image_path),
-                "size": image_path.stat().st_size,
-            })
+            image_files.append(
+                {
+                    "relative_path": entry["image"],
+                    "full_path": str(image_path),
+                    "size": image_path.stat().st_size,
+                }
+            )
 
     if not image_files:
         print(f"⚠️  {dataset_name}: No valid images found, skipping")
@@ -93,7 +95,10 @@ def create_tarballs_for_dataset(dataset_name: str, config: dict) -> list[dict]:
 
     for img in image_files:
         # If adding this would exceed limit, start new tarball
-        if current_tarball["images"] and (current_tarball["size"] + img["size"]) > MAX_TARBALL_SIZE:
+        if (
+            current_tarball["images"]
+            and (current_tarball["size"] + img["size"]) > MAX_TARBALL_SIZE
+        ):
             tarballs.append(current_tarball)
             current_tarball = {"images": [], "size": 0}
 
@@ -111,8 +116,10 @@ def create_tarballs_for_dataset(dataset_name: str, config: dict) -> list[dict]:
         tarball_filename = f"{dataset_name}{part_suffix}.tar.gz"
         tarball_path = OUTPUT_DIR / tarball_filename
 
-        print(f"Creating {tarball_filename} ({len(tarball_data['images'])} images, "
-              f"{tarball_data['size']/(1024**3):.2f} GB)...")
+        print(
+            f"Creating {tarball_filename} ({len(tarball_data['images'])} images, "
+            f"{tarball_data['size'] / (1024**3):.2f} GB)..."
+        )
 
         # Create tarball
         with tarfile.open(tarball_path, "w:gz") as tar:
@@ -121,18 +128,20 @@ def create_tarballs_for_dataset(dataset_name: str, config: dict) -> list[dict]:
                 arcname = f"{dataset_name}/{img['relative_path']}"
                 tar.add(img["full_path"], arcname=arcname)
 
-        tarball_metadata.append({
-            "filename": tarball_filename,
-            "dataset": dataset_name,
-            "part": idx,
-            "total_parts": len(tarballs),
-            "image_count": len(tarball_data["images"]),
-            "images": [img["relative_path"] for img in tarball_data["images"]],
-            "size_bytes": tarball_data["size"],
-            "size_gb": tarball_data["size"] / (1024**3),
-            "tarball_size_bytes": tarball_path.stat().st_size,
-            "tarball_size_gb": tarball_path.stat().st_size / (1024**3),
-        })
+        tarball_metadata.append(
+            {
+                "filename": tarball_filename,
+                "dataset": dataset_name,
+                "part": idx,
+                "total_parts": len(tarballs),
+                "image_count": len(tarball_data["images"]),
+                "images": [img["relative_path"] for img in tarball_data["images"]],
+                "size_bytes": tarball_data["size"],
+                "size_gb": tarball_data["size"] / (1024**3),
+                "tarball_size_bytes": tarball_path.stat().st_size,
+                "tarball_size_gb": tarball_path.stat().st_size / (1024**3),
+            }
+        )
 
     return tarball_metadata
 

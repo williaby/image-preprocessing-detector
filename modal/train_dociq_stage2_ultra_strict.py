@@ -167,12 +167,14 @@ class DocIQTrainingConfig:
 
     # === Adaptive Escalation Triggers ===
     escalate_to_ultra_strict: bool = False  # Dynamically set during training
-    escalation_triggers: dict[str, float] = field(default_factory=lambda: {
-        'output_range_below': 0.40,      # If output range < 40%, escalate
-        'val_test_gap_above': 0.15,      # If val/test gap > 15%, escalate
-        'ece_above': 0.15,                # If ECE > 15%, escalate
-        'dataset_srcc_below': 0.70,       # If any dataset SRCC < 70%, escalate
-    })
+    escalation_triggers: dict[str, float] = field(
+        default_factory=lambda: {
+            "output_range_below": 0.40,  # If output range < 40%, escalate
+            "val_test_gap_above": 0.15,  # If val/test gap > 15%, escalate
+            "ece_above": 0.15,  # If ECE > 15%, escalate
+            "dataset_srcc_below": 0.70,  # If any dataset SRCC < 70%, escalate
+        }
+    )
 
     # Circuit breakers (start lenient, escalate if triggered)
     circuit_breakers: UltraStrictCircuitBreakers = field(
@@ -196,9 +198,9 @@ class DocIQTrainingConfig:
 
         # Validate loss config (prevent MANIQA-style failures)
         assert self.loss_mse <= 0.3, f"MSE weight {self.loss_mse} too high (max 0.3)"
-        assert (
-            self.loss_kl_divergence >= 0.4
-        ), f"KL-div weight {self.loss_kl_divergence} too low (min 0.4)"
+        assert self.loss_kl_divergence >= 0.4, (
+            f"KL-div weight {self.loss_kl_divergence} too low (min 0.4)"
+        )
 
         logger.info(
             "config_validated",
@@ -364,22 +366,45 @@ class PreTrainingValidator:
         self, train_loader: DataLoader, val_loader: DataLoader, test_loader: DataLoader
     ) -> None:
         """CRITICAL: Verify no images appear in multiple splits."""
-        train_ids = {batch["image_id"][i] for batch in train_loader for i in range(len(batch["image_id"]))}
-        val_ids = {batch["image_id"][i] for batch in val_loader for i in range(len(batch["image_id"]))}
-        test_ids = {batch["image_id"][i] for batch in test_loader for i in range(len(batch["image_id"]))}
+        train_ids = {
+            batch["image_id"][i]
+            for batch in train_loader
+            for i in range(len(batch["image_id"]))
+        }
+        val_ids = {
+            batch["image_id"][i]
+            for batch in val_loader
+            for i in range(len(batch["image_id"]))
+        }
+        test_ids = {
+            batch["image_id"][i]
+            for batch in test_loader
+            for i in range(len(batch["image_id"]))
+        }
 
         train_val_overlap = train_ids & val_ids
         train_test_overlap = train_ids & test_ids
         val_test_overlap = val_ids & test_ids
 
         if train_val_overlap:
-            raise ValueError(f"DATA LEAKAGE: {len(train_val_overlap)} images in both train and val")
+            raise ValueError(
+                f"DATA LEAKAGE: {len(train_val_overlap)} images in both train and val"
+            )
         if train_test_overlap:
-            raise ValueError(f"DATA LEAKAGE: {len(train_test_overlap)} images in both train and test")
+            raise ValueError(
+                f"DATA LEAKAGE: {len(train_test_overlap)} images in both train and test"
+            )
         if val_test_overlap:
-            raise ValueError(f"DATA LEAKAGE: {len(val_test_overlap)} images in both val and test")
+            raise ValueError(
+                f"DATA LEAKAGE: {len(val_test_overlap)} images in both val and test"
+            )
 
-        logger.info("split_leakage_check_passed", train=len(train_ids), val=len(val_ids), test=len(test_ids))
+        logger.info(
+            "split_leakage_check_passed",
+            train=len(train_ids),
+            val=len(val_ids),
+            test=len(test_ids),
+        )
 
     def _check_label_distributions(self, loader: DataLoader, split: str) -> None:
         """Ensure soft-labels aren't degenerate."""
@@ -393,13 +418,17 @@ class PreTrainingValidator:
         bin_usage = (all_labels > 0.01).mean(axis=0)
         min_bin_usage = bin_usage.min()
         if min_bin_usage < 0.05:
-            raise ValueError(f"{split}: Bin {bin_usage.argmin()} used in <5% of samples")
+            raise ValueError(
+                f"{split}: Bin {bin_usage.argmin()} used in <5% of samples"
+            )
 
         # Check 2: Entropy should be reasonable
         entropy = -np.sum(all_labels * np.log(all_labels + 1e-10), axis=1)
         mean_entropy = entropy.mean()
         if mean_entropy < 1.0:
-            raise ValueError(f"{split}: Mean entropy {mean_entropy:.2f} too low (degenerate labels)")
+            raise ValueError(
+                f"{split}: Mean entropy {mean_entropy:.2f} too low (degenerate labels)"
+            )
 
         logger.info(
             "label_distribution_check_passed",
@@ -492,11 +521,15 @@ def main(
     if local:
         # Run locally (requires local GPU)
         logger.info("running_locally")
-        result = train_dociq_replica.local(config_dict=asdict(config), resume_checkpoint=resume)
+        result = train_dociq_replica.local(
+            config_dict=asdict(config), resume_checkpoint=resume
+        )
     else:
         # Run on Modal serverless GPU
         logger.info("running_on_modal")
-        result = train_dociq_replica.remote(config_dict=asdict(config), resume_checkpoint=resume)
+        result = train_dociq_replica.remote(
+            config_dict=asdict(config), resume_checkpoint=resume
+        )
 
     logger.info("training_result", result=result)
 

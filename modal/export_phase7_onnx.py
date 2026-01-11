@@ -51,7 +51,9 @@ image = (
 
 # Mount volumes
 mvp_volume = modal.Volume.from_name("phase7-mvp-checkpoints", create_if_missing=False)
-production_volume = modal.Volume.from_name("phase7-production-checkpoints", create_if_missing=False)
+production_volume = modal.Volume.from_name(
+    "phase7-production-checkpoints", create_if_missing=False
+)
 
 
 @stub.function(
@@ -86,17 +88,18 @@ def export_model(model_type: str, seed: int) -> dict:
 
     class MultiHeadIQA(nn.Module):
         """MVP model: Simple 5-head architecture."""
+
         def __init__(self, backbone, feature_dim, num_heads, dropout):
             super().__init__()
             self.backbone = backbone
-            self.heads = nn.ModuleList([
-                nn.Sequential(
-                    nn.Dropout(dropout),
-                    nn.Linear(feature_dim, 1),
-                    nn.Sigmoid()
-                )
-                for _ in range(num_heads)
-            ])
+            self.heads = nn.ModuleList(
+                [
+                    nn.Sequential(
+                        nn.Dropout(dropout), nn.Linear(feature_dim, 1), nn.Sigmoid()
+                    )
+                    for _ in range(num_heads)
+                ]
+            )
 
         def forward(self, x):
             features = self.backbone(x)
@@ -105,6 +108,7 @@ def export_model(model_type: str, seed: int) -> dict:
 
     class UncertaintyHead(nn.Module):
         """Production model head: outputs mean + log variance."""
+
         def __init__(self, in_features: int, dropout: float = 0.3):
             super().__init__()
             self.shared = nn.Sequential(
@@ -132,13 +136,14 @@ def export_model(model_type: str, seed: int) -> dict:
 
     class UncertaintyIQAModel(nn.Module):
         """Production model: ResNet-50 with uncertainty heads."""
+
         def __init__(self, backbone, feature_dim: int, num_heads: int, dropout: float):
             super().__init__()
             self.backbone = backbone
             self.pool = nn.AdaptiveAvgPool2d(1)
-            self.heads = nn.ModuleList([
-                UncertaintyHead(feature_dim, dropout) for _ in range(num_heads)
-            ])
+            self.heads = nn.ModuleList(
+                [UncertaintyHead(feature_dim, dropout) for _ in range(num_heads)]
+            )
 
         def forward(self, x):
             features = self.backbone(x)
@@ -164,7 +169,9 @@ def export_model(model_type: str, seed: int) -> dict:
         if not checkpoint_path.exists() and seed == 42:
             checkpoint_path = Path("/mvp_checkpoints/best_model.pt")
     else:  # production
-        checkpoint_path = Path(f"/production_checkpoints/production_model_seed{seed}.pt")
+        checkpoint_path = Path(
+            f"/production_checkpoints/production_model_seed{seed}.pt"
+        )
 
     print(f"\n📂 Loading checkpoint from: {checkpoint_path}")
 
@@ -235,7 +242,7 @@ def export_model(model_type: str, seed: int) -> dict:
         output_names=output_names,
         dynamic_axes={
             "input": {0: "batch_size"},
-            **{name: {0: "batch_size"} for name in output_names}
+            **{name: {0: "batch_size"} for name in output_names},
         },
     )
 
@@ -318,7 +325,7 @@ def main(model_type: str = "mvp", seed: int = None):
 
     results = []
     for s in seeds:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Processing {model_type} seed {s}...")
         print("=" * 60)
 
@@ -340,9 +347,13 @@ def main(model_type: str = "mvp", seed: int = None):
             print(f"  ❌ {r['model_type']} seed {r['seed']}: {r['error']}")
         else:
             print(f"  ✅ {r['model_type']} seed {r['seed']}: {r['onnx_path']}")
-            print(f"     ECE: {r['metrics'].get('macro_ece', 'N/A')}, "
-                  f"MAE: {r['metrics'].get('severity_mae', 'N/A')}, "
-                  f"Corr: {r['metrics'].get('macro_correlation', 'N/A')}")
-            print(f"     Size: {r['onnx_size_mb']:.2f} MB, Resolution: {r['input_resolution']}x{r['input_resolution']}")
+            print(
+                f"     ECE: {r['metrics'].get('macro_ece', 'N/A')}, "
+                f"MAE: {r['metrics'].get('severity_mae', 'N/A')}, "
+                f"Corr: {r['metrics'].get('macro_correlation', 'N/A')}"
+            )
+            print(
+                f"     Size: {r['onnx_size_mb']:.2f} MB, Resolution: {r['input_resolution']}x{r['input_resolution']}"
+            )
 
     return results

@@ -390,11 +390,11 @@ def run_inference_for_dataset(
     Returns:
         Dict with statistics about the inference run
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Processing: {config.name}")
     print(f"Priority: {config.priority}")
     print(f"Notes: {config.notes}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Discover images
     images = discover_images(config)
@@ -577,7 +577,9 @@ def main():
         for name, config in STAGE1_DATASETS.items():
             images = discover_images(config)
             total_images += len(images)
-            print(f"  {name:15} | {len(images):6} images | {config.priority:8} | {config.notes}")
+            print(
+                f"  {name:15} | {len(images):6} images | {config.priority:8} | {config.notes}"
+            )
         print("-" * 80)
         print(f"  {'TOTAL':15} | {total_images:6} images")
         return

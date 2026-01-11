@@ -109,16 +109,23 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
     # Find all images in extracted directory
     image_files = []
     for img_path in extract_dir.rglob("*"):
-        if img_path.is_file() and img_path.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}:
+        if img_path.is_file() and img_path.suffix.lower() in {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".bmp",
+        }:
             # Store relative path from dataset root
             relative_parts = img_path.relative_to(extract_dir).parts
             dataset_name = relative_parts[0]
             relative_path = str(Path(*relative_parts[1:]))
-            image_files.append({
-                "full_path": img_path,
-                "relative_path": relative_path,
-                "dataset": dataset_name,
-            })
+            image_files.append(
+                {
+                    "full_path": img_path,
+                    "relative_path": relative_path,
+                    "dataset": dataset_name,
+                }
+            )
 
     print(f"Found {len(image_files)} images in tarball")
 
@@ -180,7 +187,9 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
             )
             preprocessed = image_processor.preprocess(image, return_tensors="pt")
             if preprocessed is None or "pixel_values" not in preprocessed:
-                print(f"preprocess returned None or missing pixel_values for {img_info['relative_path']}")
+                print(
+                    f"preprocess returned None or missing pixel_values for {img_info['relative_path']}"
+                )
                 errors += 1
                 continue
             pixel_values = preprocessed["pixel_values"]
@@ -208,20 +217,20 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
             predicted_score = (probs * weights).sum().item()
 
             # Store result
-            results.append({
-                "image": img_info["relative_path"],
-                "dataset": img_info["dataset"],
-                "logits": {
-                    level: logits[i].item()
-                    for i, level in enumerate(LEVEL_NAMES)
-                },
-                "probs": {
-                    level: probs[i].item()
-                    for i, level in enumerate(LEVEL_NAMES)
-                },
-                "predicted_score": predicted_score,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
+            results.append(
+                {
+                    "image": img_info["relative_path"],
+                    "dataset": img_info["dataset"],
+                    "logits": {
+                        level: logits[i].item() for i, level in enumerate(LEVEL_NAMES)
+                    },
+                    "probs": {
+                        level: probs[i].item() for i, level in enumerate(LEVEL_NAMES)
+                    },
+                    "predicted_score": predicted_score,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         except Exception as e:
             print(f"Error processing {img_info['relative_path']}: {e}")
@@ -230,7 +239,9 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
     inference_time = time.time() - inference_start
 
     # Save results
-    output_filename = f"{output_prefix}_{tarball_filename.replace('.tar.gz', '')}_labels.jsonl"
+    output_filename = (
+        f"{output_prefix}_{tarball_filename.replace('.tar.gz', '')}_labels.jsonl"
+    )
     output_path = Path("/results") / output_filename
 
     with open(output_path, "w") as f:
@@ -257,8 +268,10 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
     print(f"Tarball: {tarball_filename}")
     print(f"Processed: {len(results)}/{len(image_files)} images")
     print(f"Errors: {errors}")
-    print(f"Times: extract={extract_time:.1f}s, model_load={model_load_time:.1f}s, "
-          f"inference={inference_time:.1f}s, total={total_time:.1f}s")
+    print(
+        f"Times: extract={extract_time:.1f}s, model_load={model_load_time:.1f}s, "
+        f"inference={inference_time:.1f}s, total={total_time:.1f}s"
+    )
     print(f"Avg: {stats['avg_time_per_image_s']:.3f}s/image")
     print(f"Results: {output_filename}")
     print("=" * 80)
@@ -289,7 +302,15 @@ def main(
 
     subprocess.run(
         # nosec B108 - Modal container isolation, /tmp is ephemeral SSD
-        ["modal", "nfs", "get", "stage1-tarballs", "tarballs/manifest.json", "/tmp/manifest.json", "--force"],
+        [
+            "modal",
+            "nfs",
+            "get",
+            "stage1-tarballs",
+            "tarballs/manifest.json",
+            "/tmp/manifest.json",
+            "--force",
+        ],
         check=True,
     )
     with open("/tmp/manifest.json") as f:  # nosec B108
@@ -320,12 +341,16 @@ def main(
     total_images = sum(s["processed"] for s in all_stats)
     total_errors = sum(s["errors"] for s in all_stats)
     total_time = sum(s["total_time_s"] for s in all_stats)
-    avg_time = sum(s["inference_time_s"] for s in all_stats) / total_images if total_images else 0
+    avg_time = (
+        sum(s["inference_time_s"] for s in all_stats) / total_images
+        if total_images
+        else 0
+    )
 
     print(f"Tarballs processed: {len(all_stats)}")
     print(f"Total images: {total_images:,}")
     print(f"Total errors: {total_errors}")
-    print(f"Total time: {total_time/60:.1f} minutes")
+    print(f"Total time: {total_time / 60:.1f} minutes")
     print(f"Avg time/image: {avg_time:.3f}s")
     print("\nResults saved to Modal volume: stage1-deqa-results")
     print("=" * 80)

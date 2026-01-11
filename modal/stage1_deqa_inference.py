@@ -143,8 +143,7 @@ def get_quantization_config(quantize_mode: str | None):
             llm_int8_threshold=6.0,  # Outlier threshold for mixed precision
         )
     raise ValueError(
-        f"Invalid quantize mode: {quantize_mode}. "
-        f"Use 'fp16', '8bit', or '4bit'"
+        f"Invalid quantize mode: {quantize_mode}. Use 'fp16', '8bit', or '4bit'"
     )
 
 
@@ -275,11 +274,13 @@ def run_deqa_inference_batch(
 
         # Load image from bytes
         if key not in image_data:
-            errors.append({
-                "image": rel_path,
-                "dataset": dataset,
-                "error": f"Image not found in data: {key}",
-            })
+            errors.append(
+                {
+                    "image": rel_path,
+                    "dataset": dataset,
+                    "error": f"Image not found in data: {key}",
+                }
+            )
             continue
 
         try:
@@ -297,11 +298,13 @@ def run_deqa_inference_batch(
             batch_entries.append(entry)
 
         except Exception as e:
-            errors.append({
-                "image": rel_path,
-                "dataset": dataset,
-                "error": str(e),
-            })
+            errors.append(
+                {
+                    "image": rel_path,
+                    "dataset": dataset,
+                    "error": str(e),
+                }
+            )
             continue
 
         # Process batch
@@ -328,14 +331,16 @@ def run_deqa_inference_batch(
                     prob_values = [probs[name] for name in LEVEL_NAMES]
                     score = sum(p * s for p, s in zip(prob_values, LEVEL_SCORES))
 
-                    results.append({
-                        "image": batch_entry["image"],
-                        "dataset": batch_entry["dataset"],
-                        "logits": logits,
-                        "probs": probs,
-                        "predicted_score": score,
-                        "timestamp": datetime.now().isoformat(),
-                    })
+                    results.append(
+                        {
+                            "image": batch_entry["image"],
+                            "dataset": batch_entry["dataset"],
+                            "logits": logits,
+                            "probs": probs,
+                            "predicted_score": score,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+                    )
 
                 image_tensors = []
                 batch_entries = []
@@ -404,7 +409,9 @@ def main(
         print("  • SSH timeouts kill the job")
         print()
         print("RECOMMENDED: Cancel (Ctrl+C) and restart with:")
-        print(f"  modal run --detach modal/stage1_deqa_inference.py --all --quantize {quantize}")
+        print(
+            f"  modal run --detach modal/stage1_deqa_inference.py --all --quantize {quantize}"
+        )
         print("=" * 70)
         print()
 
@@ -488,8 +495,12 @@ def main(
         )
 
         if result["errors"] == 0 and result["processed"] == result["total_entries"]:
-            print(f"\n✅ VALIDATION PASSED ({quantize.upper()}) - Ready for comparison!")
-            print(f"Download: modal volume get stage1-deqa-results {output_name}_deqa_labels.jsonl ./results/")
+            print(
+                f"\n✅ VALIDATION PASSED ({quantize.upper()}) - Ready for comparison!"
+            )
+            print(
+                f"Download: modal volume get stage1-deqa-results {output_name}_deqa_labels.jsonl ./results/"
+            )
         else:
             print("\n⚠️ VALIDATION HAD ISSUES - Check errors before proceeding")
 
@@ -590,9 +601,9 @@ def main(
     all_results = []
 
     for name, config in datasets_to_process.items():
-        print(f"\n{'='*40}")
+        print(f"\n{'=' * 40}")
         print(f"Processing {name} ({config['images']} images)...")
-        print(f"{'='*40}")
+        print(f"{'=' * 40}")
 
         # Load manifest
         manifest_path = Path(config["manifest"])

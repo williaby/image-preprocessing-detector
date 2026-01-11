@@ -110,7 +110,9 @@ def run_resnet50_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -132,6 +134,7 @@ def run_resnet50_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     class ResNetIQA(nn.Module):
         """Simple ResNet50-based IQA model."""
+
         def __init__(self):
             super().__init__()
             # Load pretrained ResNet50
@@ -158,14 +161,13 @@ def run_resnet50_benchmark(num_samples: int = 0) -> dict[str, Any]:
     print(f"Model loaded in {model_load_time:.1f}s")
 
     # Image preprocessing (ImageNet normalization)
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        ),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
     # Run inference
     print("\n--- Running Inference ---")
@@ -174,7 +176,7 @@ def run_resnet50_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -196,24 +198,28 @@ def run_resnet50_benchmark(num_samples: int = 0) -> dict[str, Any]:
                 "color": float(scores[2]),
             }
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute and print metrics
     print("\n--- Computing Metrics ---")
@@ -252,7 +258,9 @@ def run_resnet34_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -292,11 +300,13 @@ def run_resnet34_benchmark(num_samples: int = 0) -> dict[str, Any]:
     model_load_time = time.time() - model_start
     print(f"Model loaded in {model_load_time:.1f}s")
 
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
     print("\n--- Running Inference ---")
     results = []
@@ -304,7 +314,7 @@ def run_resnet34_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -325,24 +335,28 @@ def run_resnet34_benchmark(num_samples: int = 0) -> dict[str, Any]:
                 "color": float(scores[2]),
             }
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     print("\n--- Computing Metrics ---")
     metrics = compute_metrics(results, model_id, model_load_time, inference_times)
@@ -380,7 +394,9 @@ def run_resnet18_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -420,11 +436,13 @@ def run_resnet18_benchmark(num_samples: int = 0) -> dict[str, Any]:
     model_load_time = time.time() - model_start
     print(f"Model loaded in {model_load_time:.1f}s")
 
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
     print("\n--- Running Inference ---")
     results = []
@@ -432,7 +450,7 @@ def run_resnet18_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -453,24 +471,28 @@ def run_resnet18_benchmark(num_samples: int = 0) -> dict[str, Any]:
                 "color": float(scores[2]),
             }
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     print("\n--- Computing Metrics ---")
     metrics = compute_metrics(results, model_id, model_load_time, inference_times)
@@ -508,7 +530,9 @@ def run_convnext_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -548,11 +572,13 @@ def run_convnext_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
     model_load_time = time.time() - model_start
     print(f"Model loaded in {model_load_time:.1f}s")
 
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
     print("\n--- Running Inference ---")
     results = []
@@ -560,7 +586,7 @@ def run_convnext_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -581,24 +607,28 @@ def run_convnext_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
                 "color": float(scores[2]),
             }
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     print("\n--- Computing Metrics ---")
     metrics = compute_metrics(results, model_id, model_load_time, inference_times)
@@ -636,7 +666,9 @@ def run_efficientnet_b4_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -656,7 +688,9 @@ def run_efficientnet_b4_benchmark(num_samples: int = 0) -> dict[str, Any]:
     class EfficientNetB4IQA(nn.Module):
         def __init__(self):
             super().__init__()
-            self.backbone = efficientnet_b4(weights=EfficientNet_B4_Weights.IMAGENET1K_V1)
+            self.backbone = efficientnet_b4(
+                weights=EfficientNet_B4_Weights.IMAGENET1K_V1
+            )
             num_features = self.backbone.classifier[1].in_features
             self.backbone.classifier[1] = nn.Sequential(
                 nn.Linear(num_features, 512),
@@ -677,11 +711,13 @@ def run_efficientnet_b4_benchmark(num_samples: int = 0) -> dict[str, Any]:
     print(f"Model loaded in {model_load_time:.1f}s")
 
     # EfficientNet-B4 expects 380x380 input
-    preprocess = transforms.Compose([
-        transforms.Resize((380, 380)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((380, 380)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
     print("\n--- Running Inference ---")
     results = []
@@ -689,7 +725,7 @@ def run_efficientnet_b4_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -710,24 +746,28 @@ def run_efficientnet_b4_benchmark(num_samples: int = 0) -> dict[str, Any]:
                 "color": float(scores[2]),
             }
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     print("\n--- Computing Metrics ---")
     metrics = compute_metrics(results, model_id, model_load_time, inference_times)
@@ -765,7 +805,9 @@ def run_swin_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -806,11 +848,13 @@ def run_swin_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
     print(f"Model loaded in {model_load_time:.1f}s")
 
     # Swin-T expects 224x224 input
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
     print("\n--- Running Inference ---")
     results = []
@@ -818,7 +862,7 @@ def run_swin_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -839,24 +883,28 @@ def run_swin_tiny_benchmark(num_samples: int = 0) -> dict[str, Any]:
                 "color": float(scores[2]),
             }
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     print("\n--- Computing Metrics ---")
     metrics = compute_metrics(results, model_id, model_load_time, inference_times)
@@ -910,7 +958,9 @@ def run_clip_iqa_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -931,12 +981,12 @@ def run_clip_iqa_benchmark(num_samples: int = 0) -> dict[str, Any]:
     model_start = time.time()
 
     model, _, preprocess = open_clip.create_model_and_transforms(
-        'ViT-B-32', pretrained='openai'
+        "ViT-B-32", pretrained="openai"
     )
     model = model.to(device)
     model.eval()
 
-    tokenizer = open_clip.get_tokenizer('ViT-B-32')
+    tokenizer = open_clip.get_tokenizer("ViT-B-32")
 
     model_load_time = time.time() - model_start
     print(f"Model loaded in {model_load_time:.1f}s")
@@ -973,7 +1023,7 @@ def run_clip_iqa_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -984,7 +1034,9 @@ def run_clip_iqa_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
             with torch.inference_mode():
                 image_features = model.encode_image(image_input)
-                image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+                image_features = image_features / image_features.norm(
+                    dim=-1, keepdim=True
+                )
 
             predicted = {}
             for dim, txt_feat in text_features.items():
@@ -999,24 +1051,28 @@ def run_clip_iqa_benchmark(num_samples: int = 0) -> dict[str, Any]:
             elapsed_ms = (time.time() - start) * 1000
             inference_times.append(elapsed_ms)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute and print metrics
     print("\n--- Computing Metrics ---")
@@ -1055,8 +1111,7 @@ pyiqa_image = (
     memory=16384,
 )
 def run_pyiqa_benchmark(
-    metric_name: str = "musiq",
-    num_samples: int = 0
+    metric_name: str = "musiq", num_samples: int = 0
 ) -> dict[str, Any]:
     """Run DIQA-5000 benchmark with PyIQA metrics.
 
@@ -1075,7 +1130,9 @@ def run_pyiqa_benchmark(
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -1098,17 +1155,21 @@ def run_pyiqa_benchmark(
     iqa_metric = pyiqa.create_metric(metric_name, device=device)
 
     # Check if metric is lower-better or higher-better
-    lower_better = iqa_metric.lower_better if hasattr(iqa_metric, 'lower_better') else False
+    lower_better = (
+        iqa_metric.lower_better if hasattr(iqa_metric, "lower_better") else False
+    )
     print(f"Metric type: {'lower is better' if lower_better else 'higher is better'}")
 
     model_load_time = time.time() - model_start
     print(f"Model loaded in {model_load_time:.1f}s")
 
     # Image preprocessing
-    preprocess = transforms.Compose([
-        transforms.Resize((512, 512)),
-        transforms.ToTensor(),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((512, 512)),
+            transforms.ToTensor(),
+        ]
+    )
 
     # Run inference
     print("\n--- Running Inference ---")
@@ -1118,7 +1179,7 @@ def run_pyiqa_benchmark(
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -1134,27 +1195,33 @@ def run_pyiqa_benchmark(
             inference_times.append(elapsed_ms)
             raw_scores.append(score)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "raw_score": score,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "raw_score": score,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "raw_score": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "raw_score": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Normalize scores to [1, 5] range
-    successful_scores = [r["raw_score"] for r in results if r["success"] and r["raw_score"] is not None]
+    successful_scores = [
+        r["raw_score"] for r in results if r["success"] and r["raw_score"] is not None
+    ]
     if successful_scores:
         min_score = min(successful_scores)
         max_score = max(successful_scores)
@@ -1241,7 +1308,9 @@ def run_finetuned_musiq_benchmark(
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -1262,6 +1331,7 @@ def run_finetuned_musiq_benchmark(
 
     class MultiTaskHead(nn.Module):
         """Multi-task head for DIQA dimensions."""
+
         def __init__(
             self, in_features: int = 384, hidden_dim: int = 256, dropout: float = 0.1
         ):
@@ -1271,11 +1341,13 @@ def run_finetuned_musiq_benchmark(
                 nn.ReLU(),
                 nn.Dropout(dropout),
             )
-            self.heads = nn.ModuleDict({
-                "overall": nn.Linear(hidden_dim, 1),
-                "sharpness": nn.Linear(hidden_dim, 1),
-                "color": nn.Linear(hidden_dim, 1),
-            })
+            self.heads = nn.ModuleDict(
+                {
+                    "overall": nn.Linear(hidden_dim, 1),
+                    "sharpness": nn.Linear(hidden_dim, 1),
+                    "color": nn.Linear(hidden_dim, 1),
+                }
+            )
 
         def forward(self, features: torch.Tensor) -> dict[str, torch.Tensor]:
             shared = self.shared(features)
@@ -1286,6 +1358,7 @@ def run_finetuned_musiq_benchmark(
 
     class MUSIQBackbone(nn.Module):
         """MUSIQ score encoder backbone."""
+
         def __init__(self, musiq_model: nn.Module):
             super().__init__()
             self._musiq_model = musiq_model
@@ -1310,6 +1383,7 @@ def run_finetuned_musiq_benchmark(
 
     class MUSIQMultiTask(nn.Module):
         """Full MUSIQ multi-task model."""
+
         def __init__(
             self,
             pretrained_musiq: nn.Module,
@@ -1343,7 +1417,9 @@ def run_finetuned_musiq_benchmark(
     bucket = client.bucket("image_detection_b")
     blob = bucket.blob(gcs_path)
     blob.download_to_filename(str(local_model_path))
-    print(f"Downloaded model checkpoint ({local_model_path.stat().st_size / 1024:.1f} KB)")
+    print(
+        f"Downloaded model checkpoint ({local_model_path.stat().st_size / 1024:.1f} KB)"
+    )
 
     # Load base MUSIQ from PyIQA
     base_musiq = pyiqa.create_metric("musiq", device=device)
@@ -1353,7 +1429,9 @@ def run_finetuned_musiq_benchmark(
     model = model.to(device)
 
     # Load trained weights
-    checkpoint = torch.load(str(local_model_path), map_location=device, weights_only=False)
+    checkpoint = torch.load(
+        str(local_model_path), map_location=device, weights_only=False
+    )
     if "model_state_dict" in checkpoint:
         state_dict = checkpoint["model_state_dict"]
     else:
@@ -1366,10 +1444,12 @@ def run_finetuned_musiq_benchmark(
     print(f"Model loaded in {model_load_time:.1f}s")
 
     # Image preprocessing
-    preprocess = transforms.Compose([
-        transforms.Resize((512, 512)),
-        transforms.ToTensor(),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((512, 512)),
+            transforms.ToTensor(),
+        ]
+    )
 
     # Run inference
     print("\n--- Running Inference ---")
@@ -1378,7 +1458,7 @@ def run_finetuned_musiq_benchmark(
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -1399,24 +1479,28 @@ def run_finetuned_musiq_benchmark(
             elapsed_ms = (time.time() - start) * 1000
             inference_times.append(elapsed_ms)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute and print metrics for MUSIQ Sharpness Specialist
     print("\n--- Computing Metrics ---")
@@ -1500,7 +1584,9 @@ def run_finetuned_maniqa_benchmark(
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
@@ -1628,7 +1714,9 @@ def run_finetuned_maniqa_benchmark(
     model = model.to(device)
 
     # Load trained weights
-    checkpoint = torch.load(str(local_model_path), map_location=device, weights_only=False)
+    checkpoint = torch.load(
+        str(local_model_path), map_location=device, weights_only=False
+    )
     if "model_state_dict" in checkpoint:
         state_dict = checkpoint["model_state_dict"]
         print(f"Loaded checkpoint from epoch {checkpoint.get('epoch', 'unknown')}")
@@ -1646,14 +1734,13 @@ def run_finetuned_maniqa_benchmark(
     print(f"Model loaded in {model_load_time:.1f}s")
 
     # Image preprocessing (MANIQA uses 224x224 input)
-    preprocess = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]
-        ),
-    ])
+    preprocess = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
     # Run inference
     print("\n--- Running Inference ---")
@@ -1662,7 +1749,7 @@ def run_finetuned_maniqa_benchmark(
 
     for i, sample in enumerate(samples):
         if (i + 1) % 100 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -1683,24 +1770,28 @@ def run_finetuned_maniqa_benchmark(
             elapsed_ms = (time.time() - start) * 1000
             inference_times.append(elapsed_ms)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute and print metrics for MANIQA fine-tuned
     print("\n--- Computing Metrics ---")

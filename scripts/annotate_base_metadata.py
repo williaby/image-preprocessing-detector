@@ -35,6 +35,7 @@ Usage:
 
 Updated 2025-12-20: Added reproducibility fields, tiered enrichment, DocLayout-YOLO.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -73,6 +74,7 @@ E_DRIVE_ROOT = Path("/mnt/e/image_detection")
 BASE_DATA = E_DRIVE_ROOT / "01_base_data"
 BENCHMARK_ONLY = E_DRIVE_ROOT / "02_benchmark_only"
 METADATA_ROOT = E_DRIVE_ROOT / "metadata_registry"
+
 
 # Current git SHA for reproducibility
 def get_git_sha() -> str:
@@ -524,7 +526,9 @@ class EnrichmentVersion:
     version: int
     created_at: str
     created_by: str
-    method: str  # "tier_0_exact", "tier_1_annotation", "tier_2_model", "tier_3_heuristic"
+    method: (
+        str  # "tier_0_exact", "tier_1_annotation", "tier_2_model", "tier_3_heuristic"
+    )
     description: str
     data: EnrichmentData = field(default_factory=EnrichmentData)
 
@@ -631,7 +635,11 @@ class SampleMetadata:
                         "model_checkpoint": v.model_checkpoint,
                         "config_hash": v.config_hash,
                         "script_version": v.script_version,
-                        "data": {k: val for k, val in v.data.__dict__.items() if val is not None},
+                        "data": {
+                            k: val
+                            for k, val in v.data.__dict__.items()
+                            if val is not None
+                        },
                     }
                     for v in self.enrichment_versions
                 ],
@@ -665,7 +673,15 @@ def extract_file_metadata(image_path: Path) -> OriginalFileMetadata:
             mode = img.mode
 
             # Determine channels from mode
-            channels_map = {"1": 1, "L": 1, "P": 1, "RGB": 3, "RGBA": 4, "CMYK": 4, "LAB": 3}
+            channels_map = {
+                "1": 1,
+                "L": 1,
+                "P": 1,
+                "RGB": 3,
+                "RGBA": 4,
+                "CMYK": 4,
+                "LAB": 3,
+            }
             channels = channels_map.get(mode, 3)
 
             # Try to get DPI from EXIF or info
@@ -755,7 +771,9 @@ def load_doclayout_yolo():
         return None
 
 
-def run_doclayout_yolo(image_path: Path, conf_threshold: float = 0.25) -> dict[str, Any]:
+def run_doclayout_yolo(
+    image_path: Path, conf_threshold: float = 0.25
+) -> dict[str, Any]:
     """Run DocLayout-YOLO inference for content detection.
 
     Returns:
@@ -803,7 +821,11 @@ def run_doclayout_yolo(image_path: Path, conf_threshold: float = 0.25) -> dict[s
                     detections["has_table"] = True
                 elif "formula" in class_lower or "equation" in class_lower:
                     detections["has_formula"] = True
-                elif "picture" in class_lower or "figure" in class_lower or "image" in class_lower:
+                elif (
+                    "picture" in class_lower
+                    or "figure" in class_lower
+                    or "image" in class_lower
+                ):
                     detections["has_figure"] = True
 
         return detections
@@ -937,7 +959,9 @@ def _load_coco_annotations(coco_path: Path) -> dict[str, Any] | None:
             result["annotations"][filename] = annotations
 
         _COCO_CACHE[cache_key] = result
-        logger.debug(f"Loaded COCO annotations from {coco_path}: {len(filename_to_id)} images")
+        logger.debug(
+            f"Loaded COCO annotations from {coco_path}: {len(filename_to_id)} images"
+        )
         return result
     except Exception as e:
         logger.warning(f"Failed to load COCO annotations from {coco_path}: {e}")
@@ -1011,8 +1035,16 @@ def parse_tablebank_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
 
     # TableBank structure: Detection/images/ and Detection/annotations/
     coco_paths = [
-        dataset_path / "TableBank" / "Detection" / "annotations" / "tablebank_latex_train.json",
-        dataset_path / "TableBank" / "Detection" / "annotations" / "tablebank_word_train.json",
+        dataset_path
+        / "TableBank"
+        / "Detection"
+        / "annotations"
+        / "tablebank_latex_train.json",
+        dataset_path
+        / "TableBank"
+        / "Detection"
+        / "annotations"
+        / "tablebank_word_train.json",
         dataset_path / "Detection" / "annotations" / "train.json",
         dataset_path / "annotations" / "train.json",
     ]
@@ -1097,17 +1129,25 @@ def get_enrichment_tier(
     """
     # Tier 0: Exact by construction
     if dataset_name in TIER_0_DATASETS:
-        return EnrichmentTier.TIER_0_EXACT, "Dataset content type is exact by construction"
+        return (
+            EnrichmentTier.TIER_0_EXACT,
+            "Dataset content type is exact by construction",
+        )
 
     # Tier 1: Has COCO annotations we can derive from
     if dataset_name in TIER_1_DATASETS:
-        has_annotations = any([
-            original_labels.doclaynet_annotations,
-            original_labels.tablebank_annotations,
-            original_labels.funsd_annotations,
-        ])
+        has_annotations = any(
+            [
+                original_labels.doclaynet_annotations,
+                original_labels.tablebank_annotations,
+                original_labels.funsd_annotations,
+            ]
+        )
         if has_annotations:
-            return EnrichmentTier.TIER_1_ANNOTATION, "Derived from COCO/JSON annotations"
+            return (
+                EnrichmentTier.TIER_1_ANNOTATION,
+                "Derived from COCO/JSON annotations",
+            )
 
     # Tier 2: DocLayout-YOLO inference (if enabled)
     if use_yolo:
@@ -1134,15 +1174,22 @@ def apply_tiered_enrichment(
     dataset_name = sample.dataset_name
     original_labels = sample.original_labels
 
-    tier, tier_description = get_enrichment_tier(dataset_name, config, original_labels, use_yolo)
+    tier, tier_description = get_enrichment_tier(
+        dataset_name, config, original_labels, use_yolo
+    )
 
     enrichment = EnrichmentData(
         capture_method=config["capture_method"].value,
-        capture_confidence=0.95 if config["capture_method"] != CaptureMethod.UNKNOWN else 0.5,
+        capture_confidence=0.95
+        if config["capture_method"] != CaptureMethod.UNKNOWN
+        else 0.5,
         capture_detection_method="dataset_config",
         resolution_dpi=sample.original_file.dpi,
         resolution_category=categorize_dpi(sample.original_file.dpi).value,
-        resolution_pixels=(sample.original_file.width_px, sample.original_file.height_px),
+        resolution_pixels=(
+            sample.original_file.width_px,
+            sample.original_file.height_px,
+        ),
         domain_level1=config["domain"].value,
         domain_confidence=0.9 if config["domain"] != DomainLevel1.UNKNOWN else 0.3,
         content_flags_tier=tier.value,
@@ -1287,7 +1334,9 @@ def scan_dataset(
     if config.get("arrow_format"):
         extracted_dir = dataset_path / "extracted_images"
         if not extracted_dir.exists() or not any(extracted_dir.iterdir()):
-            logger.warning(f"{dataset_name} requires extraction. Run --extract-omnidocbench first.")
+            logger.warning(
+                f"{dataset_name} requires extraction. Run --extract-omnidocbench first."
+            )
             return samples
 
     # Find all images
@@ -1310,7 +1359,14 @@ def scan_dataset(
 
     for image_path in tqdm(image_files, desc=f"  {dataset_name}", leave=False):
         # Skip non-image files
-        if image_path.suffix.lower() not in {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}:
+        if image_path.suffix.lower() not in {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".tif",
+            ".tiff",
+            ".bmp",
+        }:
             continue
 
         # Generate unique ID
@@ -1342,8 +1398,12 @@ def scan_dataset(
         )
 
         # Apply tiered enrichment
-        tier, tier_desc = get_enrichment_tier(dataset_name, config, original_labels, use_yolo)
-        enrichment = apply_tiered_enrichment(sample, config, image_path, use_yolo, git_sha)
+        tier, tier_desc = get_enrichment_tier(
+            dataset_name, config, original_labels, use_yolo
+        )
+        enrichment = apply_tiered_enrichment(
+            sample, config, image_path, use_yolo, git_sha
+        )
 
         # Add enrichment with reproducibility fields
         sample.add_enrichment(
@@ -1352,7 +1412,9 @@ def scan_dataset(
             method=tier.value,
             description=tier_desc,
             git_sha=git_sha,
-            model_checkpoint="doclayout_yolo" if tier == EnrichmentTier.TIER_2_MODEL else None,
+            model_checkpoint="doclayout_yolo"
+            if tier == EnrichmentTier.TIER_2_MODEL
+            else None,
         )
 
         samples.append(sample)
@@ -1370,7 +1432,9 @@ def save_metadata_parquet(samples: list[SampleMetadata], output_path: Path) -> N
     records = []
     for sample in samples:
         enrichment = sample.get_current_enrichment()
-        version_info = sample.enrichment_versions[-1] if sample.enrichment_versions else None
+        version_info = (
+            sample.enrichment_versions[-1] if sample.enrichment_versions else None
+        )
 
         record = {
             "sample_id": sample.id,
@@ -1391,11 +1455,15 @@ def save_metadata_parquet(samples: list[SampleMetadata], output_path: Path) -> N
             # Enrichment data
             "enrichment_version": sample.current_version,
             "enrichment_tier": enrichment.content_flags_tier if enrichment else None,
-            "enrichment_source": enrichment.content_flags_source if enrichment else None,
+            "enrichment_source": enrichment.content_flags_source
+            if enrichment
+            else None,
             "capture_method": enrichment.capture_method if enrichment else None,
             "capture_confidence": enrichment.capture_confidence if enrichment else None,
             "domain_level1": enrichment.domain_level1 if enrichment else None,
-            "resolution_category": enrichment.resolution_category if enrichment else None,
+            "resolution_category": enrichment.resolution_category
+            if enrichment
+            else None,
             # Content flags
             "has_table": enrichment.has_table if enrichment else None,
             "has_formula": enrichment.has_formula if enrichment else None,
@@ -1429,13 +1497,23 @@ def save_metadata_parquet(samples: list[SampleMetadata], output_path: Path) -> N
             ),
             # Derived element counts (for quick filtering)
             "table_count": (
-                len([a for a in (sample.original_labels.doclaynet_annotations or [])
-                     if a.get("category_name") == "Table"])
+                len(
+                    [
+                        a
+                        for a in (sample.original_labels.doclaynet_annotations or [])
+                        if a.get("category_name") == "Table"
+                    ]
+                )
                 + len(sample.original_labels.tablebank_annotations or [])
             ),
             "formula_count": (
-                len([a for a in (sample.original_labels.doclaynet_annotations or [])
-                     if a.get("category_name") == "Formula"])
+                len(
+                    [
+                        a
+                        for a in (sample.original_labels.doclaynet_annotations or [])
+                        if a.get("category_name") == "Formula"
+                    ]
+                )
             ),
             # Timestamps
             "created_at": sample.created_at,
@@ -1587,15 +1665,31 @@ Enrichment Tiers:
         """,
     )
 
-    parser.add_argument("--scan", action="store_true", help="Scan datasets and create metadata")
+    parser.add_argument(
+        "--scan", action="store_true", help="Scan datasets and create metadata"
+    )
     parser.add_argument("--dataset", type=str, help="Specific dataset to process")
     parser.add_argument("--limit", type=int, help="Limit samples per dataset")
-    parser.add_argument("--no-yolo", action="store_true", help="Disable DocLayout-YOLO (use Tier 3 fallback)")
-    parser.add_argument("--stats", action="store_true", help="Generate statistics report")
+    parser.add_argument(
+        "--no-yolo",
+        action="store_true",
+        help="Disable DocLayout-YOLO (use Tier 3 fallback)",
+    )
+    parser.add_argument(
+        "--stats", action="store_true", help="Generate statistics report"
+    )
     parser.add_argument("--export", action="store_true", help="Export to Parquet")
-    parser.add_argument("--extract-omnidocbench", action="store_true", help="Extract OmniDocBench images from arrow")
-    parser.add_argument("--output", type=Path, default=METADATA_ROOT, help="Output directory")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be done")
+    parser.add_argument(
+        "--extract-omnidocbench",
+        action="store_true",
+        help="Extract OmniDocBench images from arrow",
+    )
+    parser.add_argument(
+        "--output", type=Path, default=METADATA_ROOT, help="Output directory"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be done"
+    )
 
     args = parser.parse_args()
 
@@ -1637,12 +1731,20 @@ Enrichment Tiers:
         if args.dry_run:
             logger.info("DRY RUN - would scan:")
             for name, config in datasets_to_scan.items():
-                tier = "Tier 0" if name in TIER_0_DATASETS else "Tier 1" if name in TIER_1_DATASETS else "Tier 2/3"
+                tier = (
+                    "Tier 0"
+                    if name in TIER_0_DATASETS
+                    else "Tier 1"
+                    if name in TIER_1_DATASETS
+                    else "Tier 2/3"
+                )
                 logger.info(f"  {name}: {config['path']} ({tier})")
             return
 
         for dataset_name, config in datasets_to_scan.items():
-            samples = scan_dataset(dataset_name, config, limit=args.limit, use_yolo=use_yolo)
+            samples = scan_dataset(
+                dataset_name, config, limit=args.limit, use_yolo=use_yolo
+            )
             all_samples.extend(samples)
             logger.info(f"  {dataset_name}: {len(samples)} samples")
 
@@ -1670,7 +1772,8 @@ Enrichment Tiers:
                 "by_capture_method": df["capture_method"].value_counts().to_dict(),
                 "by_domain": df["domain_level1"].value_counts().to_dict(),
                 "by_enrichment_tier": df["enrichment_tier"].value_counts().to_dict(),
-                "with_human_mos": df["diqa_mos"].notna().sum() + df["ocr_quality_score"].notna().sum(),
+                "with_human_mos": df["diqa_mos"].notna().sum()
+                + df["ocr_quality_score"].notna().sum(),
                 "with_tables": df["has_table"].sum() if "has_table" in df else 0,
                 "with_formulas": df["has_formula"].sum() if "has_formula" in df else 0,
             }
@@ -1690,15 +1793,21 @@ Enrichment Tiers:
             logger.info(f"  {ds}: {count:,}")
 
         logger.info("\nBy Enrichment Tier:")
-        for tier, count in sorted(stats.get("by_enrichment_tier", {}).items(), key=lambda x: -x[1]):
+        for tier, count in sorted(
+            stats.get("by_enrichment_tier", {}).items(), key=lambda x: -x[1]
+        ):
             logger.info(f"  {tier}: {count:,}")
 
         logger.info("\nBy Capture Method:")
-        for cm, count in sorted(stats.get("by_capture_method", {}).items(), key=lambda x: -x[1]):
+        for cm, count in sorted(
+            stats.get("by_capture_method", {}).items(), key=lambda x: -x[1]
+        ):
             logger.info(f"  {cm}: {count:,}")
 
         logger.info("\nBy Domain:")
-        for domain, count in sorted(stats.get("by_domain", {}).items(), key=lambda x: -x[1]):
+        for domain, count in sorted(
+            stats.get("by_domain", {}).items(), key=lambda x: -x[1]
+        ):
             logger.info(f"  {domain}: {count:,}")
 
         logger.info(f"\nWith Human MOS: {stats.get('with_human_mos', 0):,}")

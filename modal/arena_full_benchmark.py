@@ -93,6 +93,7 @@ deepseek_image = (
     )
 )
 
+
 def parse_vlm_response(response: str) -> dict[str, float | None]:
     """Parse VLM response to extract quality scores.
 
@@ -160,7 +161,9 @@ def run_benchmark(
     # GPU info
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
 
     # Download dataset
     dataset_path = download_dataset_from_gcs(DATASET_CACHE_DIR)
@@ -195,6 +198,7 @@ def run_benchmark(
         }
     else:
         from transformers import BitsAndBytesConfig
+
         load_kwargs = {
             "trust_remote_code": True,
             "cache_dir": cache_dir,
@@ -219,7 +223,7 @@ def run_benchmark(
 
     for i, sample in enumerate(samples):
         if (i + 1) % 50 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -283,11 +287,11 @@ def run_benchmark(
 
             # Decode
             if "smolvlm" in model_id.lower() or "smol" in model_id.lower():
-                generated_ids = output_ids[0][len(inputs.input_ids[0]):]
+                generated_ids = output_ids[0][len(inputs.input_ids[0]) :]
                 output_text = processor.decode(generated_ids, skip_special_tokens=True)
             elif "qwen" in model_id.lower():
                 generated_ids = [
-                    output_ids[j][len(inputs.input_ids[j]):]
+                    output_ids[j][len(inputs.input_ids[j]) :]
                     for j in range(len(output_ids))
                 ]
                 output_text = processor.batch_decode(
@@ -304,25 +308,29 @@ def run_benchmark(
             # Parse response
             predicted = parse_vlm_response(output_text)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "response": output_text[:200],
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "response": output_text[:200],
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute metrics
     print("\n--- Computing Metrics ---")
@@ -369,11 +377,15 @@ def run_benchmark(
             srcc, _ = stats.spearmanr(gt_values, pred_values)
 
             # MAE (Mean Absolute Error)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(gt_values)
+            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(
+                gt_values
+            )
 
             # RMSE (Root Mean Square Error)
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            rmse = mse ** 0.5
+            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(
+                gt_values
+            )
+            rmse = mse**0.5
 
             metrics[dim] = {
                 "plcc": plcc,
@@ -397,7 +409,9 @@ def run_benchmark(
     print("BENCHMARK RESULTS")
     print("=" * 60)
     print(f"Model: {model_id}")
-    print(f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)")
+    print(
+        f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)"
+    )
     print(f"Success Rate: {metrics['success_rate']:.1%}")
 
     if "timing" in metrics:
@@ -467,7 +481,9 @@ def run_deepseek_benchmark(
     # GPU info
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
 
     # Download dataset
     dataset_path = download_dataset_from_gcs(DATASET_CACHE_DIR)
@@ -526,7 +542,7 @@ def run_deepseek_benchmark(
 
     for i, sample in enumerate(samples):
         if (i + 1) % 50 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -550,25 +566,29 @@ def run_deepseek_benchmark(
             output_text = res if isinstance(res, str) else str(res)
             predicted = parse_vlm_response(output_text)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "response": output_text[:200],
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "response": output_text[:200],
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute metrics (same as run_benchmark)
     print("\n--- Computing Metrics ---")
@@ -608,9 +628,13 @@ def run_deepseek_benchmark(
         if len(gt_values) >= 3:
             plcc, _ = stats.pearsonr(gt_values, pred_values)
             srcc, _ = stats.spearmanr(gt_values, pred_values)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            rmse = mse ** 0.5
+            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(
+                gt_values
+            )
+            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(
+                gt_values
+            )
+            rmse = mse**0.5
 
             metrics[dim] = {
                 "plcc": plcc,
@@ -634,7 +658,9 @@ def run_deepseek_benchmark(
     print("BENCHMARK RESULTS")
     print("=" * 60)
     print(f"Model: {model_id}")
-    print(f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)")
+    print(
+        f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)"
+    )
     print(f"Success Rate: {metrics['success_rate']:.1%}")
 
     if "timing" in metrics:
@@ -714,7 +740,9 @@ def run_qwen3_benchmark(
     # GPU info
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
 
     # Download dataset
     dataset_path = download_dataset_from_gcs(DATASET_CACHE_DIR)
@@ -768,8 +796,11 @@ Color: X.X"""
     print("\n--- Warmup ---")
     warmup_msg = [{"role": "user", "content": [{"type": "text", "text": "Hi"}]}]
     warmup_inputs = processor.apply_chat_template(
-        warmup_msg, tokenize=True, add_generation_prompt=True,
-        return_dict=True, return_tensors="pt"
+        warmup_msg,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_dict=True,
+        return_tensors="pt",
     ).to(model.device)
     with torch.inference_mode():
         _ = model.generate(**warmup_inputs, max_new_tokens=4)
@@ -782,7 +813,7 @@ Color: X.X"""
 
     for i, sample in enumerate(samples):
         if (i + 1) % 50 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -822,7 +853,7 @@ Color: X.X"""
 
             # Decode
             generated_ids_trimmed = [
-                out_ids[len(in_ids):]
+                out_ids[len(in_ids) :]
                 for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
             ]
             output_text = processor.batch_decode(
@@ -837,25 +868,29 @@ Color: X.X"""
             # Parse response
             predicted = parse_vlm_response(output_text)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "response": output_text[:200],
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "response": output_text[:200],
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute metrics
     print("\n--- Computing Metrics ---")
@@ -895,9 +930,13 @@ Color: X.X"""
         if len(gt_values) >= 3:
             plcc, _ = stats.pearsonr(gt_values, pred_values)
             srcc, _ = stats.spearmanr(gt_values, pred_values)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            rmse = mse ** 0.5
+            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(
+                gt_values
+            )
+            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(
+                gt_values
+            )
+            rmse = mse**0.5
 
             metrics[dim] = {
                 "plcc": plcc,
@@ -921,7 +960,9 @@ Color: X.X"""
     print("BENCHMARK RESULTS")
     print("=" * 60)
     print(f"Model: {model_id}")
-    print(f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)")
+    print(
+        f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)"
+    )
     print(f"Success Rate: {metrics['success_rate']:.1%}")
 
     if "timing" in metrics:
@@ -1002,7 +1043,9 @@ def run_internvl_benchmark(
     # GPU info
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
 
     # Download dataset
     dataset_path = download_dataset_from_gcs(DATASET_CACHE_DIR)
@@ -1062,7 +1105,7 @@ Color: X.X"""
 
     for i, sample in enumerate(samples):
         if (i + 1) % 50 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -1090,25 +1133,29 @@ Color: X.X"""
             output_text = response if isinstance(response, str) else str(response)
             predicted = parse_vlm_response(output_text)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "response": output_text[:200],
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "response": output_text[:200],
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute metrics
     print("\n--- Computing Metrics ---")
@@ -1148,9 +1195,13 @@ Color: X.X"""
         if len(gt_values) >= 3:
             plcc, _ = stats.pearsonr(gt_values, pred_values)
             srcc, _ = stats.spearmanr(gt_values, pred_values)
-            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(gt_values)
-            rmse = mse ** 0.5
+            mae = sum(abs(g - p) for g, p in zip(gt_values, pred_values)) / len(
+                gt_values
+            )
+            mse = sum((g - p) ** 2 for g, p in zip(gt_values, pred_values)) / len(
+                gt_values
+            )
+            rmse = mse**0.5
 
             metrics[dim] = {
                 "plcc": plcc,
@@ -1174,7 +1225,9 @@ Color: X.X"""
     print("BENCHMARK RESULTS")
     print("=" * 60)
     print(f"Model: {model_id}")
-    print(f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)")
+    print(
+        f"Samples: {metrics['num_samples']} ({metrics['successful']} successful, {metrics['failed']} failed)"
+    )
     print(f"Success Rate: {metrics['success_rate']:.1%}")
 
     if "timing" in metrics:

@@ -70,7 +70,9 @@ def compute_entropy(probs: dict, epsilon=1e-10) -> float:
     return entropy
 
 
-def compare_distributions(fp16_results: list[dict], quant_results: list[dict], mode: str) -> dict:
+def compare_distributions(
+    fp16_results: list[dict], quant_results: list[dict], mode: str
+) -> dict:
     """Compare quantized results against FP16 baseline.
 
     Args:
@@ -264,13 +266,21 @@ def main():
     nf4_decision = evaluate_decision_gate(nf4_metrics, "NF4")
 
     print(f"\nINT8 Quantization:")
-    print(f"  Mean KL-div: {int8_metrics['kl_divergence']['mean']:.4f} (threshold: <0.03)")
-    print(f"  SRCC loss: {int8_metrics['correlation']['srcc_loss_pct']:.2f}% (threshold: <1%)")
+    print(
+        f"  Mean KL-div: {int8_metrics['kl_divergence']['mean']:.4f} (threshold: <0.03)"
+    )
+    print(
+        f"  SRCC loss: {int8_metrics['correlation']['srcc_loss_pct']:.2f}% (threshold: <1%)"
+    )
     print(f"  Decision: {int8_decision['recommendation']}")
 
     print(f"\nNF4 Quantization:")
-    print(f"  Mean KL-div: {nf4_metrics['kl_divergence']['mean']:.4f} (threshold: <0.05)")
-    print(f"  SRCC loss: {nf4_metrics['correlation']['srcc_loss_pct']:.2f}% (threshold: <2%)")
+    print(
+        f"  Mean KL-div: {nf4_metrics['kl_divergence']['mean']:.4f} (threshold: <0.05)"
+    )
+    print(
+        f"  SRCC loss: {nf4_metrics['correlation']['srcc_loss_pct']:.2f}% (threshold: <2%)"
+    )
     print(f"  Decision: {nf4_decision['recommendation']}")
 
     # Generate comprehensive report

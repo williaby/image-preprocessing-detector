@@ -53,6 +53,7 @@ def check_dependencies() -> bool:
 
     try:
         import torch
+
         print(f"PyTorch: {torch.__version__}")
         print(f"CUDA available: {torch.cuda.is_available()}")
         if torch.cuda.is_available():
@@ -62,12 +63,14 @@ def check_dependencies() -> bool:
 
     try:
         import transformers
+
         print(f"Transformers: {transformers.__version__}")
     except ImportError:
         missing.append("transformers")
 
     try:
         import accelerate
+
         print(f"Accelerate: {accelerate.__version__}")
     except ImportError:
         missing.append("accelerate")
@@ -75,6 +78,7 @@ def check_dependencies() -> bool:
     # bitsandbytes is optional (Linux only)
     try:
         import bitsandbytes
+
         print(f"Bitsandbytes: {bitsandbytes.__version__}")
     except ImportError:
         print("Bitsandbytes: Not installed (optional, Linux only)")
@@ -87,7 +91,9 @@ def check_dependencies() -> bool:
     return True
 
 
-def create_test_images(num_images: int = 5) -> list[tuple[np.ndarray, dict[str, float]]]:
+def create_test_images(
+    num_images: int = 5,
+) -> list[tuple[np.ndarray, dict[str, float]]]:
     """Create synthetic test images with ground truth labels.
 
     Returns:
@@ -120,7 +126,9 @@ def create_test_images(num_images: int = 5) -> list[tuple[np.ndarray, dict[str, 
 
         # Ground truth labels (simulated)
         labels = {
-            "overall": float(np.clip(0.7 - noise_level * 0.5 + brightness * 0.2, 0.3, 0.95)),
+            "overall": float(
+                np.clip(0.7 - noise_level * 0.5 + brightness * 0.2, 0.3, 0.95)
+            ),
             "sharpness": float(np.clip(sharpness_factor * 0.8 + 0.1, 0.2, 0.9)),
             "color": float(np.clip(brightness * 0.6 + 0.3, 0.4, 0.95)),
         }
@@ -234,6 +242,7 @@ def test_metrics() -> bool:
     except Exception as e:
         print(f"  Metrics test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -306,6 +315,7 @@ def test_dataset_adapter() -> bool:
     except Exception as e:
         print(f"  Dataset adapter test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -343,6 +353,7 @@ def test_modal_client() -> bool:
     print("\n--- Testing Modal Client (Mock Mode) ---")
     try:
         import os
+
         os.environ["ARENA_MODAL_MOCK"] = "true"
 
         from image_preprocessing_detector.labeling.arena.modal_client import (
@@ -391,6 +402,7 @@ def test_modal_client() -> bool:
     except Exception as e:
         print(f"  Modal client test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -400,6 +412,7 @@ def test_modal_backend() -> bool:
     print("\n--- Testing Modal Backend (Mock Mode) ---")
     try:
         import os
+
         os.environ["ARENA_MODAL_MOCK"] = "true"
 
         from image_preprocessing_detector.labeling.arena.inference.base import (
@@ -438,12 +451,13 @@ def test_modal_backend() -> bool:
         assert 0 <= prediction.overall <= 1
         assert 0 <= prediction.sharpness <= 1
         assert 0 <= prediction.color <= 1
-        print(f"  Prediction: overall={prediction.overall:.2f}, sharpness={prediction.sharpness:.2f}")
+        print(
+            f"  Prediction: overall={prediction.overall:.2f}, sharpness={prediction.sharpness:.2f}"
+        )
 
         # Test batch prediction
         images = [
-            np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8)
-            for _ in range(4)
+            np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8) for _ in range(4)
         ]
         predictions = backend.predict_batch(images)
         assert len(predictions) == 4
@@ -470,6 +484,7 @@ def test_modal_backend() -> bool:
     except Exception as e:
         print(f"  Modal backend test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -554,7 +569,10 @@ def test_smolvlm_model_loading(device: str = "cuda", model_size: str = "256M") -
                 "role": "user",
                 "content": [
                     {"type": "image"},
-                    {"type": "text", "text": "Rate this image quality from 0 to 1. Reply with just a number."},
+                    {
+                        "type": "text",
+                        "text": "Rate this image quality from 0 to 1. Reply with just a number.",
+                    },
                 ],
             }
         ]
@@ -567,7 +585,9 @@ def test_smolvlm_model_loading(device: str = "cuda", model_size: str = "256M") -
         )
 
         if device == "cuda":
-            inputs = {k: v.cuda() if hasattr(v, "cuda") else v for k, v in inputs.items()}
+            inputs = {
+                k: v.cuda() if hasattr(v, "cuda") else v for k, v in inputs.items()
+            }
 
         with torch.no_grad():
             outputs = model.generate(
@@ -595,6 +615,7 @@ def test_smolvlm_model_loading(device: str = "cuda", model_size: str = "256M") -
     except Exception as e:
         print(f"  Model loading failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -693,7 +714,9 @@ def test_qwen_vlm_loading(device: str = "cuda") -> bool:
         )
 
         if device == "cuda":
-            inputs = {k: v.cuda() if hasattr(v, "cuda") else v for k, v in inputs.items()}
+            inputs = {
+                k: v.cuda() if hasattr(v, "cuda") else v for k, v in inputs.items()
+            }
 
         with torch.no_grad():
             outputs = model.generate(
@@ -721,6 +744,7 @@ def test_qwen_vlm_loading(device: str = "cuda") -> bool:
     except Exception as e:
         print(f"  Model loading failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -749,15 +773,21 @@ def test_leaderboard_generator() -> bool:
         generator = LeaderboardGenerator(config)
 
         # Add some fake results
-        for i, (name, plcc) in enumerate([
-            ("model-a", 0.92),
-            ("model-b", 0.88),
-            ("model-c", 0.95),
-        ]):
+        for i, (name, plcc) in enumerate(
+            [
+                ("model-a", 0.92),
+                ("model-b", 0.88),
+                ("model-c", 0.95),
+            ]
+        ):
             result = BenchmarkResult(
                 run_id=f"run_{i}",
                 status=RunStatus.COMPLETED,
-                model_spec={"id": f"test/{name}", "source": "huggingface", "variant": "base"},
+                model_spec={
+                    "id": f"test/{name}",
+                    "source": "huggingface",
+                    "variant": "base",
+                },
                 dataset=DatasetInfo(
                     name="diqa5000",
                     version="1.0",
@@ -765,10 +795,34 @@ def test_leaderboard_generator() -> bool:
                     num_samples=100,
                 ),
                 metrics={
-                    "overall": {"plcc": plcc, "srcc": plcc - 0.02, "mae": 0.1 - plcc * 0.05, "rmse": 0.12 - plcc * 0.05, "num_samples": 100},
-                    "sharpness": {"plcc": plcc - 0.03, "srcc": plcc - 0.05, "mae": 0.11 - plcc * 0.05, "rmse": 0.13 - plcc * 0.05, "num_samples": 100},
-                    "color": {"plcc": plcc + 0.01, "srcc": plcc - 0.01, "mae": 0.09 - plcc * 0.05, "rmse": 0.11 - plcc * 0.05, "num_samples": 100},
-                    "aggregate": {"plcc": plcc, "srcc": plcc - 0.03, "mae": 0.1 - plcc * 0.05, "rmse": 0.12 - plcc * 0.05, "num_samples": 100},
+                    "overall": {
+                        "plcc": plcc,
+                        "srcc": plcc - 0.02,
+                        "mae": 0.1 - plcc * 0.05,
+                        "rmse": 0.12 - plcc * 0.05,
+                        "num_samples": 100,
+                    },
+                    "sharpness": {
+                        "plcc": plcc - 0.03,
+                        "srcc": plcc - 0.05,
+                        "mae": 0.11 - plcc * 0.05,
+                        "rmse": 0.13 - plcc * 0.05,
+                        "num_samples": 100,
+                    },
+                    "color": {
+                        "plcc": plcc + 0.01,
+                        "srcc": plcc - 0.01,
+                        "mae": 0.09 - plcc * 0.05,
+                        "rmse": 0.11 - plcc * 0.05,
+                        "num_samples": 100,
+                    },
+                    "aggregate": {
+                        "plcc": plcc,
+                        "srcc": plcc - 0.03,
+                        "mae": 0.1 - plcc * 0.05,
+                        "rmse": 0.12 - plcc * 0.05,
+                        "num_samples": 100,
+                    },
                 },
                 execution=ExecutionInfo(
                     hardware="Test",
@@ -796,6 +850,7 @@ def test_leaderboard_generator() -> bool:
     except Exception as e:
         print(f"  Leaderboard test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

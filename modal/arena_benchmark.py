@@ -48,6 +48,7 @@ vlm_image = (
 # Model cache volume for HuggingFace models
 model_volume = modal.Volume.from_name("arena-models", create_if_missing=True)
 
+
 @app.function(
     image=vlm_image,
     gpu="T4",  # Start with T4 (16GB), can upgrade to A10 (24GB) if needed
@@ -95,7 +96,7 @@ class VLMInference:
         >>> result = inference.predict.remote(
         ...     image_b64="...",
         ...     prompt="Rate the quality of this document...",
-        ...     model_id="unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit"
+        ...     model_id="unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit",
         ... )
     """
 
@@ -113,7 +114,9 @@ class VLMInference:
         # Log GPU info on startup
         if torch.cuda.is_available():
             print(f"GPU: {torch.cuda.get_device_name(0)}")
-            print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+            print(
+                f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+            )
 
     def _load_model(self, model_id: str) -> None:
         """Load or switch VLM model.
@@ -289,7 +292,7 @@ class VLMInference:
         # Skip input tokens to get only the generated text
         if "qwen" in model_id.lower():
             generated_ids = [
-                output_ids[i][len(inputs.input_ids[i]):]
+                output_ids[i][len(inputs.input_ids[i]) :]
                 for i in range(len(output_ids))
             ]
             output_text = self._processor.batch_decode(
@@ -299,7 +302,7 @@ class VLMInference:
             )[0]
         elif "smolvlm" in model_id.lower() or "smol" in model_id.lower():
             # SmolVLM: skip input tokens
-            generated_ids = output_ids[0][len(inputs.input_ids[0]):]
+            generated_ids = output_ids[0][len(inputs.input_ids[0]) :]
             output_text = self._processor.decode(
                 generated_ids,
                 skip_special_tokens=True,
@@ -319,7 +322,9 @@ class VLMInference:
             "text": output_text,
             "inference_time_ms": elapsed_ms,
             "model_id": model_id,
-            "device": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
+            "device": torch.cuda.get_device_name(0)
+            if torch.cuda.is_available()
+            else "cpu",
         }
 
     @modal.method()
@@ -358,10 +363,12 @@ class VLMInference:
                 )
                 results.append(result)
             except Exception as e:
-                results.append({
-                    "error": str(e),
-                    "model_id": model_id,
-                })
+                results.append(
+                    {
+                        "error": str(e),
+                        "model_id": model_id,
+                    }
+                )
 
         return results
 
@@ -377,9 +384,15 @@ class VLMInference:
         return {
             "current_model_id": self._current_model_id,
             "model_loaded": self._model is not None,
-            "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
-            "gpu_memory_allocated_gb": torch.cuda.memory_allocated(0) / (1024**3) if torch.cuda.is_available() else 0,
-            "gpu_memory_reserved_gb": torch.cuda.memory_reserved(0) / (1024**3) if torch.cuda.is_available() else 0,
+            "gpu_name": torch.cuda.get_device_name(0)
+            if torch.cuda.is_available()
+            else None,
+            "gpu_memory_allocated_gb": torch.cuda.memory_allocated(0) / (1024**3)
+            if torch.cuda.is_available()
+            else 0,
+            "gpu_memory_reserved_gb": torch.cuda.memory_reserved(0) / (1024**3)
+            if torch.cuda.is_available()
+            else 0,
         }
 
 

@@ -78,14 +78,18 @@ def load_test_samples(num_samples: int = 5) -> list[dict]:
                 "color": float(row["color_fidelity"]),
             }
 
-            samples.append({
-                "sample_id": image_filename.replace(".jpg", ""),
-                "image_b64": image_b64,
-                "ground_truth": ground_truth,
-                "image_path": str(image_path),
-            })
+            samples.append(
+                {
+                    "sample_id": image_filename.replace(".jpg", ""),
+                    "image_b64": image_b64,
+                    "ground_truth": ground_truth,
+                    "image_path": str(image_path),
+                }
+            )
 
-            print(f"Loaded sample {i+1}: {image_filename} (GT: overall={ground_truth['overall']:.2f})")
+            print(
+                f"Loaded sample {i + 1}: {image_filename} (GT: overall={ground_truth['overall']:.2f})"
+            )
 
     return samples
 
@@ -108,7 +112,7 @@ def run_modal_inference(samples: list[dict]) -> list[dict]:
     results = []
 
     for i, sample in enumerate(samples):
-        print(f"\nProcessing sample {i+1}/{len(samples)}: {sample['sample_id']}...")
+        print(f"\nProcessing sample {i + 1}/{len(samples)}: {sample['sample_id']}...")
 
         try:
             result = inference.predict.remote(
@@ -119,24 +123,28 @@ def run_modal_inference(samples: list[dict]) -> list[dict]:
                 temperature=0.1,
             )
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "prediction": result,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "prediction": result,
+                    "success": True,
+                }
+            )
 
             print(f"  Inference time: {result.get('inference_time_ms', 0):.0f}ms")
             print(f"  Response: {result.get('text', '')[:100]}...")
 
         except Exception as e:
             print(f"  Error: {e}")
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "prediction": {"error": str(e)},
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "prediction": {"error": str(e)},
+                    "success": False,
+                }
+            )
 
     return results
 
@@ -186,10 +194,14 @@ def main():
         status = "✓" if result["success"] else "✗"
         gt = result["ground_truth"]
         print(f"\n{status} {result['sample_id']}")
-        print(f"  Ground Truth: overall={gt['overall']:.2f}, sharpness={gt['sharpness']:.2f}, color={gt['color']:.2f}")
+        print(
+            f"  Ground Truth: overall={gt['overall']:.2f}, sharpness={gt['sharpness']:.2f}, color={gt['color']:.2f}"
+        )
         if result["success"]:
             print(f"  Model Response: {result['prediction'].get('text', '')[:80]}...")
-            print(f"  Inference Time: {result['prediction'].get('inference_time_ms', 0):.0f}ms")
+            print(
+                f"  Inference Time: {result['prediction'].get('inference_time_ms', 0):.0f}ms"
+            )
         else:
             print(f"  Error: {result['prediction'].get('error', 'Unknown error')}")
 

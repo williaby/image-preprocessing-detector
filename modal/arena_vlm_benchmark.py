@@ -115,7 +115,9 @@ def run_qwen3_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
 
     # Download dataset
     dataset_path = download_dataset_from_gcs(DATASET_CACHE_DIR)
@@ -154,8 +156,11 @@ def run_qwen3_benchmark(num_samples: int = 0) -> dict[str, Any]:
     print("\n--- Warmup ---")
     warmup_msg = [{"role": "user", "content": [{"type": "text", "text": "Hi"}]}]
     warmup_inputs = processor.apply_chat_template(
-        warmup_msg, tokenize=True, add_generation_prompt=True,
-        return_dict=True, return_tensors="pt"
+        warmup_msg,
+        tokenize=True,
+        add_generation_prompt=True,
+        return_dict=True,
+        return_tensors="pt",
     ).to(model.device)
     with torch.inference_mode():
         _ = model.generate(**warmup_inputs, max_new_tokens=4)
@@ -168,7 +173,7 @@ def run_qwen3_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 50 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -204,7 +209,7 @@ def run_qwen3_benchmark(num_samples: int = 0) -> dict[str, Any]:
                 )
 
             generated_ids_trimmed = [
-                out_ids[len(in_ids):]
+                out_ids[len(in_ids) :]
                 for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
             ]
             output_text = processor.batch_decode(
@@ -218,25 +223,29 @@ def run_qwen3_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
             predicted = parse_vlm_response(output_text)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "response": output_text[:200],
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "response": output_text[:200],
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute and print metrics
     print("\n--- Computing Metrics ---")
@@ -293,7 +302,9 @@ def run_internvl_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     if torch.cuda.is_available():
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB")
+        print(
+            f"Memory: {torch.cuda.get_device_properties(0).total_memory / (1024**3):.1f} GB"
+        )
 
     # Download dataset
     dataset_path = download_dataset_from_gcs(DATASET_CACHE_DIR)
@@ -334,7 +345,9 @@ def run_internvl_benchmark(num_samples: int = 0) -> dict[str, Any]:
     print("\n--- Warmup ---")
     try:
         with torch.inference_mode():
-            _ = model.chat(tokenizer, None, "Hi", generation_config={"max_new_tokens": 4})
+            _ = model.chat(
+                tokenizer, None, "Hi", generation_config={"max_new_tokens": 4}
+            )
         print("Warmup complete")
     except Exception as e:
         print(f"Warmup skipped (model may not support text-only): {e}")
@@ -349,7 +362,7 @@ def run_internvl_benchmark(num_samples: int = 0) -> dict[str, Any]:
 
     for i, sample in enumerate(samples):
         if (i + 1) % 50 == 0 or i == 0:
-            print(f"Processing sample {i+1}/{len(samples)}...")
+            print(f"Processing sample {i + 1}/{len(samples)}...")
 
         start = time.time()
 
@@ -375,25 +388,29 @@ def run_internvl_benchmark(num_samples: int = 0) -> dict[str, Any]:
             output_text = response if isinstance(response, str) else str(response)
             predicted = parse_vlm_response(output_text)
 
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": predicted,
-                "response": output_text[:200],
-                "inference_time_ms": elapsed_ms,
-                "success": True,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": predicted,
+                    "response": output_text[:200],
+                    "inference_time_ms": elapsed_ms,
+                    "success": True,
+                }
+            )
 
         except Exception as e:
             elapsed_ms = (time.time() - start) * 1000
-            results.append({
-                "sample_id": sample["sample_id"],
-                "ground_truth": sample["ground_truth"],
-                "predicted": None,
-                "error": str(e),
-                "inference_time_ms": elapsed_ms,
-                "success": False,
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "ground_truth": sample["ground_truth"],
+                    "predicted": None,
+                    "error": str(e),
+                    "inference_time_ms": elapsed_ms,
+                    "success": False,
+                }
+            )
 
     # Compute and print metrics
     print("\n--- Computing Metrics ---")

@@ -109,7 +109,9 @@ class HeadMetrics:
     ence: float = 0.0
     mce: float = 0.0
     num_samples: int = 0
-    uncertainty_correlation: float | None = None  # Correlation between uncertainty and error
+    uncertainty_correlation: float | None = (
+        None  # Correlation between uncertainty and error
+    )
 
 
 @dataclass
@@ -130,7 +132,9 @@ class DatasetResults:
     srcc_ci_upper: float | None = None
     per_head_metrics: list[HeadMetrics] = field(default_factory=list)
     supports_uncertainty: bool = False  # Whether model provides uncertainty estimates
-    macro_uncertainty_correlation: float | None = None  # Mean uncertainty-error correlation
+    macro_uncertainty_correlation: float | None = (
+        None  # Mean uncertainty-error correlation
+    )
 
 
 @dataclass
@@ -356,9 +360,7 @@ def load_model(config: BenchmarkConfig) -> torch.nn.Module:
         class GaussianHead(nn.Module):
             """Gaussian head for uncertainty estimation."""
 
-            def __init__(
-                self, in_features: int, hidden_dim: int, sub_dim: int
-            ) -> None:
+            def __init__(self, in_features: int, hidden_dim: int, sub_dim: int) -> None:
                 super().__init__()
                 self.shared = nn.Sequential(
                     nn.Linear(in_features, hidden_dim),
@@ -377,9 +379,7 @@ def load_model(config: BenchmarkConfig) -> torch.nn.Module:
                     nn.Linear(sub_dim, 1),
                 )
 
-            def forward(
-                self, x: torch.Tensor
-            ) -> tuple[torch.Tensor, torch.Tensor]:
+            def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
                 shared = self.shared(x)
                 mu = self.mu_head(shared)
                 log_var = self.log_var_head(shared)
@@ -404,9 +404,7 @@ def load_model(config: BenchmarkConfig) -> torch.nn.Module:
                 )
                 self.supports_uncertainty = True
 
-            def forward(
-                self, x: torch.Tensor
-            ) -> tuple[torch.Tensor, torch.Tensor]:
+            def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
                 features = self.backbone(x)
                 mus = []
                 log_vars = []
@@ -515,9 +513,7 @@ class Phase7MVPDataset(torch.utils.data.Dataset):
 
         # Extract severity scores
         severity_scores = sample.get("severity_scores", {})
-        labels = [
-            float(severity_scores.get(key, 0.0)) for key in self.SEVERITY_KEYS
-        ]
+        labels = [float(severity_scores.get(key, 0.0)) for key in self.SEVERITY_KEYS]
 
         # Apply transform
         if self.transform is not None:
@@ -559,9 +555,7 @@ def create_phase7_dataloader(
         ]
     )
 
-    dataset = Phase7MVPDataset(
-        config.phase7_mvp_path, split=split, transform=transform
-    )
+    dataset = Phase7MVPDataset(config.phase7_mvp_path, split=split, transform=transform)
 
     return DataLoader(
         dataset,
@@ -789,10 +783,12 @@ def evaluate_diqa5000(
     with open(annotations_file) as f:
         reader = csv.DictReader(f)
         for row in reader:
-            annotations.append({
-                "image_name": row["res"],  # Use distorted (res) images
-                "mos": float(row["overall"]),  # Use overall quality score
-            })
+            annotations.append(
+                {
+                    "image_name": row["res"],  # Use distorted (res) images
+                    "mos": float(row["overall"]),  # Use overall quality score
+                }
+            )
 
     print(f"DIQA-5000 test annotations: {len(annotations)} samples")
 

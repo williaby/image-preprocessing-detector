@@ -10,13 +10,27 @@ from pathlib import Path
 
 # Stage 1 dataset manifests
 MANIFESTS = {
-    "diqa-5000": Path("/mnt/e/image_detection/06_staging/stage1_manifests/diqa-5000_manifest.json"),
-    "smartdoc-qa": Path("/mnt/e/image_detection/06_staging/stage1_manifests/smartdoc-qa_manifest.json"),
-    "ocr-quality": Path("/mnt/e/image_detection/06_staging/stage1_manifests/ocr-quality_manifest.json"),
-    "dibco": Path("/mnt/e/image_detection/06_staging/stage1_manifests/dibco_manifest.json"),
-    "funsd": Path("/mnt/e/image_detection/06_staging/stage1_manifests/funsd_manifest.json"),
-    "sroie": Path("/mnt/e/image_detection/06_staging/stage1_manifests/sroie_manifest.json"),
-    "tobacco-800": Path("/mnt/e/image_detection/06_staging/stage1_manifests/tobacco-800_manifest.json"),
+    "diqa-5000": Path(
+        "/mnt/e/image_detection/06_staging/stage1_manifests/diqa-5000_manifest.json"
+    ),
+    "smartdoc-qa": Path(
+        "/mnt/e/image_detection/06_staging/stage1_manifests/smartdoc-qa_manifest.json"
+    ),
+    "ocr-quality": Path(
+        "/mnt/e/image_detection/06_staging/stage1_manifests/ocr-quality_manifest.json"
+    ),
+    "dibco": Path(
+        "/mnt/e/image_detection/06_staging/stage1_manifests/dibco_manifest.json"
+    ),
+    "funsd": Path(
+        "/mnt/e/image_detection/06_staging/stage1_manifests/funsd_manifest.json"
+    ),
+    "sroie": Path(
+        "/mnt/e/image_detection/06_staging/stage1_manifests/sroie_manifest.json"
+    ),
+    "tobacco-800": Path(
+        "/mnt/e/image_detection/06_staging/stage1_manifests/tobacco-800_manifest.json"
+    ),
 }
 
 # Root directories for each dataset
@@ -70,7 +84,9 @@ def main():
 
     while sum(samples_per_dataset.values()) > TOTAL_SAMPLE:
         # Remove from smallest allocation (but keep at least 1)
-        for name in sorted(samples_per_dataset.keys(), key=lambda k: samples_per_dataset[k]):
+        for name in sorted(
+            samples_per_dataset.keys(), key=lambda k: samples_per_dataset[k]
+        ):
             if samples_per_dataset[name] > 1:
                 samples_per_dataset[name] -= 1
                 break
@@ -88,11 +104,13 @@ def main():
         sampled = random.sample(data, n_samples)
 
         for item in sampled:
-            combined_manifest.append({
-                "image": item["image"],
-                "dataset": name,
-                "root_dir": ROOT_DIRS[name],
-            })
+            combined_manifest.append(
+                {
+                    "image": item["image"],
+                    "dataset": name,
+                    "root_dir": ROOT_DIRS[name],
+                }
+            )
 
         sample_summary[name] = {
             "sampled": n_samples,

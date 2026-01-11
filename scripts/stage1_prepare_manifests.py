@@ -183,7 +183,9 @@ def main():
         for name, config in STAGE1_DATASETS.items():
             images = discover_images(config)
             total += len(images)
-            print(f"  {name:15} | {len(images):6} images | {config.priority:8} | {config.notes[:40]}")
+            print(
+                f"  {name:15} | {len(images):6} images | {config.priority:8} | {config.notes[:40]}"
+            )
         print("-" * 80)
         print(f"  {'TOTAL':15} | {total:6} images")
         return
@@ -228,11 +230,11 @@ def main():
     for stats in all_stats:
         if stats["manifest"]:
             cmd = f"""
-# {stats['dataset']} ({stats['images']} images)
+# {stats["dataset"]} ({stats["images"]} images)
 python src/evaluate/iqa_eval.py \\
     --model-path zhalala/DeQA-Doc-Mix \\
-    --meta-paths {stats['manifest']} \\
-    --root-dir {stats['root_dir']} \\
+    --meta-paths {stats["manifest"]} \\
+    --root-dir {stats["root_dir"]} \\
     --save-dir /mnt/e/image_detection/06_staging/stage1_deqa_labels \\
     --level-names excellent good fair poor bad \\
     --with-prob True \\

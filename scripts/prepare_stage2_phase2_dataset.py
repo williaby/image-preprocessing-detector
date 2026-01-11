@@ -20,7 +20,9 @@ METADATA_REGISTRY = Path("/mnt/e/image_detection/metadata_registry/json")
 STAGE2_SPLITS = Path("/home/byron/dev/image_detection/stage2_diqa_ensemble/splits")
 
 # Output location for enhanced splits
-OUTPUT_DIR = Path("/home/byron/dev/image_detection/stage2_diqa_ensemble/splits_with_layer2")
+OUTPUT_DIR = Path(
+    "/home/byron/dev/image_detection/stage2_diqa_ensemble/splits_with_layer2"
+)
 
 
 def load_layer2_metadata(dataset_name: str) -> dict:
@@ -101,7 +103,9 @@ def enhance_split_with_layer2(split_file: Path, output_file: Path) -> dict:
                         "domain_level1": layer2_data.get("domain_level1", "UNK"),
                         "domain_confidence": layer2_data.get("domain_confidence", 0.3),
                         "capture_method": layer2_data.get("capture_method", "unknown"),
-                        "resolution_category": layer2_data.get("resolution_category", "unknown"),
+                        "resolution_category": layer2_data.get(
+                            "resolution_category", "unknown"
+                        ),
                     }
                     enhanced_count += 1
             else:
@@ -119,7 +123,7 @@ def enhance_split_with_layer2(split_file: Path, output_file: Path) -> dict:
     }
 
     print(f"  Total: {total_count}")
-    print(f"  Enhanced: {enhanced_count} ({stats['coverage']*100:.1f}%)")
+    print(f"  Enhanced: {enhanced_count} ({stats['coverage'] * 100:.1f}%)")
     print(f"  Missing: {missing_count}")
 
     return stats
@@ -127,9 +131,9 @@ def enhance_split_with_layer2(split_file: Path, output_file: Path) -> dict:
 
 def main():
     """Process all splits."""
-    print("="*60)
+    print("=" * 60)
     print("Stage 2 Dataset Enhancement with Layer 2 Metadata")
-    print("="*60)
+    print("=" * 60)
 
     if not METADATA_REGISTRY.exists():
         print(f"❌ Metadata registry not found: {METADATA_REGISTRY}")
@@ -148,12 +152,14 @@ def main():
             all_stats[split] = enhance_split_with_layer2(input_file, output_file)
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Summary")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     for split, stats in all_stats.items():
-        print(f"{split.upper()}: {stats['enhanced']}/{stats['total']} enhanced ({stats['coverage']*100:.1f}%)")
+        print(
+            f"{split.upper()}: {stats['enhanced']}/{stats['total']} enhanced ({stats['coverage'] * 100:.1f}%)"
+        )
 
     print(f"\n✅ Enhanced splits saved to: {OUTPUT_DIR}")
     print(f"\nNext steps:")
