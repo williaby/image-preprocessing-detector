@@ -1458,7 +1458,7 @@ def _download_dataset_from_gcs() -> None:
 
     log.info(f"found_{len(tarball_blobs)}_tarballs")
 
-    tmp_dir = Path("/tmp")
+    tmp_dir = Path("/tmp")  # nosec B108 - Modal container isolation
     for blob in tarball_blobs:
         filename = Path(blob.name).name
         local_path = tmp_dir / filename

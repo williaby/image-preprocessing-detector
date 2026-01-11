@@ -141,12 +141,12 @@ class ProductionTrainingConfig:
 
 def set_seed(seed: int) -> None:
     """Set random seeds for reproducibility."""
-    import random
+    import random  # nosec B311 - used for ML reproducibility, not cryptographic
 
     import numpy as np
     import torch
 
-    random.seed(seed)
+    random.seed(seed)  # nosec B311
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -241,7 +241,7 @@ def prepare_dataset(bucket_name: str, gcs_prefix: str) -> Path:
     """Download and prepare dataset."""
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
 
-    dataset_dir = Path("/tmp/phase7_production")
+    dataset_dir = Path("/tmp/phase7_production")  # nosec B108 - Modal container isolation
     images_dir = dataset_dir / "images"
 
     if (dataset_dir / "train_metadata.json").exists():

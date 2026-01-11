@@ -183,12 +183,12 @@ class TestLayoutMaskGeneratorConfig:
         config = LayoutMaskGeneratorConfig(
             target_size=(800, 800),
             confidence_threshold=0.5,
-            cache_dir="/tmp/mask_cache",
+            cache_dir="/tmp/mask_cache",  # nosec B108 - test fixture
         )
 
         assert config.target_size == (800, 800)
         assert config.confidence_threshold == 0.5
-        assert config.cache_dir == "/tmp/mask_cache"
+        assert config.cache_dir == "/tmp/mask_cache"  # nosec B108 - test fixture
 
 
 class TestLayoutMaskGenerator:

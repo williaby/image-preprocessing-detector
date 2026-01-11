@@ -5,7 +5,7 @@ Takes a stratified sample from each Stage 1 dataset proportional to size.
 """
 
 import json
-import random
+import random  # nosec B311 - used for dataset sampling, not cryptographic
 from pathlib import Path
 
 # Stage 1 dataset manifests

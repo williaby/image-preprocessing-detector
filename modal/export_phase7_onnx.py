@@ -66,10 +66,11 @@ production_volume = modal.Volume.from_name("phase7-production-checkpoints", crea
 def export_model(model_type: str, seed: int) -> dict:
     """Export a single model to ONNX."""
     import os
-    import torch
-    import torch.nn as nn
+
     import onnx
     import timm
+    import torch
+    import torch.nn as nn
     from google.cloud import storage
 
     print("=" * 60)
@@ -217,7 +218,7 @@ def export_model(model_type: str, seed: int) -> dict:
 
     dummy_input = torch.randn(1, 3, input_resolution, input_resolution)
 
-    onnx_dir = Path("/tmp/onnx_export")
+    onnx_dir = Path("/tmp/onnx_export")  # nosec B108 - Modal container isolation
     onnx_dir.mkdir(exist_ok=True)
     onnx_filename = f"phase7_{model_type}_resnet50_seed{seed}.onnx"
     onnx_path = onnx_dir / onnx_filename

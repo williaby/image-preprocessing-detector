@@ -14,7 +14,7 @@ from pathlib import Path
 DIQA_ROOT = Path("/mnt/e/image_detection/02_benchmark_only/diqa-5000")
 TEST_DIR = DIQA_ROOT / "test"
 ARCHIVE_NAME = "diqa5000-test.tar.gz"
-ARCHIVE_PATH = Path("/tmp") / ARCHIVE_NAME
+ARCHIVE_PATH = Path("/tmp") / ARCHIVE_NAME  # nosec B108 - temp archive location, cleaned up after upload
 
 # GCS bucket
 GCS_BUCKET = "gs://assured-oss-457903-diqa5000"

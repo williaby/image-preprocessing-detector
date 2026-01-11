@@ -127,7 +127,7 @@ class TestDatasetBuilder:
         samples = [
             HarvestedSample(
                 sample_id=f"sample_{i}",
-                source_path=f"/tmp/sample_{i}.png",
+                source_path=f"/tmp/sample_{i}.png",  # nosec B108 - test fixture
                 harvest_time=utc_now(),
                 harvest_reason=HarvestReason.HIGH_ENTROPY,
                 privacy_status=PrivacyStatus.APPROVED,

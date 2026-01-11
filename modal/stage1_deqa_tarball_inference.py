@@ -93,10 +93,10 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
     print(f"Processing tarball: {tarball_filename}")
     start_time = time.time()
 
-    # Extract tarball to /tmp (ephemeral SSD)
+    # Extract tarball to /tmp (ephemeral SSD in Modal's isolated container)
     # Note: tarballs are in /tarballs/tarballs/ subdirectory
     tarball_path = Path("/tarballs/tarballs") / tarball_filename
-    extract_dir = Path("/tmp/extracted")
+    extract_dir = Path("/tmp/extracted")  # nosec B108 - Modal container isolation
     extract_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Extracting {tarball_filename} to {extract_dir}...")
@@ -288,10 +288,11 @@ def main(
     import subprocess
 
     subprocess.run(
+        # nosec B108 - Modal container isolation, /tmp is ephemeral SSD
         ["modal", "nfs", "get", "stage1-tarballs", "tarballs/manifest.json", "/tmp/manifest.json", "--force"],
         check=True,
     )
-    with open("/tmp/manifest.json") as f:
+    with open("/tmp/manifest.json") as f:  # nosec B108
         manifest = json.load(f)
 
     # Get tarballs to process
