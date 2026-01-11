@@ -95,4 +95,5 @@ def ml_detector(
         teacher_model_path=teacher_path,
         device=Device.CPU,
         enable_modal_fallback=False,
+        use_orchestrator=False,  # Use legacy mode for tests that access .device
     )

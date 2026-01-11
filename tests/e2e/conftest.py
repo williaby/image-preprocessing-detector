@@ -20,35 +20,76 @@ def temp_output_dir():
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-@pytest.fixture
-def sample_document_image():
-    """Create a synthetic document image for testing."""
+def _create_document_image(height: int = 825, width: int = 637) -> np.ndarray:
+    """Create a synthetic document image for testing.
+
+    Default size is 1/4 of letter size (825x637) for faster tests while
+    maintaining sufficient resolution for IQA detectors.
+    """
     # Create a document-like image (white background with text blocks)
-    img = np.ones((3300, 2550, 3), dtype=np.uint8) * 255
+    img = np.ones((height, width, 3), dtype=np.uint8) * 255
+
+    # Scale factor from full size (3300x2550) to test size
+    scale_x = width / 2550
+    scale_y = height / 3300
 
     # Add header text block
-    cv2.rectangle(img, (200, 100), (2350, 200), (0, 0, 0), -1)
+    cv2.rectangle(
+        img,
+        (int(200 * scale_x), int(100 * scale_y)),
+        (int(2350 * scale_x), int(200 * scale_y)),
+        (0, 0, 0),
+        -1,
+    )
 
     # Add body text blocks (simulating paragraphs)
     for y in range(300, 2800, 100):
         # Vary line lengths to simulate text
-        width = _rng.integers(1800, 2100)
-        cv2.rectangle(img, (200, y), (200 + width, y + 20), (30, 30, 30), -1)
+        line_width = _rng.integers(1800, 2100)
+        cv2.rectangle(
+            img,
+            (int(200 * scale_x), int(y * scale_y)),
+            (int((200 + line_width) * scale_x), int((y + 20) * scale_y)),
+            (30, 30, 30),
+            -1,
+        )
 
     # Add a figure placeholder
-    cv2.rectangle(img, (200, 2900), (1200, 3200), (200, 200, 200), -1)
-    cv2.rectangle(img, (200, 2900), (1200, 3200), (100, 100, 100), 2)
+    cv2.rectangle(
+        img,
+        (int(200 * scale_x), int(2900 * scale_y)),
+        (int(1200 * scale_x), int(3200 * scale_y)),
+        (200, 200, 200),
+        -1,
+    )
+    cv2.rectangle(
+        img,
+        (int(200 * scale_x), int(2900 * scale_y)),
+        (int(1200 * scale_x), int(3200 * scale_y)),
+        (100, 100, 100),
+        2,
+    )
 
     return img
 
 
-@pytest.fixture
+# Module-scoped fixtures for faster tests (images created once per module)
+@pytest.fixture(scope="module")
+def sample_document_image():
+    """Create a synthetic document image for testing.
+
+    Module-scoped for performance - image is reused across all tests in module.
+    """
+    return _create_document_image()
+
+
+@pytest.fixture(scope="module")
 def sample_blurry_image(sample_document_image):
     """Create a blurry version of the sample document."""
     return cv2.GaussianBlur(sample_document_image, (21, 21), 10)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sample_noisy_image(sample_document_image):
     """Create a noisy version of the sample document."""
     # Use float arithmetic to properly add Gaussian noise
@@ -58,7 +99,7 @@ def sample_noisy_image(sample_document_image):
     return np.clip(img_float + noise, 0, 255).astype(np.uint8)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sample_skewed_image(sample_document_image):
     """Create a skewed version of the sample document."""
     h, w = sample_document_image.shape[:2]
@@ -69,7 +110,7 @@ def sample_skewed_image(sample_document_image):
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sample_low_contrast_image(sample_document_image):
     """Create a low contrast version of the sample document."""
     # Reduce contrast by compressing intensity range
@@ -79,7 +120,7 @@ def sample_low_contrast_image(sample_document_image):
     return cv2.cvtColor(low_contrast, cv2.COLOR_GRAY2BGR)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def multi_issue_image(sample_document_image):
     """Create an image with multiple quality issues."""
     # Apply blur
