@@ -58,13 +58,13 @@ dependencies = [
     # "pytesseract (>=0.3.13,<0.4.0)",
     "gitpython (>=3.1.45,<4.0.0)",
     "pywavelets (>=1.4.0)",
-    "onnxruntime-gpu (>=1.23.2,<2.0.0)",
     "defusedxml>=0.7.1",
     "fonttools>=4.60.2,<5.0.0",
     "werkzeug>=3.1.5",
     "urllib3>=2.6.3",
-    "ultralytics>=8.3.230",
     "filelock>=3.20.1",
+    # Note: ultralytics and onnxruntime-gpu moved to [ml] extra to reduce base install size
+    # This allows fuzzing and lightweight installs without ~4GB of CUDA dependencies
 ]
 
 [project.optional-dependencies]
@@ -130,19 +130,27 @@ dev = [
 
 ml = [
     # Machine Learning Dependencies (install separately for Phase 2/3)
+    # Includes ~4GB of CUDA dependencies - use [fuzz] extra for lightweight installs
     "torch>=2.9.0",  # Updated to address GHSA-887c-mr87-cxwp (CVE-2025-3730)
     "torchvision>=0.24.0",  # Compatible with torch 2.9.0
     "doclayout-yolo",  # DocLayout-YOLO (YOLOv10-based) for Phase 3 layout detection
-    "ultralytics>=8.0.0",  # YOLOv8 for Phase 6 layout-lite (lightweight)
+    "ultralytics>=8.3.230",  # YOLOv8/YOLO11 for layout detection (moved from base)
     "timm>=0.9.0",
     "albumentations>=1.3.0",
-    "onnxruntime>=1.15.0",
+    "onnxruntime-gpu>=1.23.2,<2.0.0",  # GPU-accelerated inference (moved from base)
     "tensorboard>=2.12.0",  # Training monitoring
     # "genalog>=0.1.0",  # DISABLED: Conflicts with dev dependencies
     # Model artifact storage and versioning
     "google-cloud-storage>=2.10.0",
     "huggingface-hub>=0.20.0",
     "pyyaml>=6.0",
+]
+
+fuzz = [
+    # Minimal dependencies for ClusterFuzzLite fuzzing
+    # Excludes PyTorch/CUDA to fit in disk space constraints (~4GB saved)
+    "atheris>=2.3.0",
+    # Core deps already in base: pillow, numpy, pymupdf, opencv-python-headless
 ]
 
 api = [

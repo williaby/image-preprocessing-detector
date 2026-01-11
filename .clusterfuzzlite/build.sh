@@ -27,23 +27,29 @@ echo "Python version $PYTHON_VERSION is compatible with Atheris"
 # Install UV (replaces Poetry for this project)
 pip3 install uv
 
-# Install project dependencies (without dev dependencies)
+# Install project dependencies (minimal set for fuzzing)
 cd "$SRC/image-preprocessing-detector"
 
-# Generate requirements without dev dependencies (no hashes for pip compatibility)
-uv export --no-dev --no-hashes --format requirements-txt > /tmp/requirements.txt
+# Install ONLY the fuzz extra which includes minimal deps
+# This avoids ~4GB of CUDA/PyTorch dependencies that cause disk space issues
+echo "Installing minimal fuzz dependencies (no CUDA/PyTorch)..."
 
 # Pin NumPy to <2.0 for PyInstaller compatibility (NumPy 2.x has _core module issues)
-# Filter out numpy and editable requirements from requirements
-grep -v "^numpy" /tmp/requirements.txt | grep -v "^-e " > /tmp/requirements-no-numpy.txt
 pip3 install "numpy>=1.26.0,<2.0.0"
-pip3 install -r /tmp/requirements-no-numpy.txt
 
-# Install project in editable mode
+# Install core dependencies manually (excluding heavy ML deps)
+# These are the only deps needed for the fuzz targets
+pip3 install \
+    "pillow>=10.0.0" \
+    "pymupdf>=1.23.0" \
+    "opencv-python-headless>=4.8.0,<5.0.0" \
+    "pydantic>=2.0.0" \
+    "structlog>=23.1.0" \
+    "atheris>=2.3.0"
+
+# Install project in editable mode without dependencies
+# (we installed them manually above)
 pip3 install -e . --no-deps
-
-# Install Atheris for Python fuzzing
-pip3 install atheris==2.3.0
 
 # Store project directory for absolute paths
 PROJECT_DIR="$SRC/image-preprocessing-detector"
