@@ -122,6 +122,7 @@ class VLMInference:
             model_id: HuggingFace model ID
         """
         import os
+
         import torch
         from transformers import AutoModelForVision2Seq, AutoProcessor
 

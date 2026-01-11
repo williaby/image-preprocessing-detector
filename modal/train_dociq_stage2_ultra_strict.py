@@ -35,21 +35,18 @@ Usage:
 from __future__ import annotations
 
 import json
-import sys
-from collections import deque
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-import modal
 import numpy as np
 import structlog
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from scipy import stats
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
+
+import modal
 
 logger = structlog.get_logger(__name__)
 

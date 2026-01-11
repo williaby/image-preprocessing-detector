@@ -127,8 +127,8 @@ def get_quantization_config(quantize_mode: str | None):
     if not quantize_mode or quantize_mode == "fp16":
         return None
 
-    from transformers import BitsAndBytesConfig
     import torch
+    from transformers import BitsAndBytesConfig
 
     if quantize_mode == "4bit":
         return BitsAndBytesConfig(
@@ -137,16 +137,15 @@ def get_quantization_config(quantize_mode: str | None):
             bnb_4bit_compute_dtype=torch.float16,
             bnb_4bit_use_double_quant=True,  # Nested quantization for better compression
         )
-    elif quantize_mode == "8bit":
+    if quantize_mode == "8bit":
         return BitsAndBytesConfig(
             load_in_8bit=True,
             llm_int8_threshold=6.0,  # Outlier threshold for mixed precision
         )
-    else:
-        raise ValueError(
-            f"Invalid quantize mode: {quantize_mode}. "
-            f"Use 'fp16', '8bit', or '4bit'"
-        )
+    raise ValueError(
+        f"Invalid quantize mode: {quantize_mode}. "
+        f"Use 'fp16', '8bit', or '4bit'"
+    )
 
 
 @app.function(
@@ -179,12 +178,11 @@ def run_deqa_inference_batch(
 
     import torch
     from PIL import Image
-    from tqdm import tqdm
-
     from src.constants import DEFAULT_IMAGE_TOKEN, IMAGE_TOKEN_INDEX
     from src.conversation import conv_templates
     from src.mm_utils import get_model_name_from_path, tokenizer_image_token
     from src.model.builder import load_pretrained_model
+    from tqdm import tqdm
 
     print(f"Processing {len(entries)} images...")
     print(f"Image data keys: {len(image_data)}")
@@ -253,14 +251,13 @@ def run_deqa_inference_batch(
         width, height = pil_img.size
         if width == height:
             return pil_img
-        elif width > height:
+        if width > height:
             result = Image.new(pil_img.mode, (width, width), background_color)
             result.paste(pil_img, (0, (width - height) // 2))
             return result
-        else:
-            result = Image.new(pil_img.mode, (height, height), background_color)
-            result.paste(pil_img, ((height - width) // 2, 0))
-            return result
+        result = Image.new(pil_img.mode, (height, height), background_color)
+        result.paste(pil_img, ((height - width) // 2, 0))
+        return result
 
     results = []
     errors = []
@@ -350,15 +347,13 @@ def run_deqa_inference_batch(
     # Save results to volume
     output_path = f"/results/{output_name}_deqa_labels.jsonl"
     with open(output_path, "w") as f:
-        for result in results:
-            f.write(json.dumps(result) + "\n")
+        f.writelines(json.dumps(result) + "\n" for result in results)
 
     # Save errors if any
     if errors:
         error_path = f"/results/{output_name}_errors.jsonl"
         with open(error_path, "w") as f:
-            for error in errors:
-                f.write(json.dumps(error) + "\n")
+            f.writelines(json.dumps(error) + "\n" for error in errors)
         print(f"Errors saved to {error_path}")
 
     print(f"Results saved to {output_path}")
@@ -496,7 +491,7 @@ def main(
             print(f"\n✅ VALIDATION PASSED ({quantize.upper()}) - Ready for comparison!")
             print(f"Download: modal volume get stage1-deqa-results {output_name}_deqa_labels.jsonl ./results/")
         else:
-            print(f"\n⚠️ VALIDATION HAD ISSUES - Check errors before proceeding")
+            print("\n⚠️ VALIDATION HAD ISSUES - Check errors before proceeding")
 
         return
 
