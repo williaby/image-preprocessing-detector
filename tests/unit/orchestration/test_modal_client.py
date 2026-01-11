@@ -194,8 +194,9 @@ class TestCircuitBreakerStates:
 
         assert client.breaker_state.state == CircuitState.OPEN
 
-        # Wait for timeout
-        time.sleep(0.15)
+        # Simulate time passing by manipulating the breaker state's last_failure_time
+        # This avoids real sleep while testing the same logic
+        client.breaker_state.last_failure_time = time.time() - 0.2  # 0.2s ago
 
         # Next request should transition to HALF_OPEN
         request = ModalInferenceRequest(image_array=img)
@@ -214,16 +215,19 @@ class TestCircuitBreakerStates:
         client = ModalClient(config=config, modal_endpoint="https://test.modal.com")
         img = np.zeros((100, 100, 3), dtype=np.uint8)
 
-        # Open circuit with failures
-        with patch.object(client, "_execute_request", side_effect=RuntimeError("fail")):
+        # Open circuit with failures (mock sleep to avoid retry delays)
+        with (
+            patch.object(client, "_execute_request", side_effect=RuntimeError("fail")),
+            patch("time.sleep"),  # Skip actual sleep during backoff
+        ):
             for _ in range(2):
                 request = ModalInferenceRequest(image_array=img)
                 client.predict(request)
 
         assert client.breaker_state.state == CircuitState.OPEN
 
-        # Wait for timeout
-        time.sleep(0.15)
+        # Simulate time passing by manipulating the breaker state's last_failure_time
+        client.breaker_state.last_failure_time = time.time() - 0.2  # 0.2s ago
 
         # Successful requests should close circuit
         for _ in range(2):
@@ -250,8 +254,8 @@ class TestCircuitBreakerStates:
 
         assert client.breaker_state.state == CircuitState.OPEN
 
-        # Wait for timeout
-        time.sleep(0.15)
+        # Simulate time passing by manipulating the breaker state's last_failure_time
+        client.breaker_state.last_failure_time = time.time() - 0.2  # 0.2s ago
 
         # Failure in half-open should reopen circuit
         request = ModalInferenceRequest(image_array=img)
@@ -296,7 +300,11 @@ class TestRetryLogic:
             msg = "Simulated failure"
             raise RuntimeError(msg)
 
-        with patch.object(client, "_execute_request", side_effect=mock_execute):
+        # Mock time.sleep to avoid actual delays during retries
+        with (
+            patch.object(client, "_execute_request", side_effect=mock_execute),
+            patch("time.sleep"),  # Skip actual sleep during backoff
+        ):
             request = ModalInferenceRequest(image_array=img)
             response = client.predict(request)
 
@@ -329,7 +337,11 @@ class TestRetryLogic:
                 model_version="v1.0",
             )
 
-        with patch.object(client, "_execute_request", side_effect=mock_execute):
+        # Mock time.sleep to avoid actual delays during retries
+        with (
+            patch.object(client, "_execute_request", side_effect=mock_execute),
+            patch("time.sleep"),  # Skip actual sleep during backoff
+        ):
             request = ModalInferenceRequest(image_array=img)
             response = client.predict(request)
 
@@ -404,7 +416,9 @@ class TestEdgeCases:
 
     def test_no_endpoint_configured(self) -> None:
         """Test behavior when no Modal endpoint configured."""
-        client = ModalClient(modal_endpoint=None)
+        # Use max_retries=0 to avoid retry delays
+        config = CircuitBreakerConfig(max_retries=0)
+        client = ModalClient(config=config, modal_endpoint=None)
         img = np.zeros((100, 100, 3), dtype=np.uint8)
         request = ModalInferenceRequest(image_array=img)
 

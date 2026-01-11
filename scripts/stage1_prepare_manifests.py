@@ -126,7 +126,7 @@ def create_manifest(config: DatasetConfig, output_dir: Path) -> dict:
     print(f"  Found: {len(images)} images")
 
     if not images:
-        print(f"  WARNING: No images found!")
+        print("  WARNING: No images found!")
         return {"dataset": config.name, "images": 0, "manifest": None}
 
     # Create manifest entries

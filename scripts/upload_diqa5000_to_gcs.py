@@ -82,9 +82,8 @@ def verify_upload() -> bool:
     if result.returncode == 0:
         print(f"Verified: {result.stdout.strip()}")
         return True
-    else:
-        print(f"Verification failed: {result.stderr}")
-        return False
+    print(f"Verification failed: {result.stderr}")
+    return False
 
 
 def main() -> int:

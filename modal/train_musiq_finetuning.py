@@ -146,7 +146,7 @@ def download_diqa5000(bucket_name: str, target_dir: Path) -> Path:
             member_path = target_dir / member.name
             if not is_within_directory(target_dir, member_path):
                 raise ValueError(f"Path traversal detected: {member.name}")
-        # noqa: S202, nosec B202: Path traversal validation performed above
+
         tar.extractall(path=target_dir, members=members, filter="data")
 
     extract_time = time.time() - extract_start

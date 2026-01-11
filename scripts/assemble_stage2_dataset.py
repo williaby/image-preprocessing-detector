@@ -24,7 +24,7 @@ import json
 import logging
 import shutil
 import tarfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -202,7 +202,7 @@ def resolve_source_path(
     """Resolve the full source path for an image."""
     if dataset_name == "diqa-5000":
         return benchmark_data / "diqa-5000" / image_path
-    elif dataset_name == "smartdoc-qa":
+    if dataset_name == "smartdoc-qa":
         return (
             benchmark_data
             / "smartdoc-qa"
@@ -210,19 +210,18 @@ def resolve_source_path(
             / "Captured_Images"
             / image_path
         )
-    elif dataset_name == "funsd":
+    if dataset_name == "funsd":
         # image_path: images/funsd_000074.jpg -> just the filename part
         filename = Path(image_path).name
         return base_data / "forms" / "funsd" / "images" / filename
-    elif dataset_name == "sroie":
+    if dataset_name == "sroie":
         filename = Path(image_path).name
         return base_data / "forms" / "sroie" / "images" / filename
-    elif dataset_name == "tobacco-800":
+    if dataset_name == "tobacco-800":
         filename = Path(image_path).name
         return base_data / "degraded" / "tobacco800" / "images" / filename
-    else:
-        logger.warning(f"Unknown dataset: {dataset_name}")
-        return None
+    logger.warning(f"Unknown dataset: {dataset_name}")
+    return None
 
 
 def assemble_dataset(

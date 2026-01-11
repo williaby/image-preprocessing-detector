@@ -265,7 +265,7 @@ def main():
     int8_decision = evaluate_decision_gate(int8_metrics, "INT8")
     nf4_decision = evaluate_decision_gate(nf4_metrics, "NF4")
 
-    print(f"\nINT8 Quantization:")
+    print("\nINT8 Quantization:")
     print(
         f"  Mean KL-div: {int8_metrics['kl_divergence']['mean']:.4f} (threshold: <0.03)"
     )
@@ -274,7 +274,7 @@ def main():
     )
     print(f"  Decision: {int8_decision['recommendation']}")
 
-    print(f"\nNF4 Quantization:")
+    print("\nNF4 Quantization:")
     print(
         f"  Mean KL-div: {nf4_metrics['kl_divergence']['mean']:.4f} (threshold: <0.05)"
     )
@@ -326,24 +326,23 @@ def generate_final_recommendation(int8_decision: dict, nf4_decision: dict) -> st
             "Reason: Same quality as INT8, lower VRAM (9GB vs 14GB)\n"
             "Enables future local inference on consumer GPUs (RTX 3090/4090)"
         )
-    elif int8_pass:
+    if int8_pass:
         return (
             "✅ INT8 APPROVED, NF4 rejected\n\n"
             "Recommendation: Use INT8 for production\n"
             "Reason: Safer quality preservation than NF4"
         )
-    elif nf4_pass:
+    if nf4_pass:
         return (
             "✅ NF4 APPROVED, INT8 rejected\n\n"
             "Recommendation: Use NF4 for production\n"
             "Reason: Passed quality gates, lower VRAM than rejected INT8"
         )
-    else:
-        return (
-            "❌ Both INT8 and NF4 REJECTED\n\n"
-            "Recommendation: Use FP16 baseline for production\n"
-            "Reason: Quantization introduces unacceptable quality degradation"
-        )
+    return (
+        "❌ Both INT8 and NF4 REJECTED\n\n"
+        "Recommendation: Use FP16 baseline for production\n"
+        "Reason: Quantization introduces unacceptable quality degradation"
+    )
 
 
 if __name__ == "__main__":

@@ -46,8 +46,10 @@ def download_plantuml() -> bool:
     try:
         # Create SSL context with certificate verification
         ssl_context = ssl.create_default_context()
-        # PLANTUML_URL is a hardcoded constant, not user-controlled
-        with (  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected
+        # Security: PLANTUML_URL is a module-level constant pointing to the official
+        # PlantUML GitHub releases. It cannot be modified by user input.
+        with (
+            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: ERA001
             urllib.request.urlopen(  # noqa: S310  # nosec B310
                 PLANTUML_URL, context=ssl_context
             ) as response,

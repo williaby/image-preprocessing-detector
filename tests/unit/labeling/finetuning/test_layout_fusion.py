@@ -85,16 +85,22 @@ class TestLayoutFusionDownsampler:
         assert downsampler.config.n_layout_classes == 8
 
     def test_forward_shape_standard(self) -> None:
-        """Test forward pass produces correct output shape for 1600x1600 input."""
+        """Test forward pass produces correct output shape.
+
+        Uses 400x400 input for faster testing - the 4x downsampling math
+        is identical regardless of input size.
+        """
         downsampler = LayoutFusionDownsampler()
         batch_size = 2
 
-        rgb = torch.randn(batch_size, 3, 1600, 1600)
-        layout = torch.randn(batch_size, 11, 1600, 1600)
+        # Use smaller tensors for faster testing (same code path as 1600x1600)
+        rgb = torch.randn(batch_size, 3, 400, 400)
+        layout = torch.randn(batch_size, 11, 400, 400)
 
         output = downsampler(rgb, layout)
 
-        assert output.shape == (batch_size, 3, 400, 400)
+        # Expected output: 400px input with 4x downsampling produces 100px output
+        assert output.shape == (batch_size, 3, 100, 100)
 
     def test_forward_shape_smaller_input(self) -> None:
         """Test forward pass with smaller input sizes."""
@@ -135,8 +141,9 @@ class TestLayoutFusionDownsampler:
         downsampler = LayoutFusionDownsampler()
 
         # Slightly different sizes should be interpolated
-        rgb = torch.randn(2, 3, 1600, 1600)
-        layout = torch.randn(2, 11, 1596, 1596)  # Slightly smaller
+        # Use smaller tensors for faster testing
+        rgb = torch.randn(2, 3, 400, 400)
+        layout = torch.randn(2, 11, 396, 396)  # Slightly smaller
 
         output = downsampler(rgb, layout)
 
@@ -416,12 +423,16 @@ class TestDocIQReplica:
         assert not model.is_backbone_frozen
 
     def test_forward_shape(self) -> None:
-        """Test forward pass produces correct output shape."""
+        """Test forward pass produces correct output shape.
+
+        Uses 400x400 input for faster testing - architecture is size-agnostic.
+        """
         model = DocIQReplica(freeze_backbone=True, pretrained_backbone=False)
         batch_size = 2
 
-        rgb = torch.randn(batch_size, 3, 1600, 1600)
-        layout = torch.randn(batch_size, 11, 1600, 1600)
+        # Use smaller tensors for faster testing
+        rgb = torch.randn(batch_size, 3, 400, 400)
+        layout = torch.randn(batch_size, 11, 400, 400)
 
         outputs = model(rgb, layout)
 

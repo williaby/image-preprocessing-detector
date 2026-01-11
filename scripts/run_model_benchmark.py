@@ -330,7 +330,7 @@ def load_model(config: BenchmarkConfig) -> torch.nn.Module:
 
     # Load checkpoint
     # S6985: weights_only=False required to load config dict from checkpoint
-    checkpoint = torch.load(  # noqa: S6985  # nosec B614
+    checkpoint = torch.load(  # nosec B614
         config.model_path, map_location=config.device, weights_only=False
     )
 
@@ -541,7 +541,7 @@ def create_phase7_dataloader(
 
     # Get input resolution from model checkpoint config
     # S6985: weights_only=False required to load config dict from checkpoint
-    checkpoint = torch.load(  # noqa: S6985  # nosec B614
+    checkpoint = torch.load(  # nosec B614
         config.model_path, map_location="cpu", weights_only=False
     )
     model_config = checkpoint.get("config", {})
@@ -770,7 +770,7 @@ def evaluate_diqa5000(
     annotations_file = test_dir / "test.csv"
 
     if not test_dir.exists() or not annotations_file.exists():
-        print(f"DIQA-5000 test split not properly configured")
+        print("DIQA-5000 test split not properly configured")
         print(f"  Expected: {annotations_file}")
         return None
 
@@ -794,7 +794,7 @@ def evaluate_diqa5000(
 
     # Get input resolution from model checkpoint config
     # S6985: weights_only=False required to load config dict from checkpoint
-    checkpoint = torch.load(  # noqa: S6985  # nosec B614
+    checkpoint = torch.load(  # nosec B614
         config.model_path, map_location="cpu", weights_only=False
     )
     model_config = checkpoint.get("config", {})
@@ -934,7 +934,7 @@ def evaluate_smartdoc_qa_ocr(
 
     # Get input resolution from model checkpoint config
     # S6985: weights_only=False required to load config dict from checkpoint
-    checkpoint = torch.load(  # noqa: S6985  # nosec B614
+    checkpoint = torch.load(  # nosec B614
         config.model_path, map_location="cpu", weights_only=False
     )
     model_config = checkpoint.get("config", {})
@@ -955,7 +955,7 @@ def evaluate_smartdoc_qa_ocr(
         try:
             content = filepath.read_text()
             # Look for "XX.XX%  Accuracy" pattern
-            # noqa: S5852 - possessive quantifier not supported in Python re; pattern is safe
+
             match = re.search(r"(\d+\.\d+)%\s{1,10}Accuracy", content)
             if match:
                 return float(match.group(1))

@@ -102,7 +102,7 @@ def process_tarball(tarball_filename: str, output_prefix: str = "stage1") -> dic
     print(f"Extracting {tarball_filename} to {extract_dir}...")
     extract_start = time.time()
     with tarfile.open(tarball_path, "r:gz") as tar:
-        tar.extractall(extract_dir, filter="data")  # noqa: S202
+        tar.extractall(extract_dir, filter="data")
     extract_time = time.time() - extract_start
     print(f"Extraction completed in {extract_time:.1f}s")
 

@@ -162,12 +162,12 @@ def main():
         )
 
     print(f"\n✅ Enhanced splits saved to: {OUTPUT_DIR}")
-    print(f"\nNext steps:")
-    print(f"1. Upload enhanced splits to Modal volume:")
-    print(f"   poetry run modal volume put stage2-training-data \\")
+    print("\nNext steps:")
+    print("1. Upload enhanced splits to Modal volume:")
+    print("   poetry run modal volume put stage2-training-data \\")
     print(f"     {OUTPUT_DIR}/ /data/stage2_diqa_ensemble/splits_with_layer2/")
-    print(f"2. Update training script to load from splits_with_layer2/")
-    print(f"3. Launch Phase 2 training")
+    print("2. Update training script to load from splits_with_layer2/")
+    print("3. Launch Phase 2 training")
 
 
 if __name__ == "__main__":

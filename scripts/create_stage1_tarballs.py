@@ -18,7 +18,6 @@ Output structure:
 """
 
 import json
-import subprocess
 import tarfile
 from pathlib import Path
 

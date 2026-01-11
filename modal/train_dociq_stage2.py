@@ -1472,7 +1472,7 @@ def _download_dataset_from_gcs() -> None:
     for tarball in tmp_dir.glob("stage2_*.tar.gz"):
         log.info(f"extracting_{tarball.name}")
         with tarfile.open(tarball, "r:gz") as tar:
-            tar.extractall(path=extract_dir, filter="data")  # noqa: S202
+            tar.extractall(path=extract_dir, filter="data")
         # Remove tarball to save space
         tarball.unlink()
 

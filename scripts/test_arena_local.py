@@ -325,7 +325,6 @@ def test_inference_backend_factory() -> bool:
     print("\n--- Testing Inference Backend Factory ---")
     try:
         from image_preprocessing_detector.labeling.arena.inference.base import (
-            InferenceConfig,
             create_backend,
         )
 

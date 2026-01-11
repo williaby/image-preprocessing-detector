@@ -90,7 +90,7 @@ def download_dataset_from_gcs(
     print("Extracting dataset...")
     start = time.time()
     with tarfile.open(archive_path, "r:gz") as tar:
-        tar.extractall(cache_path, filter="data")  # noqa: S202
+        tar.extractall(cache_path, filter="data")
     extract_time = time.time() - start
     print(f"Extracted in {extract_time:.1f}s")
 

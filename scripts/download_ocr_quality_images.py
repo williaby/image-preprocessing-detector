@@ -9,7 +9,6 @@ Usage:
 """
 
 import argparse
-import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -134,13 +133,13 @@ def main():
     # Write manifest
     manifest_path = output_dir.parent / "download_manifest.txt"
     with open(manifest_path, "w") as f:
-        f.write(f"OCR-Quality Dataset Download\n")
-        f.write(f"============================\n")
+        f.write("OCR-Quality Dataset Download\n")
+        f.write("============================\n")
         f.write(f"Total images: {TOTAL_IMAGES}\n")
         f.write(f"Downloaded: {final_count}\n")
         f.write(f"Failed: {len(failed)}\n")
         if failed:
-            f.write(f"\nFailed files:\n")
+            f.write("\nFailed files:\n")
             for idx, msg in failed:
                 f.write(f"  {idx}.png: {msg}\n")
 

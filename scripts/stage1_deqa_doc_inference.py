@@ -46,7 +46,6 @@ Output:
 
 import argparse
 import json
-import os
 import sys
 import time
 from dataclasses import dataclass, field
@@ -293,7 +292,7 @@ class DeQADocInference:
         except ImportError:
             # Fallback to direct HuggingFace loading
             print("DeQAScorer not available, using direct HuggingFace loading...")
-            from transformers import AutoModelForCausalLM, AutoProcessor
+            from transformers import AutoModelForCausalLM
 
             load_kwargs = {
                 "trust_remote_code": True,
@@ -343,11 +342,10 @@ class DeQADocInference:
                     "predicted_score": score,
                     "inference_time_ms": (time.time() - start_time) * 1000,
                 }
-            else:
-                # Direct model interface - would need custom inference logic
-                raise NotImplementedError(
-                    "Direct model inference not yet implemented. Use DeQAScorer."
-                )
+            # Direct model interface - would need custom inference logic
+            raise NotImplementedError(
+                "Direct model inference not yet implemented. Use DeQAScorer."
+            )
 
         except Exception as e:
             return {

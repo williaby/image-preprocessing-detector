@@ -11,7 +11,6 @@ This script checks for common data issues that can cause training failures:
 import json
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -60,13 +59,13 @@ def analyze_soft_labels(split_file: Path) -> dict:
     deqa_scores = np.array(deqa_scores)
     human_mos_scores = np.array(human_mos_scores)
 
-    print(f"\n📊 Label Statistics:")
+    print("\n📊 Label Statistics:")
     print(f"  Samples with soft labels: {len(all_soft_labels)}")
     print(f"  Samples with DEQA scores: {len(deqa_scores)}")
     print(f"  Samples with human MOS: {len(human_mos_scores)}")
 
     # Check soft label distribution
-    print(f"\n📈 Soft Label Distribution (10 bins):")
+    print("\n📈 Soft Label Distribution (10 bins):")
     mean_per_bin = all_soft_labels.mean(axis=0)
     std_per_bin = all_soft_labels.std(axis=0)
 
@@ -80,11 +79,11 @@ def analyze_soft_labels(split_file: Path) -> dict:
     imbalance_ratio = max_bin / (min_bin + 1e-8)
     print(f"\n⚖️  Imbalance Ratio: {imbalance_ratio:.2f}x (max/min)")
     if imbalance_ratio > 5:
-        print(f"  ⚠️  WARNING: High imbalance detected!")
+        print("  ⚠️  WARNING: High imbalance detected!")
 
     # Check DEQA scores
     if len(deqa_scores) > 0:
-        print(f"\n📉 DEQA Score Distribution:")
+        print("\n📉 DEQA Score Distribution:")
         print(f"  Mean: {deqa_scores.mean():.3f}")
         print(f"  Std:  {deqa_scores.std():.3f}")
         print(f"  Min:  {deqa_scores.min():.3f}")
@@ -93,21 +92,21 @@ def analyze_soft_labels(split_file: Path) -> dict:
 
         # Histogram
         hist, bins = np.histogram(deqa_scores, bins=10, range=(1, 5))
-        print(f"\n  Histogram (1-5 scale):")
+        print("\n  Histogram (1-5 scale):")
         for i, (count, start) in enumerate(zip(hist, bins[:-1])):
             bar = "█" * int(count / hist.max() * 30)
             print(f"    {start:.1f}-{bins[i + 1]:.1f}: {count:4d} {bar}")
 
     # Check human MOS
     if len(human_mos_scores) > 0:
-        print(f"\n👥 Human MOS Distribution:")
+        print("\n👥 Human MOS Distribution:")
         print(f"  Samples: {len(human_mos_scores)}")
         print(f"  Mean: {human_mos_scores.mean():.3f}")
         print(f"  Std:  {human_mos_scores.std():.3f}")
         print(f"  Range: {human_mos_scores.min():.3f} - {human_mos_scores.max():.3f}")
 
     # Per-dataset analysis
-    print(f"\n📁 Per-Dataset Breakdown:")
+    print("\n📁 Per-Dataset Breakdown:")
     for dataset_name, dataset_samples in sorted(datasets.items()):
         print(f"\n  {dataset_name}: {len(dataset_samples)} samples")
 
@@ -162,9 +161,9 @@ def main():
 
     if not splits_dir.exists():
         print(f"❌ Splits directory not found: {splits_dir}")
-        print(f"\nTo download from Modal volume:")
+        print("\nTo download from Modal volume:")
         print(
-            f"  poetry run modal volume get stage2-training-data stage2_diqa_ensemble/splits ./stage2_diqa_ensemble/splits"
+            "  poetry run modal volume get stage2-training-data stage2_diqa_ensemble/splits ./stage2_diqa_ensemble/splits"
         )
         return
 
@@ -187,14 +186,14 @@ def main():
             imbalance = stats["soft_label_stats"]["imbalance_ratio"]
             print(f"  Soft label imbalance: {imbalance:.2f}x")
             if imbalance > 5:
-                print(f"    ⚠️  HIGH IMBALANCE - may cause training issues")
+                print("    ⚠️  HIGH IMBALANCE - may cause training issues")
 
     # Check for critical issues
-    print(f"\n🔍 Recommendations:")
+    print("\n🔍 Recommendations:")
 
     train_stats = results.get("train", {})
     if train_stats.get("soft_label_stats", {}).get("imbalance_ratio", 0) > 5:
-        print(f"  ⚠️  Consider rebalancing soft labels or using class weights")
+        print("  ⚠️  Consider rebalancing soft labels or using class weights")
 
     # Check dataset sizes
     train_datasets = train_stats.get("datasets", {})
@@ -203,7 +202,7 @@ def main():
         max_size = max(train_datasets.values())
         if max_size / (min_size + 1) > 10:
             print(f"  ⚠️  Dataset size imbalance: {min_size} to {max_size} samples")
-            print(f"      Consider weighted sampling or balancing")
+            print("      Consider weighted sampling or balancing")
 
 
 if __name__ == "__main__":
