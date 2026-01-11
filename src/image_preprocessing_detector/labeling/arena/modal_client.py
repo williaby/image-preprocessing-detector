@@ -371,11 +371,14 @@ class ArenaModalClient:
                 self._inference_cls = modal.Cls.lookup(  # type: ignore[attr-defined]
                     self.app_name, self.class_name
                 )
-            except modal.exception.NotFoundError as e:  # type: ignore[attr-defined]
-                raise RuntimeError(
-                    f"Modal app '{self.app_name}' not deployed. "
-                    "Run: modal deploy modal/arena_benchmark.py"
-                ) from e
+            except Exception as e:
+                # Handle Modal's NotFoundError (modal.exception module not in type stubs)
+                if "NotFoundError" in type(e).__name__:
+                    raise RuntimeError(
+                        f"Modal app '{self.app_name}' not deployed. "
+                        "Run: modal deploy modal/arena_benchmark.py"
+                    ) from e
+                raise
 
         return self._inference_cls
 

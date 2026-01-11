@@ -301,7 +301,8 @@ class LayoutFusionDownsampler(nn.Module):
 
         # Concatenate and fuse
         fused = torch.cat([rgb_feat, layout_feat], dim=1)  # [B, 128, H/4, W/4]
-        return self.fusion(fused)  # [B, 3, H/4, W/4]
+        output: torch.Tensor = self.fusion(fused)  # [B, 3, H/4, W/4]
+        return output
 
     def get_output_size(self, input_size: int = 1600) -> int:
         """Calculate output spatial size for a given input size.
@@ -479,7 +480,8 @@ class LayoutMaskGenerator:
 
         cache_file = self._cache_path / f"{cache_key}.npy"
         if cache_file.exists():
-            return np.load(cache_file)
+            result: NDArray[np.float32] = np.load(cache_file)
+            return result
         return None
 
     def _save_to_cache(self, cache_key: str, mask: NDArray[np.float32]) -> None:

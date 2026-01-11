@@ -322,8 +322,14 @@ class DIQATrainer:
 
             if self.model is not None:
                 # Apply LoRA to encoder only
-                # Note: encoder is a Module, but get_peft_model accepts PreTrainedModel (runtime compatible)
-                self.model.encoder = get_peft_model(self.model.encoder, lora_config)
+                # Note: encoder is a Module, but get_peft_model expects PreTrainedModel
+                # HuggingFace models are compatible at runtime - use cast to satisfy typing
+                from typing import cast
+
+                from transformers import PreTrainedModel
+
+                encoder_as_pretrained = cast(PreTrainedModel, self.model.encoder)
+                self.model.encoder = get_peft_model(encoder_as_pretrained, lora_config)
 
             logger.info(
                 "lora_applied",

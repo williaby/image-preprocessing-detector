@@ -257,7 +257,7 @@ class LeaderboardGenerator:
 
         def get_value(entry: LeaderboardEntry) -> float:
             dim_metrics = getattr(entry.metrics, dimension)
-            return getattr(dim_metrics, metric)
+            return float(getattr(dim_metrics, metric))
 
         return sorted(entries, key=get_value, reverse=reverse)
 

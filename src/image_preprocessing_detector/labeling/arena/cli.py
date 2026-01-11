@@ -535,7 +535,7 @@ def compare(
     dimension, metric_name = metric.split(".")
 
     def get_metric(r: BenchmarkResult) -> float:
-        return r.metrics.get(dimension, {}).get(metric_name, 0)
+        return float(r.metrics.get(dimension, {}).get(metric_name, 0))
 
     # Sort by metric
     reverse = metric_name in ("plcc", "srcc")

@@ -189,29 +189,36 @@ class DIQA5000TrainingDataset(Dataset[tuple[torch.Tensor, dict[str, torch.Tensor
         """
         sample = self.base_dataset[idx]
 
-        # Get image as numpy array [H, W, C]
-        image = sample.image
+        # Get image as numpy array [H, W, C] - use Any type to handle cv2.resize output
+
+        import numpy as np
+
+        image_array: Any = sample.image
 
         # Resize if specified
         if self.target_size is not None:
             import cv2
 
-            image = cv2.resize(
-                image,
+            # cv2.resize returns a compatible ndarray type
+            image_array = cv2.resize(
+                image_array,
                 (self.target_size[1], self.target_size[0]),
                 interpolation=cv2.INTER_LINEAR,
             )
 
-        # Apply augmentation
+        # Ensure we have the numpy array for downstream processing
+        image_np: np.ndarray[Any, Any] = image_array
+
+        # Apply augmentation and convert to tensor
         if self.transform is not None:
-            transformed = self.transform(image=image)
-            image = transformed["image"]
+            transformed = self.transform(image=image_np)
+            image_tensor = transformed["image"]
             # ToTensorV2 outputs uint8 tensor - convert to float [0, 1]
-            if image.dtype == torch.uint8:
-                image = image.float() / 255.0
+            if image_tensor.dtype == torch.uint8:
+                image_tensor = image_tensor.float() / 255.0
         else:
             # Default: just convert to tensor and normalize
-            image = torch.from_numpy(image).permute(2, 0, 1).float() / 255.0
+            image_tensor = torch.from_numpy(image_np).permute(2, 0, 1).float() / 255.0
 
         # Convert labels to tensors
         labels = {
@@ -224,7 +231,7 @@ class DIQA5000TrainingDataset(Dataset[tuple[torch.Tensor, dict[str, torch.Tensor
             "color": torch.tensor(sample.ground_truth["color"], dtype=torch.float32),
         }
 
-        return image, labels
+        return image_tensor, labels
 
 
 def create_dataloaders(

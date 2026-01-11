@@ -814,7 +814,8 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
     if image is None or image.size == 0:
         raise ValueError("Invalid image")
 
-    h, w = image.shape[:2]
+    # Image dimensions available for future aspect ratio checks
+    _h, _w = image.shape[:2]
 
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image

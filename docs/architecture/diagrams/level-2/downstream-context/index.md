@@ -45,7 +45,7 @@ Embedding generation and vector database storage.
 
 ## Pipeline Flow
 
-```
+```text
 Project A (THIS REPO)  →  Project B  →  Project C  →  Project D
 Preprocessing & IQA       OCR Layout     Fusion        Vector Store
 ───────────────────       ──────────     ──────        ────────────

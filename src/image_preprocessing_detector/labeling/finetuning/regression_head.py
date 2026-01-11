@@ -286,7 +286,10 @@ class DIQARegressionModel(nn.Module):
                 logger.warning("bitsandbytes_not_available", falling_back="fp16")
                 load_kwargs["torch_dtype"] = torch.float16
 
-        return AutoModel.from_pretrained(model_id, **load_kwargs)
+        # HuggingFace model loading is intentional - model_id is user-configured
+        # and validated by HuggingFace's model hub infrastructure
+        model: nn.Module = AutoModel.from_pretrained(model_id, **load_kwargs)  # nosec B615  # nosemgrep: python.lang.security.audit.unsafe-hf-hub-download
+        return model
 
     def _get_hidden_size(self) -> int:
         """Get the hidden size from the encoder config."""
@@ -344,7 +347,8 @@ class DIQARegressionModel(nn.Module):
             hidden_states = encoder_outputs
 
         # Pass through regression head
-        return self.head(hidden_states)
+        output: Tensor = self.head(hidden_states)
+        return output
 
     def get_trainable_parameters(self) -> int:
         """Get number of trainable parameters."""

@@ -176,7 +176,7 @@ src/image_preprocessing_detector/labeling/arena/  # Complete Arena infrastructur
 - metrics.py: ~445 lines (PLCC, SRCC, MAE, RMSE with bootstrap CIs)
 - schemas.py: ~482 lines (data models, serialization)
 - leaderboard.py: ~300 lines (leaderboard generation)
-- cli.py: ~200 lines (CLI interface)
+- cli.py: ~200 lines (CLI)
 - datasets/: ~400 lines (DIQA5000 adapter + base classes)
 - inference/: ~600 lines (PyTorch, HuggingFace, Modal, API backends)
 - Additional utilities: ~2,283 lines
@@ -244,7 +244,7 @@ benchmarks/adapters/synthetic_iqa_adapter.py    # Synthetic benchmark adapter
 - **Test files**: `test_*.py`, `*_test.py`, `tests/` directories
 - **Cache directories**: `__pycache__`, `.pytest_cache`
 - **Compiled files**: `.pyc`, `.pyo`
-- **Non-Python files**: YAML configs, JSON schemas, markdown docs
+- **Non-Python files**: YAML configs, JSON schemas, Markdown docs
 
 ### Counting Command
 
@@ -388,7 +388,7 @@ labeling/arena/
 ├── metrics.py                  # ~445 lines (PLCC, SRCC, bootstrap)
 ├── schemas.py                  # ~482 lines (data models)
 ├── leaderboard.py              # ~300 lines (HTML/markdown generation)
-├── cli.py                      # ~200 lines (CLI interface)
+├── cli.py                      # ~200 lines (CLI)
 ├── modal_client.py             # ~180 lines (Modal GPU client)
 ├── datasets/
 │   ├── base.py                 # ~120 lines (abstract interface)
@@ -450,7 +450,7 @@ find src/image_preprocessing_detector -name "*.py" \
 
 ### Workstream Sum
 
-```
+```text
 Production Runtime:    16,910
 Model Training:         7,058
 Model Arena:            6,340
@@ -502,7 +502,7 @@ TOTAL:                 43,735 lines
 
 The script also outputs **formatted updates** for copy-paste into Level 1:
 
-```
+```text
 📝 Suggested Level 1 updates:
 
 | **Production Runtime** | ~16,900 |

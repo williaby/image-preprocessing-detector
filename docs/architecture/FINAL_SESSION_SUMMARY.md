@@ -420,7 +420,7 @@ Successfully completed **all immediate fixes, all Level 2 enrichments, and all s
 
 **Diagram → Code**:
 
-```
+```text
 Swimlane step annotation: text_gate.py (350 lines)
     ↓
 Verify file exists in FILE_INVENTORY
@@ -430,7 +430,7 @@ Confirm in LOC extraction mapping
 
 **Code → Diagram**:
 
-```
+```text
 LOC script maps: detection/text_gate.py
     ↓
 Check appears in swimlane annotation
@@ -555,7 +555,7 @@ Difference: 60 lines (0.4%) → Investigate
 
 **Traceability** and **Level 3 Docs** will be implemented **in parallel**:
 
-```
+```text
 Week 3:
 ├─ Traceability tables (all 8) ────────────────── 8 hours
 └─ Data Prep Level 3 docs + swimlane ──────────  16 hours
@@ -755,7 +755,7 @@ TOTAL: 66-70 hours over 4 weeks
 
 **Conventional Commit Message** (suggested):
 
-```
+```text
 docs(architecture): complete 74% of documentation improvement plan
 
 Implemented all immediate fixes, Level 2 enrichments, and automation based on

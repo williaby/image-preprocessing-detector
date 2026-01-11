@@ -300,7 +300,7 @@ title: Complete File Inventory with Workstream Mappings
 | src/image_preprocessing_detector/labeling/arena/metrics.py | 445 | PLCC, SRCC, MAE, RMSE with bootstrap CIs |
 | src/image_preprocessing_detector/labeling/arena/schemas.py | 482 | Data models, serialization |
 | src/image_preprocessing_detector/labeling/arena/leaderboard.py | 305 | Leaderboard generation (Markdown, HTML) |
-| src/image_preprocessing_detector/labeling/arena/cli.py | 196 | CLI interface (run, leaderboard, compare) |
+| src/image_preprocessing_detector/labeling/arena/cli.py | 196 | CLI (run, leaderboard, compare) |
 | src/image_preprocessing_detector/labeling/arena/modal_client.py | 202 | Modal GPU client |
 
 **Subtotal**: 2,357 lines

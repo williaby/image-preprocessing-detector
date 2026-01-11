@@ -722,7 +722,7 @@ result = runner.run(backend, dataset, config)
 - Reproducibility manifests (~482 lines schemas)
 - Phase 1 baseline leaderboard (8 models)
 - Leaderboard generator (~300 lines)
-- CLI interface (~200 lines)
+- CLI (~200 lines)
 
 **Total**: ~3,057 lines operational code
 
@@ -750,7 +750,7 @@ src/image_preprocessing_detector/labeling/arena/
 ├── metrics.py                  # PLCC, SRCC, MAE, RMSE (445 lines)
 ├── schemas.py                  # Data models, serialization (482 lines)
 ├── leaderboard.py              # Leaderboard generation (300 lines)
-├── cli.py                      # CLI interface (200 lines)
+├── cli.py                      # CLI (200 lines)
 ├── modal_client.py             # Modal GPU client
 ├── datasets/
 │   ├── base.py                 # Abstract dataset interface
@@ -902,7 +902,7 @@ This section maps Model Arena components to implementation files with LOC counts
 - [metrics.py](../../../../src/image_preprocessing_detector/labeling/arena/metrics.py) - ArenaMetrics (445 lines)
 - [schemas.py](../../../../src/image_preprocessing_detector/labeling/arena/schemas.py) - Data models (482 lines)
 - [leaderboard.py](../../../../src/image_preprocessing_detector/labeling/arena/leaderboard.py) - Leaderboard generation (300 lines)
-- [cli.py](../../../../src/image_preprocessing_detector/labeling/arena/cli.py) - CLI interface (200 lines)
+- [cli.py](../../../../src/image_preprocessing_detector/labeling/arena/cli.py) - CLI (200 lines)
 - [datasets/base.py](../../../../src/image_preprocessing_detector/labeling/arena/datasets/base.py) - Abstract dataset
 - [datasets/diqa5000.py](../../../../src/image_preprocessing_detector/labeling/arena/datasets/diqa5000.py) - DIQA-5000 impl (200 lines)
 - [inference/](../../../../src/image_preprocessing_detector/labeling/arena/inference/) - Inference backends (600 lines total)

@@ -204,7 +204,8 @@ class MUSIQBackbone(nn.Module):
         scores = scores / 100.0  # Normalize to [0, 1]
 
         # Encode scores to feature space
-        return self.score_encoder(scores)  # [batch, 384]
+        encoded: torch.Tensor = self.score_encoder(scores)  # [batch, 384]
+        return encoded
 
     def get_musiq_score(self, x: torch.Tensor) -> torch.Tensor:
         """Get raw MUSIQ scores without encoding.
@@ -224,7 +225,8 @@ class MUSIQBackbone(nn.Module):
             self._musiq_model.train()
         if scores.dim() > 1:
             scores = scores.squeeze(-1)
-        return scores
+        result: torch.Tensor = scores
+        return result
 
 
 class MUSIQMultiTask(nn.Module):
