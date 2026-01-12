@@ -305,6 +305,15 @@ These documents remain accurate:
 
 ## Required Actions
 
+### Critical (Architecture Decision Required)
+
+0. [ ] **Decide 45→5 head mapping strategy** - See "Production Model Architecture Gap" section
+   - Option A: Keep 5 heads, group 45 types
+   - Option B: Expand to 8 heads (recommended)
+   - Option C: Full 45-head model
+   - Option D: Two-stage coarse + fine
+0. [ ] **Resolve head naming inconsistency** - `illumination/artifacts` vs `contrast/compression`
+
 ### High Priority
 
 1. [ ] Add DEPRECATED headers to 6 planning documents
@@ -322,6 +331,74 @@ These documents remain accurate:
 
 8. [ ] Review ADR-022 for resolution implications
 9. [ ] Archive deprecated planning documents
+
+---
+
+## Production Model Architecture Gap
+
+### 45 Degradation Types vs 5 Model Heads
+
+**Critical Discovery**: The training label taxonomy defines 45 degradation types, but the production model outputs only 5 aggregate scores.
+
+#### Current Production Model (5 Heads)
+
+From `src/.../models/resnet_teacher.py`:
+```python
+ISSUE_TYPES = ["blur", "noise", "skew", "illumination", "artifacts"]
+```
+
+**Note**: Naming inconsistency exists in codebase - `iqa_ml.py` uses `["blur", "noise", "contrast", "skew", "compression"]`.
+
+#### 45-Dimensional Degradation Taxonomy
+
+From `scripts/build_training_labels.py`:
+
+| Group | Count | Types |
+|-------|-------|-------|
+| **Blur/Focus** | 6 | motion_blur, defocus_blur, gaussian_blur, zoom_blur, focus_falloff, lens_distortion |
+| **Noise** | 7 | gaussian_noise, salt_pepper_noise, speckle_noise, sensor_noise, color_noise, film_grain, quantization_noise |
+| **Geometric** | 6 | skew, rotation, perspective, warp, curl, fold |
+| **Illumination** | 6 | uneven_lighting, shadow, glare, low_contrast, high_contrast, overexposure |
+| **Compression** | 5 | jpeg_artifacts, blocking, ringing, posterization, banding |
+| **Physical** | 5 | stain, ink_bleed, bleed_through, water_damage, yellowing |
+| **Text-specific** | 5 | faded_text, broken_characters, touching_characters, overlapping_text, stamp_interference |
+| **Scanner** | 5 | moire_pattern, halftone, scanner_noise, dust_specks, scratches |
+
+#### Architecture Gap Analysis
+
+| 45-Type Group | Maps to 5-Head? | Coverage |
+|---------------|-----------------|----------|
+| Blur/Focus (6) | blur | ✅ Full |
+| Noise (7) | noise | ✅ Full |
+| Geometric (6) | skew | ✅ Full |
+| Illumination (6) | illumination/contrast | ✅ Full |
+| Compression (5) | artifacts/compression | ✅ Full |
+| **Physical (5)** | ❓ | ⚠️ No clear mapping |
+| **Text-specific (5)** | ❓ | ⚠️ No clear mapping |
+| **Scanner (5)** | ❓ | ⚠️ No clear mapping |
+
+**Gap**: 15 degradation types (physical, text-specific, scanner) have no clear mapping to the 5-head output.
+
+#### Architecture Options
+
+| Option | Description | Pros | Cons |
+|--------|-------------|------|------|
+| **A: Keep 5 heads** | Map 45→5 via grouping | Simpler, faster inference | Loss of fine-grained detection |
+| **B: Expand to 8 heads** | Add physical, text, scanner heads | Better coverage | Requires retraining |
+| **C: 45-head model** | One head per degradation | Full taxonomy coverage | Complex, slow inference |
+| **D: Two-stage** | 5-head coarse + 45-head fine | Best of both | Complexity, latency |
+
+**Recommendation**: Option B (8 heads) provides good coverage with manageable complexity.
+
+#### Head Naming Inconsistency
+
+Must resolve before production:
+
+| Location | Head 4 | Head 5 |
+|----------|--------|--------|
+| `resnet_teacher.py` | illumination | artifacts |
+| `iqa_ml.py` | contrast | compression |
+| `workers/tasks.py` | contrast | compression |
 
 ---
 
