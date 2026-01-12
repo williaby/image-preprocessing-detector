@@ -98,6 +98,17 @@ docs/model-cards/
 | [resnet50_imagenet1k_v2](external/resnet50_imagenet1k_v2.md) | Feature backbone for IQA Teacher | iqa_resnet50_teacher, diqa_resnet50_generalist |
 | [musiq_koniq10k](external/musiq_koniq10k.md) | Multi-scale IQA transformer | diqa_musiq_sharpness (fine-tuned) |
 
+### DeQA-Doc Models (VQualA 2025 Champion - External VLM)
+
+| Model | Purpose | Status |
+|-------|---------|--------|
+| [deqa_mplug_owl2_7b](external/deqa_mplug_owl2_7b.md) | Base VLM for DeQA-Doc (CLIP + LLaMA-2-7B) | Pretrained |
+| [diqa_model_dimension_specific](external/diqa_model_dimension_specific.md) | Dimension-specific specialists (overall/sharpness/color) | Pretrained |
+| [deqa_mix](external/deqa_mix.md) | Mixed-dimension multi-task variant | Pretrained |
+| [deqa_qwen25_vl_7b](external/deqa_qwen25_vl_7b.md) | Dynamic resolution VLM (Qwen2.5-VL) | Pretrained |
+
+**Note**: DeQA-Doc models are VLM-based and require A100-class GPU. Current benchmarking infrastructure does not support these models; VLM benchmark adapters needed.
+
 ## Creating a New Model Card
 
 1. Copy [TEMPLATE.md](TEMPLATE.md) to the appropriate subdirectory
