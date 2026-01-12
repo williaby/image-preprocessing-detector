@@ -77,7 +77,90 @@ Implements Layer 3 (TRAINING):
 | 768x768 | 6.1px | Marginal | Not tested |
 | **1600x1600** | **12.8px** | **Clearly visible** | CURRENT STANDARD |
 
-**Source**: DocIQ paper - "ensures high-frequency components of text characters are preserved"
+**Source**: DocIQ paper (arXiv:2509.17012) - "ensures high-frequency components of text characters are preserved"
+
+---
+
+## Research Foundation: DocIQ and DeQA-Doc Papers
+
+### DocIQ Architecture (arXiv:2509.17012)
+
+The DocIQ paper establishes the architecture our implementation follows:
+
+| Component | Specification |
+|-----------|---------------|
+| **Input Resolution** | 1600×1600 (confirmed) |
+| **Backbone** | ResNet-50 pretrained on ImageNet |
+| **Layout Fusion Downsampler** | Dual-path: spatial downsampling + semantic layout mask |
+| **Layout Mask Classes** | 11 DocLayNet classes (text, tables, figures, etc.) |
+| **Output Heads** | 3 independent regressors (overall, sharpness, color) |
+| **Loss Function** | Distribution-matching: KL divergence + EMD |
+
+**Performance on DIQA-5000**:
+- SRCC: 0.8704 (average across dimensions)
+- PLCC: 0.8999
+
+### Layout Fusion Downsampler Design
+
+The dual-path architecture addresses high-resolution processing:
+
+```
+Path 1 (Primary): Image → Spatial Downsampling → Features
+Path 2 (Secondary): Image + Layout Mask → Semantic Downsampling → Features
+                                    ↓
+                            Feature Fusion → Backbone
+```
+
+**Benefits**:
+- Reduces computational complexity while preserving quality-relevant features
+- Semantic region focusing (text vs. figures vs. tables)
+- Preserves crucial spatial relationships
+
+### DeQA-Doc: VQualA 2025 Champion (arXiv:2507.12796)
+
+DeQA-Doc won the ICCV 2025 VQualA DIQA Challenge with **0.9288 final score**.
+
+**Key Innovation - Soft Labels Without Variance**:
+
+> "DIQA-5000 only provides mean scores **without corresponding variances**, making direct construction of soft labels infeasible."
+
+**Solutions for Missing Variance** (applicable to our approach):
+
+1. **Pseudo-variance**: Assign fixed σ based on empirical statistics
+   ```python
+   sigma = 0.08  # Empirical: 0.2 × 0.4 range per bin
+   ```
+
+2. **Linear interpolation**: Between adjacent quality levels as lightweight surrogate
+
+This validates our `UNIFIED_LABELING_STRATEGY.md` soft-label construction approach.
+
+### DIQA-5000 Dataset Details
+
+| Attribute | Value |
+|-----------|-------|
+| Total images | 5,000 (from 500 base images) |
+| Distortion types | 5: shadow, occlusion, blur, creases, moiré |
+| Human raters | 15 per image |
+| Quality dimensions | 3: overall, sharpness, color fidelity |
+| Scale | MOS 1-5 (5 = best) |
+
+### Implications for Our Strategy
+
+| Research Finding | Impact |
+|------------------|--------|
+| 1600×1600 confirmed essential | Validates resolution requirement |
+| Layout masks improve quality | Confirms need for DocLayNet masks |
+| Pseudo-variance works (σ=0.08) | Enables soft labels from MOS-only |
+| KL-div loss effective | Validates distribution-matching approach |
+| 0.87+ SRCC achievable | Sets realistic performance target |
+| DeQA-Doc 0.93 with MLLM | MLLM teacher viable for anchor labels |
+
+### References
+
+- [DocIQ Paper (arXiv:2509.17012)](https://arxiv.org/abs/2509.17012)
+- [DeQA-Doc Paper (arXiv:2507.12796)](https://arxiv.org/abs/2507.12796)
+- [DeQA-Doc GitHub](https://github.com/Junjie-Gao19/DeQA-Doc)
 
 ---
 
