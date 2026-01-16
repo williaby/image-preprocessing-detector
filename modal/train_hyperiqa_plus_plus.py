@@ -403,7 +403,11 @@ def setup_optimizer_with_pcgrad(
             ]
         )
 
-    optimizer = torch.optim.AdamW(param_groups, weight_decay=config.weight_decay)
+    optimizer = torch.optim.AdamW(
+        param_groups,
+        lr=config.phase1_lr,  # Default lr (overridden by per-group lr)
+        weight_decay=config.weight_decay,
+    )
 
     if config.use_pcgrad:
         optimizer = PCGrad(optimizer)
@@ -504,7 +508,7 @@ def train_step_accumulate(
     batch: dict,
     criterion,
     accumulation_steps: int,
-    current_step: int,
+    _current_step: int,
 ) -> dict[str, float]:
     """Single training step for gradient accumulation (no optimizer step).
 
@@ -513,7 +517,7 @@ def train_step_accumulate(
         batch: Batch dictionary with pixel_values and targets
         criterion: Multi-task loss function
         accumulation_steps: Number of steps to accumulate
-        current_step: Current step within accumulation (0-indexed)
+        _current_step: Current step within accumulation (0-indexed, unused but kept for API)
 
     Returns:
         Loss dictionary (scaled losses)
@@ -699,10 +703,12 @@ def train_hyperiqa_plus_plus(
         checkpoint_to_load = best_checkpoint
         if checkpoint_to_load.exists():
             print(f"\n📂 Loading checkpoint: {checkpoint_to_load}")
-            # weights_only=False required for loading optimizer state and training metadata
-            # Security: checkpoint files are from our own training runs, not external sources
-            checkpoint = torch.load(  # noqa: S614
-                checkpoint_to_load, map_location=device, weights_only=False
+            # Security: weights_only=True ensures only tensor data is loaded
+            # Checkpoint contains: model_state_dict, optimizer_state_dict, val_metrics, config
+            checkpoint = torch.load(
+                checkpoint_to_load,
+                map_location=device,
+                weights_only=True,
             )
             model.load_state_dict(checkpoint["model_state_dict"])
             resume_epoch = checkpoint.get("epoch", 10)

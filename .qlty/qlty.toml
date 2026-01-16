@@ -135,6 +135,20 @@ match.plugins = ["radarlint-python"]
 match.rules = ["radarlint-python:python:S1135"]
 set.ignored = true
 
+# Ignore cognitive complexity in Modal training scripts - complex training loops are necessary
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["modal/**"]
+set.ignored = true
+
+# Ignore unused parameter warnings in Modal training scripts - kept for API consistency
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1172"]
+match.file_patterns = ["modal/**"]
+set.ignored = true
+
 [[plugin]]
 name = "hadolint"
 
