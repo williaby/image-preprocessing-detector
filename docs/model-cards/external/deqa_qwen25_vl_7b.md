@@ -2,7 +2,7 @@
 owner: docs-team
 purpose: 'Documentation for Model Card: DeQA-Doc Qwen2.5-VL-7B.'
 schema_type: common
-status: draft
+status: published
 tags:
 - iqa
 - vlm
@@ -27,7 +27,7 @@ title: 'Model Card: DeQA-Doc Qwen2.5-VL-7B'
 | **Phase** | External VLM (DIQA Track A/B Candidate) |
 | **Status** | `pretrained` (VQualA 2025 Champion Ensemble) |
 | **Priority** | P1 (High - dynamic resolution VLM) |
-| **Last Updated** | 2025-01-12 |
+| **Last Updated** | 2026-01-16 |
 | **Schema Version** | 3.0 |
 
 ---
@@ -171,8 +171,12 @@ In the championship-winning ensemble (m0 + m1 + m3 + Q0 + Q1):
 ### Dynamic Resolution Advantage
 
 ```python
+import torch
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
 from PIL import Image
+
+# IQA prompt template (DeQA-Score style)
+IQA_PROMPT = "The quality of this image is"
 
 # Load model
 model = Qwen2VLForConditionalGeneration.from_pretrained(

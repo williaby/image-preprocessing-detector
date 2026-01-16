@@ -46,9 +46,13 @@ docs/model-cards/
 │       ├── classify_resnet18_formula.md
 │       └── classify_mobilenetv3_parasitic.md
 │
-├── external/                    # External pretrained models (backbones)
+├── external/                    # External pretrained models (backbones, VLMs)
 │   ├── resnet50_imagenet1k_v2.md
-│   └── musiq_koniq10k.md
+│   ├── musiq_koniq10k.md
+│   ├── deqa_mplug_owl2_7b.md    # DeQA-Doc base VLM (VQualA 2025 Champion)
+│   ├── deqa_mix.md              # Multi-task mixed-dimension variant
+│   ├── deqa_qwen25_vl_7b.md     # Dynamic resolution VLM
+│   └── diqa_model_dimension_specific.md  # Dimension specialists
 │
 └── deprecated/                  # Archived model cards (historical reference)
 ```

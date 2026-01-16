@@ -2,7 +2,7 @@
 owner: docs-team
 purpose: 'Documentation for Model Card: DeQA-Doc mPLUG-Owl2-7B Base Model.'
 schema_type: common
-status: draft
+status: published
 tags:
 - iqa
 - vlm
@@ -26,7 +26,7 @@ title: 'Model Card: DeQA-Doc mPLUG-Owl2-7B'
 | **Phase** | External VLM (DIQA Track A/B Candidate) |
 | **Status** | `pretrained` (VQualA 2025 Champion) |
 | **Priority** | P1 (High - competition winner) |
-| **Last Updated** | 2025-01-12 |
+| **Last Updated** | 2026-01-16 |
 | **Schema Version** | 3.0 |
 
 ---
@@ -132,9 +132,11 @@ inputs = processor(images=image, text=prompt, return_tensors="pt")
 
 | Configuration | Final Score | Overall SRCC | Sharpness SRCC | Color SRCC |
 |--------------|-------------|--------------|----------------|------------|
-| m0 (Full tune, 1024×1024) | 0.8989 | - | - | - |
-| m1 (LoRA, 1024×1024) | 0.9033 | - | - | - |
-| m3 (KonIQ pretrain + LoRA) | - | - | - | - |
+| m0 (Full tune, 1024×1024) | 0.8989 | N/R | N/R | N/R |
+| m1 (LoRA, 1024×1024) | 0.9033 | N/R | N/R | N/R |
+| m3 (KonIQ pretrain + LoRA) | N/R | N/R | N/R | N/R |
+
+*N/R = Not reported individually; only Final Score available in published results.*
 
 ### Resolution Ablation
 
@@ -190,7 +192,7 @@ inputs = processor(images=image, text=prompt, return_tensors="pt")
 |---------|----------|------------|----------|-------------|
 | **m0** | Full tuning | 1024×1024 | None | 0.8989 |
 | **m1** | LoRA | 1024×1024 | None | 0.9033 |
-| **m3** | LoRA | 1024×1024 | KonIQ-10k | TBD |
+| **m3** | LoRA | 1024×1024 | KonIQ-10k | N/R (ensemble component) |
 
 ### Ensemble Performance
 
@@ -209,7 +211,7 @@ The final DeQA-Doc ensemble (m0 + m1 + m3 + Q0 + Q1) achieves:
 |------|-------------|----------|
 | Base weights | mPLUG-Owl2-7B initial | HuggingFace |
 | Fine-tuned checkpoint | DIQA-specific | ModelScope (DIQA_model) |
-| LoRA adapters | Parameter-efficient | TBD |
+| LoRA adapters | Parameter-efficient | DeQA-Doc GitHub |
 
 ### Storage Locations
 

@@ -21,7 +21,7 @@ This document explains the fundamental differences between the DeQA-Score/DeQA-D
 | **Score Extraction** | Model outputs `[batch, 3]` tensor | Parse text OR extract logits for 5 level tokens |
 | **Training Target** | Point estimate (MSE loss) | Soft label distribution (KL divergence) |
 | **Evaluation** | SRCC/PLCC on predictions | SRCC/PLCC on distribution expectation |
-| **Prompt** | None (image → score) | "The quality of this image is \<level\>" |
+| **Prompt** | None (image → score) | "The quality of this image is {level}" |
 
 ## 1. How DeQA-Score Actually Works
 
@@ -75,7 +75,7 @@ Given a Mean Opinion Score (MOS) μ and variance σ² from human annotations:
 
 ### 1.3 Training Losses
 
-**KL Divergence Loss** (for \<level\> token):
+**KL Divergence Loss** (for {level} token):
 
 ```text
 ℒ_kl = Σᵢ pᵢ · log(pᵢ / pᵢᵖʳᵉᵈ)
@@ -176,7 +176,7 @@ def parse_vlm_response(response: str) -> dict:
 
 | Component | Our VLM Benchmark | DeQA-Score |
 |-----------|-------------------|------------|
-| **Prompt** | Multi-line instructions | Single template: "The quality of this image is \<level\>" |
+| **Prompt** | Multi-line instructions | Single template: "The quality of this image is {level}" |
 | **Output** | Free-form text | Single token prediction with logit extraction |
 | **Score** | Regex parsing | Closed-set softmax → expectation |
 | **Training** | General VLM (not IQA-specific) | Soft label regression with fidelity loss |
@@ -278,7 +278,7 @@ The gap is substantial (~0.4 Final Score difference).
 To benchmark VLM models properly:
 
 1. **Use closed-set softmax** extraction instead of text parsing
-2. **Match training prompts** exactly ("The quality of this image is \<level\>")
+2. **Match training prompts** exactly ("The quality of this image is {level}")
 3. **Extract logits** for the 5 level tokens specifically
 4. **Compute expected score** from probability distribution
 

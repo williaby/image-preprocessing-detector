@@ -2,7 +2,7 @@
 owner: docs-team
 purpose: 'Documentation for Model Card: DIQA_model Dimension-Specific Models.'
 schema_type: common
-status: draft
+status: published
 tags:
 - iqa
 - vlm
@@ -27,7 +27,7 @@ title: 'Model Card: DIQA_model (Dimension-Specific)'
 | **Phase** | External VLM (DIQA Track A Candidate) |
 | **Status** | `pretrained` (VQualA 2025 Component) |
 | **Priority** | P1 (High - dimension specialists) |
-| **Last Updated** | 2025-01-12 |
+| **Last Updated** | 2026-01-16 |
 | **Schema Version** | 3.0 |
 
 ---
