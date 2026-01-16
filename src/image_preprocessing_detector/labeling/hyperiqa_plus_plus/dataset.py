@@ -164,8 +164,19 @@ class DIQA5000HighResDataset(Dataset):
         """
         sample = self.samples[idx]
 
-        # Load image
-        img_path = self.images_dir / sample["image_name"]
+        # Load image with path validation (security: prevent path traversal)
+        img_path = (self.images_dir / sample["image_name"]).resolve()
+
+        # Ensure path is within images directory
+        if not img_path.is_relative_to(self.images_dir.resolve()):
+            msg = f"Path traversal detected: {img_path}"
+            raise ValueError(msg)
+
+        # Ensure file exists
+        if not img_path.exists():
+            msg = f"Image not found: {img_path}"
+            raise FileNotFoundError(msg)
+
         image = Image.open(img_path).convert("RGB")
 
         # Apply safe augmentations (train split only)

@@ -130,11 +130,17 @@ title: 'Model Card: HyperIQA++ DIQA-5000'
 
 ### 4.3 VQualA Score Breakdown
 
-The VQualA score combines multiple quality dimensions:
+The VQualA score combines multiple quality dimensions with weighted formula:
 
 ```text
-VQualA = 0.8838 = weighted_mean(overall_plcc, sharpness_plcc, color_plcc, ...)
+VQualA = 0.5 × SRCC_overall + 0.25 × SRCC_sharpness + 0.25 × SRCC_color
+       = 0.5 × 0.8596 + 0.25 × 0.8510 + 0.25 × 0.8521
+       = 0.4298 + 0.2128 + 0.2130
+       = 0.8556
 ```
+
+**Note**: The reported VQualA=0.8838 may include additional metrics from VQualA 2025
+protocol not shown in this table. The formula above uses SRCC values from section 4.2.
 
 ### 4.4 Training Convergence
 
