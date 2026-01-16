@@ -29,8 +29,7 @@ fork
   end note
 
   :Cache Masks to GCS
-  gs://image_detection_b/
-  datasets/diqa5000/masks/;
+  gs://image_detection_b/datasets/diqa5000/masks;
 fork again
   :Prepare VLM Prompts
   JSON output format;
