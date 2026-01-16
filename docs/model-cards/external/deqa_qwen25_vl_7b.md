@@ -6,8 +6,8 @@ status: draft
 tags:
 - iqa
 - vlm
-- deqa-doc
-- vquala-2025
+- deqa_doc
+- vquala_2025
 - qwen
 title: 'Model Card: DeQA-Doc Qwen2.5-VL-7B'
 ---

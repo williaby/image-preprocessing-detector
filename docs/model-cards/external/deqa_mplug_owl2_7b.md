@@ -6,8 +6,8 @@ status: draft
 tags:
 - iqa
 - vlm
-- deqa-doc
-- vquala-2025
+- deqa_doc
+- vquala_2025
 title: 'Model Card: DeQA-Doc mPLUG-Owl2-7B'
 ---
 

@@ -6,9 +6,9 @@ status: draft
 tags:
 - iqa
 - vlm
-- deqa-doc
-- vquala-2025
-- multi-task
+- deqa_doc
+- vquala_2025
+- multi_task
 title: 'Model Card: DeQA-Mix'
 ---
 

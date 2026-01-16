@@ -6,12 +6,10 @@ status: published
 tags:
 - benchmarking
 - methodology
-- deqa-score
+- deqa_score
 - iqa
-title: 'DeQA Methodology Comparison'
+title: 'DeQA-Score vs Our Benchmarking Methodology: A Comprehensive Analysis'
 ---
-
-# DeQA-Score vs Our Benchmarking Methodology: A Comprehensive Analysis
 
 This document explains the fundamental differences between the DeQA-Score/DeQA-Doc approach and our current benchmarking infrastructure, clarifying why VLM-based models require different handling.
 
@@ -33,7 +31,7 @@ Traditional IQA models output a single quality score. DeQA-Score fundamentally c
 
 **The Five Quality Levels:**
 
-```
+```text
 Level 1: "bad"       → score center c₁ = 1
 Level 2: "poor"      → score center c₂ = 2
 Level 3: "fair"      → score center c₃ = 3
@@ -43,7 +41,7 @@ Level 5: "excellent" → score center c₅ = 5
 
 **Training Prompt Template:**
 
-```
+```text
 "The quality of this image is <level>"
 ```
 
@@ -57,19 +55,19 @@ Given a Mean Opinion Score (MOS) μ and variance σ² from human annotations:
 
 2. **Compute raw probability for each level** by integrating the Gaussian PDF:
 
-   ```
+   ```text
    pᵢʳᵃʷ = ∫[cᵢ-0.5 to cᵢ+0.5] f(x)dx
    ```
 
 3. **Apply linear transformation** to ensure ∑pᵢ = 1 and recovered mean = μ:
 
-   ```
+   ```text
    pᵢ = α·pᵢʳᵃʷ + β
    ```
 
 4. **For datasets lacking variance** (like DIQA-5000), use pseudo-variance:
 
-   ```
+   ```text
    pseudo_std = 0.2 × (max_score - min_score)
    ```
 
@@ -79,19 +77,19 @@ Given a Mean Opinion Score (MOS) μ and variance σ² from human annotations:
 
 **KL Divergence Loss** (for \<level\> token):
 
-```
+```text
 ℒ_kl = Σᵢ pᵢ · log(pᵢ / pᵢᵖʳᵉᵈ)
 ```
 
 **Fidelity Loss** (for inter-image relationships):
 
-```
+```text
 ℒ_fd = 1 - √[p(A>B)·pᵖʳᵉᵈ(A>B)] - √[(1-p(A>B))·(1-pᵖʳᵉᵈ(A>B))]
 ```
 
 where:
 
-```
+```text
 p(A>B) = Φ((μₐ - μᵦ)/√(σₐ² + σᵦ²))
 ```
 

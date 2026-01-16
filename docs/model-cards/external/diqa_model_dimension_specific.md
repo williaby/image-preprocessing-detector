@@ -6,9 +6,9 @@ status: draft
 tags:
 - iqa
 - vlm
-- deqa-doc
-- vquala-2025
-- dimension-specific
+- deqa_doc
+- vquala_2025
+- dimension_specific
 title: 'Model Card: DIQA_model (Dimension-Specific)'
 ---
 
