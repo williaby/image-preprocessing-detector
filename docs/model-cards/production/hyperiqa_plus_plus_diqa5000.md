@@ -130,17 +130,17 @@ title: 'Model Card: HyperIQA++ DIQA-5000'
 
 ### 4.3 VQualA Score Breakdown
 
-The VQualA score combines multiple quality dimensions with weighted formula:
+The VQualA 2025 score uses PLCC (not SRCC) with official 40%/30%/30% weights:
 
 ```text
-VQualA = 0.5 × SRCC_overall + 0.25 × SRCC_sharpness + 0.25 × SRCC_color
-       = 0.5 × 0.8596 + 0.25 × 0.8510 + 0.25 × 0.8521
-       = 0.4298 + 0.2128 + 0.2130
-       = 0.8556
+VQualA = 0.4 × PLCC_overall + 0.3 × PLCC_sharpness + 0.3 × PLCC_color
+       = 0.4 × 0.8865 + 0.3 × 0.8942 + 0.3 × 0.8699
+       = 0.3546 + 0.2683 + 0.2610
+       = 0.8838 ✅
 ```
 
-**Note**: The reported VQualA=0.8838 may include additional metrics from VQualA 2025
-protocol not shown in this table. The formula above uses SRCC values from section 4.2.
+**VQualA 2025 Protocol**: Uses PLCC (Pearson correlation) with 40%/30%/30% weighting
+to emphasize overall quality while rewarding strong performance on perceptual dimensions.
 
 ### 4.4 Training Convergence
 
@@ -227,10 +227,10 @@ from image_preprocessing_detector.labeling.hyperiqa_plus_plus import HyperIQAPlu
 from torchvision import transforms
 from PIL import Image
 
-# Load model
-model = HyperIQAPlusPlus(num_bins=10, use_pretrained=False)
+# Load model (use_pretrained=True to match training architecture)
+model = HyperIQAPlusPlus(num_bins=10, use_pretrained=True)
 checkpoint = torch.load("models/hyperiqa_plus_plus/hyperiqa_plus_plus_best.pt",
-                        map_location="cpu")
+                        map_location="cpu", weights_only=False)
 model.load_state_dict(checkpoint["model_state_dict"])
 model.eval()
 
