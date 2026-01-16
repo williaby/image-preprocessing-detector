@@ -33,7 +33,9 @@ app = modal.App("hyperiqa-plus-plus-benchmark")
 
 # Volumes
 data_volume = modal.Volume.from_name("diqa5000-original", create_if_missing=False)
-checkpoint_volume = modal.Volume.from_name("hyperiqa-checkpoints", create_if_missing=True)
+checkpoint_volume = modal.Volume.from_name(
+    "hyperiqa-checkpoints", create_if_missing=True
+)
 
 # Docker image with dependencies
 benchmark_image = (
@@ -86,6 +88,7 @@ GCS_SECRET = modal.Secret.from_name("gcs-credentials")
 @dataclass
 class BenchmarkConfig:
     """Benchmark configuration."""
+
     image_size: tuple[int, int] = (1600, 1600)
     num_bins: int = 10
     batch_size: int = 4
@@ -215,6 +218,7 @@ def benchmark_hyperiqa_plus_plus() -> dict:
         else:
             print("Listing /data contents:")
             import os
+
             for item in os.listdir("/data"):
                 print(f"  {item}")
             raise FileNotFoundError(f"Dataset not found at {data_dir}")
@@ -350,9 +354,9 @@ def benchmark_hyperiqa_plus_plus() -> dict:
 
     # Calculate VQualA composite score
     vquala_score = (
-        results["overall_plcc"] * 0.4 +
-        results["sharpness_plcc"] * 0.3 +
-        results["color_plcc"] * 0.3
+        results["overall_plcc"] * 0.4
+        + results["sharpness_plcc"] * 0.3
+        + results["color_plcc"] * 0.3
     )
     results["vquala_score"] = vquala_score
 
@@ -364,7 +368,9 @@ def benchmark_hyperiqa_plus_plus() -> dict:
     results["inference_total_s"] = total_inference_s
     results["model_load_s"] = 0  # Not tracked separately
     results["gpu_type"] = "A10G"
-    results["notes"] = "HyperIQA++ with 7 DocIQ/VQualA innovations fine-tuned on DIQA-5000"
+    results["notes"] = (
+        "HyperIQA++ with 7 DocIQ/VQualA innovations fine-tuned on DIQA-5000"
+    )
 
     print(f"\n{'=' * 60}")
     print(f"VQualA Score: {vquala_score:.4f}")

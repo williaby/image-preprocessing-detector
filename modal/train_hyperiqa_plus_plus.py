@@ -293,9 +293,7 @@ def create_dataloaders(
         DIQA5000HighResDataset,
     )
 
-    batch_size = (
-        config.phase1_batch_size if phase == 1 else config.phase2_batch_size
-    )
+    batch_size = config.phase1_batch_size if phase == 1 else config.phase2_batch_size
 
     train_dataset = DIQA5000HighResDataset(
         root_dir=root_dir,
@@ -369,35 +367,41 @@ def setup_optimizer_with_pcgrad(
         ]
 
         if model.hypernet is not None:
-            param_groups.append({
-                "params": model.hypernet.parameters(),
-                "lr": config.phase2_lr_hypernet,
-            })
+            param_groups.append(
+                {
+                    "params": model.hypernet.parameters(),
+                    "lr": config.phase2_lr_hypernet,
+                }
+            )
 
         if model.feature_fusion is not None:
-            param_groups.append({
-                "params": model.feature_fusion.parameters(),
-                "lr": config.phase2_lr_heads,
-            })
+            param_groups.append(
+                {
+                    "params": model.feature_fusion.parameters(),
+                    "lr": config.phase2_lr_heads,
+                }
+            )
 
-        param_groups.extend([
-            {
-                "params": model.spatial_attention.parameters(),
-                "lr": config.phase2_lr_heads,
-            },
-            {
-                "params": model.head_overall.parameters(),
-                "lr": config.phase2_lr_heads,
-            },
-            {
-                "params": model.head_sharpness.parameters(),
-                "lr": config.phase2_lr_heads,
-            },
-            {
-                "params": model.head_color.parameters(),
-                "lr": config.phase2_lr_heads,
-            },
-        ])
+        param_groups.extend(
+            [
+                {
+                    "params": model.spatial_attention.parameters(),
+                    "lr": config.phase2_lr_heads,
+                },
+                {
+                    "params": model.head_overall.parameters(),
+                    "lr": config.phase2_lr_heads,
+                },
+                {
+                    "params": model.head_sharpness.parameters(),
+                    "lr": config.phase2_lr_heads,
+                },
+                {
+                    "params": model.head_color.parameters(),
+                    "lr": config.phase2_lr_heads,
+                },
+            ]
+        )
 
     optimizer = torch.optim.AdamW(param_groups, weight_decay=config.weight_decay)
 
@@ -425,7 +429,9 @@ def setup_scheduler(optimizer, config: TrainingConfig):
     from image_preprocessing_detector.labeling.hyperiqa_plus_plus.pcgrad import PCGrad
 
     # If optimizer is PCGrad-wrapped, pass the underlying optimizer
-    base_optimizer = optimizer._optimizer if isinstance(optimizer, PCGrad) else optimizer
+    base_optimizer = (
+        optimizer._optimizer if isinstance(optimizer, PCGrad) else optimizer
+    )
 
     return torch.optim.lr_scheduler.StepLR(
         base_optimizer,
@@ -693,7 +699,9 @@ def train_hyperiqa_plus_plus(
         checkpoint_to_load = best_checkpoint
         if checkpoint_to_load.exists():
             print(f"\n📂 Loading checkpoint: {checkpoint_to_load}")
-            checkpoint = torch.load(checkpoint_to_load, map_location=device, weights_only=False)
+            checkpoint = torch.load(
+                checkpoint_to_load, map_location=device, weights_only=False
+            )
             model.load_state_dict(checkpoint["model_state_dict"])
             resume_epoch = checkpoint.get("epoch", 10)
             val_metrics = checkpoint.get("val_metrics", {})
@@ -772,9 +780,11 @@ def train_hyperiqa_plus_plus(
 
             print(f"\nEpoch {epoch} Summary:")
             print(f"  Train Loss: {avg_train_loss:.4f}")
-            print(f"  Val SRCC: Overall={val_metrics['overall_srcc']:.4f}, "
-                  f"Sharpness={val_metrics['sharpness_srcc']:.4f}, "
-                  f"Color={val_metrics['color_srcc']:.4f}")
+            print(
+                f"  Val SRCC: Overall={val_metrics['overall_srcc']:.4f}, "
+                f"Sharpness={val_metrics['sharpness_srcc']:.4f}, "
+                f"Color={val_metrics['color_srcc']:.4f}"
+            )
             print(f"  Val PLCC: Overall={val_metrics['overall_plcc']:.4f}")
             print(f"  VQualA Score: {val_metrics['vquala_score']:.4f}")
 
@@ -783,8 +793,10 @@ def train_hyperiqa_plus_plus(
                 history["best_vquala"] = val_metrics["vquala_score"]
                 history["best_epoch"] = epoch
 
-        print(f"\n✅ Phase 1 Complete - Best VQualA: {history['best_vquala']:.4f} "
-              f"(Epoch {history['best_epoch']})")
+        print(
+            f"\n✅ Phase 1 Complete - Best VQualA: {history['best_vquala']:.4f} "
+            f"(Epoch {history['best_epoch']})"
+        )
 
     # ========================================================================
     # PHASE 2: Full Fine-Tuning (Epochs 11-60)
@@ -803,15 +815,20 @@ def train_hyperiqa_plus_plus(
 
     train_loader, val_loader = create_dataloaders(dataset_path, config, phase=2)
     effective_batch = config.phase2_batch_size * config.gradient_accumulation_steps
-    print(f"Batch size: {config.phase2_batch_size} "
-          f"(effective: {effective_batch} with {config.gradient_accumulation_steps}x accumulation)")
+    print(
+        f"Batch size: {config.phase2_batch_size} "
+        f"(effective: {effective_batch} with {config.gradient_accumulation_steps}x accumulation)"
+    )
 
     # Phase 2 uses standard optimizer with gradient accumulation (not PCGrad)
     # PCGrad doesn't work well with gradient accumulation
     base_optimizer = torch.optim.AdamW(
         [
             {"params": model.backbone.parameters(), "lr": config.phase2_lr_backbone},
-            {"params": model.spatial_attention.parameters(), "lr": config.phase2_lr_heads},
+            {
+                "params": model.spatial_attention.parameters(),
+                "lr": config.phase2_lr_heads,
+            },
             {"params": model.head_overall.parameters(), "lr": config.phase2_lr_heads},
             {"params": model.head_sharpness.parameters(), "lr": config.phase2_lr_heads},
             {"params": model.head_color.parameters(), "lr": config.phase2_lr_heads},
@@ -820,10 +837,12 @@ def train_hyperiqa_plus_plus(
     )
     # Add hypernet if it exists
     if model.hypernet is not None:
-        base_optimizer.add_param_group({
-            "params": model.hypernet.parameters(),
-            "lr": config.phase2_lr_hypernet,
-        })
+        base_optimizer.add_param_group(
+            {
+                "params": model.hypernet.parameters(),
+                "lr": config.phase2_lr_hypernet,
+            }
+        )
     optimizer = base_optimizer
     scheduler = setup_scheduler(optimizer, config)
     print("⚠️  Using standard optimizer for Phase 2 (gradient accumulation enabled)")
@@ -847,9 +866,7 @@ def train_hyperiqa_plus_plus(
         for batch_idx, batch in enumerate(pbar):
             batch["pixel_values"] = batch["pixel_values"].to(device)
             for dim in ["overall", "sharpness", "color"]:
-                batch["targets"][dim]["mos"] = batch["targets"][dim]["mos"].to(
-                    device
-                )
+                batch["targets"][dim]["mos"] = batch["targets"][dim]["mos"].to(device)
                 batch["targets"][dim]["soft_labels"] = batch["targets"][dim][
                     "soft_labels"
                 ].to(device)
@@ -960,7 +977,9 @@ def train_hyperiqa_plus_plus(
     print("\n" + "=" * 70)
     print("TRAINING COMPLETE")
     print("=" * 70)
-    print(f"Best VQualA Score: {history['best_vquala']:.4f} (Epoch {history['best_epoch']})")
+    print(
+        f"Best VQualA Score: {history['best_vquala']:.4f} (Epoch {history['best_epoch']})"
+    )
     print(f"Best checkpoint: {best_checkpoint_path}")
 
     # Return results
