@@ -47,6 +47,7 @@ from __future__ import annotations
 import json
 import random
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -260,7 +261,7 @@ def train_siglip2_iqa(
             # Average the projected gradients
             return torch.stack(projected).mean(dim=0)
 
-    PCGRAD_AVAILABLE = True
+    pcgrad_available = True
     print("PCGrad optimizer available (inline implementation)")
 
     # Load configuration
@@ -279,7 +280,7 @@ def train_siglip2_iqa(
     print(f"Max Patches: {config.max_num_patches}")
     print(f"Total Epochs: {config.total_epochs}")
     print(f"Batch Size: {config.batch_size}")
-    print(f"PCGrad: {config.use_pcgrad and PCGRAD_AVAILABLE}")
+    print(f"PCGrad: {config.use_pcgrad and pcgrad_available}")
     print(f"NormInNorm Loss: {config.use_norm_in_norm}")
     print(f"Uncertainty Output: {config.uncertainty}")
     print(f"Target SRCC: {config.target_srcc}")
@@ -376,7 +377,7 @@ def train_siglip2_iqa(
             self,
             pixel_values: torch.Tensor,
             spatial_shapes: torch.Tensor | None = None,
-            pixel_attention_mask: torch.Tensor | None = None,
+            _pixel_attention_mask: torch.Tensor | None = None,
         ) -> dict[str, dict | torch.Tensor]:
             # Extract vision features (NaFlex requires spatial_shapes)
             outputs = self.backbone.get_image_features(
@@ -444,9 +445,8 @@ def train_siglip2_iqa(
             if all_csvs_exist:
                 print("DIQA-5000 already downloaded and validated, skipping...")
                 return True
-            else:
-                print("Marker file exists but CSVs missing, re-downloading...")
-                marker_file.unlink()  # Remove stale marker
+            print("Marker file exists but CSVs missing, re-downloading...")
+            marker_file.unlink()  # Remove stale marker
 
         print(f"Downloading DIQA-5000 from gs://{GCS_BUCKET}/{GCS_PREFIX}/")
         start_time = time.time()
@@ -755,7 +755,7 @@ def train_siglip2_iqa(
         losses = []
         for dim in ["overall", "sharpness", "color"]:
             target = torch.tensor(
-                [l[dim] for l in labels], device=device, dtype=torch.float32
+                [lbl[dim] for lbl in labels], device=device, dtype=torch.float32
             )
 
             if config.uncertainty:
@@ -797,7 +797,7 @@ def train_siglip2_iqa(
                         preds = outputs[dim].cpu().numpy()
 
                     all_preds[dim].extend(preds)
-                    all_labels[dim].extend([l[dim] for l in labels_list])
+                    all_labels[dim].extend([lbl[dim] for lbl in labels_list])
 
         # Compute SRCC
         import numpy as np
@@ -844,7 +844,7 @@ def train_siglip2_iqa(
         weight_decay=config.weight_decay,
     )
 
-    if config.use_pcgrad and PCGRAD_AVAILABLE:
+    if config.use_pcgrad and pcgrad_available:
         optimizer = PCGrad(optimizer)
 
     for epoch in range(config.phase1_epochs):
@@ -864,12 +864,12 @@ def train_siglip2_iqa(
             optimizer.zero_grad()
             outputs = model(pixel_values, spatial_shapes)
 
-            if config.use_pcgrad and PCGRAD_AVAILABLE:
+            if config.use_pcgrad and pcgrad_available:
                 # PCGrad: separate losses per dimension
                 losses = []
                 for dim in ["overall", "sharpness", "color"]:
                     target = torch.tensor(
-                        [l[dim] for l in labels_list],
+                        [lbl[dim] for lbl in labels_list],
                         device=device,
                         dtype=torch.float32,
                     )
@@ -882,7 +882,9 @@ def train_siglip2_iqa(
                     losses.append(loss)
 
                 optimizer.pc_backward(losses)
-                train_loss += sum(l.item() for l in losses) / len(losses)
+                train_loss += sum(loss_item.item() for loss_item in losses) / len(
+                    losses
+                )
             else:
                 loss, _ = compute_loss(outputs, labels_list)
                 loss.backward()
@@ -930,7 +932,7 @@ def train_siglip2_iqa(
                 "metrics": val_metrics,
             }
             torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
-            print(f"  ✓ New best VQualA! Saved checkpoint.")
+            print("  ✓ New best VQualA! Saved checkpoint.")
             patience_counter = 0
         else:
             patience_counter += 1
@@ -1056,7 +1058,7 @@ def train_siglip2_iqa(
                 "metrics": val_metrics,
             }
             torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
-            print(f"  ✓ New best VQualA! Saved checkpoint.")
+            print("  ✓ New best VQualA! Saved checkpoint.")
             patience_counter = 0
         else:
             patience_counter += 1
@@ -1089,7 +1091,7 @@ def train_siglip2_iqa(
             val_metrics["vquala"] >= config.target_vquala
             and val_metrics["srcc_overall"] >= config.target_srcc
         ):
-            print(f"  ✓ Target metrics achieved! Continuing to maximize performance...")
+            print("  ✓ Target metrics achieved! Continuing to maximize performance...")
 
     # ========================================================================
     # Post-hoc Calibration (if uncertainty enabled)
@@ -1123,31 +1125,38 @@ def train_siglip2_iqa(
                 for dim in ["overall", "sharpness", "color"]:
                     predictions[dim].extend(outputs[dim]["mu"].cpu().numpy())
                     uncertainties[dim].extend(outputs[dim]["sigma_sq"].cpu().numpy())
-                    targets[dim].extend([l[dim] for l in labels_list])
+                    targets[dim].extend([lbl[dim] for lbl in labels_list])
 
         # Optimize temperature for each head
+        def make_nll_func(
+            preds_arr: np.ndarray, uncerts_arr: np.ndarray, targs_arr: np.ndarray
+        ) -> Callable[[float], float]:
+            """Create NLL function with captured arrays to avoid closure issues."""
+
+            def negative_log_likelihood(temp: float) -> float:
+                scaled_sigma_sq = temp * uncerts_arr
+                return float(
+                    np.mean(
+                        0.5 * np.log(scaled_sigma_sq + 1e-8)
+                        + (targs_arr - preds_arr) ** 2 / (2 * scaled_sigma_sq + 1e-8)
+                    )
+                )
+
+            return negative_log_likelihood
+
         calibration_temps = {}
         for dim in ["overall", "sharpness", "color"]:
-            preds = np.array(predictions[dim])
-            uncerts = np.array(uncertainties[dim])
-            targs = np.array(targets[dim])
+            preds_arr = np.array(predictions[dim])
+            uncerts_arr = np.array(uncertainties[dim])
+            targs_arr = np.array(targets[dim])
 
-            def negative_log_likelihood(T):
-                scaled_sigma_sq = T * uncerts
-                nll = np.mean(
-                    0.5 * np.log(scaled_sigma_sq + 1e-8)
-                    + (targs - preds) ** 2 / (2 * scaled_sigma_sq + 1e-8)
-                )
-                return nll
+            nll_func = make_nll_func(preds_arr, uncerts_arr, targs_arr)
+            result = minimize_scalar(nll_func, bounds=(0.1, 10.0), method="bounded")
+            optimal_temp = result.x
+            calibration_temps[dim] = optimal_temp
 
-            result = minimize_scalar(
-                negative_log_likelihood, bounds=(0.1, 10.0), method="bounded"
-            )
-            optimal_T = result.x
-            calibration_temps[dim] = optimal_T
-
-            srcc, _ = spearmanr(preds, targs)
-            print(f"  {dim}: T={optimal_T:.3f}, SRCC={srcc:.4f}")
+            srcc, _ = spearmanr(preds_arr, targs_arr)
+            print(f"  {dim}: T={optimal_temp:.3f}, SRCC={srcc:.4f}")
 
         # Apply calibration
         model.set_calibration_temps(calibration_temps)
@@ -1180,7 +1189,7 @@ def train_siglip2_iqa(
 
     test_metrics = validate(test_loader)
 
-    print(f"\nTest Set Results:")
+    print("\nTest Set Results:")
     print(f"  SRCC Overall:   {test_metrics['srcc_overall']:.4f}")
     print(f"  SRCC Sharpness: {test_metrics['srcc_sharpness']:.4f}")
     print(f"  SRCC Color:     {test_metrics['srcc_color']:.4f}")
@@ -1192,7 +1201,7 @@ def train_siglip2_iqa(
     )
 
     if target_achieved:
-        print(f"\n✓ TARGET ACHIEVED! Model ready for pseudo-label generation.")
+        print("\n✓ TARGET ACHIEVED! Model ready for pseudo-label generation.")
     else:
         print(f"\n✗ Target not achieved. Best VQualA: {best_vquala:.4f}")
 
