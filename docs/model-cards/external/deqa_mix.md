@@ -176,7 +176,7 @@ final_score = (
 
 ### Multi-Task Head Design
 
-```
+```text
                   ┌─────────────────┐
                   │  CLIP ViT-L     │
                   │  Vision Encoder │

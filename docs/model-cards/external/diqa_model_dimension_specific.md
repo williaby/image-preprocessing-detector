@@ -156,23 +156,29 @@ final_score = (
 ### Usage Example
 
 ```python
-from modelscope import AutoModel
+from modelscope.pipelines import pipeline
+from modelscope.utils.constant import Tasks
 from PIL import Image
 
-# Load dimension-specific model
-model_overall = AutoModel.from_pretrained("DIQA_model/overall")
-model_sharpness = AutoModel.from_pretrained("DIQA_model/sharpness")
-model_color = AutoModel.from_pretrained("DIQA_model/color")
+# Create pipelines for each dimension-specific model
+pipe_overall = pipeline(Tasks.image_quality_assessment_mos, model="DIQA_model/overall")
+pipe_sharpness = pipeline(Tasks.image_quality_assessment_mos, model="DIQA_model/sharpness")
+pipe_color = pipeline(Tasks.image_quality_assessment_mos, model="DIQA_model/color")
 
-# Process image
-image = Image.open("document.png").convert("RGB").resize((1024, 1024))
+# Load and resize image
+image_path = "document.png"
 
 # Get per-dimension scores
-score_overall = model_overall.predict(image)
-score_sharpness = model_sharpness.predict(image)
-score_color = model_color.predict(image)
+result_overall = pipe_overall(image_path)
+result_sharpness = pipe_sharpness(image_path)
+result_color = pipe_color(image_path)
 
-# Compute weighted final score
+# Extract scores from pipeline results
+score_overall = result_overall["score"]
+score_sharpness = result_sharpness["score"]
+score_color = result_color["score"]
+
+# Compute weighted final score (VQualA 2025 formula)
 final_score = 0.5 * score_overall + 0.25 * score_sharpness + 0.25 * score_color
 ```
 

@@ -94,12 +94,13 @@ Rankings use SRCC (Spearman Rank Correlation), the standard metric for VQualA 20
 |------|-------|------|--------------|---------------|---------|
 | 🥇 1 | SigLIP2-IQA-Base-86M-v1.0.0 | Fine-tuned | **0.896** | **0.886** | 100ms |
 | 🥈 2 | HyperIQA-Plus-Plus-DIQA5000-v1.0.0 | Fine-tuned | **0.860** | **0.856** | 2.9ms |
-| 🥉 3 | DeQA-Doc-3Specialists | VLM | **0.733** | 0.711 | VLM |
+| 🥉 3 | DeQA-Doc-3Specialists | VLM | **0.733** | 0.711 | ~2000ms‡ |
 | 4 | PyIQA-maniqa | Pretrained | 0.526 | 0.544 | 1845ms |
-| 5 | DeQA-Score-Mix3-Prompted | VLM | 0.491 | 0.498 | VLM |
+| 5 | DeQA-Score-Mix3-Prompted | VLM | 0.491 | 0.498 | ~2000ms‡ |
 | 6 | PyIQA-liqe | Pretrained | 0.403 | 0.429 | 150ms |
 
 †VQualA Score = 0.5×SRCC_overall + 0.25×SRCC_sharpness + 0.25×SRCC_color
+‡VLM latency measured on A100 GPU; varies significantly by hardware and configuration.
 
 ### Pretrained IQA Models (Baselines)
 

@@ -134,7 +134,7 @@ class ResNetIQA(nn.Module):
 
 **Output**: Direct tensor of shape `[batch, 3]` with numeric scores.
 
-### 2.2 VLM Benchmarks (Qwen3-VL, InternVL)
+### 2.2 VLM Benchmarks (Qwen2.5-VL, InternVL)
 
 Our current VLM approach uses **text parsing**:
 
