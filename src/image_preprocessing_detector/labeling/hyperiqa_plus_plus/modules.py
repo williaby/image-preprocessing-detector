@@ -12,14 +12,12 @@ Implements DocIQ-inspired components:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, cast
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F  # noqa: N812  # PyTorch convention
-
-if TYPE_CHECKING:
-    from torch import Tensor
+from torch import Tensor
 
 
 class MultiScaleFeatureFusion(nn.Module):
@@ -74,28 +72,30 @@ class MultiScaleFeatureFusion(nn.Module):
         Returns:
             Fused features [B, 2048, H', W']
         """
-        features = []
+        features: list[Tensor] = []
 
-        # Initial layers
-        x = self.backbone.conv1(x)
-        x = self.backbone.bn1(x)
-        x = self.backbone.relu(x)
-        x = self.backbone.maxpool(x)
+        # Initial layers - use getattr to access backbone layers dynamically
+        # This is necessary because nn.Module typing doesn't know about ResNet structure
+        backbone: Any = self.backbone
+        x = backbone.conv1(x)
+        x = backbone.bn1(x)
+        x = backbone.relu(x)
+        x = backbone.maxpool(x)
 
         # Stage 1: 256 channels
-        x = self.backbone.layer1(x)
+        x = backbone.layer1(x)
         features.append(self.proj1(x))
 
         # Stage 2: 512 channels
-        x = self.backbone.layer2(x)
+        x = backbone.layer2(x)
         features.append(self.proj2(x))
 
         # Stage 3: 1024 channels
-        x = self.backbone.layer3(x)
+        x = backbone.layer3(x)
         features.append(self.proj3(x))
 
         # Stage 4: 2048 channels
-        x = self.backbone.layer4(x)
+        x = backbone.layer4(x)
         features.append(self.proj4(x))
 
         # Resize all to same spatial size (use first feature map as target)
@@ -107,7 +107,7 @@ class MultiScaleFeatureFusion(nn.Module):
 
         # Concatenate and fuse
         fused = torch.cat(features, dim=1)  # [B, 512*4, H, W]
-        return self.fusion(fused)  # [B, 2048, H, W]
+        return cast(Tensor, self.fusion(fused))  # [B, 2048, H, W]
 
 
 class SpatialAttentionModule(nn.Module):
@@ -200,11 +200,13 @@ class SoftLabelHead(nn.Module):
                 - probs: Softmax probabilities [B, num_bins]
                 - logits: Raw logits [B, num_bins]
         """
-        logits = self.head(features)  # [B, num_bins]
+        logits = cast(Tensor, self.head(features))  # [B, num_bins]
         probs = F.softmax(logits, dim=-1)  # Distribution
 
         # Expected value as final score
         # score = Σ(p_i x bin_center_i)
-        score = (probs * self.bin_centers).sum(dim=-1)  # [B]
+        # Cast bin_centers since register_buffer type is Tensor | Module
+        bin_centers = cast(Tensor, self.bin_centers)
+        score = (probs * bin_centers).sum(dim=-1)  # [B]
 
         return score, probs, logits
