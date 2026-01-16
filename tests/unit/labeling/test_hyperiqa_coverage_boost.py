@@ -162,3 +162,127 @@ class TestUtilsCoverage:
             assert torch.isclose(labels.sum(), torch.tensor(1.0))
             assert labels.min() >= 0.0
             assert labels.max() <= 1.0
+
+
+class TestDatasetCoverage:
+    """Test dataset.py for coverage."""
+
+    def test_dataset_init_missing_csv(self, tmp_path: Path) -> None:
+        """Test dataset initialization with missing CSV file."""
+        import pytest
+
+        from image_preprocessing_detector.labeling.hyperiqa_plus_plus.dataset import (
+            DIQA5000HighResDataset,
+        )
+
+        with pytest.raises(FileNotFoundError, match="Annotations not found"):
+            DIQA5000HighResDataset(root_dir=tmp_path, split="train")
+
+    def test_dataset_load_and_getitem(self, tmp_path: Path) -> None:
+        """Test dataset loading and item retrieval."""
+        from PIL import Image
+
+        from image_preprocessing_detector.labeling.hyperiqa_plus_plus.dataset import (
+            DIQA5000HighResDataset,
+        )
+
+        # Create mock dataset structure
+        train_dir = tmp_path / "train"
+        train_dir.mkdir()
+        res_dir = train_dir / "res"
+        res_dir.mkdir()
+
+        # Create test image
+        test_img = Image.new("RGB", (100, 100), color="red")
+        test_img.save(res_dir / "test.png")
+
+        # Create CSV
+        csv_path = train_dir / "train.csv"
+        csv_path.write_text(
+            "res,ori,overall,sharpness,color_fidelity\ntest.png,orig.png,3.5,4.0,3.0\n"
+        )
+
+        # Create dataset
+        dataset = DIQA5000HighResDataset(
+            root_dir=tmp_path,
+            split="train",
+            image_size=(224, 224),
+            augment=False,
+        )
+
+        assert len(dataset) == 1
+
+        # Get item
+        item = dataset[0]
+        assert "pixel_values" in item
+        assert "targets" in item
+        assert item["pixel_values"].shape[0] == 3  # RGB channels
+
+    def test_dataset_path_traversal_prevention(self, tmp_path: Path) -> None:
+        """Test that path traversal is prevented."""
+        import pytest
+
+        from image_preprocessing_detector.labeling.hyperiqa_plus_plus.dataset import (
+            DIQA5000HighResDataset,
+        )
+
+        # Create mock dataset structure
+        train_dir = tmp_path / "train"
+        train_dir.mkdir()
+        res_dir = train_dir / "res"
+        res_dir.mkdir()
+
+        # Create CSV with path traversal attempt
+        csv_path = train_dir / "train.csv"
+        csv_path.write_text(
+            "res,ori,overall,sharpness,color_fidelity\n"
+            "../../../etc/passwd,orig.png,3.5,4.0,3.0\n"
+        )
+
+        dataset = DIQA5000HighResDataset(
+            root_dir=tmp_path,
+            split="train",
+            image_size=(224, 224),
+            augment=False,
+        )
+
+        with pytest.raises(ValueError, match="Path traversal detected"):
+            _ = dataset[0]
+
+    def test_dataset_with_augmentation(self, tmp_path: Path) -> None:
+        """Test dataset with augmentation enabled."""
+        from PIL import Image
+
+        from image_preprocessing_detector.labeling.hyperiqa_plus_plus.dataset import (
+            DIQA5000HighResDataset,
+        )
+
+        # Create mock dataset structure
+        train_dir = tmp_path / "train"
+        train_dir.mkdir()
+        res_dir = train_dir / "res"
+        res_dir.mkdir()
+
+        # Create test image
+        test_img = Image.new("RGB", (100, 100), color="blue")
+        test_img.save(res_dir / "aug_test.png")
+
+        # Create CSV
+        csv_path = train_dir / "train.csv"
+        csv_path.write_text(
+            "res,ori,overall,sharpness,color_fidelity\n"
+            "aug_test.png,orig.png,2.5,3.0,4.0\n"
+        )
+
+        # Create dataset with augmentation
+        dataset = DIQA5000HighResDataset(
+            root_dir=tmp_path,
+            split="train",
+            image_size=(224, 224),
+            augment=True,
+        )
+
+        # Get item multiple times to trigger augmentation paths
+        for _ in range(5):
+            item = dataset[0]
+            assert item["pixel_values"].shape == (3, 224, 224)
