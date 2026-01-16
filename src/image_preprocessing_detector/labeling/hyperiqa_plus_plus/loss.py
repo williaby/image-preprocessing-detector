@@ -110,6 +110,7 @@ class MultiTaskIQALoss(nn.Module):
         self.use_norm_in_norm = use_norm_in_norm
 
         self.kl_criterion = nn.KLDivLoss(reduction="batchmean")
+        self.score_criterion: nn.Module  # Can be NormInNormLoss or MSELoss
         if use_norm_in_norm:
             self.score_criterion = NormInNormLoss(p=1.0, q=2.0)
         else:
