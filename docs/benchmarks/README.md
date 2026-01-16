@@ -84,17 +84,41 @@ All columns must be present. Use empty string for missing optional fields like `
 - Seed: 42 for reproducibility
 - Minimum 30 samples required for bootstrap
 
-## Current Leaderboard (Overall Quality PLCC)
+## Current Leaderboard (Overall Quality SRCC)
 
-| Rank | Model | Overall PLCC | 95% CI |
+Rankings use SRCC (Spearman Rank Correlation), the standard metric for VQualA 2025 Challenge.
+
+### Top Performers
+
+| Rank | Model | Type | Overall SRCC | VQualA Score† | Latency |
+|------|-------|------|--------------|---------------|---------|
+| 🥇 1 | SigLIP2-IQA-Base-86M-v1.0.0 | Fine-tuned | **0.896** | **0.886** | 100ms |
+| 🥈 2 | HyperIQA-Plus-Plus-DIQA5000-v1.0.0 | Fine-tuned | **0.860** | **0.856** | 2.9ms |
+| 🥉 3 | DeQA-Doc-3Specialists | VLM | **0.733** | 0.711 | ~2000ms‡ |
+| 4 | PyIQA-maniqa | Pretrained | 0.526 | 0.544 | 1845ms |
+| 5 | DeQA-Score-Mix3-Prompted | VLM | 0.491 | 0.498 | ~2000ms‡ |
+| 6 | PyIQA-liqe | Pretrained | 0.403 | 0.429 | 150ms |
+
+†VQualA Score = 0.5×SRCC_overall + 0.25×SRCC_sharpness + 0.25×SRCC_color
+‡VLM latency measured on A100 GPU; varies significantly by hardware and configuration.
+
+### Pretrained IQA Models (Baselines)
+
+| Rank | Model | Overall SRCC | 95% CI |
 |------|-------|--------------|--------|
-| 1 | PyIQA-qualiclip | 0.2216 | [0.144, 0.288] |
-| 2 | PyIQA-musiq | 0.2098 | [0.136, 0.275] |
-| 3 | ResNet18-ImageNet-IQA | 0.0963 | [0.038, 0.155] |
-| 4 | Swin-Tiny-ImageNet-IQA | 0.0474 | [-0.008, 0.099] |
-| 5 | ConvNeXt-Tiny-ImageNet-IQA | -0.0330 | [-0.103, 0.031] |
-| 6 | ResNet50-ImageNet-IQA | -0.0341 | [-0.098, 0.038] |
-| 7 | ResNet34-ImageNet-IQA | -0.0602 | [-0.122, 0.008] |
-| 8 | EfficientNet-B4-ImageNet-IQA | -0.1222 | [-0.185, -0.054] |
+| 1 | PyIQA-maniqa | 0.526 | [0.477, 0.567] |
+| 2 | PyIQA-liqe | 0.403 | [0.346, 0.459] |
+| 3 | PyIQA-dbcnn | 0.288 | [0.227, 0.347] |
+| 4 | PyIQA-hyperiqa | 0.236 | [0.172, 0.298] |
+| 5 | PyIQA-topiq_nr | 0.176 | [0.114, 0.233] |
+| 6 | PyIQA-clipiqa | 0.160 | [0.104, 0.218] |
+| 7 | PyIQA-musiq | 0.116 | [0.047, 0.180] |
+| 8 | PyIQA-qualiclip | 0.104 | [0.036, 0.165] |
 
-*Last updated: 2025-12-18*
+### Notes
+
+- **SigLIP2** and **HyperIQA++** are our fine-tuned models achieving SOTA on DIQA-5000
+- **DeQA-Doc** models are VLM-based (7B params) requiring A100-class GPU
+- See [DEQA_METHODOLOGY_COMPARISON.md](DEQA_METHODOLOGY_COMPARISON.md) for VLM evaluation methodology
+
+*Last updated: 2026-01-16*

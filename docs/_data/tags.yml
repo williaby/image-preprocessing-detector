@@ -26,6 +26,15 @@ allowed:
   - enhancement
   - restoration
 
+  # VLM & External Models
+  - vlm
+  - deqa_doc
+  - deqa_score
+  - vquala_2025
+  - multi_task
+  - dimension_specific
+  - qwen
+
   # Specific Techniques
   - classical_cv
   - skew_detection
