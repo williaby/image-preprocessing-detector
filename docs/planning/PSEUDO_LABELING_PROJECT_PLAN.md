@@ -1,8 +1,18 @@
-# Pseudo-Labeling Workstream Project Plan
+---
+title: Pseudo-Labeling Workstream Project Plan
+schema_type: planning
+status: draft
+owner: ml-team
+tags:
+  - pseudo_labeling
+  - iqa
+  - training
+  - dociq
+purpose: Generate comprehensive pseudo-labels for ~2.5M document images to enable production IQA model training.
+component: Strategy
+source: UNIFIED_LABELING_STRATEGY.md
+---
 
-**Date**: 2026-01-12
-**Status**: Ready for Execution
-**Owner**: Core Team
 **Objective**: Generate comprehensive pseudo-labels for ~2.5M document images to enable production IQA model training
 
 ---
@@ -11,7 +21,7 @@
 
 This project plan details the work required to complete the pseudo-labeling workflow, generating 3-dimension quality labels (overall, sharpness, color) for the entire document corpus. The approach follows the DocIQ architecture (1600×1600 + layout masks) validated by research.
 
-**Total Estimated Cost**: $75-130
+**Total Estimated Cost**: $80-140
 **Total Estimated Time**: 2-3 weeks
 **Key Deliverable**: Pseudo-labels for ~2.5M images in Layer 2 (ENRICHMENT) metadata
 
@@ -36,7 +46,7 @@ This project plan details the work required to complete the pseudo-labeling work
 |-----------|--------|-----------------|
 | Stage 2 Phase 2 Fine-tuning | 0% | Budget exhausted Dec 2024 |
 | DeQA-Doc Anchor Labels | 0% | Not started |
-| Full Corpus Pseudo-Labels | 0% | Requires trained model |
+| Full Corpus Pseudo-Labels | 0% | Requires a trained model |
 | Documentation Updates | 0% | ADRs and CLAUDE.md need updates |
 
 ---
@@ -173,7 +183,7 @@ This phase uses DeQA-Doc (MLLM, 0.93 accuracy) to create enriched ground truth f
 
 #### Hybrid Two-Pass Approach
 
-```
+```text
 Pass 1: DocIQ-Replica (fast) ──────────────────────────────────
   │  • All 2.5M images
   │  • ~30ms/image on GPU
@@ -181,7 +191,7 @@ Pass 1: DocIQ-Replica (fast) ─────────────────
   │  • Output: 3D distributions + uncertainty
   ↓
 Uncertainty Filter ────────────────────────────────────────────
-  │  • Flag high-uncertainty samples (σ > 0.0625)
+  │  • Flag high-uncertainty samples (variance > 0.0625)
   │  • Flag edge cases (score < 0.3 or > 0.9)
   │  • Expected: ~15-20% flagged (~400-500K images)
   ↓
@@ -231,11 +241,11 @@ Final Labels ──────────────────────�
 ```python
 CONFIDENCE_THRESHOLDS = {
     'high': {
-        'max_variance': 0.015,   # σ < 0.12
+        'max_variance': 0.015,   # variance < 0.015 (std < 0.12)
         'training_weight': 1.0,
     },
     'medium': {
-        'max_variance': 0.0625,  # σ < 0.25
+        'max_variance': 0.0625,  # variance < 0.0625 (std < 0.25)
         'training_weight': 0.5,
     },
     'low': {
@@ -283,6 +293,7 @@ CONFIDENCE_THRESHOLDS = {
 ```
 
 Apply to:
+
 - `PHASE7_IDEAL_STATE_PROJECT_PLAN_v2.md`
 - `PHASE7_SPRINT_IMPLEMENTATION_PLAN.md`
 - `PHASE7_TRAINING_DEEP_DIVE.md`
@@ -324,7 +335,7 @@ Apply to:
 
 ## Timeline Summary
 
-```
+```text
 Week 1:
 ├── Day 1-2: Phase 1 - Stage 2 Fine-tuning (CRITICAL)
 ├── Day 3-4: Phase 2 - DeQA-Doc Anchor Labels (parallel with layout masks)
@@ -353,6 +364,7 @@ Week 3:
 | **Total** | **~130h** | **$80-140** | |
 
 **Cost Optimization**:
+
 - Use Modal spot instances where possible (40% savings)
 - Batch inference for Pass 1 (1000+ images/batch)
 - Quantize DeQA-Doc to 4-bit for Pass 2 (2x speedup)
@@ -374,7 +386,7 @@ Week 3:
 
 ## Dependencies
 
-```
+```text
 Phase 1 (Stage 2 Fine-tuning)
     ↓
     ├── Phase 2 (DeQA-Doc Anchors) [parallel]
@@ -449,7 +461,7 @@ class AnchorSource(str, Enum):
 |------|---------|
 | `scripts/annotate_base_metadata.py` | Layer 1-2 metadata annotation |
 | `scripts/build_training_labels.py` | Layer 3 training label computation |
-| `modal/generate_pseudo_labels.py` | Qwen3-VL pseudo-labeling |
+| `modal/generate_pseudo_labels.py` | DocIQ-Replica (Pass 1) + DeQA-Doc (Pass 2) pseudo-labeling |
 | `modal/stage1_deqa_inference.py` | DIQA inference pipeline |
 | `src/image_preprocessing_detector/labeling/finetuning/` | DocIQ-Replica training |
 | `docs/planning/UNIFIED_LABELING_STRATEGY.md` | Strategic approach |

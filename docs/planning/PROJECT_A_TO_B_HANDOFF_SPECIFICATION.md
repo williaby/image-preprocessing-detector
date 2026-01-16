@@ -1,13 +1,26 @@
-# Project A → Project B Handoff Specification
+---
+title: Project A to Project B Handoff Specification
+schema_type: planning
+status: draft
+owner: ml-team
+tags:
+  - ocr_preprocessing
+  - iqa
+  - pipeline
+  - integration
+purpose: Complete specification of what Project A delivers to Project B (OCR Orchestration).
+component: Context
+source: CLAUDE.md
+---
 
 **Date**: 2026-01-12
-**Purpose**: Complete specification of what Project A delivers to Project B (OCR Orchestration)
 
 ---
 
 ## Executive Summary
 
 Project A (Preprocessing, IQA & Coarse Layout Gateway) produces:
+
 1. **Corrected images** - Quality-enhanced page images ready for OCR
 2. **DocumentMetadata.json** - Structured metadata with quality scores and routing recommendations
 
@@ -181,6 +194,7 @@ For each correction to activate, specific detection must occur:
 ### 4.1 Classical IQA (✅ Complete)
 
 8 detectors fully implemented:
+
 - Skew, Blur, Contrast, Noise
 - Illumination, JPEG Blockiness, Binarization, Bleed-through
 
@@ -238,7 +252,7 @@ For fine-grained correction and diagnostics:
 | 45-dim degradation vector | Detailed diagnosis | ❌ Need 45-head model |
 | Physical damage detection | Stain, water damage | ❌ Not covered |
 | Text-specific issues | Faded text, broken chars | ❌ Not covered |
-| Scanner artifacts | Moiré, halftone, dust | ❌ Not covered |
+| Scanner artifacts | Moiré pattern, halftone, dust | ❌ Not covered |
 
 ---
 
@@ -246,7 +260,7 @@ For fine-grained correction and diagnostics:
 
 Complete mapping from correction to required detection:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                    CORRECTION PIPELINE                                   │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -324,7 +338,7 @@ These 15 degradation types have no model coverage:
 
 **Physical Damage** (5): stain, ink_bleed, bleed_through*, water_damage, yellowing
 **Text-specific** (5): faded_text, broken_characters, touching_characters, overlapping_text, stamp_interference
-**Scanner** (5): moire_pattern, halftone, scanner_noise, dust_specks, scratches
+**Scanner** (5): moiré pattern (`moire_pattern`), halftone, scanner_noise, dust_specks, scratches
 
 *bleed_through has classical detector but no ML model
 

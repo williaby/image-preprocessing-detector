@@ -1,8 +1,19 @@
-# Pseudo-Labeling Workflow Status Report
+---
+title: Pseudo-Labeling Workflow Status Report
+schema_type: planning
+status: draft
+owner: ml-team
+tags:
+  - pseudo_labeling
+  - iqa
+  - training
+  - dociq
+purpose: Track pseudo-labeling workflow status, document deprecations, and identify required updates.
+component: Strategy
+source: UNIFIED_LABELING_STRATEGY.md
+---
 
-**Date**: 2026-01-12
 **Status**: Active Review
-**Purpose**: Track pseudo-labeling workflow status, document deprecations, and identify required updates
 
 ---
 
@@ -97,6 +108,7 @@ The DocIQ paper establishes the architecture our implementation follows:
 | **Loss Function** | Distribution-matching: KL divergence + EMD |
 
 **Performance on DIQA-5000**:
+
 - SRCC: 0.8704 (average across dimensions)
 - PLCC: 0.8999
 
@@ -104,7 +116,7 @@ The DocIQ paper establishes the architecture our implementation follows:
 
 The dual-path architecture addresses high-resolution processing:
 
-```
+```text
 Path 1 (Primary): Image → Spatial Downsampling → Features
 Path 2 (Secondary): Image + Layout Mask → Semantic Downsampling → Features
                                     ↓
@@ -112,6 +124,7 @@ Path 2 (Secondary): Image + Layout Mask → Semantic Downsampling → Features
 ```
 
 **Benefits**:
+
 - Reduces computational complexity while preserving quality-relevant features
 - Semantic region focusing (text vs. figures vs. tables)
 - Preserves crucial spatial relationships
@@ -127,6 +140,7 @@ DeQA-Doc won the ICCV 2025 VQualA DIQA Challenge with **0.9288 final score**.
 **Solutions for Missing Variance** (applicable to our approach):
 
 1. **Pseudo-variance**: Assign fixed σ based on empirical statistics
+
    ```python
    sigma = 0.08  # Empirical: 0.2 × 0.4 range per bin
    ```
@@ -140,7 +154,7 @@ This validates our `UNIFIED_LABELING_STRATEGY.md` soft-label construction approa
 | Attribute | Value |
 |-----------|-------|
 | Total images | 5,000 (from 500 base images) |
-| Distortion types | 5: shadow, occlusion, blur, creases, moiré |
+| Distortion types | 5: shadow, occlusion, blur, creases, moiré pattern |
 | Human raters | 15 per image |
 | Quality dimensions | 3: overall, sharpness, color fidelity |
 | Scale | MOS 1-5 (5 = best) |
@@ -219,14 +233,16 @@ These documents describe abandoned sub-1600px approaches:
 4. **Missing layout masks** - No 11-class DocLayNet mask requirement
 
 **Current (Incorrect)**:
-```
+
+```text
 | Student (ResNet-18) GPU | 10ms |
 | Student (ResNet-18) CPU | 40ms |
 | Teacher (ResNet-50) GPU | 30ms |
 ```
 
 **Should Be (1600px)**:
-```
+
+```text
 | Student (ResNet-18) GPU | ~50-100ms at 1600x1600 |
 | Teacher (ResNet-50) GPU | ~150-200ms at 1600x1600 |
 | CPU inference | Not recommended (use classical IQA fallback) |
@@ -249,19 +265,22 @@ These documents describe abandoned sub-1600px approaches:
 ### Phase 3 Section
 
 **Current**:
-```
+
+```text
 - **Student Model** (ResNet-18): Default production inference, val_loss=0.14
 - **Teacher Model** (ResNet-50): High-capacity model for difficult cases, val_loss=0.27
 ```
 
 **Issues**:
+
 1. No mention of 1600x1600 resolution requirement
 2. No mention of layout masks
 3. No mention of DocIQ-Replica architecture
 4. val_loss values are from Stage 1 only (incomplete training)
 
 **Recommended**:
-```
+
+```text
 - **Architecture**: DocIQ-Replica with Layout Fusion Downsampler
 - **Input Resolution**: 1600x1600 (required for compression detection)
 - **Layout Masks**: 11-class DocLayNet masks (1600x1600)
@@ -271,7 +290,8 @@ These documents describe abandoned sub-1600px approaches:
 ### Performance Targets Section
 
 **Current**:
-```
+
+```text
 | Student (ResNet-18) CPU | ≤40ms/page (target) |
 | Student (ResNet-18) GPU | ≤10ms/page (target) |
 ```
@@ -279,7 +299,8 @@ These documents describe abandoned sub-1600px approaches:
 **Issues**: Unrealistic at 1600x1600 (50x more pixels than 224px)
 
 **Recommended**:
-```
+
+```text
 | Student (ResNet-18) GPU | ≤100ms/page at 1600x1600 |
 | Teacher (ResNet-50) GPU | ≤200ms/page at 1600x1600 |
 | CPU inference | Use 300 DPI classical IQA fallback |
@@ -312,7 +333,7 @@ These documents remain accurate:
    - Option B: Expand to 8 heads (recommended)
    - Option C: Full 45-head model
    - Option D: Two-stage coarse + fine
-0. [ ] **Resolve head naming inconsistency** - `illumination/artifacts` vs `contrast/compression`
+1. [ ] **Resolve head naming inconsistency** - `illumination/artifacts` vs `contrast/compression`
 
 ### High Priority
 
@@ -323,14 +344,14 @@ These documents remain accurate:
 
 ### Medium Priority
 
-5. [ ] Update ADR-030 with resolution clarification
-6. [ ] Consolidate DIQA pseudo-label documents
-7. [ ] Update CLAUDE.md Key Technologies section
+1. [ ] Update ADR-030 with resolution clarification
+2. [ ] Consolidate DIQA pseudo-label documents
+3. [ ] Update CLAUDE.md Key Technologies section
 
 ### Low Priority
 
-8. [ ] Review ADR-022 for resolution implications
-9. [ ] Archive deprecated planning documents
+1. [ ] Review ADR-022 for resolution implications
+2. [ ] Archive deprecated planning documents
 
 ---
 
@@ -343,6 +364,7 @@ These documents remain accurate:
 #### Current Production Model (5 Heads)
 
 From `src/.../models/resnet_teacher.py`:
+
 ```python
 ISSUE_TYPES = ["blur", "noise", "skew", "illumination", "artifacts"]
 ```
@@ -362,7 +384,7 @@ From `scripts/build_training_labels.py`:
 | **Compression** | 5 | jpeg_artifacts, blocking, ringing, posterization, banding |
 | **Physical** | 5 | stain, ink_bleed, bleed_through, water_damage, yellowing |
 | **Text-specific** | 5 | faded_text, broken_characters, touching_characters, overlapping_text, stamp_interference |
-| **Scanner** | 5 | moire_pattern, halftone, scanner_noise, dust_specks, scratches |
+| **Scanner** | 5 | `moire_pattern`, halftone, scanner_noise, dust_specks, scratches |
 
 #### Architecture Gap Analysis
 
