@@ -110,11 +110,6 @@ training_image = (
         remote_path="/root/image_preprocessing_detector",
         copy=True,
     )
-    .add_local_file(
-        ".gcp/service-account.json",
-        "/root/.gcp/service-account.json",
-        copy=True,
-    )
 )
 
 
@@ -195,14 +190,32 @@ def download_diqa5000_from_gcs(target_dir: Path) -> Path:
     Returns:
         Path to extracted DIQA-5000 directory
     """
+    import base64
     import os
+    import tempfile
 
     from google.cloud import storage
 
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # Set GCS credentials
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/root/.gcp/service-account.json"
+    # Materialize GCS credentials from Modal Secret
+    gcp_sa_key = os.environ.get("GCP_SA_KEY")
+    if gcp_sa_key:
+        gcp_sa_key_json = base64.b64decode(gcp_sa_key).decode("utf-8")
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, prefix="gcp-sa-key-"
+        ) as f:
+            f.write(gcp_sa_key_json)
+            f.flush()
+            credentials_path = f.name
+        os.chmod(credentials_path, 0o600)
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+    elif "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ:
+        msg = (
+            "GCS credentials not configured. Set Modal Secret 'gcs-credentials' "
+            "with GCP_SA_KEY environment variable."
+        )
+        raise FileNotFoundError(msg)
 
     bucket_name = "image_detection_b"
     gcs_path = "datasets/diqa-5000/diqa-5000.tar.gz"
