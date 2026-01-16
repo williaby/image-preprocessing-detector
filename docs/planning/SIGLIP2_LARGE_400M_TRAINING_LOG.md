@@ -1,4 +1,14 @@
-# SigLIP 2 Large (400M) Document IQA Training Log
+---
+owner: ml-team
+purpose: 'Training log and planning for SigLIP 2 Large 400M Document IQA model.'
+schema_type: common
+status: draft
+tags:
+- iqa
+- training
+- planning
+title: 'SigLIP 2 Large (400M) Document IQA Training Log'
+---
 
 > **Status**: Planning Phase
 > **Created**: 2026-01-14

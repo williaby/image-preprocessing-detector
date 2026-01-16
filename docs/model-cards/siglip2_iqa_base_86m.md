@@ -1,14 +1,11 @@
 ---
 owner: ml-team
-purpose: 'Model Card: SigLIP 2 Base NaFlex Document IQA (86M parameters)'
+purpose: 'Model Card: SigLIP 2 Base NaFlex Document IQA (86M parameters).'
 schema_type: common
-status: trained
+status: draft
 tags:
 - iqa
-- siglip2
-- naflex
-- diqa-5000
-- document-quality
+- diqa_5000
 title: 'Model Card: SigLIP2-IQA-Base-86M'
 ---
 
@@ -150,7 +147,7 @@ vquala = 0.5 * srcc_overall + 0.25 * srcc_sharpness + 0.25 * srcc_color
 
 ### Model Structure
 
-```
+```text
 SigLIP2DocumentIQA(
   backbone: Siglip2VisionModel (86M params, frozen → unfrozen)
   heads: ModuleDict(
@@ -204,12 +201,23 @@ SigLIP2DocumentIQA(
 
 ```python
 import torch
-from transformers import AutoModel, AutoProcessor
+from transformers import AutoProcessor
 from PIL import Image
 
-# Load model and processor
-model = SigLIP2DocumentIQA.from_pretrained("siglip2-iqa-base-86m-v1.0.0")
+# Import model class from training script (or define locally)
+# from modal.train_siglip2_iqa import SigLIP2DocumentIQA
+
+# Load processor
 processor = AutoProcessor.from_pretrained("google/siglip2-base-patch16-naflex")
+
+# Initialize model and load checkpoint
+model = SigLIP2DocumentIQA(
+    model_id="google/siglip2-base-patch16-naflex",
+    uncertainty=True,
+)
+checkpoint = torch.load("models/iqa/siglip2_base/siglip2_iqa_best.pt")
+model.load_state_dict(checkpoint["model_state_dict"])
+model.eval()
 
 # Process image
 image = Image.open("document.png").convert("RGB")
@@ -217,16 +225,17 @@ inputs = processor(
     images=[image],
     return_tensors="pt",
     padding="max_length",
-    max_num_patches=576
+    max_num_patches=576,
 )
 
 # Get quality scores with uncertainty
 with torch.no_grad():
     outputs = model(inputs["pixel_values"], inputs["spatial_shapes"])
 
-print(f"Overall Quality: {outputs['overall']['mu']:.2f} ± {outputs['overall']['sigma']:.2f}")
-print(f"Sharpness: {outputs['sharpness']['mu']:.2f} ± {outputs['sharpness']['sigma']:.2f}")
-print(f"Color Fidelity: {outputs['color']['mu']:.2f} ± {outputs['color']['sigma']:.2f}")
+# Output format: sigma_sq is variance, take sqrt for std deviation
+print(f"Overall Quality: {outputs['overall']['mu'].item():.2f} ± {outputs['overall']['sigma_sq'].sqrt().item():.2f}")
+print(f"Sharpness: {outputs['sharpness']['mu'].item():.2f} ± {outputs['sharpness']['sigma_sq'].sqrt().item():.2f}")
+print(f"Color Fidelity: {outputs['color']['mu'].item():.2f} ± {outputs['color']['sigma_sq'].sqrt().item():.2f}")
 ```
 
 ---

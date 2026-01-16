@@ -106,7 +106,9 @@ class SigLIP2TrainingConfig:
 
     # Model
     model_id: str = "google/siglip2-base-patch16-naflex"
-    max_num_patches: int = 576  # Critical hyperparameter (default 256 leaves performance on table)
+    max_num_patches: int = (
+        576  # Critical hyperparameter (default 256 leaves performance on table)
+    )
     uncertainty: bool = True  # Output mu and sigma^2
 
     # Training phases
@@ -150,7 +152,9 @@ class SigLIP2TrainingConfig:
         return {k: getattr(self, k) for k in self.__dataclass_fields__}
 
 
-def compute_vquala(srcc_overall: float, srcc_sharpness: float, srcc_color: float) -> float:
+def compute_vquala(
+    srcc_overall: float, srcc_sharpness: float, srcc_color: float
+) -> float:
     """Compute VQualA final score: 0.5*overall + 0.25*sharpness + 0.25*color."""
     return 0.5 * srcc_overall + 0.25 * srcc_sharpness + 0.25 * srcc_color
 
@@ -234,8 +238,8 @@ def train_siglip2_iqa(
             for group in self.optimizer.param_groups:
                 for p in group["params"]:
                     numel = p.numel()
-                    if p.grad is not None or True:
-                        p.grad = projected_grads[offset:offset + numel].view_as(p)
+                    # Always assign projected gradient (PCGrad accumulates from all tasks)
+                    p.grad = projected_grads[offset : offset + numel].view_as(p)
                     offset += numel
 
         def _project_gradients(self, grads: list[torch.Tensor]) -> torch.Tensor:
@@ -249,7 +253,9 @@ def train_siglip2_iqa(
                         dot = torch.dot(projected[i], grads[j])
                         if dot < 0:
                             # Project out the conflicting component
-                            projected[i] -= (dot / (torch.dot(grads[j], grads[j]) + 1e-8)) * grads[j]
+                            projected[i] -= (
+                                dot / (torch.dot(grads[j], grads[j]) + 1e-8)
+                            ) * grads[j]
 
             # Average the projected gradients
             return torch.stack(projected).mean(dim=0)
@@ -466,7 +472,7 @@ def train_siglip2_iqa(
                 if blob.name.endswith("/"):
                     continue
 
-                relative_path = blob.name[len(prefix):]
+                relative_path = blob.name[len(prefix) :]
                 if not relative_path:
                     continue
 
@@ -564,13 +570,15 @@ def train_siglip2_iqa(
                         continue
 
                     # Parse MOS scores (1-5 scale)
-                    self.samples.append({
-                        "image_path": str(image_path),
-                        "image_id": image_filename.replace(".jpg", ""),
-                        "overall": float(row["overall"]),
-                        "sharpness": float(row["sharpness"]),
-                        "color_fidelity": float(row["color_fidelity"]),
-                    })
+                    self.samples.append(
+                        {
+                            "image_path": str(image_path),
+                            "image_id": image_filename.replace(".jpg", ""),
+                            "overall": float(row["overall"]),
+                            "sharpness": float(row["sharpness"]),
+                            "color_fidelity": float(row["color_fidelity"]),
+                        }
+                    )
 
             print(f"  {split}: {len(self.samples)} samples loaded")
 
@@ -699,7 +707,9 @@ def train_siglip2_iqa(
         """Custom collate function to properly handle labels dict."""
         pixel_values = torch.stack([item["pixel_values"] for item in batch])
         spatial_shapes = torch.stack([item["spatial_shapes"] for item in batch])
-        pixel_attention_mask = torch.stack([item["pixel_attention_mask"] for item in batch])
+        pixel_attention_mask = torch.stack(
+            [item["pixel_attention_mask"] for item in batch]
+        )
         # Keep labels as list of dicts (not dict of lists)
         labels = [item["labels"] for item in batch]
         image_ids = [item["image_id"] for item in batch]
@@ -843,22 +853,25 @@ def train_siglip2_iqa(
         train_loss = 0.0
 
         for batch in tqdm(
-            train_loader, desc=f"Phase 1 - Epoch {epoch+1}/{config.phase1_epochs}"
+            train_loader, desc=f"Phase 1 - Epoch {epoch + 1}/{config.phase1_epochs}"
         ):
             pixel_values = batch["pixel_values"].to(device)
             spatial_shapes = batch["spatial_shapes"].to(device)
-            pixel_attention_mask = batch["pixel_attention_mask"].to(device)
+            # Note: pixel_attention_mask loaded but not passed to get_image_features
+            # (NaFlex uses spatial_shapes for resolution handling)
             labels_list = batch["labels"]
 
             optimizer.zero_grad()
-            outputs = model(pixel_values, spatial_shapes, pixel_attention_mask)
+            outputs = model(pixel_values, spatial_shapes)
 
             if config.use_pcgrad and PCGRAD_AVAILABLE:
                 # PCGrad: separate losses per dimension
                 losses = []
                 for dim in ["overall", "sharpness", "color"]:
                     target = torch.tensor(
-                        [l[dim] for l in labels_list], device=device, dtype=torch.float32
+                        [l[dim] for l in labels_list],
+                        device=device,
+                        dtype=torch.float32,
                     )
                     if config.uncertainty:
                         loss = criterion(
@@ -897,7 +910,7 @@ def train_siglip2_iqa(
             }
         )
 
-        print(f"\nPhase 1 - Epoch {epoch+1}/{config.phase1_epochs}:")
+        print(f"\nPhase 1 - Epoch {epoch + 1}/{config.phase1_epochs}:")
         print(f"  Train Loss: {train_loss:.4f}")
         print(f"  Val Loss: {val_metrics['loss']:.4f}")
         print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
@@ -944,10 +957,9 @@ def train_siglip2_iqa(
         weight_decay=config.weight_decay,
     )
 
-    # Keep reference to base optimizer for scheduler (PCGrad wraps it)
+    # Keep reference to base optimizer for scheduler
+    # Note: PCGrad wrapping disabled in Phase 2 to avoid OOM with full backbone unfrozen
     base_optimizer = optimizer
-    if config.use_pcgrad and PCGRAD_AVAILABLE:
-        optimizer = PCGrad(base_optimizer)
 
     # OneCycleLR scheduler (uses base optimizer, not PCGrad wrapper)
     if config.use_onecycle:
@@ -979,11 +991,11 @@ def train_siglip2_iqa(
         train_loss = 0.0
 
         for batch in tqdm(
-            train_loader, desc=f"Phase 2 - Epoch {epoch+1}/{config.phase2_epochs}"
+            train_loader, desc=f"Phase 2 - Epoch {epoch + 1}/{config.phase2_epochs}"
         ):
             pixel_values = batch["pixel_values"].to(device)
             spatial_shapes = batch["spatial_shapes"].to(device)
-            pixel_attention_mask = batch["pixel_attention_mask"].to(device)
+            # Note: pixel_attention_mask not needed for get_image_features
             labels_list = batch["labels"]
 
             base_optimizer.zero_grad()
@@ -1024,7 +1036,7 @@ def train_siglip2_iqa(
             }
         )
 
-        print(f"\nPhase 2 - Epoch {epoch+1}/{config.phase2_epochs}:")
+        print(f"\nPhase 2 - Epoch {epoch + 1}/{config.phase2_epochs}:")
         print(f"  Train Loss: {train_loss:.4f}")
         print(f"  Val Loss: {val_metrics['loss']:.4f}")
         print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
@@ -1054,7 +1066,7 @@ def train_siglip2_iqa(
             checkpoint = {
                 "epoch": config.phase1_epochs + epoch + 1,
                 "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": base_optimizer.state_dict(),  # Use base_optimizer (PCGrad wrapper has no state_dict)
+                "optimizer_state_dict": base_optimizer.state_dict(),
                 "config": config.to_dict(),
                 "metrics": val_metrics,
             }
@@ -1066,7 +1078,9 @@ def train_siglip2_iqa(
         # Early stopping (only if no improvement for many epochs)
         # Note: We don't stop early just because we hit targets - we want to see how high we can go
         if patience_counter >= config.early_stopping_patience:
-            print(f"\nEarly stopping triggered after {patience_counter} epochs without improvement.")
+            print(
+                f"\nEarly stopping triggered after {patience_counter} epochs without improvement."
+            )
             print(f"Best VQualA achieved: {best_vquala:.4f}")
             break
 
@@ -1275,6 +1289,8 @@ def main(
         print("\n✓ Model ready for pseudo-label generation!")
         print("Next steps:")
         print("  1. Download checkpoint:")
-        print("     modal volume get siglip2-iqa-results /results/siglip2/siglip2_iqa_best.pt ./checkpoints/")
+        print(
+            "     modal volume get siglip2-iqa-results /results/siglip2/siglip2_iqa_best.pt ./checkpoints/"
+        )
         print("  2. Generate pseudo-labels for other datasets")
         print("  3. Rebuild Stage 2 with consistent labels")
