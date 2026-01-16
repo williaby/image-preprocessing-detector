@@ -699,7 +699,9 @@ def train_hyperiqa_plus_plus(
         checkpoint_to_load = best_checkpoint
         if checkpoint_to_load.exists():
             print(f"\n📂 Loading checkpoint: {checkpoint_to_load}")
-            checkpoint = torch.load(
+            # weights_only=False required for loading optimizer state and training metadata
+            # Security: checkpoint files are from our own training runs, not external sources
+            checkpoint = torch.load(  # noqa: S614
                 checkpoint_to_load, map_location=device, weights_only=False
             )
             model.load_state_dict(checkpoint["model_state_dict"])
@@ -833,6 +835,7 @@ def train_hyperiqa_plus_plus(
             {"params": model.head_sharpness.parameters(), "lr": config.phase2_lr_heads},
             {"params": model.head_color.parameters(), "lr": config.phase2_lr_heads},
         ],
+        lr=config.phase2_lr_heads,  # Default lr (overridden by per-group lr)
         weight_decay=config.weight_decay,
     )
     # Add hypernet if it exists
