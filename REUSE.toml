@@ -191,6 +191,7 @@ path = [
     "benchmarks/reports/**/*.json",
     "benchmarks/reports/**/*.md",
     "benchmarks/results/**/*.csv",  # Benchmark result CSVs
+    "docs/benchmarks/**/*.csv",  # DIQA-5000 and other benchmark results
     "codemeta.json",
     "benchmarks/LICENSES.md",
     "benchmarks/registry.yml",
