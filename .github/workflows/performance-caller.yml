@@ -1,0 +1,74 @@
+---
+# Performance Regression Testing
+# Uses org reusable python-performance-regression.yml workflow
+#
+# Sprint 4.3.6: Automated performance regression detection
+# Runs on PRs affecting inference pipeline to catch performance degradation
+
+name: Performance Regression
+
+"on":
+  pull_request:
+    paths:
+      - 'src/image_preprocessing_detector/detection/**'
+      - 'src/image_preprocessing_detector/models/**'
+      - 'src/image_preprocessing_detector/orchestration/**'
+      - 'src/image_preprocessing_detector/workers/**'
+      - 'scripts/benchmarks/**'
+      - '.github/workflows/performance-caller.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  performance-regression:
+    name: ML Inference Performance Check
+    uses: williaby/.github/.github/workflows/python-performance-regression.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      # Benchmark configuration
+      benchmark-script: 'scripts/benchmarks/benchmark_student_cpu.py'
+      benchmark-args: ''
+      primary-metric: 'p95_ms'
+
+      # Thresholds
+      regression-threshold: 10.0  # Fail if >10% slower
+      improvement-threshold: 5.0  # Highlight if >5% faster
+
+      # Baseline
+      baseline-file: 'docs/benchmarks/baselines/phase3_student_cpu.json'
+
+      # Execution
+      python-version: '3.12'
+      warmup-iterations: 10
+      benchmark-iterations: 100
+
+      # Synthetic data generation
+      generate-synthetic-data: true
+      synthetic-data-script: |
+        import cv2
+        import numpy as np
+        from pathlib import Path
+
+        # Create 100 synthetic test images for benchmarking
+        output_dir = Path("${{ inputs.test-data-directory }}")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        for i in range(100):
+            img = np.random.randint(0, 255, (800, 600, 3), dtype=np.uint8)
+            cv2.imwrite(str(output_dir / f"test_{i:03d}.png"), img)
+
+        print(f"Generated 100 test images in {output_dir}")
+
+      test-data-directory: '/tmp/perf_test_data'
+
+      # Extras
+      extra-dependencies: 'dev ml'
+
+      # Behavior
+      fail-on-regression: true
+      comment-on-pr: true
+      timeout-minutes: 30

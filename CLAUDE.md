@@ -228,6 +228,107 @@ Configuration: `.coderabbit.yaml`
 - Security vulnerability detection
 - Test coverage analysis
 
+## Draft PR Workflow (MANDATORY FOR COST OPTIMIZATION)
+
+**ALWAYS create PRs as draft first**, then mark ready for review after validation.
+
+### Why Draft PRs?
+
+Draft PRs skip expensive workflows (saves $0.50-1.00 per PR cycle):
+
+- Python compatibility matrix (12 jobs → 1 job)
+- ClusterFuzzLite fuzzing (30 min → skipped)
+- Mutation testing (60 min → skipped)
+- SonarCloud analysis (10 min → skipped)
+- Container security scans (12 min → skipped)
+
+**Essential checks still run**: Linting, tests, security scans, REUSE, SBOM, requirement locks
+
+### Standard PR Workflow
+
+1. **Create as draft** (automatic during development):
+
+   ```bash
+   # Claude creates all PRs as draft by default
+   gh pr create --draft --title "feat: add new feature"
+   ```
+
+2. **Validate locally before each push**:
+
+   ```bash
+   ./scripts/validate-before-push.sh && git push
+   ```
+
+3. **Draft PR runs fast essential checks** (~5-8 workflows, ~15 minutes):
+
+   - CI (linting, tests, type checking)
+   - Security essentials (Bandit, Safety)
+   - REUSE compliance
+   - SBOM generation
+   - Requirements lock validation
+
+4. **Verify draft PR passes** essential checks:
+
+   ```bash
+   gh pr checks  # Should show ~5-8 checks passing
+   ```
+
+5. **Mark ready for review** when development complete:
+
+   ```bash
+   gh pr ready <pr-number>
+   ```
+
+6. **Full CI suite runs** (~15 workflows, comprehensive validation)
+
+### Claude PR Creation Pattern
+
+When Claude creates a PR, it MUST follow this pattern:
+
+```bash
+# Step 1: Local validation (catch issues before push)
+./scripts/validate-before-push.sh
+
+# Step 2: Create PR as DRAFT
+gh pr create --draft \
+  --title "feat: descriptive title" \
+  --body "$(cat PR_DESCRIPTION.md)"
+
+# Step 3: Verify essential checks pass
+echo "⏳ Waiting for draft PR checks..."
+gh pr checks --watch
+
+# Step 4: Mark ready when checks pass
+echo "✅ Draft PR checks passed. Mark ready for review when development complete:"
+echo "   gh pr ready <pr-number>"
+```
+
+### Cost Comparison
+
+**Old Workflow** (no draft PRs):
+
+- Every push: 15 workflows × 7 min = 105 min
+- 3 pushes per PR: 315 minutes ($2.52)
+
+**New Workflow** (with draft PRs):
+
+- Draft push 1: 6 workflows × 5 min = 30 min
+- Draft push 2: 6 workflows × 5 min = 30 min
+- Mark ready: 15 workflows × 5 min = 75 min
+- **Total**: 135 minutes ($1.08)
+
+**Savings**: 180 minutes ($1.44) per PR = 57% reduction
+
+### Exception: Critical Hotfixes
+
+For critical production issues, skip draft PR and run full validation immediately:
+
+```bash
+gh pr create --title "fix: critical security patch" \
+  --body "Fixes CVE-YYYY-XXXXX"
+  # No --draft flag
+```
+
 ## Naming Conventions (MANDATORY COMPLIANCE)
 
 **Core Components:**

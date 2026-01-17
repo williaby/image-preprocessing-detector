@@ -1,3 +1,8 @@
+---
+name: test-engineer
+description: Comprehensive testing specialist for test strategy, generation, and quality assurance
+---
+
 # Test Engineer Agent
 
 Comprehensive testing specialist for test strategy, generation, and quality assurance with 80%+ coverage.

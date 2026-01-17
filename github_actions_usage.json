@@ -1,0 +1,186 @@
+{
+  "repository": "williaby/image-preprocessing-detector",
+  "generated_at": "2025-12-07T19:17:55.011390",
+  "workflows": [
+    {
+      "name": "CI",
+      "total_runs": 95,
+      "total_duration_minutes": 2299.9,
+      "avg_duration_minutes": 24.21,
+      "total_cost_usd": 18.4,
+      "success_runs": 41,
+      "failed_runs": 31,
+      "cancelled_runs": 23
+    },
+    {
+      "name": "ClusterFuzzLite",
+      "total_runs": 95,
+      "total_duration_minutes": 1642.48,
+      "avg_duration_minutes": 17.29,
+      "total_cost_usd": 13.14,
+      "success_runs": 95,
+      "failed_runs": 0,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "Security Analysis",
+      "total_runs": 82,
+      "total_duration_minutes": 181.45,
+      "avg_duration_minutes": 2.21,
+      "total_cost_usd": 1.45,
+      "success_runs": 74,
+      "failed_runs": 8,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "Documentation",
+      "total_runs": 77,
+      "total_duration_minutes": 122.47,
+      "avg_duration_minutes": 1.59,
+      "total_cost_usd": 0.98,
+      "success_runs": 58,
+      "failed_runs": 19,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "Copilot code review",
+      "total_runs": 31,
+      "total_duration_minutes": 107.92,
+      "avg_duration_minutes": 3.48,
+      "total_cost_usd": 0.86,
+      "success_runs": 30,
+      "failed_runs": 1,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "SBOM & Security Scan",
+      "total_runs": 53,
+      "total_duration_minutes": 56.92,
+      "avg_duration_minutes": 1.07,
+      "total_cost_usd": 0.46,
+      "success_runs": 53,
+      "failed_runs": 0,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "PR Validation",
+      "total_runs": 80,
+      "total_duration_minutes": 49.37,
+      "avg_duration_minutes": 0.62,
+      "total_cost_usd": 0.39,
+      "success_runs": 66,
+      "failed_runs": 14,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "REUSE Compliance",
+      "total_runs": 95,
+      "total_duration_minutes": 37.38,
+      "avg_duration_minutes": 0.39,
+      "total_cost_usd": 0.3,
+      "success_runs": 89,
+      "failed_runs": 6,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "OpenSSF Scorecard",
+      "total_runs": 16,
+      "total_duration_minutes": 27.6,
+      "avg_duration_minutes": 1.72,
+      "total_cost_usd": 0.22,
+      "success_runs": 16,
+      "failed_runs": 0,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "Codecov",
+      "total_runs": 97,
+      "total_duration_minutes": 15.9,
+      "avg_duration_minutes": 0.16,
+      "total_cost_usd": 0.13,
+      "success_runs": 42,
+      "failed_runs": 0,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "Qlty",
+      "total_runs": 87,
+      "total_duration_minutes": 12.6,
+      "avg_duration_minutes": 0.14,
+      "total_cost_usd": 0.1,
+      "success_runs": 38,
+      "failed_runs": 0,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "SonarCloud",
+      "total_runs": 95,
+      "total_duration_minutes": 11.35,
+      "avg_duration_minutes": 0.12,
+      "total_cost_usd": 0.09,
+      "success_runs": 95,
+      "failed_runs": 0,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "Performance Regression Gate",
+      "total_runs": 5,
+      "total_duration_minutes": 7.02,
+      "avg_duration_minutes": 1.4,
+      "total_cost_usd": 0.06,
+      "success_runs": 4,
+      "failed_runs": 1,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "Mutation Testing",
+      "total_runs": 1,
+      "total_duration_minutes": 2.97,
+      "avg_duration_minutes": 2.97,
+      "total_cost_usd": 0.02,
+      "success_runs": 0,
+      "failed_runs": 1,
+      "cancelled_runs": 0
+    },
+    {
+      "name": "Deploy API",
+      "total_runs": 6,
+      "total_duration_minutes": 2.88,
+      "avg_duration_minutes": 0.48,
+      "total_cost_usd": 0.02,
+      "success_runs": 0,
+      "failed_runs": 6,
+      "cancelled_runs": 0
+    },
+    {
+      "name": ".github/workflows/compatibility.yml",
+      "total_runs": 73,
+      "total_duration_minutes": 0.0,
+      "avg_duration_minutes": 0.0,
+      "total_cost_usd": 0.0,
+      "success_runs": 0,
+      "failed_runs": 73,
+      "cancelled_runs": 0
+    },
+    {
+      "name": ".github/workflows/mutation-testing.yml",
+      "total_runs": 1,
+      "total_duration_minutes": 0.0,
+      "avg_duration_minutes": 0.0,
+      "total_cost_usd": 0.0,
+      "success_runs": 0,
+      "failed_runs": 1,
+      "cancelled_runs": 0
+    },
+    {
+      "name": ".github/workflows/release.yml",
+      "total_runs": 11,
+      "total_duration_minutes": 0.0,
+      "avg_duration_minutes": 0.0,
+      "total_cost_usd": 0.0,
+      "success_runs": 0,
+      "failed_runs": 11,
+      "cancelled_runs": 0
+    }
+  ]
+}

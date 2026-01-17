@@ -1,0 +1,106 @@
+---
+# Documentation Build and Validation
+# Uses org reusable python-docs.yml workflow with custom front-matter validation
+#
+# MAINTENANCE BENEFIT: Standardized MkDocs builds across org
+# - Zero cost savings (docs are fast)
+# - Fixes 24.7% failure rate
+# - Easier to maintain (update once in org)
+# - Consistent documentation patterns
+
+name: Documentation
+
+"on":
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'overrides/**'
+      - 'tools/**'
+      - 'src/**'
+      - '.github/workflows/docs-caller.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'overrides/**'
+      - 'tools/**'
+      - 'src/**'
+
+permissions: read-all
+
+jobs:
+  # Custom front-matter validation (project-specific)
+  validate-frontmatter:
+    name: Validate Front Matter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55  # v5.5.0
+        with:
+          python-version: '3.12'
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86  # v5.4.2
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Autofix front matter
+        run: uv run python tools/validate_front_matter.py docs --fix
+
+      - name: Validate front matter (strict)
+        run: uv run python tools/validate_front_matter.py docs
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: front-matter-validation
+          path: front-matter-report.json
+          retention-days: 7
+
+  # Standard documentation build using org workflow
+  build:
+    name: Build Documentation
+    needs: validate-frontmatter
+    uses: ByronWilliamsCPA/.github/.github/workflows/python-docs.yml@main
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    with:
+      python-version: '3.12'
+      docs-directory: 'docs'
+      source-directory: 'src'
+      docstring-threshold: 80
+      deploy-to-pages: true  # Deploy on main branch
+
+  # Documentation summary
+  docs-summary:
+    name: Documentation Summary
+    needs: [validate-frontmatter, build]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## Documentation Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Front Matter Validation: ${{ needs.validate-frontmatter.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Documentation Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.validate-frontmatter.result }}" != "success" ]] || \
+             [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "❌ One or more documentation checks failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "✅ All documentation checks passed" >> $GITHUB_STEP_SUMMARY
