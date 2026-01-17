@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import gc
 import logging
+import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from image_preprocessing_detector.labeling.deqa.base import (
@@ -102,9 +104,9 @@ class VLSingleInference(DeQAInference):
         """
         import sys
 
-        # Add DeQA-Score to path if available
-        deqa_score_path = "/opt/DeQA-Score"
-        if deqa_score_path not in sys.path:
+        # Add DeQA-Score to path (allow override via DEQA_SCORE_PATH env var)
+        deqa_score_path = os.environ.get("DEQA_SCORE_PATH", "/opt/DeQA-Score")
+        if Path(deqa_score_path).is_dir() and deqa_score_path not in sys.path:
             sys.path.insert(0, deqa_score_path)
 
         try:
@@ -239,7 +241,10 @@ class VLSingleInference(DeQAInference):
                 .to(self.config.device)
             )
 
-            logger.info("Token IDs for quality levels: %s", self.token_ids)
+            # NLP tokenizer IDs for quality level vocabulary (not credentials)
+            logger.info(  # nosemgrep: python-logger-credential-disclosure
+                "Token IDs for quality levels: %s", self.token_ids
+            )
 
         except ImportError:
             logger.warning("DeQA-Score templates not available, using simple prompt")
@@ -300,7 +305,7 @@ class VLSingleInference(DeQAInference):
         import torch
 
         # Preprocess image
-        image_tensor = self._preprocess_image(image)
+        image_tensor = self._preprocess_vl_image(image)
 
         # Run inference
         with torch.inference_mode():
@@ -338,8 +343,13 @@ class VLSingleInference(DeQAInference):
 
         return results
 
-    def _preprocess_image(self, image: Image.Image) -> Any:
-        """Preprocess image for model input.
+    # Note: expand_to_square is inherited from base class for code deduplication.
+    # _preprocess_vl_image is a thin wrapper that uses self.image_processor.
+
+    def _preprocess_vl_image(self, image: Image.Image) -> Any:
+        """Preprocess image for VL model input.
+
+        Uses inherited preprocess_image from base class with self.image_processor.
 
         Args:
             image: PIL Image.
@@ -347,51 +357,7 @@ class VLSingleInference(DeQAInference):
         Returns:
             Preprocessed image tensor.
         """
-        # Convert to RGB if needed
-        if image.mode != "RGB":
-            image = image.convert("RGB")
-
-        # Expand to square (DeQA-Score requirement)
-        image = self._expand_to_square(
-            image,
-            tuple(int(x * 255) for x in self.image_processor.image_mean),
-        )
-
-        # Process with model's image processor
-        return (
-            self.image_processor.preprocess(image, return_tensors="pt")["pixel_values"]
-            .half()
-            .to(self.config.device)
-        )
-
-    @staticmethod
-    def _expand_to_square(
-        image: Image.Image, background_color: tuple[int, ...]
-    ) -> Image.Image:
-        """Expand image to square by padding.
-
-        Args:
-            image: PIL Image.
-            background_color: Color for padding.
-
-        Returns:
-            Square PIL Image.
-        """
-        from PIL import Image as PILImage
-
-        width, height = image.size
-        if width == height:
-            return image
-
-        size = max(width, height)
-        result = PILImage.new(image.mode, (size, size), background_color)  # type: ignore[arg-type]
-
-        if width > height:
-            result.paste(image, (0, (size - height) // 2))
-        else:
-            result.paste(image, ((size - width) // 2, 0))
-
-        return result
+        return self.preprocess_image(image, self.image_processor)
 
     def predict_batch(
         self,
@@ -414,7 +380,7 @@ class VLSingleInference(DeQAInference):
         import torch
 
         # Preprocess all images
-        image_tensors = [self._preprocess_image(img) for img in images]
+        image_tensors = [self._preprocess_vl_image(img) for img in images]
         batched_images = torch.cat(image_tensors, dim=0)
 
         # Run batched inference

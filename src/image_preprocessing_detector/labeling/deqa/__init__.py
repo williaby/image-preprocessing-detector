@@ -87,21 +87,29 @@ def create_inference_engine(config: DeQAConfig) -> DeQAInference:
 
     Raises:
         ValueError: If an unknown inference mode is specified.
+
+    Note:
+        SPECIALIST and SPECIALIST_TRUE both use SpecialistInference.
+        ENSEMBLE and ENSEMBLE_TRUE both use EnsembleInference.
+        The TRUE variants indicate the full model configuration is used.
     """
-    if config.mode == InferenceMode.SPECIALIST:
+    # Specialist modes (dimension-specific CNN models)
+    if config.mode in (InferenceMode.SPECIALIST, InferenceMode.SPECIALIST_TRUE):
         from image_preprocessing_detector.labeling.deqa.specialist import (
             SpecialistInference,
         )
 
         return SpecialistInference(config)
 
-    if config.mode == InferenceMode.ENSEMBLE:
+    # Ensemble modes (multiple VLM models)
+    if config.mode in (InferenceMode.ENSEMBLE, InferenceMode.ENSEMBLE_TRUE):
         from image_preprocessing_detector.labeling.deqa.ensemble import (
             EnsembleInference,
         )
 
         return EnsembleInference(config)
 
+    # Single VL model mode
     if config.mode == InferenceMode.VL:
         from image_preprocessing_detector.labeling.deqa.vl_single import (
             VLSingleInference,

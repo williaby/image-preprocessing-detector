@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import gc
 import logging
+import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from image_preprocessing_detector.labeling.deqa.base import (
@@ -135,9 +137,9 @@ class EnsembleInference(DeQAInference):
         else:
             local_path = model_config.model_path
 
-        # Add DeQA-Score to path
-        deqa_score_path = "/opt/DeQA-Score"
-        if deqa_score_path not in sys.path:
+        # Add DeQA-Score to path (allow override via DEQA_SCORE_PATH env var)
+        deqa_score_path = os.environ.get("DEQA_SCORE_PATH", "/opt/DeQA-Score")
+        if Path(deqa_score_path).is_dir() and deqa_score_path not in sys.path:
             sys.path.insert(0, deqa_score_path)
 
         try:
@@ -451,7 +453,7 @@ class EnsembleInference(DeQAInference):
         input_ids = self.input_ids[model_id]
 
         # Preprocess image
-        image_tensor = self._preprocess_image(image, processor)
+        image_tensor = self.preprocess_image(image, processor)
 
         with torch.inference_mode():
             output = model(
@@ -557,62 +559,8 @@ class EnsembleInference(DeQAInference):
 
         return results
 
-    def _preprocess_image(self, image: Image.Image, processor: Any) -> Any:
-        """Preprocess image for mPLUG model input.
-
-        Args:
-            image: PIL Image.
-            processor: Image processor.
-
-        Returns:
-            Preprocessed image tensor.
-        """
-        # Convert to RGB if needed
-        if image.mode != "RGB":
-            image = image.convert("RGB")
-
-        # Expand to square
-        image = self._expand_to_square(
-            image,
-            tuple(int(x * 255) for x in processor.image_mean),
-        )
-
-        # Process with model's image processor
-        return (
-            processor.preprocess(image, return_tensors="pt")["pixel_values"]
-            .half()
-            .to(self.config.device)
-        )
-
-    @staticmethod
-    def _expand_to_square(
-        image: Image.Image,
-        background_color: tuple[int, ...],
-    ) -> Image.Image:
-        """Expand image to square by padding.
-
-        Args:
-            image: PIL Image.
-            background_color: Color for padding.
-
-        Returns:
-            Square PIL Image.
-        """
-        from PIL import Image as PILImage
-
-        width, height = image.size
-        if width == height:
-            return image
-
-        size = max(width, height)
-        result = PILImage.new(image.mode, (size, size), background_color)  # type: ignore[arg-type]
-
-        if width > height:
-            result.paste(image, (0, (size - height) // 2))
-        else:
-            result.paste(image, ((size - width) // 2, 0))
-
-        return result
+    # Note: _preprocess_image and _expand_to_square are inherited from base class
+    # as preprocess_image and expand_to_square for code deduplication
 
     def _aggregate_ensemble_scores(
         self,

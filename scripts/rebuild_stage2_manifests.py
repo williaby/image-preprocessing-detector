@@ -28,23 +28,26 @@ from pathlib import Path
 
 
 def _get_default_paths() -> tuple[Path, Path, Path]:
-    """Get default paths from environment or hardcoded values.
+    """Get default paths from environment or relative to repository root.
 
     Returns:
         Tuple of (stage2_dir, labels_dir, output_dir).
+
+    Environment Variables:
+        STAGE2_DIR: Path to Stage 2 dataset directory
+        LABELS_DIR: Path to DeQA labels directory (defaults to repo/results/deqa_labels)
     """
+    # Default labels directory relative to repository root (scripts/ is one level down)
+    repo_root = Path(__file__).resolve().parent.parent
+    default_labels_dir = repo_root / "results" / "deqa_labels"
+
     stage2_dir = Path(
         os.environ.get(
             "STAGE2_DIR",
             "/mnt/e/image_detection/03_training_datasets/stage2_diqa_ensemble",
         )
     )
-    labels_dir = Path(
-        os.environ.get(
-            "LABELS_DIR",
-            "/home/byron/dev/image_detection/results/deqa_labels",  # nosemgrep: hardcoded-absolute-path
-        )
-    )
+    labels_dir = Path(os.environ.get("LABELS_DIR", str(default_labels_dir)))
     output_dir = stage2_dir / "splits_v2"
     return stage2_dir, labels_dir, output_dir
 

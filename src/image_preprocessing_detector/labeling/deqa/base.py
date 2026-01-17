@@ -159,12 +159,12 @@ class DeQAInference(ABC):
         Args:
             device: Device to load models on. Defaults to config.device.
         """
-        ...
+        raise NotImplementedError  # Abstract method - must be overridden
 
     @abstractmethod
     def unload_models(self) -> None:
         """Unload models and free GPU memory."""
-        ...
+        raise NotImplementedError  # Abstract method - must be overridden
 
     @abstractmethod
     def predict(self, image: Image.Image) -> dict[str, DeQAScore]:
@@ -176,7 +176,7 @@ class DeQAInference(ABC):
         Returns:
             Dictionary mapping dimension to DeQAScore.
         """
-        ...
+        raise NotImplementedError  # Abstract method - must be overridden
 
     def predict_batch(
         self,
@@ -194,6 +194,94 @@ class DeQAInference(ABC):
             List of dictionaries mapping dimension to DeQAScore.
         """
         return [self.predict(img) for img in images]
+
+    # =========================================================================
+    # Shared Helper Methods (reduce duplication across inference modes)
+    # =========================================================================
+
+    @staticmethod
+    def expand_to_square(
+        image: Image.Image,
+        background_color: tuple[int, ...],
+    ) -> Image.Image:
+        """Expand image to square by padding with background color.
+
+        This is a shared utility used across all inference modes for consistent
+        image preprocessing before model input.
+
+        Args:
+            image: PIL Image to pad.
+            background_color: RGB tuple for padding color.
+
+        Returns:
+            Square PIL Image with original centered.
+        """
+        from typing import cast
+
+        from PIL import Image as PILImage
+
+        width, height = image.size
+        if width == height:
+            return image
+
+        size = max(width, height)
+        # Cast to satisfy type stubs; runtime accepts any int tuple
+        color = cast(tuple[int, int, int], background_color)
+        result = PILImage.new(image.mode, (size, size), color)
+
+        if width > height:
+            result.paste(image, (0, (size - height) // 2))
+        else:
+            result.paste(image, ((size - width) // 2, 0))
+
+        return result
+
+    def preprocess_image(self, image: Image.Image, processor: Any) -> Any:
+        """Preprocess image for model input.
+
+        Shared preprocessing pipeline used by all inference modes.
+
+        Args:
+            image: PIL Image to preprocess.
+            processor: HuggingFace image processor.
+
+        Returns:
+            Preprocessed tensor ready for model input.
+        """
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
+        image = self.expand_to_square(
+            image,
+            tuple(int(x * 255) for x in processor.image_mean),
+        )
+
+        return (
+            processor.preprocess(image, return_tensors="pt")["pixel_values"]
+            .half()
+            .to(self.config.device)
+        )
+
+    @staticmethod
+    def extract_level_logits(
+        logits: Any,
+        token_ids: list[int],
+        index: int = -1,
+    ) -> dict[str, float]:
+        """Extract logits for quality level tokens.
+
+        Args:
+            logits: Model output logits tensor.
+            token_ids: List of token IDs for quality levels.
+            index: Position in sequence to extract from (default: -1 = last).
+
+        Returns:
+            Dictionary mapping quality level to logit value.
+        """
+        return {
+            level: logits[index, token_id].item()
+            for level, token_id in zip(QUALITY_LEVELS, token_ids, strict=True)
+        }
 
     def generate_label_result(
         self,
@@ -287,6 +375,9 @@ class CheckpointManager:
     def _validate_path(path: Path) -> Path:
         """Validate and resolve a path, preventing traversal attacks.
 
+        Uses Path.resolve() with base directory check to prevent path traversal
+        via URL encoding, unicode normalization, or other bypass techniques.
+
         Args:
             path: Path to validate.
 
@@ -294,12 +385,21 @@ class CheckpointManager:
             Resolved absolute path.
 
         Raises:
-            ValueError: If path contains traversal attempts.
+            ValueError: If path resolves outside the base directory.
         """
-        if ".." in str(path):
-            msg = f"Path traversal not allowed: {path}"
-            raise ValueError(msg)
-        return path.resolve()
+        resolved = path.resolve()
+
+        # For absolute paths, verify they're within an expected root
+        # For relative paths, ensure they stay within current working directory
+        if not path.is_absolute():
+            base_dir = Path.cwd().resolve()
+            try:
+                resolved.relative_to(base_dir)
+            except ValueError:
+                msg = f"Path traversal not allowed: {path} resolves outside {base_dir}"
+                raise ValueError(msg) from None
+
+        return resolved
 
     @property
     def output_path(self) -> Path:

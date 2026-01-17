@@ -9,11 +9,14 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 from scipy import stats
+
+from image_preprocessing_detector.utils.datetime_compat import UTC
 
 logger = logging.getLogger(__name__)
 
@@ -132,13 +135,23 @@ def load_labels(label_path: Path) -> list[dict]:
         List of label dictionaries.
 
     Raises:
-        ValueError: If path contains traversal attempts.
+        ValueError: If path contains traversal attempts or is outside base directory.
+        FileNotFoundError: If file does not exist.
     """
-    # Validate path to prevent traversal attacks
+    # Validate path using Path.resolve() with base directory check
     resolved = label_path.resolve()
-    if ".." in str(label_path) or not resolved.is_file():
-        msg = f"Invalid label path: {label_path}"
-        raise ValueError(msg)
+    base_dir = Path.cwd().resolve()
+
+    # Check if resolved path is within base directory (prevents traversal attacks)
+    try:
+        resolved.relative_to(base_dir)
+    except ValueError:
+        msg = f"Path traversal not allowed: {label_path} resolves outside {base_dir}"
+        raise ValueError(msg) from None
+
+    if not resolved.is_file():
+        msg = f"Label file not found: {resolved}"
+        raise FileNotFoundError(msg)
 
     labels: list[dict] = []
     # Path validated above - resolved is safe to open
@@ -523,7 +536,7 @@ def generate_comparison_report(
     report_lines = [
         "# DeQA Label Comparison Report",
         "",
-        f"Generated: {__import__('datetime').datetime.now().isoformat()}",
+        f"Generated: {datetime.now(tz=UTC).isoformat()}",
         "",
         "## Summary",
         "",
