@@ -9,27 +9,28 @@
 # Format: [[IgnoredVulns]] with id and reason fields
 
 # ============================================================================
-# OSV-Scanner Auto-Filtering (No Manual Ignores Needed)
+# Platform-Specific Exclusions (Not Applicable to Linux CI/Production)
 # ============================================================================
-# As of osv-scanner v2.2.4, the scanner auto-filters vulnerabilities based on:
-# - Disputed status (e.g., CVE-2022-42969/PYSEC-2022-42969)
-# - Platform-specific exclusions (e.g., Windows-only CVE-2025-53000)
-#
-# Previously ignored vulnerabilities (now auto-filtered by scanner):
+
+# nbconvert Windows-only uncontrolled search path vulnerability
+# - Affects only Windows when running `jupyter nbconvert --to pdf`
+# - Exploits Windows PATH lookup for inkscape.bat in current directory
+# - Linux/macOS not affected (different executable resolution behavior)
+# - This project runs on Linux CI and Linux production servers
+[[IgnoredVulns]]
+id = "GHSA-xm59-rqc7-hhvf"
+reason = "Windows-only vulnerability (CWE-427) - this project runs on Linux"
+
+# ============================================================================
+# Disputed Vulnerabilities (Auto-Filtered by OSV-Scanner)
+# ============================================================================
+# As of osv-scanner v2.2.4, disputed CVEs are auto-filtered.
+# Documenting for reference:
 #
 # PYSEC-2022-42969 / CVE-2022-42969:
 #   - py library ReDoS in SVN parsing
 #   - Status: DISPUTED in NVD (May 2024)
 #   - Auto-filtered by scanner's disputed CVE handling
-#
-# CVE-2025-53000 / GHSA-xm59-rqc7-hhvf:
-#   - nbconvert Windows-only inkscape.bat vulnerability
-#   - Status: Platform-specific (Windows only)
-#   - Auto-filtered by scanner on Linux CI runners
-#
-# NOTE: Manual [[IgnoredVulns]] entries removed to prevent "unused ignores"
-# warnings in osv-scanner v2.2.4+. Re-add entries only if scanner stops
-# auto-filtering and vulnerabilities appear in scan results.
 
 # ============================================================================
 # Notes - Fixed Vulnerabilities
