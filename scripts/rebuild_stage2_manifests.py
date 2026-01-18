@@ -23,7 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 
@@ -217,7 +217,7 @@ def _update_entry_with_label(entry: dict, label: dict) -> dict:
 
     # Mark as updated
     new_entry["label_source"] = "specialist_true"
-    new_entry["label_timestamp"] = label.get("timestamp", datetime.now().isoformat())
+    new_entry["label_timestamp"] = label.get("timestamp", datetime.now(UTC).isoformat())
 
     return new_entry
 
@@ -277,7 +277,7 @@ def _save_manifest_metadata(dry_run: bool) -> None:
 
     manifest = {
         "version": "2.0.0",
-        "created": datetime.now().isoformat(),
+        "created": datetime.now(UTC).isoformat(),
         "description": "Stage 2 DIQA Ensemble Training Dataset - 3-Dimension Labels",
         "label_source": "DeQA-Doc specialist_true (3 dimension-specific models)",
         "dimensions": ["overall", "sharpness", "color"],

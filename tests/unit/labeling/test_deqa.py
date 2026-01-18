@@ -750,6 +750,7 @@ class TestCreateInferenceEngine:
             mock.return_value = MagicMock()
             engine = create_inference_engine(config)
             mock.assert_called_once_with(config)
+            assert engine is mock.return_value
 
     def test_create_specialist_true_engine(self) -> None:
         """Test creating specialist_true inference engine."""
@@ -760,6 +761,7 @@ class TestCreateInferenceEngine:
             mock.return_value = MagicMock()
             engine = create_inference_engine(config)
             mock.assert_called_once_with(config)
+            assert engine is mock.return_value
 
     def test_create_ensemble_engine(self) -> None:
         """Test creating ensemble inference engine."""
@@ -770,6 +772,7 @@ class TestCreateInferenceEngine:
             mock.return_value = MagicMock()
             engine = create_inference_engine(config)
             mock.assert_called_once_with(config)
+            assert engine is mock.return_value
 
     def test_create_ensemble_true_engine(self) -> None:
         """Test creating ensemble_true inference engine."""
@@ -780,6 +783,7 @@ class TestCreateInferenceEngine:
             mock.return_value = MagicMock()
             engine = create_inference_engine(config)
             mock.assert_called_once_with(config)
+            assert engine is mock.return_value
 
     def test_create_vl_engine(self) -> None:
         """Test creating vl inference engine."""
@@ -790,3 +794,4 @@ class TestCreateInferenceEngine:
             mock.return_value = MagicMock()
             engine = create_inference_engine(config)
             mock.assert_called_once_with(config)
+            assert engine is mock.return_value
