@@ -377,6 +377,7 @@ class EnsembleInference(DeQAInference):
 
         import torch
 
+        # list() required: we delete keys while iterating, need a copy
         for model_id in list(self.models.keys()):
             del self.models[model_id]
             del self.tokenizers[model_id]

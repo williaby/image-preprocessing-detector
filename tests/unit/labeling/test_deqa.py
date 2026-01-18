@@ -209,11 +209,12 @@ class TestDeQAConfig:
         config = DeQAConfig(mode=InferenceMode.VL)
         assert config.model_id == "deqa-score-mix3"
 
-    def test_path_conversion(self) -> None:
+    def test_path_conversion(self, tmp_path: Path) -> None:
         """Test string path is converted to Path."""
-        config = DeQAConfig(mode=InferenceMode.SPECIALIST, output_dir="/tmp/test")  # type: ignore[arg-type]
+        test_dir = str(tmp_path / "test_output")
+        config = DeQAConfig(mode=InferenceMode.SPECIALIST, output_dir=test_dir)  # type: ignore[arg-type]
         assert isinstance(config.output_dir, Path)
-        assert str(config.output_dir) == "/tmp/test"
+        assert config.output_dir == Path(test_dir)
 
     def test_get_model_configs_specialist(self) -> None:
         """Test get_model_configs for specialist mode."""
@@ -288,7 +289,7 @@ class TestDeQAScore:
             score=4.2,
         )
         assert score.dimension == QualityDimension.OVERALL
-        assert score.score == 4.2
+        assert score.score == pytest.approx(4.2)
         assert score.logits == {}
         assert score.probs == {}
 
@@ -301,8 +302,8 @@ class TestDeQAScore:
             probs={"excellent": 0.3, "good": 0.7},
             model_id="diqa-sharpness",
         )
-        assert score.logits["excellent"] == 1.0
-        assert score.probs["good"] == 0.7
+        assert score.logits["excellent"] == pytest.approx(1.0)
+        assert score.probs["good"] == pytest.approx(0.7)
         assert score.model_id == "diqa-sharpness"
 
     def test_to_dict(self) -> None:
@@ -314,7 +315,7 @@ class TestDeQAScore:
         )
         data = score.to_dict()
         assert data["dimension"] == "color"
-        assert data["score"] == 4.0
+        assert data["score"] == pytest.approx(4.0)
 
     def test_from_dict(self) -> None:
         """Test deserialization."""
@@ -327,7 +328,7 @@ class TestDeQAScore:
         }
         score = DeQAScore.from_dict(data)
         assert score.dimension == QualityDimension.OVERALL
-        assert score.score == 3.8
+        assert score.score == pytest.approx(3.8)
         assert score.model_id == "test-model"
 
 
@@ -344,7 +345,7 @@ class TestLabelResult:
         )
         assert result.image_path == "/path/to/image.jpg"
         assert result.dataset == "diqa-5000"
-        assert result.scores["overall"] == 4.0
+        assert result.scores["overall"] == pytest.approx(4.0)
         assert result.timestamp != ""  # auto-set
 
     def test_auto_timestamp(self) -> None:
@@ -394,7 +395,7 @@ class TestLabelResult:
         }
         result = LabelResult.from_dict(data)
         assert result.image_path == "/test.jpg"
-        assert result.scores["overall"] == 3.5
+        assert result.scores["overall"] == pytest.approx(3.5)
 
 
 class TestDeQAInferenceBase:
@@ -446,10 +447,10 @@ class TestDeQAInferenceBase:
 
         class TestInference(DeQAInference):
             def load_models(self, device: str | None = None) -> None:
-                pass
+                """Stub - no models to load for test."""
 
             def unload_models(self) -> None:
-                pass
+                """Stub - no models to unload for test."""
 
             def predict(self, image: Any) -> dict[str, DeQAScore]:
                 return {
@@ -541,10 +542,10 @@ class TestDeQAInferenceBase:
 
         class TestInference(DeQAInference):
             def load_models(self, device: str | None = None) -> None:
-                pass
+                """Stub - no models to load for test."""
 
             def unload_models(self) -> None:
-                pass
+                """Stub - no models to unload for test."""
 
             def predict(self, image: Any) -> dict[str, DeQAScore]:
                 return {}
@@ -561,7 +562,7 @@ class TestDeQAInferenceBase:
         assert result.image_path == "/test.jpg"
         assert result.dataset == "diqa-5000"
         assert result.mode == "specialist"
-        assert result.scores["overall"] == 4.0
+        assert result.scores["overall"] == pytest.approx(4.0)
 
 
 class TestCheckpointManager:
@@ -666,7 +667,7 @@ class TestVQualAScore:
         )
         data = score.to_dict()
         assert "final_score" in data
-        assert data["overall_srcc"] == 0.85
+        assert data["overall_srcc"] == pytest.approx(0.85)
 
 
 class TestComparisonMetrics:
@@ -682,7 +683,7 @@ class TestComparisonMetrics:
             mae=0.25,
             sample_size=1000,
         )
-        assert metrics.srcc == 0.9
+        assert metrics.srcc == pytest.approx(0.9)
         assert metrics.sample_size == 1000
 
     def test_to_dict(self) -> None:
@@ -725,7 +726,7 @@ class TestLabelAnalysis:
                 "overall": {"mean": 3.5, "std": 0.8},
             },
         )
-        assert analysis.dimension_stats["overall"]["mean"] == 3.5
+        assert analysis.dimension_stats["overall"]["mean"] == pytest.approx(3.5)
 
     def test_to_dict(self) -> None:
         """Test serialization."""

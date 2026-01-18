@@ -337,6 +337,7 @@ class SpecialistInference(DeQAInference):
 
         import torch
 
+        # list() required: we delete keys while iterating, need a copy
         for dimension in list(self.models.keys()):
             del self.models[dimension]
             del self.tokenizers[dimension]
