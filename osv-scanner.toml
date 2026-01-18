@@ -9,57 +9,28 @@
 # Format: [[IgnoredVulns]] with id and reason fields
 
 # ============================================================================
-# py Library - ReDoS in SVN Repository Parsing (LOW RISK)
+# Platform-Specific Exclusions (Not Applicable to Linux CI/Production)
 # ============================================================================
-# PYSEC-2022-42969: ReDoS attack via malicious Subversion repository metadata
-# CVE-2022-42969 was marked as DISPUTED in NVD (disputed May 2024)
-# Multiple third parties argue this is not a valid/reproducible vulnerability
-#
-# JUSTIFICATION FOR EXCEPTION:
-# 1. The py library is deprecated and only used by interrogate (docstring coverage tool)
-# 2. This project does not interact with Subversion repositories
-# 3. Attack requires crafted SVN repo metadata (not applicable to our use case)
-# 4. Not used in production code - dev dependency only
-# 5. CVE was disputed by py maintainers and NVD
-#
-# Impact: NONE - vulnerability not exploitable in this project's context
-# Mitigation: None needed - not applicable to our use case
-#
-# NOTE: OSV-Scanner v2.x should auto-filter disputed CVEs, but PYSEC-2022-42969
-# still appears in scans. Explicit ignore added to pass security gates.
 
-[[IgnoredVulns]]
-id = "PYSEC-2022-42969"
-reason = "CVE-2022-42969 disputed. ReDoS in SVN parsing - not applicable (no SVN usage, dev-only dep)"
-
-# ============================================================================
-# nbconvert - Uncontrolled Search Path on Windows (NOT APPLICABLE)
-# ============================================================================
-# GHSA-xm59-rqc7-hhvf / CVE-2025-53000: Unauthorized code execution via inkscape.bat on Windows
-# Severity: HIGH (CVSS 8.5)
-# Affected: nbconvert <= 7.16.6 (all versions, no fix available as of 2026-01-10)
-# Reference: https://github.com/advisories/GHSA-xm59-rqc7-hhvf
-#
-# JUSTIFICATION FOR EXCEPTION:
-# 1. Vulnerability only affects Windows systems (requires Windows batch file execution)
-# 2. This project runs exclusively on Linux (Ubuntu via WSL2, Docker, GitHub Actions)
-# 3. Attack requires SVG→PDF conversion with malicious inkscape.bat in search path
-# 4. We do not use nbconvert for PDF conversion (use PyMuPDF for PDF→image)
-# 5. nbconvert is a transitive dev dependency (likely from Jupyter/ipykernel)
-# 6. Not used in production code - dev/testing only
-#
-# Impact: NONE - vulnerability not exploitable on Linux systems
-# Mitigation: None needed - platform protection (Linux-only deployment)
-#
-# This exception will be removed when nbconvert releases a patched version.
-
+# nbconvert Windows-only uncontrolled search path vulnerability
+# - Affects only Windows when running `jupyter nbconvert --to pdf`
+# - Exploits Windows PATH lookup for inkscape.bat in current directory
+# - Linux/macOS not affected (different executable resolution behavior)
+# - This project runs on Linux CI and Linux production servers
 [[IgnoredVulns]]
 id = "GHSA-xm59-rqc7-hhvf"
-reason = "Windows-only vulnerability (inkscape.bat). Project runs Linux-only (WSL2/Docker/CI). Not used in production."
+reason = "Windows-only vulnerability (CWE-427) - this project runs on Linux"
 
-[[IgnoredVulns]]
-id = "CVE-2025-53000"
-reason = "Windows-only vulnerability (inkscape.bat). Project runs Linux-only (WSL2/Docker/CI). Not used in production."
+# ============================================================================
+# Disputed Vulnerabilities (Auto-Filtered by OSV-Scanner)
+# ============================================================================
+# As of osv-scanner v2.2.4, disputed CVEs are auto-filtered.
+# Documenting for reference:
+#
+# PYSEC-2022-42969 / CVE-2022-42969:
+#   - py library ReDoS in SVN parsing
+#   - Status: DISPUTED in NVD (May 2024)
+#   - Auto-filtered by scanner's disputed CVE handling
 
 # ============================================================================
 # Notes - Fixed Vulnerabilities

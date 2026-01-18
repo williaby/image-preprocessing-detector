@@ -372,19 +372,23 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Run OSV Scanner
+        id: osv-scan
         uses: google/osv-scanner-action/osv-scanner-action@9bb69575e74019c2ad085a1860787043adf47ccb # v2.2.4
         with:
           scan-args: |-
             --lockfile=uv.lock
             --format=json
             --output=osv-results.json
-        # continue-on-error: true  # Removed to ensure scan failures are not masked
+        # OSV Scanner exits with code 1 for both actual vulnerabilities AND "unused ignores"
+        # We need to continue and check the actual results to distinguish these cases
+        continue-on-error: true
 
       - name: Check OSV Results for HIGH/CRITICAL
         run: |
           echo "🔍 Analyzing OSV scan results for HIGH/CRITICAL vulnerabilities..."
+          echo "OSV Scanner exit outcome: ${{ steps.osv-scan.outcome }}"
 
-          # Check if results file exists - fail if missing (indicates scan failure)
+          # Check if results file exists
           if [ ! -f osv-results.json ]; then
             echo "❌ ERROR: OSV results file not found - scan failed"
             echo "This indicates a scan failure, not 'no vulnerabilities found'"
