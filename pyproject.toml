@@ -607,6 +607,10 @@ omit = [
     "src/image_preprocessing_detector/labeling/finetuning/stages/*",
     # Quantization pipeline (standalone tool, require PyTorch)
     "src/image_preprocessing_detector/labeling/quantization/pipeline.py",
+    # DeQA inference engines (require PyTorch/transformers, tested separately with ml dependencies)
+    "src/image_preprocessing_detector/labeling/deqa/specialist.py",
+    "src/image_preprocessing_detector/labeling/deqa/ensemble.py",
+    "src/image_preprocessing_detector/labeling/deqa/vl_single.py",
 ]
 
 [tool.coverage.report]

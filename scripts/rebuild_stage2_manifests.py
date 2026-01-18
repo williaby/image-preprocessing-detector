@@ -151,9 +151,7 @@ def _build_label_index(available_labels: dict[str, list[dict]]) -> dict[str, dic
     return labels_by_image
 
 
-def _find_label_for_entry(
-    entry: dict, labels_by_image: dict[str, dict]
-) -> dict | None:
+def _find_label_for_entry(entry: dict, labels_by_image: dict[str, dict]) -> dict | None:
     """Find matching label for a manifest entry.
 
     Args:
@@ -212,25 +210,19 @@ def _update_entry_with_label(entry: dict, label: dict) -> dict:
     new_entry["deqa_predicted_score"] = label["scores"]["overall"]
 
     # Replace single soft_label_10bin with overall dimension
-    new_entry["soft_label_10bin"] = probs_to_soft_label_10bin(
-        label["probs"]["overall"]
-    )
+    new_entry["soft_label_10bin"] = probs_to_soft_label_10bin(label["probs"]["overall"])
 
     # Store raw probs for reference
     new_entry["deqa_probs_3dim"] = label["probs"]
 
     # Mark as updated
     new_entry["label_source"] = "specialist_true"
-    new_entry["label_timestamp"] = label.get(
-        "timestamp", datetime.now().isoformat()
-    )
+    new_entry["label_timestamp"] = label.get("timestamp", datetime.now().isoformat())
 
     return new_entry
 
 
-def _process_split(
-    split: str, labels_by_image: dict[str, dict], dry_run: bool
-) -> None:
+def _process_split(split: str, labels_by_image: dict[str, dict], dry_run: bool) -> None:
     """Process a single data split.
 
     Args:
