@@ -342,7 +342,7 @@ psutil==7.2.1
     #   ultralytics
 py-cpuinfo==9.0.0
     # via doclayout-yolo
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   pyasn1-modules
     #   rsa
