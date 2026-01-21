@@ -159,7 +159,7 @@ propcache==0.4.1
     #   yarl
 protobuf==6.33.3
     # via modal
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   pyasn1-modules
     #   rsa
