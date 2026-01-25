@@ -854,7 +854,7 @@ pyarrow==22.0.0
     # via
     #   datasets
     #   streamlit
-pyasn1==0.6.1
+pyasn1==0.6.2
     # via
     #   pyasn1-modules
     #   rsa
@@ -1173,7 +1173,7 @@ tomlkit==0.13.3
     # via
     #   dvc
     #   safety
-torch==2.9.1
+torch==2.10.0
     # via
     #   torchvision
     #   ultralytics
