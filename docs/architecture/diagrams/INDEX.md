@@ -49,7 +49,8 @@ docs/architecture/diagrams/
     │
     ├── data-preparation/
     │   ├── project-a-training-data-ingestion.puml
-    │   └── automated-data-labeling-pipeline.puml
+    │   ├── automated-data-labeling-pipeline.puml
+    │   └── metadata-schema-architecture.puml
     │
     ├── pseudo-labeling/
     │   ├── diqa-pseudo-labeling-workflow.puml
@@ -188,6 +189,38 @@ docs/architecture/diagrams/
 | OmniDocBench | scripts/download_omnidocbench.py | - |
 | ViDoRe Finance | scripts/download_vidore_finance.py | - |
 | DIQA-5000 upload | scripts/upload_diqa5000_to_gcs.py | - |
+
+### metadata-schema-architecture.puml
+
+**Location**: `level-2/data-preparation/`
+
+**Purpose**: Three-layer metadata architecture (Immutable → Enrichment → Training) showing data flow from source datasets through schema utilities to training.
+
+| Layer | Components | Source Files | Documentation |
+|-------|------------|--------------|---------------|
+| **External Sources** ||||
+| IQA Benchmarks | DIQA-5000, SmartDoc-QA, OCR-Quality | /mnt/e/.../02_benchmark_only/ | DATASET_CATALOG.md |
+| Layout Datasets | DocLayNet, TableBank, FUNSD | /mnt/e/.../01_base_data/ | DATASET_CATALOG.md |
+| Handwriting | SignaTR6K, NIST-SD19, PUCIT-OHUL | /mnt/e/.../01_base_data/ | DATASET_CATALOG.md |
+| **Layer 1: IMMUTABLE** ||||
+| OriginalLabels | DIQA, Layout, Handwriting fields | scripts/annotate_base_metadata.py:470-520 | LABEL_MAPPING_SPECIFICATION.md |
+| Label Parsers | parse_diqa_labels, parse_doclaynet_labels | scripts/annotate_base_metadata.py:920-1050 | LABEL_MAPPING_SPECIFICATION.md |
+| **Layer 2: ENRICHMENT** ||||
+| EnrichmentData | Quality normalization, content flags | scripts/annotate_base_metadata.py | - |
+| ISO Standards | Language, Script, Paper Size, Text Scope | src/.../schema_utils/*.py | layer2_enrichment.schema.json |
+| Schema Utilities | ISO639, ISO15924, TextScope, PaperSize | src/.../schema_utils/\_\_init\_\_.py | - |
+| **Layer 3: TRAINING** ||||
+| Parquet Export | samples.parquet (~1M records) | scripts/annotate_base_metadata.py | - |
+| DataLoader | DIQA5000Dataset with normalization | modal/train_siglip2_iqa_v2.py | - |
+| Model Heads | overall, sharpness, color heads | src/.../labeling/deqa/config.py | - |
+
+**Key Terminology Mapping** (DIQA-5000):
+
+| CSV Column | Schema Field | Training Field | Model Head |
+|------------|--------------|----------------|------------|
+| overall | diqa_overall | overall | overall |
+| sharpness | diqa_sharpness | sharpness | sharpness |
+| color_fidelity | diqa_color_fidelity | color | color |
 
 ---
 

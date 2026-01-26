@@ -61,7 +61,8 @@ docs/architecture/diagrams/
     │
     ├── data-preparation/
     │   ├── project-a-training-data-ingestion.puml
-    │   └── automated-data-labeling-pipeline.puml
+    │   ├── automated-data-labeling-pipeline.puml
+    │   └── metadata-schema-architecture.puml
     │
     ├── pseudo-labeling/
     │   ├── diqa-pseudo-labeling-workflow.puml

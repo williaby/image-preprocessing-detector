@@ -1,0 +1,215 @@
+@startuml Metadata_Schema_Architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+
+title Metadata Schema Architecture\nThree-Layer Data Flow (Immutable → Enrichment → Training)
+footer Project A - Data Preparation | v1.0 | January 2026
+
+' ============================================================================
+' COLOR DEFINITIONS
+' ============================================================================
+!define IMMUTABLE_COLOR #FFF3E0
+!define ENRICHMENT_COLOR #E3F2FD
+!define TRAINING_COLOR #E8F5E9
+!define EXTERNAL_COLOR #FFEBEE
+!define UTILITY_COLOR #F3E5F5
+
+' ============================================================================
+' EXTERNAL DATA SOURCES
+' ============================================================================
+rectangle "Source Datasets" as Sources #EXTERNAL_COLOR {
+    rectangle "IQA Benchmarks" as IQA {
+        [DIQA-5000\n(CSV: overall, sharpness, color_fidelity)]
+        [SmartDoc-QA\n(JSON: quality_score)]
+        [OCR-Quality\n(JSON: score)]
+    }
+    rectangle "Layout Datasets" as Layout {
+        [DocLayNet\n(COCO JSON)]
+        [TableBank\n(COCO JSON)]
+        [FUNSD\n(Custom JSON)]
+    }
+    rectangle "Handwriting" as HW {
+        [SignaTR6K\n(Directory)]
+        [NIST-SD19\n(Metadata)]
+        [PUCIT-OHUL\n(Urdu)]
+    }
+}
+
+note right of Sources
+  **Source:**
+  - /mnt/e/image_detection/01_base_data/
+  - /mnt/e/image_detection/02_benchmark_only/
+
+  **Documentation:**
+  [[docs/DATASET_CATALOG.md]]
+  [[docs/schema/LABEL_MAPPING_SPECIFICATION.md]]
+
+  **Registry:**
+  40 datasets, ~1.07M images
+end note
+
+' ============================================================================
+' LAYER 1: IMMUTABLE (Original Labels)
+' ============================================================================
+package "Layer 1: IMMUTABLE" as L1 #IMMUTABLE_COLOR {
+    rectangle "OriginalLabels Dataclass" as OL {
+        [DIQA Fields\ndiqa_overall, diqa_sharpness\ndiqa_color_fidelity, diqa_mos]
+        [Layout Fields\ndoclaynet_annotations\ntablebank_annotations]
+        [Handwriting Fields\nwriter_id, transcription\nis_genuine]
+        [Multilingual Fields\nlanguage_code, script_name\ntext_instances]
+    }
+
+    rectangle "Label Parsers" as Parsers {
+        [parse_diqa_labels\n✅ Implemented]
+        [parse_doclaynet_labels\n✅ Implemented]
+        [parse_smartdoc_labels\n⚠️ Placeholder]
+        [parse_funsd_labels\n⚠️ Placeholder]
+    }
+}
+
+note right of L1
+  **Source:**
+  - scripts/annotate_base_metadata.py
+    (OriginalLabels dataclass, lines 470-520)
+    (Label parsers, lines 920-1050)
+
+  **Principle:**
+  Exact preservation of source labels
+  Never modified after initial capture
+  Dataset-specific field names
+
+  **DIQA-5000 Terminology:**
+  |= CSV |= Schema |= Conceptual |
+  | overall | diqa_overall | Authentic |
+  | sharpness | diqa_sharpness | Technical |
+  | color_fidelity | diqa_color_fidelity | Aesthetic |
+end note
+
+' ============================================================================
+' LAYER 2: ENRICHMENT (Standardized)
+' ============================================================================
+package "Layer 2: ENRICHMENT" as L2 #ENRICHMENT_COLOR {
+    rectangle "EnrichmentData" as ED {
+        [Quality Normalization\nnormalized_quality (0-1)\nquality_tier (high/medium/low)]
+        [Content Flags\nhas_table, has_formula\nhas_handwriting, has_figure]
+        [Capture Method\ncapture_method, domain\nresolution_category]
+    }
+
+    rectangle "ISO Standards" as ISO {
+        [Language/Script\niso639_language\niso15924_script\nbcp47_tag]
+        [Paper Size\npaper_size (A4/Letter)\npaper_size_standard\npaper_size_orientation]
+        [Text Scope\ntext_scope (char/word/line/page)\ntext_scope_content_type]
+    }
+
+    rectangle "Schema Utilities" as Utils #UTILITY_COLOR {
+        [iso_language_script.py\nISO639Language, ISO15924Script\nScriptFamily, BCP47 tags]
+        [iso_paper_sizes.py\nPaperSize detection\nISO 216 compliance]
+        [text_scope.py\nTextScope classification\nScope estimation]
+        [dataset_source.py\nDATASET_REGISTRY\nProvenance tracking]
+    }
+}
+
+note right of L2
+  **Source:**
+  - src/.../schema_utils/__init__.py
+  - src/.../schema_utils/iso_language_script.py
+  - src/.../schema_utils/iso_paper_sizes.py
+  - src/.../schema_utils/text_scope.py
+  - src/.../schema_utils/dataset_source.py
+
+  **JSON Schema:**
+  - docs/schema/layer2_enrichment.schema.json
+
+  **Standards:**
+  - ISO 639-1/3 (Language)
+  - ISO 15924 (Script)
+  - ISO 216 (Paper Size)
+  - BCP 47 (Language Tags)
+end note
+
+' ============================================================================
+' LAYER 3: TRAINING (Task-Specific)
+' ============================================================================
+package "Layer 3: TRAINING" as L3 #TRAINING_COLOR {
+    rectangle "Parquet Export" as Parquet {
+        [samples.parquet\n~1M records\nSchema v2.1]
+    }
+
+    rectangle "DataLoader Integration" as DL {
+        [DIQA5000Dataset\nlabels = {\n  overall, sharpness, color\n}]
+        [Normalization\n(score - 1.0) / 4.0\n→ 0-1 range]
+    }
+
+    rectangle "Model Heads" as Heads {
+        [SigLIP2 Multi-Head\noverall, sharpness, color]
+        [DeQA Specialists\nDIQA_overall, DIQA_sharpness\nDIQA_color]
+        [VQualA Metric\n0.5*overall + 0.25*sharp\n+ 0.25*color]
+    }
+}
+
+note right of L3
+  **Source:**
+  - modal/train_siglip2_iqa_v2.py
+  - src/.../labeling/deqa/config.py
+  - src/.../labeling/finetuning/dataset.py
+
+  **Training Integration:**
+  Schema fields → DataLoader → Model heads
+
+  **Head Mapping:**
+  |= Schema |= Training |= Head |
+  | diqa_overall | overall | overall |
+  | diqa_sharpness | sharpness | sharpness |
+  | diqa_color_fidelity | color | color |
+end note
+
+' ============================================================================
+' DATA FLOW CONNECTIONS
+' ============================================================================
+
+' Sources to Layer 1
+Sources --> L1 : Raw labels\n(CSV, JSON, directory)
+
+' Layer 1 to Layer 2
+L1 --> L2 : Mapping functions\n(normalization, ISO codes)
+
+' Layer 2 to Layer 3
+L2 --> L3 : On-demand\ncomputation
+
+' Internal Layer 1 flows
+IQA --> Parsers
+Layout --> Parsers
+HW --> Parsers
+Parsers --> OL
+
+' Internal Layer 2 flows
+OL --> ED : Enrich
+ED --> ISO : Standardize
+Utils ..> ISO : Utilities
+
+' Internal Layer 3 flows
+ISO --> Parquet : Export
+Parquet --> DL : Load
+DL --> Heads : Train
+
+' ============================================================================
+' LEGEND
+' ============================================================================
+legend right
+  |= Color |= Layer |
+  | <#FFEBEE> | External Sources |
+  | <#FFF3E0> | Layer 1: Immutable |
+  | <#E3F2FD> | Layer 2: Enrichment |
+  | <#E8F5E9> | Layer 3: Training |
+  | <#F3E5F5> | Schema Utilities |
+
+  **Diagram Hierarchy:**
+  Level 0: rag-pipeline-overview.puml
+  Level 1: PROJECT_A_ARCHITECTURE_OVERVIEW.puml
+  Level 2: **This Diagram**
+  └── metadata-schema-architecture.puml
+endlegend
+
+@enduml
