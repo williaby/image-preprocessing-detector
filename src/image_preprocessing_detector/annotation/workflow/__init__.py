@@ -46,6 +46,12 @@ Example:
 
 from __future__ import annotations
 
+from .orchestrator import (
+    AnnotationOrchestrator,
+    DatasetResult,
+    OrchestrationResult,
+    create_orchestrator,
+)
 from .pipeline import (
     AnnotationPipeline,
     EnrichedSample,
@@ -59,11 +65,15 @@ from .progress import (
 )
 
 __all__: list[str] = [
+    "AnnotationOrchestrator",
     "AnnotationPipeline",
+    "DatasetResult",
     "EnrichedSample",
+    "OrchestrationResult",
     "ParsedSample",
     "PipelineResult",
     "PipelineStats",
     "ProgressCallback",
     "ProgressTracker",
+    "create_orchestrator",
 ]

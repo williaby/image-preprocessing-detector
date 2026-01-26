@@ -42,10 +42,10 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
-from ..base import BaseParser
 from ...schemas.immutable import OriginalLabels
+from ..base import BaseParser
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class MultilingualScriptsParser(BaseParser):
     """
 
     # Script/language mapping based on subdataset
-    SCRIPT_MAPPINGS = {
+    SCRIPT_MAPPINGS: ClassVar[dict[str, dict[str, Any]]] = {
         "arabic_ocr": {
             "script": "Arab",
             "language": "ar",
@@ -95,13 +95,14 @@ class MultilingualScriptsParser(BaseParser):
         self,
         dataset_path: Path,
         image_path: Path,
-        config: dict[str, Any],
+        _config: dict[str, Any],
     ) -> OriginalLabels:
         """Parse Multilingual Scripts labels from directory structure and manifests.
 
         Args:
             dataset_path: Root path of the multilingual_scripts dataset
             image_path: Absolute path to the image file being processed
+            _config: Dataset configuration (unused)
             config: Dataset configuration dictionary (unused)
 
         Returns:
@@ -126,8 +127,12 @@ class MultilingualScriptsParser(BaseParser):
 
         if subdataset and subdataset in self.SCRIPT_MAPPINGS:
             mapping = self.SCRIPT_MAPPINGS[subdataset]
-            labels.script_name = mapping["script_name"]
-            labels.language_code = mapping["language"]
+            labels.script_name = (
+                str(mapping["script_name"]) if mapping["script_name"] else None
+            )
+            labels.language_code = (
+                str(mapping["language"]) if mapping["language"] else None
+            )
             labels.raw_labels["iso15924_script"] = mapping["script"]
             labels.raw_labels["subdataset"] = subdataset
             labels.raw_labels["has_ground_truth_labels"] = mapping["labeled"]

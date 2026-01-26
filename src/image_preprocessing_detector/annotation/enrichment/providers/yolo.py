@@ -31,8 +31,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from ...schemas.enrichment import EnrichmentData
 from ..errors import InferenceError, ProviderUnavailableError
-from ...schemas.enrichment import EnrichmentData, LayoutDetection
 
 logger = logging.getLogger(__name__)
 
@@ -146,14 +146,14 @@ class YOLOProvider:
         self._device_available = True
         return True
 
-    def supports(self, image_path: Path) -> bool:
+    def supports(self, _image_path: Path) -> bool:
         """Check if this image should be processed.
 
         Currently processes all images. Could be extended to skip
         images that already have layout annotations.
 
         Args:
-            image_path: Path to image file
+            _image_path: Path to image file (unused)
 
         Returns:
             True (processes all images by default)
@@ -187,7 +187,9 @@ class YOLOProvider:
             logger.info(f"YOLO model loaded on {self.device}")
 
         except Exception as e:
-            raise ProviderUnavailableError(self.name, f"Model loading failed: {e}")
+            raise ProviderUnavailableError(
+                self.name, f"Model loading failed: {e}"
+            ) from e
 
     def enrich(self, image_path: Path) -> EnrichmentData:
         """Enrich a single image with layout detection.
@@ -238,9 +240,9 @@ class YOLOProvider:
                 batch_results = self._process_batch(batch_paths)
                 results.extend(batch_results)
             except Exception as e:
-                # On batch failure, return empty enrichments
-                logger.error(f"YOLO batch inference failed: {e}")
-                raise InferenceError(self.name, len(batch_paths), e)
+                # On batch failure, re-raise as InferenceError
+                logger.exception("YOLO batch inference failed")
+                raise InferenceError(self.name, len(batch_paths), e) from e
 
         return results
 
@@ -256,7 +258,8 @@ class YOLOProvider:
         # Convert paths to strings for YOLO
         image_paths = [str(p) for p in paths]
 
-        # Run inference
+        # Run inference (model is guaranteed loaded via _ensure_loaded)
+        assert self._model is not None
         predictions = self._model.predict(
             image_paths,
             conf=self.confidence_threshold,
@@ -266,7 +269,7 @@ class YOLOProvider:
 
         # Convert predictions to EnrichmentData
         results = []
-        for path, pred in zip(paths, predictions):
+        for _path, pred in zip(paths, predictions, strict=True):
             enrichment = EnrichmentData()
             enrichment.layout_detections = self._convert_predictions(pred)
             results.append(enrichment)
@@ -282,7 +285,7 @@ class YOLOProvider:
         Returns:
             List of LayoutDetection dictionaries
         """
-        detections = []
+        detections: list[dict[str, Any]] = []
 
         # Extract boxes, classes, and confidences
         if not hasattr(prediction, "boxes"):
