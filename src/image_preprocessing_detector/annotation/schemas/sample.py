@@ -31,8 +31,10 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
+
+from image_preprocessing_detector.utils.datetime_compat import UTC
 
 from .enrichment import EnrichmentData, EnrichmentVersion
 from .immutable import OriginalFileMetadata, OriginalLabels
