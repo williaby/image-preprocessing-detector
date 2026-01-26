@@ -1,14 +1,13 @@
 ---
 title: "Metadata Annotation System Refactoring Plan"
 schema_type: planning
-status: in-progress
+status: in-review
 owner: core-maintainer
 purpose: >
   Convert the monolithic annotate_base_metadata.py (~3,800 LOC) into a modular,
   maintainable package that supports dataset extensibility, schema evolution, and ML integration.
 component: "Strategy"
 source: "Phase 10A planning session"
-last_updated: "2025-01-26"
 tags:
   - planning
   - schema
@@ -46,10 +45,50 @@ average score 8.4/10) and establishes a foundation for:
 | Phase | Status | Completion | Notes |
 |-------|--------|------------|-------|
 | Phase 1: Foundation | ✅ **COMPLETE** | 25/27 tasks | 2 tasks deferred to Phase 2 |
-| Phase 2: Core Refactoring | ❌ Not Started | 0/36 tasks | - |
+| Phase 2: Core Refactoring | ✅ **COMPLETE** | 36/36 tasks | 524 tests passing |
 | Phase 3: Extensibility | ❌ Not Started | 0/21 tasks | - |
 | Phase 4: ML Integration | ❌ Not Started | 0/18 tasks | - |
 | Phase 5: Production Hardening | ❌ Not Started | 0/24 tasks | - |
+
+### Phase 2 Implementation Summary (2025-01-26)
+
+**Completed Tasks**: 36/36 (100%)
+
+**Test Coverage**: 524 unit tests passing
+
+- test_quality_parsers.py: Quality score parsers (DIQA, SmartDoc, DIBCO, OCR Quality)
+- test_layout_parsers.py: Layout parsers (DocLayNet, FUNSD, TableBank, PubTabNet, SROIE)
+- test_handwriting_parsers.py: Handwriting parsers (Signatr, NIST-SD19, PUCIT-OHUL)
+- test_multilingual_parsers.py: Multilingual parsers (MDIW-13, CC-OCR, MLE2E, scripts)
+- test_document_parsers.py: Document parsers (OHR-Bench, RVL-CDIP, Tobacco-800)
+- test_parser_registry.py: Parser registry integration
+- test_enrichment.py: Enrichment providers and manager
+- test_pipeline.py: Three-stage CPU/GPU/IO pipeline
+- test_storage.py: Partitioned Parquet writer
+- test_orchestrator.py: Multi-dataset orchestration
+
+**Sub-phases Completed**:
+
+| Sub-Phase | Tasks | Key Deliverables |
+|-----------|-------|------------------|
+| 2.1 Parser Architecture | 9/9 | Protocol-based parsers, 38+ parsers migrated, explicit registry |
+| 2.2 Enrichment System | 6/6 | Structured errors, provider protocols, YOLO batching |
+| 2.3 Pipeline Architecture | 8/8 | CPU/GPU separation, queue-based communication |
+| 2.4 Parquet Storage | 6/6 | Hive-style partitioning, atomic writes, predicate pushdown |
+| 2.5 Orchestrator | 7/7 | Direct API (no subprocess), completion tracking |
+
+**Issues Resolved**:
+
+- P0-2: Parquet overwrite → ✅ Fixed by partitioned storage with Hive-style paths
+- P0-3: shlex.quote bug → ✅ Fixed by direct API orchestrator (subprocess eliminated)
+- P1-2: Global mutable state → ✅ Fixed by dependency injection via `create_orchestrator()`
+- P2-4: Parser duplication → ✅ Fixed by protocol-based parser registry
+- P2-6: Per-image YOLO → ✅ Fixed by batch enrichment in EnrichmentManager
+
+**Deferred Phase 1 Tasks Completed**:
+
+- 1.2.5: Pydantic validation → ✅ Implemented in parsers/base.py with validators.py
+- 1.4.3: DATASET_CONFIGS migration → ✅ Completed in config/datasets.py with parser_name field
 
 ### Phase 1 Implementation Summary (2025-01-26)
 
@@ -105,20 +144,20 @@ average score 8.4/10) and establishes a foundation for:
 | ID | Severity | Issue | Impact | Phase | Status |
 |----|----------|-------|--------|-------|--------|
 | P0-1 | 🔴 Critical | SHA256 partial hashing (64KB only) | Data integrity risk, hash collisions | 1.3 | ✅ Fixed |
-| P0-2 | 🔴 Critical | Parquet overwrite on per-dataset runs | Data loss in incremental mode | 2.4 | ❌ |
-| P0-3 | 🔴 Critical | shlex.quote bug in incremental wrapper | Broken --dataset matching | 2.5 | ❌ |
+| P0-2 | 🔴 Critical | Parquet overwrite on per-dataset runs | Data loss in incremental mode | 2.4 | ✅ Fixed |
+| P0-3 | 🔴 Critical | shlex.quote bug in incremental wrapper | Broken --dataset matching | 2.5 | ✅ Fixed |
 | P0-4 | 🔴 Critical | FUNSD type mismatch (dict vs list) | Runtime crashes | 1.2 | ✅ Fixed |
-| P1-1 | ⚠️ High | Monolithic 3,800 LOC single file | Maintainability debt | 1.1, 2.x | 🔄 Started |
-| P1-2 | ⚠️ High | Global mutable state (3 caches) | Testability issues | 2.2, 5.1 | ❌ |
+| P1-1 | ⚠️ High | Monolithic 3,800 LOC single file | Maintainability debt | 1.1, 2.x | ✅ Fixed |
+| P1-2 | ⚠️ High | Global mutable state (3 caches) | Testability issues | 2.2, 5.1 | ✅ Fixed |
 | P1-3 | ⚠️ High | Random UUIDs prevent deduplication | Incremental updates broken | 1.3 | ✅ Fixed |
-| P1-4 | ⚠️ High | Dataset-level only checkpointing | 99% failure restarts from 0% | 3.3 | ❌ |
+| P1-4 | ⚠️ High | Dataset-level only checkpointing | 99% failure restarts from 0% | 3.3 | 🔄 Partial |
 | P1-5 | ⚠️ High | Memory OOM with 500K+ samples | Process crashes | 5.1 | ❌ |
-| P2-1 | 🟡 Medium | Zero unit test coverage | Regression risk | 5.4 | 🔄 Started |
+| P2-1 | 🟡 Medium | Zero unit test coverage | Regression risk | 5.4 | ✅ Fixed |
 | P2-2 | 🟡 Medium | No atomic state file writes | Corruption on crash | 1.3 | ✅ Fixed |
 | P2-3 | 🟡 Medium | Hardcoded paths | Portability issues | 1.4 | ✅ Fixed |
-| P2-4 | 🟡 Medium | Parser duplication | Code smell | 2.1 | ❌ |
+| P2-4 | 🟡 Medium | Parser duplication | Code smell | 2.1 | ✅ Fixed |
 | P2-5 | 🟡 Medium | No schema version migration | Upgrade friction | 3.2 | ❌ |
-| P2-6 | 🟡 Medium | Per-image YOLO without batching | Performance | 2.3, 5.2 | ❌ |
+| P2-6 | 🟡 Medium | Per-image YOLO without batching | Performance | 2.3, 5.2 | ✅ Fixed |
 
 ### Current File Structure
 
