@@ -41,8 +41,8 @@ __version__ = "0.1.0"
 SCHEMA_VERSION = "2.1"
 
 # Lazy imports for public API - populated as modules are implemented
-# Phase 1: schemas, config, integrity
-# Phase 2+: parsers, enrichment, storage, workflow
+# Phase 1: schemas, config, integrity, enrichment
+# Phase 2+: parsers, storage, workflow
 
 
 def create_orchestrator(
@@ -113,6 +113,19 @@ class AnnotationOrchestrator:
         )
 
 
+# Re-export enrichment for convenience
+from .enrichment import (  # noqa: E402
+    EnrichmentManager,
+    EnrichmentResult,
+    EnrichmentProvider,
+    QualityScoreProvider,
+    EnrichmentError,
+    InferenceError,
+    ProviderUnavailableError,
+    ValidationError,
+    BatchProcessingError,
+)
+
 __all__ = [
     "SCHEMA_VERSION",
     # Orchestrator
@@ -121,4 +134,14 @@ __all__ = [
     "__version__",
     # Factory
     "create_orchestrator",
+    # Enrichment (Phase 1)
+    "EnrichmentManager",
+    "EnrichmentResult",
+    "EnrichmentProvider",
+    "QualityScoreProvider",
+    "EnrichmentError",
+    "InferenceError",
+    "ProviderUnavailableError",
+    "ValidationError",
+    "BatchProcessingError",
 ]
