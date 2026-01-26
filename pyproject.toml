@@ -652,5 +652,6 @@ byronwilliamscpa-gemini-image = { git = "https://github.com/ByronWilliamsCPA/pyt
 [dependency-groups]
 dev = [
     "byronwilliamscpa-gemini-image",
+    "kaggle>=1.7.4.5",
     "mkdocs-kroki-plugin>=1.1.0",
 ]
