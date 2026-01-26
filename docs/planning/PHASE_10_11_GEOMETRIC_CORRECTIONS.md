@@ -39,7 +39,15 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 2. ✅ Use for table detection → gate perspective + set Docling flags
 3. ✅ Allow Teacher on CPU (accept >SLA latency in edge cases)
 4. ✅ Increase perspective confidence threshold to 0.8 (safer)
-5. ✅ Defer script detection to Phase 11 (occasional Japanese/Dzongkha, not core corpus)
+5. ✅ 10-class script detection in Phase 10A (improved Japanese/Tibetan coverage)
+
+**Consensus Decisions (2026-01-17)** - Multi-model validation with 5 models (8.2/10 confidence):
+
+1. ✅ **Orientation Detector**: CASCADE pattern (CNN primary, heuristic fallback if confidence <0.9)
+2. ✅ **Perspective Model**: MobileViT-v2 (~10M params) replaces HRNet-W18 (39.5M params)
+3. ✅ **Dataset Strategy**: SmartDoc-QA + DocLayNet synthetic (NOT DocUNet - access uncertain)
+4. ✅ **Script Classes**: 10-class (latin, cjk_mixed, japanese, korean, tibetan, arabic, devanagari, cyrillic, thai, hebrew)
+5. ✅ **Pipeline Integration**: New `geometric_corrections.py` module invoked from document_processor
 
 ---
 
@@ -47,14 +55,18 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 
 | Phase | Status | Progress | Est. Duration | Notes |
 |-------|--------|----------|---------------|-------|
-| **Phase 10A**: Geometric Corrections | ❌ NOT STARTED | 0% | 10 days | Border removal, orientation, perspective |
+| **Phase 10A**: Geometric Corrections | ❌ NOT STARTED | 0% | 12 days | Border removal, orientation (MobileCLIP-aligned), perspective |
 | **Phase 10B**: DoclingRouter & Schema | ❌ NOT STARTED | 0% | 7 days | Schema expansion, content-aware routing |
 | **Phase 10C**: Verification | ❌ NOT STARTED | 0% | 5 days | Audits, line enhancement, contract resolution |
 | **Phase 11**: Script Awareness | ❌ DEFERRED | 0% | 6-12 days | Text/visual script detection, multilingual benchmark |
 
-**Total Phase 10**: 22 days (~88 hours of implementation + training)
+**Total Phase 10**: 24 days (~96 hours of implementation + training)
 **Total Phase 11**: 6-12 days (~36 hours of implementation + training)
-**Combined Timeline**: 28-34 days
+**Combined Timeline**: 30-36 days
+
+> **Timeline Update (2026-01-17)**: Phase 10A extended by 2 days to accommodate MobileCLIP dataset
+> alignment (document-level splitting, Japanese vertical text, degradation augmentation).
+> See MOBILECLIP2_S4_S0_DATASET_DESIGN.md for dataset specifications.
 
 ---
 
@@ -64,21 +76,40 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 
 | Model | Architecture | Heads | Status | Training Effort | Phase |
 |-------|--------------|-------|--------|-----------------|-------|
-| **Model 1**: Coarse Orientation CNN | MobileNetV3-Small | 1 (4-class) | ❌ NEW | 2-3 days | 10A |
-| **Model 2**: Perspective Detector | HRNet-W18 | 2 (corners + confidence) | ❌ NEW | 3-5 days | 10A |
+| **Model 1**: Orientation + Script CNN | MobileNetV4-Conv-S | 2 (4-class orientation + 10-class script) | ❌ NEW | 2-3 days | 10A |
+| **Model 2**: Perspective Detector | MobileViT-v2 | 2 (corners + confidence) | ❌ NEW | 3-5 days | 10A |
 | **Model 3**: Student ResNet-18 IQA | ResNet-18 | 8 | ✅ TRAINED | - | Existing |
 | **Model 4**: Teacher ResNet-50 IQA | ResNet-50 | 8 | ✅ TRAINED | - | Existing |
 | **Model 5**: YOLOv10-doc Layout-Lite | YOLOv10 | 1 | ✅ PRETRAINED | - | Existing |
 
-### Phase 11 Models (Deferred)
+> **Architecture Decision (2026-01-17)**: MobileNetV4-Conv-S selected over MobileNetV3-Small.
+> Faster inference (~1.5-2.5ms GPU, ~8-12ms CPU) with better accuracy.
+> Production-ready in [timm](https://huggingface.co/timm/mobilenetv4_conv_small.e2400_r224_in1k).
+> [ONNX export verified](https://huggingface.co/onnx-community/mobilenetv4_conv_small.e2400_r224_in1k).
+> Multi-task heads: orientation (4-class) + script family (10-class) in single forward pass.
+>
+> **Consensus Update (2026-01-17)**: 10-class script detection selected over 6-class for improved
+> Japanese vertical text detection and Tibetan/Dzongkha coverage. Aligns with MobileCLIP dataset design.
+> Classes: latin, cjk_mixed, japanese, korean, tibetan, arabic, devanagari, cyrillic, thai, hebrew.
+>
+> **Perspective Model Update (2026-01-17)**: MobileViT-v2 (~10M params) replaces HRNet-W18 (39.5M params).
+> 4/5 consensus models flagged HRNet as too heavy. MobileViT-v2 achieves 92% accuracy at 1/3 parameters.
+> Target: ~8ms GPU inference (vs 15ms for HRNet), ~48MB ONNX (vs ~150MB).
+> CPU fallback: Skip perspective correction if inference >50ms.
+
+### Phase 11 Models (Deferred - Visual Script Fallback)
 
 | Model | Architecture | Heads | Status | Training Effort | Phase |
 |-------|--------------|-------|--------|-----------------|-------|
-| **Model 6**: Script Detection CNN | MobileNetV3-Small | 1 (10+ scripts) | ❌ FUTURE | 2-3 days | 11 |
+| **Model 6**: Visual Script CNN (Fallback) | MobileNetV4-Conv-S | 1 (10 scripts) | ❌ OPTIONAL | 2-3 days | 11 |
+
+> **Note**: Phase 10A now provides full 10-class script detection (latin, cjk_mixed, japanese,
+> korean, tibetan, arabic, devanagari, cyrillic, thai, hebrew). Phase 11 adds optional visual-only
+> fallback for image-only documents where text extraction fails.
 
 **Phase 10 Training**: 2 new models, 5-8 days total
-**Total Prediction Heads (Phase 10)**: 20 (1+2+8+8+1)
-**Total Prediction Heads (Phase 11)**: 21 (+1 script detection)
+**Total Prediction Heads (Phase 10)**: 21 (2+2+8+8+1)
+**Total Prediction Heads (Phase 11)**: 22 (+1 fine-grained script detection)
 
 ---
 
@@ -116,28 +147,31 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 └────────────────────────────────────────────────────────────┘
                            ↓
 ┌────────────────────────────────────────────────────────────┐
-│ STAGE 2: GEOMETRIC CORRECTION (NEW)           30-60ms     │
+│ STAGE 2: GEOMETRIC CORRECTION + SCRIPT (NEW)  30-60ms     │
 ├────────────────────────────────────────────────────────────┤
 │ ┌──────────────────────────────────────────────────────┐   │
-│ │ MODEL 1: Coarse Orientation CNN          3ms (always)│   │
-│ │ • MobileNetV3-Small                                   │   │
-│ │ • 1 head: [0°, 90°, 180°, 270°]                       │   │
+│ │ MODEL 1: Orientation + Script CNN       3ms (always) │   │
+│ │ • MobileNetV4-Conv-S (multi-task)                     │   │
+│ │ • Head 1: [0°, 90°, 180°, 270°] orientation           │   │
+│ │ • Head 2: [latin, cjk_mixed, jp, kr, tib, ar, dev, cy, th, he] │
 │ └──────────────────────────────────────────────────────┘   │
-│ • GATE 2: Rotate if confidence >0.9 ────────┐ +5ms         │
+│ • GATE 2: Rotate if orientation_conf >0.9 ──┐ +5ms         │
+│ • OUTPUT: script_family → DoclingRouter     │              │
 │                                              │              │
 │ • Fine Deskewing (Hough Transform) ←────────┘ 10ms         │
 │   Target: <0.5° residual skew                              │
 │                                                             │
 │ ┌──────────────────────────────────────────────────────┐   │
-│ │ MODEL 2: Perspective Detector            15ms (gated)│   │
-│ │ • HRNet-W18 corner detection                          │   │
+│ │ MODEL 2: Perspective Detector             8ms (gated)│   │
+│ │ • MobileViT-v2 corner detection (~10M params)         │   │
 │ │ • 2 heads: corners, confidence                        │   │
+│ │ • CPU fallback: skip if >50ms                         │   │
 │ └──────────────────────────────────────────────────────┘   │
 │ • GATE 3: IF (is_scan OR has_potential_tables) ─┐ +23ms    │
 │   AND confidence >0.8:                          │           │
 │   Apply homography transformation  ←────────────┘           │
 │                                                             │
-│ OUTPUT: GeometricallyCorrectImage                          │
+│ OUTPUT: GeometricallyCorrectImage + script_family          │
 └────────────────────────────────────────────────────────────┘
                            ↓
 ┌────────────────────────────────────────────────────────────┐
@@ -270,61 +304,149 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 
 ---
 
-#### Sprint 10A.2: Coarse Orientation CNN (Days 3-5, 4 sprints)
+#### Sprint 10A.2: Coarse Orientation CNN (Days 3-6, 5 sprints)
 
 **Objective**: Detect and correct 0°/90°/180°/270° rotation
 
-- **Sprint 10A.2.1**: Dataset preparation (4 hours)
-  - Create `scripts/prepare_orientation_dataset.py`
-  - Source: SmartDoc-QA + horizontal subset of OHR-Bench
-  - Apply rotations: 0°, 90°, 180°, 270° to each image
-  - Target: 50K samples (12.5K per class)
-  - Split: 80% train, 10% val, 10% test
-  - Save to `data/training/orientation/`
-  - Add dataset validation script
+> **Reference**: Aligned with MOBILECLIP2_S4_S0_DATASET_DESIGN.md specifications.
+> Key improvements: Document-level splitting, Japanese vertical text, degradation augmentation.
 
-- **Sprint 10A.2.2**: Model architecture and training (6 hours + GPU time)
-  - Create `src/models/orientation_cnn.py`
-  - Architecture: MobileNetV3-Small (pretrained ImageNet)
-  - Head: FC layer → 4-way softmax
+- **Sprint 10A.2.1**: Dataset preparation with document-level splitting (8 hours)
+  - Create `scripts/prepare_orientation_dataset.py`
+  - **Source datasets** (12,500 unique documents):
+    - DocLayNet: 6,000 pages (scientific, financial, legal)
+    - RVL-CDIP: 2,500 real scans (low quality, valuable)
+    - PubTabNet: 1,500 table-heavy documents
+    - FUNSD/FUNSD+: 1,200 forms
+    - SmartDoc-QA + OHR-Bench: 1,300 additional
+  - **CRITICAL: Document-level splitting** (prevents data leakage):
+    1. Assign unique `source_document_id` to each source image
+    2. Split by document ID FIRST: 70% train, 15% val, 15% test
+    3. Apply rotations (0°, 90°, 180°, 270°) AFTER splitting
+    4. Validate: No document ID overlap between splits
+  - **Japanese vertical text** (1,250 samples):
+    - Source: MLT Japanese + synthetic vertical rendering
+    - Label as 0° (upright) NOT 270° rotated
+    - Add metadata: `is_vertical_text: true, text_orientation: vertical_ttb`
+    - Same images reused in Phase 11 script detection
+  - **Degradation augmentation** (50% of samples):
+    - Camera artifacts: Motion blur, shadows, perspective ±5%
+    - Scanner artifacts: Noise std=5-15, JPEG quality 75-90
+    - Apply AFTER rotation, track in metadata
+  - Target: 50K samples (12.5K per class, perfectly balanced)
+  - Split: 70% train (35K), 15% val (7.5K), 15% test (7.5K)
+  - Save to `data/training/orientation/`
+  - Create dataset validation script with leakage detection
+  - Add 10 unit tests for splitting and augmentation
+
+- **Sprint 10A.2.2**: Multi-task model architecture and training (8 hours + GPU time)
+  - Create `src/models/orientation_script_cnn.py`
+  - **Architecture**: MobileNetV4-Conv-S (pretrained ImageNet via timm)
+    - Backbone: `timm.create_model('mobilenetv4_conv_small.e2400_r224_in1k', pretrained=True)`
+    - Shared feature extractor (3.8M params)
+  - **Multi-task heads** (single forward pass, ~0.5ms overhead):
+    - Head 1: Orientation → FC(1280, 4) → 4-way softmax [0°, 90°, 180°, 270°]
+    - Head 2: Script Family → FC(1280, 10) → 10-way softmax
+      - Classes: [latin, cjk_mixed, japanese, korean, tibetan, arabic, devanagari, cyrillic, thai, hebrew]
   - Input: 224×224 RGB (downsampled from full page)
-  - Training config:
+  - **Training config**:
     - Optimizer: AdamW, lr=1e-3, cosine decay
     - Batch size: 64
     - Epochs: 20-30
-    - Augmentation: Brightness, contrast, scaling (NO rotation)
-    - Loss: Cross-entropy
-    - Early stopping: val_accuracy >98% for 3 epochs
-  - Train on Modal A10 GPU (~2 hours)
-  - Target: >98% accuracy, per-class >95%
+    - Augmentation: Brightness, contrast, scaling (NO rotation for orientation task)
+    - Loss: Combined cross-entropy (orientation_loss + 0.5 * script_loss)
+    - Early stopping: val_orientation_accuracy >98% AND val_script_accuracy >90%
+  - **Dataset requirements**:
+    - Orientation: 50K samples (MobileCLIP spec)
+    - Script: 50K samples (MobileCLIP spec) with 10-class labels
+    - Source: MOBILECLIP2_S4_S0_DATASET_DESIGN.md specifications
+    - Tibetan: 4,000 samples (200 real + 3,800 synthetic) - monitor synthetic→real gap
+  - Train on Modal A10 GPU (~4 hours for 10-class)
+  - **Targets**:
+    - Orientation: >98% accuracy, per-class >95%
+    - Script family: >95% accuracy overall (10-class is harder than 6-class)
+    - Japanese: >90% accuracy (critical for vertical text detection)
+    - Tibetan: >80% accuracy (limited real samples, 95% synthetic)
 
 - **Sprint 10A.2.3**: ONNX export and registration (2 hours)
   - Export to ONNX format for production
   - Export TorchScript for Modal backup
-  - Save to `models/orientation/mobilenetv3_orientation.onnx`
-  - Create model card with metrics
+  - Save to `models/orientation_script/mobilenetv4_orientation_script.onnx`
+  - **ONNX outputs**: Two tensors (orientation_logits, script_logits)
+  - Create model card with metrics for both tasks
   - Register in local model registry
 
-- **Sprint 10A.2.4**: Detector integration (3 hours)
-  - Create `src/detection/orientation_detector.py`
-  - Class: `CoarseOrientationDetector`
+- **Sprint 10A.2.4**: Multi-task detector integration (4 hours)
+  - Create `src/detection/orientation_script_detector.py`
+  - Class: `OrientationScriptDetector`
   - Load ONNX model with ONNXRuntime
-  - Method: `predict(image) -> Tuple[int, float]` (angle, confidence)
-  - Apply rotation if confidence >0.9 and angle != 0
+  - Method: `predict(image) -> OrientationScriptResult`
+  - **Output dataclass**:
+
+    ```python
+    @dataclass
+    class OrientationScriptResult:
+        orientation_class: int  # 0, 90, 180, 270
+        orientation_confidence: float
+        script_family: str  # latin, cjk_mixed, japanese, korean, tibetan, arabic, devanagari, cyrillic, thai, hebrew
+        script_confidence: float
+    ```
+
+  - **Integration logic**:
+    - Apply rotation if orientation_confidence >0.9 and orientation_class != 0
+    - Pass script_family to DoclingRouter for OCR backend selection
+    - **Japanese vertical text**: If script_family == "japanese" AND vertical_text_detector confirms, skip rotation
   - Integrate into geometric correction stage (Stage 2)
-  - Add 20 unit tests (4 classes × 5 scenarios)
+  - Add 40 unit tests (4 orientation × 10 script scenarios + edge cases)
+
+- **Sprint 10A.2.6**: Orientation Service with Cascade Pattern (2 hours) [NEW - Consensus Decision]
+  - Create `src/detection/orientation_service.py`
+  - Class: `OrientationService`
+  - **Cascade pattern** (CNN primary, heuristic fallback):
+    1. Run CNN (MobileNetV4-Conv-S) → ~3ms
+    2. IF CNN confidence < 0.9:
+       - Trigger existing heuristic ensemble (orientation_detector.py) → ~40ms
+       - Log disagreement for monitoring
+    3. Return higher-confidence result
+  - **Feature flag**: `ENABLE_HEURISTIC_FALLBACK=True` (for future deprecation)
+  - Add Prometheus metrics for:
+    - CNN-only decisions (expected: >90%)
+    - Fallback triggers
+    - CNN/heuristic disagreements
+  - Add 15 unit tests for cascade logic
+
+- **Sprint 10A.2.5**: Vertical text detection gate (3 hours) [NEW - MobileCLIP alignment]
+  - Create `src/detection/vertical_text_detector.py`
+  - Class: `VerticalTextDetector`
+  - **Purpose**: Detect Japanese/CJK vertical text BEFORE orientation classification
+  - **Algorithm** (heuristic-based, no ML):
+    1. Run text detection on image (reuse text_gate.py)
+    2. Analyze text bounding box aspect ratios
+    3. Detect vertical text patterns: height >> width for text regions
+    4. Check for CJK Unicode ranges in OCR preview (if available)
+  - **Output**: `VerticalTextResult(is_vertical: bool, confidence: float, script_hint: str)`
+  - **Integration logic**:
+    - IF `is_vertical == True` AND `confidence > 0.8`:
+      - Skip orientation CNN (assume 0° upright)
+      - Set metadata: `is_vertical_text: True`
+      - Add to DoclingRouter hints: `text_direction: "vertical_ttb"`
+  - **Why needed**: Prevents orientation model from misclassifying vertical Japanese as 270° rotated
+  - Target latency: <5ms
+  - Add 10 unit tests (vertical Japanese, horizontal CJK, edge cases)
 
 **Deliverables**:
 
-- `scripts/prepare_orientation_dataset.py` (~100 lines)
-- `src/models/orientation_cnn.py` (~200 lines)
-- `src/detection/orientation_detector.py` (~150 lines)
-- `tests/unit/test_orientation_detector.py` (~400 lines)
-- Trained model: `models/orientation/mobilenetv3_orientation.onnx`
+- `scripts/prepare_orientation_script_dataset.py` (~300 lines, multi-task labels)
+- `src/models/orientation_script_cnn.py` (~250 lines, MobileNetV4 + dual heads)
+- `src/detection/orientation_script_detector.py` (~200 lines, multi-task inference)
+- `src/detection/vertical_text_detector.py` (~120 lines) [NEW]
+- `tests/unit/test_orientation_script_detector.py` (~500 lines, 30 test cases)
+- `tests/unit/test_vertical_text_detector.py` (~200 lines) [NEW]
+- Trained model: `models/orientation_script/mobilenetv4_orientation_script.onnx`
 
 ---
 
-#### Sprint 10A.3: Fast Table Pre-Detection (Day 6, 2 sprints)
+#### Sprint 10A.3: Fast Table Pre-Detection (Day 7, 2 sprints)
 
 **Objective**: Lightweight heuristic for perspective gating
 
@@ -359,18 +481,23 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 
 **Objective**: Detect quadrilateral corners for keystoning correction
 
-- **Sprint 10A.4.1**: Dataset acquisition and augmentation (4 hours)
-  - Download DocUNet dataset (~3K document dewarping images)
-  - Use existing SmartDoc mobile captures (perspective distortion)
+- **Sprint 10A.4.1**: Dataset acquisition and augmentation (4 hours) [UPDATED - Consensus Decision]
+  - **Primary source**: SmartDoc-QA (4,270 real mobile captures with perspective distortion)
+    - Path: `02_benchmark_only/smartdoc-qa/Dataset SmartDoc-QA/Captured_Images/`
+    - Contains real-world perspective distortion from mobile capture
+  - **Secondary source**: DocLayNet synthetic homography (16K+ augmented samples)
+    - Apply random homography transforms to 80,863 DocLayNet pages
+    - Homography parameters: rotation ±10°, perspective ±15%, scale 0.8-1.2
+  - **NOTE**: DocUNet dataset access uncertain - using SmartDoc-QA + synthetic instead
   - Create augmentation script: `scripts/augment_perspective_dataset.py`
-  - Apply random homography transforms to flat scans
-  - Generate 20K augmented samples
-  - Total: 28K samples (DocUNet + SmartDoc + augmented)
+  - Total target: 20K+ samples (SmartDoc-QA real + DocLayNet synthetic)
   - Save to `data/training/perspective/`
 
-- **Sprint 10A.4.2**: Model architecture and training (8 hours + GPU time)
+- **Sprint 10A.4.2**: Model architecture and training (8 hours + GPU time) [UPDATED - Consensus Decision]
   - Create `src/models/perspective_cnn.py`
-  - Architecture: HRNet-W18 (High-Resolution Net)
+  - **Architecture**: MobileViT-v2 (~10M params) [Replaces HRNet-W18 per consensus]
+    - Rationale: 4/5 models flagged HRNet-W18 (39.5M params) as too heavy
+    - MobileViT-v2 achieves 92% accuracy at 1/3 parameters
   - Input: 512×512 RGB (resized from 300 DPI page)
   - Head 1: Corner Heatmaps
     - 4 channels (top-left, top-right, bottom-left, bottom-right)
@@ -382,21 +509,23 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
     - Output: [0-1] confidence
   - Training config:
     - Optimizer: AdamW, lr=1e-3
-    - Batch size: 16 (GPU memory constraints)
+    - Batch size: 32 (MobileViT-v2 uses less memory than HRNet)
     - Epochs: 30-40
     - Loss: MSE (heatmaps) + BCE (confidence)
     - Augmentation: Perspective transforms, brightness/contrast, Gaussian noise
   - Validation targets:
     - Corner localization error: <5 pixels at 512×512
-    - Confidence precision at 0.8 threshold: >90%
+    - Confidence precision at 0.8 threshold: >88% (slightly lower than HRNet's 90%)
     - False positive rate: <5%
+  - **CPU fallback behavior**: Skip perspective correction if inference >50ms
 
 - **Sprint 10A.4.3**: ONNX export and corner extraction (3 hours)
   - Export to ONNX (primary) and TorchScript (Modal backup)
   - Implement soft-argmax corner extraction from heatmaps
   - Implement corner ordering: TL, TR, BR, BL
   - Create homography application function: `apply_homography()`
-  - Save to `models/perspective/hrnet_w18_perspective.onnx`
+  - Save to `models/perspective/mobilevit_v2_perspective.onnx`
+  - **Model size target**: ~48MB ONNX (vs ~150MB for HRNet-W18)
 
 - **Sprint 10A.4.4**: Detector integration and gating (4 hours)
   - Create `src/detection/perspective_detector.py`
@@ -416,7 +545,7 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 - `src/detection/perspective_detector.py` (~200 lines)
 - `src/correction/perspective_corrector.py` (~100 lines)
 - `tests/unit/test_perspective_*.py` (~500 lines total)
-- Trained model: `models/perspective/hrnet_w18_perspective.onnx`
+- Trained model: `models/perspective/mobilevit_v2_perspective.onnx`
 
 ---
 
@@ -424,16 +553,18 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 
 **Objective**: Integrate all geometric gates into main pipeline
 
-- **Sprint 10A.5.1**: Pipeline orchestration update (4 hours)
-  - Update `src/pipeline/main_pipeline.py` (or create if not exists)
-  - Add geometric correction stage between ingestion and text gate
-  - Implement gate sequencing:
+- **Sprint 10A.5.1**: Pipeline orchestration update (4 hours) [UPDATED - Consensus Decision]
+  - Create `src/pipeline/geometric_corrections.py` [NEW - per consensus]
+  - Class: `GeometricCorrectionStage`
+  - **Contract**: input image → corrected image + PageMetadata deltas
+  - Integrate as Stage 2 invoked from `document_processor.py`
+  - Keep stages composable:
     1. Border removal (always)
     2. Table pre-detection (always, fast)
-    3. Coarse orientation (always)
+    3. Orientation detection via `OrientationService` (cascade: CNN primary, heuristics fallback)
     4. Fine deskewing (always)
     5. Perspective detection (gated: is_scan OR has_potential_tables)
-    6. Perspective correction (gated: confidence >0.8)
+    6. Perspective correction (gated: confidence >0.8, skip if CPU >50ms)
   - Add structured logging for each gate decision
   - Add Prometheus metrics for gate trigger rates
 
@@ -441,18 +572,21 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
   - Create `tests/integration/test_geometric_pipeline.py`
   - Test cases:
     - Clean digital PDF (no corrections)
-    - Rotated scan (orientation correction)
+    - Rotated scan (orientation correction via CNN)
+    - Low-confidence rotation (cascade to heuristic fallback)
     - Perspective-distorted scan (perspective correction)
     - Table document (perspective gated by table detection)
+    - Japanese vertical text (skip rotation, mark as vertical)
     - All corrections (rotation + deskew + perspective)
   - Performance benchmarking on SmartDoc-QA subset
   - Verify latency budget: <150ms weighted average
-  - Add 30 integration tests
+  - Add 35 integration tests (increased for cascade and 10-class scenarios)
 
 **Deliverables**:
 
-- Updated `src/pipeline/main_pipeline.py` (+200 lines)
-- `tests/integration/test_geometric_pipeline.py` (~400 lines)
+- `src/pipeline/geometric_corrections.py` (~300 lines) [NEW]
+- `src/detection/orientation_service.py` (~150 lines) [NEW - cascade pattern]
+- `tests/integration/test_geometric_pipeline.py` (~500 lines)
 - Configuration schema updates in `config.py`
 
 ---
@@ -725,13 +859,17 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 | Metric | Target | Validation Method |
 |--------|--------|-------------------|
 | Orientation Detection Accuracy | >98% | SmartDoc-QA test set |
-| Perspective Detection Precision | >90% at 0.8 confidence | DocUNet + SmartDoc test |
+| Script Detection Accuracy (Overall) | >95% | MobileCLIP test set (10-class) |
+| Script Detection Accuracy (Japanese) | >90% | MobileCLIP Japanese subset |
+| Script Detection Accuracy (Tibetan) | >80% | MobileCLIP Tibetan subset (95% synthetic) |
+| Perspective Detection Precision | >88% at 0.8 confidence | SmartDoc-QA + DocLayNet test |
 | Table Heuristic Recall | >85% | Annotated table documents |
 | Border Removal Safety | 100% (no header/footer crop) | Manual audit |
 | Latency (Weighted Average) | <150ms | Performance benchmark |
 | Schema Validation | 100% pass | Integration tests |
 | DoclingRouter Accuracy | >95% flag correctness | E2E test suite |
 | Test Coverage | >80% for new modules | pytest-cov |
+| Cascade Fallback Rate | <10% | Prometheus metrics |
 
 ---
 
@@ -739,12 +877,13 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 
 | Category | Deliverables |
 |----------|--------------|
-| **New Models** | Coarse Orientation CNN (MobileNetV3-Small), Perspective Detector (HRNet-W18) |
-| **Detection Modules** | `orientation_detector.py`, `table_predetector.py`, `perspective_detector.py` |
+| **New Models** | Orientation + Script CNN (MobileNetV4-Conv-S, 10-class script), Perspective Detector (MobileViT-v2) |
+| **Detection Modules** | `orientation_script_detector.py`, `orientation_service.py` (cascade), `table_predetector.py`, `perspective_detector.py`, `vertical_text_detector.py` |
 | **Correction Modules** | `border_removal.py`, `perspective_corrector.py`, `line_enhancer.py` |
+| **Pipeline Modules** | `geometric_corrections.py` (Stage 2 orchestration) |
 | **Routing Modules** | `docling_router.py` |
 | **Schema Updates** | `DoclingFlags`, `DoclingConfigHints`, geometric correction metadata |
-| **Tests** | 150+ new tests (unit + integration) |
+| **Tests** | 175+ new tests (unit + integration) |
 | **Documentation** | Phase 10 report, migration guide, performance benchmarks |
 
 ---
@@ -981,9 +1120,36 @@ Phase 10 and Phase 11 extend Project A's preprocessing capabilities to handle ge
 
 1. **Confirm Phase 10 scope** (Latin-centric, defer script to Phase 11)
 2. **Begin Sprint 10A.1** (Border removal implementation)
-3. **Parallel work**: Start dataset preparation for Coarse Orientation CNN
-4. **Create tracking**: Phase 10 sprint board with 30 sprints
-5. **Update PROJECT_PLAN.md** with Phase 10/11 references
+3. **Parallel work**: Start MobileCLIP dataset generation (can run alongside 10A.1)
+4. **Dataset preparation**: Use MobileCLIP orientation dataset spec for Sprint 10A.2.1
+5. **Create tracking**: Phase 10 sprint board with 30 sprints
+6. **Update PROJECT_PLAN.md** with Phase 10/11 references
+
+---
+
+## Related Documents
+
+| Document | Purpose | Relationship |
+|----------|---------|--------------|
+| [PROJECT_PLAN.md](PROJECT_PLAN.md) | Main project plan (Phases 0-9) | Parent document |
+| [MOBILECLIP2_S4_S0_DATASET_DESIGN.md](MOBILECLIP2_S4_S0_DATASET_DESIGN.md) | Dataset specifications for orientation & script detection | **Sprint 10A.2.1 alignment** |
+| [tmp_cleanup/.tmp-mobileclip-phase10-impact-analysis-20260117.md](../../tmp_cleanup/.tmp-mobileclip-phase10-impact-analysis-20260117.md) | Impact analysis of MobileCLIP on Phase 10 | Analysis reference |
+
+### Key Integration Points with MobileCLIP Dataset Design
+
+1. **Sprint 10A.2.1** (Orientation Dataset): Adopts MobileCLIP 50K orientation spec
+   - Document-level splitting (prevents data leakage)
+   - 70/15/15 split ratio
+   - 50% degradation augmentation
+   - 1,250 Japanese vertical text samples
+
+2. **Sprint 10A.2.5** (Vertical Text Gate): Prevents orientation misclassification
+   - Detects vertical Japanese/CJK before orientation CNN
+   - Same images reused in Phase 11 script detection
+
+3. **Phase 11** (Script Detection): Directly adopts MobileCLIP 50K script dataset spec
+   - 10 script classes
+   - Special Tibetan 5-fold CV validation
 
 ---
 
