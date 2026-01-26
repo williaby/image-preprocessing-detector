@@ -37,9 +37,17 @@ Use this condensed format in the main catalog for rapid dataset selection:
 - **Paper**: [Title (Year)](link)
 - **IQA Profile**: [blur_sensitive, high_contrast, etc.]
 - **Project Usage**: Phase X training/validation/benchmark
+- **Parser**: [`parse_xxx_labels`](../scripts/annotate_base_metadata.py#LXXX) | ✅/⚠️/❌/ℹ️
 
 [2-3 sentence description of dataset and its IQA relevance]
 ```
+
+**Parser Status Legend**:
+
+- ✅ Complete - Full label extraction implemented
+- ⚠️ Partial - Some fields extracted, others pending
+- ❌ Not Implemented - Labels available but no parser yet
+- ℹ️ Not Applicable - Dataset has no ground truth labels
 
 ---
 
@@ -93,6 +101,18 @@ documentation_status: complete  # complete | partial | inferred
 | **Subset Used** | Full dataset / Specific subset (explain) |
 | **Preprocessing** | Required steps before use |
 | **Dataloader** | `src/data/tablebank_loader.py` |
+
+#### 2b. Parser & Metadata Integration
+
+| Aspect | Details |
+|--------|---------|
+| **Label Parser** | [`parse_tablebank_labels`](../../scripts/annotate_base_metadata.py#L1333) |
+| **Parser Status** | ✅ Complete / ⚠️ Partial / ❌ Not Implemented / ℹ️ Not Applicable |
+| **Layer 1 Fields** | `tablebank_annotations` (COCO format) |
+| **Layer 2 Auto-Derived** | `has_table=True`, `script_family`, `iso639_language` |
+| **Config Entry** | [`DATASET_CONFIGS["tablebank"]`](../../scripts/annotate_base_metadata.py#L284) |
+
+> **Parser Reference**: See [LABEL_MAPPING_SPECIFICATION.md](../schema/LABEL_MAPPING_SPECIFICATION.md) for field mappings.
 
 #### 3. Dataset Statistics
 

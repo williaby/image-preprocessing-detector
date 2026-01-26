@@ -15,15 +15,75 @@ title: Dataset Catalog
 
 ---
 
+## Dataset Short Codes
+
+All datasets have standardized short codes for use in metadata files and the `schema_utils.DATASET_REGISTRY`.
+
+**Usage in metadata**: `{"dataset_name": "tablebank", "dataset_version": "1.0"}`
+
+### Base Training Datasets
+
+| Short Code | Full Name | Category | Images | License |
+|------------|-----------|----------|--------|---------|
+| `tablebank` | TableBank | Tables | 278,582 | Apache-2.0 |
+| `pubtabnet` | PubTabNet | Tables | 568,000+ | CDLA-Sharing |
+| `fintabnet` | FinTabNet | Tables | 97,475 | Research |
+| `doclaynet` | DocLayNet | Documents | 80,863 | CDLA-Permissive |
+| `rvl-cdip` | RVL-CDIP | Documents | 400,000 | Academic |
+| `bhutan-afs` | Bhutan Financial | Documents | 125 | Public Domain |
+| `nist-sd2` | NIST SD-2 (Tax Forms) | Forms | 5,590 | Public Domain |
+| `nist-sd6` | NIST SD-6 (Census Forms) | Forms | 5,595 | Public Domain |
+| `funsd` | FUNSD | Forms | 199 | CC-BY-4.0 |
+| `funsd-plus` | FUNSD+ Extended | Forms | 1,500+ | CC-BY-4.0 |
+| `sroie` | SROIE Receipts | Forms | 973 | Research |
+| `nist-sd19` | NIST SD-19 (Handwriting) | Handwriting | 810,000+ | Public Domain |
+| `hasyv2` | HASYv2 (Math Symbols) | Handwriting | 168,233 | CC0 |
+| `signatr6k` | SignaTR6K | Handwriting | 12,514 | Academic |
+| `im2latex` | im2latex-100k | Formulas | 100,000 | CC0 |
+| `mathverse` | MathVerse | Formulas | 3,940 | MIT |
+| `multimodal-textbook` | Multimodal Textbook | Educational | 1,113 | Apache-2.0 |
+| `tobacco800` | Tobacco-800 | Degraded | 1,290 | Academic |
+| `dibco-train` | DIBCO Training Subset | Degraded | ~500 | Academic |
+| `realdae` | RealDAE | Camera-Captured | 600 pairs | Research |
+| `ocr-quality` | OCR-Quality | IQA Reference | 1,000 | Unknown |
+
+### Language & Script Detection
+
+| Short Code | Full Name | Scripts | Images | License |
+|------------|-----------|---------|--------|---------|
+| `jssoda` | JSSODa | Japanese | 2,000+ | CC-BY-4.0 |
+| `arabic-ocr` | Arabic OCR Dataset | Arabic | 500+ | Unknown |
+| `dzongkha-digits` | Dzongkha Digits | Tibetan | 1,000 | CC0 |
+| `mdiw13` | MDIW-13 | 13 scripts | 86,655 words | Academic |
+| `midv500` | MIDV-500 | Cyrillic/Latin | 50 countries | MIT |
+| `tibhcr` | TibHCR | Tibetan | 141,698 | Academic |
+| `cc-ocr` | CC-OCR | CJK Mixed | 7,058 | MIT |
+| `nepal-devanagari` | Nepal Documents | Devanagari | 717 | Public Domain |
+| `mlt19` | MLT-19 | 10 languages | ~14 GB | MIT |
+
+### Benchmark-Only (Reserved for Evaluation)
+
+| Short Code | Full Name | Purpose | Images | License |
+|------------|-----------|---------|--------|---------|
+| `diqa-5000` | DIQA-5000 | IQA Calibration | 5,500 | Research |
+| `dibco-eval` | DIBCO Evaluation | Degradation Benchmark | 131 | Academic |
+| `smartdoc-qa` | SmartDoc-QA | Mobile Capture QA | 4,270 | Research |
+| `ohr-bench` | OHR-Bench | OCR Hallucination | 8,561 | Research |
+| `omnidocbench` | OmniDocBench | Multi-task Eval | metadata | Research |
+
+---
+
 ## Layer 2 Annotation Status
 
 **Status**: ✅ **COMPLETE** - 24 of 24 datasets annotated
 **Completion Date**: 2025-12-21
 **Metadata Location**: `/mnt/e/image_detection/metadata_registry/json/`
 **Total Output**: 2.2 GB (24 JSON files)
-**Schema Version**: 2.0 (Three-layer architecture)
+**Schema Version**: 2.1 (Three-layer architecture with language/script, text scope, paper size fields)
 
 All datasets have been annotated with Layer 1 (IMMUTABLE) and Layer 2 (ENRICHMENT) metadata. See [Data Preparation Level 2 Documentation](architecture/diagrams/level-2/data-preparation/index.md#current-status-layer-2-annotation) for detailed status breakdown.
+
+> **Schema Reference**: See [LABEL_MAPPING_SPECIFICATION.md](schema/LABEL_MAPPING_SPECIFICATION.md) for how original dataset labels are mapped to our standardized schema.
 
 ---
 
@@ -121,6 +181,7 @@ Source images available for training augmentation. Total: **~1.04M images**
 - **Path**: `01_base_data/tables/tablebank/`
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Training augmentation source for table-focused IQA
+- **Parser**: [`parse_tablebank_labels`](../scripts/annotate_base_metadata.py#L1333) | ✅ Complete
 
 ##### References
 
@@ -201,6 +262,7 @@ Source images available for training augmentation. Total: **~1.04M images**
 - **Path**: `01_base_data/tables/pubtabnet/`
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Scientific table IQA training, structure recognition baseline
+- **Parser**: [`parse_pubtabnet_labels`](../scripts/annotate_base_metadata.py#L1714) | ✅ Complete
 
 ##### References
 
@@ -273,15 +335,17 @@ Source images available for training augmentation. Total: **~1.04M images**
 - **Path**: `01_base_data/tables/fintabnet/`
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Financial document IQA training
+- **Parser**: [`parse_fintabnet_labels`](../scripts/annotate_base_metadata.py#L1786) | ✅ Complete
 
 ---
 
-### 1.2 Documents (97,471 images)
+### 1.2 Documents (97,596 images)
 
 | Dataset | Images | Resolution | Format | Source | License | Commercial Use |
 |---------|--------|------------|--------|--------|---------|----------------|
 | **DocLayNet** | 80,863 | 1025x1025px | PNG | IBM Research | CDLA-Permissive-1.0 | Yes |
 | **RVL-CDIP** | 400,000 | ≤1000px | TIFF | Legacy Tobacco | Academic | Research Only |
+| **Bhutan Financial** | 125 | 300 DPI | PNG | Royal Government of Bhutan | Public Domain | Yes |
 
 ---
 
@@ -366,6 +430,7 @@ Source images available for training augmentation. Total: **~1.04M images**
 - **Path**: `01_base_data/documents/doclaynet/`
 - **Phase(s)**: Phase 2 (Layout-lite), Phase 7 training
 - **Purpose**: Layout-aware IQA training, element detection
+- **Parser**: [`parse_doclaynet_labels`](../scripts/annotate_base_metadata.py#L1296) | ✅ Complete
 
 ##### References
 
@@ -451,6 +516,7 @@ Source images available for training augmentation. Total: **~1.04M images**
 - **Phase(s)**: Phase 7 training, IQA calibration
 - **Purpose**: Real degradation pattern training, baseline quality assessment
 - **Subset Used**: 16,000 images (sample for diversity)
+- **Parser**: ✅ `parse_rvl_cdip_labels` (extracts document class from 16-folder structure)
 
 ##### References
 
@@ -462,6 +528,77 @@ Source images available for training augmentation. Total: **~1.04M images**
   year={2015}
 }
 ```
+
+---
+
+#### Bhutan Financial Statements
+
+> **Quick Stats**: 125 pages | Government financial + tax documents | Real-world complex tables | Public domain
+>
+> **License**: Public Domain | **Commercial Use**: Yes
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Bhutan Government Documents (AFS 2024-25 + Tax Act 2021) |
+| **Version** | 2024-25 / 2021 |
+| **Release Date** | 2024 |
+| **Maintainer** | Royal Government of Bhutan |
+| **License** | Public Domain (Government Document) |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Pages** | 125 (10 exclusions applied) |
+| **Source Documents** | AFS 2024-25 (115 pages) + Tax Act 2021 (10 pages) |
+| **File Format** | PNG (converted from PDF) |
+| **Resolution** | 300 DPI |
+| **Source Format** | PDF (official government publication) |
+
+##### Content Composition
+
+| Aspect | Details |
+|--------|---------|
+| **Domain** | Government financial reporting + tax legislation |
+| **Document Types** | Balance sheets, income statements, schedules, tax code articles |
+| **Language** | English |
+| **Table Characteristics** | Multi-column layouts, footnotes, decimal-aligned numbers |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Born-digital (official government PDF) |
+| **Baseline Quality** | High (professional typesetting) |
+| **Table Complexity** | **HIGH** - Financial tables with merged cells, footnotes |
+| **Layout Complexity** | **HIGH** - Multi-column, mixed content |
+| **Skew Sensitivity** | LOW - Born-digital, no scanning artifacts |
+| **Key Value** | Real-world government financial document samples |
+
+##### Training Value
+
+- **Strengths**: Real government documents, complex table layouts, public domain, document diversity (financial + legal)
+- **Weaknesses**: Single source (one country), limited quantity
+- **Complementary Datasets**: FinTabNet for financial diversity, DocLayNet for layout variety
+- **Phase 10A Role**: 125 government document samples for orientation detection training
+
+##### Data Quality Notes
+
+- **Excluded Blank (3)**: AFS pages 3, 5, 125 - moved to `_excluded_blank/`
+- **Excluded Rotated (7)**: AFS pages 94-100 - moved to `_excluded_rotated/` to reduce rotated-table prevalence
+- **Remaining Rotated Table Pages (29)**: Pages 66-73, 77-78, 101-116, 122-124 contain portrait pages with 90-degree rotated tables. Kept as edge cases (23.2% of subset vs original 29.5%).
+
+##### Project Usage
+
+- **Path**: `01_base_data/documents/bhutan_financial/`
+- **Phase(s)**: Phase 10A (Orientation Detection)
+- **Purpose**: Real-world government document training, complex table samples
+- **Added**: 2025-01-24
+- **Quality Review**: 2025-01-25 (10 total exclusions: 3 blank + 7 rotated)
+- **Parser**: ℹ️ N/A (unlabeled real-world government documents)
 
 ---
 
@@ -536,6 +673,7 @@ IRS 1040 Package X (1988 tax year):
 - **Path**: `01_base_data/forms/nist_db2/`
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Form structure IQA, field detection baseline
+- **Parser**: ✅ `parse_nist_db2_labels` (extracts form_id, field_count, sample_fields from .fmt files)
 
 ---
 
@@ -582,6 +720,7 @@ IRS 1040 Package X (1988 tax year):
 
 - **Path**: `01_base_data/forms/nist_sd6/`
 - **Purpose**: Handwritten field detection, form grid IQA
+- **Parser**: ✅ `parse_nist_sd6_labels` (extracts form_id, field_count, sample_fields from .fmt files)
 
 ---
 
@@ -649,6 +788,7 @@ IRS 1040 Package X (1988 tax year):
 - **Path**: `01_base_data/forms/funsd/`
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Noisy form IQA baseline, real degradation samples
+- **Parser**: [`parse_funsd_labels`](../scripts/annotate_base_metadata.py#L1375) | ✅ Complete
 
 ##### References
 
@@ -721,6 +861,7 @@ IRS 1040 Package X (1988 tax year):
 - **Size**: 420 MB
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Extended form understanding training data
+- **Parser**: ✅ `parse_funsd_plus_labels` (extracts field boxes, entities from JSON annotations)
 
 ---
 
@@ -784,6 +925,7 @@ IRS 1040 Package X (1988 tax year):
 
 - **Path**: `01_base_data/forms/sroie/`
 - **Purpose**: Mobile capture IQA, thermal print degradation training
+- **Parser**: ✅ `parse_sroie_labels` (extracts OCR text, NER entities, box annotations)
 
 ---
 
@@ -856,6 +998,7 @@ IRS 1040 Package X (1988 tax year):
 
 - **Path**: `01_base_data/handwriting/nist_sd19_pages/`
 - **Purpose**: Full-page handwriting IQA, stroke quality assessment
+- **Parser**: [`parse_nist_sd19_labels`](../scripts/annotate_base_metadata.py#L1985) | ✅ Complete
 
 ---
 
@@ -900,6 +1043,7 @@ IRS 1040 Package X (1988 tax year):
 
 - **Path**: `01_base_data/handwriting/maths_handwriting/`
 - **Purpose**: Mathematical symbol IQA, stroke quality metrics
+- **Parser**: ❌ Not Implemented (has symbol class labels)
 
 ---
 
@@ -964,6 +1108,7 @@ IRS 1040 Package X (1988 tax year):
 - **Size**: 142 MB
 - **Phase(s)**: Phase 7, Phase 9 (signature detection)
 - **Purpose**: Signature quality assessment, detection training
+- **Parser**: [`parse_signatr_labels`](../scripts/annotate_base_metadata.py#L1423) | ✅ Complete
 
 ---
 
@@ -1024,6 +1169,7 @@ IRS 1040 Package X (1988 tax year):
 
 - **Path**: `01_base_data/formulas/im2latex/`
 - **Purpose**: Mathematical notation IQA, compression sensitivity
+- **Parser**: [`parse_im2latex_labels`](../scripts/annotate_base_metadata.py#L1870) | ✅ Complete
 
 ---
 
@@ -1069,6 +1215,7 @@ IRS 1040 Package X (1988 tax year):
 
 - **Path**: `01_base_data/formulas/mathverse/`
 - **Purpose**: Geometric diagram IQA, fine line quality
+- **Parser**: ✅ `parse_mathverse_labels` (extracts question, answer, problem_type from JSON)
 
 ---
 
@@ -1089,6 +1236,7 @@ IRS 1040 Package X (1988 tax year):
 - **Origin**: Keyframes from 67,434 educational YouTube videos
 - **Subject Distribution**: Mathematics (18%), Engineering (15%), Physics (10%), CS (8%), Chemistry (5%)
 - **IQA Relevance**: Equations, diagrams, presentation slides, STEM content
+- **Parser**: ❌ Not Implemented (has Parquet metadata)
 
 ---
 
@@ -1110,6 +1258,7 @@ IRS 1040 Package X (1988 tax year):
 - **Degradation Types**: Yellowing, staining, bleed-through, foxing, fading
 - **IQA Relevance**: **Ground truth for real-world document degradation**
 - **Key Value**: Only dataset with authentic archival degradation
+- **Parser**: ℹ️ N/A (no ground truth labels)
 
 #### Historical Degraded (Collection)
 
@@ -1154,6 +1303,7 @@ IRS 1040 Package X (1988 tax year):
 - **Weaknesses**: Small sample sizes, specialized domain
 - **Key Value**: Critical for training robust binarization and IQA on worst-case inputs
 - **Benchmark Note**: DIBCO subsets overlap with `02_benchmark_only/dibco/` - use carefully
+- **Parser**: ℹ️ N/A (no ground truth labels)
 
 ---
 
@@ -1254,6 +1404,7 @@ realdae/
 - **Phase(s)**: Phase 7 training (optional camera enhancement), potential GCDRNet integration
 - **Purpose**: Camera-captured document enhancement training, mobile capture preprocessing
 - **Priority**: **P2** - Valuable for mobile/camera capture scenarios
+- **Parser**: ❌ Not Implemented (has paired GT images, no text labels)
 
 ##### Associated Model
 
@@ -1281,11 +1432,15 @@ realdae/
 
 ---
 
-### 1.10 Language Detection (Placeholder)
+### 1.10 Language & Script Detection
 
-| Dataset | Status | Format | Source | License |
-|---------|--------|--------|--------|---------|
-| **WiLI-2018** | Empty | Text | Research | Apache-2.0 |
+| Dataset | Images | Resolution | Format | Source | License | Commercial Use |
+|---------|--------|------------|--------|--------|---------|----------------|
+| **WiLI-2018** | Empty | Text | N/A | Research | Apache-2.0 | Yes |
+| **JSSODa** | 2,000+ | Variable | PNG | HuggingFace | CC-BY-4.0 | Yes |
+| **Arabic OCR** | 500+ | Variable | PNG | HuggingFace | Unknown | Research |
+| **Dzongkha Digits** | 1,000 | Variable | PNG | HuggingFace | CC0 | Yes |
+| **MLT-19** | ~14 GB | Variable | JPG | Kaggle | MIT | Research |
 
 #### WiLI-2018
 
@@ -1294,6 +1449,989 @@ realdae/
 - **Expected**: Wikipedia Language Identification dataset (235 languages, 235K paragraphs)
 - **Purpose**: Multi-lingual document detection and language identification
 - **Action Required**: Download dataset if language detection training is needed
+
+---
+
+#### JSSODa (Japanese Simple Synthetic OCR Dataset)
+
+> **Quick Stats**: 2,000+ images | Vertical & horizontal text | Synthetic Japanese | Orientation training
+>
+> **License**: CC-BY-4.0 | **Commercial Use**: Yes
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Japanese Simple Synthetic OCR Dataset |
+| **Version** | 1.0 |
+| **Maintainer** | LLM-JP |
+| **HuggingFace** | [llm-jp/JSSODa](https://huggingface.co/datasets/llm-jp/JSSODa) |
+| **Test Set** | [llm-jp/JSSODa-test](https://huggingface.co/datasets/llm-jp/JSSODa-test) |
+| **License** | CC-BY-4.0 |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 2,000+ (downloaded sample) |
+| **Vertical Text** | ~991 images |
+| **Horizontal Text** | ~1,009 images |
+| **File Format** | PNG |
+| **Column Configurations** | 1-4 columns |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Synthetically generated |
+| **Baseline Quality** | Clean (programmatically rendered) |
+| **Text Direction** | Both vertical (ttb) and horizontal (ltr) |
+| **Language** | Japanese only |
+| **Key Value** | **Critical for orientation detection training** |
+
+##### Training Value
+
+- **Strengths**: Explicit vertical/horizontal labels, clean synthetic quality
+- **Weaknesses**: Synthetic only (no real scan artifacts), Japanese-only
+- **Critical Use**: **Japanese vertical text must be labeled as 0° (upright), not 270°**
+- **Phase 10A Role**: Provides 1,250 vertical text samples for orientation detection
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/multilingual_scripts/jssoda/`
+- **Phase(s)**: Phase 10A (Orientation Detection)
+- **Purpose**: Vertical text orientation training, script detection
+- **Parser**: [`parse_multilingual_scripts_labels`](../scripts/annotate_base_metadata.py#L1548) | ✅ Complete
+
+---
+
+#### Arabic OCR Dataset
+
+> **Quick Stats**: 500+ images | RTL text | Document images | Script detection
+>
+> **License**: Unknown | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Arabic OCR Dataset |
+| **Maintainer** | mssqpi |
+| **HuggingFace** | [mssqpi/Arabic-OCR-Dataset](https://huggingface.co/datasets/mssqpi/Arabic-OCR-Dataset) |
+| **License** | Unknown |
+| **Documentation Status** | Basic |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 500+ (downloaded sample) |
+| **File Format** | PNG |
+| **Text Direction** | RTL (right-to-left) |
+| **Script** | Arabic |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Document images |
+| **Text Direction** | RTL (Arabic script) |
+| **Language** | Arabic |
+| **Key Value** | Arabic script class for 10-class detection |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/multilingual_scripts/arabic_ocr/`
+- **Phase(s)**: Phase 10A (Script Detection)
+- **Purpose**: Arabic script class training
+- **Parser**: [`parse_multilingual_scripts_labels`](../scripts/annotate_base_metadata.py#L1548) | ✅ Complete
+
+---
+
+#### Dzongkha Digits (Tibetan Script)
+
+> **Quick Stats**: 1,000 images | Handwritten digits | Tibetan-derived script
+>
+> **License**: CC0 (Public Domain) | **Commercial Use**: Yes
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Dzongkha Handwritten Digit Dataset |
+| **Version** | 1.0 |
+| **Release Date** | 2022 |
+| **Maintainer** | Tawmo, Prottay Kumar Adhikary et al. |
+| **HuggingFace** | [proadhikary/dzongkha-digits](https://huggingface.co/datasets/proadhikary/dzongkha-digits) |
+| **Zenodo** | [10.5281/zenodo.6271560](https://doi.org/10.5281/zenodo.6271560) |
+| **License** | CC0 (Public Domain) |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 1,000 |
+| **Classes** | 10 (digits 0-9: ༠–༩) |
+| **Participants** | 100 writers |
+| **File Format** | JPG |
+| **Collection Method** | Google Jamboard |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Handwritten digits |
+| **Script** | Tibetan (Dzongkha is Tibetan-derived) |
+| **Language** | Dzongkha (Bhutan national language) |
+| **Key Value** | Tibetan script class for 10-class detection |
+
+##### References
+
+```bibtex
+@dataset{tawmo_2022_6271560,
+  author = {Tawmo and Prottay Kumar Adhikary and Pankaj Dadure and Partha Pakray},
+  title = {Dzongkha Handwritten Digit Dataset},
+  year = {2022},
+  doi = {10.5281/zenodo.6271560}
+}
+```
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/multilingual_scripts/dzongkha_digits/`
+- **Phase(s)**: Phase 10A (Script Detection)
+- **Purpose**: Tibetan script class training
+- **Parser**: [`parse_multilingual_scripts_labels`](../scripts/annotate_base_metadata.py#L1548) | ✅ Complete
+
+---
+
+#### MDIW-13 (Foundational Script Identification Dataset)
+
+> **Quick Stats**: 1,135 documents | 86,655 words | 13 scripts | Printed + Handwritten
+>
+> **License**: Academic | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Multi-lingual Database for Script Identification |
+| **Version** | February 2025 |
+| **Source** | [Zenodo](https://zenodo.org/records/6376096) |
+| **Paper** | [Cognitive Computation 2023](https://link.springer.com/article/10.1007/s12559-023-10193-w) |
+| **License** | Academic/Research |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Documents** | 1,135 |
+| **Total Lines** | 13,979 |
+| **Total Words** | 86,655 |
+| **File Format** | PNG |
+| **Archive Size** | 226 MB |
+
+##### Scripts Included (13)
+
+| Script | Notes |
+|--------|-------|
+| **Arabic** | Printed + handwritten |
+| **Bengali** | Bangla script |
+| **Gujarati** | Indic |
+| **Gurmukhi** | Punjabi script |
+| **Devanagari** | Hindi, Marathi, Nepali |
+| **Japanese** | Mixed Kanji + Kana |
+| **Kannada** | South Indian |
+| **Malayalam** | South Indian |
+| **Oriya** | Eastern Indian |
+| **Roman (Latin)** | English |
+| **Tamil** | South Indian |
+| **Telugu** | South Indian |
+| **Thai** | Southeast Asian |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Scanned newspapers + handwritten letters |
+| **Key Value** | **Only multi-script DOCUMENT dataset** (not scene text) |
+| **Segmentation** | Document → Line → Word level |
+| **Handwriting** | Included (critical for robustness) |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/mdiw13/`
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Foundational training for 10-class script classifier
+- **Note**: Research identified this as "the most on-target dataset" for document script ID
+- **Parser**: [`parse_mdiw13_labels`](../scripts/annotate_base_metadata.py#L2094) | ✅ Complete
+
+---
+
+#### MIDV-500 (Cyrillic + Latin ID Documents)
+
+> **Quick Stats**: 50 countries | 500 video clips | Identity documents | Cyrillic coverage
+>
+> **License**: MIT | **Commercial Use**: Yes
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Mobile Identity Document Video-500 |
+| **Paper** | [DOI](https://doi.org/10.18287/2412-6179-2019-43-5-818-824) |
+| **GitHub** | [fcakyon/midv500](https://github.com/fcakyon/midv500) |
+| **License** | MIT |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Countries** | 50 |
+| **Document Types** | 17 ID cards, 14 passports, 13 driving licences, 6 other |
+| **Total Size** | 48 GB |
+| **File Format** | JPG (video frames) |
+
+##### Cyrillic Coverage
+
+| Country | Document Types | Script |
+|---------|---------------|--------|
+| Russia | ID, Passport, Driving Licence | Cyrillic |
+| Ukraine | ID, Passport | Cyrillic |
+| Belarus | ID, Passport | Cyrillic |
+| Bulgaria | ID | Cyrillic |
+| Serbia | ID | Cyrillic |
+| Kazakhstan | ID | Cyrillic + Latin |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Video frames (mobile-captured) |
+| **Key Value** | **Primary Cyrillic source** for script detection |
+| **Noise Level** | Motion blur, perspective, lighting variation |
+| **Text Density** | Sparse (ID document format) |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/midv500_data/midv500/`
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Cyrillic script class training (1,500+ samples needed)
+- **Parser**: ✅ `parse_midv500_labels` (extracts country, doc_type, scripts from folder structure)
+
+---
+
+#### TibHCR (Tibetan Handwritten Character Recognition)
+
+> **Quick Stats**: 141,698 samples | 235 writers | 47 character classes | Handwritten
+>
+> **License**: Academic | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Tibetan Handwritten Character Recognition Dataset |
+| **Version** | 2025 |
+| **HuggingFace** | [qixiaoke/TibHCR](https://huggingface.co/datasets/qixiaoke/TibHCR) |
+| **Paper** | [ResearchGate](https://www.researchgate.net/publication/393179332) |
+| **License** | Academic |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Samples** | 141,698 |
+| **Writers** | 235 (from 5 Chinese provinces) |
+| **Character Classes** | 47 |
+| **Total Size** | 4.5 GB |
+| **File Format** | PNG |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Handwritten characters (isolated) |
+| **Key Value** | **Only large-scale Tibetan source** |
+| **Limitation** | Character-level (not document-level) |
+| **Usage Strategy** | Synthetic document generation from characters |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/huggingface_downloads/TibHCR/`
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Tibetan script class via synthetic generation
+- **Note**: Combine with Bhutan docs (198 real images) + synthetic compositing
+- **Parser**: [`parse_tibhcr_labels`](../scripts/annotate_base_metadata.py#L2211) | ✅ Complete
+
+---
+
+#### CC-OCR (CJK Mixed Benchmark)
+
+> **Quick Stats**: 7,058 images | 39 subsets | 4 tracks | MIT license
+>
+> **License**: MIT | **Commercial Use**: Yes
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | CC-OCR: Comprehensive OCR Benchmark |
+| **Version** | 1.0 |
+| **HuggingFace** | [wulipc/CC-OCR](https://huggingface.co/datasets/wulipc/CC-OCR) |
+| **License** | MIT |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 7,058 |
+| **Subsets** | 39 |
+| **Real-world Images** | 41% |
+| **Total Size** | 2.1 GB |
+| **File Format** | PNG/JPG |
+
+##### Tracks
+
+| Track | Description |
+|-------|-------------|
+| **Multi-Scene Text** | Various text in natural scenes |
+| **Multilingual Text** | Chinese, English, mixed |
+| **Document Parsing** | Structured document understanding |
+| **Key Information Extraction** | Form field extraction |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Mixed (41% real-world, 59% synthetic) |
+| **Key Value** | **MIT-licensed CJK benchmark** (alternative to M6Doc) |
+| **Languages** | Chinese (Simplified + Traditional), English, Multilingual |
+| **Quality** | Professional annotation |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/huggingface_downloads/CC-OCR/`
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: CJK Mixed script class training
+- **Note**: Selected as MIT alternative to research-licensed M6Doc
+- **Parser**: [`parse_cc_ocr_labels`](../scripts/annotate_base_metadata.py#L2157) | ✅ Complete
+
+---
+
+#### Nepal Devanagari Documents
+
+> **Quick Stats**: 717 pages | Book + Newspaper | Real-world Devanagari
+>
+> **License**: Public Domain (assumed) | **Commercial Use**: Yes
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Nepal Government Documents (Book + Newspaper) |
+| **Source** | Royal Government of Nepal (public documents) |
+| **Conversion Date** | 2025-01-25 |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Nepal 1 (Book)** | 713 pages |
+| **Nepal 2 (Newspaper)** | 4 pages |
+| **Total Pages** | 717 |
+| **Resolution** | 300 DPI |
+| **File Format** | PNG (converted from PDF) |
+
+##### Content
+
+| Source | Description |
+|--------|-------------|
+| **Nepal 1** | Multi-page book, single-column Devanagari text |
+| **Nepal 2** | 4-page newspaper, multi-column layout |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/multilingual_scripts/nepal_devanagari/`
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Real-world Devanagari document samples
+- **Parser**: [`parse_multilingual_scripts_labels`](../scripts/annotate_base_metadata.py#L1548) | ⚠️ Partial (unlabeled)
+
+---
+
+#### Downloaded Script Detection Datasets (Phase 10B)
+
+The following datasets have been downloaded for 10-class script detection training:
+
+| Dataset | Scripts | Size | Path | Status |
+|---------|---------|------|------|--------|
+| **MDIW-13** | 13 scripts (Arabic, Devanagari, Japanese, Thai, Latin + 8 Indic) | 226 MB | `language/mdiw13/` | ✅ Downloaded |
+| **MIDV-500** | Latin, Cyrillic (50 countries ID docs) | 48 GB | `language/midv500_data/` | ✅ Downloaded |
+| **TibHCR** | Tibetan (141,698 character samples) | 4.5 GB | `language/huggingface_downloads/TibHCR/` | ✅ Downloaded |
+| **CC-OCR** | CJK Mixed (7,058 images, MIT) | 2.1 GB | `language/huggingface_downloads/CC-OCR/` | ✅ Downloaded |
+| **MLT-19** | 10 languages (scene text) | 14.3 GB | `language/kaggle_downloads/` | ✅ Downloaded |
+| **Arabic Docs OCR** | Arabic (10,000 images) | 9.5 GB | `language/kaggle_downloads/` | ✅ Downloaded |
+| **Yarmouk OCR** | Arabic (8,994 images) | 2.2 GB | `language/kaggle_downloads/` | ✅ Downloaded |
+| **Hindi OCR Synthetic** | Devanagari (80,000 lines) | 735 MB | `language/kaggle_downloads/` | ✅ Downloaded |
+| **Nepali Handwritten** | Devanagari (1,000 images) | 1.3 GB | `language/kaggle_downloads/` | ✅ Downloaded |
+| **PUCIT-OHUL Urdu** | Arabic-derived (7,309 lines) | 568 MB | `language/kaggle_downloads/` | ✅ Downloaded |
+| **Nepal PDFs** | Devanagari (717 pages) | - | `language/multilingual_scripts/nepal_devanagari/` | ✅ Converted |
+
+#### Additional Script Detection Resources (Not Downloaded)
+
+The following datasets may be valuable but require manual download or registration:
+
+| Dataset | Scripts | Format | Source | Notes |
+|---------|---------|--------|--------|-------|
+| **SIW-13** | Tibetan, Hebrew, Cyrillic, Thai (13 scripts) | JPG | [Project](https://xbai.vlrlab.net/mspnProjectPage/) | ⚠️ Download link broken |
+| **MTHv2** | Mongolian, Tibetan | PNG | [GitHub](https://github.com/HCIILAB/MTHv2_Datasets_Release) | Historical documents (Chinese, not Tibetan) |
+| **SleukRith-Set** | Khmer | PNG | [GitHub](https://github.com/donavaly/SleukRith-Set) | Cambodian palm leaf manuscripts |
+| **ARDIS** | Arabic digits | PNG | [ARDIS](https://ardisdataset.github.io/ARDIS/) | Arabic-Indic digit dataset |
+| **Bengali AI CV19** | Bengali | PNG | [Kaggle](https://www.kaggle.com/c/bengaliai-cv19/data) | Bengali grapheme classification |
+| **HangulDB** | Korean | - | [GitHub](https://github.com/callee2006/HangulDB) | Korean Hangul characters |
+| **HIT-OR3C** | Chinese | - | [IAPR-TC11](http://www.iapr-tc11.org/mediawiki/index.php/HIT-OR3C) | Chinese characters |
+| **DDI-100** | Cyrillic | JPG | [GitHub](https://github.com/machine-intelligence-laboratory/DDI-100) | 300 GB - too large |
+| **DocHPLT** | 50+ languages | Text | [HuggingFace](https://huggingface.co/datasets/HPLT/DocHPLT) | For synthetic generation |
+
+---
+
+#### MLT-19 (ICDAR 2019 Multilingual Text)
+
+> **Quick Stats**: ~14 GB | 10 languages | Scene text | Script detection
+>
+> **License**: MIT | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | ICDAR 2019 Multilingual Text Detection Dataset |
+| **Version** | 1.0 |
+| **Release Date** | 2019 |
+| **Competition** | ICDAR 2019 Robust Reading Competition |
+| **Kaggle** | [zubairalibhutto/mlt-19-ocr-dataset](https://www.kaggle.com/datasets/zubairalibhutto/mlt-19-ocr-dataset) |
+| **Official** | [rrc.cvc.uab.es](https://rrc.cvc.uab.es/?ch=15) |
+| **License** | MIT |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Size** | ~14.3 GB |
+| **File Format** | JPG |
+| **Annotation Format** | TXT/JSON (bounding boxes + language labels) |
+
+##### Languages Included (10)
+
+| Script Class | Languages |
+|--------------|-----------|
+| **Arabic** | Arabic |
+| **Devanagari** | Bangla (Bengali script) |
+| **CJK** | Chinese, Japanese, Korean |
+| **Latin** | English, French, German, Italian, Latin |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Scene text (natural images) |
+| **Text Detection** | Word-level bounding boxes |
+| **Language Labels** | Per-text instance |
+| **Key Value** | Multi-script scene text for script classification |
+
+##### Download Instructions
+
+```bash
+# Requires Kaggle CLI and account
+pip install kaggle
+kaggle datasets download -d zubairalibhutto/mlt-19-ocr-dataset
+unzip mlt-19-ocr-dataset.zip -d /mnt/e/image_detection/01_base_data/language/mlt19/
+```
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/mlt19/` ✅ Extracted
+- **Phase(s)**: Phase 10A (Script Detection)
+- **Purpose**: Multi-script training for 10-class classification
+- **Files**: 30,000 files, 14 GB
+- **Parser**: [`parse_mlt19_labels`](../scripts/annotate_base_metadata.py#L2254) | ✅ Complete
+
+---
+
+#### SIW-13 (Script Identification in the Wild)
+
+> **Quick Stats**: 16,291 images | 13 scripts | Scene text | Tibetan + Hebrew coverage
+>
+> **License**: Research | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Script Identification in the Wild - 13 Classes |
+| **Version** | 1.0 |
+| **Release Date** | 2015 |
+| **Paper** | [Automatic Script Identification in the Wild](https://arxiv.org/abs/1505.02982) (ICDAR 2015) |
+| **Authors** | Baoguang Shi, Cong Yao, Chengquan Zhang, Xiang Bai et al. |
+| **Kaggle Mirror** | [ayush02102001/cvsi-script-identification-dataset](https://www.kaggle.com/datasets/ayush02102001/cvsi-script-identification-dataset) |
+| **License** | Research |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 16,291 |
+| **Training Set** | 9,791 images |
+| **Testing Set** | 6,500 images |
+| **Total Size** | 104 MB |
+| **File Format** | JPG |
+
+##### Script Classes (13)
+
+| Script | Training | Testing | Total | Notes |
+|--------|----------|---------|-------|-------|
+| **Arabic** | 802 | 200 | 1,002 | RTL cursive |
+| **Cambodian** | 866 | 217 | 1,083 | Khmer script |
+| **Chinese** | 998 | 300 | 1,298 | Han logograms |
+| **English** | 976 | 245 | 1,221 | Latin script |
+| **Greek** | 815 | 203 | 1,018 | Greek alphabet |
+| **Hebrew** | 993 | 249 | 1,242 | **Critical for Phase 10B** |
+| **Japanese** | 972 | 243 | 1,215 | Mixed Kanji/Kana |
+| **Kannada** | 823 | 206 | 1,029 | South Indian |
+| **Korean** | 1,249 | 312 | 1,561 | Hangul blocks |
+| **Mongolian** | 953 | 239 | 1,192 | Vertical script |
+| **Russian** | 825 | 206 | 1,031 | Cyrillic |
+| **Thai** | 1,778 | 444 | 2,222 | Continuous script |
+| **Tibetan** | 942 | 235 | 1,177 | **Critical for Phase 10B** |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Google Street View scene text |
+| **Quality** | Variable (real-world lighting, perspective) |
+| **Key Value** | **Only source for Tibetan & Hebrew scene text** |
+| **Domain Gap** | Street signs vs documents - requires augmentation |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/siw13/` ✅ Extracted
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Tibetan, Hebrew, Cyrillic, Thai training data
+- **Files**: 16,291 files, 104 MB
+- **Note**: Critical gap-filler for low-resource scripts
+- **Parser**: ✅ `parse_siw13_labels` (extracts script class, split from folder structure)
+
+---
+
+#### CVSI-2015 (Competition on Video Script Identification)
+
+> **Quick Stats**: 10,715 images | 10 scripts | Video frames | Indic scripts
+>
+> **License**: Research | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | ICDAR 2015 Competition on Video Script Identification |
+| **Version** | 1.0 |
+| **Release Date** | 2015 |
+| **Competition** | ICDAR 2015 |
+| **Kaggle Mirror** | [ayush02102001/cvsi-script-identification-dataset](https://www.kaggle.com/datasets/ayush02102001/cvsi-script-identification-dataset) |
+| **License** | Research |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 10,715 |
+| **Training Set** | 6,412 images |
+| **Validation Set** | 1,069 images |
+| **Testing Set** | 3,234 images |
+| **Total Size** | 43 MB |
+| **File Format** | JPG |
+
+##### Script Classes (10)
+
+| Script | Description |
+|--------|-------------|
+| **Arabic** | Arabic script |
+| **Bengali** | Bengali/Bangla script |
+| **English** | Latin script |
+| **Gujrathi** | Gujarati script |
+| **Hindi** | Devanagari script |
+| **Kannada** | Kannada script |
+| **Oriya** | Odia script |
+| **Punjabi** | Gurmukhi script |
+| **Tamil** | Tamil script |
+| **Telegu** | Telugu script |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Video frame captures |
+| **Quality** | Variable (motion blur, low resolution) |
+| **Key Value** | **Strong Indic script coverage** (8 Indic scripts) |
+| **Robustness** | Trains model for degraded quality inputs |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/cvsi/` ✅ Extracted
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Indic script differentiation (Devanagari confusers)
+- **Files**: 10,715 files, 43 MB
+- **Note**: Excellent for training Devanagari vs Bengali vs Gurmukhi
+- **Parser**: ✅ `parse_cvsi_labels` (extracts script class, split, ISO language/script codes)
+
+---
+
+#### MLe2e (Multi-Language End-to-End)
+
+> **Quick Stats**: 1,817 images | 4 scripts | Scene text | Korean focus
+>
+> **License**: Research | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Multi-Language End-to-End Dataset |
+| **Version** | 1.0 |
+| **Release Date** | 2016 |
+| **Paper** | Multi-Language Scene Text Reading |
+| **Kaggle Mirror** | [ayush02102001/cvsi-script-identification-dataset](https://www.kaggle.com/datasets/ayush02102001/cvsi-script-identification-dataset) |
+| **License** | Research |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 1,817 |
+| **Training Set** | 1,174 images |
+| **Testing Set** | 643 images |
+| **Total Size** | 19 MB |
+| **File Format** | JPG |
+
+##### Script Classes (4)
+
+| Script | Description |
+|--------|-------------|
+| **Chinese** | Han logograms |
+| **Kannada** | South Indian script |
+| **Korean** | Hangul blocks |
+| **Latin** | English/Latin script |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Scene text images |
+| **Quality** | High (curated for end-to-end evaluation) |
+| **Key Value** | **Korean (Hangul) differentiation from CJK** |
+| **Use Case** | Training model to distinguish Hangul from Han |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/mle2e/` ✅ Extracted
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Korean script isolation from CJK Mixed
+- **Files**: 1,817 files, 19 MB
+- **Note**: Critical for 4-class CJK internal model
+- **Parser**: ✅ `parse_mle2e_labels` (extracts scripts, text instances from annotation files)
+
+---
+
+#### Arabic Documents OCR Dataset
+
+> **Quick Stats**: 10,045 images | 12 categories | Arabic documents | Script detection
+>
+> **License**: CC-BY-4.0 | **Commercial Use**: Yes (with attribution)
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Arabic Documents OCR Dataset |
+| **Version** | 1.0 |
+| **Release Date** | 2023 |
+| **Kaggle** | [mehdihasan/arabic-documents-ocr-dataset](https://www.kaggle.com/datasets/mehdihasan/arabic-documents-ocr-dataset) |
+| **License** | CC-BY-4.0 |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 10,045 |
+| **Annotations** | 10,046 JSON files |
+| **Categories** | 12 document types |
+| **Total Size** | 8.9 GB |
+| **File Format** | JPG/PNG |
+
+##### Document Categories (12)
+
+| Category | Images | Description |
+|----------|--------|-------------|
+| **Administrative form** | ~841 | Government/official forms |
+| **Book** | ~840 | Book pages |
+| **Business card** | ~820 | Contact cards |
+| **Comics** | ~840 | Arabic comic strips |
+| **Handwritten text** | ~840 | Handwritten documents |
+| **Invoice** | ~840 | Financial invoices |
+| **Label** | ~810 | Product labels |
+| **Magazine** | ~840 | Magazine pages |
+| **Map** | ~840 | Arabic maps |
+| **Newspaper** | ~853 | Newspaper articles |
+| **Official document** | ~842 | Certificates, contracts |
+| **Receipt** | ~839 | Purchase receipts |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Real-world scanned documents |
+| **Script** | Arabic (right-to-left) |
+| **Quality Variation** | High (mixed scanning quality) |
+| **Key Value** | **Diverse Arabic document types** for script detection |
+| **Annotation** | JSON with text regions and transcriptions |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/arabic_docs_ocr/` ✅ Extracted (20,091 files, 9.3 GB)
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Arabic script class training
+- **Note**: Excellent variety of real-world Arabic documents
+- **Parser**: ✅ `parse_arabic_docs_labels` (extracts category, language_code from folder structure)
+
+---
+
+#### Yarmouk OCR Dataset
+
+> **Quick Stats**: 6,039 PDFs | Arabic documents | University research dataset
+>
+> **License**: Research (University of Yarmouk) | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Yarmouk University Arabic OCR Dataset |
+| **Version** | 1.0 |
+| **Release Date** | 2022 |
+| **Institution** | Yarmouk University, Jordan |
+| **Kaggle** | [malakalalwan/yarmouk-ocr-dataset](https://www.kaggle.com/datasets/malakalalwan/yarmouk-ocr-dataset) |
+| **License** | Research |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Scanned PDFs** | 6,039 |
+| **HTML Annotations** | 6,061 |
+| **Text Transcriptions** | 4,633 |
+| **Total Size** | 2.2 GB |
+| **File Format** | PDF (scanned documents) |
+
+##### Dataset Structure
+
+| Split | Description |
+|-------|-------------|
+| **Scanned/** | Original scanned PDF documents |
+| **HTML/** | Annotated HTML versions |
+| **OCR/** | OCR output text files |
+| **testing sample/** | Test set samples |
+| **training sample/** | Training set samples |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Scanned academic/official documents |
+| **Script** | Arabic |
+| **Quality** | Variable (real-world scanning artifacts) |
+| **Key Value** | **Academic Arabic documents** with OCR annotations |
+| **Note** | PDFs require conversion to images for training |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/yarmouk_ocr/` ✅ Extracted (16,734 files, 2.8 GB)
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Arabic script class training (supplementary)
+- **Note**: Requires PDF→image conversion before use
+- **Parser**: ✅ `parse_yarmouk_labels` (extracts split from folder structure)
+
+---
+
+#### Hindi OCR Synthetic Dataset
+
+> **Quick Stats**: 80,000 line images | Devanagari script | Synthetic text lines
+>
+> **License**: CC0 (Public Domain) | **Commercial Use**: Yes
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Hindi OCR Synthetic Line Image Text Pair |
+| **Version** | 1.0 |
+| **Release Date** | 2024 |
+| **Kaggle** | [sameedakbar/hindi-ocr-synthetic-line-image-text-pair](https://www.kaggle.com/datasets/sameedakbar/hindi-ocr-synthetic-line-image-text-pair) |
+| **License** | CC0 (Public Domain) |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 80,009 |
+| **CSV Labels** | 1 (data.csv) |
+| **Total Size** | 735 MB |
+| **File Format** | PNG/JPG |
+
+##### Dataset Structure
+
+| Folder | Contents |
+|--------|----------|
+| **output_images/** | 80,000 synthetic line images |
+| **TestSamples/** | 9 sample images |
+| **data.csv** | Image-text pairs mapping |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Synthetically generated |
+| **Script** | Devanagari (Hindi) |
+| **Quality** | Clean (synthetic) |
+| **Key Value** | **Large-scale Devanagari training data** |
+| **Generation** | Programmatic text rendering |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/hindi_ocr_synthetic/` ✅ Extracted (80,010 files, 920 MB)
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Devanagari script class training (primary source)
+- **Note**: Synthetic data - excellent for training, needs real-world augmentation
+- **Parser**: ✅ `parse_hindi_synthetic_labels` (extracts transcription from .txt pairs, hi/Deva metadata)
+
+---
+
+#### Nepali Handwritten Dataset
+
+> **Quick Stats**: 958 images | Handwritten Devanagari | Text detection annotations
+>
+> **License**: CC-BY-4.0 | **Commercial Use**: Yes (with attribution)
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Nepali Handwritten Images for Text Detection |
+| **Version** | 1.0 |
+| **Release Date** | 2023 |
+| **Kaggle** | [sanjayneupane/nepali-handwritten-images-for-text-detection](https://www.kaggle.com/datasets/sanjayneupane/nepali-handwritten-images-for-text-detection) |
+| **License** | CC-BY-4.0 |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 958 |
+| **XML Annotations** | 958 (bounding boxes) |
+| **Train Set** | ~766 images (80%) |
+| **Test Set** | ~192 images (20%) |
+| **Total Size** | 1.3 GB |
+| **File Format** | JPEG/JPG |
+
+##### Dataset Structure
+
+| Split | Images | Annotations |
+|-------|--------|-------------|
+| **train/** | ~766 | XML (PASCAL VOC format) |
+| **test/** | ~192 | XML (PASCAL VOC format) |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Real handwritten documents |
+| **Script** | Devanagari (Nepali variant) |
+| **Quality** | High (real-world handwriting) |
+| **Key Value** | **Handwritten Devanagari with bounding boxes** |
+| **Annotation** | PASCAL VOC XML format |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/nepali_handwritten/` ✅ Extracted (1,916 files, 1.5 GB)
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Devanagari script class training (handwritten variety)
+- **Note**: Complements synthetic Hindi data with real handwriting
+- **Parser**: ✅ `parse_nepali_handwritten_labels` (extracts bounding boxes from PASCAL VOC XML, ne/Deva metadata)
+
+---
+
+#### PUCIT-OHUL Urdu Dataset
+
+> **Quick Stats**: 7,401 line images | Handwritten Urdu | Line-level transcription
+>
+> **License**: Research (PUCIT) | **Commercial Use**: Research only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | PUCIT Offline Handwritten Urdu Lines Dataset |
+| **Acronym** | PUCIT-OHUL |
+| **Version** | 2.0 |
+| **Release Date** | 2023 |
+| **Institution** | Punjab University College of IT, Pakistan |
+| **Kaggle** | [razaimam45/pucit-ohul-pucit-handwritten-urdu-lines-dataset](https://www.kaggle.com/datasets/razaimam45/pucit-ohul-pucit-handwritten-urdu-lines-dataset) |
+| **License** | Research |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Line Images** | 7,401 |
+| **Excel Labels** | 2 (train + test) |
+| **Total Size** | 568 MB |
+| **File Format** | PNG |
+
+##### Dataset Structure
+
+| Split | Lines | Labels |
+|-------|-------|--------|
+| **train_lines/** | ~5,920 (80%) | train_labels_v2.xlsx |
+| **test_lines/** | ~1,481 (20%) | test_labels_v2.xlsx |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Handwritten line images |
+| **Script** | Urdu (Arabic-derived, Nastaliq style) |
+| **Quality** | High (consistent handwriting) |
+| **Key Value** | **Urdu handwriting for Arabic-script training** |
+| **Note** | Urdu uses modified Arabic script (Nastaliq) |
+
+##### Project Usage
+
+- **Path**: `01_base_data/language/pucit_ohul_urdu/` ✅ Extracted (7,403 files, 583 MB)
+- **Phase(s)**: Phase 10B (Script Detection)
+- **Purpose**: Arabic script class training (Urdu variant)
+- **Note**: Urdu shares Arabic script family - useful for script-level classification
+- **Parser**: [`parse_pucit_ohul_labels`](../scripts/annotate_base_metadata.py#L1472) | ✅ Complete
 
 ---
 
@@ -1399,6 +2537,7 @@ normalized_score = (5 - human_score) / 4
 - **Phase(s)**: Stage 1 DeQA-Doc labeling, IQA validation
 - **Purpose**: Cross-validate DeQA-Doc predictions against independent human scores
 - **Priority**: **HIGH** for unified labeling strategy
+- **Parser**: [`parse_ocr_quality_labels`](../scripts/annotate_base_metadata.py#L1192) | ✅ Complete
 
 ---
 
@@ -1423,6 +2562,7 @@ normalized_score = (5 - human_score) / 4
 - **Purpose**: Gold standard for IQA model calibration
 - **Usage**: Validate model predictions against human quality ratings
 - **Critical**: **NEVER train on this dataset**
+- **Parser**: [`parse_diqa_labels`](../scripts/annotate_base_metadata.py#L945) | ✅ Complete
 
 ### DIBCO (Document Image Binarization Competition)
 
@@ -1434,12 +2574,14 @@ normalized_score = (5 - human_score) / 4
 - **Ground Truth**: Pixel-perfect binarization masks
 - **Degradation Types**: Bleed-through, staining, fading, uneven illumination
 - **Purpose**: Extreme degradation edge cases, binarization quality
+- **Parser**: [`parse_dibco_labels`](../scripts/annotate_base_metadata.py#L1124) | ✅ Complete
 
 ### SmartDoc-QA
 
 - **Path**: `02_benchmark_only/smartdoc-qa/`
 - **Images**: 4,270 mobile-captured documents
 - **Purpose**: Mobile capture quality assessment benchmark
+- **Parser**: [`parse_smartdoc_labels`](../scripts/annotate_base_metadata.py#L1004) | ✅ Complete
 
 ### OHR-Bench
 
@@ -1453,6 +2595,7 @@ normalized_score = (5 - human_score) / 4
 - **Source PDFs**: Available as `pdfs.zip` (1.52 GB) on HuggingFace if page images needed
 - **Stage 1 Status**: **EXCLUDED** - No direct quality scores, requires PDF extraction
 - **Future Use**: Potential for domain diversity after preprocessing
+- **Parser**: ✅ `parse_ohr_bench_labels` (extracts document category from folder structure)
 
 ### OmniDocBench
 
@@ -1683,6 +2826,38 @@ Dataset preparation workspace for filtering and augmentation.
 
 ## References
 
+### Dataset Documentation
+
 - [DATASET_TEMPLATE.md](DATASET_TEMPLATE.md) - Detailed per-dataset documentation template
 - [DATASET_METHODOLOGY.md](DATASET_METHODOLOGY.md) - Dataset selection and augmentation methodology
 - [PHASE7v4_TRAINING_DEEP_DIVE.md](planning/PHASE7v4_TRAINING_DEEP_DIVE.md) - Training methodology
+
+### Schema & Label Mapping Documentation
+
+- [LABEL_MAPPING_SPECIFICATION.md](schema/LABEL_MAPPING_SPECIFICATION.md) - **How original dataset labels map to standardized schema**
+  - Documents three-layer architecture (Immutable → Enrichment → Training)
+  - Original label formats for each dataset category
+  - Field mappings (quality scores, layout annotations, scripts)
+  - Parser implementation status and OriginalLabels extensions
+- [layer2_enrichment.schema.json](schema/layer2_enrichment.schema.json) - JSON Schema for Layer 2 enrichment fields
+- [document_metadata.schema.json](schema/document_metadata.schema.json) - JSON Schema for DocumentMetadata output
+
+### Schema Utilities (Python Implementation)
+
+Located in `src/image_preprocessing_detector/schema_utils/`:
+
+| Module | Purpose |
+|--------|---------|
+| `dataset_source.py` | DATASET_REGISTRY with 40+ dataset short codes |
+| `text_scope.py` | TextScope enum (character → document hierarchy) |
+| `iso_language_script.py` | ISO 639/15924 language and script codes |
+| `paper_size.py` | ISO 216 paper size standards (A4, Letter, etc.) |
+| `content_type.py` | Content type classification |
+| `capture_method.py` | Capture method enumeration |
+
+### External Standards References
+
+- [ISO 639 Language Codes](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes) - Language identification
+- [ISO 15924 Script Codes](https://en.wikipedia.org/wiki/ISO_15924) - Script classification
+- [ISO 216 Paper Sizes](https://en.wikipedia.org/wiki/ISO_216) - Paper size standards
+- [BCP 47 Language Tags](https://en.wikipedia.org/wiki/IETF_language_tag) - Combined language-script tags
