@@ -12,8 +12,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-import pytest
-
 from image_preprocessing_detector.annotation.parsers.multilingual import (
     ArabicDocsParser,
     CcOcrParser,
@@ -647,8 +645,14 @@ class TestIntegration:
             (Mdiw13Parser(), Path("/data/mdiw13/Devanagari/Line/img001.png")),
             (CcOcrParser(), Path("/data/cc-ocr/multilingual_text/img001.png")),
             (TibhcrParser(), Path("/data/tibhcr/train/ka/img001.png")),
-            (ArabicDocsParser(), Path("/data/arabic_docs_ocr/Documents/invoice/img001.jpg")),
-            (NepaliHandwrittenParser(), Path("/data/nepali_handwritten/train/img001.jpg")),
+            (
+                ArabicDocsParser(),
+                Path("/data/arabic_docs_ocr/Documents/invoice/img001.jpg"),
+            ),
+            (
+                NepaliHandwrittenParser(),
+                Path("/data/nepali_handwritten/train/img001.jpg"),
+            ),
             (YarmoukParser(), Path("/data/yarmouk_ocr/Training/img001.jpg")),
             (CvsiParser(), Path("/data/cvsi/Training/Hindi/img001.jpg")),
             (Siw13Parser(), Path("/data/siw13/Training/Chinese/img001.jpg")),

@@ -51,12 +51,15 @@ from .enums import CaptureMethod, DomainLevel1, EnrichmentTier, ResolutionCatego
 # Phase 1.2.2: Immutable layer
 from .immutable import OriginalFileMetadata, OriginalLabels
 
-# Phase 1.2.6: Migrations
+# Phase 1.2.6: Migrations + Phase 3.2.2: File Migration
 from .migrations import (
     CURRENT_VERSION,
     MIN_SUPPORTED_VERSION,
+    FileMigrator,
     Migration,
+    MigrationError,
     MigrationRegistry,
+    MigrationResult,
     get_migration_path,
     migrate_sample,
     register_migration,
@@ -86,7 +89,7 @@ from .validators import (
 )
 
 __all__: list[str] = [
-    # Migrations (Phase 1.2.6)
+    # Migrations (Phase 1.2.6 + Phase 3.2.2)
     "CURRENT_VERSION",
     "MIN_SUPPORTED_VERSION",
     "SCHEMA_VERSION",
@@ -102,11 +105,14 @@ __all__: list[str] = [
     "EnrichmentTier",
     "EnrichmentVersion",
     "FileHashValidator",
+    "FileMigrator",
     "IsoDateValidator",
     # Enrichment layer (Phase 1.2.3)
     "LayoutDetection",
     "Migration",
+    "MigrationError",
     "MigrationRegistry",
+    "MigrationResult",
     "MosScoreValidator",
     "OcrQualityScoreValidator",
     # Immutable layer (Phase 1.2.2)

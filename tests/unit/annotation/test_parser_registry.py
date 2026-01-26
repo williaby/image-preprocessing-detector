@@ -83,7 +83,9 @@ class TestParserRegistryIntegration:
         if doclaynet_parser is not None:
             assert "DocLayNet" in type(doclaynet_parser).__name__
 
-    def test_get_parser_nonexistent_returns_none(self, registry: ParserRegistry) -> None:
+    def test_get_parser_nonexistent_returns_none(
+        self, registry: ParserRegistry
+    ) -> None:
         """Test get_parser returns None for unregistered datasets."""
         parser = registry.get_parser("nonexistent_dataset_xyz")
         assert parser is None
@@ -123,10 +125,13 @@ class TestParserRegistryManagement:
 
     def test_register_custom_parser(self) -> None:
         """Test registering a custom parser."""
-        from image_preprocessing_detector.annotation.parsers.base import BaseParser
-        from image_preprocessing_detector.annotation.schemas.immutable import OriginalLabels
         from pathlib import Path
         from typing import Any
+
+        from image_preprocessing_detector.annotation.parsers.base import BaseParser
+        from image_preprocessing_detector.annotation.schemas.immutable import (
+            OriginalLabels,
+        )
 
         class CustomParser(BaseParser):
             @property
@@ -151,10 +156,13 @@ class TestParserRegistryManagement:
 
     def test_register_duplicate_raises_error(self) -> None:
         """Test registering duplicate dataset raises ValueError."""
-        from image_preprocessing_detector.annotation.parsers.base import BaseParser
-        from image_preprocessing_detector.annotation.schemas.immutable import OriginalLabels
         from pathlib import Path
         from typing import Any
+
+        from image_preprocessing_detector.annotation.parsers.base import BaseParser
+        from image_preprocessing_detector.annotation.schemas.immutable import (
+            OriginalLabels,
+        )
 
         class Parser1(BaseParser):
             @property
@@ -210,7 +218,9 @@ class TestDatasetConfigCoverage:
         """Create default registry."""
         return ParserRegistry.create_default()
 
-    def test_all_datasets_with_parsers_have_config(self, registry: ParserRegistry) -> None:
+    def test_all_datasets_with_parsers_have_config(
+        self, registry: ParserRegistry
+    ) -> None:
         """Test all registered datasets have corresponding DATASET_CONFIGS entry."""
         registered_datasets = registry.list_datasets()
 
@@ -350,7 +360,6 @@ class TestParserFunctionality:
         self, registry: ParserRegistry, tmp_path
     ) -> None:
         """Test parsers return OriginalLabels instances."""
-        from pathlib import Path
 
         from image_preprocessing_detector.annotation.schemas.immutable import (
             OriginalLabels,

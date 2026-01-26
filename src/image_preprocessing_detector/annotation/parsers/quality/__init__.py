@@ -42,8 +42,8 @@ def register_quality_parsers(registry: ParserRegistry) -> None:
 
 __all__ = [
     "DIQAParser",
-    "SmartDocParser",
-    "OcrQualityParser",
     "DibcoParser",
+    "OcrQualityParser",
+    "SmartDocParser",
     "register_quality_parsers",
 ]

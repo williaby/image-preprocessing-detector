@@ -11,10 +11,9 @@ Test Coverage:
 
 from __future__ import annotations
 
-import json
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -22,6 +21,8 @@ from image_preprocessing_detector.annotation.integrity.checkpointing import (
     CheckpointInfo,
     CheckpointManager,
 )
+from image_preprocessing_detector.annotation.schemas.enrichment import EnrichmentData
+from image_preprocessing_detector.annotation.schemas.immutable import OriginalLabels
 from image_preprocessing_detector.annotation.workflow.pipeline import (
     AnnotationPipeline,
     EnrichedSample,
@@ -35,9 +36,6 @@ from image_preprocessing_detector.annotation.workflow.progress import (
     ProgressTracker,
     format_eta,
 )
-from image_preprocessing_detector.annotation.schemas.enrichment import EnrichmentData
-from image_preprocessing_detector.annotation.schemas.immutable import OriginalLabels
-
 
 # ============================================================================
 # CheckpointInfo Tests

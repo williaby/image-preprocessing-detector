@@ -14,18 +14,16 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from image_preprocessing_detector.annotation.parsers.quality import (
-    DIQAParser,
     DibcoParser,
+    DIQAParser,
     OcrQualityParser,
     SmartDocParser,
 )
 from image_preprocessing_detector.annotation.schemas.immutable import OriginalLabels
-
 
 # ==============================================================================
 # DIQAParser Tests
@@ -55,20 +53,24 @@ class TestDIQAParser:
                 f, fieldnames=["res", "ori", "overall", "sharpness", "color_fidelity"]
             )
             writer.writeheader()
-            writer.writerow({
-                "res": "img001.jpg",
-                "ori": "img001_orig.jpg",
-                "overall": "4.2",
-                "sharpness": "4.5",
-                "color_fidelity": "3.8",
-            })
-            writer.writerow({
-                "res": "img002.jpg",
-                "ori": "img002_orig.jpg",
-                "overall": "3.1",
-                "sharpness": "3.0",
-                "color_fidelity": "3.2",
-            })
+            writer.writerow(
+                {
+                    "res": "img001.jpg",
+                    "ori": "img001_orig.jpg",
+                    "overall": "4.2",
+                    "sharpness": "4.5",
+                    "color_fidelity": "3.8",
+                }
+            )
+            writer.writerow(
+                {
+                    "res": "img002.jpg",
+                    "ori": "img002_orig.jpg",
+                    "overall": "3.1",
+                    "sharpness": "3.0",
+                    "color_fidelity": "3.2",
+                }
+            )
 
         # Create val split CSV
         val_dir = dataset / "val"
@@ -79,13 +81,15 @@ class TestDIQAParser:
                 f, fieldnames=["res", "ori", "overall", "sharpness", "color_fidelity"]
             )
             writer.writeheader()
-            writer.writerow({
-                "res": "val001.jpg",
-                "ori": "val001_orig.jpg",
-                "overall": "4.8",
-                "sharpness": "4.9",
-                "color_fidelity": "4.7",
-            })
+            writer.writerow(
+                {
+                    "res": "val001.jpg",
+                    "ori": "val001_orig.jpg",
+                    "overall": "4.8",
+                    "sharpness": "4.9",
+                    "color_fidelity": "4.7",
+                }
+            )
 
         return dataset
 
@@ -194,7 +198,9 @@ class TestSmartDocParser:
         """Test dataset_names property."""
         assert parser.dataset_names == ["smartdoc-qa"]
 
-    def test_parse_filename_encoding(self, parser: SmartDocParser, dataset_path: Path) -> None:
+    def test_parse_filename_encoding(
+        self, parser: SmartDocParser, dataset_path: Path
+    ) -> None:
         """Test parsing capture parameters from filename."""
         image_path = (
             dataset_path
@@ -216,7 +222,9 @@ class TestSmartDocParser:
         assert labels.raw_labels["viewing_angle"] == 0
         assert labels.raw_labels["blur_level"] == 0
 
-    def test_parse_ocr_accuracy(self, parser: SmartDocParser, dataset_path: Path) -> None:
+    def test_parse_ocr_accuracy(
+        self, parser: SmartDocParser, dataset_path: Path
+    ) -> None:
         """Test parsing OCR accuracy to MOS conversion."""
         image_path = (
             dataset_path
@@ -233,7 +241,9 @@ class TestSmartDocParser:
         assert labels.raw_labels["character_accuracy_percent"] == 99.56
         assert labels.raw_labels["word_accuracy_percent"] == 98.23
 
-    def test_parse_motion_blur_variant(self, parser: SmartDocParser, tmp_path: Path) -> None:
+    def test_parse_motion_blur_variant(
+        self, parser: SmartDocParser, tmp_path: Path
+    ) -> None:
         """Test parsing filename with motion blur variant."""
         dataset = tmp_path / "smartdoc"
         phone_dir = dataset / "Captured_Images" / "TestPhone" / "Images"
@@ -248,7 +258,9 @@ class TestSmartDocParser:
         assert labels.raw_labels["blur_type"] == "Mb"
         assert labels.raw_labels["blur_variant"] == 2
 
-    def test_parse_no_ocr_accuracy(self, parser: SmartDocParser, tmp_path: Path) -> None:
+    def test_parse_no_ocr_accuracy(
+        self, parser: SmartDocParser, tmp_path: Path
+    ) -> None:
         """Test parsing when OCR accuracy files are missing."""
         dataset = tmp_path / "smartdoc"
         phone_dir = dataset / "Captured_Images" / "TestPhone" / "Images"
@@ -331,7 +343,9 @@ class TestDibcoParser:
 
     def test_parse_handwritten(self, parser: DibcoParser, dataset_path: Path) -> None:
         """Test parsing handwritten document metadata."""
-        image_path = dataset_path / "2013" / "DIBCO2013_Test_images-handwritten" / "H01.png"
+        image_path = (
+            dataset_path / "2013" / "DIBCO2013_Test_images-handwritten" / "H01.png"
+        )
         labels = parser.parse(dataset_path, image_path, {})
 
         assert labels.raw_labels is not None
@@ -351,9 +365,13 @@ class TestDibcoParser:
         assert labels.raw_labels["document_type"] == "printed"
         assert labels.raw_labels["has_handwriting"] is False
 
-    def test_parse_ground_truth_image(self, parser: DibcoParser, dataset_path: Path) -> None:
+    def test_parse_ground_truth_image(
+        self, parser: DibcoParser, dataset_path: Path
+    ) -> None:
         """Test parsing ground truth image metadata."""
-        image_path = dataset_path / "2013" / "DIBCO2013-GT-Test-images_handwritten" / "H01.png"
+        image_path = (
+            dataset_path / "2013" / "DIBCO2013-GT-Test-images_handwritten" / "H01.png"
+        )
         labels = parser.parse(dataset_path, image_path, {})
 
         assert labels.raw_labels is not None
@@ -455,7 +473,9 @@ class TestOcrQualityParser:
         """Test dataset_names property."""
         assert parser.dataset_names == ["ocr_quality"]
 
-    def test_parse_json(self, parser: OcrQualityParser, dataset_path_json: Path) -> None:
+    def test_parse_json(
+        self, parser: OcrQualityParser, dataset_path_json: Path
+    ) -> None:
         """Test parsing from JSON file."""
         image_path = dataset_path_json / "images" / "doc001.png"
         labels = parser.parse(dataset_path_json, image_path, {})
@@ -468,7 +488,9 @@ class TestOcrQualityParser:
         not pytest.importorskip("pyarrow", reason="pyarrow not available"),
         reason="pyarrow required",
     )
-    def test_parse_parquet(self, parser: OcrQualityParser, dataset_path_parquet: Path) -> None:
+    def test_parse_parquet(
+        self, parser: OcrQualityParser, dataset_path_parquet: Path
+    ) -> None:
         """Test parsing from Parquet file (preferred)."""
         image_path = dataset_path_parquet / "images" / "doc001.png"
         labels = parser.parse(dataset_path_parquet, image_path, {})
@@ -477,7 +499,9 @@ class TestOcrQualityParser:
         assert labels.ocr_quality_source == "human_annotator_1"
         assert len(labels.ocr_quality_text or "") <= 500  # Truncated
 
-    def test_parse_no_match(self, parser: OcrQualityParser, dataset_path_json: Path) -> None:
+    def test_parse_no_match(
+        self, parser: OcrQualityParser, dataset_path_json: Path
+    ) -> None:
         """Test parsing when no matching entry found."""
         image_path = dataset_path_json / "images" / "nonexistent.png"
         labels = parser.parse(dataset_path_json, image_path, {})
@@ -485,7 +509,9 @@ class TestOcrQualityParser:
         assert labels.ocr_quality_score is None
         assert labels.ocr_quality_source is None
 
-    def test_parse_missing_files(self, parser: OcrQualityParser, tmp_path: Path) -> None:
+    def test_parse_missing_files(
+        self, parser: OcrQualityParser, tmp_path: Path
+    ) -> None:
         """Test parsing when annotation files are missing."""
         dataset = tmp_path / "empty"
         dataset.mkdir()
@@ -494,7 +520,9 @@ class TestOcrQualityParser:
 
         assert labels.ocr_quality_score is None
 
-    def test_text_truncation(self, parser: OcrQualityParser, dataset_path_json: Path) -> None:
+    def test_text_truncation(
+        self, parser: OcrQualityParser, dataset_path_json: Path
+    ) -> None:
         """Test that OCR text is truncated to 500 characters."""
         image_path = dataset_path_json / "images" / "doc001.png"
         labels = parser.parse(dataset_path_json, image_path, {})

@@ -65,6 +65,7 @@ class AnnotationSettings:
         # ML Providers
         yolo_confidence_threshold: Minimum YOLO detection confidence
         yolo_model_path: Path to YOLO model weights (None = default)
+        siglip_model_path: Path to SigLIP model checkpoint (HuggingFace format)
         siglip_batch_size: Batch size for SigLIP inference
     """
 
@@ -92,6 +93,7 @@ class AnnotationSettings:
     # ML Providers
     yolo_confidence_threshold: float = 0.25
     yolo_model_path: Path | None = None
+    siglip_model_path: Path | None = None
     siglip_batch_size: int = 32
 
     @classmethod
@@ -109,6 +111,7 @@ class AnnotationSettings:
             - ANNOTATION_ATOMIC_FSYNC
             - ANNOTATION_YOLO_CONFIDENCE
             - ANNOTATION_YOLO_MODEL_PATH
+            - ANNOTATION_SIGLIP_MODEL_PATH
             - ANNOTATION_SIGLIP_BATCH_SIZE
 
         Returns:
@@ -149,6 +152,7 @@ class AnnotationSettings:
             atomic_fsync=get_bool("ATOMIC_FSYNC", default=False),
             yolo_confidence_threshold=get_float("YOLO_CONFIDENCE", 0.25),
             yolo_model_path=get_optional_path("YOLO_MODEL_PATH"),
+            siglip_model_path=get_optional_path("SIGLIP_MODEL_PATH"),
             siglip_batch_size=get_int("SIGLIP_BATCH_SIZE", 32),
         )
 
@@ -220,6 +224,7 @@ class AnnotationSettings:
                 "confidence_threshold", config.get("yolo_confidence_threshold", 0.25)
             ),
             yolo_model_path=get_optional_path("yolo", "model_path"),
+            siglip_model_path=get_optional_path("siglip", "model_path"),
             siglip_batch_size=config.get("siglip_batch_size", 32),
         )
 
@@ -255,6 +260,14 @@ class AnnotationSettings:
         if self.yolo_model_path and not self.yolo_model_path.exists():
             issues.append(f"yolo_model_path does not exist: {self.yolo_model_path}")
 
+        if self.siglip_model_path and not self.siglip_model_path.exists():
+            issues.append(f"siglip_model_path does not exist: {self.siglip_model_path}")
+
+        if self.siglip_batch_size < 1:
+            issues.append(
+                f"siglip_batch_size must be positive, got {self.siglip_batch_size}"
+            )
+
         # P0-1 fix validation
         if not self.hash_full_file:
             issues.append("hash_full_file must be True (P0-1 fix)")
@@ -280,6 +293,9 @@ class AnnotationSettings:
             "yolo_confidence_threshold": self.yolo_confidence_threshold,
             "yolo_model_path": str(self.yolo_model_path)
             if self.yolo_model_path
+            else None,
+            "siglip_model_path": str(self.siglip_model_path)
+            if self.siglip_model_path
             else None,
             "siglip_batch_size": self.siglip_batch_size,
         }

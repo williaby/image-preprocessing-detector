@@ -179,24 +179,24 @@ class TestDatasetConfigsRegistry:
         """Check is_benchmark flag matches path_suffix."""
         for name, config in DATASET_CONFIGS.items():
             if config.is_benchmark:
-                assert config.path_suffix.startswith(
-                    "benchmark_only"
-                ), f"{name}: is_benchmark=True but path not in benchmark_only/"
+                assert config.path_suffix.startswith("benchmark_only"), (
+                    f"{name}: is_benchmark=True but path not in benchmark_only/"
+                )
             else:
-                assert config.path_suffix.startswith(
-                    "base_data"
-                ), f"{name}: is_benchmark=False but path not in base_data/"
+                assert config.path_suffix.startswith("base_data"), (
+                    f"{name}: is_benchmark=False but path not in base_data/"
+                )
 
     def test_parser_names_lowercase_snake_case(self) -> None:
         """Ensure parser names follow naming convention."""
         for name, config in DATASET_CONFIGS.items():
             if config.parser_name:
-                assert (
-                    config.parser_name == config.parser_name.lower()
-                ), f"{name}: parser_name should be lowercase"
-                assert (
-                    " " not in config.parser_name
-                ), f"{name}: parser_name should not contain spaces"
+                assert config.parser_name == config.parser_name.lower(), (
+                    f"{name}: parser_name should be lowercase"
+                )
+                assert " " not in config.parser_name, (
+                    f"{name}: parser_name should not contain spaces"
+                )
 
 
 class TestSpecificDatasets:
@@ -318,7 +318,9 @@ class TestValidation:
         # Should have no issues
         assert len(issues) == 0, f"Validation issues found: {issues}"
 
-    def test_validation_detects_key_mismatch(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validation_detects_key_mismatch(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Detect when key doesn't match config.name."""
         bad_configs = {
             "wrong_key": DatasetConfig(
@@ -339,7 +341,9 @@ class TestValidation:
         assert len(issues) > 0
         assert any("does not match" in issue for issue in issues)
 
-    def test_validation_detects_absolute_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validation_detects_absolute_path(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Detect path_suffix starting with /."""
         bad_configs = {
             "bad_path": DatasetConfig(
@@ -449,9 +453,9 @@ class TestMultilingualDatasets:
             config = DATASET_CONFIGS[name]
             # If has language code, should have script code
             if config.iso639_language:
-                assert (
-                    config.iso15924_script is not None
-                ), f"{name} has language but no script"
+                assert config.iso15924_script is not None, (
+                    f"{name} has language but no script"
+                )
 
     def test_text_scope_populated(self) -> None:
         """Ensure text_scope is populated for multilingual datasets."""
@@ -475,9 +479,9 @@ class TestMultilingualDatasets:
 
         for name in multilingual_datasets:
             config = DATASET_CONFIGS[name]
-            assert (
-                config.text_scope is not None
-            ), f"{name} should have text_scope populated"
+            assert config.text_scope is not None, (
+                f"{name} should have text_scope populated"
+            )
 
 
 class TestArrowFormatDatasets:
@@ -492,6 +496,6 @@ class TestArrowFormatDatasets:
         """Arrow format datasets should be benchmarks."""
         for name, config in DATASET_CONFIGS.items():
             if config.arrow_format:
-                assert (
-                    config.is_benchmark is True
-                ), f"{name} has arrow_format but is not benchmark"
+                assert config.is_benchmark is True, (
+                    f"{name} has arrow_format but is not benchmark"
+                )

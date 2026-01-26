@@ -7,23 +7,33 @@ such as DocLayout-YOLO for layout detection and SigLIP for quality prediction.
 
 Available Providers:
     - YOLOProvider: DocLayout-YOLO layout detection with batch inference
-    - (Future) SigLIPProvider: Quality score prediction
+    - SigLIPProvider: Quality score prediction with MOS scores
 
 Example:
     >>> from image_preprocessing_detector.annotation.enrichment.providers import (
     ...     YOLOProvider,
+    ...     SigLIPProvider,
     ... )
     >>>
-    >>> provider = YOLOProvider(model_path="checkpoints/yolo.pt")
-    >>> if provider.is_available():
-    ...     enrichment = provider.enrich(image_path)
+    >>> yolo = YOLOProvider(model_path="checkpoints/yolo.pt")
+    >>> siglip = SigLIPProvider(model_path="checkpoints/siglip2-iqa")
+    >>>
+    >>> if yolo.is_available():
+    ...     enrichment = yolo.enrich(image_path)
+    >>> if siglip.is_available():
+    ...     quality = siglip.enrich(image_path)
+    ...     print(f"MOS: {quality.llm_predicted_mos}")
 """
 
 from __future__ import annotations
 
 from .base import EnrichmentProvider, QualityScoreProvider
+from .siglip import SigLIPProvider
+from .yolo import YOLOProvider
 
 __all__ = [
     "EnrichmentProvider",
     "QualityScoreProvider",
+    "SigLIPProvider",
+    "YOLOProvider",
 ]

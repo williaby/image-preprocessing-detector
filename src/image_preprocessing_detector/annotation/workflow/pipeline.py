@@ -43,11 +43,13 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from collections.abc import Iterator
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
+from datetime import UTC
 from pathlib import Path
 from queue import Empty, Queue
-from typing import TYPE_CHECKING, Any, Iterator
+from typing import TYPE_CHECKING, Any
 
 from ..config.settings import AnnotationSettings
 from ..integrity.checkpointing import CheckpointManager
@@ -165,7 +167,7 @@ def _parse_single_image(
     image_path: Path,
     dataset_path: Path,
     dataset_name: str,
-    parser_config: dict[str, Any],
+    _parser_config: dict[str, Any],
 ) -> ParsedSample | tuple[Path, str]:
     """Parse a single image (runs in worker process).
 
@@ -175,7 +177,8 @@ def _parse_single_image(
     Args:
         image_path: Absolute path to the image
         dataset_path: Root path of the dataset
-        parser_config: Configuration for the parser
+        dataset_name: Name of the source dataset
+        _parser_config: Configuration for the parser (unused, parsing happens in main)
 
     Returns:
         ParsedSample on success, or (path, error_message) tuple on failure
@@ -203,7 +206,7 @@ def _parse_single_image(
         )
 
     except Exception as e:
-        logger.error(f"Failed to hash {image_path}: {e}")
+        logger.exception(f"Failed to hash {image_path}")
         return (image_path, str(e))
 
 
@@ -304,7 +307,7 @@ class AnnotationPipeline:
             logger.error(f"No parser registered for dataset: {dataset_name}")
             return PipelineResult(
                 dataset_name=dataset_name,
-                errors=[(Path("."), f"No parser for {dataset_name}")],
+                errors=[(Path(), f"No parser for {dataset_name}")],
                 stats=self._stats,
             )
 
@@ -398,9 +401,13 @@ class AnnotationPipeline:
                     for p in batch
                 }
 
-                # Collect results
+                # Collect results in SUBMISSION ORDER (not completion order)
+                # P0 Fix: as_completed() returns non-deterministic order which breaks
+                # checkpoint resume. We maintain submission order for deterministic resume.
                 hashed_batch: list[ParsedSample] = []
-                for future in as_completed(futures):
+                for original_path in batch:
+                    # Find the future for this path
+                    future = next(f for f, p in futures.items() if p == original_path)
                     result = future.result()
                     if isinstance(result, ParsedSample):
                         hashed_batch.append(result)
@@ -422,7 +429,7 @@ class AnnotationPipeline:
         dataset_name: str,
         parser: Any,
         dataset_path: Path,
-        config: dict[str, Any],
+        _config: dict[str, Any],
     ) -> None:
         """Stage 2: Sequential label parsing.
 
@@ -449,7 +456,7 @@ class AnnotationPipeline:
                     labels = parser.parse(
                         dataset_path,
                         sample.image_path,
-                        config,
+                        _config,
                     )
                     # Update with parsed labels
                     parsed_sample = ParsedSample(
@@ -497,7 +504,9 @@ class AnnotationPipeline:
                 enrichment_results = self.enrichment.enrich_batch(image_paths)
 
                 enriched_batch = []
-                for parsed, enrich_result in zip(batch, enrichment_results):
+                for parsed, enrich_result in zip(
+                    batch, enrichment_results, strict=True
+                ):
                     enriched = EnrichedSample(
                         parsed=parsed,
                         enrichment=enrich_result.data,
@@ -508,7 +517,7 @@ class AnnotationPipeline:
                 self._enrich_queue.put(enriched_batch)
 
             except Exception as e:
-                logger.error(f"GPU enrichment failed for batch: {e}")
+                logger.exception("GPU enrichment failed for batch")
                 # Put samples with empty enrichment
                 enriched_batch = [
                     EnrichedSample(
@@ -554,8 +563,8 @@ class AnnotationPipeline:
                     metadata = self._create_sample_metadata(sample)
                     results.append(metadata)
                 except Exception as e:
-                    logger.error(
-                        f"Failed to create metadata for {sample.parsed.image_path}: {e}"
+                    logger.exception(
+                        f"Failed to create metadata for {sample.parsed.image_path}"
                     )
                     self._errors.append((sample.parsed.image_path, str(e)))
 
@@ -583,7 +592,7 @@ class AnnotationPipeline:
         Returns:
             Complete SampleMetadata instance
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from ..integrity.hashing import compute_sample_id
         from ..schemas.immutable import OriginalFileMetadata
@@ -620,7 +629,7 @@ class AnnotationPipeline:
             dataset_version="1.0",  # Default version
             original_path=sample.parsed.relative_path,
             original_filename=sample.parsed.image_path.name,
-            download_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            download_date=datetime.now(UTC).strftime("%Y-%m-%d"),
             original_labels=sample.parsed.original_labels,
             original_file=original_file,
         )

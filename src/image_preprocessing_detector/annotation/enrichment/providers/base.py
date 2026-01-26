@@ -43,9 +43,7 @@ Example:
     ...         # Run inference and return enrichment
     ...         return EnrichmentData(...)
     ...
-    ...     def enrich_batch(
-    ...         self, image_paths: list[Path]
-    ...     ) -> list[EnrichmentData]:
+    ...     def enrich_batch(self, image_paths: list[Path]) -> list[EnrichmentData]:
     ...         # Batch inference for efficiency
     ...         return [self.enrich(p) for p in image_paths]
 """
@@ -205,8 +203,6 @@ class QualityScoreProvider(Protocol):
         ...             llm_model_name="siglip2-iqa",
         ...         )
     """
-
-    pass
 
 
 __all__ = [

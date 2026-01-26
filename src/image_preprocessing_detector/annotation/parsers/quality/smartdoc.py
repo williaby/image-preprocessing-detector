@@ -53,8 +53,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from ..base import BaseParser
 from ...schemas.immutable import OriginalLabels
+from ..base import BaseParser
 
 logger = logging.getLogger(__name__)
 

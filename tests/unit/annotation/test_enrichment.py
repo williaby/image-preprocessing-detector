@@ -16,10 +16,10 @@ Fixtures:
 
 from __future__ import annotations
 
-import pytest
-from dataclasses import asdict
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
+
+import pytest
 
 from image_preprocessing_detector.annotation.enrichment import (
     BatchProcessingError,
@@ -35,9 +35,7 @@ from image_preprocessing_detector.annotation.enrichment.providers.yolo import (
 )
 from image_preprocessing_detector.annotation.schemas.enrichment import (
     EnrichmentData,
-    LayoutDetection,
 )
-
 
 # ============================================================================
 # Test Error Classes
@@ -122,7 +120,9 @@ class TestYOLOProvider:
         provider = YOLOProvider(model_path="/nonexistent/model.pt")
         assert not provider.is_available()
 
-    @patch("image_preprocessing_detector.annotation.enrichment.providers.yolo.Path.exists")
+    @patch(
+        "image_preprocessing_detector.annotation.enrichment.providers.yolo.Path.exists"
+    )
     def test_is_available_no_ultralytics(self, mock_exists):
         """Test is_available returns False when ultralytics not installed."""
         mock_exists.return_value = True
@@ -150,6 +150,7 @@ class TestYOLOProvider:
             # If installed but CUDA unavailable with cuda device, should fail
             try:
                 import ultralytics  # noqa: F401
+
                 # ultralytics available, should fail CUDA check
                 assert not result, "Should return False when CUDA unavailable"
             except ImportError:
@@ -347,7 +348,9 @@ class MockProvider:
         self.call_count += 1
 
         if self._should_fail:
-            raise InferenceError(self.name, len(image_paths), RuntimeError("Mock failure"))
+            raise InferenceError(
+                self.name, len(image_paths), RuntimeError("Mock failure")
+            )
 
         # Return mock enrichment
         return [
@@ -605,9 +608,7 @@ class TestEnrichmentIntegration:
         failing = MockProvider(name="failing", should_fail=True)
         succeeding = MockProvider(name="succeeding", should_fail=False)
 
-        manager = EnrichmentManager(
-            providers=[failing, succeeding], validate=False
-        )
+        manager = EnrichmentManager(providers=[failing, succeeding], validate=False)
 
         results = manager.enrich_batch([Path("test.jpg")])
 

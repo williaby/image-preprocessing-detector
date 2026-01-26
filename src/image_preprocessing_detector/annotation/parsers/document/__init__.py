@@ -35,13 +35,13 @@ def register_document_parsers(registry: ParserRegistry) -> None:
     Args:
         registry: ParserRegistry instance to register parsers with
     """
-    from .rvl_cdip import RvlCdipParser
     from .midv500 import Midv500Parser
+    from .multimodal_textbook import MultimodalTextbookParser
     from .ohr_bench import OhrBenchParser
     from .omnidocbench import OmnidocbenchParser
-    from .tobacco800 import Tobacco800Parser
     from .realdae import RealdaeParser
-    from .multimodal_textbook import MultimodalTextbookParser
+    from .rvl_cdip import RvlCdipParser
+    from .tobacco800 import Tobacco800Parser
 
     registry.register(RvlCdipParser())
     registry.register(Midv500Parser())

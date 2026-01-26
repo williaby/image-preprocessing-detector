@@ -38,8 +38,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..base import BaseParser
 from ...schemas.immutable import OriginalLabels
+from ..base import BaseParser
 
 logger = logging.getLogger(__name__)
 
@@ -87,10 +87,10 @@ class YarmoukParser(BaseParser):
             if part == "Training":
                 labels.raw_labels["split"] = "train"
                 break
-            elif part == "Testing":
+            if part == "Testing":
                 labels.raw_labels["split"] = "test"
                 break
-            elif part == "Samples":
+            if part == "Samples":
                 labels.raw_labels["split"] = "sample"
                 break
 

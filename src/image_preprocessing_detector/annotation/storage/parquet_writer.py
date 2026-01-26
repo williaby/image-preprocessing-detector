@@ -154,15 +154,21 @@ class PartitionedParquetWriter:
         self,
         dataset_name: str,
         samples: list[SampleMetadata],
+        streaming_batch_size: int | None = None,
     ) -> int:
         """Write samples for a single dataset (atomic replacement).
 
         Replaces all existing data for this dataset partition.
         Does NOT touch other dataset partitions.
 
+        P1 Fix: Added streaming_batch_size parameter for memory-efficient writes.
+        When set, samples are written in batches to avoid loading all into memory.
+
         Args:
             dataset_name: Name of the dataset
             samples: List of SampleMetadata to write
+            streaming_batch_size: If set, write samples in batches of this size
+                                  to reduce memory usage. Recommended for >10k samples.
 
         Returns:
             Number of samples written
@@ -174,6 +180,12 @@ class PartitionedParquetWriter:
         if not samples:
             logger.debug(f"No samples to write for {dataset_name}")
             return 0
+
+        # Use streaming mode for large datasets
+        if streaming_batch_size is not None and len(samples) > streaming_batch_size:
+            return self._write_dataset_streaming(
+                dataset_name, samples, streaming_batch_size
+            )
 
         # Create partition directory
         partition_dir = self._get_partition_dir(dataset_name)
@@ -197,6 +209,66 @@ class PartitionedParquetWriter:
         except Exception:
             logger.exception(f"Failed to write {dataset_name}")
             raise
+
+    def _write_dataset_streaming(
+        self,
+        dataset_name: str,
+        samples: list[SampleMetadata],
+        batch_size: int,
+    ) -> int:
+        """Write samples in streaming batches to reduce memory usage.
+
+        P1 Fix: Memory-efficient write for large datasets.
+        Writes samples in batches using row group streaming.
+
+        Args:
+            dataset_name: Name of the dataset
+            samples: List of SampleMetadata to write
+            batch_size: Number of samples per batch
+
+        Returns:
+            Number of samples written
+        """
+        partition_dir = self._get_partition_dir(dataset_name)
+        partition_dir.mkdir(parents=True, exist_ok=True)
+
+        output_path = partition_dir / "part-0000.parquet"
+        total_written = 0
+
+        # Use ParquetWriter for streaming row groups
+        with atomic_write(output_path, fsync=False) as temp_path:
+            writer: pq.ParquetWriter | None = None
+            try:
+                for i in range(0, len(samples), batch_size):
+                    batch = samples[i : i + batch_size]
+                    table = self._samples_to_table(batch)
+
+                    if writer is None:
+                        writer = pq.ParquetWriter(
+                            temp_path,
+                            schema=self._schema,
+                            compression=self.compression,
+                        )
+
+                    writer.write_table(table)
+                    total_written += len(batch)
+
+                    # Allow GC to reclaim batch memory
+                    del table
+                    del batch
+
+            except Exception:
+                logger.exception(f"Failed to write {dataset_name} (streaming)")
+                raise
+            finally:
+                if writer is not None:
+                    writer.close()
+
+        logger.info(
+            f"Wrote {total_written} samples to {dataset_name} partition "
+            f"(streaming, {batch_size} per batch)"
+        )
+        return total_written
 
     def append_to_dataset(
         self,
@@ -284,15 +356,23 @@ class PartitionedParquetWriter:
         """Read single dataset partition efficiently.
 
         Uses predicate pushdown to only read the relevant partition.
+        P2 Fix: Accepts both sanitized and unsanitized names for convenience.
 
         Args:
-            dataset_name: Name of the dataset to read
+            dataset_name: Name of the dataset to read (sanitized or original)
 
         Returns:
             PyArrow Table with samples from the specified dataset
         """
         dataset = self.get_dataset()
-        return dataset.to_table(filter=ds.field("dataset_name") == dataset_name)
+        # Try original name first, then sanitized
+        table = dataset.to_table(filter=ds.field("dataset_name") == dataset_name)
+        if len(table) == 0:
+            # Try sanitized name
+            sanitized = self._sanitize_dataset_name(dataset_name)
+            if sanitized != dataset_name:
+                table = dataset.to_table(filter=ds.field("dataset_name") == sanitized)
+        return table
 
     def delete_dataset(self, dataset_name: str) -> bool:
         """Delete a dataset partition.
@@ -354,6 +434,10 @@ class PartitionedParquetWriter:
 
         Useful after many append operations to improve read performance.
 
+        P1 Fix: Uses write-swap-delete pattern to ensure atomicity.
+        The new compacted file is written first, then old parts are deleted.
+        If writing fails, the original parts remain intact.
+
         Args:
             dataset_name: Name of the dataset to compact
 
@@ -369,22 +453,59 @@ class PartitionedParquetWriter:
         if len(table) == 0:
             return 0
 
-        # Remove old parts
-        for part_file in partition_dir.glob("part-*.parquet"):
-            part_file.unlink()
+        # Collect old part files BEFORE writing new one
+        old_parts = list(partition_dir.glob("part-*.parquet"))
 
-        # Write compacted file
-        output_path = partition_dir / "part-0000.parquet"
-        with atomic_write(output_path, fsync=False) as temp_path:
-            pq.write_table(
-                table,
-                temp_path,
-                compression=self.compression,
-                write_statistics=True,
-            )
+        # Write compacted file with a temporary name first
+        # We use a different name pattern to avoid conflicts
+        output_path = partition_dir / "part-0000-compacted.parquet"
+        final_path = partition_dir / "part-0000.parquet"
 
-        logger.info(f"Compacted {dataset_name}: {len(table)} samples")
-        return len(table)
+        try:
+            # Step 1: WRITE new compacted file
+            with atomic_write(output_path, fsync=False) as temp_path:
+                pq.write_table(
+                    table,
+                    temp_path,
+                    compression=self.compression,
+                    write_statistics=True,
+                )
+
+            # Step 2: SWAP - rename compacted file to final name
+            # (atomic_write already handles this via os.replace)
+
+            # Step 3: DELETE old parts (only after successful write)
+            for part_file in old_parts:
+                if part_file != output_path:  # Don't delete the new file
+                    part_file.unlink(missing_ok=True)
+
+            # Step 4: Rename to final name if needed
+            if output_path != final_path and output_path.exists():
+                output_path.rename(final_path)
+
+            logger.info(f"Compacted {dataset_name}: {len(table)} samples")
+            return len(table)
+
+        except Exception:
+            # If anything fails, clean up the temp file but keep originals
+            if output_path.exists():
+                output_path.unlink(missing_ok=True)
+            raise
+
+    @staticmethod
+    def _sanitize_dataset_name(dataset_name: str) -> str:
+        """Sanitize dataset name for filesystem compatibility.
+
+        P2 Fix: Centralized sanitization ensures consistency between
+        partition directories and stored dataset names.
+
+        Args:
+            dataset_name: Raw dataset name (may contain path separators)
+
+        Returns:
+            Filesystem-safe dataset name
+        """
+        return dataset_name.replace("/", "_").replace("\\", "_")
 
     def _get_partition_dir(self, dataset_name: str) -> Path:
         """Get partition directory for a dataset.
@@ -395,8 +516,7 @@ class PartitionedParquetWriter:
         Returns:
             Path to partition directory
         """
-        # Sanitize dataset name for filesystem
-        safe_name = dataset_name.replace("/", "_").replace("\\", "_")
+        safe_name = self._sanitize_dataset_name(dataset_name)
         return self.parquet_root / f"dataset_name={safe_name}"
 
     def _samples_to_table(

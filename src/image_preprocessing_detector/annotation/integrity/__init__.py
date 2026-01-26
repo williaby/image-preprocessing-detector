@@ -44,10 +44,14 @@ from .atomic import (
     safe_write_text,
 )
 
-# Phase 2.3: Checkpointing
+# Phase 2.3 + Phase 3.3: Checkpointing
 from .checkpointing import (
+    BatchCheckpointInfo,
+    BatchCheckpointManager,
     CheckpointInfo,
     CheckpointManager,
+    CheckpointValidationResult,
+    ValidationResult,  # Backward compatibility alias
 )
 
 # Phase 1.3.1-1.3.2: Hashing
@@ -61,11 +65,15 @@ from .hashing import (
 )
 
 __all__: list[str] = [
-    # Checkpointing (Phase 2.3)
-    "CheckpointInfo",
-    "CheckpointManager",
     # Hashing (Phase 1.3.1-1.3.2)
     "DEFAULT_CHUNK_SIZE",
+    # Checkpointing (Phase 2.3 + Phase 3.3)
+    "BatchCheckpointInfo",
+    "BatchCheckpointManager",
+    "CheckpointInfo",
+    "CheckpointManager",
+    "CheckpointValidationResult",
+    "ValidationResult",  # Backward compatibility alias
     "atomic_json_write",
     # Atomic operations (Phase 1.3.3-1.3.4)
     "atomic_write",

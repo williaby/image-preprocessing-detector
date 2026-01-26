@@ -17,17 +17,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import pytest
-
 if TYPE_CHECKING:
-    from image_preprocessing_detector.annotation.schemas.immutable import OriginalLabels
+    pass
 
 # Import all parsers
-from image_preprocessing_detector.annotation.parsers.document.rvl_cdip import (
-    RvlCdipParser,
-)
 from image_preprocessing_detector.annotation.parsers.document.midv500 import (
     Midv500Parser,
+)
+from image_preprocessing_detector.annotation.parsers.document.multimodal_textbook import (
+    MultimodalTextbookParser,
 )
 from image_preprocessing_detector.annotation.parsers.document.ohr_bench import (
     OhrBenchParser,
@@ -35,16 +33,15 @@ from image_preprocessing_detector.annotation.parsers.document.ohr_bench import (
 from image_preprocessing_detector.annotation.parsers.document.omnidocbench import (
     OmnidocbenchParser,
 )
-from image_preprocessing_detector.annotation.parsers.document.tobacco800 import (
-    Tobacco800Parser,
-)
 from image_preprocessing_detector.annotation.parsers.document.realdae import (
     RealdaeParser,
 )
-from image_preprocessing_detector.annotation.parsers.document.multimodal_textbook import (
-    MultimodalTextbookParser,
+from image_preprocessing_detector.annotation.parsers.document.rvl_cdip import (
+    RvlCdipParser,
 )
-
+from image_preprocessing_detector.annotation.parsers.document.tobacco800 import (
+    Tobacco800Parser,
+)
 
 # =============================================================================
 # RVL-CDIP Parser Tests
@@ -262,9 +259,22 @@ class TestOhrBenchParser:
         dataset_path = Path("/data/ohr_bench")
 
         categories = [
-            "academic", "book", "exam", "finance", "form", "handwritten",
-            "legal", "magazine", "medical", "newspaper", "note", "poster",
-            "receipt", "research", "resume", "slide"
+            "academic",
+            "book",
+            "exam",
+            "finance",
+            "form",
+            "handwritten",
+            "legal",
+            "magazine",
+            "medical",
+            "newspaper",
+            "note",
+            "poster",
+            "receipt",
+            "research",
+            "resume",
+            "slide",
         ]
 
         for category in categories:
@@ -497,13 +507,18 @@ class TestMultimodalTextbookParser:
     def test_dataset_names(self) -> None:
         """Test parser reports correct dataset names."""
         parser = MultimodalTextbookParser()
-        assert set(parser.dataset_names) == {"multimodal_textbook", "multimodal-textbook"}
+        assert set(parser.dataset_names) == {
+            "multimodal_textbook",
+            "multimodal-textbook",
+        }
 
     def test_parse_basic_metadata(self) -> None:
         """Test parsing extracts basic metadata."""
         parser = MultimodalTextbookParser()
         dataset_path = Path("/data/multimodal_textbook")
-        image_path = Path("/data/multimodal_textbook/example_data/sample_100_images/page_001.jpg")
+        image_path = Path(
+            "/data/multimodal_textbook/example_data/sample_100_images/page_001.jpg"
+        )
 
         labels = parser.parse(dataset_path, image_path, {})
 

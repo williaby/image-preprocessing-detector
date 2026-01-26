@@ -162,9 +162,7 @@ class BatchProcessingError(EnrichmentError):
         self.failed_count = failed_count
         self.failed_paths = failed_paths
         self.partial_results = partial_results or []
-        message = (
-            f"Batch processing failed: {failed_count}/{total_count} images failed"
-        )
+        message = f"Batch processing failed: {failed_count}/{total_count} images failed"
         super().__init__(message)
 
 

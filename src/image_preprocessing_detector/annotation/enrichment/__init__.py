@@ -50,19 +50,23 @@ from .errors import (
     ValidationError,
 )
 from .manager import EnrichmentManager, EnrichmentResult
-from .providers import EnrichmentProvider, QualityScoreProvider
+from .providers import (
+    EnrichmentProvider,
+    QualityScoreProvider,
+    SigLIPProvider,
+    YOLOProvider,
+)
 
 __all__ = [
-    # Error classes
     "BatchProcessingError",
     "EnrichmentError",
+    "EnrichmentManager",
+    "EnrichmentProvider",
+    "EnrichmentResult",
     "InferenceError",
     "ProviderUnavailableError",
-    "ValidationError",
-    # Manager
-    "EnrichmentManager",
-    "EnrichmentResult",
-    # Provider protocols
-    "EnrichmentProvider",
     "QualityScoreProvider",
+    "SigLIPProvider",
+    "ValidationError",
+    "YOLOProvider",
 ]

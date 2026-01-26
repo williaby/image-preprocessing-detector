@@ -213,7 +213,9 @@ class TestPucitOhulParser:
         assert labels.raw_labels is not None
         assert labels.raw_labels["split"] == "train"
 
-    def test_parse_test_split(self, parser: PucitOhulParser, dataset_path: Path) -> None:
+    def test_parse_test_split(
+        self, parser: PucitOhulParser, dataset_path: Path
+    ) -> None:
         """Test parsing test split."""
         image_path = dataset_path / "test_lines" / "img002.png"
         labels = parser.parse(dataset_path, image_path, {})

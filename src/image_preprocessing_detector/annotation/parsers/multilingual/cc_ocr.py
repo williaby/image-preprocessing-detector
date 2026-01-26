@@ -44,8 +44,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..base import BaseParser
 from ...schemas.immutable import OriginalLabels
+from ..base import BaseParser
 
 logger = logging.getLogger(__name__)
 
@@ -91,11 +91,14 @@ class CcOcrParser(BaseParser):
 
         for part in path_parts:
             # Look for track patterns
-            if "scene" in part.lower() or "multilingual" in part.lower():
-                labels.raw_labels["track"] = part
-            elif "document" in part.lower() or "parsing" in part.lower():
-                labels.raw_labels["track"] = part
-            elif "extraction" in part.lower() or "key" in part.lower():
+            if (
+                "scene" in part.lower()
+                or "multilingual" in part.lower()
+                or "document" in part.lower()
+                or "parsing" in part.lower()
+                or "extraction" in part.lower()
+                or "key" in part.lower()
+            ):
                 labels.raw_labels["track"] = part
 
         # Try to load JSON annotations if available

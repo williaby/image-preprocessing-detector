@@ -40,11 +40,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .errors import EnrichmentError, ValidationError
+from .errors import EnrichmentError
 
 if TYPE_CHECKING:
-    from .providers.base import EnrichmentProvider
     from ..schemas.enrichment import EnrichmentData
+    from .providers.base import EnrichmentProvider
 
 logger = logging.getLogger(__name__)
 
@@ -161,9 +161,7 @@ class EnrichmentManager:
         if existing is None:
             existing = [None] * len(image_paths)
 
-        results = [
-            EnrichmentResult(data=e or EnrichmentData()) for e in existing
-        ]
+        results = [EnrichmentResult(data=e or EnrichmentData()) for e in existing]
 
         # Get available providers sorted by tier priority
         available_providers = self._get_sorted_providers()
@@ -180,9 +178,7 @@ class EnrichmentManager:
 
             # Find images that this provider should process
             applicable_indices = [
-                i
-                for i, path in enumerate(image_paths)
-                if provider.supports(path)
+                i for i, path in enumerate(image_paths) if provider.supports(path)
             ]
 
             if not applicable_indices:
@@ -200,7 +196,7 @@ class EnrichmentManager:
 
             # Update results
             if enriched is not None:
-                for idx, enrichment in zip(applicable_indices, enriched):
+                for idx, enrichment in zip(applicable_indices, enriched, strict=True):
                     results[idx].data = enrichment
                     results[idx].providers_used.append(provider.name)
 
@@ -234,7 +230,7 @@ class EnrichmentManager:
         self,
         provider: EnrichmentProvider,
         batch_paths: list[Path],
-        batch_existing: list[EnrichmentData],
+        _batch_existing: list[EnrichmentData],
         indices: list[int],
         results: list[EnrichmentResult],
     ) -> list[EnrichmentData] | None:
@@ -243,7 +239,7 @@ class EnrichmentManager:
         Args:
             provider: Provider to use
             batch_paths: Image paths to process
-            batch_existing: Existing enrichment data
+            _batch_existing: Existing enrichment data (reserved for incremental enrichment)
             indices: Indices in original results list
             results: Results list to update on error
 
@@ -253,12 +249,6 @@ class EnrichmentManager:
         for attempt in range(self.max_retries + 1):
             try:
                 enriched = provider.enrich_batch(batch_paths)
-                if attempt > 0:
-                    logger.info(
-                        f"Provider {provider.name} succeeded on retry {attempt}"
-                    )
-                return enriched
-
             except EnrichmentError as e:
                 # Structured enrichment error - log and track
                 logger.warning(
@@ -266,7 +256,7 @@ class EnrichmentManager:
                 )
 
                 # Add to dead letter queue
-                for idx, path in zip(indices, batch_paths):
+                for _idx, path in zip(indices, batch_paths, strict=True):
                     self._dead_letter.append((path, e))
 
                 # Update result errors
@@ -277,8 +267,7 @@ class EnrichmentManager:
                 if attempt < self.max_retries and self._is_transient(e):
                     logger.info(f"Retrying provider {provider.name}...")
                     continue
-                else:
-                    return None
+                return None
 
             except Exception as e:
                 # Unexpected error - log and fail
@@ -286,11 +275,20 @@ class EnrichmentManager:
                     f"Provider {provider.name} failed unexpectedly: {e}", exc_info=True
                 )
 
-                for idx, path in zip(indices, batch_paths):
+                for _idx, path in zip(indices, batch_paths, strict=True):
                     self._dead_letter.append((path, e))
-                    results[idx].errors.append(f"{provider.name}: Unexpected error: {e}")
+                    results[indices[batch_paths.index(path)]].errors.append(
+                        f"{provider.name}: Unexpected error: {e}"
+                    )
 
                 return None
+
+            else:
+                if attempt > 0:
+                    logger.info(
+                        f"Provider {provider.name} succeeded on retry {attempt}"
+                    )
+                return enriched
 
         return None
 

@@ -36,12 +36,12 @@ def register_layout_parsers(registry: ParserRegistry) -> None:
         registry: ParserRegistry instance to register parsers with
     """
     from .doclaynet import DocLayNetParser
-    from .tablebank import TableBankParser
-    from .pubtabnet import PubTabNetParser
     from .fintabnet import FinTabNetParser
     from .funsd import FunsdParser
     from .funsd_plus import FunsdPlusParser
+    from .pubtabnet import PubTabNetParser
     from .sroie import SroieParser
+    from .tablebank import TableBankParser
 
     registry.register(DocLayNetParser())
     registry.register(TableBankParser())

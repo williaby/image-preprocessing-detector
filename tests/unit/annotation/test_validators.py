@@ -20,14 +20,12 @@ from image_preprocessing_detector.annotation.schemas.validators import (
     OcrQualityScoreValidator,
     PixelDimensionsValidator,
     SampleIdValidator,
-    ValidationResult,
     validate_enrichment_data,
     validate_enrichment_version,
     validate_original_file_metadata,
     validate_original_labels,
     validate_sample_metadata,
 )
-
 
 # ============================================================================
 # Field Validator Tests

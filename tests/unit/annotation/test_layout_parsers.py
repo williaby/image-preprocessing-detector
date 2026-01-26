@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -26,12 +25,6 @@ from image_preprocessing_detector.annotation.parsers.layout import (
 from image_preprocessing_detector.annotation.parsers.layout.doclaynet import (
     DocLayNetParser,
 )
-from image_preprocessing_detector.annotation.parsers.layout.tablebank import (
-    TableBankParser,
-)
-from image_preprocessing_detector.annotation.parsers.layout.pubtabnet import (
-    PubTabNetParser,
-)
 from image_preprocessing_detector.annotation.parsers.layout.fintabnet import (
     FinTabNetParser,
 )
@@ -39,9 +32,14 @@ from image_preprocessing_detector.annotation.parsers.layout.funsd import FunsdPa
 from image_preprocessing_detector.annotation.parsers.layout.funsd_plus import (
     FunsdPlusParser,
 )
+from image_preprocessing_detector.annotation.parsers.layout.pubtabnet import (
+    PubTabNetParser,
+)
 from image_preprocessing_detector.annotation.parsers.layout.sroie import SroieParser
+from image_preprocessing_detector.annotation.parsers.layout.tablebank import (
+    TableBankParser,
+)
 from image_preprocessing_detector.annotation.schemas.immutable import OriginalLabels
-
 
 # ==============================================================================
 # DocLayNetParser Tests
@@ -134,7 +132,10 @@ class TestDocLayNetParser:
         image_path_2 = dataset_path / "PNG" / "doc1234_1.png"
         labels_2 = parser.parse(dataset_path, image_path_2, {})
         assert len(labels_2.raw_labels["doclaynet_annotations"]) == 1
-        assert labels_2.raw_labels["doclaynet_annotations"][0]["category_name"] == "Formula"
+        assert (
+            labels_2.raw_labels["doclaynet_annotations"][0]["category_name"]
+            == "Formula"
+        )
 
     def test_parse_no_annotations(
         self, parser: DocLayNetParser, dataset_path: Path
@@ -143,16 +144,24 @@ class TestDocLayNetParser:
         image_path = dataset_path / "PNG" / "nonexistent.png"
         labels = parser.parse(dataset_path, image_path, {})
 
-        assert labels.raw_labels is None or "doclaynet_annotations" not in labels.raw_labels
+        assert (
+            labels.raw_labels is None
+            or "doclaynet_annotations" not in labels.raw_labels
+        )
 
-    def test_parse_missing_coco_file(self, parser: DocLayNetParser, tmp_path: Path) -> None:
+    def test_parse_missing_coco_file(
+        self, parser: DocLayNetParser, tmp_path: Path
+    ) -> None:
         """Test parsing when COCO file is missing."""
         dataset = tmp_path / "empty"
         dataset.mkdir()
         image_path = dataset / "PNG" / "doc001.png"
         labels = parser.parse(dataset, image_path, {})
 
-        assert labels.raw_labels is None or "doclaynet_annotations" not in labels.raw_labels
+        assert (
+            labels.raw_labels is None
+            or "doclaynet_annotations" not in labels.raw_labels
+        )
 
 
 # ==============================================================================
@@ -252,7 +261,15 @@ class TestPubTabNetParser:
                 "split": "train",
                 "html": {
                     "structure": {
-                        "tokens": ["<thead>", "<tr>", "<td>", "Cell1", "</td>", "</tr>", "</thead>"]
+                        "tokens": [
+                            "<thead>",
+                            "<tr>",
+                            "<td>",
+                            "Cell1",
+                            "</td>",
+                            "</tr>",
+                            "</thead>",
+                        ]
                     },
                     "cells": [
                         {"tokens": ["Cell1"], "bbox": [10, 20, 100, 50]},
@@ -271,8 +288,7 @@ class TestPubTabNetParser:
         ]
 
         with open(jsonl_path, "w") as f:
-            for entry in entries:
-                f.write(json.dumps(entry) + "\n")
+            f.writelines(json.dumps(entry) + "\n" for entry in entries)
 
         return dataset
 
@@ -305,9 +321,7 @@ class TestPubTabNetParser:
         assert labels.table_html == "<table></table>"
         assert labels.raw_labels["split"] == "val"
 
-    def test_parse_no_match(
-        self, parser: PubTabNetParser, dataset_path: Path
-    ) -> None:
+    def test_parse_no_match(self, parser: PubTabNetParser, dataset_path: Path) -> None:
         """Test parsing when no matching entry found."""
         image_path = dataset_path / "train" / "nonexistent.png"
         labels = parser.parse(dataset_path, image_path, {})
@@ -341,7 +355,17 @@ class TestFinTabNetParser:
             {
                 "filename": "table_001.png",
                 "html": {
-                    "structure": {"tokens": ["<table>", "<tr>", "<td>", "Revenue", "</td>", "</tr>", "</table>"]},
+                    "structure": {
+                        "tokens": [
+                            "<table>",
+                            "<tr>",
+                            "<td>",
+                            "Revenue",
+                            "</td>",
+                            "</tr>",
+                            "</table>",
+                        ]
+                    },
                     "cells": [
                         {"tokens": ["Revenue"], "bbox": [20, 30, 150, 60]},
                         {"tokens": ["$1000"], "bbox": [160, 30, 250, 60]},
@@ -351,8 +375,7 @@ class TestFinTabNetParser:
         ]
 
         with open(jsonl_path, "w") as f:
-            for entry in entries:
-                f.write(json.dumps(entry) + "\n")
+            f.writelines(json.dumps(entry) + "\n" for entry in entries)
 
         return dataset
 
@@ -568,9 +591,7 @@ class TestSroieParser:
         assert labels.text_instances[0]["text"] == "COMPANY NAME"
         assert labels.text_instances[3]["text"] == "$99.99"
 
-    def test_parse_sets_metadata(
-        self, parser: SroieParser, dataset_path: Path
-    ) -> None:
+    def test_parse_sets_metadata(self, parser: SroieParser, dataset_path: Path) -> None:
         """Test that parser sets metadata fields."""
         image_path = dataset_path / "train" / "X00001.jpg"
         labels = parser.parse(dataset_path, image_path, {})

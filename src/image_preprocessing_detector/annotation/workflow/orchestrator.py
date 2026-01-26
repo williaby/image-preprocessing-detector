@@ -229,10 +229,13 @@ class AnnotationOrchestrator:
                 self._write_outputs(dataset_name, result)
 
             # Build result
+            # P0 Fix: Partial failures should NOT be marked as complete success.
+            # A dataset is only successful if ALL samples processed without errors.
             error_messages = [str(err) for _, err in result.errors]
+            is_complete_success = result.error_count == 0 and result.success_count > 0
             return DatasetResult(
                 dataset_name=dataset_name,
-                success=True,
+                success=is_complete_success,
                 samples_processed=result.success_count,
                 samples_failed=result.error_count,
                 errors=error_messages,
