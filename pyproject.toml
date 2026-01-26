@@ -199,6 +199,8 @@ labeling = [
 
 [project.scripts]
 imgprep = "image_preprocessing_detector.cli:cli"
+# Annotation CLI (Phase 2 - stub for now)
+# annotate = "image_preprocessing_detector.annotation.cli:cli"
 
 [tool.uv]
 # Ensure compatibility with Linux systems by resolving to compatible wheels

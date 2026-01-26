@@ -56,7 +56,7 @@ def _get_git_sha() -> str:
 
     try:
         result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
+            ["git", "rev-parse", "HEAD"],  # noqa: S607 - git is intentional
             capture_output=True,
             text=True,
             cwd=Path(__file__).parent,

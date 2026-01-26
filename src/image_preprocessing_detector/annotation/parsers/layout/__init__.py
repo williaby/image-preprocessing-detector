@@ -1,0 +1,57 @@
+# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
+# SPDX-License-Identifier: MIT
+"""Layout annotation parsers for the annotation system.
+
+This package contains parsers for datasets with layout/structure annotations:
+- DocLayNet: Document layout analysis (COCO format)
+- TableBank: Table detection (COCO format)
+- PubTabNet: Table structure (HTML + COCO)
+- FinTabNet: Financial table structure
+- FUNSD: Form understanding (dict format - P0-4 fix)
+- FUNSD+: Extended FUNSD
+- SROIE: Receipt OCR and IE
+
+Datasets covered:
+    - doclaynet
+    - tablebank
+    - pubtabnet
+    - fintabnet
+    - funsd
+    - funsd_plus
+    - sroie
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..registry import ParserRegistry
+
+
+def register_layout_parsers(registry: ParserRegistry) -> None:
+    """Register all layout parsers with the registry.
+
+    Args:
+        registry: ParserRegistry instance to register parsers with
+    """
+    from .doclaynet import DocLayNetParser
+    from .tablebank import TableBankParser
+    from .pubtabnet import PubTabNetParser
+    from .fintabnet import FinTabNetParser
+    from .funsd import FunsdParser
+    from .funsd_plus import FunsdPlusParser
+    from .sroie import SroieParser
+
+    registry.register(DocLayNetParser())
+    registry.register(TableBankParser())
+    registry.register(PubTabNetParser())
+    registry.register(FinTabNetParser())
+    registry.register(FunsdParser())
+    registry.register(FunsdPlusParser())
+    registry.register(SroieParser())
+
+
+__all__ = [
+    "register_layout_parsers",
+]

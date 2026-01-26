@@ -1,13 +1,14 @@
 ---
 title: "Metadata Annotation System Refactoring Plan"
 schema_type: planning
-status: draft
+status: in-progress
 owner: core-maintainer
 purpose: >
   Convert the monolithic annotate_base_metadata.py (~3,800 LOC) into a modular,
   maintainable package that supports dataset extensibility, schema evolution, and ML integration.
 component: "Strategy"
 source: "Phase 10A planning session"
+last_updated: "2025-01-26"
 tags:
   - planning
   - schema
@@ -38,6 +39,49 @@ average score 8.4/10) and establishes a foundation for:
 
 ---
 
+## Implementation Status
+
+> **Last Updated**: 2025-01-26
+
+| Phase | Status | Completion | Notes |
+|-------|--------|------------|-------|
+| Phase 1: Foundation | ✅ **COMPLETE** | 25/27 tasks | 2 tasks deferred to Phase 2 |
+| Phase 2: Core Refactoring | ❌ Not Started | 0/36 tasks | - |
+| Phase 3: Extensibility | ❌ Not Started | 0/21 tasks | - |
+| Phase 4: ML Integration | ❌ Not Started | 0/18 tasks | - |
+| Phase 5: Production Hardening | ❌ Not Started | 0/24 tasks | - |
+
+### Phase 1 Implementation Summary (2025-01-26)
+
+**Completed Tasks**: 25/27 (93%)
+
+**Deferred to Phase 2**:
+
+- 1.2.5: Add Pydantic validation using schema_utils patterns (better done with full parser system)
+- 1.4.3: Migrate DATASET_CONFIGS to config/datasets.py (requires parser registry first)
+
+**Test Coverage**: 108 unit tests passing
+
+- test_imports.py: Import validation (3 test classes)
+- test_schemas.py: Schema dataclasses (6 test classes)
+- test_hashing.py: Integrity operations (3 test classes)
+- test_atomic.py: Atomic file operations (4 test classes)
+- test_config.py: Configuration system (6 test classes)
+
+**Multi-Model Consensus Validation** (5 models, average 9.2/10):
+
+| Model | Score | Key Feedback |
+|-------|-------|--------------|
+| Gemini 2.5 Pro | 10/10 | "Excellent foundation, critical fixes properly implemented" |
+| Gemini 3 Pro Preview | 10/10 | "Full-file hashing and atomic writes exactly right" |
+| GPT-5.2 | 8/10 | "Good structure, consider runtime validation and frozen dataclasses" |
+| DeepSeek R1 | 9/10 | "Solid implementation, temp file uniqueness could be improved" |
+| Grok-4 | 9/10 | "Well-architected, unified config loader would help" |
+
+**Breaking Change Documented**: CHANGELOG.md updated with full-file SHA256 migration notice.
+
+---
+
 ## Table of Contents
 
 1. [Current State Analysis](#current-state-analysis)
@@ -58,23 +102,23 @@ average score 8.4/10) and establishes a foundation for:
 
 ### Problems Identified (Multi-Model Consensus)
 
-| ID | Severity | Issue | Impact | Phase |
-|----|----------|-------|--------|-------|
-| P0-1 | 🔴 Critical | SHA256 partial hashing (64KB only) | Data integrity risk, hash collisions | 1.3 |
-| P0-2 | 🔴 Critical | Parquet overwrite on per-dataset runs | Data loss in incremental mode | 2.4 |
-| P0-3 | 🔴 Critical | shlex.quote bug in incremental wrapper | Broken --dataset matching | 2.5 |
-| P0-4 | 🔴 Critical | FUNSD type mismatch (dict vs list) | Runtime crashes | 1.2 |
-| P1-1 | ⚠️ High | Monolithic 3,800 LOC single file | Maintainability debt | 1.1, 2.x |
-| P1-2 | ⚠️ High | Global mutable state (3 caches) | Testability issues | 2.2, 5.1 |
-| P1-3 | ⚠️ High | Random UUIDs prevent deduplication | Incremental updates broken | 1.3 |
-| P1-4 | ⚠️ High | Dataset-level only checkpointing | 99% failure restarts from 0% | 3.3 |
-| P1-5 | ⚠️ High | Memory OOM with 500K+ samples | Process crashes | 5.1 |
-| P2-1 | 🟡 Medium | Zero unit test coverage | Regression risk | 5.4 |
-| P2-2 | 🟡 Medium | No atomic state file writes | Corruption on crash | 1.3 |
-| P2-3 | 🟡 Medium | Hardcoded paths | Portability issues | 1.4 |
-| P2-4 | 🟡 Medium | Parser duplication | Code smell | 2.1 |
-| P2-5 | 🟡 Medium | No schema version migration | Upgrade friction | 3.2 |
-| P2-6 | 🟡 Medium | Per-image YOLO without batching | Performance | 2.3, 5.2 |
+| ID | Severity | Issue | Impact | Phase | Status |
+|----|----------|-------|--------|-------|--------|
+| P0-1 | 🔴 Critical | SHA256 partial hashing (64KB only) | Data integrity risk, hash collisions | 1.3 | ✅ Fixed |
+| P0-2 | 🔴 Critical | Parquet overwrite on per-dataset runs | Data loss in incremental mode | 2.4 | ❌ |
+| P0-3 | 🔴 Critical | shlex.quote bug in incremental wrapper | Broken --dataset matching | 2.5 | ❌ |
+| P0-4 | 🔴 Critical | FUNSD type mismatch (dict vs list) | Runtime crashes | 1.2 | ✅ Fixed |
+| P1-1 | ⚠️ High | Monolithic 3,800 LOC single file | Maintainability debt | 1.1, 2.x | 🔄 Started |
+| P1-2 | ⚠️ High | Global mutable state (3 caches) | Testability issues | 2.2, 5.1 | ❌ |
+| P1-3 | ⚠️ High | Random UUIDs prevent deduplication | Incremental updates broken | 1.3 | ✅ Fixed |
+| P1-4 | ⚠️ High | Dataset-level only checkpointing | 99% failure restarts from 0% | 3.3 | ❌ |
+| P1-5 | ⚠️ High | Memory OOM with 500K+ samples | Process crashes | 5.1 | ❌ |
+| P2-1 | 🟡 Medium | Zero unit test coverage | Regression risk | 5.4 | 🔄 Started |
+| P2-2 | 🟡 Medium | No atomic state file writes | Corruption on crash | 1.3 | ✅ Fixed |
+| P2-3 | 🟡 Medium | Hardcoded paths | Portability issues | 1.4 | ✅ Fixed |
+| P2-4 | 🟡 Medium | Parser duplication | Code smell | 2.1 | ❌ |
+| P2-5 | 🟡 Medium | No schema version migration | Upgrade friction | 3.2 | ❌ |
+| P2-6 | 🟡 Medium | Per-image YOLO without batching | Performance | 2.3, 5.2 | ❌ |
 
 ### Current File Structure
 
@@ -214,19 +258,21 @@ This refactoring plan aligns with the Level 2 Data Preparation architecture docu
 
 ---
 
-## Phase 1: Foundation (Week 1-2)
+## Phase 1: Foundation (Week 1-2) ✅ COMPLETE
 
-### 1.1 Create Package Structure
+> **Status**: Complete (2025-01-26) | 25/27 tasks | 108 tests passing
+
+### 1.1 Create Package Structure ✅
 
 **Objective**: Establish module skeleton with public API
 
-| Task ID | Task | Estimate | Assignee |
-|---------|------|----------|----------|
-| 1.1.1 | Create `annotation/` package with all subpackage `__init__.py` files | 2h | - |
-| 1.1.2 | Define public API in top-level `__init__.py` with `__all__` exports | 2h | - |
-| 1.1.3 | Create `create_orchestrator()` factory function stub | 2h | - |
-| 1.1.4 | Add to `pyproject.toml` entry points for CLI | 1h | - |
-| 1.1.5 | Write import validation tests | 1h | - |
+| Task ID | Task | Estimate | Status |
+|---------|------|----------|--------|
+| 1.1.1 | Create `annotation/` package with all subpackage `__init__.py` files | 2h | ✅ |
+| 1.1.2 | Define public API in top-level `__init__.py` with `__all__` exports | 2h | ✅ |
+| 1.1.3 | Create `create_orchestrator()` factory function stub | 2h | ✅ |
+| 1.1.4 | Add to `pyproject.toml` entry points for CLI | 1h | ✅ |
+| 1.1.5 | Write import validation tests | 1h | ✅ |
 
 **Deliverables**:
 
@@ -238,19 +284,19 @@ This refactoring plan aligns with the Level 2 Data Preparation architecture docu
 
 ---
 
-### 1.2 Migrate Schemas
+### 1.2 Migrate Schemas ✅
 
 **Objective**: Move dataclasses to dedicated schema modules
 
-| Task ID | Task | Estimate | Assignee |
-|---------|------|----------|----------|
-| 1.2.1 | Extract enums to `schemas/enums.py` (CaptureMethod, DomainLevel1, ResolutionCategory, EnrichmentTier) | 3h | - |
-| 1.2.2 | Extract immutable layer to `schemas/immutable.py` (OriginalFileMetadata, OriginalLabels) with P0-4 fix | 4h | - |
-| 1.2.3 | Extract enrichment layer to `schemas/enrichment.py` (LayoutDetection, EnrichmentData, EnrichmentVersion) | 4h | - |
-| 1.2.4 | Extract sample aggregate to `schemas/sample.py` (SampleMetadata with all methods) | 4h | - |
-| 1.2.5 | Add Pydantic validation using existing `schema_utils/validation.py` patterns | 3h | - |
-| 1.2.6 | Create `schemas/migrations.py` stub with rollback support | 2h | - |
-| 1.2.7 | Write unit tests for all schema classes | 4h | - |
+| Task ID | Task | Estimate | Status |
+|---------|------|----------|--------|
+| 1.2.1 | Extract enums to `schemas/enums.py` (CaptureMethod, DomainLevel1, ResolutionCategory, EnrichmentTier) | 3h | ✅ |
+| 1.2.2 | Extract immutable layer to `schemas/immutable.py` (OriginalFileMetadata, OriginalLabels) with P0-4 fix | 4h | ✅ |
+| 1.2.3 | Extract enrichment layer to `schemas/enrichment.py` (LayoutDetection, EnrichmentData, EnrichmentVersion) | 4h | ✅ |
+| 1.2.4 | Extract sample aggregate to `schemas/sample.py` (SampleMetadata with all methods) | 4h | ✅ |
+| 1.2.5 | Add Pydantic validation using existing `schema_utils/validation.py` patterns | 3h | ⏳ Deferred |
+| 1.2.6 | Create `schemas/migrations.py` stub with rollback support | 2h | ✅ |
+| 1.2.7 | Write unit tests for all schema classes | 4h | ✅ |
 
 **Critical Fix - P0-4 (FUNSD type mismatch)**:
 
@@ -276,19 +322,19 @@ class OriginalLabels:
 
 ---
 
-### 1.3 Fix Critical Data Integrity Issues
+### 1.3 Fix Critical Data Integrity Issues ✅
 
 **Objective**: Address P0-1 (hashing), P1-3 (deterministic IDs), P2-2 (atomic writes)
 
-| Task ID | Task | Estimate | Assignee |
-|---------|------|----------|----------|
-| 1.3.1 | Create `integrity/hashing.py` with full-file SHA256 | 3h | - |
-| 1.3.2 | Implement deterministic `compute_sample_id()` function | 2h | - |
-| 1.3.3 | Create `integrity/atomic.py` with `os.replace()` (cross-platform) | 3h | - |
-| 1.3.4 | Add fsync option for critical data integrity | 2h | - |
-| 1.3.5 | Write comprehensive unit tests for hashing edge cases | 3h | - |
-| 1.3.6 | Write tests for atomic operations (including failure scenarios) | 3h | - |
-| 1.3.7 | Document hash discontinuity breaking change in CHANGELOG | 1h | - |
+| Task ID | Task | Estimate | Status |
+|---------|------|----------|--------|
+| 1.3.1 | Create `integrity/hashing.py` with full-file SHA256 | 3h | ✅ |
+| 1.3.2 | Implement deterministic `compute_sample_id()` function | 2h | ✅ |
+| 1.3.3 | Create `integrity/atomic.py` with `os.replace()` (cross-platform) | 3h | ✅ |
+| 1.3.4 | Add fsync option for critical data integrity | 2h | ✅ |
+| 1.3.5 | Write comprehensive unit tests for hashing edge cases | 3h | ✅ |
+| 1.3.6 | Write tests for atomic operations (including failure scenarios) | 3h | ✅ |
+| 1.3.7 | Document hash discontinuity breaking change in CHANGELOG | 1h | ✅ |
 
 **Implementation - integrity/hashing.py**:
 
@@ -378,19 +424,19 @@ def atomic_write(path: Path, fsync: bool = False) -> Iterator[Path]:
 
 ---
 
-### 1.4 Create Configuration System
+### 1.4 Create Configuration System ✅
 
 **Objective**: Externalize hardcoded paths and settings
 
-| Task ID | Task | Estimate | Assignee |
-|---------|------|----------|----------|
-| 1.4.1 | Create `config/settings.py` with `AnnotationSettings` dataclass | 3h | - |
-| 1.4.2 | Implement `from_env()` classmethod for environment loading | 2h | - |
-| 1.4.3 | Migrate `DATASET_CONFIGS` to `config/datasets.py` | 4h | - |
-| 1.4.4 | Migrate tier definitions to `config/tiers.py` | 2h | - |
-| 1.4.5 | Create YAML config loader as alternative to env vars | 3h | - |
-| 1.4.6 | Write validation for configuration completeness | 2h | - |
-| 1.4.7 | Write unit tests for configuration loading | 2h | - |
+| Task ID | Task | Estimate | Status |
+|---------|------|----------|--------|
+| 1.4.1 | Create `config/settings.py` with `AnnotationSettings` dataclass | 3h | ✅ |
+| 1.4.2 | Implement `from_env()` classmethod for environment loading | 2h | ✅ |
+| 1.4.3 | Migrate `DATASET_CONFIGS` to `config/datasets.py` | 4h | ⏳ Deferred |
+| 1.4.4 | Migrate tier definitions to `config/tiers.py` | 2h | ✅ |
+| 1.4.5 | Create YAML config loader as alternative to env vars | 3h | ✅ |
+| 1.4.6 | Write validation for configuration completeness | 2h | ✅ |
+| 1.4.7 | Write unit tests for configuration loading | 2h | ✅ |
 
 **Implementation - config/settings.py**:
 

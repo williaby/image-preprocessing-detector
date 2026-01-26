@@ -17,7 +17,9 @@ Example:
     >>> from image_preprocessing_detector.annotation.config import (
     ...     AnnotationSettings,
     ...     DATASET_CONFIGS,
+    ...     DatasetConfig,
     ...     TIER_0_DATASETS,
+    ...     get_dataset_path,
     ... )
     >>>
     >>> # Load from environment
@@ -28,9 +30,20 @@ Example:
     >>>
     >>> # Get dataset configuration
     >>> diqa_config = DATASET_CONFIGS["diqa-5000"]
+    >>> full_path = get_dataset_path(diqa_config, settings)
 """
 
 from __future__ import annotations
+
+# Phase 1.4.3: Datasets
+from .datasets import (
+    DATASET_CONFIGS,
+    DatasetConfig,
+    get_dataset_path,
+    get_parser_module_name,
+    is_benchmark_dataset,
+    validate_dataset_configs,
+)
 
 # Phase 1.4.1-1.4.2: Settings
 from .settings import AnnotationSettings
@@ -46,21 +59,19 @@ from .tiers import (
     is_tier_1,
 )
 
-# Phase 1.4.3: Datasets (TODO: Full DATASET_CONFIGS migration)
-# from .datasets import DATASET_CONFIGS, get_dataset_config
-
 __all__: list[str] = [
-    # Settings (Phase 1.4.1-1.4.2)
-    "AnnotationSettings",
-    # Tiers (Phase 1.4.4)
+    "CONTENT_FLAG_KEYS",
+    "DATASET_CONFIGS",
     "TIER_0_DATASETS",
     "TIER_1_DATASETS",
-    "CONTENT_FLAG_KEYS",
-    "get_tier_for_dataset",
+    "AnnotationSettings",
+    "DatasetConfig",
+    "get_dataset_path",
+    "get_parser_module_name",
     "get_tier_0_flags",
+    "get_tier_for_dataset",
+    "is_benchmark_dataset",
     "is_tier_0",
     "is_tier_1",
-    # Datasets (Phase 1.4.3 - TODO)
-    # "DATASET_CONFIGS",
-    # "get_dataset_config",
+    "validate_dataset_configs",
 ]

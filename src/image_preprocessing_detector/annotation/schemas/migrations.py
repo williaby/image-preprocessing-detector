@@ -177,7 +177,8 @@ def migrate_sample(
         ValueError: If migration path not found
     """
     if from_version is None:
-        from_version = data.get("record_meta", {}).get("schema_version", "1.0")
+        record_meta = data.get("record_meta", {})
+        from_version = str(record_meta.get("schema_version", "1.0"))
 
     if from_version == to_version:
         return data

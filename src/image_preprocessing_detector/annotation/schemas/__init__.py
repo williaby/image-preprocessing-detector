@@ -23,6 +23,11 @@ Migrations (migrations.py):
     - Forward/backward migration support
     - Rollback capabilities
 
+Validators (validators.py):
+    - Pydantic-based runtime validation
+    - Field validators for all schema types
+    - ValidationResult for error reporting
+
 Example:
     >>> from image_preprocessing_detector.annotation.schemas import (
     ...     CaptureMethod,
@@ -30,6 +35,8 @@ Example:
     ...     OriginalFileMetadata,
     ...     EnrichmentData,
     ...     SampleMetadata,
+    ...     validate_sample_metadata,
+    ...     ValidationResult,
     ... )
 """
 
@@ -59,30 +66,65 @@ from .migrations import (
 # Phase 1.2.4: Sample aggregate
 from .sample import SCHEMA_VERSION, SCRIPT_VERSION, SampleMetadata
 
+# Phase 1.2.5: Validators
+from .validators import (
+    BboxValidator,
+    ConfidenceValidator,
+    DpiValidator,
+    FileHashValidator,
+    IsoDateValidator,
+    MosScoreValidator,
+    OcrQualityScoreValidator,
+    PixelDimensionsValidator,
+    SampleIdValidator,
+    ValidationResult,
+    validate_enrichment_data,
+    validate_enrichment_version,
+    validate_original_file_metadata,
+    validate_original_labels,
+    validate_sample_metadata,
+)
+
 __all__: list[str] = [
     # Migrations (Phase 1.2.6)
     "CURRENT_VERSION",
     "MIN_SUPPORTED_VERSION",
     "SCHEMA_VERSION",
     "SCRIPT_VERSION",
+    # Validators (Phase 1.2.5)
+    "BboxValidator",
     # Enums (Phase 1.2.1)
     "CaptureMethod",
+    "ConfidenceValidator",
     "DomainLevel1",
+    "DpiValidator",
     "EnrichmentData",
     "EnrichmentTier",
     "EnrichmentVersion",
+    "FileHashValidator",
+    "IsoDateValidator",
     # Enrichment layer (Phase 1.2.3)
     "LayoutDetection",
     "Migration",
     "MigrationRegistry",
+    "MosScoreValidator",
+    "OcrQualityScoreValidator",
     # Immutable layer (Phase 1.2.2)
     "OriginalFileMetadata",
     "OriginalLabels",
+    "PixelDimensionsValidator",
     "ResolutionCategory",
+    "SampleIdValidator",
     # Sample aggregate (Phase 1.2.4)
     "SampleMetadata",
+    "ValidationResult",
     "get_migration_path",
     "migrate_sample",
     "register_migration",
     "rollback_sample",
+    "validate_enrichment_data",
+    "validate_enrichment_version",
+    "validate_original_file_metadata",
+    "validate_original_labels",
+    "validate_sample_metadata",
 ]
