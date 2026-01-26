@@ -44,6 +44,12 @@ from .atomic import (
     safe_write_text,
 )
 
+# Phase 2.3: Checkpointing
+from .checkpointing import (
+    CheckpointInfo,
+    CheckpointManager,
+)
+
 # Phase 1.3.1-1.3.2: Hashing
 from .hashing import (
     DEFAULT_CHUNK_SIZE,
@@ -55,6 +61,9 @@ from .hashing import (
 )
 
 __all__: list[str] = [
+    # Checkpointing (Phase 2.3)
+    "CheckpointInfo",
+    "CheckpointManager",
     # Hashing (Phase 1.3.1-1.3.2)
     "DEFAULT_CHUNK_SIZE",
     "atomic_json_write",
