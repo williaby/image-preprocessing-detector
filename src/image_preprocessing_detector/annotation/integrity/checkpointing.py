@@ -70,11 +70,14 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from filelock import FileLock
 
 from .atomic import atomic_write
 
@@ -135,6 +138,13 @@ class CheckpointManager:
     Checkpoints are stored as JSON files in the checkpoint directory,
     one per dataset. Files are written atomically to prevent corruption.
 
+    Safety guarantees:
+        - Thread-safety: RLock serializes access within a single process
+        - Cross-process safety: FileLock serializes access across processes
+
+    This allows multiple threads AND multiple processes (e.g., Celery workers,
+    parallel scripts) to safely share the same checkpoint directory.
+
     Attributes:
         checkpoint_dir: Directory for checkpoint files
         fsync: Whether to call fsync for durability
@@ -154,8 +164,13 @@ class CheckpointManager:
         self.checkpoint_dir = Path(checkpoint_dir)
         self.fsync = fsync
 
-        # Ensure checkpoint directory exists
+        # Ensure checkpoint directory exists before creating lock file
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+        # Cross-process safety: FileLock for multiple processes
+        self._file_lock = FileLock(self.checkpoint_dir / ".checkpoint.lock")
+        # Thread-safety: RLock for concurrent access within a process
+        self._thread_lock = threading.RLock()
 
     def _checkpoint_path(self, dataset_name: str) -> Path:
         """Get checkpoint file path for a dataset.
@@ -173,33 +188,37 @@ class CheckpointManager:
     def get_resume_point(self, dataset_name: str) -> CheckpointInfo | None:
         """Get resume point for a dataset.
 
+        Thread-safe and process-safe: Uses layered locking to prevent races.
+
         Args:
             dataset_name: Name of the dataset to check
 
         Returns:
             CheckpointInfo if checkpoint exists, None otherwise
         """
-        checkpoint_path = self._checkpoint_path(dataset_name)
+        # Cross-process and thread safety
+        with self._file_lock, self._thread_lock:
+            checkpoint_path = self._checkpoint_path(dataset_name)
 
-        if not checkpoint_path.exists():
-            logger.debug(f"No checkpoint found for {dataset_name}")
-            return None
+            if not checkpoint_path.exists():
+                logger.debug(f"No checkpoint found for {dataset_name}")
+                return None
 
-        try:
-            with open(checkpoint_path) as f:
-                data = json.load(f)
-            checkpoint = CheckpointInfo.from_dict(data)
-        except (json.JSONDecodeError, KeyError, TypeError) as e:
-            logger.warning(
-                f"Invalid checkpoint file for {dataset_name}: {e}. Starting fresh."
-            )
-            return None
-        else:
-            logger.info(
-                f"Found checkpoint for {dataset_name}: "
-                f"processed={checkpoint.processed_count}, last={checkpoint.last_path}"
-            )
-            return checkpoint
+            try:
+                with open(checkpoint_path) as f:
+                    data = json.load(f)
+                checkpoint = CheckpointInfo.from_dict(data)
+            except (json.JSONDecodeError, KeyError, TypeError) as e:
+                logger.warning(
+                    f"Invalid checkpoint file for {dataset_name}: {e}. Starting fresh."
+                )
+                return None
+            else:
+                logger.info(
+                    f"Found checkpoint for {dataset_name}: "
+                    f"processed={checkpoint.processed_count}, last={checkpoint.last_path}"
+                )
+                return checkpoint
 
     def save_checkpoint(
         self,
@@ -210,6 +229,7 @@ class CheckpointManager:
     ) -> None:
         """Save a checkpoint for a dataset.
 
+        Thread-safe and process-safe: Uses layered locking to serialize writes.
         The checkpoint is written atomically to prevent corruption.
 
         Args:
@@ -227,8 +247,10 @@ class CheckpointManager:
 
         checkpoint_path = self._checkpoint_path(dataset_name)
 
-        # Write atomically
+        # Cross-process and thread safety, atomic write
         with (
+            self._file_lock,
+            self._thread_lock,
             atomic_write(checkpoint_path, fsync=self.fsync) as temp_path,
             open(temp_path, "w") as f,
         ):
@@ -239,6 +261,7 @@ class CheckpointManager:
     def clear_checkpoint(self, dataset_name: str) -> bool:
         """Clear checkpoint for a dataset.
 
+        Thread-safe and process-safe: Uses layered locking.
         Call this when processing completes successfully.
 
         Args:
@@ -247,30 +270,36 @@ class CheckpointManager:
         Returns:
             True if checkpoint was removed, False if it didn't exist
         """
-        checkpoint_path = self._checkpoint_path(dataset_name)
+        # Cross-process and thread safety
+        with self._file_lock, self._thread_lock:
+            checkpoint_path = self._checkpoint_path(dataset_name)
 
-        if checkpoint_path.exists():
-            checkpoint_path.unlink()
-            logger.info(f"Cleared checkpoint for {dataset_name}")
-            return True
-        return False
+            if checkpoint_path.exists():
+                checkpoint_path.unlink()
+                logger.info(f"Cleared checkpoint for {dataset_name}")
+                return True
+            return False
 
     def list_checkpoints(self) -> list[CheckpointInfo]:
         """List all existing checkpoints.
 
+        Thread-safe and process-safe: Uses layered locking for consistent reads.
+
         Returns:
             List of CheckpointInfo for all datasets with checkpoints
         """
-        checkpoints = []
-        for path in self.checkpoint_dir.glob("*.checkpoint.json"):
-            try:
-                with open(path) as f:
-                    data = json.load(f)
-                checkpoints.append(CheckpointInfo.from_dict(data))
-            except (json.JSONDecodeError, KeyError, TypeError) as e:
-                logger.warning(f"Skipping invalid checkpoint {path}: {e}")
+        # Cross-process and thread safety
+        with self._file_lock, self._thread_lock:
+            checkpoints = []
+            for path in self.checkpoint_dir.glob("*.checkpoint.json"):
+                try:
+                    with open(path) as f:
+                        data = json.load(f)
+                    checkpoints.append(CheckpointInfo.from_dict(data))
+                except (json.JSONDecodeError, KeyError, TypeError) as e:
+                    logger.warning(f"Skipping invalid checkpoint {path}: {e}")
 
-        return sorted(checkpoints, key=lambda c: c.timestamp, reverse=True)
+            return sorted(checkpoints, key=lambda c: c.timestamp, reverse=True)
 
     def get_stats(self) -> dict[str, Any]:
         """Get checkpoint statistics.
@@ -296,6 +325,7 @@ class CheckpointManager:
     ) -> CheckpointValidationResult:
         """Get resume point with hash-based validation.
 
+        Thread-safe: Uses internal lock for checkpoint retrieval.
         Validates that the checkpoint file still exists in the image list
         and optionally verifies its hash matches.
 
@@ -324,6 +354,7 @@ class CheckpointManager:
             >>> if result.is_valid:
             ...     start_idx = result.resume_index
         """
+        # Note: get_resume_point is already thread-safe via RLock
         checkpoint = self.get_resume_point(dataset_name)
 
         if checkpoint is None:
@@ -586,39 +617,43 @@ class BatchCheckpointManager(CheckpointManager):
     def get_batch_resume_point(self, dataset_name: str) -> BatchCheckpointInfo | None:
         """Get batch-aware resume point.
 
+        Thread-safe and process-safe: Uses layered locking.
+
         Args:
             dataset_name: Name of the dataset
 
         Returns:
             BatchCheckpointInfo if checkpoint exists, None otherwise
         """
-        checkpoint_path = self._checkpoint_path(dataset_name)
+        # Cross-process and thread safety
+        with self._file_lock, self._thread_lock:
+            checkpoint_path = self._checkpoint_path(dataset_name)
 
-        if not checkpoint_path.exists():
-            return None
+            if not checkpoint_path.exists():
+                return None
 
-        try:
-            with open(checkpoint_path) as f:
-                data = json.load(f)
+            try:
+                with open(checkpoint_path) as f:
+                    data = json.load(f)
 
-            # Check if this is a batch checkpoint (version 2+)
-            if data.get("version", 1) >= 2:
-                return BatchCheckpointInfo.from_dict(data)
-            # Convert legacy checkpoint to batch checkpoint
-            legacy = CheckpointInfo.from_dict(data)
-            return BatchCheckpointInfo(
-                dataset_name=legacy.dataset_name,
-                processed_count=legacy.processed_count,
-                last_path=legacy.last_path,
-                last_hash=legacy.last_hash,
-                timestamp=legacy.timestamp,
-                version=2,
-                batch_idx=legacy.processed_count // self.batch_size,
-                batch_size=self.batch_size,
-            )
-        except (json.JSONDecodeError, KeyError, TypeError) as e:
-            logger.warning(f"Invalid checkpoint file for {dataset_name}: {e}")
-            return None
+                # Check if this is a batch checkpoint (version 2+)
+                if data.get("version", 1) >= 2:
+                    return BatchCheckpointInfo.from_dict(data)
+                # Convert legacy checkpoint to batch checkpoint
+                legacy = CheckpointInfo.from_dict(data)
+                return BatchCheckpointInfo(
+                    dataset_name=legacy.dataset_name,
+                    processed_count=legacy.processed_count,
+                    last_path=legacy.last_path,
+                    last_hash=legacy.last_hash,
+                    timestamp=legacy.timestamp,
+                    version=2,
+                    batch_idx=legacy.processed_count // self.batch_size,
+                    batch_size=self.batch_size,
+                )
+            except (json.JSONDecodeError, KeyError, TypeError) as e:
+                logger.warning(f"Invalid checkpoint file for {dataset_name}: {e}")
+                return None
 
     def get_progress(self, dataset_name: str) -> dict[str, Any]:
         """Get progress information from checkpoint.
@@ -658,13 +693,18 @@ class BatchCheckpointManager(CheckpointManager):
     ) -> None:
         """Save batch checkpoint atomically.
 
+        Thread-safe and process-safe: Uses layered locking.
+
         Args:
             dataset_name: Name of the dataset
             checkpoint: Checkpoint info to save
         """
         checkpoint_path = self._checkpoint_path(dataset_name)
 
+        # Cross-process and thread safety, atomic write
         with (
+            self._file_lock,
+            self._thread_lock,
             atomic_write(checkpoint_path, fsync=self.fsync) as temp_path,
             open(temp_path, "w") as f,
         ):

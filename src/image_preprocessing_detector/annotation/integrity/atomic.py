@@ -29,6 +29,7 @@ Example:
 from __future__ import annotations
 
 import os
+import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -49,6 +50,9 @@ def atomic_write(
     1. The target file is never in a partial/corrupt state
     2. Readers always see either the old or new complete content
     3. Crashes during write don't corrupt existing data
+
+    Temp files use unique names (PID + UUID) to prevent collisions when
+    multiple processes write to the same target path concurrently.
 
     Args:
         path: Target file path for the final output
@@ -75,8 +79,10 @@ def atomic_write(
         (write_text, write_bytes) or by opening it normally.
         Do NOT write directly to `path` - write to `temp_path`.
     """
-    # Create temp file in same directory for atomic rename
-    temp_path = path.with_suffix(path.suffix + suffix)
+    # Create unique temp file using PID + UUID to prevent collisions
+    # across concurrent processes writing to the same target
+    unique_id = f"{os.getpid()}_{uuid.uuid4().hex[:8]}"
+    temp_path = path.with_suffix(f".{unique_id}{suffix}")
 
     try:
         yield temp_path
