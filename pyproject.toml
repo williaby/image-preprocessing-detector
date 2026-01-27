@@ -75,6 +75,7 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-xdist>=3.3.0",
     "hypothesis>=6.82.0",
+    "openpyxl>=3.1.0",  # Excel file parsing for annotation parsers
     # Code Quality
     "ruff>=0.9.0,<1.0.0",  # Equivalent to ^0.9.0 in Poetry (PEP 508 syntax)
     "mypy>=1.4.0",  # Legacy type checker (kept for reference)
@@ -577,6 +578,8 @@ markers = [
     "performance: marks tests as performance/latency tests (run with '-m performance')",
     "requires_full_dataset: marks tests requiring full datasets (88+ GB, skip in CI)",
     "real_data: marks tests using real test fixtures (not synthetic)",
+    "e2e: marks tests as end-to-end tests (full pipeline, real components)",
+    "e2e_annotation: marks annotation system E2E tests (Phase 6.1)",
 ]
 
 # Coverage Configuration
