@@ -229,18 +229,25 @@ def sample_dataset_dir(tmp_path: Path, sample_rgb_bytes: bytes) -> Path:
 
 
 class MockParser(BaseParser):
-    """Mock parser for testing."""
+    """Mock parser for testing.
+
+    Implements the BaseParser interface with configurable dataset names.
+    """
 
     def __init__(self, dataset_name: str = "mock-dataset"):
-        """Initialize mock parser."""
+        """Initialize mock parser.
+
+        Args:
+            dataset_name: Primary dataset name this parser handles.
+        """
         super().__init__()
         self._dataset_name = dataset_name
         self.parse_calls: list[Path] = []
 
     @property
-    def dataset_name(self) -> str:
-        """Return dataset name."""
-        return self._dataset_name
+    def dataset_names(self) -> list[str]:
+        """Return list of dataset names this parser handles."""
+        return [self._dataset_name]
 
     @property
     def supported_extensions(self) -> set[str]:
@@ -256,11 +263,11 @@ class MockParser(BaseParser):
         """Parse image and return mock labels.
 
         Records the parse call for verification.
+        Uses raw_labels for generic label storage.
         """
         self.parse_calls.append(image_path)
         return OriginalLabels(
-            category="document",
-            tags=["mock", "test"],
+            raw_labels={"category": "document", "tags": ["mock", "test"]},
         )
 
 
@@ -317,7 +324,10 @@ def sample_enrichment_data(
 
 @pytest.fixture
 def mock_enrichment_manager(sample_enrichment_data: EnrichmentData):
-    """Return mock enrichment manager that returns sample data."""
+    """Return mock enrichment manager that returns sample data.
+
+    DEPRECATED: Prefer real_enrichment_manager for new tests.
+    """
     manager = MagicMock(spec=EnrichmentManager)
 
     def mock_enrich_batch(image_paths: list[Path]) -> list[EnrichmentResult]:
@@ -333,6 +343,28 @@ def mock_enrichment_manager(sample_enrichment_data: EnrichmentData):
     return manager
 
 
+@pytest.fixture
+def real_enrichment_manager() -> EnrichmentManager:
+    """Return real EnrichmentManager with SimulatedInferenceProvider.
+
+    Uses SimulatedInferenceProvider for GPU-less testing with deterministic,
+    reproducible enrichment results. Preferred over mock_enrichment_manager.
+    """
+    from image_preprocessing_detector.annotation.enrichment.providers import (
+        SimulatedInferenceProvider,
+    )
+
+    simulated_provider = SimulatedInferenceProvider(
+        failure_rate=0.0,  # No failures for normal unit tests
+        seed=42,  # Reproducible results
+    )
+    return EnrichmentManager(
+        providers=[simulated_provider],
+        validate=True,
+        max_retries=1,
+    )
+
+
 # ============================================================================
 # Schema Fixtures
 # ============================================================================
@@ -340,10 +372,9 @@ def mock_enrichment_manager(sample_enrichment_data: EnrichmentData):
 
 @pytest.fixture
 def sample_original_labels() -> OriginalLabels:
-    """Return sample original labels."""
+    """Return sample original labels using raw_labels fallback."""
     return OriginalLabels(
-        category="document",
-        tags=["text", "table"],
+        raw_labels={"category": "document", "tags": ["text", "table"]},
     )
 
 
@@ -387,7 +418,7 @@ def sample_parsed_sample(sample_image_file: Path) -> ParsedSample:
         image_path=sample_image_file,
         relative_path="train/sample_image.png",
         file_hash="abc123def456",
-        original_labels=OriginalLabels(category="document"),
+        original_labels=OriginalLabels(raw_labels={"category": "document"}),
         dataset_name="test-dataset",
     )
 
@@ -412,14 +443,22 @@ def sample_enriched_sample(
 
 @pytest.fixture
 def sample_settings(tmp_path: Path) -> AnnotationSettings:
-    """Return sample annotation settings."""
+    """Return sample annotation settings with real paths.
+
+    Uses tmp_path to create isolated test directories.
+    """
+    metadata_root = tmp_path / "metadata_registry"
+    metadata_root.mkdir(parents=True, exist_ok=True)
+
     return AnnotationSettings(
         e_drive_root=tmp_path,
-        parquet_output=tmp_path / "output",
+        metadata_root=metadata_root,
         checkpoint_dir=tmp_path / "checkpoints",
         workers=2,
         batch_size=10,
         checkpoint_interval=5,
+        yolo_model_path=None,  # No GPU inference for unit tests
+        siglip_model_path=None,
     )
 
 

@@ -5,12 +5,31 @@ This module provides:
 - Test fixture paths for real dataset samples
 - Pytest markers for different test categories
 - Shared fixtures for common test resources
+- Custom plugins for test quality enforcement (weak assertion detector)
+
+Custom Plugins:
+    The weak assertion detector is available via --weak-assertions flag.
+    See tests/plugins/weak_assertion_detector.py for details.
 """
 
 import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
+
+# Add tests directory to path for plugin import
+_tests_dir = Path(__file__).parent
+if str(_tests_dir) not in sys.path:
+    sys.path.insert(0, str(_tests_dir))
+
+# Import plugin hooks to register them
+from plugins.weak_assertion_detector import (
+    pytest_addoption as _weak_assertion_addoption,
+)
+from plugins.weak_assertion_detector import (
+    pytest_configure as _weak_assertion_configure,
+)
 
 # ============================================================================
 # Test Fixture Paths
@@ -31,8 +50,14 @@ IMAGE_GLOB_PATTERN = "*.{jpg,png,jpeg}"
 # ============================================================================
 
 
+def pytest_addoption(parser):
+    """Add custom command line options."""
+    # Delegate to weak assertion plugin
+    _weak_assertion_addoption(parser)
+
+
 def pytest_configure(config):
-    """Register custom pytest markers."""
+    """Register custom pytest markers and plugins."""
     config.addinivalue_line(
         "markers",
         "unit: Unit tests (fast, isolated, no external dependencies)",
@@ -57,6 +82,9 @@ def pytest_configure(config):
         "markers",
         "real_data: Tests using real test fixtures (not synthetic)",
     )
+
+    # Register weak assertion detector plugin
+    _weak_assertion_configure(config)
 
 
 # ============================================================================

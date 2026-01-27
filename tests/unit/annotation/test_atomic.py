@@ -118,7 +118,9 @@ class TestAtomicWrite:
         target = tmp_path / "output.txt"
 
         with atomic_write(target, suffix=".temp") as temp_path:
-            assert str(temp_path).endswith(".txt.temp")
+            # Temp file should have unique name (PID_UUID) + custom suffix
+            assert str(temp_path).endswith(".temp")
+            assert "output." in str(temp_path)
             temp_path.write_text("Content")
 
         assert target.exists()

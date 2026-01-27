@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -411,11 +410,33 @@ class TestPipelineStats:
 class TestPipelineResult:
     """Test PipelineResult dataclass."""
 
-    def test_pipeline_result_properties(self):
+    def test_pipeline_result_properties(self, tmp_path):
         """Test PipelineResult computed properties."""
+        # Create real sample objects instead of MagicMock
+        sample1 = EnrichedSample(
+            parsed=ParsedSample(
+                image_path=tmp_path / "img1.png",
+                relative_path="img1.png",
+                file_hash="hash1",
+                original_labels=OriginalLabels(),
+                dataset_name="test",
+            ),
+            enrichment=EnrichmentData(),
+        )
+        sample2 = EnrichedSample(
+            parsed=ParsedSample(
+                image_path=tmp_path / "img2.png",
+                relative_path="img2.png",
+                file_hash="hash2",
+                original_labels=OriginalLabels(),
+                dataset_name="test",
+            ),
+            enrichment=EnrichmentData(),
+        )
+
         result = PipelineResult(
             dataset_name="test",
-            samples=[MagicMock(), MagicMock()],
+            samples=[sample1, sample2],
             errors=[(Path("a.png"), "error")],
         )
 
@@ -472,71 +493,35 @@ class TestParseSingleImage:
 
 
 class TestAnnotationPipeline:
-    """Test AnnotationPipeline class."""
+    """Test AnnotationPipeline class.
 
-    @pytest.fixture
-    def mock_settings(self):
-        """Create mock settings."""
-        settings = MagicMock()
-        settings.workers = 2
-        settings.batch_size = 10
-        settings.checkpoint_interval = 5
-        settings.e_drive_root = Path("/data")
-        return settings
-
-    @pytest.fixture
-    def mock_parser_registry(self):
-        """Create mock parser registry."""
-        registry = MagicMock()
-        parser = MagicMock()
-        parser.parse.return_value = OriginalLabels()
-        registry.get_parser.return_value = parser
-        return registry
-
-    @pytest.fixture
-    def mock_enrichment_manager(self):
-        """Create mock enrichment manager."""
-        manager = MagicMock()
-
-        # Return mock enrichment results
-        def enrich_batch(paths, *args, **kwargs):
-            results = []
-            for _ in paths:
-                result = MagicMock()
-                result.data = EnrichmentData()
-                result.errors = []
-                results.append(result)
-            return results
-
-        manager.enrich_batch.side_effect = enrich_batch
-        return manager
-
-    @pytest.fixture
-    def mock_checkpoint_manager(self, tmp_path):
-        """Create mock checkpoint manager."""
-        manager = MagicMock()
-        manager.get_resume_point.return_value = None
-        manager.save_checkpoint.return_value = None
-        manager.clear_checkpoint.return_value = True
-        return manager
+    Refactored to use real components where possible (Phase 6.2).
+    Uses fixtures from conftest.py:
+    - sample_settings: Real AnnotationSettings with tmp_path
+    - parser_registry_with_mock: Real ParserRegistry with MockParser
+    - real_enrichment_manager: Real EnrichmentManager with SimulatedInferenceProvider
+    - mock_checkpoint_manager: Real CheckpointManager with tmp_path
+    """
 
     def test_pipeline_creation(
         self,
-        mock_settings,
-        mock_parser_registry,
-        mock_enrichment_manager,
+        sample_settings,
+        parser_registry_with_mock,
+        real_enrichment_manager,
         mock_checkpoint_manager,
     ):
-        """Test creating pipeline."""
+        """Test creating pipeline with real components."""
         pipeline = AnnotationPipeline(
-            settings=mock_settings,
-            parser_registry=mock_parser_registry,
-            enrichment_manager=mock_enrichment_manager,
+            settings=sample_settings,
+            parser_registry=parser_registry_with_mock,
+            enrichment_manager=real_enrichment_manager,
             checkpoint_manager=mock_checkpoint_manager,
         )
 
-        assert pipeline.settings is mock_settings
-        assert pipeline.parsers is mock_parser_registry
+        assert pipeline.settings is sample_settings
+        assert pipeline.parsers is parser_registry_with_mock
+        assert pipeline.enrichment is real_enrichment_manager
+        assert pipeline.checkpoints is mock_checkpoint_manager
 
     def test_batches_utility(self):
         """Test _batches static method."""
@@ -549,16 +534,16 @@ class TestAnnotationPipeline:
 
     def test_find_resume_index(
         self,
-        mock_settings,
-        mock_parser_registry,
-        mock_enrichment_manager,
+        sample_settings,
+        parser_registry_with_mock,
+        real_enrichment_manager,
         mock_checkpoint_manager,
     ):
         """Test finding resume index."""
         pipeline = AnnotationPipeline(
-            settings=mock_settings,
-            parser_registry=mock_parser_registry,
-            enrichment_manager=mock_enrichment_manager,
+            settings=sample_settings,
+            parser_registry=parser_registry_with_mock,
+            enrichment_manager=real_enrichment_manager,
             checkpoint_manager=mock_checkpoint_manager,
         )
 
@@ -574,18 +559,22 @@ class TestAnnotationPipeline:
 
     def test_process_dataset_no_parser(
         self,
-        mock_settings,
-        mock_enrichment_manager,
+        sample_settings,
+        real_enrichment_manager,
         mock_checkpoint_manager,
     ):
         """Test processing with no parser returns error."""
-        parser_registry = MagicMock()
-        parser_registry.get_parser.return_value = None
+        from image_preprocessing_detector.annotation.parsers.registry import (
+            ParserRegistry,
+        )
+
+        # Empty registry - no parsers registered
+        empty_registry = ParserRegistry()
 
         pipeline = AnnotationPipeline(
-            settings=mock_settings,
-            parser_registry=parser_registry,
-            enrichment_manager=mock_enrichment_manager,
+            settings=sample_settings,
+            parser_registry=empty_registry,
+            enrichment_manager=real_enrichment_manager,
             checkpoint_manager=mock_checkpoint_manager,
         )
 
@@ -605,50 +594,62 @@ class TestAnnotationPipeline:
 
 
 class TestPipelineIntegration:
-    """Integration tests for complete pipeline flow."""
+    """Integration tests for complete pipeline flow.
 
-    def test_end_to_end_with_real_files(self, tmp_path):
-        """Test complete pipeline with actual files."""
-        # Create test images
+    Refactored to use real components (Phase 6.2).
+    """
+
+    def test_end_to_end_with_real_files(
+        self,
+        tmp_path,
+        sample_rgb_bytes,
+        real_enrichment_manager,
+        mock_parser_factory,
+    ):
+        """Test complete pipeline with actual files and real components."""
+        from image_preprocessing_detector.annotation.config.settings import (
+            AnnotationSettings,
+        )
+        from image_preprocessing_detector.annotation.parsers.registry import (
+            ParserRegistry,
+        )
+
+        # Create test images (real PNG bytes)
         images_dir = tmp_path / "images"
         images_dir.mkdir()
 
         for i in range(3):
             img_path = images_dir / f"img{i}.png"
-            img_path.write_bytes(f"image content {i}".encode())
+            img_path.write_bytes(sample_rgb_bytes)
 
-        # Create mock components
-        settings = MagicMock()
-        settings.workers = 1
-        settings.batch_size = 2
-        settings.checkpoint_interval = 1
-        settings.e_drive_root = tmp_path
+        # Use real settings with test-appropriate values
+        metadata_root = tmp_path / "metadata"
+        metadata_root.mkdir()
 
-        parser = MagicMock()
-        parser.parse.return_value = OriginalLabels()
-        parser_registry = MagicMock()
-        parser_registry.get_parser.return_value = parser
+        settings = AnnotationSettings(
+            e_drive_root=tmp_path,
+            metadata_root=metadata_root,
+            checkpoint_dir=tmp_path / "checkpoints",
+            workers=1,
+            batch_size=2,
+            checkpoint_interval=1,
+            yolo_model_path=None,
+            siglip_model_path=None,
+        )
 
-        def enrich_batch(paths, *args, **kwargs):
-            results = []
-            for _ in paths:
-                result = MagicMock()
-                result.data = EnrichmentData()
-                result.errors = []
-                results.append(result)
-            return results
+        # Use real parser registry with mock parser configured for test-dataset
+        test_parser = mock_parser_factory("test-dataset")
+        parser_registry = ParserRegistry()
+        parser_registry.register(test_parser)
 
-        enrichment_manager = MagicMock()
-        enrichment_manager.enrich_batch.side_effect = enrich_batch
+        # Use real checkpoint manager
+        checkpoint_manager = CheckpointManager(checkpoint_dir=settings.checkpoint_dir)
 
-        checkpoint_dir = tmp_path / "checkpoints"
-        checkpoint_manager = CheckpointManager(checkpoint_dir=checkpoint_dir)
-
-        # Create and run pipeline
+        # Create and run pipeline with real components
         pipeline = AnnotationPipeline(
             settings=settings,
             parser_registry=parser_registry,
-            enrichment_manager=enrichment_manager,
+            enrichment_manager=real_enrichment_manager,
             checkpoint_manager=checkpoint_manager,
         )
 
@@ -665,3 +666,10 @@ class TestPipelineIntegration:
         assert result.success_count == 3
         assert result.error_count == 0
         assert result.stats.total_images == 3
+
+        # Verify test parser was actually called
+        assert len(test_parser.parse_calls) == 3
+
+        # Verify checkpoint manager was used (checkpoint may be cleared on success)
+        # The checkpoint dir should exist and have been initialized
+        assert checkpoint_manager.checkpoint_dir.exists()
