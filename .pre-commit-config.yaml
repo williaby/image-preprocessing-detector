@@ -109,6 +109,31 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
+  # Phase 5: Check for unbounded module-level caches
+  # Prevents OOM issues from unbounded dictionaries at module level
+  # Allowed patterns: _*_READERS (StreamingJSONLReader), _COCO_CACHE (file-level)
+  - repo: local
+    hooks:
+      - id: no-unbounded-module-caches
+        name: Check for unbounded module-level caches
+        entry: bash
+        args:
+          - -c
+          - |
+            PATTERN="^_[A-Z_]*_CACHE: dict"
+            SEARCH_PATH="src/image_preprocessing_detector/annotation/parsers/"
+            if grep -rn "$PATTERN" "$SEARCH_PATH" 2>/dev/null \
+                | grep -v "_COCO_CACHE" \
+                | grep -v "_READERS"; then
+              echo "ERROR: Found unbounded module-level cache."
+              echo "Use BoundedCache or StreamingJSONLReader instead."
+              exit 1
+            fi
+        language: system
+        files: ^src/image_preprocessing_detector/annotation/parsers/.*\.py$
+        pass_filenames: false
+        stages: [pre-commit]
+
   # Python docstring coverage with interrogate
   # NOTE: Docstring style now handled by Ruff (D rules)
   - repo: https://github.com/econchick/interrogate
