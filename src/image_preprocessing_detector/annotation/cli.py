@@ -49,6 +49,12 @@ from .parsers.template import (
     validate_dataset_info,
 )
 from .schemas.enums import DomainLevel1
+from .workflow.preflight import (
+    CheckSeverity,
+    PreflightChecker,
+    PreflightConfig,
+    PreflightResult,
+)
 
 
 @click.group()
@@ -545,6 +551,223 @@ def migrate(
         f"\n{'=' * 40}\nMigrated: {migrated}\nSkipped:  {skipped}\nErrors:   {errors}"
     )
     if errors > 0:
+        sys.exit(1)
+
+
+# =============================================================================
+# preflight command
+# =============================================================================
+
+
+def _format_preflight_failures(failures: list[Any], verbose: bool) -> list[str]:
+    """Format failure checks for output."""
+    lines: list[str] = []
+    for check in failures:
+        severity_icon = "⚠" if check.severity == CheckSeverity.WARNING else "✗"
+        lines.append(f"{severity_icon} [{check.category.value}] {check.name}")
+        lines.append(f"    {check.message}")
+        if verbose and check.details:
+            for key, value in check.details.items():
+                lines.append(f"      {key}: {value}")
+    return lines
+
+
+def _format_preflight_result(result: PreflightResult, verbose: bool) -> str:
+    """Format pre-flight result for CLI output."""
+    lines: list[str] = []
+    total_checks = len(result.checks)
+
+    # Header and summary
+    status = "✓ PASSED" if result.passed else "✗ FAILED"
+    lines.append(f"\nPre-flight Validation: {status}")
+    lines.append("=" * 50)
+    lines.append(f"Total checks: {total_checks}")
+    lines.append(f"  Passed:   {total_checks - len(result.failures)}")
+    lines.append(f"  Warnings: {len(result.warnings)}")
+    lines.append(f"  Errors:   {len(result.errors)}")
+
+    # Show failures (always)
+    if result.failures:
+        lines.append("\n--- Failures ---")
+        lines.extend(_format_preflight_failures(result.failures, verbose))
+
+    # Show all checks in verbose mode
+    if verbose and result.checks:
+        lines.append("\n--- All Checks ---")
+        for check in result.checks:
+            icon = "✓" if check.passed else "✗"
+            lines.append(
+                f"{icon} [{check.category.value}] {check.name}: {check.message}"
+            )
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _load_preflight_settings(
+    dataset: Path | None,
+    output: Path | None,
+    checkpoint: Path | None,
+) -> tuple[AnnotationSettings | None, Path | None, Path | None, Path | None]:
+    """Load settings from environment and resolve paths."""
+    try:
+        settings = AnnotationSettings.from_env()
+        resolved_dataset = dataset or settings.e_drive_root
+        resolved_output = output or settings.metadata_root
+        resolved_checkpoint = checkpoint or settings.checkpoint_dir
+    except Exception as e:
+        click.echo(f"Warning: Could not load settings: {e}", err=True)
+        return None, dataset, output, checkpoint
+    else:
+        return settings, resolved_dataset, resolved_output, resolved_checkpoint
+
+
+def _collect_model_paths(
+    settings: AnnotationSettings | None, check_models: bool
+) -> list[Path]:
+    """Collect model paths from settings for validation."""
+    model_paths: list[Path] = []
+    if check_models and settings:
+        if settings.yolo_model_path:
+            model_paths.append(settings.yolo_model_path)
+        if settings.siglip_model_path:
+            model_paths.append(settings.siglip_model_path)
+    return model_paths
+
+
+def _add_settings_validation(
+    result: PreflightResult, settings: AnnotationSettings
+) -> None:
+    """Add settings validation issues to preflight result."""
+    from .workflow.preflight import CheckCategory, CheckResult
+
+    for issue in settings.validate():
+        result.add_check(
+            CheckResult(
+                name="settings_validation",
+                passed=False,
+                category=CheckCategory.SYSTEM,
+                severity=CheckSeverity.WARNING,
+                message=issue,
+            )
+        )
+
+
+@cli.command("preflight")
+@click.option(
+    "--dataset",
+    "-d",
+    type=click.Path(exists=True, path_type=Path),
+    help="Dataset path to validate",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(path_type=Path),
+    help="Output directory for results",
+)
+@click.option(
+    "--checkpoint",
+    type=click.Path(path_type=Path),
+    help="Checkpoint directory",
+)
+@click.option(
+    "--min-disk-gb",
+    type=float,
+    default=10.0,
+    help="Minimum required disk space in GB (default: 10)",
+)
+@click.option(
+    "--check-models/--no-check-models",
+    default=True,
+    help="Check model file existence (default: yes)",
+)
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed check results")
+@click.option("--json", "output_json", is_flag=True, help="Output results as JSON")
+@click.option(
+    "--from-settings",
+    is_flag=True,
+    help="Load paths from AnnotationSettings (env vars / config)",
+)
+@click.option(
+    "--check-providers",
+    multiple=True,
+    type=str,
+    help="Check provider availability (e.g., --check-providers yolo --check-providers siglip)",
+)
+def preflight(
+    dataset: Path | None,
+    output: Path | None,
+    checkpoint: Path | None,
+    min_disk_gb: float,
+    check_models: bool,
+    verbose: bool,
+    output_json: bool,
+    from_settings: bool,
+    check_providers: tuple[str, ...],
+) -> None:
+    r"""Run pre-flight validation checks before annotation workflow.
+
+    Validates disk space, path accessibility, model files, and system
+    readiness before starting long-running annotation operations.
+
+    \b
+    Examples:
+        # Basic validation with explicit paths
+        annotation preflight -d /path/to/dataset -o /path/to/output
+
+        # Use paths from environment/settings
+        annotation preflight --from-settings
+
+        # Verbose output with model checks
+        annotation preflight -d ./dataset -o ./output -v --check-models
+
+        # JSON output for CI integration
+        annotation preflight --from-settings --json
+    """
+    import json as json_module
+
+    # Load settings if requested
+    settings = None
+    if from_settings:
+        settings, dataset, output, checkpoint = _load_preflight_settings(
+            dataset, output, checkpoint
+        )
+        if not dataset and not settings:
+            click.echo("Error: --dataset required when settings unavailable", err=True)
+            sys.exit(1)
+
+    # Build model paths and configure checker
+    model_paths = _collect_model_paths(settings, check_models)
+    provider_names = list(check_providers) if check_providers else []
+    required_paths: list[Path] = [dataset] if dataset else []
+    config = PreflightConfig(
+        min_disk_space_gb=min_disk_gb,
+        model_paths=model_paths,
+        required_read_paths=required_paths,
+        check_provider_connectivity=bool(provider_names),
+        provider_names=provider_names,
+    )
+
+    # Run checks
+    checker = PreflightChecker(config=config)
+    result = checker.check_all(
+        dataset_path=dataset,
+        output_path=output,
+        checkpoint_path=checkpoint,
+    )
+
+    # Add settings validation if loaded
+    if settings:
+        _add_settings_validation(result, settings)
+
+    # Output results
+    if output_json:
+        click.echo(json_module.dumps(result.to_dict(), indent=2, default=str))
+    else:
+        click.echo(_format_preflight_result(result, verbose))
+
+    if not result.passed:
         sys.exit(1)
 
 

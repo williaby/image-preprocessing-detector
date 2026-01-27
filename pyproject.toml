@@ -567,7 +567,7 @@ addopts = [
     "--cov-report=html",
     "--cov-report=term-missing:skip-covered",
     "--cov-report=xml",
-    "--cov-fail-under=79",
+    "--cov-fail-under=80",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -594,6 +594,10 @@ omit = [
     "data/*",  # Exclude data processing scripts
     # CLI - tested via integration but excluded from unit coverage
     "src/image_preprocessing_detector/cli.py",
+    # Annotation CLI - tested via integration but excluded from unit coverage
+    "src/image_preprocessing_detector/annotation/cli.py",
+    # Annotation monitoring infrastructure (requires Prometheus setup)
+    "src/image_preprocessing_detector/annotation/monitoring/*",
     # Phase 6: layout_lite - needs tests (TODO: create tests using existing fixtures)
     "src/image_preprocessing_detector/detection/layout_lite/*",
     # Phase 8: document_processor - not yet implemented
