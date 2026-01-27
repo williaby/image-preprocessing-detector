@@ -54,12 +54,14 @@ from typing import TYPE_CHECKING, Any
 from ..config.settings import AnnotationSettings
 from ..integrity.checkpointing import CheckpointManager
 from ..integrity.hashing import compute_full_sha256
+from ..monitoring.metrics import get_annotation_metrics
 from ..schemas.enrichment import EnrichmentData
 from ..schemas.immutable import OriginalLabels
 from ..schemas.sample import SampleMetadata
 
 if TYPE_CHECKING:
     from ..enrichment.manager import EnrichmentManager
+    from ..monitoring.metrics import AnnotationMetrics
     from ..parsers.registry import ParserRegistry
 
 logger = logging.getLogger(__name__)
@@ -117,6 +119,7 @@ class PipelineStats:
         success_count: Successfully processed images
         error_count: Images with errors
         cpu_time_seconds: Time spent in CPU stage
+        parse_time_seconds: Time spent in parse stage
         gpu_time_seconds: Time spent in GPU stage
         io_time_seconds: Time spent in IO stage
         images_per_second: Throughput metric
@@ -126,6 +129,7 @@ class PipelineStats:
     success_count: int = 0
     error_count: int = 0
     cpu_time_seconds: float = 0.0
+    parse_time_seconds: float = 0.0
     gpu_time_seconds: float = 0.0
     io_time_seconds: float = 0.0
     images_per_second: float = 0.0
@@ -255,6 +259,9 @@ class AnnotationPipeline:
         self.enrichment = enrichment_manager
         self.checkpoints = checkpoint_manager
 
+        # Metrics collection
+        self._metrics: AnnotationMetrics = get_annotation_metrics()
+
         # Inter-stage queues with bounded capacity
         # Bounded queues prevent memory exhaustion
         self._hash_queue: Queue[list[ParsedSample] | None] = Queue(maxsize=4)
@@ -282,6 +289,9 @@ class AnnotationPipeline:
             PipelineResult with processed samples and statistics
         """
         start_time = time.perf_counter()
+
+        # Track active pipelines
+        self._metrics.active_pipelines.inc()
 
         # Reset state
         self._errors = []
@@ -342,6 +352,7 @@ class AnnotationPipeline:
         cpu_start = time.perf_counter()
         self._cpu_stage(dataset_name, image_paths, dataset_path, dataset_config)
         self._stats.cpu_time_seconds = time.perf_counter() - cpu_start
+        self._metrics.record_pipeline_stage("cpu_hash", self._stats.cpu_time_seconds)
 
         # Wait for pipeline to drain
         parse_thread.join()
@@ -358,6 +369,9 @@ class AnnotationPipeline:
         # Clear checkpoint on success
         if not self._errors:
             self.checkpoints.clear_checkpoint(dataset_name)
+
+        # Track pipeline completion
+        self._metrics.active_pipelines.dec()
 
         logger.info(
             f"Pipeline completed for {dataset_name}: "
@@ -415,6 +429,9 @@ class AnnotationPipeline:
                         # Error case: (path, error_message)
                         path, error = result
                         self._errors.append((path, error))
+                        self._metrics.pipeline_errors.labels(
+                            stage="cpu_hash", error_type="HashError"
+                        ).inc()
 
                 # Send to parse stage
                 if hashed_batch:
@@ -439,6 +456,7 @@ class AnnotationPipeline:
         - Non-picklable objects
         """
         logger.debug("Parse stage starting")
+        parse_start = time.perf_counter()
 
         while True:
             try:
@@ -470,10 +488,17 @@ class AnnotationPipeline:
                 except Exception as e:
                     logger.warning(f"Parse failed for {sample.image_path}: {e}")
                     self._errors.append((sample.image_path, str(e)))
+                    self._metrics.pipeline_errors.labels(
+                        stage="parse", error_type=type(e).__name__
+                    ).inc()
 
             # Send to GPU stage
             if parsed_batch:
                 self._parse_queue.put(parsed_batch)
+
+        # Record parse stage timing
+        self._stats.parse_time_seconds = time.perf_counter() - parse_start
+        self._metrics.record_pipeline_stage("parse", self._stats.parse_time_seconds)
 
         # Signal end of parse stage
         self._parse_queue.put(None)
@@ -518,6 +543,10 @@ class AnnotationPipeline:
 
             except Exception as e:
                 logger.exception("GPU enrichment failed for batch")
+                # Record error metric
+                self._metrics.pipeline_errors.labels(
+                    stage="gpu", error_type=type(e).__name__
+                ).inc()
                 # Put samples with empty enrichment
                 enriched_batch = [
                     EnrichedSample(
@@ -530,6 +559,7 @@ class AnnotationPipeline:
                 self._enrich_queue.put(enriched_batch)
 
         self._stats.gpu_time_seconds = time.perf_counter() - gpu_start
+        self._metrics.record_pipeline_stage("gpu", self._stats.gpu_time_seconds)
 
         # Signal end of GPU stage
         self._enrich_queue.put(None)
@@ -557,6 +587,10 @@ class AnnotationPipeline:
             if batch is None:
                 break
 
+            # Track batch processing time
+            batch_start = time.perf_counter()
+            batch_errors = 0
+
             # Convert to SampleMetadata
             for sample in batch:
                 try:
@@ -567,8 +601,21 @@ class AnnotationPipeline:
                         f"Failed to create metadata for {sample.parsed.image_path}"
                     )
                     self._errors.append((sample.parsed.image_path, str(e)))
+                    batch_errors += 1
+                    self._metrics.pipeline_errors.labels(
+                        stage="io", error_type=type(e).__name__
+                    ).inc()
 
             batch_count += 1
+            batch_duration = time.perf_counter() - batch_start
+
+            # Record batch metrics
+            self._metrics.record_batch_processed(
+                dataset=dataset_name,
+                batch_size=len(batch),
+                duration_seconds=batch_duration,
+                success=(batch_errors == 0),
+            )
 
             # Checkpoint every N batches
             if batch_count % self.settings.checkpoint_interval == 0:
@@ -581,6 +628,7 @@ class AnnotationPipeline:
                 )
 
         self._stats.io_time_seconds = time.perf_counter() - io_start
+        self._metrics.record_pipeline_stage("io", self._stats.io_time_seconds)
         logger.debug(f"IO stage complete: {len(results)} samples")
 
     def _create_sample_metadata(self, sample: EnrichedSample) -> SampleMetadata:

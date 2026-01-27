@@ -8,6 +8,7 @@ Modules:
     - pipeline.py: Three-stage CPU/GPU/IO pipeline
     - progress.py: Progress tracking and reporting
     - orchestrator.py: Multi-dataset coordination (Phase 2.5)
+    - scanner.py: Batch-aware file scanner with checkpointing (Phase 5)
 
 Pipeline Architecture:
     Stage 1 (CPU Pool): Parallel file hashing + label parsing
@@ -26,6 +27,8 @@ Example:
     ...     AnnotationPipeline,
     ...     ParsedSample,
     ...     EnrichedSample,
+    ...     BatchScanner,
+    ...     ScanConfig,
     ... )
     >>>
     >>> # Create pipeline
@@ -36,12 +39,15 @@ Example:
     ...     checkpoint_manager=checkpoints,
     ... )
     >>>
-    >>> # Process dataset
-    >>> results = pipeline.process_dataset(
-    ...     dataset_name="diqa-5000",
-    ...     image_paths=paths,
-    ...     dataset_config=config,
-    ... )
+    >>> # Scan dataset with batch accumulation (Phase 5)
+    >>> scanner = BatchScanner(ScanConfig(batch_size=100))
+    >>> for batch in scanner.scan(dataset_path):
+    ...     results = pipeline.process_dataset(
+    ...         dataset_name=batch.dataset_name,
+    ...         image_paths=batch.paths,
+    ...         dataset_config=config,
+    ...     )
+    ...     scanner.mark_batch_complete(batch)
 """
 
 from __future__ import annotations
@@ -59,21 +65,60 @@ from .pipeline import (
     PipelineResult,
     PipelineStats,
 )
+from .preflight import (
+    CheckCategory,
+    CheckResult,
+    CheckSeverity,
+    PreflightChecker,
+    PreflightConfig,
+    PreflightResult,
+    run_preflight_checks,
+)
 from .progress import (
     ProgressCallback,
     ProgressTracker,
 )
+from .scanner import (
+    BatchScanner,
+    LoggingProgressCallback,
+    ScanBatch,
+    ScanCheckpoint,
+    ScanConfig,
+    ScanProgress,
+)
+
+# Rename to avoid conflict with progress.ProgressCallback
+ScannerProgressCallback = LoggingProgressCallback
 
 __all__: list[str] = [
+    # Orchestration
     "AnnotationOrchestrator",
+    # Pipeline
     "AnnotationPipeline",
+    # Scanner (Phase 5)
+    "BatchScanner",
+    # Pre-flight checks (Phase 5)
+    "CheckCategory",
+    "CheckResult",
+    "CheckSeverity",
     "DatasetResult",
     "EnrichedSample",
+    "LoggingProgressCallback",
     "OrchestrationResult",
     "ParsedSample",
     "PipelineResult",
     "PipelineStats",
+    "PreflightChecker",
+    "PreflightConfig",
+    "PreflightResult",
+    # Progress
     "ProgressCallback",
     "ProgressTracker",
+    "ScanBatch",
+    "ScanCheckpoint",
+    "ScanConfig",
+    "ScanProgress",
+    "ScannerProgressCallback",
     "create_orchestrator",
+    "run_preflight_checks",
 ]
