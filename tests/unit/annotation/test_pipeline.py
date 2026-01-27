@@ -441,7 +441,7 @@ class TestParseSingleImage:
             image_path=image_path,
             dataset_path=tmp_path,
             dataset_name="test-dataset",
-            parser_config={},
+            _parser_config={},
         )
 
         assert isinstance(result, ParsedSample)
@@ -458,7 +458,7 @@ class TestParseSingleImage:
             image_path=image_path,
             dataset_path=tmp_path,
             dataset_name="test",
-            parser_config={},
+            _parser_config={},
         )
 
         # Should return (path, error) tuple

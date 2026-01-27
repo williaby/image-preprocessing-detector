@@ -32,6 +32,8 @@ Extracts:
     - table_html: HTML structure tokens joined as string
     - cell_annotations: List of cell dicts with tokens and bboxes
 
+Phase 5 Fix: Uses StreamingJSONLReader for memory-efficient access.
+
 Example:
     >>> parser = FinTabNetParser()
     >>> labels = parser.parse(
@@ -47,19 +49,18 @@ Example:
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import Any
 
 from ...schemas.immutable import OriginalLabels
+from ...storage.cache import StreamingJSONLReader
 from ..base import BaseParser
 
 logger = logging.getLogger(__name__)
 
-# Module-level cache for FinTabNet JSONL annotations (loaded once per file)
-# Reuse PubTabNet cache mechanism since format is identical
-_FINTABNET_CACHE: dict[str, dict[str, dict]] = {}
+# Phase 5: Use streaming readers instead of loading entire JSONL into memory
+_FINTABNET_READERS: dict[str, StreamingJSONLReader] = {}
 
 
 class FinTabNetParser(BaseParser):
@@ -67,12 +68,33 @@ class FinTabNetParser(BaseParser):
 
     Extracts table HTML structure and cell annotations from JSONL files.
     Uses the same format as PubTabNet for consistency.
+
+    Phase 5: Uses StreamingJSONLReader for memory-efficient access.
     """
 
     @property
     def dataset_names(self) -> list[str]:
         """Return dataset names handled by this parser."""
         return ["fintabnet"]
+
+    def _get_reader(self, jsonl_path: Path) -> StreamingJSONLReader:
+        """Get or create a StreamingJSONLReader for the JSONL file.
+
+        Args:
+            jsonl_path: Path to the JSONL annotation file
+
+        Returns:
+            StreamingJSONLReader instance (cached per file path)
+        """
+        cache_key = str(jsonl_path)
+        if cache_key not in _FINTABNET_READERS:
+            logger.debug(f"Creating StreamingJSONLReader for {jsonl_path}")
+            _FINTABNET_READERS[cache_key] = StreamingJSONLReader(
+                file_path=jsonl_path,
+                cache_size=5_000,  # Cache 5K entries for repeated access
+                filename_key="filename",
+            )
+        return _FINTABNET_READERS[cache_key]
 
     def parse(
         self,
@@ -112,29 +134,14 @@ class FinTabNetParser(BaseParser):
         if not jsonl_path:
             return labels
 
-        # Load annotations into cache if not already done
-        cache_key = str(jsonl_path)
-        if cache_key not in _FINTABNET_CACHE:
-            try:
-                annotations_by_filename: dict[str, dict] = {}
-                with open(jsonl_path) as f:
-                    for line in f:
-                        if line.strip():
-                            entry = json.loads(line)
-                            if "filename" in entry:
-                                annotations_by_filename[entry["filename"]] = entry
-                _FINTABNET_CACHE[cache_key] = annotations_by_filename
-                logger.debug(
-                    f"Loaded {len(annotations_by_filename)} FinTabNet annotations from {jsonl_path}"
-                )
-            except Exception as e:
-                logger.warning(f"Failed to load FinTabNet JSONL from {jsonl_path}: {e}")
-                _FINTABNET_CACHE[cache_key] = {}
-
-        # Look up annotation for this image
-        filename = image_path.name
-        annotations = _FINTABNET_CACHE.get(cache_key, {})
-        entry = annotations.get(filename)
+        # Phase 5: Use StreamingJSONLReader for memory-efficient access
+        try:
+            reader = self._get_reader(jsonl_path)
+            filename = image_path.name
+            entry = reader.get(filename)
+        except Exception as e:
+            logger.warning(f"Failed to read FinTabNet annotation for {image_path}: {e}")
+            return labels
 
         if entry and "html" in entry:
             html_data = entry["html"]
