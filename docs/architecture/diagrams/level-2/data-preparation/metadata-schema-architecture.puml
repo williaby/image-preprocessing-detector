@@ -1,11 +1,11 @@
-@startuml Metadata_Schema_Architecture
+@startuml metadata-schema-architecture
 !theme plain
 skinparam backgroundColor #FEFEFE
 skinparam packageStyle rectangle
 skinparam componentStyle rectangle
 
-title Metadata Schema Architecture\nThree-Layer Data Flow (Immutable → Enrichment → Training)
-footer Project A - Data Preparation | v1.0 | January 2026
+title Metadata Schema Architecture (V2)\nThree-Layer Data Flow (Immutable → Enrichment → Training)
+footer Project A - Data Preparation | v2.0 | January 2026
 
 ' ============================================================================
 ' COLOR DEFINITIONS
@@ -15,6 +15,7 @@ footer Project A - Data Preparation | v1.0 | January 2026
 !define TRAINING_COLOR #E8F5E9
 !define EXTERNAL_COLOR #FFEBEE
 !define UTILITY_COLOR #F3E5F5
+!define WORKFLOW_COLOR #F5F5DC
 
 ' ============================================================================
 ' EXTERNAL DATA SOURCES
@@ -61,19 +62,21 @@ package "Layer 1: IMMUTABLE" as L1 #IMMUTABLE_COLOR {
         [Multilingual Fields\nlanguage_code, script_name\ntext_instances]
     }
 
-    rectangle "Label Parsers" as Parsers {
-        [parse_diqa_labels\n✅ Implemented]
-        [parse_doclaynet_labels\n✅ Implemented]
-        [parse_smartdoc_labels\n⚠️ Placeholder]
-        [parse_funsd_labels\n⚠️ Placeholder]
+    rectangle "Parser Registry (V2)" as Parsers {
+        [annotation/parsers/quality/\nDIQAParser, SmartDocParser\nOCRQualityParser]
+        [annotation/parsers/layout/\nDocLayNetParser, TableBankParser\nPubTabNetParser, FUNSDParser]
+        [annotation/parsers/handwriting/\nSignaTRParser, NISTParser\nMathsHandwritingParser]
     }
 }
 
 note right of L1
-  **Source:**
-  - scripts/annotate_base_metadata.py
-    (OriginalLabels dataclass, lines 470-520)
-    (Label parsers, lines 920-1050)
+  **Source (V2):**
+  - annotation/schemas/immutable.py
+    (OriginalLabels, OriginalFileMetadata)
+  - annotation/parsers/registry.py
+    (ParserRegistry, 38+ parsers)
+  - annotation/parsers/base.py
+    (DatasetParser protocol)
 
   **Principle:**
   Exact preservation of source labels
@@ -91,16 +94,16 @@ end note
 ' LAYER 2: ENRICHMENT (Standardized)
 ' ============================================================================
 package "Layer 2: ENRICHMENT" as L2 #ENRICHMENT_COLOR {
-    rectangle "EnrichmentData" as ED {
-        [Quality Normalization\nnormalized_quality (0-1)\nquality_tier (high/medium/low)]
+    rectangle "EnrichmentData (V2)" as ED {
+        [Quality Normalization\nquality_overall (0-1)\nlayout_detections]
         [Content Flags\nhas_table, has_formula\nhas_handwriting, has_figure]
         [Capture Method\ncapture_method, domain\nresolution_category]
     }
 
-    rectangle "ISO Standards" as ISO {
-        [Language/Script\niso639_language\niso15924_script\nbcp47_tag]
-        [Paper Size\npaper_size (A4/Letter)\npaper_size_standard\npaper_size_orientation]
-        [Text Scope\ntext_scope (char/word/line/page)\ntext_scope_content_type]
+    rectangle "Provider Pattern (V2)" as Providers {
+        [YOLOProvider\n11 DocLayNet classes\nlayout detection]
+        [SigLIPProvider\nquality_overall\nbatch inference]
+        [Built-in Tiers\ntier_0 (by construction)\ntier_1 (existing annotations)]
     }
 
     rectangle "Schema Utilities" as Utils #UTILITY_COLOR {
@@ -112,29 +115,46 @@ package "Layer 2: ENRICHMENT" as L2 #ENRICHMENT_COLOR {
 }
 
 note right of L2
-  **Source:**
-  - src/.../schema_utils/__init__.py
-  - src/.../schema_utils/iso_language_script.py
-  - src/.../schema_utils/iso_paper_sizes.py
-  - src/.../schema_utils/text_scope.py
-  - src/.../schema_utils/dataset_source.py
+  **Source (V2):**
+  - annotation/schemas/enrichment.py
+  - annotation/enrichment/manager.py
+  - annotation/enrichment/providers/
+    yolo.py, siglip.py, base.py
 
-  **JSON Schema:**
-  - docs/schema/layer2_enrichment.schema.json
+  **Provider Tiers:**
+  Tier 0: By construction (content flags)
+  Tier 1: Existing annotations (COCO, MOS)
+  Tier 2: ML inference (YOLO, SigLIP)
+  Tier 3: Heuristics (fallback)
 
-  **Standards:**
-  - ISO 639-1/3 (Language)
-  - ISO 15924 (Script)
-  - ISO 216 (Paper Size)
-  - BCP 47 (Language Tags)
+  **Schema Utilities:**
+  - src/.../schema_utils/
 end note
+
+' ============================================================================
+' V2 WORKFLOW: THREE-STAGE PIPELINE
+' ============================================================================
+package "V2 Pipeline (annotation.workflow)" as Pipeline #WORKFLOW_COLOR {
+    rectangle "CPU Stage" as CPU {
+        [Parallel SHA256\n(ProcessPoolExecutor)]
+    }
+    rectangle "Parse Stage" as Parse {
+        [Sequential parsing\n(parser caches)]
+    }
+    rectangle "GPU Stage" as GPU {
+        [Single-thread batched\n(CUDA safety)]
+    }
+    rectangle "IO Stage" as IO {
+        [Checkpointed writes\n(atomic operations)]
+    }
+}
 
 ' ============================================================================
 ' LAYER 3: TRAINING (Task-Specific)
 ' ============================================================================
 package "Layer 3: TRAINING" as L3 #TRAINING_COLOR {
-    rectangle "Parquet Export" as Parquet {
-        [samples.parquet\n~1M records\nSchema v2.1]
+    rectangle "Partitioned Parquet (V2)" as Parquet {
+        [metadata_registry/parquet/\ndataset_name=X/\npart-0000.parquet]
     }
 
     rectangle "DataLoader Integration" as DL {
@@ -155,8 +175,10 @@ note right of L3
   - src/.../labeling/deqa/config.py
   - src/.../labeling/finetuning/dataset.py
 
-  **Training Integration:**
-  Schema fields → DataLoader → Model heads
+  **V2 Storage:**
+  Hive-style partitioning
+  O(1) per-dataset writes
+  pyarrow.dataset unified view
 
   **Head Mapping:**
   |= Schema |= Training |= Head |
@@ -172,11 +194,14 @@ end note
 ' Sources to Layer 1
 Sources --> L1 : Raw labels\n(CSV, JSON, directory)
 
-' Layer 1 to Layer 2
-L1 --> L2 : Mapping functions\n(normalization, ISO codes)
+' Layer 1 to Pipeline
+L1 --> Pipeline : ParsedSample
+
+' Pipeline to Layer 2
+Pipeline --> L2 : EnrichedSample
 
 ' Layer 2 to Layer 3
-L2 --> L3 : On-demand\ncomputation
+L2 --> L3 : SampleMetadata
 
 ' Internal Layer 1 flows
 IQA --> Parsers
@@ -184,13 +209,19 @@ Layout --> Parsers
 HW --> Parsers
 Parsers --> OL
 
+' Pipeline internal
+CPU --> Parse
+Parse --> GPU
+GPU --> IO
+
 ' Internal Layer 2 flows
 OL --> ED : Enrich
-ED --> ISO : Standardize
-Utils ..> ISO : Utilities
+ED --> Providers : Provider chain
+Providers --> ED
+Utils ..> ED : Utilities
 
 ' Internal Layer 3 flows
-ISO --> Parquet : Export
+ED --> Parquet : Export
 Parquet --> DL : Load
 DL --> Heads : Train
 
@@ -203,13 +234,14 @@ legend right
   | <#FFF3E0> | Layer 1: Immutable |
   | <#E3F2FD> | Layer 2: Enrichment |
   | <#E8F5E9> | Layer 3: Training |
+  | <#F5F5DC> | V2 Pipeline |
   | <#F3E5F5> | Schema Utilities |
 
-  **Diagram Hierarchy:**
-  Level 0: rag-pipeline-overview.puml
-  Level 1: PROJECT_A_ARCHITECTURE_OVERVIEW.puml
-  Level 2: **This Diagram**
-  └── metadata-schema-architecture.puml
+  **V2 Architecture:**
+  annotation/ package (~19,600 LOC)
+  38+ dataset parsers
+  Provider pattern for ML enrichment
+  Three-stage CPU/GPU/IO pipeline
 endlegend
 
 @enduml
