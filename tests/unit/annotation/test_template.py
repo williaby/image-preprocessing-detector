@@ -230,7 +230,7 @@ class TestGenerateConfigEntry:
 
         code = generate_config_entry(info)
 
-        assert "benchmark_only/diqa" in code
+        assert "02_benchmark_only/diqa" in code
 
 
 class TestGenerateTestStub:

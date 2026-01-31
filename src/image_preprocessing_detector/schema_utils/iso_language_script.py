@@ -479,6 +479,95 @@ def normalize_legacy_script(legacy_script: str) -> str:
     return mapping.get(normalized, "Zzzz")
 
 
+def is_valid_iso15924_code(code: str) -> bool:
+    """Check if a string is a valid ISO 15924 script code.
+
+    Validates against the ISO15924Script enum values.
+
+    Args:
+        code: 4-letter script code to validate (e.g., "Latn", "Arab")
+
+    Returns:
+        True if code is a valid ISO 15924 script code
+
+    Example:
+        >>> is_valid_iso15924_code("Latn")
+        True
+        >>> is_valid_iso15924_code("INVALID")
+        False
+    """
+    try:
+        # Check if the code matches any enum value
+        for member in ISO15924Script:
+            if member.value == code:
+                return True
+        return False
+    except (ValueError, TypeError):
+        return False
+
+
+def get_iso15924_script(code: str) -> ISO15924Script | None:
+    """Convert a string code to ISO15924Script enum.
+
+    Args:
+        code: 4-letter script code (e.g., "Latn", "Arab")
+
+    Returns:
+        ISO15924Script enum member if valid, None otherwise
+
+    Example:
+        >>> get_iso15924_script("Latn")
+        <ISO15924Script.LATN: 'Latn'>
+        >>> get_iso15924_script("INVALID")
+        None
+    """
+    try:
+        for member in ISO15924Script:
+            if member.value == code:
+                return member
+        return None
+    except (ValueError, TypeError):
+        return None
+
+
+def validate_script_code_for_ml(code: str) -> tuple[bool, str | None]:
+    """Validate a script code for ML pipeline usage.
+
+    Validates that the code is a valid ISO 15924 code and provides
+    suggestions for corrections if not.
+
+    Args:
+        code: Script code to validate
+
+    Returns:
+        Tuple of (is_valid, suggested_correction_or_error_message)
+
+    Example:
+        >>> validate_script_code_for_ml("Latn")
+        (True, None)
+        >>> validate_script_code_for_ml("latin")
+        (False, "Try 'Latn' (normalized from 'latin')")
+    """
+    if not code:
+        return False, "Script code cannot be empty"
+
+    # Check if already valid
+    if is_valid_iso15924_code(code):
+        return True, None
+
+    # Try to normalize legacy names
+    normalized = normalize_legacy_script(code)
+    if normalized != "Zzzz" and is_valid_iso15924_code(normalized):
+        return False, f"Try '{normalized}' (normalized from '{code}')"
+
+    # Check for case issues
+    for member in ISO15924Script:
+        if member.value.lower() == code.lower():
+            return False, f"Case mismatch: use '{member.value}' not '{code}'"
+
+    return False, f"Unknown script code: '{code}'"
+
+
 # 10-class script detection taxonomy (for ML models)
 SCRIPT_DETECTION_CLASSES: list[str] = [
     "Latn",  # Latin (Western European, Vietnamese, etc.)

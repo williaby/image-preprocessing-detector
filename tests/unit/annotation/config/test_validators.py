@@ -189,7 +189,7 @@ class TestValidateDatasetConfig:
         """Test valid config passes validation."""
         config = DatasetConfig(
             name="test-dataset",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -204,7 +204,7 @@ class TestValidateDatasetConfig:
         """Test missing name produces error."""
         config = DatasetConfig(
             name="",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -234,7 +234,7 @@ class TestValidateDatasetConfig:
         """Test missing pattern produces error."""
         config = DatasetConfig(
             name="test",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -249,7 +249,7 @@ class TestValidateDatasetConfig:
         """Test uppercase name produces warning."""
         config = DatasetConfig(
             name="TEST-Dataset",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -265,7 +265,7 @@ class TestValidateDatasetConfig:
         """Test space in name produces error."""
         config = DatasetConfig(
             name="test dataset",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -280,7 +280,7 @@ class TestValidateDatasetConfig:
         """Test pattern without extension produces warning."""
         config = DatasetConfig(
             name="test",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -295,7 +295,7 @@ class TestValidateDatasetConfig:
         """Test invalid ISO 639 code produces error."""
         config = DatasetConfig(
             name="test",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -311,7 +311,7 @@ class TestValidateDatasetConfig:
         """Test invalid ISO 15924 code produces error."""
         config = DatasetConfig(
             name="test",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -327,7 +327,7 @@ class TestValidateDatasetConfig:
         """Test valid ISO codes pass validation."""
         config = DatasetConfig(
             name="arabic-docs",
-            path_suffix="base_data/multilingual/arabic",
+            path_suffix="01_base_data/multilingual/arabic",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -343,7 +343,7 @@ class TestValidateDatasetConfig:
         """Test invalid text_scope produces error."""
         config = DatasetConfig(
             name="test",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -359,7 +359,7 @@ class TestValidateDatasetConfig:
         """Test missing parser_name produces warning."""
         config = DatasetConfig(
             name="test",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -380,14 +380,14 @@ class TestValidateAllConfigs:
         configs = {
             "valid": DatasetConfig(
                 name="valid",
-                path_suffix="base_data/valid",
+                path_suffix="01_base_data/valid",
                 pattern="**/*.jpg",
                 capture_method=CaptureMethod.SCANNER_FLATBED,
                 domain=DomainLevel1.TAX,
             ),
             "invalid": DatasetConfig(
                 name="",
-                path_suffix="base_data/invalid",
+                path_suffix="01_base_data/invalid",
                 pattern="**/*.jpg",
                 capture_method=CaptureMethod.SCANNER_FLATBED,
                 domain=DomainLevel1.TAX,
@@ -405,7 +405,7 @@ class TestValidateAllConfigs:
         configs = {
             "key": DatasetConfig(
                 name="different",
-                path_suffix="base_data/test",
+                path_suffix="01_base_data/test",
                 pattern="**/*.jpg",
                 capture_method=CaptureMethod.SCANNER_FLATBED,
                 domain=DomainLevel1.TAX,
@@ -425,7 +425,7 @@ class TestQuickValidate:
         """Test valid config returns True."""
         config = DatasetConfig(
             name="test",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,
@@ -437,7 +437,7 @@ class TestQuickValidate:
         """Test missing name returns False."""
         config = DatasetConfig(
             name="",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.SCANNER_FLATBED,
             domain=DomainLevel1.TAX,

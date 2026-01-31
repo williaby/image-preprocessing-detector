@@ -77,7 +77,7 @@ class NepaliHandwrittenParser(BaseParser):
         # Fixed: Devanagari script (ISO 15924: Deva, ISO 639: ne)
         labels.language_code = "ne"
         labels.script_name = "Devanagari"
-        labels.raw_labels["iso15924_script"] = "Deva"
+        labels.iso15924_script_code = "Deva"
 
         # Extract split from parent directory
         parent = image_path.parent.name

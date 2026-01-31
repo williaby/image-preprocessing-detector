@@ -45,7 +45,7 @@ class TestMultilingualScriptsParser:
 
         assert labels.script_name == "Arabic"
         assert labels.language_code == "ar"
-        assert labels.raw_labels["iso15924_script"] == "Arab"
+        assert labels.iso15924_script_code == "Arab"  # Standardized field
         assert labels.raw_labels["subdataset"] == "arabic_ocr"
         assert labels.raw_labels["has_ground_truth_labels"] is True
 
@@ -59,7 +59,7 @@ class TestMultilingualScriptsParser:
 
         assert labels.script_name == "Tibetan"
         assert labels.language_code == "dz"
-        assert labels.raw_labels["iso15924_script"] == "Tibt"
+        assert labels.iso15924_script_code == "Tibt"  # Standardized field
         assert labels.raw_labels["subdataset"] == "dzongkha_digits"
 
     def test_jssoda_subdataset(self):
@@ -72,7 +72,7 @@ class TestMultilingualScriptsParser:
 
         assert labels.script_name == "Japanese"
         assert labels.language_code == "ja"
-        assert labels.raw_labels["iso15924_script"] == "Jpan"
+        assert labels.iso15924_script_code == "Jpan"  # Standardized field
 
     def test_nepal_devanagari_book(self):
         """Test parsing Nepal Devanagari book subdataset."""
@@ -86,7 +86,7 @@ class TestMultilingualScriptsParser:
 
         assert labels.script_name == "Devanagari"
         assert labels.language_code == "ne"
-        assert labels.raw_labels["iso15924_script"] == "Deva"
+        assert labels.iso15924_script_code == "Deva"  # Standardized field
         assert labels.raw_labels["subdataset"] == "nepal_devanagari"
         assert labels.raw_labels["has_ground_truth_labels"] is False
         assert labels.raw_labels["document_type"] == "book"
@@ -135,7 +135,7 @@ class TestMdiw13Parser:
 
         assert labels.script_name == "Devanagari"
         assert labels.language_code == "hi"
-        assert labels.raw_labels["iso15924_script"] == "Deva"
+        assert labels.iso15924_script_code == "Deva"  # Standardized field
         assert labels.raw_labels["segmentation_level"] == "line"
 
     def test_arabic_script_document_level(self):
@@ -148,7 +148,7 @@ class TestMdiw13Parser:
 
         assert labels.script_name == "Arabic"
         assert labels.language_code == "ar"
-        assert labels.raw_labels["iso15924_script"] == "Arab"
+        assert labels.iso15924_script_code == "Arab"  # Standardized field
         assert labels.raw_labels["segmentation_level"] == "document"
 
     def test_tamil_script_word_level(self):
@@ -161,7 +161,7 @@ class TestMdiw13Parser:
 
         assert labels.script_name == "Tamil"
         assert labels.language_code == "ta"
-        assert labels.raw_labels["iso15924_script"] == "Taml"
+        assert labels.iso15924_script_code == "Taml"  # Standardized field
         assert labels.raw_labels["segmentation_level"] == "word"
 
     def test_all_13_scripts(self):
@@ -190,7 +190,7 @@ class TestMdiw13Parser:
             labels = parser.parse(dataset_path, image_path, {})
             assert labels.script_name == script_name
             assert labels.language_code == lang_code
-            assert labels.raw_labels["iso15924_script"] == iso15924
+            assert labels.iso15924_script_code == iso15924  # Standardized field
 
 
 class TestCcOcrParser:
@@ -210,7 +210,8 @@ class TestCcOcrParser:
         labels = parser.parse(dataset_path, image_path, {})
 
         assert labels.language_code == "zh"
-        assert labels.script_name == "Hans"
+        assert labels.script_name == "Chinese"  # Human-readable name
+        assert labels.iso15924_script_code == "Hans"  # ISO 15924 code
 
     def test_track_detection(self):
         """Test track detection from path."""
@@ -257,7 +258,7 @@ class TestTibhcrParser:
 
         assert labels.script_name == "Tibetan"
         assert labels.language_code == "bo"
-        assert labels.raw_labels["iso15924_script"] == "Tibt"
+        assert labels.iso15924_script_code == "Tibt"  # Standardized field
 
     def test_character_class_extraction(self):
         """Test character class extraction."""
@@ -301,7 +302,7 @@ class TestArabicDocsParser:
 
         assert labels.language_code == "ar"
         assert labels.script_name == "Arabic"
-        assert labels.raw_labels["iso15924_script"] == "Arab"
+        assert labels.iso15924_script_code == "Arab"  # Standardized field
 
     def test_category_extraction(self):
         """Test category extraction from path."""
@@ -333,7 +334,7 @@ class TestNepaliHandwrittenParser:
 
         assert labels.language_code == "ne"
         assert labels.script_name == "Devanagari"
-        assert labels.raw_labels["iso15924_script"] == "Deva"
+        assert labels.iso15924_script_code == "Deva"  # Standardized field
 
     def test_split_extraction(self):
         """Test split extraction."""
@@ -364,7 +365,7 @@ class TestYarmoukParser:
 
         assert labels.language_code == "ar"
         assert labels.script_name == "Arabic"
-        assert labels.raw_labels["iso15924_script"] == "Arab"
+        assert labels.iso15924_script_code == "Arab"  # Standardized field
 
     def test_training_split(self):
         """Test Training split extraction."""
@@ -414,8 +415,8 @@ class TestCvsiParser:
         labels = parser.parse(dataset_path, image_path, {})
 
         assert labels.language_code == "hi"
-        assert labels.script_name == "Deva"
-        assert labels.raw_labels["iso15924_script"] == "Deva"
+        assert labels.script_name == "Hindi"  # Human-readable name
+        assert labels.iso15924_script_code == "Deva"  # Standardized ISO 15924
         assert labels.raw_labels["script_class"] == "Hindi"
         assert labels.raw_labels["split"] == "training"
 
@@ -428,7 +429,8 @@ class TestCvsiParser:
         labels = parser.parse(dataset_path, image_path, {})
 
         assert labels.language_code == "ta"
-        assert labels.script_name == "Taml"
+        assert labels.script_name == "Tamil"  # Human-readable name
+        assert labels.iso15924_script_code == "Taml"  # Standardized ISO 15924
         assert labels.raw_labels["split"] == "testing"
 
     def test_all_10_scripts(self):
@@ -453,7 +455,8 @@ class TestCvsiParser:
             image_path = Path(f"/data/cvsi/Training/{script_name}/img001.jpg")
             labels = parser.parse(dataset_path, image_path, {})
             assert labels.language_code == lang_code
-            assert labels.script_name == iso15924
+            assert labels.script_name == script_name  # Human-readable name
+            assert labels.iso15924_script_code == iso15924  # Standardized ISO 15924
 
 
 class TestSiw13Parser:
@@ -473,8 +476,8 @@ class TestSiw13Parser:
         labels = parser.parse(dataset_path, image_path, {})
 
         assert labels.language_code == "zh"
-        assert labels.script_name == "Hans"
-        assert labels.raw_labels["iso15924_script"] == "Hans"
+        assert labels.script_name == "Chinese"  # Human-readable name
+        assert labels.iso15924_script_code == "Hans"  # Standardized ISO 15924
         assert labels.raw_labels["script_class"] == "Chinese"
         assert labels.raw_labels["split"] == "training"
 
@@ -487,7 +490,8 @@ class TestSiw13Parser:
         labels = parser.parse(dataset_path, image_path, {})
 
         assert labels.language_code == "bo"
-        assert labels.script_name == "Tibt"
+        assert labels.script_name == "Tibetan"  # Human-readable name
+        assert labels.iso15924_script_code == "Tibt"  # Standardized ISO 15924
         assert labels.raw_labels["split"] == "testing"
 
     def test_all_13_scripts(self):
@@ -515,7 +519,8 @@ class TestSiw13Parser:
             image_path = Path(f"/data/siw13/Training/{script_name}/img001.jpg")
             labels = parser.parse(dataset_path, image_path, {})
             assert labels.language_code == lang_code
-            assert labels.script_name == iso15924
+            assert labels.script_name == script_name  # Human-readable name
+            assert labels.iso15924_script_code == iso15924  # Standardized ISO 15924
 
 
 class TestMle2eParser:
@@ -558,7 +563,10 @@ class TestMle2eParser:
                 # Primary script is set from one of the detected scripts
                 # (order is implementation-dependent with multiple scripts)
                 assert labels.language_code in {"zh", "en", "ko"}
-                assert labels.script_name in {"Hans", "Latn", "Hang"}
+                # Human-readable names now in script_name
+                assert labels.script_name in {"Chinese", "Latin", "Korean"}
+                # ISO 15924 codes in iso15924_script_code
+                assert labels.iso15924_script_code in {"Hans", "Latn", "Hang"}
 
                 # Text instances (first 5)
                 assert labels.text_instances is not None
@@ -570,15 +578,16 @@ class TestMle2eParser:
         """Test all 4 MLE2E scripts are correctly mapped."""
         parser = Mle2eParser()
 
+        # (script_label, lang_code, human_name, iso15924)
         scripts = [
-            ("latin", "en", "Latn"),
-            ("chinese", "zh", "Hans"),
-            ("kannada", "kn", "Knda"),
-            ("korean", "ko", "Hang"),
+            ("latin", "en", "Latin", "Latn"),
+            ("chinese", "zh", "Chinese", "Hans"),
+            ("kannada", "kn", "Kannada", "Knda"),
+            ("korean", "ko", "Korean", "Hang"),
         ]
 
-        for script_name, lang_code, iso15924 in scripts:
-            txt_content = f"100,200,300,400,{script_name},sample"
+        for script_label, lang_code, human_name, iso15924 in scripts:
+            txt_content = f"100,200,300,400,{script_label},sample"
 
             dataset_path = Path("/data/mle2e")
             image_path = Path("/data/mle2e/Training/img001.jpg")
@@ -587,7 +596,8 @@ class TestMle2eParser:
                 with patch("pathlib.Path.exists", return_value=True):
                     labels = parser.parse(dataset_path, image_path, {})
                     assert labels.language_code == lang_code
-                    assert labels.script_name == iso15924
+                    assert labels.script_name == human_name  # Human-readable name
+                    assert labels.iso15924_script_code == iso15924  # ISO 15924
 
 
 class TestIntegration:

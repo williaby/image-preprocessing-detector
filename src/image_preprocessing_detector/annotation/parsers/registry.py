@@ -215,6 +215,14 @@ class ParserRegistry:
         except ImportError as e:
             logger.warning("Failed to load document parsers: %s", e)
 
+        # Generic parser for datasets without specific label formats
+        try:
+            from .generic import register_generic_parser
+
+            register_generic_parser(registry)
+        except ImportError as e:
+            logger.warning("Failed to load generic parser: %s", e)
+
         logger.info("Created default parser registry with %d datasets", len(registry))
 
         return registry

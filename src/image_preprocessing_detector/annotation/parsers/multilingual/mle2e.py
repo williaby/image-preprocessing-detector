@@ -131,8 +131,10 @@ class Mle2eParser(BaseParser):
                         if primary_script in self.SCRIPT_MAPPING:
                             lang_code, script_code = self.SCRIPT_MAPPING[primary_script]
                             labels.language_code = lang_code
-                            labels.script_name = script_code
-                            labels.raw_labels["iso15924_script"] = script_code
+                            labels.script_name = (
+                                primary_script.title()
+                            )  # Human-readable
+                            labels.iso15924_script_code = script_code  # ISO 15924
                     if text_instances:
                         # Sample first 5 text instances
                         labels.text_instances = text_instances[:5]

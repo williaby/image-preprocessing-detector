@@ -110,6 +110,7 @@ class OriginalLabels:
         # Multilingual/Script Datasets
         language_code: Original language label (e.g., "ur", "jp")
         script_name: Original script label (e.g., "Arabic", "Devanagari")
+        iso15924_script_code: Standardized 4-letter ISO 15924 code (e.g., "Arab", "Deva")
 
         # Scene Text Datasets (MLT-19 style)
         text_instances: List of text instance annotations
@@ -159,6 +160,9 @@ class OriginalLabels:
     # === Multilingual/Script Datasets ===
     language_code: str | None = None
     script_name: str | None = None
+    # ISO 15924 4-letter script code (e.g., "Arab", "Deva", "Latn")
+    # This is the STANDARDIZED code; script_name may contain full names
+    iso15924_script_code: str | None = None
 
     # === Scene Text Datasets (MLT-19 style) ===
     text_instances: list[dict[str, Any]] | None = None

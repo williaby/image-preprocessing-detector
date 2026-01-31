@@ -97,17 +97,22 @@ This document specifies the complete dataset design for training MobileCLIP-2 mo
 
 | Document Type | Count | Source Datasets | Orientation Sensitivity | Why Critical |
 |---------------|-------|----------------|------------------------|--------------|
-| **Scientific papers** | 2,500 (20%) | DocLayNet (scientific subset) | High | Multi-column, equations, figure captions |
-| **Financial reports** | 2,000 (16%) | DocLayNet (financial), FinTabNet samples | High | Tables, decimal alignment, headers |
+| **Scientific papers** | 2,000 (16%) | DocLayNet (scientific subset) | High | Multi-column, equations, figure captions |
+| **Financial reports** | 1,500 (12%) | DocLayNet (financial), FinTabNet samples | High | Tables, decimal alignment, headers |
 | **Forms** | 1,500 (12%) | FUNSD, FUNSD+, NIST SD-2/SD-6 | **Extreme** | Grid structures, field alignment |
 | **Receipts** | 1,000 (8%) | SROIE | High | Thermal print, narrow aspect ratio |
-| **Tables (standalone)** | 2,000 (16%) | TableBank, PubTabNet | **Extreme** | Row/column swap when rotated |
+| **Tables (standalone)** | 1,500 (12%) | TableBank, PubTabNet | **Extreme** | Row/column swap when rotated |
 | **Legal documents** | 1,000 (8%) | DocLayNet (laws subset) | Medium | Dense text, paragraph structure |
 | **Handwritten pages** | 1,000 (8%) | NIST SD-19 (full pages) | High | Stroke baseline direction |
-| **Mixed layouts** | 1,500 (12%) | DocLayNet (manuals, tenders, patents) | High | Element spatial relationships |
-| **Japanese (vertical text)** | 1,250 (10%) | MLT, Custom, Synthetic | **CRITICAL** | Must learn "vertical = 0°, not 270°" |
+| **Mixed layouts** | 1,000 (8%) | DocLayNet (manuals, tenders, patents) | High | Element spatial relationships |
+| **Arabic documents** | 1,500 (12%) | Arabic Docs OCR (Kaggle) | **High** | RTL script, diverse doc types (forms, invoices, books) |
+| **Devanagari documents** | 700 (5.5%) | Nepal Devanagari | **High** | Shirorekha headline orientation-sensitive |
+| **Japanese (vertical text)** | 1,050 (8.5%) | MLT, Custom, Synthetic | **CRITICAL** | Must learn "vertical = 0°, not 270°" |
 
-**Total Source**: 13,250 documents (oversample to 12,500 after filtering)
+**Total Source**: 13,750 documents (oversample to 12,500 after filtering)
+
+> **Update (2026-01-25)**: Added Arabic and Devanagari document sources from Phase 10B script detection
+> datasets to improve orientation detection for RTL and Indic scripts.
 
 ---
 
@@ -173,7 +178,29 @@ NIST SD-2/SD-6:
   License: Public Domain (Commercial OK)
 ```
 
-**Japanese Vertical Text Sources** (NEW - Critical):
+**Multilingual Document Sources** (NEW - Script Diversity):
+
+```yaml
+Arabic Docs OCR:
+  Path: /mnt/e/image_detection/01_base_data/language/arabic_docs_ocr/
+  Total Available: 10,045 document images
+  Use: Sample 1,500 (forms 150, books 150, invoices 150, receipts 150, newspapers 150, ...)
+  Categories: 12 types (admin forms, books, business cards, comics, handwritten,
+              invoices, labels, magazines, maps, newspapers, official docs, receipts)
+  Format: JPG/PNG
+  License: CC-BY-4.0 (Commercial OK)
+  Value: RTL script orientation, diverse Arabic document types
+
+Nepal Devanagari:
+  Path: /mnt/e/image_detection/01_base_data/language/multilingual_scripts/nepal_devanagari/
+  Total Available: 717 document pages
+  Use: All 717 pages (books, newspapers)
+  Format: PNG (converted from PDF)
+  License: Custom (Research)
+  Value: Devanagari shirorekha headline is orientation-sensitive
+```
+
+**Japanese Vertical Text Sources** (Critical):
 
 ```yaml
 MLT (Multi-Lingual Text):
@@ -192,10 +219,11 @@ Synthetic Japanese Vertical:
   Method: Render Japanese text in vertical layout
   Fonts: Noto Sans CJK JP, Hiragino, Yu Gothic
   Layouts: Traditional book style (top-to-bottom, right-to-left columns)
-  Target: 750 synthetic samples (supplement real samples)
+  Target: 550 synthetic samples (supplement real samples)
   Tools: PIL + custom vertical text renderer
 
-Total Japanese: 300 (MLT) + 200 (custom) + 750 (synthetic) = 1,250 samples
+Total Japanese: 300 (MLT) + 200 (custom) + 550 (synthetic) = 1,050 samples
+# Reduced from 1,250 to accommodate Arabic (1,500) and Devanagari (700) additions
 ```
 
 ---

@@ -196,6 +196,24 @@ docs/architecture/diagrams/
 
 **Purpose**: Three-layer metadata architecture (Immutable → Enrichment → Training) showing data flow from source datasets through schema utilities to training.
 
+### Schema Visualizations (Mermaid)
+
+**Location**: `docs/schema/`
+
+**Purpose**: Interactive schema diagrams with entity relationships, class structures, and data flows.
+
+| Schema | Visualization | Description |
+|--------|---------------|-------------|
+| layer2_enrichment.schema.json | [layer2_enrichment_schema.md](../../../schema/layer2_enrichment_schema.md) | Layer 2 enrichment with provenance tracking |
+| document_metadata.schema.json | [document_metadata_schema.md](../../../schema/document_metadata_schema.md) | Project A → Project B handoff schema |
+
+**Diagram Types in Each Visualization**:
+
+- Entity Relationship Diagram (object references)
+- Class Diagrams (properties, types, constraints)
+- Enumeration Values (all enum options)
+- Data Flow Diagrams (processing pipeline)
+
 | Layer | Components | Source Files | Documentation |
 |-------|------------|--------------|---------------|
 | **External Sources** ||||

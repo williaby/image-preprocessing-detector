@@ -553,6 +553,68 @@ def detect_language_fasttext(text: str, model: Any) -> LanguageDetection:
         return LanguageDetection("und", None, 0.0, "fasttext_error")
 
 
+def detect_language_openlid(text: str, detector: Any) -> LanguageDetection:
+    """Detect language using OpenLID-v2 model.
+
+    OpenLID-v2 provides both language (ISO 639-3) and script (ISO 15924)
+    in a single prediction. This function normalizes dialects to their
+    macro-language codes for consistency.
+
+    Args:
+        text: Text to analyze
+        detector: OpenLIDDetector instance
+
+    Returns:
+        LanguageDetection with normalized language code
+    """
+    if not text or not text.strip():
+        return LanguageDetection("und", None, 0.0, "openlid_empty")
+
+    try:
+        result = detector.detect(text)
+
+        if result.language_639_1 == "und":
+            return LanguageDetection("und", None, result.confidence, "openlid_und")
+
+        # Normalize Devanagari dialects to Hindi for routing consistency
+        # OpenLID detects: san (Sanskrit), mar (Marathi), bho (Bhojpuri),
+        # awa (Awadhi), hne (Chhattisgarhi), mai (Maithili) etc.
+        lang_code = result.language_639_1
+        if result.script_code == "Deva" and lang_code not in ("hi", "mr", "ne", "sa"):
+            # Treat Hindi dialects (Bhojpuri, Awadhi, etc.) as Hindi for routing
+            # but preserve the original detection in method name
+            return LanguageDetection(
+                language="hi",
+                script=result.script_code,
+                confidence=result.confidence,
+                method=f"openlid_deva_variant_{result.language_639_3}",
+            )
+
+        # Normalize Arabic dialects to macro-language 'ar'
+        # OpenLID detects: arb (MSA), arz (Egyptian), ary (Moroccan),
+        # acm (Mesopotamian), apc (Levantine), etc.
+        if result.script_code == "Arab" and lang_code == result.language_639_3:
+            # This is a 3-letter Arabic variant code, normalize to 'ar'
+            # but preserve variant info in method
+            return LanguageDetection(
+                language="ar",
+                script=result.script_code,
+                confidence=result.confidence,
+                method=f"openlid_arab_variant_{result.language_639_3}",
+            )
+
+        return LanguageDetection(
+            language=lang_code,
+            script=result.script_code,
+            confidence=result.confidence,
+            method="openlid",
+        )
+
+    except Exception as e:
+        logger.debug(f"OpenLID error: {e}")
+        return LanguageDetection("und", None, 0.0, "openlid_error")
+
+
 def detect_language_lingua(text: str, detector: Any) -> LanguageDetection:
     """Detect language using lingua-py."""
     if not text or not text.strip():
@@ -584,19 +646,26 @@ def multi_language_consensus(
     text: str,
     fasttext_model: Any = None,
     lingua_detector: Any = None,
+    openlid_detector: Any = None,
 ) -> MultiLanguageResult:
     """Multi-factor consensus detection that handles multiple languages.
 
+    Detection Priority (updated for OpenLID-v2):
     1. Detect ALL scripts via Unicode (deterministic)
-    2. Run language detectors (fastText, lingua)
-    3. Cross-reference scripts found with language detections
-    4. Report ALL significant languages found
+    2. OpenLID-v2 as PRIMARY detector (provides language + script)
+    3. lingua as SECONDARY for consensus
+    4. fastText lid.176 as FALLBACK
+    5. Cross-reference and report ALL significant languages
+
+    OpenLID-v2 Advantages:
+    - 200 language varieties with script identification
+    - Better for non-Latin scripts (Bengali, Korean, Japanese)
+    - Dialect detection (normalized for routing)
 
     Example: Doc with English AND Dzongkha text
     - Unicode detects: Latn (40%), Tibt (60%)
-    - fastText detects: en (0.75)
-    - lingua detects: en (0.80)
-    - Result: mul, detected_languages=["en", "dz"]
+    - OpenLID detects: en_Latn (0.75), bo_Tibt (0.85)
+    - Result: mul, detected_languages=["en", "bo"]
     """
     votes: list[LanguageDetection] = []
     detected_languages: list[str] = []
@@ -641,17 +710,30 @@ def multi_language_consensus(
                 ambiguous_scripts.append(sc.script)
 
     # Step 3: Run statistical language detectors
-    if fasttext_model:
-        ft_result = detect_language_fasttext(text, fasttext_model)
-        votes.append(ft_result)
-        if ft_result.language != "und" and ft_result.language not in detected_languages:
-            detected_languages.append(ft_result.language)
+    # OpenLID-v2 is PRIMARY (provides language + script in one call)
+    if openlid_detector:
+        ol_result = detect_language_openlid(text, openlid_detector)
+        votes.append(ol_result)
+        if ol_result.language != "und" and ol_result.language not in detected_languages:
+            detected_languages.append(ol_result.language)
+        # OpenLID also provides script - validate against Unicode detection
+        if ol_result.script and ol_result.script not in detected_scripts:
+            # OpenLID detected a script not in Unicode analysis (rare)
+            detected_scripts.append(ol_result.script)
 
+    # lingua as SECONDARY for consensus
     if lingua_detector:
         lg_result = detect_language_lingua(text, lingua_detector)
         votes.append(lg_result)
         if lg_result.language != "und" and lg_result.language not in detected_languages:
             detected_languages.append(lg_result.language)
+
+    # fastText lid.176 as FALLBACK (only if OpenLID not available)
+    if fasttext_model and not openlid_detector:
+        ft_result = detect_language_fasttext(text, fasttext_model)
+        votes.append(ft_result)
+        if ft_result.language != "und" and ft_result.language not in detected_languages:
+            detected_languages.append(ft_result.language)
 
     # Step 4: Determine primary language
     # If multiple significant scripts → multi-language document
@@ -914,6 +996,7 @@ def process_dataset(
     fasttext_model: Any,
     lingua_detector: Any,
     easyocr_reader: Any | None,
+    openlid_detector: Any | None = None,
     start_idx: int = 0,
     end_idx: int | None = None,
     batch_size: int = 100,
@@ -921,7 +1004,20 @@ def process_dataset(
 ) -> dict[str, int]:
     """Process a single dataset for language enrichment.
 
-    Returns stats dict with processing counts.
+    Args:
+        dataset_name: Name of the dataset
+        metadata_path: Path to metadata JSON
+        fasttext_model: lid.176.bin model (fallback)
+        lingua_detector: lingua-py detector (secondary)
+        easyocr_reader: EasyOCR reader for text extraction
+        openlid_detector: OpenLID-v2 detector (primary) - recommended
+        start_idx: Starting sample index
+        end_idx: Ending sample index
+        batch_size: Checkpoint save frequency
+        dry_run: If True, don't save changes
+
+    Returns:
+        Stats dict with processing counts.
     """
     logger.info(f"Loading metadata from {metadata_path}")
     metadata = load_metadata(metadata_path)
@@ -1006,7 +1102,13 @@ def process_dataset(
             stats["undetermined"] += 1
         else:
             # Run multi-language consensus detection
-            result = multi_language_consensus(text, fasttext_model, lingua_detector)
+            # OpenLID-v2 is primary, lingua secondary, fastText fallback
+            result = multi_language_consensus(
+                text,
+                fasttext_model=fasttext_model,
+                lingua_detector=lingua_detector,
+                openlid_detector=openlid_detector,
+            )
 
             if result.primary_language == "mul":
                 stats["multi_language"] += 1
@@ -1061,6 +1163,11 @@ def main() -> int:
         default="en,ar,hi,bn,ja,ko,ch_sim",  # Compatible subset
         help="Comma-separated EasyOCR languages (must be compatible)",
     )
+    parser.add_argument(
+        "--no-openlid",
+        action="store_true",
+        help="Disable OpenLID-v2 (use lid.176.bin instead)",
+    )
     args = parser.parse_args()
 
     # List datasets mode
@@ -1101,27 +1208,46 @@ def main() -> int:
     # Initialize detection models
     fasttext_model = None
     lingua_detector = None
+    openlid_detector = None
     easyocr_reader = None
 
-    # Load fastText
-    try:
-        import fasttext
+    # Load OpenLID-v2 (PRIMARY - recommended)
+    if not args.no_openlid:
+        try:
+            from image_preprocessing_detector.schema_utils.openlid_integration import (
+                OpenLIDDetector,
+            )
 
-        model_path = args.model_dir / "lid.176.bin"
-        if model_path.exists():
-            logger.info("Loading fastText model...")
-            fasttext_model = fasttext.load_model(str(model_path))
-        else:
-            logger.warning(f"fastText model not found at {model_path}")
-            logger.warning("Run with --download-model to download it")
-    except ImportError:
-        logger.warning("fastText not installed. Run: uv add fasttext")
+            logger.info("Initializing OpenLID-v2 detector (primary)...")
+            openlid_detector = OpenLIDDetector(auto_download=True)
+            # Warm up the model
+            openlid_detector.detect("test")
+            logger.info("OpenLID-v2 ready (200 languages, provides script detection)")
+        except ImportError:
+            logger.warning("OpenLID integration not available")
+        except Exception as e:
+            logger.warning(f"OpenLID-v2 initialization error: {e}")
 
-    # Load lingua
+    # Load fastText lid.176.bin (FALLBACK - only if OpenLID not available)
+    if not openlid_detector:
+        try:
+            import fasttext
+
+            model_path = args.model_dir / "lid.176.bin"
+            if model_path.exists():
+                logger.info("Loading fastText lid.176.bin model (fallback)...")
+                fasttext_model = fasttext.load_model(str(model_path))
+            else:
+                logger.warning(f"fastText model not found at {model_path}")
+                logger.warning("Run with --download-model to download it")
+        except ImportError:
+            logger.warning("fastText not installed. Run: uv add fasttext")
+
+    # Load lingua (SECONDARY - for consensus)
     try:
         from lingua import LanguageDetectorBuilder
 
-        logger.info("Initializing lingua detector...")
+        logger.info("Initializing lingua detector (secondary)...")
         lingua_detector = LanguageDetectorBuilder.from_all_languages().build()
     except ImportError:
         logger.warning("lingua not installed. Run: uv add lingua-language-detector")
@@ -1139,10 +1265,16 @@ def main() -> int:
         except Exception as e:
             logger.warning(f"EasyOCR initialization error: {e}")
 
-    if not fasttext_model and not lingua_detector:
+    if not openlid_detector and not fasttext_model and not lingua_detector:
         logger.error("No language detection models available!")
-        logger.error("Install at least one: uv add fasttext lingua-language-detector")
+        logger.error("Install OpenLID-v2 (recommended) or fastText/lingua")
         return 1
+
+    # Log detection strategy
+    if openlid_detector:
+        logger.info("Detection strategy: OpenLID-v2 (primary) + lingua (consensus)")
+    else:
+        logger.info("Detection strategy: fastText (primary) + lingua (consensus)")
 
     # Process datasets
     total_stats = {"processed": 0, "multi_language": 0, "single_language": 0, "undetermined": 0}
@@ -1157,6 +1289,7 @@ def main() -> int:
             fasttext_model=fasttext_model,
             lingua_detector=lingua_detector,
             easyocr_reader=easyocr_reader,
+            openlid_detector=openlid_detector,
             start_idx=args.start,
             end_idx=args.end,
             batch_size=args.batch_size,

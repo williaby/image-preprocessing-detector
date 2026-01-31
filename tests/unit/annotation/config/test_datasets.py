@@ -4,7 +4,7 @@
 
 Tests:
     - DatasetConfig dataclass structure and immutability
-    - DATASET_CONFIGS registry completeness (38 datasets)
+    - DATASET_CONFIGS registry completeness (42 datasets)
     - Path resolution helpers
     - Parser name mapping
     - Validation logic
@@ -38,7 +38,7 @@ class TestDatasetConfig:
         """Ensure DatasetConfig is immutable."""
         config = DatasetConfig(
             name="test",
-            path_suffix="base_data/test",
+            path_suffix="01_base_data/test",
             pattern="**/*.jpg",
             capture_method=CaptureMethod.UNKNOWN,
             domain=DomainLevel1.UNKNOWN,
@@ -51,7 +51,7 @@ class TestDatasetConfig:
         """Create config with only required fields."""
         config = DatasetConfig(
             name="minimal",
-            path_suffix="base_data/minimal",
+            path_suffix="01_base_data/minimal",
             pattern="*.jpg",
             capture_method=CaptureMethod.SCANNER_ADF,
             domain=DomainLevel1.ADMINISTRATIVE,
@@ -67,7 +67,7 @@ class TestDatasetConfig:
         """Create config with all optional fields populated."""
         config = DatasetConfig(
             name="complete",
-            path_suffix="benchmark_only/complete",
+            path_suffix="02_benchmark_only/complete",
             pattern="**/*.png",
             capture_method=CaptureMethod.BORN_DIGITAL,
             domain=DomainLevel1.SCIENTIFIC,
@@ -167,8 +167,8 @@ class TestDatasetConfigsRegistry:
         # OHR-Bench (1)
         assert "ohr-bench" in DATASET_CONFIGS
 
-        # Total count (40 datasets migrated from monolith)
-        assert len(DATASET_CONFIGS) == 40
+        # Total count (42 datasets migrated from monolith)
+        assert len(DATASET_CONFIGS) == 42
 
     def test_all_keys_match_names(self) -> None:
         """Ensure registry keys match config names."""
@@ -179,12 +179,12 @@ class TestDatasetConfigsRegistry:
         """Check is_benchmark flag matches path_suffix."""
         for name, config in DATASET_CONFIGS.items():
             if config.is_benchmark:
-                assert config.path_suffix.startswith("benchmark_only"), (
-                    f"{name}: is_benchmark=True but path not in benchmark_only/"
+                assert config.path_suffix.startswith("02_benchmark_only"), (
+                    f"{name}: is_benchmark=True but path not in 02_benchmark_only/"
                 )
             else:
-                assert config.path_suffix.startswith("base_data"), (
-                    f"{name}: is_benchmark=False but path not in base_data/"
+                assert config.path_suffix.startswith("01_base_data"), (
+                    f"{name}: is_benchmark=False but path not in 01_base_data/"
                 )
 
     def test_parser_names_lowercase_snake_case(self) -> None:
@@ -243,11 +243,11 @@ class TestSpecificDatasets:
         assert config.text_scope == "word"
         assert config.has_handwriting is True
 
-    def test_bhutan_financial_no_parser(self) -> None:
-        """Validate bhutan_financial has no parser (real-world docs)."""
+    def test_bhutan_financial_generic_parser(self) -> None:
+        """Validate bhutan_financial uses generic parser (real-world docs)."""
         config = DATASET_CONFIGS["bhutan_financial"]
 
-        assert config.parser_name is None
+        assert config.parser_name == "generic"
         assert config.has_table is True
         assert config.paper_size == "A4"
 
@@ -262,7 +262,7 @@ class TestPathResolution:
 
         path = get_dataset_path(config, settings)
 
-        assert path == Path("/mnt/e/image_detection/benchmark_only/diqa-5000")
+        assert path == Path("/mnt/e/image_detection/02_benchmark_only/diqa-5000")
 
     def test_get_dataset_path_base_data(self) -> None:
         """Resolve path for base_data dataset."""
@@ -271,7 +271,7 @@ class TestPathResolution:
 
         path = get_dataset_path(config, settings)
 
-        assert path == Path("/mnt/e/image_detection/base_data/tables/tablebank")
+        assert path == Path("/mnt/e/image_detection/01_base_data/tables/tablebank")
 
     def test_is_benchmark_dataset(self) -> None:
         """Check is_benchmark_dataset helper."""
@@ -291,12 +291,12 @@ class TestParserMapping:
 
         assert module == "diqa_parser"
 
-    def test_get_parser_module_name_none(self) -> None:
-        """Handle dataset with no parser."""
+    def test_get_parser_module_name_generic(self) -> None:
+        """Handle dataset with generic parser."""
         config = DATASET_CONFIGS["bhutan_financial"]
         module = get_parser_module_name(config)
 
-        assert module is None
+        assert module == "generic_parser"
 
     def test_parser_module_names_consistent(self) -> None:
         """Ensure all parser names map to valid module names."""
@@ -325,7 +325,7 @@ class TestValidation:
         bad_configs = {
             "wrong_key": DatasetConfig(
                 name="correct_name",
-                path_suffix="base_data/test",
+                path_suffix="01_base_data/test",
                 pattern="*.jpg",
                 capture_method=CaptureMethod.UNKNOWN,
                 domain=DomainLevel1.UNKNOWN,
@@ -371,7 +371,7 @@ class TestValidation:
         bad_configs = {
             "bad_parser": DatasetConfig(
                 name="bad_parser",
-                path_suffix="base_data/test",
+                path_suffix="01_base_data/test",
                 pattern="*.jpg",
                 capture_method=CaptureMethod.UNKNOWN,
                 domain=DomainLevel1.UNKNOWN,

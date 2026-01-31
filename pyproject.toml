@@ -197,6 +197,32 @@ labeling = [
     "peft>=0.7.0",           # Parameter-efficient fine-tuning (LoRA)
     "qwen-vl-utils>=0.0.8",  # Qwen VL image processing utilities
 ]
+language-detection = [
+    "easyocr>=1.7.2",
+    "fasttext>=0.9.3",
+    "lingua-language-detector>=2.1.1",
+]
+
+synthetic = [
+    # Synthetic Document Generator Dependencies
+    # Generates multi-script training data from OpenLID-v2 for SigLIP training
+    #
+    # SYSTEM DEPENDENCY REQUIRED: libraqm
+    # Install via system package manager for HarfBuzz text shaping:
+    #   Ubuntu/Debian: sudo apt-get install libraqm-dev
+    #   macOS: brew install libraqm
+    #   Fedora: sudo dnf install libraqm-devel
+    # This enables proper rendering of Arabic, Devanagari, Tibetan, Thai, etc.
+    #
+    # NOTE: augraphy's numba dependency has Python version conflicts.
+    # We override with modern versions that support Python 3.12+
+    "numba>=0.60.0",        # Numba JIT (Python 3.12+ compatible)
+    "llvmlite>=0.43.0",     # LLVM bindings (Python 3.12+ compatible)
+    "augraphy>=8.0.0",      # Document degradation/augmentation
+    "datasets>=3.6.0",      # HuggingFace datasets for OpenLID-v2 corpus
+    "scikit-image>=0.25.2",
+    "albumentations>=2.0.8",
+]
 
 [project.scripts]
 imgprep = "image_preprocessing_detector.cli:cli"
@@ -368,6 +394,8 @@ known-local-folder = ["validation", "benchmarks"]
 "src/image_preprocessing_detector/schema.py" = ["S108"]  # Example path in docstring
 # Office processor - availability check
 "src/image_preprocessing_detector/ingestion/office_processor.py" = ["F401"]  # docling availability check
+# Synthetic module - random used for sample selection (not crypto), font loading patterns
+"src/image_preprocessing_detector/synthetic/*.py" = ["S311", "TRY300", "TRY400", "ERA001"]
 
 # Bandit Configuration (Security Linting)
 [tool.bandit]

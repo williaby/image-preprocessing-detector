@@ -81,7 +81,17 @@ Three-layer pipeline for dataset annotation and label management implementing th
 
 ## Three-Layer Metadata Architecture
 
-The data preparation pipeline implements a versioned metadata schema with three distinct layers:
+The data preparation pipeline implements a versioned metadata schema with three distinct layers.
+
+**Schema Visualizations** (Mermaid diagrams with ER, class, and data flow views):
+
+- [Layer 2 Enrichment Schema](../../../../schema/layer2_enrichment_schema.md) - Derived annotations with provenance tracking
+- [Document Metadata Schema](../../../../schema/document_metadata_schema.md) - Project A → Project B handoff schema
+
+**JSON Schema Definitions**:
+
+- [layer2_enrichment.schema.json](../../../../schema/layer2_enrichment.schema.json)
+- [document_metadata.schema.json](../../../../schema/document_metadata.schema.json)
 
 ### Layer 1: IMMUTABLE (Original Labels)
 
@@ -129,6 +139,125 @@ Training-ready labels computed from original + enrichment layers.
 4. `llm_low` (weight: 0.3) - LLM confidence < 0.5
 5. `synthetic` (weight: 0.3) - Augmentation-derived
 6. `none` (weight: 0.0) - No anchor available
+
+---
+
+## Three-Tier Script Architecture (Stream 1)
+
+The annotation system uses a three-tier architecture for script (writing system) handling:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    Three-Tier Script Architecture                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐   │
+│  │   Tier 1         │    │   Tier 2         │    │   Tier 3         │   │
+│  │   STORAGE        │───▶│   ML TRAINING    │───▶│   ROUTING        │   │
+│  └──────────────────┘    └──────────────────┘    └──────────────────┘   │
+│         │                        │                        │              │
+│  Full ISO 15924           Grouped ML              OCR Engine             │
+│  codes stored             classes                 selection              │
+│  (e.g., "Latn",          (e.g., "LATN",         (e.g., rapidocr,       │
+│   "Gujr", "Deva")         "INDIC_OTHER")         paddleocr, tesseract)  │
+│                                                                          │
+│  ──────────────────────────────────────────────────────────────────────  │
+│  Config:                 Config:                 Config:                 │
+│  schema.py               script_ml_classes.yaml  script_routing.yaml    │
+│  (ISO15924Script enum)   (iso15924_to_ml_class)  (routing_rules)        │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Tier 1: Storage (ISO 15924)
+
+Full ISO 15924 4-letter script codes are stored in metadata, never aggregated.
+
+| Data Class | Module | Field | Purpose |
+|------------|--------|-------|---------|
+| `OriginalLabels` | `annotation/schemas/immutable.py` | `iso15924_script_code` | Standardized script code |
+| `LanguageInfo` | `schema.py` | `script` (ISO15924Script enum) | Schema-level storage |
+
+**Key Implementation**:
+
+- [`src/image_preprocessing_detector/schema_utils/iso_language_script.py`](../../../../../src/image_preprocessing_detector/schema_utils/iso_language_script.py) - ISO15924Script enum
+- Validation helpers: `is_valid_iso15924_code()`, `get_iso15924_script()`, `validate_script_code_for_ml()`
+
+### Tier 2: ML Training (Grouped Classes)
+
+Scripts are grouped into ~19 ML classes for training via configurable mapping.
+
+| Class | Module | Purpose |
+|-------|--------|---------|
+| `ScriptMLMapping` | `schema_utils/script_ml_mapping.py` | ISO 15924 → ML class mapping |
+
+**Configuration**: [`config/script_ml_classes.yaml`](../../../../../config/script_ml_classes.yaml)
+
+```yaml
+ml_classes: [LATN, CYRL, GREK, ARAB, HEBR, DEVA, BENG, TAML, TELU,
+             HANS, HANT, JPAN, KORE, THAI, TIBT, INDIC_OTHER,
+             SE_ASIAN_OTHER, OTHER, UNKNOWN]
+
+iso15924_to_ml_class:
+  Latn: LATN
+  Gujr: INDIC_OTHER  # Gujarati → grouped class
+  Hans: HANS
+  # ... 200+ mappings
+```
+
+**Key Features**:
+
+- Hot-reload without restart (`ScriptMLMapping.reload()`)
+- Class weights for imbalanced training
+- Bidirectional lookup (code → class, class → all codes)
+
+### Tier 3: Routing (OCR Engine Selection)
+
+ML classes are routed to specific OCR engines with optimized configurations.
+
+| Class | Module | Purpose |
+|-------|--------|---------|
+| `ScriptRouter` | `routing/script_router.py` | Script → OCR engine routing |
+
+**Configuration**: [`config/script_routing.yaml`](../../../../../config/script_routing.yaml)
+
+```yaml
+routing_rules:
+  LATN:
+    engine: "rapidocr"
+    batch_size: 8
+  HANS:
+    engine: "paddleocr"
+    batch_size: 2
+    lang_hint: "ch"
+  ARAB:
+    engine: "tesseract"
+    rtl: true
+
+vlm_escalation:
+  confidence_threshold: 0.5
+  always_escalate: ["Tibt", "Ethi"]
+```
+
+**Key Features**:
+
+- Priority system: ISO 15924 override → ML class rule → defaults
+- VLM escalation for low-confidence or unsupported scripts
+- RTL handling flags
+- Engine-specific configurations
+
+### Parser Integration
+
+Multilingual parsers populate the `iso15924_script_code` field:
+
+```python
+# In annotation/parsers/multilingual/*.py
+labels = OriginalLabels()
+labels.script_name = "Arabic"           # Human-readable name
+labels.iso15924_script_code = "Arab"    # ISO 15924 code (Tier 1)
+```
+
+**Updated Parsers**: mlt19, arabic_docs, tibhcr, nepali_handwritten, yarmouk, cvsi, siw13, mle2e, cc_ocr, mdiw13, hindi_ocr_synthetic, pucit_ohul, multilingual_scripts
 
 ---
 
@@ -448,6 +577,155 @@ All datasets have been successfully annotated with three-layer metadata (immutab
 - **Tier 0** (by construction): 8 datasets - Content known from dataset purpose
 - **Tier 1** (existing annotations): 5 datasets - COCO, MOS, or OCR ground truth
 - **Tier 2** (YOLO inference): 11 datasets - DocLayout-YOLO layout detection
+
+---
+
+## Layer 2 Metadata Aggregation
+
+**Purpose**: Compute dataset-level statistics from Layer 2 enrichment metadata for documentation and training planning.
+
+**Added**: 2025-01-30 (Stream 1 integration)
+**Script**: [`scripts/aggregate_layer2_metadata.py`](../../../../../scripts/aggregate_layer2_metadata.py)
+**Output**: `metadata_registry/aggregates/{dataset_name}_stats.json`
+
+### Architecture Integration
+
+```text
+Layer 2 Enrichment Metadata      Aggregation Script           Dataset Documentation
+─────────────────────────        ──────────────────           ─────────────────────
+/mnt/e/.../metadata_registry/                                 docs/
+├── json/                    →   aggregate_layer2_      →    ├── DATASET_QUICK_REFERENCE.md
+│   ├── tablebank_meta.json      metadata.py                 │   (metadata-enriched tables)
+│   ├── fintabnet_meta.json                                  ├── DATASET_PROCESSING_STATUS.md
+│   └── ...                                                   └── DATASET_CATALOG.md
+└── aggregates/              ←   Output JSON stats
+    ├── tablebank_stats.json     (capture, domain,
+    ├── fintabnet_stats.json      quality, content flags)
+    └── ...
+```
+
+### Computed Statistics
+
+For each dataset with Layer 2 metadata, the aggregation script computes:
+
+| Statistic Category | Fields Extracted | Example Output | Use Case |
+|-------------------|------------------|----------------|----------|
+| **Capture Method** | `capture_method` from each sample | `{"born_digital": 100%}` | Predict degradation patterns |
+| **Domain Coverage** | `domain_level1` from each sample | `{"FIN": 100%}` | Domain-specific training |
+| **Quality Distribution** | `overall_score` from QualityInfo | `min: 0.85, max: 1.0, mean: 0.93` | Dataset difficulty assessment |
+| **Degradation Types** | `degradations[]` from QualityInfo | `{"compression": 12%, "blur": 8%}` | Degradation coverage |
+| **Content Flags** | `has_table`, `has_formula`, etc. | `{"has_table": 100%}` | Content type filtering |
+| **Script/Language** | `script_code`, `language_code` | `{"Latn": 95%, "Zyyy": 5%}` | Multilingual coverage |
+| **Layout Types** | `layout_type` from StructureInfo | `{"tabular": 100%}` | Layout diversity |
+| **Text Density** | `text_density` from StructureInfo | `{"dense": 70%, "moderate": 25%}` | Text coverage |
+| **Text Scope** | `scope` from TextScopeInfo | `{"page": 100%}` | Granularity assessment |
+| **Paper Sizes** | `detected_size` from PaperSizeInfo | `{"A4": 40%, "Letter": 55%}` | Regional coverage |
+
+### Workflow
+
+```bash
+# 1. Complete Layer 2 annotation for dataset(s)
+imgprep annotation scan --dataset tablebank --use-yolo
+
+# 2. Run aggregation script
+PYTHONPATH=$PWD:$PYTHONPATH python scripts/aggregate_layer2_metadata.py \
+    --layer2-dir /mnt/e/image_detection/metadata_registry/json \
+    --output-dir metadata_registry/aggregates \
+    --verbose
+
+# 3. Use aggregates to update documentation
+# (Manual or automated script to update DATASET_QUICK_REFERENCE.md)
+```
+
+### Current Aggregation Status (as of 2025-01-30)
+
+**Processed**: 20/40 datasets with Layer 2 metadata
+
+| Dataset | Samples | Capture Method | Domain | Content Flags | Notes |
+|---------|---------|----------------|--------|---------------|-------|
+| fintabnet | 97,475 | Born-digital (100%) | FIN (100%) | has_table (100%) | ⭐⭐⭐ Complete metadata |
+| pubtabnet | 519,030 | Born-digital (100%) | SCI (100%) | has_table (100%) | ⭐⭐⭐ Complete metadata |
+| tablebank | 10 | Born-digital (100%) | SCI (100%) | has_table (100%) | ⭐⭐⭐ Complete metadata (sample) |
+| doclaynet | 80,863 | Born-digital (100%) | Mixed | has_table (varies) | ⭐⭐⭐ Complete metadata |
+| realdae | 583 | Camera (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| smartdoc-qa | 4,260 | Camera (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| dibco | 212 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| funsd | 199 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| sroie | 2,043 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| tobacco800 | 1,290 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| ohr-bench | 8,303 | Unknown | UNK | - | ⭐ Minimal metadata |
+| ... | ... | ... | ... | ... | 10 more with minimal metadata |
+
+**Metadata Coverage**:
+
+- ⭐⭐⭐ **Good**: 4 datasets (capture + domain + content flags)
+- ⭐⭐ **Partial**: 6 datasets (capture + domain only)
+- ⭐ **Minimal**: 10 datasets (domain only or unknown capture)
+
+### Integration with Dataset Documentation
+
+The aggregated statistics are used in three-tier dataset documentation:
+
+1. **[DATASET_QUICK_REFERENCE.md](../../../../DATASET_QUICK_REFERENCE.md)** (~800 lines, ~8K tokens)
+   - Training tables enhanced with capture method, domain, content flags
+   - Metadata coverage indicators (⭐⭐⭐/⭐⭐/⭐)
+   - Token-optimized for training planning discussions
+
+2. **[DATASET_PROCESSING_STATUS.md](../../../../DATASET_PROCESSING_STATUS.md)** (~500 lines, ~5K tokens)
+   - Tracks format conversion and label extraction progress
+   - Shows which datasets need enrichment completion
+
+3. **[DATASET_CATALOG.md](../../../../DATASET_CATALOG.md)** (~4,300 lines, ~45K tokens)
+   - Comprehensive per-dataset documentation
+   - Deep technical details (used only when needed)
+
+**Token Efficiency**: 70-85% reduction for typical dataset queries vs loading full catalog
+
+### Pending Enrichment Tasks
+
+**Priority**: Complete enrichment for training-critical datasets
+
+| Priority | Datasets | Missing Fields | Impact |
+|----------|----------|----------------|--------|
+| **P0 (IQA Training)** | ohr-bench, diqa-5000, realdae | Quality scores, degradation types | Cannot show quality profiles in Quick Reference |
+| **P1 (Script Detection)** | synth-multiscript-250k, mdiw13, mlt19 | Language/script codes | Cannot show script coverage statistics |
+| **P2 (Layout Detection)** | All layout datasets | Layout types, text density | Cannot show layout diversity |
+| **P3 (Content Characterization)** | 16 datasets with UNK domain | Domain classification | Cannot filter by domain accurately |
+
+**Expected Timeline**: As Layer 2 enrichment pipeline adds quality assessment and script detection, re-run aggregation to populate missing fields.
+
+### Aggregation Script Reference
+
+**Location**: [`scripts/aggregate_layer2_metadata.py`](../../../../../scripts/aggregate_layer2_metadata.py)
+
+**Key Features**:
+
+- Processes single-file metadata format (`{dataset}_metadata.json`)
+- Extracts from `samples[].enrichments.versions[-1].data` (latest version)
+- Computes percentages, min/max/mean statistics
+- Handles missing fields gracefully (partial metadata)
+- Outputs JSON for programmatic consumption
+
+**Output Schema**:
+
+```json
+{
+  "dataset_name": "tablebank",
+  "total_samples": 278582,
+  "capture_methods_pct": {"born_digital": 100.0},
+  "domains_pct": {"SCI": 85.0, "TEC": 15.0},
+  "content_flags_pct": {"has_table": 100.0, "has_formula": 15.0},
+  "quality_summary": {"min": 0.85, "max": 1.00, "mean": 0.93},
+  "top_degradations": [{"type": "compression", "percentage": 12.0}],
+  "top_scripts": [{"script": "Latn", "percentage": 95.0}]
+}
+```
+
+**Related Documentation**:
+
+- [DATASET_METADATA_AGGREGATION_GUIDE.md](../../../../DATASET_METADATA_AGGREGATION_GUIDE.md) - Complete usage guide
+- [DATASET_AGGREGATION_SUMMARY.md](../../../../DATASET_AGGREGATION_SUMMARY.md) - Current aggregation results
+- [DATASET_QUICK_REFERENCE_ENHANCED_PROPOSAL.md](../../../../DATASET_QUICK_REFERENCE_ENHANCED_PROPOSAL.md) - Future enhancements
 
 ---
 

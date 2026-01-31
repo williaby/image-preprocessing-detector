@@ -321,8 +321,9 @@ class AnnotationPipeline:
                 stats=self._stats,
             )
 
-        # Get dataset path from config
-        dataset_path = Path(dataset_config.get("path", self.settings.e_drive_root))
+        # Get dataset path from config (combine e_drive_root with path_suffix)
+        path_suffix = dataset_config.get("path_suffix", "")
+        dataset_path = Path(self.settings.e_drive_root) / path_suffix
 
         # Start pipeline stages as threads
         io_thread = threading.Thread(

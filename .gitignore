@@ -165,6 +165,9 @@ __modal_cache__/
 modal_cache/
 *modal-token*
 .modal-token
+
+# Augraphy
+augraphy_cache/
 # Keep lightweight DVC pointer files even though dataset contents are ignored
 !data/**/*.dvc
 tmp_comments.json

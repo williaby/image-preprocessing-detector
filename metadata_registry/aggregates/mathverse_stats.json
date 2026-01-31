@@ -1,0 +1,56 @@
+{
+  "dataset_name": "mathverse",
+  "total_samples": 6940,
+  "capture_methods": {
+    "born_digital": 6940
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "EDU": 6940
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {},
+  "script_families": {
+    "ltr": 6940
+  },
+  "language_codes": {},
+  "content_flags": {
+    "has_formula": 6940
+  },
+  "text_scopes": {
+    "paragraph": 6940
+  },
+  "content_types": {},
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "born_digital": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "EDU": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {},
+  "script_families_pct": {
+    "ltr": 100.0
+  },
+  "language_codes_pct": {},
+  "text_scopes_pct": {
+    "paragraph": 100.0
+  },
+  "content_types_pct": {},
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_formula": 100.0
+  },
+  "top_degradations": [],
+  "top_scripts": []
+}

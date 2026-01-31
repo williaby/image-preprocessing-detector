@@ -79,8 +79,8 @@ class ArabicDocsParser(BaseParser):
 
         # Fixed: Arabic script (ISO 15924: Arab, ISO 639: ar)
         labels.language_code = "ar"
-        labels.script_name = "Arabic"
-        labels.raw_labels["iso15924_script"] = "Arab"
+        labels.script_name = "Arabic"  # Human-readable name
+        labels.iso15924_script_code = "Arab"  # Standardized ISO 15924 code
 
         # Extract category from parent directory
         path_parts = image_path.parts

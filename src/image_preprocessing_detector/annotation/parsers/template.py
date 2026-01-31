@@ -133,6 +133,35 @@ class DatasetInfo:
         slug = self.get_dataset_slug()
         return slug.replace("-", "_")
 
+    def validate_script_code(self) -> tuple[bool, str | None]:
+        """Validate ISO 15924 script code if provided.
+
+        Uses the three-tier script architecture validation:
+        - Tier 1: Validates against ISO15924Script enum
+        - Provides suggestions for common errors (case, legacy names)
+
+        Returns:
+            Tuple of (is_valid, error_or_suggestion_message)
+            Returns (True, None) if no script code set or code is valid
+
+        Example:
+            >>> info = DatasetInfo(dataset_name="test", iso15924_script="Latn")
+            >>> info.validate_script_code()
+            (True, None)
+            >>> info = DatasetInfo(dataset_name="test", iso15924_script="latin")
+            >>> info.validate_script_code()
+            (False, "Try 'Latn' (normalized from 'latin')")
+        """
+        if not self.iso15924_script:
+            return True, None
+
+        # Import here to avoid circular imports
+        from image_preprocessing_detector.schema_utils.iso_language_script import (
+            validate_script_code_for_ml,
+        )
+
+        return validate_script_code_for_ml(self.iso15924_script)
+
 
 # Parser class template with all required boilerplate
 PARSER_TEMPLATE = Template('''# SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
@@ -381,9 +410,9 @@ def generate_config_entry(
     # Generate path suffix if not provided
     if path_suffix is None:
         if info.category == ParserCategory.QUALITY:
-            path_suffix = f"benchmark_only/{slug}"
+            path_suffix = f"02_benchmark_only/{slug}"
         else:
-            path_suffix = f"base_data/{info.category.value}/{slug}"
+            path_suffix = f"01_base_data/{info.category.value}/{slug}"
 
     # Build optional fields string
     optional_parts = []
@@ -522,6 +551,12 @@ def validate_dataset_info(info: DatasetInfo) -> list[str]:
 
     if info.domain == "GENERAL":
         warnings.append("INFO: domain is GENERAL (consider being more specific)")
+
+    # Validate ISO 15924 script code if provided
+    if info.iso15924_script:
+        is_valid, message = info.validate_script_code()
+        if not is_valid and message:
+            warnings.append(f"WARNING: iso15924_script invalid - {message}")
 
     return warnings
 

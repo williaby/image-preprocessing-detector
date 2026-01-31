@@ -83,7 +83,7 @@ class TibhcrParser(BaseParser):
         # Fixed: Tibetan script (ISO 15924: Tibt, ISO 639: bo)
         labels.script_name = "Tibetan"
         labels.language_code = "bo"
-        labels.raw_labels["iso15924_script"] = "Tibt"
+        labels.iso15924_script_code = "Tibt"
 
         path_parts = image_path.parts
 

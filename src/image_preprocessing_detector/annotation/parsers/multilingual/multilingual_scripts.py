@@ -133,7 +133,7 @@ class MultilingualScriptsParser(BaseParser):
             labels.language_code = (
                 str(mapping["language"]) if mapping["language"] else None
             )
-            labels.raw_labels["iso15924_script"] = mapping["script"]
+            labels.iso15924_script_code = str(mapping["script"])  # ISO 15924
             labels.raw_labels["subdataset"] = subdataset
             labels.raw_labels["has_ground_truth_labels"] = mapping["labeled"]
 

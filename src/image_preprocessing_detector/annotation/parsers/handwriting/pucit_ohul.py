@@ -88,7 +88,8 @@ class PucitOhulParser(BaseParser):
 
         # Set language/script based on dataset (known from dataset metadata)
         labels.language_code = "ur"  # Urdu
-        labels.script_name = "Arabic"  # Urdu uses Arabic script
+        labels.script_name = "Arabic"  # Human-readable name
+        labels.iso15924_script_code = "Arab"  # ISO 15924 (Urdu uses Arabic script)
 
         # Initialize raw_labels dict
         if labels.raw_labels is None:

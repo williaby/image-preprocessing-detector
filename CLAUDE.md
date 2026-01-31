@@ -778,6 +778,123 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 - Reading order prediction (ReadingBank)
 - Full semantic layout detection (DocLayNet)
 
+## Dataset Inventory
+
+> **Token Optimized**: Three-tier documentation structure for efficient LLM context usage
+> **Total Datasets**: 46 (35 training-ready, 9 in progress, 1 blocked, 1 text corpus)
+> **Expected Token Savings**: 70-85% for typical dataset queries
+> **Layer 2 Metadata**: 20/46 datasets with aggregated statistics
+
+### Documentation Tiers
+
+**Tier 1 - Quick Reference** (START HERE): [docs/DATASET_QUICK_REFERENCE.md](docs/DATASET_QUICK_REFERENCE.md)
+- **Purpose**: Training task selection, quick stats
+- **Use For**: "Which datasets for IQA training?", "How many layout detection images?"
+- **Size**: ~800 lines, ~8K tokens
+- **Enhanced**: Includes capture method, domain, and content flags from Layer 2 metadata aggregates
+- **Contains**:
+  - Datasets grouped by training purpose (IQA, Layout, Text Detection, etc.)
+  - Metadata-enriched tables with capture method (📄 🖨️ 📱 🎨 icons)
+  - Label type index (COCO boxes, quality scores, OCR text, scripts)
+  - Training recipes by phase with metadata coverage indicators (⭐⭐⭐/⭐⭐/⭐)
+  - Critical filters (benchmark-reserved, license restrictions)
+
+**Tier 2 - Processing Status**: [docs/DATASET_PROCESSING_STATUS.md](docs/DATASET_PROCESSING_STATUS.md)
+- **Purpose**: Current conversion/extraction status tracking
+- **Use For**: "Is ohr-bench ready?", "What's blocking cocotext?"
+- **Size**: ~500 lines, ~5K tokens
+- **Contains**:
+  - Format conversion status (✅ Training-Ready, 🔄 In Progress, ❌ Blocked, 📚 Text Corpus)
+  - Label extraction progress
+  - Blockers, priorities, and ETAs
+  - Storage requirements
+
+**Tier 3 - Naming Standard**: [docs/DATASET_NAMING_STANDARD.md](docs/DATASET_NAMING_STANDARD.md)
+- **Purpose**: Canonical names and alias resolution
+- **Use For**: "Is nist_db2 same as nist-sd2?", "What's the canonical name?"
+- **Size**: ~600 lines, ~6K tokens
+- **Contains**:
+  - Canonical name registry (all 46 datasets)
+  - Alias mappings (resolves underscore vs hyphen confusion)
+  - Migration guide with scripts
+  - Naming conventions
+
+**Tier 4 - Full Catalog** (LAST RESORT): [docs/DATASET_CATALOG.md](docs/DATASET_CATALOG.md)
+- **Purpose**: Comprehensive technical documentation
+- **Use For**: Deep technical queries only (IQA sensitivity, licenses, papers)
+- **Size**: ~4,300 lines, ~45K tokens
+- **Contains**: Detailed per-dataset documentation, IQA matrices, benchmark metrics
+
+### Usage Guidelines for Claude Code
+
+**Decision Flow**:
+1. **Training task selection or quick stats?** → Read Tier 1 (Quick Reference)
+2. **Current state, blockers, or conversion status?** → Read Tier 2 (Processing Status)
+3. **Naming confusion or aliases?** → Read Tier 3 (Naming Standard)
+4. **Deep technical details needed?** → Read Tier 4 (Full Catalog)
+
+**Token Efficiency**:
+
+| Query Type | Files Read | Token Cost | Savings vs Full Catalog |
+|------------|------------|------------|-------------------------|
+| "Datasets for IQA training?" | Tier 1 only | 8K | 83% |
+| "Is ohr-bench ready?" | Tier 1 + 2 | 13K | 71% |
+| "Is nist_db2 same as nist-sd2?" | Tier 3 only | 6K | 87% |
+| "TableBank blur sensitivity?" | Tier 4 (Full Catalog) | 45K | 0% (justified) |
+
+**Critical Rules**:
+- ✅ **Always start with Tier 1** (Quick Reference) for dataset questions
+- ✅ **Use Tier 2** (Processing Status) for current state queries
+- ✅ **Use Tier 3** (Naming Standard) for name resolution
+- ❌ **Avoid Tier 4** (Full Catalog) unless deep technical details explicitly needed
+
+### Layer 2 Metadata Aggregation
+
+**Purpose**: Surface dataset characteristics from Layer 2 enrichment metadata
+
+**Current Coverage**: 20/46 datasets with aggregated statistics
+- ⭐⭐⭐ **Good metadata**: 4 datasets (capture + domain + content flags)
+- ⭐⭐ **Partial metadata**: 6 datasets (capture + domain)
+- ⭐ **Minimal metadata**: 10 datasets (domain only)
+- **No metadata yet**: 26 datasets (pending Layer 2 enrichment)
+
+**Aggregation Script**: [scripts/aggregate_layer2_metadata.py](scripts/aggregate_layer2_metadata.py)
+- Processes Layer 2 enrichment JSON files from `/mnt/e/image_detection/metadata_registry/json/`
+- Computes capture method, domain, quality, degradation, script, and content statistics
+- Outputs to `metadata_registry/aggregates/{dataset}_stats.json`
+
+**Usage**:
+```bash
+# Aggregate all datasets
+python scripts/aggregate_layer2_metadata.py \
+    --layer2-dir /mnt/e/image_detection/metadata_registry/json \
+    --output-dir metadata_registry/aggregates \
+    --verbose
+
+# Aggregate single dataset
+python scripts/aggregate_layer2_metadata.py --dataset tablebank --verbose
+```
+
+**Enhanced Quick Reference**: Training tables now include:
+
+- 📷 **Capture Method**: Icons showing born-digital (📄), scanner (🖨️), camera (📱), synthetic (🎨)
+- 🏛️ **Domain**: TAX, FIN, SCI, EDU, etc. (or UNK if not yet classified)
+- ⭐ **Metadata Coverage**: Indicates enrichment completeness (⭐⭐⭐ good, ⭐⭐ partial, ⭐ minimal)
+
+**Related Documentation**:
+
+- [DATASET_INTEGRATION_GUIDE.md](docs/DATASET_INTEGRATION_GUIDE.md) - Complete usage patterns
+- [DATASET_METADATA_AGGREGATION_GUIDE.md](docs/DATASET_METADATA_AGGREGATION_GUIDE.md) - Aggregation workflow
+- [DATASET_AGGREGATION_SUMMARY.md](docs/DATASET_AGGREGATION_SUMMARY.md) - Current aggregation results
+- [Level 2 Architecture](docs/architecture/diagrams/level-2/data-preparation/index.md#layer-2-metadata-aggregation) - Technical details
+
+**Key Datasets**:
+
+- **IQA Training**: ohr-bench (8.5K), diqa-5000 (5.5K), iqa_phase7_165k (165K), realdae (1.2K)
+- **Layout Detection**: doclaynet (81K), pubtabnet (568K), tablebank (278K), fintabnet (97K)
+- **Script Detection**: synth-multiscript-250k (250K, generating), mdiw13 (290K), mlt19 (20K)
+- **Text Detection**: cocotext (64K), mlt19 (20K), cc-ocr (6.5K)
+
 ## Pre-Commit Linting Checklist
 
 Before committing ANY changes, ensure:

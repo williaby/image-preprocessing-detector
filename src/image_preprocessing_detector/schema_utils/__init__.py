@@ -100,7 +100,10 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
     LanguageScriptTag,
     ScriptFamily,
     create_language_script_info,
+    get_iso15924_script,
+    is_valid_iso15924_code,
     normalize_legacy_script,
+    validate_script_code_for_ml,
 )
 from image_preprocessing_detector.schema_utils.iso_paper_sizes import (
     A4_PIXELS_BY_DPI,
@@ -112,6 +115,22 @@ from image_preprocessing_detector.schema_utils.iso_paper_sizes import (
     PaperSizeStandard,
     detect_paper_size,
     get_expected_pixels,
+)
+from image_preprocessing_detector.schema_utils.openlid_integration import (
+    ISO639_1_TO_3,
+    ISO639_3_TO_1,
+    OpenLIDDetector,
+    OpenLIDResult,
+    detect_language_openlid,
+    detect_top_k_openlid,
+)
+from image_preprocessing_detector.schema_utils.openlid_integration import (
+    get_detector as get_openlid_detector,
+)
+from image_preprocessing_detector.schema_utils.script_ml_mapping import (
+    ScriptMLMapping,
+    get_default_mapping,
+    reset_default_mapping,
 )
 from image_preprocessing_detector.schema_utils.text_scope import (
     DATASET_SCOPE_DEFAULTS,
@@ -201,6 +220,9 @@ __all__ = [
     "convert_bbox",
     "create_file_integrity",
     "create_language_script_info",
+    "get_iso15924_script",
+    "is_valid_iso15924_code",
+    "validate_script_code_for_ml",
     "create_source_info",
     "create_text_scope_info",
     "detect_paper_size",
@@ -225,4 +247,16 @@ __all__ = [
     "validate_enrichment",
     "validate_iqa_vector",
     "validate_sample_id",
+    # Stream 1: Script ML Mapping
+    "ScriptMLMapping",
+    "get_default_mapping",
+    "reset_default_mapping",
+    # OpenLID-v2 Integration
+    "ISO639_1_TO_3",
+    "ISO639_3_TO_1",
+    "OpenLIDDetector",
+    "OpenLIDResult",
+    "detect_language_openlid",
+    "detect_top_k_openlid",
+    "get_openlid_detector",
 ]

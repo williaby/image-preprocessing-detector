@@ -91,6 +91,13 @@
         "language": {
           "$ref": "#/$defs/LanguageInfo"
         },
+        "languages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LanguageInfo"
+          },
+          "description": "All detected languages/scripts for multi-script documents. Use 'language' for single-script docs, or 'languages' for multi-script. The primary language should have is_primary=true."
+        },
         "text_scope": {
           "$ref": "#/$defs/TextScopeInfo"
         },
@@ -119,7 +126,7 @@
       "properties": {
         "method": {
           "type": "string",
-          "enum": ["born_digital", "scanner_flatbed", "scanner_adf", "camera_professional", "camera_smartphone", "fax", "unknown"],
+          "enum": ["born_digital", "scanner_flatbed", "scanner_adf", "camera_professional", "camera_smartphone", "fax", "synthetic", "unknown"],
           "description": "Detected capture method"
         },
         "confidence": {

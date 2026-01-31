@@ -3,7 +3,7 @@
 """Multilingual and script detection parsers for the annotation system.
 
 This package contains parsers for multilingual/script datasets covering
-13+ datasets across multiple languages and scripts.
+15+ datasets across multiple languages and scripts.
 
 Parsers:
     - MultilingualScriptsParser: Collection of subdatasets (arabic_ocr,
@@ -17,6 +17,8 @@ Parsers:
     - CvsiParser: Video script identification (10 scripts)
     - Siw13Parser: Scene script identification (13 scripts)
     - Mle2eParser: Multi-language end-to-end (4 scripts)
+    - Mlt19Parser: ICDAR 2019 MLT multi-lingual scene text (10 languages)
+    - HindiOcrSyntheticParser: Synthetic Hindi text (80K images)
 
 Datasets covered:
     - multilingual_scripts (arabic_ocr, dzongkha_digits, jssoda, nepal_devanagari)
@@ -29,6 +31,8 @@ Datasets covered:
     - cvsi (10 scripts)
     - siw13 (13 scripts)
     - mle2e (4 scripts)
+    - mlt19 (10 languages scene text)
+    - hindi_ocr_synthetic (Hindi synthetic)
 
 Example:
     >>> from image_preprocessing_detector.annotation.parsers.multilingual import (
@@ -53,8 +57,10 @@ if TYPE_CHECKING:
 from .arabic_docs import ArabicDocsParser
 from .cc_ocr import CcOcrParser
 from .cvsi import CvsiParser
+from .hindi_ocr_synthetic import HindiOcrSyntheticParser
 from .mdiw13 import Mdiw13Parser
 from .mle2e import Mle2eParser
+from .mlt19 import Mlt19Parser
 from .multilingual_scripts import MultilingualScriptsParser
 from .nepali_handwritten import NepaliHandwrittenParser
 from .siw13 import Siw13Parser
@@ -78,14 +84,18 @@ def register_multilingual_parsers(registry: ParserRegistry) -> None:
     registry.register(CvsiParser())
     registry.register(Siw13Parser())
     registry.register(Mle2eParser())
+    registry.register(Mlt19Parser())
+    registry.register(HindiOcrSyntheticParser())
 
 
 __all__ = [
     "ArabicDocsParser",
     "CcOcrParser",
     "CvsiParser",
+    "HindiOcrSyntheticParser",
     "Mdiw13Parser",
     "Mle2eParser",
+    "Mlt19Parser",
     "MultilingualScriptsParser",
     "NepaliHandwrittenParser",
     "Siw13Parser",

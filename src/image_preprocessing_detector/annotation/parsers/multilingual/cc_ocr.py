@@ -84,7 +84,8 @@ class CcOcrParser(BaseParser):
 
         # Default to Chinese for CC-OCR (Simplified Chinese)
         labels.language_code = "zh"
-        labels.script_name = "Hans"
+        labels.script_name = "Chinese"  # Human-readable name
+        labels.iso15924_script_code = "Hans"  # ISO 15924
 
         # Parse track and subset from path
         path_parts = image_path.parts

@@ -109,8 +109,8 @@ class CvsiParser(BaseParser):
                     if script_class in self.SCRIPT_MAPPING:
                         lang_code, script_code = self.SCRIPT_MAPPING[script_class]
                         labels.language_code = lang_code
-                        labels.script_name = script_code
-                        labels.raw_labels["iso15924_script"] = script_code
+                        labels.script_name = script_class  # Human-readable name
+                        labels.iso15924_script_code = script_code  # ISO 15924
                 break
 
         return labels

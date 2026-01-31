@@ -859,5 +859,15 @@ def noise_check(
         sys.exit(1)
 
 
+# Register synthetic generation command group
+try:
+    from image_preprocessing_detector.synthetic.cli import synthetic
+
+    cli.add_command(synthetic)
+except ImportError:
+    # Synthetic module not available (missing optional dependencies)
+    pass
+
+
 if __name__ == "__main__":
     cli()

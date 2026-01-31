@@ -156,6 +156,7 @@ TIER_0_DATASETS = {
     "im2latex": {"has_formula": True, "text_scope": "phrase"},
     "mathverse": {"has_formula": True, "text_scope": "paragraph"},
     "maths_handwriting": {"has_formula": True, "has_handwriting": True, "text_scope": "phrase"},
+    "hasyv2": {"has_formula": True, "has_handwriting": True, "text_scope": "character"},
     # Handwriting (100% handwritten content)
     "signatr6k": {"has_signature": True, "has_handwriting": True, "text_scope": "word"},
     "nist_sd19": {"has_handwriting": True, "text_scope": "page"},
@@ -170,12 +171,14 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Benchmark datasets ===
     "diqa-5000": {
         "path": BENCHMARK_ONLY / "diqa-5000",
-        "pattern": "**/ori/*.jpg",  # Fixed: images are in train/ori/, val/ori/, test/ori/
+        "pattern": "**/*.jpg",  # All images: ori (original) + res (enhanced)
         "capture_method": CaptureMethod.UNKNOWN,
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": True,
         "mos_file": "train/train.csv",  # CSV with MOS scores
         "original_labels_parser": "parse_diqa_labels",
+        "default_language_code": "en",  # Predominantly English PDFs
+        "default_script_name": "Latn",
     },
     "smartdoc-qa": {
         "path": BENCHMARK_ONLY / "smartdoc-qa",  # Fixed: hyphen not underscore
@@ -184,6 +187,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": True,
         "original_labels_parser": "parse_smartdoc_labels",
+        "default_language_code": "en",  # Administrative documents
+        "default_script_name": "Latn",
     },
     "dibco": {
         "path": BENCHMARK_ONLY / "dibco",
@@ -201,6 +206,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
         "arrow_format": True,  # Special handling needed
+        "original_labels_parser": "parse_omnidocbench_labels",
     },
     # === Base training datasets ===
     "tobacco800": {
@@ -209,6 +215,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "capture_method": CaptureMethod.SCANNER_ADF,
         "domain": DomainLevel1.ADMINISTRATIVE,
         "has_human_mos": False,
+        "default_language_code": "en",  # US tobacco company documents
+        "default_script_name": "Latn",
     },
     "historical_degraded": {
         "path": BASE_DATA / "degraded/historical_degraded",
@@ -225,6 +233,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "domain": DomainLevel1.ADMINISTRATIVE,
         "has_human_mos": False,
         "original_labels_parser": "parse_rvl_cdip_labels",
+        "default_language_code": "en",  # US tobacco industry documents
+        "default_script_name": "Latn",
     },
     "doclaynet": {
         "path": BASE_DATA / "documents/doclaynet",
@@ -245,6 +255,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_handwriting": True,
         "has_signature": True,
         "original_labels_parser": "parse_nist_db2_labels",
+        "default_language_code": "en",  # US IRS tax forms
+        "default_script_name": "Latn",
     },
     "nist_sd6": {
         "path": BASE_DATA / "forms/nist_sd6",
@@ -254,10 +266,12 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_human_mos": False,
         "has_table": True,
         "original_labels_parser": "parse_nist_sd6_labels",
+        "default_language_code": "en",  # US IRS tax forms
+        "default_script_name": "Latn",
     },
     "funsd": {
         "path": BASE_DATA / "forms/funsd",
-        "pattern": "**/*.png",
+        "pattern": "images/*.jpg",
         "capture_method": CaptureMethod.SCANNER_ADF,
         "domain": DomainLevel1.ADMINISTRATIVE,
         "has_human_mos": False,
@@ -265,6 +279,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_table": True,
         "has_handwriting": True,
         "has_signature": True,
+        "default_language_code": "en",  # US tobacco industry forms
+        "default_script_name": "Latn",
     },
     "funsd_plus": {
         "path": BASE_DATA / "forms/funsd_plus",
@@ -276,6 +292,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_handwriting": True,
         "has_signature": True,
         "original_labels_parser": "parse_funsd_plus_labels",
+        "default_language_code": "en",  # Extended FUNSD, US tobacco forms
+        "default_script_name": "Latn",
     },
     "sroie": {
         "path": BASE_DATA / "forms/sroie",
@@ -285,6 +303,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_human_mos": False,
         "has_table": True,
         "original_labels_parser": "parse_sroie_labels",
+        "default_language_code": "en",  # English receipts
+        "default_script_name": "Latn",
     },
     "tablebank": {
         "path": BASE_DATA / "tables/tablebank",
@@ -299,6 +319,9 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_formula": False,
         "has_handwriting": False,
         "has_signature": False,
+        # TableBank is multilingual but predominantly English (arXiv/Word sources)
+        "default_language_code": "en",
+        "default_script_name": "Latn",
     },
     "pubtabnet": {
         "path": BASE_DATA / "tables/pubtabnet",
@@ -312,6 +335,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_handwriting": False,
         "has_signature": False,
         "original_labels_parser": "parse_pubtabnet_labels",
+        "default_language_code": "en",  # PubMed scientific articles
+        "default_script_name": "Latn",
     },
     "fintabnet": {
         "path": BASE_DATA / "tables/fintabnet",
@@ -325,6 +350,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_handwriting": False,
         "has_signature": False,
         "original_labels_parser": "parse_fintabnet_labels",
+        "default_language_code": "en",  # US Fortune 500 financial reports
+        "default_script_name": "Latn",
     },
     "nist_sd19": {
         "path": BASE_DATA / "handwriting/nist_sd19_pages",
@@ -338,6 +365,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_handwriting": True,
         "has_signature": False,
         "original_labels_parser": "parse_nist_sd19_labels",
+        "default_language_code": "en",  # US handwriting database
+        "default_script_name": "Latn",
     },
     "signatr6k": {
         "path": BASE_DATA / "handwriting/signatr6k",
@@ -351,6 +380,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_formula": False,
         "has_handwriting": True,
         "has_signature": True,
+        "default_language_code": "en",  # Thomson Reuters legal (Canada/US)
+        "default_script_name": "Latn",
     },
     "maths_handwriting": {
         "path": BASE_DATA / "handwriting/maths_handwriting",
@@ -363,6 +394,24 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_formula": True,
         "has_handwriting": True,
         "has_signature": False,
+        "default_language_code": "zxx",  # No linguistic content (math symbols)
+        "default_script_name": "Zmth",  # Mathematical notation
+    },
+    "hasyv2": {
+        "path": BASE_DATA / "handwriting/hasyv2_original/hasy-data",
+        "pattern": "*.png",
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.EDUCATIONAL,
+        "has_human_mos": False,
+        # Tier 0: 100% handwritten mathematical symbols by definition
+        "has_table": False,
+        "has_formula": True,
+        "has_handwriting": True,
+        "has_signature": False,
+        "default_language_code": "zxx",  # No linguistic content (math symbols)
+        "default_script_name": "Zmth",  # Mathematical notation
+        "text_scope": "character",  # Single character per image
+        "original_labels_parser": "parse_hasyv2_labels",
     },
     "im2latex": {
         "path": BASE_DATA / "formulas/im2latex",
@@ -376,6 +425,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_handwriting": False,
         "has_signature": False,
         "original_labels_parser": "parse_im2latex_labels",
+        "default_language_code": "en",  # arXiv papers (English source)
+        "default_script_name": "Latn",
     },
     "mathverse": {
         "path": BASE_DATA / "formulas/mathverse",
@@ -389,6 +440,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_handwriting": False,
         "has_signature": False,
         "original_labels_parser": "parse_mathverse_labels",
+        "default_language_code": "en",  # English math problems
+        "default_script_name": "Latn",
     },
     "multimodal_textbook": {
         "path": BASE_DATA / "educational/multimodal_textbook",
@@ -405,7 +458,10 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "domain": DomainLevel1.UNKNOWN,
         "has_human_mos": False,
         "has_paired_gt": True,  # Has pixel-aligned ground truth
+        "original_labels_parser": "parse_realdae_labels",
         # Mixed content, needs YOLO detection
+        "default_language_code": "en",  # Document restoration benchmark
+        "default_script_name": "Latn",
     },
     # === NEW: OCR-Quality with human scores ===
     "ocr_quality": {
@@ -450,7 +506,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === Unlabeled real-world documents (for inference/testing) ===
     "bhutan_financial": {
         "path": BASE_DATA / "documents/bhutan_financial",
-        "pattern": "**/*.jpg",
+        "pattern": "**/*.png",
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
@@ -474,8 +530,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "original_labels_parser": "parse_mdiw13_labels",
     },
     "cc_ocr": {
-        "path": BASE_DATA / "language/huggingface_downloads/CC-OCR",
-        "pattern": "**/*.png",
+        "path": BASE_DATA / "language/cc_ocr_extracted",
+        "pattern": "**/*.jpg",
         "capture_method": CaptureMethod.UNKNOWN,  # Mixed (41% real-world, 59% synthetic)
         "domain": DomainLevel1.UNKNOWN,  # Multiple domains
         "has_human_mos": False,
@@ -484,8 +540,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "original_labels_parser": "parse_cc_ocr_labels",
     },
     "tibhcr": {
-        "path": BASE_DATA / "language/huggingface_downloads/TibHCR",
-        "pattern": "**/*.png",
+        "path": BASE_DATA / "language/huggingface_downloads/TibHCR/TibHCR",
+        "pattern": "**/*.jpg",
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.PERSONAL,  # Handwritten characters
         "has_human_mos": False,
@@ -541,8 +597,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "original_labels_parser": "parse_nepali_handwritten_labels",
     },
     "yarmouk_ocr": {
-        "path": BASE_DATA / "language/yarmouk_ocr",
-        "pattern": "**/*.jpg",
+        "path": BASE_DATA / "language/yarmouk_ocr_images",  # Converted from PDFs
+        "pattern": "**/*.png",  # PNG format from conversion
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Mixed Arabic documents
         "has_human_mos": False,
@@ -587,12 +643,24 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     # === OHR-Bench (Arrow format benchmark) ===
     "ohr-bench": {
         "path": BENCHMARK_ONLY / "ohr-bench",
-        "pattern": "extracted_images/*.png",  # After extraction
+        "pattern": "extracted_images/**/*.png",  # After extraction (includes subdirs)
         "capture_method": CaptureMethod.UNKNOWN,
         "domain": DomainLevel1.UNKNOWN,  # Mixed benchmark
         "has_human_mos": False,
         "arrow_format": True,  # Needs extraction like omnidocbench
         "original_labels_parser": "parse_ohr_bench_labels",
+    },
+    # === FinanceBench (SEC Financial Documents) ===
+    "financebench": {
+        "path": BENCHMARK_ONLY / "financebench",
+        "pattern": "extracted_images/*.png",  # After PDF extraction
+        "capture_method": CaptureMethod.BORN_DIGITAL,  # SEC filings
+        "domain": DomainLevel1.FINANCIAL,
+        "has_human_mos": False,
+        "has_table": True,  # SEC filings contain tables
+        "original_labels_parser": "parse_financebench_labels",
+        "default_language_code": "en",  # US SEC filings
+        "default_script_name": "Latn",
     },
 }
 
@@ -661,6 +729,7 @@ class OriginalLabels:
     # === Multilingual/Script Datasets ===
     language_code: str | None = None  # Original language label (e.g., "ur", "jp")
     script_name: str | None = None  # Original script label (e.g., "Arabic", "Devanagari")
+    iso15924_script_code: str | None = None  # Standardized ISO 15924 code (e.g., "Arab", "Deva")
 
     # === Scene Text Datasets (MLT-19 style) ===
     text_instances: list[dict] | None = None
@@ -1439,16 +1508,45 @@ def derive_content_flags_from_coco(annotations: list[dict]) -> dict[str, bool]:
 
 
 def parse_doclaynet_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
-    """Parse DocLayNet COCO annotations.
+    """Parse DocLayNet COCO annotations with per-document language detection.
 
     DocLayNet categories (11 classes):
     - Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header,
     - Picture, Section-Header, Table, Text, Title
+
+    Language detection:
+    - Collection-based: german_laws -> de, japanese_laws -> ja, etc.
+    - Filename prefix: EN-, DE-, FR- prefixes in doc_name
+    - Default: English (95% of dataset)
     """
     labels = OriginalLabels()
 
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    # Language mapping by collection name
+    collection_lang_map = {
+        "german_laws": ("de", "Latn"),
+        "japanese_laws": ("ja", "Jpan"),
+        "russian_laws": ("ru", "Cyrl"),
+        "patents_cn": ("zh", "Hans"),
+        "philippine_laws": ("en", "Latn"),  # English/Filipino, primarily English
+    }
+
+    # Language mapping by doc_name prefix
+    prefix_lang_map = {
+        "DE-": ("de", "Latn"),
+        "FR-": ("fr", "Latn"),
+        "EN-": ("en", "Latn"),
+        "JA-": ("ja", "Jpan"),
+        "ZH-": ("zh", "Hans"),
+    }
+
     # Look for COCO annotations in various locations
     coco_paths = [
+        dataset_path / "ground_truth" / "coco" / "train.json",
+        dataset_path / "ground_truth" / "coco" / "val.json",
+        dataset_path / "ground_truth" / "coco" / "test.json",
         dataset_path / "COCO" / "train.json",
         dataset_path / "COCO" / "val.json",
         dataset_path / "COCO" / "test.json",
@@ -1463,6 +1561,9 @@ def parse_doclaynet_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
             break
 
     if not coco_data:
+        # Default to English if no COCO data found
+        labels.language_code = "en"
+        labels.script_name = "Latn"
         return labels
 
     # Get annotations for this image
@@ -1471,6 +1572,43 @@ def parse_doclaynet_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
 
     if annotations:
         labels.doclaynet_annotations = annotations
+
+    # Try to find image metadata for language detection
+    images_data = coco_data.get("images", [])
+    image_meta = None
+    for img in images_data:
+        if img.get("file_name") == filename:
+            image_meta = img
+            break
+
+    if image_meta:
+        # Extract collection and doc_name
+        collection = image_meta.get("collection", "")
+        doc_name = image_meta.get("doc_name", "")
+        doc_category = image_meta.get("doc_category", "")
+
+        labels.raw_labels["collection"] = collection
+        labels.raw_labels["doc_name"] = doc_name
+        labels.raw_labels["doc_category"] = doc_category
+
+        # Check collection for language
+        if collection in collection_lang_map:
+            labels.language_code, labels.script_name = collection_lang_map[collection]
+            labels.raw_labels["language_source"] = "collection"
+        else:
+            # Check doc_name prefix for language
+            for prefix, (lang, script) in prefix_lang_map.items():
+                if doc_name.startswith(prefix):
+                    labels.language_code = lang
+                    labels.script_name = script
+                    labels.raw_labels["language_source"] = "filename_prefix"
+                    break
+
+    # Default to English if no language detected (95% of DocLayNet is English)
+    if not labels.language_code:
+        labels.language_code = "en"
+        labels.script_name = "Latn"
+        labels.raw_labels["language_source"] = "default"
 
     return labels
 
@@ -1636,6 +1774,7 @@ def parse_pucit_ohul_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     # Set language/script based on dataset (known from dataset metadata)
     labels.language_code = "ur"  # Urdu
     labels.script_name = "Arabic"  # Urdu uses Arabic script
+    labels.iso15924_script_code = "Arab"  # ISO 15924 for Arabic script
 
     # Determine split from path
     path_str = str(image_path)
@@ -2235,8 +2374,8 @@ def parse_mdiw13_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     for part in path_parts:
         if part in script_mappings:
             iso15924, iso639 = script_mappings[part]
-            labels.script_name = part
-            labels.raw_labels["iso15924_script"] = iso15924
+            labels.script_name = part  # Human-readable name
+            labels.iso15924_script_code = iso15924  # Standardized ISO 15924 code
             labels.language_code = iso639
             break
 
@@ -2267,6 +2406,11 @@ def parse_cc_ocr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
         - raw_labels: track, subset, scene_type
     """
     labels = OriginalLabels()
+
+    # Default to Chinese (simplified) - CC-OCR is primarily Chinese
+    labels.language_code = "zh"
+    labels.script_name = "Chinese"
+    labels.iso15924_script_code = "Hans"  # ISO 15924 for Simplified Chinese
 
     if labels.raw_labels is None:
         labels.raw_labels = {}
@@ -2324,7 +2468,9 @@ def parse_tibhcr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     labels = OriginalLabels()
 
     # Fixed: Tibetan script
+    labels.language_code = "bo"
     labels.script_name = "Tibetan"
+    labels.iso15924_script_code = "Tibt"  # ISO 15924 for Tibetan
 
     if labels.raw_labels is None:
         labels.raw_labels = {}
@@ -2389,7 +2535,9 @@ def parse_mlt19_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     }
 
     # Try to find ground truth file
+    # MLT-19 structure: TrainGT/TrainGT/tr_img_{id}.txt or train_gt/gt_{stem}.txt
     gt_dirs = [
+        dataset_path / "TrainGT" / "TrainGT",  # Actual structure
         dataset_path / "train_gt",
         dataset_path / "val_gt",
         dataset_path / "test_gt",
@@ -2398,9 +2546,16 @@ def parse_mlt19_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
 
     gt_file = None
     for gt_dir in gt_dirs:
-        candidate = gt_dir / f"gt_{image_path.stem}.txt"
-        if candidate.exists():
-            gt_file = candidate
+        # Try multiple filename patterns
+        candidates = [
+            gt_dir / f"gt_{image_path.stem}.txt",
+            gt_dir / f"{image_path.stem}.txt",  # tr_img_00001.txt
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                gt_file = candidate
+                break
+        if gt_file:
             break
 
     if gt_file:
@@ -2429,14 +2584,28 @@ def parse_mlt19_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
             labels.text_instances = text_instances
             labels.raw_labels["languages"] = list(languages_found)
 
-            # Set primary language code if single language
-            if len(languages_found) == 1:
-                lang = list(languages_found)[0]
-                if lang in lang_to_iso and lang_to_iso[lang]:
-                    labels.language_code = lang_to_iso[lang]
+            # Set language code based on languages found
+            # Filter out non-linguistic markers (Symbols, Mixed, None)
+            linguistic_langs = {
+                lang for lang in languages_found
+                if lang in lang_to_iso and lang_to_iso[lang] is not None
+            }
+
+            if len(linguistic_langs) == 1:
+                # Single language - set that language
+                lang = list(linguistic_langs)[0]
+                labels.language_code = lang_to_iso[lang]
+            elif len(linguistic_langs) > 1:
+                # Multiple languages in same document - use 'mul' (ISO 639-3)
+                labels.language_code = "mul"
+            # If no linguistic languages found (only Symbols/Mixed/None), leave empty
 
         except Exception as e:
             logger.debug(f"Failed to parse MLT-19 GT file {gt_file}: {e}")
+    else:
+        # No GT file found - mark as undetermined for test images
+        # MLT-19 test set GT was never released (ICDAR competition holdout)
+        labels.raw_labels["gt_available"] = False
 
     # Determine split from path
     path_str = str(image_path).lower()
@@ -2446,6 +2615,11 @@ def parse_mlt19_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
         labels.raw_labels["split"] = "val"
     elif "test" in path_str:
         labels.raw_labels["split"] = "test"
+        # Test images without GT - mark as undetermined baseline
+        # Language can be enriched later via visual detection
+        if not gt_file and not labels.language_code:
+            labels.language_code = "und"  # ISO 639-2 undetermined
+            labels.raw_labels["language_source"] = "baseline_und"
 
     return labels
 
@@ -2459,6 +2633,7 @@ def parse_arabic_docs_labels(dataset_path: Path, image_path: Path) -> OriginalLa
     labels = OriginalLabels()
     labels.language_code = "ar"
     labels.script_name = "Arabic"
+    labels.iso15924_script_code = "Arab"  # ISO 15924 for Arabic
 
     if labels.raw_labels is None:
         labels.raw_labels = {}
@@ -2483,6 +2658,7 @@ def parse_hindi_synthetic_labels(dataset_path: Path, image_path: Path) -> Origin
     labels = OriginalLabels()
     labels.language_code = "hi"
     labels.script_name = "Devanagari"
+    labels.iso15924_script_code = "Deva"  # ISO 15924 for Devanagari
 
     if labels.raw_labels is None:
         labels.raw_labels = {}
@@ -2517,6 +2693,7 @@ def parse_nepali_handwritten_labels(dataset_path: Path, image_path: Path) -> Ori
     labels = OriginalLabels()
     labels.language_code = "ne"
     labels.script_name = "Devanagari"
+    labels.iso15924_script_code = "Deva"  # ISO 15924 for Devanagari
 
     if labels.raw_labels is None:
         labels.raw_labels = {}
@@ -2538,6 +2715,7 @@ def parse_yarmouk_labels(dataset_path: Path, image_path: Path) -> OriginalLabels
     labels = OriginalLabels()
     labels.language_code = "ar"
     labels.script_name = "Arabic"
+    labels.iso15924_script_code = "Arab"  # ISO 15924 for Arabic
 
     if labels.raw_labels is None:
         labels.raw_labels = {}
@@ -2592,10 +2770,70 @@ def parse_ohr_bench_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     return labels
 
 
+def parse_financebench_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse FinanceBench labels from filename pattern and metadata.
+
+    FinanceBench contains SEC filings (10K, 10Q, 8K, Earnings) from public companies.
+    Filename pattern: {COMPANY}_{PERIOD}_{TYPE}_p{PAGE}.png
+    Examples: 3M_2018_10K_p059.png, ADOBE_2022_10K_p001.png
+
+    Document Types:
+        - 10k: Annual financial reports
+        - 10q: Quarterly financial reports
+        - 8k: Current event reports
+        - earnings: Earnings call transcripts
+    """
+    import json
+    import re
+
+    labels = OriginalLabels()
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    # Filename pattern: {COMPANY}_{PERIOD}_{TYPE}_p{PAGE}.png
+    filename_pattern = re.compile(
+        r"^(?P<company>.+?)_(?P<period>\d{4}Q?\d?)_(?P<doc_type>\w+)_p(?P<page>\d+)\.png$",
+        re.IGNORECASE,
+    )
+
+    filename = image_path.name
+    match = filename_pattern.match(filename)
+
+    if match:
+        company = match.group("company")
+        period = match.group("period")
+        doc_type = match.group("doc_type").lower()
+        page_num = int(match.group("page"))
+
+        labels.raw_labels["company"] = company
+        labels.raw_labels["doc_period"] = period
+        labels.raw_labels["doc_type"] = doc_type
+        labels.raw_labels["page_num"] = page_num
+        labels.document_type = f"SEC {doc_type.upper()}"
+
+        # Try to get additional metadata from JSONL files
+        doc_name = f"{company}_{period}_{doc_type.upper()}"
+        doc_info_path = dataset_path / "data" / "financebench_document_information.jsonl"
+
+        if doc_info_path.exists():
+            with open(doc_info_path, encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        doc = json.loads(line)
+                        if doc.get("doc_name", "").lower() == doc_name.lower():
+                            labels.raw_labels["gics_sector"] = doc.get("gics_sector")
+                            labels.raw_labels["doc_link"] = doc.get("doc_link")
+                            break
+
+    return labels
+
+
 def parse_midv500_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse MIDV-500 ID document labels from path structure.
 
-    Structure: {country_code}/{doc_type}/{id}.tif
+    Structure: {num}_{country_code}_{doc_type}/images/{condition}/{id}.tif
+    Examples: 01_alb_id, 06_bra_passport, 12_deu_drvlic_new
     50 countries, various document types (ID, passport, driving licence).
     """
     labels = OriginalLabels()
@@ -2603,25 +2841,74 @@ def parse_midv500_labels(dataset_path: Path, image_path: Path) -> OriginalLabels
     if labels.raw_labels is None:
         labels.raw_labels = {}
 
+    # ISO 3166-1 alpha-3 to language/script mapping
+    country_to_lang_script = {
+        "alb": ("sq", "Latn"),  # Albania - Albanian
+        "aut": ("de", "Latn"),  # Austria - German
+        "aze": ("az", "Latn"),  # Azerbaijan - Azerbaijani
+        "bra": ("pt", "Latn"),  # Brazil - Portuguese
+        "chl": ("es", "Latn"),  # Chile - Spanish
+        "chn": ("zh", "Hans"),  # China - Chinese
+        "cze": ("cs", "Latn"),  # Czech Republic - Czech
+        "deu": ("de", "Latn"),  # Germany - German
+        "dza": ("ar", "Arab"),  # Algeria - Arabic
+        "esp": ("es", "Latn"),  # Spain - Spanish
+        "est": ("et", "Latn"),  # Estonia - Estonian
+        "fin": ("fi", "Latn"),  # Finland - Finnish
+        "grc": ("el", "Grek"),  # Greece - Greek
+        "hrv": ("hr", "Latn"),  # Croatia - Croatian
+        "hun": ("hu", "Latn"),  # Hungary - Hungarian
+        "irn": ("fa", "Arab"),  # Iran - Persian
+        "ita": ("it", "Latn"),  # Italy - Italian
+        "jpn": ("ja", "Jpan"),  # Japan - Japanese
+        "ltu": ("lt", "Latn"),  # Lithuania - Lithuanian
+        "lva": ("lv", "Latn"),  # Latvia - Latvian
+        "mys": ("ms", "Latn"),  # Malaysia - Malay
+        "nld": ("nl", "Latn"),  # Netherlands - Dutch
+        "nor": ("no", "Latn"),  # Norway - Norwegian
+        "pol": ("pl", "Latn"),  # Poland - Polish
+        "prt": ("pt", "Latn"),  # Portugal - Portuguese
+        "rou": ("ro", "Latn"),  # Romania - Romanian
+        "rus": ("ru", "Cyrl"),  # Russia - Russian
+        "srb": ("sr", "Cyrl"),  # Serbia - Serbian
+        "svk": ("sk", "Latn"),  # Slovakia - Slovak
+        "svn": ("sl", "Latn"),  # Slovenia - Slovenian
+        "swe": ("sv", "Latn"),  # Sweden - Swedish
+        "tur": ("tr", "Latn"),  # Turkey - Turkish
+        "ukr": ("uk", "Cyrl"),  # Ukraine - Ukrainian
+        "usa": ("en", "Latn"),  # USA - English
+        "zaf": ("en", "Latn"),  # South Africa - English (primary)
+        # Additional country codes found in MIDV-500
+        "mac": ("zh", "Hans"),  # Macau - Chinese
+        "mda": ("ro", "Latn"),  # Moldova - Romanian
+        "ury": ("es", "Latn"),  # Uruguay - Spanish
+        "xpo": ("en", "Latn"),  # Synthetic/placeholder - default English
+    }
+
     path_parts = image_path.parts
 
-    # Try to extract country code and document type from path
-    # MIDV structure varies but usually has country codes
-    for i, part in enumerate(path_parts):
-        # Country codes are usually 2-3 letter codes
-        if len(part) == 2 and part.isupper():
-            labels.raw_labels["country_code"] = part
-        elif len(part) == 3 and part.isupper():
-            labels.raw_labels["country_code"] = part
-        # Document types
-        if part.lower() in ("id", "passport", "driverlicense", "driving_licence", "dl"):
-            labels.raw_labels["document_type"] = part
-            labels.document_type = part.title()
+    # Extract country code from directory name like "01_alb_id"
+    for part in path_parts:
+        if "_" in part:
+            subparts = part.lower().split("_")
+            if len(subparts) >= 2:
+                # Format: {num}_{country}_{doctype}[_variant]
+                country_code = subparts[1] if subparts[0].isdigit() else subparts[0]
+                if len(country_code) == 3:
+                    labels.raw_labels["country_code"] = country_code.upper()
 
-    # Cyrillic countries (for script detection)
-    cyrillic_countries = {"RU", "UA", "BY", "BG", "RS", "KZ"}
-    if labels.raw_labels.get("country_code") in cyrillic_countries:
-        labels.script_name = "Cyrillic"
+                    # Map to language and script
+                    if country_code in country_to_lang_script:
+                        labels.language_code, labels.script_name = country_to_lang_script[country_code]
+
+                    # Extract document type
+                    doc_types = {"id", "passport", "drvlic", "homereturn", "internalpassport"}
+                    for subpart in subparts[2:]:
+                        if subpart in doc_types:
+                            labels.raw_labels["document_type"] = subpart
+                            labels.document_type = subpart.replace("drvlic", "Driving License").title()
+                            break
+                    break
 
     return labels
 
@@ -2860,7 +3147,10 @@ def parse_cvsi_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
                 script_name = path_parts[i + 1]
                 labels.raw_labels["script_class"] = script_name
                 if script_name in script_mapping:
-                    labels.language_code, labels.script_name = script_mapping[script_name]
+                    lang_code, iso15924 = script_mapping[script_name]
+                    labels.language_code = lang_code
+                    labels.script_name = script_name  # Human-readable name
+                    labels.iso15924_script_code = iso15924  # ISO 15924
             break
 
     return labels
@@ -2904,7 +3194,10 @@ def parse_siw13_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
                 script_name = path_parts[i + 1]
                 labels.raw_labels["script_class"] = script_name
                 if script_name in script_mapping:
-                    labels.language_code, labels.script_name = script_mapping[script_name]
+                    lang_code, iso15924 = script_mapping[script_name]
+                    labels.language_code = lang_code
+                    labels.script_name = script_name  # Human-readable name
+                    labels.iso15924_script_code = iso15924  # ISO 15924
             break
 
     return labels
@@ -2923,25 +3216,44 @@ def parse_mle2e_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     if labels.raw_labels is None:
         labels.raw_labels = {}
 
-    # Script to ISO mappings
+    # Script to ISO mappings: script -> (language_code, iso15924, human_readable_name)
     script_mapping = {
-        "latin": ("en", "Latn"),
-        "chinese": ("zh", "Hans"),
-        "kannada": ("kn", "Knda"),
-        "korean": ("ko", "Hang"),
+        "latin": ("en", "Latn", "Latin"),
+        "chinese": ("zh", "Hans", "Chinese"),
+        "kannada": ("kn", "Knda", "Kannada"),
+        "korean": ("ko", "Hang", "Korean"),
     }
 
-    # Extract split from path
+    # Extract split and language from path
+    # Structure: {Training,Testing}/{language}/*.jpg
     path_parts = image_path.parts
-    for part in path_parts:
+    for i, part in enumerate(path_parts):
         if part == "Training":
             labels.raw_labels["split"] = "train"
+            # Check next part for language
+            if i + 1 < len(path_parts):
+                lang_dir = path_parts[i + 1].lower()
+                if lang_dir in script_mapping:
+                    lang_code, iso15924, human_name = script_mapping[lang_dir]
+                    labels.language_code = lang_code
+                    labels.script_name = human_name  # Human-readable name
+                    labels.iso15924_script_code = iso15924  # ISO 15924 code
+                    labels.raw_labels["script_from_path"] = lang_dir
             break
         if part == "Testing":
             labels.raw_labels["split"] = "test"
+            # Check next part for language
+            if i + 1 < len(path_parts):
+                lang_dir = path_parts[i + 1].lower()
+                if lang_dir in script_mapping:
+                    lang_code, iso15924, human_name = script_mapping[lang_dir]
+                    labels.language_code = lang_code
+                    labels.script_name = human_name  # Human-readable name
+                    labels.iso15924_script_code = iso15924  # ISO 15924 code
+                    labels.raw_labels["script_from_path"] = lang_dir
             break
 
-    # Try to find and parse companion annotation file
+    # Try to find and parse companion annotation file (may override path-based language)
     txt_path = image_path.with_suffix(".txt")
     if txt_path.exists():
         try:
@@ -2967,11 +3279,206 @@ def parse_mle2e_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
                     # Set primary script based on first found
                     primary_script = next(iter(scripts_found))
                     if primary_script in script_mapping:
-                        labels.language_code, labels.script_name = script_mapping[primary_script]
+                        lang_code, iso15924, human_name = script_mapping[primary_script]
+                        labels.language_code = lang_code
+                        labels.script_name = human_name  # Human-readable name
+                        labels.iso15924_script_code = iso15924  # ISO 15924 code
                 if text_instances:
                     labels.text_instances = text_instances[:5]  # Sample
         except Exception as e:
             logger.debug(f"Failed to parse MLE2E annotation: {e}")
+
+    return labels
+
+
+def parse_omnidocbench_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse OmniDocBench labels from extracted image filenames.
+
+    OmniDocBench structure (after extraction):
+        omnidocbench/
+            extracted_images/
+                {doc_type}_{doc_name}_page_{pagenum}.png
+
+    Document types:
+        - PPT: PowerPoint presentations
+        - book_en: English books
+        - color: Colored documents
+        - data: Data/spreadsheet documents
+        - docstructbench: Document structure benchmark images
+        - eastmoney: Financial documents (eastmoney.com)
+        - exam: Examination papers
+        - jiaocai: Textbook materials (Chinese)
+        - magazine: Magazine pages
+        - newspaper: Newspaper articles
+        - notes: Handwritten/typed notes
+        - scihub: Scientific papers
+        - show: Presentation slides
+        - yanbaopptmerge: Research report PPTs
+        - yanbaor2: Research reports v2
+
+    Extracts:
+        - raw_labels.doc_type: Document type prefix
+        - raw_labels.doc_name: Document identifier/name
+        - raw_labels.page_num: Page number
+        - language_code: Language if detectible from name
+    """
+    labels = OriginalLabels()
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    filename = image_path.stem
+
+    # Document type to domain/language/script mapping
+    # Format: prefix -> (doc_type, language_code, script_name)
+    doc_type_mapping = {
+        "PPT": ("presentation", None, None),
+        "book_en": ("book", "en", "Latn"),
+        "book_eng": ("book", "en", "Latn"),
+        "book_zh": ("book", "zh", "Hans"),
+        "color": ("document", None, None),
+        "data": ("spreadsheet", None, None),
+        "docstructbench": ("document", None, None),
+        "eastmoney": ("financial", "zh", "Hans"),
+        "exam": ("examination", None, None),
+        "jiaocai": ("textbook", "zh", "Hans"),  # 教材 = Chinese textbook
+        "jiaocaineedrop": ("textbook", "zh", "Hans"),
+        "dianzishu": ("ebook", "zh", "Hans"),  # 电子书 = Chinese e-book
+        "magazine": ("magazine", None, None),
+        "newspaper": ("newspaper", None, None),
+        "notes": ("notes", None, None),
+        "paper": ("scientific", "en", "Latn"),  # Academic papers, typically English
+        "scihub": ("scientific", "en", "Latn"),
+        "show": ("presentation", None, None),
+        "textbook": ("textbook", "en", "Latn"),  # Generic textbook, default English
+        "yanbaopptmerge": ("research_report", "zh", "Hans"),
+        "yanbaor2": ("research_report", "zh", "Hans"),
+        "pdf": ("document", None, None),  # Generic PDF
+    }
+
+    # Try to extract document type from filename prefix
+    remainder = filename
+    for prefix, (doc_type, lang, script) in doc_type_mapping.items():
+        if filename.startswith(prefix):
+            labels.raw_labels["doc_type"] = doc_type
+            labels.raw_labels["doc_type_prefix"] = prefix
+            if lang:
+                labels.language_code = lang
+            if script:
+                labels.script_name = script
+            # Extract remaining parts after prefix
+            remainder = filename[len(prefix):].lstrip("_")
+            break
+    else:
+        # Unknown prefix
+        labels.raw_labels["doc_type"] = "unknown"
+
+    # Check for language codes in filename if not already set from prefix
+    # Patterns: _en_, _eng_, _zh_, _chi_, _chn_, etc.
+    if not labels.language_code:
+        filename_lower = filename.lower()
+        if "_en_" in filename_lower or "_eng_" in filename_lower or "_english" in filename_lower:
+            labels.language_code = "en"
+            labels.script_name = "Latn"
+        elif "_zh_" in filename_lower or "_chi_" in filename_lower or "_chn_" in filename_lower or "_chinese" in filename_lower:
+            labels.language_code = "zh"
+            labels.script_name = "Hans"
+        elif filename_lower.startswith("en_") or filename_lower.startswith("eng_"):
+            labels.language_code = "en"
+            labels.script_name = "Latn"
+        elif filename_lower.startswith("zh_") or filename_lower.startswith("chi_"):
+            labels.language_code = "zh"
+            labels.script_name = "Hans"
+
+    # Default to English for certain document types known to be English-majority
+    # Note: OmniDocBench has ~30% English, ~60% Chinese, ~10% mixed
+    # Only apply defaults to clearly English document types
+
+    # Try to extract page number
+    # Pattern: ..._page_XXX or _XXXX at end
+    import re
+    page_match = re.search(r"_page_(\d+)$", filename)
+    if page_match:
+        labels.raw_labels["page_num"] = int(page_match.group(1))
+        # Document name is everything before _page_
+        doc_name_end = filename.rfind("_page_")
+        if doc_name_end > 0:
+            labels.raw_labels["doc_name"] = filename[:doc_name_end]
+    else:
+        # Try alternate pattern: _XXXX at end (4 digits)
+        page_match = re.search(r"_(\d{3,4})$", filename)
+        if page_match:
+            labels.raw_labels["page_num"] = int(page_match.group(1))
+            labels.raw_labels["doc_name"] = filename[:filename.rfind("_")]
+
+    return labels
+
+
+def parse_realdae_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse RealDAE (Real-world Document Image Artifact Elimination) labels.
+
+    RealDAE structure:
+        realdae/
+            task_{type}_{split}/
+                {origin}_{number}_{gt|in}.jpg
+
+    Types: bleed (bleed-through), color (color degradation), shadow (shadow removal)
+    Splits: train, test
+    File types: _in.jpg (input/degraded), _gt.jpg (ground truth/clean)
+
+    Extracts:
+        - raw_labels.task_type: bleed, color, or shadow
+        - raw_labels.split: train or test
+        - raw_labels.is_input: True if *_in.jpg, False if *_gt.jpg
+        - raw_labels.paired_file: Path to corresponding gt/in file
+        - raw_labels.origin: Origin prefix
+        - raw_labels.sample_id: Sample number
+    """
+    labels = OriginalLabels()
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    # Extract task type and split from directory name
+    # Pattern: task_{type}_{split} (e.g., task_bleed_train, task_shadow_test)
+    path_parts = image_path.parts
+    for part in path_parts:
+        if part.startswith("task_"):
+            parts = part.split("_")
+            if len(parts) >= 3:
+                labels.raw_labels["task_type"] = parts[1]  # bleed, color, shadow
+                labels.raw_labels["split"] = parts[2]  # train, test
+            break
+
+    # Parse filename pattern: {origin}_{number}_{gt|in}.jpg
+    filename = image_path.stem
+    if filename.endswith("_in"):
+        labels.raw_labels["is_input"] = True
+        labels.raw_labels["is_ground_truth"] = False
+        base_name = filename[:-3]  # Remove _in
+        gt_file = image_path.parent / f"{base_name}_gt.jpg"
+        if gt_file.exists():
+            labels.raw_labels["paired_file"] = str(gt_file)
+    elif filename.endswith("_gt"):
+        labels.raw_labels["is_input"] = False
+        labels.raw_labels["is_ground_truth"] = True
+        base_name = filename[:-3]  # Remove _gt
+        in_file = image_path.parent / f"{base_name}_in.jpg"
+        if in_file.exists():
+            labels.raw_labels["paired_file"] = str(in_file)
+
+    # Extract origin and sample ID from base name
+    # Pattern: origin1000_103 -> origin="origin1000", sample_id="103"
+    if "_" in filename:
+        name_parts = filename.rsplit("_", 2)  # Split from right, max 2 splits
+        if len(name_parts) >= 2:
+            labels.raw_labels["origin"] = name_parts[0]
+            # Sample ID is the number before _gt/_in
+            if len(name_parts) >= 2:
+                try:
+                    labels.raw_labels["sample_id"] = int(name_parts[1])
+                except ValueError:
+                    labels.raw_labels["sample_id"] = name_parts[1]
 
     return labels
 
@@ -3002,6 +3509,7 @@ LABEL_PARSERS = {
     "parse_nepali_handwritten_labels": parse_nepali_handwritten_labels,
     "parse_yarmouk_labels": parse_yarmouk_labels,
     "parse_ohr_bench_labels": parse_ohr_bench_labels,
+    "parse_financebench_labels": parse_financebench_labels,
     "parse_midv500_labels": parse_midv500_labels,
     "parse_funsd_plus_labels": parse_funsd_plus_labels,
     "parse_sroie_labels": parse_sroie_labels,
@@ -3011,6 +3519,8 @@ LABEL_PARSERS = {
     "parse_cvsi_labels": parse_cvsi_labels,
     "parse_siw13_labels": parse_siw13_labels,
     "parse_mle2e_labels": parse_mle2e_labels,
+    "parse_realdae_labels": parse_realdae_labels,
+    "parse_omnidocbench_labels": parse_omnidocbench_labels,
 }
 
 
@@ -3167,11 +3677,13 @@ def apply_tiered_enrichment(
         enrichment.text_scope_content_type = config.get("text_scope_content_type", "printed")
     enrichment.text_scope_detection_method = "dataset_metadata"
 
-    # Language/Script (from config, with Layer 1 fallback)
-    # Priority: config > Layer 1 parsed values > None
+    # Language/Script (from config, with Layer 1 fallback, then dataset default)
+    # Priority: config > Layer 1 parsed values > dataset default > None
     enrichment.iso639_language = config.get("iso639_language")
     if enrichment.iso639_language is None and original_labels.language_code:
         enrichment.iso639_language = original_labels.language_code
+    if enrichment.iso639_language is None:
+        enrichment.iso639_language = config.get("default_language_code")
 
     enrichment.iso15924_script = config.get("iso15924_script")
     if enrichment.iso15924_script is None and original_labels.script_name:
@@ -3201,6 +3713,8 @@ def apply_tiered_enrichment(
         enrichment.iso15924_script = script_to_iso.get(
             original_labels.script_name, original_labels.script_name
         )
+    if enrichment.iso15924_script is None:
+        enrichment.iso15924_script = config.get("default_script_name")
 
     # Script family (from config, with auto-derivation from ISO 15924)
     enrichment.script_family = config.get("script_family")

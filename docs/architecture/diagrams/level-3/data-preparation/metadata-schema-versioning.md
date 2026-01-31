@@ -22,6 +22,15 @@ title: 'Level 3: Metadata Schema & Versioning System'
 
 The metadata schema system implements a **three-layer architectural pattern** for managing document quality assessment data throughout the training pipeline. It enforces immutability of original dataset labels while enabling progressive enrichment and flexible training label generation.
 
+### Visual Schema Documentation
+
+For interactive Mermaid diagrams showing entity relationships, class structures, and data flows:
+
+- [Layer 2 Enrichment Schema Visualization](../../../../schema/layer2_enrichment_schema.md) - ER diagrams, class diagrams, enum values
+- [Document Metadata Schema Visualization](../../../../schema/document_metadata_schema.md) - Output schema for Project B handoff
+
+**JSON Schema Definitions**: `docs/schema/layer2_enrichment.schema.json`, `docs/schema/document_metadata.schema.json`
+
 ### Key Principles
 
 1. **Layer 1 (IMMUTABLE)**: Original labels preserved exactly as provided by source datasets

@@ -42,6 +42,7 @@ class CaptureMethod(str, Enum):
         CAMERA_PROFESSIONAL: Professional camera setup
         CAMERA_SMARTPHONE: Smartphone camera capture
         FAX: Fax machine transmission
+        SYNTHETIC: Synthetically generated document (e.g., for training data)
         UNKNOWN: Unknown capture method
     """
 
@@ -51,6 +52,7 @@ class CaptureMethod(str, Enum):
     CAMERA_PROFESSIONAL = "camera_professional"
     CAMERA_SMARTPHONE = "camera_smartphone"
     FAX = "fax"
+    SYNTHETIC = "synthetic"
     UNKNOWN = "unknown"
 
 

@@ -196,10 +196,10 @@ class Mdiw13Parser(BaseParser):
         iso15924, iso639 = self.SCRIPT_MAPPINGS[script_name]
 
         labels = OriginalLabels()
-        labels.script_name = script_name
+        labels.script_name = script_name  # Human-readable name
+        labels.iso15924_script_code = iso15924  # ISO 15924
         labels.language_code = iso639
         labels.raw_labels = {
-            "iso15924_script": iso15924,
             "data_source": "competition_test",
             "numeric_label": numeric_label,
         }
@@ -242,8 +242,8 @@ class Mdiw13Parser(BaseParser):
         for part in path_parts:
             if part in self.SCRIPT_MAPPINGS:
                 iso15924, iso639 = self.SCRIPT_MAPPINGS[part]
-                labels.script_name = part
-                labels.raw_labels["iso15924_script"] = iso15924
+                labels.script_name = part  # Human-readable name
+                labels.iso15924_script_code = iso15924  # ISO 15924
                 labels.language_code = iso639
                 labels.raw_labels["data_source"] = data_source
                 break
