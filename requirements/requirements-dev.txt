@@ -602,7 +602,7 @@ narwhals==2.15.0
     # via altair
 nbclient==0.10.4
     # via nbconvert
-nbconvert==7.16.6
+nbconvert==7.17.0
     # via
     #   jupyter
     #   jupyter-server
@@ -828,7 +828,7 @@ propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
-protobuf==6.33.3
+protobuf==6.33.5
     # via
     #   kaggle
     #   kagglesdk
@@ -1173,7 +1173,7 @@ tomlkit==0.13.3
     # via
     #   dvc
     #   safety
-torch==2.9.1
+torch==2.10.0
     # via
     #   torchvision
     #   ultralytics
