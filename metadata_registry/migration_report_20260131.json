@@ -1,0 +1,394 @@
+{
+  "migration_date": "2026-01-31",
+  "migration_timestamp": "2026-01-31T12:00:27.229574+00:00",
+  "script_version": "1.0.0",
+  "format_version": "full_nested_v2.0",
+  "dry_run": false,
+  "total_datasets": 42,
+  "successful": 42,
+  "partial": 0,
+  "skipped": 0,
+  "failed": 0,
+  "total_samples_migrated": 1638789,
+  "total_samples_already_migrated": 0,
+  "results": [
+    {
+      "dataset": "arabic_docs_ocr",
+      "status": "success",
+      "samples_total": 8203,
+      "samples_migrated": 8203,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "bhutan_financial",
+      "status": "success",
+      "samples_total": 135,
+      "samples_migrated": 135,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "cc_ocr",
+      "status": "success",
+      "samples_total": 6284,
+      "samples_migrated": 6284,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "cvsi",
+      "status": "success",
+      "samples_total": 10715,
+      "samples_migrated": 10715,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "dibco",
+      "status": "success",
+      "samples_total": 212,
+      "samples_migrated": 212,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "diqa-5000",
+      "status": "success",
+      "samples_total": 5500,
+      "samples_migrated": 5500,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "doclaynet",
+      "status": "success",
+      "samples_total": 81471,
+      "samples_migrated": 81471,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "financebench",
+      "status": "success",
+      "samples_total": 54120,
+      "samples_migrated": 54120,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "fintabnet",
+      "status": "success",
+      "samples_total": 97475,
+      "samples_migrated": 97475,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "funsd",
+      "status": "success",
+      "samples_total": 149,
+      "samples_migrated": 149,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "funsd_plus",
+      "status": "success",
+      "samples_total": 1139,
+      "samples_migrated": 1139,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "hasyv2",
+      "status": "success",
+      "samples_total": 168233,
+      "samples_migrated": 168233,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "hindi_ocr_synthetic",
+      "status": "success",
+      "samples_total": 80008,
+      "samples_migrated": 80008,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "historical_degraded",
+      "status": "success",
+      "samples_total": 1356,
+      "samples_migrated": 1356,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "im2latex",
+      "status": "success",
+      "samples_total": 10000,
+      "samples_migrated": 10000,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "maths_handwriting",
+      "status": "success",
+      "samples_total": 15000,
+      "samples_migrated": 15000,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "mathverse",
+      "status": "success",
+      "samples_total": 6940,
+      "samples_migrated": 6940,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "mdiw13",
+      "status": "success",
+      "samples_total": 290213,
+      "samples_migrated": 290213,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "midv500",
+      "status": "success",
+      "samples_total": 15050,
+      "samples_migrated": 15050,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "mle2e",
+      "status": "success",
+      "samples_total": 1816,
+      "samples_migrated": 1816,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "mlt19",
+      "status": "success",
+      "samples_total": 19657,
+      "samples_migrated": 19657,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "multilingual_scripts",
+      "status": "success",
+      "samples_total": 3279,
+      "samples_migrated": 3279,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "multimodal_textbook",
+      "status": "success",
+      "samples_total": 1113,
+      "samples_migrated": 1113,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "nepali_handwritten",
+      "status": "success",
+      "samples_total": 5,
+      "samples_migrated": 5,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "nist_db2",
+      "status": "success",
+      "samples_total": 5590,
+      "samples_migrated": 5590,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "nist_sd19",
+      "status": "success",
+      "samples_total": 3669,
+      "samples_migrated": 3669,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "nist_sd6",
+      "status": "success",
+      "samples_total": 5595,
+      "samples_migrated": 5595,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "ocr_quality",
+      "status": "success",
+      "samples_total": 1000,
+      "samples_migrated": 1000,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "ohr-bench",
+      "status": "success",
+      "samples_total": 8303,
+      "samples_migrated": 8303,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "omnidocbench",
+      "status": "success",
+      "samples_total": 377,
+      "samples_migrated": 377,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "pubtabnet",
+      "status": "success",
+      "samples_total": 519030,
+      "samples_migrated": 519030,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "pucit_ohul",
+      "status": "success",
+      "samples_total": 7401,
+      "samples_migrated": 7401,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "realdae",
+      "status": "success",
+      "samples_total": 583,
+      "samples_migrated": 583,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "rvl_cdip",
+      "status": "success",
+      "samples_total": 16000,
+      "samples_migrated": 16000,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "signatr6k",
+      "status": "success",
+      "samples_total": 12514,
+      "samples_migrated": 12514,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "siw13",
+      "status": "success",
+      "samples_total": 16291,
+      "samples_migrated": 16291,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "smartdoc-qa",
+      "status": "success",
+      "samples_total": 4260,
+      "samples_migrated": 4260,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "sroie",
+      "status": "success",
+      "samples_total": 2043,
+      "samples_migrated": 2043,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "tablebank",
+      "status": "success",
+      "samples_total": 10,
+      "samples_migrated": 10,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "tibhcr",
+      "status": "success",
+      "samples_total": 141698,
+      "samples_migrated": 141698,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "tobacco800",
+      "status": "success",
+      "samples_total": 1290,
+      "samples_migrated": 1290,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    },
+    {
+      "dataset": "yarmouk_ocr",
+      "status": "success",
+      "samples_total": 15062,
+      "samples_migrated": 15062,
+      "samples_already_migrated": 0,
+      "errors": [],
+      "validation_errors": []
+    }
+  ]
+}
