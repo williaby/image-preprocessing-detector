@@ -15,27 +15,208 @@ dataset-level statistics for:
 
 Output: JSON files in metadata_registry/aggregates/ with per-dataset statistics.
 
+Supports both:
+- Full nested schema format (post-migration, 2025-01-31+)
+- Legacy flat field format (pre-migration)
+
 Usage:
     python scripts/aggregate_layer2_metadata.py
     python scripts/aggregate_layer2_metadata.py --dataset tablebank
     python scripts/aggregate_layer2_metadata.py --output-dir custom/path/
+    python scripts/aggregate_layer2_metadata.py --layer2-dir /mnt/e/image_detection/metadata_registry/json
 """
 
 import json
 import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from image_preprocessing_detector.schema_utils.dataset_source import DATASET_REGISTRY
+
+
+def get_nested_value(data: dict[str, Any], *keys: str, default: Any = None) -> Any:
+    """Safely extract a value from nested dict structure.
+
+    Handles both nested and flat formats:
+    - Nested: data["capture_method"]["method"]
+    - Flat: data["capture_method"] (string)
+
+    Args:
+        data: The data dictionary
+        *keys: Key path (e.g., "capture_method", "method")
+        default: Default value if not found
+
+    Returns:
+        The extracted value or default
+    """
+    current = data
+    for key in keys:
+        if isinstance(current, dict) and key in current:
+            current = current[key]
+        else:
+            return default
+    return current if current is not None else default
+
+
+def extract_capture_method(data: dict[str, Any]) -> str | None:
+    """Extract capture method from either format.
+
+    Nested: data["capture_method"]["method"]
+    Flat: data["capture_method"]
+    """
+    cm = data.get("capture_method")
+    if isinstance(cm, dict):
+        return cm.get("method")
+    elif isinstance(cm, str):
+        return cm
+    return None
+
+
+def extract_domain(data: dict[str, Any]) -> str | None:
+    """Extract domain level1 from either format.
+
+    Nested: data["domain"]["level1"]
+    Flat: data["domain_level1"]
+    """
+    domain = data.get("domain")
+    if isinstance(domain, dict):
+        return domain.get("level1")
+    return data.get("domain_level1")
+
+
+def extract_layout_type(data: dict[str, Any]) -> str | None:
+    """Extract layout type from either format.
+
+    Nested: data["structure"]["layout_type"]
+    Flat: data["layout_type"]
+    """
+    structure = data.get("structure")
+    if isinstance(structure, dict):
+        return structure.get("layout_type")
+    return data.get("layout_type")
+
+
+def extract_text_density(data: dict[str, Any]) -> str | None:
+    """Extract text density from either format.
+
+    Nested: data["structure"]["text_density"]
+    Flat: data["text_density"]
+    """
+    structure = data.get("structure")
+    if isinstance(structure, dict):
+        return structure.get("text_density")
+    return data.get("text_density")
+
+
+def extract_language_info(
+    data: dict[str, Any],
+) -> tuple[str | None, str | None, str | None]:
+    """Extract language code, script code, and script family.
+
+    Nested: data["language"]["language_code"], ["script_code"], ["script_family"]
+    Flat: data["language_code"], data["script_code"], data["script_family"]
+          or data["iso639_language"], data["iso15924_script"]
+
+    Returns:
+        Tuple of (language_code, script_code, script_family)
+    """
+    language = data.get("language")
+    if isinstance(language, dict):
+        return (
+            language.get("language_code"),
+            language.get("script_code"),
+            language.get("script_family"),
+        )
+    # Flat format - try both naming conventions
+    lang_code = data.get("language_code") or data.get("iso639_language")
+    script_code = data.get("script_code") or data.get("iso15924_script")
+    script_family = data.get("script_family")
+    return (lang_code, script_code, script_family)
+
+
+def extract_text_scope(data: dict[str, Any]) -> tuple[str | None, str | None]:
+    """Extract text scope and content type from either format.
+
+    Nested: data["text_scope"]["scope"], data["text_scope"]["content_type"]
+    Flat: data["text_scope"], data["content_type"] or data["text_scope_content_type"]
+
+    Returns:
+        Tuple of (scope, content_type)
+    """
+    ts = data.get("text_scope")
+    if isinstance(ts, dict):
+        return (ts.get("scope"), ts.get("content_type"))
+    elif isinstance(ts, str):
+        # Flat format
+        content_type = data.get("content_type") or data.get("text_scope_content_type")
+        return (ts, content_type)
+    return (None, None)
+
+
+def extract_content_flags(data: dict[str, Any]) -> dict[str, bool]:
+    """Extract content flags from either format.
+
+    Nested: data["content_flags"]["has_table"], etc.
+    Flat: data["has_table"], etc.
+
+    Returns:
+        Dictionary of flag_name -> bool
+    """
+    flags = {}
+    flag_names = ["has_table", "has_formula", "has_handwriting", "has_signature", "has_figure"]
+
+    cf = data.get("content_flags")
+    if isinstance(cf, dict):
+        for flag in flag_names:
+            if cf.get(flag) is True:
+                flags[flag] = True
+    else:
+        # Flat format
+        for flag in flag_names:
+            if data.get(flag) is True:
+                flags[flag] = True
+    return flags
+
+
+def extract_paper_size(data: dict[str, Any]) -> tuple[str | None, str | None]:
+    """Extract paper size and orientation from either format.
+
+    Nested: data["paper_size"]["detected_size"], data["paper_size"]["orientation"]
+    Flat: data["detected_paper_size"], data["paper_orientation"]
+
+    Returns:
+        Tuple of (detected_size, orientation)
+    """
+    ps = data.get("paper_size")
+    if isinstance(ps, dict):
+        return (ps.get("detected_size"), ps.get("orientation"))
+    return (data.get("detected_paper_size"), data.get("paper_orientation"))
+
+
+def extract_quality_info(data: dict[str, Any]) -> tuple[float | None, list[dict]]:
+    """Extract quality score and degradations from either format.
+
+    Nested: data["quality"]["overall_score"], data["quality"]["degradations"]
+    Flat: data["overall_score"], data["degradations"]
+
+    Returns:
+        Tuple of (overall_score, degradations_list)
+    """
+    quality = data.get("quality")
+    if isinstance(quality, dict):
+        return (quality.get("overall_score"), quality.get("degradations", []))
+    return (data.get("overall_score"), data.get("degradations", []))
 
 
 def aggregate_dataset_metadata(
     dataset_name: str,
     layer2_dir: Path,
     verbose: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Aggregate Layer 2 metadata for a single dataset.
+
+    Supports both nested (post-migration) and flat (legacy) schema formats.
 
     Args:
         dataset_name: Canonical dataset name
@@ -72,7 +253,7 @@ def aggregate_dataset_metadata(
 
     samples = dataset_metadata.get("samples", [])
 
-    stats: Dict[str, Any] = {
+    stats: dict[str, Any] = {
         "dataset_name": dataset_name,
         "total_samples": len(samples),
         # Raw counters
@@ -105,73 +286,69 @@ def aggregate_dataset_metadata(
             latest = versions[-1]
             data = latest.get("data", {})
 
-            # Capture method (direct string field)
-            if "capture_method" in data:
-                method = data["capture_method"]
-                if method:
-                    stats["capture_methods"][method] += 1
+            # Capture method (handles both nested and flat formats)
+            method = extract_capture_method(data)
+            if method:
+                stats["capture_methods"][method] += 1
 
-            # Domains (direct string field)
-            if "domain_level1" in data:
-                level1 = data["domain_level1"]
-                if level1:
-                    stats["domains"][level1] += 1
+            # Domain (handles both nested and flat formats)
+            domain = extract_domain(data)
+            if domain:
+                stats["domains"][domain] += 1
 
-            # Layout type (if present)
-            if "layout_type" in data:
-                layout_type = data["layout_type"]
-                if layout_type:
-                    stats["layout_types"][layout_type] += 1
+            # Layout type (handles both nested and flat formats)
+            layout_type = extract_layout_type(data)
+            if layout_type:
+                stats["layout_types"][layout_type] += 1
 
-            # Text density (if present)
-            if "text_density" in data:
-                text_density = data["text_density"]
-                if text_density:
-                    stats["text_densities"][text_density] += 1
+            # Text density (handles both nested and flat formats)
+            text_density = extract_text_density(data)
+            if text_density:
+                stats["text_densities"][text_density] += 1
 
-            # Language/Script (if present)
-            if "script_code" in data:
-                script_code = data["script_code"]
-                if script_code:
-                    stats["script_codes"][script_code] += 1
+            # Language/Script (handles both nested and flat formats)
+            lang_code, script_code, script_family = extract_language_info(data)
+            if lang_code:
+                stats["language_codes"][lang_code] += 1
+            if script_code:
+                stats["script_codes"][script_code] += 1
+            if script_family:
+                stats["script_families"][script_family] += 1
 
-            if "script_family" in data:
-                script_family = data["script_family"]
-                if script_family:
-                    stats["script_families"][script_family] += 1
+            # Content flags (handles both nested and flat formats)
+            flags = extract_content_flags(data)
+            for flag_name in flags:
+                stats["content_flags"][flag_name] += 1
 
-            if "language_code" in data:
-                language_code = data["language_code"]
-                if language_code:
-                    stats["language_codes"][language_code] += 1
+            # Text scope and content type (handles both nested and flat formats)
+            scope, content_type = extract_text_scope(data)
+            if scope:
+                stats["text_scopes"][scope] += 1
+            if content_type:
+                stats["content_types"][content_type] += 1
 
-            # Content flags (boolean fields)
-            for flag in ["has_table", "has_formula", "has_handwriting", "has_signature", "has_figure"]:
-                if flag in data and data[flag] is True:
-                    stats["content_flags"][flag] += 1
+            # Paper size (handles both nested and flat formats)
+            paper_size, orientation = extract_paper_size(data)
+            if paper_size:
+                stats["paper_sizes"][paper_size] += 1
+            if orientation:
+                stats["paper_orientations"][orientation] += 1
 
-            # Text scope (if present)
-            if "text_scope" in data:
-                scope = data["text_scope"]
-                if scope:
-                    stats["text_scopes"][scope] += 1
+            # Quality info (handles both nested and flat formats)
+            quality_score, degradations = extract_quality_info(data)
+            if quality_score is not None:
+                stats["quality_scores"].append(quality_score)
 
-            # Content type (if present)
-            if "content_type" in data:
-                content_type = data["content_type"]
-                if content_type:
-                    stats["content_types"][content_type] += 1
-
-            # Paper size (if present)
-            if "detected_paper_size" in data:
-                detected_size = data["detected_paper_size"]
-                if detected_size:
-                    stats["paper_sizes"][detected_size] += 1
-
-            if "paper_orientation" in data:
-                orientation = data["paper_orientation"]
-                if orientation:
-                    stats["paper_orientations"][orientation] += 1
+            # Process degradations if present
+            if degradations:
+                for deg in degradations:
+                    if isinstance(deg, dict):
+                        deg_type = deg.get("type")
+                        severity = deg.get("severity_numeric")
+                        if deg_type:
+                            stats["degradation_types"][deg_type] += 1
+                            if severity is not None:
+                                stats["degradation_severities"][deg_type].append(severity)
 
         except Exception as e:
             if verbose:
@@ -261,6 +438,22 @@ def aggregate_dataset_metadata(
         ]
     else:
         stats["top_scripts"] = []
+
+    # Top languages (by frequency)
+    if stats["language_codes"]:
+        top_languages = stats["language_codes"].most_common(10)
+        stats["top_languages"] = [
+            {"language": lang, "count": count, "percentage": round(count / total * 100, 1)}
+            for lang, count in top_languages
+        ]
+    else:
+        stats["top_languages"] = []
+
+    # Script family summary
+    if stats["script_families"]:
+        stats["script_family_summary"] = dict(stats["script_families"].most_common())
+    else:
+        stats["script_family_summary"] = {}
 
     return stats
 
