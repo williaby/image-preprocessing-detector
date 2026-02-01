@@ -10,11 +10,11 @@ Supported Datasets:
     - historical_degraded: Historical degraded documents
     - bhutan_financial: Government financial documents
     - mathverse: Mathematical visual reasoning (formula images)
-    - im2latex: LaTeX formula renderings
 
 Note:
     Most datasets have dedicated parsers. This generic parser is only for
     datasets that truly have no structured annotations or dedicated parsers.
+    im2latex has been moved to a dedicated parser in the formula/ module.
 
 Example:
     >>> parser = GenericParser()
@@ -44,7 +44,7 @@ GENERIC_DATASETS = [
     "historical_degraded",
     "bhutan_financial",
     "mathverse",  # Formula images without labels
-    "im2latex",  # LaTeX formula images without labels
+    # NOTE: im2latex moved to dedicated Im2latexParser in formula/ module
 ]
 
 
@@ -184,10 +184,7 @@ class GenericParser(BaseParser):
             labels.raw_labels["content_type"] = "formula"
             labels.raw_labels["is_educational"] = True
 
-        elif dataset_name == "im2latex":
-            # LaTeX formula rendering dataset
-            labels.raw_labels["content_type"] = "formula"
-            labels.raw_labels["is_synthetic"] = True
+        # NOTE: im2latex moved to dedicated Im2latexParser in formula/ module
 
     def supports_batch(self) -> bool:
         """Generic parser supports batch processing."""

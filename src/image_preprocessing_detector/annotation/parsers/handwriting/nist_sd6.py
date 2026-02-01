@@ -1,9 +1,13 @@
 # SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 # SPDX-License-Identifier: MIT
-"""Parser for NIST Special Database 6 (Tax Form) dataset.
+"""Parser for NIST Special Database 6 (Census Form) dataset.
 
-NIST SD6 contains handwritten IRS 1040 tax forms with field annotations
-stored in companion .fmt files. Similar structure to NIST SD2.
+NIST SD6 contains synthesized 1988 Census forms with handwritten field entries.
+Field annotations are stored in companion .fmt files (same format as NIST SD2).
+
+IMPORTANT: This dataset contains CENSUS forms, NOT tax forms (unlike NIST SD2).
+- SD2: IRS 1040 tax forms (12 form types)
+- SD6: 1988 Census forms (20 unique form faces)
 
 Dataset Structure:
     nist_sd6/
@@ -11,21 +15,32 @@ Dataset Structure:
             data/
                 sfrs2_0/
                     r0000/
-                        r0000_00.png  - Page images
+                        r0000_00.png  - Page images (5,595 total)
                         r0000_00.fmt  - Field annotations
+                    r0001/
+                        ...
 
 .fmt File Format:
-    Line 1: Form ID (e.g., "1040_1")
+    Line 1: Form ID (e.g., "census_001")
     Line 2+: field_id value
-    Fields follow IRS 1040 form structure
+    Fields follow 1988 Census form structure
+    Special token: _ICON_ for checkboxes/logos
 
-Labels:
-    - form_type: IRS form type (1040)
-    - document_type: tax_form
-    - form_id: Unique form identifier
+Labels Extracted:
+    - form_type: "census" (1988 Census forms)
+    - document_type: "census_form"
+    - form_id: Unique form identifier from .fmt
     - field_count: Number of fields in form
     - has_handwritten_content: Whether form contains handwritten text
     - sample_fields: Sample field values (first 5)
+    - field_mapping: Full field_id→value mapping (optional)
+
+Dataset Characteristics:
+    - 5,595 page images (synthesized, not real scans)
+    - 20 unique Census form faces
+    - Binary B&W images (2560 x 3300 px)
+    - Public domain license
+    - Handwritten field entries on printed forms
 
 Example:
     >>> parser = NistSd6Parser()
@@ -37,7 +52,7 @@ Example:
     >>> print(labels.language_code)
     'en'
     >>> print(labels.raw_labels["form_type"])
-    '1040'
+    'census'
 """
 
 from __future__ import annotations
@@ -53,13 +68,16 @@ logger = logging.getLogger(__name__)
 
 
 class NistSd6Parser(BaseParser):
-    """Parser for NIST Special Database 6 (Tax Form) dataset.
+    """Parser for NIST Special Database 6 (Census Form) dataset.
 
-    Extracts tax form metadata and field annotations from .fmt files:
-    - Form type (IRS 1040)
+    Extracts census form metadata and field annotations from .fmt files:
+    - Form type (1988 Census forms - NOT tax forms like SD2)
     - Form ID
     - Field count and sample values
+    - Full field mapping (field_id → value)
     - Handwritten content detection
+
+    IMPORTANT: SD6 contains Census forms, NOT IRS 1040 tax forms.
     """
 
     @property
@@ -86,7 +104,7 @@ class NistSd6Parser(BaseParser):
         """
         labels = OriginalLabels()
 
-        # Set language/script for US tax forms
+        # Set language/script for US Census forms
         labels.language_code = "en"
         labels.script_name = "Latin"
 
@@ -94,8 +112,9 @@ class NistSd6Parser(BaseParser):
         if labels.raw_labels is None:
             labels.raw_labels = {}
 
-        labels.raw_labels["form_type"] = "1040"
-        labels.raw_labels["document_type"] = "tax_form"
+        # CRITICAL FIX: SD6 contains Census forms, NOT tax forms
+        labels.raw_labels["form_type"] = "census"
+        labels.raw_labels["document_type"] = "census_form"
 
         # Try to find and parse companion .fmt file
         fmt_path = image_path.with_suffix(".fmt")
@@ -107,18 +126,21 @@ class NistSd6Parser(BaseParser):
                         # First line is form ID
                         labels.raw_labels["form_id"] = lines[0].strip()
 
-                        # Extract field count and sample values
-                        field_values = []
+                        # Extract full field mapping and sample values
+                        field_mapping: dict[str, str] = {}
+                        field_values: list[str] = []
                         for line in lines[1:]:
                             line = line.strip()
                             if line and " " in line:
                                 parts = line.split(" ", 1)
                                 if len(parts) == 2:
-                                    _field_id, value = parts
+                                    field_id, value = parts
                                     if value and value != "_ICON_":
+                                        field_mapping[field_id] = value
                                         field_values.append(value)
 
                         labels.raw_labels["field_count"] = len(lines) - 1
+                        labels.raw_labels["field_mapping"] = field_mapping
                         if field_values:
                             labels.raw_labels["has_handwritten_content"] = True
                             # Store first few field values as sample

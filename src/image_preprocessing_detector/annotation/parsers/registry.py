@@ -215,6 +215,14 @@ class ParserRegistry:
         except ImportError as e:
             logger.warning("Failed to load document parsers: %s", e)
 
+        # Formula parsers
+        try:
+            from .formula import register_formula_parsers
+
+            register_formula_parsers(registry)
+        except ImportError as e:
+            logger.warning("Failed to load formula parsers: %s", e)
+
         # Generic parser for datasets without specific label formats
         try:
             from .generic import register_generic_parser

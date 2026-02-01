@@ -19,6 +19,7 @@ Parsers:
     - Mle2eParser: Multi-language end-to-end (4 scripts)
     - Mlt19Parser: ICDAR 2019 MLT multi-lingual scene text (10 languages)
     - HindiOcrSyntheticParser: Synthetic Hindi text (80K images)
+    - CocotextParser: COCO-Text scene text (64K images, 145K annotations)
 
 Datasets covered:
     - multilingual_scripts (arabic_ocr, dzongkha_digits, jssoda, nepal_devanagari)
@@ -33,6 +34,7 @@ Datasets covered:
     - mle2e (4 scripts)
     - mlt19 (10 languages scene text)
     - hindi_ocr_synthetic (Hindi synthetic)
+    - cocotext (scene text, 64K COCO images)
 
 Example:
     >>> from image_preprocessing_detector.annotation.parsers.multilingual import (
@@ -56,6 +58,7 @@ if TYPE_CHECKING:
 
 from .arabic_docs import ArabicDocsParser
 from .cc_ocr import CcOcrParser
+from .cocotext import CocotextParser
 from .cvsi import CvsiParser
 from .hindi_ocr_synthetic import HindiOcrSyntheticParser
 from .mdiw13 import Mdiw13Parser
@@ -86,11 +89,13 @@ def register_multilingual_parsers(registry: ParserRegistry) -> None:
     registry.register(Mle2eParser())
     registry.register(Mlt19Parser())
     registry.register(HindiOcrSyntheticParser())
+    registry.register(CocotextParser())
 
 
 __all__ = [
     "ArabicDocsParser",
     "CcOcrParser",
+    "CocotextParser",
     "CvsiParser",
     "HindiOcrSyntheticParser",
     "Mdiw13Parser",
