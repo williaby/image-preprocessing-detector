@@ -16,16 +16,20 @@ title: Dataset Documentation Integration Guide
 
 ---
 
-## Three-Tier Dataset Documentation Structure
+## Modular Dataset Documentation Structure
 
-We use a **token-optimized three-tier structure** to balance LLM efficiency with comprehensive documentation:
+We use a **token-optimized modular structure** with individual dataset files and task-based indices:
 
 ```
 Tier 1: DATASET_QUICK_REFERENCE.md     (~800 lines, ~8K tokens)
    ↓
 Tier 2: DATASET_PROCESSING_STATUS.md   (~500 lines, ~5K tokens)
    ↓
-Tier 3: DATASET_CATALOG.md             (~4.3K lines, ~45K tokens)
+Tier 3: DATASET_NAMING_STANDARD.md     (~600 lines, ~6K tokens)
+   ↓
+Tier 4: Individual dataset files in source/ (51 files, 100-500 lines each)
+   ↓
+Tier 5: Task-based indices in indices/ (7 files for different training tasks)
 ```
 
 ### When to Use Each File
@@ -37,8 +41,8 @@ Tier 3: DATASET_CATALOG.md             (~4.3K lines, ~45K tokens)
 | **"What's the current status of ohr-bench conversion?"** | DATASET_PROCESSING_STATUS.md | Operational status tracking |
 | **"Which datasets need format conversion?"** | DATASET_PROCESSING_STATUS.md | Blockers and next steps |
 | **"Is nist-sd2 the same as nist_db2?"** | DATASET_NAMING_STANDARD.md | Canonical names and aliases |
-| **"What are the IQA sensitivity characteristics of TableBank?"** | DATASET_CATALOG.md | Deep technical details |
-| **"What's the license for PubTabNet?"** | DATASET_CATALOG.md | Comprehensive dataset documentation |
+| **"What are the IQA sensitivity characteristics of TableBank?"** | Individual dataset files in datasets/source/ | Deep technical details |
+| **"What's the license for PubTabNet?"** | Individual dataset files in datasets/source/ | Comprehensive dataset documentation |
 
 ---
 
@@ -51,11 +55,11 @@ Tier 3: DATASET_CATALOG.md             (~4.3K lines, ~45K tokens)
 **Claude Code Flow**:
 
 1. ✅ Read [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md) → "IQA Training" section
-2. ✅ Identify: ohr-bench (6,849 train), diqa-5000 (4,400 train), iqa_phase7_165k (165K)
+2. ✅ Identify: ohr-bench (6,849 train), diqa-5000 (4,400 train), realdae (600 pairs), ocr-quality (1,000)
 3. ✅ Check "Never Train On" table → reserve val/test splits
 4. ⚠️ Check [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md) → ohr-bench is 🔄 converting
-5. ✅ Recommend: "Use diqa-5000 train + iqa_phase7_165k now, add ohr-bench when conversion completes"
-6. ❌ Don't read DATASET_CATALOG.md unless user asks for deep details
+5. ✅ Recommend: "Use diqa-5000 train + realdae + ocr-quality now, add ohr-bench when conversion completes"
+6. ❌ Don't read Individual dataset files in datasets/source/ unless user asks for deep details
 
 **Token Usage**: ~8K (Quick Ref) + ~5K (Status) = **13K tokens** vs 45K for full catalog
 
@@ -114,7 +118,7 @@ Tier 3: DATASET_CATALOG.md             (~4.3K lines, ~45K tokens)
 
 1. ❌ Skip [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md) → too high-level
 2. ❌ Skip [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md) → not relevant
-3. ✅ Read [DATASET_CATALOG.md](DATASET_CATALOG.md) → TableBank section → "IQA Profile"
+3. ✅ Read [Individual dataset files in datasets/source/](Individual dataset files in datasets/source/) → TableBank section → "IQA Profile"
 4. ✅ Find: Blur Sensitivity: HIGH, Compression Sensitivity: HIGH
 5. ✅ Answer: "TableBank has HIGH blur sensitivity (grid lines sensitive) and HIGH compression sensitivity (JPEG artifacts destroy thin table lines)."
 
@@ -148,7 +152,7 @@ Is this about TRAINING TASK SELECTION or QUICK STATS?
                     │
                     └─ NO → Deep technical details needed
                              ↓
-                             Read DATASET_CATALOG.md (45K tokens)
+                             Read Individual dataset files in datasets/source/ (45K tokens)
 ```
 
 ---
@@ -188,12 +192,12 @@ Is this about TRAINING TASK SELECTION or QUICK STATS?
 - **Update Frequency**: On-demand (when adding new datasets)
 - **Optimized For**: "Is X the same as Y?" queries
 - **Contains**:
-  - Canonical name registry (all 44 datasets)
+  - Canonical name registry (all 50 datasets)
   - Alias mappings
   - Migration guide
   - Naming conventions and validation
 
-### DATASET_CATALOG.md
+### Individual dataset files in datasets/source/
 
 - **Size**: ~4,300 lines, ~45K tokens
 - **Purpose**: Comprehensive technical documentation
@@ -217,25 +221,25 @@ Add this section to your project's CLAUDE.md:
 
 > **Token Optimized**: Use tiered documentation for efficient LLM context usage
 
-**Quick Reference** (Start Here): [docs/DATASET_QUICK_REFERENCE.md](docs/DATASET_QUICK_REFERENCE.md)
+**Quick Reference** (Start Here): [datasets/DATASET_QUICK_REFERENCE.md](datasets/DATASET_QUICK_REFERENCE.md)
 - Training task selection ("Which datasets for IQA training?")
 - Quick stats and image counts
 - Training recipes by phase
 - ~800 lines, ~8K tokens
 
-**Processing Status**: [docs/DATASET_PROCESSING_STATUS.md](docs/DATASET_PROCESSING_STATUS.md)
+**Processing Status**: [datasets/DATASET_PROCESSING_STATUS.md](datasets/DATASET_PROCESSING_STATUS.md)
 - Current conversion/extraction status
 - Blockers and next steps
 - Processing priorities
 - ~500 lines, ~5K tokens
 
-**Naming Standard**: [docs/DATASET_NAMING_STANDARD.md](docs/DATASET_NAMING_STANDARD.md)
+**Naming Standard**: [datasets/DATASET_NAMING_STANDARD.md](datasets/DATASET_NAMING_STANDARD.md)
 - Canonical names and aliases
 - Resolve naming confusion
 - Migration guide
 - ~600 lines, ~6K tokens
 
-**Full Catalog**: [docs/DATASET_CATALOG.md](docs/DATASET_CATALOG.md)
+**Full Catalog**: [docs/Individual dataset files in datasets/source/](docs/Individual dataset files in datasets/source/)
 - Comprehensive technical documentation
 - Deep details (IQA sensitivity, licenses, papers)
 - Only use when Quick Reference insufficient
@@ -259,7 +263,7 @@ Add this section to your project's CLAUDE.md:
 - Checking canonical names
 - Understanding aliases
 
-**Use DATASET_CATALOG.md** (last resort) for:
+**Use Individual dataset files in datasets/source/** (last resort) for:
 - Deep technical characteristics
 - IQA sensitivity details
 - License specifics
@@ -305,7 +309,7 @@ Add this section to your project's CLAUDE.md:
 
 ### Monthly Reviews
 
-**DATASET_CATALOG.md**:
+**Individual dataset files in datasets/source/**:
 
 - Add new per-dataset documentation sections
 - Update IQA sensitivity matrix (if new datasets tested)
@@ -331,7 +335,7 @@ Before committing documentation updates:
 - [ ] **Quick Reference** has all training-ready datasets
 - [ ] **Processing Status** reflects current conversion state
 - [ ] **Naming Standard** includes all canonical names and aliases
-- [ ] **Full Catalog** has detailed sections for all 44 datasets
+- [ ] **Full Catalog** has detailed sections for all 50 datasets
 - [ ] Cross-references between files are accurate
 - [ ] Token counts are approximately correct (~8K, ~5K, ~6K, ~45K)
 - [ ] No conflicting information between files
@@ -369,6 +373,6 @@ Test these queries to validate integration:
 
 ---
 
-**Last Updated**: 2025-01-30
+**Last Updated**: 2026-01-31
 **Maintained By**: Data team
 **Questions**: Create issue or contact data team lead

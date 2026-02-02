@@ -218,7 +218,6 @@ dataset_root/
 | diqa-5000 | 5,500 | Human MOS (1-5), image paths | P0 |
 | realdae | 1,200 | Before/after pairs, quality metrics | P0 |
 | ocr-quality | 1,000 | Human quality scores, multilingual | P1 |
-| iqa_phase7_165k | 165,000 | Synthetic quality labels (8 dimensions) | P1 |
 
 ### Batch 2: Layout Detection Datasets (8 datasets)
 
@@ -240,7 +239,7 @@ dataset_root/
 | synth-multiscript-250k | 250,000 | Script labels (27 scripts), quality labels | P0 |
 | mdiw13 | 290,213 | Script labels (13 scripts), word boxes | P0 |
 | mlt19 | 20,000 | Language labels (10), word boxes | P0 |
-| cc_ocr | 6,533 | CJK text, word boxes | P1 |
+| cc_ocr | 7,058 | CJK text (TSV, no boxes) | P1 |
 | arabic_docs_ocr | 10,045 | Arabic OCR text, word/page level | P1 |
 | hindi_ocr_synthetic | 80,009 | Hindi OCR text, synthetic | P1 |
 | multilingual_scripts | 3,279 | 27 script labels, synthetic | P2 |
@@ -278,7 +277,7 @@ dataset_root/
 | Dataset | Images | Source Labels Expected | Priority |
 |---------|--------|----------------------|----------|
 | financebench | 54,121 | Financial tables, QA pairs | P1 |
-| bhutan_financial | 135 | Annual report structure | P2 |
+| bhutan_financial | 125 | Annual report structure | P2 |
 | invoices_kaggle | 1,414 | Invoice fields, key-value pairs | P2 |
 | mathverse | 6,940 | Math problems, multi-modal | P2 |
 | multimodal_textbook | 1,113 | STEM diagrams, equations | P2 |
@@ -672,7 +671,7 @@ Your review is complete when:
 - **Layer 2 Schema**: `/home/byron/dev/image_detection/docs/schema/layer2_enrichment.schema.json`
 - **Parser Base Class**: `/home/byron/dev/image_detection/src/image_preprocessing_detector/annotation/parsers/base.py`
 - **Existing Documentation**: `/home/byron/dev/image_detection/docs/schema/LABEL_MAPPING_SPECIFICATION.md`
-- **Dataset Catalog**: `/home/byron/dev/image_detection/docs/DATASET_CATALOG.md`
+- **Dataset Catalog**: `/home/byron/dev/image_detection/docs/datasets/DATASET_QUICK_REFERENCE.md`
 
 ---
 

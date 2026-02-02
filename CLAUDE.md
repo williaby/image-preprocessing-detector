@@ -780,14 +780,15 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 
 ## Dataset Inventory
 
-> **Token Optimized**: Three-tier documentation structure for efficient LLM context usage
-> **Total Datasets**: 46 (35 training-ready, 9 in progress, 1 blocked, 1 text corpus)
+> **Token Optimized**: Modular documentation structure for efficient LLM context usage
+> **Total Datasets**: 51 (41 training-ready, 8 in progress, 1 blocked, 1 text corpus)
 > **Expected Token Savings**: 70-85% for typical dataset queries
-> **Layer 2 Metadata**: 20/46 datasets with aggregated statistics
+> **Layer 2 Metadata**: 20/51 datasets with aggregated statistics
+> **New Structure**: Individual dataset files in `docs/datasets/source/` + task-based indices
 
 ### Documentation Tiers
 
-**Tier 1 - Quick Reference** (START HERE): [docs/DATASET_QUICK_REFERENCE.md](docs/DATASET_QUICK_REFERENCE.md)
+**Tier 1 - Quick Reference** (START HERE): [docs/datasets/DATASET_QUICK_REFERENCE.md](docs/datasets/DATASET_QUICK_REFERENCE.md)
 - **Purpose**: Training task selection, quick stats
 - **Use For**: "Which datasets for IQA training?", "How many layout detection images?"
 - **Size**: ~800 lines, ~8K tokens
@@ -799,7 +800,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
   - Training recipes by phase with metadata coverage indicators (⭐⭐⭐/⭐⭐/⭐)
   - Critical filters (benchmark-reserved, license restrictions)
 
-**Tier 2 - Processing Status**: [docs/DATASET_PROCESSING_STATUS.md](docs/DATASET_PROCESSING_STATUS.md)
+**Tier 2 - Processing Status**: [docs/datasets/DATASET_PROCESSING_STATUS.md](docs/datasets/DATASET_PROCESSING_STATUS.md)
 - **Purpose**: Current conversion/extraction status tracking
 - **Use For**: "Is ohr-bench ready?", "What's blocking cocotext?"
 - **Size**: ~500 lines, ~5K tokens
@@ -809,44 +810,55 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
   - Blockers, priorities, and ETAs
   - Storage requirements
 
-**Tier 3 - Naming Standard**: [docs/DATASET_NAMING_STANDARD.md](docs/DATASET_NAMING_STANDARD.md)
+**Tier 3 - Naming Standard**: [docs/datasets/DATASET_NAMING_STANDARD.md](docs/datasets/DATASET_NAMING_STANDARD.md)
 - **Purpose**: Canonical names and alias resolution
 - **Use For**: "Is nist_db2 same as nist-sd2?", "What's the canonical name?"
 - **Size**: ~600 lines, ~6K tokens
 - **Contains**:
-  - Canonical name registry (all 46 datasets)
+  - Canonical name registry (all 51 datasets)
   - Alias mappings (resolves underscore vs hyphen confusion)
   - Migration guide with scripts
   - Naming conventions
 
-**Tier 4 - Full Catalog** (LAST RESORT): [docs/DATASET_CATALOG.md](docs/DATASET_CATALOG.md)
-- **Purpose**: Comprehensive technical documentation
-- **Use For**: Deep technical queries only (IQA sensitivity, licenses, papers)
-- **Size**: ~4,300 lines, ~45K tokens
-- **Contains**: Detailed per-dataset documentation, IQA matrices, benchmark metrics
+**Tier 4 - Individual Dataset Files** (TARGETED LOOKUP): [docs/datasets/source/](docs/datasets/source/)
+- **Purpose**: Per-dataset deep technical documentation (51 individual files)
+- **Use For**: Specific dataset details (licenses, IQA sensitivity, citations)
+- **Size**: ~100-500 lines per dataset, ~500-2K tokens each
+- **Contains**: Complete dataset documentation (all 10 template sections per dataset)
+- **Access**: Alphabetical - `source/{canonical-name}.md` (e.g., `source/tablebank.md`)
+- **Navigation**: See [docs/datasets/README.md](docs/datasets/README.md)
+
+**Tier 5 - Task Indices** (TRAINING RECIPES): [docs/datasets/indices/](docs/datasets/indices/)
+- **Purpose**: Curated dataset lists by training task (7 task-specific indices)
+- **Tasks**: [IQA](docs/datasets/indices/IQA.md), [Layout](docs/datasets/indices/LAYOUT.md), [Tables](docs/datasets/indices/TABLES.md), [Text Detection](docs/datasets/indices/TEXT_DETECTION.md), [Handwriting](docs/datasets/indices/HANDWRITING.md), [Scripts](docs/datasets/indices/SCRIPTS.md), [Benchmarks](docs/datasets/indices/BENCHMARKS.md)
+- **Use For**: "All layout detection datasets", "Which datasets for IQA training?"
+- **Size**: ~100-300 lines per index, ~1-3K tokens each
 
 ### Usage Guidelines for Claude Code
 
 **Decision Flow**:
 1. **Training task selection or quick stats?** → Read Tier 1 (Quick Reference)
-2. **Current state, blockers, or conversion status?** → Read Tier 2 (Processing Status)
-3. **Naming confusion or aliases?** → Read Tier 3 (Naming Standard)
-4. **Deep technical details needed?** → Read Tier 4 (Full Catalog)
+2. **Which datasets for specific task?** → Read Tier 5 (Task Indices like IQA.md, LAYOUT.md)
+3. **Current state, blockers, or conversion status?** → Read Tier 2 (Processing Status)
+4. **Naming confusion or aliases?** → Read Tier 3 (Naming Standard)
+5. **Deep technical details for ONE dataset?** → Read Tier 4 (Individual source file)
 
 **Token Efficiency**:
 
-| Query Type | Files Read | Token Cost | Savings vs Full Catalog |
+| Query Type | Files Read | Token Cost | Savings vs Old Catalog |
 |------------|------------|------------|-------------------------|
-| "Datasets for IQA training?" | Tier 1 only | 8K | 83% |
+| "Datasets for IQA training?" | Tier 5 (IQA.md) | 2K | 96% |
+| "All layout datasets?" | Tier 5 (LAYOUT.md) | 3K | 93% |
 | "Is ohr-bench ready?" | Tier 1 + 2 | 13K | 71% |
 | "Is nist_db2 same as nist-sd2?" | Tier 3 only | 6K | 87% |
-| "TableBank blur sensitivity?" | Tier 4 (Full Catalog) | 45K | 0% (justified) |
+| "TableBank blur sensitivity?" | Tier 4 (source/tablebank.md) | 1-2K | 96% |
 
 **Critical Rules**:
 - ✅ **Always start with Tier 1** (Quick Reference) for dataset questions
+- ✅ **Use Tier 5** (Task Indices) for training task selection (most efficient)
 - ✅ **Use Tier 2** (Processing Status) for current state queries
 - ✅ **Use Tier 3** (Naming Standard) for name resolution
-- ❌ **Avoid Tier 4** (Full Catalog) unless deep technical details explicitly needed
+- ✅ **Use Tier 4** (Individual files) for specific dataset deep dives (replaces old monolithic catalog)
 
 ### Layer 2 Metadata Aggregation
 
@@ -883,9 +895,9 @@ python scripts/aggregate_layer2_metadata.py --dataset tablebank --verbose
 
 **Related Documentation**:
 
-- [DATASET_INTEGRATION_GUIDE.md](docs/DATASET_INTEGRATION_GUIDE.md) - Complete usage patterns
-- [DATASET_METADATA_AGGREGATION_GUIDE.md](docs/DATASET_METADATA_AGGREGATION_GUIDE.md) - Aggregation workflow
-- [DATASET_AGGREGATION_SUMMARY.md](docs/DATASET_AGGREGATION_SUMMARY.md) - Current aggregation results
+- [DATASET_INTEGRATION_GUIDE.md](docs/datasets/DATASET_INTEGRATION_GUIDE.md) - Complete usage patterns
+- [DATASET_METADATA_AGGREGATION_GUIDE.md](docs/datasets/DATASET_METADATA_AGGREGATION_GUIDE.md) - Aggregation workflow
+- [DATASET_AGGREGATION_SUMMARY.md](docs/datasets/DATASET_AGGREGATION_SUMMARY.md) - Current aggregation results
 - [Level 2 Architecture](docs/architecture/diagrams/level-2/data-preparation/index.md#layer-2-metadata-aggregation) - Technical details
 
 **Key Datasets**:
@@ -894,6 +906,52 @@ python scripts/aggregate_layer2_metadata.py --dataset tablebank --verbose
 - **Layout Detection**: doclaynet (81K), pubtabnet (568K), tablebank (278K), fintabnet (97K)
 - **Script Detection**: synth-multiscript-250k (250K, generating), mdiw13 (290K), mlt19 (20K)
 - **Text Detection**: cocotext (64K), mlt19 (20K), cc-ocr (6.5K)
+
+## Training Dataset Inventory
+
+> **Token Optimized**: Two-tier documentation structure for training datasets
+> **Location**: `E:\image_detection\03_training_datasets\`
+> **Total Training Images**: 50K ready + 250K target (synthetic_multiscript in progress)
+
+### Documentation Tiers
+
+**Tier 1 - Quick Reference** (START HERE): [docs/datasets/TRAINING_DATASET_QUICK_REFERENCE.md](docs/datasets/TRAINING_DATASET_QUICK_REFERENCE.md)
+
+- **Purpose**: Training dataset selection, quick stats
+- **Use For**: "Which training dataset for orientation?", "Script detection dataset?"
+- **Size**: ~200 lines, ~2K tokens
+
+**Tier 2 - Full Catalog**: [docs/datasets/TRAINING_DATASET_CATALOG.md](docs/datasets/TRAINING_DATASET_CATALOG.md)
+
+- **Purpose**: Comprehensive training dataset documentation
+- **Use For**: Deep technical details, generation provenance, label schemas
+- **Size**: ~800 lines, ~8K tokens
+
+**Template**: [docs/datasets/TRAINING_DATASET_TEMPLATE.md](docs/datasets/TRAINING_DATASET_TEMPLATE.md)
+
+- **Purpose**: Template for documenting new training datasets
+
+### Training Datasets Summary
+
+| Dataset | Purpose | Images | Status | Design Spec |
+|---------|---------|--------|--------|-------------|
+| orientation | Orientation Detection | 50,000 | ✅ Ready | [MOBILECLIP2_S4_S0_DATASET_DESIGN.md](docs/planning/MOBILECLIP2_S4_S0_DATASET_DESIGN.md) |
+| synthetic_multiscript | Script Detection | 250K target (~27K partial) | 🔄 In Progress | [synth-multiscript-250k_review.md](docs/datasets/reviews/synth-multiscript-250k_review.md) |
+
+### Usage Guidelines for Claude Code
+
+**Decision Flow**:
+
+1. **Training dataset selection?** → Read Quick Reference
+2. **Deep technical details?** → Read Full Catalog
+3. **Creating new dataset?** → Use Template
+
+**Key Difference from Source Datasets**:
+
+- Training datasets are **assembled/generated** from source datasets
+- Have **generation provenance** (scripts, configs, timestamps)
+- May use **soft labels** or **pseudo-labels** (not just ground truth)
+- Are **purpose-built** for specific ML training tasks
 
 ## Pre-Commit Linting Checklist
 

@@ -1792,7 +1792,7 @@ Best regards,
 
 - Multilingual Document Research: `/home/byron/dev/image_detection/tmp_cleanup/multilingual_document_research.md`
 - Consensus Analysis: `/home/byron/dev/image_detection/tmp_cleanup/.tmp-mobileclip-distillation-comparison-20260114.md`
-- Dataset Catalog: `/home/byron/dev/image_detection/docs/DATASET_CATALOG.md`
+- Dataset Catalog: `/home/byron/dev/image_detection/docs/datasets/DATASET_QUICK_REFERENCE.md`
 
 ---
 

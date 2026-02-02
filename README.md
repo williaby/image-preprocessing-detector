@@ -356,7 +356,7 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
   - [INDEX.md](docs/architecture/diagrams/INDEX.md): Diagram-to-source traceability matrix
   - [STYLE_GUIDE.md](docs/architecture/diagrams/STYLE_GUIDE.md): Diagram styling standards
 - **[AUDIT.md](docs/architecture/AUDIT.md)**: Diagram gap analysis and recommendations
-- **[DATASET_CATALOG.md](docs/DATASET_CATALOG.md)**: Dataset documentation and metadata pipeline
+- **[docs/datasets/README.md](docs/datasets/README.md)**: Dataset documentation navigation guide (51 datasets, modular structure)
 
 ### Technical Guides
 

@@ -1,0 +1,182 @@
+#### FUNSD+ (Extended FUNSD)
+
+> **Quick Stats**: 1,139 forms | Extended annotations | Pre-split | HuggingFace-ready
+>
+> **License**: CC-BY-4.0 | **Commercial Use**: Yes
+
+##### 1. Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | FUNSD+ Extended Form Understanding Dataset |
+| **Version** | 1.0 |
+| **Source** | Extended version of original FUNSD |
+| **HuggingFace** | Available via HuggingFace datasets |
+| **License** | CC-BY-4.0 |
+| **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/funsd_plus/` |
+| **Documentation Status** | Complete |
+
+##### 2. Source Data Inventory
+
+> **Purpose**: Documents what the original dataset provides from the source, enabling parser development and integration planning.
+
+###### 2.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | JPG | Form images (scanned documents) |
+| **Annotations** | Arrow (Parquet) | HuggingFace dataset format |
+| **Metadata** | JSON | Dataset configuration and split info |
+
+###### 2.2 Dataset Split Locations
+
+> **Purpose**: Track train/test paths to avoid missing data during processing.
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train** | `images/funsd_plus_train_*.jpg` | `train/data-00000-of-00001.arrow` | 1,026 | ✅ |
+| **Test** | `images/funsd_plus_test_*.jpg` | `test/data-00000-of-00001.arrow` | 113 | ✅ |
+| **Total** | `images/*.jpg` | - | 1,139 | ✅ |
+
+**Split Organization Pattern**: `single_dir_with_manifest` (HuggingFace dataset)
+
+> **Notes**:
+>
+> - All images centralized in `images/` directory
+> - Annotations in Arrow format (train/ and test/ subdirectories)
+> - Filename convention indicates split: `funsd_plus_{split}_{index}.jpg`
+
+###### 2.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Text Transcriptions** | Arrow (string list) | Word | Ground truth word text (OCR not needed) |
+| **Bounding Boxes** | Arrow (float64 nested list) | Word | Word-level coordinates (format: [x, y, width, height] or [x1, y1, x2, y2] - TBD) |
+| **NER Tags** | ClassLabel | Word | BIO tagging scheme (9 classes) |
+| **Grouped Words** | Arrow (nested structure) | Entity | Entity-level groupings (optional) |
+| **Labels** | Arrow (int64 list) | Word/Entity | Alternative labeling (details TBD) |
+
+> **Note**: FUNSD+ uses word-level BIO (Begin-Inside-Outside) tagging, unlike original FUNSD's entity-level structure.
+
+###### 2.4 Provided Metadata
+
+| Metadata Type | Location | Content |
+|---------------|----------|---------|
+| **Dataset-level** | `dataset_dict.json` | Split names ("train", "test") |
+| **Split-level** | `{split}/dataset_info.json` | Schema, features, download info |
+| **Image-level** | Arrow tables | image_id, dimensions (embedded in Image type) |
+
+###### 2.5 Annotation Schema Details
+
+> **Format**: HuggingFace Datasets (Arrow/Parquet binary format)
+
+**HuggingFace Features Schema**:
+
+```python
+{
+  "image": Image(),  # PIL Image object
+  "words": Sequence(Value("string")),  # List of word strings
+  "bboxes": Sequence(Sequence(Value("float64"))),  # Nested list of coordinates
+  "ner_tags": Sequence(ClassLabel(names=[
+    "O",  # Outside (not an entity)
+    "B-QUESTION", "I-QUESTION",  # Question entity
+    "B-ANSWER", "I-ANSWER",      # Answer entity
+    "B-HEADER", "I-HEADER",      # Header entity
+    "B-OTHER", "I-OTHER"         # Other entity
+  ])),
+  "grouped_words": Sequence(...),  # Entity groupings (structure TBD)
+  "labels": Sequence(Value("int64")),  # Alternative labels (details TBD)
+  "image_id": Value("int64")  # Unique image identifier
+}
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `image` | Image | Yes | PIL Image object (embedded) |
+| `words` | List[str] | Yes | Word text (ground truth transcription) |
+| `bboxes` | List[List[float64]] | Yes | Word bounding boxes (4 coordinates each) |
+| `ner_tags` | List[ClassLabel] | Yes | BIO tags (9 classes) |
+| `image_id` | int64 | Yes | Links to image filename |
+| `grouped_words` | Nested | Optional | Entity-level groupings |
+| `labels` | List[int64] | Optional | Alternative labeling scheme |
+
+> **Bbox Format Note**: Coordinate format needs verification (likely [x, y, width, height] COCO format or [x1, y1, x2, y2] PASCAL VOC).
+
+**BIO Tagging Scheme**:
+
+- **B-{ENTITY}**: Begin - First word of entity
+- **I-{ENTITY}**: Inside - Continuation of entity
+- **O**: Outside - Not part of any entity
+
+###### 2.6 Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ Word text | `text_content.full_text` | **P0** | Ground truth available, NOT extracted |
+| ✅ Word bboxes | `text_content.segments[].bbox` | P1 | Word-level positional info |
+| ✅ NER tags | `entities.key_value` or custom | P2 | BIO tags → entity extraction |
+| ✅ Image ID | `provenance.source_id` | P3 | Linking to source |
+| ⚠️ Entity bboxes | `layout_detections.bbox` | P2 | Derivable from word bboxes + BIO tags |
+| ❌ Entity linking | - | N/A | Not available in HF format |
+
+**Critical Gap**: Parser currently expects FUNSD JSON format but dataset uses HuggingFace Arrow. **Rewrite required** (deferred - 6-8h effort).
+
+##### 3. Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Forms** | 1,139 (5.7× larger than FUNSD) |
+| **Training Split** | Pre-defined |
+| **Test Split** | Pre-defined |
+| **File Format** | PNG/JPEG |
+| **Annotation Format** | Extended NER + layout |
+
+##### Content Organization
+
+| Component | Description |
+|-----------|-------------|
+| **images/** | Form images |
+| **train/** | Training split |
+| **test/** | Test split |
+| **dataset_dict.json** | HuggingFace dataset configuration |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Real scanned forms (noisy) |
+| **Baseline Quality** | Variable (intentionally noisy) |
+| **Noise Level** | **HIGH** - Authentic scan noise |
+| **Annotation Quality** | Extended from original FUNSD |
+| **Key Value** | Larger training set than original FUNSD |
+
+##### Training Value
+
+- **Strengths**: Larger than original FUNSD, pre-split for training, HuggingFace compatible
+- **Weaknesses**: Extended dataset quality may vary
+- **Complementary Datasets**: Use with original FUNSD for validation
+
+##### Project Usage
+
+- **Path**: `01_base_data/forms/funsd_plus/`
+- **Size**: 420 MB
+- **Phase(s)**: Phase 7 training
+- **Purpose**: Extended form understanding training data
+- **Parser**: ✅ `parse_funsd_plus_labels` (extracts field boxes, entities from JSON annotations)
+
+##### Layer 2 Annotation Summary
+
+| Metric | Value |
+|--------|-------|
+| **Annotated Samples** | 1,139 |
+| **File Format** | JPEG (100%) |
+| **Dimensions** | 956-1409 × 1063-1566 px (avg: 1085 × 1386) |
+| **Avg File Size** | 199 KB |
+| **Color Space** | RGB |
+| **Capture Method** | Scanner (ADF) |
+| **Domain** | ADM (Administrative) |
+| **Content Flags** | Tables: ✅, Handwriting: ✅, Signatures: ✅ |
+
+---

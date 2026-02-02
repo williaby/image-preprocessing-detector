@@ -121,7 +121,7 @@ bash scripts/monitor_annotation.sh
    - Enrichment tier distribution breakdown
    - Tools created and challenges resolved
 
-2. **[docs/DATASET_CATALOG.md](docs/DATASET_CATALOG.md)**
+2. **[docs/datasets/source/ (individual dataset files)](docs/datasets/source/ (individual dataset files))**
    - Updated "Last Updated" to 2025-12-21
    - Added "Layer 2 Annotation Status" section at top (lines 10-18)
    - Shows 100% completion with metadata location
@@ -270,7 +270,7 @@ This metadata is used during Stage 2 training to:
 - `tmp_cleanup/.tmp-annotation-analysis-20251221.md` - Detailed analysis
 - `tmp_cleanup/.tmp-annotation-final-status-20251221.md` - Final status report
 - `docs/architecture/diagrams/level-2/data-preparation/index.md` - Updated with status
-- `docs/DATASET_CATALOG.md` - Updated with completion status
+- `docs/datasets/source/ (individual dataset files)` - Updated with completion status
 
 ---
 
@@ -583,7 +583,7 @@ cat .annotate_progress.json | jq '.failed_datasets'
 Files to update:
 
 - `docs/architecture/diagrams/level-2/data-preparation/index.md` (Line 168+)
-- `docs/DATASET_CATALOG.md` (Line 10+)
+- `docs/datasets/source/ (individual dataset files)` (Line 10+)
 
 ---
 

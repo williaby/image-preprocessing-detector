@@ -639,7 +639,7 @@ gsutil cp <checkpoint>.pt gs://image_detection_b/models/dociq_stage2/
 **Related Specifications**:
 
 - Training spec: `docs/planning/STAGE2_DOCIQ_TRAINING_SPEC.md`
-- Dataset catalog: `docs/DATASET_CATALOG.md`
+- Dataset catalog: `docs/datasets/ (51 individual dataset files)`
 - Layer 2 annotation status: See catalog "Layer 2 Annotation Status" section
 
 **Modal Workspace**: `williaby/main`

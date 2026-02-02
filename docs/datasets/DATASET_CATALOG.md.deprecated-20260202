@@ -1,0 +1,99 @@
+# DEPRECATED: DATASET_CATALOG.md
+
+> **Status**: 🗄️ Archived as of 2026-02-02
+> **Reason**: Migrated to modular structure for token efficiency
+> **Replacement**: See [docs/datasets/README.md](README.md) for new organization
+
+---
+
+## Migration Notice
+
+This monolithic catalog file (11,000+ lines, ~45K tokens) has been **replaced** with a modular structure:
+
+### New Documentation Structure
+
+**📚 Reference Files** (in `docs/datasets/`):
+- [DATASET_QUICK_REFERENCE.md](DATASET_QUICK_REFERENCE.md) - Quick stats, task groups
+- [DATASET_PROCESSING_STATUS.md](DATASET_PROCESSING_STATUS.md) - Conversion status
+- [DATASET_NAMING_STANDARD.md](DATASET_NAMING_STANDARD.md) - Canonical names
+- [README.md](README.md) - Navigation guide
+
+**📁 Individual Dataset Files** (51 files in `docs/datasets/source/`):
+- Alphabetically organized: `source/arabic-docs-ocr.md`, `source/tablebank.md`, etc.
+- Complete documentation per dataset (all 10 template sections)
+- Token cost: 500-2K per file (vs 45K for full catalog)
+
+**📑 Task-Based Indices** (7 files in `docs/datasets/indices/`):
+- [indices/IQA.md](indices/IQA.md) - IQA training datasets
+- [indices/LAYOUT.md](indices/LAYOUT.md) - Layout detection
+- [indices/TABLES.md](indices/TABLES.md) - Table structure
+- [indices/TEXT_DETECTION.md](indices/TEXT_DETECTION.md) - Text & script detection
+- [indices/HANDWRITING.md](indices/HANDWRITING.md) - Handwriting detection
+- [indices/SCRIPTS.md](indices/SCRIPTS.md) - Script-specific datasets
+- [indices/BENCHMARKS.md](indices/BENCHMARKS.md) - Benchmark restrictions
+
+**🎓 Training Datasets** (2 files in `docs/datasets/training/`):
+- [training/orientation.md](training/orientation.md) - 50K orientation detection
+- [training/synth-multiscript-250k.md](training/synth-multiscript-250k.md) - 250K script detection
+
+---
+
+## Why the Migration?
+
+**Problems with Monolithic Catalog**:
+1. ❌ **Huge token cost**: 45K tokens to read entire file
+2. ❌ **Difficult to maintain**: 11,000+ lines in single file
+3. ❌ **Slow to navigate**: Hard to find specific dataset
+4. ❌ **Context inefficient**: Must load everything for any query
+
+**Benefits of Modular Structure**:
+1. ✅ **Token efficient**: 500-2K tokens per query (96% savings)
+2. ✅ **Easy maintenance**: Update one dataset = edit one file
+3. ✅ **Fast navigation**: Alphabetical lookup or task-based indices
+4. ✅ **Targeted loading**: Read only what you need
+
+---
+
+## How to Find Information
+
+### Old Way (Deprecated):
+```bash
+# Read entire catalog (45K tokens)
+cat docs/DATASET_CATALOG.md | grep -A50 "### TableBank"
+```
+
+### New Way:
+```bash
+# Read specific dataset (1-2K tokens)
+cat docs/datasets/source/tablebank.md
+
+# Or find by task (2-3K tokens)
+cat docs/datasets/indices/TABLES.md
+```
+
+---
+
+## Migration Date
+
+- **Archived**: 2026-02-02
+- **Migrated By**: Claude Code file-operations-agent
+- **Datasets Split**: 51 individual files created
+- **Task Indices Created**: 7 indices
+- **Cross-References Updated**: 15 files
+
+---
+
+## Preservation
+
+This file is preserved for:
+- Historical reference
+- Audit trail
+- Backup in case of migration issues
+
+**Do not use this file for active development.**
+
+**Use the new modular structure at [docs/datasets/](README.md) instead.**
+
+---
+
+*For questions about the migration, see: tmp_cleanup/.tmp-dataset-doc-cross-reference-update-20260202.md*

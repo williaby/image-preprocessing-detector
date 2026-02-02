@@ -177,3 +177,8 @@ data/drift_references/
 
 # Dataset review files (generated documentation, not tracked)
 docs/datasets/reviews/
+
+# Large dataset archives
+*.tgz
+*.tar.gz
+largeWriterIndependentTextLineRecognitionTask.*.zip
