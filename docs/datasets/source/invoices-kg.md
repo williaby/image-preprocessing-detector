@@ -311,7 +311,7 @@ Each manifest contains an array of annotation objects:
 
 **Parser Issues**:
 
-1. Wrong HuggingFace dataset path: uses `vikp/ohr_bench` instead of `opendatalab/OHR-Bench`
+1. ✅ FIXED: HuggingFace dataset path corrected to `opendatalab/OHR-Bench`
 2. Missing ground truth text extraction from `gt_text` column
 3. Using filename heuristic (16 categories) instead of official 7 domains from parquet
 

@@ -4,7 +4,7 @@
 
 OHR-Bench (OCR Hallucination Recognition Benchmark) provides document images
 across 16 categories for evaluating OCR hallucination detection. The dataset
-is available on HuggingFace as `vikp/ohr_bench` with Arrow metadata containing
+is available on HuggingFace as `opendatalab/OHR-Bench` with Arrow metadata containing
 quality scores and OCR ground truth.
 
 Dataset Structure (Local):
@@ -12,7 +12,7 @@ Dataset Structure (Local):
         {category}/
             *.jpg
 
-HuggingFace Dataset: vikp/ohr_bench
+HuggingFace Dataset: opendatalab/OHR-Bench
     Arrow format with metadata fields:
     - image_id: Unique identifier
     - category: Document category (16 classes)
@@ -188,7 +188,7 @@ class OhrBenchParser(BaseParser):
 
         try:
             return load_dataset(
-                "vikp/ohr_bench",
+                "opendatalab/OHR-Bench",
                 cache_dir=cache_dir,
                 trust_remote_code=True,
             )
