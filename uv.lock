@@ -3003,6 +3003,7 @@ language-detection = [
 ml = [
     { name = "albumentations" },
     { name = "doclayout-yolo" },
+    { name = "fasttext" },
     { name = "google-cloud-storage" },
     { name = "huggingface-hub" },
     { name = "onnxruntime-gpu" },
@@ -3058,6 +3059,7 @@ requires-dist = [
     { name = "easyocr", marker = "extra == 'language-detection'", specifier = ">=1.7.2" },
     { name = "fastapi", marker = "extra == 'api'", specifier = ">=0.115.0" },
     { name = "fasttext", marker = "extra == 'language-detection'", specifier = ">=0.9.3" },
+    { name = "fasttext", marker = "extra == 'ml'", specifier = ">=0.9.3" },
     { name = "filelock", specifier = ">=3.20.1" },
     { name = "filelock", marker = "extra == 'dev'", specifier = ">=3.20.1" },
     { name = "flower", marker = "extra == 'workers'", specifier = ">=2.0.0" },
