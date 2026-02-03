@@ -10,6 +10,8 @@ This package contains parsers for handwriting/signature datasets:
 - NIST-SD6: Handwritten tax forms (Special Database 6)
 - Maths Handwriting: Mathematical expressions (stub)
 - HASYv2: Handwritten mathematical symbols (369 classes)
+- Muharaf: Arabic historical manuscripts with PAGE XML annotations
+- IAM: English handwriting database (forms/lines/words)
 
 Datasets covered:
     - signatr6k
@@ -19,6 +21,8 @@ Datasets covered:
     - nist_sd6
     - maths_handwriting
     - hasyv2
+    - muharaf
+    - iam
 """
 
 from __future__ import annotations
@@ -26,7 +30,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .hasyv2 import HASYv2Parser
+from .iam import IAMParser
 from .maths_handwriting import MathsHandwritingParser
+from .muharaf import MuharafParser
 from .nist_db2 import NistDb2Parser
 from .nist_sd6 import NistSd6Parser
 from .nist_sd19 import NistSd19Parser
@@ -50,11 +56,15 @@ def register_handwriting_parsers(registry: ParserRegistry) -> None:
     registry.register(NistSd6Parser())
     registry.register(MathsHandwritingParser())
     registry.register(HASYv2Parser())
+    registry.register(MuharafParser())
+    registry.register(IAMParser())
 
 
 __all__ = [
     "HASYv2Parser",
+    "IAMParser",
     "MathsHandwritingParser",
+    "MuharafParser",
     "NistDb2Parser",
     "NistSd6Parser",
     "NistSd19Parser",

@@ -65,6 +65,7 @@ dependencies = [
     "filelock>=3.20.1",
     # Note: ultralytics and onnxruntime-gpu moved to [ml] extra to reduce base install size
     # This allows fuzzing and lightweight installs without ~4GB of CUDA dependencies
+    "openpyxl>=3.1.5",
 ]
 
 [project.optional-dependencies]

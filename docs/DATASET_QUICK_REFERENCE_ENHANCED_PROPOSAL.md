@@ -148,7 +148,7 @@ For detailed dataset pages, add comprehensive metadata profile:
 | 🖨️ **Scanner (Flatbed/ADF)** | funsd, tobacco800, dibco, rvl_cdip | ~19K | Degradation detection, archival quality, real scans |
 | 📱 **Camera (Professional)** | realdae, smartdoc-qa, midv500 | ~9K | Mobile capture, shadow/perspective, real-world degradation |
 | 📱 **Camera (Smartphone)** | smartdoc-qa subset | ~2K | Consumer-grade capture, low-light, motion blur |
-| 🎨 **Synthetic** | synth-multiscript-250k, hindi-synth, iqa_phase7_165k | ~495K | Controlled degradation, script diversity, augmentation |
+| 🎨 **Synthetic** | synth-multiscript-250k, hindi-synth | ~330K | Controlled degradation, script diversity, augmentation |
 
 ### By Domain Coverage
 
@@ -158,7 +158,7 @@ For detailed dataset pages, add comprehensive metadata profile:
 | 🔬 **Scientific (SCI)** | pubtabnet, tablebank, mathverse, im2latex | ~856K | Research papers, academic tables, math formulas |
 | 📚 **Educational (EDU)** | multimodal-textbook, mathverse | ~8K | Textbooks, STEM diagrams, educational content |
 | 🏛️ **Administrative (ADM)** | funsd, nist-sd2, nist-sd6, sroie | ~14K | Forms, receipts, tax documents, administrative records |
-| 📰 **General (UNK)** | rvl_cdip, tobacco800, historical-degraded | ~18K | Mixed document types, archival scans |
+| 📰 **General (UNK)** | rvl_cdip, tobacco800, dibco | ~18K | Mixed document types, archival scans |
 
 ### By Quality Distribution
 
@@ -166,8 +166,8 @@ For detailed dataset pages, add comprehensive metadata profile:
 |---------------|----------|--------------|---------------------|
 | **High (0.8-1.0)** | tablebank, pubtabnet, doclaynet, im2latex | ~1M | Minimal degradation, born-digital clean |
 | **Medium (0.5-0.8)** | ohr-bench, diqa subset, rvl_cdip | ~30K | Moderate blur/noise, scanner artifacts |
-| **Low (0.2-0.5)** | dibco, tobacco800, historical-degraded, diqa subset | ~3K | Severe degradation, aging, archival scans |
-| **Mixed (0.1-1.0)** | diqa-5000, iqa_phase7_165k, synth-multiscript-250k | ~420K | Full quality spectrum for IQA training |
+| **Low (0.2-0.5)** | dibco, tobacco800, dibco, diqa subset | ~3K | Severe degradation, aging, archival scans |
+| **Mixed (0.1-1.0)** | diqa-5000, synth-multiscript-250k | ~255K | Full quality spectrum for IQA training |
 
 ### By Text Density
 
@@ -181,7 +181,7 @@ For detailed dataset pages, add comprehensive metadata profile:
 
 | Layout Type | Datasets | Total Images | Use Cases |
 |-------------|----------|--------------|-----------|
-| **Single Column** | historical-degraded, tobacco800, dibco | ~3K | Simple layouts, historical docs, degradation focus |
+| **Single Column** | dibco, tobacco800, dibco | ~3K | Simple layouts, historical docs, degradation focus |
 | **Multi Column** | rvl_cdip, scientific papers subset | ~500K | Journals, newspapers, complex layouts |
 | **Tabular** | tablebank, pubtabnet, fintabnet | ~944K | Table detection, structure extraction |
 | **Form-Based** | funsd, nist-sd2, sroie | ~8K | Form understanding, key-value extraction |
@@ -213,7 +213,7 @@ For detailed dataset pages, add comprehensive metadata profile:
 |-------------|----------|--------------|-------------|
 | **Character-level** | hasy, nist-sd19, im2latex (formula symbols) | ~178K | Symbol/character recognition |
 | **Word-level** | mlt19, mdiw13, cc-ocr, scene text datasets | ~390K | Word spotting, text detection |
-| **Line-level** | historical-degraded, dibco, tobacco800 | ~3K | OCR line extraction |
+| **Line-level** | dibco, dibco, tobacco800 | ~3K | OCR line extraction |
 | **Paragraph-level** | doclaynet, rvl_cdip, scientific papers | ~550K | Text block segmentation |
 | **Page-level** | tablebank, pubtabnet, financebench | ~1M | Full-page layout analysis |
 | **Document-level** | omnidocbench (metadata), financebench (PDFs) | ~54K | Multi-page document classification |
@@ -239,10 +239,10 @@ For detailed dataset pages, add comprehensive metadata profile:
 **Optimal Dataset Combination**:
 | Dataset | Contribution | Rationale (Metadata-Driven) |
 |---------|-------------|----------------------------|
-| iqa_phase7_165k | **Base training (70%)** | Synthetic with controlled degradation spectrum (0.1-1.0), 8 IQA dimensions, all capture methods simulated |
-| diqa-5000 (train) | **Real-world grounding (15%)** | Real degradation patterns, scanner+camera mix, human MOS scores for calibration |
-| ohr-bench (train) | **OCR-specific bias (10%)** | Born-digital + synthetic, OCR-relevant degradations, text-heavy content |
-| realdae (train) | **Camera-specific patterns (5%)** | Real camera artifacts (shadow, perspective), before/after pairs for delta learning |
+| ohr-bench (train) | **Base training (50%)** | Born-digital + synthetic, OCR-relevant degradations, text-heavy content |
+| diqa-5000 (train) | **Real-world grounding (30%)** | Real degradation patterns, scanner+camera mix, human MOS scores for calibration |
+| realdae (train) | **Camera-specific patterns (15%)** | Real camera artifacts (shadow, perspective), before/after pairs for delta learning |
+| ocr-quality | **Quality calibration (5%)** | Human quality scores for model calibration |
 
 **Expected Coverage** (from aggregated Layer 2 metadata):
 - Capture methods: Born-digital (40%), Synthetic (35%), Scanner (15%), Camera (10%)

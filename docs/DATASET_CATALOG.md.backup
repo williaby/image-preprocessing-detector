@@ -26,16 +26,19 @@ All datasets have standardized short codes for use in metadata files and the `sc
 | Short Code | Full Name | Category | Images | License |
 |------------|-----------|----------|--------|---------|
 | `tablebank` | TableBank | Tables | 278,582 | Apache-2.0 |
-| `pubtabnet` | PubTabNet | Tables | 568,000+ | CDLA-Sharing |
+| `pubtabnet` | PubTabNet | Tables | 519,030 | CDLA-Sharing |
 | `fintabnet` | FinTabNet | Tables | 97,475 | Research |
 | `doclaynet` | DocLayNet | Documents | 80,863 | CDLA-Permissive |
+| `docsynth300k` | DocSynth300K | Layout | 300,000 | Apache-2.0 |
 | `rvl-cdip` | RVL-CDIP | Documents | 400,000 | Academic |
 | `bhutan-afs` | Bhutan Financial | Documents | 125 | Public Domain |
 | `nist-sd2` | NIST SD-2 (Tax Forms) | Forms | 5,590 | Public Domain |
 | `nist-sd6` | NIST SD-6 (Tax Forms w/ Handprint) | Forms | 5,595 | Public Domain |
 | `funsd` | FUNSD | Forms | 199 | CC-BY-4.0 |
-| `funsd-plus` | FUNSD+ Extended | Forms | 1,113 | CC-BY-4.0 |
+| `funsd-plus` | FUNSD+ Extended | Forms | 1,139 | CC-BY-4.0 |
 | `sroie` | SROIE Receipts | Forms | 973 | Research |
+| `sroie-voxel51` | SROIE (Voxel51/HuggingFace) | Forms | 712 | CC-BY-4.0 |
+| `invoices-kaggle` | Kaggle High-Quality Invoices | Forms | 1,414 | ODbL-1.0 |
 | `nist-sd19` | NIST SD-19 (Handwriting) | Handwriting | 810,000+ | Public Domain |
 | `hasyv2` | HASYv2 (Math Symbols) | Handwriting | 168,233 | CC0 |
 | `signatr6k` | SignaTR6K | Text Segmentation | 12,514 | Academic |
@@ -52,7 +55,7 @@ All datasets have standardized short codes for use in metadata files and the `sc
 | Short Code | Full Name | Scripts | Images | License |
 |------------|-----------|---------|--------|---------|
 | `jssoda` | JSSODa | Japanese | 2,000+ | CC-BY-4.0 |
-| `arabic-ocr` | Arabic OCR Dataset | Arabic | 500+ | Unknown |
+| `arabic-ocr` | Arabic OCR Dataset | Arabic | 10,045 | Unknown |
 | `dzongkha-digits` | Dzongkha Digits | Tibetan | 1,000 | CC0 |
 | `mdiw13` | MDIW-13 | 13 scripts | 86,655 words | Academic |
 | `midv500` | MIDV-500 | Cyrillic/Latin | 50 countries | MIT |
@@ -121,7 +124,89 @@ Language & Script Detection datasets added for future expansion - `wili-2018`, `
 ├── 05_models/              # Production-ready models
 ├── 06_staging/             # Dataset preparation workspace
 └── 07_archives/            # Compressed backups
+├── annotations/            # Unified extracted annotations (NEW)
+│   └── {dataset}/
+│       ├── layout/         # DocLayout-YOLO COCO annotations
+│       ├── ocr/            # Extracted text JSONL files
+│       ├── ground_truth/   # Original GT if available
+│       └── gcs_ocr/        # GCS Vision API extractions
+└── extracted_text/         # Legacy extraction location (migrated to annotations/)
 ```
+
+---
+
+## Data Locations Reference
+
+> **Purpose**: Quick lookup for image files, text annotations, and COCO layout labels
+> **Last Updated**: 2025-01-31
+> **Status Legend**: ✅ Available | ❌ None | 🔄 In Progress | ⚠️ Partial
+
+### Training Datasets - Data Availability Matrix
+
+| Dataset | Images | Images Path | Text GT | Text Extracted | COCO GT | COCO Extracted |
+|---------|--------|-------------|---------|----------------|---------|----------------|
+| **tablebank** | 278,582 | `01_base_data/tables/tablebank/` | ❌ | ❌ | ✅ `Detection/` | ❌ |
+| **pubtabnet** | 519,030 | `01_base_data/tables/pubtabnet/` | ✅ HTML cells | ❌ | ✅ JSONL | ❌ |
+| **fintabnet** | 97,475 | `01_base_data/tables/fintabnet/` | ✅ XML structure | ❌ | ✅ 77K JSON | ❌ |
+| **doclaynet** | 80,863 | `01_base_data/documents/doclaynet/` | ✅ 81K JSON (cell text) | ❌ | ✅ COCO JSON | ❌ |
+| **docsynth300k** | 300,000 | `01_base_data/layout/docsynth300k/` | ❌ | ❌ | ✅ YOLO format | ❌ |
+| **funsd** | 199 | `01_base_data/forms/funsd/` | ✅ 199 JSON | ✅ `annotations/funsd/ocr/` | ✅ GT annotations | ❌ |
+| **funsd_plus** | 1,139 | `01_base_data/forms/funsd_plus/` | ✅ 5 JSON | ❌ | ⚠️ Partial | ❌ |
+| **sroie** | 2,043 | `01_base_data/forms/sroie/` | ❌ | ✅ `annotations/sroie/ocr/` | ❌ | ✅ `annotations/sroie/layout/` |
+| **sroie_voxel51** | 712 | `01_base_data/forms/sroie_voxel51_labeled/` | ✅ 712 Supervisely JSON | ❌ | ⚠️ Partial | ❌ |
+| **invoices_kaggle** | 1,414 | `01_base_data/forms/invoices_kaggle/` | ✅ 19 JSON | ✅ `annotations/invoices-kaggle/ocr/` | ❌ | ✅ `annotations/invoices-kaggle/layout/` |
+| **mobile_receipts** | 713 | `01_base_data/forms/mobile_receipts_voxel51/` | ✅ 11 JSON | ✅ `annotations/mobile-receipts-voxel51/ocr/` | ❌ | ✅ `annotations/mobile-receipts-voxel51/layout/` |
+| **nist_sd2** | 5,590 | `01_base_data/forms/nist_db2/` | ❌ | ✅ `annotations/nist-sd2/ocr/` | ❌ | ✅ `annotations/nist-sd2/layout/` |
+| **nist_sd6** | 5,595 | `01_base_data/forms/nist_sd6/` | ❌ | ✅ `annotations/nist-sd6/ocr/` | ❌ | ✅ `annotations/nist-sd6/layout/` |
+| **rvl_cdip** | 400,000 | `01_base_data/documents/rvl_cdip/` | ❌ | ✅ `annotations/rvl-cdip/ocr/` | ❌ | ✅ `annotations/rvl-cdip/layout/` |
+| **cocotext** | 63,686 | `01_base_data/text_detection/cocotext/` | ✅ 64K instances | ❌ | ✅ COCO JSON | ❌ |
+| **hiertext** | 11,639 | `01_base_data/text_detection/hiertext/` | ✅ 1.4GB JSONL | ❌ | ✅ Polygon format | ❌ |
+| **mlt19** | 20,000 | `01_base_data/language/mlt19/` | ✅ 10K TXT | ❌ | ⚠️ Text boxes | ❌ |
+| **mdiw13** | 290,213 | `01_base_data/language/mdiw13/` | ✅ 4 TXT | ❌ | ❌ | ❌ |
+| **hasyv2** | 168,233 | `01_base_data/handwriting/hasyv2_original/` | ✅ 1 TXT | ❌ | ❌ | ❌ |
+| **iam_handwriting** | 115,320 | `01_base_data/handwriting/iam_handwriting/` | ❌ | ❌ | ❌ | ❌ |
+| **nist_sd19** | 3,669 | `01_base_data/handwriting/nist_sd19_pages/` | ❌ | ❌ | ❌ | ❌ |
+| **tobacco800** | 1,290 | `01_base_data/degraded/tobacco800/` | ❌ | ❌ | ❌ | ❌ |
+
+### IQA & Benchmark Datasets
+
+| Dataset | Images | Images Path | Text GT | Text Extracted | COCO GT | COCO Extracted |
+|---------|--------|-------------|---------|----------------|---------|----------------|
+| **diqa-5000** | 5,500 | `02_benchmark_only/diqa-5000/` | ❌ | ✅ `annotations/diqa-5000/ocr/` | ❌ | ✅ `annotations/diqa-5000/layout/` |
+| **ohr-bench** | 8,561 | `02_benchmark_only/ohr-bench/` | ✅ 4 JSON | ❌ | ❌ | ❌ |
+| **smartdoc-qa** | 4,280 | `02_benchmark_only/smartdoc-qa/` | ❌ | ✅ `annotations/smartdoc-qa/ocr/` | ❌ | ✅ `annotations/smartdoc-qa/layout/` |
+| **dibco** | 343 | `02_benchmark_only/dibco/` | ❌ | ❌ | ❌ | ❌ |
+| **realdae** | 1,200 | `01_base_data/iqa/realdae/` | ❌ | ❌ | ❌ | ❌ |
+| **omnidocbench** | metadata | `02_benchmark_only/omnidocbench/` | ✅ 3 JSON | ❌ | ❌ | ❌ |
+| **financebench** | 368 PDFs | `02_benchmark_only/financebench/` | ✅ 18 JSON | ❌ | ❌ | ❌ |
+
+### Language & Script Detection
+
+| Dataset | Images | Images Path | Text GT | Text Extracted | COCO GT | COCO Extracted |
+|---------|--------|-------------|---------|----------------|---------|----------------|
+| **yarmouk_ocr** | 4,633 | `01_base_data/language/yarmouk_ocr_images/` | ✅ 4.6K TXT | ❌ | ❌ | ❌ |
+| **arabic_docs_ocr** | 10,045 | `01_base_data/language/arabic_docs_ocr/` | ✅ 10,046 Supervisely JSON | ❌ | ❌ | ❌ |
+| **cc_ocr** | 7,058 | `01_base_data/language/huggingface_downloads/CC-OCR/` | ✅ 39 TSV (answer col) | ❌ | ❌ | ❌ |
+| **nepali_handwritten** | 958 | `01_base_data/handwriting/nepali_handwritten/` | ❌ | ❌ | ❌ | ❌ |
+| **pucit_ohul_urdu** | 7,401 | `01_base_data/handwriting/pucit_ohul_urdu/` | ✅ 7,487 xlsx (Urdu text) | ❌ | ❌ | ❌ |
+| **synth_multiscript** | 27,000 | `03_training_datasets/synth-multiscript-250k/` | 🔄 Generating | ❌ | ❌ | ❌ |
+
+### Extracted Annotations Summary
+
+**Location**: `/mnt/e/image_detection/annotations/`
+
+| Dataset | Layout Annotations | OCR Documents | GCS OCR |
+|---------|-------------------|---------------|---------|
+| diqa-5000 | 57,763 | 5,500 | ❌ |
+| funsd | ❌ | 1,338 | ✅ 14 files |
+| invoices-kaggle | 18,462 | 1,414 | ❌ |
+| mobile-receipts-voxel51 | 4,839 | 713 | ❌ |
+| nist-sd2 | 36,311 | 5,590 | ❌ |
+| nist-sd6 | 37,158 | 5,595 | ❌ |
+| rvl-cdip | 144,976 | 16,000 | ❌ |
+| smartdoc-qa | 2,762 | 3,000 | ❌ |
+| sroie | 12,568 | 2,043 | ✅ 22 files |
+| **TOTAL** | **314,839** | **41,193** | **2 datasets** |
 
 ---
 
@@ -160,18 +245,117 @@ Source images available for training augmentation. Total: **~1.04M images**
 | **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/tablebank/` |
 | **Documentation Status** | Complete |
 
+##### Source Data Inventory
+
+###### Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | JPG | Document page images with table regions |
+| **Annotations** | JSON (COCO) | Table detection bounding boxes |
+| **Metadata** | README | Documentation and citation info |
+
+###### Dataset Split Locations
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train (LaTeX)** | `Detection/images/` | `Detection/annotations/tablebank_latex_train.json` | 187,199 | ✅ |
+| **Train (Word)** | `Detection/images/` | `Detection/annotations/tablebank_word_train.json` | 73,383 | ✅ |
+| **Validation (LaTeX)** | `Detection/images/` | `Detection/annotations/tablebank_latex_val.json` | 7,265 | ✅ |
+| **Validation (Word)** | `Detection/images/` | `Detection/annotations/tablebank_word_val.json` | 2,735 | ✅ |
+| **Test (LaTeX)** | `Detection/images/` | `Detection/annotations/tablebank_latex_test.json` | 5,719 | ✅ |
+| **Test (Word)** | `Detection/images/` | `Detection/annotations/tablebank_word_test.json` | 2,281 | ✅ |
+
+**Split Organization Pattern**: `by_file_list` (LaTeX and Word samples in same image directory, split by annotation file)
+
+> **Notes**: [Official]
+>
+> - All images stored in single `Detection/images/` directory
+> - Splits defined by separate annotation JSON files (6 total: 3 splits × 2 sources)
+> - LaTeX subset: arXiv papers (rendered table regions)
+> - Word subset: MSRA NLC academic documents (extracted table regions)
+
+###### Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Bounding Boxes** | COCO JSON | Region (table-level) | Single class "table" detection boxes [x,y,w,h] |
+| **Text Transcriptions** | N/A | N/A | Not provided - detection only |
+| **Table Structure** | N/A | N/A | Not in Detection task (separate Recognition dataset) |
+
+###### Annotation Schema Details
+
+**Format**: Standard COCO format
+
+```json
+{
+  "images": [{"id": int, "file_name": str, "width": int, "height": int}],
+  "annotations": [{"id": int, "image_id": int, "category_id": 1, "bbox": [x,y,w,h]}],
+  "categories": [{"id": 1, "name": "table"}]
+}
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `image_id` | int | Yes | Links annotation to image |
+| `bbox` | list[4] | Yes | COCO format [x,y,w,h] |
+| `category_id` | int | Yes | Always 1 (table class) |
+| `file_name` | str | Yes | Relative path to image |
+
+###### Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ Table bounding boxes | `layout_detections.bbox` | High | COCO format, direct mapping |
+| ✅ Image metadata | `image_metadata` | High | Dimensions from annotation |
+| ✅ LaTeX vs Word source | `provenance.subset` | Medium | Derivable from annotation file |
+| ✅ Split information | `provenance.split` | High | train/val/test from filename |
+| ❌ Text transcriptions | - | Low | Not provided in Detection task |
+| ❌ Table structure | - | Low | Separate Recognition dataset |
+
+**Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
+
 ##### Dataset Statistics
+
+###### Split Coverage
+
+> **CRITICAL**: Layer 2 metadata not yet generated for TableBank. Counts below are from source annotations [Official].
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Train** | 260,582 | N/A | N/A | ⚠️ Pending Layer 2 annotation |
+| **Validation** | 10,000 | N/A | N/A | ⚠️ Pending Layer 2 annotation |
+| **Test** | 8,000 | N/A | N/A | ⚠️ Pending Layer 2 annotation |
+| **Total** | 278,582 | N/A | N/A | ⚠️ Pending Layer 2 annotation |
+
+**Split Status Legend**:
+
+- ✅ Complete - All samples from this split are in Layer 2 metadata
+- ⚠️ Partial - Some samples missing from Layer 2 OR Layer 2 not yet generated
+- ❌ Missing - Split not included in Layer 2 metadata
+
+> **Action Required**: Run Layer 2 annotation pipeline on TableBank to populate metadata and verify 100% coverage.
+
+###### Sample Counts
 
 | Metric | Value |
 |--------|-------|
-| **Total Images (Detection)** | 278,582 |
-| **Total Images (Structure)** | 145,463 |
-| **Training Split** | 260,582 (93.5%) |
-| **Validation Split** | 10,000 (3.6%) |
-| **Test Split** | 8,000 (2.9%) |
+| **Total Images (Detection)** | 278,582 [Official] |
+| **Total Images (Structure)** | 145,463 [Official] |
+| **Training Split** | 260,582 (93.5%) [Official] |
+| **Validation Split** | 10,000 (3.6%) [Official] |
+| **Test Split** | 8,000 (2.9%) [Official] |
 | **Image Dimensions** | Variable (document page size) |
 | **File Format** | JPG |
 | **Annotation Format** | COCO-style JSON |
+
+###### Text Statistics
+
+**Text Statistics**: ❌ Not Available
+
+> TableBank provides table detection bounding boxes only. Text transcription is NOT included in the dataset annotations. The Detection task focuses on table region localization, while the separate Recognition task dataset includes table structure annotations (rows/columns/cells) but not text content. OCR extraction would be required to obtain text for IQA text-based metrics.
 
 ##### Composition by Source
 
@@ -183,15 +367,47 @@ Source images available for training augmentation. Total: **~1.04M images**
 
 ##### IQA Profile
 
+###### Source Characteristics
+
+| Characteristic | Description |
+|----------------|-------------|
+| **Source Type** | Born-digital (LaTeX rendering + Word extraction) [Official] |
+| **Capture Device** | N/A (programmatic generation) [Official] |
+| **Original Quality** | High - no scanning artifacts [Official] |
+| **Compression** | JPEG (quality varies by source) [Inferred] |
+| **Known Artifacts** | Minor JPEG blocking on some samples [Inferred] |
+
+###### Degradation Sensitivity
+
+| IQA Metric | Sensitivity | Notes |
+|------------|-------------|-------|
+| **Blur** | HIGH | Grid lines and cell borders extremely sensitive [Inferred] |
+| **Noise** | MEDIUM | High contrast masks moderate noise [Inferred] |
+| **Skew** | HIGH | Cell alignment degrades rapidly with rotation [Inferred] |
+| **Contrast** | LOW | Already high contrast (black on white) [Inferred] |
+| **Compression** | HIGH | JPEG artifacts destroy thin cell borders [Inferred] |
+
+###### Document Feature Characteristics
+
+| Feature | Presence | IQA Implications |
+|---------|----------|------------------|
+| **Grid Lines** | Pervasive | Primary blur detection target [Inferred] |
+| **Small Text** | Common | 8-14pt fonts sensitive to blur [Inferred] |
+| **Mathematical Notation** | Common in LaTeX | Subscripts/superscripts fragile [Inferred] |
+| **Color Usage** | Minimal | Grayscale processing sufficient [Inferred] |
+| **Font Diversity** | Low | Standard academic fonts [Inferred] |
+
+###### Training & Benchmark Value
+
 | Aspect | Assessment |
 |--------|------------|
-| **Source Type** | Born-digital (programmatically extracted) |
-| **Baseline Quality** | Clean, no scanning artifacts |
-| **Blur Sensitivity** | **HIGH** - Grid lines and cell text extremely sensitive |
-| **Noise Sensitivity** | MEDIUM - High contrast masks moderate noise |
-| **Skew Sensitivity** | **HIGH** - Cell alignment degrades rapidly |
-| **Contrast Baseline** | High (black text on white background) |
-| **Compression Sensitivity** | **HIGH** - JPEG artifacts destroy thin table lines |
+| **Training Value** | HIGH - Large volume (278K), clean ground truth for table quality [Official] |
+| **Unique Characteristics** | Grid line sharpness, cell boundary detection [Inferred] |
+| **Complementary Datasets** | Combine with PubTabNet (structure), FinTabNet (financial) [Inferred] |
+| **Benchmark Suitability** | MEDIUM - Born-digital only, lacks real scan artifacts [Inferred] |
+| **Known Limitations** | No handwritten content, limited degradation variety [Inferred] |
+
+**Baseline Quality Metrics**: [NEEDS_PROFILING] - Requires empirical analysis on 1000-sample subset
 
 ##### Benchmark Performance
 
@@ -214,10 +430,73 @@ Source images available for training augmentation. Total: **~1.04M images**
 
 ##### Project Usage
 
-- **Path**: `01_base_data/tables/tablebank/`
-- **Phase(s)**: Phase 7 training
-- **Purpose**: Training augmentation source for table-focused IQA
-- **Parser**: [`parse_tablebank_labels`](../scripts/annotate_base_metadata.py#L1333) | ✅ Complete
+| Aspect | Details |
+|--------|---------|
+| **Phase(s)** | Phase 7 training |
+| **Purpose** | Training augmentation source for table-focused IQA |
+| **Local Path** | `01_base_data/tables/tablebank/` |
+| **Subset Used** | Full Detection dataset (278,582 images) |
+| **Preprocessing** | None required - images ready for use |
+
+###### Parser & Metadata Integration
+
+| Aspect | Details |
+|--------|---------|
+| **Label Parser** | [`TableBankParser`](../../src/image_preprocessing_detector/annotation/parsers/layout/tablebank.py) |
+| **Parser Status** | ✅ Complete |
+| **Layer 1 Fields** | `raw_labels["tablebank_annotations"]` (COCO format), `language_code="en"`, `script_name="Latin"` |
+| **Layer 2 Auto-Derived** | `has_table=True`, `iso15924_script="Latn"`, `language_confidence=0.95` |
+| **Config Entry** | `DATASET_CONFIGS["tablebank"]` in annotation config |
+
+**Parser vs Layer 2 Schema Audit Matrix**:
+
+| Source Field | Layer 2 Target | Parser Handles? | Priority | Notes |
+|--------------|----------------|-----------------|----------|-------|
+| COCO bbox [x,y,w,h] | `layout_detections[].bbox` | ⚠️ Via raw_labels | High | In raw_labels, needs Layer 2 mapping |
+| category="table" | `layout_detections[].class_name` | ⚠️ Indirect | High | In raw_labels, needs explicit mapping |
+| category="table" | `content_flags.has_table` | ❌ No | Medium | Derivable from annotations |
+| category_id | `layout_detections[].class_id` | ❌ No | Low | Not critical for single-class |
+| image_id | `provenance.source_id` | ❌ No | Low | For traceability |
+| file_name | `provenance.original_filename` | ❌ No | Low | For audit trail |
+| Dataset config | `capture_method.method` | ❌ No | High | Should set "born_digital" |
+| Dataset provenance | `language.language_code` | ✅ Yes | High | "en" correctly set |
+| Dataset provenance | `language.script_code` | ✅ Yes | High | "Latn" correctly set |
+| Dataset config | `domain.level1` | ❌ No | Medium | Should set "SCI" (scientific) |
+| LaTeX vs Word | `provenance.subset` | ❌ No | Low | For analysis purposes |
+| Split (train/val/test) | `provenance.split` | ❌ No | High | CRITICAL for training |
+
+**Current Parser Coverage**:
+
+- ✅ **Language/Script Metadata**: Correctly extracted (en/Latin/Latn with 95% confidence)
+- ⚠️ **Layout Detections**: In raw_labels but not Layer 2 `layout_detections[]` array
+- ❌ **Missing High Priority**: capture_method, domain, provenance.split
+- ❌ **Missing Medium Priority**: has_table content flag derivation
+
+**Recommended Parser Enhancements**:
+
+1. Populate `provenance.split` from annotation filename (train/val/test)
+2. Set `capture_method.method = "born_digital"`
+3. Set `domain.level1 = "SCI"` (scientific publications)
+4. Derive `content_flags.has_table = True` from annotations
+5. Map raw_labels to Layer 2 `layout_detections[]` structure
+
+###### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/tables/tablebank/TableBank/Detection/images/` | ✅ Available | All splits in single directory |
+| **Layout GT** | `01_base_data/tables/tablebank/TableBank/Detection/annotations/*.json` | ✅ COCO format | 6 files (3 splits × 2 sources) |
+| **Text/OCR GT** | - | ❌ None | Not provided - detection only |
+| **Text/OCR Extracted** | `annotations/tablebank/ocr/` | ❌ Not extracted | Future: DocTR extraction |
+| **Layout Extracted** | `annotations/tablebank/layout/` | ❌ Not extracted | Not needed (GT available) |
+| **Layer 2 Metadata** | `metadata_registry/json/tablebank_layer2.json` | ❌ Not generated | Pending annotation pipeline |
+
+**Location Status Legend**:
+
+- ✅ Available - Data exists at this location
+- ❌ None/Not extracted - Data not available or not yet processed
+- 🔄 In progress - Currently being processed/extracted
+- ⚠️ Partial - Some data available, incomplete
 
 ##### Layer 2 Annotation Summary
 
@@ -231,6 +510,36 @@ Source images available for training augmentation. Total: **~1.04M images**
 | **Capture Method** | Born-digital |
 | **Domain** | SCI (Scientific) |
 | **Content Flags** | Tables: ✅ 100% |
+
+##### Known Issues & Limitations
+
+- **Quality Bias**: Born-digital only; doesn't represent scanned document quality [Inferred]
+- **Domain Bias**: Heavy scientific/academic focus; limited document variety [Inferred]
+- **Annotation Gaps**: Table structure annotations exist in separate Recognition dataset, not in Detection task [Official]
+- **Class Imbalance**: 70% LaTeX vs 30% Word creates rendering style bias [Official]
+- **Resolution Variance**: Wide dimension range requires normalization for training [Inferred]
+- **No Text Content**: Text transcription not provided; OCR extraction would be required [Official]
+- **Split Information Missing**: Parser does not currently populate `provenance.split` field [Empirically Derived]
+
+##### Dataset-Specific Notes
+
+###### Annotation Caveats
+
+- **Detection Only**: TableBank Detection task provides table region bounding boxes only. Table structure annotations (rows/columns/cells) are available separately in the Recognition task subset, but NOT included in the Detection task. [Official]
+- **No Text Content**: Text transcription is not provided in either Detection or Recognition tasks. OCR would be required to extract text for IQA text-based metrics. [Official]
+- **Single Class**: All annotations use category_id=1 for "table" class. No sub-categorization of table types. [Official]
+
+###### Implementation Notes
+
+- **Multi-Path Support**: Parser checks multiple potential annotation paths (TableBank/Detection/annotations/, Detection/annotations/, annotations/) to handle different dataset organizations. [Empirically Derived]
+- **Module-Level Caching**: COCO annotations are cached at module level to avoid redundant file I/O when processing multiple images from same split. [Empirically Derived]
+- **Filename Matching**: Images matched to annotations via filename field in COCO JSON. All images stored in single directory regardless of split or source (LaTeX/Word). [Official]
+
+###### External Resources
+
+- **GitHub Repository**: [doc-analysis/TableBank](https://github.com/doc-analysis/TableBank) - Official dataset repository with download instructions [Official]
+- **HuggingFace Dataset**: [liminghao1630/TableBank](https://huggingface.co/datasets/liminghao1630/TableBank) - HuggingFace Datasets integration [Official]
+- **GCS Bucket**: `gs://image_detection_b/image-preprocessing-detector/datasets/tablebank/` - Project-internal storage [Project-specific]
 
 ##### References
 
@@ -266,13 +575,138 @@ Source images available for training augmentation. Total: **~1.04M images**
 | **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/pubtabnet/` |
 | **Documentation Status** | Complete |
 
+##### Source Data Inventory
+
+> **Purpose**: Documents what the original dataset provides from the source, enabling parser development and integration planning.
+
+###### 2.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | PNG | Table region images extracted from PDFs |
+| **Annotations** | JSONL | Single file (PubTabNet_2.0.0.jsonl) with HTML structure and cell bboxes |
+| **Supplementary** | MD / TXT | README, LICENSE files in GitHub repo |
+
+###### 2.2 Dataset Split Locations
+
+> **Purpose**: Track train/test/val paths to avoid missing data during processing.
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train** | `pubtabnet/train/` | `PubTabNet_2.0.0.jsonl` (filtered by split field) | 500,777 | ✅ |
+| **Validation** | `pubtabnet/val/` | `PubTabNet_2.0.0.jsonl` (filtered by split field) | 9,115 | ✅ |
+| **Test** | `pubtabnet/test/` | `PubTabNet_2.0.0.jsonl` (filtered by split field) | 9,138 | ✅ |
+
+**Split Organization Pattern**: `by_folder` + `single_jsonl_with_split_field`
+
+> **Notes**:
+>
+> - All annotations are in a single JSONL file (4.1 GB)
+> - Split information is in each JSONL entry's "split" field
+> - Images are organized in train/val/test folders
+
+###### 2.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Bounding Boxes** | Custom JSON | Cell-level | Cell bounding boxes in [x1, y1, x2, y2] format |
+| **HTML Structure** | Custom JSON | Table-level | HTML tokens representing table structure (<thead>, <tr>, <td>, etc.) |
+| **Text Transcriptions** | JSON tokens | Cell-level | Cell text as array of tokens |
+| **Split Information** | JSON field | Image-level | Dataset split (train/val/test) |
+
+> **Note**: No quality scores, reading order, or page-level layout provided.
+
+###### 2.4 Provided Metadata
+
+| Metadata Type | Location | Content |
+|---------------|----------|---------|
+| **Dataset-level** | README.md (GitHub) | Version, license, citation, download links |
+| **Image-level** | JSONL filename field | Image filename for lookup |
+| **Annotation-level** | JSONL split field | Dataset split assignment |
+
+###### 2.5 Annotation Schema Details
+
+> **Format**: JSONL (one JSON object per line)
+
+```json
+{
+  "filename": "PMC1234567_table_0.png",
+  "split": "train",
+  "html": {
+    "structure": {
+      "tokens": ["<thead>", "<tr>", "<td>", "</td>", "<td>", "</td>", "</tr>", "</thead>"]
+    },
+    "cells": [
+      {
+        "tokens": ["Age", "Group"],
+        "bbox": [10, 10, 50, 20]
+      },
+      {
+        "tokens": ["18-25"],
+        "bbox": [60, 10, 90, 20]
+      }
+    ]
+  }
+}
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `filename` | string | Yes | Links to image file |
+| `split` | string | Yes | "train", "val", or "test" |
+| `html.structure.tokens` | array | Yes | HTML tag tokens |
+| `html.cells` | array | Yes | Cell annotations |
+| `html.cells[].tokens` | array | Yes | Cell text as tokens |
+| `html.cells[].bbox` | array | Yes | [x1, y1, x2, y2] format |
+
+###### 2.6 Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ Cell bboxes | `layout_detections` | **HIGH** | Need to map to COCO format [x,y,w,h] |
+| ✅ Cell text | `text_content.full_text` | **HIGH** | Concatenate cell tokens |
+| ✅ HTML structure | `raw_labels.table_html` | MEDIUM | Currently stored as string |
+| ✅ Split info | `provenance.split` | HIGH | Already extracted |
+| ⚠️ Table hierarchy | `layout_detections.hierarchy` | LOW | Can infer from HTML tokens |
+| ❌ Reading order | - | LOW | Not provided |
+| ❌ Quality scores | - | N/A | Not provided |
+
+**Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
+
 ##### Dataset Statistics
+
+
+###### 4.1 Split Coverage
+
+> **CRITICAL**: Always document ALL available splits and verify Layer 2 metadata includes them.
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Train** | 500,777 | 500,777 | 100% | ✅ Complete |
+| **Validation** | 9,115 | 9,115 | 100% | ✅ Complete |
+| **Test** | 9,138 | 9,138 | 100% | ✅ Complete |
+| **Total** | 519,030 | 519,030 | 100% | ✅ All splits |
+
+**Split Status Legend**:
+
+- ✅ Complete - All samples from this split are in Layer 2 metadata
+- ⚠️ Partial - Some samples missing from Layer 2
+- ❌ Missing - Split not included in Layer 2 metadata
+- ℹ️ N/A - Split does not exist in source dataset
+
+> **Note**: All splits are fully covered in Layer 2 metadata. Split information is extracted
+> from the "split" field in the JSONL annotations.
+
+###### 4.2 Sample Counts
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 568,000+ |
-| **Training Split** | ~545,000 (96%) |
-| **Test Split** | Withheld (ICDAR competition) |
+| **Total Images** | 519,030 |
+| **Training Split** | 500,777 (96.5%) |
+| **Validation Split** | 9,115 (1.8%) |
+| **Test Split** | 9,138 (1.8%) |
 | **Image Width Range** | 64 - 1,220 pixels |
 | **File Format** | PNG |
 | **Annotation Format** | JSONL (HTML structure + cell bboxes) |
@@ -323,6 +757,28 @@ Source images available for training augmentation. Total: **~1.04M images**
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Scientific table IQA training, structure recognition baseline
 - **Parser**: [`parse_pubtabnet_labels`](../scripts/annotate_base_metadata.py#L1714) | ✅ Complete
+
+
+###### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `/mnt/e/image_detection/01_base_data/tables/pubtabnet/pubtabnet/` | ✅ Available | 519,030 total (train/val/test splits) |
+| **Images (local subset)** | `data/phase7_mvp/00_base_images/pubtabnet/` | ✅ Available | Symlinks to subset for testing |
+| **Text/OCR GT** | Embedded in JSONL | ✅ Available | Cell text tokens in PubTabNet_2.0.0.jsonl |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Parser does not populate text_content field |
+| **Layout GT** | Embedded in JSONL | ✅ Available | Cell bboxes in PubTabNet_2.0.0.jsonl |
+| **Layout Extracted** | - | ❌ Not extracted | Parser does not populate layout_detections field |
+| **Annotations (JSONL)** | `/mnt/e/image_detection/01_base_data/tables/pubtabnet/pubtabnet/PubTabNet_2.0.0.jsonl` | ✅ Available | 4.1 GB, 519,030 entries |
+| **Layer 2 Metadata** | `/mnt/e/image_detection/metadata_registry/json/pubtabnet_layer2.json` | ✅ Available | 519,030 samples enriched |
+| **Layer 2 Aggregates** | `metadata_registry/aggregates/pubtabnet_stats.json` | ✅ Available | Capture method, domain, content flags |
+
+**Location Status Legend**:
+
+- ✅ Available - Data exists at this location
+- ❌ Not extracted - Data not yet processed into this format
+- 🔄 In progress - Currently being processed/extracted
+- ⚠️ Partial - Some data available, incomplete
 
 ##### Layer 2 Annotation Summary
 
@@ -444,11 +900,12 @@ Source images available for training augmentation. Total: **~1.04M images**
 
 ---
 
-### 1.2 Documents (97,596 images)
+### 1.2 Documents (397,596 images)
 
 | Dataset | Images | Resolution | Format | Source | License | Commercial Use |
 |---------|--------|------------|--------|--------|---------|----------------|
 | **DocLayNet** | 80,863 | 1025x1025px | PNG | IBM Research | CDLA-Permissive-1.0 | Yes |
+| **DocSynth300K** | 300,000 | ~1240x1198px | JPEG | OpenDataLab | Apache-2.0 | Yes |
 | **RVL-CDIP** | 400,000 | ≤1000px | TIFF | Legacy Tobacco | Academic | Research Only |
 | **Bhutan Financial** | 125 | 300 DPI | PNG | Royal Government of Bhutan | Public Domain | Yes |
 
@@ -554,6 +1011,22 @@ Source images available for training augmentation. Total: **~1.04M images**
 - **Purpose**: Layout-aware IQA training, element detection
 - **Parser**: [`parse_doclaynet_labels`](../scripts/annotate_base_metadata.py#L1296) | ✅ Complete
 
+##### Text Labels
+
+DocLayNet includes per-document JSON files with text content extracted from the original PDFs:
+
+| Attribute | Value |
+|-----------|-------|
+| **Location** | `ground_truth/json/` (81,471 files) |
+| **Format** | JSON with `cells` array |
+| **Fields** | `text`, `bbox`, `font` (color, name, size) |
+
+**Sample structure**:
+
+```json
+{"metadata": {...}, "cells": [{"bbox": [97.4, 70.4, 18.9, 9.5], "text": "The", "font": {...}}, ...]}
+```
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -600,31 +1073,173 @@ Source images available for training augmentation. Total: **~1.04M images**
 | **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/rvl_cdip/` |
 | **Documentation Status** | Complete |
 
-##### Dataset Statistics
+#### 2. Source Data Inventory
+
+> **Purpose**: Documents what the original dataset provides from the source, enabling parser development and integration planning.
+
+##### 2.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | TIFF (original), JPEG (local conversion) | 400,000 grayscale document images |
+| **Annotations** | TXT | Class labels in format: `path/to/image.tif category_id` |
+| **Metadata** | None | No per-image metadata files |
+| **Supplementary** | None | Minimal documentation |
+
+##### 2.2 Dataset Split Locations
+
+**Split Organization Pattern**: `by_file_list` (official) / `single_dir_with_manifest` (local subset)
+
+**Official Distribution**:
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train** | `images/` | `labels/train.txt` | 320,000 | ⚠️ Official only |
+| **Validation** | `images/` | `labels/val.txt` | 40,000 | ⚠️ Official only |
+| **Test** | `images/` | `labels/test.txt` | 40,000 | ⚠️ Official only |
+| **Total** | `images/` | `labels/*.txt` | 400,000 | ⚠️ Official only |
+
+**Local Subset** (4% sample):
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Unknown** | `01_base_data/documents/rvl_cdip/images/` | Filename-based only | 16,000 | ✅ Available |
+
+> **Notes**:
+> - Official dataset uses 3 label files (`train.txt`, `val.txt`, `test.txt`) defining split membership
+> - Local subset (16K) has no split labels - all images in single directory
+> - Filenames encode class only: `rvl_{class}_{number}.jpg`
+> - Split membership for local subset is [NEEDS_PROFILING]
+
+##### 2.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Document Class** | TXT (numeric ID 0-15) | Image-level | Single class label per document |
+
+> **Note**: No bounding boxes, OCR text, or region-level annotations in source dataset.
+
+##### 2.4 Provided Metadata
+
+| Metadata Type | Location | Content |
+|---------------|----------|---------|
+| **Dataset-level** | Website README | License, citation, download links |
+| **Image-level** | Filename only | Class encoded in filename: `rvl_{class}_{number}` |
+
+> **Note**: Minimal metadata. No resolution, DPI, source document, or temporal metadata.
+
+##### 2.5 Annotation Schema Details
+
+**Format**: Plain text label files
+
+```text
+# Example label file format (train.txt, val.txt, test.txt)
+path/to/image/rvl_advertisement_0000.tif 4
+path/to/image/rvl_letter_0001.tif 0
+path/to/image/rvl_form_0002.tif 1
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `image_path` | str | Yes | Relative path from dataset root |
+| `category_id` | int | Yes | Integer 0-15 mapping to class name |
+
+**Class ID Mapping**:
+- 0: letter, 1: form, 2: email, 3: handwritten, 4: advertisement
+- 5: scientific report, 6: scientific publication, 7: specification, 8: file folder
+- 9: news article, 10: budget, 11: invoice, 12: presentation
+- 13: questionnaire, 14: resume, 15: memo
+
+##### 2.6 Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ Document class (filename) | `document_class` (str) | High | Parser implemented |
+| ✅ Document class ID (filename) | `document_class_id` (int) | High | Parser implemented |
+| ⚠️ Split membership | - | Medium | Not in local subset |
+| ❌ OCR text | - | Low | Not in source (can derive) |
+| ❌ Layout annotations | - | Low | Not in source (can derive) |
+
+**Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available in source
+
+#### 4. Dataset Statistics
+
+##### 4.1 Split Coverage
+
+> **CRITICAL**: Always document ALL available splits and verify Layer 2 metadata includes them.
+> **Note**: Local subset (16K) does not have split labels. Official dataset (400K) has train/val/test splits.
+
+**Official Dataset** (400K total):
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Train** | 320,000 | 0 | 0% | ⚠️ Not in local subset |
+| **Validation** | 40,000 | 0 | 0% | ⚠️ Not in local subset |
+| **Test** | 40,000 | 0 | 0% | ⚠️ Not in local subset |
+| **Total** | 400,000 | 0 | 0% | ⚠️ Official only |
+
+**Local Subset** (16K - 4% sample):
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Unknown** | 16,000 (estimated) | 16,000 | 100% | ✅ Complete |
+
+**Split Status Legend:**
+
+- ✅ Complete - All samples from this split are in Layer 2 metadata
+- ⚠️ Not in local subset - Split exists in official dataset but not processed locally
+
+> **Implementation Note**: Local subset is 4% of full dataset (16K/400K). Split membership not preserved
+> in local copy - all images in single directory. For training, recommend implementing stratified
+> cross-validation since split labels unavailable.
+
+##### 4.2 Sample Counts
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 400,000 |
-| **Training Split** | 320,000 (80%) |
-| **Validation Split** | 40,000 (10%) |
-| **Test Split** | 40,000 (10%) |
-| **Images per Class** | 25,000 (balanced) |
+| **Total Images** | 400,000 (official) / 16,000 (local subset) |
+| **Training Split** | 320,000 (80%) - official only |
+| **Validation Split** | 40,000 (10%) - official only |
+| **Test Split** | 40,000 (10%) - official only |
+| **Images per Class** | 25,000 (balanced) - official |
 | **Max Dimension** | ≤1000 pixels |
-| **File Format** | TIFF (grayscale) |
-| **Download Size** | 37 GB |
+| **File Format** | TIFF (grayscale) - official / JPEG (RGB) - local |
+| **Download Size** | 37 GB (official full dataset) |
 
-##### Document Classes (16)
+#### 5. Content Composition
 
-| ID | Class | ID | Class |
-|----|-------|----|-------|
-| 0 | Letter | 8 | News Article |
-| 1 | Form | 9 | Budget |
-| 2 | Email | 10 | Invoice |
-| 3 | Handwritten | 11 | Presentation |
-| 4 | Advertisement | 12 | Questionnaire |
-| 5 | Scientific Report | 13 | Resume |
-| 6 | Scientific Publication | 14 | Memo |
-| 7 | Specification | 15 | File Folder |
+##### 5.1 Class/Category Distribution
+
+**Official Dataset** (400K total) - Perfectly Balanced:
+
+| Class ID | Class Name | Count | Percentage |
+|----------|------------|-------|------------|
+| 0 | letter | 25,000 | 6.25% |
+| 1 | form | 25,000 | 6.25% |
+| 2 | email | 25,000 | 6.25% |
+| 3 | handwritten | 25,000 | 6.25% |
+| 4 | advertisement | 25,000 | 6.25% |
+| 5 | scientific_report | 25,000 | 6.25% |
+| 6 | scientific_publication | 25,000 | 6.25% |
+| 7 | specification | 25,000 | 6.25% |
+| 8 | file_folder | 25,000 | 6.25% |
+| 9 | news_article | 25,000 | 6.25% |
+| 10 | budget | 25,000 | 6.25% |
+| 11 | invoice | 25,000 | 6.25% |
+| 12 | presentation | 25,000 | 6.25% |
+| 13 | questionnaire | 25,000 | 6.25% |
+| 14 | resume | 25,000 | 6.25% |
+| 15 | memo | 25,000 | 6.25% |
+| **Total** | | **400,000** | **100%** |
+
+**Local Subset** (16K - 4% sample) - [NEEDS_PROFILING]:
+
+> **Note**: Class distribution of local 16K subset not yet profiled. Recommend running class count
+> analysis to verify if stratified sampling was used (1,000 per class) or if distribution differs.
+
+**Source**: [Official] Website (adamharley.com/rvl-cdip)
 
 ##### IQA Profile
 
@@ -654,7 +1269,24 @@ Source images available for training augmentation. Total: **~1.04M images**
 - **Unique Features**: **Only large-scale real-scan document dataset** with 16-class classification
 - **Benchmark Suitability**: **HIGH** - ICDAR 2015 standard for document classification
 
-##### Project Usage
+##### 6.5 Benchmark Results
+
+> **Purpose**: Document published model performance on this dataset for baseline comparison.
+
+**Status**: [NEEDS_VERIFICATION] - ICDAR 2015 paper results not yet extracted
+
+| Model/Method | Task | Metric | Score | Reference |
+|--------------|------|--------|-------|-----------|
+| CNN Baseline | 16-class Classification | Accuracy | [TBD] | [Harley et al. ICDAR 2015](https://www.cs.cmu.edu/~aharley/icdar15/) |
+
+**Known Leaderboards**:
+
+- [Papers With Code - RVL-CDIP](https://paperswithcode.com/dataset/rvl-cdip)
+
+> **TODO**: Extract baseline CNN accuracy from ICDAR 2015 paper full text or arXiv.
+> Paper title: "Evaluation of Deep Convolutional Nets for Document Image Classification and Retrieval"
+
+#### 3. Project Usage
 
 - **Path**: `01_base_data/documents/rvl_cdip/`
 - **Phase(s)**: Phase 7 training, IQA calibration
@@ -674,7 +1306,40 @@ Source images available for training augmentation. Total: **~1.04M images**
 | **Capture Method** | Scanner (ADF) |
 | **Domain** | ADM (Administrative) |
 
-##### References
+#### 10. Dataset-Specific Notes
+
+##### 10.1 Annotation Caveats
+
+- **Filename Dependency**: Class labels encoded in filename only (`rvl_{class}_{number}.jpg`)
+- **No Bounding Boxes**: Classification-only dataset - no region annotations
+- **Split Labels Missing Locally**: Local 16K subset has no split membership metadata
+- **Perfectly Balanced**: Official dataset has exactly 25,000 samples per class (rare property)
+
+##### 10.2 Implementation Notes
+
+- **Format Conversion**: Original TIFF (.tif) grayscale converted to JPEG (.jpg) RGB locally
+  - Conversion date: Unknown
+  - Quality impact: Minimal (high JPEG quality assumed)
+  - Original dimensions preserved (<= 1000px max dimension)
+
+- **Subset Selection**: Local 16K subset = 4% of full 400K dataset
+  - Selection method: [NEEDS_PROFILING] (random? stratified? specific split?)
+  - Class distribution: [NEEDS_PROFILING] (verify if balanced)
+
+- **Parser Implementation**: Class extracted via regex on filename
+  - Pattern: `rvl_{class}_{number}.jpg`
+  - Right-split to handle multi-word classes (e.g., `scientific_publication`)
+
+##### 10.3 External Resources
+
+- **Official Website**: <https://adamharley.com/rvl-cdip/>
+- **HuggingFace**: Available via Datasets Library (recommended for full dataset access)
+- **Download**:
+  - Full dataset: `rvl-cdip.tar.gz` (37 GB)
+  - Labels only: `labels_only.tar.gz` (6.1 MB)
+- **Papers With Code**: <https://paperswithcode.com/dataset/rvl-cdip>
+
+#### 9. References
 
 ```bibtex
 @inproceedings{harley2015icdar,
@@ -760,15 +1425,338 @@ Source images available for training augmentation. Total: **~1.04M images**
 
 ---
 
-### 1.3 Forms (16,016+ images)
+#### docsynth300k
+
+> **Quick Stats**: 300,000 synthetic document pages | 74 layout classes | YOLO polygon annotations | Layout pre-training
+>
+> **License**: Apache-2.0 | **Commercial Use**: Yes
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | DocSynth300K: Large-Scale Synthetic Document Layout Pre-training Dataset |
+| **Version** | 1.0 |
+| **Release Date** | 2024 |
+| **Maintainer** | OpenDataLab (juliozhao) |
+| **Paper** | [DocLayout-YOLO (arXiv:2410.12628)](https://arxiv.org/abs/2410.12628) |
+| **Repository** | [GitHub: opendatalab/DocLayout-YOLO](https://github.com/opendatalab/DocLayout-YOLO) |
+| **HuggingFace** | [juliozhao/DocSynth300K](https://huggingface.co/datasets/juliozhao/DocSynth300K) |
+| **License** | Apache-2.0 |
+| **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/docsynth300k/` |
+| **Documentation Status** | Partial |
+
+##### 2. Source Data Inventory
+
+###### 2.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | JPEG | 300,000 synthetic document page images |
+| **Annotations** | TXT (YOLO polygon) | 300,000 label files (8-coordinate polygons) |
+| **Metadata** | Parquet | 30 parquet files with image_data and annotations |
+| **Supplementary** | Python script | extract_images.py conversion tool |
+
+###### 2.2 Dataset Split Locations
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train** | `docsynth300k/images/` | `docsynth300k/labels/` | 300,000 | ✅ |
+| **Validation** | - | - | 0 | ℹ️ N/A |
+| **Test** | - | - | 0 | ℹ️ N/A |
+
+**Split Organization Pattern**: `single_dir_with_manifest` (parquet acts as manifest)
+
+> **Notes**:
+>
+> - Single split dataset (train only) - no validation or test splits provided
+> - All 300K images intended for pre-training
+> - Original data stored in 30 parquet files (~113 GB total)
+> - Extracted to images/ and labels/ directories
+
+###### 2.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Polygons** | YOLO 8-coordinate | Element-level | Quadrilateral bounding polygons for layout elements |
+| **Class IDs** | Integer (0-73) | Element-level | 74 document layout classes |
+
+###### 2.4 Provided Metadata
+
+| Metadata Type | Location | Content |
+|---------------|----------|---------|
+| **Dataset-level** | README.md | License, download instructions, conversion tools |
+| **Image-level** | Parquet filename column | Image filename mapping |
+| **Annotation-level** | Parquet anno_string column | YOLO polygon coordinates + class IDs |
+
+###### 2.5 Annotation Schema Details
+
+**Format**: YOLO polygon format with 8 normalized coordinates
+
+```text
+# Parquet Schema
+{
+  "filename": str,              # e.g., "1720629091_634364.jpg"
+  "image_data": bytes,          # Base64-encoded JPEG image
+  "anno_string": list[str]      # YOLO annotations (1-32 per image)
+}
+
+# YOLO Annotation Format (each string in anno_string list)
+<class_id> <x1> <y1> <x2> <y2> <x3> <y3> <x4> <y4>
+
+# Example
+23 0.0942 0.5595 0.7866 0.5595 0.7866 0.6310 0.0942 0.6310
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `filename` | str | Yes | Links annotation to image in parquet |
+| `class_id` | int | Yes | Range 0-73 (74 classes total) |
+| `x1-x4, y1-y4` | float | Yes | Normalized [0,1] polygon coordinates |
+
+###### 2.6 Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ YOLO polygons | `layout_annotations` | High | Implemented in DocSynth300KParser |
+| ✅ Class IDs (0-73) | `class_name` | High | Requires class taxonomy mapping |
+| ⚠️ 74-class taxonomy | - | High | Class definitions not documented |
+| ❌ Text GT | - | N/A | Synthetic dataset, no text provided |
+| ❌ Reading order | - | Low | Not provided |
+
+**Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 300,000 |
+| **Image Format** | JPEG |
+| **Image Dimensions** | ~1240 × 1198 pixels (variable) |
+| **Label Files** | 300,000 TXT (YOLO polygon format) |
+| **Class Count** | 74 unique classes (IDs 0-73) |
+| **Source Format** | 30 Parquet files (~113 GB total) |
+| **Extracted Size** | Images: ~35 GB, Labels: ~500 MB |
+
+##### 4.1 Split Coverage
+
+> **CRITICAL**: Always document ALL available splits and verify Layer 2 metadata includes them.
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Train** | 300,000 | [NEEDS_PROFILING] | - | 🔄 Needs Layer 2 metadata |
+| **Validation** | 0 | - | - | ℹ️ N/A (no split) |
+| **Test** | 0 | - | - | ℹ️ N/A (no split) |
+| **Total** | 300,000 | [NEEDS_PROFILING] | - | 🔄 Pending |
+
+**Split Status Legend:**
+
+- 🔄 Needs Layer 2 metadata - Split exists but Layer 2 enrichment not complete
+- ℹ️ N/A - Split does not exist in source dataset
+
+> **Note**: DocSynth300K is a single-split dataset (train only) designed for pre-training.
+> No validation or test splits are provided. All 300K images should be used for model
+> initialization before fine-tuning on downstream datasets (e.g., DocLayNet).
+
+##### Annotation Format
+
+YOLO polygon format with 8 coordinates per element:
+
+```text
+<class_id> <x1> <y1> <x2> <y2> <x3> <y3> <x4> <y4>
+```
+
+**Sample annotation**:
+
+```text
+48 0.1930 0.8719 0.8415 0.8719 0.8415 0.9515 0.1930 0.9515
+63 0.2208 0.0743 0.8995 0.0743 0.8995 0.7940 0.2208 0.7940
+```
+
+| Field | Description |
+|-------|-------------|
+| **class_id** | Element class (0-73) |
+| **x1-x4, y1-y4** | Normalized quadrilateral polygon coordinates |
+
+##### 5.2 Class/Category Definitions
+
+> **Purpose**: Define the taxonomy of classes/categories used in the dataset annotations.
+
+**[NEEDS_VERIFICATION]**: The DocSynth300K dataset uses 74 unique class IDs (0-73),
+but the official class definitions are not documented in the HuggingFace dataset page,
+GitHub repository, or ArXiv paper. Class IDs observed in annotations include:
+
+| Class ID | Frequency | Description |
+|----------|-----------|-------------|
+| 0 | [Unknown] | [NEEDS_VERIFICATION] |
+| 1 | [Unknown] | [NEEDS_VERIFICATION] |
+| ... | ... | ... |
+| 23 | High | [Observed in samples] |
+| 48 | Very High | [Observed in samples] |
+| ... | ... | ... |
+| 73 | [Unknown] | [NEEDS_VERIFICATION] |
+
+**Relationship to DocLayNet**:
+
+The paper states that DocSynth300K pre-training improves DocLayNet fine-tuning
+performance (+2.0 mAP), suggesting class alignment. However, DocLayNet uses only
+11 classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header,
+Picture, Section-Header, Table, Text, Title).
+
+**Possible Scenarios**:
+
+1. 74 classes may be a superset that maps to DocLayNet 11 classes
+2. 74 classes may include fine-grained subcategories (e.g., Table-Simple, Table-Complex)
+3. Class taxonomy may be defined in DocLayout-YOLO model code
+
+**Action Required**: Contact dataset authors or inspect model configuration for
+class name mappings.
+
+> **Notes**:
+>
+> - Mark catalog entry status as "Partial" until class taxonomy verified
+> - Parser currently extracts class IDs but cannot map to semantic names
+> - This blocks full Layer 2 enrichment (layout_detections.class_name field)
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Synthetic (born-digital, generated) |
+| **Generation Method** | Mesh-candidate BestFit algorithm |
+| **Layout Complexity** | **HIGH** - Diverse element arrangements, multi-scale variations |
+| **Annotation Quality** | **HIGH** - Programmatically generated (perfect ground truth) |
+| **Blur Sensitivity** | LOW - Clean synthetic rendering |
+| **Skew Sensitivity** | N/A - Synthetic, no rotation artifacts |
+| **Key Challenge** | Domain gap between synthetic and real documents |
+
+##### Training Value
+
+- **Strengths**: Large scale (300K images), perfect annotations, diverse layouts, permissive license
+- **Weaknesses**: Synthetic data may not capture all real-world degradations
+- **Unique Features**: Designed specifically for DocLayout-YOLO pre-training, polygon annotations
+- **Benchmark Suitability**: **PRE-TRAINING** - Not intended as evaluation benchmark, use DocLayNet/DocStructBench for benchmarking
+- **Phase Role**: Layout-aware pre-training before fine-tuning on real datasets
+
+##### Project Usage
+
+- **Path**: `01_base_data/layout/docsynth300k/`
+- **Phase(s)**: Phase 2 (Layout-lite pre-training), Phase 7 (Layout detection)
+- **Purpose**: Pre-training DocLayout-YOLO for document layout detection
+- **Parser**: Custom extraction script (`extract_images.py` in dataset folder)
+- **Added**: 2025-01-31
+
+##### 3b. Parser & Metadata Integration
+
+| Aspect | Details |
+|--------|---------|
+| **Label Parser** | [`DocSynth300KParser`](../../src/image_preprocessing_detector/annotation/parsers/layout/docsynth300k.py) |
+| **Parser Status** | ✅ Complete |
+| **Registry** | ✅ Registered in `parsers/layout/__init__.py` |
+| **Layer 1 Fields** | `docsynth300k_annotations` (YOLO polygon format) |
+| **Layer 2 Auto-Derived** | `layout_detections` (converted from YOLO to COCO bbox), `has_table`, `has_figure` |
+| **Config Entry** | Uses parquet-based indexing (module-level cache) |
+| **Batch Support** | ✅ Yes (benefits from parquet index) |
+
+**Parser Implementation Notes**:
+
+- Builds filename → annotations index from 30 parquet files on first access
+- Index cached at module level for performance
+- Converts YOLO 8-coordinate polygons to COCO-style bboxes
+- Returns `raw_labels["docsynth300k_annotations"]` with parsed annotations
+
+**Known Limitations**:
+
+- ⚠️ 74-class taxonomy not mapped to DocLayNet 11 classes
+- First call expensive (parquet indexing), subsequent calls use cache
+- Requires pyarrow dependency for parquet reading
+
+##### 3c. Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/layout/docsynth300k/images/` | ✅ Available | 300,000 JPEG files |
+| **Images (source)** | `01_base_data/layout/docsynth300k/part*.parquet` | ✅ Available | 30 parquet files (~113 GB) |
+| **Text/OCR GT** | - | ❌ None | Synthetic dataset, no text GT provided |
+| **Text/OCR Extracted** | `annotations/docsynth300k/ocr/` | ❌ Not extracted | Could extract via DocTR/Tesseract |
+| **Layout GT** | `01_base_data/layout/docsynth300k/labels/` | ✅ Available | 300,000 TXT (YOLO polygon format) |
+| **Layout Extracted** | - | ℹ️ N/A | Original labels already in YOLO format |
+| **Layer 2 Metadata** | `metadata_registry/json/docsynth300k_layer2.json` | ❌ Not generated | Needs Layer 2 enrichment run |
+| **Extraction Script** | `01_base_data/layout/docsynth300k/extract_images.py` | ✅ Available | Local parquet → images/labels |
+
+**Location Status Legend**:
+
+- ✅ Available - Data exists at this location
+- ❌ None/Not extracted - Data not available or not yet processed
+- ℹ️ N/A - Not applicable for this dataset type
+
+##### 10. Dataset-Specific Notes
+
+###### 10.1 Annotation Caveats
+
+- **Parquet Format**: Original data stored in 30 parquet files (~113 GB total)
+- **Extraction Required**: Images and labels must be extracted from parquet using
+  `extract_images.py` or similar conversion script
+- **YOLO Polygon Format**: Annotations use 8-coordinate quadrilateral polygons,
+  not standard YOLO 5-value bounding boxes
+- **Class ID Range**: 74 unique classes (IDs 0-73), but class taxonomy not documented
+
+###### 10.2 Implementation Notes
+
+- **Parser Caching**: `DocSynth300KParser` builds filename → annotations index from
+  all 30 parquet files on first access. Index is cached at module level for performance.
+  First parsing call may take 30-60 seconds.
+- **Coordinate Conversion**: Parser converts YOLO 8-coordinate polygons to COCO-style
+  bounding boxes using min/max of quadrilateral corners
+- **Batch Processing**: Parser supports batch mode (`supports_batch() = True`) and
+  benefits from parquet indexing
+- **Dependency**: Requires `pyarrow` for parquet file reading
+
+###### 10.3 External Resources
+
+- **Conversion Tool**: `format_docsynth300k.py` from GitHub repo converts parquet
+  to YOLO directory structure (`./layout_data/docsynth300k/`)
+- **Pre-training Script**: [assets/script.sh#L2](https://github.com/opendatalab/DocLayout-YOLO/blob/main/assets/script.sh#L2)
+  shows 8-GPU pre-training command
+- **Known Issue**: YOLO data loading has memory leakage, may require `--resume`
+  for interrupted training runs
+- **Downstream Datasets**: Designed for pre-training before fine-tuning on:
+  - DocLayNet (document layout)
+  - D4LA (document understanding)
+  - Custom downstream tasks
+
+###### 10.4 Custom Metrics
+
+- **Pre-training Value**: Measured by improvement on downstream tasks:
+  - DocLayNet: +2.0 mAP, +0.4 AP50 (from 77.7 → 79.7 mAP)
+- **Domain Gap**: Performance gain indicates synthetic→real transfer learning works,
+  but domain gap exists (not suitable as evaluation benchmark)
+
+##### References
+
+```bibtex
+@article{zhao2024doclayoutyolo,
+  title={DocLayout-YOLO: Enhancing Document Layout Analysis through Diverse Synthetic Data and Global-to-Local Adaptive Perception},
+  author={Zhao, Zhiyuan and others},
+  journal={arXiv preprint arXiv:2410.12628},
+  year={2024}
+}
+```
+
+---
+
+### 1.3 Forms (16,208+ images)
 
 | Dataset | Images | Resolution | Format | Source | License | Commercial Use |
 |---------|--------|------------|--------|--------|---------|----------------|
 | **NIST SD-2** | 5,590 | 300 DPI | Binary | NIST | Public Domain | Yes |
 | **NIST SD-6** | 5,595 | 300 DPI | Binary | NIST | Public Domain | Yes |
 | **FUNSD** | 199 | Variable | PNG/JPEG | IBM Research | CC-BY-4.0 | Yes |
-| **FUNSD+** | 1,113 | Variable | PNG/JPEG | HuggingFace | CC-BY-4.0 | Yes |
+| **FUNSD+** | 1,139 | Variable | PNG/JPEG | HuggingFace | CC-BY-4.0 | Yes |
 | **SROIE** | 973 | Variable | JPG | ICDAR 2019 | Custom | Research Only |
+| **receipts_hitl** | 192 | Variable | JPG | Supervisely | Unknown | Unknown |
 
 ---
 
@@ -791,11 +1779,182 @@ Source images available for training augmentation. Total: **~1.04M images**
 | **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/nist_db2/` |
 | **Documentation Status** | Complete |
 
-##### Dataset Statistics
+##### 2. Source Data Inventory
+
+> **Purpose**: Documents what the original dataset provides from the source, enabling parser development and integration planning.
+
+###### 2.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | PNG | 5,590 page images (2560×3300 px, binary B&W) |
+| **Annotations** | .fmt (text) | Field annotation files (one per image) |
+| **Metadata** | N/A | No separate metadata files |
+| **Supplementary** | PDF / TXT | Dataset documentation, paper |
+
+###### 2.2 Dataset Split Locations
+
+> **Purpose**: Track train/test/val paths to avoid missing data during processing.
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train** | `splits/nist-sd2/train.json` | Co-located .fmt | 4,472 | ✅ Manifest created |
+| **Validation** | `splits/nist-sd2/val.json` | Co-located .fmt | 559 | ✅ Manifest created |
+| **Test** | `splits/nist-sd2/test.json` | Co-located .fmt | 559 | ✅ Manifest created |
+| **Total** | All images in source directory | Co-located .fmt | 5,590 | ✅ Complete |
+
+**Split Organization Pattern**: `single_dir_with_manifest`
+
+> **Notes**:
+>
+> - No official splits from NIST - created locally with random seed 42
+> - .fmt annotation files co-located with images in source directory
+> - All images accessible via symlinks in `data/phase7_mvp/00_base_images/nist_db2/`
+> - Original source: `/mnt/e/image_detection/benchmarks/nist_db2/sd02/data/sfrs_*/`
+
+###### 2.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Text Transcriptions** | .fmt (text) | Form / Field | Ground truth field values |
+| **Form Metadata** | .fmt (text) | Form | Form ID, form type (implicit) |
+| **Field Count** | .fmt (text) | Form | Number of fields per form |
+| **Handwriting Flag** | .fmt (text) | Form | Inferred from field value presence |
+
+> **Note**: No bounding boxes, polygons, segmentation masks, or spatial coordinates provided.
+
+###### 2.4 Provided Metadata
+
+| Metadata Type | Location | Content |
+|---------------|----------|---------|
+| **Dataset-level** | NIST documentation | Release date (1992), IRS 1040 Package X, 12 form types |
+| **Image-level** | Filename | Form type inferred from directory structure (sfrs_0-8) |
+| **Annotation-level** | .fmt files | Field ID, field value, special tokens (_ICON_) |
+| **Document-level** | .fmt files | Form ID (line 1), field count (line count - 1) |
+
+###### 2.5 Annotation Schema Details
+
+> **Format**: Custom text format (.fmt files)
+
+```text
+# .fmt File Structure
+Line 1: Form ID (unique identifier, e.g., "1040_001")
+Line 2+: field_id value
+
+Example:
+1040_001
+SSN 123-45-6789
+FNAME JOHN
+LNAME DOE
+WAGES 45000
+_ICON_  ← Special token for non-text content (checkboxes, logos)
+
+# Field value parsing
+- Split on first space: field_id, value
+- Special token "_ICON_" marks non-text content
+- Empty values indicate unfilled fields
+- No spatial coordinates provided
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `form_id` | str | Yes | Line 1, unique per form |
+| `field_id` | str | No | Part of field_id value pairs |
+| `value` | str | No | Field transcription or "_ICON_" |
+
+###### 2.6 Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ Form ID | `form_id` | High | Direct extraction from .fmt line 1 |
+| ✅ Form type | `form_type` | High | Hardcoded "1040" (could infer from dir) |
+| ✅ Field values | `sample_fields` | High | Currently extracts first 5, could extract all |
+| ✅ Field IDs | - | Medium | Available but not currently extracted |
+| ✅ Field count | `field_count` | Medium | Computed from line count |
+| ✅ Handwriting flag | `has_handwritten_content` | Medium | Inferred from field value presence |
+| ✅ Text GT | `text_content.full_text` | High | Parser populates via .fmt concatenation |
+| ❌ Bounding boxes | - | N/A | Not provided in source |
+| ❌ Quality scores | - | N/A | Not provided in source |
+| ❌ Reading order | - | N/A | Not provided in source |
+
+**Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
+
+##### 3. Project Usage
+
+| Aspect | Details |
+|--------|---------|
+| **Phase(s)** | Phase 7 training |
+| **Purpose** | Form structure IQA, field detection baseline |
+| **Local Path** | `01_base_data/forms/nist_db2/` |
+| **Subset Used** | Full dataset |
+| **Preprocessing** | None required (already normalized) |
+
+##### 3b. Parser & Metadata Integration
+
+| Aspect | Details |
+|--------|---------|
+| **Label Parser** | `parse_nist_db2_labels` |
+| **Parser Status** | ✅ Complete (text_content populated) |
+| **Layer 1 Fields** | `form_id`, `field_count`, `sample_fields`, `text_content` |
+| **Layer 2 Auto-Derived** | `capture_method`, `domain=FIN`, `resolution` |
+| **Config Entry** | `DATASET_CONFIGS["nist_db2"]` |
+
+> **Parser Reference**: Extracts form_id, field_count, sample_fields from .fmt files; populates text_content schema
+
+##### 3c. Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/forms/nist_db2/` | ✅ Available | 5,590 PNG symlinks |
+| **Images (source)** | `/mnt/e/image_detection/benchmarks/nist_db2/sd02/data/sfrs_*/` | ✅ Available | Original files on E: drive |
+| **Text/OCR GT** | Co-located .fmt files | ✅ Available | Field transcriptions in source |
+| **Text/OCR Extracted** | Parser populates text_content | ✅ Implemented | Parser concatenates .fmt field values |
+| **Layout GT** | - | ❌ None | No spatial coordinates in source |
+| **Layout Extracted** | `annotations/nist-sd2/layout/` | ❌ Not extracted | No layout annotations available |
+| **Layer 2 Metadata** | `/mnt/e/image_detection/metadata_registry/json/nist_db2_metadata.json` | ✅ Available | 18.8 MB JSON (5,590 records) |
+| **Split Manifests** | `splits/nist-sd2/*.json` | ✅ Created | train/val/test manifests |
+
+**Location Status Legend**:
+
+- ✅ Available - Data exists at this location
+- ❌ None/Not extracted - Data not available or not yet processed
+- ℹ️ N/A - Not applicable for this dataset type
+
+##### 4. Dataset Statistics
+
+###### 4.1 Split Coverage
+
+> **CRITICAL**: Always document ALL available splits and verify Layer 2 metadata includes them.
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Train** | 4,472 | 4,472 | 100% | 🔄 Pending re-annotation |
+| **Validation** | 559 | 559 | 100% | 🔄 Pending re-annotation |
+| **Test** | 559 | 559 | 100% | 🔄 Pending re-annotation |
+| **Total** | 5,590 | 5,590 | 100% | ✅ All images annotated |
+
+**Split Status Legend:**
+
+- ✅ Complete - All samples from this split are in Layer 2 metadata
+- ⚠️ Partial - Some samples missing from Layer 2
+- ❌ Missing - Split not included in Layer 2 metadata
+- 🔄 Pending - Split created, needs Layer 2 re-annotation with split field
+- ℹ️ N/A - Split does not exist in source dataset
+
+> **Note**: Splits created locally (not official NIST splits). Layer 2 metadata needs
+> re-annotation to populate `provenance.split` field with train/val/test assignments.
+> Use split manifests in `splits/nist-sd2/*.json` to map images to splits.
+
+###### 4.2 Sample Counts
 
 | Metric | Value |
 |--------|-------|
 | **Total Images** | 5,590 pages |
+| **Training Split** | 4,472 (80%) |
+| **Validation Split** | 559 (10%) |
+| **Test Split** | 559 (10%) |
 | **Simulated Submissions** | 900 tax returns |
 | **Average Forms/Submission** | 6.2 form faces |
 | **Form Types** | 12 IRS forms (20 unique faces) |
@@ -803,12 +1962,131 @@ Source images available for training augmentation. Total: **~1.04M images**
 | **File Format** | Binary (B&W) |
 | **Supplementary Files** | 5,590 text files (field answers) |
 
-##### Form Types Included
+##### 5. Content Composition
+
+| Aspect | Details |
+|--------|---------|
+| **Domain** | Financial (US Federal Tax Forms) |
+| **Document Types** | IRS 1040 Package X (1988 tax year) |
+| **Language(s)** | English (100%) |
+| **Temporal Range** | 1988 tax year forms |
+| **Acquisition Method** | Synthesized (computer-generated) |
+
+###### 5.1 Form Types Included
 
 IRS 1040 Package X (1988 tax year):
 
 - Forms: 1040, 2106, 2441, 4562, 6251
 - Schedules: A, B, C, D, E, F, SE
+
+###### 5.2 Class/Category Definitions
+
+> **Purpose**: Define the taxonomy of form types used in the dataset.
+
+| Class/Category | ID | Description | Parent |
+|----------------|-----|-------------|--------|
+| **Main Forms** | - | Primary IRS tax forms | - |
+| Form 1040 | 1 | Individual Income Tax Return | Main Forms |
+| Form 2106 | 2 | Employee Business Expenses | Main Forms |
+| Form 2441 | 3 | Child and Dependent Care Credit | Main Forms |
+| Form 4562 | 4 | Depreciation and Amortization | Main Forms |
+| Form 6251 | 5 | Alternative Minimum Tax | Main Forms |
+| **Schedules** | - | Income/deduction schedules | - |
+| Schedule A | 6 | Itemized Deductions | Schedules |
+| Schedule B | 7 | Interest and Dividend Income | Schedules |
+| Schedule C | 8 | Profit or Loss from Business | Schedules |
+| Schedule D | 9 | Capital Gains and Losses | Schedules |
+| Schedule E | 10 | Supplemental Income and Loss | Schedules |
+| Schedule F | 11 | Profit or Loss from Farming | Schedules |
+| Schedule SE | 12 | Self-Employment Tax | Schedules |
+
+**Total**: 12 form types, 20 unique form faces (some forms are 2-sided)
+
+###### 5.3 Language & Script Coverage
+
+> **Purpose**: Document language and script distribution.
+
+| Script/Language | ISO Code | Samples | Coverage | Notes |
+|-----------------|----------|---------|----------|-------|
+| English | en / Latn | 5,590 | 100% | US tax forms only |
+
+**Script Families Present**: Latin
+
+##### 6. IQA Profile
+
+###### 6.1 Source Characteristics
+
+| Characteristic | Description |
+|----------------|-------------|
+| **Source Type** | Synthesized (computer-generated, not real scans) |
+| **Capture Device** | N/A (programmatically generated) |
+| **Original Quality** | Clean, no authentic scanning artifacts |
+| **Compression** | PNG lossless |
+| **Known Artifacts** | None (synthesized data) |
+
+###### 6.2 Degradation Sensitivity
+
+| IQA Metric | Sensitivity | Notes |
+|------------|-------------|-------|
+| **Blur** | HIGH | Form field boundaries extremely sensitive |
+| **Noise** | MEDIUM | High contrast masks moderate noise |
+| **Skew** | **HIGH** | Grid alignment critical for field isolation |
+| **Contrast** | LOW | Already high contrast (black on white) |
+| **Compression** | LOW | Binary format, no compression artifacts |
+
+###### 6.3 Training & Benchmark Value
+
+| Aspect | Assessment |
+|--------|------------|
+| **Training Value** | MEDIUM - Clean ground truth, but synthesized only |
+| **Unique Characteristics** | Form structure, field-level annotations |
+| **Complementary Datasets** | Combine with real scanned tax forms (SROIE, FUNSD) |
+| **Benchmark Suitability** | LOW - Synthesized data doesn't represent real-world degradation |
+| **Known Limitations** | No real scanning artifacts, dated form designs (1988) |
+
+##### 10. Dataset-Specific Notes
+
+> **Purpose**: Capture unique characteristics, caveats, and implementation details specific to this dataset.
+
+###### 10.1 Annotation Caveats
+
+- **.fmt file format is custom**: Not standard JSON/XML - text-based field-value pairs
+- **Special token "_ICON_"**: Marks non-text content (checkboxes, logos, signatures)
+- **No spatial coordinates**: Field locations not annotated - form-level only
+- **Synthesized data**: Computer-generated forms, not real scanned documents
+  - **Implication**: No authentic scanning artifacts (blur, skew, degradation)
+  - **Use case**: Clean ground truth for form structure, not real-world quality assessment
+  - **Complement with**: Real scanned tax forms for degradation training
+- **Field ID conventions**: Field IDs are IRS-specific (e.g., SSN, WAGES, FNAME)
+- **1988 tax year**: Forms are from 1988 - outdated layouts and field requirements
+
+###### 10.2 Implementation Notes
+
+- **Parser text_content**: Parser successfully populates text_content schema by concatenating .fmt field values
+- **Form type hardcoded**: Parser hardcodes form_type="1040"
+  - **Alternative**: Could infer from directory structure (sfrs_0-8) or form_id pattern
+- **.fmt files co-located**: Annotation files stored alongside images in source directory
+  - **Naming**: `{image_stem}.fmt` matches `{image_stem}.png`
+- **Capture method metadata**: Marked as "scanner" in Layer 2 but actually synthesized
+
+###### 10.3 External Resources
+
+- **NIST SRD 2 website**: https://www.nist.gov/srd/nist-special-database-2
+- **Dataset series**: Part of NIST Special Database series
+  - SD-2: Tax forms (this dataset)
+  - SD-6: Census forms with handprint
+  - SD-19: Handwriting characters
+- **IRS forms**: 1040 Package X (1988 tax year)
+  - **Historical note**: Forms are 35+ years old, layouts have changed significantly
+- **Public domain**: U.S. Government work, no license restrictions
+
+###### 10.4 Custom Metrics
+
+N/A - No dataset-specific quality tiers or scoring systems
+
+> **Important**: This is a **synthesized** dataset, not real scanned documents.
+> Use for form structure understanding and field detection training, but pair
+> with real degraded form datasets for production-ready IQA models.
 
 ##### IQA Profile
 
@@ -928,7 +2206,74 @@ IRS 1040 Package X (1988 tax year):
 | **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/funsd/` |
 | **Documentation Status** | Complete |
 
+##### Source Data Inventory
+
+###### 2.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | PNG | Scanned form images |
+| **Annotations** | JSON | Per-form entity annotations with boxes, text, labels, linking |
+
+###### 2.2 Dataset Split Locations
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train** | `training_data/images/` | `training_data/annotations/` | 149 | ✅ |
+| **Test** | `testing_data/images/` | `testing_data/annotations/` | 50 | ✅ |
+| **Total** | - | - | 199 | ✅ |
+
+**Split Organization Pattern**: `by_folder`
+
+###### 2.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Bounding Boxes** | XYXY | Word / Entity | Entity and word-level boxes |
+| **Text Transcriptions** | JSON | Entity / Word | Ground truth text content |
+| **NER Labels** | JSON | Entity | Semantic labels (question/answer/header/other) |
+| **Entity Linking** | JSON | Entity | Relation pairs between entities |
+
+###### 2.4 Annotation Schema Details
+
+```json
+{
+  "form": [
+    {
+      "text": "Entity text",
+      "box": [x1, y1, x2, y2],
+      "label": "question|answer|header|other",
+      "linking": [[entity_id1, entity_id2], ...],
+      "words": [{"text": "word", "box": [x1, y1, x2, y2]}]
+    }
+  ]
+}
+```
+
 ##### Dataset Statistics
+
+###### 4.1 Split Coverage
+
+> **CRITICAL**: Always document ALL available splits and verify Layer 2 metadata includes them.
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Train** | 149 | 199 (combined) | N/A | ⚠️ Split info not tracked in Layer 2 |
+| **Test** | 50 | 199 (combined) | N/A | ⚠️ Split info not tracked in Layer 2 BENCHMARK RESERVED |
+| **Total** | 199 | 199 | 100% | ✅ All samples in Layer 2 |
+
+**Split Status Legend:**
+
+- ✅ Complete - All samples from this split are in Layer 2 metadata
+- ⚠️ Split info not tracked - Layer 2 metadata exists but doesn't track split membership
+- ❌ Missing - Split not included in Layer 2 metadata
+
+> **Note**: Layer 2 metadata contains all 199 samples but does not track which split each sample belongs to
+> (train vs test). The current Layer 2 schema does not include a `split` field. Source split information
+> is available in the original FUNSD directory structure (`training_data/` and `testing_data/`).
+> Test split (50 images) is BENCHMARK RESERVED - do not use for training.
+
+###### 4.2 Sample Counts
 
 | Metric | Value |
 |--------|-------|
@@ -940,6 +2285,18 @@ IRS 1040 Package X (1988 tax year):
 | **Relations** | 5,304 |
 | **Image Width Range** | 754-863 pixels |
 | **File Format** | JPEG |
+
+###### 4.3 Text Statistics
+
+> **Source**: Computed from ground truth text labels via `calculate_text_statistics.py`
+> **Availability**: ✅ Available
+
+| Metric | Mean | Min | Max |
+|--------|------|-----|-----|
+| **Word Count** | 154.1 | 25 | 437 |
+| **Sentence Count** | 12.1 | 1 | 67 |
+
+**Text Source**: `ground_truth`
 
 ##### Entity Types (NER Tags)
 
@@ -976,6 +2333,21 @@ IRS 1040 Package X (1988 tax year):
 
 *FUNSD is the standard benchmark for Document AI form understanding models*
 
+##### Class/Category Definitions
+
+| Class/Category | ID | Description |
+|----------------|-----|-------------|
+| question | 0 | Form field questions/labels |
+| answer | 1 | Form field answers/values |
+| header | 2 | Form headers and titles |
+| other | 3 | Other text elements |
+
+##### Language & Script Coverage
+
+| Script/Language | ISO Code | Coverage | Notes |
+|-----------------|----------|----------|-------|
+| English | en / Latn | 100% | US tax and administrative forms |
+
 ##### Training Value
 
 - **Strengths**: Real noise, word-level bboxes, NER annotations, industry benchmark
@@ -983,12 +2355,40 @@ IRS 1040 Package X (1988 tax year):
 - **Unique Features**: Semantic entity labeling, relation annotations (5,304 relations)
 - **Benchmark Suitability**: **HIGH** - Standard benchmark for LayoutLM family and Document AI models
 
+##### Known Issues & Limitations
+
+- **Size**: Only 199 forms - may need augmentation for training
+- **Domain Bias**: US administrative forms; limited to English
+- **Annotation Gaps**: Entity linking (5,304 relations) not yet extracted by parser
+- **Word-Level Data**: Parser extracts entity-level only; word-level boxes available but not mapped
+
 ##### Project Usage
 
 - **Path**: `01_base_data/forms/funsd/`
 - **Phase(s)**: Phase 7 training
 - **Purpose**: Noisy form IQA baseline, real degradation samples
-- **Parser**: [`parse_funsd_labels`](../scripts/annotate_base_metadata.py#L1375) | ✅ Complete
+- **Parser**: [`FunsdParser`](../src/image_preprocessing_detector/annotation/parsers/layout/funsd.py) | ✅ Complete
+
+##### Parser & Metadata Integration
+
+| Aspect | Details |
+|--------|---------|
+| **Label Parser** | `FunsdParser` in `parsers/layout/funsd.py` |
+| **Parser Status** | ✅ Complete |
+| **Layer 1 Fields** | `funsd_annotations` (dict), `language_code`, `transcription` |
+| **Layer 2 Auto-Derived** | `text_content`, `text_statistics` |
+| **Config Entry** | `DATASET_CONFIGS["funsd"]` |
+
+**Parser Audit Matrix**:
+
+| Source Field | Layer 2 Target | Parser Handles | Priority | Notes |
+|--------------|----------------|----------------|----------|-------|
+| form[].box | layout_detections.bbox | ⚠️ Partial | High | In funsd_annotations |
+| form[].text | text_content.full_text | ✅ Yes | High | Aggregated to transcription |
+| form[].label | layout_detections.class_name | ⚠️ Partial | High | In funsd_annotations |
+| form[].linking | entities.relations | ❌ No | Medium | Not extracted |
+| form[].words | layout_detections.word_boxes | ❌ No | Low | Not extracted |
+| language | language.language_code | ✅ Yes | Medium | Set to "en" |
 
 ##### Layer 2 Annotation Summary
 
@@ -1002,6 +2402,30 @@ IRS 1040 Package X (1988 tax year):
 | **Capture Method** | Scanner (ADF) |
 | **Domain** | ADM (Administrative) |
 | **Content Flags** | Tables: ✅, Handwriting: ✅, Signatures: ✅ |
+
+##### Dataset-Specific Notes
+
+###### Annotation Format
+
+FUNSD uses a unique annotation format where annotations are a **dict** (not a list):
+- Root key is `"form"` containing array of entities
+- Each entity has `text`, `box`, `label`, `linking`, and `words` fields
+- Box format is XYXY: `[x1, y1, x2, y2]`
+
+###### Entity Linking
+
+The `linking` field contains relation pairs connecting entities:
+- Format: `[[source_id, target_id], ...]`
+- 5,304 total relations across 199 forms
+- Used for form understanding tasks (question→answer linking)
+
+###### HuggingFace Integration
+
+Available via HuggingFace datasets:
+```python
+from datasets import load_dataset
+dataset = load_dataset("nielsr/funsd")
+```
 
 ##### References
 
@@ -1018,11 +2442,11 @@ IRS 1040 Package X (1988 tax year):
 
 #### FUNSD+ (Extended FUNSD)
 
-> **Quick Stats**: ~1,500+ forms | Extended annotations | Pre-split | HuggingFace-ready
+> **Quick Stats**: 1,139 forms | Extended annotations | Pre-split | HuggingFace-ready
 >
 > **License**: CC-BY-4.0 | **Commercial Use**: Yes
 
-##### Overview
+##### 1. Overview
 
 | Attribute | Value |
 |-----------|-------|
@@ -1034,11 +2458,115 @@ IRS 1040 Package X (1988 tax year):
 | **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/funsd_plus/` |
 | **Documentation Status** | Complete |
 
-##### Dataset Statistics
+##### 2. Source Data Inventory
+
+> **Purpose**: Documents what the original dataset provides from the source, enabling parser development and integration planning.
+
+###### 2.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | JPG | Form images (scanned documents) |
+| **Annotations** | Arrow (Parquet) | HuggingFace dataset format |
+| **Metadata** | JSON | Dataset configuration and split info |
+
+###### 2.2 Dataset Split Locations
+
+> **Purpose**: Track train/test paths to avoid missing data during processing.
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train** | `images/funsd_plus_train_*.jpg` | `train/data-00000-of-00001.arrow` | 1,026 | ✅ |
+| **Test** | `images/funsd_plus_test_*.jpg` | `test/data-00000-of-00001.arrow` | 113 | ✅ |
+| **Total** | `images/*.jpg` | - | 1,139 | ✅ |
+
+**Split Organization Pattern**: `single_dir_with_manifest` (HuggingFace dataset)
+
+> **Notes**:
+> - All images centralized in `images/` directory
+> - Annotations in Arrow format (train/ and test/ subdirectories)
+> - Filename convention indicates split: `funsd_plus_{split}_{index}.jpg`
+
+###### 2.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Text Transcriptions** | Arrow (string list) | Word | Ground truth word text (OCR not needed) |
+| **Bounding Boxes** | Arrow (float64 nested list) | Word | Word-level coordinates (format: [x, y, width, height] or [x1, y1, x2, y2] - TBD) |
+| **NER Tags** | ClassLabel | Word | BIO tagging scheme (9 classes) |
+| **Grouped Words** | Arrow (nested structure) | Entity | Entity-level groupings (optional) |
+| **Labels** | Arrow (int64 list) | Word/Entity | Alternative labeling (details TBD) |
+
+> **Note**: FUNSD+ uses word-level BIO (Begin-Inside-Outside) tagging, unlike original FUNSD's entity-level structure.
+
+###### 2.4 Provided Metadata
+
+| Metadata Type | Location | Content |
+|---------------|----------|---------|
+| **Dataset-level** | `dataset_dict.json` | Split names ("train", "test") |
+| **Split-level** | `{split}/dataset_info.json` | Schema, features, download info |
+| **Image-level** | Arrow tables | image_id, dimensions (embedded in Image type) |
+
+###### 2.5 Annotation Schema Details
+
+> **Format**: HuggingFace Datasets (Arrow/Parquet binary format)
+
+**HuggingFace Features Schema**:
+```python
+{
+  "image": Image(),  # PIL Image object
+  "words": Sequence(Value("string")),  # List of word strings
+  "bboxes": Sequence(Sequence(Value("float64"))),  # Nested list of coordinates
+  "ner_tags": Sequence(ClassLabel(names=[
+    "O",  # Outside (not an entity)
+    "B-QUESTION", "I-QUESTION",  # Question entity
+    "B-ANSWER", "I-ANSWER",      # Answer entity
+    "B-HEADER", "I-HEADER",      # Header entity
+    "B-OTHER", "I-OTHER"         # Other entity
+  ])),
+  "grouped_words": Sequence(...),  # Entity groupings (structure TBD)
+  "labels": Sequence(Value("int64")),  # Alternative labels (details TBD)
+  "image_id": Value("int64")  # Unique image identifier
+}
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `image` | Image | Yes | PIL Image object (embedded) |
+| `words` | List[str] | Yes | Word text (ground truth transcription) |
+| `bboxes` | List[List[float64]] | Yes | Word bounding boxes (4 coordinates each) |
+| `ner_tags` | List[ClassLabel] | Yes | BIO tags (9 classes) |
+| `image_id` | int64 | Yes | Links to image filename |
+| `grouped_words` | Nested | Optional | Entity-level groupings |
+| `labels` | List[int64] | Optional | Alternative labeling scheme |
+
+> **Bbox Format Note**: Coordinate format needs verification (likely [x, y, width, height] COCO format or [x1, y1, x2, y2] PASCAL VOC).
+
+**BIO Tagging Scheme**:
+- **B-{ENTITY}**: Begin - First word of entity
+- **I-{ENTITY}**: Inside - Continuation of entity
+- **O**: Outside - Not part of any entity
+
+###### 2.6 Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ Word text | `text_content.full_text` | **P0** | Ground truth available, NOT extracted |
+| ✅ Word bboxes | `text_content.segments[].bbox` | P1 | Word-level positional info |
+| ✅ NER tags | `entities.key_value` or custom | P2 | BIO tags → entity extraction |
+| ✅ Image ID | `provenance.source_id` | P3 | Linking to source |
+| ⚠️ Entity bboxes | `layout_detections.bbox` | P2 | Derivable from word bboxes + BIO tags |
+| ❌ Entity linking | - | N/A | Not available in HF format |
+
+**Critical Gap**: Parser currently expects FUNSD JSON format but dataset uses HuggingFace Arrow. **Rewrite required** (deferred - 6-8h effort).
+
+##### 3. Dataset Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Total Forms** | ~1,500+ (extended from 199) |
+| **Total Forms** | 1,139 (5.7× larger than FUNSD) |
 | **Training Split** | Pre-defined |
 | **Test Split** | Pre-defined |
 | **File Format** | PNG/JPEG |
@@ -1094,106 +2622,733 @@ IRS 1040 Package X (1988 tax year):
 
 #### SROIE
 
-> **Quick Stats**: 973 receipts | Mobile captures | Entity extraction | Thermal print
+> **Quick Stats**: 2,043 images | Camera-captured receipts | Text detection + OCR + Entity extraction
 >
-> **License**: Custom | **Commercial Use**: Research only
+> **License**: Research Use Only | **Commercial Use**: No (pending verification)
+
+- **Path**: `data/phase7_mvp/00_base_images/sroie/` (1,500 symlinks)
+- **Paper**: [ICDAR 2019 Robust Reading Challenge on Scanned Receipts OCR and Information Extraction (2021)](https://arxiv.org/abs/2103.10213)
+- **IQA Profile**: [camera_blur, glare_reflection, perspective_distortion]
+- **Project Usage**: Phase 7 OCR training, receipt understanding
+- **Parser**: [`SroieParser`](../src/image_preprocessing_detector/annotation/parsers/layout/sroie.py) | ✅ Complete
+
+**Data Locations**:
+| Type | Path | Status |
+|------|------|--------|
+| Images | `data/phase7_mvp/00_base_images/sroie/` | ✅ 1,500 symlinks (Phase 7 subset) |
+| Images (source) | `/mnt/e/image_detection/v4_datasets/sroie/images/` | ⚠️ Mount unavailable |
+| Text/OCR GT | Paired .txt files (8-point quad + transcription) | ⚠️ Source unavailable |
+| Layer 2 Metadata | `metadata_registry/json/sroie/` | ✅ Available |
+| Aggregated Stats | `metadata_registry/aggregates/sroie_stats.json` | ✅ Available |
+
+SROIE (Scanned Receipt OCR and Information Extraction) provides camera-captured receipt
+images with quad-coordinate text localization and ground truth transcriptions. Dataset
+was created for ICDAR 2019 competition supporting text detection, OCR, and key information
+extraction tasks (company name, date, address, total).
+
+---
+
+##### 1. Source Data Inventory
+
+**Official Dataset**: ICDAR 2019 SROIE
+
+- **Release Year**: 2019 (competition), 2021 (paper publication)
+- **Version**: 1.0
+- **Publisher**: ICDAR 2019 Robust Reading Competition
+- **Authors**: Zheng Huang, Kai Chen, Jianhua He, Xiang Bai, Dimosthenis Karatzas, Shjian Lu, C.V. Jawahar
+- **License**: [NEEDS_VERIFICATION] - Conservative classification as Research Use Only
+- **Citation**:
+
+  ```bibtex
+  @article{huang2021icdar2019,
+    title={ICDAR 2019 Robust Reading Challenge on Scanned Receipts OCR and Information Extraction},
+    author={Huang, Zheng and Chen, Kai and He, Jianhua and Bai, Xiang and Karatzas, Dimosthenis and Lu, Shijian and Jawahar, CV},
+    journal={arXiv preprint arXiv:2103.10213},
+    year={2021}
+  }
+  ```
+
+- **Download**: [HuggingFace: darentang/sroie](https://huggingface.co/datasets/darentang/sroie) | [Kaggle: urbikn/sroie-datasetv2](https://www.kaggle.com/datasets/urbikn/sroie-datasetv2)
+- **Documentation Status**: [Official] for paper/competition info, [Empirically Derived] for Layer 2 counts
+
+###### 1.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | JPG | Camera-captured receipt images |
+| **Annotations** | TXT | Paired .txt files (one per image) with quad coords + OCR text |
+| **Entity Labels** | TXT (separate) | Key information extraction (company, date, address, total) |
+
+###### 1.2 Dataset Split Locations
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Train** | `train/` | `train/{id}.txt` | [NEEDS_VERIFICATION] | ⚠️ Source unavailable |
+| **Test** | `test/` | `test/{id}.txt` | [NEEDS_VERIFICATION] | ⚠️ Source unavailable |
+| **Total** | - | - | 2,043 | ✅ Layer 2 metadata |
+
+**Split Organization Pattern**: `by_folder` (train/test directories)
+
+> **Note**: E: drive mount unavailable at review time. Authoritative count (2,043) from Layer 2
+> aggregated metadata. Phase 7 subset uses 1,500 symlinks.
+
+###### 1.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Quad Coordinates** | TXT (CSV) | Text region | 8-point polygon per text region (x1,y1,x2,y2,x3,y3,x4,y4) |
+| **Text Transcriptions** | TXT (CSV) | Text region | Ground truth OCR text per quad |
+| **Entity Labels** | TXT (separate) | Document | 4 key fields (company, date, address, total) |
+
+###### 1.4 Annotation Schema Details
+
+**Text Region Annotation Format** (paired .txt files):
+
+```text
+# Format: x1,y1,x2,y2,x3,y3,x4,y4,text
+123,45,678,45,678,90,123,90,COMPANY NAME
+200,100,500,100,500,120,200,120,Receipt Total: $45.99
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `x1,y1,x2,y2,x3,y3,x4,y4` | 8 ints | Yes | Quad coordinates (rotated/perspective) |
+| `text` | str | Yes | OCR transcription |
+
+###### 1.5 Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ Quad coords | `text_instances.bbox` | High | ✅ Extracted as 8-point polygon |
+| ✅ OCR text | `text_content.full_text` | High | ✅ Aggregated to text_content |
+| ✅ Text source type | `text_content.source_type` | High | ✅ Set to "dataset_provided" |
+| ⚠️ Entity labels | `entities.key_value` | Medium | ❌ Not extracted (separate files) |
+| ⚠️ Quad→bbox | `layout_detections.bbox` | Medium | ❌ Not converted to COCO format |
+| ❌ Layout class | `layout_detections.class_name` | Low | Not provided (all "text") |
+
+**Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
+
+---
+
+##### 2. Project Usage
+
+| Aspect | Details |
+|--------|---------|
+| **Phase(s)** | Phase 7 OCR training |
+| **Purpose** | Receipt OCR, text detection, key information extraction |
+| **Local Path** | `data/phase7_mvp/00_base_images/sroie/` |
+| **Subset Used** | 1,500 images (Phase 7 selection from 2,043 total) |
+| **Preprocessing** | None required (images pre-normalized) |
+| **Benchmark Status** | ❌ Not reserved (347 test images available for training if needed) |
+
+**Training Task Alignment**:
+
+- ✅ Text detection (quad coordinates preserve rotation/perspective)
+- ✅ OCR training (ground truth transcriptions)
+- ✅ Receipt structure understanding
+- ⚠️ Layout detection (requires quad→bbox conversion)
+- ⚠️ Key information extraction (entity labels available but not extracted)
+
+---
+
+##### 3. Parser & Metadata Integration
+
+| Aspect | Details |
+|--------|---------|
+| **Label Parser** | `SroieParser` in `parsers/layout/sroie.py` |
+| **Parser Status** | ✅ Complete - Text content extraction implemented |
+| **Layer 1 Fields** | `text_instances` (list[dict]), `raw_labels["split"]`, `raw_labels["document_type"]` |
+| **Layer 2 Auto-Derived** | `text_content` (✅ implemented in parser) |
+| **Config Entry** | `DATASET_CONFIGS["sroie"]` |
+
+> **Parser Reference**: See [SroieParser source](../src/image_preprocessing_detector/annotation/parsers/layout/sroie.py#L66-L143)
+
+###### Parser Audit Matrix (Schema-Derived)
+
+| Source Field | Layer 2 Target | Parser Handles? | Priority | Gap Analysis |
+|--------------|----------------|-----------------|----------|--------------|
+| **Quad coords (8-point)** | `layout_detections.polygon` | ❌ No | High | In text_instances, not layout_detections |
+| **Quad coords → bbox** | `layout_detections.bbox` | ❌ No | High | Conversion needed for COCO compatibility |
+| **OCR text** | `text_content.full_text` | ✅ Yes | High | ✅ Implemented (lines 119-130) |
+| **Text source type** | `text_content.source_type` | ✅ Yes | High | ✅ Set to "dataset_provided" |
+| **Text source file** | `text_content.source_file` | ❌ No | Medium | Not tracked |
+| **Text source format** | `text_content.source_format` | ✅ Yes | Medium | ✅ Set to "txt_quad_text" |
+| **Extraction method** | `text_content.extraction_method` | ✅ Yes | Medium | ✅ Set to "SroieParser.parse" |
+| **Split info** | `provenance.split` | ✅ Yes | Medium | ✅ In raw_labels["split"] |
+| **Document type** | N/A | ✅ Yes | Low | ✅ In raw_labels["document_type"] |
+| **Language/script** | `language.language_code` | ❌ No | Medium | [NEEDS_PROFILING] Likely multilingual |
+| **Text statistics** | `text_statistics` | ❌ No | Medium | [NEEDS_PROFILING] Requires text_content aggregation |
+| **Quality scores** | `quality.overall_score` | ❌ No | Low | [NEEDS_PROFILING] Camera artifacts expected |
+
+**Parser Coverage**: 50% (5/10 high-priority fields)
+
+**Missing Extractions**:
+
+1. **Layout detections** (polygon/bbox) - High priority for layout models
+2. **Text statistics** - Medium priority (requires profiling with source data)
+3. **Language detection** - Medium priority (multilingual receipts likely)
+4. **Quality assessment** - Low priority (camera artifacts expected: blur, glare, perspective)
+
+---
+
+##### 4. Data Locations
+
+**Images**:
+
+- **Local Path**: `data/phase7_mvp/00_base_images/sroie/`
+- **Type**: Symlinks (1,500 files - Phase 7 subset)
+- **Target**: `/mnt/e/image_detection/v4_datasets/sroie/images/`
+- **Status**: ⚠️ Mount unavailable at review time
+
+**Annotations**:
+
+- **Format**: Paired .txt files (quad coordinates + OCR text)
+- **Location**: Expected alongside images in source dataset
+- **Status**: ❌ Source unavailable (mount issue)
+
+**Layer 2 Metadata**:
+
+- **Aggregates**: `metadata_registry/aggregates/sroie_stats.json` ✅ Available
+- **Individual JSON**: `/mnt/e/image_detection/metadata_registry/json/sroie/` ⚠️ Source location
+
+---
+
+##### 5. Dataset Statistics
+
+###### 5.1 Split Coverage
+
+> **CRITICAL**: Authoritative count from Layer 2 aggregated metadata. Source splits unavailable.
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Train** | [NEEDS_VERIFICATION] | [TO_VERIFY] | [TO_COMPUTE]% | ⚠️ Source unavailable |
+| **Test** | [NEEDS_VERIFICATION] | [TO_VERIFY] | [TO_COMPUTE]% | ⚠️ Source unavailable |
+| **Total** | 2,043 | 2,043 | 100% | ✅ All samples in Layer 2 |
+
+**Split Status Legend:**
+
+- ✅ Complete - All samples from this split are in Layer 2 metadata
+- ⚠️ Partial - Some samples missing or source unavailable
+- ❌ Missing - Split not included in Layer 2 metadata
+
+> **Note**: E: drive mount unavailable. Layer 2 aggregated metadata shows 2,043 total samples.
+> Phase 7 subset uses 1,500 symlinks. Train/test split counts require source verification.
+
+###### 5.2 Sample Counts
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 2,043 [Empirically Derived] |
+| **Phase 7 Subset** | 1,500 symlinks |
+| **Image Dimensions** | 150-6016 × 168-5312 px [Empirically Derived] |
+| **Average Dimensions** | 1026 × 1394 px [Empirically Derived] |
+| **Resolution (DPI)** | Variable (camera capture) |
+| **File Format** | JPEG (100%) [Empirically Derived] |
+| **Color Space** | RGB [Empirically Derived] |
+| **Average File Size** | 243 KB [Empirically Derived] |
+| **Annotation Format** | TXT (quad coords + OCR text) |
+
+###### 5.3 Text Statistics
+
+> **Source**: Ground truth text available but not yet profiled
+> **Availability**: ⚠️ [NEEDS_PROFILING] - E: drive mount unavailable
+
+**Expected Statistics** (based on receipt domain):
+
+| Metric | Expected Range |
+|--------|----------------|
+| **Character Count** | 200-500 chars/receipt |
+| **Word Count** | 30-80 words/receipt |
+| **Line Count** | 15-35 lines/receipt |
+
+**Text Source**: `ground_truth` (dataset_provided via parser)
+
+###### 5.4 Capture Method [Official]
+
+> **Source**: Layer 2 aggregated metadata (sroie_stats.json)
+
+| Capture Method | Count | Percentage |
+|----------------|-------|------------|
+| camera_smartphone | 2,043 | 100% |
+
+**Capture Characteristics**:
+
+- Camera-captured receipts (smartphone or tablet)
+- Real-world capture conditions (variable lighting, perspective)
+- Potential artifacts: blur, glare, perspective distortion, shadows
+- Thermal print substrate (unique degradation profile)
+
+###### 5.5 Domain Distribution [Official]
+
+> **Source**: Layer 2 aggregated metadata (sroie_stats.json)
+
+| Domain | Count | Percentage |
+|--------|-------|------------|
+| FIN | 2,043 | 100% |
+
+**Domain Notes**: Financial documents (retail receipts) - restaurant, grocery, retail purchases
+
+---
+
+##### 6. Content Composition
+
+###### 6.1 Layout Types
+
+[NEEDS_PROFILING] - Layout classification not performed
+
+**Expected Layout**: Receipt structure
+
+- Header (business name, address, phone)
+- Line items (product/service + price)
+- Subtotals and calculations
+- Totals (subtotal, tax, total)
+- Footer (payment method, date/time, transaction ID)
+
+###### 6.2 Text Density
+
+[NEEDS_PROFILING] - Text density analysis not performed
+
+**Expected Density**: Medium to high
+
+- Structured tabular content (line items with prices)
+- Short text strings (business names, products, payment methods)
+- Numeric values (prices, totals, tax amounts, dates/times)
+- Dense footer information (legal text, contact info)
+
+###### 6.3 Script & Language Distribution
+
+**Script Family** [Official]:
+
+> **Source**: Layer 2 aggregated metadata
+
+| Script | Count | Percentage |
+|--------|-------|------------|
+| ltr | 2,043 | 100% |
+
+**Language**: [NEEDS_PROFILING]
+
+- Likely multilingual (receipts from various countries per ICDAR competition)
+- Expected: English, Chinese, Japanese, Thai, Vietnamese (common in ICDAR datasets)
+- Ground truth text available for language detection when E: drive restored
+
+###### 6.4 Content Flags [Official]
+
+> **Source**: Layer 2 aggregated metadata (sroie_stats.json)
+
+| Flag | Count | Percentage |
+|------|-------|------------|
+| has_table | 2,043 | 100% |
+
+**Content Notes**:
+
+- All receipts contain tabular structure (line items with prices)
+- Text regions with quad coordinates (rotated/perspective text common)
+- Thermal print substrate (variable print quality)
+
+###### 6.5 Text Scope
+
+[NEEDS_PROFILING] - Text scope analysis not performed
+
+**Expected Scope**: page-level (document-level)
+
+- Full receipt text per image
+- Character count: [NEEDS_PROFILING] - estimate 200-500 chars/receipt
+- Hierarchical structure: page → text regions → words
+
+---
+
+##### 7. IQA Profile
+
+[NEEDS_PROFILING] - Camera-captured receipts expected to have specific quality issues
+
+**Predicted Sensitivity**:
+
+- **High**: Camera blur (motion/focus), glare/reflection (on thermal print), perspective distortion
+- **Medium**: Low contrast (faded thermal print), uneven illumination, shadows, thermal print degradation
+- **Low**: JPEG artifacts, compression noise
+
+**Recommended IQA Detectors**:
+
+- Blur detection (Laplacian variance for motion/focus blur)
+- Glare detection (bright spot analysis on reflective surfaces)
+- Perspective distortion (quad coordinate variance analysis)
+- Illumination uniformity (shadow detection)
+- Thermal print quality (contrast analysis, fading detection)
+
+**Thermal Print Challenges** (unique to SROIE):
+
+- Ink fading over time (low contrast, missing characters)
+- Variable ink density (uneven print quality)
+- Substrate curl/wrinkle (perspective distortion)
+- Reflective surface (glare from camera flash)
+
+---
+
+##### 8. Quality Metrics
+
+[NEEDS_PROFILING] - Quality profiling not performed (E: drive unavailable)
+
+**Recommended Profiling** (when source data restored):
+
+1. Run classical IQA detectors on sample (blur, contrast, illumination, glare)
+2. Analyze quad coordinate variance (perspective distortion metric)
+3. Text region size distribution (readability metric)
+4. Thermal print quality assessment (contrast, fading)
+
+**Expected Quality Distribution**:
+
+- Variable quality (real-world mobile capture)
+- Blur presence: Common (handheld camera shake)
+- Glare presence: Common (flash on thermal print)
+- Perspective distortion: Common (angled capture)
+
+---
+
+##### 9. Degradation Profile
+
+[NEEDS_PROFILING] - No degradation labels in aggregated metadata
+
+**Expected Degradations** (camera capture + thermal print):
+
+**Camera-Related**:
+
+- Motion blur (camera shake during capture)
+- Out-of-focus blur (incorrect autofocus)
+- Glare/reflection (flash on reflective thermal print)
+- Perspective distortion (angled capture, receipt curl)
+- Shadow artifacts (uneven lighting)
+- Low light conditions (underexposure)
+
+**Thermal Print-Related** (unique to SROIE):
+
+- Ink fading (time-based degradation)
+- Low contrast (thermal print characteristics)
+- Variable ink density (print quality variation)
+- Substrate wrinkle/curl (physical deformation)
+
+---
+
+##### 10. Known Issues
+
+1. **Count Discrepancy** [NEEDS_VERIFICATION]:
+   - Layer 2 metadata: 2,043 images (authoritative)
+   - Phase7 symlinks: 1,500 images (subset)
+   - Previous catalog entry: 973 images (incorrect)
+   - **Resolution**: Use 2,043 as authoritative count from Layer 2 aggregation
+
+2. **Source Data Unavailable**:
+   - Symlink targets at `/mnt/e/image_detection/v4_datasets/sroie/` not accessible
+   - Blocks: Language detection, text statistics profiling, IQA characterization
+   - **Priority**: P2 (Medium)
+   - **Action**: Verify mount or restore source data
+
+3. **License Classification** [NEEDS_VERIFICATION]:
+   - Paper suggests academic use (ICDAR competition)
+   - Conservative classification: "Research Use Only"
+   - **Action**: Verify ICDAR 2019 competition terms and dataset download license
+   - **Priority**: P0 (Critical for commercial use guidance)
+
+4. **Text Content Integration**: ✅ RESOLVED
+   - Parser already implements text_content schema fields (lines 118-130)
+   - No action needed
+
+5. **Layout Detections Missing**:
+   - Quad coordinates not mapped to `layout_detections.polygon`
+   - No COCO bbox conversion for `layout_detections.bbox`
+   - **Priority**: P3 (Low - optional enhancement for layout training)
+   - **Action**: Enhance parser when layout training needed
+
+6. **Entity Labels Not Extracted**:
+   - Key information extraction labels (company, date, address, total) available in separate files
+   - Not currently extracted by parser
+   - **Priority**: P2 (Medium - valuable for structured receipt understanding)
+   - **Action**: Enhance parser to extract entity labels
+
+---
+
+##### 11. Dataset-Specific Notes
+
+###### ICDAR 2019 Competition Context
+
+**Competition**: ICDAR 2019 Robust Reading Competition
+**Three Tasks**:
+
+1. **Task 1**: Scanned Receipt Text Localisation (quad coordinates)
+2. **Task 2**: Scanned Receipt OCR (text transcription)
+3. **Task 3**: Key Information Extraction (4 fields: company, date, address, total)
+
+**Test Set**: Likely 347 images reserved for competition
+**Training Set**: Remaining images available for model training
+
+**Benchmark Performance** (Key Information Extraction):
+
+| Model | F1 Score | Year | Notes |
+|-------|----------|------|-------|
+| StrucTexT | High | 2021 | 50M document pre-training |
+| GraphDoc | High | 2021 | RVL-CDIP pre-trained |
+| LLM-TKIE | **0.839** | 2025 | No fine-tuning, 93.3% accuracy |
+| DocAnnot | 0.846 | 2024 | Auto-annotation framework |
+
+###### Quad Coordinates Preservation
+
+**8-Point Polygon Format**: `[x1,y1,x2,y2,x3,y3,x4,y4]`
+
+- Preserves rotation and perspective information
+- Essential for rotated/skewed receipt text
+- Conversion to axis-aligned bbox may lose skew information
+- **Recommendation**: Retain both polygon and bbox representations for layout training
+
+**Example**:
+
+```python
+# Quad coordinates (rotated rectangle)
+quad = [123,45,678,45,678,90,123,90]
+
+# COCO bbox conversion (axis-aligned)
+x_min, x_max = min(quad[::2]), max(quad[::2])
+y_min, y_max = min(quad[1::2]), max(quad[1::2])
+coco_bbox = [x_min, y_min, x_max - x_min, y_max - y_min]
+```
+
+###### Multilingual Receipt Potential
+
+**Expected Languages** (based on ICDAR competition):
+
+- English (Latin script)
+- Chinese (Simplified/Traditional Han)
+- Japanese (Hiragana, Katakana, Kanji)
+- Thai (Thai script)
+- Vietnamese (Latin with diacritics)
+
+**Language Detection Recommendation**:
+
+- Run language detection on ground truth text when E: drive restored
+- Use ISO 639-1/3 codes for language classification
+- Document script-confusable pairs (e.g., Latin O vs CJK 〇)
+
+###### Thermal Print Characteristics
+
+**Unique to SROIE**: Only thermal print dataset in catalog
+
+**Thermal Print Challenges**:
+
+- Ink fading over time (receipts may be aged)
+- Low baseline contrast (thermal print lighter than inkjet/laser)
+- Variable print quality (thermal printer maintenance-dependent)
+- Reflective substrate (glare from camera flash common)
+
+**IQA Training Value**:
+
+- Thermal print degradation patterns different from scanner artifacts
+- Mobile capture conditions (blur, perspective, shadows) complement scanner datasets
+- Real-world receipt OCR representative samples
+
+###### Entity Extraction Training
+
+**4 Key Fields** (separate label files):
+
+| Entity | Description | Extraction Challenge |
+|--------|-------------|---------------------|
+| **COMPANY** | Business/merchant name | Variable format, multi-line |
+| **DATE** | Transaction date | Format variation (MM/DD/YYYY, DD-MM-YYYY, etc.) |
+| **ADDRESS** | Business address | Multi-line, partial addresses |
+| **TOTAL** | Final transaction amount | Currency symbols, decimal formats |
+
+**Use Case**: Structured receipt understanding, key-value pair extraction, NER training
+
+---
+
+**References**:
+
+- [ICDAR 2019 SROIE Paper](https://arxiv.org/abs/2103.10213)
+- [HuggingFace Dataset](https://huggingface.co/datasets/darentang/sroie)
+- [Kaggle Dataset](https://www.kaggle.com/datasets/urbikn/sroie-datasetv2)
+- [SroieParser Source Code](../src/image_preprocessing_detector/annotation/parsers/layout/sroie.py)
+
+---
+
+#### receipts_hitl (Human-in-the-Loop Receipts)
+
+> **Quick Stats**: 192 receipts | Supervisely annotations | Text transcriptions | Category labels
+>
+> **License**: Unknown | **Commercial Use**: Unknown
 
 ##### Overview
 
 | Attribute | Value |
 |-----------|-------|
-| **Full Name** | Scanned Receipts OCR and Information Extraction |
+| **Full Name** | Receipts Human-in-the-Loop Dataset |
 | **Version** | 1.0 |
-| **Release Date** | 2019 |
-| **Maintainer** | ICDAR 2019 Robust Reading Competition |
-| **Paper** | [ICDAR 2019 Competition on SROIE](https://arxiv.org/abs/2103.10213) |
-| **HuggingFace** | [darentang/sroie](https://huggingface.co/datasets/darentang/sroie) |
-| **Kaggle** | [urbikn/sroie-datasetv2](https://www.kaggle.com/datasets/urbikn/sroie-datasetv2) |
-| **License** | Custom (research use) |
-| **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/sroie/` |
+| **Source** | Supervisely platform |
+| **Local Path** | `01_base_data/forms/receipts_hitl/` |
+| **License** | Unknown (check Supervisely terms) |
 | **Documentation Status** | Complete |
 
 ##### Dataset Statistics
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 973 |
-| **Training Split** | 626 (64%) |
-| **Test Split** | 347 (36%) |
+| **Total Images** | 192 |
+| **Annotation Files** | 193 JSON |
 | **File Format** | JPEG |
-| **Annotation Format** | Word-level bboxes + NER tags |
+| **Annotation Format** | Supervisely JSON |
 
-##### Entity Types (4 Key Fields)
+##### Entity Types (10 Categories)
 
-| Entity | Description |
-|--------|-------------|
-| **COMPANY** | Business/merchant name |
-| **DATE** | Transaction date |
-| **ADDRESS** | Business address |
-| **TOTAL** | Final transaction amount |
+| Category | Description |
+|----------|-------------|
+| **Business name** | Store/merchant name |
+| **Business address** | Business location |
+| **Business phone** | Contact number |
+| **Business other information** | Additional business details |
+| **Time and date** | Transaction timestamp |
+| **Item information** | Product/service details |
+| **Subtotal** | Pre-tax total |
+| **Tax** | Tax amount |
+| **Total** | Final transaction amount |
+| **Other** | Miscellaneous text |
+
+##### Text Labels
+
+receipts_hitl includes OCR transcriptions in Supervisely-format JSON annotation files:
+
+| Attribute | Value |
+|-----------|-------|
+| **Location** | `ds0/ann/*.json` (193 files) |
+| **Format** | Supervisely JSON with `objects` array |
+| **Tags** | `Transcription` (text content) + `Category` (field type) |
+| **Geometry** | Rectangle bounding boxes |
+
+**Sample structure**:
+
+```json
+{
+  "objects": [
+    {
+      "classTitle": "Text",
+      "geometryType": "rectangle",
+      "points": {"exterior": [[226.0, 54.0], [457.0, 76.0]]},
+      "tags": [
+        {"name": "Transcription", "value": "Katana Sushi"},
+        {"name": "Category", "value": "Business name"}
+      ]
+    }
+  ]
+}
+```
 
 ##### IQA Profile
 
 | Aspect | Assessment |
 |--------|------------|
-| **Source Type** | Mobile camera captures + thermal prints |
+| **Source Type** | Mobile camera captures |
 | **Baseline Quality** | Variable (real-world conditions) |
-| **Blur Sensitivity** | **HIGH** - Small thermal print text |
+| **Blur Sensitivity** | HIGH - Small receipt text |
 | **Noise Sensitivity** | HIGH - Mobile camera noise |
-| **Lighting Variation** | Present (real capture conditions) |
-| **Thermal Print Issues** | Fading, low contrast, variable ink density |
-| **Key Challenge** | Mobile capture + thermal print degradation |
-
-##### Benchmark Performance (Key Information Extraction)
-
-| Model | F1 Score | Notes |
-|-------|----------|-------|
-| StrucTexT | High | 50M document pre-training |
-| GraphDoc | High | RVL-CDIP pre-trained |
-| LLM-TKIE (2025) | **0.839** | No fine-tuning, 93.3% accuracy |
-| DocAnnot (2024) | 0.846 | Auto-annotation framework |
-
-*ICDAR 2019 competition benchmark for receipt OCR and extraction*
-
-##### Competition Tasks
-
-1. **Task 1**: Scanned Receipt Text Localisation
-2. **Task 2**: Scanned Receipt OCR
-3. **Task 3**: Key Information Extraction (4 fields)
-
-##### Training Value
-
-- **Strengths**: Real mobile capture, thermal print samples, ICDAR competition standard
-- **Weaknesses**: Small dataset (973), limited to receipts domain
-- **Unique Features**: **Only thermal print dataset**, mobile capture conditions, 4-field KIE benchmark
+| **Key Challenge** | Real-world capture conditions |
+| **Annotation Quality** | High (human-in-the-loop verified) |
 
 ##### Project Usage
 
-- **Path**: `01_base_data/forms/sroie/`
-- **Purpose**: Mobile capture IQA, thermal print degradation training
-- **Parser**: ✅ `parse_sroie_labels` (extracts OCR text, NER entities, box annotations)
-
-##### Layer 2 Annotation Summary
-
-| Metric | Value |
-|--------|-------|
-| **Annotated Samples** | 2,043 |
-| **File Format** | JPEG (100%) |
-| **Dimensions** | 150-6016 × 168-5312 px (avg: 1026 × 1394) |
-| **Avg File Size** | 243 KB |
-| **Color Space** | RGB |
-| **Capture Method** | Camera (Smartphone) |
-| **Domain** | FIN (Financial/Receipts) |
+- **Path**: `01_base_data/forms/receipts_hitl/`
+- **Phase(s)**: Form understanding, KIE training
+- **Purpose**: Receipt OCR and key information extraction
+- **Note**: Complements SROIE with additional receipt samples
 
 ---
 
-### 1.4 Handwriting (31,183 images)
+### 1.4 Handwriting (187,106 images)
 
 | Dataset | Images | Resolution | Format | Source | License | Commercial Use |
 |---------|--------|------------|--------|--------|---------|----------------|
+| **IAM Handwriting** | 130,212 | 300 DPI | PNG | FKI-IAM | Research | Research Only |
 | **NIST SD-19** | 810,000+ chars | 300 DPI | PCT | NIST | Public Domain | Yes |
 | **HASYv2** | 168,233 | 32x32 | PNG | Research | CC0 | Yes |
 | **Signatr6k** | 12,514 | Variable | PNG | Research | Academic | Research Only |
+| **Muharaf** | 25,711 | Variable | JPG/PNG | Zenodo | CC BY-NC-SA 4.0 | Research Only |
+
+---
+
+#### IAM Handwriting Database
+
+> **Quick Stats**: 130,212 images | 657 writers | Forms, lines, words | Ground truth text + XML bboxes
+>
+> **License**: Research | **Commercial Use**: Research Only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | IAM Handwriting Database |
+| **Version** | 3.0 |
+| **Release Date** | 2002 (updated 2004) |
+| **Maintainer** | FKI Research Group, University of Bern |
+| **Website** | [IAM Handwriting Database](https://fki.tic.heia-fr.ch/databases/iam-handwriting-database) |
+| **Paper** | [The IAM-database: an English sentence database for offline handwriting recognition (IJDAR 2002)](https://link.springer.com/article/10.1007/s100320200071) |
+| **License** | Research Use Only |
+| **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/iam_handwriting/` |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 130,212 |
+| **Forms (Full Pages)** | 1,539 |
+| **Lines** | 13,353 |
+| **Words** | 115,320 |
+| **Writers** | 657 |
+| **Sentences** | 5,685 unique |
+| **Format** | PNG (grayscale, 300 DPI) |
+
+##### Data Hierarchy
+
+| Level | Count | Description |
+|-------|-------|-------------|
+| **Forms** | 1,539 | Full handwritten pages (aXX-YYY format) |
+| **Lines** | 13,353 | Individual text lines with bounding boxes |
+| **Words** | 115,320 | Segmented words with transcriptions |
+
+##### Annotation Format
+
+| Annotation Type | Format | Content |
+|-----------------|--------|---------|
+| **Text Labels** | TXT (`ascii/`) | Transcriptions for forms, lines, sentences, words |
+| **Bounding Boxes** | XML (`xml/`) | Per-page word/line coordinates |
+| **Line Format** | `lines.txt` | `id ok graylevel components x,y,w,h transcription` |
+
+**Sample lines.txt entry**:
+
+```text
+a01-000u-00 ok 154 19 408 746 1663 91 A|MOVE|to|stop|Mr.|Gaitskell|from
+```
+
+##### IQA Profile
+
+| Characteristic | Rating | Notes |
+|----------------|--------|-------|
+| **Blur Sensitivity** | Medium | Handwriting clarity varies by writer |
+| **Contrast Sensitivity** | High | Grayscale scans, ink density varies |
+| **Noise Tolerance** | Medium | Some scan artifacts present |
+| **Primary Degradation** | Writer variability | Different handwriting styles |
+| **DPI** | 300 | Consistent across all forms |
+
+##### Project Usage
+
+- **Phase 3**: Handwriting detection training
+- **Phase 10A**: Writer identification, handwriting style analysis
+- **Parser**: ✅ `parse_iam_labels` (extracts transcriptions, bounding boxes)
+
+##### Data Locations
+
+| Data Type | Path |
+|-----------|------|
+| **Local Path** | `01_base_data/handwriting/iam_handwriting/` |
+| **Images** | Root + `a01/`, `a02/`, etc. subdirectories |
+| **ASCII Labels** | `ascii/forms.txt`, `ascii/lines.txt`, `ascii/words.txt`, `ascii/sentences.txt` |
+| **XML Annotations** | `xml/*.xml` (per-form bounding boxes) |
 
 ---
 
@@ -1290,7 +3445,7 @@ IRS 1040 Package X (1988 tax year):
 
 > **Quick Stats**: 168,233 symbols | 369 classes | Mathematical symbols | Crowdsourced
 >
-> **License**: CC0 (Public Domain) | **Commercial Use**: Yes
+> **License**: ODC ODbL v1.0 | **Commercial Use**: Yes (with attribution required)
 
 ##### Overview
 
@@ -1298,13 +3453,160 @@ IRS 1040 Package X (1988 tax year):
 |-----------|-------|
 | **Full Name** | HASY v2: Handwritten Symbol Database |
 | **Version** | 2.0 |
+| **Release Date** | 2017-01-24 |
+| **Last Updated** | 2020-01-24 (dataset), 2026-02-01 (documentation) |
+| **Maintainer** | Martin Thoma |
 | **Paper** | [The HASYv2 dataset](https://arxiv.org/abs/1701.08380) |
-| **License** | CC0 (Public Domain) |
+| **Repository** | [Zenodo: HASYv2](https://zenodo.org/records/259444) |
+| **DOI** | [10.5281/zenodo.259444](https://doi.org/10.5281/zenodo.259444) |
+| **License** | ODC ODbL v1.0 ([Open Database License](https://opendatacommons.org/licenses/odbl/1-0/)) |
+| **Commercial Use** | Yes (with attribution required) |
 | **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/hasyv2/` |
 | **GCS (Legacy)** | `gs://image_detection_b/image-preprocessing-detector/datasets/maths_handwriting/` |
 | **Documentation Status** | Complete |
 
+> **Attribution Required**: Must credit Martin Thoma and cite paper (arXiv:1701.08380) when using this dataset.
+
+##### 2. Source Data Inventory
+
+> **Purpose**: Documents what the original dataset provides from the source, enabling parser development and integration planning.
+
+###### 2.1 Provided File Types
+
+| File Type | Format(s) | Description |
+|-----------|-----------|-------------|
+| **Images** | PNG | 168,233 handwritten symbol images (32×32 pixels) |
+| **Annotations** | CSV | 20 CSV files (10 folds × 2 splits) with labels |
+| **Metadata** | Implicit | User IDs in CSV for crowdsource tracking |
+| **Supplementary** | Unknown | README/documentation (if present in archive) |
+
+###### 2.2 Dataset Split Locations
+
+> **Purpose**: Track train/test/val paths to avoid missing data during processing.
+
+| Split | Images Path | Annotations Path | Count | Status |
+|-------|-------------|------------------|-------|--------|
+| **Fold 1 Train** | `hasy-data/` (shared) | `classification-task/fold-1/train.csv` | ~15,141 | ✅ |
+| **Fold 1 Test** | `hasy-data/` (shared) | `classification-task/fold-1/test.csv` | ~1,682 | ✅ |
+| **Fold 2 Train** | `hasy-data/` (shared) | `classification-task/fold-2/train.csv` | ~15,141 | ✅ |
+| **Fold 2 Test** | `hasy-data/` (shared) | `classification-task/fold-2/test.csv` | ~1,682 | ✅ |
+| **...** | *(Folds 3-10 follow same pattern)* | | | |
+| **Total Train** | `hasy-data/` | All fold-*/train.csv | 151,410 | ✅ |
+| **Total Test** | `hasy-data/` | All fold-*/test.csv | 16,823 | ✅ **RESERVED** |
+
+**Split Organization Pattern**: `by_file_list` (CSV manifests reference shared image directory)
+
+> **Notes**:
+>
+> - All 168,233 images stored in single `hasy-data/` directory
+> - CSV files use relative paths: `../../hasy-data/v2-XXXXX.png`
+> - Test split (16,823 samples) is **RESERVED** for benchmark comparisons
+> - 10-fold cross-validation structure enables robust model evaluation
+
+###### 2.3 Provided Labels & Annotations
+
+| Label Type | Format | Granularity | Description |
+|------------|--------|-------------|-------------|
+| **Symbol Class ID** | CSV | Image-level | Numeric class ID (1-369) |
+| **LaTeX Representation** | CSV | Image-level | Semantic symbol label (e.g., `\alpha`, `\sum`) |
+| **User ID** | CSV | Image-level | Crowdsource contributor ID for quality control |
+| **Fold Membership** | CSV location | Image-level | Which cross-validation fold (1-10) |
+| **Split Assignment** | CSV location | Image-level | Train or test within fold |
+
+> **Note**: No bounding boxes or polygons (each 32×32 image contains exactly one symbol)
+
+###### 2.4 Provided Metadata
+
+| Metadata Type | Location | Content |
+|---------------|----------|---------|
+| **Dataset-level** | Zenodo page | Version, license, DOI, citation |
+| **Image-level** | Filename | Unique identifier (v2-XXXXX.png) |
+| **Annotation-level** | CSV columns | Symbol ID, LaTeX, user ID |
+| **Quality Control** | CSV user_id | Crowdsource contributor tracking |
+
+###### 2.5 Annotation Schema Details
+
+> **Format**: CSV with 4 columns per image
+
+```text
+# CSV Format (classification-task/fold-N/train.csv or test.csv)
+path,symbol_id,latex,user_id
+../../hasy-data/v2-00016.png,31,A,8071
+../../hasy-data/v2-00017.png,145,\alpha,8071
+../../hasy-data/v2-00018.png,267,\sum,8072
+```
+
+**Key Fields for Parsing**:
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `path` | str | Yes | Relative path from CSV location to image |
+| `symbol_id` | int | Yes | Numeric class ID (1-369) |
+| `latex` | str | Yes | LaTeX representation of symbol |
+| `user_id` | int | Yes | Crowdsource contributor ID |
+
+###### 2.6 Parser Potential Summary
+
+| Data Available | Parser Extractable | Priority | Notes |
+|----------------|-------------------|----------|-------|
+| ✅ Symbol class IDs | `symbol_id` | High | Direct integer mapping |
+| ✅ LaTeX labels | `latex` (text GT) | High | Semantic ground truth |
+| ✅ User IDs | `user_id` | Medium | Quality control metadata |
+| ✅ Fold structure | `fold`, `split` | High | Cross-validation tracking |
+| ❌ Bounding boxes | - | N/A | Not applicable (isolated symbols) |
+| ❌ Segmentation | - | N/A | Not applicable (32×32 isolated) |
+
+**Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available
+
 ##### Dataset Statistics
+
+###### 4.1 Split Coverage
+
+> **CRITICAL**: Always document ALL available splits and verify Layer 2 metadata includes them.
+
+| Split | Source Count | Layer 2 Count | Coverage | Status |
+|-------|--------------|---------------|----------|--------|
+| **Fold 1 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 1 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 2 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 2 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 3 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 3 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 4 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 4 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 5 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 5 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 6 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 6 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 7 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 7 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 8 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 8 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 9 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 9 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Fold 10 Train** | ~15,141 | TBD | TBD | ⚠️ Verify |
+| **Fold 10 Test** | ~1,682 | TBD | TBD | ⚠️ Verify |
+| **Total Train** | 151,410 | TBD | TBD | ⚠️ Verify |
+| **Total Test** | 16,823 | TBD | TBD | ⚠️ Verify **RESERVED** |
+| **Grand Total** | 168,233 | TBD | TBD | ⚠️ Verify |
+
+**Split Status Legend:**
+
+- ✅ Complete - All samples from this split are in Layer 2 metadata
+- ⚠️ Verify - Counts need verification from CSV parsing or Layer 2 metadata
+- ❌ Missing - Split not included in Layer 2 metadata
+- 🔴 RESERVED - Test split must not be used for training
+
+> **Note**: Per-fold counts are estimates assuming balanced folds (~15,141 train / ~1,682 test per fold).
+> Actual counts should be verified by parsing CSV files or querying Layer 2 metadata.
+>
+> **Training Constraint**: The 16,823 test samples across all folds are RESERVED for benchmark
+> comparisons and must never be used for training or validation.
+
+> **Cross-Validation Usage**: When training with 10-fold CV, ensure each fold's test split is
+> held out during training on that fold. Do not mix train/test samples within folds.
+
+###### 4.2 Sample Counts
 
 | Metric | Value |
 |--------|-------|
@@ -1313,6 +3615,67 @@ IRS 1040 Package X (1988 tax year):
 | **Image Size** | 32×32 pixels |
 | **File Format** | PNG |
 | **Color** | Binary (B&W) |
+
+##### 5. Content Composition
+
+###### 5.2 Class/Category Definitions
+
+> **Purpose**: Define the taxonomy of 369 mathematical symbol classes.
+> **Source**: Extracted from CSV label files (symbol_id → latex mappings)
+
+**Symbol Categories** (369 total classes):
+
+| Category | Symbol Count | Examples |
+|----------|--------------|----------|
+| **Latin Uppercase** | 26 | A, B, C, ..., Z |
+| **Latin Lowercase** | 26 | a, b, c, ..., z |
+| **Greek Uppercase** | ~24 | Α, Β, Γ, ..., Ω |
+| **Greek Lowercase** | ~24 | α, β, γ, ..., ω |
+| **Digits** | 10 | 0, 1, 2, ..., 9 |
+| **Operators** | ~50 | +, -, ×, ÷, =, ≠, ≈, ∝, etc. |
+| **Relations** | ~30 | <, >, ≤, ≥, ∈, ∉, ⊂, ⊃, etc. |
+| **Symbols** | ~60 | ∑, ∏, ∫, ∂, ∇, √, ∞, π, etc. |
+| **Arrows** | ~20 | →, ←, ↔, ⇒, ⇐, ⇔, etc. |
+| **Brackets** | ~12 | (, ), [, ], {, }, ⟨, ⟩, etc. |
+| **Other** | ~97 | Miscellaneous mathematical symbols |
+
+**Sample Symbol Mappings**:
+
+| Symbol ID | LaTeX | Description | Category |
+|-----------|-------|-------------|----------|
+| 31 | `A` | Latin uppercase A | Latin Uppercase |
+| 145 | `\alpha` | Greek lowercase alpha | Greek Lowercase |
+| 267 | `\sum` | Summation operator | Symbols |
+
+> **Note**: Complete 369-class taxonomy available by parsing all CSV files. The above table
+> shows category-level groupings and representative examples. Full symbol-by-symbol mapping
+> can be extracted using parser code or CSV inspection.
+
+**Class Distribution Analysis**: [NEEDS_PROFILING]
+
+- Most frequent symbols: TBD (requires CSV parsing)
+- Least frequent symbols: TBD (requires CSV parsing)
+- Class imbalance ratio: TBD (requires analysis)
+
+###### 5.3 Language & Script Coverage
+
+> **Purpose**: Document script classification for mathematical symbols.
+> **Applicability**: OCR routing, script detection model training.
+
+| Script/Language | ISO Code | Samples | Coverage | Notes |
+|-----------------|----------|---------|----------|-------|
+| Common (Math) | Zyyy | 168,233 | 100% | Mathematical symbols, script-agnostic |
+
+**Script Families Present**: Common (mathematical notation)
+
+> **Notes**:
+> - Mathematical symbols use ISO 15924 code "Zyyy" (Common/Undetermined script)
+> - This is the correct classification per Unicode standards for math notation
+> - Symbols are language-agnostic (used across all written languages)
+> - Some Latin and Greek letters may also be present (369 classes include A-Z, α-ω)
+>
+> **OCR Routing**: This dataset is suitable for training symbol recognizers that operate
+> independently of language or script context (e.g., equation parsing, STEM document OCR).
 
 ##### IQA Profile
 
@@ -1462,6 +3825,110 @@ Labels are extracted from CSV files in `classification-task/fold-{1-10}/`:
 | **Capture Method** | Scanner (Flatbed) |
 | **Domain** | PER (Personal/Signatures) |
 | **Content Flags** | Handwriting: ✅, Signatures: ✅ |
+
+---
+
+#### Muharaf (Arabic Historical Manuscripts)
+
+> **Quick Stats**: 24,952 images (public) | 457 pages + 24,495 lines | Arabic cursive handwriting | Expert transcriptions
+>
+> **License**: CC BY-NC-SA 4.0 | **Commercial Use**: Research Only
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | Muharaf: Manuscripts of Handwritten Arabic Dataset |
+| **Version** | 1.0 |
+| **Release Date** | 2024 |
+| **Maintainer** | Phoenix Center for Lebanese Studies, USEK |
+| **Paper** | [Muharaf Dataset (arXiv:2406.09630)](https://arxiv.org/abs/2406.09630) |
+| **Zenodo** | [DOI: 10.5281/zenodo.11492215](https://zenodo.org/records/11492215) |
+| **License** | CC BY-NC-SA 4.0 (Public portion) |
+| **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/muharaf/` |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 24,952 (public portion) |
+| **Page-Level** | 457 images (JPG) |
+| **Line-Level** | 24,495 images (PNG) |
+| **Annotation Files** | 3,648 JSON + 1,216 XML |
+| **Transcriptions** | 24,495 TXT files |
+| **Time Period** | 19th-21st century |
+| **Document Types** | Letters, diaries, poems, legal records |
+| **Full Dataset** | 25,711 images (1,216 pages) - restricted portion |
+
+##### Content Organization
+
+| Component | Format | Count | Notes |
+|-----------|--------|-------|-------|
+| **Page Images** | JPG | 457 | Historical manuscript pages (public) |
+| **Line Images** | PNG | 24,495 | Cropped text lines |
+| **Transcriptions** | TXT | 24,495 | Expert transcriptions |
+| **Annotations** | JSON | 3,648 | Multiple annotation types |
+| **XML Data** | XML | 1,216 | Structured metadata |
+
+##### IQA Profile
+
+| Aspect | Assessment |
+|--------|------------|
+| **Source Type** | Scanned historical manuscripts |
+| **Quality Range** | Clean to illegible (varying quality) |
+| **Blur Sensitivity** | **HIGH** - Fine Arabic cursive strokes |
+| **Degradation Types** | Aging, bleed-through, ink fading, creases |
+| **Script** | Arabic (cursive, historical) |
+| **Key Challenge** | RTL script, connected letters, historical variations |
+
+##### Legibility Assessment
+
+The dataset explicitly includes **variable quality samples**:
+
+- Clean backgrounds with clear text
+- Partially degraded (ink bleed, fading)
+- Heavily degraded (creases, stains)
+- Near-illegible samples
+
+This makes it ideal for **handwriting legibility training**.
+
+##### Training Value
+
+- **Strengths**: Arabic cursive focus, expert transcriptions, quality variation, historical diversity
+- **Weaknesses**: Non-commercial license, Arabic-only
+- **Use Case**: Arabic handwriting detection, legibility assessment, OCR training
+- **Complementary**: HierText (English scene text), COCO-Text (multi-language scene text)
+
+##### Project Usage
+
+- **Path**: `01_base_data/handwriting/muharaf/`
+- **Size**: ~3.4 GB (page data) + ~1.3 GB (line images)
+- **Phase(s)**: Phase 9 (handwriting), Phase 10 (multilingual)
+- **Purpose**: Arabic handwriting quality, legibility grading, script detection
+- **Parser**: ❌ Pending implementation
+
+##### Layer 2 Annotation Summary
+
+| Metric | Value |
+|--------|-------|
+| **Annotated Samples** | 24,952 (page + line level, public) |
+| **File Format** | JPG (pages), PNG (lines) |
+| **Capture Method** | Scanner (Archival quality) |
+| **Domain** | HIS (Historical Documents) |
+| **Script** | Arabic (Arab) |
+| **Content Flags** | Handwriting: ✅ 100%, Historical: ✅ |
+
+##### Data Locations
+
+| Component | Path |
+|-----------|------|
+| **All Data** | `01_base_data/handwriting/muharaf/public/` |
+| **Page Images** | `*.jpg` (457 files) |
+| **Line Images** | `*_*.png` (24,495 files) |
+| **Transcriptions** | `*_*.txt` (24,495 files) |
+| **JSON Annotations** | `*.json` (3,648 files) |
+| **XML Metadata** | `*.xml` (1,216 files) |
 
 ---
 
@@ -2202,7 +4669,7 @@ realdae/
 - **Path**: `01_base_data/language/multilingual_scripts/jssoda/`
 - **Phase(s)**: Phase 10A (Orientation Detection)
 - **Purpose**: Vertical text orientation training, script detection
-- **Parser**: [`parse_multilingual_scripts_labels`](../scripts/annotate_base_metadata.py#L1548) | ✅ Complete
+- **Parser**: ❌ Not Implemented (manifest.json format not supported)
 
 ---
 
@@ -2423,6 +4890,30 @@ realdae/
 - **Purpose**: Cyrillic script class training (1,500+ samples needed)
 - **Parser**: ✅ `parse_midv500_labels` (extracts country, doc_type, scripts from folder structure)
 
+##### Text Labels
+
+MIDV500 includes per-document-type JSON template files with text field values:
+
+| Attribute | Value |
+|-----------|-------|
+| **Location** | `*/ground_truth/{doc_type}.json` (50 template files) |
+| **Frame Files** | 15,050 JSON files (quad coordinates only) |
+| **Format** | JSON with `field##` entries containing `quad` + `value` |
+| **Content** | Names, nationalities, dates, document numbers, gender |
+
+**Sample structure** (from `01_alb_id.json`):
+
+```json
+{
+  "field01": {"quad": [[334, 122], ...], "value": "Sojli"},
+  "field02": {"quad": [[334, 179], ...], "value": "Monika"},
+  "field05": {"quad": [[334, 353], ...], "value": "01-01-1980"},
+  "field08": {"quad": [[693, 236], ...], "value": "200000907"}
+}
+```
+
+**Note**: Text values are in template files (one per document type). Frame JSONs contain only quad coordinates for document detection.
+
 ---
 
 #### TibHCR (Tibetan Handwritten Character Recognition)
@@ -2525,6 +5016,23 @@ realdae/
 - **Note**: Selected as MIT alternative to research-licensed M6Doc
 - **Parser**: [`parse_cc_ocr_labels`](../scripts/annotate_base_metadata.py#L2157) | ✅ Complete
 - **Conversion**: ✅ Extracted from TSV files (base64-encoded images) → `extracted_images/` via `scripts/convert_datasets_to_images.py --dataset cc-ocr`
+
+##### Text Labels
+
+CC-OCR includes OCR ground truth text in TSV annotation files:
+
+| Attribute | Value |
+|-----------|-------|
+| **Location** | `doc_parsing/`, `kie/`, `multi_lan_ocr/`, `multi_scene_ocr/` subdirs |
+| **File Count** | 39 TSV files |
+| **Format** | TSV with columns: `index`, `image`, `image_name`, `question`, `answer`, `category`, `l2-category`, `split` |
+| **Text Column** | `answer` - contains full OCR ground truth text |
+
+**Sample text labels**:
+
+- Chinese documents: `非本协议另有规定或双方另有其它书面约定，租金...`
+- English documents: `\section*{English First Paper} Subject code: 107...`
+- LaTeX formatting preserved for formulas and structured content
 
 ---
 
@@ -2873,8 +5381,8 @@ per-word language labels: Arabic, Bangla, Chinese, Hindi, Japanese, Korean, Lati
 | Metric | Value |
 |--------|-------|
 | **Total Images** | 16,291 |
-| **Training Set** | 9,791 images |
-| **Testing Set** | 6,500 images |
+| **Training Set** | 12,992 images |
+| **Testing Set** | 3,299 images |
 | **Total Size** | 104 MB |
 | **File Format** | JPG |
 
@@ -3330,6 +5838,31 @@ per-word language labels: Arabic, Bangla, Chinese, Hindi, Japanese, Korean, Lati
 - **Note**: Urdu shares Arabic script family - useful for script-level classification
 - **Parser**: [`parse_pucit_ohul_labels`](../scripts/annotate_base_metadata.py#L1472) | ✅ Complete
 
+##### Text Labels
+
+PUCIT-OHUL includes Urdu text transcriptions in Excel spreadsheets:
+
+| Attribute | Value |
+|-----------|-------|
+| **Location** | `Pucit/train_labels_v2.xlsx` + `Pucit/test_labels_v2.xlsx` |
+| **Train Labels** | 6,489 rows |
+| **Test Labels** | 998 rows |
+| **Total** | 7,487 labeled lines |
+| **Format** | Excel with columns: `Num`, `Caption`, `Revised` |
+
+**Column definitions**:
+
+- **Num**: Image filename reference (e.g., "1-1" → `1-1.png`)
+- **Caption**: Original handwritten Urdu text transcription
+- **Revised**: Cleaned/corrected transcription
+
+**Sample rows**:
+
+| Num | Caption | Revised |
+|-----|---------|---------|
+| 1-1 | وسط ایشیائی مملکتوں میں ازبکستان سے پاکستان | وسط ایشیائی مملکتوں میں ازبکستان سے پاکستان |
+| 1-2 | کے سفارت کارانہ اور دیرینہ کاروباری اور | کے سفارت کارانہ اور دیرینہ کاروباری اور |
+
 ---
 
 ### 1.11 Text Detection (Annotations Only)
@@ -3355,7 +5888,8 @@ per-word language labels: Arabic, Bangla, Chinese, Hindi, Japanese, Korean, Lati
 | **Paper** | [COCO-Text (arXiv:1601.07140)](https://arxiv.org/abs/1601.07140) |
 | **Repository** | [Cornell Vision](https://vision.cornell.edu/se3/coco-text-2/) |
 | **License** | CC-BY-4.0 |
-| **GCS** | `gs://image_detection_b/image-preprocessing-detector/datasets/cocotext/` |
+| **GCS Path** | `gs://image_detection_b/01_base_data/text_detection/cocotext/` |
+| **Local Path** | `01_base_data/text_detection/cocotext/` |
 | **Documentation Status** | Complete |
 
 ##### Dataset Statistics
@@ -3396,7 +5930,91 @@ per-word language labels: Arabic, Bangla, Chinese, Hindi, Japanese, Korean, Lati
 - **Path**: `01_base_data/text_detection/cocotext/`
 - **Phase(s)**: Phase 1 (text gate validation)
 - **Purpose**: Scene text detection benchmark, text gate calibration
-- **Parser**: ❌ Not Implemented (JSON annotation format)
+- **Parser**: ✅ `CocotextParser` (multilingual package)
+
+---
+
+#### HierText
+
+> **Quick Stats**: 11,639 images | 1.2M word annotations | Word-level handwriting + legibility labels
+>
+> **License**: CC-BY-SA-4.0 | **Commercial Use**: Yes (with attribution + ShareAlike)
+
+##### Overview
+
+| Attribute | Value |
+|-----------|-------|
+| **Full Name** | HierText: Hierarchical Text Detection and Recognition |
+| **Version** | 1.0 |
+| **Release Date** | March 2022 |
+| **Maintainer** | Google Research |
+| **Paper** | [HierText: Towards Rich Hierarchical Scene Text](https://arxiv.org/abs/2203.15143) |
+| **Repository** | [google-research-datasets/hiertext](https://github.com/google-research-datasets/hiertext) |
+| **License** | CC-BY-SA-4.0 |
+| **Local Path** | `01_base_data/text_detection/hiertext/` |
+| **GCS Path** | `gs://image_detection_b/01_base_data/text_detection/hiertext/` |
+| **Documentation Status** | Complete |
+
+##### Dataset Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Images** | 11,639 |
+| **Train Images** | 8,281 |
+| **Validation Images** | 1,724 |
+| **Test Images** | 1,634 |
+| **Word Annotations** | ~1.2M |
+| **Format** | JSON (single file per split) |
+| **Image Source** | Open Images Dataset |
+
+##### Annotation Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| **handwritten** | bool | Word/line-level handwriting detection |
+| **legible** | bool | Word/line-level legibility assessment |
+| **text** | string | Transcribed text content |
+| **vertices** | polygon | Polygon coordinates (not bbox) |
+| **vertical** | bool | Vertical text orientation |
+
+##### Hierarchical Structure
+
+```text
+image
+└── paragraphs[]
+    ├── legible: bool
+    └── lines[]
+        ├── text: string
+        ├── handwritten: bool
+        ├── legible: bool
+        ├── vertical: bool
+        └── words[]
+            ├── text: string
+            ├── handwritten: bool
+            ├── legible: bool
+            └── vertices: [[x,y], ...]
+```
+
+##### Use Cases
+
+- **Strengths**: GOLD STANDARD for graded handwriting assessment - explicit `handwritten` + `legible` labels at word level
+- **Weaknesses**: Scene text focus (not documents), requires polygon-to-bbox conversion
+- **Complementary Datasets**: COCO-Text, Total-Text, TextOCR
+
+##### Graded Assessment Derivation
+
+| Derived Metric | Formula |
+|----------------|---------|
+| **presence_ratio** | handwritten_words / total_words |
+| **legibility_ratio** | legible_handwritten / handwritten_words |
+| **presence_category** | NONE/SPARSE/MODERATE/SUBSTANTIAL/DOMINANT based on ratio |
+
+##### Project Usage
+
+- **Path**: `01_base_data/text_detection/hiertext/`
+- **Phase(s)**: Graded handwriting assessment training
+- **Purpose**: Train SigLIP v2 NaFlex multi-task head for presence/legibility/content_type
+- **Parser**: ✅ `HiertextParser` (multilingual package)
 
 ---
 
@@ -4056,25 +6674,6 @@ Generated augmented datasets with labels, ready for model training.
   └── metadata/         # Split metadata JSONs
   ```
 
-### Phase 7 v3 (Previous)
-
-- **Path**: `03_training_datasets/phase7_v3/`
-- **Total Samples**: 154,241
-- **Split**: Train (107,636) / Val (23,207) / Test (23,398)
-- **Labels**: Continuous [0,1] severity scores
-- **Heads**: blur, noise, skew, contrast, compression
-- **Structure**:
-
-  ```text
-  phase7_v3/
-  ├── images/           # Augmented training images
-  └── metadata/         # Split metadata JSONs
-      ├── train_metadata.json
-      ├── val_metadata.json
-      ├── test_metadata.json
-      └── samples_metadata/
-  ```
-
 ### Phase 2 100k (Legacy)
 
 - **Path**: `03_training_datasets/phase2_100k/`
@@ -4168,22 +6767,7 @@ Dataset preparation workspace for filtering and augmentation.
 ### Dataset Backups
 
 - **Path**: `07_archives/dataset_backups/`
-- **Size**: 6.4 GB
-- **Contents**: Phase 7 v3 training dataset backups (11 tar.gz files)
-
-| Backup File | Description |
-|-------------|-------------|
-| `phase7_v3_train_part1.tar.gz` | Training data part 1 |
-| `phase7_v3_train_part2.tar.gz` | Training data part 2 |
-| `phase7_v3_train_part3.tar.gz` | Training data part 3 |
-| `phase7_v3_train_part4.tar.gz` | Training data part 4 |
-| `phase7_v3_train_part5.tar.gz` | Training data part 5 |
-| `phase7_v3_train_part6.tar.gz` | Training data part 6 |
-| `phase7_v3_train_sample.tar.gz` | Training sample subset |
-| `phase7_v3_val.tar.gz` | Validation data |
-| `phase7_v3_val_sample.tar.gz` | Validation sample subset |
-| `phase7_v3_test.tar.gz` | Test data |
-| `phase7_v3_test_sample.tar.gz` | Test sample subset |
+- **Status**: Empty (phase7_v3 backups deleted 2025-02-01)
 
 ### Checkpoint Backups
 

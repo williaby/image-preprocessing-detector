@@ -20,6 +20,9 @@ Parsers:
     - Mlt19Parser: ICDAR 2019 MLT multi-lingual scene text (10 languages)
     - HindiOcrSyntheticParser: Synthetic Hindi text (80K images)
     - CocotextParser: COCO-Text scene text (64K images, 145K annotations)
+    - HiertextParser: HierText hierarchical text (11K images, 1.2M word annotations)
+    - SynthMultiscriptParser: Synthetic multi-script documents (250K images, 27 scripts)
+    - JssodaParser: Japanese scene text with vertical/horizontal orientation (2K images)
 
 Datasets covered:
     - multilingual_scripts (arabic_ocr, dzongkha_digits, jssoda, nepal_devanagari)
@@ -35,6 +38,7 @@ Datasets covered:
     - mlt19 (10 languages scene text)
     - hindi_ocr_synthetic (Hindi synthetic)
     - cocotext (scene text, 64K COCO images)
+    - synth-multiscript-250k (synthetic, 250K multi-script documents)
 
 Example:
     >>> from image_preprocessing_detector.annotation.parsers.multilingual import (
@@ -60,13 +64,16 @@ from .arabic_docs import ArabicDocsParser
 from .cc_ocr import CcOcrParser
 from .cocotext import CocotextParser
 from .cvsi import CvsiParser
+from .hiertext import HiertextParser
 from .hindi_ocr_synthetic import HindiOcrSyntheticParser
+from .jssoda import JssodaParser
 from .mdiw13 import Mdiw13Parser
 from .mle2e import Mle2eParser
 from .mlt19 import Mlt19Parser
 from .multilingual_scripts import MultilingualScriptsParser
 from .nepali_handwritten import NepaliHandwrittenParser
 from .siw13 import Siw13Parser
+from .synth_multiscript import SynthMultiscriptParser
 from .tibhcr import TibhcrParser
 from .yarmouk import YarmoukParser
 
@@ -90,6 +97,9 @@ def register_multilingual_parsers(registry: ParserRegistry) -> None:
     registry.register(Mlt19Parser())
     registry.register(HindiOcrSyntheticParser())
     registry.register(CocotextParser())
+    registry.register(HiertextParser())
+    registry.register(SynthMultiscriptParser())
+    registry.register(JssodaParser())
 
 
 __all__ = [
@@ -97,13 +107,16 @@ __all__ = [
     "CcOcrParser",
     "CocotextParser",
     "CvsiParser",
+    "HiertextParser",
     "HindiOcrSyntheticParser",
+    "JssodaParser",
     "Mdiw13Parser",
     "Mle2eParser",
     "Mlt19Parser",
     "MultilingualScriptsParser",
     "NepaliHandwrittenParser",
     "Siw13Parser",
+    "SynthMultiscriptParser",
     "TibhcrParser",
     "YarmoukParser",
     "register_multilingual_parsers",

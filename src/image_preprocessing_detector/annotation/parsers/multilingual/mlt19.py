@@ -108,7 +108,7 @@ class Mlt19Parser(BaseParser):
 
         Returns:
             OriginalLabels with language_code, script_name, and raw_labels
-            containing word annotations and language statistics
+            containing word annotations, bounding boxes, and language statistics
         """
         labels = OriginalLabels()
         labels.raw_labels = {}
@@ -119,6 +119,7 @@ class Mlt19Parser(BaseParser):
         languages_found: list[str] = []
         transcriptions: list[str] = []
         word_count = 0
+        text_instances: list[dict[str, Any]] = []
 
         if gt_path and gt_path.exists():
             try:
@@ -131,17 +132,51 @@ class Mlt19Parser(BaseParser):
                         # Parse CSV format: x1,y1,...,x4,y4,language,transcription
                         parts = line.split(",")
                         if len(parts) >= 10:
-                            # First 8 values are coordinates
-                            language = parts[8]
-                            transcription = ",".join(parts[9:])  # Handle commas in text
+                            # Extract coordinates (first 8 values)
+                            try:
+                                coords = [float(x) for x in parts[0:8]]
+                                language = parts[8]
+                                transcription = ",".join(
+                                    parts[9:]
+                                )  # Handle commas in text
 
-                            if language and language not in languages_found:
-                                languages_found.append(language)
+                                # Convert quadrilateral to COCO bbox [x, y, w, h]
+                                x_coords = coords[0::2]  # x1, x2, x3, x4
+                                y_coords = coords[1::2]  # y1, y2, y3, y4
+                                x_min, x_max = min(x_coords), max(x_coords)
+                                y_min, y_max = min(y_coords), max(y_coords)
 
-                            # Count words (skip illegible markers)
-                            if transcription and transcription != "###":
-                                transcriptions.append(transcription)
-                                word_count += 1
+                                # Store text instance with bbox and language
+                                text_instances.append(
+                                    {
+                                        "bbox": [
+                                            x_min,
+                                            y_min,
+                                            x_max - x_min,
+                                            y_max - y_min,
+                                        ],  # COCO format
+                                        "polygon": coords,  # Preserve original quadrilateral
+                                        "language": language,
+                                        "transcription": transcription
+                                        if transcription != "###"
+                                        else "",
+                                        "illegible": transcription == "###",
+                                    }
+                                )
+
+                                if language and language not in languages_found:
+                                    languages_found.append(language)
+
+                                # Count words (skip illegible markers)
+                                if transcription and transcription != "###":
+                                    transcriptions.append(transcription)
+                                    word_count += 1
+
+                            except (ValueError, IndexError) as e:
+                                logger.debug(
+                                    f"Failed to parse coordinates for line: {line[:50]}... Error: {e}"
+                                )
+                                continue
 
             except Exception as e:
                 logger.debug(f"Failed to parse MLT19 ground truth at {gt_path}: {e}")
@@ -158,15 +193,47 @@ class Mlt19Parser(BaseParser):
             labels.language_code = "und"  # Undetermined
             labels.iso15924_script_code = "Zzzz"  # Unknown script
 
+        # R8: Store all languages for Layer 2 mapping (multi-script support)
+        if len(languages_found) > 1:
+            # Multi-script document - store all languages
+            labels.raw_labels["all_languages"] = [
+                {
+                    "language_code": LANGUAGE_TO_ISO.get(lang, "und"),
+                    "script_code": LANGUAGE_TO_SCRIPT.get(lang, "Zzzz"),
+                    "script_name": lang,
+                    "is_primary": (i == 0),
+                }
+                for i, lang in enumerate(languages_found)
+            ]
+
+        # R10: Store text scope metrics for Layer 2 mapping
+        if transcriptions:
+            total_chars = sum(len(t) for t in transcriptions if t != "###")
+            labels.raw_labels["text_scope"] = {
+                "scope": "word",  # Word-level annotations
+                "estimated_words": word_count,
+                "estimated_chars": total_chars,
+                "content_type": "scene_text",
+            }
+
         # Store raw labels
         labels.raw_labels["word_count"] = word_count
         labels.raw_labels["languages_found"] = languages_found
         labels.raw_labels["has_mixed_scripts"] = len(languages_found) > 1
         labels.raw_labels["content_type"] = "scene_text"
 
-        # Store sample transcriptions (first 5)
+        # R7: Store bounding boxes and text instances
+        if text_instances:
+            labels.raw_labels["text_instances"] = text_instances
+
+        # Store ALL transcriptions (not just first 5) for full text extraction
         if transcriptions:
-            labels.raw_labels["sample_texts"] = transcriptions[:5]
+            labels.raw_labels["sample_texts"] = transcriptions[
+                :5
+            ]  # Keep backward compatibility
+            labels.raw_labels["all_transcriptions"] = (
+                transcriptions  # Full text for Layer 2
+            )
 
         return labels
 

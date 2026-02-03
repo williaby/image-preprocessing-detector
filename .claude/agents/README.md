@@ -61,7 +61,7 @@ Operations and research capabilities:
 - **`devops-deployment-agent`** - CI/CD pipelines, infrastructure automation, deployment
 - **`research-agent`** - Web search, documentation research, information gathering
 
-### Contextual Agents (7)
+### Contextual Agents (8)
 
 Project or domain-specific capabilities:
 
@@ -72,6 +72,7 @@ Project or domain-specific capabilities:
 - **`project-plan-synthesizer`** - Project planning, roadmap synthesis, task breakdown
 - **`model-card-agent`** - ML model documentation, HuggingFace-aligned cards, registry management
 - **`diagram-maintenance-agent`** - PlantUML workflow diagrams, source traceability, consistency enforcement
+- **`dataset-catalog-agent`** - Dataset documentation, parser auditing, Layer 2 schema compliance, cross-file consistency
 
 ### Merged/Eliminated
 
@@ -121,6 +122,7 @@ context_refs:  # NEW: Reference shared context instead of repeating
 - **`shared-architecture.md`** - Common system architectures and patterns
 - **`development-standards.md`** - Universal coding standards and practices
 - **`integration-patterns.md`** - Common integration and API patterns
+- **`dataset-documentation-standards.md`** - Dataset documentation patterns, Layer 2 schema, naming conventions
 
 **Size Limits**:
 

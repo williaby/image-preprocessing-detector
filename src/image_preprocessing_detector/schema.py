@@ -10,7 +10,7 @@ scores, and Docling routing support. See docs/planning/STREAM_1_SCHEMA_ANALYSIS.
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -123,6 +123,62 @@ class LayoutType(str, Enum):
     THREE_COLUMN = "three_column"
     COMPLEX = "complex"
     UNKNOWN = "unknown"
+
+
+# =============================================================================
+# Graded Handwriting Assessment (Consensus-validated schema extension)
+# =============================================================================
+
+
+class HandwritingPresence(IntEnum):
+    """Graded handwriting presence - QUANTITY of handwriting on page.
+
+    Orthogonal to content type (what) and legibility (quality).
+    Derived from HierText/COCO-Text word-level annotations via area ratios.
+
+    Training data source: HierText (11K images), COCO-Text (63K images)
+    Label derivation: Count handwritten words / total words per page
+    """
+
+    NONE = 0  # No handwriting detected
+    SPARSE = 1  # <10% of page area contains handwriting
+    MODERATE = 2  # 10-30% of page area
+    SUBSTANTIAL = 3  # 30-60% of page area
+    DOMINANT = 4  # >60% of page area
+
+
+class HandwritingLegibility(IntEnum):
+    """Graded handwriting legibility - how READABLE the handwriting is.
+
+    Based on clinical Handwriting Legibility Scale (HLS) but simplified
+    for OCR routing purposes. Higher values = harder to read.
+
+    Training data source: HierText `legible` field, OCR confidence as proxy
+    Label derivation: OCR confidence correlation with HLS clinical standards
+    """
+
+    NOT_APPLICABLE = 0  # No handwriting to assess
+    EXCELLENT = 1  # Block print, very neat (OCR conf > 0.9)
+    GOOD = 2  # Neat cursive, easily readable (OCR conf 0.7-0.9)
+    FAIR = 3  # Readable with effort (OCR conf 0.5-0.7)
+    POOR = 4  # Many words unclear (OCR conf 0.3-0.5)
+    ILLEGIBLE = 5  # Historical/severely degraded (OCR conf < 0.3)
+
+
+class HandwritingContentType(str, Enum):
+    """Handwriting content type classification - WHAT is written.
+
+    Orthogonal to presence (quantity) and legibility (quality).
+    Important for routing: numeric-only handwriting routes differently than prose.
+    """
+
+    NOT_APPLICABLE = "not_applicable"  # No handwriting present
+    SIGNATURES_MARKS = "signatures_marks"  # Signatures, initials, checkmarks
+    NUMERIC = "numeric"  # Numbers only (dates, amounts, IDs)
+    ALPHANUMERIC = "alphanumeric"  # Mixed letters and numbers (short)
+    PROSE = "prose"  # Sentences, paragraphs (long-form text)
+    MIXED = "mixed"  # Multiple types on same page
+    SPECIALIZED = "specialized"  # Math, symbols, non-Latin scripts
 
 
 class ActionType(str, Enum):
@@ -521,6 +577,99 @@ class TableComplexity(BaseModel):
     )
 
 
+class HandwritingAssessment(BaseModel):
+    """Graded handwriting assessment with orthogonal dimensions.
+
+    Three-dimensional assessment following consensus-validated schema:
+    - Presence: How much handwriting? (quantity)
+    - Legibility: How readable? (quality)
+    - ContentType: What kind? (category)
+
+    Design principle: Store discrete classifications + continuous scores.
+    Continuous scores enable DQS weighting; discrete values enable routing rules.
+
+    Training architecture: SigLIP v2 NaFlex multi-task head
+    - 3 classification heads (presence, legibility, content_type)
+    - 2 regression heads (presence_score, legibility_score)
+
+    Backward compatibility: has_handwriting = (presence > NONE)
+    """
+
+    # Discrete classifications
+    presence: HandwritingPresence = Field(
+        default=HandwritingPresence.NONE,
+        description="Graded handwriting presence (quantity)",
+    )
+    legibility: HandwritingLegibility = Field(
+        default=HandwritingLegibility.NOT_APPLICABLE,
+        description="Graded legibility (readability quality)",
+    )
+    content_type: HandwritingContentType = Field(
+        default=HandwritingContentType.NOT_APPLICABLE,
+        description="Content type classification (what is written)",
+    )
+
+    # Continuous scores for DQS integration
+    presence_score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Continuous presence score (area ratio 0-1)",
+    )
+    legibility_score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Continuous legibility score (0=illegible, 1=excellent)",
+    )
+
+    # Confidence in predictions
+    presence_confidence: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in presence classification",
+    )
+    legibility_confidence: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in legibility classification",
+    )
+    content_type_confidence: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence in content type classification",
+    )
+
+    # Detection provenance
+    detection_method: str = Field(
+        default="none",
+        description="Detection method: 'siglip2_multitask', 'heuristic', 'ground_truth'",
+    )
+
+    @property
+    def has_handwriting(self) -> bool:
+        """Backward-compatible binary handwriting flag."""
+        return self.presence != HandwritingPresence.NONE
+
+    @property
+    def needs_advanced_ocr(self) -> bool:
+        """Check if handwriting characteristics require advanced OCR.
+
+        Triggers advanced OCR routing when:
+        - Substantial+ handwriting presence (>30% of page)
+        - Poor+ legibility (OCR confidence <0.5)
+        - Specialized content (math, symbols)
+        """
+        return (
+            self.presence >= HandwritingPresence.SUBSTANTIAL
+            or self.legibility >= HandwritingLegibility.POOR
+            or self.content_type == HandwritingContentType.SPECIALIZED
+        )
+
+
 class DoclingRoutingParams(BaseModel):
     """Docling CLI parameters derived from Project A analysis.
 
@@ -787,12 +936,18 @@ class PageLayoutSummary(BaseModel):
         description="Table structure complexity (if tables detected)",
     )
 
-    # Handwriting confidence (continuous)
+    # Handwriting confidence (continuous) - legacy field, use handwriting_assessment
     handwriting_score: float = Field(
         default=0.0,
         ge=0.0,
         le=1.0,
-        description="Handwriting presence confidence (for VLM escalation)",
+        description="DEPRECATED: Use handwriting_assessment.presence_score instead",
+    )
+
+    # Graded handwriting assessment (consensus-validated multi-dimensional)
+    handwriting_assessment: HandwritingAssessment | None = Field(
+        None,
+        description="Graded handwriting assessment (presence, legibility, content_type)",
     )
 
     # Orientation info (populated from OrientationDetection)

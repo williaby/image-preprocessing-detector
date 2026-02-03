@@ -121,7 +121,7 @@ gsutil -m cp -r gs://image_detection_b/image-preprocessing-detector/datasets/doc
 | Dataset | Image Count | Format | Location |
 |---------|-------------|--------|----------|
 | arabic_docs_ocr | 10,045 | JPG | `01_base_data/language/` |
-| bhutan_financial | 135 | PNG | `01_base_data/documents/` |
+| bhutan_financial | 125 | PNG | `01_base_data/documents/` |
 | cc_ocr | 6,510 | PNG | `01_base_data/language/cc_ocr_extracted/` |
 | cvsi | 10,715 | PNG | `01_base_data/language/` |
 | dibco | 46 | PNG | `02_benchmark_only/` |

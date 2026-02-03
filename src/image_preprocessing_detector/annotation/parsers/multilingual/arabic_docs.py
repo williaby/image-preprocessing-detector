@@ -3,38 +3,64 @@
 """Parser for Arabic Documents OCR dataset.
 
 Arabic Documents OCR contains scanned Arabic documents across
-12 different categories/document types.
+12 different categories/document types with Supervisely annotations.
 
 Dataset Structure:
     arabic_docs_ocr/
         Documents/
-            {category}/
-                *.jpg
+            Documents/
+                {category}/
+                    img/  # Images (JPG/PNG)
+                    ann/  # Supervisely JSON annotations
 
 12 Categories:
-    Various document types (invoices, forms, letters, etc.)
+    Administrative form, Book, Business card, Comics, Handwritten text,
+    Invoice, Label, Magazine, Map, Newspaper, Official document, Receipt
+
+Annotation Format (Supervisely):
+    {
+      "size": {"height": int, "width": int},
+      "objects": [
+        {
+          "classTitle": "Title" | "Body text" | "Page",
+          "geometryType": "rectangle" | "polygon",
+          "points": {
+            "exterior": [[x1, y1], [x2, y2], ...],
+            "interior": []
+          },
+          "tags": [
+            {"name": "Transcription", "value": "Arabic text"}
+          ]
+        }
+      ]
+    }
 
 Extracts:
+    - Bounding boxes (COCO format from rectangles)
+    - Polygons (page boundaries)
+    - Text transcriptions (from tags)
+    - Layout classes (Title, Body text, Page)
+    - Image dimensions
     - language_code: Fixed "ar" (Arabic)
     - script_name: Fixed "Arabic"
     - document_type: Category from directory
-    - raw_labels: category, iso15924_script
 
 Example:
     >>> parser = ArabicDocsParser()
     >>> labels = parser.parse(
     ...     dataset_path=Path("/data/arabic_docs_ocr"),
-    ...     image_path=Path("/data/arabic_docs_ocr/Documents/invoice/img001.jpg"),
+    ...     image_path=Path(
+    ...         "/data/arabic_docs_ocr/Documents/Documents/Invoice/img/001.jpg"
+    ...     ),
     ...     config={},
     ... )
-    >>> print(labels.language_code)
-    ar
-    >>> print(labels.document_type)
-    Invoice
+    >>> print(len(labels.bbox))  # Multiple bounding boxes
+    >>> print(labels.text_content)  # Concatenated Arabic text
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -46,10 +72,10 @@ logger = logging.getLogger(__name__)
 
 
 class ArabicDocsParser(BaseParser):
-    """Parser for Arabic Documents OCR dataset.
+    """Parser for Arabic Documents OCR dataset with Supervisely annotations.
 
-    Extracts document category from directory structure.
-    Fixed Arabic language/script.
+    Extracts bounding boxes, polygons, text transcriptions, and layout classes
+    from Supervisely JSON format.
     """
 
     @property
@@ -63,7 +89,7 @@ class ArabicDocsParser(BaseParser):
         image_path: Path,
         config: dict[str, Any],
     ) -> OriginalLabels:
-        """Parse Arabic Documents labels from directory structure.
+        """Parse Arabic Documents labels from Supervisely JSON.
 
         Args:
             dataset_path: Root path of the arabic_docs_ocr dataset
@@ -71,8 +97,8 @@ class ArabicDocsParser(BaseParser):
             config: Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code="ar", script_name="Arabic",
-            and document category
+            OriginalLabels with bounding boxes, text transcriptions, layout classes,
+            language/script metadata, and document category
         """
         labels = OriginalLabels()
         labels.raw_labels = {}
@@ -84,12 +110,102 @@ class ArabicDocsParser(BaseParser):
 
         # Extract category from parent directory
         path_parts = image_path.parts
+        category = None
         for i, part in enumerate(path_parts):
             if part == "Documents" and i + 1 < len(path_parts):
                 category = path_parts[i + 1]
                 labels.raw_labels["category"] = category
                 labels.raw_labels["document_type"] = category
                 break
+
+        # Find corresponding annotation JSON file
+        # Pattern: img/001.jpg -> ann/001.json
+        if image_path.parent.name == "img":
+            ann_dir = image_path.parent.parent / "ann"
+            json_path = ann_dir / f"{image_path.stem}.json"
+
+            if not json_path.exists():
+                logger.warning(
+                    f"Annotation file not found for {image_path.name}: {json_path}"
+                )
+                return labels
+
+            # Parse Supervisely JSON
+            try:
+                with open(json_path, encoding="utf-8") as f:
+                    ann_data = json.load(f)
+
+                # Extract image dimensions
+                if "size" in ann_data:
+                    labels.raw_labels["image_width"] = ann_data["size"].get("width")
+                    labels.raw_labels["image_height"] = ann_data["size"].get("height")
+
+                # Extract objects (bounding boxes, polygons, transcriptions)
+                bbox_list = []
+                polygon_list = []
+                text_list = []
+                class_list = []
+
+                for obj in ann_data.get("objects", []):
+                    class_title = obj.get("classTitle", "")
+                    geometry_type = obj.get("geometryType", "")
+                    points = obj.get("points", {})
+                    exterior = points.get("exterior", [])
+
+                    # Extract text transcription from tags
+                    text = None
+                    for tag in obj.get("tags", []):
+                        if tag.get("name") == "Transcription":
+                            text = tag.get("value", "")
+                            if text:
+                                text_list.append(text)
+                            break
+
+                    # Convert rectangle to COCO bbox [x, y, width, height]
+                    if geometry_type == "rectangle" and len(exterior) == 2:
+                        x1, y1 = exterior[0]
+                        x2, y2 = exterior[1]
+                        x_min = min(x1, x2)
+                        y_min = min(y1, y2)
+                        width = abs(x2 - x1)
+                        height = abs(y2 - y1)
+
+                        bbox = BBox(
+                            bbox=[x_min, y_min, width, height],
+                            category=class_title,
+                            text=text,
+                        )
+                        bbox_list.append(bbox)
+                        class_list.append(class_title)
+
+                    # Store polygon points (for page boundaries)
+                    elif geometry_type == "polygon" and exterior:
+                        polygon_list.append(
+                            {"class": class_title, "points": exterior, "text": text}
+                        )
+                        class_list.append(class_title)
+
+                # Store extracted data
+                if bbox_list:
+                    labels.bbox = bbox_list
+
+                if text_list:
+                    # Concatenate all transcriptions with newlines
+                    labels.text_content = "\n".join(text_list)
+                    labels.raw_labels["text_source"] = "ground_truth"
+                    labels.raw_labels["transcription_count"] = len(text_list)
+
+                if polygon_list:
+                    labels.raw_labels["polygons"] = polygon_list
+
+                if class_list:
+                    labels.raw_labels["layout_classes"] = list(set(class_list))
+                    labels.raw_labels["object_count"] = len(class_list)
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON {json_path}: {e}")
+            except Exception as e:
+                logger.error(f"Error processing annotation {json_path}: {e}")
 
         return labels
 

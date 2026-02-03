@@ -10,8 +10,8 @@ tags:
 title: Dataset Aggregation Summary
 ---
 
-> **Date**: 2025-01-30
-> **Datasets Processed**: 20 of 40 datasets with Layer 2 metadata
+> **Date**: 2026-01-31
+> **Datasets Processed**: 24 of 50 datasets with Layer 2 metadata
 > **Output Location**: `metadata_registry/aggregates/`
 
 ---
@@ -24,15 +24,17 @@ title: Dataset Aggregation Summary
 |---------|---------|----------------|--------|---------------|------------|---------------|
 | arabic_docs_ocr | 10,045 | Unknown | UNK | - | - | - |
 | bhutan_financial | 125 | Unknown | UNK | - | - | - |
-| cc_ocr | 6,533 | Unknown | UNK | - | - | - |
+| cc_ocr | 7,058 | Unknown | UNK | - | - | - |
 | cvsi | 10,715 | Unknown | UNK | - | - | - |
 | dibco | 212 | Scanner flatbed (100%) | UNK (100%) | - | - | - |
 | diqa-5000 | 5,500 | - | - | - | - | - |
 | doclaynet | 80,863 | Born-digital (100%) | UNK/TEC/SCI mix | has_table varies | page (100%) | ltr (100%) |
+| docsynth300k | 300,000 | Synthetic (100%) | Mixed | has_table varies | page (100%) | ltr (100%) |
 | financebench | 54,121 | Unknown | UNK | - | - | - |
 | fintabnet | 97,475 | Born-digital (100%) | FIN (100%) | has_table (100%) | page (100%) | ltr (100%) |
 | funsd | 199 | Scanner (100%) | UNK (100%) | - | - | - |
 | funsd_plus | 1,113 | Unknown | UNK | - | - | - |
+| invoices-kaggle | 1,414 | Scanner (est.) | FIN | - | - | ltr (100%) |
 | ohr-bench | 8,303 | Unknown | UNK | - | - | - |
 | omnidocbench | 377 | Unknown | UNK | - | - | - |
 | pubtabnet | 519,030 | Born-digital (100%) | SCI (100%) | has_table (100%) | page (100%) | ltr (100%) |
@@ -40,19 +42,19 @@ title: Dataset Aggregation Summary
 | signatr6k | 12,514 | Unknown | UNK | - | - | - |
 | smartdoc-qa | 4,260 | Camera (100%) | UNK (100%) | - | - | - |
 | sroie | 2,043 | Scanner (100%) | UNK (100%) | - | - | - |
+| sroie-voxel51 | 712 | Scanner (100%) | UNK | - | - | ltr (100%) |
 | tablebank | 10 | Born-digital (100%) | SCI (100%) | has_table (100%) | page (100%) | ltr (100%) |
 | tibhcr | 141,698 | Unknown | UNK | - | - | - |
 | tobacco800 | 1,290 | Scanner (100%) | UNK (100%) | - | - | - |
 
 **Note**: Some datasets have partial metadata (e.g., tablebank shows only 10 samples in metadata vs 278K images in actual dataset)
 
-### Datasets Without Layer 2 Metadata (20)
+### Datasets Without Layer 2 Metadata (26)
 
 No metadata files found for:
 
 - hasyv2
 - hindi-synth
-- historical-degraded
 - iam-handwriting
 - im2latex
 - invoices-kg
@@ -85,31 +87,32 @@ No metadata files found for:
 
 | Field | Datasets with Data | Coverage |
 |-------|-------------------|----------|
-| **Capture Method** | 11/20 | 55% |
-| **Domain** | 20/20 | 100% (but mostly "UNK") |
-| **Content Flags** (has_table) | 4/20 | 20% |
-| **Text Scope** | 4/20 | 20% |
-| **Script Family** | 4/20 | 20% |
-| **Quality Scores** | 0/20 | 0% |
-| **Degradation Types** | 0/20 | 0% |
-| **Layout Types** | 0/20 | 0% |
-| **Language/Script Codes** | 0/20 | 0% |
+| **Capture Method** | 17/24 | 71% |
+| **Domain** | 24/24 | 100% (but mostly "UNK") |
+| **Content Flags** (has_table) | 5/24 | 21% |
+| **Text Scope** | 5/24 | 21% |
+| **Script Family** | 8/24 | 33% |
+| **Quality Scores** | 0/24 | 0% |
+| **Degradation Types** | 0/24 | 0% |
+| **Layout Types** | 0/24 | 0% |
+| **Language/Script Codes** | 0/24 | 0% |
 
 ### Observations
 
 1. **Capture Method Coverage**:
+   - Synthetic: docsynth300k (layout)
    - Born-digital: doclaynet, fintabnet, pubtabnet, tablebank (table datasets)
-   - Scanner: dibco, funsd, sroie, tobacco800 (degraded/forms)
+   - Scanner: dibco, funsd, sroie, sroie-voxel51, tobacco800, invoices-kaggle, receipts_hitl (degraded/forms)
    - Camera: realdae, smartdoc-qa (camera-captured)
-   - Unknown: 9 datasets (need enrichment)
+   - Unknown: 7 datasets (need enrichment)
 
 2. **Domain Classification**:
-   - FIN (Financial): fintabnet (100%)
+   - FIN (Financial): fintabnet (100%), invoices-kaggle, receipts_hitl
    - SCI (Scientific): pubtabnet, tablebank, doclaynet subset
-   - UNK (Unknown): 16/20 datasets (needs improvement)
+   - UNK (Unknown): 18/24 datasets (needs improvement)
 
 3. **Content Flags**:
-   - has_table: 100% coverage for table datasets (fintabnet, pubtabnet, tablebank, doclaynet subset)
+   - has_table: 100% coverage for table datasets (fintabnet, pubtabnet, tablebank, doclaynet, docsynth300k subset)
    - Other flags (has_formula, has_handwriting, has_figure): not yet populated
 
 4. **Missing Fields**:
@@ -258,6 +261,6 @@ No metadata files found for:
 
 ---
 
-**Generated**: 2025-01-30
+**Generated**: 2026-01-31
 **Script**: [scripts/aggregate_layer2_metadata.py](../scripts/aggregate_layer2_metadata.py)
 **Next Review**: After next batch of Layer 2 enrichment completes

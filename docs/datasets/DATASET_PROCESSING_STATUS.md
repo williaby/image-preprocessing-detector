@@ -116,7 +116,7 @@ Format conversion, label extraction, or generation currently underway.
 | **doc3d** | 100,000 | 🔄 ZIP→PNG (not extracted) | ✅ 7 GT types available | 16 ZIPs (209GB), user-defined splits | 1. Extract 16 ZIP files<br>2. Verify mesh ID structure<br>3. Decision: Parser needed? | Deferred (P3 priority) |
 | **hiertext** | 11,639 | ✅ Training-Ready | ✅ Word-level labels | None | Gold standard for graded handwriting | Complete |
 | **docsynth300k** | 300,000 | 🔄 Parquet→PNG | ⚠️ Needs extraction | Parquet huge (15GB+) | 1. Batch parquet conversion (chunked)<br>2. Extract synthetic labels | Week 3-4 |
-| **iam_handwriting** | 115,320 | 🔄 Parquet→PNG | ⚠️ Needs extraction | Parquet large (5GB) | 1. Convert parquet to PNG<br>2. Extract handwriting labels | Week 2-3 |
+| **iam** | 130,212 | ✅ Images Ready | ❌ Parser needed | 6.4 GB PNG already extracted | 1. Implement parser (XML + TXT formats)<br>2. Generate/locate split files<br>3. Extract to Layer 2 metadata | Week 2-3 |
 | **mobile_receipts** | Unknown | 🔄 Parquet→JPG | ⚠️ Needs extraction | Parquet format | 1. Assess parquet size<br>2. Convert to JPG<br>3. Extract receipt labels | Week 3 |
 | **ohr-bench** | 8,561 | 🔄 Parquet→PNG | ✅ Quality scores | Parquet (2.1GB) | 1. Convert parquet to PNG<br>2. Labels already extracted | Week 1 |
 | **omnidocbench** | Metadata | 🔄 Parquet→PNG | ⚠️ Framework metadata | Complex benchmark | 1. Understand benchmark structure<br>2. Extract relevant images<br>3. Map to our schema | Week 4+ |
@@ -129,7 +129,7 @@ Format conversion, label extraction, or generation currently underway.
 1. **P0 (SigLIP Training)**: synth-multiscript-250k (250,000 images) - script detection critical
 2. **P0 (IQA Training)**: ohr-bench (8,561 images) - already have labels
 3. **P1 (Text Detection)**: cocotext (63,686 images) - scene text critical
-4. **P1 (Handwriting)**: iam_handwriting (115,320 images) - large handwriting corpus
+4. **P1 (Handwriting)**: iam (130,212 images) - LARGEST handwriting corpus, parser needed
 5. **P2 (Financial)**: financebench (54,121 images) - financial domain coverage
 6. **P3 (Synthetic)**: docsynth300k (300,000 images) - large but synthetic
 7. **P3 (Dewarping)**: doc3d (100,000 images) - specialized 3D geometry GT, large size (209GB), deferred
@@ -168,7 +168,6 @@ Fundamental issues preventing use for image-based training.
 |---------|--------|--------------|-------------------|----------------|--------|
 | cocotext | 63,686 | ~3.2 GB | `scripts/convert_parquet_to_images.py` | `01_base_data/cocotext/` | 🔄 Queued |
 | docsynth300k | 300,000 | ~15 GB | `scripts/convert_parquet_to_images.py --chunked` | `01_base_data/docsynth300k/` | 🔄 Queued |
-| iam_handwriting | 115,320 | ~5 GB | `scripts/convert_parquet_to_images.py` | `01_base_data/iam_handwriting/` | 🔄 Queued |
 | ohr-bench | 8,561 | ~2.1 GB | `scripts/convert_parquet_to_images.py` | `02_benchmark_only/ohr-bench/` | 🔄 In Progress |
 | mobile_receipts | Unknown | Unknown | `scripts/convert_parquet_to_images.py` | `01_base_data/mobile_receipts/` | 🔄 Assess first |
 | omnidocbench | Unknown | Unknown | Custom script needed | `02_benchmark_only/omnidocbench/` | ⚠️ Needs analysis |
@@ -195,7 +194,7 @@ python scripts/convert_parquet_to_images.py \
 
 - cocotext: ~6 GB (JPG)
 - docsynth300k: ~30 GB (PNG)
-- iam_handwriting: ~10 GB (PNG)
+- iam: Already extracted (6.4 GB PNG)
 - ohr-bench: ~4 GB (PNG)
 - **Total**: ~50 GB additional storage
 
@@ -239,7 +238,7 @@ python scripts/convert_pdf_to_images.py \
 | **Quality Scores** | 6 | 1 (ohr-bench converting) | Extract from parquet column |
 | **Script/Language** | 12 | 3 (cocotext, docsynth, iam) | Multilingual field extraction |
 | **Degradation Types** | 7 | 0 | ✅ Complete |
-| **Handwriting Labels** | 5 | 1 (iam_handwriting) | Character-level labels from parquet |
+| **Handwriting Labels** | 6 (iam added) | 0 | ✅ All datasets have labels (IAM needs parser) |
 
 ### Extraction Scripts
 
@@ -316,8 +315,8 @@ Examples: tobacco800, rvl_cdip, fintabnet, etc.
 
 ### Week 3
 
-- [ ] Convert iam_handwriting parquet→PNG (115,320 images)
-- [ ] Extract iam handwriting character labels
+- [ ] Implement IAM parser (XML + TXT formats)
+- [ ] Generate/locate IAM split files (train/val/test)
 - [ ] Assess mobile_receipts parquet size/structure
 - [ ] Convert mobile_receipts if feasible
 
@@ -451,7 +450,7 @@ Before marking a dataset as ✅ Training-Ready, complete:
 | ohr-bench | PNG | ~4 GB |
 | cocotext | JPG | ~6 GB |
 | financebench | PNG | ~50 GB |
-| iam_handwriting | PNG | ~10 GB |
+| iam | PNG (already extracted) | 6.4 GB ✅ |
 | docsynth300k | PNG | ~30 GB |
 | mobile_receipts | JPG | ~5 GB |
 | **Total** | - | **~105 GB** |

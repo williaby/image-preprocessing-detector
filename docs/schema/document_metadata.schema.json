@@ -187,6 +187,82 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Structural complexity for routing (0=simple, 1=complex)"
+        },
+        "handwriting_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "DEPRECATED: Use handwriting_assessment.presence_score instead. Handwriting presence confidence for VLM escalation."
+        },
+        "handwriting_assessment": {
+          "$ref": "#/$defs/HandwritingAssessment",
+          "description": "Graded handwriting assessment (presence, legibility, content_type)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "HandwritingAssessment": {
+      "type": "object",
+      "description": "Graded handwriting assessment with orthogonal dimensions: presence, legibility, content type. Consensus-validated schema extension for DQS integration.",
+      "properties": {
+        "presence": {
+          "type": "string",
+          "enum": ["NONE", "SPARSE", "MODERATE", "SUBSTANTIAL", "DOMINANT"],
+          "default": "NONE",
+          "description": "Graded handwriting presence (quantity). NONE=0%, SPARSE=<10%, MODERATE=10-30%, SUBSTANTIAL=30-60%, DOMINANT=>60%"
+        },
+        "presence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Continuous presence score (handwriting area ratio 0-1)"
+        },
+        "presence_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Confidence in presence classification"
+        },
+        "legibility": {
+          "type": "string",
+          "enum": ["NOT_APPLICABLE", "EXCELLENT", "GOOD", "FAIR", "POOR", "ILLEGIBLE"],
+          "default": "NOT_APPLICABLE",
+          "description": "Graded legibility (readability quality). Based on clinical Handwriting Legibility Scale (HLS). Higher values = harder to read."
+        },
+        "legibility_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Continuous legibility score (0=illegible, 1=excellent)"
+        },
+        "legibility_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Confidence in legibility classification"
+        },
+        "content_type": {
+          "type": "string",
+          "enum": ["not_applicable", "signatures_marks", "numeric", "alphanumeric", "prose", "mixed", "specialized"],
+          "default": "not_applicable",
+          "description": "Content type classification. signatures_marks=signatures/initials, numeric=numbers only, alphanumeric=mixed short, prose=long-form, specialized=math/symbols"
+        },
+        "content_type_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Confidence in content type classification"
+        },
+        "detection_method": {
+          "type": "string",
+          "default": "none",
+          "description": "Detection method: siglip2_multitask, heuristic, ground_truth, hiertext, cocotext"
         }
       },
       "additionalProperties": false

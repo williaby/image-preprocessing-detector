@@ -29,10 +29,17 @@ COCO Format:
     - annotations: List of bbox annotations with image_id, category_id (table)
     - categories: Single category for "table"
 
-Extracts:
+Extracts (Layer 1 - Basic Annotations):
     - raw_labels["tablebank_annotations"]: COCO-format table bounding boxes
     - language_code: "en" (English) - dataset-level assignment
     - script_name: "Latin" with ISO 15924 code "Latn" - dataset-level assignment
+
+Extracts (Layer 2 - Enhanced Metadata):
+    - raw_labels["split"]: train/validation/test split from annotation filename
+    - raw_labels["dataset_subset"]: latex or word source subset
+    - raw_labels["capture_method"]: "born_digital" (LaTeX rendered, Word extracted)
+    - raw_labels["domain_level1"]: "SCI" (scientific publications)
+    - raw_labels["has_table"]: True if table annotations present
 
 Language Assignment Rationale:
     TableBank is sourced from arXiv papers (LaTeX subset) and academic Word
@@ -52,6 +59,10 @@ Example:
     en
     >>> print(labels.script_name)
     Latin
+    >>> print(labels.raw_labels.get("capture_method"))
+    born_digital
+    >>> print(labels.raw_labels.get("domain_level1"))
+    SCI
 """
 
 from __future__ import annotations
@@ -118,7 +129,9 @@ def _load_coco_annotations(coco_path: Path) -> dict[str, Any] | None:
             annotations = id_to_annotations.get(img_id, [])
             # Add category names to annotations
             for ann in annotations:
-                ann["category_name"] = categories.get(ann.get("category_id"), "unknown")
+                cat_id = ann.get("category_id")
+                if cat_id is not None:
+                    ann["category_name"] = categories.get(cat_id, "unknown")
             result["annotations"][filename] = annotations
 
         _COCO_CACHE[cache_key] = result
@@ -175,6 +188,26 @@ class TableBankParser(BaseParser):
             "language_confidence": 0.95,
         }
 
+        # R2: Add capture method metadata (born_digital)
+        labels.raw_labels.update(
+            {
+                "capture_method": "born_digital",
+                "capture_confidence": 1.0,
+                "capture_detection_method": "dataset_provenance",
+                "capture_method_rationale": "LaTeX rendered and Word extracted tables (no scanning)",
+            }
+        )
+
+        # R3: Add domain classification (SCI)
+        labels.raw_labels.update(
+            {
+                "domain_level1": "SCI",
+                "domain_confidence": 0.95,
+                "domain_source": "dataset_provenance",
+                "domain_rationale": "arXiv papers (LaTeX) and academic documents (Word)",
+            }
+        )
+
         # TableBank structure: Detection/images/ and Detection/annotations/
         coco_paths = [
             dataset_path
@@ -192,13 +225,43 @@ class TableBankParser(BaseParser):
         ]
 
         coco_data = None
+        matched_coco_path = None
         for coco_path in coco_paths:
             coco_data = _load_coco_annotations(coco_path)
             if coco_data:
+                matched_coco_path = coco_path
                 break
 
         if not coco_data:
             return labels
+
+        # R1: Extract provenance fields (split, subset) from COCO filename
+        if matched_coco_path:
+            split_map = {
+                "train": "train",
+                "val": "validation",
+                "test": "test",
+            }
+            subset_map = {
+                "latex": "latex",
+                "word": "word",
+            }
+
+            # Extract from coco_path filename (e.g., "tablebank_latex_train.json")
+            filename_stem = matched_coco_path.stem  # "tablebank_latex_train"
+            parts = filename_stem.split("_")
+
+            if len(parts) >= 3:
+                # Format: tablebank_<subset>_<split>
+                subset = parts[1]  # "latex" or "word"
+                split = parts[2]  # "train", "val", "test"
+
+                labels.raw_labels["dataset_subset"] = subset_map.get(subset, subset)
+                labels.raw_labels["split"] = split_map.get(split, split)
+            elif len(parts) == 1:
+                # Format: train.json (no subset, only split)
+                split = parts[0]
+                labels.raw_labels["split"] = split_map.get(split, split)
 
         # Get annotations for this image
         filename = image_path.name
@@ -207,6 +270,24 @@ class TableBankParser(BaseParser):
         # Add annotations to raw_labels (preserve existing language metadata)
         if annotations:
             labels.raw_labels["tablebank_annotations"] = annotations
+
+        # R4: Add content_flags (has_table) based on annotation presence
+        if annotations:
+            labels.raw_labels.update(
+                {
+                    "has_table": True,
+                    "content_flags_tier": "tier_1_annotation",
+                    "content_flags_source": "coco_annotation",
+                }
+            )
+        else:
+            labels.raw_labels.update(
+                {
+                    "has_table": False,
+                    "content_flags_tier": "tier_3_heuristic",
+                    "content_flags_source": "parser_inference",
+                }
+            )
 
         return labels
 

@@ -114,6 +114,20 @@ class SroieParser(BaseParser):
                                 continue
                     if text_instances:
                         labels.text_instances = text_instances
+
+                        # Populate Layer 2 text_content schema fields
+                        full_text = " ".join(
+                            instance["text"] for instance in text_instances
+                        )
+                        labels.text_content = {
+                            "full_text": full_text,
+                            "source_type": "dataset_provided",
+                            "source_format": "txt_quad_text",
+                            "extraction_method": "SroieParser.parse",
+                            "extraction_timestamp": None,
+                            "is_complete": True,
+                            "encoding": "utf-8",
+                        }
             except Exception as e:
                 logger.debug(f"Failed to parse SROIE annotations: {e}")
 

@@ -175,6 +175,65 @@ class FinTabNetParser(BaseParser):
             if "cells" in html_data:
                 labels.cell_annotations = html_data["cells"]
 
+                # R2: Aggregate cell text tokens into full_text
+                all_text = []
+                layout_detections = []
+
+                for cell in html_data["cells"]:
+                    # Aggregate text content
+                    if "tokens" in cell:
+                        cell_text = " ".join(cell["tokens"])
+                        all_text.append(cell_text)
+
+                    # R3: Convert cell boxes (XYXY) to COCO format (XYWH) for layout_detections
+                    if "bbox" in cell:
+                        x1, y1, x2, y2 = cell["bbox"]
+                        x, y, w, h = x1, y1, x2 - x1, y2 - y1
+
+                        detection = {
+                            "class_name": "Text",  # Cell content is text
+                            "bbox": [x, y, w, h],  # COCO XYWH format
+                            "bbox_original": cell["bbox"],  # Preserve XYXY for audit
+                            "bbox_source_format": "xyxy",
+                            "confidence": 1.0,  # Ground truth data
+                            "source": "fintabnet_gt",
+                        }
+                        layout_detections.append(detection)
+
+                # Set text_content if any text was found
+                if all_text:
+                    labels.text_content = {
+                        "full_text": " ".join(all_text),
+                        "source_type": "dataset_provided",
+                        "source_format": "jsonl_cell_tokens",
+                        "extraction_method": "FinTabNetParser.parse",
+                        "extraction_timestamp": None,
+                        "is_complete": True,
+                        "encoding": "utf-8",
+                    }
+
+                # Set layout_detections if any boxes were converted
+                if layout_detections:
+                    labels.layout_detections = layout_detections
+
+        # R4: Set dataset-level metadata
+        labels.capture_method = {
+            "method": "born_digital",
+            "confidence": 1.0,
+            "detection_method": "dataset_config",
+        }
+
+        labels.domain = {
+            "level1": "FIN",
+            "confidence": 0.99,
+        }
+
+        labels.content_flags = {
+            "has_table": True,
+            "tier": "tier_0_exact",
+            "source": "tier_0_exact_by_construction",
+        }
+
         return labels
 
 

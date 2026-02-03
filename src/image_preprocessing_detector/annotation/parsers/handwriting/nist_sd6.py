@@ -145,10 +145,47 @@ class NistSd6Parser(BaseParser):
                             labels.raw_labels["has_handwritten_content"] = True
                             # Store first few field values as sample
                             labels.raw_labels["sample_fields"] = field_values[:5]
+
+                            # R1: Populate text_content field (following fintabnet/pubtabnet pattern)
+                            labels.text_content = {
+                                "full_text": " ".join(field_values),
+                                "source_type": "dataset_provided",
+                                "source_format": "fmt_field_values",
+                                "extraction_method": "NistSd6Parser.parse",
+                                "extraction_timestamp": None,
+                                "is_complete": True,
+                                "encoding": "utf-8",
+                            }
+
+                            # R2: Set content_flags (schema-compliant)
+                            labels.content_flags = {
+                                "has_handwriting": True,
+                                "tier": "tier_0_exact",
+                                "source": "tier_0_exact_by_construction",
+                            }
                         else:
                             labels.raw_labels["has_handwritten_content"] = False
+
+                            # R2: Set content_flags even if no text
+                            labels.content_flags = {
+                                "has_handwriting": False,
+                                "tier": "tier_0_exact",
+                                "source": "tier_0_exact_by_construction",
+                            }
             except Exception as e:
                 logger.debug(f"Failed to parse NIST SD6 .fmt file: {e}")
+
+        # R3: Set dataset-level metadata (following fintabnet/pubtabnet pattern)
+        labels.capture_method = {
+            "method": "scanner_flatbed",
+            "confidence": 0.99,
+            "detection_method": "dataset_config",
+        }
+
+        labels.domain = {
+            "level1": "GOV",  # Government (US Census forms)
+            "confidence": 0.99,
+        }
 
         return labels
 

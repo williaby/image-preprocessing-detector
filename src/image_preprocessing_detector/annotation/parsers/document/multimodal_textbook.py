@@ -109,6 +109,11 @@ class MultimodalTextbookParser(BaseParser):
             "captions",
         ]
 
+        # Language metadata (hardcoded for English STEM textbooks)
+        labels.raw_labels["language_code"] = "en"  # English
+        labels.raw_labels["script_code"] = "Latn"  # Latin script
+        labels.raw_labels["script_family"] = "latin"
+
         return labels
 
 

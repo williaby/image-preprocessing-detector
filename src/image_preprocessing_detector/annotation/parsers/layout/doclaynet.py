@@ -159,6 +159,9 @@ class DocLayNetParser(BaseParser):
 
         # Look for COCO annotations in various locations
         coco_paths = [
+            dataset_path / "ground_truth" / "coco" / "train.json",
+            dataset_path / "ground_truth" / "coco" / "val.json",
+            dataset_path / "ground_truth" / "coco" / "test.json",
             dataset_path / "COCO" / "train.json",
             dataset_path / "COCO" / "val.json",
             dataset_path / "COCO" / "test.json",
@@ -183,6 +186,52 @@ class DocLayNetParser(BaseParser):
             if labels.raw_labels is None:
                 labels.raw_labels = {}
             labels.raw_labels["doclaynet_annotations"] = annotations
+
+        # Extract text content from ground_truth/json/ files
+        text_json_path = (
+            dataset_path / "ground_truth" / "json" / f"{image_path.stem}.json"
+        )
+        if text_json_path.exists():
+            try:
+                with open(text_json_path) as f:
+                    text_data = json.load(f)
+
+                # Extract all cell text
+                cells = text_data.get("cells", [])
+                if cells:
+                    # Sort cells by position (top-to-bottom, left-to-right)
+                    sorted_cells = sorted(
+                        cells, key=lambda c: (c["bbox"][1], c["bbox"][0])
+                    )
+                    full_text = " ".join(
+                        cell["text"] for cell in sorted_cells if cell.get("text")
+                    )
+
+                    if full_text.strip():
+                        if labels.raw_labels is None:
+                            labels.raw_labels = {}
+                        labels.raw_labels["text_content"] = {
+                            "full_text": full_text,
+                            "source_type": "ground_truth",
+                            "source_file": str(
+                                text_json_path.relative_to(dataset_path)
+                            ),
+                            "source_format": "doclaynet_json_cells",
+                            "extraction_method": "parse_doclaynet_labels",
+                            "is_complete": True,
+                            "segments": [
+                                {
+                                    "text": cell["text"],
+                                    "segment_type": "cell",
+                                    "bbox": cell["bbox"],
+                                    "sequence_index": idx,
+                                }
+                                for idx, cell in enumerate(sorted_cells)
+                                if cell.get("text")
+                            ],
+                        }
+            except Exception as e:
+                logger.warning(f"Failed to extract text from {text_json_path}: {e}")
 
         return labels
 

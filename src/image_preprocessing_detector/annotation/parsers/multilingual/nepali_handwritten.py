@@ -3,19 +3,27 @@
 """Parser for Nepali Handwritten dataset.
 
 Nepali Handwritten contains handwritten Nepali text images
-in Devanagari script, split into training and test sets.
+in Devanagari script with PASCAL VOC XML bounding box annotations.
 
 Dataset Structure:
     nepali_handwritten/
         train/
-            *.jpg
+            *.jpg          # Handwritten text images
+            *.xml          # PASCAL VOC annotations
         test/
             *.jpg
+            *.xml
+
+Annotation Format:
+    PASCAL VOC XML with <object> elements containing <bndbox> coordinates.
+    Bounding boxes are converted from PASCAL VOC format [xmin, ymin, xmax, ymax]
+    to COCO format [x, y, width, height].
 
 Extracts:
     - language_code: Fixed "ne" (Nepali)
     - script_name: Fixed "Devanagari"
-    - raw_labels: split, iso15924_script
+    - iso15924_script_code: Fixed "Deva"
+    - raw_labels: split, pascal_voc_objects (with COCO-format bboxes)
 
 Example:
     >>> parser = NepaliHandwrittenParser()
@@ -26,13 +34,14 @@ Example:
     ... )
     >>> print(labels.language_code)
     ne
-    >>> print(labels.script_name)
-    Devanagari
+    >>> print(labels.raw_labels.get("num_objects"))
+    5
 """
 
 from __future__ import annotations
 
 import logging
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
@@ -60,7 +69,10 @@ class NepaliHandwrittenParser(BaseParser):
         image_path: Path,
         config: dict[str, Any],
     ) -> OriginalLabels:
-        """Parse Nepali Handwritten labels from directory structure.
+        """Parse Nepali Handwritten labels from PASCAL VOC XML and directory structure.
+
+        Extracts bounding boxes from PASCAL VOC XML files and converts them
+        to COCO format [x, y, width, height] for Layer 2 compatibility.
 
         Args:
             dataset_path: Root path of the nepali_handwritten dataset
@@ -68,8 +80,15 @@ class NepaliHandwrittenParser(BaseParser):
             config: Dataset configuration dictionary (unused)
 
         Returns:
-            OriginalLabels with language_code="ne", script_name="Devanagari",
-            and split information
+            OriginalLabels with:
+                - language_code="ne" (Nepali)
+                - script_name="Devanagari"
+                - iso15924_script_code="Deva"
+                - raw_labels containing split, pascal_voc_objects, num_objects
+
+        Note:
+            PASCAL VOC format uses [xmin, ymin, xmax, ymax] coordinates.
+            These are converted to COCO format [x, y, width, height] in raw_labels.
         """
         labels = OriginalLabels()
         labels.raw_labels = {}
@@ -83,6 +102,93 @@ class NepaliHandwrittenParser(BaseParser):
         parent = image_path.parent.name
         if parent in ("train", "test", "val"):
             labels.raw_labels["split"] = parent
+
+        # Parse PASCAL VOC XML for bounding boxes
+        xml_path = image_path.with_suffix(".xml")
+        if xml_path.exists():
+            try:
+                tree = ET.parse(xml_path)
+                root = tree.getroot()
+
+                # Extract image dimensions if available
+                size_elem = root.find("size")
+                if size_elem is not None:
+                    width_elem = size_elem.find("width")
+                    height_elem = size_elem.find("height")
+                    if width_elem is not None and height_elem is not None:
+                        labels.raw_labels["image_width"] = int(width_elem.text)
+                        labels.raw_labels["image_height"] = int(height_elem.text)
+
+                # Extract all objects with bounding boxes
+                objects = []
+                for obj in root.findall("object"):
+                    # Get object name/category (default to "text")
+                    name_elem = obj.find("name")
+                    name = name_elem.text if name_elem is not None else "text"
+
+                    # Parse bounding box coordinates
+                    bbox_elem = obj.find("bndbox")
+                    if bbox_elem is not None:
+                        try:
+                            xmin = int(float(bbox_elem.find("xmin").text))
+                            ymin = int(float(bbox_elem.find("ymin").text))
+                            xmax = int(float(bbox_elem.find("xmax").text))
+                            ymax = int(float(bbox_elem.find("ymax").text))
+
+                            # Convert PASCAL VOC [xmin, ymin, xmax, ymax]
+                            # to COCO format [x, y, width, height]
+                            x = xmin
+                            y = ymin
+                            width = xmax - xmin
+                            height = ymax - ymin
+
+                            # Validate bounding box dimensions
+                            if width > 0 and height > 0:
+                                obj_dict = {
+                                    "bbox": [x, y, width, height],
+                                    "category": name,
+                                    "bbox_format": "coco",  # Converted to COCO
+                                    "original_format": "pascal_voc",
+                                }
+
+                                # Extract optional "difficult" flag
+                                difficult_elem = obj.find("difficult")
+                                if difficult_elem is not None:
+                                    obj_dict["difficult"] = difficult_elem.text == "1"
+
+                                objects.append(obj_dict)
+                            else:
+                                logger.warning(
+                                    "Invalid bbox dimensions for %s: width=%d, height=%d",
+                                    image_path.name,
+                                    width,
+                                    height,
+                                )
+                        except (ValueError, AttributeError) as e:
+                            logger.warning(
+                                "Failed to parse bbox for object in %s: %s",
+                                image_path.name,
+                                e,
+                            )
+                            continue
+
+                # Store extracted objects
+                if objects:
+                    labels.raw_labels["pascal_voc_objects"] = objects
+                    labels.raw_labels["num_objects"] = len(objects)
+                else:
+                    # No valid objects found
+                    labels.raw_labels["num_objects"] = 0
+
+            except ET.ParseError as e:
+                logger.error("XML parse error for %s: %s", xml_path, e)
+                labels.raw_labels["xml_parse_error"] = str(e)
+            except FileNotFoundError:
+                logger.debug("XML file not found (may be expected): %s", xml_path)
+        else:
+            # XML file doesn't exist - not an error for this dataset
+            logger.debug("No XML annotation found for %s", image_path.name)
+            labels.raw_labels["num_objects"] = 0
 
         return labels
 

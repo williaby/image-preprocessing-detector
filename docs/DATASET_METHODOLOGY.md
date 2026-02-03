@@ -78,7 +78,6 @@ diversity and reduce bias toward any single document type.
 | **nist_sd6** | 1,200 | 4.8% | Forms | Scanned |
 | **maths_handwriting** | 1,200 | 4.8% | Math | Scanned |
 | **funsd_plus** | 1,139 | 4.6% | Forms | Scanned |
-| **historical_degraded** | 700 | 2.8% | Real Degraded | Scanned |
 | **multimodal_textbook** | 648 | 2.6% | Educational | Hybrid |
 | **mathverse** | 500 | 2.0% | Math | Born Digital |
 | **dibco** | 128 | 0.5% | Real Degraded | Scanned |
@@ -330,8 +329,7 @@ All source datasets are stored on the E: drive with a category-based organizatio
 /mnt/e/image_detection/
 ├── 01_base_data/                    # Training data organized by category
 │   ├── degraded/                    # Real degradation sources
-│   │   ├── tobacco800/              # Historical scans
-│   │   └── historical_degraded/     # Additional degraded documents
+│   │   └── tobacco800/              # Historical scans
 │   ├── documents/                   # Multi-category documents
 │   │   ├── rvl_cdip/                # 16 document categories
 │   │   └── doclaynet/               # Document layouts

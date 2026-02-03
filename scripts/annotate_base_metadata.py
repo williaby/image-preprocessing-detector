@@ -271,7 +271,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "funsd": {
         "path": BASE_DATA / "forms/funsd",
-        "pattern": "images/*.jpg",
+        "pattern": "*/images/*.png",  # Both train and test splits
         "capture_method": CaptureMethod.SCANNER_ADF,
         "domain": DomainLevel1.ADMINISTRATIVE,
         "has_human_mos": False,
@@ -869,6 +869,9 @@ class SampleMetadata:
     # Original file metadata (immutable)
     original_file: OriginalFileMetadata
 
+    # Fields with defaults must come after non-default fields
+    split: str = "unknown"  # train, test, val, unknown
+
     # Enrichment history (versioned)
     current_version: int = 0
     enrichment_versions: list[EnrichmentVersion] = field(default_factory=list)
@@ -926,6 +929,7 @@ class SampleMetadata:
                 "original_path": self.original_path,
                 "original_filename": self.original_filename,
                 "download_date": self.download_date,
+                "split": self.split,
             },
             "original_labels": {
                 k: v for k, v in self.original_labels.__dict__.items() if v is not None
@@ -1659,27 +1663,34 @@ def parse_funsd_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse FUNSD form annotations.
 
     FUNSD (Form Understanding in Noisy Scanned Documents) structure:
-    - Standard structure: {training,testing}_data/annotations/*.json
+    - Current structure: {train,test}/images/*.png with {train,test}/annotations/*.json
+    - Legacy structure: {training,testing}_data/annotations/*.json
     - Alternative: annotations alongside images
-    - Our copy: images/ folder only (flattened, no annotations)
 
     FUNSD annotation format (if available):
     - "form": list of form entities
     - Each entity has: "text", "box", "label", "linking", "words"
     - Labels: "question", "answer", "header", "other"
-
-    Note: This dataset copy appears to have images only. If annotations
-    are missing, we can still derive that it's a forms dataset (Tier 0).
     """
     labels = OriginalLabels()
+
+    # Detect split from path (train/test/unknown)
+    path_str = str(image_path)
+    split = "unknown"
+    if "/train/" in path_str:
+        split = "train"
+    elif "/test/" in path_str:
+        split = "test"
 
     # Try multiple possible annotation locations
     json_paths = [
         # Alongside image
         image_path.with_suffix(".json"),
-        # Standard FUNSD training structure
+        # Current structure: {train,test}/annotations/*.json
+        dataset_path / split / "annotations" / f"{image_path.stem}.json",
+        # Standard FUNSD training structure (legacy)
         dataset_path / "training_data" / "annotations" / f"{image_path.stem}.json",
-        # Standard FUNSD testing structure
+        # Standard FUNSD testing structure (legacy)
         dataset_path / "testing_data" / "annotations" / f"{image_path.stem}.json",
         # Alternative annotation folder
         dataset_path / "annotations" / f"{image_path.stem}.json",
@@ -1689,7 +1700,29 @@ def parse_funsd_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
         if json_path.exists():
             try:
                 with open(json_path) as f:
-                    labels.funsd_annotations = json.load(f)
+                    raw_annotations = json.load(f)
+                # Convert FUNSD format to COCO-like format for compatibility
+                # FUNSD: {"form": [{"box": [x,y,w,h], "text": "...", "label": "question"}, ...]}
+                # COCO-like: [{"bbox": [x,y,w,h], "category_name": "form_field", ...}, ...]
+                if "form" in raw_annotations:
+                    labels.funsd_annotations = []
+                    for entity in raw_annotations["form"]:
+                        # Map FUNSD labels to semantic category names
+                        label = entity.get("label", "other")
+                        category_map = {
+                            "question": "form_field_question",
+                            "answer": "form_field_answer",
+                            "header": "header",
+                            "other": "text",
+                        }
+                        labels.funsd_annotations.append({
+                            "bbox": entity.get("box", []),
+                            "category_name": category_map.get(label, "text"),
+                            "text": entity.get("text", ""),
+                            "original_label": label,
+                        })
+                else:
+                    labels.funsd_annotations = raw_annotations
                 break  # Found annotations, stop searching
             except Exception as e:
                 logger.debug(f"Failed to parse FUNSD annotations from {json_path}: {e}")
@@ -1699,6 +1732,7 @@ def parse_funsd_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
         labels.raw_labels = {}
     labels.raw_labels["document_type"] = "form"
     labels.raw_labels["is_scanned"] = True
+    labels.raw_labels["split"] = split  # Track the dataset split
 
     return labels
 
@@ -2389,61 +2423,92 @@ def parse_mdiw13_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
 
 
 def parse_cc_ocr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
-    """Parse CC-OCR benchmark labels from directory structure.
+    """Parse CC-OCR benchmark labels from TSV files.
 
-    CC-OCR (Comprehensive OCR Benchmark) structure:
+    CC-OCR structure:
         CC-OCR/
-            {track}/
-                {subset}/
-                    images/
-                        *.png
-                    annotations/
-                        *.json
+            {track}/           # doc_parsing, kie, multi_lan_ocr, multi_scene_ocr
+                *.tsv          # Annotation files with columns:
+                               # index, image, image_name, question, answer, category, l2-category, split
 
-    Tracks: Multi-Scene Text, Multilingual Text, Document Parsing, Key Info Extraction
+    TSV columns:
+        - image_name: Filename (e.g., "0.jpg")
+        - answer: Ground truth OCR text (UTF-8, LaTeX for documents)
+        - category: Track (doc_parsing, kie, multi_lan_ocr, multi_scene_ocr)
+        - l2-category: Subset name (39 unique values)
+        - split: Always "test" (benchmark-only)
 
     Extracts:
-        - raw_labels: track, subset, scene_type
+        - transcription: Full OCR text from "answer" column
+        - language_code: Inferred from track/category
+        - raw_labels: track, subset, split
     """
+    import csv
+
     labels = OriginalLabels()
 
-    # Default to Chinese (simplified) - CC-OCR is primarily Chinese
+    # Default to Chinese (Simplified) - can be overridden by track detection
     labels.language_code = "zh"
     labels.script_name = "Chinese"
-    labels.iso15924_script_code = "Hans"  # ISO 15924 for Simplified Chinese
+    labels.iso15924_script_code = "Hans"
 
     if labels.raw_labels is None:
         labels.raw_labels = {}
 
-    # Parse track and subset from path
+    # Parse track from path
     path_parts = image_path.parts
+    track = None
+    for part in path_parts:
+        if part in ("doc_parsing", "kie", "multi_lan_ocr", "multi_scene_ocr"):
+            track = part
+            labels.raw_labels["track"] = track
+            break
 
-    for i, part in enumerate(path_parts):
-        # Look for track patterns
-        if "scene" in part.lower() or "multilingual" in part.lower():
-            labels.raw_labels["track"] = part
-        elif "document" in part.lower() or "parsing" in part.lower():
-            labels.raw_labels["track"] = part
-        elif "extraction" in part.lower() or "key" in part.lower():
-            labels.raw_labels["track"] = part
+    # Find TSV file containing this image
+    # TSV files are in the track directory (not per-image)
+    if track:
+        track_dir = dataset_path / track
+        if not track_dir.exists():
+            logger.warning(f"Track directory not found: {track_dir}")
+            return labels
 
-    # Try to load JSON annotations if available
-    json_path = image_path.with_suffix(".json")
-    if not json_path.exists():
-        json_path = image_path.parent.parent / "annotations" / f"{image_path.stem}.json"
+        tsv_files = list(track_dir.glob("*.tsv"))
 
-    if json_path.exists():
-        try:
-            with open(json_path) as f:
-                anno = json.load(f)
-                if "language" in anno:
-                    labels.language_code = anno["language"]
-                if "text" in anno:
-                    labels.transcription = anno["text"]
-                labels.raw_labels["annotation"] = anno
-        except Exception as e:
-            logger.debug(f"Failed to parse CC-OCR annotation: {e}")
+        # Search all TSV files for matching image_name
+        image_name = image_path.name
+        for tsv_file in tsv_files:
+            try:
+                with open(tsv_file, encoding="utf-8") as f:
+                    reader = csv.DictReader(f, delimiter="\t")
+                    for row in reader:
+                        if row.get("image_name") == image_name:
+                            # Found matching row
+                            labels.transcription = row.get("answer", "")
+                            labels.raw_labels["category"] = row.get("category", "")
+                            labels.raw_labels["l2_category"] = row.get("l2-category", "")
+                            labels.raw_labels["split"] = row.get("split", "test")
+                            labels.raw_labels["question"] = row.get("question", "")
+                            labels.raw_labels["subset_file"] = tsv_file.name
 
+                            # Infer language from track
+                            if track == "multi_lan_ocr":
+                                # Multilingual - would need subcategory analysis
+                                labels.raw_labels["multilingual"] = True
+                            elif track in ("doc_parsing", "kie"):
+                                # Assume Chinese
+                                labels.language_code = "zh"
+                            elif track == "multi_scene_ocr":
+                                # Mixed Chinese/English - default Chinese
+                                labels.language_code = "zh"
+
+                            return labels  # Found match, return
+
+            except Exception as e:
+                logger.debug(f"Failed to parse TSV {tsv_file}: {e}")
+                continue
+
+    # If no TSV match found, return minimal labels
+    logger.warning(f"No TSV annotation found for {image_name} in track {track}")
     return labels
 
 
@@ -3904,6 +3969,13 @@ def scan_dataset(
             original_file=file_metadata,
         )
 
+        # Extract split from raw_labels if available
+        if (
+            original_labels.raw_labels
+            and "split" in original_labels.raw_labels
+        ):
+            sample.split = original_labels.raw_labels["split"]
+
         # Apply tiered enrichment
         tier, tier_desc = get_enrichment_tier(
             dataset_name, config, original_labels, use_yolo
@@ -4084,9 +4156,16 @@ def save_metadata_json(samples: list[SampleMetadata], output_dir: Path) -> None:
     for dataset_name, dataset_samples in by_dataset.items():
         output_file = output_dir / f"{dataset_name}_metadata.json"
 
+        # Calculate split coverage
+        split_counts: dict[str, int] = {}
+        for s in dataset_samples:
+            split_counts[s.split] = split_counts.get(s.split, 0) + 1
+
         data = {
             "dataset_name": dataset_name,
             "sample_count": len(dataset_samples),
+            "splits_included": list(split_counts.keys()),
+            "split_counts": split_counts,
             "created_at": datetime.now(UTC).isoformat(),
             "schema_version": SCHEMA_VERSION,
             "script_version": SCRIPT_VERSION,

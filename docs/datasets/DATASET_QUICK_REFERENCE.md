@@ -138,6 +138,7 @@ title: Dataset Quick Reference
 | Dataset | Images | Content Type | Labels | Split | License | Notes |
 |---------|--------|--------------|--------|-------|---------|-------|
 | **hiertext** | 11,639 | Scene text (mixed) | `handwritten` + `legible` (word-level) | 8,281 train | CC-BY-SA-4.0 | **GOLD STANDARD for graded assessment** |
+| **iam** | 130,212 | English handwriting | Word/line transcriptions + bboxes | 6,161 train (lines) | Research only | **LARGEST handwriting corpus**, 657 writers |
 | cocotext | 63,686 | Scene text (incidental) | `class` + `legibility` (word-level) | 43,686 train | CC-BY-4.0 | Machine printed vs handwritten |
 | hasyv2 | 168,233 | Math symbols (handwritten) | Symbol class | 151,410 train | CC0 | **test RESERVED** |
 | **muharaf** | 24,952 | Arabic cursive (historical) | Line transcriptions | All | CC-BY-NC-SA-4.0 | **Variable quality for legibility** (public portion) |
@@ -145,7 +146,7 @@ title: Dataset Quick Reference
 | nist-sd6 | 5,595 | Tax forms with handprint | Form + handprint | All | Public | Forms + handwriting |
 | nepali_handwritten | 958 | Devanagari handwriting | Character class | All | Public | Handwritten Nepali |
 | pucit-ohul | 7,401 | Urdu handwriting | Line text | All | Academic | Handwritten Urdu |
-| **Handwriting Total** | **286,133** | - | - | **~275K train** | - | - |
+| **Handwriting Total** | **416,345** | - | - | **~405K train** | - | - |
 
 **Graded Assessment Labels** (NEW):
 

@@ -42,6 +42,11 @@ DATASETS = {
     "mlt19": "datasets/mlt19",
     "jssoda": "datasets/jssoda",
     "rvl-cdip": "datasets/rvl_cdip",
+    # Forms datasets (receipts/invoices)
+    "invoices-kaggle": "datasets/invoices_kaggle",
+    "mobile-receipts-voxel51": "datasets/mobile_receipts_voxel51",
+    "receipts-hitl": "datasets/receipts_hitl",
+    "sroie-voxel51": "datasets/sroie_voxel51",
 }
 
 GCS_BUCKET = "image_detection_b"

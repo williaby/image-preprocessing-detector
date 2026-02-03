@@ -119,6 +119,18 @@ class NistDb2Parser(BaseParser):
                             labels.raw_labels["has_handwritten_content"] = True
                             # Store first few field values as sample
                             labels.raw_labels["sample_fields"] = field_values[:5]
+
+                            # Populate Layer 2 text_content schema fields
+                            full_text = " ".join(field_values)
+                            labels.text_content = {
+                                "full_text": full_text,
+                                "source_type": "dataset_provided",
+                                "source_format": "fmt_field_values",
+                                "extraction_method": "NistDb2Parser.parse",
+                                "extraction_timestamp": None,
+                                "is_complete": True,
+                                "encoding": "utf-8",
+                            }
                         else:
                             labels.raw_labels["has_handwritten_content"] = False
             except Exception as e:

@@ -177,13 +177,82 @@ class PubTabNetParser(BaseParser):
             if "structure" in html_data and "tokens" in html_data["structure"]:
                 labels.table_html = "".join(html_data["structure"]["tokens"])
 
-            # Extract cell annotations
+            # Extract cell annotations and aggregate text content
             if "cells" in html_data:
                 labels.cell_annotations = html_data["cells"]
+
+                # Aggregate cell text tokens into full_text (like fintabnet)
+                # PubTabNet tokens are individual characters with HTML tags
+                all_text = []
+                layout_detections = []
+
+                for cell in html_data["cells"]:
+                    # Aggregate text content from cell tokens
+                    # Filter out HTML tags and join character tokens
+                    if "tokens" in cell:
+                        # Filter out HTML tags (start with < or end with >)
+                        text_tokens = [
+                            t
+                            for t in cell["tokens"]
+                            if not (t.startswith("<") or t.endswith(">"))
+                        ]
+                        # Join without spaces since tokens are individual chars
+                        cell_text = "".join(text_tokens)
+                        if cell_text.strip():
+                            all_text.append(cell_text)
+
+                    # Convert cell boxes (XYXY) to COCO format (XYWH)
+                    if "bbox" in cell:
+                        x1, y1, x2, y2 = cell["bbox"]
+                        x, y, w, h = x1, y1, x2 - x1, y2 - y1
+
+                        detection = {
+                            "class_name": "Text",  # Cell content is text
+                            "bbox": [x, y, w, h],  # COCO XYWH format
+                            "bbox_original": cell["bbox"],  # Preserve XYXY for audit
+                            "bbox_source_format": "xyxy",
+                            "confidence": 1.0,  # Ground truth data
+                            "source": "pubtabnet_gt",
+                        }
+                        layout_detections.append(detection)
+
+                # Set text_content if any text was found
+                if all_text:
+                    labels.text_content = {
+                        "full_text": " ".join(all_text),
+                        "source_type": "dataset_provided",
+                        "source_format": "jsonl_cell_tokens",
+                        "extraction_method": "PubTabNetParser.parse",
+                        "extraction_timestamp": None,
+                        "is_complete": True,
+                        "encoding": "utf-8",
+                    }
+
+                # Set layout_detections if any boxes were converted
+                if layout_detections:
+                    labels.layout_detections = layout_detections
 
             # Store split information if available (preserve existing raw_labels)
             if "split" in entry:
                 labels.raw_labels["split"] = entry["split"]
+
+        # Set dataset-level metadata (like fintabnet)
+        labels.capture_method = {
+            "method": "born_digital",
+            "confidence": 1.0,
+            "detection_method": "dataset_config",
+        }
+
+        labels.domain = {
+            "level1": "SCI",  # Scientific (PubMed Central)
+            "confidence": 0.98,
+        }
+
+        labels.content_flags = {
+            "has_table": True,
+            "tier": "tier_0_exact",
+            "source": "tier_0_exact_by_construction",
+        }
 
         return labels
 

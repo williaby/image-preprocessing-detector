@@ -130,6 +130,29 @@ class FunsdParser(BaseParser):
         labels.raw_labels["document_type"] = "form"
         labels.raw_labels["is_scanned"] = True
 
+        # FUNSD is English forms - populate language_code (Layer 1 field)
+        labels.language_code = "en"
+
+        # Aggregate text transcription from form entities if available
+        if labels.funsd_annotations and "form" in labels.funsd_annotations:
+            form_entities = labels.funsd_annotations["form"]
+            full_text = " ".join(
+                entity.get("text", "") for entity in form_entities if entity.get("text")
+            )
+            if full_text.strip():
+                labels.transcription = full_text.strip()
+
+                # Populate Layer 2 text_content schema fields
+                labels.text_content = {
+                    "full_text": full_text.strip(),
+                    "source_type": "dataset_provided",
+                    "source_format": "json_entity_text",
+                    "extraction_method": "FunsdParser.parse",
+                    "extraction_timestamp": None,
+                    "is_complete": True,
+                    "encoding": "utf-8",
+                }
+
         return labels
 
 

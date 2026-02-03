@@ -440,6 +440,42 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         has_signature=False,
         parser_name="maths_handwriting",
     ),
+    "muharaf": DatasetConfig(
+        name="muharaf",
+        path_suffix="01_base_data/handwriting/muharaf/public",
+        pattern="**/*.{jpg,png}",
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.PERSONAL,
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 0: 100% Arabic handwritten historical manuscripts
+        has_table=False,
+        has_formula=False,
+        has_handwriting=True,
+        has_signature=True,  # Some regions marked as signature-mark
+        parser_name="muharaf",
+        iso639_language="ar",
+        iso15924_script="Arab",
+        text_scope="line",  # Line-level transcriptions
+    ),
+    "iam": DatasetConfig(
+        name="iam",
+        path_suffix="01_base_data/handwriting/iam_handwriting",
+        pattern="**/*.png",
+        capture_method=CaptureMethod.SCANNER_FLATBED,
+        domain=DomainLevel1.ADMINISTRATIVE,
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 0: 100% English handwriting by definition
+        has_table=False,
+        has_formula=False,
+        has_handwriting=True,
+        has_signature=False,
+        parser_name="iam",
+        iso639_language="en",
+        iso15924_script="Latn",
+        text_scope="mixed",  # Forms, lines, and words
+    ),
     # HASYv2 - Original dataset with full labels (168,233 images, 369 classes)
     "hasyv2": DatasetConfig(
         name="hasyv2",
@@ -755,6 +791,26 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         has_signature=False,
         parser_name="financebench",
     ),
+    # =========================================================================
+    # Generated Training Datasets (03_training_datasets)
+    # =========================================================================
+    "synth-multiscript-250k": DatasetConfig(
+        name="synth-multiscript-250k",
+        path_suffix="03_training_datasets/synthetic_multiscript",
+        pattern="**/*.png",  # Images organized by script: {Script}/*.png
+        capture_method=CaptureMethod.BORN_DIGITAL,  # Synthetic generation
+        domain=DomainLevel1.UNKNOWN,  # Mixed domains
+        is_benchmark=False,
+        has_human_mos=False,
+        # Tier 0: Pure synthetic text documents
+        has_table=False,
+        has_formula=False,
+        has_handwriting=False,
+        has_signature=False,
+        text_scope="paragraph",
+        # Multi-script: 27 scripts (Arab, Latn, Hans, Deva, etc.)
+        parser_name="synth_multiscript",
+    ),
 }
 
 
@@ -803,11 +859,13 @@ def validate_dataset_configs() -> list[str]:
             issues.append(
                 f"{config.name}: is_benchmark=True but path not in 02_benchmark_only/"
             )
+        # Non-benchmark datasets can be in 01_base_data or 03_training_datasets
+        valid_non_benchmark_prefixes = ("01_base_data", "03_training_datasets")
         if not config.is_benchmark and not config.path_suffix.startswith(
-            "01_base_data"
+            valid_non_benchmark_prefixes
         ):
             issues.append(
-                f"{config.name}: is_benchmark=False but path not in 01_base_data/"
+                f"{config.name}: is_benchmark=False but path not in {valid_non_benchmark_prefixes}"
             )
 
     return issues

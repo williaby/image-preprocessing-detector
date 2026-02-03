@@ -116,6 +116,15 @@
             "$ref": "#/$defs/LayoutDetection"
           },
           "description": "Detected layout elements (from YOLO or COCO)"
+        },
+        "handwriting_assessment": {
+          "$ref": "#/$defs/HandwritingAssessment"
+        },
+        "text_content": {
+          "$ref": "#/$defs/TextContent"
+        },
+        "text_statistics": {
+          "$ref": "#/$defs/TextStatistics"
         }
       },
       "additionalProperties": false
@@ -561,6 +570,240 @@
       "minItems": 4,
       "maxItems": 4,
       "examples": [[100, 200, 300, 150]]
+    },
+    "TextContent": {
+      "type": "object",
+      "description": "Extracted or ground truth text content. This is the standardized storage location for text from any source (GT labels, OCR, transcription). Text statistics are computed from this field.",
+      "properties": {
+        "full_text": {
+          "type": "string",
+          "description": "Complete text content, concatenated if from multiple regions. Newlines preserved."
+        },
+        "segments": {
+          "type": ["array", "null"],
+          "items": {
+            "$ref": "#/$defs/TextSegment"
+          },
+          "description": "Optional segmented text with region/line-level granularity. Use when source provides positional info."
+        },
+        "source_type": {
+          "type": "string",
+          "enum": ["ground_truth", "ocr_tesseract", "ocr_doctr", "ocr_paddleocr", "ocr_easyocr", "transcription", "synthetic", "dataset_provided"],
+          "description": "Origin of the text content"
+        },
+        "source_file": {
+          "type": ["string", "null"],
+          "description": "Original file path or annotation ID the text was extracted from"
+        },
+        "source_format": {
+          "type": ["string", "null"],
+          "description": "Format of the source (e.g., 'coco_text_annotation', 'txt_file', 'xml_alto', 'json_ocr')",
+          "examples": ["coco_text_annotation", "txt_file", "xml_alto", "json_ocr", "hocr"]
+        },
+        "extraction_method": {
+          "type": ["string", "null"],
+          "description": "Parser or script that performed the extraction",
+          "examples": ["parse_cocotext_labels", "parse_iam_transcription", "doctr_v0.8"]
+        },
+        "extraction_timestamp": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when text was extracted"
+        },
+        "language_hint": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z]{2,3}$",
+          "description": "ISO 639 language code if known from source metadata"
+        },
+        "encoding": {
+          "type": "string",
+          "default": "utf-8",
+          "description": "Text encoding (always normalized to UTF-8 in storage)"
+        },
+        "is_complete": {
+          "type": "boolean",
+          "default": true,
+          "description": "False if text is partial (e.g., only visible text regions, truncated)"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall confidence in text accuracy (for OCR sources)"
+        }
+      },
+      "required": ["full_text", "source_type"],
+      "additionalProperties": false
+    },
+    "TextSegment": {
+      "type": "object",
+      "description": "A segment of text with optional positional information",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Text content of this segment"
+        },
+        "segment_type": {
+          "type": "string",
+          "enum": ["line", "paragraph", "word", "region", "block", "cell"],
+          "description": "Granularity level of this segment"
+        },
+        "bbox": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {"type": "number"},
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "COCO bbox [x, y, width, height] if positional info available"
+            }
+          ]
+        },
+        "sequence_index": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Reading order index within the document"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence for this specific segment (OCR)"
+        },
+        "parent_element_id": {
+          "type": ["string", "null"],
+          "description": "Reference to layout_detections element if text is from a detected region"
+        }
+      },
+      "required": ["text"],
+      "additionalProperties": false
+    },
+    "TextStatistics": {
+      "type": "object",
+      "description": "Precise text statistics computed from text_content field. Only populated when text_content is available.",
+      "properties": {
+        "character_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of characters (including spaces and punctuation)"
+        },
+        "character_count_no_spaces": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Character count excluding whitespace"
+        },
+        "word_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of words (whitespace-delimited tokens)"
+        },
+        "sentence_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of sentences (detected via punctuation: . ! ?)"
+        },
+        "paragraph_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of paragraphs (detected via double newlines or explicit markers)"
+        },
+        "line_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of text lines (single newline delimited)"
+        },
+        "avg_word_length": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Average word length in characters"
+        },
+        "avg_sentence_length": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Average sentence length in words"
+        },
+        "avg_paragraph_length": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Average paragraph length in sentences"
+        },
+        "text_source": {
+          "type": "string",
+          "description": "Source of the text content",
+          "enum": ["ground_truth", "ocr_tesseract", "ocr_doctr", "ocr_paddleocr", "transcription", "synthetic"],
+          "examples": ["ground_truth", "ocr_tesseract"]
+        },
+        "text_source_file": {
+          "type": ["string", "null"],
+          "description": "Path or identifier of the source text file/annotation"
+        },
+        "computation_method": {
+          "type": "string",
+          "description": "Method used for tokenization and counting",
+          "examples": ["nltk", "spacy", "regex_simple", "unicode_segmentation"]
+        }
+      },
+      "required": ["character_count", "word_count", "text_source"],
+      "additionalProperties": false
+    },
+    "HandwritingAssessment": {
+      "type": "object",
+      "description": "Graded handwriting assessment with orthogonal dimensions: presence, legibility, content type. Consensus-validated schema extension for DQS integration.",
+      "properties": {
+        "presence": {
+          "type": "string",
+          "enum": ["NONE", "SPARSE", "MODERATE", "SUBSTANTIAL", "DOMINANT"],
+          "description": "Graded handwriting presence (quantity). NONE=0%, SPARSE=<10%, MODERATE=10-30%, SUBSTANTIAL=30-60%, DOMINANT=>60%"
+        },
+        "presence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Continuous presence score (handwriting area ratio 0-1)"
+        },
+        "presence_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in presence classification"
+        },
+        "legibility": {
+          "type": "string",
+          "enum": ["NOT_APPLICABLE", "EXCELLENT", "GOOD", "FAIR", "POOR", "ILLEGIBLE"],
+          "description": "Graded legibility (readability quality). Based on clinical Handwriting Legibility Scale (HLS). Higher values = harder to read."
+        },
+        "legibility_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Continuous legibility score (0=illegible, 1=excellent)"
+        },
+        "legibility_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in legibility classification"
+        },
+        "content_type": {
+          "type": "string",
+          "enum": ["not_applicable", "signatures_marks", "numeric", "alphanumeric", "prose", "mixed", "specialized"],
+          "description": "Content type classification (what is written). signatures_marks=signatures/initials, numeric=numbers only, alphanumeric=mixed short, prose=long-form, specialized=math/symbols"
+        },
+        "content_type_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in content type classification"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Detection method used",
+          "enum": ["none", "siglip2_multitask", "heuristic", "ground_truth", "hiertext", "cocotext"],
+          "examples": ["siglip2_multitask", "hiertext", "ground_truth"]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
