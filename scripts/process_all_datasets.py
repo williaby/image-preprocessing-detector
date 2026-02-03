@@ -98,7 +98,7 @@ TIER_1_SMALL: list[str] = [
 # Tier 2: Medium datasets (10K-100K images) - ~8 hours processing
 TIER_2_MEDIUM: list[str] = [
     "signatr6k",  # 6,000 images
-    "nist_db2",  # ~12,000 images
+    "nist-sd2",  # ~12,000 images
     "nist_sd6",  # ~12,000 images
     "doclaynet",  # ~80,000 images
     "fintabnet",  # ~90,000 images

@@ -40,7 +40,7 @@ COMPOSITION = {
     # Multi-category diversity (14%)
     "rvl_cdip": 3_500,  # 16 document categories (16,000 available)
     # Structured forms (14.6%)
-    "nist_db2": 1_200,  # Check images (5,590 available)
+    "nist-sd2": 1_200,  # Check images (5,590 available)
     "nist_sd6": 1_200,  # Tax forms (5,595 available)
     "funsd_plus": 1_139,  # Form understanding (1,139 available)
     # Mobile capture proxy (6%)
@@ -73,7 +73,7 @@ SOURCE_PATHS: dict[str, tuple[Path, str]] = {
     "rvl_cdip": (BASE_DATA / "documents/rvl_cdip/images", "*.jpg"),
     "doclaynet": (BASE_DATA / "documents/doclaynet", "**/*.png"),
     # === 01_base_data/forms (structured forms) ===
-    "nist_db2": (BASE_DATA / "forms/nist_db2", "**/*.png"),
+    "nist-sd2": (BASE_DATA / "forms/nist-sd2", "**/*.png"),
     "nist_sd6": (BASE_DATA / "forms/nist_sd6", "**/*.png"),
     "funsd_plus": (BASE_DATA / "forms/funsd_plus/images", "*.jpg"),
     "sroie": (BASE_DATA / "forms/sroie", "**/*.jpg"),
@@ -81,7 +81,7 @@ SOURCE_PATHS: dict[str, tuple[Path, str]] = {
     "tablebank": (BASE_DATA / "tables/tablebank/TableBank/Detection/images", "*.jpg"),
     "pubtabnet": (BASE_DATA / "tables/pubtabnet", "**/*.png"),
     # === 01_base_data/handwriting ===
-    "nist_sd19": (BASE_DATA / "handwriting/nist_sd19_pages", "**/*.png"),
+    "nist_sd19": (BASE_DATA / "handwriting/nist-sd19", "**/*.png"),
     "maths_handwriting": (BASE_DATA / "handwriting/maths_handwriting", "**/*.png"),
     # === 01_base_data/formulas (math content) ===
     "mathverse": (BASE_DATA / "formulas/mathverse/images", "*.jpg"),
@@ -232,7 +232,7 @@ def main():
             "historical_degraded",
         ],
         "Multi-Category": ["rvl_cdip"],
-        "Forms": ["nist_db2", "nist_sd6", "funsd_plus"],
+        "Forms": ["nist-sd2", "nist_sd6", "funsd_plus"],
         "Mobile/Receipts": ["sroie"],
         "Tables": ["tablebank", "pubtabnet"],
         "Layouts": ["doclaynet"],

@@ -6,7 +6,7 @@ This parser extracts symbol class labels from the HASYv2 CSV files.
 The dataset contains 168,233 images of 369 handwritten symbol classes.
 
 Dataset Structure:
-    hasyv2_original/
+    hasy/
         hasy-data/
             v2-00001.png
             v2-00002.png
@@ -39,8 +39,8 @@ Reference:
 Example:
     >>> parser = HASYv2Parser()
     >>> labels = parser.parse(
-    ...     dataset_path=Path("/data/hasyv2_original"),
-    ...     image_path=Path("/data/hasyv2_original/hasy-data/v2-00016.png"),
+    ...     dataset_path=Path("/data/hasy"),
+    ...     image_path=Path("/data/hasy/hasy-data/v2-00016.png"),
     ...     config={},
     ... )
     >>> print(labels.raw_labels["symbol_id"])
@@ -74,7 +74,7 @@ class HASYv2Parser(BaseParser):
     @property
     def dataset_names(self) -> list[str]:
         """Return dataset names handled by this parser."""
-        return ["hasyv2", "hasy-v2", "hasy_v2", "hasyv2_original"]
+        return ["hasyv2", "hasy-v2", "hasy_v2", "hasy"]
 
     def _build_label_cache(self, dataset_path: Path) -> dict[str, dict[str, Any]]:
         """Build a cache mapping image filenames to their labels.

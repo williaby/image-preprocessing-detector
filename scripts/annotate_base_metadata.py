@@ -245,8 +245,8 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "original_labels_parser": "parse_doclaynet_labels",
         "has_coco_annotations": True,
     },
-    "nist_db2": {
-        "path": BASE_DATA / "forms/nist_db2",
+    "nist-sd2": {
+        "path": BASE_DATA / "forms/nist-sd2",
         "pattern": "**/*.png",
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.FINANCIAL,
@@ -254,7 +254,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_table": True,
         "has_handwriting": True,
         "has_signature": True,
-        "original_labels_parser": "parse_nist_db2_labels",
+        "original_labels_parser": "parse_nist-sd2_labels",
         "default_language_code": "en",  # US IRS tax forms
         "default_script_name": "Latn",
     },
@@ -354,7 +354,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "default_script_name": "Latn",
     },
     "nist_sd19": {
-        "path": BASE_DATA / "handwriting/nist_sd19_pages",
+        "path": BASE_DATA / "handwriting/nist-sd19",
         "pattern": "**/*.png",
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.PERSONAL,
@@ -398,7 +398,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "default_script_name": "Zmth",  # Mathematical notation
     },
     "hasyv2": {
-        "path": BASE_DATA / "handwriting/hasyv2_original/hasy-data",
+        "path": BASE_DATA / "handwriting/hasy/hasy-data",
         "pattern": "*.png",
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.EDUCATIONAL,
@@ -474,7 +474,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     # === NEW: Multilingual/Script Detection Datasets ===
     "pucit_ohul": {
-        "path": BASE_DATA / "language/pucit_ohul_urdu",
+        "path": BASE_DATA / "language/pucit-ohul",
         "pattern": "**/*.png",
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.EDUCATIONAL,
@@ -530,7 +530,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "original_labels_parser": "parse_mdiw13_labels",
     },
     "cc_ocr": {
-        "path": BASE_DATA / "language/cc_ocr_extracted",
+        "path": BASE_DATA / "language/cc-ocr",
         "pattern": "**/*.jpg",
         "capture_method": CaptureMethod.UNKNOWN,  # Mixed (41% real-world, 59% synthetic)
         "domain": DomainLevel1.UNKNOWN,  # Multiple domains
@@ -597,7 +597,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "original_labels_parser": "parse_nepali_handwritten_labels",
     },
     "yarmouk_ocr": {
-        "path": BASE_DATA / "language/yarmouk_ocr_images",  # Converted from PDFs
+        "path": BASE_DATA / "language/yarmouk",  # Converted from PDFs
         "pattern": "**/*.png",  # PNG format from conversion
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.UNKNOWN,  # Mixed Arabic documents
@@ -2299,7 +2299,7 @@ def parse_nist_sd19_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     """Parse NIST SD-19 handwriting labels from directory structure.
 
     NIST SD-19 (Special Database 19) structure:
-        nist_sd19_pages/
+        nist-sd19/
             by_class/
                 {class_id}/
                     hsf_{writer_id}/
@@ -3085,7 +3085,7 @@ def parse_mathverse_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     return labels
 
 
-def parse_nist_db2_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+def parse_nist-sd2_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse NIST Special Database 2 (Tax Form) labels.
 
     SD2 contains IRS 1040 tax forms with field annotations in .fmt files.
@@ -3579,7 +3579,7 @@ LABEL_PARSERS = {
     "parse_funsd_plus_labels": parse_funsd_plus_labels,
     "parse_sroie_labels": parse_sroie_labels,
     "parse_mathverse_labels": parse_mathverse_labels,
-    "parse_nist_db2_labels": parse_nist_db2_labels,
+    "parse_nist-sd2_labels": parse_nist-sd2_labels,
     "parse_nist_sd6_labels": parse_nist_sd6_labels,
     "parse_cvsi_labels": parse_cvsi_labels,
     "parse_siw13_labels": parse_siw13_labels,

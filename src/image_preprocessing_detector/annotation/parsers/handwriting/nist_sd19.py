@@ -6,7 +6,7 @@ NIST Special Database 19 contains handwritten characters and digits from
 various sources, organized by writer and character class.
 
 Dataset Structure:
-    nist_sd19_pages/
+    nist-sd19/
         by_class/
             {class_id}/
                 hsf_{writer_id}/
@@ -30,8 +30,8 @@ Labels:
 Example:
     >>> parser = NistSd19Parser()
     >>> labels = parser.parse(
-    ...     dataset_path=Path("/data/nist_sd19_pages"),
-    ...     image_path=Path("/data/nist_sd19_pages/by_class/30/hsf_0/a_0001.png"),
+    ...     dataset_path=Path("/data/nist-sd19"),
+    ...     image_path=Path("/data/nist-sd19/by_class/30/hsf_0/a_0001.png"),
     ...     config={},
     ... )
     >>> print(labels.transcription)

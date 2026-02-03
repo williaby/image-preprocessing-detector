@@ -208,7 +208,7 @@ class OrientationDatasetGenerator:
             "funsd": self.base_data_path / "forms" / "funsd",
             "funsd_plus": self.base_data_path / "forms" / "funsd_plus",
             "sroie": self.base_data_path / "forms" / "sroie",
-            "nist_sd19": self.base_data_path / "handwriting" / "nist_sd19_pages",
+            "nist_sd19": self.base_data_path / "handwriting" / "nist-sd19",
             # Real-world government financial documents
             "bhutan_financial": self.base_data_path / "documents" / "bhutan_financial",
             # Multilingual script datasets (Phase 10A)

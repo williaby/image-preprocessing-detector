@@ -17,7 +17,7 @@ Datasets covered:
     - signatr6k
     - nist_sd19
     - pucit_ohul
-    - nist_db2
+    - nist-sd2
     - nist_sd6
     - maths_handwriting
     - hasyv2
@@ -33,7 +33,7 @@ from .hasyv2 import HASYv2Parser
 from .iam import IAMParser
 from .maths_handwriting import MathsHandwritingParser
 from .muharaf import MuharafParser
-from .nist_db2 import NistDb2Parser
+from .nist-sd2 import NistDb2Parser
 from .nist_sd6 import NistSd6Parser
 from .nist_sd19 import NistSd19Parser
 from .pucit_ohul import PucitOhulParser

@@ -14,7 +14,7 @@ Configuration Categories:
     - Benchmark datasets (4): diqa-5000, smartdoc-qa, dibco, omnidocbench
     - Base Training - Degraded (2): tobacco800, historical_degraded
     - Base Training - Documents (2): rvl_cdip, doclaynet
-    - Base Training - Forms (5): nist_db2, nist_sd6, funsd, funsd_plus, sroie
+    - Base Training - Forms (5): nist-sd2, nist_sd6, funsd, funsd_plus, sroie
     - Base Training - Tables (3): tablebank, pubtabnet, fintabnet
     - Base Training - Handwriting (3): nist_sd19, signatr6k, maths_handwriting
     - Base Training - Formulas (2): im2latex, mathverse
@@ -282,9 +282,9 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     # =========================================================================
     # Base Training - Forms (5)
     # =========================================================================
-    "nist_db2": DatasetConfig(
-        name="nist_db2",
-        path_suffix="01_base_data/forms/nist_db2",
+    "nist-sd2": DatasetConfig(
+        name="nist-sd2",
+        path_suffix="01_base_data/forms/nist-sd2",
         pattern="**/*.png",
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.FINANCIAL,
@@ -293,7 +293,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         has_table=True,
         has_handwriting=True,
         has_signature=True,
-        parser_name="nist_db2",
+        parser_name="nist-sd2",
     ),
     "nist_sd6": DatasetConfig(
         name="nist_sd6",
@@ -397,7 +397,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     # =========================================================================
     "nist_sd19": DatasetConfig(
         name="nist_sd19",
-        path_suffix="01_base_data/handwriting/nist_sd19_pages",
+        path_suffix="01_base_data/handwriting/nist-sd19",
         pattern="**/*.png",
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.PERSONAL,
@@ -479,7 +479,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     # HASYv2 - Original dataset with full labels (168,233 images, 369 classes)
     "hasyv2": DatasetConfig(
         name="hasyv2",
-        path_suffix="01_base_data/handwriting/hasyv2_original/hasy-data",
+        path_suffix="01_base_data/handwriting/hasy/hasy-data",
         pattern="*.png",
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.EDUCATIONAL,
@@ -570,7 +570,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     # =========================================================================
     "pucit_ohul": DatasetConfig(
         name="pucit_ohul",
-        path_suffix="01_base_data/language/pucit_ohul_urdu",
+        path_suffix="01_base_data/language/pucit-ohul",
         pattern="**/*.png",
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.EDUCATIONAL,
@@ -632,7 +632,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     ),
     "cc_ocr": DatasetConfig(
         name="cc_ocr",
-        path_suffix="01_base_data/language/cc_ocr_extracted",
+        path_suffix="01_base_data/language/cc-ocr",
         pattern="**/*.*",
         capture_method=CaptureMethod.UNKNOWN,  # Mixed (41% real-world, 59% synthetic)
         domain=DomainLevel1.UNKNOWN,
@@ -709,7 +709,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     ),
     "yarmouk_ocr": DatasetConfig(
         name="yarmouk_ocr",
-        path_suffix="01_base_data/language/yarmouk_ocr_images",
+        path_suffix="01_base_data/language/yarmouk",
         pattern="**/*.png",
         capture_method=CaptureMethod.SCANNER_FLATBED,
         domain=DomainLevel1.UNKNOWN,

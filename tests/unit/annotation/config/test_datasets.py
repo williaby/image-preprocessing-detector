@@ -116,7 +116,7 @@ class TestDatasetConfigsRegistry:
         assert "doclaynet" in DATASET_CONFIGS
 
         # Forms (5)
-        assert "nist_db2" in DATASET_CONFIGS
+        assert "nist-sd2" in DATASET_CONFIGS
         assert "nist_sd6" in DATASET_CONFIGS
         assert "funsd" in DATASET_CONFIGS
         assert "funsd_plus" in DATASET_CONFIGS
@@ -225,9 +225,9 @@ class TestSpecificDatasets:
         assert config.has_signature is False
         assert config.has_coco_annotations is True
 
-    def test_nist_db2_multi_flags(self) -> None:
-        """Validate nist_db2 multiple content flags."""
-        config = DATASET_CONFIGS["nist_db2"]
+    def test_nist-sd2_multi_flags(self) -> None:
+        """Validate nist-sd2 multiple content flags."""
+        config = DATASET_CONFIGS["nist-sd2"]
 
         assert config.has_table is True
         assert config.has_handwriting is True

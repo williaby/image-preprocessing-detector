@@ -262,7 +262,7 @@ class TestNistSd19Parser:
     @pytest.fixture
     def dataset_path(self, tmp_path: Path) -> Path:
         """Create mock NIST SD-19 dataset structure."""
-        dataset = tmp_path / "nist_sd19_pages"
+        dataset = tmp_path / "nist-sd19"
         dataset.mkdir()
 
         # Create by_class structure
@@ -375,7 +375,7 @@ class TestNistDb2Parser:
     def test_dataset_names(self, parser: NistDb2Parser) -> None:
         """Test dataset_names property."""
         assert "nist-db2" in parser.dataset_names
-        assert "nist_db2" in parser.dataset_names
+        assert "nist-sd2" in parser.dataset_names
         assert "sd2" in parser.dataset_names
 
     def test_parse_language_and_script(

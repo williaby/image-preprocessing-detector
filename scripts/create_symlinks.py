@@ -50,7 +50,7 @@ SYMLINK_MAPPINGS = [
     # Training datasets (Phase 3 - handwriting & layout)
     ("data/training/iam_handwriting", "training/iam_handwriting"),
     ("data/training/docsynth300k", "training/docsynth300k"),
-    ("data/training/nist_db2", "training/nist_db2"),
+    ("data/training/nist-sd2", "training/nist-sd2"),
 ]
 
 

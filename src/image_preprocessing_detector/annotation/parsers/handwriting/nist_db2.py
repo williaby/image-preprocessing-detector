@@ -61,7 +61,7 @@ class NistDb2Parser(BaseParser):
     @property
     def dataset_names(self) -> list[str]:
         """Return dataset names handled by this parser."""
-        return ["nist-db2", "nist_db2", "sd2"]
+        return ["nist-db2", "nist-sd2", "sd2"]
 
     def parse(
         self,

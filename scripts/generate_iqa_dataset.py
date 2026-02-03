@@ -76,7 +76,7 @@ class DatasetConfig:
         # Multi-category diversity
         "rvl_cdip": 3_500,  # 16 document categories - needs download
         # Structured forms
-        "nist_db2_sd6": 2_500,  # Check/tax forms - needs download
+        "nist-sd2_sd6": 2_500,  # Check/tax forms - needs download
         "funsd_plus": 1_300,  # Form understanding
         # Mobile capture proxy
         "sroie": 1_500,  # Receipts - needs download
@@ -374,13 +374,13 @@ class DatasetGenerator:
         nist_forms_path = PROJECT_ROOT / "data/benchmarks/nist-forms"
         if nist_forms_path.exists():
             all_files = sorted(nist_forms_path.glob("**/*.png"))
-            target = self.config.COMPOSITION.get("nist_db2_sd6", 0)
+            target = self.config.COMPOSITION.get("nist-sd2_sd6", 0)
             if target > 0 and all_files:
-                datasets["nist_db2_sd6"] = random.sample(
+                datasets["nist-sd2_sd6"] = random.sample(
                     all_files, min(target, len(all_files))
                 )  # nosec B311
                 print(
-                    f"  NIST DB2+SD6: Found {len(all_files)} samples, using {len(datasets['nist_db2_sd6'])}"
+                    f"  NIST DB2+SD6: Found {len(all_files)} samples, using {len(datasets['nist-sd2_sd6'])}"
                 )
         else:
             print("  NIST DB2+SD6: ⚠️ Not downloaded - needs NIST Special Databases")
@@ -813,7 +813,7 @@ class DatasetGenerator:
             # Multi-category
             "rvl_cdip": random.choice(["single_column", "multi_column", "complex"]),  # nosec B311
             # Forms
-            "nist_db2_sd6": "single_column",
+            "nist-sd2_sd6": "single_column",
             "funsd_plus": "single_column",
             # Mobile proxy
             "sroie": "single_column",
@@ -842,7 +842,7 @@ class DatasetGenerator:
             # Multi-category - mixed
             "rvl_cdip": random.choice(["image_only", "hybrid"]),  # nosec B311
             # Forms - mostly scanned
-            "nist_db2_sd6": "image_only",
+            "nist-sd2_sd6": "image_only",
             "funsd_plus": "image_only",
             # Mobile proxy - image capture
             "sroie": "image_only",
@@ -871,7 +871,7 @@ class DatasetGenerator:
             # Multi-category - diverse
             "rvl_cdip": random.choice(["scientific", "mixed_layout", "forms"]),  # nosec B311
             # Forms
-            "nist_db2_sd6": "forms",
+            "nist-sd2_sd6": "forms",
             "funsd_plus": "forms",
             # Mobile proxy
             "sroie": "forms",  # receipts are form-like

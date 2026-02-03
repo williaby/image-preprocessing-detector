@@ -83,7 +83,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "sources": [
             {"path": BASE_DATA_PATH / "forms/funsd", "pattern": "**/*.png"},
             {"path": BASE_DATA_PATH / "forms/funsd_plus", "pattern": "**/*.png"},
-            {"path": BASE_DATA_PATH / "forms/nist_db2", "pattern": "**/*.*"},
+            {"path": BASE_DATA_PATH / "forms/nist-sd2", "pattern": "**/*.*"},
             {"path": BASE_DATA_PATH / "forms/nist_sd6", "pattern": "**/*.*"},
         ],
         "doc_type": "form",
@@ -117,7 +117,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "handwritten_pages": {
         "count": 1000,
         "sources": [
-            {"path": BASE_DATA_PATH / "handwriting/nist_sd19_pages", "pattern": "**/*.*"},
+            {"path": BASE_DATA_PATH / "handwriting/nist-sd19", "pattern": "**/*.*"},
         ],
         "doc_type": "handwritten",
     },

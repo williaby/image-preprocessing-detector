@@ -312,7 +312,7 @@ class TestParserCategoryLoading:
         datasets = registry.list_datasets()
 
         # At least one handwriting parser
-        handwriting_datasets = {"signatr6k", "nist_sd19", "nist_db2", "pucit_ohul"}
+        handwriting_datasets = {"signatr6k", "nist_sd19", "nist-sd2", "pucit_ohul"}
         assert any(d in datasets for d in handwriting_datasets)
 
     def test_multilingual_parsers_load(self) -> None:
