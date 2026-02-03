@@ -632,8 +632,8 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     ),
     "cc_ocr": DatasetConfig(
         name="cc_ocr",
-        path_suffix="01_base_data/language/cc-ocr",
-        pattern="**/*.*",
+        path_suffix="01_base_data/language/huggingface_downloads/CC-OCR/extracted_images",
+        pattern="**/*.jpg",
         capture_method=CaptureMethod.UNKNOWN,  # Mixed (41% real-world, 59% synthetic)
         domain=DomainLevel1.UNKNOWN,
         is_benchmark=False,
@@ -641,6 +641,18 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
         text_scope="mixed",
         # CJK Mixed: Chinese (Simplified + Traditional), English, Multilingual
         parser_name="cc_ocr",
+    ),
+    "cocotext": DatasetConfig(
+        name="cocotext",
+        path_suffix="01_base_data/text_detection/cocotext/images",
+        pattern="**/*.jpg",
+        capture_method=CaptureMethod.CAMERA_SMARTPHONE,  # COCO natural images
+        domain=DomainLevel1.UNKNOWN,  # Various scene types
+        is_benchmark=False,
+        has_human_mos=False,
+        text_scope="word",
+        # Multi-language scene text detection
+        parser_name="cocotext",
     ),
     "tibhcr": DatasetConfig(
         name="tibhcr",

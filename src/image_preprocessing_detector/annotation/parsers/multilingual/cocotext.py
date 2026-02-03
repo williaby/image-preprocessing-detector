@@ -126,6 +126,8 @@ class CocotextParser(BaseParser):
             return True
 
         # Try to find annotation file
+        # Check both dataset_path and parent (for when path points to images/)
+        search_paths = [dataset_path, dataset_path.parent]
         ann_patterns = [
             "cocotext.v2.json",
             "COCO_Text.json",
@@ -133,10 +135,13 @@ class CocotextParser(BaseParser):
         ]
 
         ann_path = None
-        for pattern in ann_patterns:
-            candidate = dataset_path / pattern
-            if candidate.exists():
-                ann_path = candidate
+        for search_path in search_paths:
+            for pattern in ann_patterns:
+                candidate = search_path / pattern
+                if candidate.exists():
+                    ann_path = candidate
+                    break
+            if ann_path:
                 break
 
         if ann_path is None:

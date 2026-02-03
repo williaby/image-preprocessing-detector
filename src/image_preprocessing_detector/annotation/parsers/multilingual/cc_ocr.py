@@ -70,8 +70,11 @@ class CcOcrParser(BaseParser):
             Image: .../extracted_images/doc_parsing/doc/doc_scan_chn_75/0.jpg
             TSV:   .../doc_parsing/doc/doc_scan_chn_75.tsv
 
+        The dataset_path points to extracted_images/, so we go up one level
+        to find the TSV files in the sibling track directories.
+
         Args:
-            dataset_path: Root path of the CC-OCR dataset
+            dataset_path: Root path of the CC-OCR extracted_images directory
             image_path: Absolute path to the image file being processed
 
         Returns:
@@ -97,8 +100,11 @@ class CcOcrParser(BaseParser):
         category = parts[extracted_idx + 2]  # "doc"
         subset = parts[extracted_idx + 3]  # "doc_scan_chn_75"
 
-        # Build TSV path
-        tsv_path = dataset_path / track / category / f"{subset}.tsv"
+        # Build TSV path - go up from extracted_images to CC-OCR root
+        # dataset_path = .../CC-OCR/extracted_images
+        # TSV is at .../CC-OCR/doc_parsing/doc/doc_scan_chn_75.tsv
+        cc_ocr_root = dataset_path.parent  # Go up from extracted_images to CC-OCR
+        tsv_path = cc_ocr_root / track / category / f"{subset}.tsv"
 
         if not tsv_path.exists():
             logger.debug(f"TSV not found at: {tsv_path}")
@@ -130,8 +136,8 @@ class CcOcrParser(BaseParser):
                     image_name = row.get("image_name")
                     if image_name:
                         annotations[image_name] = row
-        except Exception as e:
-            logger.error(f"Failed to load TSV {tsv_path}: {e}")
+        except Exception:
+            logger.exception(f"Failed to load TSV {tsv_path}")
             return {}
 
         return annotations
@@ -190,9 +196,11 @@ class CcOcrParser(BaseParser):
                     labels.transcription = row["answer"]
 
                 # Store additional TSV fields in raw_labels
+                # TSV is in CC-OCR root (parent of extracted_images)
+                cc_ocr_root = dataset_path.parent
                 labels.raw_labels.update(
                     {
-                        "tsv_file": str(tsv_path.relative_to(dataset_path)),
+                        "tsv_file": str(tsv_path.relative_to(cc_ocr_root)),
                         "category": row.get("category", ""),
                         "l2_category": row.get("l2-category", ""),
                         "split": row.get("split", ""),
