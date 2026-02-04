@@ -401,6 +401,7 @@ class LanguageDetectionProvider:
         self,
         labels: OriginalLabels,
         existing: EnrichmentData | None = None,
+        preserve_high_confidence: bool = True,
     ) -> EnrichmentData:
         """Enrich from parser labels by extracting text and detecting language.
 
@@ -410,6 +411,8 @@ class LanguageDetectionProvider:
         Args:
             labels: OriginalLabels from parser
             existing: Optional existing EnrichmentData to augment
+            preserve_high_confidence: If True, don't overwrite existing language
+                data if it has higher confidence than new detection
 
         Returns:
             EnrichmentData with language/script fields populated
@@ -427,7 +430,22 @@ class LanguageDetectionProvider:
         # Detect language
         detection = self.detect_language(extracted.text)
 
-        # Update enrichment data
+        new_confidence = detection.get("language_confidence", 0.0) or 0.0
+        existing_confidence = existing.language_confidence or 0.0
+
+        # Check if we should preserve existing data
+        if preserve_high_confidence and existing.iso639_language is not None:
+            if existing_confidence >= new_confidence:
+                logger.debug(
+                    f"Preserving existing language data (conf={existing_confidence:.2%}) "
+                    f"over new detection (conf={new_confidence:.2%})"
+                )
+                # Still update text scope info
+                existing.text_scope_estimated_chars = extracted.char_count
+                existing.text_scope_estimated_words = extracted.word_count
+                return existing
+
+        # Update enrichment data with new detection
         existing.iso639_language = detection.get("iso639_language")
         existing.iso15924_script = detection.get("iso15924_script")
         existing.script_family = detection.get("script_family")
