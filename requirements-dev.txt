@@ -589,7 +589,7 @@ narwhals==2.15.0
     # via altair
 nbclient==0.10.4
     # via nbconvert
-nbconvert==7.16.6
+nbconvert==7.17.0
     # via
     #   jupyter
     #   jupyter-server
@@ -666,7 +666,7 @@ onnx==1.20.1
     # via image-preprocessing-detector
 opencv-python-headless==4.11.0.86
     # via image-preprocessing-detector
-orjson==3.11.5 ; implementation_name == 'cpython'
+orjson==3.11.6 ; implementation_name == 'cpython'
     # via
     #   dvc-data
     #   sqltrie
@@ -753,7 +753,7 @@ propcache==0.4.1
     # via
     #   aiohttp
     #   yarl
-protobuf==6.33.3
+protobuf==6.33.5
     # via
     #   kaggle
     #   kagglesdk
