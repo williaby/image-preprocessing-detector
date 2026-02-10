@@ -182,3 +182,26 @@ docs/datasets/reviews/
 *.tgz
 *.tar.gz
 largeWriterIndependentTextLineRecognitionTask.*.zip
+
+# IAM dataset files (downloaded, not tracked)
+gan.iam.*.txt
+shtg_iam_words.json.gz
+
+# Model files (not in models/ directory)
+yolov10x.pt
+
+# Backup files
+*.backup
+*.backup-*
+*.cvsi-update
+
+# YOLO inference runs
+runs/
+
+# Generated/stale artifacts
+front-matter-report.json
+coverage.json
+pal_generated.code
+rag_architecture.png
+.annotate_progress.json
+.coveragerc-ml
