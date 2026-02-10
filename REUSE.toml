@@ -216,6 +216,7 @@ path = [
     "pal_generated.code",  # PAL MCP generated code artifact
     "results/**/*.json",  # Generated result files
     "results/**/*.jsonl",  # Generated JSONL result files
+    "scripts/**/*.json",  # Script audit/result JSON files
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
