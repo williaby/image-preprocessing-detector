@@ -49,7 +49,7 @@ STAGE1_DATASETS = {
     },
     "sroie": {
         "manifest": "/mnt/e/image_detection/06_staging/stage1_manifests/sroie_manifest.json",
-        "root_dir": "/mnt/e/image_detection/01_base_data/forms/sroie",
+        "root_dir": "/mnt/e/image_detection/01_base_data/forms/sroie_icdar2019",
         "priority": "MEDIUM",
     },
     "tobacco-800": {

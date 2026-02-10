@@ -93,7 +93,7 @@ def get_git_sha() -> str:
 
 
 # Schema version for tracking changes
-SCHEMA_VERSION = "2.1"  # Added text_scope, paper_size, ISO language/script, dataset_short_code
+SCHEMA_VERSION = "2.1.0"  # v2.1.0: geometric, physical_degradation, ml_iqa, code, image_properties, ocr_impact
 SCRIPT_VERSION = "2.0.0"
 
 
@@ -254,7 +254,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "has_table": True,
         "has_handwriting": True,
         "has_signature": True,
-        "original_labels_parser": "parse_nist-sd2_labels",
+        "original_labels_parser": "parse_nist_sd2_labels",
         "default_language_code": "en",  # US IRS tax forms
         "default_script_name": "Latn",
     },
@@ -296,14 +296,14 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "default_script_name": "Latn",
     },
     "sroie": {
-        "path": BASE_DATA / "forms/sroie",
+        "path": BASE_DATA / "forms/sroie_icdar2019",
         "pattern": "**/*.jpg",
         "capture_method": CaptureMethod.CAMERA_SMARTPHONE,
         "domain": DomainLevel1.FINANCIAL,
         "has_human_mos": False,
         "has_table": True,
         "original_labels_parser": "parse_sroie_labels",
-        "default_language_code": "en",  # English receipts
+        "default_language_code": "en",  # Malaysian receipts, primarily English text
         "default_script_name": "Latn",
     },
     "tablebank": {
@@ -485,6 +485,19 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         "text_scope": "word",  # Word-level handwriting samples
         "original_labels_parser": "parse_pucit_ohul_labels",
     },
+    "muharaf": {
+        "path": BASE_DATA / "handwriting/muharaf/public",
+        "pattern": "**/*",  # Both .jpg (pages) and .png (lines); suffix filter at scan
+        "capture_method": CaptureMethod.SCANNER_FLATBED,
+        "domain": DomainLevel1.PERSONAL,  # Personal letters/manuscripts
+        "has_human_mos": False,
+        "has_handwriting": True,
+        "has_signature": True,  # Some regions marked as signature-mark
+        "iso639_language": "ar",  # Arabic
+        "iso15924_script": "Arab",  # Arabic script
+        "text_scope": "line",  # Line-level transcriptions
+        "original_labels_parser": "parse_muharaf_labels",
+    },
     "multilingual_scripts": {
         "path": BASE_DATA / "language/multilingual_scripts",
         "pattern": "**/*.png",
@@ -561,6 +574,29 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
         # Hindi, and 3 others
         "original_labels_parser": "parse_mlt19_labels",
     },
+    # === HierText (hierarchical scene text) ===
+    "hiertext": {
+        "path": BASE_DATA / "text_detection/hiertext",
+        "pattern": "**/*.jpg",
+        "capture_method": CaptureMethod.UNKNOWN,  # Natural scene images (Open Images)
+        "domain": DomainLevel1.UNKNOWN,  # Scene text from various sources
+        "has_human_mos": False,
+        "has_handwriting": True,  # Includes handwriting legibility labels
+        "text_scope": "word",  # Word-level hierarchical annotations
+        # TODO: Add parse_hiertext_labels for JSONL ground truth
+    },
+    # === Invoices-KG (Kaggle invoice OCR) ===
+    "invoices-kg": {
+        "path": BASE_DATA / "forms/invoices_kaggle",
+        "pattern": "*/images/*.jpg",  # Both train and val splits
+        "capture_method": CaptureMethod.SCANNER_ADF,
+        "domain": DomainLevel1.FINANCIAL,
+        "has_human_mos": False,
+        "has_table": True,  # Invoice items table structure
+        "default_language_code": "en",  # English invoices
+        "default_script_name": "Latn",
+        # TODO: Add parse_invoices_kg_labels for annotations.json
+    },
     # === Additional Kaggle Script Detection Datasets ===
     "arabic_docs_ocr": {
         "path": BASE_DATA / "language/arabic_docs_ocr",
@@ -586,7 +622,7 @@ DATASET_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "nepali_handwritten": {
         "path": BASE_DATA / "language/nepali_handwritten",
-        "pattern": "**/*.jpg",
+        "pattern": "**/*",  # Mix of .jpg, .jpeg, .png; suffix filter at scan
         "capture_method": CaptureMethod.SCANNER_FLATBED,
         "domain": DomainLevel1.EDUCATIONAL,
         "has_human_mos": False,
@@ -827,6 +863,62 @@ class EnrichmentData:
     # Layout detections (for Tier 1/2)
     layout_detections: list[dict] | None = None
 
+    # --- v2.1.0 additions below ---
+
+    # Geometric attributes (orientation, skew) -- v2.1
+    orientation_class: int | None = None  # 0/90/180/270
+    orientation_confidence: float | None = None
+    orientation_corrected: bool | None = None
+    orientation_detection_method: str | None = None
+    skew_angle_degrees: float | None = None  # exact angle +-180
+    skew_confidence: float | None = None
+    skew_detection_method: str | None = None
+
+    # Physical degradation (shadow, warping, watermark) -- v2.1
+    shadow_severity: float | None = None  # 0-1
+    shadow_type: str | None = None
+    shadow_confidence: float | None = None
+    warping_severity: float | None = None  # 0-1
+    warping_type: str | None = None
+    warping_confidence: float | None = None
+    watermark_severity: float | None = None  # 0-1
+    watermark_type: str | None = None
+    watermark_confidence: float | None = None
+    fuzzy_scan_score: float | None = None  # 0-1
+
+    # ML IQA 6-dim scores -- v2.1
+    ml_iqa_blur: float | None = None  # 0-1
+    ml_iqa_noise: float | None = None  # 0-1
+    ml_iqa_contrast: float | None = None  # 0-1
+    ml_iqa_compression: float | None = None  # 0-1
+    ml_iqa_skew: float | None = None  # 0-1
+    ml_iqa_overall: float | None = None  # 0-1
+    ml_iqa_model_name: str | None = None
+    ml_iqa_model_version: str | None = None
+
+    # Code detection -- v2.1 (ContentFlags + StructureInfo in JSON schema)
+    has_code: bool | None = None
+    code_confidence: float | None = None  # 0-1
+    code_language: str | None = None
+    code_rendering_style: str | None = None
+
+    # Resolution enhancement -- v2.1
+    character_height_px: float | None = None
+    resolution_quality_score: float | None = None  # 0-1
+    effective_dpi: int | None = None
+
+    # Image properties (color mode, document age) -- v2.1
+    color_mode: str | None = None  # "color", "grayscale", "binarized"
+    document_age: str | None = None  # "modern", "aged", "historical"
+
+    # OCR impact (future: populated by Project B) -- v2.1
+    ocr_engine: str | None = None
+    ocr_engine_version: str | None = None
+    ocr_char_error_rate: float | None = None
+    ocr_word_error_rate: float | None = None
+    ocr_quality_before_correction: float | None = None
+    ocr_quality_after_correction: float | None = None
+
 
 @dataclass
 class EnrichmentVersion:
@@ -1050,38 +1142,69 @@ _YOLO_MODEL = None
 
 
 def load_doclayout_yolo():
-    """Load DocLayout-YOLO model (lazy loading, cached)."""
+    """Load DocLayout-YOLO model (lazy loading, cached).
+
+    Loads the DocStructBench variant of DocLayout-YOLO (10 document
+    layout classes: title, plain text, abandon, figure, figure_caption,
+    table, table_caption, table_footnote, isolate_formula, formula_caption).
+
+    Loading strategy (in order):
+    1. Local .pt files at known project paths
+    2. HuggingFace cached model via huggingface_hub + doclayout_yolo
+    3. Direct HuggingFace download + doclayout_yolo
+
+    Returns:
+        Loaded YOLOv10 model instance or None if loading fails.
+    """
     global _YOLO_MODEL
     if _YOLO_MODEL is not None:
         return _YOLO_MODEL
 
-    try:
-        from ultralytics import YOLO
+    HF_REPO = "juliozhao/DocLayout-YOLO-DocStructBench"
+    HF_FILENAME = "doclayout_yolo_docstructbench_imgsz1024.pt"
 
-        # Try multiple model paths
-        model_paths = [
-            PROJECT_ROOT / "models" / "doclayout_yolo_docstructbench.pt",
-            PROJECT_ROOT / "05_models" / "doclayout_yolo.pt",
-            Path.home() / ".cache" / "doclayout_yolo.pt",
-        ]
+    # Strategy 1: Try local model files
+    local_paths = [
+        PROJECT_ROOT / "models" / "doclayout_yolo_docstructbench.pt",
+        PROJECT_ROOT / "05_models" / "doclayout_yolo.pt",
+        Path.home() / ".cache" / "doclayout_yolo.pt",
+    ]
 
-        for model_path in model_paths:
-            if model_path.exists():
+    for model_path in local_paths:
+        if model_path.exists():
+            try:
+                from doclayout_yolo import YOLOv10
+
                 logger.info(f"Loading DocLayout-YOLO from {model_path}")
-                _YOLO_MODEL = YOLO(str(model_path))
+                _YOLO_MODEL = YOLOv10(str(model_path))
                 return _YOLO_MODEL
+            except Exception as e:
+                logger.warning(f"Failed to load from {model_path}: {e}")
 
-        # Try loading from HuggingFace or default
-        logger.info("Loading DocLayout-YOLO from default location")
-        _YOLO_MODEL = YOLO("yolov10x")  # Fallback to standard YOLO
+    # Strategy 2: Download from HuggingFace and load with doclayout_yolo
+    try:
+        from doclayout_yolo import YOLOv10
+        from huggingface_hub import hf_hub_download
+
+        logger.info(f"Loading DocLayout-YOLO from HuggingFace: {HF_REPO}")
+        model_path = hf_hub_download(repo_id=HF_REPO, filename=HF_FILENAME)
+        _YOLO_MODEL = YOLOv10(model_path)
+        logger.info(
+            f"DocLayout-YOLO loaded: {len(_YOLO_MODEL.names)} classes "
+            f"({list(_YOLO_MODEL.names.values())[:3]}...)"
+        )
         return _YOLO_MODEL
-
-    except ImportError:
-        logger.warning("ultralytics not installed, DocLayout-YOLO disabled")
-        return None
+    except ImportError as e:
+        logger.warning(f"Required packages not available: {e}")
     except Exception as e:
-        logger.warning(f"Failed to load DocLayout-YOLO: {e}")
-        return None
+        logger.warning(f"Failed to load DocLayout-YOLO from HuggingFace: {e}")
+
+    logger.warning(
+        "DocLayout-YOLO not available. Install doclayout-yolo and "
+        "huggingface-hub packages, or place model at "
+        "models/doclayout_yolo_docstructbench.pt"
+    )
+    return None
 
 
 def run_doclayout_yolo(
@@ -1786,8 +1909,43 @@ def parse_signatr_labels(dataset_path: Path, image_path: Path) -> OriginalLabels
     return labels
 
 
+# Module-level cache for PUCIT-OHUL Excel labels (avoids reopening XLSX per image)
+_pucit_label_cache: dict[Path, dict[str, tuple[str | None, str | None]]] = {}
+
+
+def _load_pucit_excel(excel_file: Path) -> dict[str, tuple[str | None, str | None]]:
+    """Load and cache all labels from a PUCIT-OHUL Excel file.
+
+    Returns dict mapping image key -> (transcription, writer_id).
+    """
+    if excel_file in _pucit_label_cache:
+        return _pucit_label_cache[excel_file]
+
+    label_map: dict[str, tuple[str | None, str | None]] = {}
+    try:
+        import openpyxl
+
+        wb = openpyxl.load_workbook(excel_file, read_only=True)
+        ws = wb.active
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if row and len(row) >= 2 and row[0] is not None:
+                image_key = str(row[0])
+                transcription = str(row[1]) if row[1] else None
+                writer_id = str(row[2]) if len(row) >= 3 and row[2] else None
+                label_map[image_key] = (transcription, writer_id)
+        wb.close()
+        logger.debug("Loaded %d labels from %s", len(label_map), excel_file.name)
+    except ImportError:
+        logger.debug("openpyxl not available for PUCIT-OHUL label parsing")
+    except Exception:
+        logger.debug("Failed to parse PUCIT-OHUL labels from %s", excel_file)
+
+    _pucit_label_cache[excel_file] = label_map
+    return label_map
+
+
 def parse_pucit_ohul_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
-    """Parse PUCIT-OHUL Urdu handwriting labels from Excel files.
+    """Parse PUCIT-OHUL Urdu handwriting labels from cached Excel data.
 
     PUCIT-OHUL (Punjab University Center for IT - Offline Handwritten Urdu Lines):
         Pucit/
@@ -1796,12 +1954,7 @@ def parse_pucit_ohul_labels(dataset_path: Path, image_path: Path) -> OriginalLab
             train_lines/         - Training images
             test_lines/          - Testing images
 
-    This is an Urdu line-level handwriting dataset. Labels contain:
-        - Urdu transcription text (ground truth)
-        - Writer information (if available)
-
-    Note: Excel parsing requires openpyxl. Falls back to path-based inference
-    if Excel reading fails.
+    Excel data is cached on first access per file for O(1) lookups.
     """
     labels = OriginalLabels()
 
@@ -1823,8 +1976,7 @@ def parse_pucit_ohul_labels(dataset_path: Path, image_path: Path) -> OriginalLab
     if split:
         labels.raw_labels["split"] = split
 
-    # Try to find and parse Excel labels
-    # Look for Pucit subdirectory
+    # Find Pucit directory with Excel files
     pucit_path = None
     for parent in image_path.parents:
         if (parent / "train_labels_v2.xlsx").exists():
@@ -1834,31 +1986,18 @@ def parse_pucit_ohul_labels(dataset_path: Path, image_path: Path) -> OriginalLab
             pucit_path = parent / "Pucit"
             break
 
-    if pucit_path:
-        excel_file = pucit_path / f"{split}_labels_v2.xlsx" if split else None
-        if excel_file and excel_file.exists():
-            try:
-                import openpyxl
-
-                wb = openpyxl.load_workbook(excel_file, read_only=True)
-                ws = wb.active
-
-                # Find row matching image filename
-                image_name = image_path.stem
-                for row in ws.iter_rows(min_row=2, values_only=True):  # Skip header
-                    if row and len(row) >= 2:
-                        # Assuming format: [image_name, transcription, ...]
-                        if str(row[0]) == image_name or str(row[0]) == image_path.name:
-                            if row[1]:
-                                labels.transcription = str(row[1])
-                            if len(row) >= 3 and row[2]:
-                                labels.writer_id = str(row[2])
-                            break
-                wb.close()
-            except ImportError:
-                logger.debug("openpyxl not available for PUCIT-OHUL label parsing")
-            except Exception as e:
-                logger.debug(f"Failed to parse PUCIT-OHUL labels from {excel_file}: {e}")
+    if pucit_path and split:
+        excel_file = pucit_path / f"{split}_labels_v2.xlsx"
+        if excel_file.exists():
+            label_map = _load_pucit_excel(excel_file)
+            # O(1) dict lookup instead of iterating all rows
+            match = label_map.get(image_path.stem) or label_map.get(image_path.name)
+            if match:
+                transcription, writer_id = match
+                if transcription:
+                    labels.transcription = transcription
+                if writer_id:
+                    labels.writer_id = writer_id
 
     return labels
 
@@ -2791,10 +2930,10 @@ def parse_yarmouk_labels(dataset_path: Path, image_path: Path) -> OriginalLabels
         if part == "Training":
             labels.raw_labels["split"] = "train"
             break
-        elif part == "Testing":
+        if part == "Testing":
             labels.raw_labels["split"] = "test"
             break
-        elif part == "Samples":
+        if part == "Samples":
             labels.raw_labels["split"] = "sample"
             break
 
@@ -3085,7 +3224,7 @@ def parse_mathverse_labels(dataset_path: Path, image_path: Path) -> OriginalLabe
     return labels
 
 
-def parse_nist-sd2_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+def parse_nist_sd2_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
     """Parse NIST Special Database 2 (Tax Form) labels.
 
     SD2 contains IRS 1040 tax forms with field annotations in .fmt files.
@@ -3548,6 +3687,59 @@ def parse_realdae_labels(dataset_path: Path, image_path: Path) -> OriginalLabels
     return labels
 
 
+def parse_muharaf_labels(dataset_path: Path, image_path: Path) -> OriginalLabels:
+    """Parse Muharaf Arabic Historical Manuscripts labels.
+
+    Muharaf contains Arabic handwriting from Lebanese diaspora (19th-21st century).
+
+    Structure:
+        muharaf/public/
+            *.jpg  - Page images (457 pages)
+            *.png  - Line images (24,495 lines)
+            *.xml  - PAGE XML annotations
+            *.txt  - Text transcriptions (one per line image)
+
+    Extracts:
+        - language_code: "ar" (Arabic)
+        - script_name: "Arabic"
+        - iso15924_script_code: "Arab"
+        - transcription: from companion .txt file
+        - raw_labels: reading_direction, production type
+    """
+    labels = OriginalLabels()
+
+    # Set language/script for Arabic handwriting
+    labels.language_code = "ar"
+    labels.script_name = "Arabic"
+    labels.iso15924_script_code = "Arab"
+
+    if labels.raw_labels is None:
+        labels.raw_labels = {}
+
+    labels.raw_labels["dataset"] = "muharaf"
+    labels.raw_labels["production"] = "handwritten-cursive"
+    labels.raw_labels["reading_direction"] = "right-to-left"
+
+    # Determine if page image or line image
+    suffix = image_path.suffix.lower()
+    if suffix == ".jpg":
+        labels.raw_labels["image_type"] = "page"
+    elif suffix == ".png":
+        labels.raw_labels["image_type"] = "line"
+
+    # Try to read companion .txt file for transcription
+    txt_path = image_path.with_suffix(".txt")
+    if txt_path.exists():
+        try:
+            transcription = txt_path.read_text(encoding="utf-8").strip()
+            if transcription:
+                labels.transcription = transcription
+        except Exception:
+            logger.debug(f"Failed to read transcription from {txt_path.name}")
+
+    return labels
+
+
 # Registry of label parsers
 LABEL_PARSERS = {
     "parse_diqa_labels": parse_diqa_labels,
@@ -3579,13 +3771,14 @@ LABEL_PARSERS = {
     "parse_funsd_plus_labels": parse_funsd_plus_labels,
     "parse_sroie_labels": parse_sroie_labels,
     "parse_mathverse_labels": parse_mathverse_labels,
-    "parse_nist-sd2_labels": parse_nist-sd2_labels,
+    "parse_nist_sd2_labels": parse_nist_sd2_labels,
     "parse_nist_sd6_labels": parse_nist_sd6_labels,
     "parse_cvsi_labels": parse_cvsi_labels,
     "parse_siw13_labels": parse_siw13_labels,
     "parse_mle2e_labels": parse_mle2e_labels,
     "parse_realdae_labels": parse_realdae_labels,
     "parse_omnidocbench_labels": parse_omnidocbench_labels,
+    "parse_muharaf_labels": parse_muharaf_labels,
 }
 
 
@@ -3641,6 +3834,7 @@ def apply_tiered_enrichment(
     image_path: Path,
     use_yolo: bool,
     git_sha: str,
+    existing_openlid: dict[str, Any] | None = None,
 ) -> EnrichmentData:
     """Apply tiered enrichment logic to determine content flags.
 
@@ -3648,6 +3842,19 @@ def apply_tiered_enrichment(
     Tier 1: Derived from COCO/JSON annotations
     Tier 2: DocLayout-YOLO inference
     Tier 3: Dataset-level heuristics (fallback)
+
+    Language/Script Priority:
+    1. Ground truth from parser (original_labels.language_code) - highest
+    2. Existing OpenLID detection (existing_openlid) - preserve if no ground truth
+    3. Dataset defaults - only if no other data available
+
+    Args:
+        sample: Sample metadata being enriched
+        config: Dataset configuration
+        image_path: Path to the image file
+        use_yolo: Whether to use DocLayout-YOLO inference
+        git_sha: Current git SHA for provenance
+        existing_openlid: Optional existing OpenLID-detected language data to preserve
     """
     dataset_name = sample.dataset_name
     original_labels = sample.original_labels
@@ -3742,43 +3949,81 @@ def apply_tiered_enrichment(
         enrichment.text_scope_content_type = config.get("text_scope_content_type", "printed")
     enrichment.text_scope_detection_method = "dataset_metadata"
 
-    # Language/Script (from config, with Layer 1 fallback, then dataset default)
-    # Priority: config > Layer 1 parsed values > dataset default > None
-    enrichment.iso639_language = config.get("iso639_language")
-    if enrichment.iso639_language is None and original_labels.language_code:
-        enrichment.iso639_language = original_labels.language_code
-    if enrichment.iso639_language is None:
-        enrichment.iso639_language = config.get("default_language_code")
+    # Language/Script Priority Hierarchy:
+    # 1. Ground truth from parser (original_labels) - highest priority
+    # 2. Existing OpenLID detection - preserve if no ground truth
+    # 3. Dataset defaults - only if no other data available
 
-    enrichment.iso15924_script = config.get("iso15924_script")
-    if enrichment.iso15924_script is None and original_labels.script_name:
-        # Map script names to ISO 15924 codes
-        script_to_iso = {
-            "Arabic": "Arab",
-            "Tibetan": "Tibt",
-            "Japanese": "Jpan",
-            "Devanagari": "Deva",
-            "Latin": "Latn",
-            "Chinese": "Hans",
-            "Korean": "Kore",
-            "Cyrillic": "Cyrl",
-            "Greek": "Grek",
-            "Hebrew": "Hebr",
-            "Thai": "Thai",
-            "Tamil": "Taml",
-            "Telugu": "Telu",
-            "Bengali": "Beng",
-            "Gujarati": "Gujr",
-            "Kannada": "Knda",
-            "Malayalam": "Mlym",
-            "Oriya": "Orya",
-            "Punjabi": "Guru",
-            "Urdu": "Arab",  # Urdu uses Arabic script
-        }
+    # Map script names to ISO 15924 codes
+    script_to_iso = {
+        "Arabic": "Arab",
+        "Tibetan": "Tibt",
+        "Japanese": "Jpan",
+        "Devanagari": "Deva",
+        "Latin": "Latn",
+        "Chinese": "Hans",
+        "Korean": "Kore",
+        "Cyrillic": "Cyrl",
+        "Greek": "Grek",
+        "Hebrew": "Hebr",
+        "Thai": "Thai",
+        "Tamil": "Taml",
+        "Telugu": "Telu",
+        "Bengali": "Beng",
+        "Gujarati": "Gujr",
+        "Kannada": "Knda",
+        "Malayalam": "Mlym",
+        "Oriya": "Orya",
+        "Punjabi": "Guru",
+        "Urdu": "Arab",  # Urdu uses Arabic script
+    }
+
+    # Check for ground truth from parser (Priority 1 - highest)
+    has_ground_truth_language = bool(
+        config.get("iso639_language") or original_labels.language_code
+    )
+    has_ground_truth_script = bool(
+        config.get("iso15924_script") or original_labels.script_name
+    )
+
+    # Apply language with priority hierarchy
+    if config.get("iso639_language"):
+        # Config override (explicit dataset-level ground truth)
+        enrichment.iso639_language = config.get("iso639_language")
+        enrichment.text_scope_detection_method = "dataset_config"
+    elif original_labels.language_code:
+        # Parser-extracted ground truth (Priority 1)
+        enrichment.iso639_language = original_labels.language_code
+        enrichment.text_scope_detection_method = "parser_ground_truth"
+    elif existing_openlid and existing_openlid.get("iso639_language"):
+        # Preserve existing OpenLID detection (Priority 2)
+        enrichment.iso639_language = existing_openlid["iso639_language"]
+        enrichment.text_scope_detection_method = existing_openlid.get(
+            "text_scope_detection_method", "openlid_v2"
+        )
+    else:
+        # Dataset default fallback (Priority 3 - lowest)
+        enrichment.iso639_language = config.get("default_language_code")
+        enrichment.text_scope_detection_method = "dataset_default"
+
+    # Apply script with priority hierarchy
+    if config.get("iso15924_script"):
+        # Config override (explicit dataset-level ground truth)
+        enrichment.iso15924_script = config.get("iso15924_script")
+    elif original_labels.script_name:
+        # Parser-extracted ground truth (Priority 1)
         enrichment.iso15924_script = script_to_iso.get(
             original_labels.script_name, original_labels.script_name
         )
-    if enrichment.iso15924_script is None:
+    elif existing_openlid and existing_openlid.get("iso15924_script"):
+        # Preserve existing OpenLID detection (Priority 2)
+        enrichment.iso15924_script = existing_openlid["iso15924_script"]
+        # Also preserve related OpenLID fields
+        enrichment.bcp47_tag = existing_openlid.get("bcp47_tag")
+        enrichment.primary_language = existing_openlid.get("primary_language")
+        enrichment.language_confidence = existing_openlid.get("language_confidence")
+    else:
+        # Dataset default fallback (Priority 3 - lowest)
         enrichment.iso15924_script = config.get("default_script_name")
 
     # Script family (from config, with auto-derivation from ISO 15924)
@@ -3822,6 +4067,40 @@ def apply_tiered_enrichment(
 
     # Dataset short code (standardized identifier)
     enrichment.dataset_short_code = dataset_name.replace("_", "-")
+
+    # === v2.1.0 fields (geometric, physical degradation, ML IQA, code, image properties) ===
+
+    # Code detection: derive from layout detections if available
+    if enrichment.layout_detections:
+        code_classes = {"code", "source_code", "listing"}
+        enrichment.has_code = any(
+            det.get("class_name", "").lower() in code_classes
+            for det in enrichment.layout_detections
+        )
+        enrichment.code_confidence = 1.0 if tier == EnrichmentTier.TIER_1_ANNOTATION else 0.8
+    elif tier == EnrichmentTier.TIER_0_EXACT:
+        enrichment.has_code = False
+        enrichment.code_confidence = 1.0
+
+    # Resolution enhancement: effective_dpi mirrors resolution_dpi until resampling detection
+    enrichment.effective_dpi = sample.original_file.dpi
+
+    # Image properties: color_mode from config or auto-detect, document_age from config
+    enrichment.color_mode = config.get("color_mode")
+    enrichment.document_age = config.get("document_age")
+
+    # Auto-derive document_age for known historical/degraded datasets
+    if enrichment.document_age is None:
+        historical_datasets = {"dibco", "historical_degraded"}
+        aged_datasets = {"tobacco800", "rvl_cdip"}
+        if dataset_name in historical_datasets:
+            enrichment.document_age = "historical"
+        elif dataset_name in aged_datasets:
+            enrichment.document_age = "aged"
+
+    # Geometric, physical degradation, ML IQA, OCR impact:
+    # Left as None -- populated by dedicated enrichment passes
+    # (production pipeline inference, orientation detection, shadow/warping models)
 
     return enrichment
 
@@ -3891,9 +4170,20 @@ def scan_dataset(
     config: dict[str, Any],
     limit: int | None = None,
     use_yolo: bool = True,
+    existing_openlid_data: dict[str, dict[str, Any]] | None = None,
 ) -> list[SampleMetadata]:
-    """Scan a dataset and create initial metadata records."""
+    """Scan a dataset and create initial metadata records.
+
+    Args:
+        dataset_name: Name of the dataset to scan
+        config: Dataset configuration dictionary
+        limit: Optional limit on number of samples to process
+        use_yolo: Whether to use DocLayout-YOLO inference
+        existing_openlid_data: Optional dict mapping file_hash to existing
+            OpenLID-detected language/script data to preserve
+    """
     samples: list[SampleMetadata] = []
+    existing_openlid_data = existing_openlid_data or {}
 
     dataset_path = config["path"]
     pattern = config["pattern"]
@@ -3980,8 +4270,10 @@ def scan_dataset(
         tier, tier_desc = get_enrichment_tier(
             dataset_name, config, original_labels, use_yolo
         )
+        # Check for existing OpenLID data to preserve
+        existing_openlid = existing_openlid_data.get(file_hash)
         enrichment = apply_tiered_enrichment(
-            sample, config, image_path, use_yolo, git_sha
+            sample, config, image_path, use_yolo, git_sha, existing_openlid
         )
 
         # Add enrichment with reproducibility fields
@@ -4142,6 +4434,32 @@ def save_metadata_parquet(samples: list[SampleMetadata], output_path: Path) -> N
     logger.info(f"Saved {len(records)} samples to {output_path}")
 
 
+def _count_images_on_disk(dataset_name: str) -> int | None:
+    """Count total image files on disk for a dataset.
+
+    Resolves path from DATASET_CONFIGS and counts files matching the
+    dataset's glob pattern. Returns None if dataset not in configs or
+    path not found.
+    """
+    config = DATASET_CONFIGS.get(dataset_name)
+    if not config:
+        return None
+
+    dataset_path: Path = config["path"]
+    pattern: str = config["pattern"]
+
+    if not dataset_path.exists():
+        return None
+
+    image_extensions = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp"}
+    count = sum(
+        1
+        for f in dataset_path.glob(pattern)
+        if f.suffix.lower() in image_extensions
+    )
+    return count
+
+
 def save_metadata_json(samples: list[SampleMetadata], output_dir: Path) -> None:
     """Save full metadata to JSON files (one per dataset)."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -4161,9 +4479,13 @@ def save_metadata_json(samples: list[SampleMetadata], output_dir: Path) -> None:
         for s in dataset_samples:
             split_counts[s.split] = split_counts.get(s.split, 0) + 1
 
+        # Count total images on disk (independent of limit or processing)
+        image_count_on_disk = _count_images_on_disk(dataset_name)
+
         data = {
             "dataset_name": dataset_name,
             "sample_count": len(dataset_samples),
+            "image_count_on_disk": image_count_on_disk,
             "splits_included": list(split_counts.keys()),
             "split_counts": split_counts,
             "created_at": datetime.now(UTC).isoformat(),
@@ -4176,7 +4498,86 @@ def save_metadata_json(samples: list[SampleMetadata], output_dir: Path) -> None:
         with open(output_file, "w") as f:
             json.dump(data, f, indent=2)
 
-        logger.info(f"Saved {len(dataset_samples)} samples to {output_file}")
+        disk_info = (
+            f" (disk: {image_count_on_disk})"
+            if image_count_on_disk is not None
+            else ""
+        )
+        logger.info(
+            f"Saved {len(dataset_samples)} samples to {output_file}{disk_info}"
+        )
+
+
+def load_existing_metadata(
+    output_dir: Path,
+) -> dict[str, dict[str, Any]]:
+    """Load existing metadata indexed by file_hash for merge operations.
+
+    This allows preserving OpenLID-detected language/script data when
+    re-running the annotation script.
+
+    Args:
+        output_dir: Directory containing JSON metadata files
+
+    Returns:
+        Dictionary mapping file_hash to existing enrichment data
+    """
+    existing: dict[str, dict[str, Any]] = {}
+
+    json_dir = output_dir / "json"
+    if not json_dir.exists():
+        return existing
+
+    for json_file in json_dir.glob("*_metadata.json"):
+        try:
+            with open(json_file) as f:
+                data = json.load(f)
+
+            for sample in data.get("samples", []):
+                file_hash = sample.get("file_hash")
+                if not file_hash:
+                    continue
+
+                # Extract current enrichment data if available
+                enrichment_versions = sample.get("enrichment_versions", [])
+                current_version = sample.get("current_version", 0)
+
+                for version in enrichment_versions:
+                    if version.get("version") == current_version:
+                        enrichment_data = version.get("data", {})
+                        # Check if this has OpenLID-detected language data
+                        detection_method = enrichment_data.get(
+                            "text_scope_detection_method", ""
+                        )
+                        if "openlid" in detection_method.lower():
+                            existing[file_hash] = {
+                                "iso639_language": enrichment_data.get(
+                                    "iso639_language"
+                                ),
+                                "iso15924_script": enrichment_data.get(
+                                    "iso15924_script"
+                                ),
+                                "script_family": enrichment_data.get("script_family"),
+                                "bcp47_tag": enrichment_data.get("bcp47_tag"),
+                                "primary_language": enrichment_data.get(
+                                    "primary_language"
+                                ),
+                                "language_confidence": enrichment_data.get(
+                                    "language_confidence"
+                                ),
+                                "text_scope_detection_method": detection_method,
+                            }
+                        break
+
+        except Exception as e:
+            logger.warning(f"Failed to load existing metadata from {json_file}: {e}")
+
+    if existing:
+        logger.info(
+            f"Loaded {len(existing)} samples with OpenLID language data to preserve"
+        )
+
+    return existing
 
 
 def generate_statistics(samples: list[SampleMetadata]) -> dict[str, Any]:
@@ -4359,9 +4760,16 @@ Enrichment Tiers:
                 logger.info(f"  {name}: {config['path']} ({tier})")
             return
 
+        # Load existing metadata to preserve OpenLID language/script data
+        existing_openlid_data = load_existing_metadata(args.output)
+
         for dataset_name, config in datasets_to_scan.items():
             samples = scan_dataset(
-                dataset_name, config, limit=args.limit, use_yolo=use_yolo
+                dataset_name,
+                config,
+                limit=args.limit,
+                use_yolo=use_yolo,
+                existing_openlid_data=existing_openlid_data,
             )
             all_samples.extend(samples)
             logger.info(f"  {dataset_name}: {len(samples)} samples")

@@ -18,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import pyarrow.parquet as pq
@@ -251,6 +252,12 @@ def main() -> None:
         action="store_true",
         help="List all available columns",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        default=False,
+        help="Output results as JSON instead of formatted text",
+    )
     args = parser.parse_args()
 
     if not args.parquet.exists():
@@ -278,6 +285,43 @@ def main() -> None:
         print(f"Filtered to {len(df):,} records for dataset: {args.dataset}")
 
     summary = generate_dataset_summary(df)
+
+    if args.json:
+        # Build JSON-serializable results
+        # Per-field coverage percentages grouped by FIELD_CATEGORIES
+        field_coverage: dict[str, dict[str, dict[str, float | int]]] = {}
+        for category, fields in FIELD_CATEGORIES.items():
+            category_coverage: dict[str, dict[str, float | int]] = {}
+            for field in fields:
+                non_null, total, pct = calculate_field_completeness(df, field)
+                category_coverage[field] = {
+                    "non_null_count": non_null,
+                    "total_count": total,
+                    "percentage": round(pct, 1),
+                }
+            field_coverage[category] = category_coverage
+
+        # Overall completeness score (average across all fields)
+        all_percentages = []
+        for category_fields in field_coverage.values():
+            for stats in category_fields.values():
+                all_percentages.append(stats["percentage"])
+        overall_completeness = (
+            round(sum(all_percentages) / len(all_percentages), 1)
+            if all_percentages
+            else 0.0
+        )
+
+        results = {
+            "total_records": len(df),
+            "total_datasets": len(summary),
+            "per_dataset": summary,
+            "field_coverage_by_category": field_coverage,
+            "overall_completeness_score": overall_completeness,
+        }
+        print(json.dumps(results, indent=2, default=str))
+        return
+
     print_summary_table(df, summary)
 
     if args.output:

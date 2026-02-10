@@ -91,7 +91,7 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "receipts": {
         "count": 1000,
         "sources": [
-            {"path": BASE_DATA_PATH / "forms/sroie", "pattern": "**/*.jpg"},
+            {"path": BASE_DATA_PATH / "forms/sroie_icdar2019", "pattern": "**/*.jpg"},
         ],
         "doc_type": "receipt",
     },

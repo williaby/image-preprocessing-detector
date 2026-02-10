@@ -44,7 +44,7 @@ COMPOSITION = {
     "nist_sd6": 1_200,  # Tax forms (5,595 available)
     "funsd_plus": 1_139,  # Form understanding (1,139 available)
     # Mobile capture proxy (6%)
-    "sroie": 1_500,  # Receipts (2,043 available)
+    "sroie": 973,  # Receipts (973 available - full ICDAR 2019 set)
     # Born-digital tables (18%)
     "tablebank": 2_500,  # LaTeX/Word tables (260,025 available)
     "pubtabnet": 2_000,  # Scientific tables (519,030 available)
@@ -76,7 +76,7 @@ SOURCE_PATHS: dict[str, tuple[Path, str]] = {
     "nist-sd2": (BASE_DATA / "forms/nist-sd2", "**/*.png"),
     "nist_sd6": (BASE_DATA / "forms/nist_sd6", "**/*.png"),
     "funsd_plus": (BASE_DATA / "forms/funsd_plus/images", "*.jpg"),
-    "sroie": (BASE_DATA / "forms/sroie", "**/*.jpg"),
+    "sroie": (BASE_DATA / "forms/sroie_icdar2019", "**/*.jpg"),
     # === 01_base_data/tables (tabular data) ===
     "tablebank": (BASE_DATA / "tables/tablebank/TableBank/Detection/images", "*.jpg"),
     "pubtabnet": (BASE_DATA / "tables/pubtabnet", "**/*.png"),

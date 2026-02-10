@@ -48,7 +48,7 @@ DATASET_PATHS = {
     "rvl_cdip": BASE_DATA_PATH / "documents/rvl_cdip",
     "tobacco800": BASE_DATA_PATH / "documents/tobacco800",
     "funsd": BASE_DATA_PATH / "forms/funsd",
-    "sroie": BASE_DATA_PATH / "forms/sroie",
+    "sroie": BASE_DATA_PATH / "forms/sroie_icdar2019",
 }
 
 # Confidence thresholds for stratification
