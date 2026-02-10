@@ -151,7 +151,7 @@ source: project-a
 - Performance benchmarking (all components)
 - Load testing and stress testing
 - Documentation updates
-- Deployment automation (Docker, Kubernetes)
+- Deployment automation (Docker, Docker Compose)
 - Production runbooks
 
 **Status**: ⏳ NOT STARTED (blocked by Phase 4)

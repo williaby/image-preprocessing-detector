@@ -66,25 +66,29 @@ Estimated daily cost has exceeded $5 threshold.
 
 ```bash
 # Increase uncertainty threshold (fewer escalations)
-kubectl set env deployment/imgprep-worker IMGPREP_UNCERTAINTY_THRESHOLD=0.35 -n imgprep
+export IMGPREP_UNCERTAINTY_THRESHOLD=0.35
+docker restart imgprep-worker
 
 # Or disable teacher entirely
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_ENABLED=false -n imgprep
+export IMGPREP_TEACHER_ENABLED=false
+docker restart imgprep-worker
 ```
 
 #### Use local GPU instead of Modal
 
 ```bash
 # Switch to local GPU (if available)
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_DEVICE=gpu -n imgprep
-kubectl set env deployment/imgprep-worker IMGPREP_MODAL_ENABLED=false -n imgprep
+export IMGPREP_TEACHER_DEVICE=gpu
+export IMGPREP_MODAL_ENABLED=false
+docker restart imgprep-worker
 ```
 
 #### Implement rate limiting
 
 ```bash
 # Add daily teacher limit
-kubectl set env deployment/imgprep-worker IMGPREP_DAILY_TEACHER_LIMIT=1000 -n imgprep
+export IMGPREP_DAILY_TEACHER_LIMIT=1000
+docker restart imgprep-worker
 ```
 
 ---
@@ -115,7 +119,7 @@ Cost rate has suddenly increased, indicating unusual usage pattern.
 3. **Check for unusual document types**
 
    ```bash
-   kubectl logs -n imgprep -l app=imgprep-worker --tail=1000 | \
+   docker logs imgprep-worker --tail=1000 | \
      jq 'select(.event == "page_processed")' | \
      jq '.gate_result' | sort | uniq -c
    ```
@@ -177,10 +181,12 @@ Approaching or exceeding the $30 monthly Modal free tier budget.
 
 ```bash
 # Disable Modal GPU, use local only
-kubectl set env deployment/imgprep-worker IMGPREP_MODAL_ENABLED=false -n imgprep
+export IMGPREP_MODAL_ENABLED=false
+docker restart imgprep-worker
 
 # Or set strict daily budget
-kubectl set env deployment/imgprep-worker IMGPREP_DAILY_BUDGET=0.5 -n imgprep
+export IMGPREP_DAILY_BUDGET=0.5
+docker restart imgprep-worker
 ```
 
 #### Long-term solutions
@@ -228,21 +234,24 @@ Modal GPU usage rate exceeds 100 seconds/hour.
 
 ```bash
 # Process multiple images per GPU call
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_BATCH_SIZE=8 -n imgprep
+export IMGPREP_TEACHER_BATCH_SIZE=8
+docker restart imgprep-worker
 ```
 
 #### Enable caching
 
 ```bash
 # Cache teacher results
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_CACHE_ENABLED=true -n imgprep
+export IMGPREP_TEACHER_CACHE_ENABLED=true
+docker restart imgprep-worker
 ```
 
 #### Optimize model
 
 ```bash
 # Use ONNX optimized model
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_FORMAT=onnx -n imgprep
+export IMGPREP_TEACHER_FORMAT=onnx
+docker restart imgprep-worker
 ```
 
 ### Cost Reference

@@ -249,7 +249,6 @@ Prepare system for production deployment with API, monitoring, and scalability.
 **Deployment**:
 
 - [ ] Docker containers
-- [ ] Kubernetes manifests
 - [ ] Horizontal scaling
 - [ ] GPU resource management
 

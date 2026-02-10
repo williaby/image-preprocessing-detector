@@ -37,7 +37,7 @@ pip install httpx google-cloud-storage aiofiles
 pip install doclayout-yolo
 
 # Install additional utilities
-pip install rich structlog
+pip install rich structlog pyarrow
 
 # Verify GPU
 echo "=== GPU Verification ==="
@@ -105,6 +105,27 @@ DATASETS = {
     "mlt19": "datasets/mlt19",
     "jssoda": "datasets/jssoda",
     "rvl-cdip": "datasets/rvl_cdip",
+    # Forms datasets (receipts/invoices)
+    "invoices-kaggle": "datasets/invoices_kaggle",
+    "mobile-receipts-voxel51": "datasets/mobile_receipts_voxel51",
+    "receipts-hitl": "datasets/receipts_hitl",
+    "sroie-voxel51": "datasets/sroie_voxel51",
+    # Remaining datasets needing text + layout extraction
+    "docsynth": "datasets/docsynth300k",
+    "doc3d": "datasets/doc3d",
+    "siw13": "datasets/siw13",
+    "signatr6k": "datasets/signatr6k",
+    "cvsi": "datasets/cvsi",
+    "arabic-docs": "datasets/arabic_docs_ocr",
+    "realdae": "datasets/realdae",
+    "tobacco800": "datasets/tobacco800",
+    "dibco": "datasets/dibco",
+    "bhutan-afs": "datasets/bhutan_financial",
+}
+
+# Datasets stored as parquet with embedded images (not standalone image files)
+PARQUET_DATASETS = {
+    "docsynth",
 }
 
 GCS_BUCKET = "image_detection_b"

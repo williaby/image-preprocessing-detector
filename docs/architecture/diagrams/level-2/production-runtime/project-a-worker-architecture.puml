@@ -1,4 +1,4 @@
-@startuml Project_A_Worker_Architecture
+@startuml project-a-worker-architecture
 !theme plain
 skinparam backgroundColor #FEFEFE
 skinparam packageStyle rectangle

@@ -26,7 +26,7 @@ Generated: 2025-01-29
 | **mathverse** | `formulas/mathverse/` | ~2 GB | P1 - Formulas |
 | **multimodal_textbook** | `educational/multimodal_textbook/` | ~1 GB | P1 - Educational |
 | **nist_sd6** | `forms/nist_sd6/` | ~1 GB | P1 - Forms |
-| **sroie** | `forms/sroie/` | ~500 MB | P1 - Receipts |
+| **sroie** | `forms/sroie_icdar2019/` | ~400 MB | P1 - Receipts (ICDAR 2019, 973 images) |
 | **funsd_plus** | `forms/funsd_plus/` | ~200 MB | P1 - Forms |
 | **tobacco800** | `degraded/tobacco800/` | ~500 MB | P2 - Degraded |
 | **bhutan_financial** | `documents/bhutan_financial/` | ~50 MB | P2 - Government |

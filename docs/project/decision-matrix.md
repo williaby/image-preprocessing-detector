@@ -410,7 +410,6 @@ Where should the production service be deployed?
 **Start with Cloud (GCP or AWS)** for faster launch:
 
 - Deploy on GCP (Cloud Run + GPU VMs) or AWS (ECS + EC2)
-- Use managed Kubernetes (GKE or EKS) for orchestration
 - Auto-scaling for variable workload
 - Clear migration path to on-premise if cost becomes issue
 

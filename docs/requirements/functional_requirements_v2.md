@@ -1610,7 +1610,7 @@ The application shall be **stateless**:
 - No in-memory session data between requests
 - Each request is independent
 
-**Rationale:** Enables horizontal scaling and Kubernetes deployment
+**Rationale:** Enables horizontal scaling and container-based deployment
 
 ---
 

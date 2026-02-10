@@ -163,7 +163,7 @@ Based on analysis of the [DeQA-Doc repository](/home/byron/dev/DeQA-Doc/), we re
 | **OCR-Quality** | 1,000 | 1-dim (1-4) | OCR quality + multilingual | Local: `01_base_data/ocr_quality/` | **HIGH (NEW)** |
 | **DIBCO** | 131 | Binarization GT | Extreme degradation edge cases | Local: `02_benchmark_only/dibco/` | HIGH |
 | **FUNSD** | 199 | NER annotations | Real noisy scanned forms | Local: `01_base_data/forms/funsd/` | MEDIUM |
-| **SROIE** | 973 | Entity extraction | Mobile capture / thermal print | Local: `01_base_data/forms/sroie/` | MEDIUM |
+| **SROIE** | 973 | Entity extraction | Malaysian receipts (camera + scanner) | Local: `01_base_data/forms/sroie_icdar2019/` | MEDIUM |
 | **Tobacco-800** | 1,290 | N/A | Real archival degradation | Local: `01_base_data/degraded/tobacco800/` | MEDIUM |
 | **Total Stage 1** | **~13,363** | | Diverse anchor set | | |
 

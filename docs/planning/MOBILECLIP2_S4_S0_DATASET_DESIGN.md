@@ -150,9 +150,9 @@ FUNSD + FUNSD+:
   License: CC-BY-4.0 (Commercial OK)
 
 SROIE:
-  Path: /mnt/e/image_detection/01_base_data/forms/sroie/
-  Total Available: 973 receipts
-  Use: All 973 (mobile captures, thermal print)
+  Path: /mnt/e/image_detection/01_base_data/forms/sroie_icdar2019/
+  Total Available: 973 receipts (626 train + 347 test)
+  Use: All 973 (Malaysian receipts, camera + scanner captures)
   Format: JPEG
   License: Custom (Research only)
 

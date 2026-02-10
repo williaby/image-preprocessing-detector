@@ -50,8 +50,8 @@ Processing latency has exceeded acceptable thresholds. This indicates the system
 3. **Check resource utilization**
 
    ```bash
-   # CPU/Memory on worker pods
-   kubectl top pods -n imgprep -l app=imgprep-worker
+   # CPU/Memory on worker containers
+   docker stats imgprep-worker --no-stream
 
    # GPU memory
    nvidia-smi
@@ -66,7 +66,7 @@ Processing latency has exceeded acceptable thresholds. This indicates the system
 5. **Review recent deployments**
 
    ```bash
-   kubectl rollout history deployment/imgprep-worker -n imgprep
+   docker inspect imgprep-worker --format='{{.Config.Image}} {{.Created}}'
    ```
 
 ### Resolution
@@ -75,7 +75,7 @@ Processing latency has exceeded acceptable thresholds. This indicates the system
 
 ```bash
 # Scale workers horizontally
-kubectl scale deployment/imgprep-worker --replicas=6 -n imgprep
+docker compose up -d --scale imgprep-worker=6
 ```
 
 #### If GPU-bound
@@ -85,17 +85,19 @@ kubectl scale deployment/imgprep-worker --replicas=6 -n imgprep
 curl -s http://imgprep:8000/metrics | grep imgprep_teacher_invocations
 
 # Temporarily disable teacher if escalation rate > 30%
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_ENABLED=false -n imgprep
+export IMGPREP_TEACHER_ENABLED=false
+docker restart imgprep-worker
 ```
 
 #### If queue backlog
 
 ```bash
 # Increase worker count
-kubectl scale deployment/imgprep-worker --replicas=8 -n imgprep
+docker compose up -d --scale imgprep-worker=8
 
 # Consider enabling batch mode
-kubectl set env deployment/imgprep-worker IMGPREP_BATCH_MODE=true -n imgprep
+export IMGPREP_BATCH_MODE=true
+docker restart imgprep-worker
 ```
 
 ### Prevention
@@ -128,13 +130,13 @@ The student model (ResNet-18) is exceeding its target latency of 100ms p95.
 2. **Verify GPU availability**
 
    ```bash
-   kubectl exec -it deployment/imgprep-worker -n imgprep -- nvidia-smi
+   docker exec imgprep-worker nvidia-smi
    ```
 
 3. **Check for memory pressure**
 
    ```bash
-   kubectl exec -it deployment/imgprep-worker -n imgprep -- free -h
+   docker exec imgprep-worker free -h
    ```
 
 ### Resolution
@@ -143,18 +145,19 @@ The student model (ResNet-18) is exceeding its target latency of 100ms p95.
 
 ```bash
 # Restart workers to reinitialize GPU
-kubectl rollout restart deployment/imgprep-worker -n imgprep
+docker restart imgprep-worker
 ```
 
 #### If GPU memory exhausted
 
 ```bash
 # Reduce batch size
-kubectl set env deployment/imgprep-worker IMGPREP_BATCH_SIZE=4 -n imgprep
+export IMGPREP_BATCH_SIZE=4
+docker restart imgprep-worker
 ```
 
 ### Prevention
 
 - Ensure GPU is always available for student model
 - Monitor model load status
-- Set resource requests/limits appropriately
+- Configure resource limits in docker-compose.yml
