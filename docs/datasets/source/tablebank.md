@@ -254,16 +254,14 @@
 4. Derive `content_flags.has_table = True` from annotations
 5. Map raw_labels to Layer 2 `layout_detections[]` structure
 
-###### Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/tables/tablebank/TableBank/Detection/images/` | ✅ Available | All splits in single directory |
-| **Layout GT** | `01_base_data/tables/tablebank/TableBank/Detection/annotations/*.json` | ✅ COCO format | 6 files (3 splits × 2 sources) |
-| **Text/OCR GT** | - | ❌ None | Not provided - detection only |
-| **Text/OCR Extracted** | `annotations/tablebank/ocr/` | ❌ Not extracted | Future: DocTR extraction |
-| **Layout Extracted** | `annotations/tablebank/layout/` | ❌ Not extracted | Not needed (GT available) |
-| **Layer 2 Metadata** | `metadata_registry/json/tablebank_layer2.json` | ❌ Not generated | Pending annotation pipeline |
+| **Images** | `01_base_data/tables/tablebank/` | ✅ Available | 260,025 PNG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
 
 **Location Status Legend**:
 
@@ -327,3 +325,22 @@
 ```
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 260,025 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 260,025 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

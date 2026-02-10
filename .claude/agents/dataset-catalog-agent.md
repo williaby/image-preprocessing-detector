@@ -14,7 +14,7 @@ Specialized dataset documentation assistant for reviewing, validating, and compl
 
 ## Core Responsibilities
 
-- **Catalog Entry Validation**: Review and complete DATASET_CATALOG.md entries per template
+- **Catalog Entry Validation**: Review and complete docs/datasets/source/{canonical-name}.md entries per template
 - **Parser Auditing**: Compare source labels against parser extraction coverage
 - **Layer 2 Text Integration**: Ensure text_content field populated correctly in parsers
 - **Naming Compliance**: Enforce DATASET_NAMING_STANDARD.md canonical names
@@ -63,22 +63,40 @@ Review dataset catalog entry for cocotext (category: language, priority: P1)
 ### Phase 1: Current State Analysis
 
 1. **Read Template**: docs/datasets/DATASET_TEMPLATE.md (understand required format)
-2. **Read Current Entry**: Search DATASET_CATALOG.md for dataset section using Grep
+2. **Read Current Entry**: Read docs/datasets/source/{canonical-name}.md
 3. **Gap Analysis**: Create comparison matrix:
 
 | Template Section | Present? | Complete? | Notes |
 |------------------|----------|-----------|-------|
-| Quick Stats | Yes/No | Full/Partial/Empty | |
-| Overview Table | Yes/No | Full/Partial/Empty | |
-| Source Data Inventory | Yes/No | Full/Partial/Empty | |
-| Project Usage | Yes/No | Full/Partial/Empty | |
-| Parser & Metadata Integration | Yes/No | Full/Partial/Empty | |
-| Data Locations | Yes/No | Full/Partial/Empty | |
-| Dataset Statistics | Yes/No | Full/Partial/Empty | |
-| Content Composition | Yes/No | Full/Partial/Empty | |
-| IQA Profile | Yes/No | Full/Partial/Empty | |
-| Known Issues | Yes/No | Full/Partial/Empty | |
-| Dataset-Specific Notes | Yes/No | Full/Partial/Empty | |
+| 1. Overview | Yes/No | Full/Partial/Empty | Frontmatter, overview table |
+| 2. Source Data Inventory | Yes/No | Full/Partial/Empty | |
+| → 2.1 Provided File Types | Yes/No | Full/Partial/Empty | |
+| → 2.2 Dataset Split Locations | Yes/No | Full/Partial/Empty | |
+| → 2.3 Provided Labels & Annotations | Yes/No | Full/Partial/Empty | |
+| → 2.4 Provided Metadata | Yes/No | Full/Partial/Empty | Optional |
+| → 2.5 Annotation Schema Details | Yes/No | Full/Partial/Empty | Optional |
+| → 2.6 Parser Potential Summary | Yes/No | Full/Partial/Empty | Optional |
+| 3. Project Usage | Yes/No | Full/Partial/Empty | |
+| 3b. Parser & Metadata Integration | Yes/No | Full/Partial/Empty | |
+| 3c. Data Locations | Yes/No | Full/Partial/Empty | |
+| 4. Dataset Statistics | Yes/No | Full/Partial/Empty | |
+| → 4.1 Split Coverage | Yes/No | Full/Partial/Empty | |
+| → 4.2 Sample Counts | Yes/No | Full/Partial/Empty | |
+| → 4.3 Text Statistics | Yes/No | Full/Partial/Empty | Conditional |
+| 5. Content Composition | Yes/No | Full/Partial/Empty | |
+| → 5.1 Class/Category Distribution | Yes/No | Full/Partial/Empty | Optional |
+| → 5.2 Class/Category Definitions | Yes/No | Full/Partial/Empty | Optional |
+| → 5.3 Language & Script Coverage | Yes/No | Full/Partial/Empty | Optional |
+| 6. IQA Profile | Yes/No | Full/Partial/Empty | |
+| → 6.1 Source Characteristics | Yes/No | Full/Partial/Empty | |
+| → 6.2 Degradation Sensitivity | Yes/No | Full/Partial/Empty | |
+| → 6.3 Document Feature Characteristics | Yes/No | Full/Partial/Empty | |
+| → 6.4 Training & Benchmark Value | Yes/No | Full/Partial/Empty | |
+| → 6.5 Benchmark Results | Yes/No | Full/Partial/Empty | Optional |
+| 7. Known Issues & Limitations | Yes/No | Full/Partial/Empty | |
+| 8. Representative Samples | Yes/No | Full/Partial/Empty | Optional |
+| 9. References | Yes/No | Full/Partial/Empty | |
+| 10. Dataset-Specific Notes | Yes/No | Full/Partial/Empty | Optional |
 
 **Output**: Gap analysis saved to `tmp_cleanup/.tmp-{dataset}-gap-analysis.md`
 
@@ -152,13 +170,15 @@ uv run python scripts/metadata_completeness_report.py --dataset {dataset_name}
 - All template sections exist (even if marked incomplete)
 - **If Gate 3 fails**: Document issues, DO NOT proceed to Phase 4
 
-**Output**: Updated DATASET_CATALOG.md section via Edit tool
+**Output**: Updated docs/datasets/source/{canonical-name}.md via Edit tool
 
 ### Phase 4: Parser Audit
 
 1. **Locate Parser**: `src/image_preprocessing_detector/annotation/parsers/{category}/{dataset}.py`
    - Use Glob to find parser file
    - Check parser registry for registration
+
+   **Name Mapping**: Parsers may be registered under snake_case variants (e.g., `cc_ocr`) while canonical names use kebab-case (`cc-ocr`). When locating parsers, check both variants via `name.replace("-", "_")`. The DATASET_CONFIGS registry uses snake_case keys, the parser's `dataset_names` property may return either variant.
 
 2. **If No Parser Exists**:
    - Document as parser_status = "Not Implemented"
@@ -275,6 +295,12 @@ Update all three documentation tiers for consistency:
 - Verify canonical name entry exists
 - Add any discovered aliases
 - Confirm status indicator is correct
+
+**Task Indices** (`docs/datasets/indices/`):
+
+- Verify dataset is listed in all relevant task indices (IQA.md, LAYOUT.md, TABLES.md, TEXT_DETECTION.md, HANDWRITING.md, SCRIPTS.md, BENCHMARKS.md)
+- Add to appropriate index if missing based on dataset category and training purpose
+- Remove from indices if dataset is no longer applicable
 
 **Gate 6**: All counts and statuses must match across files
 
@@ -503,6 +529,12 @@ For reviewing multiple datasets sequentially:
    - Pass/fail counts per phase
    - Aggregated blockers by priority
    - Recommended next actions
+4. Generate consolidated audit report:
+   - Output: `docs/planning/DATASET_AUDIT_REPORT.md`
+   - Executive summary with dimension scores
+   - Per-dataset breakdown sorted by overall score (ascending - worst first)
+   - Prioritized action items (P0-P3)
+   - Machine-readable JSON at `docs/planning/dataset_audit_report.json`
 
 ---
 ## Use Cases

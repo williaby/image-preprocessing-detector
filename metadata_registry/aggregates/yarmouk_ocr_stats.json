@@ -1,34 +1,32 @@
 {
-  "dataset_name": "tibhcr",
-  "total_samples": 141698,
+  "dataset_name": "yarmouk_ocr",
+  "total_samples": 15062,
   "capture_methods": {
-    "scanner_flatbed": 141698
+    "scanner_flatbed": 15062
   },
   "quality_scores": [],
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "PER": 141698
+    "UNK": 15062
   },
   "layout_types": {},
   "text_densities": {},
   "script_codes": {
-    "Tibt": 141698
+    "Arab": 15062
   },
   "script_families": {
-    "indic": 141698
+    "rtl": 15062
   },
   "language_codes": {
-    "bo": 141698
+    "ar": 15062
   },
-  "content_flags": {
-    "has_handwriting": 141698
-  },
+  "content_flags": {},
   "text_scopes": {
-    "word": 141698
+    "page": 15062
   },
   "content_types": {
-    "handwritten": 141698
+    "printed": 15062
   },
   "paper_sizes": {},
   "paper_orientations": {},
@@ -39,46 +37,44 @@
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "PER": 100.0
+    "UNK": 100.0
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
   "script_codes_pct": {
-    "Tibt": 100.0
+    "Arab": 100.0
   },
   "script_families_pct": {
-    "indic": 100.0
+    "rtl": 100.0
   },
   "language_codes_pct": {
-    "bo": 100.0
+    "ar": 100.0
   },
   "text_scopes_pct": {
-    "word": 100.0
+    "page": 100.0
   },
   "content_types_pct": {
-    "handwritten": 100.0
+    "printed": 100.0
   },
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
-  "content_flags_pct": {
-    "has_handwriting": 100.0
-  },
+  "content_flags_pct": {},
   "top_degradations": [],
   "top_scripts": [
     {
-      "script": "Tibt",
-      "count": 141698,
+      "script": "Arab",
+      "count": 15062,
       "percentage": 100.0
     }
   ],
   "top_languages": [
     {
-      "language": "bo",
-      "count": 141698,
+      "language": "ar",
+      "count": 15062,
       "percentage": 100.0
     }
   ],
   "script_family_summary": {
-    "indic": 141698
+    "rtl": 15062
   }
 }

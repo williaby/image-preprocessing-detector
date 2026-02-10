@@ -189,6 +189,15 @@ DIBCO/
 - **Purpose**: Extreme degradation edge cases, binarization quality
 - **Parser**: [`parse_dibco_labels`](../scripts/annotate_base_metadata.py#L1124) | ✅ Complete
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `02_benchmark_only/dibco/` | ✅ Available | 212 PNG/BMP files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | `metadata_registry/extracted/dibco/ocr_batch_0.jsonl` | ✅ Extracted | Docling OCR, 127 records, 106 (83.5%) with text content |
+| **Layout Extracted** | `metadata_registry/extracted/dibco/layout_batch_0.json` | ✅ Extracted | Docling layout annotations, 4 categories (list_item, picture, section_header, text) |
+
 #### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -200,3 +209,22 @@ DIBCO/
 | **Color Space** | RGB (64%), Binary (36%) |
 | **Capture Method** | Scanner (Flatbed) |
 | **Domain** | Historical Documents |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 212 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 212 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `language` | 100.0% | 0.000 |

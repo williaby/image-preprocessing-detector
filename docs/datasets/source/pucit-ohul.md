@@ -140,17 +140,14 @@ Column 3: "Revised" - Cleaned/corrected transcription (preferred)
 | Writer ID | `writer_id` | ❌ No | Low | Not extracted (may be in column 3) |
 | Character-level | - | ❌ N/A | - | Not provided in source |
 
-##### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/language/pucit_ohul_urdu/` | ✅ Available | Currently uses underscores, needs rename to `pucit-ohul/` |
-| **Images (GCS)** | `gs://image_detection_b/image-preprocessing-detector/datasets/pucit_ohul_urdu/` | ✅ Available | Remote storage (GCS paths may keep underscores) |
-| **Text/OCR GT** | `Pucit/train_labels_v2.xlsx` + `Pucit/test_labels_v2.xlsx` | ✅ Available | Original ground truth Excel files |
-| **Text/OCR Extracted** | `annotations/pucit-ohul/ocr/` | ❌ Not needed | GT already in Excel, no separate extraction |
-| **Layout GT** | - | ❌ None | Line-level dataset, no layout annotations |
-| **Layout Extracted** | `annotations/pucit-ohul/layout/` | ❌ Not extracted | Could generate bounding boxes via preprocessing |
-| **Layer 2 Metadata** | `metadata_registry/json/pucit-ohul_layer2.json` | ⚠️ Unknown | [NEEDS_VERIFICATION] Check if exists |
+| **Images** | `01_base_data/language/pucit-ohul/` | ✅ Available | 7,401 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | XLSX: Line-level Urdu transcriptions (`train_labels_v2.xlsx`, `test_labels_v2.xlsx`) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/pucit-ohul/` | ✅ Available | Docling GPU: 38 layout batches, 7,401 images |
 
 **Location Status Legend**:
 
@@ -223,3 +220,22 @@ PUCIT-OHUL includes Urdu text transcriptions in Excel spreadsheets:
 | 1-2 | کے سفارت کارانہ اور دیرینہ کاروباری اور | کے سفارت کارانہ اور دیرینہ کاروباری اور |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 7,401 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 7,401 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 100.0% | 0.000 |

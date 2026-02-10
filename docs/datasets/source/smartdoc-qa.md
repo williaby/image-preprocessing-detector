@@ -155,6 +155,16 @@ SmartDoc-QA enables benchmarking quality assessment methods using OCR accuracy a
 - **Purpose**: Mobile capture quality assessment benchmark
 - **Parser**: [`parse_smartdoc_labels`](../scripts/annotate_base_metadata.py#L1004) | ✅ Complete
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `02_benchmark_only/smartdoc-qa/` | ✅ Available | 4,280 JPG files |
+| **Text/GT** | Native annotations | ✅ Available | JSON: QA text pairs from document images |
+| **Text/OCR Extracted** | `annotations/smartdoc-qa/ocr/ocr_batch_*.jsonl` | ✅ Available | 3,000 records (70%), Docling OCR |
+| **Layout Extracted** | `annotations/smartdoc-qa/layout/layout_batch_*.json` | ✅ Available | 2,203 records (51%), DocLayout-YOLO |
+| **Docling GPU Extracted** | `metadata_registry/extracted/smartdoc-qa/` | ⚠️ Partial | Docling GPU: 3,000/4,280 OCR (70%) + 2,305/4,280 layout (54%), needs investigation |
+
 #### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -166,3 +176,23 @@ SmartDoc-QA enables benchmarking quality assessment methods using OCR accuracy a
 | **Color Space** | RGB |
 | **Capture Method** | Camera (Smartphone) |
 | **Domain** | General Documents |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 4,260 | **Avg Min Confidence**: 0.217
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 4,260 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `domain` | 61.6% | 0.300 |
+| 2 | `layout_detections` | 38.4% | 0.349 |

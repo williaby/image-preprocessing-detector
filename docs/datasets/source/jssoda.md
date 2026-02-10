@@ -45,13 +45,12 @@
 
 ##### Data Locations
 
-| Type | Path | Status |
-|------|------|--------|
-| Images (Horizontal) | `01_base_data/language/multilingual_scripts/jssoda/horizontal/` | ✅ Ready (1,009 PNG) |
-| Images (Vertical) | `01_base_data/language/multilingual_scripts/jssoda/vertical/` | ✅ Ready (991 PNG) |
-| Manifest | `01_base_data/language/multilingual_scripts/jssoda/manifest.json` | ✅ Ready (2,000 entries) |
-| Text/OCR | Ground truth in manifest.json ("text" field) | ✅ Available |
-| Layer 2 Metadata | `metadata_registry/json/jssoda/` | ❌ Not Generated |
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/language/multilingual_scripts/jssoda/` | ✅ Available | 2,000 JPG files |
+| **Text/GT** | - | ❌ Not available | Local copy has layout metadata only (is_vertical, num_columns); text annotations not preserved from HuggingFace download |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/jssoda/` | ✅ Available | Docling GPU: 10 layout batches, 2,000 images |
 
 ##### Project Usage
 
@@ -61,3 +60,22 @@
 - **Parser**: ❌ Not Implemented (manifest.json parser needed)
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 2,000 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 2,000 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `capture_method` | 100.0% | 0.000 |

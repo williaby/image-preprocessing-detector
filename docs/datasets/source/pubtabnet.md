@@ -201,19 +201,14 @@
 - **Purpose**: Scientific table IQA training, structure recognition baseline
 - **Parser**: [`parse_pubtabnet_labels`](../scripts/annotate_base_metadata.py#L1714) | ✅ Complete
 
-###### Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `/mnt/e/image_detection/01_base_data/tables/pubtabnet/pubtabnet/` | ✅ Available | 519,030 total (train/val/test splits) |
-| **Images (local subset)** | `data/phase7_mvp/00_base_images/pubtabnet/` | ✅ Available | Symlinks to subset for testing |
-| **Text/OCR GT** | Embedded in JSONL | ✅ Available | Cell text tokens in PubTabNet_2.0.0.jsonl |
-| **Text/OCR Extracted** | - | ❌ Not extracted | Parser does not populate text_content field |
-| **Layout GT** | Embedded in JSONL | ✅ Available | Cell bboxes in PubTabNet_2.0.0.jsonl |
-| **Layout Extracted** | - | ❌ Not extracted | Parser does not populate layout_detections field |
-| **Annotations (JSONL)** | `/mnt/e/image_detection/01_base_data/tables/pubtabnet/pubtabnet/PubTabNet_2.0.0.jsonl` | ✅ Available | 4.1 GB, 519,030 entries |
-| **Layer 2 Metadata** | `/mnt/e/image_detection/metadata_registry/json/pubtabnet_layer2.json` | ✅ Available | 519,030 samples enriched |
-| **Layer 2 Aggregates** | `metadata_registry/aggregates/pubtabnet_stats.json` | ✅ Available | Capture method, domain, content flags |
+| **Images** | `01_base_data/tables/pubtabnet/` | ✅ Available | 519,030 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | JSONL: Cell-level text as token arrays (`html.cells[].tokens`) |
+| **Text/GT Extracted** | `metadata_registry/extracted/pubtabnet/` | ✅ Converted | GT cell text → page text via `convert_pubtabnet_to_extracted.py` (509K images) |
+| **Layout/GT Extracted** | `metadata_registry/extracted/pubtabnet/` | ✅ Converted | Cell bboxes → COCO format, schema: `pubtabnet-gt` |
 
 **Location Status Legend**:
 
@@ -247,3 +242,22 @@
 ```
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 519,030 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 519,030 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 100.0% | 0.000 |

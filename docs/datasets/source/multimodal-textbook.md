@@ -56,6 +56,15 @@
 - **Purpose**: Educational document IQA, STEM content quality assessment
 - **Parser**: ❌ Not Implemented (has Parquet metadata)
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/educational/multimodal_textbook/` | ✅ Available | 1,113 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | Parquet/JSON: Full textbook content text |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -69,3 +78,22 @@
 | **Domain** | EDU (Educational/STEM) |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 1,113 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 1,113 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `language` | 100.0% | 0.000 |

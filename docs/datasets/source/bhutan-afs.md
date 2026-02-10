@@ -70,3 +70,12 @@
 - **Parser**: ⚠️ GenericParser (minimal metadata only) | `src/image_preprocessing_detector/annotation/parsers/generic.py`
 
 ---
+
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/documents/bhutan_financial/` | ✅ Available | 135 PNG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | `metadata_registry/extracted/bhutan-afs/ocr_batch_0.jsonl` | ✅ Extracted | Docling OCR, 135 records, 100% success, tables detected |
+| **Layout Extracted** | `metadata_registry/extracted/bhutan-afs/layout_batch_0.json` | ✅ Extracted | Docling layout annotations, 130 images, 392 annotations, 8 categories |

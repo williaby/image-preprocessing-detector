@@ -106,7 +106,7 @@ path/to/image/rvl_form_0002.tif 1
 | ✅ Document class (filename) | `document_class` (str) | High | Parser implemented |
 | ✅ Document class ID (filename) | `document_class_id` (int) | High | Parser implemented |
 | ⚠️ Split membership | - | Medium | Not in local subset |
-| ❌ OCR text | - | Low | Not in source (can derive) |
+| ✅ OCR text | `annotations/rvl-cdip/ocr/ocr_batch_*.jsonl` | Medium | Docling OCR extracted (15,903/16,000 = 99%) |
 | ❌ Layout annotations | - | Low | Not in source (can derive) |
 
 **Legend**: ✅ Directly usable | ⚠️ Requires transformation | ❌ Not available in source
@@ -241,6 +241,15 @@ path/to/image/rvl_form_0002.tif 1
 - **Subset Used**: 16,000 images (sample for diversity)
 - **Parser**: ✅ `parse_rvl_cdip_labels` (extracts document class from 16-folder structure)
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/documents/rvl_cdip/` | ✅ Available | 16,000 JPEG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | `annotations/rvl-cdip/ocr/ocr_batch_*.jsonl` | ✅ Available | 16,000 records (100%), Docling OCR |
+| **Layout Extracted** | `annotations/rvl-cdip/layout/layout_batch_*.json` | ✅ Available | 15,733 records (98%), DocLayout-YOLO |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -298,3 +307,23 @@ path/to/image/rvl_form_0002.tif 1
 ```
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 16,000 | **Avg Min Confidence**: 0.533
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 3,274 | 20.5% |
+| active_learning | 6,901 | 43.1% |
+| unreliable | 5,825 | 36.4% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 74.2% | 0.576 |
+| 2 | `text_quality` | 25.8% | 0.672 |

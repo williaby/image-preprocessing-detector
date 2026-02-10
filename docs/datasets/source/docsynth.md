@@ -246,18 +246,14 @@ class name mappings.
 - First call expensive (parquet indexing), subsequent calls use cache
 - Requires pyarrow dependency for parquet reading
 
-##### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/layout/docsynth300k/images/` | ✅ Available | 300,000 JPEG files |
-| **Images (source)** | `01_base_data/layout/docsynth300k/part*.parquet` | ✅ Available | 30 parquet files (~113 GB) |
-| **Text/OCR GT** | - | ❌ None | Synthetic dataset, no text GT provided |
-| **Text/OCR Extracted** | `annotations/docsynth300k/ocr/` | ❌ Not extracted | Could extract via DocTR/Tesseract |
-| **Layout GT** | `01_base_data/layout/docsynth300k/labels/` | ✅ Available | 300,000 TXT (YOLO polygon format) |
-| **Layout Extracted** | - | ℹ️ N/A | Original labels already in YOLO format |
-| **Layer 2 Metadata** | `metadata_registry/json/docsynth300k_layer2.json` | ❌ Not generated | Needs Layer 2 enrichment run |
-| **Extraction Script** | `01_base_data/layout/docsynth300k/extract_images.py` | ✅ Available | Local parquet → images/labels |
+| **Images** | `01_base_data/layout/docsynth300k/` | ✅ Available | 300,000 PNG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
 
 **Location Status Legend**:
 

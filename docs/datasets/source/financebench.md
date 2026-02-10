@@ -221,19 +221,14 @@ This benchmark exposes significant LLM limitations on financial document underst
 
 > **Parser Reference**: See [LABEL_MAPPING_SPECIFICATION.md](../schema/LABEL_MAPPING_SPECIFICATION.md) for field mappings.
 
-##### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images (Source)** | `02_benchmark_only/financebench/pdfs/` | ✅ Available | 368 PDF documents (source) |
-| **Images (Converted)** | `02_benchmark_only/financebench/extracted_images/` | ✅ Available | 54,120 PNG images at 300 DPI |
-| **Text/OCR GT** | - | ❌ None | Q&A benchmark, no ground truth text |
-| **Text/OCR Extracted** | - | ❌ None | Not applicable (benchmark dataset) |
-| **Layout GT** | - | ❌ None | No layout annotations provided |
-| **Layout Extracted** | - | ❌ None | Not planned (benchmark dataset) |
-| **Q&A Annotations** | `02_benchmark_only/financebench/data/*.jsonl` | ✅ Available | 150 open-source Q&A pairs |
-| **Document Metadata** | `02_benchmark_only/financebench/data/financebench_document_information.jsonl` | ✅ Available | 368 document records |
-| **Layer 2 Metadata** | `metadata_registry/json/financebench_layer2.json` | ❌ Not created | Awaiting parser integration |
+| **Images** | `02_benchmark_only/financebench/` | ✅ Available | 54,121 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | JSON: QA text pairs from financial documents |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
 
 **Location Status Legend**:
 
@@ -296,3 +291,22 @@ ds = load_dataset("PatronusAI/financebench")
 ## 3. Training Datasets (03_training_datasets/)
 
 Generated augmented datasets with labels, ready for model training.
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 54,120 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 54,120 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `has_formula` | 100.0% | 0.000 |

@@ -141,18 +141,14 @@ _ICON_  ← Special token for non-text content (checkboxes, logos)
 
 > **Parser Reference**: Extracts form_id, field_count, sample_fields from .fmt files; populates text_content schema
 
-##### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/forms/nist_db2/` | ✅ Available | 5,590 PNG symlinks |
-| **Images (source)** | `/mnt/e/image_detection/benchmarks/nist_db2/sd02/data/sfrs_*/` | ✅ Available | Original files on E: drive |
-| **Text/OCR GT** | Co-located .fmt files | ✅ Available | Field transcriptions in source |
-| **Text/OCR Extracted** | Parser populates text_content | ✅ Implemented | Parser concatenates .fmt field values |
-| **Layout GT** | - | ❌ None | No spatial coordinates in source |
-| **Layout Extracted** | `annotations/nist-sd2/layout/` | ❌ Not extracted | No layout annotations available |
-| **Layer 2 Metadata** | `/mnt/e/image_detection/metadata_registry/json/nist_db2_metadata.json` | ✅ Available | 18.8 MB JSON (5,590 records) |
-| **Split Manifests** | `splits/nist-sd2/*.json` | ✅ Created | train/val/test manifests |
+| **Images** | `01_base_data/forms/nist-sd2/` | ✅ Available | 5,590 TIF files |
+| **Text/GT** | Native annotations | ✅ Available | TXT (.fmt): Form field values (field_id value pairs in `.fmt` files) |
+| **Text/OCR Extracted** | `annotations/nist-sd2/ocr/ocr_batch_*.jsonl` | ✅ Available | 5,590 records (100%), Docling OCR |
+| **Layout Extracted** | `annotations/nist-sd2/layout/layout_batch_*.json` | ✅ Available | 5,590 records (100%), DocLayout-YOLO |
 
 **Location Status Legend**:
 
@@ -363,3 +359,23 @@ N/A - No dataset-specific quality tiers or scoring systems
 | **Domain** | FIN (Financial/Tax) |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 5,590 | **Avg Min Confidence**: 0.585
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 512 | 9.2% |
+| active_learning | 4,412 | 78.9% |
+| unreliable | 666 | 11.9% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 98.4% | 0.585 |
+| 2 | `has_table` | 1.6% | 0.800 |

@@ -72,6 +72,15 @@
 - **Purpose**: Full-page handwriting IQA, stroke quality assessment
 - **Parser**: [`parse_nist_sd19_labels`](../scripts/annotate_base_metadata.py#L1985) | ✅ Complete
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/handwriting/nist-sd19/` | ✅ Available | 3,669 PNG files |
+| **Text/GT** | Native annotations | ⚠️ Partial | Binary (.hsf): Character-level ground truth from filename/directory structure |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -86,3 +95,22 @@
 | **Content Flags** | Handwriting: ✅ 100% |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 3,669 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 3,669 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

@@ -365,20 +365,14 @@ path,symbol_id,latex,user_id
 - ✅ `text_content.source_type` set to `"ground_truth"`
 - ⚠️ `text_statistics` should be computed from LaTeX strings (needs verification)
 
-###### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images (Full)** | `01_base_data/handwriting/hasyv2_original/hasy-data/` | ✅ Available | 168,233 PNG files (32×32) |
-| **Images (Legacy)** | `01_base_data/handwriting/maths_handwriting/` | ⚠️ Partial | 15,000 images, labels lost |
-| **Images (GCS)** | `gs://image_detection_b/.../hasyv2/` | ✅ Available | Cloud storage |
-| **Images (GCS Legacy)** | `gs://image_detection_b/.../maths_handwriting/` | ⚠️ Legacy | Old path |
-| **Text/OCR GT** | CSV `latex` field | ✅ Available | LaTeX ground truth in CSV labels |
-| **Text/OCR Extracted** | - | ℹ️ N/A | Not applicable (GT already available) |
-| **Layout GT** | - | ℹ️ N/A | Not applicable (isolated symbols, no layout) |
-| **Layout Extracted** | - | ℹ️ N/A | Not applicable |
-| **Label Files** | `hasyv2_original/classification-task/fold-{1-10}/*.csv` | ✅ Available | 20 CSV files (10 folds × 2 splits) |
-| **Layer 2 Metadata** | `metadata_registry/json/hasyv2_layer2.json` | ⚠️ Verify | Enrichment metadata (verify existence) |
+| **Images** | `01_base_data/handwriting/hasy/` | ✅ Available | 168,233 PNG files |
+| **Text/GT** | Native annotations | ⚠️ Partial | CSV: LaTeX symbol labels (`latex` field, e.g., `A`, `\alpha`, `\sum`) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
 
 **Location Status Legend**:
 

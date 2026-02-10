@@ -10,7 +10,7 @@ tags:
 title: Dataset Processing Status
 ---
 
-> **Last Updated**: 2025-01-30
+> **Last Updated**: 2026-02-09
 > **Purpose**: Operational tracking of dataset processing pipeline
 > **Usage**: Check current state, identify blockers, track conversion progress
 > **Audience**: Development team working on dataset preparation
@@ -26,13 +26,13 @@ PDF/Parquet/JPG/PNG   →   Standardize to JPG/PNG  → Parse source labels  →
                                                       + Layer 2 enrichment
 ```
 
-**Current Status**: 36/47 datasets training-ready (76.6%), 1 benchmark-ready
+**Current Status**: 37/48 datasets training-ready (77.1%), 1 benchmark-ready
 
 | Status | Count | Percentage | Description |
 |--------|-------|------------|-------------|
-| ✅ **Training-Ready** | 36 | 76.6% | Format standardized + labels extracted |
+| ✅ **Training-Ready** | 37 | 77.1% | Format standardized + labels extracted |
 | ✅ **Benchmark-Ready** | 1 | 2.1% | Evaluation-only (license restrictions) |
-| 🔄 **In Progress** | 9 | 19.1% | Format conversion, label extraction, or generating |
+| 🔄 **In Progress** | 8 | 16.7% | Format conversion, label extraction, or generating |
 | 📚 **Non-Image Corpus** | 1 | 2.1% | Text-only corpus (openlid-v2, used for generation) |
 | ❌ **Blocked** | 1 | 2.1% | Fundamental issue preventing use |
 
@@ -63,6 +63,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | mdiw13 | 290,213 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | midv500 | 3,612 | ✅ PNG | ✅ Mobile capture | ✅ Complete | ID documents |
 | mle2e | 1,816 | ✅ JPG | ✅ Script labels | ⚠️ Partial | 4 scripts (pre-segmented crops), text transcriptions pending |
+| muharaf | 25,711 | ✅ JPG/PNG | ✅ Arabic transcriptions | ✅ Complete | Arabic handwriting (457 pages + 24,495 lines), parser + Layer 2 metadata |
 | midv500_data | 15,050 | ✅ PNG | ✅ Mobile capture | ✅ Complete | Extended MIDV-500 |
 | mlt19 | 20,000 | ✅ JPG | ✅ Word boxes + script | ✅ Complete | 10 languages |
 | multilingual_scripts | 3,279 | ✅ PNG | ✅ Script labels | ✅ Complete | 27 scripts synthetic |
@@ -72,6 +73,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | nist-sd6 | 5,595 | ✅ PNG | ✅ Form + handwriting | ✅ Complete | Forms with handprint |
 | nist-sd19 | 3,669 | ✅ PNG | ✅ Handwriting labels | ✅ Complete | Digits + letters |
 | ocr-quality | 1,000 | ✅ JPG | ✅ Quality scores | ✅ Complete | Multilingual |
+| ohr-bench | 8,303 | ✅ PNG | ✅ Quality scores + OCR | ✅ Complete | 7 domains, Layer 2 metadata generated (2026-02-09) |
 | pucit-ohul | 7,401 | ✅ PNG | ✅ Handwriting labels | ✅ Complete | Urdu handwriting |
 | pubtabnet | 519,030 | ✅ PNG | ✅ COCO + structure | ✅ Complete | Research papers |
 | realdae | 1,200 | ✅ PNG | ✅ Before/after + scores | ✅ Complete | Camera-captured GT |
@@ -79,7 +81,7 @@ Format standardized to JPG/PNG, labels extracted and mapped to Layer 2 schema.
 | signatr6k | 12,514 | ✅ PNG | ✅ Segmentation | ✅ Complete | Text segmentation |
 | siw13 | 16,291 | ✅ PNG | ✅ Script labels | ✅ Complete | 13 scripts |
 | smartdoc-qa | 4,280 | ✅ JPG | ✅ Quality + mobile | ✅ Complete | Mobile capture QA |
-| sroie | 2,043 | ✅ JPG | ✅ COCO + OCR | ✅ Complete | Receipts |
+| sroie | 973 | ✅ JPG | ✅ Quad + OCR + Entities | ✅ Complete | Malaysian receipts (ICDAR 2019) |
 | synthetic_iqa | 9 | ✅ PNG | ✅ Quality scores | ✅ Complete | Prototype samples |
 | tablebank | 278,582 | ✅ JPG | ✅ COCO boxes | ✅ Complete | Table regions |
 | tibhcr | 141,698 | ✅ JPG | ✅ Character labels | ✅ Complete | 47 Tibetan classes, 235 writers |
@@ -118,7 +120,6 @@ Format conversion, label extraction, or generation currently underway.
 | **docsynth300k** | 300,000 | 🔄 Parquet→PNG | ⚠️ Needs extraction | Parquet huge (15GB+) | 1. Batch parquet conversion (chunked)<br>2. Extract synthetic labels | Week 3-4 |
 | **iam** | 130,212 | ✅ Images Ready | ❌ Parser needed | 6.4 GB PNG already extracted | 1. Implement parser (XML + TXT formats)<br>2. Generate/locate split files<br>3. Extract to Layer 2 metadata | Week 2-3 |
 | **mobile_receipts** | Unknown | 🔄 Parquet→JPG | ⚠️ Needs extraction | Parquet format | 1. Assess parquet size<br>2. Convert to JPG<br>3. Extract receipt labels | Week 3 |
-| **ohr-bench** | 8,561 | 🔄 Parquet→PNG | ✅ Quality scores | Parquet (2.1GB) | 1. Convert parquet to PNG<br>2. Labels already extracted | Week 1 |
 | **omnidocbench** | Metadata | 🔄 Parquet→PNG | ⚠️ Framework metadata | Complex benchmark | 1. Understand benchmark structure<br>2. Extract relevant images<br>3. Map to our schema | Week 4+ |
 | **yarmouk_source** | Unknown | 🔄 PDF→PNG | ⚠️ Needs extraction | Original PDFs | 1. Convert source PDFs<br>2. Note: yarmouk_ocr already complete | Deprioritized |
 | **jssoda** | 2,000 | ✅ Images Ready | ✅ Available in manifest | Parser not implemented | 1. Implement manifest.json parser<br>2. Extract text + orientation metadata<br>3. Generate Layer 2 metadata | Week 2 |
@@ -224,6 +225,77 @@ python scripts/convert_pdf_to_images.py \
 **Storage Estimate**:
 
 - financebench: ~50 GB (300 DPI PNG)
+
+---
+
+## Text & Layout Extraction Status
+
+Uniform text + layout extraction across all datasets for training/testing, language/script enrichment, and confidence gap analysis.
+
+### Extraction Methods
+
+| Method | Description | Speed | Output Schema |
+|--------|-------------|-------|---------------|
+| **Docling GPU** | Full OCR + native layout (23 categories) on VPS A100 | ~1.8s/image | `docling-native` |
+| **GT Conversion** | Convert existing GT annotations to page-level text + COCO layout | ~0.1ms/image | `{dataset}-gt` |
+
+### Extraction Coverage by Dataset
+
+| Dataset | Images | Text Extracted | Layout Extracted | Method | Status |
+|---------|--------|----------------|------------------|--------|--------|
+| **pubtabnet** | 509,892 | ✅ Page text | ✅ Cell bboxes | GT Conversion | ✅ Complete |
+| **fintabnet** | 97,486 | ✅ Page text | ✅ Cell + structure bboxes (7 classes) | GT Conversion | ✅ Complete |
+| **doclaynet** | 81,471 | ✅ Page text | ✅ 11 semantic categories | GT Conversion | ✅ Complete |
+| **arabic-docs** | 10,045 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **bhutan-afs** | 125 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **cvsi** | 10,715 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **dibco** | 1,300 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **realdae** | 1,200 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **signatr6k** | 12,514 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **siw13** | 16,291 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **tobacco800** | 1,290 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **nist-sd2** | 5,590 | ✅ OCR text | ✅ Docling 23-cat layout | Docling GPU | ✅ Complete |
+| **diqa-5000** | 5,500 | ✅ OCR text (5,500) | ✅ Docling 12-cat layout (5,499 images, 67K ann) | Docling GPU | ✅ Complete |
+| **smartdoc-qa** | 4,280 | ⚠️ OCR text (3,000/4,280 = 70%) | ⚠️ Docling 14-cat layout (2,305/4,280 = 54%) | Docling GPU | ⚠️ Partial - 30% images failed/skipped |
+| **financebench** | 54,120 | 🔄 In progress | 🔄 In progress | Docling GPU | 🔄 Running on VPS |
+| **ohr-bench** | 8,561 | ✅ OCR text (1,259) | ✅ Docling 14-cat layout (1,259 images, 136K ann) | Docling GPU | ✅ Complete |
+| **omnidocbench** | 1,358 | ✅ OCR text (1,358) | ✅ Docling 14-cat layout (1,357 images, 28.6K ann) | Docling GPU | ✅ Complete |
+| **funsd** | 199 | ✅ Page text | ✅ Form entity bboxes (4 classes) | GT Conversion | ✅ Complete |
+| **funsd_plus** | 1,139 | ✅ Page text | ✅ Word bboxes (4 classes) | GT Conversion | ✅ Complete |
+| **sroie** | 973 | ✅ Page text | ✅ Text region bboxes | GT Conversion | ✅ Complete |
+| **mlt19** | 10,000 | ✅ Page text | ✅ Word bboxes (10 scripts) | GT Conversion | ✅ Complete |
+| **hiertext** | 11,639 | ✅ Page text | ✅ Line + word bboxes | GT Conversion | ✅ Complete |
+| **tablebank** | 278,582 | ❌ Not extracted | ❌ Not extracted | Docling GPU | Pending (no text GT) |
+| **doc3d** | 102,000 | ❌ Not extracted | ❌ Not extracted | Docling GPU | Pending |
+| **docsynth300k** | 300,000 | ❌ Layout only | ❌ Not extracted | N/A | No text in parquet metadata |
+
+### GT Conversion Scripts
+
+| Script | Dataset | Input Format | Output |
+|--------|---------|--------------|--------|
+| `scripts/convert_pubtabnet_to_extracted.py` | PubTabNet | JSONL (cell tokens + bboxes) | `ocr_batch_N.jsonl` + `layout_batch_N.json` |
+| `scripts/convert_fintabnet_to_extracted.py` | FinTabNet | JSON (cell text + PDF bboxes) + XML (structure) | `ocr_batch_N.jsonl` + `layout_batch_N.json` |
+| `scripts/convert_doclaynet_to_extracted.py` | DocLayNet | JSON (word text + font) + COCO (11 categories) | `ocr_batch_N.jsonl` + `layout_batch_N.json` |
+| `scripts/convert_funsd_to_extracted.py` | FUNSD | JSON (entity text + XYXY bboxes) | `ocr_batch_N.jsonl` + `layout_batch_N.json` |
+| `scripts/convert_funsd_plus_to_extracted.py` | FUNSD+ | Arrow (word text + XYWH bboxes) | `ocr_batch_N.jsonl` + `layout_batch_N.json` |
+| `scripts/convert_sroie_to_extracted.py` | SROIE | JSON (quad bboxes + OCR text + entities) | `ocr_batch_N.jsonl` + `layout_batch_N.json` |
+| `scripts/convert_mlt19_to_extracted.py` | MLT-19 | TXT (quad coords + script + text) | `ocr_batch_N.jsonl` + `layout_batch_N.json` |
+| `scripts/convert_hiertext_to_extracted.py` | HierText | JSON (hierarchical paragraphs/lines/words + polygons) | `ocr_batch_N.jsonl` + `layout_batch_N.json` |
+
+### Extraction Output Location
+
+All extracted text + layout stored at: `metadata_registry/extracted/{dataset_name}/`
+
+| File Pattern | Content |
+|-------------|---------|
+| `ocr_batch_N.jsonl` | One JSON line per image: source, text, confidence, tables_found |
+| `layout_batch_N.json` | COCO-style: categories, images, annotations (bboxes) |
+
+### Post-Processing Applied
+
+- **BBox normalization**: Fixed 146,398 annotations across 8 Docling datasets (negative heights from PDF coordinate system)
+- **Fields added**: `bbox_raw` (original coordinates) + `coord_origin` (bottom-left/top-left/pdf-points) for traceability
+- **Script**: `scripts/fix_docling_bboxes.py`
 
 ---
 
@@ -470,6 +542,6 @@ Before marking a dataset as ✅ Training-Ready, complete:
 
 ---
 
-**Last Updated**: 2025-01-30
-**Next Review**: 2025-02-06 (weekly updates)
+**Last Updated**: 2026-02-09
+**Next Review**: 2026-02-14 (weekly updates)
 **Contact**: Data team for processing questions

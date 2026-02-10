@@ -201,14 +201,10 @@
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/forms/nist_sd6/sd06/data/sfrs2_*/` | ✅ Available | 5,595 PNG files, binary 1-bit |
-| **Images (alt)** | - | - | No alternate location |
-| **Text/OCR GT** | Same as images (.fmt files) | ✅ Available | Ground truth field transcriptions |
-| **Text/OCR Extracted** | `annotations/nist-sd6/ocr/` | ❌ Empty | No separate OCR extraction needed |
-| **Layout GT** | - | ❌ None | Dataset does not provide layout annotations |
-| **Layout Extracted** | `annotations/nist-sd6/layout/` | ❌ Empty | Could extract with DocLayout-YOLO |
-| **Ground Truth** | `annotations/nist-sd6/ground_truth/` | ✅ Available | Structured field annotations |
-| **Layer 2 Metadata** | `metadata_registry/json/nist-sd6_layer2.json` | ⚠️ Partial | Exists but text_content not populated |
+| **Images** | `01_base_data/forms/nist_sd6/` | ✅ Available | 5,595 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | TXT (.fmt): Form field values (field_id value pairs in `.fmt` files) |
+| **Text/OCR Extracted** | `annotations/nist-sd6/ocr/ocr_batch_*.jsonl` | ✅ Available | 5,595 records (100%), Docling OCR |
+| **Layout Extracted** | `annotations/nist-sd6/layout/layout_batch_*.json` | ✅ Available | 5,593 records (100%), DocLayout-YOLO |
 
 **Location Status Legend**:
 
@@ -309,3 +305,24 @@
 - **Form Type Stratification**: Recommend splitting by form type for train/val/test to ensure coverage
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 5,595 | **Avg Min Confidence**: 0.572
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 399 | 7.1% |
+| active_learning | 4,352 | 77.8% |
+| unreliable | 844 | 15.1% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 99.5% | 0.572 |
+| 2 | `text_quality` | 0.5% | 0.800 |
+| 3 | `has_table` | 0.0% | 0.800 |

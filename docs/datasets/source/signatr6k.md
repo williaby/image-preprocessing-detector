@@ -63,6 +63,16 @@
 - **Purpose**: Signature quality assessment, detection training
 - **Parser**: [`parse_signatr_labels`](../scripts/annotate_base_metadata.py#L1423) | ✅ Complete
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/handwriting/signatr6k/` | ✅ Available | 12,514 PNG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+| **Docling GPU Extracted** | `metadata_registry/extracted/signatr6k/` | ✅ Available | Docling GPU: 12,514 OCR records + 9,452 layout images, 14,506 annotations, 4 Docling categories |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -77,3 +87,22 @@
 | **Content Flags** | Handwriting: ✅, Signatures: ✅ |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 12,514 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 12,514 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

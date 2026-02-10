@@ -206,3 +206,31 @@
 - **Parser**: [`parse_multilingual_scripts_labels`](../scripts/annotate_base_metadata.py#L1548) | ✅ Complete
 
 ---
+
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/language/multilingual_scripts/dzongkha_digits/` | ✅ Available | 62 PNG files |
+| **Text/GT** | Native annotations | ⚠️ Partial | Labels: Digit class labels from directory structure |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/dzongkha-digits/` | ✅ Available | Docling GPU: 1 layout batch, 62 images |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 62 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 62 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `capture_method` | 100.0% | 0.000 |

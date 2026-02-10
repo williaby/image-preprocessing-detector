@@ -274,17 +274,14 @@ normalized_score = (5 - human_score) / 4
 - **Priority**: **HIGH** for unified labeling strategy
 - **Parser**: [`parse_ocr_quality_labels`](../scripts/annotate_base_metadata.py#L1192) | ✅ Complete
 
-#### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | Embedded in Parquet | ✅ Available | PNG data in `OCR-Quality.parquet` |
-| **Images (alt)** | HuggingFace cache | ✅ Available | Auto-extracted when using datasets library |
-| **Text/OCR GT** | `ocr_text` column | ✅ Available | Qwen2.5-VL-72B extractions |
-| **Text/OCR Extracted** | - | ℹ️ N/A | Already in ground truth |
-| **Layout GT** | - | ❌ None | No layout annotations |
-| **Layout Extracted** | - | ❌ Not extracted | No layout detection run |
-| **Layer 2 Metadata** | `metadata_registry/json/ocr_quality_layer2.json` | ⚠️ Partial | [NEEDS_VERIFICATION] |
+| **Images** | `01_base_data/ocr_quality/` | ✅ Available | 1,000 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | Parquet: Full page OCR text by Qwen2.5-VL-72B (`ocr_text` field) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
 
 **Location Status Legend**:
 
@@ -428,3 +425,22 @@ normalized_score = (5 - human_score) / 4
 | **OHR-Bench** | 8,561 entries | OCR hallucination | Text annotations | Research |
 | **OmniDocBench** | metadata | Multi-task evaluation | Multiple | Research |
 | **SmartDoc-QA** | 4,270 | Mobile capture QA | OCR accuracy (proxy) | Research |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 1,000 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 1,000 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `language` | 100.0% | 0.000 |

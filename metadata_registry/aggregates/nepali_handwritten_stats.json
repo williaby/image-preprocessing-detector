@@ -1,34 +1,34 @@
 {
-  "dataset_name": "tibhcr",
-  "total_samples": 141698,
+  "dataset_name": "nepali_handwritten",
+  "total_samples": 958,
   "capture_methods": {
-    "scanner_flatbed": 141698
+    "scanner_flatbed": 958
   },
   "quality_scores": [],
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "PER": 141698
+    "EDU": 958
   },
   "layout_types": {},
   "text_densities": {},
   "script_codes": {
-    "Tibt": 141698
+    "Deva": 958
   },
   "script_families": {
-    "indic": 141698
+    "indic": 958
   },
   "language_codes": {
-    "bo": 141698
+    "ne": 958
   },
   "content_flags": {
-    "has_handwriting": 141698
+    "has_handwriting": 958
   },
   "text_scopes": {
-    "word": 141698
+    "word": 958
   },
   "content_types": {
-    "handwritten": 141698
+    "handwritten": 958
   },
   "paper_sizes": {},
   "paper_orientations": {},
@@ -39,18 +39,18 @@
   },
   "degradation_types_pct": {},
   "domains_pct": {
-    "PER": 100.0
+    "EDU": 100.0
   },
   "layout_types_pct": {},
   "text_densities_pct": {},
   "script_codes_pct": {
-    "Tibt": 100.0
+    "Deva": 100.0
   },
   "script_families_pct": {
     "indic": 100.0
   },
   "language_codes_pct": {
-    "bo": 100.0
+    "ne": 100.0
   },
   "text_scopes_pct": {
     "word": 100.0
@@ -66,19 +66,19 @@
   "top_degradations": [],
   "top_scripts": [
     {
-      "script": "Tibt",
-      "count": 141698,
+      "script": "Deva",
+      "count": 958,
       "percentage": 100.0
     }
   ],
   "top_languages": [
     {
-      "language": "bo",
-      "count": 141698,
+      "language": "ne",
+      "count": 958,
       "percentage": 100.0
     }
   ],
   "script_family_summary": {
-    "indic": 141698
+    "indic": 958
   }
 }

@@ -62,7 +62,7 @@ No benchmark restrictions:
 | tablebank | 278,582 | Table detection | [tablebank.md](../source/tablebank.md) |
 | fintabnet | 97,475 | Financial table structure | [fintabnet.md](../source/fintabnet.md) |
 | rvl-cdip | 400,000 | Document classification | [rvl-cdip.md](../source/rvl-cdip.md) |
-| sroie | 2,043 | Receipt OCR | [sroie.md](../source/sroie.md) |
+| sroie | 973 | Receipt OCR (ICDAR 2019) | [sroie.md](../source/sroie.md) |
 | funsd-plus | 1,139 | Extended forms | [funsd-plus.md](../source/funsd-plus.md) |
 | doc3d | 100,000 | 3D document dewarping | [doc3d.md](../source/doc3d.md) |
 | realdae | 1,200 | Real degradation pairs | [realdae.md](../source/realdae.md) |

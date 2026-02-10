@@ -76,7 +76,7 @@
 |---------|--------|-------|------|
 | funsd | 199 | Forms (entity detection) | [funsd.md](../source/funsd.md) |
 | funsd-plus | 1,139 | Forms (extended) | [funsd-plus.md](../source/funsd-plus.md) |
-| sroie | 2,043 | Receipts (layout + OCR) | [sroie.md](../source/sroie.md) |
+| sroie | 973 | Malaysian receipts (quad + OCR + entities) | [sroie.md](../source/sroie.md) |
 | multimodal-textbook | 1,113 | Textbook pages (diagrams, equations) | [multimodal-textbook.md](../source/multimodal-textbook.md) |
 
 ---

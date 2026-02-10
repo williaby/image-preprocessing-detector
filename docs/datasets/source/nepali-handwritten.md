@@ -116,15 +116,14 @@
 
 > **Parser Implementation**: Extracts bounding boxes from PASCAL VOC XML files and converts to COCO format for Layer 2 compatibility.
 
-###### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/language/nepali_handwritten/{train,test}/*.jpg` | ⚠️ GCS only | 958 images, 1.3-1.5 GB |
-| **Text/OCR GT** | - | ❌ None | No ground truth text transcriptions |
-| **Layout GT** | `{train,test}/*.xml` | ✅ PASCAL VOC | Bounding boxes only |
-| **Layout Extracted** | `annotations/nepali_handwritten/layout/` | ❌ Not extracted | Requires metadata generation |
-| **Layer 2 Metadata** | `metadata_registry/json/nepali_handwritten_layer2.json` | ❌ Not extracted | Requires local extraction + annotation |
+| **Images** | `01_base_data/language/nepali_handwritten/` | ✅ Available | 958 PNG files |
+| **Text/GT** | Native annotations | ⚠️ Partial | Labels: Character/digit class labels |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/nepali-handwritten/` | ✅ Available | Docling GPU: 5 layout batches, 958 images |
 
 **Location Status Legend**:
 
@@ -138,15 +137,15 @@
 
 | Split | Source Count | Layer 2 Count | Coverage | Status |
 |-------|--------------|---------------|----------|--------|
-| **Train** | ~766 | 0 | 0% | ❌ Not extracted |
-| **Test** | ~192 | 0 | 0% | ❌ Not extracted |
-| **Total** | 958 | 0 | 0% | ❌ Extraction required |
+| **Train** | ~766 | ~766 | 100% | ✅ Complete |
+| **Test** | ~192 | ~192 | 100% | ✅ Complete |
+| **Total** | 958 | 958 | 100% | ✅ Complete |
 
 **Split Status Legend**:
 
 - ✅ Complete - All samples in Layer 2 | ⚠️ Partial | ❌ Missing | ℹ️ N/A
 
-> **Note**: Dataset requires local extraction from GCS and Layer 2 metadata generation via `scripts/annotate_base_metadata.py --dataset nepali_handwritten`.
+> **Note**: Layer 2 base metadata generated via `scripts/annotate_base_metadata.py --dataset nepali_handwritten` (2026-02-09). Includes 958 images (.jpg, .jpeg, .png).
 
 ###### 4.2 Sample Counts
 
@@ -311,3 +310,22 @@
 - [CVSI](cvsi.md) - Indic script scene text (includes Devanagari confusers)
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 958 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 958 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

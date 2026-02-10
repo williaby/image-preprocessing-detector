@@ -193,3 +193,31 @@ image
 - **Parser**: ✅ `HiertextParser` (multilingual package)
 
 ---
+
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/text_detection/hiertext/` | ✅ Available | 11,641 JPG files |
+| **Text/GT** | Native annotations | ✅ Available | JSONL: Word & line-level text (`words[].text`, `lines[].text` in gt/*.jsonl) |
+| **Text/GT Converted** | `metadata_registry/extracted/hiertext/` | ✅ Converted | GT conversion: 11,639 images, 1,116,661 annotations, 4.8M chars, 3 categories (paragraph/line/word) |
+| **Layout GT Converted** | `metadata_registry/extracted/hiertext/layout_batch_*.json` | ✅ Converted | COCO-style hierarchical layout with polygon→bbox conversion, handwritten flags preserved |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 11,639 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 11,639 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `language` | 100.0% | 0.000 |

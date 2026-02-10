@@ -50,6 +50,15 @@
 - **Purpose**: Cyrillic script class training (1,500+ samples needed)
 - **Parser**: ✅ `parse_midv500_labels` (extracts country, doc_type, scripts from folder structure)
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/documents/midv500/` | ✅ Available | 3,612 JPG files |
+| **Text/GT** | Native annotations | ✅ Available | JSON: ID document field values (`ground_truth/{doc_type}.json`) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+
 ##### Text Labels
 
 MIDV500 includes per-document-type JSON template files with text field values:
@@ -75,3 +84,22 @@ MIDV500 includes per-document-type JSON template files with text field values:
 **Note**: Text values are in template files (one per document type). Frame JSONs contain only quad coordinates for document detection.
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 15,050 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 15,050 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `has_table` | 100.0% | 0.000 |

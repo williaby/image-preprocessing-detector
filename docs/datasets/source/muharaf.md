@@ -146,15 +146,17 @@
 
 | Split | Source Count | Layer 2 Count | Coverage | Status |
 |-------|--------------|---------------|----------|--------|
-| **All (Public)** | 24,952 | 0 | 0% | ❌ Not processed |
+| **All (Public)** | 24,952 | 25,711 | 100% | ✅ Complete |
 | **Restricted** | 759 | 0 | 0% | ❌ Not publicly available |
-| **Total** | 25,711 | 0 | 0% | ❌ Pending annotation |
+| **Total** | 25,711 | 25,711 | 100% | ✅ Complete (public) |
 
 **Split Status Legend:**
 
-- ❌ Not processed - Layer 2 metadata not yet generated
+- ✅ Complete - Layer 2 base metadata generated (2026-02-09)
 - ❌ Not publicly available - Restricted portion requires contacting maintainers
 
+> **Note**: Layer 2 base metadata generated via `scripts/annotate_base_metadata.py --dataset muharaf` (2026-02-09). 25,711 samples (457 page JPGs + 24,495 line PNGs + auxiliary). 24,495 samples include Arabic transcriptions from paired .txt files.
+>
 > **Recommendation**: Create custom train/test/val splits for training. Suggested split: 70% train, 15% val, 15% test (stratified by quality tier if legibility annotations added).
 
 ##### 4.2 Sample Counts
@@ -186,15 +188,12 @@
 
 **Script**: Arabic (cursive, historical variations, RTL direction)
 
-> **Action Required**: Run text profiling after parser implementation:
+> **Status**: Layer 2 base metadata generated (2026-02-09). Text profiling statistics pending.
 >
 > ```bash
-> # Generate Layer 2 metadata with parser
-> uv run python scripts/annotate_base_metadata.py --dataset muharaf
->
 > # Calculate text statistics from Layer 2 JSON
 > uv run python scripts/calculate_text_statistics.py \
->   --input /mnt/e/image_detection/metadata_registry/json/muharaf_layer2.json
+>   --input /mnt/e/image_detection/metadata_registry/json/muharaf_metadata.json
 > ```
 
 #### 5. Content Composition
@@ -321,7 +320,7 @@ This makes it ideal for **handwriting legibility training**.
 - **Size**: ~3.4 GB (page data) + ~1.3 GB (line images)
 - **Phase(s)**: Phase 9 (handwriting), Phase 10 (multilingual)
 - **Purpose**: Arabic handwriting quality, legibility grading, script detection
-- **Parser**: ❌ Pending implementation
+- **Parser**: ✅ `parse_muharaf_labels` (Arabic metadata, transcription from .txt pairs, page/line classification)
 
 ##### Layer 2 Annotation Summary
 
@@ -336,13 +335,31 @@ This makes it ideal for **handwriting legibility training**.
 
 ##### Data Locations
 
-| Component | Path |
-|-----------|------|
-| **All Data** | `01_base_data/handwriting/muharaf/public/` |
-| **Page Images** | `*.jpg` (457 files) |
-| **Line Images** | `*_*.png` (24,495 files) |
-| **Transcriptions** | `*_*.txt` (24,495 files) |
-| **JSON Annotations** | `*.json` (3,648 files) |
-| **XML Metadata** | `*.xml` (1,216 files) |
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/handwriting/muharaf/` | ✅ Available | 25,711 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | TXT + XML: Line-level Arabic transcriptions (24,495 `.txt` files + PAGE XML `<Unicode>`) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/muharaf/` | ✅ Available | Docling GPU: 129 layout batches, 25,711 images |
+| **Layer 2 Metadata** | `metadata_registry/json/muharaf_metadata.json` | ✅ Complete | 25,711 samples (2026-02-09) |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 25,711 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 25,711 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `has_table` | 100.0% | 0.000 |

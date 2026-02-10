@@ -18,10 +18,9 @@ repos:
       - id: end-of-file-fixer
         stages: [pre-commit]
       - id: check-yaml
-        # Allow multiple YAML documents in single file (e.g., k8s manifests with ---)
-        # Exclude Helm templates (contain Go templating syntax)
+        # Allow multiple YAML documents in single file (e.g., manifests with ---)
         args: ['--allow-multiple-documents']
-        exclude: ^(mkdocs\.yml|charts/.*/templates/.*\.yaml)$
+        exclude: ^mkdocs\.yml$
         stages: [pre-commit]
       - id: check-json
         stages: [pre-commit]

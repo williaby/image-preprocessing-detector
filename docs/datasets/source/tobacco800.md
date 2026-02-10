@@ -188,6 +188,15 @@
 - **Purpose**: Real-world degradation patterns, signature/logo detection
 - **Parser**: ℹ️ N/A (no ground truth labels)
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/degraded/tobacco800/` | ✅ Available | 1,290 TIFF/PNG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | `metadata_registry/extracted/tobacco800/ocr_batch_*.jsonl` | ✅ Extracted | Docling OCR, 7 batch files, 1,290 records (100% coverage), confidence 1.0 |
+| **Layout Extracted** | `metadata_registry/extracted/tobacco800/layout_batch_*.json` | ✅ Extracted | Docling layout annotations, 7 batch files, 10 categories |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -237,3 +246,22 @@
 - **Historical Value**: Only dataset with authentic 30-50 year document aging
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 1,290 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 1,290 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

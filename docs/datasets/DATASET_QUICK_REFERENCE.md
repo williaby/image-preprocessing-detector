@@ -10,7 +10,7 @@ tags:
 title: Dataset Quick Reference
 ---
 
-> **Last Updated**: 2026-01-31
+> **Last Updated**: 2026-02-09
 > **Purpose**: Lightweight dataset lookup for training planning and task selection
 > **Token Optimized**: ~800 lines vs 51 individual dataset files (100-500 lines each)
 > **Usage**: Start here for training discussions, refer to individual dataset files or task indices for deep details
@@ -22,12 +22,88 @@ title: Dataset Quick Reference
 | Metric | Count | Notes |
 |--------|-------|-------|
 | **Total Datasets** | 51 | Across all categories (includes openlid-v2 corpus + synth-multiscript-250k + hiertext + muharaf) |
-| **Training-Ready** | 41 | ✅ Format standardized + labels extracted |
-| **In Progress** | 8 | 🔄 Format conversion, label extraction, or generating |
+| **Training-Ready** | 42 | ✅ Format standardized + labels extracted |
+| **In Progress** | 7 | 🔄 Format conversion, label extraction, or generating |
 | **Blocked** | 1 | ❌ Text-only corpus (wili_2018) |
 | **Non-Image Corpus** | 1 | 📚 Text-only (openlid-v2, used for synthetic generation) |
 | **Total Training Images** | ~3.35M | Excludes reserved val/test splits |
 | **Benchmark Images Available** | ~850K | Train splits only (val/test RESERVED) |
+
+---
+
+## Metadata Availability
+
+Per-dataset metadata completeness across 6 dimensions, sorted by image count descending.
+
+**Legend**: GT = Ground Truth | Extracted = Docling OCR/DocLayout-YOLO/Docling GPU | Converted = Schema transformation | Constructed = Built from cell-level GT | OpenLID = Detected via OpenLID-v2 | (dataset) = Dataset-level provenance, not per-sample | (coarse) = Binary classification only
+
+> **Note**: Image counts reflect total files on disk across all splits (train + val + test). Some counts include auxiliary files (e.g., masks). See individual dataset docs for per-split breakdowns.
+
+| Dataset | Images | Format | Text | Layout | Language | Script |
+|---------|-------:|--------|------|--------|----------|--------|
+| pubtabnet | 519,030 | PNG | GT + Constructed | GT (PubTabNet) + Converted | GT (dataset) | GT (dataset) |
+| docsynth | 300,000 | PNG | None | GT (DocSynth300K) | None | None |
+| mdiw13 | 290,213 | PNG | None | Extracted (Docling) | GT | GT |
+| tablebank | 260,025 | PNG | None | GT (COCO) | GT (dataset) | GT (dataset) |
+| hasy | 168,233 | PNG | Partial (LaTeX) | None | None | None |
+| tibhcr | 141,698 | PNG | Partial (char) | Extracted (Docling) | GT | GT |
+| iam | 130,212 | PNG | GT | None | GT (dataset) | GT (dataset) |
+| coco-text | 123,287 | JPG | GT | None | GT (coarse) | OpenLID |
+| doc3d | 102,064 | PNG | None | None | None | None |
+| fintabnet | 97,475 | PNG | GT + Constructed | GT (FinTabNet) + Converted | GT (dataset) | GT (dataset) |
+| doclaynet | 81,471 | PNG | GT + Extracted | GT (DocLayNet) + Converted | GT (dataset) | GT (dataset) |
+| hindi-synth | 80,009 | PNG | GT | Extracted (Docling) | GT (dataset) | GT |
+| financebench | 54,121 | PNG | GT | None | GT (dataset) | GT (dataset) |
+| muharaf | 25,711 | PNG | GT | Extracted (Docling) | GT | GT |
+| mlt19 | 19,993 | JPG | GT + Converted | GT (COCO) + Converted | GT | GT |
+| siw13 | 16,291 | JPG | Extracted | Extracted (Docling 3-cat) | GT | GT |
+| ohr-bench | 16,091 | JPG | GT + Extracted | Extracted (Docling 14-cat) | OpenLID | OpenLID |
+| rvl-cdip | 16,000 | JPEG | Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
+| yarmouk | 15,062 | JPG | GT (OCR) | Extracted (Docling) | GT (dataset) | GT (dataset) |
+| signatr6k | 12,514 | PNG | Extracted | Extracted (Docling 4-cat) | None | None |
+| hiertext | 11,641 | JPG | GT + Converted | GT (COCO) + Converted | OpenLID | OpenLID |
+| cvsi | 10,715 | JPG | Extracted | Extracted (DocLayout-YOLO) | GT | GT |
+| arabic-docs | 10,045 | JPG/PNG | GT (titles) + Extracted | Extracted (Docling 14-cat) | GT | GT |
+| im2latex | 10,000 | PNG | GT | None | GT (dataset) | GT (dataset) |
+| pucit-ohul | 7,401 | PNG | GT | Extracted (Docling) | GT | GT |
+| mathverse | 6,940 | PNG | GT | None | GT (dataset) | GT (dataset) |
+| cc-ocr | 6,533 | JPG/PNG | GT + Extracted | Extracted (Docling) | None | None |
+| nist-sd6 | 5,595 | PNG | GT + Extracted | Extracted (DocLayout-YOLO) | GT (dataset) | GT (dataset) |
+| nist-sd2 | 5,590 | TIF | GT + Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
+| diqa-5000 | 5,500 | JPG | Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
+| smartdoc-qa | 4,280 | JPG | GT + Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
+| nist-sd19 | 3,669 | PNG | Partial (binary) | None | GT (dataset) | GT (dataset) |
+| midv500 | 3,612 | JPG | GT | None | OpenLID | OpenLID |
+| jssoda | 2,000 | JPG | None | Extracted (Docling) | GT (dataset) | GT (dataset) |
+| mle2e | 1,816 | JPG | GT | Extracted (Docling) | GT | GT |
+| invoices-kg | 1,414 | JPG/PNG | GT + Extracted | Extracted (DocLayout-YOLO) | OpenLID | OpenLID |
+| omnidocbench | 1,358 | PNG/JPG | GT + Extracted | Extracted (Docling 14-cat) | None | None |
+| tobacco800 | 1,290 | TIFF/PNG | Extracted | Extracted (DocLayout-YOLO) | None | None |
+| realdae | 1,200 | JPG | Extracted | Extracted (DocLayout-YOLO) | None | None |
+| funsd-plus | 1,139 | PNG/JPG | GT + Converted | GT (COCO) + Converted | GT (dataset) | GT (dataset) |
+| multimodal-textbook | 1,113 | PNG | GT | None | GT (dataset) | GT (dataset) |
+| ocr-quality | 1,000 | PNG | GT | None | OpenLID | OpenLID |
+| sroie | 973 | JPG | GT + Converted | GT (COCO) + Converted | OpenLID | OpenLID |
+| nepali-handwritten | 958 | PNG | Partial (class) | Extracted (Docling) | GT | GT |
+| funsd | 199 | PNG | GT + Extracted | GT (Custom) + Converted (COCO) | GT (dataset) | OpenLID |
+| dibco | 212 | PNG/BMP | Extracted | Extracted (DocLayout-YOLO) | None | None |
+| bhutan-afs | 135 | PNG | Extracted | Extracted (DocLayout-YOLO) | None | None |
+| dzongkha-digits | 62 | PNG | Partial (class) | Extracted (Docling) | GT | GT |
+| openlid-v2 | -- | N/A (text) | GT | None | GT | GT |
+| wili-2018 | -- | N/A (text) | GT | None | GT | GT |
+
+**Summary**: 50 datasets (48 image + 2 text corpora) | 45 with text labels | 37 with layout labels | 38 with language labels | 38 with script labels
+
+### Coverage Summary
+
+Image-level metadata coverage across the 48 image datasets (excludes text corpora).
+
+| Dimension | Images with Metadata | Total Images | Coverage |
+|-----------|---------------------:|-------------:|---------:|
+| Text | 1,621,588 | 2,575,890 | 63.0% |
+| Layout | 1,400,176 | 2,575,890 | 54.4% |
+| Language | 1,982,351 | 2,575,890 | 77.0% |
+| Script | 1,982,351 | 2,575,890 | 77.0% |
 
 ---
 
@@ -66,9 +142,9 @@ title: Dataset Quick Reference
 | fintabnet | 97,475 | 📄 Born-digital ⭐⭐⭐ | FIN 100% ⭐⭐⭐ | COCO + structure | Tables 100% | All | Research |
 | funsd | 199 | 🖨️ Scanner ⭐⭐⭐ | UNK ⭐ | COCO + OCR | Forms | 149 train | CC-BY-4.0 |
 | funsd_plus | 1,139 | Unknown ⭐ | UNK ⭐ | COCO + OCR | Forms | All | CC-BY-4.0 |
-| sroie | 2,043 | 📱 Camera ⭐⭐⭐ | FIN ⭐⭐⭐ | COCO + OCR | Receipts | All | Research |
+| sroie | 973 | 📱 Camera / 🖨️ Scanner ⭐⭐⭐ | FIN ⭐⭐⭐ | Quad + OCR + Entities | Receipts | 626 train | Research |
 | omnidocbench | Metadata | Unknown ⭐ | UNK ⭐ | Multi-task | Benchmark | N/A | Research |
-| **Layout Total** | **1,329,108** | - | - | - | - | **~1.14M train** | - |
+| **Layout Total** | **1,328,038** | - | - | - | - | **~1.14M train** | - |
 
 **Metadata Legend**: ⭐⭐⭐ Good metadata | ⭐⭐ Partial | ⭐ Minimal/Unknown
 
@@ -177,8 +253,8 @@ title: Dataset Quick Reference
 |---------|--------|--------------|-------|---------|-------|
 | funsd | 199 | Forms (noisy scans) | 149 train | CC-BY-4.0 | **50 test RESERVED** |
 | funsd_plus | 1,139 | Forms (extended) | All | CC-BY-4.0 | Extended FUNSD |
-| sroie | 2,043 | Receipts | All | Research | Receipt OCR |
-| sroie-voxel51 | 712 | Receipts (ICDAR-SROIE) | 626 train | CC-BY-4.0 | Via Voxel51/HuggingFace |
+| sroie | 973 | Malaysian receipts (ICDAR 2019) | 626 train / 347 test | Research | Official SROIE from HuggingFace rth/sroie-2019-v2 |
+| sroie-voxel51 | 712 | Receipts (ICDAR-SROIE train only) | 712 train | CC-BY-4.0 | Via Voxel51/HuggingFace (subset) |
 | invoices-kaggle | 1,414 | Invoice images | All | ODbL-1.0 | High-quality OCR invoices |
 | nist-sd2 | 5,590 | Tax forms (IRS 1040) | 4,472 train / 559 val / 559 test | Public Domain | 12 form types, synthesized |
 | nist-sd6 | 5,595 | Tax forms + handprint | All | Public | Forms with handwriting |
@@ -227,8 +303,8 @@ title: Dataset Quick Reference
 
 ### COCO Layout Boxes (Layout Detection)
 
-**Total**: 1,029,108 images (837K train)
-**Datasets**: doclaynet, pubtabnet, tablebank, fintabnet, funsd, funsd_plus, sroie, omnidocbench
+**Total**: 1,028,038 images (837K train)
+**Datasets**: doclaynet, pubtabnet, tablebank, fintabnet, funsd, funsd_plus, sroie (973), omnidocbench
 **Format**: COCO-style `[x, y, width, height]`
 **Classes**: 11 DocLayNet classes (Caption, Footnote, Formula, List-Item, Page-Footer, Page-Header, Picture, Section-Header, Table, Text, Title)
 **Use Case**: YOLOv10-doc layout-lite detection
@@ -498,6 +574,7 @@ title: Dataset Quick Reference
 | hindi_ocr_synthetic | 80,009 | ✅ |
 | cocotext | 63,686 | ✅ |
 | financebench | 54,121 | 🔄 PDF conversion |
+| muharaf | 25,711 | ✅ |
 | mlt19 | 20,000 | ✅ |
 | siw13 | 16,291 | ✅ |
 | rvl_cdip | 16,000 | ✅ |
@@ -507,18 +584,18 @@ title: Dataset Quick Reference
 | cvsi | 10,715 | ✅ |
 | arabic_docs_ocr | 10,045 | ✅ |
 | im2latex | 10,000 | ✅ |
-| ohr-bench | 8,561 | 🔄 Parquet conversion |
+| ohr-bench | 8,561 | ✅ |
 | pucit-ohul | 7,401 | ✅ |
 | mathverse | 6,940 | ✅ |
 | cc_ocr | 7,058 | ✅ |
 | nist-sd6 | 5,595 | ✅ |
-| nist-sd2 | 5,590 | ✅ | 🎨 Synthetic | FIN | ⭐⭐ |
+| nist-sd2 | 5,590 | ✅ |
 | diqa-5000 | 5,500 | ✅ |
 | smartdoc-qa | 4,280 | ✅ |
 | midv500 | 3,612 | ✅ |
 | nist-sd19 | 3,669 | ✅ |
 | multilingual_scripts | 3,279 | ✅ |
-| sroie | 2,043 | ✅ |
+| sroie | 973 | ✅ |
 | invoices-kaggle | 1,414 | ✅ |
 | tobacco800 | 1,290 | ✅ |
 | realdae | 1,200 | ✅ |

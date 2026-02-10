@@ -166,6 +166,15 @@
 - **Purpose**: Extended form understanding training data
 - **Parser**: ✅ `parse_funsd_plus_labels` (extracts field boxes, entities from JSON annotations)
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/forms/funsd_plus/` | ✅ Available | 1,139 PNG/JPG files |
+| **Text/GT** | Native annotations | ✅ Available | Arrow/Parquet: Word-level transcriptions (`words` string array in HuggingFace format) |
+| **Text/GT Converted** | `metadata_registry/extracted/funsd_plus/` | ✅ Converted | GT conversion: 1,139 forms, 177,724 word annotations, 4 categories (question/answer/header/other) |
+| **Layout GT Converted** | `metadata_registry/extracted/funsd_plus/layout_batch_*.json` | ✅ Converted | COCO-style word-level layout from Arrow GT annotations |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -180,3 +189,23 @@
 | **Content Flags** | Tables: ✅, Handwriting: ✅, Signatures: ✅ |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 1,139 | **Avg Min Confidence**: 0.550
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 77 | 6.8% |
+| active_learning | 703 | 61.7% |
+| unreliable | 359 | 31.5% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 98.5% | 0.550 |
+| 2 | `has_table` | 1.5% | 0.800 |

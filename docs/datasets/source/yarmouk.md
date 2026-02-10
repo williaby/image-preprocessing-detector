@@ -57,3 +57,13 @@
 - **Conversion**: ⚠️ Required PDF→PNG conversion at 300 DPI (6,039 scanned PDFs → PNG images)
 
 ---
+
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/language/yarmouk/` | ✅ Available | 15,062 JPG files |
+| **Text/GT** | Native OCR + HTML annotations | ✅ Available | TXT: 4,633 OCR text files (`OCR/` dirs) + 6,061 HTML annotations (`HTML/` dirs) + 444+ cleaned text (`text_c/` dirs) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run (optional, native OCR already available) |
+| **Layout Extracted** | `metadata_registry/extracted/yarmouk/` | ✅ Available | Docling GPU: 106 layout batches, 15,062 images |
+| **Layer 2 Metadata** | `metadata_registry/json/yarmouk_ocr_metadata.json` | ✅ Complete | 15,062 samples (2026-02-09) |

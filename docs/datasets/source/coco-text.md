@@ -136,6 +136,15 @@
 - **Purpose**: Scene text detection benchmark, text gate calibration
 - **Parser**: ✅ `CocotextParser` (multilingual package)
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/text_detection/cocotext/` | ✅ Available | 123,287 JPG files |
+| **Text/GT** | Native annotations | ✅ Available | JSON (COCO): Word-level scene text (`anns.utf8_string` in cocotext.v2.json) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+
 ##### 3b. Parser & Metadata Integration
 
 **Parser Implementation**: ✅ `CocotextParser` (src/image_preprocessing_detector/annotation/parsers/multilingual/cocotext.py)

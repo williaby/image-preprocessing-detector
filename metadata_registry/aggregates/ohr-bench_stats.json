@@ -40,5 +40,7 @@
   "paper_orientations_pct": {},
   "content_flags_pct": {},
   "top_degradations": [],
-  "top_scripts": []
+  "top_scripts": [],
+  "top_languages": [],
+  "script_family_summary": {}
 }

@@ -181,6 +181,16 @@
 - **Purpose**: Noisy form IQA baseline, real degradation samples
 - **Parser**: [`FunsdParser`](../src/image_preprocessing_detector/annotation/parsers/layout/funsd.py) | ✅ Complete
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/forms/funsd/` | ✅ Available | 348 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | JSON: Entity & word-level transcriptions (`form[].text`, `form[].words[].text`) |
+| **Text/OCR Extracted** | `annotations/funsd/ocr/batch_*.jsonl` | ✅ Available | 1,324 records (100%), Docling OCR |
+| **Text/GT Converted** | `metadata_registry/extracted/funsd/` | ✅ Converted | GT conversion: 199 forms, 9,743 annotations, 4 categories (question/answer/header/other) |
+| **Layout GT Converted** | `metadata_registry/extracted/funsd/layout_batch_*.json` | ✅ Converted | COCO-style entity-level layout from GT annotations |
+
 ##### Parser & Metadata Integration
 
 | Aspect | Details |
@@ -254,3 +264,23 @@ dataset = load_dataset("nielsr/funsd")
 ```
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 199 | **Avg Min Confidence**: 0.346
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 4 | 2.0% |
+| soft_label | 11 | 5.5% |
+| active_learning | 11 | 5.5% |
+| unreliable | 173 | 86.9% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `language` | 98.0% | 0.346 |
+| 2 | `domain` | 2.0% | 0.900 |

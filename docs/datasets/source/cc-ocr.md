@@ -52,6 +52,15 @@
 - **Parser**: [`parse_cc_ocr_labels`](../scripts/annotate_base_metadata.py#L2157) | ✅ Complete
 - **Conversion**: ✅ Extracted from TSV files (base64-encoded images) → `extracted_images/` via `scripts/convert_datasets_to_images.py --dataset cc-ocr`
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/language/cc-ocr/` | ✅ Available | 6,533 JPG/PNG files |
+| **Text/GT** | Native annotations | ✅ Available | TSV: Full OCR text in `answer` field (doc_parsing, kie TSVs) |
+| **Text/OCR Extracted** | `metadata_registry/extracted/cc-ocr/` | ✅ Available | Docling GPU: 33 OCR batches, 6,533 records |
+| **Layout Extracted** | `metadata_registry/extracted/cc-ocr/` | ✅ Available | Docling GPU: 33 layout batches, 6,533 images |
+
 ##### Text Labels
 
 CC-OCR includes OCR ground truth text in TSV annotation files:
@@ -129,3 +138,22 @@ The following datasets have been downloaded for 10-class script detection traini
 | **Nepali Handwritten** | Devanagari (1,000 images) | 1.3 GB | `language/kaggle_downloads/` | ✅ Downloaded |
 | **PUCIT-OHUL Urdu** | Arabic-derived (7,309 lines) | 568 MB | `language/kaggle_downloads/` | ✅ Downloaded |
 | **Nepal PDFs** | Devanagari (717 pages) | - | `language/multilingual_scripts/nepal_devanagari/` | ✅ Converted |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 6,284 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 6,284 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `has_table` | 100.0% | 0.000 |

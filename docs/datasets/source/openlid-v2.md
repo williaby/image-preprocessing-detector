@@ -212,6 +212,15 @@ Languages written in multiple scripts (valuable for robustness training):
 - **Sampling**: 5,000 samples per language (capped), weighted by language prevalence
 - **Integration**: `src/image_preprocessing_detector/synthetic/corpus.py`
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | N/A | N/A | Text corpus - no images |
+| **Text/GT** | Native annotations | ✅ Available | HuggingFace: Sentence-level text samples (116M+ text corpus, `text` field) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+
 #### 3b. Parser & Metadata Integration
 
 | Aspect | Details |

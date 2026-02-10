@@ -97,3 +97,34 @@
 |-------|------|----------|-------|
 
 ## Detailed Dataset Entries
+
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `02_benchmark_only/ohr-bench/` | ✅ Available | 16,091 JPG files |
+| **Text/GT** | Native annotations | ✅ Available | Parquet: Structured ground truth text (`gt_text` field in HuggingFace parquet) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+| **Docling GPU Extracted** | `metadata_registry/extracted/ohr-bench/` | ✅ Available | Docling GPU: 1,261 PDFs → 1,259 OCR records (99.8% success) + 1,259 layout images, 136,555 annotations, 14 Docling categories |
+| **Language Detected** | `metadata_registry/extracted/ohr-bench/language_detection.json` | ✅ Available | fastText: 79.5% English, 18.1% Chinese, 1.2% other (fr/ca/ru/de). Scripts: 84.1% Latin, 15.6% Chinese |
+| **Layer 2 Metadata** | `metadata_registry/json/ohr-bench_metadata.json` | ✅ Complete | 8,303 samples (2026-02-09) |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 8,303 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 8,303 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `language` | 100.0% | 0.000 |

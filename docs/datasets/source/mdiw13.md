@@ -267,17 +267,14 @@ python scripts/profile_dataset.py \
 
 > **Parser Reference**: See [LABEL_MAPPING_SPECIFICATION.md](../schema/LABEL_MAPPING_SPECIFICATION.md) for field mappings
 
-#### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/language/mdiw13/` | ✅ Available | Primary image files (290K) |
-| **Images (GCS)** | `gs://image_detection_b/.../mdiw13/` | ✅ Available | Backup storage |
-| **Text/OCR GT** | - | ❌ None | Dataset does not provide text transcriptions |
-| **Text/OCR Extracted** | `annotations/mdiw13/ocr/` | ❌ Not extracted | Could extract via Tesseract/DocTR |
-| **Layout GT** | - | ❌ None | No layout annotations provided |
-| **Layout Extracted** | `annotations/mdiw13/layout/` | ❌ Not extracted | Could extract via DocLayout-YOLO |
-| **Layer 2 Metadata** | `metadata_registry/json/mdiw13_layer2.json` | ❓ Check | Enrichment metadata |
+| **Images** | `01_base_data/language/mdiw13/` | ✅ Available | 290,213 PNG files |
+| **Text/GT** | Native annotations | ⚠️ Partial | Labels: Word-level script/language labels (not full text transcriptions) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/mdiw13/` | ✅ Available | Docling GPU: 581 layout batches, 290,213 images |
 
 **Location Status Legend**:
 
@@ -353,3 +350,23 @@ python scripts/profile_dataset.py \
 - **Script confusability**: Japanese (Kanji) may confuse with Chinese scripts
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 290,213 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 290,213 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 63.6% | 0.000 |
+| 2 | `language` | 36.4% | 0.604 |

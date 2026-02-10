@@ -8,8 +8,8 @@ tags:
 title: Dataset Documentation Template
 ---
 
-> **Version**: 1.2.0
-> **Last Updated**: 2025-02-01
+> **Version**: 1.3.0
+> **Last Updated**: 2026-02-09
 > **Purpose**: Standardized template for comprehensive IQA dataset documentation
 > **Consensus**: Validated by Gemini 3 Pro (9/10) and Claude Sonnet 4.5 (8/10)
 
@@ -518,6 +518,44 @@ tablebank/
 
 ---
 
+#### 11. Reliability & Bottlenecks
+
+> **Purpose**: Auto-generated composite reliability summary identifying the weakest enrichment fields per dataset. Populated by `materialize_reliability_summary.py`.
+>
+> **Methodology**: Each enrichment field is assigned a confidence score (0.0-1.0). Missing/unrun fields get confidence=0.0. The composite min_confidence across all fields determines each sample's overall reliability category.
+
+##### 11.1 Composite Category Distribution
+
+> **Computed**: YYYY-MM-DD | **Samples**: N | **Avg Min Confidence**: 0.XXX
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 0 | 0.0% |
+
+**Category Thresholds**: hard_label >= 0.9, soft_label >= 0.7, active_learning >= 0.5, unreliable < 0.5
+
+##### 11.2 Top Bottleneck Fields
+
+> The fields most frequently responsible for the lowest per-sample confidence.
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `field_name` | XX.X% | 0.XXX |
+| 2 | `field_name` | XX.X% | 0.XXX |
+| 3 | `field_name` | XX.X% | 0.XXX |
+
+> **Improving Reliability**: Run the corresponding backfill script for the top bottleneck:
+>
+> - `text_quality` -> `backfill_text_quality_confidence.py`
+> - `language` -> `backfill_language_confidence.py`
+> - `layout_detections` -> Re-run DocLayout-YOLO inference
+> - `capture_method`, `domain` -> Update dataset config / re-run annotation
+
+---
+
 ## Documentation Status Markers
 
 Use these markers to indicate documentation completeness:
@@ -563,6 +601,7 @@ The profiling script computes:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3.0 | 2026-02-09 | Added Section 11 "Reliability & Bottlenecks" for auto-generated composite reliability summary with category distribution and top bottleneck fields per dataset |
 | 1.2.0 | 2025-02-01 | Added Section 5.2 "Class/Category Definitions" for taxonomy documentation; Added Section 5.3 "Language & Script Coverage" for multilingual datasets; Added Section 6.5 "Benchmark Results" for published model performance; Added Section 10 "Dataset-Specific Notes" as freeform section for dataset-unique content (annotation caveats, implementation notes, external resources, custom metrics) |
 | 1.1.0 | 2025-02-01 | Added Section 2 "Source Data Inventory" with subsections for file types, split locations (train/test/val paths), labels, metadata, schema details, and parser potential |
 | 1.0.0 | 2025-12-17 | Initial template based on Gemini/Claude consensus |

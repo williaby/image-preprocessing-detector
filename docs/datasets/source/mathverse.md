@@ -65,6 +65,15 @@
 - **Purpose**: Geometric diagram IQA, fine line quality
 - **Parser**: ✅ `parse_mathverse_labels` (extracts question, answer, problem_type from JSON)
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `02_benchmark_only/mathverse/` | ✅ Available | 6,940 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | JSON/Parquet: Math problem text and answers |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -79,3 +88,22 @@
 | **Content Flags** | Formulas: ✅ 100% |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 6,940 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 6,940 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `capture_method` | 100.0% | 0.000 |

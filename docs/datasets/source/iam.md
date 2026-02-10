@@ -151,13 +151,12 @@ a01-000u-00 ok 154 19 408 746 1663 91 A|MOVE|to|stop|Mr.|Gaitskell|from
 
 ##### Data Locations
 
-| Data Type | Path |
-|-----------|------|
-| **Local Path** | `01_base_data/handwriting/iam_handwriting/` |
-| **Images** | Root + `a01/`, `a02/`, etc. subdirectories (77 writer directories) |
-| **ASCII Labels** | `ascii/forms.txt`, `ascii/lines.txt`, `ascii/words.txt`, `ascii/sentences.txt` |
-| **XML Annotations** | `xml/*.xml` (1,539 files, one per form) |
-| **GCS Backup** | `gs://image_detection_b/image-preprocessing-detector/datasets/iam_handwriting/` |
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/handwriting/iam_handwriting/` | ✅ Available | 130,212 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | XML + TXT: Word/line transcriptions (`xml/*.xml` word text + `ascii/lines.txt`) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
 
 ##### Known Issues
 

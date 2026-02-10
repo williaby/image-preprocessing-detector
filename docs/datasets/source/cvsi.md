@@ -109,17 +109,14 @@ cvsi/
 - **Parser**: ✅ `parse_cvsi_labels` (extracts script class, split, ISO language/script codes)
 - **Layer 2 Integration**: Populates `language.script_iso15924`, `language.language_code`, `provenance.split`
 
-###### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `01_base_data/language/cvsi/` | ✅ Available | 10,715 JPG files |
-| **Images (GCS)** | `gs://image_detection_b/image-preprocessing-detector/datasets/cvsi/` | ✅ Available | Cloud backup |
-| **Text/OCR GT** | - | ❌ None | Scene text images, no transcription GT |
-| **Text/OCR Extracted** | `annotations/cvsi/ocr/` | ❌ Not extracted | OCR not yet run |
-| **Layout GT** | - | ❌ None | No bounding box annotations in source |
-| **Layout Extracted** | `annotations/cvsi/layout/` | ❌ Not extracted | Layout detection not yet run |
-| **Layer 2 Metadata** | `metadata_registry/json/cvsi_layer2.json` | ⚠️ Unknown | Check if enrichment completed |
+| **Images** | `01_base_data/language/cvsi/` | ✅ Available | 10,715 JPG/PNG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | `metadata_registry/extracted/cvsi/ocr_batch_*.jsonl` | ✅ Extracted | 54 JSONL files, 10,715 records, 3,364 (31.4%) with non-empty text |
+| **Layout Extracted** | `metadata_registry/extracted/cvsi/layout_batch_*.json` | ✅ Extracted | DocLayout-YOLO layout extraction available |
 
 **Location Status Legend**:
 
@@ -228,6 +225,7 @@ cvsi/
 **Script Families Present**: Abjad (1), Alphabetic (1), Brahmic/Indic (8)
 
 **Key Characteristics**:
+
 - **Indic Script Heavy**: 8 of 10 scripts are Indic (Brahmic family)
 - **Devanagari Confusables**: Bengali, Gujarati, Gurmukhi share similar shapes with Devanagari
 - **Video Frame Quality**: Variable quality due to motion blur, compression artifacts
@@ -287,3 +285,22 @@ cvsi/
 - **No Text Transcriptions**: Scene text images, but no ground truth text provided
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 10,715 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 10,715 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

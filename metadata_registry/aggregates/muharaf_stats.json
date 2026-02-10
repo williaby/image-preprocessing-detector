@@ -1,34 +1,35 @@
 {
-  "dataset_name": "tibhcr",
-  "total_samples": 141698,
+  "dataset_name": "muharaf",
+  "total_samples": 25711,
   "capture_methods": {
-    "scanner_flatbed": 141698
+    "scanner_flatbed": 25711
   },
   "quality_scores": [],
   "degradation_types": {},
   "degradation_severities": {},
   "domains": {
-    "PER": 141698
+    "PER": 25711
   },
   "layout_types": {},
   "text_densities": {},
   "script_codes": {
-    "Tibt": 141698
+    "Arab": 25711
   },
   "script_families": {
-    "indic": 141698
+    "rtl": 25711
   },
   "language_codes": {
-    "bo": 141698
+    "ar": 25711
   },
   "content_flags": {
-    "has_handwriting": 141698
+    "has_handwriting": 25711,
+    "has_signature": 25711
   },
   "text_scopes": {
-    "word": 141698
+    "line": 25711
   },
   "content_types": {
-    "handwritten": 141698
+    "handwritten": 25711
   },
   "paper_sizes": {},
   "paper_orientations": {},
@@ -44,16 +45,16 @@
   "layout_types_pct": {},
   "text_densities_pct": {},
   "script_codes_pct": {
-    "Tibt": 100.0
+    "Arab": 100.0
   },
   "script_families_pct": {
-    "indic": 100.0
+    "rtl": 100.0
   },
   "language_codes_pct": {
-    "bo": 100.0
+    "ar": 100.0
   },
   "text_scopes_pct": {
-    "word": 100.0
+    "line": 100.0
   },
   "content_types_pct": {
     "handwritten": 100.0
@@ -61,24 +62,25 @@
   "paper_sizes_pct": {},
   "paper_orientations_pct": {},
   "content_flags_pct": {
-    "has_handwriting": 100.0
+    "has_handwriting": 100.0,
+    "has_signature": 100.0
   },
   "top_degradations": [],
   "top_scripts": [
     {
-      "script": "Tibt",
-      "count": 141698,
+      "script": "Arab",
+      "count": 25711,
       "percentage": 100.0
     }
   ],
   "top_languages": [
     {
-      "language": "bo",
-      "count": 141698,
+      "language": "ar",
+      "count": 25711,
       "percentage": 100.0
     }
   ],
   "script_family_summary": {
-    "indic": 141698
+    "rtl": 25711
   }
 }

@@ -94,7 +94,7 @@ title: Dataset Naming Standard
 | `signatr6k` | signatr6k | signatr-6k, signature-6k | ✅ | Text segmentation (signatures) |
 | `siw13` | siw13 | siw-13, siw_13 | ✅ | Script identification words (13 scripts) |
 | `smartdoc-qa` | smartdoc-qa | smartdoc_qa | ✅ | Mobile capture quality assessment |
-| `sroie` | sroie | sroie-receipts | ✅ | Scanned receipts OCR |
+| `sroie` | sroie_icdar2019 | sroie-receipts, sroie-icdar2019 | ✅ | ICDAR 2019 SROIE Malaysian receipts (973 images) |
 | `synth-multiscript-250k` | synthetic_250k | synth-multiscript, synthetic_250k | 🔄 | Synthetic multi-script 250K (27 scripts, SigLIP training) |
 | `synthetic-iqa` | synthetic_iqa | synthetic_iqa | ✅ | Synthetic IQA test samples |
 | `tablebank` | tablebank | table-bank | ✅ | TableBank dataset |

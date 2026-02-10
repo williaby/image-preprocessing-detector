@@ -121,6 +121,15 @@ Line 2: \sum_{i=1}^{n} i^2 = \frac{n(n+1)(2n+1)}{6}
 | **File Format** | PNG (transparent background) |
 | **Download Size** | 306.8 MB total |
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/formulas/im2latex/` | ✅ Available | 10,000 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | TXT: LaTeX formula source code (`im2latex_formulas.lst`, line-indexed) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+
 ##### Benchmark Performance (Image-to-LaTeX)
 
 | Model | BLEU Score | Notes |
@@ -227,3 +236,22 @@ Line 2: \sum_{i=1}^{n} i^2 = \frac{n(n+1)(2n+1)}{6}
 | **Content Flags** | Formulas: ✅ 100% |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 10,000 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 10,000 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 100.0% | 0.000 |

@@ -151,17 +151,14 @@ mle2e/
 1. **Text transcription integration**: Test set transcriptions exist in separate file (not yet integrated into parser)
 2. **Full scene image annotations**: Original dataset has bbox annotations for full scene images, but only pre-segmented crops are available locally
 
-##### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images** | `/mnt/e/image_detection/01_base_data/language/mle2e/` | ✅ Available | 1,816 pre-segmented text line crops |
-| **Images (GCS)** | `gs://image_detection_b/.../mle2e/` | ✅ Available | Cloud storage backup |
-| **Text/OCR GT** | `mle2e/Testing/` (separate file) | ⚠️ Partial | Ground truth text for test set only (not integrated) |
-| **Text/OCR Extracted** | N/A | ❌ Not extracted | OCR not needed (GT available for test set) |
-| **Layout GT** | N/A | ❌ Not available locally | Full scene images with bbox annotations not in local copy |
-| **Layout Extracted** | N/A | ❌ Not extracted | Pre-segmented crops (no bbox needed) |
-| **Layer 2 Metadata** | `metadata_registry/parquet/dataset_name=mle2e/` | ✅ Available | Parquet format metadata exists |
+| **Images** | `01_base_data/language/mle2e/` | ✅ Available | 1,816 JPG files |
+| **Text/GT** | Native annotations | ✅ Available | TXT/JSON: Word-level text in detection annotations |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/mle2e/` | ✅ Available | Docling GPU: 10 layout batches, 1,816 images |
 
 **Location Status Legend**:
 
@@ -445,3 +442,22 @@ mle2e/
 - Pre-segmented format ideal for text line classification (no detection stage needed)
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 1,816 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 1,816 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `has_table` | 100.0% | 0.000 |

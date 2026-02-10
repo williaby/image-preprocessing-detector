@@ -52,3 +52,13 @@
 - **Parser**: ✅ `parse_hindi_synthetic_labels` (extracts transcription from .txt pairs, hi/Deva metadata)
 
 ---
+
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/language/hindi_ocr_synthetic/` | ✅ Available | 80,009 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | CSV/TXT: Paired image-text files (Devanagari line transcriptions) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/hindi-synth/` | ✅ Available | Docling GPU: 161 layout batches, 80,009 images |
+| **Layer 2 Metadata** | `metadata_registry/json/hindi_ocr_synthetic_metadata.json` | ✅ Complete | 80,008 samples (2026-02-09) |

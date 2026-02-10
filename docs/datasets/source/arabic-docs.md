@@ -51,7 +51,7 @@
 | **Script** | Arabic (right-to-left) |
 | **Quality Variation** | High (mixed scanning quality) |
 | **Key Value** | **Diverse Arabic document types** for script detection |
-| **Annotation** | JSON with text regions and transcriptions |
+| **Annotation** | Supervisely JSON with text regions; ~69% have title transcriptions |
 
 ##### Project Usage
 
@@ -62,3 +62,13 @@
 - **Parser**: ✅ `parse_arabic_docs_labels` (extracts category, language_code from folder structure)
 
 ---
+
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/language/arabic_docs_ocr/` | ✅ Available | 10,045 JPG/PNG files |
+| **Text/GT** | `01_base_data/language/arabic_docs_ocr/Documents/` | ⚠️ Partial | Supervisely JSON annotations with "Transcription" tags on Title objects; ~69% of files have Arabic text transcriptions. Body text has bounding boxes only, no transcription. |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+| **Docling GPU Extracted** | `metadata_registry/extracted/arabic-docs/` | ✅ Available | Docling GPU: 10,045 OCR records + 9,729 layout images, 78,733 annotations, 14 Docling categories |

@@ -98,6 +98,15 @@
 - **Purpose**: Layout-aware IQA training, element detection
 - **Parser**: [`parse_doclaynet_labels`](../scripts/annotate_base_metadata.py#L1296) | ✅ Complete
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/documents/doclaynet/` | ✅ Available | 81,471 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | JSON: Word-level text with font metadata (`cells[].text` in per-doc JSON) |
+| **Text/GT Extracted** | `metadata_registry/extracted/doclaynet/` | ✅ Converted | GT word text → page text via `convert_doclaynet_to_extracted.py` (81K docs) |
+| **Layout/GT Extracted** | `metadata_registry/extracted/doclaynet/` | ✅ Converted | 11 DocLayNet semantic categories from COCO GT, schema: `doclaynet-gt` |
+
 ##### Text Labels
 
 DocLayNet includes per-document JSON files with text content extracted from the original PDFs:
@@ -139,3 +148,23 @@ DocLayNet includes per-document JSON files with text content extracted from the 
 ```
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 81,471 | **Avg Min Confidence**: 0.255
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 81,471 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `domain` | 84.8% | 0.300 |
+| 2 | `has_table` | 15.2% | 0.848 |

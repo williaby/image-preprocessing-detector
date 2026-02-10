@@ -45,12 +45,19 @@
 
 | Split | Images Path | Annotations Path | Count | Status |
 |-------|-------------|------------------|-------|--------|
-| **Full Dataset** | `doc3d/img/` | `doc3d/{gt_type}/` | 100,000 [Official] | ✅ Downloaded (as ZIPs) |
+| **Full Dataset** | `doc3d/img/` | `doc3d/{gt_type}/` | 102,064 [Verified] | ✅ Extracted |
 | **Train** | - | - | - | ℹ️ User-defined (by mesh ID) |
 | **Validation** | - | - | - | ℹ️ User-defined (by mesh ID) |
 | **Test** | - | - | - | ℹ️ User-defined (by mesh ID) |
 
-**Current State**: Dataset downloaded as 16 ZIP files (~107GB visible, 209GB total). Images not yet extracted.
+**Current State**: Images fully extracted (102,064 PNG files, 24 GB). Organized in 21 mesh ID subdirectories under `img/`.
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/camera_captured/doc3d/data/doc3d/img/` | ✅ Extracted | 102,064 PNG files (448x448, RGBA) |
+| **Albedo** | `01_base_data/camera_captured/doc3d/data/doc3d/alb_*.zip` | ⬇️ Downloaded (not extracted) | 8 ZIPs (~2.3 GB) |
+| **Backward Mapping** | `01_base_data/camera_captured/doc3d/data/doc3d/bm_*.zip` | ⬇️ Downloaded (not extracted) | 8 ZIPs (~105 GB) |
+| **Depth Maps** | - | ❌ Not downloaded | 21 ZIPs (optional, for warping severity) |
 
 ##### 2.3 Provided Labels & Annotations
 
@@ -82,19 +89,19 @@
 ```text
 [Empirically Derived from filesystem]
 
-doc3d/data/doc3d/  (209GB total, 16 ZIP files)
-├── img/              # Warped document images (100K PNG)
-├── 3d/               # 3D coordinate arrays (.npy)
-├── dmap/             # Depth map arrays (.npy) [added v0.5.1]
-├── uv/               # UV coordinate arrays (.npy)
-├── bm/               # Backward mapping arrays (.npy, ~14GB per ZIP)
-├── alb/              # Albedo maps (.npy, ~276-328MB per ZIP)
-├── norm/             # Surface normals (.npy)
-└── recon/            # Checkerboard reconstructions (.npy)
+doc3d/data/doc3d/
+├── img/                     # 102,064 warped document images (PNG, 448x448, RGBA)
+│   ├── 1/                   # Mesh ID 1 (4,999 images)
+│   │   ├── 1000_4-pp_Page_847-Pwi0001.png
+│   │   └── ...
+│   ├── 2/ ... 21/           # 21 mesh ID subdirectories (~5,000 images each)
+├── alb_1.zip - alb_8.zip   # Albedo maps (NPY, ~2.3 GB compressed, not extracted)
+├── bm_1.zip, bm_10-16.zip  # Backward mapping (NPY, ~105 GB compressed, not extracted)
+└── img_1.zip - img_21.zip  # Image ZIPs (24 GB, can be deleted after verification)
 
-# Current State: ZIPs not extracted
-# File naming convention: [NEEDS_VERIFICATION after extraction]
-# Array shapes and data types: [NEEDS_VERIFICATION]
+# File naming convention: {mesh_id}_{variant}-{doc_type}_Page_{page}-{hash}0001.png
+# Image dimensions: 448x448 pixels, RGBA mode, PNG format
+# Mesh IDs: 1-21 (21 directories, ~5,000 images per mesh)
 ```
 
 **Key Fields for Parsing**:
@@ -132,16 +139,27 @@ doc3d/data/doc3d/  (209GB total, 16 ZIP files)
 
 #### 4. Dataset Statistics
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/camera_captured/doc3d/data/doc3d/img/` | ✅ Available | 102,064 PNG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+
 ##### 4.1 Sample Counts
 
 | Metric | Value |
 |--------|-------|
-| **Total Images** | 100,000 [Official] |
-| **Local Storage** | ~209 GB (16 ZIP files) |
+| **Total Images** | 102,064 [Verified] |
+| **Local Storage** | ~131 GB (24 GB extracted images + 107 GB auxiliary ZIPs) |
 | **Ground Truth Types** | 7 (3D coords, depth, UV, backward mapping, albedo, normals, checkerboard) |
 | **Document Types** | Rendered documents with realistic 3D deformations (folding, bending, curving) |
 | **Image Format** | PNG |
-| **Resolution** | Variable (rendered, not scanned) |
+| **Resolution** | 448x448 pixels (fixed, rendered) |
+| **Color Mode** | RGBA (4-channel) |
+| **Mesh ID Groups** | 21 directories (~5,000 images each) |
 
 #### 10. Dataset-Specific Notes
 

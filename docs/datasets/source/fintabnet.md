@@ -77,6 +77,15 @@
 - **Purpose**: Financial document IQA training
 - **Parser**: [`parse_fintabnet_labels`](../scripts/annotate_base_metadata.py#L1786) | ✅ Complete
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/tables/fintabnet/` | ✅ Available | 97,475 PNG files |
+| **Text/GT** | Native annotations | ✅ Available | JSONL: Cell-level text in table structure annotations |
+| **Text/GT Extracted** | `metadata_registry/extracted/fintabnet/` | ✅ Converted | GT cell text → page text via `convert_fintabnet_to_extracted.py` (97K tables) |
+| **Layout/GT Extracted** | `metadata_registry/extracted/fintabnet/` | ✅ Converted | Cell + structure bboxes → COCO format, schema: `fintabnet-gt` |
+
 ##### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -91,3 +100,22 @@
 | **Content Flags** | Tables: ✅ 100% |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 97,475 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 97,475 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `layout_detections` | 100.0% | 0.000 |

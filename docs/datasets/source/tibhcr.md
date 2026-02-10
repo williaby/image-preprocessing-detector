@@ -106,3 +106,32 @@ Numerals/3/3_0089.jpg, "༣"
 - **Conversion**: ✅ Extracted from `TibHCR.zip` (865 MB) → 141,698 JPG images
 
 ---
+
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `01_base_data/language/huggingface_downloads/TibHCR/` | ✅ Available | 141,698 PNG files |
+| **Text/GT** | Native annotations | ⚠️ Partial | TXT (CSV): Tibetan Unicode character labels (`label.txt`) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | `metadata_registry/extracted/tibhcr/` | ✅ Available | Docling GPU: 284 layout batches, 141,698 images |
+| **Layer 2 Metadata** | `metadata_registry/json/tibhcr_metadata.json` | ✅ Complete | 141,698 samples (2026-02-09) |
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 141,698 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 141,698 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |

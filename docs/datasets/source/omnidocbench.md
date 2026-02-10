@@ -170,6 +170,16 @@
 - **Purpose**: Multi-task document parsing evaluation
 - **Parser**: [`parse_omnidocbench_labels`](../scripts/annotate_base_metadata.py#L2979) | ✅ Complete
 
+##### Data Locations
+
+| Data Type | Path | Status | Notes |
+|-----------|------|--------|-------|
+| **Images** | `02_benchmark_only/omnidocbench/` | ✅ Available | 1,358 PNG/JPG files |
+| **Text/GT** | Native annotations | ✅ Available | Parquet: Multi-level ground truth text (`gt_text` field in HuggingFace parquet) |
+| **Text/OCR Extracted** | - | ❌ Not extracted | Docling OCR not yet run |
+| **Layout Extracted** | - | ❌ Not extracted | DocLayout-YOLO not yet run |
+| **Docling GPU Extracted** | `metadata_registry/extracted/omnidocbench/` | ✅ Available | Docling GPU: 1,358 OCR records + 1,357 layout images, 28,614 annotations, 14 Docling categories |
+
 #### Layer 2 Annotation Summary
 
 | Metric | Value |
@@ -183,3 +193,23 @@
 | **Domain** | Multi-domain Benchmark |
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 377 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 377 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `language` | 76.7% | 0.222 |
+| 2 | `has_table` | 23.3% | 0.000 |

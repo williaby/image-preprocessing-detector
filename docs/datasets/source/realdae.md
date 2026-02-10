@@ -181,17 +181,14 @@ realdae/
 - **Priority**: **P2** - Valuable for mobile/camera capture scenarios
 - **Parser**: [`parse_realdae_labels`](../scripts/annotate_base_metadata.py#L2979) | ✅ Complete
 
-#### 3c. Data Locations
+##### Data Locations
 
 | Data Type | Path | Status | Notes |
 |-----------|------|--------|-------|
-| **Images (Input)** | `01_base_data/camera_captured/realdae/task_*/*_in.jpg` | ✅ Available | 600 degraded camera-captured images |
-| **Images (GT)** | `01_base_data/camera_captured/realdae/task_*/*_gt.jpg` | ✅ Available | 600 clean flatbed-scanned ground truth |
-| **Text/OCR GT** | - | ❌ None | No ground truth text provided |
-| **Text/OCR Extracted** | - | ❌ Not extracted | No OCR extraction performed |
-| **Layout GT** | - | ❌ None | No layout annotations provided |
-| **Layout Extracted** | - | ❌ Not extracted | No layout detection performed |
-| **Layer 2 Metadata** | `metadata_registry/json/realdae_metadata.json` | ⚠️ Partial | 583 samples annotated (input images only) |
+| **Images** | `01_base_data/camera_captured/realdae/` | ✅ Available | 1,200 JPG files |
+| **Text/GT** | - | ❌ Not provided | No ground truth text in source dataset |
+| **Text/OCR Extracted** | `metadata_registry/extracted/realdae/ocr_batch_*.jsonl` | ✅ Extracted | Docling OCR, 6 batch files, 1,200 records (1,198 with text, 99.8%), confidence ~1.0 |
+| **Layout Extracted** | `metadata_registry/extracted/realdae/layout_batch_*.json` | ✅ Extracted | Docling layout annotations, 6 batch files, 10 categories |
 
 **Location Status Legend**:
 
@@ -327,3 +324,22 @@ realdae/
 ```
 
 ---
+
+##### Reliability & Bottlenecks
+
+> **Computed**: 2026-02-10 | **Samples**: 583 | **Avg Min Confidence**: 0.000
+
+**Composite Category Distribution**:
+
+| Category | Count | Pct |
+|----------|------:|----:|
+| hard_label | 0 | 0.0% |
+| soft_label | 0 | 0.0% |
+| active_learning | 0 | 0.0% |
+| unreliable | 583 | 100.0% |
+
+**Top Bottleneck Fields** (most frequently the weakest):
+
+| Rank | Field | Bottleneck % | Avg Confidence |
+|-----:|-------|-------------:|---------------:|
+| 1 | `text_quality` | 100.0% | 0.000 |
