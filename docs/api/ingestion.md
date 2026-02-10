@@ -134,4 +134,4 @@ except Exception as e:
 
 - [Schema API](schema.md) - Data models
 - [Detection API](detection.md) - Quality assessment
-- [User Guide: Image Quality](../guides/iqa.md) - IQA overview
+- [Reference: Detection Taxonomy](../reference/detection-taxonomy.md) - Quality issue classification

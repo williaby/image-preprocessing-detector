@@ -1080,7 +1080,7 @@ print('Valid!')
 
 For detailed pipeline flow visualization, see:
 
-- **PlantUML Diagram:** `docs/planning/workflows_opus/unified_primary_workflow.puml`
+- **PlantUML Diagram:** `docs/_archived/planning/workflows-opus/unified_primary_workflow.puml` (archived 2026-02-09)
 
 ---
 
@@ -1100,4 +1100,4 @@ For questions about Project A output:
 - **JSON Schema**: See `docs/schema/document_metadata.schema.json`
 - **Integration Issues**: Create issue in Project A repository
 - **Architecture Questions**: See `docs/development/RAG Pipeline/RAG-pipeline-project-overview.md`
-- **Pipeline Workflow**: See `docs/planning/workflows_opus/unified_primary_workflow.puml`
+- **Pipeline Workflow**: See `docs/_archived/planning/workflows-opus/unified_primary_workflow.puml` (archived 2026-02-09)

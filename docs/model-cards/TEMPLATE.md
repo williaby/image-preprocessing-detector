@@ -17,8 +17,8 @@ INSTRUCTIONS:
 
 TEMPLATE VERSION: 3.0 (HuggingFace-Aligned)
 Based on: docs/reference/detection-taxonomy.md
-          docs/reference/document-type-taxonomy.md
-          docs/reference/metadata-versioning-schema.md
+          docs/_archived/reference/document-type-taxonomy.md
+          docs/_archived/reference/metadata-versioning-schema.md
           HuggingFace Model Card Best Practices
 -->
 

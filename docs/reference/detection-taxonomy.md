@@ -9,6 +9,8 @@ owner: docs-team
 purpose: Reference documentation for detection taxonomy - complete classification of document quality issues.
 ---
 
+> **Review Needed (2026-02-09)**: This taxonomy may need alignment with `config/layout_taxonomy.yaml` and the SigLIP 2 multi-task architecture. Has 15+ inbound references across docs -- update content in place, do not move.
+
 **Version**: 3.0 (Research-Aligned)
 **Date**: 2025-11-13
 **Status**: 🚧 **In Progress** - Migration from v2 functional requirements

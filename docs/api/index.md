@@ -10,6 +10,8 @@ authors:
 purpose: "Provide comprehensive API reference documentation for developers."
 ---
 
+> **Note**: These documents describe the planned REST API for Phase 5. The API is not yet fully implemented. See [Project Plan](../planning/PROJECT_PLAN.md) for current Phase 5 status.
+
 Welcome to the Image Preprocessing Detector API reference documentation. This section provides detailed documentation for all public modules, classes, and functions.
 
 ## Core Modules
@@ -167,9 +169,8 @@ issues = iqa.detect_issues(image_array)
 
 ## Related Documentation
 
-- [User Guide](../guides/overview.md) - High-level usage documentation
-- [Architecture](../development/RAG%20Pipeline/RAG-pipeline-project-overview.md) - System architecture
-- [Project Plan](../development/RAG%20Pipeline/project-a-project-plan.md) - Implementation roadmap
+- [Architecture](../architecture/) - System architecture
+- [Project Plan](../planning/PROJECT_PLAN.md) - Implementation roadmap
 - [Contributing](../development/contributing.md) - Development guidelines
 
 ## Module Reference

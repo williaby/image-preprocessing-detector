@@ -633,7 +633,7 @@ def train_dociq_replica():
 - [Level 2 - Pseudo-Labeling Workflow](../../level-2/pseudo-labeling/index.md) - Full DIQA-5000 system overview
 - [Level 2 - Model Training](../../level-2/model-training/index.md) - SigLIP 2 + MobileNetV4 two-model training pipeline (current primary)
 - [Level 3 - Model Training Swimlane](./model-training-swimlane.puml) - Detailed training workflow
-- [DIQA-5000 Pseudo-Labels v2 Planning Doc](../../../../planning/DIQA-5000_Pseudo_Labels_v2.md) - Complete system specification
+- [DIQA-5000 Pseudo-Labels v2 Planning Doc](../../../../_archived/planning/diqa-deqa-research/DIQA-5000_Pseudo_Labels_v2.md) - Complete system specification (archived - superseded by SigLIP 2)
 
 ### Implementation Files
 

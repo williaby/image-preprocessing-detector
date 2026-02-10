@@ -234,4 +234,4 @@ print(metadata.transform_history)
 
 - [Detection API](detection.md) - Quality issue detection
 - [Schema API](schema.md) - TransformHistory model
-- [User Guide: Correction](../guides/correction.md) - Correction pipeline overview
+- [Reference: Detection Taxonomy](../reference/detection-taxonomy.md) - Quality issue classification

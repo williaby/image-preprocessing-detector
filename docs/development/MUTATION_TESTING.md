@@ -216,4 +216,3 @@ Document these in a `.mutmut-allowlist` file if needed.
 
 - [mutmut Documentation](https://mutmut.readthedocs.io/)
 - [Mutation Testing Theory](https://en.wikipedia.org/wiki/Mutation_testing)
-- [TEST_IMPROVEMENT_TRACKER.md](./TEST_IMPROVEMENT_TRACKER.md) - Test coverage tracking
