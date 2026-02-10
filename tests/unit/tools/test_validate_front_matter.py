@@ -334,7 +334,7 @@ Content.
     def test_redundant_h1_warning(
         self, tmp_path: Path, allowlists: tuple[set, set]
     ) -> None:
-        """Test detection of redundant H1 heading."""
+        """Test detection of redundant H1 heading (non-blocking warning)."""
         allowed_tags, allowed_owners = allowlists
 
         md_file = tmp_path / "with_h1.md"
@@ -353,8 +353,8 @@ This H1 is redundant because title is in front matter.
 
             result = validate_file(md_file, allowed_tags, allowed_owners)
 
-        assert result["ok"] is False
-        assert any("redundant h1" in err.lower() for err in result["errors"])
+        # H1 is now a non-blocking warning (printed to stderr), not an error
+        assert result["ok"] is True
 
     def test_h1_in_code_block_ignored(
         self, tmp_path: Path, allowlists: tuple[set, set]
@@ -415,7 +415,7 @@ Content.
     def test_missing_front_matter(
         self, tmp_path: Path, allowlists: tuple[set, set]
     ) -> None:
-        """Test validation fails for missing front matter."""
+        """Test validation passes for files without front matter schema_type."""
         allowed_tags, allowed_owners = allowlists
 
         md_file = tmp_path / "no_fm.md"
@@ -426,11 +426,10 @@ No front matter at all.
 
         result = validate_file(md_file, allowed_tags, allowed_owners)
 
-        # Validation should fail for missing front matter
-        # The file will have an empty metadata dict, which will fail Pydantic validation
-        # or the H1 will be flagged as redundant
-        assert result["ok"] is False
-        assert len(result["errors"]) > 0
+        # Files without schema_type skip Pydantic validation (legacy docs)
+        # H1 is a non-blocking warning, not an error
+        # Empty/missing front matter results in empty dict, no schema_type → ok
+        assert result["ok"] is True
 
 
 class TestResultStructure:
