@@ -480,9 +480,16 @@ class MLIQADetector:
             RuntimeError: If student model not available
         """
         if self._batch_engine is None:
-            from image_preprocessing_detector.models.batch_inference import (
-                BatchInferenceEngine,
-            )
+            try:
+                from image_preprocessing_detector.models.batch_inference import (
+                    BatchInferenceEngine,
+                )
+            except ImportError as e:
+                msg = (
+                    "BatchInferenceEngine requires the models package, "
+                    "which was removed in the Phase 2/7 cleanup."
+                )
+                raise RuntimeError(msg) from e
 
             session = self._load_student_session(device=device)
             self._batch_engine = BatchInferenceEngine(

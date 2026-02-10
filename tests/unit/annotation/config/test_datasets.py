@@ -167,8 +167,8 @@ class TestDatasetConfigsRegistry:
         # OHR-Bench (1)
         assert "ohr-bench" in DATASET_CONFIGS
 
-        # Total count (42 datasets migrated from monolith)
-        assert len(DATASET_CONFIGS) == 42
+        # Total count (46 datasets: 42 from monolith + 4 added later)
+        assert len(DATASET_CONFIGS) == 46
 
     def test_all_keys_match_names(self) -> None:
         """Ensure registry keys match config names."""
@@ -177,14 +177,15 @@ class TestDatasetConfigsRegistry:
 
     def test_benchmark_datasets_marked_correctly(self) -> None:
         """Check is_benchmark flag matches path_suffix."""
+        valid_non_benchmark_prefixes = ("01_base_data", "03_training_datasets")
         for name, config in DATASET_CONFIGS.items():
             if config.is_benchmark:
                 assert config.path_suffix.startswith("02_benchmark_only"), (
                     f"{name}: is_benchmark=True but path not in 02_benchmark_only/"
                 )
             else:
-                assert config.path_suffix.startswith("01_base_data"), (
-                    f"{name}: is_benchmark=False but path not in 01_base_data/"
+                assert config.path_suffix.startswith(valid_non_benchmark_prefixes), (
+                    f"{name}: is_benchmark=False but path not in {valid_non_benchmark_prefixes}"
                 )
 
     def test_parser_names_lowercase_snake_case(self) -> None:
@@ -225,7 +226,7 @@ class TestSpecificDatasets:
         assert config.has_signature is False
         assert config.has_coco_annotations is True
 
-    def test_nist-sd2_multi_flags(self) -> None:
+    def test_nist_sd2_multi_flags(self) -> None:
         """Validate nist-sd2 multiple content flags."""
         config = DATASET_CONFIGS["nist-sd2"]
 

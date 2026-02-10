@@ -244,44 +244,6 @@ class TestIQATaskClass:
         assert task._student_session is None
         assert task._teacher_session is None
 
-    def test_student_session_property(self) -> None:
-        """Test student session property with mocked loader."""
-        from image_preprocessing_detector.workers.tasks import IQATask
-
-        task = IQATask()
-
-        with patch(
-            "image_preprocessing_detector.models.model_loader.load_student_model"
-        ) as mock_load:
-            mock_session = MagicMock()
-            mock_load.return_value = mock_session
-
-            session = task.student_session
-
-            mock_load.assert_called_once()
-            assert session is mock_session
-
-    def test_student_session_cached(self) -> None:
-        """Test student session is cached after first load."""
-        from image_preprocessing_detector.workers.tasks import IQATask
-
-        task = IQATask()
-
-        with patch(
-            "image_preprocessing_detector.models.model_loader.load_student_model"
-        ) as mock_load:
-            mock_session = MagicMock()
-            mock_load.return_value = mock_session
-
-            # First access
-            session1 = task.student_session
-            # Second access
-            session2 = task.student_session
-
-            # Should only load once
-            mock_load.assert_called_once()
-            assert session1 is session2
-
 
 class TestModuleExports:
     """Tests for module exports."""
@@ -367,57 +329,6 @@ class TestTaskHelperFunctions:
         # Confidences should be high for both
         assert confidences["blur"] > 0.99
         assert confidences["noise"] > 0.99
-
-
-class TestIQATaskProperties:
-    """Tests for IQATask model loading properties."""
-
-    def test_teacher_session_property(self) -> None:
-        """Test teacher session property with mocked loader."""
-        from image_preprocessing_detector.workers.tasks import IQATask
-
-        task = IQATask()
-
-        with patch(
-            "image_preprocessing_detector.models.model_loader.load_teacher_model"
-        ) as mock_load:
-            mock_session = MagicMock()
-            mock_load.return_value = mock_session
-
-            session = task.teacher_session
-
-            mock_load.assert_called_once()
-            assert session is mock_session
-
-    def test_student_session_load_failure(self) -> None:
-        """Test student session handles load failure gracefully."""
-        from image_preprocessing_detector.workers.tasks import IQATask
-
-        task = IQATask()
-
-        with patch(
-            "image_preprocessing_detector.models.model_loader.load_student_model"
-        ) as mock_load:
-            mock_load.side_effect = ImportError("model_loader not available")
-
-            # Should return None on failure, not raise
-            session = task.student_session
-            assert session is None
-
-    def test_teacher_session_load_failure(self) -> None:
-        """Test teacher session handles load failure gracefully."""
-        from image_preprocessing_detector.workers.tasks import IQATask
-
-        task = IQATask()
-
-        with patch(
-            "image_preprocessing_detector.models.model_loader.load_teacher_model"
-        ) as mock_load:
-            mock_load.side_effect = ImportError("model_loader not available")
-
-            # Should return None on failure, not raise
-            session = task.teacher_session
-            assert session is None
 
 
 class TestRunIQAAnalysisTask:

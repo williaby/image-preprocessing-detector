@@ -242,10 +242,17 @@ class RegressionBackend(InferenceBackend):
         Returns:
             Loaded model.
         """
-        # Import the regression head model class
-        from image_preprocessing_detector.labeling.finetuning.regression_head import (
-            DIQARegressionModel,
-        )
+        try:
+            from image_preprocessing_detector.labeling.finetuning.regression_head import (
+                DIQARegressionModel,
+            )
+        except ImportError as e:
+            msg = (
+                "DIQARegressionModel requires the labeling.finetuning package, "
+                "which was removed in the Phase 2/7 cleanup. "
+                "Use HuggingFace-hosted models instead of local state dicts."
+            )
+            raise ModelLoadError(msg) from e
 
         # Determine base model from spec or state dict
         # Use quant_params for extra model metadata (if not available, use defaults)

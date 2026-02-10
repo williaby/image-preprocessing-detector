@@ -119,7 +119,7 @@ class TestDatasetInventory:
             receipts_hitl_path=tmp_path / "hitl",
             docsynth300k_path=tmp_path / "docsynth",
             docbank_path=tmp_path / "docbank",
-            nist-sd2_path=tmp_path / "nist",
+            nist_sd2_path=tmp_path / "nist",
             docile_path=tmp_path / "docile",
         )
 
@@ -148,7 +148,7 @@ class TestDatasetSufficiencyMeasurer:
             receipts_hitl_path=tmp_path / "hitl",
             docsynth300k_path=tmp_path / "docsynth",
             docbank_path=tmp_path / "docbank",
-            nist-sd2_path=tmp_path / "nist",
+            nist_sd2_path=tmp_path / "nist",
             docile_path=tmp_path / "docile",
         )
 

@@ -698,7 +698,7 @@ See [schema.py](src/image_preprocessing_detector/schema.py) for complete Pydanti
 
 - **Phase 5** (Weeks 18-20): Testing, Documentation & Deployment - ⚠️ **40% COMPLETE**
   - FastAPI framework ✅
-  - Docker/K8s manifests ✅
+  - Docker deployment ✅
   - E2E test suite ✅
   - Actual API endpoint implementations (pending)
   - Load testing, deployment automation (pending)
@@ -895,9 +895,6 @@ python scripts/aggregate_layer2_metadata.py --dataset tablebank --verbose
 
 **Related Documentation**:
 
-- [DATASET_INTEGRATION_GUIDE.md](docs/datasets/DATASET_INTEGRATION_GUIDE.md) - Complete usage patterns
-- [DATASET_METADATA_AGGREGATION_GUIDE.md](docs/datasets/DATASET_METADATA_AGGREGATION_GUIDE.md) - Aggregation workflow
-- [DATASET_AGGREGATION_SUMMARY.md](docs/datasets/DATASET_AGGREGATION_SUMMARY.md) - Current aggregation results
 - [Level 2 Architecture](docs/architecture/diagrams/level-2/data-preparation/index.md#layer-2-metadata-aggregation) - Technical details
 
 **Key Datasets**:

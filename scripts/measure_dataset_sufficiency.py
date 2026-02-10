@@ -83,7 +83,7 @@ class DatasetInventory:
     docsynth300k_path: Path
     docbank_path: Path
     # Business document datasets
-    nist-sd2_path: Path
+    nist_sd2_path: Path
     docile_path: Path
 
 
@@ -414,7 +414,7 @@ class DatasetSufficiencyMeasurer:
             logger.info(f"Found {counts['hitl']} HITL receipt samples")
 
         # NIST DB2 and DocILE
-        counts["nist"] = self._measure_nist-sd2()
+        counts["nist"] = self._measure_nist_sd2()
         counts["docile"] = self._measure_docile()
 
         total = sum(counts.values())
@@ -1029,9 +1029,9 @@ class DatasetSufficiencyMeasurer:
         # Store language coverage
         self.report.language_coverage = dict(paragraph_counts)
 
-    def _measure_nist-sd2(self) -> int:
+    def _measure_nist_sd2(self) -> int:
         """Count NIST DB2 tax form images."""
-        nist_path = self.inventory.nist-sd2_path
+        nist_path = self.inventory.nist_sd2_path
         if not nist_path.exists():
             logger.warning(f"NIST DB2 not found at {nist_path}")
             return 0
@@ -1794,7 +1794,7 @@ def main() -> None:
         docsynth300k_path=args.data_root / "training" / "layout" / "docsynth300k",
         docbank_path=args.data_root / "training" / "layout" / "docbank",
         # Business document datasets
-        nist-sd2_path=args.data_root / "training" / "business_documents" / "sd02",
+        nist_sd2_path=args.data_root / "training" / "business_documents" / "sd02",
         docile_path=args.data_root / "training" / "business_documents" / "docile",
     )
 
