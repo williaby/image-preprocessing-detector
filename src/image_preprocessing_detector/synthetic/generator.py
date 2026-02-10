@@ -53,6 +53,7 @@ from image_preprocessing_detector.synthetic.augmentation_hybrid import (
     HybridProfile,
 )
 from image_preprocessing_detector.synthetic.config import (
+    COLOR_MODE_WEIGHTS,
     DOCUMENT_COMPOSITION_WEIGHTS,
     LAYOUT_WEIGHTS,
     MVP_SCRIPTS,
@@ -62,6 +63,7 @@ from image_preprocessing_detector.synthetic.config import (
     SCRIPT_CONFIGS,
     TEXT_DENSITY_WEIGHTS,
     TWO_SCRIPT_COMBINATIONS,
+    ColorMode,
     LayoutType,
     TextDensity,
 )
@@ -112,6 +114,14 @@ class GenerationConfig:
     dpi: int = 300  # Output resolution (300 = full, 150 = half for faster augmentation)
     augmenter: str = "albumentations"  # "augraphy", "albumentations", or "hybrid"
     # Hybrid mode: Augraphy for bleed-through/ink/paper + Albumentations for blur/noise/compression
+    # Multi-task training augmentation flags
+    color_mode_enabled: bool = (
+        False  # Apply random color mode conversion (grayscale/binarized)
+    )
+    skew_augmentation: bool = False  # Apply random ±10° rotation with exact angle label
+    orientation_augmentation: bool = (
+        False  # Apply 0/90/180/270 rotation with class label
+    )
 
     def __post_init__(self) -> None:
         """Validate and set defaults."""
@@ -406,7 +416,7 @@ class MultiScriptDocumentGenerator:
         Returns:
             Target DPI value
         """
-        tier_config = RESOLUTION_TIERS.get(tier, RESOLUTION_TIERS["MEDIUM"])
+        tier_config = RESOLUTION_TIERS.get(tier, RESOLUTION_TIERS["STANDARD"])
         return tier_config["target_dpi"]
 
     def _get_renderer_for_tier(self, resolution_tier: str) -> DocumentRenderer:
@@ -452,6 +462,219 @@ class MultiScriptDocumentGenerator:
             target_dpi,
         )
         return renderer
+
+    def _apply_color_mode(self, image: Any) -> tuple[Any, str]:
+        """Apply random color mode conversion for training diversity.
+
+        Converts image to grayscale or binarized based on COLOR_MODE_WEIGHTS.
+        The image is always returned as RGB (3-channel) for model compatibility.
+
+        Args:
+            image: PIL Image in RGB mode
+
+        Returns:
+            Tuple of (converted image, color_mode string)
+        """
+        mode = self._select_weighted(COLOR_MODE_WEIGHTS)
+
+        if mode == ColorMode.GRAYSCALE:
+            gray = image.convert("L")
+            return gray.convert("RGB"), "grayscale"
+
+        if mode == ColorMode.BINARIZED:
+            gray = image.convert("L")
+            # Otsu-style adaptive threshold via simple mean
+            import numpy as np
+
+            arr = np.array(gray)
+            threshold = int(arr.mean() * 0.85)  # Slightly below mean for document text
+            binary = gray.point(lambda p: 255 if p > threshold else 0)
+            return binary.convert("RGB"), "binarized"
+
+        return image, "color"
+
+    def _apply_skew_augmentation(self, image: Any) -> tuple[Any, float]:
+        """Apply random skew rotation with exact angle label.
+
+        Applies a random rotation between -10° and +10° with white fill.
+        The exact angle is stored as a tier_0_exact label for regression training.
+
+        Args:
+            image: PIL Image
+
+        Returns:
+            Tuple of (rotated image, angle in degrees)
+        """
+        angle = self._rng.uniform(-10.0, 10.0)
+        rotated = image.rotate(
+            -angle,  # PIL rotates counter-clockwise, negate for clockwise convention
+            expand=False,
+            fillcolor=(255, 255, 255),
+        )
+        return rotated, angle
+
+    def _apply_orientation_augmentation(self, image: Any) -> tuple[Any, int]:
+        """Apply random 0/90/180/270 degree rotation with class label.
+
+        Args:
+            image: PIL Image
+
+        Returns:
+            Tuple of (rotated image, orientation class)
+        """
+        from PIL import Image as PILImage
+
+        orientation = self._rng.choice([0, 90, 180, 270])
+        if orientation == 0:
+            return image, 0
+        if orientation == 90:
+            return image.transpose(PILImage.Transpose.ROTATE_90), 90
+        if orientation == 180:
+            return image.transpose(PILImage.Transpose.ROTATE_180), 180
+        return image.transpose(PILImage.Transpose.ROTATE_270), 270
+
+    def _measure_char_height(self, image: Any) -> tuple[float | None, float | None]:
+        """Measure character height via connected component analysis.
+
+        Uses a simple binarize + connected component approach to estimate
+        the median character height in the image.
+
+        Args:
+            image: PIL Image
+
+        Returns:
+            Tuple of (char_height_px, quality_score) or (None, None) if measurement fails
+        """
+        try:
+            import numpy as np
+
+            gray = np.array(image.convert("L"))
+            # Binarize with adaptive threshold
+            threshold = int(gray.mean() * 0.85)
+            binary = (gray < threshold).astype(np.uint8)
+
+            # Find connected components
+            try:
+                import cv2
+
+                num_labels, _labels, stats, _ = cv2.connectedComponentsWithStats(
+                    binary, connectivity=8
+                )
+            except ImportError:
+                return None, None
+
+            if num_labels < 3:  # Need at least a few components
+                return None, None
+
+            # Get heights of components (skip background label 0)
+            heights = stats[1:, cv2.CC_STAT_HEIGHT]
+            areas = stats[1:, cv2.CC_STAT_AREA]
+
+            # Filter: keep components with reasonable aspect ratio and size
+            widths = stats[1:, cv2.CC_STAT_WIDTH]
+            aspect_ratios = heights / np.maximum(widths, 1)
+            min_area = max(4, gray.size * 0.00001)  # At least 4 pixels
+            max_area = gray.size * 0.1  # No more than 10% of image
+
+            mask = (
+                (areas > min_area)
+                & (areas < max_area)
+                & (aspect_ratios > 0.2)
+                & (aspect_ratios < 5.0)
+            )
+
+            filtered_heights = heights[mask]
+            if len(filtered_heights) < 3:
+                return None, None
+
+            median_height = float(np.median(filtered_heights))
+
+            # Map character height to quality score (from plan Section 3.2)
+            if median_height < 16:
+                quality = median_height / 16.0 * 0.15
+            elif median_height < 24:
+                quality = 0.15 + (median_height - 16) / 8.0 * 0.20
+            elif median_height < 32:
+                quality = 0.35 + (median_height - 24) / 8.0 * 0.20
+            elif median_height < 48:
+                quality = 0.55 + (median_height - 32) / 16.0 * 0.20
+            elif median_height < 64:
+                quality = 0.75 + (median_height - 48) / 16.0 * 0.10
+            elif median_height < 96:
+                quality = 0.85 + (median_height - 64) / 32.0 * 0.10
+            else:
+                quality = min(1.0, 0.95 + (median_height - 96) / 200.0 * 0.05)
+
+            return median_height, round(quality, 4)
+
+        except Exception as e:
+            logger.debug("Character height measurement failed: %s", e)
+            return None, None
+
+    def _apply_geometric_transforms(
+        self,
+        image: Any,
+    ) -> tuple[Any, float | None, int | None]:
+        """Apply geometric transforms (skew, orientation) to a rendered image.
+
+        These MUST be applied BEFORE the augmentation/degradation pipeline so that
+        pixel-level effects (noise, blur, compression artifacts) are added in the
+        correct reference frame. Real scanners physically rotate/skew the document
+        first, then sensor noise is added on top.
+
+        Args:
+            image: Clean rendered image (pre-augmentation)
+
+        Returns:
+            Tuple of (transformed_image, skew_angle_degrees, orientation_class).
+            skew_angle is None if skew augmentation is disabled.
+            orientation_class is None if orientation augmentation is disabled.
+        """
+        skew_angle: float | None = None
+        orientation_class: int | None = None
+
+        # 1. Skew augmentation (applied before orientation)
+        if self.config.skew_augmentation:
+            image, skew_angle = self._apply_skew_augmentation(image)
+
+        # 2. Orientation augmentation (applied after skew)
+        if self.config.orientation_augmentation:
+            image, orientation_class = self._apply_orientation_augmentation(image)
+
+        return image, skew_angle, orientation_class
+
+    def _apply_post_processing(
+        self,
+        sample: GeneratedSample,
+    ) -> GeneratedSample:
+        """Apply non-geometric post-processing to a generated sample.
+
+        This applies color mode conversion and character height measurement AFTER
+        the augmentation pipeline. Geometric transforms (skew, orientation) are
+        applied earlier via _apply_geometric_transforms() BEFORE augmentation
+        to avoid unrealistic "rotated noise" artifacts.
+
+        Args:
+            sample: Generated sample to post-process
+
+        Returns:
+            Sample with post-processing applied and metadata updated
+        """
+        image = sample.image
+
+        # 1. Color mode conversion (after augmentation is fine — changes color space)
+        if self.config.color_mode_enabled:
+            image, color_mode = self._apply_color_mode(image)
+            sample.color_mode = color_mode
+
+        # 2. Character height measurement (non-destructive, measurement only)
+        char_height, quality_score = self._measure_char_height(image)
+        if char_height is not None:
+            sample.char_height_px = char_height
+            sample.char_height_quality_score = quality_score
+
+        sample.image = image
+        return sample
 
     def _generate_single_sample(
         self,
@@ -501,8 +724,14 @@ class MultiScriptDocumentGenerator:
             logger.error("Rendering failed for %s: %s", script_code, e)
             return None
 
-        # Apply augmentation
+        # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
+        # artifacts. Real scanners rotate/skew the physical document, then sensor
+        # noise is added — so we must transform geometry on the clean image first.
+        image, skew_angle, orientation_class = self._apply_geometric_transforms(image)
+
+        # Apply augmentation (noise, blur, degradation on geometrically-correct image)
         is_pristine = degradation_profile == DegradationProfile.PRISTINE
+        document_age: str | None = None
         if is_pristine:
             degraded_image = image
             iqa_labels = IQALabels(overall_quality=1.0)
@@ -547,6 +776,16 @@ class MultiScriptDocumentGenerator:
             hybrid_profile = hybrid_profile_map.get(
                 degradation_profile, HybridProfile.MODERATE
             )
+            # Randomly apply document aging: 15% AGED, 5% HISTORICAL
+            aging_roll = self._rng.random()
+            if aging_roll < 0.05:
+                hybrid_profile = HybridProfile.HISTORICAL
+                document_age = "historical"
+            elif aging_roll < 0.20:
+                hybrid_profile = HybridProfile.AGED
+                document_age = "aged"
+            else:
+                document_age = "modern"
             try:
                 # Hybrid pipeline returns IQALabels directly
                 degraded_image, iqa_labels = self.hybrid_augmentation.apply(
@@ -571,7 +810,7 @@ class MultiScriptDocumentGenerator:
 
         # Create sample
         sample_id = str(uuid.uuid4())
-        return GeneratedSample(
+        sample = GeneratedSample(
             image=degraded_image,
             sample_id=sample_id,
             scripts={script_code},
@@ -592,6 +831,18 @@ class MultiScriptDocumentGenerator:
             resolution_tier=resolution_tier,
             quality_tier=quality_tier,
         )
+        if document_age is not None:
+            sample.document_age = document_age
+
+        # Store geometric transform metadata (applied before augmentation)
+        if skew_angle is not None:
+            sample.skew_angle_degrees = skew_angle
+        if orientation_class is not None:
+            sample.orientation_class = orientation_class
+            sample.width_px = degraded_image.width
+            sample.height_px = degraded_image.height
+
+        return sample
 
     def generate(self) -> Iterator[GeneratedSample]:
         """Generate samples according to configuration.
@@ -769,6 +1020,12 @@ class MultiScriptDocumentGenerator:
                             )
 
                 if sample:
+                    # Apply post-processing (color mode, char height measurement)
+                    # Note: geometric transforms (skew, orientation) are already applied
+                    # inside _generate_single_sample/_generate_multi_script_sample BEFORE
+                    # augmentation to produce realistic noise patterns.
+                    sample = self._apply_post_processing(sample)
+
                     # Update stats
                     self._stats.total_samples += 1
                     for script_code in sample.scripts:
@@ -940,8 +1197,14 @@ class MultiScriptDocumentGenerator:
                 logger.error("Multi-script rendering failed: %s", e)
                 return None
 
-        # Apply augmentation
+        # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
+        # artifacts. Real scanners rotate/skew the physical document, then sensor
+        # noise is added — so we must transform geometry on the clean image first.
+        image, skew_angle, orientation_class = self._apply_geometric_transforms(image)
+
+        # Apply augmentation (noise, blur, degradation on geometrically-correct image)
         is_pristine = degradation_profile == DegradationProfile.PRISTINE
+        document_age: str | None = None
         if is_pristine:
             degraded_image = image
             iqa_labels = IQALabels(overall_quality=1.0)
@@ -984,6 +1247,16 @@ class MultiScriptDocumentGenerator:
             hybrid_profile = hybrid_profile_map.get(
                 degradation_profile, HybridProfile.MODERATE
             )
+            # Randomly apply document aging: 15% AGED, 5% HISTORICAL
+            aging_roll = self._rng.random()
+            if aging_roll < 0.05:
+                hybrid_profile = HybridProfile.HISTORICAL
+                document_age = "historical"
+            elif aging_roll < 0.20:
+                hybrid_profile = HybridProfile.AGED
+                document_age = "aged"
+            else:
+                document_age = "modern"
             try:
                 degraded_image, iqa_labels = self.hybrid_augmentation.apply(
                     image, hybrid_profile
@@ -1007,7 +1280,7 @@ class MultiScriptDocumentGenerator:
 
         # Create sample
         sample_id = str(uuid.uuid4())
-        return GeneratedSample(
+        sample = GeneratedSample(
             image=degraded_image,
             sample_id=sample_id,
             scripts=all_scripts,
@@ -1030,6 +1303,18 @@ class MultiScriptDocumentGenerator:
             resolution_tier=resolution_tier,
             quality_tier=quality_tier,
         )
+        if document_age is not None:
+            sample.document_age = document_age
+
+        # Store geometric transform metadata (applied before augmentation)
+        if skew_angle is not None:
+            sample.skew_angle_degrees = skew_angle
+        if orientation_class is not None:
+            sample.orientation_class = orientation_class
+            sample.width_px = degraded_image.width
+            sample.height_px = degraded_image.height
+
+        return sample
 
     def generate_multi_script_document(
         self,
@@ -1077,7 +1362,10 @@ class MultiScriptDocumentGenerator:
             logger.error("Multi-script rendering failed: %s", e)
             return None
 
-        # Apply augmentation
+        # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
+        image, skew_angle, orientation_class = self._apply_geometric_transforms(image)
+
+        # Apply augmentation (noise, blur, degradation on geometrically-correct image)
         is_pristine = degradation_profile == DegradationProfile.PRISTINE
         if is_pristine or not AUGRAPHY_AVAILABLE:
             degraded_image = image
@@ -1093,7 +1381,7 @@ class MultiScriptDocumentGenerator:
                 iqa_labels = IQALabels(overall_quality=1.0)
 
         # Create sample
-        return GeneratedSample(
+        sample = GeneratedSample(
             image=degraded_image,
             sample_id=str(uuid.uuid4()),
             scripts=all_scripts,
@@ -1112,6 +1400,16 @@ class MultiScriptDocumentGenerator:
             },
             is_pristine=is_pristine,
         )
+
+        # Store geometric transform metadata (applied before augmentation)
+        if skew_angle is not None:
+            sample.skew_angle_degrees = skew_angle
+        if orientation_class is not None:
+            sample.orientation_class = orientation_class
+            sample.width_px = degraded_image.width
+            sample.height_px = degraded_image.height
+
+        return sample
 
     def get_statistics(self) -> GenerationStats:
         """Get generation statistics.

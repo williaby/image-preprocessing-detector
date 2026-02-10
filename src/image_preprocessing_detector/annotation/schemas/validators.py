@@ -472,6 +472,31 @@ def validate_enrichment_data(data: dict[str, Any]) -> ValidationResult:
                 if "source" not in det:
                     warnings.append(f"layout_detections[{i}]: missing source")
 
+                # Validate taxonomy standardization fields (v2.2+)
+                if "canonical_class" in det and det["canonical_class"] is not None:
+                    if not isinstance(det["canonical_class"], str):
+                        errors.append(
+                            f"layout_detections[{i}].canonical_class must be str"
+                        )
+                if "source_schema" in det and det["source_schema"] is not None:
+                    if not isinstance(det["source_schema"], str):
+                        errors.append(
+                            f"layout_detections[{i}].source_schema must be str"
+                        )
+                if (
+                    "conversion_confidence" in det
+                    and det["conversion_confidence"] is not None
+                ):
+                    try:
+                        ConfidenceValidator(confidence=det["conversion_confidence"])
+                    except Exception as e:
+                        errors.append(
+                            f"layout_detections[{i}].conversion_confidence: {e}"
+                        )
+                if "is_lossy" in det and det["is_lossy"] is not None:
+                    if not isinstance(det["is_lossy"], bool):
+                        errors.append(f"layout_detections[{i}].is_lossy must be bool")
+
     # Validate text scope character/word counts
     if (
         "text_scope_estimated_chars" in data
@@ -516,6 +541,103 @@ def validate_enrichment_data(data: dict[str, Any]) -> ValidationResult:
         if not re.match(r"^[A-Z][a-z]{3}$", script):
             warnings.append(
                 f"iso15924_script '{script}' doesn't match ISO 15924 format"
+            )
+
+    # --- v2.1.0 field validation ---
+
+    # Validate orientation_class enum
+    if "orientation_class" in data and data["orientation_class"] is not None:
+        if data["orientation_class"] not in (0, 90, 180, 270):
+            errors.append(
+                f"orientation_class must be 0, 90, 180, or 270, got {data['orientation_class']}"
+            )
+
+    # Validate skew_angle_degrees range
+    if "skew_angle_degrees" in data and data["skew_angle_degrees"] is not None:
+        skew = data["skew_angle_degrees"]
+        if not isinstance(skew, (int, float)) or skew < -180 or skew > 180:
+            errors.append(f"skew_angle_degrees must be in [-180, 180], got {skew}")
+
+    # Validate all v2.1 severity/score fields (0-1 range)
+    v21_confidence_fields = [
+        "orientation_confidence",
+        "skew_confidence",
+        "shadow_severity",
+        "shadow_confidence",
+        "warping_severity",
+        "warping_confidence",
+        "watermark_severity",
+        "watermark_confidence",
+        "fuzzy_scan_score",
+        "ml_iqa_blur",
+        "ml_iqa_noise",
+        "ml_iqa_contrast",
+        "ml_iqa_compression",
+        "ml_iqa_skew",
+        "ml_iqa_overall",
+        "code_confidence",
+        "resolution_quality_score",
+        "ocr_char_error_rate",
+        "ocr_word_error_rate",
+        "ocr_quality_before_correction",
+        "ocr_quality_after_correction",
+    ]
+    for field_name in v21_confidence_fields:
+        if field_name in data and data[field_name] is not None:
+            try:
+                ConfidenceValidator(confidence=data[field_name])
+            except Exception as e:
+                errors.append(f"{field_name}: {e}")
+
+    # Validate character_height_px (non-negative)
+    if "character_height_px" in data and data["character_height_px"] is not None:
+        ch = data["character_height_px"]
+        if not isinstance(ch, (int, float)) or ch < 0:
+            errors.append(f"character_height_px must be non-negative, got {ch}")
+
+    # Validate effective_dpi (positive integer)
+    if "effective_dpi" in data and data["effective_dpi"] is not None:
+        try:
+            DpiValidator(dpi=data["effective_dpi"])
+        except Exception as e:
+            errors.append(f"effective_dpi: {e}")
+
+    # Validate color_mode enum
+    if "color_mode" in data and data["color_mode"] is not None:
+        if data["color_mode"] not in ("color", "grayscale", "binarized"):
+            errors.append(
+                f"color_mode must be 'color', 'grayscale', or 'binarized', got '{data['color_mode']}'"
+            )
+
+    # Validate document_age enum
+    if "document_age" in data and data["document_age"] is not None:
+        if data["document_age"] not in ("modern", "aged", "historical"):
+            errors.append(
+                f"document_age must be 'modern', 'aged', or 'historical', got '{data['document_age']}'"
+            )
+
+    # Validate shadow_type enum
+    if "shadow_type" in data and data["shadow_type"] is not None:
+        if data["shadow_type"] not in ("none", "hard", "soft", "mixed"):
+            warnings.append(
+                f"shadow_type '{data['shadow_type']}' not in expected values"
+            )
+
+    # Validate warping_type enum
+    if "warping_type" in data and data["warping_type"] is not None:
+        valid_warping = (
+            "none",
+            "page_curl",
+            "fold",
+            "perspective",
+            "barrel",
+            "pincushion",
+            "wave",
+            "complex",
+        )
+        if data["warping_type"] not in valid_warping:
+            warnings.append(
+                f"warping_type '{data['warping_type']}' not in expected values"
             )
 
     return ValidationResult(

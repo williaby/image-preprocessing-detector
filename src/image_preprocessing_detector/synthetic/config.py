@@ -32,6 +32,30 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
 )
 
 
+class ColorMode(str, Enum):
+    """Color mode for generated document images.
+
+    Controls post-processing color conversion for training diversity.
+    """
+
+    COLOR = "color"
+    """Full RGB color (default)."""
+
+    GRAYSCALE = "grayscale"
+    """Grayscale conversion (simulates B&W scans)."""
+
+    BINARIZED = "binarized"
+    """Binary threshold (simulates high-contrast copies/faxes)."""
+
+
+# Color mode distribution for multi-task training diversity (must sum to 1.0)
+COLOR_MODE_WEIGHTS: dict[ColorMode, float] = {
+    ColorMode.COLOR: 0.60,
+    ColorMode.GRAYSCALE: 0.25,
+    ColorMode.BINARIZED: 0.15,
+}
+
+
 class LayoutType(str, Enum):
     """Document layout types for synthetic generation.
 
@@ -125,23 +149,27 @@ LAYOUT_TO_LAYER2: dict[LayoutType, str] = {
 # =============================================================================
 
 # Resolution tiers for NaFlex optimization (variable resolution training)
+# 7-tier DPI distribution for multi-task training diversity
+# (expanded from 3 tiers to support resolution quality dataset generation)
 RESOLUTION_TIERS: dict[str, dict[str, tuple[int, int] | int]] = {
-    "LOW": {
-        "width_range": (500, 700),
-        "target_dpi": 72,
-    },  # Fast inference, simple scripts
-    "MEDIUM": {"width_range": (700, 1000), "target_dpi": 150},  # Sweet spot for SigLIP
-    "HIGH": {
-        "width_range": (1000, 1400),
-        "target_dpi": 300,
-    },  # Complex scripts (CJK, Tibetan)
+    "VERY_LOW": {"width_range": (400, 500), "target_dpi": 72},
+    "LOW": {"width_range": (500, 700), "target_dpi": 100},
+    "MEDIUM_LOW": {"width_range": (700, 850), "target_dpi": 150},
+    "MEDIUM": {"width_range": (850, 1000), "target_dpi": 200},
+    "STANDARD": {"width_range": (1000, 1200), "target_dpi": 300},
+    "HIGH": {"width_range": (1200, 1400), "target_dpi": 400},
+    "VERY_HIGH": {"width_range": (1400, 1700), "target_dpi": 600},
 }
 
 # Resolution tier distribution (must sum to 1.0)
 RESOLUTION_TIER_WEIGHTS: dict[str, float] = {
-    "LOW": 0.20,
-    "MEDIUM": 0.50,
-    "HIGH": 0.30,
+    "VERY_LOW": 0.08,
+    "LOW": 0.12,
+    "MEDIUM_LOW": 0.15,
+    "MEDIUM": 0.20,
+    "STANDARD": 0.25,
+    "HIGH": 0.12,
+    "VERY_HIGH": 0.08,
 }
 
 # Quality tiers with IQA ranges (must sum to 1.0)
@@ -179,11 +207,12 @@ TEXT_DENSITY_WEIGHTS: dict[TextDensity, float] = {
 }
 
 # Document composition weights (single vs multi-script)
+# Adjusted for multi-task training: more single-script for cleaner labels
 DOCUMENT_COMPOSITION_WEIGHTS: dict[str, float] = {
-    "single": 0.35,  # 35% pure single-script
-    "two": 0.45,  # 45% bilingual (primary use case)
-    "three": 0.12,  # 12% complex multilingual
-    "four_plus": 0.03,  # 3% edge cases
+    "single": 0.45,  # 45% pure single-script (up from 35% for cleaner labels)
+    "two": 0.38,  # 38% bilingual (down from 45%)
+    "three": 0.10,  # 10% complex multilingual (down from 12%)
+    "four_plus": 0.02,  # 2% edge cases (down from 3%)
     "priority_pairs": 0.05,  # 5% reserved for specific high-priority combinations
 }
 
@@ -932,7 +961,7 @@ FONT_RECOMMENDATIONS: dict[str, dict[str, list[str]]] = {
         "HANDWRITING": ["BadScript", "Caveat", "MarckScript"],  # Russian cursive
         "ADVERSARIAL": [],
     },
-    # Bulgarian Cyrillic - distinct glyph forms (г looks like Latin g)
+    # Bulgarian Cyrillic - distinct glyph forms (looks like Latin g)
     "Cyrl_Bulgarian": {
         "SYSTEM": ["NotoSans", "NotoSerif"],
         "REGIONAL": ["Simbal", "Vollkorn"],  # Bulgarian-specific locl fonts
@@ -1081,6 +1110,7 @@ def get_complex_scripts() -> list[ScriptConfig]:
 
 __all__ = [
     "BULGARIAN_CYRILLIC_LANGUAGES",
+    "COLOR_MODE_WEIGHTS",
     "DENSITY_TO_LAYER2",
     "DOCUMENT_COMPOSITION_WEIGHTS",
     "FONT_RECOMMENDATIONS",
@@ -1098,6 +1128,7 @@ __all__ = [
     "SCRIPT_CONFIGS",
     "TEXT_DENSITY_WEIGHTS",
     "TWO_SCRIPT_COMBINATIONS",
+    "ColorMode",
     "LayoutType",
     "ScriptConfig",
     "TextDensity",

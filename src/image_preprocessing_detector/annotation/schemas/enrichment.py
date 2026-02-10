@@ -23,6 +23,8 @@ Example:
     ...     bbox=[100.0, 200.0, 300.0, 400.0],
     ...     confidence=0.95,
     ...     source="doclayout_yolo",
+    ...     canonical_class="TABLE",
+    ...     source_schema="docstructbench",
     ... )
 """
 
@@ -37,19 +39,38 @@ class LayoutDetection:
     """Single layout detection from DocLayout-YOLO or COCO annotations.
 
     Represents a detected document element with its bounding box,
-    confidence score, and source information.
+    confidence score, and source information. After taxonomy
+    standardization, includes canonical class mapping metadata.
 
     Attributes:
         class_name: Detected element class (table, figure, text, etc.)
         bbox: Bounding box coordinates [x1, y1, x2, y2] or [x, y, w, h]
         confidence: Detection confidence score (0.0-1.0)
         source: Detection source ("doclayout_yolo", "coco_annotation", etc.)
+        canonical_class: Canonical taxonomy class (e.g., "TABLE", "FIGURE_CAPTION").
+            Set by layout taxonomy standardization (v2.2+).
+        source_schema: Layout schema that produced the class_name
+            (e.g., "doclaynet", "docstructbench", "docling"). Set by standardization.
+        source_label: Original label before conversion (preserved for traceability).
+        is_lossy: Whether the canonical mapping lost information (e.g.,
+            "figure_caption" -> "Caption" loses figure context).
+        conversion_confidence: Confidence of the taxonomy conversion (1.0 = exact,
+            <1.0 = ambiguous expansion).
+        loss_description: Human-readable description of information lost, if any.
     """
 
     class_name: str
     bbox: list[float]
     confidence: float
     source: str
+
+    # Layout taxonomy standardization fields (added v2.2)
+    canonical_class: str | None = None
+    source_schema: str | None = None
+    source_label: str | None = None
+    is_lossy: bool | None = None
+    conversion_confidence: float | None = None
+    loss_description: str | None = None
 
 
 @dataclass
@@ -128,8 +149,10 @@ class EnrichmentData:
         content_flags_tier: EnrichmentTier value for flags
         content_flags_source: Source of content flag detection
 
-        # Layout detections
-        layout_detections: List of LayoutDetection dicts
+        # Layout detections (with optional taxonomy standardization, v2.2+)
+        layout_detections: List of LayoutDetection dicts. After taxonomy
+            standardization, each detection includes canonical_class,
+            source_schema, is_lossy, and conversion_confidence fields.
     """
 
     # Capture method detection
@@ -202,6 +225,62 @@ class EnrichmentData:
 
     # Layout detections (for Tier 1/2)
     layout_detections: list[dict[str, Any]] | None = None
+
+    # --- v2.1.0 additions below ---
+
+    # Geometric attributes (orientation, skew) -- v2.1
+    orientation_class: int | None = None  # 0/90/180/270
+    orientation_confidence: float | None = None
+    orientation_corrected: bool | None = None
+    orientation_detection_method: str | None = None
+    skew_angle_degrees: float | None = None  # exact angle +-180
+    skew_confidence: float | None = None
+    skew_detection_method: str | None = None
+
+    # Physical degradation (shadow, warping, watermark) -- v2.1
+    shadow_severity: float | None = None  # 0-1
+    shadow_type: str | None = None
+    shadow_confidence: float | None = None
+    warping_severity: float | None = None  # 0-1
+    warping_type: str | None = None
+    warping_confidence: float | None = None
+    watermark_severity: float | None = None  # 0-1
+    watermark_type: str | None = None
+    watermark_confidence: float | None = None
+    fuzzy_scan_score: float | None = None  # 0-1
+
+    # ML IQA 6-dim scores -- v2.1
+    ml_iqa_blur: float | None = None  # 0-1
+    ml_iqa_noise: float | None = None  # 0-1
+    ml_iqa_contrast: float | None = None  # 0-1
+    ml_iqa_compression: float | None = None  # 0-1
+    ml_iqa_skew: float | None = None  # 0-1
+    ml_iqa_overall: float | None = None  # 0-1
+    ml_iqa_model_name: str | None = None
+    ml_iqa_model_version: str | None = None
+
+    # Code detection -- v2.1 (ContentFlags + StructureInfo in JSON schema)
+    has_code: bool | None = None
+    code_confidence: float | None = None  # 0-1
+    code_language: str | None = None
+    code_rendering_style: str | None = None
+
+    # Resolution enhancement -- v2.1
+    character_height_px: float | None = None
+    resolution_quality_score: float | None = None  # 0-1
+    effective_dpi: int | None = None
+
+    # Image properties (color mode, document age) -- v2.1
+    color_mode: str | None = None  # "color", "grayscale", "binarized"
+    document_age: str | None = None  # "modern", "aged", "historical"
+
+    # OCR impact (future: populated by Project B) -- v2.1
+    ocr_engine: str | None = None
+    ocr_engine_version: str | None = None
+    ocr_char_error_rate: float | None = None
+    ocr_word_error_rate: float | None = None
+    ocr_quality_before_correction: float | None = None
+    ocr_quality_after_correction: float | None = None
 
 
 @dataclass

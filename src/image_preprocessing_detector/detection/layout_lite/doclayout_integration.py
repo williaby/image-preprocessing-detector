@@ -45,20 +45,30 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
-# Complexity weights for different element types
-# Higher weights indicate elements that increase OCR complexity
+# Complexity weights keyed by canonical taxonomy class names (UPPERCASE).
+# Higher weights indicate elements that increase OCR complexity.
 ELEMENT_COMPLEXITY_WEIGHTS: dict[str, float] = {
-    "table": 0.25,  # Tables require special handling
-    "figure": 0.15,  # Figures need extraction
-    "isolate_formula": 0.20,  # Formulas need specialized OCR
-    "formula_caption": 0.05,  # Less complex than formulas
-    "figure_caption": 0.05,  # Text but spatially complex
-    "table_caption": 0.05,  # Text but spatially complex
-    "table_footnote": 0.05,  # Text but spatially complex
-    "title": 0.02,  # Simple text
-    "plain text": 0.01,  # Base text
-    "abandon": 0.0,  # Ignored text
+    "TABLE": 0.25,
+    "PICTURE": 0.15,
+    "FIGURE": 0.15,
+    "FORMULA": 0.20,
+    "ISOLATE_FORMULA": 0.20,
+    "CAPTION": 0.05,
+    "FIGURE_CAPTION": 0.05,
+    "TABLE_CAPTION": 0.05,
+    "TABLE_FOOTNOTE": 0.05,
+    "FORMULA_CAPTION": 0.05,
+    "TITLE": 0.02,
+    "TEXT": 0.01,
+    "PLAIN_TEXT": 0.01,
+    "ABANDONED": 0.0,
+    "CODE": 0.05,
+    "CHART": 0.15,
+    "HANDWRITTEN_TEXT": 0.10,
 }
+
+# Default weight for unknown/unmapped classes
+_DEFAULT_COMPLEXITY_WEIGHT: float = 0.01
 
 
 @dataclass
@@ -178,6 +188,30 @@ class DocLayoutIntegration:
             inference_time_ms=result.inference_time_ms,
         )
 
+    def _normalize_to_canonical(self, class_name: str) -> str:
+        """Normalize a raw class name to canonical taxonomy form.
+
+        Uses LayoutTaxonomy if available; falls back to UPPER_SNAKE_CASE
+        normalization for backward compatibility.
+
+        Args:
+            class_name: Raw class name from detection model.
+
+        Returns:
+            Canonical class name (UPPERCASE).
+        """
+        try:
+            from image_preprocessing_detector.schema_utils.layout_taxonomy import (
+                get_default_taxonomy,
+            )
+
+            taxonomy = get_default_taxonomy()
+            # Try docstructbench first (most common model output schema)
+            return taxonomy.to_canonical(class_name, "docstructbench")
+        except (ImportError, FileNotFoundError, KeyError):
+            # Fallback: uppercase and replace spaces with underscores
+            return class_name.upper().replace(" ", "_")
+
     def _calculate_complexity(
         self,
         element_counts: dict[str, int],
@@ -200,7 +234,8 @@ class DocLayoutIntegration:
         # Component 1: Weighted element type score
         type_score = 0.0
         for elem_type, count in element_counts.items():
-            weight = self._weights.get(elem_type, 0.01)
+            canonical = self._normalize_to_canonical(elem_type)
+            weight = self._weights.get(canonical, _DEFAULT_COMPLEXITY_WEIGHT)
             # Diminishing returns for multiple elements of same type
             type_score += weight * min(count, 5)
 

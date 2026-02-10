@@ -97,6 +97,72 @@ class ElementCategory(str, Enum):
     TEXT_BLOCK = "text_block"  # Legacy text block (maps to TEXT)
     FIGURE = "figure"  # DocStructBench figure class (maps to PICTURE)
 
+    @classmethod
+    def from_canonical(cls, canonical_class: str) -> ElementCategory:
+        """Map canonical taxonomy class to ElementCategory.
+
+        Uses LayoutTaxonomy to convert a canonical class name (e.g.
+        "FIGURE_CAPTION") to its DocLayNet equivalent, then maps to
+        the corresponding ElementCategory enum value.
+
+        Args:
+            canonical_class: Canonical taxonomy class name (UPPERCASE).
+
+        Returns:
+            Matching ElementCategory, or TEXT as safe fallback.
+        """
+        from image_preprocessing_detector.schema_utils.layout_taxonomy import (
+            get_default_taxonomy,
+        )
+
+        taxonomy = get_default_taxonomy()
+        doclaynet_label = taxonomy.to_doclaynet(canonical_class)
+        # Map DocLayNet label to ElementCategory value (lowercase with underscores)
+        normalized = doclaynet_label.lower().replace("-", "_")
+        try:
+            return cls(normalized)
+        except ValueError:
+            return cls.TEXT  # safe fallback
+
+    @property
+    def canonical_name(self) -> str:
+        """Return canonical taxonomy name for this category.
+
+        Maps ElementCategory values (lowercase with underscores) to
+        canonical UPPERCASE taxonomy class names via LayoutTaxonomy.
+
+        Returns:
+            Canonical class name (e.g. "CAPTION", "TABLE").
+        """
+        from image_preprocessing_detector.schema_utils.layout_taxonomy import (
+            get_default_taxonomy,
+        )
+
+        taxonomy = get_default_taxonomy()
+        # ElementCategory uses lowercase underscore values that match
+        # DocLayNet labels when normalized. Restore hyphen form for DocLayNet.
+        doclaynet_form = self.value.replace("_", "-").title()
+        # Special cases: some values don't map cleanly to DocLayNet title case
+        _value_to_doclaynet: dict[str, str] = {
+            "caption": "Caption",
+            "footnote": "Footnote",
+            "formula": "Formula",
+            "list_item": "List-item",
+            "page_footer": "Page-footer",
+            "page_header": "Page-header",
+            "picture": "Picture",
+            "section_header": "Section-header",
+            "table": "Table",
+            "text": "Text",
+            "title": "Title",
+            "image": "Picture",
+            "handwriting": "Text",
+            "text_block": "Text",
+            "figure": "Picture",
+        }
+        doclaynet_label = _value_to_doclaynet.get(self.value, doclaynet_form)
+        return taxonomy.to_canonical(doclaynet_label, "doclaynet")
+
 
 class PDFType(str, Enum):
     """PDF document type classification (Phase 8)."""

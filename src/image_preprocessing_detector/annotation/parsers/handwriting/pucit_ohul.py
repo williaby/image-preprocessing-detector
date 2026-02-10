@@ -60,12 +60,59 @@ class PucitOhulParser(BaseParser):
     - Split (train/test)
     - Transcription text
     - Writer ID (if available)
+
+    Excel data is cached on first access per file to avoid reopening
+    the XLSX for every image (O(1) lookup instead of O(n) per image).
     """
+
+    def __init__(self) -> None:
+        """Initialize parser with Excel label cache."""
+        super().__init__()
+        # Cache: excel_path -> {image_stem: (transcription, writer_id)}
+        self._label_cache: dict[Path, dict[str, tuple[str | None, str | None]]] = {}
 
     @property
     def dataset_names(self) -> list[str]:
         """Return dataset names handled by this parser."""
         return ["pucit-ohul", "pucit_ohul", "pucit"]
+
+    def _load_excel_labels(
+        self, excel_file: Path
+    ) -> dict[str, tuple[str | None, str | None]]:
+        """Load and cache all labels from an Excel file.
+
+        Args:
+            excel_file: Path to the XLSX label file.
+
+        Returns:
+            Dict mapping image stem to (transcription, writer_id) tuple.
+        """
+        if excel_file in self._label_cache:
+            return self._label_cache[excel_file]
+
+        label_map: dict[str, tuple[str | None, str | None]] = {}
+        try:
+            import openpyxl
+
+            wb = openpyxl.load_workbook(excel_file, read_only=True)
+            ws = wb.active
+
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if row and len(row) >= 2 and row[0] is not None:
+                    image_key = str(row[0])
+                    transcription = str(row[1]) if row[1] else None
+                    writer_id = str(row[2]) if len(row) >= 3 and row[2] else None
+                    label_map[image_key] = (transcription, writer_id)
+
+            wb.close()
+            logger.debug("Loaded %d labels from %s", len(label_map), excel_file.name)
+        except ImportError:
+            logger.debug("openpyxl not available for PUCIT-OHUL label parsing")
+        except Exception:
+            logger.debug("Failed to parse PUCIT-OHUL labels from %s", excel_file)
+
+        self._label_cache[excel_file] = label_map
+        return label_map
 
     def parse(
         self,
@@ -73,7 +120,7 @@ class PucitOhulParser(BaseParser):
         image_path: Path,
         config: dict[str, Any],
     ) -> OriginalLabels:
-        """Parse PUCIT-OHUL labels from Excel files.
+        """Parse PUCIT-OHUL labels from cached Excel data.
 
         Args:
             dataset_path: Root path of the PUCIT-OHUL dataset
@@ -106,8 +153,7 @@ class PucitOhulParser(BaseParser):
         if split:
             labels.raw_labels["split"] = split
 
-        # Try to find and parse Excel labels
-        # Look for Pucit subdirectory
+        # Find Pucit directory with Excel files
         pucit_path = None
         for parent in image_path.parents:
             if (parent / "train_labels_v2.xlsx").exists():
@@ -117,36 +163,21 @@ class PucitOhulParser(BaseParser):
                 pucit_path = parent / "Pucit"
                 break
 
-        if pucit_path:
-            excel_file = pucit_path / f"{split}_labels_v2.xlsx" if split else None
-            if excel_file and excel_file.exists():
-                try:
-                    import openpyxl
+        if pucit_path and split:
+            excel_file = pucit_path / f"{split}_labels_v2.xlsx"
+            if excel_file.exists():
+                label_map = self._load_excel_labels(excel_file)
+                image_stem = image_path.stem
+                image_name = image_path.name
 
-                    wb = openpyxl.load_workbook(excel_file, read_only=True)
-                    ws = wb.active
-
-                    # Find row matching image filename
-                    image_name = image_path.stem
-                    for row in ws.iter_rows(min_row=2, values_only=True):  # Skip header
-                        if row and len(row) >= 2:
-                            # Format: [image_name, transcription, ...]
-                            if (
-                                str(row[0]) == image_name
-                                or str(row[0]) == image_path.name
-                            ):
-                                if row[1]:
-                                    labels.transcription = str(row[1])
-                                if len(row) >= 3 and row[2]:
-                                    labels.writer_id = str(row[2])
-                                break
-                    wb.close()
-                except ImportError:
-                    logger.debug("openpyxl not available for PUCIT-OHUL label parsing")
-                except Exception as e:
-                    logger.debug(
-                        f"Failed to parse PUCIT-OHUL labels from {excel_file}: {e}"
-                    )
+                # O(1) dict lookup instead of iterating all rows
+                match = label_map.get(image_stem) or label_map.get(image_name)
+                if match:
+                    transcription, writer_id = match
+                    if transcription:
+                        labels.transcription = transcription
+                    if writer_id:
+                        labels.writer_id = writer_id
 
         return labels
 

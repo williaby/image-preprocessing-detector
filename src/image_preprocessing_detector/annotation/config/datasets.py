@@ -334,7 +334,7 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
     ),
     "sroie": DatasetConfig(
         name="sroie",
-        path_suffix="01_base_data/forms/sroie",
+        path_suffix="01_base_data/forms/sroie_icdar2019",
         pattern="**/*.jpg",
         capture_method=CaptureMethod.CAMERA_SMARTPHONE,
         domain=DomainLevel1.FINANCIAL,

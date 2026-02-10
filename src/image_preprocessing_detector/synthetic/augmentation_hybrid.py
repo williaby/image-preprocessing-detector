@@ -52,7 +52,7 @@ except ImportError:
     logger.warning("Augraphy not available for hybrid mode")
 
 try:
-    import albumentations as A
+    import albumentations as A  # noqa: N812
 
     ALBUMENTATIONS_AVAILABLE = True
 except ImportError:
@@ -69,6 +69,8 @@ class HybridProfile(str, Enum):
     LIGHT = "light"  # Subtle degradations
     MODERATE = "moderate"  # Noticeable but realistic degradations
     HEAVY = "heavy"  # Strong degradations
+    AGED = "aged"  # Document aging effects (yellowing, foxing, contrast)
+    HISTORICAL = "historical"  # Heavy aging (yellowing, foxing, staining, ink fade)
 
 
 # Augraphy-specific severity ranges for document effects
@@ -77,6 +79,8 @@ AUGRAPHY_SEVERITY_RANGES = {
     HybridProfile.LIGHT: (0.1, 0.3),
     HybridProfile.MODERATE: (0.3, 0.6),
     HybridProfile.HEAVY: (0.6, 0.9),
+    HybridProfile.AGED: (0.3, 0.6),  # Similar to moderate but paper-focused
+    HybridProfile.HISTORICAL: (0.5, 0.85),  # Similar to heavy but paper-focused
 }
 
 # Albumentations params by profile (same as augmentation_fast.py)
@@ -108,6 +112,20 @@ ALBUMENTATIONS_PARAMS = {
         "jpeg_quality": (30, 70),
         "rotate": 10,
         "perspective": 0.1,
+    },
+    HybridProfile.AGED: {
+        "blur_limit": 3,  # Mild blur (age doesn't mean blurry)
+        "noise_var": (5, 20),  # Light sensor noise
+        "jpeg_quality": (60, 90),  # Mild compression
+        "rotate": 2,  # Slight misalignment
+        "perspective": 0.02,
+    },
+    HybridProfile.HISTORICAL: {
+        "blur_limit": 5,  # Moderate blur (old scanner/camera)
+        "noise_var": (10, 35),  # Moderate noise
+        "jpeg_quality": (40, 75),  # Moderate compression
+        "rotate": 5,  # Scanner misalignment
+        "perspective": 0.05,
     },
 }
 
@@ -345,6 +363,100 @@ class HybridAugmentationPipeline:
 
         return _bgr_to_pil(img_array), severities
 
+    def _apply_aging_effects(
+        self,
+        image: Image.Image,
+        profile: HybridProfile,
+    ) -> tuple[Image.Image, dict[str, float]]:
+        """Apply document aging effects (yellowing, foxing, contrast reduction).
+
+        These effects simulate the physical degradation of paper and ink over time.
+        Applied in addition to standard Augraphy/Albumentations for AGED/HISTORICAL profiles.
+
+        Args:
+            image: Input PIL Image
+            profile: Must be AGED or HISTORICAL
+
+        Returns:
+            Tuple of (aged image, severity dict)
+        """
+        severities = {"paper_degradation": 0.0, "ink_degradation": 0.0}
+
+        if profile not in (HybridProfile.AGED, HybridProfile.HISTORICAL):
+            return image, severities
+
+        img_array = np.array(image, dtype=np.float32)
+
+        # Yellowing: shift color balance toward warm tones
+        if profile == HybridProfile.AGED:
+            yellow_strength = self._rng.uniform(0.03, 0.08)
+        else:  # HISTORICAL
+            yellow_strength = self._rng.uniform(0.08, 0.18)
+
+        # Add yellow tint (increase R slightly, increase G slightly, decrease B)
+        img_array[:, :, 0] = np.clip(img_array[:, :, 0] + yellow_strength * 255, 0, 255)
+        img_array[:, :, 1] = np.clip(
+            img_array[:, :, 1] + yellow_strength * 0.7 * 255, 0, 255
+        )
+        img_array[:, :, 2] = np.clip(
+            img_array[:, :, 2] - yellow_strength * 0.5 * 255, 0, 255
+        )
+
+        # Contrast reduction (aged documents lose contrast)
+        if profile == HybridProfile.AGED:
+            contrast_factor = self._rng.uniform(0.85, 0.95)
+        else:
+            contrast_factor = self._rng.uniform(0.70, 0.85)
+        mean_val = img_array.mean()
+        img_array = mean_val + contrast_factor * (img_array - mean_val)
+        img_array = np.clip(img_array, 0, 255)
+
+        # Foxing spots (brown spots from mold/oxidation) - HISTORICAL only or light for AGED
+        num_spots = 0
+        if profile == HybridProfile.HISTORICAL:
+            num_spots = self._rng.randint(5, 20)
+        elif profile == HybridProfile.AGED and self._rng.random() < 0.4:
+            num_spots = self._rng.randint(1, 5)
+
+        h, w = img_array.shape[:2]
+        for _ in range(num_spots):
+            cx = self._rng.randint(0, w - 1)
+            cy = self._rng.randint(0, h - 1)
+            radius = self._rng.randint(3, 15)
+            intensity = self._rng.uniform(0.3, 0.7)
+
+            y_coords, x_coords = np.ogrid[
+                max(0, cy - radius) : min(h, cy + radius),
+                max(0, cx - radius) : min(w, cx + radius),
+            ]
+            dist = np.sqrt((x_coords - cx) ** 2 + (y_coords - cy) ** 2)
+            spot_mask = dist < radius
+
+            # Brown foxing color
+            spot_color = np.array([165, 120, 70], dtype=np.float32)
+            region = img_array[
+                max(0, cy - radius) : min(h, cy + radius),
+                max(0, cx - radius) : min(w, cx + radius),
+            ]
+            region[spot_mask] = (
+                region[spot_mask] * (1 - intensity) + spot_color * intensity
+            )
+
+        # Ink fading for HISTORICAL
+        if profile == HybridProfile.HISTORICAL and self._rng.random() < 0.6:
+            fade = self._rng.uniform(0.05, 0.15)
+            # Fade toward paper color (lighter)
+            img_array = img_array + fade * (255 - img_array)
+            severities["ink_degradation"] = fade * 3  # Scale to 0-0.45 range
+
+        img_array = np.clip(img_array, 0, 255).astype(np.uint8)
+        result = Image.fromarray(img_array)
+
+        severities["paper_degradation"] = yellow_strength * 3 + num_spots * 0.02
+        severities["paper_degradation"] = min(1.0, severities["paper_degradation"])
+
+        return result, severities
+
     def _apply_albumentations_phase(
         self,
         image: Image.Image,
@@ -471,6 +583,12 @@ class HybridAugmentationPipeline:
         # Phase 1: Augraphy document effects
         aug_image, aug_severities = self._apply_augraphy_phase(image, profile)
         augraphy_applied = any(v > 0 for v in aug_severities.values())
+
+        # Phase 1.5: Document aging effects (AGED/HISTORICAL profiles only)
+        if profile in (HybridProfile.AGED, HybridProfile.HISTORICAL):
+            aug_image, aging_severities = self._apply_aging_effects(aug_image, profile)
+            for key, value in aging_severities.items():
+                aug_severities[key] = max(aug_severities.get(key, 0.0), value)
 
         # Phase 2: Albumentations capture effects
         result_image, alb_severities = self._apply_albumentations_phase(

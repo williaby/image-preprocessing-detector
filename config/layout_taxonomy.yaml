@@ -1,0 +1,391 @@
+# Layout Taxonomy Configuration
+# Hub-and-spoke canonical superset for cross-schema label conversion
+#
+# Architecture:
+# - 57 canonical classes organized as a tree hierarchy
+# - 11 DocLayNet top-level nodes (parent: null, doclaynet_index: 0-10)
+# - 46 extended classes from other schemas (each with parent -> DocLayNet class)
+# - 6 external schemas with class_mapping to canonical
+#
+# This mapping can be updated without code changes!
+# Hot-reload supported via LayoutTaxonomy.reload()
+
+version: "1.0.0"
+description: "Unified layout label taxonomy with cross-schema conversion"
+
+# ─────────────────────────────────────────────────────────────────────
+# Canonical class hierarchy (~45 classes)
+# ─────────────────────────────────────────────────────────────────────
+# parent: null  -> DocLayNet top-level (coarsening target)
+# parent: X     -> X is the nearest DocLayNet ancestor
+# doclaynet_index: 0-10 for the 11 DocLayNet classes only
+canonical_classes:
+  # ── DocLayNet top-level (11 classes, indices 0-10) ──
+  CAPTION:
+    parent: null
+    doclaynet_index: 0
+  FOOTNOTE:
+    parent: null
+    doclaynet_index: 1
+  FORMULA:
+    parent: null
+    doclaynet_index: 2
+  LIST_ITEM:
+    parent: null
+    doclaynet_index: 3
+  PAGE_FOOTER:
+    parent: null
+    doclaynet_index: 4
+  PAGE_HEADER:
+    parent: null
+    doclaynet_index: 5
+  PICTURE:
+    parent: null
+    doclaynet_index: 6
+  SECTION_HEADER:
+    parent: null
+    doclaynet_index: 7
+  TABLE:
+    parent: null
+    doclaynet_index: 8
+  TEXT:
+    parent: null
+    doclaynet_index: 9
+  TITLE:
+    parent: null
+    doclaynet_index: 10
+
+  # ── Extended classes under CAPTION ──
+  FIGURE_CAPTION:
+    parent: CAPTION
+  TABLE_CAPTION:
+    parent: CAPTION
+  FORMULA_CAPTION:
+    parent: CAPTION
+  TABLE_NAME:
+    parent: CAPTION
+  FIGURE_NAME:
+    parent: CAPTION
+
+  # ── Extended classes under FOOTNOTE ──
+  TABLE_FOOTNOTE:
+    parent: FOOTNOTE
+  REFERENCE:
+    parent: FOOTNOTE
+
+  # ── Extended classes under FORMULA ──
+  ISOLATE_FORMULA:
+    parent: FORMULA
+  EQUATION:
+    parent: FORMULA
+
+  # ── Extended classes under LIST_ITEM ──
+  LIST_TEXT:
+    parent: LIST_ITEM
+  REGION_LIST:
+    parent: LIST_ITEM
+  DOCUMENT_INDEX:
+    parent: LIST_ITEM
+  CATALOG:
+    parent: LIST_ITEM
+  ORDERED_LIST:
+    parent: LIST_ITEM
+  UNORDERED_LIST:
+    parent: LIST_ITEM
+
+  # ── Extended classes under PAGE_FOOTER ──
+  PAGE_FOOTER_D4LA:
+    parent: PAGE_FOOTER
+  PAGE_NUMBER:
+    parent: PAGE_FOOTER
+
+  # ── Extended classes under PAGE_HEADER ──
+  PAGE_HEADER_D4LA:
+    parent: PAGE_HEADER
+  LETTERHEAD:
+    parent: PAGE_HEADER
+
+  # ── Extended classes under PICTURE ──
+  FIGURE:
+    parent: PICTURE
+  CHART:
+    parent: PICTURE
+
+  # ── Extended classes under SECTION_HEADER ──
+  PARA_TITLE:
+    parent: SECTION_HEADER
+  REGION_TITLE:
+    parent: SECTION_HEADER
+
+  # ── Extended classes under TEXT ──
+  PLAIN_TEXT:
+    parent: TEXT
+  PARA_TEXT:
+    parent: TEXT
+  OTHER_TEXT:
+    parent: TEXT
+  CODE:
+    parent: TEXT
+  HANDWRITTEN_TEXT:
+    parent: TEXT
+  PARAGRAPH:
+    parent: TEXT
+  KEY_VALUE_REGION:
+    parent: TEXT
+  LETTER_DEAR:
+    parent: TEXT
+  LETTER_SIGN:
+    parent: TEXT
+  ABSTRACT:
+    parent: TEXT
+  AUTHOR:
+    parent: TEXT
+  DATE:
+    parent: TEXT
+  NUMBER:
+    parent: TEXT
+  QUESTION:
+    parent: TEXT
+  ANSWER:
+    parent: TEXT
+  REGION_KV:
+    parent: TEXT
+
+  # ── Extended classes under TITLE ──
+  DOC_TITLE:
+    parent: TITLE
+
+  # ── Top-level extensions (no DocLayNet parent) ──
+  FORM:
+    parent: null
+  CHECKBOX_SELECTED:
+    parent: FORM
+  CHECKBOX_UNSELECTED:
+    parent: FORM
+  GRADING_SCALE:
+    parent: FORM
+  EMPTY_VALUE:
+    parent: FORM
+  ABANDONED:
+    parent: null
+  UNKNOWN:
+    parent: null
+
+# ─────────────────────────────────────────────────────────────────────
+# Schema definitions (6 schemas)
+# ─────────────────────────────────────────────────────────────────────
+# Each schema maps its native labels to canonical class names.
+schemas:
+  doclaynet:
+    description: "IBM DocLayNet dataset (11 classes)"
+    class_mapping:
+      "Caption": CAPTION
+      "Footnote": FOOTNOTE
+      "Formula": FORMULA
+      "List-item": LIST_ITEM
+      "Page-footer": PAGE_FOOTER
+      "Page-header": PAGE_HEADER
+      "Picture": PICTURE
+      "Section-header": SECTION_HEADER
+      "Table": TABLE
+      "Text": TEXT
+      "Title": TITLE
+
+  docstructbench:
+    description: "DocLayout-YOLO / DocStructBench (10 classes)"
+    class_mapping:
+      "title": TITLE
+      "plain text": PLAIN_TEXT
+      "abandon": ABANDONED
+      "figure": FIGURE
+      "figure_caption": FIGURE_CAPTION
+      "table": TABLE
+      "table_caption": TABLE_CAPTION
+      "table_footnote": TABLE_FOOTNOTE
+      "isolate_formula": ISOLATE_FORMULA
+      "formula_caption": FORMULA_CAPTION
+
+  publaynet:
+    description: "PubLayNet dataset (5 classes)"
+    class_mapping:
+      "Text": TEXT
+      "Title": TITLE
+      "List": LIST_ITEM
+      "Table": TABLE
+      "Figure": FIGURE
+
+  docling:
+    description: "Docling DocItemLabel enum (23 classes)"
+    class_mapping:
+      "caption": CAPTION
+      "chart": CHART
+      "footnote": FOOTNOTE
+      "formula": FORMULA
+      "list_item": LIST_ITEM
+      "page_footer": PAGE_FOOTER
+      "page_header": PAGE_HEADER
+      "picture": PICTURE
+      "section_header": SECTION_HEADER
+      "table": TABLE
+      "text": TEXT
+      "title": TITLE
+      "document_index": DOCUMENT_INDEX
+      "code": CODE
+      "checkbox_selected": CHECKBOX_SELECTED
+      "checkbox_unselected": CHECKBOX_UNSELECTED
+      "form": FORM
+      "key_value_region": KEY_VALUE_REGION
+      "grading_scale": GRADING_SCALE
+      "handwritten_text": HANDWRITTEN_TEXT
+      "empty_value": EMPTY_VALUE
+      "paragraph": PARAGRAPH
+      "reference": REFERENCE
+
+  d4la:
+    description: "D4LA / VGT ICCV 2023 dataset (27 classes)"
+    class_mapping:
+      "DocTitle": DOC_TITLE
+      "ListText": LIST_TEXT
+      "LetterHead": LETTERHEAD
+      "Question": QUESTION
+      "RegionList": REGION_LIST
+      "TableName": TABLE_NAME
+      "FigureName": FIGURE_NAME
+      "Footer": PAGE_FOOTER_D4LA
+      "Number": NUMBER
+      "ParaTitle": PARA_TITLE
+      "RegionTitle": REGION_TITLE
+      "LetterDear": LETTER_DEAR
+      "OtherText": OTHER_TEXT
+      "Abstract": ABSTRACT
+      "Table": TABLE
+      "Equation": EQUATION
+      "PageHeader": PAGE_HEADER_D4LA
+      "Catalog": CATALOG
+      "ParaText": PARA_TEXT
+      "Date": DATE
+      "LetterSign": LETTER_SIGN
+      "RegionKV": REGION_KV
+      "Author": AUTHOR
+      "Figure": FIGURE
+      "Reference": REFERENCE
+      "PageFooter": PAGE_FOOTER_D4LA
+      "PageNumber": PAGE_NUMBER
+
+  funsd:
+    description: "FUNSD dataset entity-type annotations (4 classes)"
+    class_mapping:
+      "text": TEXT
+      "header": SECTION_HEADER
+      "form_field_question": QUESTION
+      "form_field_answer": ANSWER
+
+  docsynth300k:
+    description: "DocSynth300K synthetic dataset (10 classes, same as DocStructBench)"
+    class_mapping:
+      "title": TITLE
+      "plain text": PLAIN_TEXT
+      "abandon": ABANDONED
+      "figure": FIGURE
+      "figure_caption": FIGURE_CAPTION
+      "table": TABLE
+      "table_caption": TABLE_CAPTION
+      "table_footnote": TABLE_FOOTNOTE
+      "isolate_formula": ISOLATE_FORMULA
+      "formula_caption": FORMULA_CAPTION
+
+# ─────────────────────────────────────────────────────────────────────
+# Alias normalization
+# ─────────────────────────────────────────────────────────────────────
+# Maps common variant spellings to the canonical label form used in
+# one of the schema class_mappings above. Aliases are resolved BEFORE
+# schema lookup so downstream code only sees normalized labels.
+aliases:
+  # List-item variants
+  "list-item": "List-item"
+  "list_item": "list_item"
+  "listitem": "List-item"
+  "ListItem": "List-item"
+  "list item": "List-item"
+
+  # Page-footer variants
+  "page-footer": "Page-footer"
+  "page_footer": "page_footer"
+  "pagefooter": "Page-footer"
+  "PageFooter": "PageFooter"
+  "page footer": "Page-footer"
+
+  # Page-header variants
+  "page-header": "Page-header"
+  "page_header": "page_header"
+  "pageheader": "Page-header"
+  "PageHeader": "PageHeader"
+  "page header": "Page-header"
+
+  # Section-header variants
+  "section-header": "Section-header"
+  "section_header": "section_header"
+  "sectionheader": "Section-header"
+  "SectionHeader": "Section-header"
+  "section header": "Section-header"
+
+  # Caption variants
+  "caption": "caption"
+  "CAPTION": "Caption"
+
+  # Footnote variants
+  "footnote": "footnote"
+  "FOOTNOTE": "Footnote"
+
+  # Formula variants
+  "formula": "formula"
+  "FORMULA": "Formula"
+
+  # Picture variants
+  "picture": "picture"
+  "PICTURE": "Picture"
+
+  # Table variants (lowercase -> case-sensitive schema label)
+  "table": "table"
+  "TABLE": "Table"
+
+  # Text variants
+  "text": "text"
+  "TEXT": "Text"
+
+  # Title variants
+  "title": "title"
+  "TITLE": "Title"
+
+  # Figure variants
+  "figure": "figure"
+  "FIGURE": "Figure"
+
+  # Plain text variants
+  "plain_text": "plain text"
+  "plaintext": "plain text"
+  "PlainText": "plain text"
+
+  # Isolate formula variants
+  "isolate-formula": "isolate_formula"
+  "isolateformula": "isolate_formula"
+
+  # Figure caption variants
+  "figure-caption": "figure_caption"
+  "figurecaption": "figure_caption"
+  "FigureCaption": "figure_caption"
+
+  # Table caption variants
+  "table-caption": "table_caption"
+  "tablecaption": "table_caption"
+  "TableCaption": "table_caption"
+
+  # Table footnote variants
+  "table-footnote": "table_footnote"
+  "tablefootnote": "table_footnote"
+  "TableFootnote": "table_footnote"
+
+  # Formula caption variants
+  "formula-caption": "formula_caption"
+  "formulacaption": "formula_caption"
+  "FormulaCaption": "formula_caption"

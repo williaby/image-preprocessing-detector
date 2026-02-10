@@ -181,14 +181,20 @@ class GeneratedSample:
         text_density: Text density level
         iqa_labels: 8-dimension IQA quality labels
         text_blocks: List of rendered text blocks with bounding boxes
-        resolution_dpi: Output resolution (72/150/300)
+        resolution_dpi: Output resolution (72-600)
         width_px: Image width in pixels
         height_px: Image height in pixels
         generation_params: Additional generation parameters
         is_pristine: True if no degradation applied
-        resolution_tier: Resolution tier (LOW/MEDIUM/HIGH) for NaFlex
+        resolution_tier: Resolution tier for NaFlex
         quality_tier: Quality tier (PRISTINE/HIGH/MEDIUM/LOW/DEGRADED)
         split: Dataset split assignment (train/val/test)
+        color_mode: Color mode applied (color/grayscale/binarized)
+        skew_angle_degrees: Exact skew angle if skew augmentation applied
+        orientation_class: Orientation class (0/90/180/270) if orientation augmentation applied
+        char_height_px: Measured character height in pixels
+        char_height_quality_score: Quality score derived from character height (0-1)
+        document_age: Simulated document age (modern/aged/historical)
     """
 
     image: Any  # PIL.Image.Image
@@ -204,9 +210,15 @@ class GeneratedSample:
     height_px: int = 0
     generation_params: dict[str, Any] = field(default_factory=dict)
     is_pristine: bool = False
-    resolution_tier: str = "MEDIUM"  # LOW, MEDIUM, HIGH
-    quality_tier: str = "MEDIUM"  # PRISTINE, HIGH, MEDIUM, LOW, DEGRADED
-    split: str | None = None  # train, val, test
+    resolution_tier: str = "MEDIUM"
+    quality_tier: str = "MEDIUM"
+    split: str | None = None
+    color_mode: str = "color"
+    skew_angle_degrees: float | None = None
+    orientation_class: int | None = None
+    char_height_px: float | None = None
+    char_height_quality_score: float | None = None
+    document_age: str | None = None
 
 
 # =============================================================================
@@ -325,7 +337,7 @@ class Layer2SchemaAdapter:
             LanguageInfo dictionary matching Layer 2 schema
         """
         # Parse OpenLID format to extract ISO 639 code
-        iso639_code, embedded_script = self._parse_openlid_code(language_code)
+        iso639_code, _embedded_script = self._parse_openlid_code(language_code)
 
         script_config = get_script_config(script_code)
 
@@ -467,9 +479,96 @@ class Layer2SchemaAdapter:
                 element_types.add("Text")
 
         # Build the complete metadata
+        data: dict[str, Any] = {
+            "capture_method": {
+                "method": CaptureMethod.SYNTHETIC.value,
+                "confidence": 1.0,
+                "detection_method": "synthetic_generator",
+            },
+            "resolution": {
+                "dpi": sample.resolution_dpi,
+                "category": resolution_category,
+                "pixels": [sample.width_px, sample.height_px],
+                # v2.1.0 fields
+                **(
+                    {"character_height_px": round(sample.char_height_px, 2)}
+                    if sample.char_height_px is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "resolution_quality_score": round(
+                            sample.char_height_quality_score, 4
+                        )
+                    }
+                    if sample.char_height_quality_score is not None
+                    else {}
+                ),
+                "effective_dpi": sample.resolution_dpi,
+            },
+            "domain": {
+                "level1": "UNK",  # Synthetic text has no specific domain
+                "level2": None,
+                "level3": None,
+                "confidence": 1.0,
+            },
+            "structure": {
+                "text_density": layer2_density,
+                "layout_type": layer2_layout,
+                "element_types": list(element_types),
+            },
+            "quality": {
+                "overall_score": sample.iqa_labels.overall_quality,
+                "degradations": self.convert_iqa_to_degradations(
+                    sample.iqa_labels, augmentation_source
+                ),
+            },
+            "language": self.build_language_info(
+                primary_script, primary_language, is_primary=True
+            ),
+            # Only include 'languages' if there are multiple languages
+            **({"languages": languages} if len(languages) > 1 else {}),
+            "text_scope": {
+                "scope": "paragraph",
+                "content_type": "synthetic",
+                "density": layer2_density,
+                "estimated_chars": sum(len(b.text) for b in sample.text_blocks),
+                "estimated_words": sum(len(b.text.split()) for b in sample.text_blocks),
+                "confidence": 1.0,
+                "detection_method": "synthetic_generator",
+            },
+            "content_flags": {
+                "has_table": False,
+                "has_formula": False,
+                "has_handwriting": False,
+                "has_signature": False,
+                "has_figure": False,
+                "has_code": False,  # v2.1.0
+                "code_confidence": 1.0,  # v2.1.0 (ground truth: no code)
+                "tier": EnrichmentTier.TIER_0_EXACT.value,
+                "source": "synthetic_generator",
+            },
+            "llm_scores": None,
+            "layout_detections": self.build_layout_detections(sample.text_blocks),
+        }
+
+        # v2.1.0: Geometric info (orientation + skew)
+        geometric = self._build_geometric_info(sample)
+        if geometric:
+            data["geometric"] = geometric
+
+        # v2.1.0: ML IQA 6-dim scores from synthetic IQA labels
+        data["ml_image_quality"] = self._build_ml_iqa_info(sample)
+
+        # v2.1.0: Image properties (color mode, document age)
+        image_props = self._build_image_properties(sample)
+        if image_props:
+            data["image_properties"] = image_props
+
         return {
             "sample_id": sample_uuid,
             "enrichment_version": 1,
+            "schema_version": "2.1.0",
             "created_at": datetime.now(UTC).isoformat(),
             "created_by": f"synthetic_generator_v{self.generator_version}",
             "method": EnrichmentTier.TIER_0_EXACT.value,
@@ -480,66 +579,108 @@ class Layer2SchemaAdapter:
                 "model_checkpoint": None,
                 "config_hash": None,
             },
-            "data": {
-                "capture_method": {
-                    "method": CaptureMethod.SYNTHETIC.value,
-                    "confidence": 1.0,
-                    "detection_method": "synthetic_generator",
-                },
-                "resolution": {
-                    "dpi": sample.resolution_dpi,
-                    "category": resolution_category,
-                    "pixels": [sample.width_px, sample.height_px],
-                },
-                "domain": {
-                    "level1": "UNK",  # Synthetic text has no specific domain
-                    "level2": None,
-                    "level3": None,
-                    "confidence": 1.0,
-                },
-                "structure": {
-                    "text_density": layer2_density,
-                    "layout_type": layer2_layout,
-                    "element_types": list(element_types),
-                },
-                "quality": {
-                    "overall_score": sample.iqa_labels.overall_quality,
-                    "degradations": self.convert_iqa_to_degradations(
-                        sample.iqa_labels, augmentation_source
-                    ),
-                },
-                "language": self.build_language_info(
-                    primary_script, primary_language, is_primary=True
-                ),
-                # FIX BUG #2: Only include 'languages' if there are multiple languages
-                # Schema requires valid objects, not null
-                **({"languages": languages} if len(languages) > 1 else {}),
-                "text_scope": {
-                    "scope": "paragraph",
-                    "content_type": "synthetic",
-                    "density": layer2_density,
-                    "estimated_chars": sum(len(b.text) for b in sample.text_blocks),
-                    "estimated_words": sum(
-                        len(b.text.split()) for b in sample.text_blocks
-                    ),
-                    "confidence": 1.0,
-                    "detection_method": "synthetic_generator",
-                },
-                # FIX BUG #2: Omit paper_size entirely instead of setting to null
-                # Schema doesn't allow null for this field
-                "content_flags": {
-                    "has_table": False,
-                    "has_formula": False,
-                    "has_handwriting": False,
-                    "has_signature": False,
-                    "has_figure": False,
-                    "tier": EnrichmentTier.TIER_0_EXACT.value,
-                    "source": "synthetic_generator",
-                },
-                "llm_scores": None,
-                "layout_detections": self.build_layout_detections(sample.text_blocks),
-            },
+            "data": data,
         }
+
+    def _build_geometric_info(
+        self,
+        sample: GeneratedSample,
+    ) -> dict[str, Any] | None:
+        """Build GeometricInfo from sample orientation and skew data.
+
+        Args:
+            sample: Generated sample with orientation/skew fields
+
+        Returns:
+            GeometricInfo dictionary or None if no geometric data
+        """
+        has_data = (
+            sample.orientation_class is not None
+            or sample.skew_angle_degrees is not None
+        )
+        if not has_data:
+            return None
+
+        info: dict[str, Any] = {
+            "provenance_tier": "tier_0_exact",
+            "is_soft_label": False,
+            "detection_method": "synthetic_exact",
+        }
+
+        if sample.orientation_class is not None:
+            info["orientation_class"] = sample.orientation_class
+            info["orientation_confidence"] = 1.0
+            info["orientation_corrected"] = False
+            info["orientation_detection_method"] = "synthetic_exact"
+
+        if sample.skew_angle_degrees is not None:
+            info["skew_angle_degrees"] = round(sample.skew_angle_degrees, 4)
+            info["skew_confidence"] = 1.0
+            info["skew_detection_method"] = "synthetic_exact"
+
+        return info
+
+    def _build_ml_iqa_info(
+        self,
+        sample: GeneratedSample,
+    ) -> dict[str, Any]:
+        """Build MLImageQualityInfo from synthetic IQA labels.
+
+        Maps the 8-dim synthetic IQA to the 6-dim ML IQA schema fields.
+
+        Args:
+            sample: Generated sample with IQA labels
+
+        Returns:
+            MLImageQualityInfo dictionary
+        """
+        iqa = sample.iqa_labels
+        return {
+            "blur_score": round(iqa.blur, 4),
+            "noise_score": round(iqa.noise, 4),
+            "contrast_score": round(
+                iqa.ink_degradation, 4
+            ),  # Map ink_degradation -> contrast
+            "compression_score": round(iqa.compression, 4),
+            "skew_score": round(iqa.geometric_distortion, 4),
+            "overall_score": round(
+                1.0 - iqa.overall_quality, 4
+            ),  # Invert: IQA=1 is good, schema 0=best quality issue
+            "model_name": "synthetic_ground_truth",
+            "model_version": self.generator_version,
+            "confidence": 1.0,
+            "provenance_tier": "tier_0_exact",
+            "is_soft_label": False,
+            "detection_method": "synthetic_exact",
+        }
+
+    def _build_image_properties(
+        self,
+        sample: GeneratedSample,
+    ) -> dict[str, Any] | None:
+        """Build ImagePropertiesInfo from sample properties.
+
+        Args:
+            sample: Generated sample with color mode and document age
+
+        Returns:
+            ImagePropertiesInfo dictionary or None if defaults only
+        """
+        has_data = sample.color_mode != "color" or sample.document_age is not None
+        if not has_data:
+            return None
+
+        info: dict[str, Any] = {
+            "color_mode": sample.color_mode,
+            "provenance_tier": "tier_0_exact",
+            "is_soft_label": False,
+            "detection_method": "synthetic_exact",
+        }
+
+        if sample.document_age is not None:
+            info["document_age"] = sample.document_age
+
+        return info
 
 
 __all__ = [

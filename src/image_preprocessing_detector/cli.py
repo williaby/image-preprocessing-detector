@@ -859,6 +859,15 @@ def noise_check(
         sys.exit(1)
 
 
+# Register layout taxonomy command group
+try:
+    from image_preprocessing_detector.cli_layout import layout
+
+    cli.add_command(layout)
+except ImportError:
+    # Layout taxonomy module not available
+    pass
+
 # Register synthetic generation command group
 try:
     from image_preprocessing_detector.synthetic.cli import synthetic

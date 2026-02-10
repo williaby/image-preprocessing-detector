@@ -173,9 +173,24 @@ def synthetic() -> None:
 )
 @click.option(
     "--augmenter",
-    type=click.Choice(["augraphy", "albumentations"]),
+    type=click.Choice(["augraphy", "albumentations", "hybrid"]),
     default="albumentations",
-    help="Augmentation library to use (albumentations is ~600x faster)",
+    help="Augmentation library (albumentations ~600x faster, hybrid = augraphy + albumentations)",
+)
+@click.option(
+    "--color-mode",
+    is_flag=True,
+    help="Enable random color mode conversion (60%% color, 25%% grayscale, 15%% binarized)",
+)
+@click.option(
+    "--skew",
+    is_flag=True,
+    help="Enable random skew augmentation (+/-10 degrees with exact angle labels)",
+)
+@click.option(
+    "--orientation",
+    is_flag=True,
+    help="Enable random orientation augmentation (0/90/180/270 with class labels)",
 )
 def generate(
     output: Path | None,
@@ -191,6 +206,9 @@ def generate(
     profile: str,
     dpi: str,
     augmenter: str,
+    color_mode: bool,
+    skew: bool,
+    orientation: bool,
 ) -> None:
     """Generate synthetic multi-script document dataset.
 
@@ -247,6 +265,15 @@ def generate(
     click.echo(f"Resolution:      {dpi} DPI")
     click.echo(f"Augmenter:       {augmenter}")
     click.echo(f"Degradation:     {profile} profile")
+    if color_mode or skew or orientation:
+        multi_task = []
+        if color_mode:
+            multi_task.append("color-mode")
+        if skew:
+            multi_task.append("skew")
+        if orientation:
+            multi_task.append("orientation")
+        click.echo(f"Multi-task:      {', '.join(multi_task)}")
     click.echo("=" * 60)
 
     if dry_run:
@@ -258,10 +285,13 @@ def generate(
         return
 
     # Confirm before generating large datasets (skip if --yes flag)
-    if total_samples > 500 and not yes:
-        if not click.confirm(f"\nGenerate {total_samples} samples?"):
-            click.echo("Aborted.")
-            return
+    if (
+        total_samples > 500
+        and not yes
+        and not click.confirm(f"\nGenerate {total_samples} samples?")
+    ):
+        click.echo("Aborted.")
+        return
 
     # Map profile string to DegradationProfile enum(s)
     profile_map = {
@@ -286,6 +316,9 @@ def generate(
         degradation_profiles=degradation_profiles,
         dpi=int(dpi),
         augmenter=augmenter,
+        color_mode_enabled=color_mode,
+        skew_augmentation=skew,
+        orientation_augmentation=orientation,
     )
 
     # Create generator
