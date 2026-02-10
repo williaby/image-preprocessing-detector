@@ -1,6 +1,6 @@
 ---
 owner: docs-team
-purpose: Standardize dataset naming conventions and alias mappings
+purpose: Standardize dataset naming conventions and alias mappings.
 schema_type: common
 status: active
 tags:

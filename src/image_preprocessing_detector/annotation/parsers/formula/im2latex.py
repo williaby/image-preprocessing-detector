@@ -321,15 +321,14 @@ class Im2latexParser(BaseParser):
 
                 # NEW: Populate text_content fields for Layer 2 compliance
                 # LaTeX source is the "text" for formula datasets
-                if not hasattr(labels, "text_content") or labels.text_content is None:
-                    from ...schemas.enrichment import TextContent
-
-                    labels.text_content = TextContent()
-
-                labels.text_content.full_text = latex_source
-                labels.text_content.source_type = "dataset_provided"
-                labels.text_content.source_file = "im2latex_formulas.lst"
-                labels.text_content.extraction_method = "Im2latexParser.parse"
+                if labels.raw_labels is None:
+                    labels.raw_labels = {}
+                labels.raw_labels["text_content"] = {
+                    "full_text": latex_source,
+                    "source_type": "dataset_provided",
+                    "source_file": "im2latex_formulas.lst",
+                    "extraction_method": "Im2latexParser.parse",
+                }
 
                 # Estimate formula complexity (rough heuristic)
                 # Simple: <50 chars, Medium: 50-200 chars, Complex: >200 chars
@@ -354,15 +353,14 @@ class Im2latexParser(BaseParser):
                 labels.raw_labels["split"] = "unknown"
 
                 # NEW: Populate text_content fields for Layer 2 compliance
-                if not hasattr(labels, "text_content") or labels.text_content is None:
-                    from ...schemas.enrichment import TextContent
-
-                    labels.text_content = TextContent()
-
-                labels.text_content.full_text = latex_source
-                labels.text_content.source_type = "dataset_provided"
-                labels.text_content.source_file = "im2latex_formulas.lst"
-                labels.text_content.extraction_method = "Im2latexParser.parse"
+                if labels.raw_labels is None:
+                    labels.raw_labels = {}
+                labels.raw_labels["text_content"] = {
+                    "full_text": latex_source,
+                    "source_type": "dataset_provided",
+                    "source_file": "im2latex_formulas.lst",
+                    "extraction_method": "Im2latexParser.parse",
+                }
             else:
                 labels.raw_labels["error"] = "image_not_in_splits"
 

@@ -58,7 +58,7 @@ services:
       # Output directory (for extracted text)
       - /mnt/unraid/appdata/docling/output:/data/output:rw
 
-    # Resource limits
+    # Resource limits (enforced in Swarm mode; use runtime flags for standalone)
     deploy:
       resources:
         limits:

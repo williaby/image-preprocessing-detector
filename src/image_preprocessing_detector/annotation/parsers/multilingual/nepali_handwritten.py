@@ -107,7 +107,7 @@ class NepaliHandwrittenParser(BaseParser):
         xml_path = image_path.with_suffix(".xml")
         if xml_path.exists():
             try:
-                tree = ET.parse(xml_path)
+                tree = ET.parse(xml_path)  # noqa: S314
                 root = tree.getroot()
 
                 # Extract image dimensions if available
@@ -116,8 +116,8 @@ class NepaliHandwrittenParser(BaseParser):
                     width_elem = size_elem.find("width")
                     height_elem = size_elem.find("height")
                     if width_elem is not None and height_elem is not None:
-                        labels.raw_labels["image_width"] = int(width_elem.text)
-                        labels.raw_labels["image_height"] = int(height_elem.text)
+                        labels.raw_labels["image_width"] = int(width_elem.text or "0")
+                        labels.raw_labels["image_height"] = int(height_elem.text or "0")
 
                 # Extract all objects with bounding boxes
                 objects = []
@@ -130,10 +130,21 @@ class NepaliHandwrittenParser(BaseParser):
                     bbox_elem = obj.find("bndbox")
                     if bbox_elem is not None:
                         try:
-                            xmin = int(float(bbox_elem.find("xmin").text))
-                            ymin = int(float(bbox_elem.find("ymin").text))
-                            xmax = int(float(bbox_elem.find("xmax").text))
-                            ymax = int(float(bbox_elem.find("ymax").text))
+                            xmin_elem = bbox_elem.find("xmin")
+                            ymin_elem = bbox_elem.find("ymin")
+                            xmax_elem = bbox_elem.find("xmax")
+                            ymax_elem = bbox_elem.find("ymax")
+                            if (
+                                xmin_elem is None
+                                or ymin_elem is None
+                                or xmax_elem is None
+                                or ymax_elem is None
+                            ):
+                                continue
+                            xmin = int(float(xmin_elem.text or "0"))
+                            ymin = int(float(ymin_elem.text or "0"))
+                            xmax = int(float(xmax_elem.text or "0"))
+                            ymax = int(float(ymax_elem.text or "0"))
 
                             # Convert PASCAL VOC [xmin, ymin, xmax, ymax]
                             # to COCO format [x, y, width, height]
@@ -144,7 +155,7 @@ class NepaliHandwrittenParser(BaseParser):
 
                             # Validate bounding box dimensions
                             if width > 0 and height > 0:
-                                obj_dict = {
+                                obj_dict: dict[str, Any] = {
                                     "bbox": [x, y, width, height],
                                     "category": name,
                                     "bbox_format": "coco",  # Converted to COCO
@@ -180,9 +191,9 @@ class NepaliHandwrittenParser(BaseParser):
                     # No valid objects found
                     labels.raw_labels["num_objects"] = 0
 
-            except ET.ParseError as e:
-                logger.error("XML parse error for %s: %s", xml_path, e)
-                labels.raw_labels["xml_parse_error"] = str(e)
+            except ET.ParseError as exc:
+                logger.exception("XML parse error for %s", xml_path)
+                labels.raw_labels["xml_parse_error"] = str(exc)
             except FileNotFoundError:
                 logger.debug("XML file not found (may be expected): %s", xml_path)
         else:

@@ -117,9 +117,11 @@ class SroieParser(BaseParser):
 
                         # Populate Layer 2 text_content schema fields
                         full_text = " ".join(
-                            instance["text"] for instance in text_instances
+                            str(instance["text"]) for instance in text_instances
                         )
-                        labels.text_content = {
+                        if labels.raw_labels is None:
+                            labels.raw_labels = {}
+                        labels.raw_labels["text_content"] = {
                             "full_text": full_text,
                             "source_type": "dataset_provided",
                             "source_format": "txt_quad_text",

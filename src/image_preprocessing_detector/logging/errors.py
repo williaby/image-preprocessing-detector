@@ -305,6 +305,13 @@ class ValidationError(AppError):
         message: str = "Validation failed",
         details: dict[str, Any] | None = None,
     ) -> None:
+        """Initialize validation error.
+
+        Args:
+            code: Error code identifying the validation failure type.
+            message: Human-readable error message.
+            details: Additional context about the validation failure.
+        """
         super().__init__(code, message, details)
 
 
@@ -317,6 +324,13 @@ class ProcessingError(AppError):
         message: str = "Processing failed",
         details: dict[str, Any] | None = None,
     ) -> None:
+        """Initialize processing error.
+
+        Args:
+            code: Error code identifying the processing failure type.
+            message: Human-readable error message.
+            details: Additional context about the processing failure.
+        """
         super().__init__(code, message, details)
 
 
@@ -329,6 +343,13 @@ class InfrastructureError(AppError):
         message: str = "Infrastructure error",
         details: dict[str, Any] | None = None,
     ) -> None:
+        """Initialize infrastructure error.
+
+        Args:
+            code: Error code identifying the infrastructure failure type.
+            message: Human-readable error message.
+            details: Additional context about the infrastructure failure.
+        """
         super().__init__(code, message, details)
 
 
@@ -341,6 +362,13 @@ class AuthenticationError(AppError):
         message: str = "Authentication required",
         details: dict[str, Any] | None = None,
     ) -> None:
+        """Initialize authentication error.
+
+        Args:
+            code: Error code identifying the authentication failure type.
+            message: Human-readable error message.
+            details: Additional context about the authentication failure.
+        """
         super().__init__(code, message, details)
 
 
@@ -353,6 +381,13 @@ class RateLimitError(AppError):
         message: str = "Rate limit exceeded",
         details: dict[str, Any] | None = None,
     ) -> None:
+        """Initialize rate limit error.
+
+        Args:
+            code: Error code identifying the rate limit failure type.
+            message: Human-readable error message.
+            details: Additional context about the rate limit failure.
+        """
         super().__init__(code, message, details)
 
 

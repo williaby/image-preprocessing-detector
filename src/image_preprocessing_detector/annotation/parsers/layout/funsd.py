@@ -143,7 +143,9 @@ class FunsdParser(BaseParser):
                 labels.transcription = full_text.strip()
 
                 # Populate Layer 2 text_content schema fields
-                labels.text_content = {
+                if labels.raw_labels is None:
+                    labels.raw_labels = {}
+                labels.raw_labels["text_content"] = {
                     "full_text": full_text.strip(),
                     "source_type": "dataset_provided",
                     "source_format": "json_entity_text",

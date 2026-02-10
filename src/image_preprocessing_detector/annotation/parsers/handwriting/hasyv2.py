@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2025 Byron Williams <byronawilliams@gmail.com>
 # SPDX-License-Identifier: MIT
-"""Parser for HASYv2 (Handwritten Symbol) dataset.
+r"""Parser for HASYv2 (Handwritten Symbol) dataset.
 
 This parser extracts symbol class labels from the HASYv2 CSV files.
 The dataset contains 168,233 images of 369 handwritten symbol classes.

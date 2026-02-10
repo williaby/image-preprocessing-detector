@@ -38,7 +38,7 @@ except ImportError:
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
             """Initialize no-op counter."""
 
-        def labels(self, *_args: Any, **_kwargs: Any) -> Counter:
+        def labels(self, *_args: Any, **_kwargs: Any) -> Any:
             """Return self for chaining (no-op)."""
             return self
 
@@ -51,7 +51,7 @@ except ImportError:
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
             """Initialize no-op gauge."""
 
-        def labels(self, *_args: Any, **_kwargs: Any) -> Gauge:
+        def labels(self, *_args: Any, **_kwargs: Any) -> Any:
             """Return self for chaining (no-op)."""
             return self
 
@@ -70,7 +70,7 @@ except ImportError:
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
             """Initialize no-op histogram."""
 
-        def labels(self, *_args: Any, **_kwargs: Any) -> Histogram:
+        def labels(self, *_args: Any, **_kwargs: Any) -> Any:
             """Return self for chaining (no-op)."""
             return self
 

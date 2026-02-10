@@ -122,7 +122,7 @@ class NistDb2Parser(BaseParser):
 
                             # Populate Layer 2 text_content schema fields
                             full_text = " ".join(field_values)
-                            labels.text_content = {
+                            labels.raw_labels["text_content"] = {
                                 "full_text": full_text,
                                 "source_type": "dataset_provided",
                                 "source_format": "fmt_field_values",

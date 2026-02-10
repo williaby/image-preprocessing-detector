@@ -59,7 +59,7 @@ fi
 
 # Create output directory
 log_info "Creating output directory..."
-ssh "$DOCKER_HOST" "sudo mkdir -p /mnt/unraid/appdata/docling/output && sudo chmod 777 /mnt/unraid/appdata/docling/output"
+ssh "$DOCKER_HOST" "sudo mkdir -p /mnt/unraid/appdata/docling/output && sudo chmod 755 /mnt/unraid/appdata/docling/output && sudo chown \$(whoami) /mnt/unraid/appdata/docling/output"
 
 # Pull the image
 log_info "Pulling Docling image..."

@@ -120,7 +120,9 @@ class ScriptRouter:
         }
 
     @lru_cache(maxsize=256)  # noqa: B019 - Intentional caching for config lookups
-    def _get_cached_engine_config(self, iso15924_code: str) -> tuple[tuple, ...]:
+    def _get_cached_engine_config(
+        self, iso15924_code: str
+    ) -> tuple[tuple[str, Any], ...]:
         """Cached engine config lookup (returns tuple for hashability)."""
         config = self._compute_engine_config(iso15924_code)
         # Convert dict to sorted tuple of tuples for caching
@@ -171,7 +173,7 @@ class ScriptRouter:
             Engine name string (e.g., "rapidocr", "paddleocr", "tesseract")
         """
         config = self.get_engine_config(iso15924_code)
-        return config.get("engine", self._default_engine)
+        return str(config.get("engine", self._default_engine))
 
     def get_batch_size(self, iso15924_code: str) -> int:
         """Get recommended batch size for a script.
@@ -183,7 +185,7 @@ class ScriptRouter:
             Recommended batch size
         """
         config = self.get_engine_config(iso15924_code)
-        return config.get("batch_size", self._default_batch_size)
+        return int(config.get("batch_size", self._default_batch_size))
 
     def get_lang_hint(self, iso15924_code: str) -> str | None:
         """Get language hint for OCR engine.
@@ -207,7 +209,7 @@ class ScriptRouter:
             True if RTL handling required
         """
         config = self.get_engine_config(iso15924_code)
-        return config.get("rtl", False)
+        return bool(config.get("rtl", False))
 
     def should_escalate_to_vlm(
         self,
@@ -295,7 +297,8 @@ class ScriptRouter:
             Engine-specific configuration dict
         """
         engine_configs = self.routing.get("engine_configs", {})
-        return engine_configs.get(engine, {})
+        result: dict[str, Any] = engine_configs.get(engine, {})
+        return result
 
     def reload(self) -> None:
         """Hot-reload config without restart.

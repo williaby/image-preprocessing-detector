@@ -217,7 +217,9 @@ class InvoicesKgParser(BaseParser):
         ocred_text = annotation.get("ocred_text", "")
         if ocred_text:
             # Populate Layer 2 text_content schema fields
-            labels.text_content = {
+            if labels.raw_labels is None:
+                labels.raw_labels = {}
+            labels.raw_labels["text_content"] = {
                 "full_text": ocred_text,
                 "source_type": "dataset_provided",
                 "source_format": "json_manifest",

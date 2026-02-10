@@ -497,11 +497,7 @@ def is_valid_iso15924_code(code: str) -> bool:
         False
     """
     try:
-        # Check if the code matches any enum value
-        for member in ISO15924Script:
-            if member.value == code:
-                return True
-        return False
+        return any(member.value == code for member in ISO15924Script)
     except (ValueError, TypeError):
         return False
 
@@ -522,10 +518,7 @@ def get_iso15924_script(code: str) -> ISO15924Script | None:
         None
     """
     try:
-        for member in ISO15924Script:
-            if member.value == code:
-                return member
-        return None
+        return next((member for member in ISO15924Script if member.value == code), None)
     except (ValueError, TypeError):
         return None
 

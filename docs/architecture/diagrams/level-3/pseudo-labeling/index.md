@@ -1,12 +1,12 @@
 ---
 owner: docs-team
-purpose: Level 3 pseudo-labeling module documentation index
+purpose: Level 3 pseudo-labeling module documentation index.
 schema_type: common
 status: active
 tags:
-  - architecture
-  - level-3
-  - pseudo-labeling
+- architecture
+- level_3
+- pseudo_labeling
 title: "Level 3: Pseudo-Labeling - Module Implementation"
 ---
 

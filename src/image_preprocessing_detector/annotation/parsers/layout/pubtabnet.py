@@ -218,7 +218,7 @@ class PubTabNetParser(BaseParser):
 
                 # Set text_content if any text was found
                 if all_text:
-                    labels.text_content = {
+                    labels.raw_labels["text_content"] = {
                         "full_text": " ".join(all_text),
                         "source_type": "dataset_provided",
                         "source_format": "jsonl_cell_tokens",
@@ -230,25 +230,27 @@ class PubTabNetParser(BaseParser):
 
                 # Set layout_detections if any boxes were converted
                 if layout_detections:
-                    labels.layout_detections = layout_detections
+                    labels.raw_labels["layout_detections"] = layout_detections
 
             # Store split information if available (preserve existing raw_labels)
             if "split" in entry:
                 labels.raw_labels["split"] = entry["split"]
 
         # Set dataset-level metadata (like fintabnet)
-        labels.capture_method = {
+        if labels.raw_labels is None:
+            labels.raw_labels = {}
+        labels.raw_labels["capture_method"] = {
             "method": "born_digital",
             "confidence": 1.0,
             "detection_method": "dataset_config",
         }
 
-        labels.domain = {
+        labels.raw_labels["domain"] = {
             "level1": "SCI",  # Scientific (PubMed Central)
             "confidence": 0.98,
         }
 
-        labels.content_flags = {
+        labels.raw_labels["content_flags"] = {
             "has_table": True,
             "tier": "tier_0_exact",
             "source": "tier_0_exact_by_construction",

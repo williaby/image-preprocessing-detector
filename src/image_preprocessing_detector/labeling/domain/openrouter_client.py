@@ -28,7 +28,7 @@ import json
 import re
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import structlog
 
@@ -265,11 +265,11 @@ class OpenRouterClient:
                 if max(img.size) > max_px:
                     ratio = max_px / max(img.size)
                     new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
-                    img = img.resize(new_size)
+                    img = img.resize(new_size)  # type: ignore[assignment]
 
                 # Convert to RGB if necessary (handles RGBA, palette, etc.)
                 if img.mode not in ("RGB", "L"):
-                    img = img.convert("RGB")
+                    img = img.convert("RGB")  # type: ignore[assignment]
 
                 buf = io.BytesIO()
                 img.save(buf, format="PNG")
@@ -311,7 +311,7 @@ def _extract_json(text: str) -> dict[str, Any]:
     # Try direct parse first
     stripped = text.strip()
     try:
-        return json.loads(stripped)
+        return cast(dict[str, Any], json.loads(stripped))
     except json.JSONDecodeError:
         pass
 
@@ -319,7 +319,7 @@ def _extract_json(text: str) -> dict[str, Any]:
     code_block_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", stripped, re.DOTALL)
     if code_block_match:
         try:
-            return json.loads(code_block_match.group(1).strip())
+            return cast(dict[str, Any], json.loads(code_block_match.group(1).strip()))
         except json.JSONDecodeError:
             pass
 
@@ -327,7 +327,7 @@ def _extract_json(text: str) -> dict[str, Any]:
     brace_match = re.search(r"\{[^{}]*\}", stripped, re.DOTALL)
     if brace_match:
         try:
-            return json.loads(brace_match.group(0))
+            return cast(dict[str, Any], json.loads(brace_match.group(0)))
         except json.JSONDecodeError:
             pass
 
@@ -335,7 +335,7 @@ def _extract_json(text: str) -> dict[str, Any]:
     nested_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", stripped, re.DOTALL)
     if nested_match:
         try:
-            return json.loads(nested_match.group(0))
+            return cast(dict[str, Any], json.loads(nested_match.group(0)))
         except json.JSONDecodeError:
             pass
 

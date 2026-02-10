@@ -380,6 +380,14 @@ class MigrationError(Exception):
         to_version: str,
         cause: Exception | None = None,
     ):
+        """Initialize migration error.
+
+        Args:
+            file_path: Path to the file being migrated.
+            from_version: Source schema version.
+            to_version: Target schema version.
+            cause: Original exception that triggered the failure.
+        """
         self.file_path = Path(file_path)
         self.from_version = from_version
         self.to_version = to_version

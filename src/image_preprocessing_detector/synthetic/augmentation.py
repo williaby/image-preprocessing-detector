@@ -84,7 +84,6 @@ try:
         BookBinding,
         ColorPaper,
         DirtyDrum,
-        Faxify,
         Folding,
         InkBleed,
         Jpeg,

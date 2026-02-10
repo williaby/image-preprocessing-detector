@@ -1,13 +1,13 @@
 ---
 owner: docs-team
-purpose: Ensemble stacking module documentation for pseudo-labeling
+purpose: Ensemble stacking module documentation for pseudo-labeling.
 schema_type: common
 status: active
 tags:
-  - architecture
-  - level-3
-  - pseudo-labeling
-  - ensemble
+- architecture
+- level_3
+- pseudo_labeling
+- ensemble
 title: "Ensemble Stacking - 5-Model Architecture"
 ---
 

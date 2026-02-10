@@ -1,6 +1,6 @@
 ---
 owner: docs-team
-purpose: Comprehensive catalog of all training datasets
+purpose: Comprehensive catalog of all training datasets.
 schema_type: common
 status: active
 tags:

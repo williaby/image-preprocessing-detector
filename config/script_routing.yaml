@@ -187,7 +187,9 @@ vlm_escalation:
   always_escalate:
     - "Tibt"  # Tibetan - very limited OCR support
     - "Ethi"  # Ethiopic - limited OCR support
-    - "Mymr"  # Myanmar - unless using PaddleOCR override
+    # Note: Mymr has iso15924_overrides routing to PaddleOCR for basic OCR,
+    # but remains in always_escalate for full pipeline escalation review
+    - "Mymr"  # Myanmar - escalate for review even with PaddleOCR override
 
   # Escalate if script is unknown
   escalate_unknown: true

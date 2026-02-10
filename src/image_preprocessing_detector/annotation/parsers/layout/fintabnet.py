@@ -202,7 +202,7 @@ class FinTabNetParser(BaseParser):
 
                 # Set text_content if any text was found
                 if all_text:
-                    labels.text_content = {
+                    labels.raw_labels["text_content"] = {
                         "full_text": " ".join(all_text),
                         "source_type": "dataset_provided",
                         "source_format": "jsonl_cell_tokens",
@@ -214,21 +214,21 @@ class FinTabNetParser(BaseParser):
 
                 # Set layout_detections if any boxes were converted
                 if layout_detections:
-                    labels.layout_detections = layout_detections
+                    labels.raw_labels["layout_detections"] = layout_detections
 
         # R4: Set dataset-level metadata
-        labels.capture_method = {
+        labels.raw_labels["capture_method"] = {
             "method": "born_digital",
             "confidence": 1.0,
             "detection_method": "dataset_config",
         }
 
-        labels.domain = {
+        labels.raw_labels["domain"] = {
             "level1": "FIN",
             "confidence": 0.99,
         }
 
-        labels.content_flags = {
+        labels.raw_labels["content_flags"] = {
             "has_table": True,
             "tier": "tier_0_exact",
             "source": "tier_0_exact_by_construction",

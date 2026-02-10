@@ -405,7 +405,9 @@ skips = [
     "B101",  # Skip assert_used - standard pytest practice, not a security issue
     "B110",  # Skip try_except_pass - used for optional functionality (git info)
     "B311",  # Skip random - used only for non-security backoff jitter
+    "B314",  # Skip xml parse - only used for trusted local annotation files (PASCAL VOC)
     "B404",  # Skip subprocess import - controlled git commands only
+    "B405",  # Skip xml import - only used for trusted local annotation files
     "B603",  # Skip subprocess call - controlled git/nvidia-smi commands only
     "B607",  # Skip partial path - controlled git/nvidia-smi commands only
 ]

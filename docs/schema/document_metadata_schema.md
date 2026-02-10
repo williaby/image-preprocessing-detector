@@ -1,4 +1,14 @@
-# Document Metadata Schema Visualization
+---
+schema_type: common
+title: "Document Metadata Schema Visualization"
+tags:
+  - schema
+  - json
+  - reference
+status: published
+owner: docs-team
+purpose: "Entity relationship diagram for the document metadata output schema."
+---
 
 > **Schema**: `document_metadata.schema.json`
 > **Purpose**: Project A output schema for Project B handoff - Preprocessing, IQA & Coarse Layout Gateway

@@ -1,13 +1,13 @@
 ---
-title: Layer 2 Schema Migration - Instructional Prompt for LLM
-purpose: Migrate existing Layer 2 metadata from flat field format to full nested object schema
-owner: data-team
-status: ready
-priority: P0-BLOCKING
-estimated_time: 4 hours
+schema_type: common
+title: "Layer 2 Schema Migration - Instructional Prompt for LLM"
+purpose: "Migrate existing Layer 2 metadata from flat field format to full nested object schema."
+owner: docs-team
+status: published
+tags:
+  - schema
+  - metadata
 ---
-
-# Task: Migrate Layer 2 Metadata from Flat to Nested Schema Format
 
 ## Context
 

@@ -1,12 +1,13 @@
 ---
 owner: docs-team
-purpose: Track dataset format conversion, label extraction, and processing status
+purpose: Track dataset format conversion, label extraction, and processing
+  status.
 schema_type: common
 status: active
 tags:
 - datasets
 - processing
-- status-tracking
+- status_tracking
 title: Dataset Processing Status
 ---
 

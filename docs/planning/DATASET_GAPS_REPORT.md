@@ -2,7 +2,8 @@
 title: Dataset Data Availability Gaps Report
 status: active
 created: 2025-01-31
-purpose: Track missing images, text, and COCO layout annotations across all datasets
+purpose: Track missing images, text, and COCO layout annotations across all
+  datasets.
 ---
 
 # Dataset Data Availability Gaps Report

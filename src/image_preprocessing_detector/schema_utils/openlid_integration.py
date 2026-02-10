@@ -670,7 +670,7 @@ class OpenLIDDetector:
         predictions = self._model.predict(clean_text, k=k)
         results = []
 
-        for label, conf in zip(predictions[0], predictions[1]):
+        for label, conf in zip(predictions[0], predictions[1], strict=False):
             results.append(self._parse_label(label, float(conf)))
 
         return results

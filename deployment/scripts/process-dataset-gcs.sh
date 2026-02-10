@@ -22,7 +22,7 @@ DOCLING_API="${DOCLING_API:-http://docling-serve:5001}"
 INPUT_DIR="/data/input"
 OUTPUT_DIR="/data/output"
 BATCH_SIZE="${2:-5000}"  # Default 5000 files per batch
-MAX_LOCAL_GB=30  # Maximum GB to download at once
+MAX_LOCAL_GB=30  # Maximum GB to download at once (enforced in download_batch)
 
 # Dataset mapping
 declare -A DATASET_PATHS=(
@@ -92,8 +92,8 @@ download_batch() {
     local batch_dir="${INPUT_DIR}/batch_${batch_num}"
     mkdir -p "$batch_dir"
 
-    # Download files in parallel
-    echo "$file_list" | gsutil -m cp -I "$batch_dir/" 2>/dev/null
+    # Download files in parallel (gsutil cp -I expects newline-delimited paths)
+    printf '%s\n' $file_list | gsutil -m cp -I "$batch_dir/" 2>/dev/null
 
     echo "$batch_dir"
 }
@@ -210,7 +210,10 @@ main() {
 
         ((batch_num++))
 
-    done < <(echo "$all_files" | xargs -n "$BATCH_SIZE" echo)
+    done < <(echo "$all_files" | awk -v bs="$BATCH_SIZE" '{
+        lines = lines ? lines "\n" $0 : $0; count++
+        if (count >= bs) { print lines; lines=""; count=0 }
+    } END { if (lines) print lines }')
 
     log_info "=== Dataset $DATASET processing complete ==="
     log_info "Results at: ${GCS_BUCKET}/extracted_text/${DATASET}/"

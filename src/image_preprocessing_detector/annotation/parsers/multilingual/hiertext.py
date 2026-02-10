@@ -358,16 +358,17 @@ class HiertextParser(BaseParser):
         # Populate text_content field for Layer 2 integration
         if text_instances:
             # Aggregate all word text with space separation
-            full_text = " ".join(inst.get("text", "") for inst in text_instances)
+            full_text = " ".join(str(inst.get("text", "")) for inst in text_instances)
 
-            # Set text_content in OriginalLabels
-            if not hasattr(labels, "text_content") or labels.text_content is None:
-                labels.text_content = {}
-
-            labels.text_content["full_text"] = full_text
-            labels.text_content["source_type"] = "ground_truth"
-            labels.text_content["source_file"] = str(image_path.name)
-            labels.text_content["extraction_method"] = "HiertextParser.parse"
+            # Set text_content in raw_labels
+            if labels.raw_labels is None:
+                labels.raw_labels = {}
+            labels.raw_labels["text_content"] = {
+                "full_text": full_text,
+                "source_type": "ground_truth",
+                "source_file": str(image_path.name),
+                "extraction_method": "HiertextParser.parse",
+            }
 
         # Compute graded assessment statistics
         labels.raw_labels["total_word_count"] = total_words

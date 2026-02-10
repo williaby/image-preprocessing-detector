@@ -1,13 +1,14 @@
 ---
-title: Dataset Source Label Review - Comprehensive Validation
-purpose: Review source labels, parsers, and Layer 2 schema mapping for all datasets
-owner: data-team
-status: ready
-priority: P0-CRITICAL
-total_datasets: 46
+schema_type: common
+title: "Dataset Source Label Review - Comprehensive Validation"
+purpose: "Review source labels, parsers, and Layer 2 schema mapping for all datasets."
+owner: docs-team
+status: published
+tags:
+  - datasets
+  - validation
+  - labeling
 ---
-
-# Task: Comprehensive Dataset Source Label Review
 
 ## Objective
 

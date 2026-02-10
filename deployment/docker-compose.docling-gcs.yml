@@ -53,6 +53,7 @@ services:
       - /data/docling/input:/data/input:ro
       - /data/docling/output:/data/output:rw
 
+    # Resource limits (enforced in Swarm mode; use runtime flags for standalone)
     deploy:
       resources:
         limits:

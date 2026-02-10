@@ -1,4 +1,14 @@
-# Reliability Bottleneck Report
+---
+schema_type: common
+title: "Reliability Bottleneck Report"
+tags:
+  - metrics
+  - quality
+  - datasets
+status: published
+owner: docs-team
+purpose: "Report on per-sample min_confidence reliability metrics across all datasets."
+---
 
 > Generated: 2026-02-09 18:28 | Datasets: 47 | Samples: 1,937,501
 >

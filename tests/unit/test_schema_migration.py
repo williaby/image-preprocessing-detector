@@ -6,13 +6,10 @@ Tests the migration from flat field format to full nested object schema.
 from __future__ import annotations
 
 import json
-import tempfile
-from pathlib import Path
-
-import pytest
 
 # Import migration functions
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 from migrate_layer2_schema_to_full import (
@@ -466,9 +463,7 @@ class TestIsAlreadyMigrated:
 
     def test_nested_format_is_migrated(self):
         """Test nested format is detected as already migrated."""
-        nested_data = {
-            "capture_method": {"method": "born_digital", "confidence": 0.95}
-        }
+        nested_data = {"capture_method": {"method": "born_digital", "confidence": 0.95}}
 
         assert is_already_migrated(nested_data) is True
 
@@ -706,9 +701,12 @@ class TestMigrateDataset:
         # Backup should contain original data
         with open(backup_file) as f:
             backup_data = json.load(f)
-        assert backup_data["samples"][0]["enrichments"]["versions"][0]["data"][
-            "capture_method"
-        ] == "scanner"
+        assert (
+            backup_data["samples"][0]["enrichments"]["versions"][0]["data"][
+                "capture_method"
+            ]
+            == "scanner"
+        )
 
     def test_missing_file(self, tmp_path: Path):
         """Test handling of missing metadata file."""

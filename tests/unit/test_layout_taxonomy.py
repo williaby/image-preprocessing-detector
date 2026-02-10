@@ -5,7 +5,7 @@ Tests for:
 - Round-trip conversions for all 11 DocLayNet classes
 - Lossy conversion flagging (child -> parent coarsening)
 - Ambiguous expansion flagging (parent -> child, confidence < 1.0)
-- All 6 schema class mappings
+- All 7 schema class mappings
 - Alias normalization
 - DocLayNet index maps
 - Mask index maps
@@ -46,15 +46,16 @@ class TestConfigLoading:
         assert "schemas=" in r
 
     def test_available_schemas(self, taxonomy: LayoutTaxonomy) -> None:
-        """All 6 schemas are registered."""
+        """All 7 schemas are registered."""
         schemas = taxonomy.get_available_schemas()
-        assert len(schemas) == 6
+        assert len(schemas) == 7
         for name in [
             "doclaynet",
             "docstructbench",
             "publaynet",
             "docling",
             "d4la",
+            "funsd",
             "docsynth300k",
         ]:
             assert name in schemas

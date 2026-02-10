@@ -147,7 +147,7 @@ class NistSd6Parser(BaseParser):
                             labels.raw_labels["sample_fields"] = field_values[:5]
 
                             # R1: Populate text_content field (following fintabnet/pubtabnet pattern)
-                            labels.text_content = {
+                            labels.raw_labels["text_content"] = {
                                 "full_text": " ".join(field_values),
                                 "source_type": "dataset_provided",
                                 "source_format": "fmt_field_values",
@@ -158,7 +158,7 @@ class NistSd6Parser(BaseParser):
                             }
 
                             # R2: Set content_flags (schema-compliant)
-                            labels.content_flags = {
+                            labels.raw_labels["content_flags"] = {
                                 "has_handwriting": True,
                                 "tier": "tier_0_exact",
                                 "source": "tier_0_exact_by_construction",
@@ -167,7 +167,7 @@ class NistSd6Parser(BaseParser):
                             labels.raw_labels["has_handwritten_content"] = False
 
                             # R2: Set content_flags even if no text
-                            labels.content_flags = {
+                            labels.raw_labels["content_flags"] = {
                                 "has_handwriting": False,
                                 "tier": "tier_0_exact",
                                 "source": "tier_0_exact_by_construction",
@@ -176,13 +176,15 @@ class NistSd6Parser(BaseParser):
                 logger.debug(f"Failed to parse NIST SD6 .fmt file: {e}")
 
         # R3: Set dataset-level metadata (following fintabnet/pubtabnet pattern)
-        labels.capture_method = {
+        if labels.raw_labels is None:
+            labels.raw_labels = {}
+        labels.raw_labels["capture_method"] = {
             "method": "scanner_flatbed",
             "confidence": 0.99,
             "detection_method": "dataset_config",
         }
 
-        labels.domain = {
+        labels.raw_labels["domain"] = {
             "level1": "GOV",  # Government (US Census forms)
             "confidence": 0.99,
         }

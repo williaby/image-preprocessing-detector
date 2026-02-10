@@ -63,13 +63,13 @@ repos:
           - types-pillow
           - types-python-dateutil
           - types-PyYAML
-        args: ['--ignore-missing-imports', '--python-version=3.10']
+        args: ['--ignore-missing-imports', '--python-version=3.12', '--no-warn-unused-ignores']
         # Exclude tests, validation, benchmarks, data, scripts, modal,
         # notebooks, and Phase 2+ files
         exclude: |
           (?x)^(
               tests/.*|validation/.*|fuzz/.*|benchmarks/.*|data/.*|scripts/.*|
-              modal/.*|notebooks/.*|
+              modal/.*|notebooks/.*|deployment/.*|
               src/image_preprocessing_detector/utils/gcs_uploader\.py|
               src/image_preprocessing_detector/utils/device_probe\.py|
               src/image_preprocessing_detector/utils/metadata_generator\.py|

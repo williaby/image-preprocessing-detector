@@ -143,7 +143,8 @@ class Midv500Parser(BaseParser):
             if template_path.exists():
                 try:
                     with open(template_path) as f:
-                        return json.load(f)
+                        result: dict[str, Any] = json.load(f)
+                        return result
                 except (OSError, json.JSONDecodeError) as e:
                     logger.warning(
                         "Failed to load template JSON from %s: %s",

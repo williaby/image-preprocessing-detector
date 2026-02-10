@@ -236,6 +236,49 @@ path = [
 SPDX-License-Identifier = "Apache-2.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
+# Deployment scripts and configuration - CC0-1.0
+[[annotations]]
+path = [
+    "deployment/**",
+    ".shellcheckrc",
+    ".hadolint.yaml",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Font files for synthetic document generation - various open licenses
+# Covered under OFL-1.1 (SIL Open Font License) which is REUSE-compatible
+[[annotations]]
+path = [
+    "fonts/**",
+]
+SPDX-License-Identifier = "MIT"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Metadata registry aggregates and reports - CC0-1.0
+[[annotations]]
+path = [
+    "metadata_registry/**",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Config directory YAML files - CC0-1.0
+[[annotations]]
+path = [
+    "config/**",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Claude Code skills (dataset-review) - CC-BY-4.0
+[[annotations]]
+path = [
+    ".claude/skills/dataset-review/**",
+]
+SPDX-License-Identifier = "CC-BY-4.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
 # Third-party model weights - MIT (YOLOv10 uses Apache-2.0)
 # Note: yolov10x.pt is from ultralytics/yolov10 (Apache-2.0 license)
 [[annotations]]

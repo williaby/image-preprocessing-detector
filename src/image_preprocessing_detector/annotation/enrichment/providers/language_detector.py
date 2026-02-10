@@ -20,7 +20,9 @@ Example:
     >>> from image_preprocessing_detector.annotation.enrichment.providers.language_detector import (
     ...     LanguageDetectionProvider,
     ... )
-    >>> from image_preprocessing_detector.annotation.schemas.immutable import OriginalLabels
+    >>> from image_preprocessing_detector.annotation.schemas.immutable import (
+    ...     OriginalLabels,
+    ... )
     >>>
     >>> provider = LanguageDetectionProvider()
     >>> labels = OriginalLabels(transcription="Hello, world!")
@@ -36,9 +38,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..errors import EnrichmentError
 from ...schemas.enrichment import EnrichmentData
 from ...schemas.immutable import OriginalLabels
+from ..errors import EnrichmentError
 
 logger = logging.getLogger(__name__)
 
@@ -165,10 +167,11 @@ def extract_text_from_labels(labels: OriginalLabels) -> ExtractedText:
 
     # Priority 2: text_instances (scene text)
     if labels.text_instances:
-        texts = []
-        for instance in labels.text_instances:
-            if isinstance(instance, dict) and instance.get("text"):
-                texts.append(str(instance["text"]))
+        texts = [
+            str(instance["text"])
+            for instance in labels.text_instances
+            if isinstance(instance, dict) and instance.get("text")
+        ]
         if texts:
             combined = " ".join(texts)
             return ExtractedText(
@@ -359,6 +362,7 @@ class LanguageDetectionProvider:
             Dictionary with language detection results
         """
         self._ensure_detector()
+        assert self._detector is not None
 
         if not text or len(text) < self.min_text_length:
             return {
@@ -434,16 +438,19 @@ class LanguageDetectionProvider:
         existing_confidence = existing.language_confidence or 0.0
 
         # Check if we should preserve existing data
-        if preserve_high_confidence and existing.iso639_language is not None:
-            if existing_confidence >= new_confidence:
-                logger.debug(
-                    f"Preserving existing language data (conf={existing_confidence:.2%}) "
-                    f"over new detection (conf={new_confidence:.2%})"
-                )
-                # Still update text scope info
-                existing.text_scope_estimated_chars = extracted.char_count
-                existing.text_scope_estimated_words = extracted.word_count
-                return existing
+        if (
+            preserve_high_confidence
+            and existing.iso639_language is not None
+            and existing_confidence >= new_confidence
+        ):
+            logger.debug(
+                f"Preserving existing language data (conf={existing_confidence:.2%}) "
+                f"over new detection (conf={new_confidence:.2%})"
+            )
+            # Still update text scope info
+            existing.text_scope_estimated_chars = extracted.char_count
+            existing.text_scope_estimated_words = extracted.word_count
+            return existing
 
         # Update enrichment data with new detection
         existing.iso639_language = detection.get("iso639_language")
@@ -508,16 +515,16 @@ class LanguageDetectionProvider:
             existing_list = [None] * len(labels_list)
 
         results = []
-        for labels, existing in zip(labels_list, existing_list):
+        for labels, existing in zip(labels_list, existing_list, strict=False):
             results.append(self.enrich_from_labels(labels, existing))
 
         return results
 
 
 __all__ = [
+    "SCRIPT_FAMILIES",
     "ExtractedText",
     "LanguageDetectionProvider",
-    "SCRIPT_FAMILIES",
     "extract_text_from_labels",
     "get_script_family",
 ]

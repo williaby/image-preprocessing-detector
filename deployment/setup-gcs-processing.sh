@@ -56,9 +56,11 @@ ssh "$DOCKER_HOST" "sudo mkdir -p /data/docling/{input,output,secrets,scripts} &
 log_info "Setting up GCS credentials..."
 if [[ -f ~/.config/gcloud/application_default_credentials.json ]]; then
     scp ~/.config/gcloud/application_default_credentials.json "$DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
+    ssh "$DOCKER_HOST" "chmod 600 /data/docling/secrets/gcs-credentials.json"
     log_info "Copied application default credentials"
 elif [[ -f ~/gcs-service-account.json ]]; then
     scp ~/gcs-service-account.json "$DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
+    ssh "$DOCKER_HOST" "chmod 600 /data/docling/secrets/gcs-credentials.json"
     log_info "Copied service account credentials"
 else
     log_warn "No GCS credentials found locally"

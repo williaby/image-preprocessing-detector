@@ -1,12 +1,12 @@
 ---
 owner: docs-team
-purpose: Level 3 data preparation module documentation index
+purpose: Level 3 data preparation module documentation index.
 schema_type: common
 status: active
 tags:
-  - architecture
-  - level-3
-  - data-preparation
+- architecture
+- level_3
+- data_preparation
 title: "Level 3: Data Preparation - Module Implementation"
 ---
 

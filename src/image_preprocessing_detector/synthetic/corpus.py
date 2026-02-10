@@ -110,8 +110,8 @@ SAMPLE_TEXTS: dict[str, tuple[str, str]] = {
         "ru",
     ),
     "Grek": (
-        "Γειά σου κόσμε. Αυτό είναι ένα δοκιμαστικό κείμενο στα ελληνικά. "
-        "Η ελληνική γλώσσα έχει μακρά ιστορία και πλούσια κουλτούρα.",
+        "Γειά σου κόσμε. Αυτό είναι ένα δοκιμαστικό κείμενο στα ελληνικά. "  # noqa: RUF001
+        "Η ελληνική γλώσσα έχει μακρά ιστορία και πλούσια κουλτούρα.",  # noqa: RUF001
         "el",
     ),
     "Thai": (
@@ -188,7 +188,7 @@ SAMPLE_TEXTS: dict[str, tuple[str, str]] = {
     ),
     # European scripts
     "Armn": (
-        "Բարեւ աշխարհ. Սա հայերեն փորձնական տեքստն է. Հայերենը հին լեզու է.",
+        "Բարեւ աշխարհ. Սա հայերեն փորձնական տեքստն է. Հայերենը հին լեզու է.",  # noqa: RUF001
         "hy",
     ),
     "Geor": (
@@ -277,16 +277,14 @@ class ScriptCorpus:
             Random TextSample or None if no samples available
         """
         # FIX BUG #5: Use provided RNG for reproducibility, fallback to global random
-        choice_fn = rng.choice if rng else random.choice
-
         if density and density in self.samples_by_density:
             samples = self.samples_by_density[density]
             if samples:
-                return choice_fn(samples)
+                return rng.choice(samples) if rng else random.choice(samples)
 
         # Fallback to any sample
         if self.samples:
-            return choice_fn(self.samples)
+            return rng.choice(self.samples) if rng else random.choice(self.samples)
 
         return None
 
@@ -504,8 +502,8 @@ class TextCorpusManager:
 
             try:
                 # Download using gsutil
-                result = subprocess.run(
-                    ["gsutil", "cp", gcs_file, str(cache_path)],
+                result = subprocess.run(  # noqa: S603
+                    ["gsutil", "cp", gcs_file, str(cache_path)],  # noqa: S607
                     capture_output=True,
                     text=True,
                     check=False,
@@ -544,7 +542,7 @@ class TextCorpusManager:
             Number of samples loaded
         """
         try:
-            from datasets import load_dataset
+            from datasets import load_dataset  # type: ignore[attr-defined]
         except ImportError:
             logger.error(
                 "datasets library not installed. Run: uv sync --extra synthetic"
@@ -589,15 +587,16 @@ class TextCorpusManager:
             items_processed = 0
             items_matched = 0
 
-            for item in dataset:  # type: ignore[union-attr]
+            for item in dataset:
                 items_processed += 1
 
                 # Log progress every 100K items
                 if items_processed % 100000 == 0:
                     langs_complete = sum(
                         1
-                        for l in lang_to_scripts
-                        if samples_per_lang.get(l, 0) >= self.max_samples_per_language
+                        for lang in lang_to_scripts
+                        if samples_per_lang.get(lang, 0)
+                        >= self.max_samples_per_language
                     )
                     logger.info(
                         "Progress: %d items processed, %d matched, %d/%d languages complete",
@@ -608,7 +607,7 @@ class TextCorpusManager:
                     )
 
                 # Item type varies by streaming mode, cast to dict for access
-                item_dict: dict[str, str] = dict(item)  # type: ignore[arg-type]
+                item_dict: dict[str, str] = dict(item)
                 lang = item_dict.get("language", item_dict.get("lang", ""))
                 text = item_dict.get("text", "")
 

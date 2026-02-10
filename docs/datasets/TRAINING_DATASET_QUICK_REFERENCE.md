@@ -1,12 +1,12 @@
 ---
 owner: docs-team
-purpose: Quick reference for training datasets - task-based lookup
+purpose: Quick reference for training datasets - task-based lookup.
 schema_type: common
 status: active
 tags:
 - datasets
 - training
-- quick-reference
+- quick_reference
 title: Training Dataset Quick Reference
 ---
 

@@ -1,12 +1,12 @@
 ---
 owner: docs-team
-purpose: Level 3 synthetic generation module documentation index
+purpose: Level 3 synthetic generation module documentation index.
 schema_type: common
 status: active
 tags:
-  - architecture
-  - level-3
-  - synthetic-generation
+- architecture
+- level_3
+- synthetic_generation
 title: "Level 3: Synthetic Generation - Module Implementation"
 ---
 

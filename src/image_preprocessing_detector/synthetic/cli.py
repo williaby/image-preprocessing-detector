@@ -280,8 +280,8 @@ def generate(
         click.echo("\n[DRY RUN] No files will be created.")
         click.echo("\nWould generate:")
         for script in script_list:
-            config = SCRIPT_CONFIGS[script]
-            click.echo(f"  {script} ({config.name}): {samples_per_script} samples")
+            script_cfg = SCRIPT_CONFIGS[script]
+            click.echo(f"  {script} ({script_cfg.name}): {samples_per_script} samples")
         return
 
     # Confirm before generating large datasets (skip if --yes flag)
@@ -304,7 +304,7 @@ def generate(
     degradation_profiles = profile_map.get(profile, [DegradationProfile.FAST])
 
     # Create config
-    config = GenerationConfig(
+    gen_config = GenerationConfig(
         scripts=script_list,
         samples_per_script=samples_per_script,
         output_dir=output_path,
@@ -322,7 +322,7 @@ def generate(
     )
 
     # Create generator
-    generator = MultiScriptDocumentGenerator(config)
+    generator = MultiScriptDocumentGenerator(gen_config)
 
     # Initialize
     click.echo("\nInitializing...")
@@ -349,7 +349,7 @@ def generate(
         if not script_list:
             click.echo("Error: No scripts available to generate", err=True)
             sys.exit(1)
-        config.scripts = script_list
+        gen_config.scripts = script_list
 
     # Generate
     click.echo(f"\nGenerating {len(script_list) * samples_per_script} samples...")

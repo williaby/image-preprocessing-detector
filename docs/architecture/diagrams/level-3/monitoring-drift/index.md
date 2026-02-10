@@ -1,12 +1,12 @@
 ---
 owner: docs-team
-purpose: Level 3 monitoring and drift detection module documentation index
+purpose: Level 3 monitoring and drift detection module documentation index.
 schema_type: common
 status: active
 tags:
-  - architecture
-  - level-3
-  - monitoring-drift
+- architecture
+- level_3
+- monitoring_drift
 title: "Level 3: Monitoring & Drift Detection - Module Implementation"
 ---
 

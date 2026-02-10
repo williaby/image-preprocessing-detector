@@ -373,7 +373,7 @@ class LanguageInfo(BaseModel):
             script_enum = ISO15924Script(iso_code)
         except ValueError:
             script_enum = ISO15924Script.ZZZZ
-        return cls(script=script_enum, confidence=confidence)
+        return cls(script=script_enum, confidence=confidence, language_code=None)
 
 
 # =============================================================================
@@ -467,6 +467,8 @@ class ScriptDetectionResult(BaseModel):
             script_probabilities={"Zzzz": 1.0},
             is_unknown=True,
             unknown_reason=reason,
+            bbox=None,
+            page_index=None,
         )
 
     @classmethod
@@ -495,6 +497,8 @@ class ScriptDetectionResult(BaseModel):
             script_probabilities={iso_code: confidence},
             is_unknown=(iso_code == "Zzzz"),
             unknown_reason="unmapped_source_label" if iso_code == "Zzzz" else None,
+            bbox=None,
+            page_index=None,
         )
 
 

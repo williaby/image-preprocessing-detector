@@ -32,7 +32,7 @@ import logging
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from datetime import UTC, datetime  # type: ignore[attr-defined]
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 

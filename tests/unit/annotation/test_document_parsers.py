@@ -155,10 +155,14 @@ class TestMidv500Parser:
         assert parser.dataset_names == ["midv500"]
 
     def test_parse_russian_id(self) -> None:
-        """Test parsing Russian ID document (Cyrillic script)."""
+        """Test parsing Russian ID document (Cyrillic script).
+
+        MIDV-500 path format: {number}_{country}_{doctype}/images/{filename}
+        Parser extracts country_code and document_type from doc_id.
+        """
         parser = Midv500Parser()
         dataset_path = Path("/data/midv500")
-        image_path = Path("/data/midv500/RU/id/card_001.tif")
+        image_path = Path("/data/midv500/01_ru_id/images/01_ru_id.tif")
 
         labels = parser.parse(dataset_path, image_path, {})
 
@@ -168,10 +172,13 @@ class TestMidv500Parser:
         assert labels.script_name == "Cyrillic"
 
     def test_parse_usa_passport(self) -> None:
-        """Test parsing USA passport (3-letter country code)."""
+        """Test parsing USA passport (3-letter country code).
+
+        MIDV-500 path format: {number}_{country}_{doctype}/images/{filename}
+        """
         parser = Midv500Parser()
         dataset_path = Path("/data/midv500")
-        image_path = Path("/data/midv500/USA/passport/pass_001.tif")
+        image_path = Path("/data/midv500/02_usa_passport/images/02_usa_passport.tif")
 
         labels = parser.parse(dataset_path, image_path, {})
 
@@ -181,26 +188,40 @@ class TestMidv500Parser:
         assert labels.script_name is None  # Not Cyrillic
 
     def test_parse_driver_license_variants(self) -> None:
-        """Test parsing various driver's license naming variants."""
+        """Test parsing various driver's license naming variants.
+
+        Parser normalizes drvlic, driverlicense, driving_licence, dl
+        to 'driver_license'.
+        """
         parser = Midv500Parser()
         dataset_path = Path("/data/midv500")
 
-        variants = ["driverlicense", "driving_licence", "dl"]
-        for variant in variants:
-            image_path = Path(f"/data/midv500/DEU/{variant}/license_001.tif")
+        variants = ["drvlic", "driverlicense", "dl"]
+        for i, variant in enumerate(variants):
+            image_path = Path(
+                f"/data/midv500/0{i}_deu_{variant}/images/0{i}_deu_{variant}.tif"
+            )
             labels = parser.parse(dataset_path, image_path, {})
 
             assert labels.raw_labels is not None
-            assert labels.raw_labels["document_type_normalized"] == "driver_license"
+            assert labels.raw_labels["document_type_normalized"] == "driver_license", (
+                f"Failed for variant {variant}"
+            )
 
     def test_parse_cyrillic_countries(self) -> None:
-        """Test all Cyrillic countries are detected."""
+        """Test all Cyrillic countries are detected.
+
+        MIDV-500 path format: {number}_{country}_{doctype}/images/{filename}
+        """
         parser = Midv500Parser()
         dataset_path = Path("/data/midv500")
 
         cyrillic_countries = ["RU", "UA", "BY", "BG", "RS", "KZ"]
-        for country in cyrillic_countries:
-            image_path = Path(f"/data/midv500/{country}/id/card_001.tif")
+        for i, country in enumerate(cyrillic_countries):
+            cc_lower = country.lower()
+            image_path = Path(
+                f"/data/midv500/0{i}_{cc_lower}_id/images/0{i}_{cc_lower}_id.tif"
+            )
             labels = parser.parse(dataset_path, image_path, {})
 
             assert labels.script_name == "Cyrillic", f"Failed for {country}"

@@ -753,14 +753,14 @@ class FontManager:
 
         # Load font
         try:
-            font = ImageFont.truetype(str(font_info.path), size)
-            self._font_objects[cache_key] = font
+            loaded_font = ImageFont.truetype(str(font_info.path), size)
+            self._font_objects[cache_key] = loaded_font
             logger.debug(
                 "Loaded mimicry font: %s (mimics %s)",
                 font_info.family,
                 target_script,
             )
-            return font, font_info.family
+            return loaded_font, font_info.family
         except OSError as e:
             logger.error("Failed to load mimicry font %s: %s", font_info.path, e)
             return None, ""
@@ -831,14 +831,14 @@ class FontManager:
 
         # Load font
         try:
-            font = ImageFont.truetype(str(font_info.path), size)
-            self._font_objects[cache_key] = font
+            loaded_font = ImageFont.truetype(str(font_info.path), size)
+            self._font_objects[cache_key] = loaded_font
             logger.debug(
                 "Loaded handwriting font: %s (script=%s)",
                 font_info.family,
                 script_code,
             )
-            return font
+            return loaded_font
         except OSError as e:
             logger.error("Failed to load handwriting font %s: %s", font_info.path, e)
             return self.get_random_font(script_code, size)

@@ -170,12 +170,12 @@ class ArabicDocsParser(BaseParser):
                         width = abs(x2 - x1)
                         height = abs(y2 - y1)
 
-                        bbox = BBox(
-                            bbox=[x_min, y_min, width, height],
-                            category=class_title,
-                            text=text,
-                        )
-                        bbox_list.append(bbox)
+                        bbox_dict = {
+                            "bbox": [x_min, y_min, width, height],
+                            "category": class_title,
+                            "text": text,
+                        }
+                        bbox_list.append(bbox_dict)
                         class_list.append(class_title)
 
                     # Store polygon points (for page boundaries)
@@ -187,11 +187,11 @@ class ArabicDocsParser(BaseParser):
 
                 # Store extracted data
                 if bbox_list:
-                    labels.bbox = bbox_list
+                    labels.raw_labels["bbox"] = bbox_list
 
                 if text_list:
                     # Concatenate all transcriptions with newlines
-                    labels.text_content = "\n".join(text_list)
+                    labels.raw_labels["text_content"] = "\n".join(text_list)
                     labels.raw_labels["text_source"] = "ground_truth"
                     labels.raw_labels["transcription_count"] = len(text_list)
 
@@ -202,10 +202,10 @@ class ArabicDocsParser(BaseParser):
                     labels.raw_labels["layout_classes"] = list(set(class_list))
                     labels.raw_labels["object_count"] = len(class_list)
 
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse JSON {json_path}: {e}")
-            except Exception as e:
-                logger.error(f"Error processing annotation {json_path}: {e}")
+            except json.JSONDecodeError:
+                logger.exception("Failed to parse JSON %s", json_path)
+            except Exception:
+                logger.exception("Error processing annotation %s", json_path)
 
         return labels
 

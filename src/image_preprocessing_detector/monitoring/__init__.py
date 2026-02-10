@@ -218,6 +218,7 @@ class MetricsCollector:
         return cls._instance
 
     def __init__(self) -> None:
+        """Initialize metrics collector singleton with configuration and Prometheus metrics."""
         if MetricsCollector._initialized:
             return
 

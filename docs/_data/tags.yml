@@ -274,3 +274,17 @@ allowed:
   - api
   - root_cause_analysis
   - redesign
+  - quick_reference
+  - synthetic_generation
+  - monitoring_drift
+  - enrichment
+  - domain_classification
+  - metadata_enrichment
+  - openrouter
+  - catalog
+  - naming
+  - tracking
+  - status
+  - processing
+  - status_tracking
+  - ensemble

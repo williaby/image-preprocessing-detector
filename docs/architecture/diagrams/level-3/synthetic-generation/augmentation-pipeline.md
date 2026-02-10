@@ -1,13 +1,13 @@
 ---
 owner: docs-team
-purpose: Augmentation pipeline module documentation for synthetic generation
+purpose: Augmentation pipeline module documentation for synthetic generation.
 schema_type: common
 status: active
 tags:
-  - architecture
-  - level-3
-  - synthetic-generation
-  - augmentation
+- architecture
+- level_3
+- synthetic_generation
+- augmentation
 title: "Augmentation Pipeline - Hybrid Architecture"
 ---
 

@@ -107,7 +107,7 @@ class CommonFM(BaseModel):
     title: str
     description: str | None = None
     tags: list[str] = Field(default_factory=list)
-    status: Literal["draft", "in-review", "published"]
+    status: Literal["draft", "in-review", "published", "active", "complete"]
     owner: str
     review_cycle_days: int | None = Field(default=None, ge=1, le=365)
     authors: list[Author] | None = None

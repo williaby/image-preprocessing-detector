@@ -44,7 +44,7 @@ Example:
     >>> print(labels.language_code)
     'ar'
     >>> print(labels.transcription)
-    'لبنان في ١٧/١٠/١٩٦٠'  # noqa: RUF002 # Intentional Arabic-Indic digits
+    'لبنان في 17/10/1960'  # Actual data uses Arabic-Indic digit forms
 """
 
 from __future__ import annotations
@@ -112,8 +112,8 @@ class MuharafParser(BaseParser):
         labels.raw_labels["reading_direction"] = "right-to-left"
 
         # Try to find and parse companion PAGE XML file
-        xml_path = image_path.with_suffix(".xml")
-        if not xml_path.exists():
+        xml_path: Path | None = image_path.with_suffix(".xml")
+        if not xml_path.exists():  # type: ignore[union-attr]  # with_suffix always returns Path
             # Try alternate locations (may be in same directory)
             xml_path = self._find_annotation_file(
                 dataset_path,
@@ -147,6 +147,9 @@ class MuharafParser(BaseParser):
         """
         tree = ET.parse(xml_path)  # noqa: S314 # Trusted dataset XML
         root = tree.getroot()
+
+        if labels.raw_labels is None:
+            labels.raw_labels = {}
 
         # Extract page metadata
         page_elem = root.find(".//page:Page", PAGE_NS)
@@ -257,7 +260,7 @@ class MuharafParser(BaseParser):
             labels.transcription = full_text
 
             # Populate Layer 2 text_content schema fields
-            labels.text_content = {
+            labels.raw_labels["text_content"] = {
                 "full_text": full_text,
                 "source_type": "dataset_provided",
                 "source_format": "page_xml_unicode",
@@ -359,14 +362,13 @@ class MuharafParser(BaseParser):
             caption = group.get("caption", "")
             index = int(group.get("index", 0))
 
-            region_refs = []
-            for ref in group.findall(".//page:RegionRefIndexed", PAGE_NS):
-                region_refs.append(
-                    {
-                        "region_ref": ref.get("regionRef", ""),
-                        "index": int(ref.get("index", 0)),
-                    }
-                )
+            region_refs = [
+                {
+                    "region_ref": ref.get("regionRef", ""),
+                    "index": int(ref.get("index", 0)),
+                }
+                for ref in group.findall(".//page:RegionRefIndexed", PAGE_NS)
+            ]
 
             groups.append(
                 {

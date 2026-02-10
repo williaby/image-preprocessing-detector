@@ -1,12 +1,12 @@
 ---
 owner: docs-team
-purpose: Quick reference for dataset selection and training planning
+purpose: Quick reference for dataset selection and training planning.
 schema_type: common
 status: active
 tags:
 - datasets
 - training
-- quick-reference
+- quick_reference
 title: Dataset Quick Reference
 ---
 

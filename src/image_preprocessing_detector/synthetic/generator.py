@@ -341,15 +341,15 @@ class MultiScriptDocumentGenerator:
 
     def _select_quality_tier(self) -> str:
         """Select a quality tier based on configured distribution."""
-        return self._select_weighted(QUALITY_TIER_WEIGHTS)
+        return str(self._select_weighted(QUALITY_TIER_WEIGHTS))
 
     def _select_resolution_tier(self) -> str:
         """Select a resolution tier based on configured distribution."""
-        return self._select_weighted(RESOLUTION_TIER_WEIGHTS)
+        return str(self._select_weighted(RESOLUTION_TIER_WEIGHTS))
 
     def _select_composition_type(self) -> str:
         """Select document composition type (single, two, three, four_plus, priority_pairs)."""
-        return self._select_weighted(DOCUMENT_COMPOSITION_WEIGHTS)
+        return str(self._select_weighted(DOCUMENT_COMPOSITION_WEIGHTS))
 
     def _select_two_script_pair(self, available_scripts: list[str]) -> tuple[str, str]:
         """Select a two-script combination based on configured weights.
@@ -369,7 +369,8 @@ class MultiScriptDocumentGenerator:
 
         if valid_pairs:
             # Weighted selection from valid pairs
-            return self._select_weighted(valid_pairs)
+            result: Any = self._select_weighted(valid_pairs)  # type: ignore[arg-type]
+            return result  # type: ignore[no-any-return]
 
         # Fallback: random pair from available scripts
         if len(available_scripts) >= 2:
@@ -390,22 +391,31 @@ class MultiScriptDocumentGenerator:
         """
         if num_scripts == 2:
             # Two scripts: HEADER_BODY, COLUMNS, or INTERLEAVED
-            layouts = [
+            layouts: list[LayoutType] = [
                 LayoutType.HEADER_BODY,
                 LayoutType.COLUMNS,
                 LayoutType.INTERLEAVED,
             ]
             weights = [0.4, 0.4, 0.2]  # Favor structured layouts
-            return self._rng.choices(layouts, weights=weights, k=1)[0]
+            selected: LayoutType = self._rng.choices(layouts, weights=weights, k=1)[0]
+            return selected
         if num_scripts == 3:
             # Three scripts: COLUMNS or INTERLEAVED
-            layouts = [LayoutType.COLUMNS, LayoutType.INTERLEAVED, LayoutType.STACKED]
-            weights = [0.4, 0.3, 0.3]
-            return self._rng.choices(layouts, weights=weights, k=1)[0]
+            layouts3: list[LayoutType] = [
+                LayoutType.COLUMNS,
+                LayoutType.INTERLEAVED,
+                LayoutType.STACKED,
+            ]
+            weights3 = [0.4, 0.3, 0.3]
+            selected3: LayoutType = self._rng.choices(layouts3, weights=weights3, k=1)[
+                0
+            ]
+            return selected3
         # Four+ scripts: INTERLEAVED or STACKED
-        layouts = [LayoutType.INTERLEAVED, LayoutType.STACKED]
-        weights = [0.6, 0.4]
-        return self._rng.choices(layouts, weights=weights, k=1)[0]
+        layouts4: list[LayoutType] = [LayoutType.INTERLEAVED, LayoutType.STACKED]
+        weights4 = [0.6, 0.4]
+        selected4: LayoutType = self._rng.choices(layouts4, weights=weights4, k=1)[0]
+        return selected4
 
     def _get_resolution_for_tier(self, tier: str) -> int:
         """Get target DPI for a resolution tier.
@@ -417,7 +427,8 @@ class MultiScriptDocumentGenerator:
             Target DPI value
         """
         tier_config = RESOLUTION_TIERS.get(tier, RESOLUTION_TIERS["STANDARD"])
-        return tier_config["target_dpi"]
+        dpi = tier_config["target_dpi"]
+        return dpi if isinstance(dpi, int) else dpi[0]
 
     def _get_renderer_for_tier(self, resolution_tier: str) -> DocumentRenderer:
         """Get or create a renderer for the specified resolution tier.
@@ -716,7 +727,7 @@ class MultiScriptDocumentGenerator:
             image, text_blocks = tier_renderer.render_document(
                 text=text,
                 script_code=script_code,
-                language_code=language_code,
+                language_code=language_code or "",
                 layout_type=layout_type,
                 text_density=text_density,
             )
@@ -814,7 +825,7 @@ class MultiScriptDocumentGenerator:
             image=degraded_image,
             sample_id=sample_id,
             scripts={script_code},
-            language_codes=[language_code],
+            language_codes=[language_code or ""],
             layout_type=layout_type,
             text_density=text_density,
             iqa_labels=iqa_labels,

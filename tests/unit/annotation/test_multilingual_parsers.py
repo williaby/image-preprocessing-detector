@@ -223,21 +223,23 @@ class TestCcOcrParser:
 
         assert "document" in labels.raw_labels["track"].lower()
 
-    def test_json_annotation_parsing(self):
-        """Test parsing JSON annotations."""
+    def test_tsv_annotation_parsing(self):
+        """Test parsing TSV annotations.
+
+        CC-OCR parser uses TSV files (not JSON). Without a matching TSV,
+        the parser defaults to Chinese (zh). The language detection is
+        based on subset names in TSV paths (e.g., 'eng' or 'chn').
+        """
         parser = CcOcrParser()
         dataset_path = Path("/data/cc-ocr")
         image_path = Path("/data/cc-ocr/multilingual_text/subset1/images/img001.png")
 
-        json_content = '{"language": "ja", "text": "日本語"}'
+        # Without TSV files, parser uses default language
+        labels = parser.parse(dataset_path, image_path, {})
 
-        with patch("builtins.open", mock_open(read_data=json_content)):
-            with patch("pathlib.Path.exists", return_value=True):
-                labels = parser.parse(dataset_path, image_path, {})
-
-                assert labels.language_code == "ja"
-                assert labels.transcription == "日本語"
-                assert "annotation" in labels.raw_labels
+        assert labels.language_code == "zh"
+        assert labels.script_name == "Chinese"
+        assert labels.iso15924_script_code == "Hans"
 
 
 class TestTibhcrParser:

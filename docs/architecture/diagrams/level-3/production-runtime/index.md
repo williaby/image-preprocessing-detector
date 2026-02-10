@@ -1,12 +1,12 @@
 ---
 owner: docs-team
-purpose: Level 3 production runtime module documentation index
+purpose: Level 3 production runtime module documentation index.
 schema_type: common
 status: active
 tags:
-  - architecture
-  - level-3
-  - production-runtime
+- architecture
+- level_3
+- production_runtime
 title: "Level 3: Production Runtime - Module Implementation"
 ---
 

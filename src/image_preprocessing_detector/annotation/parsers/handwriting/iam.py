@@ -231,20 +231,22 @@ class IAMParser(BaseParser):
 
             # Extract all lines
             for line_elem in handwritten_part.findall("line"):
-                line_data = {
+                words: list[dict[str, Any]] = []
+                line_data: dict[str, Any] = {
                     "line_id": line_elem.get("id", ""),
                     "text": line_elem.get("text", ""),
                     "segmentation": line_elem.get("segmentation", "unknown"),
-                    "words": [],
+                    "words": words,
                 }
 
                 # Extract all words
                 for word_elem in line_elem.findall("word"):
-                    word_data = {
+                    components: list[list[int]] = []
+                    word_data: dict[str, Any] = {
                         "word_id": word_elem.get("id", ""),
                         "text": word_elem.get("text", ""),
                         "tag": word_elem.get("tag", ""),
-                        "components": [],
+                        "components": components,
                     }
 
                     # Extract component bboxes
@@ -255,9 +257,9 @@ class IAMParser(BaseParser):
                             int(cmp_elem.get("width", "0")),
                             int(cmp_elem.get("height", "0")),
                         ]
-                        word_data["components"].append(bbox)
+                        components.append(bbox)
 
-                    line_data["words"].append(word_data)
+                    words.append(word_data)
 
                 result["lines"].append(line_data)
                 if line_data["text"]:

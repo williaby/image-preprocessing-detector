@@ -30,7 +30,7 @@ import logging
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from PIL import Image
@@ -495,7 +495,7 @@ class HybridAugmentationPipeline:
         transforms = []
 
         # Blur
-        blur_limit = params["blur_limit"]
+        blur_limit = cast(int, params["blur_limit"])
         if blur_limit > 0:
             blur_choice = self._np_rng.choice(["gaussian", "motion"])
             if blur_choice == "gaussian":
@@ -505,7 +505,7 @@ class HybridAugmentationPipeline:
             severities["blur"] = blur_limit / 7.0
 
         # Noise
-        noise_var = params["noise_var"]
+        noise_var = cast(tuple[int, int], params["noise_var"])
         if noise_var[1] > 0:
             transforms.append(
                 A.GaussNoise(
@@ -515,7 +515,7 @@ class HybridAugmentationPipeline:
             severities["noise"] = noise_var[1] / 50.0
 
         # Compression
-        jpeg_quality = params["jpeg_quality"]
+        jpeg_quality = cast(tuple[int, int], params["jpeg_quality"])
         if jpeg_quality[0] < 95:
             transforms.append(
                 A.ImageCompression(
@@ -527,8 +527,8 @@ class HybridAugmentationPipeline:
             severities["compression"] = (95 - jpeg_quality[0]) / 65.0
 
         # Geometric distortion
-        rotate = params["rotate"]
-        perspective = params["perspective"]
+        rotate = cast(int, params["rotate"])
+        perspective = cast(float, params["perspective"])
         if rotate > 0:
             transforms.append(A.Rotate(limit=rotate, border_mode=0, fill=255, p=0.4))
         if perspective > 0:

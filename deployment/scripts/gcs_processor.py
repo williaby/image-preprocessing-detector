@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-GCS Dataset Processor for Docling OCR
+"""GCS Dataset Processor for Docling OCR.
 
 Downloads datasets from GCS, processes through Docling, uploads extracted text.
 
@@ -10,8 +9,10 @@ Usage:
     python gcs_processor.py --list  # List available datasets
 
 Architecture:
-    GCS (images) → Local tmpfs/disk → Docling API → GCS (extracted text)
+    GCS (images) -> Local tmpfs/disk -> Docling API -> GCS (extracted text)
 """
+
+from __future__ import annotations
 
 import argparse
 import asyncio
@@ -65,7 +66,7 @@ class ProcessingConfig:
     docling_urls: list[str] = field(default_factory=lambda: ["http://localhost:5001"])
     batch_size: int = 5000
     workers: int = 8
-    local_dir: Path = Path("/tmp/docling_processing")
+    local_dir: Path = Path("/tmp/docling_processing")  # noqa: S108  # nosec B108
     use_tmpfs: bool = False  # Use /dev/shm for faster I/O
     dry_run: bool = False
 
@@ -96,13 +97,13 @@ class GCSDatasetProcessor:
 
         # Set up local directories
         if config.use_tmpfs:
-            self.input_dir = Path("/dev/shm/docling_input")
-            self.output_dir = Path("/dev/shm/docling_output")
+            self.input_dir = Path("/dev/shm/docling_input")  # noqa: S108  # nosec B108
+            self.output_dir = Path("/dev/shm/docling_output")  # noqa: S108  # nosec B108
         else:
             self.input_dir = config.local_dir / "input"
             self.output_dir = config.local_dir / "output"
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> GCSDatasetProcessor:
         # Create a client for each Docling endpoint
         for url in self.config.docling_urls:
             client = httpx.AsyncClient(
@@ -115,7 +116,7 @@ class GCSDatasetProcessor:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         return self
 
-    async def __aexit__(self, *args):
+    async def __aexit__(self, *args: object) -> None:
         for client in self.http_clients:
             await client.aclose()
 
@@ -162,10 +163,18 @@ class GCSDatasetProcessor:
         batch_dir = self.input_dir / f"batch_{batch_num}"
         batch_dir.mkdir(exist_ok=True)
 
+        dataset_prefix = f"{GCS_PREFIX}/{DATASETS[self.config.dataset]}"
+
         local_paths = []
         for gcs_path in gcs_paths:
             blob = self.bucket.blob(gcs_path)
-            local_path = batch_dir / Path(gcs_path).name
+            # Preserve relative path to avoid filename collisions
+            try:
+                relative = Path(gcs_path).relative_to(dataset_prefix)
+            except ValueError:
+                relative = Path(Path(gcs_path).name)
+            local_path = batch_dir / relative
+            local_path.parent.mkdir(parents=True, exist_ok=True)
             blob.download_to_filename(str(local_path))
             local_paths.append(local_path)
 
@@ -180,11 +189,11 @@ class GCSDatasetProcessor:
         client = self._get_next_client()
 
         try:
-            with open(file_path, "rb") as f:
+            with open(file_path, "rb") as f:  # noqa: ASYNC230
                 response = await client.post(
                     "/v1/convert/file",
-                    files={"files": (file_path.name, f)},
-                    data={"to_formats": "json"},
+                    files={"file": (file_path.name, f)},
+                    data={"output_format": "json"},
                 )
 
             if response.status_code != 200:
@@ -258,7 +267,7 @@ class GCSDatasetProcessor:
 
         return results
 
-    def upload_results(self, results: list[ExtractionResult], batch_num: int):
+    def upload_results(self, results: list[ExtractionResult], batch_num: int) -> None:
         """Save extraction results locally (upload via gsutil separately)."""
         local_output_dir = self.output_dir / self.config.dataset
         local_output_dir.mkdir(parents=True, exist_ok=True)
@@ -296,7 +305,7 @@ class GCSDatasetProcessor:
         except Exception as e:
             logger.warning(f"GCS upload failed (will use gsutil later): {e}")
 
-    def cleanup_batch(self, batch_num: int):
+    def cleanup_batch(self, batch_num: int) -> None:
         """Clean up local files for a batch."""
         import shutil
 
@@ -304,14 +313,14 @@ class GCSDatasetProcessor:
         if batch_dir.exists():
             shutil.rmtree(batch_dir)
 
-    async def process_dataset(self):
+    async def process_dataset(self) -> None:
         """Process entire dataset in batches."""
         logger.info(f"=== Processing dataset: {self.config.dataset} ===")
 
         # Health check
         if not await self.health_check():
             raise RuntimeError(
-                f"Docling API not available at {self.config.docling_url}"
+                f"Docling API not available at {', '.join(self.config.docling_urls)}"
             )
 
         # List files
@@ -371,7 +380,8 @@ class GCSDatasetProcessor:
         )
 
 
-async def main():
+async def main() -> None:
+    """Parse arguments and process the specified dataset."""
     parser = argparse.ArgumentParser(
         description="Process datasets from GCS through Docling"
     )
@@ -395,9 +405,9 @@ async def main():
     args = parser.parse_args()
 
     if args.list:
-        print("Available datasets:")
+        print("Available datasets:")  # noqa: T201
         for name, path in sorted(DATASETS.items()):
-            print(f"  {name:20} -> {path}")
+            print(f"  {name:20} -> {path}")  # noqa: T201
         return
 
     if not args.dataset:
@@ -405,8 +415,8 @@ async def main():
         return
 
     if args.dataset not in DATASETS:
-        print(f"Unknown dataset: {args.dataset}")
-        print(f"Available: {', '.join(sorted(DATASETS.keys()))}")
+        print(f"Unknown dataset: {args.dataset}")  # noqa: T201
+        print(f"Available: {', '.join(sorted(DATASETS.keys()))}")  # noqa: T201
         return
 
     config = ProcessingConfig(

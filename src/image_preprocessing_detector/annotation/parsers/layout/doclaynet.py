@@ -111,7 +111,12 @@ def _load_coco_annotations(coco_path: Path) -> dict[str, Any] | None:
             annotations = id_to_annotations.get(img_id, [])
             # Add category names to annotations
             for ann in annotations:
-                ann["category_name"] = categories.get(ann.get("category_id"), "unknown")
+                cat_id = ann.get("category_id")
+                ann["category_name"] = (
+                    categories.get(int(cat_id), "unknown")
+                    if cat_id is not None
+                    else "unknown"
+                )
             result["annotations"][filename] = annotations
 
         _COCO_CACHE[cache_key] = result

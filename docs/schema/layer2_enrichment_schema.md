@@ -1,4 +1,14 @@
-# Layer 2 Enrichment Schema Visualization
+---
+schema_type: common
+title: "Layer 2 Enrichment Schema Visualization"
+tags:
+  - schema
+  - json
+  - metadata
+status: published
+owner: docs-team
+purpose: "Entity relationship diagram for the Layer 2 enrichment metadata schema."
+---
 
 > **Schema**: `layer2_enrichment.schema.json`
 > **Purpose**: Project A Layer 2 Enrichment - Derived annotations with full provenance tracking

@@ -40,7 +40,16 @@ class TestDIQAParser:
 
     @pytest.fixture
     def dataset_path(self, tmp_path: Path) -> Path:
-        """Create mock DIQA-5000 dataset structure."""
+        """Create mock DIQA-5000 dataset structure.
+
+        CSV columns: res (restored filename), ori (original filename),
+        overall, sharpness, color_fidelity.
+
+        The parser matches by the column corresponding to the image's folder:
+        - Image in ori/ folder -> matches against 'ori' column
+        - Image in res/ folder -> matches against 'res' column
+        So ori column values must match the image filenames used in tests.
+        """
         dataset = tmp_path / "diqa-5000"
         dataset.mkdir()
 
@@ -55,8 +64,8 @@ class TestDIQAParser:
             writer.writeheader()
             writer.writerow(
                 {
-                    "res": "img001.jpg",
-                    "ori": "img001_orig.jpg",
+                    "res": "img001_res.jpg",
+                    "ori": "img001.jpg",
                     "overall": "4.2",
                     "sharpness": "4.5",
                     "color_fidelity": "3.8",
@@ -64,8 +73,8 @@ class TestDIQAParser:
             )
             writer.writerow(
                 {
-                    "res": "img002.jpg",
-                    "ori": "img002_orig.jpg",
+                    "res": "img002_res.jpg",
+                    "ori": "img002.jpg",
                     "overall": "3.1",
                     "sharpness": "3.0",
                     "color_fidelity": "3.2",
@@ -83,8 +92,8 @@ class TestDIQAParser:
             writer.writeheader()
             writer.writerow(
                 {
-                    "res": "val001.jpg",
-                    "ori": "val001_orig.jpg",
+                    "res": "val001_res.jpg",
+                    "ori": "val001.jpg",
                     "overall": "4.8",
                     "sharpness": "4.9",
                     "color_fidelity": "4.7",
@@ -106,7 +115,7 @@ class TestDIQAParser:
         assert labels.diqa_mos == 4.2  # Backward compatibility
         assert labels.diqa_sharpness == 4.5
         assert labels.diqa_color_fidelity == 3.8
-        assert labels.diqa_original_image == "img001_orig.jpg"
+        assert labels.diqa_original_image == "img001.jpg"
 
     def test_parse_val_split(self, parser: DIQAParser, dataset_path: Path) -> None:
         """Test parsing from val split CSV."""

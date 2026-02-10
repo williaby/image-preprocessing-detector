@@ -1,4 +1,13 @@
-# Stream 1 Schema Migration Guide
+---
+schema_type: common
+title: "Stream 1 Schema Migration Guide"
+tags:
+  - schema
+  - guide
+status: published
+owner: docs-team
+purpose: "Guide for migrating downstream consumers to Stream 1 schema extensions."
+---
 
 **Version**: 1.0.0
 **Date**: 2026-01-29

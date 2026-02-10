@@ -14,7 +14,7 @@ version: "1.0.0"
 description: "Unified layout label taxonomy with cross-schema conversion"
 
 # ─────────────────────────────────────────────────────────────────────
-# Canonical class hierarchy (~45 classes)
+# Canonical class hierarchy (~57 classes)
 # ─────────────────────────────────────────────────────────────────────
 # parent: null  -> DocLayNet top-level (coarsening target)
 # parent: X     -> X is the nearest DocLayNet ancestor

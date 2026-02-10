@@ -65,7 +65,7 @@ services:
       # Output directory
       - /mnt/unraid/appdata/docling/output:/data/output:rw
 
-    # Resource limits (VLM needs more RAM)
+    # Resource limits (VLM needs more RAM; enforced in Swarm mode)
     deploy:
       resources:
         limits:

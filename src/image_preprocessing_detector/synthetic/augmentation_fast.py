@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from PIL import Image
@@ -34,13 +34,12 @@ logger = logging.getLogger(__name__)
 
 # Check if albumentations is available
 try:
-    import albumentations as A
-    from albumentations.core.transforms_interface import ImageOnlyTransform
+    import albumentations as A  # noqa: N812
 
     ALBUMENTATIONS_AVAILABLE = True
 except ImportError:
     ALBUMENTATIONS_AVAILABLE = False
-    A = None  # type: ignore[assignment]
+    A = None
 
 
 class AugmentationProfile(str, Enum):
@@ -179,7 +178,7 @@ class FastAugmentationPipeline:
         transforms = []
 
         # Blur augmentations (randomly choose one type)
-        blur_limit = params["blur_limit"]
+        blur_limit = cast(int, params["blur_limit"])
         if blur_limit > 0:
             blur_choice = self._rng.choice(["gaussian", "motion", "median"])
             if blur_choice == "gaussian":
@@ -193,7 +192,7 @@ class FastAugmentationPipeline:
             severities["blur"] = blur_limit / 7.0  # Normalize to 0-1
 
         # Noise augmentations
-        noise_var = params["noise_var"]
+        noise_var = cast(tuple[int, int], params["noise_var"])
         if noise_var[1] > 0:
             transforms.append(
                 A.GaussNoise(
@@ -203,7 +202,7 @@ class FastAugmentationPipeline:
             severities["noise"] = noise_var[1] / 50.0
 
         # JPEG compression
-        jpeg_quality = params["jpeg_quality"]
+        jpeg_quality = cast(tuple[int, int], params["jpeg_quality"])
         if jpeg_quality[0] < 95:
             transforms.append(
                 A.ImageCompression(
@@ -214,8 +213,8 @@ class FastAugmentationPipeline:
             severities["compression"] = (95 - jpeg_quality[0]) / 65.0
 
         # Ink degradation (brightness/contrast variations simulating faded ink)
-        brightness = params["brightness"]
-        contrast = params["contrast"]
+        brightness = cast(float, params["brightness"])
+        contrast = cast(float, params["contrast"])
         if brightness > 0 or contrast > 0:
             transforms.append(
                 A.RandomBrightnessContrast(
@@ -247,8 +246,8 @@ class FastAugmentationPipeline:
         severities["paper_degradation"] = paper_severity.get(profile, 0.0)
 
         # Geometric distortions
-        rotate = params["rotate"]
-        perspective = params["perspective"]
+        rotate = cast(int, params["rotate"])
+        perspective = cast(float, params["perspective"])
         if rotate > 0 or perspective > 0:
             if rotate > 0:
                 transforms.append(

@@ -360,7 +360,7 @@ class DocumentRenderer:
 
             words = paragraph.split()
             current_line: list[str] = []
-            current_width = 0
+            current_width: float = 0
 
             for word in words:
                 word_bbox = font.getbbox(word + " ")
@@ -398,7 +398,7 @@ class DocumentRenderer:
         """
         lines: list[str] = []
         current_line = ""
-        current_width = 0
+        current_width: float = 0
 
         for char in text:
             if char == "\n":
@@ -459,7 +459,10 @@ class DocumentRenderer:
             return 0
 
         # Get font metrics
-        ascent, descent = font.getmetrics()
+        if hasattr(font, "getmetrics"):
+            ascent, descent = font.getmetrics()
+        else:
+            ascent, descent = 16, 4
         line_height = int((ascent + descent) * line_spacing)
 
         y_offset = state.current_y
@@ -488,7 +491,7 @@ class DocumentRenderer:
                 text=line,
                 script_code=script_code,
                 language_code=language_code,
-                bbox=(x, y_offset, line_width, line_height),
+                bbox=(int(x), y_offset, int(line_width), line_height),
                 font_size=getattr(font, "size", 16),
                 is_header=is_header,
                 is_caption=is_caption,

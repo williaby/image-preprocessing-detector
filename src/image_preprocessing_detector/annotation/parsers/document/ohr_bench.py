@@ -181,7 +181,7 @@ class OhrBenchParser(BaseParser):
         Returns:
             Loaded dataset or None if loading fails
         """
-        from datasets import load_dataset
+        from datasets import load_dataset  # type: ignore[attr-defined]
 
         logger.debug("Loading OHR-Bench from HuggingFace...")
         cache_dir = str(dataset_path) if dataset_path.exists() else None
@@ -210,7 +210,7 @@ class OhrBenchParser(BaseParser):
             return None
 
         try:
-            from datasets import Dataset
+            from datasets import Dataset  # type: ignore[attr-defined]
 
             ds = Dataset.from_file(str(arrow_files[0]))
             return {"train": ds}  # Wrap in dict for consistency
@@ -336,9 +336,7 @@ class OhrBenchParser(BaseParser):
 
         return labels
 
-    def _extract_category(
-        self, image_path: Path, labels: OriginalLabels
-    ) -> str | None:
+    def _extract_category(self, image_path: Path, labels: OriginalLabels) -> str | None:
         """Extract category from filename or parent directory.
 
         Args:
@@ -351,6 +349,8 @@ class OhrBenchParser(BaseParser):
         filename = image_path.stem.lower()
         parent = image_path.parent.name.lower()
 
+        if labels.raw_labels is None:
+            labels.raw_labels = {}
         for cat in self.OHR_CATEGORIES:
             if cat in filename or cat in parent:
                 labels.raw_labels["category"] = cat
@@ -374,6 +374,9 @@ class OhrBenchParser(BaseParser):
         Returns:
             Updated category string
         """
+        if labels.raw_labels is None:
+            labels.raw_labels = {}
+
         # Extract quality score (0-100 scale, higher=better)
         if "quality_score" in arrow_meta:
             quality_score = arrow_meta["quality_score"]
@@ -407,6 +410,8 @@ class OhrBenchParser(BaseParser):
         if "ocr_text" not in arrow_meta:
             return
 
+        if labels.raw_labels is None:
+            labels.raw_labels = {}
         ocr_text = arrow_meta["ocr_text"] or ""
         labels.raw_labels["ocr_text_sample"] = ocr_text[:500]
         labels.raw_labels["estimated_chars"] = len(ocr_text)

@@ -204,9 +204,9 @@ class RvlCdipParser(BaseParser):
         # Determine annotation directory path
         # Try multiple possible paths for flexibility
         possible_paths = [
-            Path("/mnt/e/image_detection/annotations/rvl-cdip/layout"),
             dataset_path / "annotations" / "rvl-cdip" / "layout",
             dataset_path.parent / "annotations" / "rvl-cdip" / "layout",
+            Path("/mnt/e/image_detection/annotations/rvl-cdip/layout"),
         ]
 
         layout_dir = None
@@ -284,9 +284,9 @@ class RvlCdipParser(BaseParser):
         """
         # Determine annotation directory path
         possible_paths = [
-            Path("/mnt/e/image_detection/annotations/rvl-cdip/ocr"),
             dataset_path / "annotations" / "rvl-cdip" / "ocr",
             dataset_path.parent / "annotations" / "rvl-cdip" / "ocr",
+            Path("/mnt/e/image_detection/annotations/rvl-cdip/ocr"),
         ]
 
         ocr_dir = None

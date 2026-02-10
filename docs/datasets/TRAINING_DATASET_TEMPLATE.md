@@ -1,6 +1,6 @@
 ---
 owner: docs-team
-purpose: Template for creating consistent training dataset documentation
+purpose: Template for creating consistent training dataset documentation.
 schema_type: common
 status: active
 tags:

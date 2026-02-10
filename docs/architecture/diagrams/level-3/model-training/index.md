@@ -1,12 +1,12 @@
 ---
 owner: docs-team
-purpose: Level 3 model training module documentation index
+purpose: Level 3 model training module documentation index.
 schema_type: common
 status: active
 tags:
-  - architecture
-  - level-3
-  - model-training
+- architecture
+- level_3
+- model_training
 title: "Level 3: Model Training - Module Implementation"
 ---
 
