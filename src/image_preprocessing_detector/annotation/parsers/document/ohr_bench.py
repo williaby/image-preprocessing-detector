@@ -181,7 +181,7 @@ class OhrBenchParser(BaseParser):
         Returns:
             Loaded dataset or None if loading fails
         """
-        from datasets import load_dataset  # type: ignore[attr-defined]
+        from datasets import load_dataset
 
         logger.debug("Loading OHR-Bench from HuggingFace...")
         cache_dir = str(dataset_path) if dataset_path.exists() else None
@@ -210,7 +210,7 @@ class OhrBenchParser(BaseParser):
             return None
 
         try:
-            from datasets import Dataset  # type: ignore[attr-defined]
+            from datasets import Dataset
 
             ds = Dataset.from_file(str(arrow_files[0]))
             return {"train": ds}  # Wrap in dict for consistency

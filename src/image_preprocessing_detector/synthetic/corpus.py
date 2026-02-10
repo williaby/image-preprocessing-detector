@@ -542,7 +542,7 @@ class TextCorpusManager:
             Number of samples loaded
         """
         try:
-            from datasets import load_dataset  # type: ignore[attr-defined]
+            from datasets import load_dataset
         except ImportError:
             logger.error(
                 "datasets library not installed. Run: uv sync --extra synthetic"

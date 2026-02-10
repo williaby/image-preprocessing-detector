@@ -513,6 +513,17 @@ ignore_errors = true
 module = "image_preprocessing_detector.labeling.quantization.pipeline"
 ignore_errors = true
 
+# HuggingFace datasets has inconsistent type stubs across environments
+# When installed locally, mypy detects attr-defined errors; when absent in CI,
+# ignore_missing_imports silences everything, making type: ignore comments "unused"
+[[tool.mypy.overrides]]
+module = "datasets"
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = "datasets.*"
+follow_imports = "skip"
+
 # Annotation module uses datetime.UTC (Python 3.11+) which mypy stubs may not recognize
 [[tool.mypy.overrides]]
 module = "image_preprocessing_detector.annotation.integrity.checkpointing"
