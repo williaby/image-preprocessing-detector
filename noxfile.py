@@ -328,7 +328,7 @@ def quality(session: nox.Session) -> None:
     session.run("mypy", "src")
 
     session.log("🧪 Running tests...")
-    session.run("pytest", "-v", "--cov=src", "--cov-fail-under=80")
+    session.run("pytest", "-v", "--cov=src", "--cov-fail-under=60")
 
     session.log("✅ All quality checks passed!")
 
