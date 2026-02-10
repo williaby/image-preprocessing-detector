@@ -1,3 +1,6 @@
+' LEGACY: ResNet-50/ResNet-18 architecture (Phase 3).
+' Superseded by project-a-training-workflow-high-level.puml
+' and project-a-distillation.puml (SigLIP 2 + MobileNetV4).
 @startuml project-a-training-workflow-v2
 !theme plain
 skinparam backgroundColor #FFFFFF

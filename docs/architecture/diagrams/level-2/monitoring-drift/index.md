@@ -249,7 +249,7 @@ evaluator = PerformanceEvaluator(store, baseline_window_days=7)
 
 # Run evaluation
 result = evaluator.evaluate(
-    model_version="resnet18-v1.2",
+    model_version="siglip2_naflex-v1.0",
     predictions=predictions,
     ground_truth=labels
 )
@@ -366,13 +366,14 @@ if manager.should_dispatch(alert):
 - Integrate with privacy checker for automated PII filtering
 - Generate training manifests for retraining pipeline
 
-**Harvest Reasons** (6 categories):
+**Harvest Reasons** (7 categories):
 
 | Reason | Trigger | Priority |
 |--------|---------|----------|
-| `HIGH_ENTROPY` | Student model entropy > 0.7 | High |
-| `LOW_AGREEMENT` | Teacher-student gap > 0.15 | High |
-| `TEACHER_ESCALATION` | Required teacher inference | Medium |
+| `PER_HEAD_CONFIDENCE_DROP` | Any SigLIP 2 head confidence below per-head threshold | High |
+| `CROSS_HEAD_DISAGREEMENT` | Disagreement between related heads (e.g., IQA vs orientation) | High |
+| `CLASSICAL_ML_DISAGREEMENT` | Classical CV detector disagrees with ML head prediction | High |
+| `HIGH_ENTROPY` | Per-head prediction entropy above head-specific threshold | High |
 | `QUALITY_OUTLIER` | Quality score in extremes (< 0.2 or > 0.95) | Medium |
 | `DRIFT_DETECTED` | Sample during drift period | High |
 | `MANUAL_SELECTION` | Human-flagged sample | Variable |
@@ -408,26 +409,28 @@ from image_preprocessing_detector.drift.active_learning import (
     SampleHarvester, HarvestReason, ManifestGenerator
 )
 
-# Initialize harvester
+# Initialize harvester (per-head confidence monitoring)
 harvester = SampleHarvester(
     output_dir="active_learning_samples/",
     max_batch_size=100,
-    entropy_threshold=0.7,
-    agreement_threshold=0.5
+    per_head_entropy_thresholds={
+        "iqa": 0.7, "orientation": 0.3, "skew": 0.5,
+        "script": 0.5, "handwriting": 0.4,
+    },
+    classical_disagreement_threshold=0.2
 )
 
-# Evaluate sample for harvesting
+# Evaluate sample for harvesting (per-head confidence)
 should_harvest, reason = harvester.should_harvest(
-    prediction=0.65,
-    ground_truth=None,  # Unknown at inference time
-    student_entropy=0.82,
-    teacher_student_gap=0.18
+    per_head_predictions={"iqa": 0.65, "orientation": 0.97, "script": 0.45},
+    per_head_confidences={"iqa": 0.72, "orientation": 0.98, "script": 0.38},
+    classical_predictions={"skew_angle": 2.1, "blur_score": 0.3},
 )
 
 if should_harvest:
     sample = harvester.harvest(
         image_path="images/doc_456_page_12.png",
-        prediction=0.65,
+        per_head_predictions={"iqa": 0.65, "orientation": 0.97, "script": 0.45},
         reason=reason,
         metadata={"doc_id": "456", "page": 12}
     )
@@ -540,7 +543,9 @@ audit = manager.end_session(session)
 - Orchestrate training pipeline execution
 - Validate retrained models before deployment
 
-**Retraining Triggers** (5 types):
+**Retraining Triggers** (6 types):
+
+Retraining is triggered when ANY head drops below its graduation threshold. Head-specific retraining is supported (freeze other heads, fine-tune affected head only).
 
 | Trigger | Source | Auto-Enabled |
 |---------|--------|--------------|
@@ -548,7 +553,8 @@ audit = manager.end_session(session)
 | `SCHEDULED` | Periodic (weekly/monthly) | Configurable |
 | `DRIFT_DETECTED` | Drift detector CRITICAL alert | Yes |
 | `SAMPLE_THRESHOLD` | Harvested samples > 500 | Yes |
-| `PERFORMANCE_DROP` | mAP/F1 drop > 10% | Yes |
+| `PERFORMANCE_DROP` | Any per-head metric drops below threshold (IQA PLCC < 0.65, Orientation Acc < 95%, Skew MAE > 0.5, Script Acc < 90%, Handwriting F1 < 0.85) | Yes |
+| `CROSS_HEAD_REGRESSION` | Head-specific retraining causes regression in other heads | Yes |
 
 **Job Status Flow**:
 
@@ -627,7 +633,7 @@ if orchestrator.should_retrain(drift_result):
 | `iqa_drift_kl_divergence` | Gauge | feature | KL divergence per feature |
 | `iqa_drift_psi` | Gauge | feature | PSI per feature |
 | `iqa_drift_severity` | Gauge | feature | 0=none, 1=warning, 2=critical |
-| `iqa_escalation_rate` | Gauge | - | Teacher escalation percentage |
+| `iqa_escalation_rate` | Gauge | - | Classical fallback percentage (triggered by per-head low confidence) |
 
 **Latency Metrics**:
 
@@ -645,7 +651,7 @@ if orchestrator.should_retrain(drift_result):
 | `iqa_pages_processed_total` | status, gate_result | Total pages processed |
 | `iqa_documents_processed_total` | status, pdf_type | Total documents processed |
 | `iqa_errors_total` | error_code, category | Total errors by type |
-| `iqa_teacher_invocations_total` | reason, device | Teacher model usage |
+| `iqa_classical_fallback_total` | reason, head, device | Classical fallback invocations per head |
 
 **Cost Metrics**:
 
@@ -669,7 +675,7 @@ if orchestrator.should_retrain(drift_result):
 | **Latency** | 4 | P50/P95/P99 thresholds, student model timing |
 | **Errors** | 4 | Error rate 5%/20%, error spikes |
 | **Infrastructure** | 6 | GPU memory 90%, worker degradation, queue backlog |
-| **Model** | 3 | Teacher escalation 25%, teacher blocking, quality drift |
+| **Model** | 3 | Classical fallback rate 25%, per-head confidence drop, quality drift |
 | **Cost** | 6 | Daily budget $5, cost spikes, monthly budget $30 |
 | **Availability** | 3 | Low throughput, processing stalled, service down |
 
@@ -728,9 +734,9 @@ metrics.record_quality_score(0.72, dimension="overall")
 ### Workstream 2: Production Model Training
 
 **Input**: Augmented dataset (original + harvested samples)
-**Output**: Retrained teacher/student models
+**Output**: Retrained SigLIP 2 multi-task + MobileNetV4 models (head-specific or full retraining)
 
-**Integration**: Retraining orchestrator calls training scripts via subprocess or Modal
+**Integration**: Retraining orchestrator calls training scripts via subprocess or Modal. Supports head-specific fine-tuning (freeze unaffected heads, retrain only the degraded head).
 
 ### Workstream 6: Model Arena Benchmark
 
@@ -801,8 +807,9 @@ metrics.record_quality_score(0.72, dimension="overall")
 
 ### Future Enhancements
 
-- **Multi-Model Monitoring**: Track ensemble predictions
-- **Explainability**: SHAP/LIME for drift analysis
+- **Per-Head Drift Dashboards**: Independent drift tracking for all 16 SigLIP 2 heads
+- **Head-Specific Retraining**: Freeze unaffected heads, fine-tune only degraded heads
+- **Explainability**: SHAP/LIME for per-head drift analysis
 - **A/B Testing**: Canary deployments with traffic splitting
 - **Cost Tracking**: Compute costs per retraining cycle
 

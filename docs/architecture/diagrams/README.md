@@ -2,7 +2,7 @@
 owner: docs-team
 purpose: Overview and documentation for PlantUML Architecture Diagrams.
 schema_type: common
-status: draft
+status: active
 tags:
 - architecture
 - documentation
@@ -38,56 +38,52 @@ All diagrams are organized by level in the diagram hierarchy:
 
 ```text
 docs/architecture/diagrams/
-├── README.md                    # This guide
-├── INDEX.md                     # Complete diagram-to-source traceability
-├── STYLE_GUIDE.md               # Styling and notation standards
+├── README.md                              # This guide
+├── INDEX.md                               # Traceability matrix
+├── STYLE_GUIDE.md                         # Styling standards
 │
-├── level-0/                     # Pipeline Context
+├── level-0/                               # Pipeline Context
 │   └── rag-pipeline-overview.puml
 │
-├── level-1/                     # Project A Architecture
+├── level-1/                               # Project A Architecture
 │   ├── PROJECT_A_ARCHITECTURE_OVERVIEW.puml
 │   └── PROJECT_A_WORKFLOW_HIERARCHY.puml
 │
-└── level-2/                     # Workstream Details
-    ├── production-runtime/
-    │   ├── project-a-primary-workflow-high-level.puml
-    │   ├── project-a-primary-workflow-detailed.puml
-    │   └── project-a-device-selection-flow.puml
-    │
-    ├── model-training/
-    │   ├── project-a-distillation.puml
-    │   └── project-a-training-workflow-high-level.puml
-    │
-    ├── data-preparation/
-    │   ├── project-a-training-data-ingestion.puml
-    │   ├── automated-data-labeling-pipeline.puml
-    │   └── metadata-schema-architecture.puml
-    │
-    ├── pseudo-labeling/
-    │   ├── diqa-pseudo-labeling-workflow.puml
-    │   ├── diqa-training-phases.puml
-    │   ├── diqa-checkpoint-selection.puml
-    │   └── diqa-inference-pipeline.puml
-    │
-    ├── benchmarking/
-    │   └── project-a-benchmark-workflow.puml
-    │
-    └── downstream-context/
-        ├── project-b-ocr-layout-workflow.puml
-        ├── project-c-fusion-chunking-workflow.puml
-        └── project-d-vectorstore-workflow.puml
+├── level-2/                               # Workstream Details
+│   ├── production-runtime/          (WS1) # 6 diagrams
+│   ├── model-training/              (WS2) # 5 diagrams
+│   ├── data-preparation/            (WS3) # 3 diagrams
+│   ├── pseudo-labeling/             (WS4) # 5 diagrams
+│   ├── labeling-benchmarking/       (WS5) # 1 diagram
+│   ├── model-arena/                 (WS6) # 1 diagram
+│   ├── monitoring-drift/            (WS7) # 1 diagram
+│   ├── synthetic-generation/        (WS8) # 1 diagram
+│   ├── schema-field-population/           # 2 diagrams (summary + full reference)
+│   └── downstream-context/                # 3 diagrams
+│
+├── level-3/                               # Module Implementation
+│   ├── production-runtime/          (WS1) # Swimlane + 2 module docs
+│   ├── model-training/              (WS2) # Swimlane + 1 module doc
+│   ├── data-preparation/            (WS3) # Swimlane + 2 module docs
+│   ├── pseudo-labeling/             (WS4) # Swimlane + 1 module doc
+│   ├── monitoring-drift/            (WS7) # Swimlane + 1 module doc
+│   └── synthetic-generation/        (WS8) # Swimlane + 1 module doc
+│
+└── deprecated/                            # Superseded diagrams
+    └── benchmarking/                      # Legacy benchmark workflow
 ```
 
 ---
 
 ## Diagram Hierarchy
 
-| Level | Scope | Location |
-|-------|-------|----------|
-| **Level 0** | Multi-project pipeline context | `level-0/` |
-| **Level 1** | Project A system architecture | `level-1/` |
-| **Level 2** | Workstream implementation details | `level-2/{workstream}/` |
+| Level | Scope | Location | Diagrams |
+|-------|-------|----------|----------|
+| **Level 0** | Multi-project pipeline context | `level-0/` | 1 |
+| **Level 1** | Project A system architecture | `level-1/` | 2 |
+| **Level 2** | Workstream implementation details | `level-2/{workstream}/` | 28 |
+| **Level 3** | Module implementation with LOC | `level-3/{workstream}/` | 6 |
+| **Deprecated** | Superseded diagrams | `deprecated/{workstream}/` | 1 |
 
 ### Level 0: Pipeline Context
 
@@ -110,14 +106,18 @@ High-level views of this repository's architecture:
 
 Detailed implementation diagrams organized by workstream:
 
-| Workstream | Diagrams |
-|------------|----------|
-| **Production Runtime** | Primary workflow, device selection, runtime decisions |
-| **Model Training** | Knowledge distillation, training lifecycle |
-| **Data Preparation** | Dataset ingestion, labeling pipeline |
-| **Pseudo-Labeling** | DIQA ensemble, training phases, checkpoint selection |
-| **Benchmarking** | IQA model evaluation workflow |
-| **Downstream Context** | Projects B, C, D context diagrams |
+| Workstream | Diagrams | Level 3? |
+|------------|----------|----------|
+| **WS1: Production Runtime** | Primary workflow (high-level + detailed), device selection, worker architecture, 2 test coverage | Yes |
+| **WS2: Model Training** | Training lifecycle, training infrastructure, distillation (legacy), v2 workflow (legacy), test coverage | Yes |
+| **WS3: Data Preparation** | Dataset ingestion, labeling pipeline, metadata schema | Yes |
+| **WS4: Pseudo-Labeling** | DIQA ensemble, training phases, checkpoint selection, inference, soft labels | Yes |
+| **WS5: Labeling & Benchmarking** | Domain classification pipeline | Deferred (0 LOC) |
+| **WS6: Model Arena** | Arena architecture (supersedes legacy benchmarking) | Deferred (simple flow) |
+| **WS7: Monitoring & Drift** | Monitoring architecture | Yes |
+| **WS8: Synthetic Generation** | Synthetic generation architecture | Yes |
+| **Schema Field Population** | Schema field population (summary + full reference) | - |
+| **Downstream Context** | Projects B, C, D context diagrams | - |
 
 ---
 
@@ -125,12 +125,16 @@ Detailed implementation diagrams organized by workstream:
 
 ### Color Conventions
 
-| Color | Meaning | Use For |
-|-------|---------|---------|
-| `#E8F5E9` | Production Runtime | Live system components |
-| `#E3F2FD` | Model Training | Training workstream |
-| `#FFF3E0` | Data Preparation | Dataset processing |
-| `#F3E5F5` | Pseudo-Labeling | Label generation |
+| Color | Workstream | Use For |
+|-------|------------|---------|
+| `#E8F5E9` | WS1: Production Runtime | Live system components |
+| `#E3F2FD` | WS2: Model Training | Training workstream |
+| `#FFF3E0` | WS3: Data Preparation | Dataset processing |
+| `#F3E5F5` | WS4: Pseudo-Labeling | Label generation |
+| `#E0F7FA` | WS5: Labeling & Benchmarking | Domain classification |
+| `#FFF8E1` | WS6: Model Arena | Arena evaluation |
+| `#FFEBEE` | WS7: Monitoring & Drift | Drift detection, alerting |
+| `#FCE4EC` | WS8: Synthetic Generation | Synthetic data pipeline |
 | `#FFEBEE` | External Systems | External repos/services |
 | `#E0E0E0` | Not Yet Started | Planned components |
 
@@ -257,10 +261,12 @@ Current identified gaps (from audit):
 
 | Gap | Priority | Status |
 |-----|----------|--------|
-| Layout Model Training workflow | Critical | Not started |
-| Celery Worker architecture | High | Not started |
-| Monitoring & Drift Detection | Medium | Not started |
-| Budget Enforcement details | Low | Partial |
+| ~~Layout Model Training workflow~~ | ~~Critical~~ | **FILLED** (project-a-training-infrastructure.puml) |
+| ~~Celery Worker architecture~~ | ~~High~~ | **FILLED** (project-a-worker-architecture.puml) |
+| ~~Monitoring & Drift Detection~~ | ~~Medium~~ | **FILLED** (level-2 + level-3) |
+| Budget Enforcement details | Low | Partial (covered in worker-architecture + device-orchestrator.md) |
+| ~~Level 3 for WS4, WS8~~ | ~~Low~~ | **FILLED** (swimlane + module docs) |
+| Level 3 for WS5, WS6 | Low | **DEFERRED** (WS5: 0 LOC; WS6: simple linear flow) |
 
 See [AUDIT.md](../AUDIT.md) for full gap analysis and recommendations.
 

@@ -123,30 +123,43 @@ note right: src/detection/iqa_classical.py
 
 fork again
 
-partition "ML IQA (Student Model)" {
-  :Load ResNet-18 model;
+partition "MobileNetV4-Conv-S (Pre-Correction)" {
+  :Load MobileNetV4-Conv-S model;
   :Preprocess image\n(resize, normalize);
-  :Forward pass;
-  :Extract multi-head predictions\n(blur, noise, contrast, skew, compression);
-  :Calculate confidence scores;
-
-  if (uncertainty > threshold\nOR discrepancy with classical?) then (yes)
-    :Flag for Teacher inference;
-  endif
+  :Forward pass (~3ms GPU);
+  :Extract 3-head predictions\n(orientation, skew, resolution quality);
+  :Calculate per-head confidence scores;
 }
 note right: src/detection/iqa_ml.py
 
 end fork
 
-partition "Teacher Inference (Selective)" {
-  if (flagged_for_teacher?) then (yes)
-    :Load ResNet-50 Teacher;
-    :Forward pass on flagged pages;
-    :Override/supplement Student predictions;
-    :Log teacher usage metrics;
+partition "Pre-Correction" {
+  :Apply orientation correction\n(from MobileNetV4 prediction);
+  :Apply deskew correction\n(from MobileNetV4 skew head);
+  :Apply resolution fix\n(if resolution quality low);
+}
+
+partition "SigLIP 2 NAFlex (Multi-Task Analysis)" {
+  :Load SigLIP 2 NAFlex model\n(88M params, 16 heads);
+  :Forward pass (~50ms GPU);
+  :Extract predictions across 5 groups:\n- Group 1: IQA (blur, noise, contrast, etc.)\n- Group 2: Script detection\n- Group 3: Orientation + Skew refinement\n- Group 4: Handwriting detection\n- Group 5: Page attributes;
+  :Evaluate per-head confidence;
+
+  if (any head confidence\nbelow threshold?) then (yes)
+    :Classical fallback for low-confidence heads;
+    note right
+      6 fallback rules:
+      - Orientation < 0.7 -> Hough lines
+      - Skew < 0.6 -> Hough skew
+      - Resolution < 0.5 -> DPI + char height
+      - IQA < 0.5 -> Classical detectors
+      - Script < 0.6 -> OpenLID mapping
+      - Handwriting < 0.5 -> Stroke analysis
+    end note
   endif
 }
-note right: Phase 2 - Selective inference
+note right: src/detection/iqa_ml.py
 
 
 ' ====== LAYOUT-LITE DETECTION ======

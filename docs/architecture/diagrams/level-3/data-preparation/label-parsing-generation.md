@@ -546,6 +546,52 @@ DEGRADATION_INDEX = {
 
 **Total Dimensions**: 45 (8 groups covering all common document degradations)
 
+> **SigLIP 2 Integration**: This 45-dimensional vector feeds the **IQA heads (Group 1)** of the SigLIP 2 NAFlex multi-task model. The 5 IQA heads (blur, noise, contrast, illumination, overall_quality) aggregate from these 45 fine-grained degradation dimensions into coarser quality signals. Additional multi-task label dimensions for the remaining 11 SigLIP 2 heads and 3 MobileNetV4-Conv-S heads are documented in the [Multi-Task Label Dimensions](#multi-task-label-dimensions) section below.
+
+---
+
+### Multi-Task Label Dimensions
+
+Beyond the 45-dimensional IQA degradation vector, the training label system produces labels for all heads of the two-model inference pipeline.
+
+#### SigLIP 2 NAFlex Heads (16 heads, 5 groups)
+
+| Group | Head | Type | Dataset Sources | Provenance Tier |
+|-------|------|------|-----------------|-----------------|
+| **Group 1: IQA** | blur | regression [0,1] | DIQA-5000, OHR-Bench, synthetic IQA (100K) | tier_1 (human MOS) / tier_0 (synthetic GT) |
+| | noise | regression [0,1] | DIQA-5000, synthetic IQA (100K) | tier_1 / tier_0 |
+| | contrast | regression [0,1] | DIQA-5000, synthetic IQA (100K) | tier_1 / tier_0 |
+| | illumination | regression [0,1] | Shadow/Lighting (15K), synthetic IQA | tier_0 / tier_2 |
+| | overall_quality | regression [0,1] | DIQA-5000, OHR-Bench, SmartDoc-QA | tier_1 (human MOS) |
+| **Group 2: Script** | script_family | classification (19 classes) | synth-multiscript (108K), MDIW13, MLT19 | tier_0 / tier_1 |
+| | script_confidence | regression [0,1] | synth-multiscript, model-derived | tier_0 / tier_2 |
+| | multi_script_flag | binary | synth-multiscript, CC-OCR | tier_0 / tier_1 |
+| **Group 3: Orientation+Skew** | orientation_class | classification (4 classes) | Orientation (50K) | tier_0 (synthetic GT) |
+| | fine_skew_angle | regression [-10,+10] | Skew (40K) | tier_0 (synthetic GT) |
+| | resolution_quality | regression [0,1] | Resolution (30K) | tier_0 (synthetic GT) |
+| **Group 4: Handwriting** | has_handwriting | binary | Handwriting (60K), IAM, NIST-SD19 | tier_1 / tier_0 |
+| | handwriting_proportion | regression [0,1] | Handwriting (60K) | tier_2 (model-derived) |
+| | handwriting_confidence | regression [0,1] | Handwriting (60K) | tier_2 (model-derived) |
+| **Group 5: Page Attrs** | capture_method | classification (4 classes) | Capture (50K) | tier_1 / tier_3 |
+| | has_code_or_math | binary | Code/Math (10K), IM2LaTeX | tier_0 / tier_1 |
+
+#### MobileNetV4-Conv-S Heads (3 heads, pre-correction)
+
+| Head | Type | Dataset Sources | Provenance Tier |
+|------|------|-----------------|-----------------|
+| orientation_class | classification (4 classes) | Orientation (50K) | tier_0 (synthetic GT) |
+| fine_skew_angle | regression [-10,+10] | Skew (40K) | tier_0 (synthetic GT) |
+| resolution_quality | regression [0,1] | Resolution (30K) | tier_0 (synthetic GT) |
+
+#### Label Provenance Tiers
+
+| Tier | Name | Confidence | Weight | Example |
+|------|------|------------|--------|---------|
+| **Tier 0** | `tier_0_exact` | 1.0 | 1.0 | Synthetic ground truth, generation parameters |
+| **Tier 1** | `tier_1_annotation` | >= 0.9 | 1.0 | Human MOS/DMOS, COCO annotations |
+| **Tier 2** | `tier_2_model` | >= 0.7 | 0.8 * confidence | SigLIP 2 predictions, YOLO detections |
+| **Tier 3** | `tier_3_heuristic` | >= 0.5 | 0.5 * confidence | Classical IQA scores, rule-based flags |
+
 ---
 
 ## Anchor Score Selection Algorithm
@@ -651,6 +697,20 @@ def compute_anchor_score(
 - High-confidence LLM predictions are second-best (weight 0.8)
 - Synthetic scores provide weak supervision (weight 0.3)
 - No anchor = sample can still be used for unsupervised training (weight 0.0)
+
+### Multi-Head Anchor Concept
+
+With the SigLIP 2 multi-task architecture (16 heads), the anchor score system extends to a **per-head anchor priority**. Each SigLIP 2 head has its own anchor selection based on which datasets provide ground truth for that specific task:
+
+| Head Group | Primary Anchor Source | Fallback Source | Weight Strategy |
+|------------|----------------------|-----------------|-----------------|
+| **IQA heads** | Human MOS (DIQA-5000, LIVE, CSIQ) | Synthetic GT (Genalog parameters) | Standard priority (human > LLM > synthetic) |
+| **Script heads** | Dataset GT (synth-multiscript, MDIW13) | OpenLID-v2 model predictions | tier_0 for synthetic, tier_1 for annotated, tier_2 for model |
+| **Orientation+Skew heads** | Synthetic GT (generation parameters) | EXIF metadata | tier_0 only (exact from generation) |
+| **Handwriting heads** | Dataset GT (IAM, NIST-SD19) | Model predictions | tier_1 for annotated, tier_2 for predicted |
+| **Page Attr heads** | Dataset GT (capture method labels) | Heuristic rules | tier_1 for annotated, tier_3 for heuristic |
+
+Each head's anchor weight is computed independently, allowing the training loss to weight samples differently per task based on label reliability.
 
 ---
 

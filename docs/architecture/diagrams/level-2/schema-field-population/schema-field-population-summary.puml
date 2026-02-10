@@ -1,0 +1,103 @@
+@startuml schema-field-population-summary
+title Layer 2 Schema Field Population Summary - 8-Pass Enrichment Workflow
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+start
+
+partition "Pass 0: Synthetic Generation" #E0F7FA {
+  :MultiScriptDocumentGenerator;
+  :SchemaAdapter;
+  :Multi-task metadata nesting;
+  note right
+    **Tier 0: Exact Labels (conf=1.0)**
+    ALL 85 fields populated
+  end note
+}
+
+partition "Pass 1: Base Metadata Annotation" #ADD8E6 {
+  :annotate_base_metadata.py\n+ DATASET_CONFIGS + DocLayout-YOLO;
+  note right
+    **Tier 1-2: Config + ML**
+    Fields: capture, resolution, domain,
+    structure, quality, content_flags,
+    layout, color_mode, document_age
+    **Status**: IMPLEMENTED
+  end note
+}
+
+partition "Pass 2: Language Enrichment" #90EE90 {
+  :enrich_language_from_gt.py;
+  :backfill_language_confidence.py\n(OpenLID-v2);
+  :run_language_enrichment.py\n(fastText + lingua);
+  note right
+    **Tier 1-2: Multi-tier Consensus**
+    Fields: iso639_language, iso15924_script,
+    script_family, bcp47_tag
+    **Status**: IMPLEMENTED
+  end note
+}
+
+partition "Pass 3: Text Quality" #FFF9C4 {
+  :backfill_text_quality_confidence.py\n(OCR quality proxy);
+  note right
+    **Tier 2-3: Heuristic Proxy**
+    Fields: text_quality_confidence
+    **Status**: IMPLEMENTED
+  end note
+}
+
+partition "Pass 4: Layout Taxonomy" #ADD8E6 {
+  :standardize_layout_labels.py\n(Hub-and-spoke taxonomy);
+  note right
+    **Tier 1: Canonical Mapping**
+    57 classes across 6 schemas
+    **Status**: IMPLEMENTED
+  end note
+}
+
+' Note about skipped passes
+note right
+  **Pass 5 & 6 Skipped**
+  (not in production flow)
+  - Pass 5: DeQA Pseudo-Labeling [PLANNED]
+  - Pass 6: ML IQA Teacher-Student [NOT WIRED]
+  See detailed workflow PUML for full details
+end note
+
+partition "Pass 7: Reliability Summary" {
+  :materialize_reliability_summary.py;
+  note right
+    **Computed Field**
+    Fields: sample_reliability_summary
+    **Status**: IMPLEMENTED
+  end note
+}
+
+partition "Pass 8: Metadata Aggregation" {
+  :aggregate_layer2_metadata.py;
+  note right
+    **Per-Dataset Statistics**
+    Output: metadata_registry/aggregates/
+    **Status**: IMPLEMENTED
+  end note
+}
+
+stop
+
+' Legend placed after stop like the working examples
+legend right
+  |= Color |= Tier |= Confidence |
+  | <#E0F7FA> | Tier 0: Synthetic (exact) | 1.0 |
+  | <#ADD8E6> | Tier 1: Annotation-derived | 0.95 |
+  | <#90EE90> | Tier 2: ML Model inference | per-sample |
+  | <#FFF9C4> | Tier 3: Heuristic | 0.5-0.8 |
+  | <#FFCDD2> | Gap: Not yet wired/built | -- |
+endlegend
+
+@enduml

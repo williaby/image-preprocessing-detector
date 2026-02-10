@@ -9,6 +9,8 @@ tags:
 - architecture
 title: Swimlane Diagram Traceability Proposal
 ---
+> **Architecture Migration Note**: This proposal was created before the migration from ResNet-50/18 teacher-student to MobileNetV4-Conv-S + SigLIP 2 NAFlex multi-task pipeline. Example PlantUML snippets below reference the old architecture. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) for current model architecture.
+
 **Problem Statement**: Current LOC extraction script maps directories to workstreams, but there's no visual verification that all source files are accounted for in workflow diagrams.
 
 **Proposed Solution**: Create detailed swimlane diagrams at Level 2 (for each workstream) with **explicit script/source file annotations** on each workflow step. This creates bidirectional traceability:

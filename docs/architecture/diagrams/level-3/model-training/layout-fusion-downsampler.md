@@ -18,7 +18,9 @@ authors:
 purpose: "Document the Layout Fusion Downsampler architecture, rationale, and implementation
   details for document-aware IQA model training."
 ---
-This document provides the complete specification for the **Layout Fusion Downsampler**, a critical component introduced in the original DIQA-5000 paper to enable training document IQA models at full 1600×1600 resolution while avoiding naive downsampling artifacts.
+> **LEGACY**: This document describes the Layout Fusion Downsampling approach used with the ResNet-50 backbone. The current primary pipeline uses **SigLIP 2 NAFlex**, which handles variable resolution natively via NAFlex packing (no downsampling required). This approach is retained as a fallback option but is **not part of the primary pipeline**. See [Level 2 - Model Training](../../level-2/model-training/index.md) for the current SigLIP 2 + MobileNetV4-Conv-S two-model pipeline.
+
+This document provides the complete specification for the **Layout Fusion Downsampler**, a component introduced in the original DIQA-5000 paper to enable training document IQA models at full 1600×1600 resolution while avoiding naive downsampling artifacts.
 
 ---
 
@@ -63,6 +65,8 @@ Training document IQA models requires balancing two competing constraints:
 - ResNet-50 on 1600×1600 images requires **32GB+ GPU memory** per batch
 - Training becomes prohibitively expensive (A100-80GB required)
 - Inference latency increases 16× (1600² vs 400²)
+
+> **Note**: The memory constraint described above (ResNet-50 requiring 32GB+ for 1600x1600) does **not** apply to SigLIP 2 NAFlex. NAFlex packing handles variable resolution natively by packing multiple image regions into efficient token sequences, avoiding the quadratic memory scaling of traditional CNN approaches. SigLIP 2 NAFlex trains on A10 (24GB) GPUs without resolution-related memory issues.
 
 **Traditional Tradeoff**: Either train at low resolution (lose quality signals) or use massive GPUs (prohibitive cost)
 
@@ -627,7 +631,7 @@ def train_dociq_replica():
 ### Related Documentation
 
 - [Level 2 - Pseudo-Labeling Workflow](../../level-2/pseudo-labeling/index.md) - Full DIQA-5000 system overview
-- [Level 2 - Model Training](../../level-2/model-training/index.md) - Teacher-student training pipeline
+- [Level 2 - Model Training](../../level-2/model-training/index.md) - SigLIP 2 + MobileNetV4 two-model training pipeline (current primary)
 - [Level 3 - Model Training Swimlane](./model-training-swimlane.puml) - Detailed training workflow
 - [DIQA-5000 Pseudo-Labels v2 Planning Doc](../../../../planning/DIQA-5000_Pseudo_Labels_v2.md) - Complete system specification
 

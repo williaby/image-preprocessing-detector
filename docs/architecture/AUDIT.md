@@ -2,13 +2,13 @@
 owner: docs-team
 purpose: Documentation for PlantUML Diagram Audit and Recommendations.
 schema_type: common
-status: draft
+status: active
 tags:
 - architecture
 title: PlantUML Diagram Audit and Recommendations
 ---
 
-**Date**: December 2025
+**Date**: February 2026 (updated from December 2025 original)
 **Scope**: Project A - Preprocessing, IQA, Layout & Routing Gateway
 **Author**: Claude Code Analysis
 
@@ -63,7 +63,9 @@ Project A serves as the "front door" for a four-project RAG document pipeline. T
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Key Distinction**: The pseudo-labeling workstream uses accuracy-optimized models (MUSIQ, QualiCLIP, DocIQ-Replica, Qwen3-VL-8B, InternVL3-8B) to generate consistent labels. These are NOT production models. The production runtime uses distilled models (ResNet-18 student, ResNet-50 teacher) optimized for inference speed.
+**Key Distinction**: The pseudo-labeling workstream uses accuracy-optimized models (MUSIQ, QualiCLIP, DocIQ-Replica, Qwen3-VL-8B, InternVL3-8B) to generate consistent labels. These are NOT production models. The production runtime uses MobileNetV4-Conv-S (~3ms, 3 heads) for fast pre-correction and SigLIP 2 NAFlex (~50ms, 16 heads) for full multi-task analysis.
+
+> **Note**: This audit was conducted in December 2025 and predates the migration from ResNet-50/18 teacher-student to SigLIP 2 NAFlex + MobileNetV4-Conv-S. Some gap analysis items below reference the old architecture. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) for current architecture.
 
 ---
 
@@ -202,17 +204,10 @@ All diagrams in `tmp_cleanup/workflows_*/` should be deleted:
 - Redis broker/result backend configuration
 - GPU worker separation
 
-#### 3. Monitoring & Drift Detection
+#### 3. ~~Monitoring & Drift Detection~~ (FILLED)
 
-**Status**: MISSING
-**Need**: Phase 6 monitoring infrastructure
-**Impact**: 95% complete phase has no workflow documentation
-**Recommendation**: Create `project-a-monitoring-drift.puml` covering:
-
-- Prometheus metrics collection
-- Grafana dashboard integration
-- Drift detection alerting
-- Active learning pipeline triggers
+**Status**: **RESOLVED** (February 2026)
+**Resolution**: Created `level-2/monitoring-drift/monitoring-drift-architecture.puml` and `level-3/monitoring-drift/monitoring-drift-swimlane.puml` with complete traceability to 5,353+ LOC implementation + 5,400+ LOC tests. Includes `end-to-end-lifecycle.md` documenting the 7-phase closed-loop from drift detection through retraining.
 
 #### 4. Budget Enforcement & Circuit Breaker
 
@@ -376,48 +371,81 @@ All diagrams are now consolidated under `docs/architecture/diagrams/` with a lev
 
 ```text
 docs/architecture/diagrams/
-├── README.md                    ◄─── Quick start guide
-├── INDEX.md                     ◄─── Complete traceability matrix
-├── STYLE_GUIDE.md               ◄─── Styling standards
+├── README.md                              ◄─── Quick start guide
+├── INDEX.md                               ◄─── Complete traceability matrix
+├── STYLE_GUIDE.md                         ◄─── Styling standards
 │
-├── level-0/                     ◄─── Pipeline Context
+├── level-0/                               ◄─── Pipeline Context (1 diagram)
 │   └── rag-pipeline-overview.puml
 │
-├── level-1/                     ◄─── Project A Architecture
+├── level-1/                               ◄─── Project A Architecture (2 diagrams)
 │   ├── PROJECT_A_ARCHITECTURE_OVERVIEW.puml
 │   └── PROJECT_A_WORKFLOW_HIERARCHY.puml
 │
-└── level-2/                     ◄─── Workstream Details
-    ├── production-runtime/
-    │   ├── project-a-primary-workflow-high-level.puml
-    │   ├── project-a-primary-workflow-detailed.puml
-    │   └── project-a-device-selection-flow.puml
-    │
-    ├── model-training/
-    │   ├── project-a-distillation.puml
-    │   ├── project-a-training-workflow-high-level.puml
-    │   └── project-a-layout-training.puml  ◄─── (TO CREATE)
-    │
-    ├── data-preparation/
-    │   ├── project-a-training-data-ingestion.puml
-    │   └── automated-data-labeling-pipeline.puml
-    │
-    ├── pseudo-labeling/
-    │   ├── diqa-pseudo-labeling-workflow.puml
-    │   ├── diqa-training-phases.puml
-    │   ├── diqa-checkpoint-selection.puml
-    │   └── diqa-inference-pipeline.puml
-    │
-    ├── benchmarking/
-    │   └── project-a-benchmark-workflow.puml
-    │
-    └── downstream-context/
-        ├── project-b-ocr-layout-workflow.puml
-        ├── project-c-fusion-chunking-workflow.puml
-        └── project-d-vectorstore-workflow.puml
+├── level-2/                               ◄─── Workstream Details (28 diagrams)
+│   ├── production-runtime/          (WS1)   6 diagrams
+│   ├── model-training/              (WS2)   5 diagrams
+│   ├── data-preparation/            (WS3)   3 diagrams
+│   ├── pseudo-labeling/             (WS4)   5 diagrams
+│   ├── labeling-benchmarking/       (WS5)   1 diagram
+│   ├── model-arena/                 (WS6)   1 diagram
+│   ├── monitoring-drift/            (WS7)   1 diagram
+│   ├── synthetic-generation/        (WS8)   1 diagram
+│   ├── schema-field-population/             2 diagrams (summary + full reference)
+│   └── downstream-context/                  3 diagrams
+│
+├── level-3/                               ◄─── Module Implementation (6 swimlanes)
+│   ├── production-runtime/          (WS1)   swimlane + 2 module docs
+│   ├── model-training/              (WS2)   swimlane + 1 module doc
+│   ├── data-preparation/            (WS3)   swimlane + 2 module docs
+│   ├── pseudo-labeling/             (WS4)   swimlane + 1 module doc
+│   ├── monitoring-drift/            (WS7)   swimlane + 1 module doc
+│   └── synthetic-generation/        (WS8)   swimlane + 1 module doc
+│
+└── deprecated/                            ◄─── Superseded diagrams
+    └── benchmarking/                        1 diagram
 ```
 
-**Note**: Original diagram copies remain in `docs/planning/` and `docs/development/RAG Pipeline/` for backwards compatibility. The canonical versions are now in the level-based structure above.
+**Total**: 38 PUML diagrams across 4 levels + 10 module documentation files.
+
+> **Note**: This structure reflects the February 2026 audit update. Original diagram copies may still exist in `docs/planning/` for backwards compatibility.
+
+---
+
+## February 2026 Audit Update
+
+The following actions were taken to bring documentation in sync with the actual codebase:
+
+### Gaps Filled
+
+- **Monitoring & Drift Detection**: Level 2 architecture diagram + Level 3 swimlane + end-to-end lifecycle doc created
+- **Level 3 Module Documentation**: 4 index.md files created for production-runtime, data-preparation, model-training, monitoring-drift
+- **Missing SVGs**: 13 PUML files that lacked SVG renders now have generated SVGs
+- **Workstreams WS5-WS8**: labeling-benchmarking, model-arena, monitoring-drift, synthetic-generation, schema-field-population all now documented in INDEX.md
+
+### Artifacts Cleaned
+
+- 3 nested-path SVG generation artifacts deleted (level-1, level-2/synthetic-generation, level-3/data-preparation)
+- 1 stale archived file deleted (level-2/data-preparation/index.v1-archived.md)
+- 11 PNG/SVG files renamed from spaces/PascalCase to kebab-case
+- 4 duplicate SVGs removed (space-named duplicates of existing kebab-case SVGs)
+
+### Stale References Fixed
+
+- `src/.../augmentation/genalog_config.py` and `genalog_degrader.py` references updated to `src/.../synthetic/config.py`, `generator.py`, `augmentation_hybrid.py`, `schema_adapter.py` in synthetic-generation PUML and index.md
+
+### Remaining Gaps (from original audit)
+
+- ~~**Layout Model Training workflow**~~: **RESOLVED** (February 2026) - Created `project-a-training-infrastructure.puml` covering dataset assembly, ILP allocation, Modal GPU training, phased head training, active learning loop, and ONNX export
+- ~~**Celery Worker architecture**~~: **RESOLVED** (February 2026) - Created `project-a-worker-architecture.puml` covering FastAPI, Redis broker, 3 worker pools, device orchestration, circuit breaker, and monitoring
+- **Budget Enforcement details**: Partial (covered in worker-architecture diagram + device-orchestrator.md Level 3 doc)
+- ~~**Level 3 for WS4, WS8**~~: **RESOLVED** (February 2026) - Created swimlane + module docs for both pseudo-labeling and synthetic-generation
+- **Level 3 for WS5, WS6**: **DEFERRED** - WS5 has 0 LOC implemented; WS6 has simple linear flow with self-contained components (both explicitly state Level 3 not required in their index.md)
+
+### PUML Syntax Issues
+
+- ~~`project-a-training-data-ingestion.puml`~~: **FIXED** (February 2026) - Replaced stereotype-based partition colors with inline `#Color` syntax
+- ~~`schema-field-population-workflow.puml`~~: **RESOLVED** (February 2026) - Created simplified `schema-field-population-summary.puml` for SVG rendering; full 387-line diagram kept as text reference
 
 ---
 

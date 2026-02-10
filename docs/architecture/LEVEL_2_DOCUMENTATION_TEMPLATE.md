@@ -177,7 +177,7 @@ This level provides detailed documentation for the Production Runtime workstream
 |-----------|--------------|---------|
 | Device Orchestrator | `src/utils/device_orchestrator.py` | Device selection and fallback |
 | Text Gate | `src/detection/text_gate.py` | Fast text presence detection |
-| ML IQA | `src/detection/iqa_ml.py` | Teacher-student ResNet models |
+| ML IQA | `src/detection/iqa_ml.py` | MobileNetV4-Conv-S + SigLIP 2 NAFlex multi-task |
 ```
 
 ---
@@ -298,8 +298,8 @@ def distillation_loss(student_logits, teacher_logits, ground_truth, alpha=0.7, t
 | **None** | N/A | Production Runtime is the entry point for live processing |
 
 **Note**: Consumes trained models from Workstream 2:
-- Student model (ResNet-18): Production inference
-- Teacher model (ResNet-50): Selective escalation
+- MobileNetV4-Conv-S (~3ms): Pre-correction (orientation, skew, resolution quality)
+- SigLIP 2 NAFlex (~50ms): Full multi-task analysis (16 heads, 5 groups)
 
 ### Downstream Consumers
 

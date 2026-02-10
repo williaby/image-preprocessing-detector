@@ -32,7 +32,7 @@ Project A serves as the "front door" for the RAG document pipeline, responsible 
 
 - **Document ingestion** and page extraction
 - **Image Quality Assessment** (IQA) using classical CV and ML models
-- **Layout detection** with DocLayout-YOLO (11 DocLayNet classes)
+- **Layout detection** with Docling layout models (egret-xlarge / heron, 11+ DocLayNet classes)
 - **Corrections** (deskew, CLAHE, denoising)
 - **Document Quality Score** calculation and routing recommendations
 
@@ -50,8 +50,8 @@ The live processing pipeline that handles incoming documents. This is the only w
 |-----------|---------|
 | Ingestion & Pre-flight | DPI detection, PDF upscaling to 300 DPI, page extraction |
 | Classification & Routing | PDF type classification, text gate |
-| Quality Analysis | Classical IQA (7 detectors), ML IQA (student/teacher) |
-| Layout Analysis | DocLayout-YOLO (11 classes), reading order, table structure |
+| Quality Analysis | Classical IQA (7 detectors), MobileNetV4-Conv-S pre-correction (3 heads), SigLIP 2 NAFlex multi-task (16 heads, 5 groups) |
+| Layout Analysis | Docling layout models: egret-xlarge (accuracy) / heron (speed), 11+ DocLayNet classes |
 | Correction & Scoring | Deskew, CLAHE, denoising, DQS calculation, routing |
 
 ### 2. Production Model Training (Blue)
@@ -60,9 +60,10 @@ Training and optimization of models used in Production Runtime (Workstream 1). I
 
 | Model | Architecture | Purpose |
 |-------|--------------|---------|
-| IQA Teacher | ResNet-50 | High-capacity model for difficult cases |
-| IQA Student | ResNet-18 | Production inference (distilled from teacher) |
-| DocLayout-YOLO | YOLOv10-nano | Layout detection (11 DocLayNet classes) |
+| Pre-Correction | MobileNetV4-Conv-S (~3ms, 3 heads) | Fast orientation, skew, resolution quality for pre-correction |
+| Multi-Task Analysis | SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups) | Full document analysis: IQA, script, orientation/skew, handwriting, page attrs |
+| Layout (Accuracy) | docling-layout-egret-xlarge | Layout detection (11+ DocLayNet classes, accuracy-optimized) |
+| Layout (Speed) | docling-layout-heron | Layout detection (11+ DocLayNet classes, speed-optimized) |
 
 **Training Dataset Preparation**: Model-specific transforms (augmentation, train/val/test splits, format conversion) happen here, not in Data Preparation.
 
@@ -72,7 +73,7 @@ Dataset ingestion and cataloging. Datasets are kept in their **original form** w
 
 | Activity | Purpose |
 |----------|---------|
-| Source Collection | Ingest OHR-Bench, DIQA-5000, DocLayNet, LIVE/CSIQ |
+| Source Collection | Ingest 10 purpose-built datasets (~503K total): Orientation, Skew, Resolution, IQA, Script, Handwriting, Capture, Shadow, Warping, Code |
 | Cataloging | Register datasets with metadata, provenance tracking |
 | Storage | Store in GCS in original resolution and format |
 
@@ -161,12 +162,13 @@ Controlled document degradation and augmentation using Microsoft Genalog. Expand
 | **Ground Truth Derivation** | Automatic quality labels from degradation parameters |
 | **Dataset Expansion** | 1 clean image → 10+ degraded variants |
 
-**Status**: Infrastructure complete (~450 lines), Genalog integration in progress
+**Status**: Multi-task generation pipeline complete (~1,500+ lines), Genalog + hybrid augmentation
 
-**Typical Workflow**:
+**Capabilities**:
 
-- 500 clean images × 5 degradation profiles = 2,500 synthetic samples
-- Merge with real data (70% real, 30% synthetic) for training
+- 7 DPI tiers (72-600), ColorMode (color/grayscale/binarized), document aging (AGED/HISTORICAL)
+- Multi-task label generation: orientation, skew, resolution quality, color_mode, document_age
+- "Adjust Not Redesign" strategy: generate base images ONCE, derive multi-task training views
 
 ---
 
@@ -193,7 +195,7 @@ Workstream 4: Pseudo-Labeling
     ↓ (ensemble labeling: scripts + QualiCLIP + MUSIQ)
     ↓ (labeled training dataset)
 Workstream 2: Production Model Training
-    ↓ (ResNet-50 teacher, ResNet-18 student)
+    ↓ (MobileNetV4-Conv-S pre-correction + SigLIP 2 NAFlex multi-task)
 Workstream 6: Model Arena - Phase 2 (Fine-Tuned Validation)
     ↓ (PLCC > 0.65? → Graduate)
 Workstream 1: Production Runtime
@@ -220,7 +222,7 @@ Workstream 7: Monitoring & Drift Detection
 | Synthetic Gen | Labeling Models | Augmented dataset | Expand training data 2-3x |
 | Labeling Models | Arena Phase 1 | Pretrained models | Baseline benchmarking |
 | Arena Phase 1 | Pseudo-Labeling | Top models | Ensemble labeling |
-| Pseudo-Labeling | Production Training | Labeled dataset | Train teacher/student |
+| Pseudo-Labeling | Production Training | Labeled dataset | Train MobileNetV4 + SigLIP 2 multi-task pipeline |
 | Production Training | Arena Phase 2 | Fine-tuned models | Validation before deployment |
 | Arena Phase 2 | Production Runtime | Graduated models | Production deployment |
 | Production Runtime | Monitoring | Predictions + metrics | Drift detection |

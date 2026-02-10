@@ -103,8 +103,8 @@ if (Local GPU Available?) then (yes)
     :Select Local GPU ✅;
     note right
       **Performance:**
-      - Latency: 10-25ms/page (student)
-      - Latency: 30-50ms/page (teacher)
+      - Latency: ~3ms/page (MobileNetV4)
+      - Latency: ~50ms/page (SigLIP 2)
       - Throughput: 40-100 pages/sec
       - Cost: $0 (free)
     end note
@@ -147,8 +147,8 @@ if (Modal GPU Available?) then (yes)
     :Select Modal GPU ✅;
     note right
       **Performance:**
-      - Latency: 15-30ms/page (student)
-      - Latency: 40-60ms/page (teacher)
+      - Latency: ~5ms/page (MobileNetV4)
+      - Latency: ~60ms/page (SigLIP 2)
       - Throughput: 30-65 pages/sec
       - Cost: $0.007/page (T4)
     end note
@@ -184,13 +184,13 @@ if (CPU Allowed?) then (yes)
   :Select CPU ⚠️;
   note right
     **Performance:**
-    - Latency: 40-100ms/page (student)
-    - Latency: 150-300ms/page (teacher)
+    - Latency: 8-12ms/page (MobileNetV4)
+    - Latency: ~150ms/page (SigLIP 2)
     - Throughput: 10-25 pages/sec
     - Cost: $0 (free)
 
     **Warning:**
-    CPU inference 4-10x slower than GPU
+    CPU inference 3-5x slower than GPU for SigLIP 2
   end note
   stop
 else (no - CPU blocked)
@@ -694,11 +694,11 @@ def select_device_with_circuit_breaker(context: ProcessingContext):
 
 ### Latency Comparison
 
-| Device | Student (ResNet-18) | Teacher (ResNet-50) | Classical IQA | Layout-Lite | Total Pipeline |
-|--------|---------------------|---------------------|---------------|-------------|----------------|
-| **Local GPU (T4)** | 10-25ms | 30-50ms | 20-30ms | 30-60ms | **100-150ms/page** |
-| **Modal GPU (T4)** | 15-30ms | 40-60ms | 20-30ms | 30-60ms | **120-180ms/page** |
-| **CPU (16-core)** | 40-100ms | 150-300ms | 20-30ms | 80-150ms | **300-500ms/page** |
+| Device | MobileNetV4-Conv-S | SigLIP 2 NAFlex | Classical IQA | Layout-Lite | Total Pipeline |
+|--------|-------------------|-----------------|---------------|-------------|----------------|
+| **Local GPU (T4)** | ~3ms | ~50ms | 20-30ms | 30-60ms | **100-150ms/page** |
+| **Modal GPU (T4)** | ~5ms | ~60ms | 20-30ms | 30-60ms | **120-180ms/page** |
+| **CPU (16-core)** | 8-12ms | ~150ms | 20-30ms | 80-150ms | **300-500ms/page** |
 
 **Notes**:
 
@@ -840,24 +840,46 @@ class MLIQAInference:
         self.circuit_breaker = circuit_breaker
         self.device_probe = DeviceProbe()
 
-    def run_student_inference(
+    def run_mobilenet_inference(
         self,
         image: np.ndarray,
         context: ProcessingContext
-    ) -> IQAPrediction:
-        """Run student model inference with device selection."""
+    ) -> MobileNetPrediction:
+        """Run MobileNetV4-Conv-S pre-correction inference (3 heads)."""
 
-        # Select device using orchestrator
-        device = self.select_device(context, model_type="student")
+        # Select device using orchestrator (~500MB VRAM needed)
+        device = self.select_device(context, model_type="mobilenetv4")
 
         if device == "local_gpu":
-            return self._run_local_gpu_inference(image, model="student")
+            return self._run_local_gpu_inference(image, model="mobilenetv4")
 
         elif device == "modal_gpu":
-            return self._run_modal_gpu_inference(image, model="student", context=context)
+            return self._run_modal_gpu_inference(image, model="mobilenetv4", context=context)
 
         elif device == "cpu":
-            return self._run_cpu_inference(image, model="student")
+            return self._run_cpu_inference(image, model="mobilenetv4")
+
+        elif device == "blocked":
+            raise NoDeviceAvailableError("All devices unavailable, CPU blocked by policy")
+
+    def run_siglip2_inference(
+        self,
+        image: np.ndarray,
+        context: ProcessingContext
+    ) -> SigLIP2Prediction:
+        """Run SigLIP 2 NAFlex multi-task inference (16 heads, 5 groups)."""
+
+        # Select device using orchestrator (~2GB VRAM needed)
+        device = self.select_device(context, model_type="siglip2")
+
+        if device == "local_gpu":
+            return self._run_local_gpu_inference(image, model="siglip2")
+
+        elif device == "modal_gpu":
+            return self._run_modal_gpu_inference(image, model="siglip2", context=context)
+
+        elif device == "cpu":
+            return self._run_cpu_inference(image, model="siglip2")
 
         elif device == "blocked":
             raise NoDeviceAvailableError("All devices unavailable, CPU blocked by policy")
@@ -865,14 +887,14 @@ class MLIQAInference:
     def select_device(
         self,
         context: ProcessingContext,
-        model_type: str  # "student" or "teacher"
+        model_type: str  # "mobilenetv4" or "siglip2"
     ) -> str:
         """Device selection with policy enforcement."""
 
         # Priority 1: Local GPU
         if self.device_probe.has_local_gpu():
             memory_available = self.device_probe.get_gpu_memory_available()
-            memory_required = 4_000_000_000 if model_type == "student" else 8_000_000_000
+            memory_required = 500_000_000 if model_type == "mobilenetv4" else 2_000_000_000
 
             if memory_available >= memory_required:
                 logger.info("device_selected", device="local_gpu", model=model_type)
@@ -915,7 +937,7 @@ iqa_current_device{worker_id, device}  # device: local_gpu, modal_gpu, cpu
 iqa_device_requests_total{device, status}  # status: success, failure
 
 # Histogram: Latency per device
-iqa_device_latency_seconds{device, model}  # model: student, teacher
+iqa_device_latency_seconds{device, model}  # model: mobilenetv4, siglip2
 ```
 
 **Budget Metrics**:
@@ -1018,15 +1040,16 @@ iqa_circuit_breaker_blocks_total{service}
 **Responsibilities**:
 
 - Orchestrate device selection
-- Run student/teacher inference
-- Handle device fallback
+- Run MobileNetV4-Conv-S pre-correction inference (3 heads)
+- Run SigLIP 2 NAFlex multi-task inference (16 heads, 5 groups)
+- Handle device fallback and classical fallback
 - Track budget usage
 
 **Key Functions**:
 
 - `select_device(context, model_type) -> str`
-- `run_student_inference(image, context) -> IQAPrediction`
-- `run_teacher_inference(image, context) -> IQAPrediction`
+- `run_mobilenet_inference(image, context) -> MobileNetPrediction`
+- `run_siglip2_inference(image, context) -> SigLIP2Prediction`
 
 ---
 
@@ -1057,5 +1080,5 @@ iqa_circuit_breaker_blocks_total{service}
 
 ---
 
-*Last Updated: 2025-01-16*
+*Last Updated: 2026-02-09*
 *Device Tiers: 3 | Budget Tiers: 3 | Policy Modes: 3*

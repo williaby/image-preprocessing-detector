@@ -110,16 +110,48 @@ Our derived annotations with full provenance tracking and versioning.
 
 | Data Class | Module | Fields | Purpose |
 |------------|--------|--------|---------|
-| `EnrichmentData` | `annotation/schemas/enrichment.py` | capture_method, resolution_category, domain_level1-3, text_density, layout_type, degradations, llm_predicted_mos | Computed metadata |
+| `EnrichmentData` | `annotation/schemas/enrichment.py` | capture_method, resolution_category, domain_level1-3, text_density, layout_type, degradations, llm_predicted_mos, color_mode (binarized/grayscale/color), document_age (modern/aged/historical) | Computed metadata |
 | `EnrichmentVersion` | `annotation/schemas/enrichment.py` | version, created_at, created_by, method, description | Version provenance |
 
 **Enrichment Methods** (via Provider Pattern):
 
 | Provider | Module | Tier | Purpose |
 |----------|--------|------|---------|
-| `YOLOProvider` | `annotation/enrichment/providers/yolo.py` | Tier 2 | Layout detection (11 DocLayNet classes) |
-| `SigLIPProvider` | `annotation/enrichment/providers/siglip.py` | Tier 2 | Quality score prediction |
+| `YOLOProvider` | `annotation/enrichment/providers/yolo.py` | Tier 2 | Layout detection (multi-schema via LayoutTaxonomy, 57 canonical classes) |
+| `SigLIPProvider` | `annotation/enrichment/providers/siglip.py` | Tier 2 | SigLIP 2 multi-task enrichment (16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs) |
 | Built-in | `annotation/enrichment/tiering.py` | Tier 0-1 | Dataset-derived metadata |
+
+**Schema Utilities** (config-driven converters):
+
+| Utility | Module | Config | Purpose |
+|---------|--------|--------|---------|
+| `ScriptMLMapping` | `schema_utils/script_ml_mapping.py` | `config/script_ml_classes.yaml` | ISO 15924 → ML class mapping |
+| `LayoutTaxonomy` | `schema_utils/layout_taxonomy.py` | `config/layout_taxonomy.yaml` | 6-schema layout label conversion (~57 canonical classes) |
+
+### Label Provenance System
+
+All labels in the enrichment pipeline are tagged with a provenance tier that determines confidence and training weight:
+
+| Tier | Name | Source | Confidence | Training Weight | Example |
+|------|------|--------|------------|-----------------|---------|
+| **Tier 0** | `tier_0_exact` | Synthetic ground truth | 1.0 (exact) | 1.0 | Genalog degradation parameters, orientation from generation script |
+| **Tier 1** | `tier_1_annotation` | Human annotation | >= 0.9 | 1.0 | DIQA MOS scores, LIVE DMOS, COCO bounding boxes |
+| **Tier 2** | `tier_2_model` | Model-predicted | >= 0.7 | 0.8 * confidence | SigLIP 2 quality predictions, YOLO layout detections |
+| **Tier 3** | `tier_3_heuristic` | Rule-based derivation | >= 0.5 | 0.5 * confidence | Classical IQA detector scores, heuristic content flags |
+
+The provenance tier flows through all three metadata layers and is used by the training label builder to compute per-sample anchor weights.
+
+### Global Split Registry
+
+To prevent train/test leakage across the 10 purpose-built training datasets, a **Global Split Registry** ensures cross-dataset split consistency:
+
+- **Key**: SHA256 hash of the image file content
+- **Assignment**: Each unique image is assigned exactly one split (train/val/test) at first encounter
+- **Consistency**: If the same image appears in multiple datasets (e.g., orientation + skew), it receives the same split assignment everywhere
+- **Ratios**: Default 80/10/10 (train/val/test), configurable per dataset
+- **Storage**: Registry persisted as a Parquet file keyed by SHA256 hash
+
+See [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for per-dataset diversity specifications.
 
 ### Layer 3: TRAINING (Computed On-Demand)
 
@@ -258,6 +290,124 @@ labels.iso15924_script_code = "Arab"    # ISO 15924 code (Tier 1)
 ```
 
 **Updated Parsers**: mlt19, arabic_docs, tibhcr, nepali_handwritten, yarmouk, cvsi, siw13, mle2e, cc_ocr, mdiw13, hindi_ocr_synthetic, pucit_ohul, multilingual_scripts
+
+---
+
+## Layout Label Taxonomy (Cross-Schema Conversion)
+
+The annotation system uses a hub-and-spoke canonical superset for normalizing layout detection labels across six different schemas. This complements the Three-Tier Script Architecture (above) by solving the equivalent problem for layout labels rather than writing system codes.
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                  Layout Label Taxonomy (Hub-and-Spoke)                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌──────────────┐   │
+│  │ DocLayNet │ │ DocStruct │ │ PubLayNet │ │  Docling  │ │  DocSynth    │   │
+│  │ (11 cls)  │ │ Bench(10) │ │  (5 cls)  │ │ (23 cls)  │ │  300K (10)   │   │
+│  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └──────┬───────┘   │
+│        │             │             │             │              │             │
+│        │       ┌─────┴─────┐       │       ┌─────┴─────┐       │             │
+│        │       │   D4LA    │       │       │           │       │             │
+│        │       │ (27 cls)  │       │       │           │       │             │
+│        │       └─────┬─────┘       │       │           │       │             │
+│        ▼             ▼             ▼       ▼           ▼       ▼             │
+│  ┌────────────────────────────────────────────────────────────────────┐      │
+│  │               Canonical Superset (57 classes)                      │      │
+│  │     11 DocLayNet top-level + 46 extensions (tree hierarchy)        │      │
+│  └────────────────────────────────────────────────────────────────────┘      │
+│        │                                                                     │
+│        ├── to_canonical(label, schema) → canonical name                      │
+│        ├── from_canonical(canonical, target) → ConversionResult              │
+│        ├── convert(label, source, target) → with loss tracking               │
+│        ├── to_doclaynet(canonical) → coarsen via parent chain                │
+│        ├── build_mask_index_map(schema) → configurable mask channels         │
+│        └── build_doclaynet_index_map() → all labels → DocLayNet 0-10        │
+│                                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Supported Schemas (6 total)
+
+| Schema | Classes | Source | Config Key |
+|--------|---------|--------|------------|
+| **DocLayNet** | 11 | IBM DocLayNet dataset | `doclaynet` |
+| **DocStructBench** | 10 | DocLayout-YOLO training data | `docstructbench` |
+| **PubLayNet** | 5 | PubLayNet dataset | `publaynet` |
+| **Docling (DocItemLabel)** | 23 | `docling-core` library | `docling` |
+| **D4LA** | 27 | VGT/ICCV 2023 | `d4la` |
+| **DocSynth300K** | 10 | Synthetic (DocStructBench names) | `docsynth300k` |
+
+### Canonical Class Hierarchy (57 classes)
+
+The canonical superset organizes all layout labels into a tree with DocLayNet as root:
+
+| DocLayNet Parent | Extensions (child classes) | Source Schemas |
+|-----------------|---------------------------|----------------|
+| **CAPTION** (0) | FIGURE_CAPTION, TABLE_CAPTION, FORMULA_CAPTION, TABLE_NAME, FIGURE_NAME | DocStructBench, D4LA |
+| **FOOTNOTE** (1) | TABLE_FOOTNOTE, REFERENCE | DocStructBench, Docling, D4LA |
+| **FORMULA** (2) | ISOLATE_FORMULA, EQUATION | DocStructBench, D4LA |
+| **LIST_ITEM** (3) | LIST_TEXT, REGION_LIST, DOCUMENT_INDEX, CATALOG, ORDERED_LIST, UNORDERED_LIST | D4LA, Docling |
+| **PAGE_FOOTER** (4) | PAGE_FOOTER_D4LA, PAGE_NUMBER | D4LA |
+| **PAGE_HEADER** (5) | PAGE_HEADER_D4LA, LETTERHEAD | D4LA |
+| **PICTURE** (6) | FIGURE, CHART | DocStructBench, PubLayNet, Docling, D4LA |
+| **SECTION_HEADER** (7) | PARA_TITLE, REGION_TITLE | D4LA |
+| **TABLE** (8) | *(no extensions)* | All 6 schemas |
+| **TEXT** (9) | PLAIN_TEXT, PARA_TEXT, OTHER_TEXT, CODE, HANDWRITTEN_TEXT, PARAGRAPH, KEY_VALUE_REGION, LETTER_DEAR, LETTER_SIGN, ABSTRACT, AUTHOR, DATE, NUMBER, QUESTION, REGION_KV | DocStructBench, Docling, D4LA |
+| **TITLE** (10) | DOC_TITLE | D4LA |
+| **FORM** (new) | CHECKBOX_SELECTED, CHECKBOX_UNSELECTED, GRADING_SCALE, EMPTY_VALUE | Docling |
+| **ABANDONED** (new) | *(standalone)* | DocStructBench, DocSynth300K |
+| **UNKNOWN** (new) | *(standalone)* | Fallback for unrecognized labels |
+
+**Coarsening rule**: Any extended class maps to its DocLayNet parent by walking the `parent` chain. For example, `FIGURE_CAPTION` → `CAPTION` (index 0). Classes under FORM, ABANDONED, and UNKNOWN have no DocLayNet ancestor and map to `UNKNOWN` when coarsened.
+
+### Core Implementation
+
+| Class | Module | Purpose |
+|-------|--------|---------|
+| `LayoutTaxonomy` | `schema_utils/layout_taxonomy.py` | Config-driven conversion engine |
+| `ConversionResult` | `schema_utils/layout_taxonomy.py` | Frozen dataclass with loss tracking |
+| `get_default_taxonomy()` | `schema_utils/layout_taxonomy.py` | Module-level singleton |
+
+**Configuration**: [`config/layout_taxonomy.yaml`](../../../../../config/layout_taxonomy.yaml)
+
+**Key Features**:
+
+- Hot-reload without restart (`LayoutTaxonomy.reload()`)
+- Lossy conversion tracking (`ConversionResult.is_lossy`, `.loss_description`)
+- Configurable mask channels (`get_mask_channel_count("docling")` returns 23)
+- All-schema alias normalization (e.g., `list-item`, `list_item`, `listitem` all resolve)
+- DocLayNet index map includes all known labels from all schemas (144 entries -> 0-10)
+- Batch annotation conversion (`convert_annotations()` for annotation list processing)
+
+### Production Runtime Integration
+
+The taxonomy integrates with four production modules:
+
+| Module | Integration | Purpose |
+|--------|-------------|---------|
+| `DocLayoutClass` | `.to_canonical()` method | Normalize YOLO model output to canonical names |
+| `LayoutMaskGenerator` | Taxonomy-driven `CLASS_MAPPING` via `build_doclaynet_index_map()` or `build_mask_index_map(schema)` | Configurable mask channels per schema |
+| `DocLayoutIntegration` | `_normalize_to_canonical()` | Canonical complexity weights for structural scoring |
+| `ElementCategory` | `.from_canonical()` classmethod | Schema-level taxonomy bridge |
+
+**LayoutMaskGenerator schema configurability**: The mask generator accepts a `target_schema` parameter (default `"doclaynet"`) to control how many mask channels are produced and which class-to-index mapping is used. When `target_schema="doclaynet"`, it produces 11-channel masks using `build_doclaynet_index_map()` (all schema labels mapped to 0-10). For other schemas (e.g., `"docling"` with 23 channels), it uses `build_mask_index_map(schema)`.
+
+**ELEMENT_COMPLEXITY_WEIGHTS**: Complexity scoring in `DocLayoutIntegration` uses canonical taxonomy class names as keys (e.g., `TABLE`, `FIGURE`, `ISOLATE_FORMULA`, `CHART`, `HANDWRITTEN_TEXT`), enabling consistent weighting regardless of which detection model or schema produced the labels.
+
+### Standardization Tools
+
+| Tool | Location | Purpose |
+|------|----------|---------|
+| `imgprep layout list` | `cli_layout.py` | Show all schemas and class counts |
+| `imgprep layout compare <src> <tgt>` | `cli_layout.py` | Side-by-side mapping with loss indicators |
+| `standardize_layout_labels.py` | `scripts/` | Batch enrichment of existing metadata |
+| `audit_layout_labels.py` | `scripts/` | Coverage audit report across all datasets |
+
+### Tests
+
+- **File**: [`tests/unit/test_layout_taxonomy.py`](../../../../../tests/unit/test_layout_taxonomy.py)
+- **Count**: 147 tests covering all 6 schemas, round-trips, lossy flagging, aliases, mask indices
 
 ---
 
@@ -651,7 +801,7 @@ PYTHONPATH=$PWD:$PYTHONPATH python scripts/aggregate_layer2_metadata.py \
 | smartdoc-qa | 4,260 | Camera (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
 | dibco | 212 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
 | funsd | 199 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
-| sroie | 2,043 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| sroie | 973 | Camera/Scanner | FIN | - | ⭐⭐ Partial (needs Layer 2 rebuild) |
 | tobacco800 | 1,290 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
 | ohr-bench | 8,303 | Unknown | UNK | - | ⭐ Minimal metadata |
 | ... | ... | ... | ... | ... | 10 more with minimal metadata |
@@ -754,6 +904,11 @@ imgprep annotation stats
 imgprep annotation export --format parquet
 imgprep annotation verify-integrity
 imgprep annotation metrics  # Prometheus metrics endpoint
+
+# Layout taxonomy
+imgprep layout list                              # Show 6 schemas with class counts
+imgprep layout compare docstructbench doclaynet  # Side-by-side mapping with loss indicators
+imgprep layout compare docling d4la --format json
 ```
 
 ### Dataset Download Scripts
@@ -774,8 +929,16 @@ imgprep annotation metrics  # Prometheus metrics endpoint
 | `annotation.workflow.pipeline` | 1 & 2 | CPU/GPU separated pipeline | `annotation/workflow/pipeline.py` |
 | `annotation.parsers.*` | 1 | Dataset-specific parsing | `annotation/parsers/` |
 | `annotation.enrichment.manager` | 2 | Provider orchestration | `annotation/enrichment/manager.py` |
+| `schema_utils.layout_taxonomy` | 2 | Cross-schema layout label conversion | `schema_utils/layout_taxonomy.py` |
 | `annotation.storage.parquet_writer` | Output | Partitioned Parquet | `annotation/storage/parquet_writer.py` |
 | `build_training_labels.py` | 3 | Training-ready labels | `scripts/build_training_labels.py` |
+
+### Layout Standardization Scripts
+
+| Script | Purpose | CLI |
+|--------|---------|-----|
+| [`standardize_layout_labels.py`](../../../../../scripts/standardize_layout_labels.py) | Batch enrich metadata with canonical layout labels | `--dataset X --source-schema Y --dry-run` |
+| [`audit_layout_labels.py`](../../../../../scripts/audit_layout_labels.py) | Coverage audit across all datasets | `--metadata-dir /mnt/e/.../json --output report.txt` |
 
 ### Compatibility Layer
 
@@ -1056,7 +1219,7 @@ tests/
 
 | Workstream | Consumed Artifacts | Purpose |
 |------------|--------------------|---------|
-| **2. Production Model Training** | `parquet/`, images | Train ResNet teacher/student |
+| **2. Production Model Training** | `parquet/`, images | Train MobileNetV4-Conv-S + SigLIP 2 NAFlex multi-task models on 10 purpose-built datasets (~503K total) |
 | **4. Pseudo-Labeling** | `parquet/`, images | Apply ensemble labeling |
 | **5. Labeling & Benchmarking Models** | Raw images, metadata | Train labeling models |
 | **8. Synthetic Data Generation** | Clean images | Degradation source material |
@@ -1142,6 +1305,7 @@ tests/
 | `annotation/workflow/pipeline.py` | Pipeline Architecture |
 | `annotation/storage/parquet_writer.py` | Storage Strategy |
 | `annotation/monitoring/metrics.py` | Monitoring Integration |
+| `schema_utils/layout_taxonomy.py` | Layout Label Taxonomy |
 | `build_training_labels.py` | Layer 3, Degradation Index, Anchor Score |
 
 ---

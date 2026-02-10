@@ -115,7 +115,7 @@ Select Top N Models for Fine-Tuning
 |------|-------|--------------|--------|------------|
 | 1 | PyIQA-QualiCLIP | 0.2216 | [0.144, 0.288] | iqa_pretrained |
 | 2 | PyIQA-MUSIQ | 0.2098 | [0.136, 0.275] | iqa_pretrained |
-| 3 | ResNet18-ImageNet-IQA | 0.0963 | [0.038, 0.155] | iqa_cnn |
+| 3 | ResNet18-ImageNet-IQA *(legacy baseline; superseded by SigLIP 2 NAFlex multi-task)* | 0.0963 | [0.038, 0.155] | iqa_cnn |
 | 4 | Swin-Tiny-ImageNet-IQA | 0.0474 | [-0.008, 0.099] | iqa_cnn |
 
 **Key Insight**: QualiCLIP and MUSIQ outperform CNN baselines by 2-3x → prioritize for fine-tuning
@@ -144,19 +144,67 @@ Compare PLCC to Phase 1 Baseline
 Graduate to Production if Improvement > Threshold
 ```
 
-**Production Graduation Criteria**:
+**Production Graduation Criteria** (Multi-Metric Per-Head Thresholds):
 
-- **Target PLCC**: > 0.65 (3x improvement over QualiCLIP baseline)
-- **Minimum Improvement**: +10% PLCC over baseline
-- **Confidence Interval**: 95% CI lower bound > baseline mean
+The SigLIP 2 NAFlex multi-task model has 16 heads across 5 groups. Each head has an independent graduation threshold:
+
+| Head Group | Head | Metric | Graduation Threshold |
+|------------|------|--------|---------------------|
+| **IQA** | overall, sharpness, color, noise, etc. | PLCC | > 0.65 |
+| **Orientation** | 4-class orientation | Accuracy | > 95% |
+| **Skew** | Continuous angle regression | MAE | < 0.5 degrees |
+| **Script** | Multi-script classification | Accuracy | > 90% |
+| **Handwriting** | Binary detection | F1 | > 0.85 |
+
+- **Aggregate Graduation Score**: Weighted average across all heads (IQA heads weighted higher for IQA-focused deployment)
+- **Minimum Improvement**: +10% on aggregate score over baseline
+- **Confidence Interval**: 95% CI lower bound > baseline mean per head
+- **No-Regression Rule**: No individual head may regress beyond 2% of its baseline
+
+> **Legacy**: Previous single-metric graduation used PLCC > 0.65 only. The new multi-metric approach ensures all task heads meet quality standards independently.
 
 **Example**:
 
 - Baseline: QualiCLIP PLCC = 0.2216
-- Fine-Tuned: QualiCLIP-OHRBench PLCC = 0.68 [0.65, 0.71]
-- Improvement: 207% → **Graduate to Production** ✅
+- Fine-Tuned SigLIP 2 NAFlex: IQA PLCC = 0.68, Orientation Acc = 97%, Skew MAE = 0.3, Script Acc = 92%, Handwriting F1 = 0.88
+- All per-head thresholds met → **Graduate to Production** ✅
 
 **Decision Impact**: Gates deployment to Workstream 1 (Production Runtime)
+
+---
+
+### Multi-Task Arena Evaluation
+
+The SigLIP 2 NAFlex multi-task model (16 heads, 5 groups) requires independent benchmarking per head using dataset-specific test sets:
+
+**Per-Head Benchmark Datasets**:
+
+| Head Group | Heads | Benchmark Dataset | Metric | Test Set Size |
+|------------|-------|-------------------|--------|---------------|
+| **IQA** | overall, sharpness, color, noise, etc. | DIQA-5000, OHR-Bench | PLCC, SRCC | 1,000+ |
+| **Orientation** | 4-class (0/90/180/270) | Orientation-50K test split | Accuracy | 5,000 |
+| **Skew** | Continuous angle (regression) | Skew-40K test split | MAE (degrees) | 4,000 |
+| **Script** | Multi-script classification | Synth-multiscript test split | Accuracy | 10,000 |
+| **Handwriting** | Binary detection | Handwriting-60K test split | F1 | 6,000 |
+
+**Evaluation Process**:
+
+1. Each head is benchmarked independently against its task-specific test set
+2. Per-head metrics are computed with bootstrapped 95% confidence intervals
+3. The aggregate graduation score is a weighted average across all heads
+4. Any head failing its threshold blocks graduation (no partial deployment)
+
+**MobileNetV4-Conv-S Evaluation** (~3ms, 3 heads):
+
+The lightweight pre-correction model is evaluated separately:
+
+| Head | Metric | Graduation Threshold |
+|------|--------|---------------------|
+| Orientation (4-class) | Accuracy | > 95% |
+| Skew (regression) | MAE | < 0.5 degrees |
+| Resolution quality (0-1) | PLCC | > 0.60 |
+
+**Confidence-Based Classical Fallback**: When MobileNetV4 or SigLIP 2 confidence drops below head-specific thresholds, the system falls back to classical CV detectors for that task. The Arena tracks fallback rate as an operational metric.
 
 ---
 
@@ -544,18 +592,17 @@ torch.backends.cudnn.benchmark = False
 
 ### Workstream 2: Production Model Training
 
-**Arena Input**: Newly trained models (teacher, student, fine-tuned)
+**Arena Input**: Newly trained models (SigLIP 2 NAFlex multi-task, MobileNetV4-Conv-S, fine-tuned)
 
-**Arena Output**: PLCC/SRCC benchmarks, graduation decision
+**Arena Output**: Per-head metric benchmarks, multi-metric graduation decision
 
-**Decision**: Deploy to production if PLCC > threshold
+**Decision**: Deploy to production if all per-head thresholds met (IQA PLCC > 0.65, Orientation accuracy > 95%, Skew MAE < 0.5, Script accuracy > 90%, Handwriting F1 > 0.85)
 
 **Example**:
 
-- Train ResNet-50 teacher on OHR-Bench
-- Arena benchmark: PLCC = 0.72 [0.69, 0.75]
-- Baseline: QualiCLIP PLCC = 0.22
-- Improvement: 227% → **Graduate to Production** ✅
+- Train SigLIP 2 NAFlex on 10 purpose-built datasets (~503K images)
+- Arena benchmark: IQA PLCC = 0.72, Orientation Acc = 97%, Skew MAE = 0.3, Script Acc = 93%, Handwriting F1 = 0.89
+- All per-head thresholds met → **Graduate to Production** ✅
 
 ---
 
@@ -598,17 +645,18 @@ torch.backends.cudnn.benchmark = False
 
 **Model Arena serves as the quality gate for Production Runtime deployment:**
 
-**Graduation Criteria** (Phase 2 Validation):
+**Graduation Criteria** (Phase 2 Validation - Multi-Metric Per-Head):
 
-- **Target PLCC**: > 0.65 (3x improvement over QualiCLIP baseline of 0.22)
-- **Minimum Improvement**: +10% PLCC over baseline
-- **Confidence Interval**: 95% CI lower bound > baseline mean
+- **IQA PLCC**: > 0.65 | **Orientation Accuracy**: > 95% | **Skew MAE**: < 0.5 degrees
+- **Script Accuracy**: > 90% | **Handwriting F1**: > 0.85
+- **Minimum Improvement**: +10% on aggregate weighted score over baseline
+- **Confidence Interval**: 95% CI lower bound > baseline mean per head
 
 **Deployment Decision Process**:
 
 1. **Training Complete** (Workstream 2) → Model exported to registry
 2. **Arena Benchmark** (Workstream 6 Phase 2) → Validate on DIQA-5000 test set
-3. **Graduation Check**: PLCC > 0.65 AND improvement > 10%?
+3. **Graduation Check**: All per-head thresholds met AND aggregate improvement > 10%?
    - ✅ **YES**: Deploy to Production Runtime (Workstream 1)
    - ❌ **NO**: Return to training with analysis of failure modes
 
@@ -620,25 +668,24 @@ torch.backends.cudnn.benchmark = False
 **Example Workflow**:
 
 ```text
-Workstream 2 (Training): ResNet-18 student trained on OHR-Bench
+Workstream 2 (Training): SigLIP 2 NAFlex multi-task trained on 10 purpose-built datasets (~503K images)
     ↓
-Workstream 6 (Arena Phase 2): Benchmark on DIQA-5000
-    Result: PLCC = 0.68 [0.65, 0.71]
-    Baseline: QualiCLIP PLCC = 0.22
-    Improvement: 209% ✅
+Workstream 6 (Arena Phase 2): Per-head benchmark on task-specific test sets
+    Result: IQA PLCC = 0.68, Orientation Acc = 97%, Skew MAE = 0.3, Script Acc = 92%, Handwriting F1 = 0.88
+    All per-head thresholds met ✅
     ↓
-Workstream 1 (Production Runtime): Deploy student model
+Workstream 1 (Production Runtime): Deploy MobileNetV4-Conv-S + SigLIP 2 NAFlex pipeline
     ↓
-Workstream 7 (Monitoring): Track PLCC = 0.68 (production baseline set)
+Workstream 7 (Monitoring): Track per-head baselines (16 independent metrics)
     ↓ (after 3 months)
-Drift detected: PLCC = 0.61 (10% drop) → Trigger retraining
+Drift detected: Script Accuracy dropped 92% → 85% (below 90% threshold) → Trigger head-specific retraining
     ↓
-Workstream 2 (Retraining): Augmented dataset with active learning samples
+Workstream 2 (Retraining): Fine-tune Script head with augmented dataset (freeze other heads)
     ↓
-Workstream 6 (Arena Phase 3): Validate recovery
-    Result: PLCC = 0.70 [0.67, 0.73] ✅
+Workstream 6 (Arena Phase 3): Validate recovery on all heads
+    Result: Script Acc = 93%, all other heads stable ✅
     ↓
-Workstream 1 (Production Runtime): Re-deploy updated model
+Workstream 1 (Production Runtime): Re-deploy updated multi-task model
 ```
 
 See [Production Runtime](../production-runtime/index.md) for deployment procedures.
@@ -680,7 +727,7 @@ class LayoutMetrics:
 
 # 3. Run benchmark
 dataset = DocLayNetDataset(split="test")
-backend = create_backend("pytorch", model_path="models/doclayout_yolo.pth")
+backend = create_backend("pytorch", model_path="models/docling_layout_heron.pth")
 runner = ArenaRunner()
 result = runner.run(backend, dataset, config)
 ```

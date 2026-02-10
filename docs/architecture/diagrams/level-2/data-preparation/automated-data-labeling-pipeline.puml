@@ -60,8 +60,8 @@ package "annotation.workflow (Three-Stage Pipeline)" as workflow <<workflow>> {
     }
 
     component "GPU Stage\n(Single Thread)" as gpu_stage {
-        [Batched YOLO\nInference]
-        [Batched SigLIP\nPrediction]
+        [Batched Docling Layout\nInference]
+        [Batched SigLIP 2\nMulti-Task Prediction]
     }
 
     component "IO Stage\n(Checkpointed)" as io_stage {
@@ -99,8 +99,8 @@ package "annotation.enrichment (Layer 2: ENRICHMENT)" as layer2 <<enrichment>> {
     }
 
     component "Providers\n(providers/)" as providers {
-        [YOLOProvider\n(layout detection)]
-        [SigLIPProvider\n(quality scores)]
+        [DoclingLayoutProvider\n(layout detection)]
+        [SigLIP2Provider\n(16-head multi-task)]
         [Built-in\n(tier 0-1 defaults)]
     }
 
@@ -228,7 +228,7 @@ note right of layer2
     **Provider Pattern**
     Tier 0: By construction (content flags)
     Tier 1: Existing annotations (COCO, MOS)
-    Tier 2: ML inference (YOLO, SigLIP)
+    Tier 2: ML inference (Docling Layout, SigLIP 2)
     Tier 3: Heuristics (fallback)
 end note
 

@@ -98,11 +98,12 @@ package "Layer 2: ENRICHMENT" as L2 #ENRICHMENT_COLOR {
         [Quality Normalization\nquality_overall (0-1)\nlayout_detections]
         [Content Flags\nhas_table, has_formula\nhas_handwriting, has_figure]
         [Capture Method\ncapture_method, domain\nresolution_category]
+        [Multi-Task Namespace\nmetadata.data.multi_task\ncolor_mode, document_age]
     }
 
     rectangle "Provider Pattern (V2)" as Providers {
-        [YOLOProvider\n11 DocLayNet classes\nlayout detection]
-        [SigLIPProvider\nquality_overall\nbatch inference]
+        [DoclingLayoutProvider\negret-xlarge / heron\nlayout detection]
+        [SigLIP2Provider\n16-head multi-task\n5 groups batch inference]
         [Built-in Tiers\ntier_0 (by construction)\ntier_1 (existing annotations)]
     }
 
@@ -124,7 +125,7 @@ note right of L2
   **Provider Tiers:**
   Tier 0: By construction (content flags)
   Tier 1: Existing annotations (COCO, MOS)
-  Tier 2: ML inference (YOLO, SigLIP)
+  Tier 2: ML inference (Docling Layout, SigLIP 2)
   Tier 3: Heuristics (fallback)
 
   **Schema Utilities:**

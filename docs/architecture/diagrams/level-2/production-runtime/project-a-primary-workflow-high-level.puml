@@ -34,9 +34,11 @@ partition "Text Gate" {
 
 partition "IQA Analysis" {
   :Classical IQA\n(blur, noise, contrast, skew);
-  :ML IQA (Student)\nResNet-18 inference;
-  if (High uncertainty?) then (yes)
-    :Teacher inference\n(ResNet-50);
+  :MobileNetV4-Conv-S\npre-correction (3 heads:\norientation, skew, resolution);
+  :Apply pre-corrections\n(orientation, deskew, resolution);
+  :SigLIP 2 NAFlex\nmulti-task analysis\n(16 heads, 5 groups);
+  if (Low confidence heads?) then (yes)
+    :Classical fallback\n(6 head-specific rules);
   endif
 }
 

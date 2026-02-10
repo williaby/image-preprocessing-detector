@@ -1,5 +1,5 @@
  @startuml
-title Project A - Teacher → Student Distillation Workflow
+title Project A - Multi-Task Training Pipeline (3-Step Virtuous Cycle)
 
 skinparam dpi 150
 skinparam shadowing false
@@ -15,38 +15,71 @@ skinparam note {
 start
 
 partition "Inputs" {
-  :Teacher model\nResNet-50 (trained IQA);
-  :Student model init\nResNet-18 (random or pre-trained);
-  :Distillation dataset\n(prepared DI pipeline);
+  :10 purpose-built datasets\n(~503K total images);
+  note right
+    Orientation (50K), Skew (40K),
+    Resolution (30K), IQA (16K+100K),
+    Script (108K), Handwriting (60K),
+    Capture (50K), Shadow (15K),
+    Warping (20K), Code (10K)
+  end note
 }
 
-partition "Teacher Pass (Offline or Batched)" {
-  :Run teacher forward passes\non distillation dataset\n(batched, GPU preferred);
-  :Collect teacher logits\nfor all IQA heads\n(blur, noise, skew,\nillumination, compression);
-  :Optionally store\nteacher predictions\nfor repeated reuse;
-}
-
-partition "Soft Target Construction" {
-  :Apply temperature scaling (T)\nsoftmax(teacher_logits / T);
-  :Construct soft labels\n(one per IQA head);
-  :Retain hard labels\n(ground truth IQA / class\nwhere available);
-}
-
-partition "Student Training Loop" {
-  :Define loss function:\nL = α * KL(teacher||student)\n  + β * CE(hard_labels, student);
-  :Train ResNet-18\non same inputs as teacher\nusing combined loss;
-  :Monitor metrics\n- distillation loss\n- accuracy vs hard labels\n- correlation vs teacher;
-}
-
-partition "Evaluation & Export" {
-  :Evaluate student on\nheld-out validation set;
-  :Compare student vs teacher\n- accuracy\n- calibration\n- correlation with IQA labels;
-  if (Student meets\nacceptance criteria?) then (yes)
-    :Export student to ONNX\nand register as\nprimary runtime IQA model;
+partition "Step 1: MobileNetV4-Conv-S Bootstrap" {
+  :Initialize MobileNetV4-Conv-S\n(~4M params, pretrained);
+  :Train 3 heads on synthetic\nground truth labels:
+  - Orientation (4-class: 0/90/180/270)
+  - Skew regression (±10°)
+  - Resolution quality (0-1);
+  :Multi-task loss:\nCE(orientation) + MSE(skew)\n+ MSE(resolution);
+  if (Orientation acc > 95%?\nSkew MAE < 0.5°?\nResolution MAE < 0.1?) then (yes)
+    :Save MobileNetV4\nbootstrap checkpoint;
   else (no)
-    :Adjust α/β, temperature T,\nor architecture;\nrepeat training;
+    :Adjust hyperparameters;\nretrain;
   endif
 }
+
+partition "Step 2: SigLIP 2 NAFlex Multi-Task" {
+  :Load SigLIP 2 NAFlex backbone\n(~88M params, frozen ViT-B/16);
+  :Attach 16 task heads\nacross 5 groups:
+  G1: IQA (6 regression)
+  G2: Script (1 classification)
+  G3: Orientation+Skew (1 cls + 1 reg)
+  G4: Handwriting (3 heads)
+  G5: Page Attrs (4 heads);
+  :Train on all 10 datasets\n(frozen backbone, heads only);
+  :Weighted multi-task loss\n(per-group weights);
+  if (All heads pass\ngraduation thresholds?) then (yes)
+    :Save SigLIP 2\nmulti-task checkpoint;
+  else (no)
+    :Adjust loss weights\nor head architecture;\nretrain;
+  endif
+}
+
+partition "Step 3: MobileNetV4 Distillation Refinement" {
+  :Generate SigLIP 2 soft labels\nfor orientation, skew, resolution\n(from Groups 3+5);
+  :Re-train MobileNetV4-Conv-S\nusing KL-divergence (T=3)\nfrom SigLIP 2 soft labels;
+  :Loss: α×KL(SigLIP2||MobileNetV4)\n+ (1-α)×Hard labels\n(α=0.7, T=3);
+  if (Orientation acc > 98%?\nSkew MAE < 0.3°?) then (yes)
+    :Save MobileNetV4\ndistilled checkpoint;
+  else (no)
+    :Adjust α, T, or\nlearning rate;\nretrain;
+  endif
+}
+
+partition "Export & Registration" {
+  :Export SigLIP 2 to ONNX\n(16 output heads);
+  :Export MobileNetV4 to ONNX\n(3 output heads);
+  :Register in model registry\n(GCS bucket);
+  :Arena validation\n(per-head thresholds);
+}
+
+note right
+  **PLANNED (Deferred)**:
+  Distillation cascade for edge/mobile:
+  SigLIP 2 → MobileCLIP-2 S4 (~35M)
+  → MobileCLIP-2 S0 (~11.4M)
+end note
 
 stop
 

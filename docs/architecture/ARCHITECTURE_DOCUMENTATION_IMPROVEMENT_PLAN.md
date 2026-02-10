@@ -14,10 +14,12 @@ authors:
 - name: "Byron Williams"
 purpose: Documentation for Architecture Documentation Improvement Plan.
 ---
-**Status**: 🟢 Active
+**Status**: 🟡 Partially Superseded
 **Priority**: High
 **Target Completion**: 6 weeks
 **Multi-Model Review Date**: 2025-01-16
+
+> **Architecture Migration Note**: This improvement plan was created before the migration from ResNet-50/18 teacher-student to MobileNetV4-Conv-S + SigLIP 2 NAFlex multi-task pipeline. Example code snippets below reference the old architecture. The actual documentation has been updated to reflect the new pipeline. See [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) for current architecture.
 **Reviewers**: Gemini 3 Pro, GPT-5.1, DeepSeek R1
 
 ---

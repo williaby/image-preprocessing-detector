@@ -155,61 +155,69 @@ partition "Batch Inference" {
 |Model Training|
 
 partition "Production Model Training" {
-  :Train ResNet-50 Teacher;
+  :Train SigLIP 2 NAFlex Multi-Task;
   note right
     **Purpose:**
-    High-capacity model for
-    difficult cases
+    Full document analysis model
+    16 heads across 5 groups
+    (~50ms GPU inference)
 
     **Data:**
-    Pseudo-labeled datasets
+    10 purpose-built datasets (~503K)
 
     **Source:**
-    - src/.../training/teacher_trainer.py
-    - src/.../models/resnet_teacher.py
+    - src/.../training/siglip2_trainer.py
+    - src/.../models/siglip2_naflex.py
 
     **Scripts:**
-    - modal/train_phase2_iqa.py
+    - modal/train_siglip2_multitask.py
   end note
 
-  :Knowledge Distillation;
+  :Train MobileNetV4-Conv-S;
   note right
-    **Process:**
-    - Temperature-scaled soft targets
-    - Combined KL-div + CE loss
-    - Student mimics teacher
+    **Process (3-step virtuous cycle):**
+    1. Train on synthetic GT labels
+    2. Train SigLIP 2 multi-task
+    3. Re-train with SigLIP 2 soft labels
+       (KL-divergence, T=3)
 
     **Workflow:**
     [[project-a-distillation.puml]]
 
     **Source:**
-    - src/.../training/distillation_loss.py
+    - src/.../training/mobilenetv4_trainer.py
     - src/.../training/generate_soft_labels.py
 
     **ADR:**
     [[docs/ADRs/0028-resnet-teacher-student.md]]
+    (SUPERSEDED by SigLIP 2 multi-task)
   end note
 
-  :Train ResNet-18 Student;
+  :Export MobileNetV4 Pre-Correction;
   note right
     **Purpose:**
-    Production-optimized model
-    Fast inference (≤40ms CPU)
+    Fast pre-correction model
+    3 heads (~3ms inference)
+    orientation, skew, resolution quality
 
     **Source:**
-    - src/.../training/student_trainer.py
-    - src/.../models/resnet_student.py
+    - src/.../training/mobilenetv4_trainer.py
+    - src/.../models/mobilenetv4_conv_s.py
 
     **Scripts:**
-    - modal/train_student_distillation.py
+    - modal/train_mobilenetv4_precorrection.py
   end note
 }
 
 partition "Layout Model Training" {
-  :Fine-tune DocLayout-YOLO;
+  :Fine-tune Docling Layout Models;
   note right
     **Dataset:**
-    DocLayNet (80K pages, 11 classes)
+    DocLayNet (80K pages, 11+ classes)
+
+    **Models:**
+    - docling-layout-egret-xlarge (accuracy)
+    - docling-layout-heron (speed)
 
     **Scope:**
     Full layout analysis including
@@ -217,11 +225,7 @@ partition "Layout Model Training" {
     (moved from Project B)
 
     **Scripts:**
-    - modal/train_phase3_doclayout_yolo.py
-
-    **GAP IDENTIFIED:**
-    No dedicated workflow diagram
-    for layout model training
+    - modal/train_docling_layout.py
   end note
 }
 
@@ -292,32 +296,35 @@ partition "Document Processing" {
       src/.../detection/iqa_classical.py
     end note
   fork again
-    :ML IQA Student\n(ResNet-18);
+    :MobileNetV4-Conv-S\nPre-Correction (3 heads);
     note left
       **Source:**
       src/.../detection/iqa_ml.py
+      **Heads:** orientation, skew,
+      resolution quality (~3ms)
     end note
 
-    if (High uncertainty?) then (yes)
-      :Teacher inference\n(ResNet-50);
-      note right
-        **Escalation Logic:**
-        [[project-a-device-selection-flow.puml]]
+    :SigLIP 2 NAFlex\nMulti-Task (16 heads);
+    note right
+      **5 Head Groups (~50ms):**
+      IQA, Script, Orientation+Skew,
+      Handwriting, Page Attrs
 
-        **Source:**
-        - src/.../orchestration/device_orchestrator.py
+      **Fallback:**
+      Confidence-based classical
+      fallback (6 head-specific rules)
 
-        **ADR:**
-        [[docs/ADRs/0036-device-priority.md]]
-      end note
-    endif
+      **Source:**
+      - src/.../detection/iqa_ml.py
+      - src/.../orchestration/device_orchestrator.py
+    end note
   fork again
-    :Layout Analysis\n(DocLayout-YOLO);
+    :Layout Analysis\n(Docling Layout Models);
     note right
       **Full Layout Detection:**
-      - 11 DocLayNet classes
-      - Reading order prediction
-      - Table structure extraction
+      - 11+ DocLayNet classes
+      - docling-layout-egret-xlarge (accuracy)
+      - docling-layout-heron (speed)
 
       **Source:**
       - src/.../detection/doclayout_yolo.py

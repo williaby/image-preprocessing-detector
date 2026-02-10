@@ -188,8 +188,8 @@ This section maps pseudo-labeling pipeline stages to implementation files with L
    - `stage1_deqa_inference.py`: DIQA inference pipeline
    - `stage1_deqa_tarball_inference.py`: Batch processing for tarballs
 
-2. **Teacher Model Inference** (419 lines, 14.2%):
-   - `teacher_inference.py`: ResNet-50 teacher model inference
+2. **Production Model Inference** (419 lines, 14.2%):
+   - `teacher_inference.py`: Production model inference (legacy ResNet-50, migrating to SigLIP 2 NAFlex)
    - Used for selective high-capacity predictions
 
 3. **Supporting Infrastructure** (~661 lines, 22.4%):

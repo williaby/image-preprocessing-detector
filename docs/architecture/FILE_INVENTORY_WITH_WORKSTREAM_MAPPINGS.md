@@ -37,7 +37,7 @@ title: Complete File Inventory with Workstream Mappings
 | **WS5: Labeling & Benchmarking** | 0 | 0 | ⚠️ Planned (not implemented) |
 | **WS6: Model Arena** | 33 | 6,340 | ✅ Assigned |
 | **WS7: Monitoring & Drift** | 7 | 5,348 | ✅ Assigned |
-| **WS8: Synthetic Generation** | 5 | 1,066 | ✅ Assigned |
+| **WS8: Synthetic Generation** | 5+ | ~1,500+ | ✅ Assigned (expanded with multi-task additions) |
 | **NA - Tests** | ~300 | ~15,000 | ℹ️ Excluded from LOC |
 | **NA - Documentation** | ~200 | ~8,000 | ℹ️ Excluded from LOC |
 | **NA - Configuration** | ~50 | ~2,000 | ℹ️ Excluded from LOC |
@@ -91,7 +91,7 @@ title: Complete File Inventory with Workstream Mappings
 | src/image_preprocessing_detector/detection/**init**.py | 190 | Module exports |
 | src/image_preprocessing_detector/detection/text_gate.py | 334 | Fast text presence detection (<10ms) |
 | src/image_preprocessing_detector/detection/iqa_classical.py | 2,844 | 8 classical CV detectors (skew, blur, contrast, noise, etc.) |
-| src/image_preprocessing_detector/detection/iqa_ml.py | 1,303 | Teacher-student ML IQA inference |
+| src/image_preprocessing_detector/detection/iqa_ml.py | 1,303 | ML IQA inference (legacy teacher-student; migrating to MobileNetV4 + SigLIP 2 multi-task pipeline) |
 | src/image_preprocessing_detector/detection/hybrid_iqa.py | 351 | Hybrid IQA (classical + ML fusion) |
 | src/image_preprocessing_detector/detection/advanced_detectors.py | 892 | Additional quality detectors |
 | src/image_preprocessing_detector/detection/discrepancy.py | 786 | Classical vs ML discrepancy detection |
@@ -180,12 +180,14 @@ title: Complete File Inventory with Workstream Mappings
 **Total LOC**: 7,058
 **Level 2 Doc**: [model-training/index.md](diagrams/level-2/model-training/index.md)
 
-### Training Scripts (1,833 LOC)
+### Training Scripts (1,833 LOC) - LEGACY
+
+> **NOTE**: These ResNet teacher/student training scripts are legacy. The new two-model pipeline uses MobileNetV4-Conv-S (~3ms, 3 heads) and SigLIP 2 NAFlex (~50ms, 16 heads, 5 groups). New training scripts are planned per [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md). Training data will come from 10 purpose-built datasets (~503K total images) per [DATASET_DIVERSITY_REQUIREMENTS.md](../../planning/DATASET_DIVERSITY_REQUIREMENTS.md).
 
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
-| modal/train_phase2_iqa.py | 707 | Teacher training (ResNet-50, 50 epochs) |
-| modal/train_student_distillation.py | 779 | Student distillation (ResNet-18, 30 epochs) |
+| modal/train_phase2_iqa.py | 707 | Legacy: Teacher training (ResNet-50, 50 epochs) |
+| modal/train_student_distillation.py | 779 | Legacy: Student distillation (ResNet-18, 30 epochs) |
 | modal/export_phase7_onnx.py | 347 | ONNX export + validation |
 
 **Subtotal**: 1,833 lines
@@ -212,8 +214,8 @@ title: Complete File Inventory with Workstream Mappings
 | File Path | LOC | Workflow Step |
 |-----------|-----|---------------|
 | src/image_preprocessing_detector/models/**init**.py | 86 | Module exports |
-| src/image_preprocessing_detector/models/resnet_teacher.py | 293 | ResNet-50 architecture |
-| src/image_preprocessing_detector/models/resnet_student.py | 277 | ResNet-18 architecture |
+| src/image_preprocessing_detector/models/resnet_teacher.py | 293 | Legacy: ResNet-50 architecture (superseded by SigLIP 2 NAFlex) |
+| src/image_preprocessing_detector/models/resnet_student.py | 277 | Legacy: ResNet-18 architecture (superseded by MobileNetV4-Conv-S) |
 | src/image_preprocessing_detector/models/model_loader.py | 244 | Load models (ONNX, PyTorch, TorchScript) |
 | src/image_preprocessing_detector/models/model_optimizer.py | 1,435 | ONNX optimization, quantization |
 | src/image_preprocessing_detector/models/batch_inference.py | 622 | Batch inference utilities |
@@ -373,8 +375,8 @@ title: Complete File Inventory with Workstream Mappings
 
 ## WS8: Synthetic Data Generation
 
-**Total Files**: 5
-**Total LOC**: 1,066
+**Total Files**: 5+ (expanded with multi-task generation)
+**Total LOC**: ~1,500+ (expanded from 1,066 after multi-task additions to config.py, generator.py, augmentation_hybrid.py, schema_adapter.py, cli.py)
 **Level 2 Doc**: [synthetic-generation/index.md](diagrams/level-2/synthetic-generation/index.md)
 
 | File Path | LOC | Workflow Step |
@@ -384,7 +386,7 @@ title: Complete File Inventory with Workstream Mappings
 | src/image_preprocessing_detector/augmentation/genalog_degrader.py | 314 | Genalog wrapper (degradation application) |
 | benchmarks/adapters/synthetic_iqa_adapter.py | 422 | Synthetic benchmark adapter for Arena |
 
-**WS8 Total**: 1,066 lines ✅ (matches LOC extraction)
+**WS8 Total**: ~1,500+ lines (expanded with multi-task synthetic generation; LOC extraction pending recount)
 
 ---
 
@@ -493,7 +495,7 @@ grep -oP 'src/[^"]+' scripts/extract_workstream_loc.sh
 | WS5: Labeling & Benchmarking | 0 | 0 | ✅ |
 | WS6: Model Arena | 6,340 | 6,340 | ✅ |
 | WS7: Monitoring & Drift | 5,348 | 5,353 | ⚠️ ~0.1% variance |
-| WS8: Synthetic Generation | 1,066 | 1,066 | ✅ |
+| WS8: Synthetic Generation | 1,066 | ~1,500+ | ⚠️ Expanded (recount needed) |
 
 **Result**: ✅ All workstreams match within ±1%
 

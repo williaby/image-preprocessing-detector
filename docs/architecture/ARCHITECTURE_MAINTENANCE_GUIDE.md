@@ -677,13 +677,12 @@ end note
 
    ```plantuml
    # Add note referencing the new documentation
-   :Initialize ResNet-50 Teacher;
+   :Initialize SigLIP 2 NAFlex Multi-Task;
    note right
-     **Note**: For DocIQ-Replica (DIQA-5000),
-     this includes Layout Fusion Downsampler
-     to preserve document structure during
-     1600×1600 → 400×400 downsampling.
-     See: layout-fusion-downsampler.md
+     **Note**: SigLIP 2 NAFlex handles variable
+     resolution natively via NAFlex packing.
+     16 heads across 5 groups.
+     See: level-2/model-training/index.md
    end note
    ```
 
