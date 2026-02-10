@@ -117,10 +117,6 @@ class MetadataEnricher:
         if image_path is not None:
             return self._enrich_from_image(image_path)
 
-        # Text was provided but empty - try image fallback
-        if image_path is not None:
-            return self._enrich_from_image(image_path)
-
         # No usable input
         return _fallback_result("text", "No text or image available")
 

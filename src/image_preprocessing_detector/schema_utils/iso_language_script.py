@@ -554,7 +554,7 @@ def validate_script_code_for_ml(code: str) -> tuple[bool, str | None]:
         return False, f"Try '{normalized}' (normalized from '{code}')"
 
     # Check for case issues
-    for member in ISO15924Script:
+    for member in ISO15924Script.__members__.values():
         if member.value.lower() == code.lower():
             return False, f"Case mismatch: use '{member.value}' not '{code}'"
 

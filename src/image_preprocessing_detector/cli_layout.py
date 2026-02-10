@@ -89,18 +89,7 @@ def list_schemas() -> None:
 
     canonical_classes = taxonomy.get_canonical_classes()
     canonical_count = len(canonical_classes)
-    # DocLayNet top-level classes have doclaynet_index set
-    top_level = sum(
-        1
-        for cls in canonical_classes
-        if taxonomy.to_doclaynet_index(cls) is not None
-        and taxonomy.to_doclaynet(cls) != "UNKNOWN"
-    )
-
-    # More accurate: top-level are those with doclaynet_index directly
-    # Use the taxonomy's internal data for the count since the public
-    # API doesn't expose parent info directly. Count classes whose
-    # to_doclaynet returns themselves (they ARE the DocLayNet class).
+    # Top-level are those with doclaynet_index directly
     doclaynet_classes = taxonomy.get_schema_classes("doclaynet")
     top_level = len(doclaynet_classes)
     extensions = canonical_count - top_level
