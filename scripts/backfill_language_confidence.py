@@ -25,7 +25,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -153,10 +153,9 @@ def backfill_known_language(
         sample_data["openlid_script"] = openlid_result["script"]
         sample_data["openlid_confidence"] = openlid_result["confidence"]
         changes["openlid_confidence"] = openlid_result["confidence"]
-        changes["openlid_agrees"] = (
-            openlid_result["language"] == enrichment.get("language")
-            or openlid_result["script"] == enrichment.get("script")
-        )
+        changes["openlid_agrees"] = openlid_result["language"] == enrichment.get(
+            "language"
+        ) or openlid_result["script"] == enrichment.get("script")
 
     return changes
 
@@ -365,12 +364,14 @@ def process_dataset(
     if not dry_run:
         # Add backfill provenance to metadata root
         metadata.setdefault("backfill_history", [])
-        metadata["backfill_history"].append({
-            "operation": "language_confidence_backfill",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "enrichment_type": enrichment_type,
-            "stats": stats,
-        })
+        metadata["backfill_history"].append(
+            {
+                "operation": "language_confidence_backfill",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "enrichment_type": enrichment_type,
+                "stats": stats,
+            }
+        )
 
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)

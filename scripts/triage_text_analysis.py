@@ -23,7 +23,7 @@ import logging
 import time
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 logging.basicConfig(
@@ -69,6 +69,7 @@ CONFIDENCE_BINS = [
 @dataclass
 class TextAnalysisResult:
     """Result from text-based analysis."""
+
     sample_id: str
     text_length: int
 
@@ -98,7 +99,10 @@ def load_models():
     # Load fastText
     try:
         import fasttext
-        model_path = Path("/mnt/e/image_detection/models/language_detection/lid.176.bin")
+
+        model_path = Path(
+            "/mnt/e/image_detection/models/language_detection/lid.176.bin"
+        )
         if model_path.exists():
             fasttext.FastText.eprint = lambda x: None
             models["fasttext"] = fasttext.load_model(str(model_path))
@@ -109,6 +113,7 @@ def load_models():
     # Load lingua
     try:
         from lingua import LanguageDetectorBuilder
+
         models["lingua"] = LanguageDetectorBuilder.from_all_languages().build()
         logger.info("Loaded lingua detector")
     except ImportError:
@@ -180,11 +185,21 @@ def detect_scripts(text: str) -> tuple[list[str], dict[str, int]]:
     import unicodedata
 
     CHAR_TO_SCRIPT = {
-        "LATIN": "Latn", "GREEK": "Grek", "CYRILLIC": "Cyrl",
-        "ARABIC": "Arab", "HEBREW": "Hebr", "DEVANAGARI": "Deva",
-        "BENGALI": "Beng", "TAMIL": "Taml", "TELUGU": "Telu",
-        "THAI": "Thai", "HANGUL": "Hang", "HIRAGANA": "Hira",
-        "KATAKANA": "Kana", "HAN": "Hani", "CJK": "Hani",
+        "LATIN": "Latn",
+        "GREEK": "Grek",
+        "CYRILLIC": "Cyrl",
+        "ARABIC": "Arab",
+        "HEBREW": "Hebr",
+        "DEVANAGARI": "Deva",
+        "BENGALI": "Beng",
+        "TAMIL": "Taml",
+        "TELUGU": "Telu",
+        "THAI": "Thai",
+        "HANGUL": "Hang",
+        "HIRAGANA": "Hira",
+        "KATAKANA": "Kana",
+        "HAN": "Hani",
+        "CJK": "Hani",
     }
 
     script_counts = Counter()
@@ -245,9 +260,18 @@ def compute_consensus(
 
     # Non-ambiguous scripts
     SCRIPT_TO_LANG = {
-        "Arab": "ar", "Deva": "hi", "Beng": "bn", "Hani": "zh",
-        "Hang": "ko", "Hira": "ja", "Kana": "ja", "Cyrl": "ru",
-        "Grek": "el", "Hebr": "he", "Thai": "th", "Taml": "ta",
+        "Arab": "ar",
+        "Deva": "hi",
+        "Beng": "bn",
+        "Hani": "zh",
+        "Hang": "ko",
+        "Hira": "ja",
+        "Kana": "ja",
+        "Cyrl": "ru",
+        "Grek": "el",
+        "Hebr": "he",
+        "Thai": "th",
+        "Taml": "ta",
     }
     AMBIGUOUS = {"Latn", "Cyrl", "Arab"}
 
@@ -277,7 +301,13 @@ def compute_consensus(
     best_lang = ft_lang or lingua_lang or "und"
     best_conf = max(ft_conf, lingua_conf)
     needs_esc = best_conf < 0.6 or not agreement
-    reason = "low_confidence" if best_conf < 0.6 else "disagreement" if not agreement else None
+    reason = (
+        "low_confidence"
+        if best_conf < 0.6
+        else "disagreement"
+        if not agreement
+        else None
+    )
 
     return best_lang, best_conf, agreement, needs_esc, reason
 
@@ -356,9 +386,9 @@ def generate_report(results: list[TextAnalysisResult], dataset: str) -> str:
 
     lines = [
         f"# Language Triage Report: {dataset}",
-        f"Generated: {datetime.now(timezone.utc).isoformat()}",
+        f"Generated: {datetime.now(UTC).isoformat()}",
         f"Total samples: {len(results)}",
-        f"Method: Pre-extracted text (no OCR)",
+        "Method: Pre-extracted text (no OCR)",
         "",
         "## Executive Summary",
         "",
@@ -367,20 +397,29 @@ def generate_report(results: list[TextAnalysisResult], dataset: str) -> str:
     needs_esc = sum(1 for r in results if r.needs_escalation)
     no_esc = len(results) - needs_esc
 
-    lines.extend([
-        f"- **Can label locally**: {no_esc} ({100*no_esc/len(results):.1f}%)",
-        f"- **Needs vision API**: {needs_esc} ({100*needs_esc/len(results):.1f}%)",
-        "",
-    ])
+    lines.extend(
+        [
+            f"- **Can label locally**: {no_esc} ({100 * no_esc / len(results):.1f}%)",
+            f"- **Needs vision API**: {needs_esc} ({100 * needs_esc / len(results):.1f}%)",
+            "",
+        ]
+    )
 
     # Script distribution
     script_counts = Counter()
     for r in results:
         script_counts[r.primary_script or "None"] += 1
 
-    lines.extend(["## Script Distribution", "", "| Script | Count | % |", "|--------|-------|---|"])
+    lines.extend(
+        [
+            "## Script Distribution",
+            "",
+            "| Script | Count | % |",
+            "|--------|-------|---|",
+        ]
+    )
     for script, count in script_counts.most_common():
-        lines.append(f"| {script} | {count} | {100*count/len(results):.1f}% |")
+        lines.append(f"| {script} | {count} | {100 * count / len(results):.1f}% |")
     lines.append("")
 
     # Language distribution
@@ -388,18 +427,27 @@ def generate_report(results: list[TextAnalysisResult], dataset: str) -> str:
     for r in results:
         lang_counts[r.consensus_language] += 1
 
-    lines.extend(["## Language Distribution", "", "| Language | Count | % |", "|----------|-------|---|"])
+    lines.extend(
+        [
+            "## Language Distribution",
+            "",
+            "| Language | Count | % |",
+            "|----------|-------|---|",
+        ]
+    )
     for lang, count in lang_counts.most_common(15):
-        lines.append(f"| {lang} | {count} | {100*count/len(results):.1f}% |")
+        lines.append(f"| {lang} | {count} | {100 * count / len(results):.1f}% |")
     lines.append("")
 
     # Confidence stratification
-    lines.extend([
-        "## Confidence Stratification",
-        "",
-        "| Confidence | Count | % | Needs Escalation |",
-        "|------------|-------|---|------------------|",
-    ])
+    lines.extend(
+        [
+            "## Confidence Stratification",
+            "",
+            "| Confidence | Count | % | Needs Escalation |",
+            "|------------|-------|---|------------------|",
+        ]
+    )
 
     for low, high, label in CONFIDENCE_BINS:
         in_bin = [r for r in results if low <= r.consensus_confidence < high]
@@ -407,28 +455,34 @@ def generate_report(results: list[TextAnalysisResult], dataset: str) -> str:
         pct = 100 * count / len(results) if results else 0
         esc = sum(1 for r in in_bin if r.needs_escalation)
         esc_pct = 100 * esc / count if count else 0
-        lines.append(f"| {label} ({low:.1f}-{high:.1f}) | {count} | {pct:.1f}% | {esc} ({esc_pct:.0f}%) |")
+        lines.append(
+            f"| {label} ({low:.1f}-{high:.1f}) | {count} | {pct:.1f}% | {esc} ({esc_pct:.0f}%) |"
+        )
     lines.append("")
 
     # Detector agreement
     agree = sum(1 for r in results if r.detector_agreement)
-    lines.extend([
-        "## Detector Agreement",
-        "",
-        f"- **Agree**: {agree} ({100*agree/len(results):.1f}%)",
-        f"- **Disagree**: {len(results)-agree} ({100*(len(results)-agree)/len(results):.1f}%)",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Detector Agreement",
+            "",
+            f"- **Agree**: {agree} ({100 * agree / len(results):.1f}%)",
+            f"- **Disagree**: {len(results) - agree} ({100 * (len(results) - agree) / len(results):.1f}%)",
+            "",
+        ]
+    )
 
     # Cost estimate
-    lines.extend([
-        "## Cost Estimate",
-        "",
-        f"- Samples needing vision: {needs_esc}",
-        f"- @ $0.0003/sample (Qwen): ${needs_esc * 0.0003:.2f}",
-        f"- @ $0.01/sample (Gemini Pro): ${needs_esc * 0.01:.2f}",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Cost Estimate",
+            "",
+            f"- Samples needing vision: {needs_esc}",
+            f"- @ $0.0003/sample (Qwen): ${needs_esc * 0.0003:.2f}",
+            f"- @ $0.01/sample (Gemini Pro): ${needs_esc * 0.01:.2f}",
+            "",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -458,11 +512,12 @@ def main():
     # Sample if needed
     if not args.all and args.sample:
         import random
+
         samples = random.sample(samples, min(args.sample, len(samples)))
         logger.info(f"Sampled {len(samples)} records")
     elif not args.all:
         samples = samples[:1000]
-        logger.info(f"Using first 1000 records (use --all for full)")
+        logger.info("Using first 1000 records (use --all for full)")
 
     # Load models
     models = load_models()
@@ -476,14 +531,18 @@ def main():
             elapsed = time.time() - start
             rate = (i + 1) / elapsed
             eta = (len(samples) - i - 1) / rate
-            logger.info(f"Progress: {i+1}/{len(samples)} ({rate:.0f}/sec, ETA: {eta:.0f}s)")
+            logger.info(
+                f"Progress: {i + 1}/{len(samples)} ({rate:.0f}/sec, ETA: {eta:.0f}s)"
+            )
 
         result = analyze_sample(sample, config, models)
         if result:
             results.append(result)
 
     elapsed = time.time() - start
-    logger.info(f"Processed {len(results)} in {elapsed:.1f}s ({len(results)/elapsed:.0f}/sec)")
+    logger.info(
+        f"Processed {len(results)} in {elapsed:.1f}s ({len(results) / elapsed:.0f}/sec)"
+    )
 
     # Save results
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)

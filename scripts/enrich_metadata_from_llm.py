@@ -42,7 +42,7 @@ import logging
 import sys
 from collections import Counter
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -85,7 +85,8 @@ DATASETS_WITH_TEXT: dict[str, dict[str, Any]] = {
     },
     # === Table datasets ===
     "pubtabnet": {
-        "annotation_file": BASE_DATA / "tables/pubtabnet/pubtabnet/PubTabNet_2.0.0.jsonl",
+        "annotation_file": BASE_DATA
+        / "tables/pubtabnet/pubtabnet/PubTabNet_2.0.0.jsonl",
         "format": "pubtabnet_jsonl",
         "images": 519030,
     },
@@ -95,7 +96,8 @@ DATASETS_WITH_TEXT: dict[str, dict[str, Any]] = {
         "images": 97475,
     },
     "tablebank": {
-        "annotation_file": BASE_DATA / "tables/tablebank/tablebank_word/Detection/train.json",
+        "annotation_file": BASE_DATA
+        / "tables/tablebank/tablebank_word/Detection/train.json",
         "format": "tablebank_coco",
         "images": 163417,
     },
@@ -128,7 +130,8 @@ DATASETS_WITH_TEXT: dict[str, dict[str, Any]] = {
     },
     # === Financial ===
     "financebench": {
-        "annotation_file": E_DRIVE_ROOT / "02_benchmark_only/financebench/data/financebench_open_source.jsonl",
+        "annotation_file": E_DRIVE_ROOT
+        / "02_benchmark_only/financebench/data/financebench_open_source.jsonl",
         "format": "financebench_jsonl",
         "images": 150,
     },
@@ -686,14 +689,12 @@ def load_image_paths(
         paths = sorted(image_dir.glob(pattern))
     elif recursive:
         paths = sorted(
-            p for p in image_dir.rglob("*")
+            p
+            for p in image_dir.rglob("*")
             if p.is_file() and p.suffix.lower() in extensions
         )
     else:
-        paths = sorted(
-            p for p in image_dir.iterdir()
-            if p.suffix.lower() in extensions
-        )
+        paths = sorted(p for p in image_dir.iterdir() if p.suffix.lower() in extensions)
 
     if limit:
         paths = paths[:limit]
@@ -742,13 +743,14 @@ def save_enrichment(
         "dataset": dataset_name,
         "enrichment_type": "llm_metadata_enrichment",
         "pipeline_version": "1.0.0",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "total_samples": len(results),
         "classified_count": sum(1 for _, r in results if r.domain_level1 != "UNK"),
         "skipped_count": 0,
         "avg_domain_confidence": (
             sum(r.domain_confidence for _, r in results) / len(results)
-            if results else 0.0
+            if results
+            else 0.0
         ),
         "escalation_rate": stats.get("escalation_rate", 0.0),
         "domain_distribution": dict(domain_counter.most_common()),
@@ -846,21 +848,25 @@ def process_dataset(
         text_samples = extract_text_samples(dataset_name, config, args.limit)
         for image_id, text, text_source in text_samples:
             if image_id not in skip_ids:
-                samples.append(SampleInput(
-                    image_id=image_id,
-                    text=text,
-                    text_source=text_source,
-                ))
+                samples.append(
+                    SampleInput(
+                        image_id=image_id,
+                        text=text,
+                        text_source=text_source,
+                    )
+                )
     else:
         # Vision-based classification
         vision_config = DATASETS_VISION_ONLY.get(dataset_name, config)
         image_paths = load_image_paths(dataset_name, vision_config, args.limit)
         for image_id, image_path in image_paths:
             if image_id not in skip_ids:
-                samples.append(SampleInput(
-                    image_id=image_id,
-                    image_path=image_path,
-                ))
+                samples.append(
+                    SampleInput(
+                        image_id=image_id,
+                        image_path=image_path,
+                    )
+                )
 
     if not samples:
         logger.warning(f"No samples to process for {dataset_name}")
@@ -899,7 +905,7 @@ def process_dataset(
     output_path = save_enrichment(dataset_name, results, stats, METADATA_REGISTRY)
 
     # Print summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Dataset: {dataset_name}")
     print(f"Samples processed: {len(results)}")
     print(f"Output: {output_path}")
@@ -909,21 +915,19 @@ def process_dataset(
 
     # Domain distribution
     domain_dist = Counter(r.domain_level1 for _, r in results)
-    print(f"\nDomain Distribution:")
+    print("\nDomain Distribution:")
     for domain, count in domain_dist.most_common():
         pct = count / len(results) * 100
         print(f"  {domain}: {count} ({pct:.1f}%)")
 
     # Language distribution (top 5)
-    lang_dist = Counter(
-        r.iso639_language for _, r in results if r.iso639_language
-    )
+    lang_dist = Counter(r.iso639_language for _, r in results if r.iso639_language)
     if lang_dist:
-        print(f"\nTop Languages:")
+        print("\nTop Languages:")
         for lang, count in lang_dist.most_common(5):
             print(f"  {lang}: {count}")
 
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 def list_datasets() -> None:
@@ -939,7 +943,9 @@ def list_datasets() -> None:
 
     total = sum(c["images"] for c in DATASETS_WITH_TEXT.values())
     total += sum(c["images"] for c in DATASETS_VISION_ONLY.values())
-    print(f"\nTotal: {len(DATASETS_WITH_TEXT) + len(DATASETS_VISION_ONLY)} datasets, {total:,} images")
+    print(
+        f"\nTotal: {len(DATASETS_WITH_TEXT) + len(DATASETS_VISION_ONLY)} datasets, {total:,} images"
+    )
 
 
 def main() -> None:
@@ -951,12 +957,18 @@ def main() -> None:
     parser.add_argument("--dataset", type=str, help="Dataset name to process")
     parser.add_argument("--all", action="store_true", help="Process all datasets")
     parser.add_argument("--list", action="store_true", help="List available datasets")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be processed")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be processed"
+    )
     parser.add_argument("--limit", type=int, help="Max samples to process")
-    parser.add_argument("--resume", action="store_true", help="Skip already-processed samples")
+    parser.add_argument(
+        "--resume", action="store_true", help="Skip already-processed samples"
+    )
     parser.add_argument("--primary-model", type=str, help="Override primary text model")
     parser.add_argument("--vision-model", type=str, help="Override vision model")
-    parser.add_argument("--text-only", action="store_true", help="Skip vision-only datasets")
+    parser.add_argument(
+        "--text-only", action="store_true", help="Skip vision-only datasets"
+    )
     parser.add_argument("--vision-only", action="store_true", help="Force vision mode")
 
     args = parser.parse_args()

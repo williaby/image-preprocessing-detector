@@ -39,7 +39,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import cv2
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -62,7 +61,8 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
             {
                 "path": BASE_DATA_PATH / "documents/doclaynet",
                 "pattern": "**/*.png",
-                "filter_fn": lambda p: "scientific" in str(p).lower() or random.random() < 0.3,
+                "filter_fn": lambda p: "scientific" in str(p).lower()
+                or random.random() < 0.3,
             }
         ],
         "doc_type": "scientific",
@@ -73,7 +73,8 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
             {
                 "path": BASE_DATA_PATH / "documents/doclaynet",
                 "pattern": "**/*.png",
-                "filter_fn": lambda p: "financial" in str(p).lower() or random.random() < 0.2,
+                "filter_fn": lambda p: "financial" in str(p).lower()
+                or random.random() < 0.2,
             }
         ],
         "doc_type": "financial",
@@ -109,7 +110,8 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
             {
                 "path": BASE_DATA_PATH / "documents/doclaynet",
                 "pattern": "**/*.png",
-                "filter_fn": lambda p: "law" in str(p).lower() or random.random() < 0.15,
+                "filter_fn": lambda p: "law" in str(p).lower()
+                or random.random() < 0.15,
             }
         ],
         "doc_type": "legal",
@@ -135,8 +137,14 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
     "arabic_documents": {
         "count": 1500,
         "sources": [
-            {"path": BASE_DATA_PATH / "language/arabic_docs_ocr", "pattern": "**/*.jpg"},
-            {"path": BASE_DATA_PATH / "language/arabic_docs_ocr", "pattern": "**/*.png"},
+            {
+                "path": BASE_DATA_PATH / "language/arabic_docs_ocr",
+                "pattern": "**/*.jpg",
+            },
+            {
+                "path": BASE_DATA_PATH / "language/arabic_docs_ocr",
+                "pattern": "**/*.png",
+            },
         ],
         "doc_type": "arabic",
     },
@@ -144,7 +152,8 @@ DATASET_COMPOSITION: dict[str, dict[str, Any]] = {
         "count": 700,
         "sources": [
             {
-                "path": BASE_DATA_PATH / "language/multilingual_scripts/nepal_devanagari",
+                "path": BASE_DATA_PATH
+                / "language/multilingual_scripts/nepal_devanagari",
                 "pattern": "**/*.png",
             },
         ],
@@ -167,8 +176,8 @@ TEST_RATIO = 0.15
 
 # Rotation angles (class labels)
 ROTATIONS = {
-    0: 0,    # Class 0: Upright
-    1: 90,   # Class 1: 90° clockwise
+    0: 0,  # Class 0: Upright
+    1: 90,  # Class 1: 90° clockwise
     2: 180,  # Class 2: Upside-down
     3: 270,  # Class 3: 270° clockwise (90° counter-clockwise)
 }
@@ -206,7 +215,7 @@ def scan_directory_fast(
                 if entry.is_file():
                     if entry.suffix.lower() in extensions:
                         files.append(entry)
-                elif entry.is_dir() and not entry.name.startswith('.'):
+                elif entry.is_dir() and not entry.name.startswith("."):
                     _scan(entry, depth + 1)
         except PermissionError:
             pass
@@ -372,15 +381,17 @@ def generate_rotated_samples(
             img.save(output_path, "JPEG", quality=95)
 
             # Record metadata
-            metadata.append({
-                "filename": str(output_path.relative_to(output_dir)),
-                "source_path": str(sample.source_path),
-                "doc_id": sample.doc_id,
-                "doc_type": sample.doc_type,
-                "rotation_angle": angle,
-                "class_id": class_id,
-                "split": split_name,
-            })
+            metadata.append(
+                {
+                    "filename": str(output_path.relative_to(output_dir)),
+                    "source_path": str(sample.source_path),
+                    "doc_id": sample.doc_id,
+                    "doc_type": sample.doc_type,
+                    "rotation_angle": angle,
+                    "class_id": class_id,
+                    "split": split_name,
+                }
+            )
 
     return metadata
 
@@ -482,14 +493,10 @@ def main() -> int:
     )
     all_metadata.extend(train_meta)
 
-    val_meta = generate_rotated_samples(
-        val_samples, output_dir, "val", target_size
-    )
+    val_meta = generate_rotated_samples(val_samples, output_dir, "val", target_size)
     all_metadata.extend(val_meta)
 
-    test_meta = generate_rotated_samples(
-        test_samples, output_dir, "test", target_size
-    )
+    test_meta = generate_rotated_samples(test_samples, output_dir, "test", target_size)
     all_metadata.extend(test_meta)
 
     # Step 5: Save metadata
@@ -528,9 +535,11 @@ def main() -> int:
     logger.info("=" * 60)
     logger.info(f"Output directory: {output_dir}")
     logger.info(f"Total samples: {len(all_metadata)}")
-    logger.info(f"  Train: {len(train_meta)} ({len(train_meta)//4} docs × 4 rotations)")
-    logger.info(f"  Val: {len(val_meta)} ({len(val_meta)//4} docs × 4 rotations)")
-    logger.info(f"  Test: {len(test_meta)} ({len(test_meta)//4} docs × 4 rotations)")
+    logger.info(
+        f"  Train: {len(train_meta)} ({len(train_meta) // 4} docs × 4 rotations)"
+    )
+    logger.info(f"  Val: {len(val_meta)} ({len(val_meta) // 4} docs × 4 rotations)")
+    logger.info(f"  Test: {len(test_meta)} ({len(test_meta) // 4} docs × 4 rotations)")
     logger.info(f"Metadata: {metadata_path}")
 
     return 0

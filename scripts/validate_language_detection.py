@@ -28,9 +28,6 @@ from typing import Any
 from scripts.enrich_language import (
     METADATA_REGISTRY_PATH,
     MODEL_DIR,
-    detect_all_scripts,
-    detect_language_fasttext,
-    detect_language_lingua,
     extract_text_easyocr,
     multi_language_consensus,
 )
@@ -78,7 +75,11 @@ def get_training_samples_with_labels(
         raw_labels = orig_labels.get("raw_labels", {})
 
         # Only training samples with definite single-language labels
-        if raw_labels.get("split") == "train" and lang_code and lang_code not in ("und", "mul"):
+        if (
+            raw_labels.get("split") == "train"
+            and lang_code
+            and lang_code not in ("und", "mul")
+        ):
             if target_languages is None or lang_code in target_languages:
                 labeled_samples.append((i, sample))
 
@@ -152,7 +153,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate language detection against MLT-19 ground truth"
     )
-    parser.add_argument("--samples", type=int, default=50, help="Number of samples to validate")
+    parser.add_argument(
+        "--samples", type=int, default=50, help="Number of samples to validate"
+    )
     parser.add_argument(
         "--languages",
         type=str,
@@ -203,7 +206,8 @@ def main() -> int:
 
     # Show language distribution
     lang_dist = Counter(
-        sample.get("original_labels", {}).get("language_code") for _, sample in labeled_samples
+        sample.get("original_labels", {}).get("language_code")
+        for _, sample in labeled_samples
     )
     logger.info(f"Language distribution: {dict(lang_dist)}")
 
@@ -304,7 +308,7 @@ def main() -> int:
             accuracy = correct_count / len(results) if results else 0
             logger.info(
                 f"Progress: {idx + 1}/{len(labeled_samples)} | "
-                f"Accuracy: {accuracy*100:.1f}% ({correct_count}/{len(results)})"
+                f"Accuracy: {accuracy * 100:.1f}% ({correct_count}/{len(results)})"
             )
 
     # Final report
@@ -314,7 +318,7 @@ def main() -> int:
 
     total = len(results)
     accuracy = correct_count / total if total > 0 else 0
-    print(f"\nOverall Accuracy: {accuracy*100:.1f}% ({correct_count}/{total})")
+    print(f"\nOverall Accuracy: {accuracy * 100:.1f}% ({correct_count}/{total})")
     print(f"Skipped (image not found): {skipped_count}")
 
     # Per-language breakdown
@@ -325,7 +329,9 @@ def main() -> int:
 
     for lang, correct_list in sorted(lang_results.items()):
         lang_acc = sum(correct_list) / len(correct_list)
-        print(f"  {lang}: {lang_acc*100:.1f}% ({sum(correct_list)}/{len(correct_list)})")
+        print(
+            f"  {lang}: {lang_acc * 100:.1f}% ({sum(correct_list)}/{len(correct_list)})"
+        )
 
     # Method breakdown
     print("\nDetection Methods Used:")
@@ -333,14 +339,16 @@ def main() -> int:
     for method, count in method_counts.most_common():
         method_results = [r.correct for r in results if r.method == method]
         method_acc = sum(method_results) / len(method_results)
-        print(f"  {method}: {count} samples, {method_acc*100:.1f}% accuracy")
+        print(f"  {method}: {count} samples, {method_acc * 100:.1f}% accuracy")
 
     # Show some errors
     errors = [r for r in results if not r.correct]
     if errors:
         print("\nSample Errors (first 10):")
         for r in errors[:10]:
-            print(f"  GT={r.gt_language}, Detected={r.detected_language} ({r.detected_languages})")
+            print(
+                f"  GT={r.gt_language}, Detected={r.detected_language} ({r.detected_languages})"
+            )
             print(f"    Method: {r.method}, Conf: {r.confidence:.2f}")
             if r.extracted_text:
                 print(f"    Text: {r.extracted_text[:80]}...")

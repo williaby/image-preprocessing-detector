@@ -34,7 +34,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -518,7 +518,7 @@ def migrate_dataset(
     dataset_metadata["samples"] = migrated_samples
 
     # Add migration metadata
-    migration_time = datetime.now(timezone.utc).isoformat()
+    migration_time = datetime.now(UTC).isoformat()
     dataset_metadata["migration"] = {
         "migrated_at": migration_time,
         "migration_script": f"migrate_layer2_schema_to_full.py_v{SCRIPT_VERSION}",
@@ -654,9 +654,9 @@ def main() -> int:
     results = []
     for dataset_name in datasets:
         if args.verbose:
-            logger.info(f"\n{'='*60}")
+            logger.info(f"\n{'=' * 60}")
             logger.info(f"Migrating: {dataset_name}")
-            logger.info(f"{'='*60}")
+            logger.info(f"{'=' * 60}")
 
         result = migrate_dataset(
             dataset_name=dataset_name,
@@ -670,7 +670,13 @@ def main() -> int:
         results.append(result)
 
         # Print per-dataset summary
-        status_emoji = {"success": "OK", "partial": "WARN", "skipped": "SKIP", "error": "ERR", "failed": "FAIL"}
+        status_emoji = {
+            "success": "OK",
+            "partial": "WARN",
+            "skipped": "SKIP",
+            "error": "ERR",
+            "failed": "FAIL",
+        }
         emoji = status_emoji.get(result["status"], "?")
         logger.info(
             f"[{emoji}] {dataset_name}: "
@@ -681,8 +687,8 @@ def main() -> int:
 
     # Generate migration report
     report = {
-        "migration_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "migration_timestamp": datetime.now(timezone.utc).isoformat(),
+        "migration_date": datetime.now(UTC).strftime("%Y-%m-%d"),
+        "migration_timestamp": datetime.now(UTC).isoformat(),
         "script_version": SCRIPT_VERSION,
         "format_version": MIGRATION_FORMAT_VERSION,
         "dry_run": args.dry_run,
@@ -699,7 +705,7 @@ def main() -> int:
     }
 
     # Write report
-    report_date = datetime.now(timezone.utc).strftime("%Y%m%d")
+    report_date = datetime.now(UTC).strftime("%Y%m%d")
     report_file = Path("metadata_registry") / f"migration_report_{report_date}.json"
     report_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -709,9 +715,9 @@ def main() -> int:
         logger.info(f"Report written to: {report_file}")
 
     # Print summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("MIGRATION SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Total datasets:     {report['total_datasets']}")
     print(f"  Successful:       {report['successful']}")
     print(f"  Partial:          {report['partial']}")

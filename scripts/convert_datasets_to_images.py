@@ -193,7 +193,9 @@ def extract_ccor_images(
 
                         # Determine output filename
                         # Clean image_name if it has path components
-                        clean_name = Path(image_name).name if image_name else f"{index}.jpg"
+                        clean_name = (
+                            Path(image_name).name if image_name else f"{index}.jpg"
+                        )
                         if not clean_name.lower().endswith((".jpg", ".jpeg", ".png")):
                             clean_name = f"{clean_name}.jpg"
 
@@ -308,7 +310,9 @@ def convert_ohr_bench_pdfs(
                 if len(doc) == 1:
                     output_path = output_dir / f"{pdf_path.stem}.png"
                 else:
-                    output_path = output_dir / f"{pdf_path.stem}_p{page_num + 1:03d}.png"
+                    output_path = (
+                        output_dir / f"{pdf_path.stem}_p{page_num + 1:03d}.png"
+                    )
 
                 # Skip if already converted
                 if output_path.exists():
@@ -421,7 +425,9 @@ def convert_financebench_pdfs(
                 if len(doc) == 1:
                     output_path = output_dir / f"{pdf_path.stem}.png"
                 else:
-                    output_path = output_dir / f"{pdf_path.stem}_p{page_num + 1:03d}.png"
+                    output_path = (
+                        output_dir / f"{pdf_path.stem}_p{page_num + 1:03d}.png"
+                    )
 
                 # Skip if already converted
                 if output_path.exists():

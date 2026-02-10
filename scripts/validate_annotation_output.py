@@ -64,7 +64,7 @@ import json
 import logging
 import sys
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -335,7 +335,7 @@ def generate_report(
         ValidationReport with all validation results
     """
     report = ValidationReport(
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
     )
 
     for dataset_name in datasets:
@@ -384,7 +384,8 @@ def print_report(report: ValidationReport, summary_only: bool = False) -> None:
                 print(f"  Rows: {validation.row_count:,}")
                 print(f"  Null file_hash: {validation.null_file_hash_count}")
                 schema_check = (
-                    "✓" if validation.schema_version == validation.expected_schema_version
+                    "✓"
+                    if validation.schema_version == validation.expected_schema_version
                     else "✗"
                 )
                 print(f"  Schema version: {validation.schema_version} {schema_check}")
@@ -477,7 +478,9 @@ def main(args: argparse.Namespace) -> int:
     sys.path.insert(0, str(project_root))
 
     from image_preprocessing_detector.annotation.config.datasets import DATASET_CONFIGS
-    from image_preprocessing_detector.annotation.config.settings import AnnotationSettings
+    from image_preprocessing_detector.annotation.config.settings import (
+        AnnotationSettings,
+    )
     from image_preprocessing_detector.annotation.storage.parquet_writer import (
         PartitionedParquetWriter,
     )
@@ -559,7 +562,8 @@ def parse_args() -> argparse.Namespace:
         help="Number of sample hashes to verify per dataset (0 to skip)",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose logging",
     )

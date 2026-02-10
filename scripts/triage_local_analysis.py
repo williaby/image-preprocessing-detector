@@ -22,9 +22,9 @@ import argparse
 import json
 import logging
 import time
-from collections import Counter, defaultdict
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from collections import Counter
+from dataclasses import dataclass
+from datetime import datetime, UTC
 from pathlib import Path
 
 logging.basicConfig(
@@ -64,6 +64,7 @@ CONFIDENCE_BINS = [
 @dataclass
 class LocalDetectionResult:
     """Result from local-only detection."""
+
     sample_id: str
     image_path: str
 
@@ -98,7 +99,10 @@ def load_detection_models():
     # Load fastText
     try:
         import fasttext
-        model_path = Path("/mnt/e/image_detection/models/language_detection/lid.176.bin")
+
+        model_path = Path(
+            "/mnt/e/image_detection/models/language_detection/lid.176.bin"
+        )
         if model_path.exists():
             # Suppress fastText warnings
             fasttext.FastText.eprint = lambda x: None
@@ -112,6 +116,7 @@ def load_detection_models():
     # Load lingua
     try:
         from lingua import LanguageDetectorBuilder
+
         models["lingua"] = LanguageDetectorBuilder.from_all_languages().build()
         logger.info("Loaded lingua detector")
     except ImportError:
@@ -124,6 +129,7 @@ def load_ocr_reader():
     """Load EasyOCR reader."""
     try:
         import easyocr
+
         # Use English reader by default - it can detect text in any script
         reader = easyocr.Reader(["en"], gpu=True, verbose=False)
         logger.info("Loaded EasyOCR reader (GPU)")
@@ -132,6 +138,7 @@ def load_ocr_reader():
         logger.warning(f"EasyOCR GPU failed, trying CPU: {e}")
         try:
             import easyocr
+
             reader = easyocr.Reader(["en"], gpu=False, verbose=False)
             logger.info("Loaded EasyOCR reader (CPU)")
             return reader
@@ -375,8 +382,10 @@ def analyze_sample(
     lingua_lang, lingua_conf = detect_language_lingua(text, models.get("lingua"))
 
     # Compute consensus
-    consensus_lang, consensus_conf, agreement, needs_escalation, reason = compute_consensus(
-        scripts, script_counts, ft_lang, ft_conf, lingua_lang, lingua_conf
+    consensus_lang, consensus_conf, agreement, needs_escalation, reason = (
+        compute_consensus(
+            scripts, script_counts, ft_lang, ft_conf, lingua_lang, lingua_conf
+        )
     )
 
     return LocalDetectionResult(
@@ -405,7 +414,7 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
 
     report_lines = [
         f"# Language Triage Analysis Report: {dataset}",
-        f"Generated: {datetime.now(timezone.utc).isoformat()}",
+        f"Generated: {datetime.now(UTC).isoformat()}",
         f"Total samples analyzed: {len(results)}",
         "",
         "## Executive Summary",
@@ -416,23 +425,27 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
     needs_escalation = sum(1 for r in results if r.needs_vision_escalation)
     no_escalation = len(results) - needs_escalation
 
-    report_lines.extend([
-        f"- **Can be labeled locally**: {no_escalation} ({100*no_escalation/len(results):.1f}%)",
-        f"- **Needs vision escalation**: {needs_escalation} ({100*needs_escalation/len(results):.1f}%)",
-        "",
-    ])
+    report_lines.extend(
+        [
+            f"- **Can be labeled locally**: {no_escalation} ({100 * no_escalation / len(results):.1f}%)",
+            f"- **Needs vision escalation**: {needs_escalation} ({100 * needs_escalation / len(results):.1f}%)",
+            "",
+        ]
+    )
 
     # Script distribution
     script_counts = Counter()
     for r in results:
         script_counts[r.primary_script or "None"] += 1
 
-    report_lines.extend([
-        "## Script Distribution",
-        "",
-        "| Script | Count | % |",
-        "|--------|-------|---|",
-    ])
+    report_lines.extend(
+        [
+            "## Script Distribution",
+            "",
+            "| Script | Count | % |",
+            "|--------|-------|---|",
+        ]
+    )
     for script, count in script_counts.most_common():
         pct = 100 * count / len(results)
         report_lines.append(f"| {script} | {count} | {pct:.1f}% |")
@@ -443,24 +456,28 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
     for r in results:
         lang_counts[r.consensus_language] += 1
 
-    report_lines.extend([
-        "## Language Distribution (Consensus)",
-        "",
-        "| Language | Count | % |",
-        "|----------|-------|---|",
-    ])
+    report_lines.extend(
+        [
+            "## Language Distribution (Consensus)",
+            "",
+            "| Language | Count | % |",
+            "|----------|-------|---|",
+        ]
+    )
     for lang, count in lang_counts.most_common(15):
         pct = 100 * count / len(results)
         report_lines.append(f"| {lang} | {count} | {pct:.1f}% |")
     report_lines.append("")
 
     # Confidence stratification
-    report_lines.extend([
-        "## Confidence Stratification",
-        "",
-        "| Confidence | Count | % | Needs Escalation |",
-        "|------------|-------|---|------------------|",
-    ])
+    report_lines.extend(
+        [
+            "## Confidence Stratification",
+            "",
+            "| Confidence | Count | % | Needs Escalation |",
+            "|------------|-------|---|------------------|",
+        ]
+    )
 
     for low, high, label in CONFIDENCE_BINS:
         in_bin = [r for r in results if low <= r.consensus_confidence < high]
@@ -468,7 +485,9 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
         pct = 100 * count / len(results) if results else 0
         esc_count = sum(1 for r in in_bin if r.needs_vision_escalation)
         esc_pct = 100 * esc_count / count if count else 0
-        report_lines.append(f"| {label} ({low:.1f}-{high:.1f}) | {count} | {pct:.1f}% | {esc_count} ({esc_pct:.0f}%) |")
+        report_lines.append(
+            f"| {label} ({low:.1f}-{high:.1f}) | {count} | {pct:.1f}% | {esc_count} ({esc_pct:.0f}%) |"
+        )
     report_lines.append("")
 
     # Escalation reasons
@@ -478,35 +497,41 @@ def generate_report(results: list[LocalDetectionResult], dataset: str) -> str:
             reason_counts[r.escalation_reason] += 1
 
     if reason_counts:
-        report_lines.extend([
-            "## Escalation Reasons",
-            "",
-            "| Reason | Count |",
-            "|--------|-------|",
-        ])
+        report_lines.extend(
+            [
+                "## Escalation Reasons",
+                "",
+                "| Reason | Count |",
+                "|--------|-------|",
+            ]
+        )
         for reason, count in reason_counts.most_common():
             report_lines.append(f"| {reason} | {count} |")
         report_lines.append("")
 
     # Detector agreement
     agree_count = sum(1 for r in results if r.detector_agreement)
-    report_lines.extend([
-        "## Detector Agreement",
-        "",
-        f"- **Detectors agree**: {agree_count} ({100*agree_count/len(results):.1f}%)",
-        f"- **Detectors disagree**: {len(results) - agree_count} ({100*(len(results)-agree_count)/len(results):.1f}%)",
-        "",
-    ])
+    report_lines.extend(
+        [
+            "## Detector Agreement",
+            "",
+            f"- **Detectors agree**: {agree_count} ({100 * agree_count / len(results):.1f}%)",
+            f"- **Detectors disagree**: {len(results) - agree_count} ({100 * (len(results) - agree_count) / len(results):.1f}%)",
+            "",
+        ]
+    )
 
     # Cost estimate
-    report_lines.extend([
-        "## Cost Estimate (if using vision API)",
-        "",
-        f"- Samples needing vision: {needs_escalation}",
-        f"- Est. cost @ $0.0003/sample: ${needs_escalation * 0.0003:.2f}",
-        f"- Est. cost @ $0.01/sample (Gemini Pro): ${needs_escalation * 0.01:.2f}",
-        "",
-    ])
+    report_lines.extend(
+        [
+            "## Cost Estimate (if using vision API)",
+            "",
+            f"- Samples needing vision: {needs_escalation}",
+            f"- Est. cost @ $0.0003/sample: ${needs_escalation * 0.0003:.2f}",
+            f"- Est. cost @ $0.01/sample (Gemini Pro): ${needs_escalation * 0.01:.2f}",
+            "",
+        ]
+    )
 
     return "\n".join(report_lines)
 
@@ -516,7 +541,9 @@ def main():
     parser.add_argument("--dataset", required=True, help="Dataset name")
     parser.add_argument("--sample", type=int, help="Sample N records (default: 500)")
     parser.add_argument("--all", action="store_true", help="Process all records")
-    parser.add_argument("--report-only", action="store_true", help="Generate report from cached results")
+    parser.add_argument(
+        "--report-only", action="store_true", help="Generate report from cached results"
+    )
     args = parser.parse_args()
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -564,6 +591,7 @@ def main():
     # Sample if requested
     if not args.all:
         import random
+
         sample_size = args.sample or 500
         if len(samples) > sample_size:
             samples = random.sample(samples, sample_size)
@@ -587,14 +615,18 @@ def main():
             elapsed = time.time() - start_time
             rate = (i + 1) / elapsed
             eta = (len(samples) - i - 1) / rate if rate > 0 else 0
-            logger.info(f"Progress: {i + 1}/{len(samples)} ({rate:.1f}/sec, ETA: {eta/60:.1f} min)")
+            logger.info(
+                f"Progress: {i + 1}/{len(samples)} ({rate:.1f}/sec, ETA: {eta / 60:.1f} min)"
+            )
 
         result = analyze_sample(sample, base_path, ocr_reader, models)
         if result:
             results.append(result)
 
     elapsed = time.time() - start_time
-    logger.info(f"Processed {len(results)} samples in {elapsed:.1f}s ({len(results)/elapsed:.1f}/sec)")
+    logger.info(
+        f"Processed {len(results)} samples in {elapsed:.1f}s ({len(results) / elapsed:.1f}/sec)"
+    )
 
     # Save results
     results_data = [

@@ -20,7 +20,6 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Set
 
 from tqdm import tqdm
 
@@ -31,7 +30,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_required_images(annotation_path: Path) -> Set[str]:
+def load_required_images(annotation_path: Path) -> set[str]:
     """Load list of images actually used in COCO-Text annotations.
 
     Args:
@@ -55,7 +54,7 @@ def load_required_images(annotation_path: Path) -> Set[str]:
     return required
 
 
-def find_source_images(source_dir: Path) -> Dict[str, Path]:
+def find_source_images(source_dir: Path) -> dict[str, Path]:
     """Find all COCO images in source directory structure.
 
     Args:
@@ -84,8 +83,8 @@ def find_source_images(source_dir: Path) -> Dict[str, Path]:
 
 
 def create_symlinks(
-    required: Set[str],
-    source_images: Dict[str, Path],
+    required: set[str],
+    source_images: dict[str, Path],
     target_dir: Path,
     dry_run: bool = False,
 ) -> tuple[int, int, int]:
@@ -132,9 +131,11 @@ def create_symlinks(
                 # target: /mnt/e/.../language/cocotext/COCO_*.jpg
                 # source: /mnt/e/.../text_detection/cocotext/images/train2014/COCO_*.jpg
                 # relative: ../../text_detection/cocotext/images/train2014/COCO_*.jpg
-                rel_path = Path(
-                    "../../text_detection/cocotext/images"
-                ) / source_path.parent.name / source_path.name
+                rel_path = (
+                    Path("../../text_detection/cocotext/images")
+                    / source_path.parent.name
+                    / source_path.name
+                )
                 target_path.symlink_to(rel_path)
                 created += 1
             except Exception as e:
@@ -204,9 +205,7 @@ def main():
 
     if available < len(required):
         missing_count = len(required) - available
-        logger.warning(
-            f"{missing_count:,} images from annotations not found in source"
-        )
+        logger.warning(f"{missing_count:,} images from annotations not found in source")
 
     # Handle existing target directory
     if args.target.exists():

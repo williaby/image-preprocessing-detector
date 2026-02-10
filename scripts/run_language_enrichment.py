@@ -22,7 +22,7 @@ import sys
 import time
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 logging.basicConfig(
@@ -47,6 +47,7 @@ DATASET_PATHS = {
 @dataclass
 class MockLocalResult:
     """Mock result to trigger Tier 1b escalation."""
+
     primary_language: str = "und"
     primary_script: str | None = None
     detected_languages: list = field(default_factory=list)
@@ -138,22 +139,24 @@ def update_metadata(
             current_ver = sample["enrichments"].get("current_version", 0)
             new_ver = current_ver + 1
 
-            sample["enrichments"]["versions"].append({
-                "version": new_ver,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "enrichment_type": "language_detection",
-                "data": {
-                    "primary_language": enrichment["primary_language"],
-                    "primary_script": enrichment["primary_script"],
-                    "detected_languages": enrichment["detected_languages"],
-                    "detected_scripts": enrichment["detected_scripts"],
-                    "confidence": enrichment["confidence"],
-                    "method": enrichment["method"],
-                    "tier": enrichment["tier"],
-                    "model_used": enrichment["model_used"],
-                    "is_multilingual": enrichment["is_multilingual"],
-                },
-            })
+            sample["enrichments"]["versions"].append(
+                {
+                    "version": new_ver,
+                    "created_at": datetime.now(UTC).isoformat(),
+                    "enrichment_type": "language_detection",
+                    "data": {
+                        "primary_language": enrichment["primary_language"],
+                        "primary_script": enrichment["primary_script"],
+                        "detected_languages": enrichment["detected_languages"],
+                        "detected_scripts": enrichment["detected_scripts"],
+                        "confidence": enrichment["confidence"],
+                        "method": enrichment["method"],
+                        "tier": enrichment["tier"],
+                        "model_used": enrichment["model_used"],
+                        "is_multilingual": enrichment["is_multilingual"],
+                    },
+                }
+            )
             sample["enrichments"]["current_version"] = new_ver
             updated += 1
 
@@ -171,9 +174,13 @@ def main():
     parser = argparse.ArgumentParser(description="Run language enrichment")
     parser.add_argument("--dataset", default="mlt19", help="Dataset name")
     parser.add_argument("--limit", type=int, help="Limit samples to process")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be done")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be done"
+    )
     parser.add_argument("--all", action="store_true", help="Process all samples")
-    parser.add_argument("--paid", action="store_true", help="Use paid model (faster, ~$0.0003/sample)")
+    parser.add_argument(
+        "--paid", action="store_true", help="Use paid model (faster, ~$0.0003/sample)"
+    )
     args = parser.parse_args()
 
     # Import escalation
@@ -197,7 +204,7 @@ def main():
 
     # Limit samples if requested
     if args.limit and not args.all:
-        samples = samples[:args.limit]
+        samples = samples[: args.limit]
         logger.info(f"Processing {len(samples)} samples (limited)")
     elif not args.all:
         # Default to 10 samples for safety

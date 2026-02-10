@@ -88,8 +88,9 @@ FIELD_CATEGORIES = {
 def load_parquet_as_pandas(parquet_path: Path):
     """Load parquet file into pandas DataFrame."""
     try:
-        import pandas as pd
+        import importlib
 
+        importlib.import_module("pandas")
         table = pq.read_table(parquet_path)
         return table.to_pandas()
     except ImportError:
@@ -97,9 +98,7 @@ def load_parquet_as_pandas(parquet_path: Path):
         raise
 
 
-def calculate_field_completeness(
-    df, field: str
-) -> tuple[int, int, float]:
+def calculate_field_completeness(df, field: str) -> tuple[int, int, float]:
     """Calculate completeness for a single field.
 
     Returns:
@@ -163,7 +162,9 @@ def print_summary_table(df, summary: dict) -> None:
     print(f"{'Dataset':<30} {'Records':>12} {'% of Total':>12}")
     print("-" * 54)
 
-    sorted_datasets = sorted(summary.items(), key=lambda x: x[1]["record_count"], reverse=True)
+    sorted_datasets = sorted(
+        summary.items(), key=lambda x: x[1]["record_count"], reverse=True
+    )
     for dataset, info in sorted_datasets:
         pct = info["record_count"] / total_records * 100
         print(f"{dataset:<30} {info['record_count']:>12,} {pct:>11.1f}%")
@@ -204,8 +205,16 @@ def print_summary_table(df, summary: dict) -> None:
     print("\n" + "-" * 80)
     print("CONTENT FLAGS COVERAGE BY DATASET")
     print("-" * 80)
-    content_fields = ["has_table", "has_formula", "has_handwriting", "has_signature", "has_figure"]
-    print(f"{'Dataset':<20} {'Table':>8} {'Formula':>8} {'Handwr':>8} {'Sig':>8} {'Figure':>8}")
+    content_fields = [
+        "has_table",
+        "has_formula",
+        "has_handwriting",
+        "has_signature",
+        "has_figure",
+    ]
+    print(
+        f"{'Dataset':<20} {'Table':>8} {'Formula':>8} {'Handwr':>8} {'Sig':>8} {'Figure':>8}"
+    )
     print("-" * 60)
 
     for dataset, info in sorted_datasets[:15]:  # Top 15 datasets
@@ -214,7 +223,9 @@ def print_summary_table(df, summary: dict) -> None:
         for field in content_fields:
             _, _, pct = calculate_field_completeness(dataset_df, field)
             values.append(f"{pct:>5.0f}%" if pct > 0 else "    -")
-        print(f"{dataset:<20} {values[0]:>8} {values[1]:>8} {values[2]:>8} {values[3]:>8} {values[4]:>8}")
+        print(
+            f"{dataset:<20} {values[0]:>8} {values[1]:>8} {values[2]:>8} {values[3]:>8} {values[4]:>8}"
+        )
 
     if len(sorted_datasets) > 15:
         print(f"  ... and {len(sorted_datasets) - 15} more datasets")
@@ -334,7 +345,9 @@ def main() -> None:
     print("• Export to CSV for spreadsheet viewing:")
     print("    python scripts/metadata_completeness_report.py --output metadata.csv")
     print("• Query with DuckDB for SQL-like access:")
-    print("    duckdb -c \"SELECT dataset_name, COUNT(*) FROM 'samples.parquet' GROUP BY 1\"")
+    print(
+        "    duckdb -c \"SELECT dataset_name, COUNT(*) FROM 'samples.parquet' GROUP BY 1\""
+    )
     print("• Load in Python:")
     print("    import pandas as pd; df = pd.read_parquet('samples.parquet')")
 

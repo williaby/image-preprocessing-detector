@@ -31,11 +31,9 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
 
 import cv2
 import numpy as np
-from PIL import Image
 from tqdm import tqdm
 
 # Add project root to path
@@ -156,7 +154,7 @@ class OrientationDatasetGenerator:
 
         # Set random seeds for reproducibility
         random.seed(seed)
-        np.random.seed(seed)  # noqa: NPY002 - needed for reproducible augmentation
+        np.random.seed(seed)
 
         # Tracking
         self.source_documents: list[SourceDocument] = []
@@ -212,9 +210,20 @@ class OrientationDatasetGenerator:
             # Real-world government financial documents
             "bhutan_financial": self.base_data_path / "documents" / "bhutan_financial",
             # Multilingual script datasets (Phase 10A)
-            "jssoda_vertical": self.base_data_path / "language" / "multilingual_scripts" / "jssoda" / "vertical",
-            "jssoda_horizontal": self.base_data_path / "language" / "multilingual_scripts" / "jssoda" / "horizontal",
-            "arabic_ocr": self.base_data_path / "language" / "multilingual_scripts" / "arabic_ocr",
+            "jssoda_vertical": self.base_data_path
+            / "language"
+            / "multilingual_scripts"
+            / "jssoda"
+            / "vertical",
+            "jssoda_horizontal": self.base_data_path
+            / "language"
+            / "multilingual_scripts"
+            / "jssoda"
+            / "horizontal",
+            "arabic_ocr": self.base_data_path
+            / "language"
+            / "multilingual_scripts"
+            / "arabic_ocr",
         }
 
         source_path = source_paths.get(source_name)
@@ -342,16 +351,16 @@ class OrientationDatasetGenerator:
         assert len(train_ids & test_ids) == 0, "Train/Test overlap detected!"
         assert len(val_ids & test_ids) == 0, "Val/Test overlap detected!"
 
-        print(f"  Train: {len(train_docs):,} documents ({len(train_docs) * 4:,} samples)")
+        print(
+            f"  Train: {len(train_docs):,} documents ({len(train_docs) * 4:,} samples)"
+        )
         print(f"  Val:   {len(val_docs):,} documents ({len(val_docs) * 4:,} samples)")
         print(f"  Test:  {len(test_docs):,} documents ({len(test_docs) * 4:,} samples)")
         print("  ✓ No document ID overlap between splits")
 
         return {"train": train_docs, "val": val_docs, "test": test_docs}
 
-    def apply_rotation(
-        self, image: np.ndarray, angle: int
-    ) -> np.ndarray:
+    def apply_rotation(self, image: np.ndarray, angle: int) -> np.ndarray:
         """Rotate image to target orientation.
 
         Args:
@@ -471,9 +480,7 @@ class OrientationDatasetGenerator:
         _, encoded = cv2.imencode(".jpg", image, encode_param)
         return cv2.imdecode(encoded, cv2.IMREAD_COLOR)
 
-    def _apply_perspective_warp(
-        self, image: np.ndarray, strength: float
-    ) -> np.ndarray:
+    def _apply_perspective_warp(self, image: np.ndarray, strength: float) -> np.ndarray:
         """Apply slight perspective distortion."""
         h, w = image.shape[:2]
         offset = int(min(h, w) * strength)
@@ -682,8 +689,7 @@ class OrientationDatasetGenerator:
 
             if not dry_run:
                 with open(label_file, "w") as f:
-                    for entry in entries:
-                        f.write(json.dumps(entry) + "\n")
+                    f.writelines(json.dumps(entry) + "\n" for entry in entries)
 
     def write_metadata(self, dry_run: bool = False):
         """Write metadata files."""
@@ -753,8 +759,10 @@ class OrientationDatasetGenerator:
                 json.dump(gen_config, f, indent=2)
 
         print(f"  source_documents.json: {len(source_docs_meta):,} documents")
-        print(f"  split_assignments.json: train={len(split_meta['train_doc_ids'])}, "
-              f"val={len(split_meta['val_doc_ids'])}, test={len(split_meta['test_doc_ids'])}")
+        print(
+            f"  split_assignments.json: train={len(split_meta['train_doc_ids'])}, "
+            f"val={len(split_meta['val_doc_ids'])}, test={len(split_meta['test_doc_ids'])}"
+        )
         print("  generation_config.json: configuration saved")
 
     def print_statistics(self):
@@ -779,7 +787,7 @@ class OrientationDatasetGenerator:
             self.stats.get(f"{split}_total", 0) for split in ["train", "val", "test"]
         )
         print(f"\n  Total Samples: {total_samples:,}")
-        print(f"  Target: 50,000")
+        print("  Target: 50,000")
 
     def generate(self, dry_run: bool = False):
         """Run the full dataset generation pipeline."""
@@ -817,7 +825,7 @@ class OrientationDatasetGenerator:
         if dry_run:
             print("DRY RUN COMPLETE - No files written")
         else:
-            print(f"GENERATION COMPLETE")
+            print("GENERATION COMPLETE")
             print(f"Output: {self.output_path}")
         print("=" * 60)
 

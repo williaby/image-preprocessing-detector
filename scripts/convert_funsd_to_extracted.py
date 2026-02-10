@@ -60,9 +60,7 @@ def reconstruct_page_text(form_entities: list[dict]) -> str:
     current_line.sort(key=lambda e: e["box"][0])
     lines.append(current_line)
 
-    return "\n".join(
-        " ".join(e["text"] for e in line) for line in lines
-    )
+    return "\n".join(" ".join(e["text"] for e in line) for line in lines)
 
 
 def build_annotations(form_entities: list[dict]) -> list[dict]:
@@ -103,9 +101,9 @@ def save_batch(
     """Save a batch in the same format as process_datasets.py output."""
     ocr_path = output_dir / f"ocr_batch_{batch_num}.jsonl"
     with open(ocr_path, "w") as f:
-        for r in batch_results:
-            f.write(
-                json.dumps({
+        f.writelines(
+            json.dumps(
+                {
                     "source": r["filename"],
                     "text": r["text"],
                     "confidence": 1.0,
@@ -113,9 +111,11 @@ def save_batch(
                     "processing_time_ms": 0,
                     "success": True,
                     "error": None,
-                })
-                + "\n"
+                }
             )
+            + "\n"
+            for r in batch_results
+        )
 
     layout_data = {
         "info": {
@@ -132,11 +132,13 @@ def save_batch(
     global_ann_id = 0
     for img_id, r in enumerate(batch_results):
         if r["annotations"]:
-            layout_data["images"].append({
-                "id": img_id,
-                "file_name": r["filename"],
-                "gcs_path": r["filename"],
-            })
+            layout_data["images"].append(
+                {
+                    "id": img_id,
+                    "file_name": r["filename"],
+                    "gcs_path": r["filename"],
+                }
+            )
             for ann in r["annotations"]:
                 ann_copy = dict(ann)
                 ann_copy["image_id"] = img_id
@@ -151,9 +153,7 @@ def save_batch(
 
 def main() -> None:
     base_dir = Path("/mnt/e/image_detection/01_base_data/forms/funsd")
-    output_dir = Path(
-        "/mnt/e/image_detection/metadata_registry/extracted/funsd"
-    )
+    output_dir = Path("/mnt/e/image_detection/metadata_registry/extracted/funsd")
 
     dry_run = "--dry-run" in sys.argv
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -183,12 +183,14 @@ def main() -> None:
             annotations = build_annotations(form_entities)
             total_annotations += len(annotations)
 
-            batch_results.append({
-                "filename": image_name,
-                "split": split,
-                "text": text,
-                "annotations": annotations,
-            })
+            batch_results.append(
+                {
+                    "filename": image_name,
+                    "split": split,
+                    "text": text,
+                    "annotations": annotations,
+                }
+            )
 
             if len(batch_results) >= BATCH_SIZE:
                 if not dry_run:
@@ -203,8 +205,10 @@ def main() -> None:
         total_processed += len(batch_results)
         batch_num += 1
 
-    print(f"\nDone: {total_processed} forms, {batch_num} batches, "
-          f"{total_annotations} annotations")
+    print(
+        f"\nDone: {total_processed} forms, {batch_num} batches, "
+        f"{total_annotations} annotations"
+    )
     if dry_run:
         print("(dry run - no files written)")
 

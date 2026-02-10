@@ -34,17 +34,20 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ScriptLabel:
     """Language and script label for a sample."""
+
     language_code: str  # ISO 639-1
-    script_code: str    # ISO 15924
-    script_name: str    # Original name from dataset
-    numeric_id: int     # Original numeric label
+    script_code: str  # ISO 15924
+    script_name: str  # Original name from dataset
+    numeric_id: int  # Original numeric label
 
 
 # Mapping from numeric label to (language_code, script_code, script_name)
@@ -90,7 +93,9 @@ class MDIW13GroundTruthMapper:
             return
 
         if not self.groundtruth_path.exists():
-            raise FileNotFoundError(f"Ground truth file not found: {self.groundtruth_path}")
+            raise FileNotFoundError(
+                f"Ground truth file not found: {self.groundtruth_path}"
+            )
 
         with open(self.groundtruth_path) as f:
             for line_num, line in enumerate(f, start=1):
@@ -101,7 +106,9 @@ class MDIW13GroundTruthMapper:
                         if 0 <= numeric_label <= 12:
                             self._labels[line_num] = numeric_label
                         else:
-                            logger.warning(f"Invalid label {numeric_label} at line {line_num}")
+                            logger.warning(
+                                f"Invalid label {numeric_label} at line {line_num}"
+                            )
                     except ValueError:
                         logger.warning(f"Non-numeric label at line {line_num}: {line}")
 
@@ -148,10 +155,7 @@ class MDIW13GroundTruthMapper:
     def get_all_labels(self) -> dict[int, ScriptLabel]:
         """Get all labels as {sample_number: ScriptLabel}."""
         self._load_labels()
-        return {
-            num: NUMERIC_TO_LABEL[label]
-            for num, label in self._labels.items()
-        }
+        return {num: NUMERIC_TO_LABEL[label] for num, label in self._labels.items()}
 
     def get_distribution(self) -> dict[str, int]:
         """Get distribution of scripts in the test set."""
@@ -200,7 +204,9 @@ def main():
     for i in range(1, 6):
         label = mapper.get_label_by_number(i)
         if label:
-            print(f"  sample{i:06d}.png -> {label.script_name} ({label.language_code}/{label.script_code})")
+            print(
+                f"  sample{i:06d}.png -> {label.script_name} ({label.language_code}/{label.script_code})"
+            )
 
 
 if __name__ == "__main__":

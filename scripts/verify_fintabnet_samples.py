@@ -16,19 +16,27 @@ import time
 from collections import Counter
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Paths
-VERY_LOW_SAMPLES = Path("/mnt/e/image_detection/metadata_registry/triage_analysis/fintabnet_very_low_samples.json")
-METADATA_FILE = Path("/mnt/e/image_detection/metadata_registry/json/fintabnet_metadata.json")
+VERY_LOW_SAMPLES = Path(
+    "/mnt/e/image_detection/metadata_registry/triage_analysis/fintabnet_very_low_samples.json"
+)
+METADATA_FILE = Path(
+    "/mnt/e/image_detection/metadata_registry/json/fintabnet_metadata.json"
+)
 BASE_DATA_PATH = Path("/mnt/e/image_detection/01_base_data/tables/fintabnet")
 RESULTS_DIR = Path("/mnt/e/image_detection/metadata_registry/triage_analysis")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Verify fintabnet samples with Qwen")
-    parser.add_argument("--limit", type=int, default=50, help="Number of samples to verify")
+    parser.add_argument(
+        "--limit", type=int, default=50, help="Number of samples to verify"
+    )
     parser.add_argument("--all", action="store_true", help="Verify all samples")
     args = parser.parse_args()
 
@@ -58,19 +66,21 @@ def main():
         if sample_id in sample_paths:
             img_path = sample_paths[sample_id]
             if img_path.exists():
-                samples_to_verify.append({
-                    "sample_id": sample_id,
-                    "image_path": img_path,
-                    "text_consensus": s["consensus_language"],
-                    "text_confidence": s["consensus_confidence"],
-                    "text_script": s["primary_script"],
-                })
+                samples_to_verify.append(
+                    {
+                        "sample_id": sample_id,
+                        "image_path": img_path,
+                        "text_consensus": s["consensus_language"],
+                        "text_confidence": s["consensus_confidence"],
+                        "text_script": s["primary_script"],
+                    }
+                )
 
     logger.info(f"Found {len(samples_to_verify)} verifiable samples")
 
     # Limit if not --all
     if not args.all:
-        samples_to_verify = samples_to_verify[:args.limit]
+        samples_to_verify = samples_to_verify[: args.limit]
         logger.info(f"Processing {len(samples_to_verify)} samples (use --all for full)")
 
     # Run vision detection
@@ -94,14 +104,16 @@ def main():
                 script = vision_result.get("primary_script", "Unknown")
                 confidence = vision_result.get("total_confidence", 0)
 
-                results.append({
-                    "sample_id": sample["sample_id"],
-                    "text_consensus": sample["text_consensus"],
-                    "text_script": sample["text_script"],
-                    "vision_language": lang,
-                    "vision_script": script,
-                    "vision_confidence": confidence,
-                })
+                results.append(
+                    {
+                        "sample_id": sample["sample_id"],
+                        "text_consensus": sample["text_consensus"],
+                        "text_script": sample["text_script"],
+                        "vision_language": lang,
+                        "vision_script": script,
+                        "vision_confidence": confidence,
+                    }
+                )
 
                 lang_counts[lang] += 1
                 script_counts[script] += 1
@@ -109,17 +121,21 @@ def main():
                 if lang == "en" and script in ("Latn", "Latin"):
                     english_latin_count += 1
             else:
-                results.append({
-                    "sample_id": sample["sample_id"],
-                    "error": "API call failed",
-                })
+                results.append(
+                    {
+                        "sample_id": sample["sample_id"],
+                        "error": "API call failed",
+                    }
+                )
 
         except Exception as e:
             logger.warning(f"Error processing {sample['sample_id']}: {e}")
-            results.append({
-                "sample_id": sample["sample_id"],
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "sample_id": sample["sample_id"],
+                    "error": str(e),
+                }
+            )
 
         # Minimal delay for paid API
         time.sleep(0.1)
@@ -133,28 +149,38 @@ def main():
     print("=" * 60)
     print(f"\nTotal processed: {total}")
     print(f"Successful: {successful}")
-    print(f"English + Latin: {english_latin_count} ({100*english_latin_count/successful:.1f}%)" if successful else "")
+    print(
+        f"English + Latin: {english_latin_count} ({100 * english_latin_count / successful:.1f}%)"
+        if successful
+        else ""
+    )
 
     print("\nVision Language Distribution:")
     for lang, count in lang_counts.most_common(10):
-        print(f"  {lang}: {count} ({100*count/successful:.1f}%)")
+        print(f"  {lang}: {count} ({100 * count / successful:.1f}%)")
 
     print("\nVision Script Distribution:")
     for script, count in script_counts.most_common(10):
-        print(f"  {script}: {count} ({100*count/successful:.1f}%)")
+        print(f"  {script}: {count} ({100 * count / successful:.1f}%)")
 
     # Save results
     output_file = RESULTS_DIR / "fintabnet_vision_verification.json"
     with open(output_file, "w") as f:
-        json.dump({
-            "total": total,
-            "successful": successful,
-            "english_latin_count": english_latin_count,
-            "english_latin_pct": 100 * english_latin_count / successful if successful else 0,
-            "language_distribution": dict(lang_counts),
-            "script_distribution": dict(script_counts),
-            "results": results,
-        }, f, indent=2)
+        json.dump(
+            {
+                "total": total,
+                "successful": successful,
+                "english_latin_count": english_latin_count,
+                "english_latin_pct": 100 * english_latin_count / successful
+                if successful
+                else 0,
+                "language_distribution": dict(lang_counts),
+                "script_distribution": dict(script_counts),
+                "results": results,
+            },
+            f,
+            indent=2,
+        )
 
     print(f"\nResults saved to: {output_file}")
 

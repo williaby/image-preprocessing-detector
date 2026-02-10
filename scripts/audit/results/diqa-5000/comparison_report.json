@@ -1,0 +1,8346 @@
+{
+  "report_metadata": {
+    "dataset": "diqa-5000",
+    "audit_sample_count": 36,
+    "created_at": "2026-02-10T15:15:02.388547+00:00",
+    "sources": {
+      "A": {
+        "name": "L2 Metadata",
+        "path": "/mnt/e/image_detection/metadata_registry/json/diqa-5000_metadata.json"
+      },
+      "B": {
+        "name": "Egret Layout",
+        "path": "/home/byron/dev/image_detection/scripts/audit/results/diqa-5000/egret_results.json"
+      },
+      "C": {
+        "name": "Docling GPU Layout",
+        "path": "/mnt/e/image_detection/metadata_registry/extracted/diqa-5000"
+      },
+      "D": {
+        "name": "LLM Enrichment",
+        "path": "/mnt/e/image_detection/metadata_registry/json/diqa-5000_llm_enrichment.json"
+      },
+      "E": {
+        "name": "Visual Ground Truth",
+        "path": "/home/byron/dev/image_detection/scripts/audit/results/diqa-5000/visual_ground_truth.json"
+      }
+    },
+    "fields_compared": [
+      "capture_method",
+      "domain_level1",
+      "iso639_language",
+      "script_family",
+      "orientation_class",
+      "has_table",
+      "has_formula",
+      "has_figure",
+      "has_handwriting",
+      "layout_class_count",
+      "color_mode",
+      "physical_degradation",
+      "split"
+    ]
+  },
+  "samples": [
+    {
+      "image_id": "test_ori_00024",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": "camera_smartphone",
+            "E": "camera_smartphone"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": "SCI",
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": false
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": "zh",
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": true
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": true,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 11,
+            "B": 51,
+            "C": 12
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "creases"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "test_ori_00045",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": "camera_smartphone",
+            "E": "camera_smartphone"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": "SCI",
+            "E": "SCI"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "en",
+            "lang": "as",
+            "E": "en"
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "lang": false
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "latin"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": true,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": true,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": true,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": true,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 1,
+            "B": 5,
+            "C": 1
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "moire"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "test_res_00092",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": "zh",
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": true
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 18,
+            "B": 66,
+            "C": 20
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "test_res_00133",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": "zh",
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": true
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 22,
+            "B": 67,
+            "C": 21
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "test_res_00207",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "TEC"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": "zh",
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": true
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 4,
+            "B": 22,
+            "C": 4
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "blur"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "test_res_00215",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "SCI"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "en",
+            "lang": "en",
+            "E": "en"
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "lang": true
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "latin"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 13,
+            "B": 28,
+            "C": 10
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "test_res_00339",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "SCI"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 6,
+            "B": 17,
+            "C": 5
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "blur"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "test_res_00568",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": true,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 4,
+            "B": 53,
+            "C": 14
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "moire"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "test_res_00910",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 270
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 1,
+            "B": 11,
+            "C": 5
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "grayscale"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "test"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_ori_00027",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": "camera_smartphone",
+            "E": "camera_smartphone"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": "EDU",
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 270
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": true,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 9,
+            "B": 50,
+            "C": 8
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "occlusion"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_ori_00272",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": "scanner_flatbed",
+            "E": "camera_smartphone"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": false
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": "TEC",
+            "E": "TEC"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": true,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": true,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 17,
+            "B": 25,
+            "C": 14
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "shadow"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_ori_00291",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": "camera_smartphone",
+            "E": "camera_smartphone"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": "EDU",
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 270
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": true,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": true,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": false,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 1,
+            "B": 6,
+            "C": 5
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "occlusion"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_ori_00326",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": "scanner_flatbed",
+            "E": "camera_smartphone"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": false
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": "TEC",
+            "E": "TEC"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 13,
+            "B": 49,
+            "C": 26
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_00334",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 270
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 6,
+            "B": 57,
+            "C": 11
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "occlusion"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_00783",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": "zh",
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": true
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 15,
+            "B": 44,
+            "C": 14
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "moire"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_00825",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": "zh",
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": true
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 19,
+            "B": 52,
+            "C": 16
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_00921",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": "zh",
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": true
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 19,
+            "B": 46,
+            "C": 17
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_01045",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "SCI"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "en",
+            "lang": "scn",
+            "E": "en"
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "lang": false
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "latin"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 3,
+            "B": 2,
+            "C": 1
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "shadow"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_01184",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": false
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 1,
+            "B": 1,
+            "C": 12
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "moire"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_01202",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 5,
+            "B": 35,
+            "C": 16
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_01470",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 10,
+            "B": 71,
+            "C": 16
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_01593",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 17,
+            "B": 2,
+            "C": 18
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "moire"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_01832",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "TEC"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 12,
+            "B": 46,
+            "C": 11
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "grayscale"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "blur"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_02036",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "en",
+            "lang": null,
+            "E": "en"
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "latin"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 13,
+            "B": 41,
+            "C": 12
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_02274",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 270
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 3,
+            "B": 23,
+            "C": 14
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "grayscale"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_02781",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 270
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 2,
+            "B": 44,
+            "C": 14
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "grayscale"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_03064",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "TEC"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 14,
+            "B": 43,
+            "C": 19
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_03114",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 2,
+            "B": 6,
+            "C": 1
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "grayscale"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "blur",
+              "moire"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_03187",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "SCI"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "en",
+            "lang": null,
+            "E": "en"
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "latin"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 3,
+            "B": 22,
+            "C": 1
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "train_res_03372",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "TEC"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 23,
+            "B": 77,
+            "C": 18
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "train"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        }
+      }
+    },
+    {
+      "image_id": "val_ori_00006",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": "camera_smartphone",
+            "E": "camera_smartphone"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": "EDU",
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 270
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": true,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 1,
+            "B": 22,
+            "C": 7
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "occlusion"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "unknown"
+          },
+          "matches_gt": {
+            "A": true
+          }
+        }
+      }
+    },
+    {
+      "image_id": "val_ori_00035",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": "scanner_flatbed",
+            "E": "camera_smartphone"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": false
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": "SCI",
+            "E": "SCI"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": true,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": false,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": false,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 4,
+            "B": 7,
+            "C": 3
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "shadow"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "unknown"
+          },
+          "matches_gt": {
+            "A": true
+          }
+        }
+      }
+    },
+    {
+      "image_id": "val_res_00109",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 13,
+            "B": 31,
+            "C": 11
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "unknown"
+          },
+          "matches_gt": {
+            "A": true
+          }
+        }
+      }
+    },
+    {
+      "image_id": "val_res_00221",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": true,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": false,
+            "B": true,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 6,
+            "B": 54,
+            "C": 15
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "moire"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "unknown"
+          },
+          "matches_gt": {
+            "A": true
+          }
+        }
+      }
+    },
+    {
+      "image_id": "val_res_00335",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "SCI"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "en",
+            "lang": null,
+            "E": "en"
+          },
+          "matches_gt": {
+            "A": true,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "latin"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 0
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": true,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": true
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": false,
+            "C": true
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 4,
+            "B": 13,
+            "C": 3
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "grayscale"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": [
+              "blur"
+            ]
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "unknown"
+          },
+          "matches_gt": {
+            "A": true
+          }
+        }
+      }
+    },
+    {
+      "image_id": "val_res_00414",
+      "sources_available": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "lang": false
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "A": "unknown",
+            "D": null,
+            "E": "synthetic"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "domain_level1": {
+          "sources": {
+            "A": "UNK",
+            "D": null,
+            "E": "EDU"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null
+          }
+        },
+        "iso639_language": {
+          "sources": {
+            "A": "en",
+            "D": "zh",
+            "lang": null,
+            "E": "zh"
+          },
+          "matches_gt": {
+            "A": false,
+            "D": true,
+            "lang": null
+          }
+        },
+        "script_family": {
+          "sources": {
+            "A": "ltr",
+            "E": "cjk"
+          },
+          "matches_gt": {
+            "A": false
+          }
+        },
+        "orientation_class": {
+          "sources": {
+            "A": null,
+            "E": 270
+          },
+          "matches_gt": {
+            "A": null
+          }
+        },
+        "has_table": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": true,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": false,
+            "D": null,
+            "B": false,
+            "C": false
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "A": false,
+            "D": null,
+            "E": false,
+            "B": false,
+            "C": false
+          },
+          "matches_gt": {
+            "A": true,
+            "D": null,
+            "B": true,
+            "C": true
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "A": 1,
+            "B": 29,
+            "C": 12
+          },
+          "matches_gt": {
+            "A": null,
+            "B": null,
+            "C": null
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "E": "color"
+          },
+          "matches_gt": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "E": []
+          },
+          "matches_gt": {}
+        },
+        "split": {
+          "sources": {
+            "A": "unknown",
+            "E": "unknown"
+          },
+          "matches_gt": {
+            "A": true
+          }
+        }
+      }
+    }
+  ],
+  "agreement_metrics": {
+    "per_field": {
+      "capture_method": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.0,
+          "D": 0.1389
+        },
+        "best_source": "D",
+        "best_accuracy": 0.1389
+      },
+      "domain_level1": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.0,
+          "D": 0.1944
+        },
+        "best_source": "D",
+        "best_accuracy": 0.1944
+      },
+      "iso639_language": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.1667,
+          "D": 1.0,
+          "lang": 0.2222
+        },
+        "best_source": "D",
+        "best_accuracy": 1.0
+      },
+      "script_family": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.0
+        },
+        "best_source": "A",
+        "best_accuracy": 0.0
+      },
+      "orientation_class": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.0
+        },
+        "best_source": "A",
+        "best_accuracy": 0.0
+      },
+      "has_table": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.8611,
+          "D": 0.2222,
+          "B": 0.8333,
+          "C": 0.8333
+        },
+        "best_source": "A",
+        "best_accuracy": 0.8611
+      },
+      "has_formula": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.5278,
+          "D": 0.2222,
+          "B": 0.5556,
+          "C": 0.5278
+        },
+        "best_source": "B",
+        "best_accuracy": 0.5556
+      },
+      "has_figure": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.8889,
+          "D": 0.1944,
+          "B": 0.6389,
+          "C": 0.8611
+        },
+        "best_source": "A",
+        "best_accuracy": 0.8889
+      },
+      "has_handwriting": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.6944,
+          "D": 0.1944,
+          "B": 0.6944,
+          "C": 0.6944
+        },
+        "best_source": "A",
+        "best_accuracy": 0.6944
+      },
+      "layout_class_count": {
+        "gt_values_present": 0,
+        "source_accuracies": {},
+        "best_source": null,
+        "best_accuracy": null
+      },
+      "color_mode": {
+        "gt_values_present": 36,
+        "source_accuracies": {},
+        "best_source": null,
+        "best_accuracy": null
+      },
+      "physical_degradation": {
+        "gt_values_present": 36,
+        "source_accuracies": {},
+        "best_source": null,
+        "best_accuracy": null
+      },
+      "split": {
+        "gt_values_present": 36,
+        "source_accuracies": {
+          "A": 0.1667
+        },
+        "best_source": "A",
+        "best_accuracy": 0.1667
+      }
+    },
+    "per_source": {
+      "A": {
+        "source_name": "L2 Metadata",
+        "fields_compared": 360,
+        "fields_matching_gt": 119,
+        "overall_accuracy": 0.3306
+      },
+      "B": {
+        "source_name": "Egret Layout",
+        "fields_compared": 144,
+        "fields_matching_gt": 98,
+        "overall_accuracy": 0.6806
+      },
+      "C": {
+        "source_name": "Docling GPU Layout",
+        "fields_compared": 144,
+        "fields_matching_gt": 105,
+        "overall_accuracy": 0.7292
+      },
+      "D": {
+        "source_name": "LLM Enrichment",
+        "fields_compared": 252,
+        "fields_matching_gt": 78,
+        "overall_accuracy": 0.3095
+      },
+      "lang": {
+        "source_name": "Language Enrichment",
+        "fields_compared": 36,
+        "fields_matching_gt": 8,
+        "overall_accuracy": 0.2222
+      }
+    }
+  },
+  "disagreements": [
+    {
+      "image_id": "test_ori_00024",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "test_ori_00024",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "test_ori_00024",
+      "field": "domain_level1",
+      "source": "D",
+      "source_name": "LLM Enrichment",
+      "source_value": "SCI",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "test_ori_00024",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "test_ori_00024",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "test_ori_00024",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "test_ori_00024",
+      "field": "has_figure",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "test_ori_00024",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "SCI"
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "iso639_language",
+      "source": "lang",
+      "source_name": "Language Enrichment",
+      "source_value": "as",
+      "gt_value": "en"
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "latin"
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_table",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_table",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_table",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_ori_00045",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "test_res_00092",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "test_res_00092",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "test_res_00092",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "test_res_00092",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "test_res_00092",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "test_res_00133",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "test_res_00133",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "test_res_00133",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "test_res_00133",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "test_res_00133",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "test_res_00133",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "test_res_00207",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "test_res_00207",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "TEC"
+    },
+    {
+      "image_id": "test_res_00207",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "test_res_00207",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "test_res_00207",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "test_res_00215",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "test_res_00215",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "SCI"
+    },
+    {
+      "image_id": "test_res_00215",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "latin"
+    },
+    {
+      "image_id": "test_res_00215",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "SCI"
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_res_00339",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "test_res_00568",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "test_res_00910",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "test_res_00910",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "test_res_00910",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "test_res_00910",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "test_res_00910",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "test"
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_ori_00027",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "capture_method",
+      "source": "D",
+      "source_name": "LLM Enrichment",
+      "source_value": "scanner_flatbed",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "TEC"
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00272",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "has_handwriting",
+      "source": "D",
+      "source_name": "LLM Enrichment",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_ori_00291",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_ori_00326",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "train_ori_00326",
+      "field": "capture_method",
+      "source": "D",
+      "source_name": "LLM Enrichment",
+      "source_value": "scanner_flatbed",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "train_ori_00326",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "TEC"
+    },
+    {
+      "image_id": "train_ori_00326",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_ori_00326",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_ori_00326",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "has_figure",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_00334",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "has_table",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "has_table",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "has_table",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "has_figure",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_00783",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_00825",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_00825",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_00825",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_00825",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_00825",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_00825",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_00921",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_00921",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_00921",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_00921",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_00921",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_01045",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_01045",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "SCI"
+    },
+    {
+      "image_id": "train_res_01045",
+      "field": "iso639_language",
+      "source": "lang",
+      "source_name": "Language Enrichment",
+      "source_value": "scn",
+      "gt_value": "en"
+    },
+    {
+      "image_id": "train_res_01045",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "latin"
+    },
+    {
+      "image_id": "train_res_01045",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01045",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01045",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01045",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "has_figure",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01184",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "has_figure",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01202",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_01470",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_01470",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_01470",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_01470",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_01470",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01470",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01470",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01470",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "has_table",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "has_table",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01593",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_01832",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_01832",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "TEC"
+    },
+    {
+      "image_id": "train_res_01832",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_01832",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_01832",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01832",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01832",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_01832",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_02036",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_02036",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_02036",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "latin"
+    },
+    {
+      "image_id": "train_res_02036",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_02036",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "has_table",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "has_table",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "has_table",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02274",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_02781",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_03064",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_03064",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "TEC"
+    },
+    {
+      "image_id": "train_res_03064",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_03064",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_03064",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03114",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "SCI"
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "latin"
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_table",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_table",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_table",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_figure",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "train_res_03187",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "train_res_03372",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "train_res_03372",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "TEC"
+    },
+    {
+      "image_id": "train_res_03372",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "train_res_03372",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "train_res_03372",
+      "field": "split",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "train"
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "val_ori_00006",
+      "field": "has_figure",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "val_ori_00035",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "val_ori_00035",
+      "field": "capture_method",
+      "source": "D",
+      "source_name": "LLM Enrichment",
+      "source_value": "scanner_flatbed",
+      "gt_value": "camera_smartphone"
+    },
+    {
+      "image_id": "val_ori_00035",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "SCI"
+    },
+    {
+      "image_id": "val_ori_00035",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "val_ori_00035",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "val_ori_00035",
+      "field": "has_figure",
+      "source": "D",
+      "source_name": "LLM Enrichment",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "has_table",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "has_table",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "has_table",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "has_figure",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "val_res_00109",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "has_figure",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "has_figure",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": true,
+      "gt_value": false
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "has_handwriting",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "has_handwriting",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00221",
+      "field": "has_handwriting",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00335",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "val_res_00335",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "SCI"
+    },
+    {
+      "image_id": "val_res_00335",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "latin"
+    },
+    {
+      "image_id": "val_res_00335",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00414",
+      "field": "capture_method",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "unknown",
+      "gt_value": "synthetic"
+    },
+    {
+      "image_id": "val_res_00414",
+      "field": "domain_level1",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "UNK",
+      "gt_value": "EDU"
+    },
+    {
+      "image_id": "val_res_00414",
+      "field": "iso639_language",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "en",
+      "gt_value": "zh"
+    },
+    {
+      "image_id": "val_res_00414",
+      "field": "script_family",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": "ltr",
+      "gt_value": "cjk"
+    },
+    {
+      "image_id": "val_res_00414",
+      "field": "has_formula",
+      "source": "A",
+      "source_name": "L2 Metadata",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00414",
+      "field": "has_formula",
+      "source": "B",
+      "source_name": "Egret Layout",
+      "source_value": false,
+      "gt_value": true
+    },
+    {
+      "image_id": "val_res_00414",
+      "field": "has_formula",
+      "source": "C",
+      "source_name": "Docling GPU Layout",
+      "source_value": false,
+      "gt_value": true
+    }
+  ],
+  "disagreement_count": 298
+}

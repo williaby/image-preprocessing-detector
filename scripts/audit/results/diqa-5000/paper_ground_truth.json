@@ -1,0 +1,117 @@
+{
+  "dataset": "diqa-5000",
+  "paper": {
+    "title": "DocIQ: Document Image Quality Assessment via Vision-Language Models",
+    "arxiv_id": "2509.17012",
+    "authors": "Zhichao Ma, Fan Huang, Lu Zhao, Fengjun Guo, Guangtao Zhai, Xiongkuo Min",
+    "year": 2025
+  },
+  "ground_truth_properties": {
+    "base_document_origin": {
+      "value": "born_digital",
+      "confidence": 0.95,
+      "evidence": "Documents were 'curated from publicly accessible PDFs' then 'printed at 300 dpi to create original paper documents'",
+      "provenance_tier": "tier_1_annotation"
+    },
+    "capture_method": {
+      "ori_folder": {
+        "value": "camera_smartphone",
+        "confidence": 0.95,
+        "evidence": "Images captured 'using a specified mobile phone' to 'simulate real-world capture conditions'"
+      },
+      "res_folder": {
+        "value": "synthetic",
+        "confidence": 1.0,
+        "evidence": "Enhanced versions of ori/ images using algorithmic methods"
+      }
+    },
+    "distortion_types": {
+      "categories": [
+        {"type": "shadow", "description": "Uneven lighting, cast shadows", "count_per_category": 100},
+        {"type": "occlusion", "description": "Partial obstruction of content", "count_per_category": 100},
+        {"type": "blur", "description": "Motion blur and defocus", "count_per_category": 100},
+        {"type": "creases", "description": "Physical folds and paper damage", "count_per_category": 100},
+        {"type": "moire", "description": "Screen capture interference patterns", "count_per_category": 100}
+      ],
+      "total_base_images": 500,
+      "evidence": "5 distortion categories x 100 images each = 500 base images"
+    },
+    "enhancement_methods": {
+      "operations": [
+        "dewarp",
+        "demoire",
+        "occlusion_removal",
+        "deblur",
+        "deshadow",
+        "appearance_enhancement"
+      ],
+      "note": "Both open-source implementations and commercial SDKs used. Paper does not enumerate all 10 specific methods but lists 6 operation categories. Multiple methods per category yield 10 enhanced variants per base image.",
+      "enhanced_per_base": 10,
+      "total_enhanced": 5000
+    },
+    "annotation_protocol": {
+      "total_annotators": 23,
+      "scores_per_image": 15,
+      "dimensions": ["overall_quality", "sharpness", "color_fidelity"],
+      "scale": "MOS (Mean Opinion Score)",
+      "standard": "ITU-R BT.500",
+      "inter_annotator_agreement": "Implemented per ITU-R BT.500, specific values not reported"
+    },
+    "image_specs": {
+      "processing_resolution": "1600x1600 (for model)",
+      "original_print_dpi": 300,
+      "format": "JPEG",
+      "note": "Original capture resolution not specified. Images appear to be ~1848x2620 based on metadata"
+    },
+    "language_distribution": {
+      "note": "Paper does NOT specify language distribution. From OpenLID analysis: ~73% Chinese, ~17% English, ~10% other. From LLM analysis of 500 ori/ images: 76% Chinese, 23% English.",
+      "source": "enrichment_analysis_not_paper"
+    },
+    "document_types": {
+      "described": ["textual", "tabular", "mixed-content layouts"],
+      "from_llm_enrichment": {
+        "EDU": {"percentage": 41, "examples": ["exam", "worksheet"]},
+        "SCI": {"percentage": 31, "examples": ["research paper", "scientific article"]},
+        "TEC": {"percentage": 25, "examples": ["technical document", "manual"]},
+        "ADM": {"percentage": 2, "examples": ["administrative form"]},
+        "OTHER": {"percentage": 1, "examples": ["medical", "financial", "personal"]}
+      }
+    },
+    "dataset_split": {
+      "method": "80-20 training-testing split",
+      "note": "Paper says 80-20 split. Actual dataset has train/val/test with counts: train(3850), val(550), test(1100). Val may be carved from train.",
+      "actual_counts": {
+        "train_ori": 350,
+        "train_res": 3500,
+        "val_ori": 50,
+        "val_res": 500,
+        "test_ori": 100,
+        "test_res": 1000
+      }
+    },
+    "model_training": {
+      "backbone": "ResNet50 (ImageNet pretrained)",
+      "optimizer": "Adam",
+      "learning_rate": 0.0002,
+      "lr_schedule": "Step decay, 10-epoch steps, 0.6 decay factor",
+      "epochs": 60,
+      "batch_size": 20,
+      "gpu": "NVIDIA A10"
+    }
+  },
+  "schema_field_implications": {
+    "capture_method": "camera_smartphone for ori/, synthetic for res/ - HIGH confidence from paper",
+    "domain_level1": "NOT specified in paper. Must use LLM/visual inspection",
+    "iso639_language": "NOT specified in paper. Must use OpenLID/LLM. Dataset is MULTILINGUAL (zh+en dominant)",
+    "physical_degradation": "5 explicit categories documented: shadow, occlusion, blur, creases, moire. 100 images each.",
+    "geometric.orientation": "Portrait assumed (documents printed at 300dpi then photographed). Paper does not specify.",
+    "image_properties.color_mode": "color (RGB, photographed documents)",
+    "image_properties.document_age": "modern (2025 dataset, publicly accessible PDFs)",
+    "quality.overall_score": "MOS scores available in CSV (1-5 scale, normalize to 0-1)",
+    "text_content": "NOT provided by dataset. Available via Docling GPU OCR extraction.",
+    "layout_detections": "NOT provided by dataset. Available via DocLayout-YOLO and Docling GPU extraction.",
+    "handwriting_assessment": "NOT provided by dataset. LLM enrichment found 103/500 ori/ images with handwriting."
+  },
+  "created_at": "2026-02-10",
+  "created_by": "audit_phase_0.1_paper_review"
+}

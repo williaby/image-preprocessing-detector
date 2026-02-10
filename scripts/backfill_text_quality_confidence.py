@@ -30,7 +30,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -108,10 +108,10 @@ _GT_TEXT_MIGRATION: dict[str, str] = {
 def _lookup_gt_migration(metadata_name: str) -> str | None:
     """Look up GT source from migration dict, trying both naming forms."""
     underscore_name = metadata_name.replace("-", "_")
-    return (
-        _GT_TEXT_MIGRATION.get(metadata_name)
-        or _GT_TEXT_MIGRATION.get(underscore_name)
+    return _GT_TEXT_MIGRATION.get(metadata_name) or _GT_TEXT_MIGRATION.get(
+        underscore_name
     )
+
 
 # --- Docling OCR annotation directory mapping ---
 # Maps metadata name (underscore) to annotation directory name (hyphen)
@@ -246,9 +246,7 @@ def compute_dataset_quality_cap(
     if not confidences:
         return None
 
-    low_quality_count = sum(
-        1 for c in confidences if c < SAMPLE_LOW_QUALITY_THRESHOLD
-    )
+    low_quality_count = sum(1 for c in confidences if c < SAMPLE_LOW_QUALITY_THRESHOLD)
     low_quality_rate = low_quality_count / len(confidences)
 
     if low_quality_rate <= cap_trigger_pct:
@@ -346,12 +344,14 @@ def process_ground_truth_dataset(
 
     if not dry_run:
         metadata.setdefault("backfill_history", [])
-        metadata["backfill_history"].append({
-            "operation": "text_quality_confidence_backfill",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "source": f"ground_truth_{gt_source}",
-            "stats": stats,
-        })
+        metadata["backfill_history"].append(
+            {
+                "operation": "text_quality_confidence_backfill",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "source": f"ground_truth_{gt_source}",
+                "stats": stats,
+            }
+        )
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
         logger.info(f"  Written: {metadata_path}")
@@ -490,13 +490,15 @@ def process_docling_dataset(
     # Write updated metadata
     if not dry_run:
         metadata.setdefault("backfill_history", [])
-        metadata["backfill_history"].append({
-            "operation": "text_quality_confidence_backfill",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "source": "docling_ocr_heuristic",
-            "dataset_quality_cap": cap,
-            "stats": stats,
-        })
+        metadata["backfill_history"].append(
+            {
+                "operation": "text_quality_confidence_backfill",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "source": "docling_ocr_heuristic",
+                "dataset_quality_cap": cap,
+                "stats": stats,
+            }
+        )
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
         logger.info(f"  Written: {metadata_path}")
@@ -622,13 +624,17 @@ def process_dataset(
         return {"total": 0}
     metadata_name = metadata_path.stem.replace("_metadata", "")
 
-    logger.info(f"\n{'='*60}")
+    logger.info(f"\n{'=' * 60}")
     logger.info(f"Processing: {dataset_name}")
 
     # --- GT detection: read from metadata root or migrate from dict ---
     source_type, gt_source = stamp_text_source_type(metadata_path, dry_run)
 
-    if ground_truth or source_type in ("ground_truth", "synthetic", "partial_ground_truth"):
+    if ground_truth or source_type in (
+        "ground_truth",
+        "synthetic",
+        "partial_ground_truth",
+    ):
         source = gt_source or "user_specified"
         logger.info(f"  Mode: ground truth ({source}, type={source_type})")
         return process_ground_truth_dataset(
@@ -711,7 +717,9 @@ def main() -> None:
             name = mf.stem.replace("_metadata", "")
             datasets.append(name)
     elif args.datasets:
-        datasets = list(args.datasets)  # pass as-is; _resolve_metadata_path handles naming
+        datasets = list(
+            args.datasets
+        )  # pass as-is; _resolve_metadata_path handles naming
     else:
         print("Specify --datasets or --all", file=sys.stderr)
         sys.exit(1)
@@ -739,7 +747,7 @@ def main() -> None:
         logger.info(f"  Stats: {stats}")
 
     # Final summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("TEXT QUALITY CONFIDENCE BACKFILL SUMMARY")
     print("=" * 60)
     for key in sorted(total_stats):

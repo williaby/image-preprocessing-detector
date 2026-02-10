@@ -23,7 +23,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.annotate_base_metadata import DATASET_CONFIGS  # noqa: E402
+from scripts.annotate_base_metadata import DATASET_CONFIGS
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,9 +43,7 @@ def count_images(dataset_path: Path, pattern: str) -> int:
     if not dataset_path.exists():
         return 0
     return sum(
-        1
-        for f in dataset_path.glob(pattern)
-        if f.suffix.lower() in IMAGE_EXTENSIONS
+        1 for f in dataset_path.glob(pattern) if f.suffix.lower() in IMAGE_EXTENSIONS
     )
 
 
@@ -80,9 +78,7 @@ def reconcile_all(
 
     configs = DATASET_CONFIGS
     if dataset_filter:
-        configs = {
-            k: v for k, v in configs.items() if k == dataset_filter
-        }
+        configs = {k: v for k, v in configs.items() if k == dataset_filter}
         if not configs:
             logger.error(f"Dataset '{dataset_filter}' not found in DATASET_CONFIGS")
             return results
@@ -112,21 +108,22 @@ def reconcile_all(
         # Infer canonical name from path
         path_suffix = str(dataset_path.relative_to(dataset_path.parents[1]))
         leaf_folder = dataset_path.name
-        name_matches_path = (
-            name == leaf_folder
-            or name.replace("-", "_") == leaf_folder.replace("-", "_")
-        )
+        name_matches_path = name == leaf_folder or name.replace(
+            "-", "_"
+        ) == leaf_folder.replace("-", "_")
 
-        results.append({
-            "dataset": name,
-            "path": str(dataset_path),
-            "path_suffix": path_suffix,
-            "path_exists": path_exists,
-            "image_count": image_count,
-            "metadata_count": metadata_count,
-            "status": status,
-            "name_matches_path": name_matches_path,
-        })
+        results.append(
+            {
+                "dataset": name,
+                "path": str(dataset_path),
+                "path_suffix": path_suffix,
+                "path_exists": path_exists,
+                "image_count": image_count,
+                "metadata_count": metadata_count,
+                "status": status,
+                "name_matches_path": name_matches_path,
+            }
+        )
 
     return results
 
@@ -163,10 +160,7 @@ def print_table(results: list[dict], missing_only: bool = False) -> None:
         meta = f"{r['metadata_count']:,}" if r["metadata_count"] is not None else "-"
 
         gap = ""
-        if (
-            r["metadata_count"] is not None
-            and r["image_count"] > 0
-        ):
+        if r["metadata_count"] is not None and r["image_count"] > 0:
             diff = r["image_count"] - r["metadata_count"]
             if diff != 0:
                 gap = f"{diff:+,}"
@@ -174,8 +168,7 @@ def print_table(results: list[dict], missing_only: bool = False) -> None:
         name_ok = "yes" if r["name_matches_path"] else "NO"
 
         print(
-            f"{r['dataset']:<28} {status:<6} {disk:>10} "
-            f"{meta:>10} {gap:>8} {name_ok}"
+            f"{r['dataset']:<28} {status:<6} {disk:>10} {meta:>10} {gap:>8} {name_ok}"
         )
 
         totals["disk"] += r["image_count"]
@@ -195,7 +188,9 @@ def print_table(results: list[dict], missing_only: bool = False) -> None:
 
     # Summary
     total = len(results)
-    print(f"Datasets: {total} total, {totals['ok']} OK, {totals['issues']} need attention")
+    print(
+        f"Datasets: {total} total, {totals['ok']} OK, {totals['issues']} need attention"
+    )
 
     # Breakdown of issues
     by_status: dict[str, list[str]] = {}

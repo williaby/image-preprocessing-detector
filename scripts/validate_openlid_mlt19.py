@@ -157,7 +157,11 @@ def get_training_samples_with_labels(
         raw_labels = orig_labels.get("raw_labels", {})
 
         # Only training samples with definite single-language labels
-        if raw_labels.get("split") == "train" and lang_code and lang_code not in ("und", "mul"):
+        if (
+            raw_labels.get("split") == "train"
+            and lang_code
+            and lang_code not in ("und", "mul")
+        ):
             if target_languages is None or lang_code in target_languages:
                 labeled_samples.append((i, sample))
 
@@ -219,7 +223,9 @@ def validate_sample(
         if mapped == gt_language:
             openlid_correct = True
 
-    openlid_script_correct = gt_script is None or openlid_result.script_code == gt_script
+    openlid_script_correct = (
+        gt_script is None or openlid_result.script_code == gt_script
+    )
 
     # lid.176.bin detection (if available)
     lid176_lang = None
@@ -263,22 +269,30 @@ def print_report(stats: ValidationStats, results: list[ValidationResult]) -> Non
 
     # Overall accuracy
     openlid_acc = stats.openlid_correct / stats.total * 100 if stats.total > 0 else 0
-    script_acc = stats.openlid_script_correct / stats.total * 100 if stats.total > 0 else 0
+    script_acc = (
+        stats.openlid_script_correct / stats.total * 100 if stats.total > 0 else 0
+    )
     lid176_acc = stats.lid176_correct / stats.total * 100 if stats.total > 0 else 0
 
     print(f"\nSamples Validated: {stats.total}")
     print(f"Samples Skipped: {stats.skipped}")
 
     print("\n--- Overall Accuracy ---")
-    print(f"OpenLID-v2 Language: {stats.openlid_correct}/{stats.total} ({openlid_acc:.1f}%)")
-    print(f"OpenLID-v2 Script:   {stats.openlid_script_correct}/{stats.total} ({script_acc:.1f}%)")
+    print(
+        f"OpenLID-v2 Language: {stats.openlid_correct}/{stats.total} ({openlid_acc:.1f}%)"
+    )
+    print(
+        f"OpenLID-v2 Script:   {stats.openlid_script_correct}/{stats.total} ({script_acc:.1f}%)"
+    )
     if stats.lid176_correct > 0:
-        print(f"lid.176.bin:         {stats.lid176_correct}/{stats.total} ({lid176_acc:.1f}%)")
+        print(
+            f"lid.176.bin:         {stats.lid176_correct}/{stats.total} ({lid176_acc:.1f}%)"
+        )
 
     # Latency
     if stats.openlid_latencies:
         avg_openlid = sum(stats.openlid_latencies) / len(stats.openlid_latencies)
-        print(f"\n--- Latency ---")
+        print("\n--- Latency ---")
         print(f"OpenLID-v2 avg: {avg_openlid:.2f}ms")
     if stats.lid176_latencies:
         avg_lid176 = sum(stats.lid176_latencies) / len(stats.lid176_latencies)
@@ -294,11 +308,19 @@ def print_report(stats: ValidationStats, results: list[ValidationResult]) -> Non
         total = lang_stats["total"]
 
         openlid_pct = lang_stats["openlid_correct"] / total * 100
-        lid176_pct = lang_stats["lid176_correct"] / total * 100 if lang_stats["lid176_correct"] else 0
+        lid176_pct = (
+            lang_stats["lid176_correct"] / total * 100
+            if lang_stats["lid176_correct"]
+            else 0
+        )
         script_pct = lang_stats["script_correct"] / total * 100
 
         openlid_str = f"{lang_stats['openlid_correct']}/{total} ({openlid_pct:.0f}%)"
-        lid176_str = f"{lang_stats['lid176_correct']}/{total} ({lid176_pct:.0f}%)" if stats.lid176_correct else "N/A"
+        lid176_str = (
+            f"{lang_stats['lid176_correct']}/{total} ({lid176_pct:.0f}%)"
+            if stats.lid176_correct
+            else "N/A"
+        )
         script_str = f"{lang_stats['script_correct']}/{total} ({script_pct:.0f}%)"
 
         print(f"{lang:<8} {openlid_str:<15} {lid176_str:<15} {script_str:<15}")
@@ -306,10 +328,12 @@ def print_report(stats: ValidationStats, results: list[ValidationResult]) -> Non
     # Show some errors
     errors = [r for r in results if not r.openlid_correct]
     if errors:
-        print(f"\n--- Sample Errors (first 10) ---")
+        print("\n--- Sample Errors (first 10) ---")
         for r in errors[:10]:
-            print(f"GT={r.gt_language}, OpenLID={r.openlid_lang} ({r.openlid_lang_639_3}), "
-                  f"Script={r.openlid_script}, Conf={r.openlid_conf:.2f}")
+            print(
+                f"GT={r.gt_language}, OpenLID={r.openlid_lang} ({r.openlid_lang_639_3}), "
+                f"Script={r.openlid_script}, Conf={r.openlid_conf:.2f}"
+            )
             if r.extracted_text:
                 print(f"  Text: {r.extracted_text[:60]}...")
 
@@ -326,7 +350,9 @@ def print_report(stats: ValidationStats, results: list[ValidationResult]) -> Non
     if "ar" in stats.per_language:
         ar_stats = stats.per_language["ar"]
         ar_acc = ar_stats["openlid_correct"] / ar_stats["total"] * 100
-        print(f"\nArabic-specific: {ar_stats['openlid_correct']}/{ar_stats['total']} ({ar_acc:.1f}%)")
+        print(
+            f"\nArabic-specific: {ar_stats['openlid_correct']}/{ar_stats['total']} ({ar_acc:.1f}%)"
+        )
         if ar_acc < 90:
             print("  ⚠ Arabic dialect confusion detected (expected with OpenLID-v2)")
 
@@ -338,12 +364,22 @@ def main() -> int:
     )
     parser.add_argument("--samples", type=int, default=100, help="Number of samples")
     parser.add_argument("--all", action="store_true", help="Use all training samples")
-    parser.add_argument("--languages", type=str, help="Comma-separated languages (e.g., 'ar,zh,ja')")
-    parser.add_argument("--metadata", type=Path, default=METADATA_REGISTRY_PATH / "mlt19_metadata.json")
-    parser.add_argument("--dataset-path", type=Path, default=BASE_DATA_PATH / "language/mlt19")
+    parser.add_argument(
+        "--languages", type=str, help="Comma-separated languages (e.g., 'ar,zh,ja')"
+    )
+    parser.add_argument(
+        "--metadata", type=Path, default=METADATA_REGISTRY_PATH / "mlt19_metadata.json"
+    )
+    parser.add_argument(
+        "--dataset-path", type=Path, default=BASE_DATA_PATH / "language/mlt19"
+    )
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--no-lid176", action="store_true", help="Skip lid.176.bin comparison")
-    parser.add_argument("--no-ocr", action="store_true", help="Skip OCR (use existing text)")
+    parser.add_argument(
+        "--no-lid176", action="store_true", help="Skip lid.176.bin comparison"
+    )
+    parser.add_argument(
+        "--no-ocr", action="store_true", help="Skip OCR (use existing text)"
+    )
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -428,7 +464,10 @@ def main() -> int:
                     logger.warning(f"Could not init {family} reader: {e}")
 
             lang_to_reader = {
-                "en": "latin", "fr": "latin", "de": "latin", "it": "latin",
+                "en": "latin",
+                "fr": "latin",
+                "de": "latin",
+                "it": "latin",
                 "ar": "arabic",
                 "hi": "devanagari",
                 "bn": "bengali",
@@ -467,7 +506,9 @@ def main() -> int:
         # Progress
         if (idx + 1) % 25 == 0:
             acc = stats.openlid_correct / stats.total * 100 if stats.total > 0 else 0
-            logger.info(f"Progress: {idx + 1}/{len(labeled_samples)} | OpenLID acc: {acc:.1f}%")
+            logger.info(
+                f"Progress: {idx + 1}/{len(labeled_samples)} | OpenLID acc: {acc:.1f}%"
+            )
 
     # Print report
     print_report(stats, results)

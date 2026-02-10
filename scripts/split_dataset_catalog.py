@@ -9,7 +9,6 @@ docs/datasets/source/{canonical-name}.md
 
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 # Canonical name mapping from DATASET_NAMING_STANDARD.md
 CANONICAL_NAMES = {
@@ -33,7 +32,12 @@ CANONICAL_NAMES = {
     "hiertext": ["hiertext", "hier-text", "hier_text", "HierText"],
     "iam": ["iam_handwriting", "iam_handwriting", "iam-handwriting", "IAM"],
     "im2latex": ["im2latex", "im2latex-100k", "Im2LaTeX"],
-    "invoices-kg": ["invoices_kaggle", "invoices_kaggle", "kaggle-invoices", "invoices-kg"],
+    "invoices-kg": [
+        "invoices_kaggle",
+        "invoices_kaggle",
+        "kaggle-invoices",
+        "invoices-kg",
+    ],
     "jssoda": ["jssoda", "JSSODa"],
     "mathverse": ["mathverse", "math-verse", "MathVerse"],
     "mdiw13": ["mdiw13", "mdiw-13", "mdiw_13", "MDIW-13"],
@@ -144,7 +148,7 @@ def normalize_dataset_name(name: str) -> str:
             return canonical
 
     # If not found, convert to lowercase kebab-case
-    return re.sub(r'[_\s\(\)]+', '-', name.lower()).strip('-')
+    return re.sub(r"[_\s\(\)]+", "-", name.lower()).strip("-")
 
 
 def is_subsection_header(header_text: str) -> bool:
@@ -152,15 +156,15 @@ def is_subsection_header(header_text: str) -> bool:
     header_lower = header_text.lower()
 
     # Subsections that start with numbers (e.g., "1.", "2.", "3c.", "4.1", etc.)
-    if re.match(r'^\d+[a-z]?\.', header_lower):
+    if re.match(r"^\d+[a-z]?\.", header_lower):
         return True
 
     # Informational sections (not actual datasets)
     informational_patterns = [
-        r'downloaded\s+.*\s+datasets',  # "Downloaded Script Detection Datasets"
-        r'additional\s+.*\s+resources',  # "Additional Script Detection Resources"
-        r'nepal\s+devanagari\s+documents',  # "Nepal Devanagari Documents" (meta section)
-        r'human-in-the-loop',  # "receipts_hitl (Human-in-the-Loop Receipts)" - might be a dataset, keep for now
+        r"downloaded\s+.*\s+datasets",  # "Downloaded Script Detection Datasets"
+        r"additional\s+.*\s+resources",  # "Additional Script Detection Resources"
+        r"nepal\s+devanagari\s+documents",  # "Nepal Devanagari Documents" (meta section)
+        r"human-in-the-loop",  # "receipts_hitl (Human-in-the-Loop Receipts)" - might be a dataset, keep for now
     ]
 
     for pattern in informational_patterns:
@@ -170,19 +174,34 @@ def is_subsection_header(header_text: str) -> bool:
     # Subsection keyword patterns (not dataset names)
     subsection_keywords = [
         # Meta sections
-        r'\boverview\b', r'\binventory\b', r'\busage\b', r'\bstatistics\b',
-        r'\bcomposition\b', r'\bprofile\b', r'\bissues\b', r'\blimitations\b',
-        r'\breferences\b', r'\bnotes\b', r'\blocations\b', r'\bcoverage\b',
-        r'\bvalue\b', r'\blayer\s+2\b', r'\bannotation\s+summary\b',
-        r'\bdistortion\s+types\b', r'\bfinding\b', r'\bcitation\b',
-        r'\bdownload\s+instructions\b', r'\brepresentative\s+samples\b',
-        r'\bdata\s+structure\b', r'\bmetadata\b',
+        r"\boverview\b",
+        r"\binventory\b",
+        r"\busage\b",
+        r"\bstatistics\b",
+        r"\bcomposition\b",
+        r"\bprofile\b",
+        r"\bissues\b",
+        r"\blimitations\b",
+        r"\breferences\b",
+        r"\bnotes\b",
+        r"\blocations\b",
+        r"\bcoverage\b",
+        r"\bvalue\b",
+        r"\blayer\s+2\b",
+        r"\bannotation\s+summary\b",
+        r"\bdistortion\s+types\b",
+        r"\bfinding\b",
+        r"\bcitation\b",
+        r"\bdownload\s+instructions\b",
+        r"\brepresentative\s+samples\b",
+        r"\bdata\s+structure\b",
+        r"\bmetadata\b",
         # Specific patterns
-        r'^\s*benchmark\s+(performance|purpose|results)',
-        r'^\s*(document|ocr)\s+(domains|sources|types|noise)',
-        r'^\s*project\s+usage',
-        r'^\s*parser\s+',
-        r'^\s*key\s+(research\s+)?finding',
+        r"^\s*benchmark\s+(performance|purpose|results)",
+        r"^\s*(document|ocr)\s+(domains|sources|types|noise)",
+        r"^\s*project\s+usage",
+        r"^\s*parser\s+",
+        r"^\s*key\s+(research\s+)?finding",
     ]
 
     for pattern in subsection_keywords:
@@ -190,7 +209,7 @@ def is_subsection_header(header_text: str) -> bool:
             return True
 
     # Check for "X & Y" patterns (e.g., "Known Issues & Limitations")
-    if '&' in header_text:
+    if "&" in header_text:
         return True
 
     return False
@@ -199,18 +218,30 @@ def is_subsection_header(header_text: str) -> bool:
 def is_major_section_header(header_text: str) -> bool:
     """Check if a ### header is a major section (not a dataset)."""
     # Category section headers (e.g., "1.1 Tables", "1.2 Documents")
-    if re.match(r'^\d+\.\d+\s+\w+', header_text):
+    if re.match(r"^\d+\.\d+\s+\w+", header_text):
         return True
 
     major_sections = [
-        "Base Training Datasets", "Language & Script Detection",
-        "Text Corpus Sources", "Benchmark-Only", "Cross-Validation",
-        "Training Datasets", "IQA & Benchmark Datasets",
-        "Extracted Annotations Summary", "Phase", "Legacy Model Folders",
-        "Source Archives", "Dataset Backups", "Checkpoint Backups",
-        "For Training", "For Evaluation", "For Development",
-        "Dataset Documentation", "Schema & Label Mapping",
-        "Schema Utilities", "External Standards References"
+        "Base Training Datasets",
+        "Language & Script Detection",
+        "Text Corpus Sources",
+        "Benchmark-Only",
+        "Cross-Validation",
+        "Training Datasets",
+        "IQA & Benchmark Datasets",
+        "Extracted Annotations Summary",
+        "Phase",
+        "Legacy Model Folders",
+        "Source Archives",
+        "Dataset Backups",
+        "Checkpoint Backups",
+        "For Training",
+        "For Evaluation",
+        "For Development",
+        "Dataset Documentation",
+        "Schema & Label Mapping",
+        "Schema Utilities",
+        "External Standards References",
     ]
 
     for section in major_sections:
@@ -219,7 +250,9 @@ def is_major_section_header(header_text: str) -> bool:
     return False
 
 
-def extract_datasets(catalog_path: Path) -> Tuple[List[Tuple[str, str, int, int]], List[str]]:
+def extract_datasets(
+    catalog_path: Path,
+) -> tuple[list[tuple[str, str, int, int]], list[str]]:
     """
     Extract dataset sections from catalog.
 
@@ -227,7 +260,7 @@ def extract_datasets(catalog_path: Path) -> Tuple[List[Tuple[str, str, int, int]
         - list of (canonical_name, section_content, start_line, end_line)
         - list of skipped dataset names
     """
-    with open(catalog_path, 'r', encoding='utf-8') as f:
+    with open(catalog_path, encoding="utf-8") as f:
         lines = f.readlines()
 
     datasets = []
@@ -245,8 +278,8 @@ def extract_datasets(catalog_path: Path) -> Tuple[List[Tuple[str, str, int, int]
             if is_major_section_header(section_title):
                 # Save current dataset if exists
                 if current_dataset and current_lines:
-                    content = ''.join(current_lines)
-                    datasets.append((current_dataset, content, start_line, i-1))
+                    content = "".join(current_lines)
+                    datasets.append((current_dataset, content, start_line, i - 1))
                     current_dataset = None
                     current_lines = []
                 # Don't start a new dataset for category headers, just skip
@@ -255,8 +288,8 @@ def extract_datasets(catalog_path: Path) -> Tuple[List[Tuple[str, str, int, int]
             # Otherwise, this is a dataset at ### level
             # Save previous dataset if exists
             if current_dataset:
-                content = ''.join(current_lines)
-                datasets.append((current_dataset, content, start_line, i-1))
+                content = "".join(current_lines)
+                datasets.append((current_dataset, content, start_line, i - 1))
 
             # Start new dataset
             canonical_name = normalize_dataset_name(section_title)
@@ -283,8 +316,8 @@ def extract_datasets(catalog_path: Path) -> Tuple[List[Tuple[str, str, int, int]
             # This is a new dataset header at #### level
             # Save previous dataset if exists
             if current_dataset:
-                content = ''.join(current_lines)
-                datasets.append((current_dataset, content, start_line, i-1))
+                content = "".join(current_lines)
+                datasets.append((current_dataset, content, start_line, i - 1))
 
             # Start new dataset
             canonical_name = normalize_dataset_name(dataset_name)
@@ -304,7 +337,7 @@ def extract_datasets(catalog_path: Path) -> Tuple[List[Tuple[str, str, int, int]
 
     # Save last dataset
     if current_dataset and current_lines:
-        content = ''.join(current_lines)
+        content = "".join(current_lines)
         datasets.append((current_dataset, content, start_line, len(lines)))
 
     return datasets, skipped_datasets
@@ -330,11 +363,13 @@ def main():
         output_file = output_dir / f"{canonical_name}.md"
 
         # Write file
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(content)
 
         created_files.append(output_file.name)
-        print(f"✓ {canonical_name:30s} → {output_file.name:35s} (lines {start_line:5d}-{end_line:5d}, {len(content):6d} bytes)")
+        print(
+            f"✓ {canonical_name:30s} → {output_file.name:35s} (lines {start_line:5d}-{end_line:5d}, {len(content):6d} bytes)"
+        )
 
     print("-" * 80)
     print(f"\nCreated {len(created_files)} files in {output_dir}")
@@ -344,28 +379,28 @@ def main():
         for name in sorted(set(skipped_datasets)):
             print(f"  - {name}")
 
-    print(f"\nFiles created:")
+    print("\nFiles created:")
     for filename in sorted(created_files):
         print(f"  - {filename}")
 
     # Verify count
     expected_count = len(CANONICAL_NAMES)
     actual_count = len(created_files)
-    print(f"\nVerification:")
+    print("\nVerification:")
     print(f"  Expected datasets: {expected_count}")
     print(f"  Extracted datasets: {actual_count}")
 
     if actual_count < expected_count:
         print(f"\n⚠️  Warning: Missing {expected_count - actual_count} datasets")
         # Find missing datasets
-        created_names = set(f.replace('.md', '') for f in created_files)
+        created_names = set(f.replace(".md", "") for f in created_files)
         missing = set(CANONICAL_NAMES.keys()) - created_names
         if missing:
             print(f"  Missing: {', '.join(sorted(missing))}")
     elif actual_count > expected_count:
         print(f"\n⚠️  Warning: {actual_count - expected_count} extra datasets found")
     else:
-        print(f"  ✓ All datasets extracted successfully!")
+        print("  ✓ All datasets extracted successfully!")
 
 
 if __name__ == "__main__":

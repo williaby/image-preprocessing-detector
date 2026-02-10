@@ -31,9 +31,8 @@ import argparse
 import json
 import re
 import statistics
-from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -116,7 +115,9 @@ def calculate_text_stats(text: str) -> TextStatistics:
 
     # Character counts
     char_count = len(text)
-    char_count_no_spaces = len(text.replace(" ", "").replace("\t", "").replace("\n", ""))
+    char_count_no_spaces = len(
+        text.replace(" ", "").replace("\t", "").replace("\n", "")
+    )
 
     # Word count (whitespace tokenization)
     words = text.split()
@@ -167,9 +168,7 @@ def calculate_text_stats(text: str) -> TextStatistics:
     )
 
 
-def load_gcs_ocr_text(
-    annotations_dir: Path, dataset: str
-) -> dict[str, dict[str, Any]]:
+def load_gcs_ocr_text(annotations_dir: Path, dataset: str) -> dict[str, dict[str, Any]]:
     """Load text from GCS OCR JSONL files.
 
     Args:
@@ -413,13 +412,12 @@ def load_text_for_dataset(
 
         return text_map, filename_mapping
 
-    elif source_format == "jsonl_gcs_ocr":
+    if source_format == "jsonl_gcs_ocr":
         return load_gcs_ocr_text(annotations_dir, dataset), None
-    elif source_format == "txt_file":
+    if source_format == "txt_file":
         return load_ground_truth_text(annotations_dir, dataset), None
-    else:
-        print(f"  ⚠️  Unknown source format: {source_format}")
-        return {}, None
+    print(f"  ⚠️  Unknown source format: {source_format}")
+    return {}, None
 
 
 def extract_sample_key(sample: dict[str, Any]) -> str | None:
@@ -481,14 +479,14 @@ def process_dataset(
         return stats
 
     # Load Layer 2 metadata first (needed for hash mapping)
-    print(f"  📖 Loading Layer 2 metadata...")
+    print("  📖 Loading Layer 2 metadata...")
     with open(metadata_file, encoding="utf-8") as f:
         metadata = json.load(f)
 
     samples = metadata.get("samples", [])
 
     # Load text content (pass samples for hash-based mapping if needed)
-    print(f"  📖 Loading text content...")
+    print("  📖 Loading text content...")
     text_map, filename_mapping = load_text_for_dataset(
         annotations_dir, dataset, metadata_samples=samples
     )
@@ -549,7 +547,7 @@ def process_dataset(
             "source_format": text_data.get("source_format"),
             "source_file": text_data.get("source_file"),
             "extraction_method": "calculate_text_statistics.py_v1.0.0",
-            "extraction_timestamp": datetime.now(timezone.utc).isoformat(),
+            "extraction_timestamp": datetime.now(UTC).isoformat(),
             "confidence": text_data.get("confidence"),
             "encoding": "utf-8",
             "is_complete": True,
@@ -584,7 +582,9 @@ def process_dataset(
             all_avg_sentence_lengths.append(text_stats.avg_sentence_length)
 
         if verbose:
-            print(f"    {sample_key}: {text_stats.word_count} words, {text_stats.sentence_count} sentences")
+            print(
+                f"    {sample_key}: {text_stats.word_count} words, {text_stats.sentence_count} sentences"
+            )
 
     stats["samples_updated"] = updated_count
 
@@ -599,9 +599,13 @@ def process_dataset(
             "median": round(statistics.median(values), 2),
             "stdev": round(statistics.stdev(values), 2) if len(values) > 1 else 0,
             "percentiles": {
-                "p25": round(statistics.quantiles(values, n=4)[0], 2) if len(values) >= 4 else None,
+                "p25": round(statistics.quantiles(values, n=4)[0], 2)
+                if len(values) >= 4
+                else None,
                 "p50": round(statistics.median(values), 2),
-                "p75": round(statistics.quantiles(values, n=4)[2], 2) if len(values) >= 4 else None,
+                "p75": round(statistics.quantiles(values, n=4)[2], 2)
+                if len(values) >= 4
+                else None,
             },
         }
 
@@ -616,7 +620,7 @@ def process_dataset(
 
     # Save updated metadata
     if not dry_run and updated_count > 0:
-        print(f"  💾 Saving updated metadata...")
+        print("  💾 Saving updated metadata...")
         with open(metadata_file, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
         print(f"  ✅ Updated {updated_count} samples")

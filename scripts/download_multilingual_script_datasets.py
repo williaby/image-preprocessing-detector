@@ -36,7 +36,6 @@ Usage:
 
 import argparse
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -125,15 +124,17 @@ def download_jssoda(output_dir: Path, max_samples: int = 2000) -> int:
                     f.write(image)
 
             # Record in manifest
-            manifest[orientation].append({
-                "filename": filename,
-                "path": str(filepath.relative_to(output_dir)),
-                "is_vertical": is_vertical,
-                "num_columns": num_columns,
-                "source": "llm-jp/JSSODa",
-                "split": "train",
-                "index": idx,
-            })
+            manifest[orientation].append(
+                {
+                    "filename": filename,
+                    "path": str(filepath.relative_to(output_dir)),
+                    "is_vertical": is_vertical,
+                    "num_columns": num_columns,
+                    "source": "llm-jp/JSSODa",
+                    "split": "train",
+                    "index": idx,
+                }
+            )
 
             total_downloaded += 1
 
@@ -210,15 +211,17 @@ def download_jssoda_test(output_dir: Path, max_samples: int = 500) -> int:
                 with open(filepath, "wb") as f:
                     f.write(image)
 
-            manifest[orientation].append({
-                "filename": filename,
-                "path": str(filepath.relative_to(output_dir)),
-                "is_vertical": is_vertical,
-                "num_columns": num_columns,
-                "source": "llm-jp/JSSODa-test",
-                "split": "test",
-                "index": idx,
-            })
+            manifest[orientation].append(
+                {
+                    "filename": filename,
+                    "path": str(filepath.relative_to(output_dir)),
+                    "is_vertical": is_vertical,
+                    "num_columns": num_columns,
+                    "source": "llm-jp/JSSODa-test",
+                    "split": "test",
+                    "index": idx,
+                }
+            )
 
             total_downloaded += 1
 
@@ -280,12 +283,14 @@ def download_arabic_ocr(output_dir: Path, max_samples: int = 1000) -> int:
                 with open(filepath, "wb") as f:
                     f.write(image)
 
-            manifest["samples"].append({
-                "filename": filename,
-                "path": str(filepath.relative_to(output_dir)),
-                "source": "mssqpi/Arabic-OCR-Dataset",
-                "index": idx,
-            })
+            manifest["samples"].append(
+                {
+                    "filename": filename,
+                    "path": str(filepath.relative_to(output_dir)),
+                    "source": "mssqpi/Arabic-OCR-Dataset",
+                    "index": idx,
+                }
+            )
 
             total_downloaded += 1
 
@@ -352,13 +357,15 @@ def download_multilingual_ocr(output_dir: Path, max_samples: int = 1000) -> int:
                 with open(filepath, "wb") as f:
                     f.write(image)
 
-            manifest["samples"].append({
-                "filename": filename,
-                "path": str(filepath.relative_to(output_dir)),
-                "language": language,
-                "source": "Process-Venue/multilingual-ocr-dataset",
-                "index": idx,
-            })
+            manifest["samples"].append(
+                {
+                    "filename": filename,
+                    "path": str(filepath.relative_to(output_dir)),
+                    "language": language,
+                    "source": "Process-Venue/multilingual-ocr-dataset",
+                    "index": idx,
+                }
+            )
 
             # Track script counts
             manifest["scripts"][language] = manifest["scripts"].get(language, 0) + 1
@@ -426,13 +433,15 @@ def download_dzongkha_digits(output_dir: Path, max_samples: int = 500) -> int:
                 with open(filepath, "wb") as f:
                     f.write(image)
 
-            manifest["samples"].append({
-                "filename": filename,
-                "path": str(filepath.relative_to(output_dir)),
-                "digit_label": label,
-                "source": "proadhikary/dzongkha-digits",
-                "index": idx,
-            })
+            manifest["samples"].append(
+                {
+                    "filename": filename,
+                    "path": str(filepath.relative_to(output_dir)),
+                    "digit_label": label,
+                    "source": "proadhikary/dzongkha-digits",
+                    "index": idx,
+                }
+            )
 
             total_downloaded += 1
 
@@ -441,7 +450,7 @@ def download_dzongkha_digits(output_dir: Path, max_samples: int = 500) -> int:
             json.dump(manifest, f, indent=2)
 
         print(f"\n  Downloaded: {total_downloaded} Dzongkha digit images")
-        print(f"  Script: Tibetan (Dzongkha)")
+        print("  Script: Tibetan (Dzongkha)")
         print(f"  Manifest: {manifest_path}")
 
     except Exception as e:
@@ -466,7 +475,14 @@ def create_combined_manifest(output_dir: Path) -> None:
     # Scan for manifests
     for manifest_path in output_dir.rglob("manifest.json"):
         parent_name = manifest_path.parent.name
-        if parent_name in ("jssoda", "jssoda_test", "vjroda", "arabic_ocr", "multilingual_ocr", "dzongkha_digits"):
+        if parent_name in (
+            "jssoda",
+            "jssoda_test",
+            "vjroda",
+            "arabic_ocr",
+            "multilingual_ocr",
+            "dzongkha_digits",
+        ):
             with open(manifest_path) as f:
                 data = json.load(f)
 
@@ -475,34 +491,47 @@ def create_combined_manifest(output_dir: Path) -> None:
             horizontal_count = len(data.get("horizontal", []))
             samples_count = len(data.get("samples", []))
 
-            combined["datasets"].append({
-                "name": dataset_name,
-                "path": str(manifest_path.relative_to(output_dir)),
-                "vertical_count": vertical_count,
-                "horizontal_count": horizontal_count,
-                "samples_count": samples_count,
-            })
+            combined["datasets"].append(
+                {
+                    "name": dataset_name,
+                    "path": str(manifest_path.relative_to(output_dir)),
+                    "vertical_count": vertical_count,
+                    "horizontal_count": horizontal_count,
+                    "samples_count": samples_count,
+                }
+            )
 
             combined["total_vertical"] += vertical_count
             combined["total_horizontal"] += horizontal_count
-            combined["total_samples"] += vertical_count + horizontal_count + samples_count
+            combined["total_samples"] += (
+                vertical_count + horizontal_count + samples_count
+            )
 
             # Merge script counts
             if "scripts" in data:
                 for script, count in data["scripts"].items():
-                    combined["scripts"][script] = combined["scripts"].get(script, 0) + count
+                    combined["scripts"][script] = (
+                        combined["scripts"].get(script, 0) + count
+                    )
 
             # Track Japanese as a script
-            if "japanese" not in combined["scripts"] and (vertical_count + horizontal_count) > 0:
+            if (
+                "japanese" not in combined["scripts"]
+                and (vertical_count + horizontal_count) > 0
+            ):
                 combined["scripts"]["japanese"] = vertical_count + horizontal_count
 
             # Track Arabic
             if data.get("script") == "arabic":
-                combined["scripts"]["arabic"] = combined["scripts"].get("arabic", 0) + samples_count
+                combined["scripts"]["arabic"] = (
+                    combined["scripts"].get("arabic", 0) + samples_count
+                )
 
             # Track Tibetan (Dzongkha)
             if data.get("script") == "tibetan":
-                combined["scripts"]["tibetan"] = combined["scripts"].get("tibetan", 0) + samples_count
+                combined["scripts"]["tibetan"] = (
+                    combined["scripts"].get("tibetan", 0) + samples_count
+                )
 
     # Save combined manifest
     combined_path = output_dir / "combined_manifest.json"
@@ -528,10 +557,12 @@ def print_summary(output_dir: Path) -> None:
             combined = json.load(f)
 
         print(f"\nOutput Directory: {output_dir}")
-        print(f"\nDatasets Downloaded:")
+        print("\nDatasets Downloaded:")
         for ds in combined["datasets"]:
-            print(f"  - {ds['name']}: {ds['vertical_count']} vertical, "
-                  f"{ds['horizontal_count']} horizontal")
+            print(
+                f"  - {ds['name']}: {ds['vertical_count']} vertical, "
+                f"{ds['horizontal_count']} horizontal"
+            )
 
         print(f"\nTotal Samples: {combined['total_samples']}")
         print(f"  Vertical: {combined['total_vertical']}")
@@ -540,11 +571,15 @@ def print_summary(output_dir: Path) -> None:
         # Calculate how many we need for orientation training
         target_japanese = 1250  # From MobileCLIP spec
         if combined["total_vertical"] >= target_japanese:
-            print(f"\n✓ Sufficient vertical samples for orientation training "
-                  f"(need {target_japanese}, have {combined['total_vertical']})")
+            print(
+                f"\n✓ Sufficient vertical samples for orientation training "
+                f"(need {target_japanese}, have {combined['total_vertical']})"
+            )
         else:
-            print(f"\n⚠ May need more vertical samples "
-                  f"(need {target_japanese}, have {combined['total_vertical']})")
+            print(
+                f"\n⚠ May need more vertical samples "
+                f"(need {target_japanese}, have {combined['total_vertical']})"
+            )
 
     print("\n" + "=" * 60)
 
@@ -557,7 +592,9 @@ def main():
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("/mnt/e/image_detection/01_base_data/language/multilingual_scripts"),
+        default=Path(
+            "/mnt/e/image_detection/01_base_data/language/multilingual_scripts"
+        ),
         help="Output directory for datasets",
     )
     parser.add_argument(
@@ -599,7 +636,9 @@ def main():
     if "jssoda" in datasets_to_download:
         total += download_jssoda(args.output, max_samples=args.max_samples)
         if not args.skip_test:
-            total += download_jssoda_test(args.output, max_samples=args.max_samples // 4)
+            total += download_jssoda_test(
+                args.output, max_samples=args.max_samples // 4
+            )
 
     # Arabic OCR dataset
     if "arabic" in datasets_to_download:
@@ -611,7 +650,9 @@ def main():
 
     # Dzongkha (Tibetan script) digits
     if "dzongkha" in datasets_to_download:
-        total += download_dzongkha_digits(args.output, max_samples=args.max_samples // 4)
+        total += download_dzongkha_digits(
+            args.output, max_samples=args.max_samples // 4
+        )
 
     # Create combined manifest
     create_combined_manifest(args.output)

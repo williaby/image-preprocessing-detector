@@ -22,7 +22,6 @@ from typing import Any
 
 from image_preprocessing_detector.annotation.workflow.scanner import (
     BatchScanner,
-    LoggingProgressCallback,
     ProgressCallback,
     ScanBatch,
     ScanCheckpoint,
@@ -243,7 +242,9 @@ def benchmark_batch_generation(
                 batches.append(batch)
 
             # Overhead is just the batch object access time
-            avg_overhead = (sum(batch_times) / len(batch_times)) * 1000 if batch_times else 0
+            avg_overhead = (
+                (sum(batch_times) / len(batch_times)) * 1000 if batch_times else 0
+            )
 
             result = BenchmarkResult(
                 name="batch_generation",
@@ -332,14 +333,17 @@ def benchmark_checkpointing(
 
             avg_checkpoint_time = (
                 (sum(checkpoint_times) / len(checkpoint_times)) * 1000
-                if checkpoint_times else 0
+                if checkpoint_times
+                else 0
             )
 
             result = BenchmarkResult(
                 name="checkpointing",
                 num_files=actual_files,
                 duration_s=sum(checkpoint_times),
-                throughput=len(checkpoint_times) / sum(checkpoint_times) if checkpoint_times else 0,
+                throughput=len(checkpoint_times) / sum(checkpoint_times)
+                if checkpoint_times
+                else 0,
                 details={
                     "checkpoint_every": checkpoint_every,
                     "num_checkpoints": checkpoints_written,
@@ -413,7 +417,9 @@ def benchmark_resume(
                 )
 
             # Update checkpoint with correct hash for new scanner
-            checkpoint_path = checkpoint_dir / f"scan_{dataset_path.name}.checkpoint.json"
+            checkpoint_path = (
+                checkpoint_dir / f"scan_{dataset_path.name}.checkpoint.json"
+            )
             if checkpoint_path.exists():
                 scanner2 = BatchScanner(
                     config=config,
@@ -452,7 +458,9 @@ def benchmark_resume(
                 )
                 results.append(result)
 
-                correct_mark = "OK" if len(resumed_batches) == expected_remaining else "WRONG"
+                correct_mark = (
+                    "OK" if len(resumed_batches) == expected_remaining else "WRONG"
+                )
                 print(
                     f"  {resume_pct:.0%} complete: "
                     f"resumed {len(resumed_batches)}/{expected_remaining} batches "

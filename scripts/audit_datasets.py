@@ -35,7 +35,11 @@ PARSERS_ROOT = (
     PROJECT_ROOT / "src" / "image_preprocessing_detector" / "annotation" / "parsers"
 )
 DATASETS_CONFIG_FILE = (
-    PROJECT_ROOT / "src" / "image_preprocessing_detector" / "annotation" / "config"
+    PROJECT_ROOT
+    / "src"
+    / "image_preprocessing_detector"
+    / "annotation"
+    / "config"
     / "datasets.py"
 )
 AGGREGATES_LOCAL = PROJECT_ROOT / "metadata_registry" / "aggregates"
@@ -48,27 +52,48 @@ FIELD_CATEGORIES: dict[str, list[str]] = {
     "file_info": ["width_px", "height_px", "file_size_bytes", "dpi", "format"],
     "quality_scores": ["diqa_mos", "ocr_quality_score", "smartdoc_mos"],
     "original_labels": [
-        "writer_id", "transcription", "original_language_code", "original_script_name",
+        "writer_id",
+        "transcription",
+        "original_language_code",
+        "original_script_name",
     ],
     "enrichment": [
-        "enrichment_version", "enrichment_tier", "enrichment_source",
-        "capture_method", "capture_confidence", "domain_level1", "resolution_category",
+        "enrichment_version",
+        "enrichment_tier",
+        "enrichment_source",
+        "capture_method",
+        "capture_confidence",
+        "domain_level1",
+        "resolution_category",
     ],
     "content_flags": [
-        "has_table", "has_formula", "has_handwriting", "has_signature", "has_figure",
+        "has_table",
+        "has_formula",
+        "has_handwriting",
+        "has_signature",
+        "has_figure",
     ],
-    "language_script": ["iso639_language", "iso15924_script", "script_family", "bcp47_tag"],
+    "language_script": [
+        "iso639_language",
+        "iso15924_script",
+        "script_family",
+        "bcp47_tag",
+    ],
     "text_scope": [
-        "text_scope", "text_scope_content_type",
-        "text_scope_estimated_chars", "text_scope_estimated_words",
+        "text_scope",
+        "text_scope_content_type",
+        "text_scope_estimated_chars",
+        "text_scope_estimated_words",
     ],
     "paper_size": ["paper_size", "paper_size_standard", "paper_size_orientation"],
     "dataset_source": ["dataset_short_code"],
     "element_counts": ["table_count", "formula_count"],
     "reproducibility": ["git_sha", "model_checkpoint", "script_version"],
     "annotations": [
-        "doclaynet_annotations_json", "tablebank_annotations_json",
-        "funsd_annotations_json", "layout_detections_json",
+        "doclaynet_annotations_json",
+        "tablebank_annotations_json",
+        "funsd_annotations_json",
+        "layout_detections_json",
     ],
 }
 
@@ -124,9 +149,12 @@ def check_documentation(name: str) -> dict[str, Any]:
     """Score template compliance for a dataset source doc."""
     doc_path = SOURCE_DIR / f"{name}.md"
     result: dict[str, Any] = {
-        "file_exists": doc_path.exists(), "has_frontmatter": False,
-        "sections_present": {}, "optional_sections_present": {},
-        "needs_profiling_count": 0, "needs_verification_count": 0,
+        "file_exists": doc_path.exists(),
+        "has_frontmatter": False,
+        "sections_present": {},
+        "optional_sections_present": {},
+        "needs_profiling_count": 0,
+        "needs_verification_count": 0,
         "documentation_score": 0.0,
     }
     if not doc_path.exists():
@@ -185,7 +213,7 @@ def _load_parquet_dataset_names() -> dict[str, Any] | None:
                     coverage[field] = round(non_null / total * 100, 1) if total else 0.0
             result[ds_name] = {"total_samples": total, "field_coverage": coverage}
         return result
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"WARNING: Could not read parquet: {exc}", file=sys.stderr)
         return None
 
@@ -193,8 +221,11 @@ def _load_parquet_dataset_names() -> dict[str, Any] | None:
 def check_metadata(name: str, parquet_data: dict[str, Any] | None) -> dict[str, Any]:
     """Check Layer 2 metadata completeness for a dataset."""
     result: dict[str, Any] = {
-        "in_parquet": False, "total_samples": 0,
-        "field_coverage": {}, "critical_gaps": [], "metadata_score": 0.0,
+        "in_parquet": False,
+        "total_samples": 0,
+        "field_coverage": {},
+        "critical_gaps": [],
+        "metadata_score": 0.0,
     }
     if parquet_data is None:
         result["error"] = "parquet_unavailable"
@@ -241,8 +272,10 @@ def _load_config_keys() -> set[str]:
 def check_parsers(name: str, config_keys: set[str]) -> dict[str, Any]:
     """Check parser file existence and DATASET_CONFIGS entry."""
     result: dict[str, Any] = {
-        "parser_file": None, "file_exists": False,
-        "in_dataset_configs": False, "config_key": None,
+        "parser_file": None,
+        "file_exists": False,
+        "in_dataset_configs": False,
+        "config_key": None,
     }
     snake = to_config_key(name)
     variants = {name, snake}
@@ -290,8 +323,10 @@ def check_cross_file(
 def check_aggregation(name: str) -> dict[str, Any]:
     """Check if aggregate stats JSON exists with key fields."""
     result: dict[str, Any] = {
-        "stats_file_exists": False, "has_capture": False,
-        "has_domain": False, "has_content_flags": False,
+        "stats_file_exists": False,
+        "has_capture": False,
+        "has_domain": False,
+        "has_content_flags": False,
     }
     snake = to_config_key(name)
     candidates = [f"{name}_stats.json", f"{snake}_stats.json"]
@@ -379,15 +414,22 @@ def run_audit(
     quick_ref = _safe_read(QUICK_REF)
     processing = _safe_read(PROCESSING_STATUS)
     naming = _safe_read(NAMING_STANDARD)
-    indices: dict[str, str] = {
-        f.stem: _safe_read(f) for f in sorted(INDICES_DIR.glob("*.md"))
-    } if INDICES_DIR.exists() else {}
+    indices: dict[str, str] = (
+        {f.stem: _safe_read(f) for f in sorted(INDICES_DIR.glob("*.md"))}
+        if INDICES_DIR.exists()
+        else {}
+    )
 
     results = [
         audit_dataset(
-            name, parquet_data=parquet_data, config_keys=config_keys,
-            quick_ref=quick_ref, processing=processing,
-            naming=naming, indices=indices, dimension=dimension,
+            name,
+            parquet_data=parquet_data,
+            config_keys=config_keys,
+            quick_ref=quick_ref,
+            processing=processing,
+            naming=naming,
+            indices=indices,
+            dimension=dimension,
         )
         for name in datasets
     ]
@@ -423,17 +465,27 @@ def _dimension_status(entry: dict[str, Any], dim: str) -> str:
 
     if dim == "cross_file":
         present = sum(
-            1 for k in ["in_source_file", "in_quick_reference",
-                        "in_processing_status", "in_naming_standard"]
+            1
+            for k in [
+                "in_source_file",
+                "in_quick_reference",
+                "in_processing_status",
+                "in_naming_standard",
+            ]
             if data.get(k)
         )
-        return "Complete" if present == 4 else ("Partial" if present >= 2 else "Missing")
+        return (
+            "Complete" if present == 4 else ("Partial" if present >= 2 else "Missing")
+        )
 
     if dim == "aggregation":
         if not data.get("stats_file_exists"):
             return "Missing"
-        flags = [data.get("has_capture"), data.get("has_domain"),
-                 data.get("has_content_flags")]
+        flags = [
+            data.get("has_capture"),
+            data.get("has_domain"),
+            data.get("has_content_flags"),
+        ]
         return "Complete" if all(flags) else "Partial"
 
     return "N/A"
@@ -504,8 +556,9 @@ def generate_markdown_report(results: list[dict[str, Any]]) -> str:
     )
     for entry in results:
         cols = " | ".join(_dimension_status(entry, d) for d in DIMS)
-        lines.append(f"| {entry['dataset']} | {entry.get('overall_score', 0.0):.1f} "
-                     f"| {cols} |")
+        lines.append(
+            f"| {entry['dataset']} | {entry.get('overall_score', 0.0):.1f} | {cols} |"
+        )
     lines.append("")
 
     # Action items
@@ -543,9 +596,11 @@ def _print_console_summary(results: list[dict[str, Any]]) -> None:
         for entry in results:
             status = _dimension_status(entry, dim)
             counts[status] = counts.get(status, 0) + 1
-        print(f"  {dim:<16} Complete: {counts.get('Complete', 0):>3}  "
-              f"Partial: {counts.get('Partial', 0):>3}  "
-              f"Missing: {counts.get('Missing', 0):>3}")
+        print(
+            f"  {dim:<16} Complete: {counts.get('Complete', 0):>3}  "
+            f"Partial: {counts.get('Partial', 0):>3}  "
+            f"Missing: {counts.get('Missing', 0):>3}"
+        )
 
     print(f"\n{'-' * 72}\nLOWEST SCORING DATASETS\n{'-' * 72}")
     print(f"{'Dataset':<30} {'Score':>8}\n{'-' * 38}")
@@ -590,15 +645,20 @@ def main() -> None:
     if args.dataset:
         canonical = normalize_dataset_name(args.dataset)
         if canonical not in all_datasets:
-            print(f"ERROR: '{canonical}' not found. Available: "
-                  f"{', '.join(all_datasets[:10])}...", file=sys.stderr)
+            print(
+                f"ERROR: '{canonical}' not found. Available: "
+                f"{', '.join(all_datasets[:10])}...",
+                file=sys.stderr,
+            )
             sys.exit(1)
         datasets = [canonical]
     else:
         datasets = all_datasets
 
-    print(f"Discovered {len(all_datasets)} datasets, auditing {len(datasets)}.",
-          file=sys.stderr)
+    print(
+        f"Discovered {len(all_datasets)} datasets, auditing {len(datasets)}.",
+        file=sys.stderr,
+    )
 
     results = run_audit(datasets, dimension=args.dimension)
 

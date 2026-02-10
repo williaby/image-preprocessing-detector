@@ -225,7 +225,7 @@ def _convert_standard(
         if stats["converted"] % 1000 == 0 and stats["converted"] > 0:
             logger.info(
                 f"Progress: {stats['converted']}/{stats['found']} "
-                f"({stats['converted']/stats['found']*100:.1f}%)"
+                f"({stats['converted'] / stats['found'] * 100:.1f}%)"
             )
 
 
@@ -266,8 +266,7 @@ def _convert_chunked(
             )
 
         logger.info(
-            f"Chunk {chunk_idx + 1} complete: "
-            f"{end_idx - start_idx} images processed"
+            f"Chunk {chunk_idx + 1} complete: {end_idx - start_idx} images processed"
         )
 
 
@@ -296,10 +295,11 @@ def _convert_sample(
         elif isinstance(image_data, str):
             # Base64-encoded image (common in HuggingFace datasets)
             import base64
+
             try:
                 # Remove data URI prefix if present
-                if image_data.startswith('data:image'):
-                    image_data = image_data.split(',', 1)[1]
+                if image_data.startswith("data:image"):
+                    image_data = image_data.split(",", 1)[1]
                 # Decode base64
                 image_bytes = base64.b64decode(image_data)
                 image = Image.open(BytesIO(image_bytes))
@@ -314,7 +314,9 @@ def _convert_sample(
             # Bytes in dictionary
             image = Image.open(BytesIO(image_data["bytes"]))
         else:
-            logger.warning(f"Unknown image data type at index {idx}: {type(image_data)}")
+            logger.warning(
+                f"Unknown image data type at index {idx}: {type(image_data)}"
+            )
             stats["errors"] += 1
             return
 

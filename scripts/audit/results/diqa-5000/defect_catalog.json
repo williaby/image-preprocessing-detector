@@ -1,0 +1,311 @@
+{
+  "dataset": "diqa-5000",
+  "audit_date": "2026-02-10",
+  "total_samples": 5500,
+  "audited_samples": 36,
+  "schema_version": "2.1.0",
+  "defects": [
+    {
+      "id": "D01",
+      "field": "source.split",
+      "defect_type": "wrong_value",
+      "current": "unknown",
+      "correct": "train/val/test (from image path)",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "pipeline_ignores_path_split",
+      "fix_category": "pipeline_bug",
+      "fix_complexity": "low",
+      "extrapolation_risk": "HIGH - same split detection gap likely affects all datasets with path-based splits"
+    },
+    {
+      "id": "D02",
+      "field": "capture_method.value",
+      "defect_type": "wrong_value",
+      "current": "unknown",
+      "correct": "camera_smartphone (ori/), synthetic (res/)",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "config_override_ignores_parser",
+      "fix_category": "pipeline_bug",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "HIGH - same config override pattern used for 30+ datasets"
+    },
+    {
+      "id": "D03",
+      "field": "original_labels",
+      "defect_type": "missing_data",
+      "current": "{} for ori/ images",
+      "correct": "MOS scores from CSV should be populated",
+      "affected_count": 500,
+      "affected_pct": 9.1,
+      "root_cause": "script_parser_only_matches_res_column",
+      "fix_category": "pipeline_bug",
+      "fix_complexity": "low",
+      "extrapolation_risk": "LOW - DIQA-specific CSV parsing issue"
+    },
+    {
+      "id": "D04",
+      "field": "script_family.value",
+      "defect_type": "wrong_enum",
+      "current": "ltr",
+      "correct": "latin, cjk, or other (per schema enum)",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "wrong_enum_values_in_mapping",
+      "fix_category": "pipeline_bug",
+      "fix_complexity": "low",
+      "extrapolation_risk": "CRITICAL - same mapping used for ALL datasets, 'ltr'/'rtl' are not valid enum values in schema"
+    },
+    {
+      "id": "D05",
+      "field": "domain.domain_level1",
+      "defect_type": "wrong_value",
+      "current": "UNK",
+      "correct": "EDU (61%), SCI (22%), TEC (17%) based on visual inspection",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "llm_enrichment_not_integrated",
+      "fix_category": "integration_gap",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "HIGH - LLM enrichment exists for many datasets but is not merged into L2 metadata"
+    },
+    {
+      "id": "D06",
+      "field": "iso639_language.value",
+      "defect_type": "wrong_value",
+      "current": "en (hardcoded default)",
+      "correct": "zh (73%), en (17%), mixed (10%) - per-image detection required",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "default_language_overrides_detection",
+      "fix_category": "pipeline_bug",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "CRITICAL - default_language_code pattern used for many mixed-language datasets"
+    },
+    {
+      "id": "D07",
+      "field": "layout_detections[].bbox",
+      "defect_type": "wrong_format",
+      "current": "xyxy format [x1, y1, x2, y2]",
+      "correct": "COCO xywh format [x, y, width, height]",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "bbox_format_not_converted",
+      "fix_category": "pipeline_bug",
+      "fix_complexity": "low",
+      "extrapolation_risk": "CRITICAL - same bbox conversion issue likely affects ALL datasets with layout detections"
+    },
+    {
+      "id": "D08",
+      "field": "content_flags",
+      "defect_type": "wrong_value",
+      "current": "all false",
+      "correct": "should be derived from layout detections (tables, formulas, figures) and LLM enrichment",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "flags_not_derived_from_layout",
+      "fix_category": "pipeline_bug",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "HIGH - same derivation gap affects all datasets",
+      "visual_audit_findings": {
+        "has_formula_actual": "83% of audit samples",
+        "has_handwriting_actual": "33% of audit samples",
+        "has_figure_actual": "19% of audit samples",
+        "has_table_actual": "14% of audit samples",
+        "has_code_actual": "14% of audit samples (NOT in current schema)"
+      }
+    },
+    {
+      "id": "D09",
+      "field": "quality.degradations",
+      "defect_type": "missing_data",
+      "current": "empty",
+      "correct": "derivable from MOS scores and visual inspection",
+      "affected_count": 5000,
+      "affected_pct": 90.9,
+      "root_cause": "mos_scores_not_mapped_to_degradation",
+      "fix_category": "integration_gap",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "LOW - DIQA-specific MOS mapping"
+    },
+    {
+      "id": "D10",
+      "field": "geometric.orientation_class",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "0 (portrait) or 270 (rotated 90° CW) - 22% of audit samples are rotated",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "v2_1_0_field_not_populated",
+      "fix_category": "integration_gap",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "HIGH - orientation detection missing for all datasets",
+      "visual_audit_findings": {
+        "portrait_0": "78% of audit samples",
+        "rotated_270": "22% of audit samples",
+        "note": "Rotation is a significant issue - affects OCR and downstream processing"
+      }
+    },
+    {
+      "id": "D11",
+      "field": "physical_degradation",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "ori/ images have real-world degradations: shadow, blur, creases, moire, occlusion",
+      "affected_count": 500,
+      "affected_pct": 9.1,
+      "root_cause": "v2_1_0_field_not_populated",
+      "fix_category": "integration_gap",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "MEDIUM - paper-documented degradation types available for this dataset"
+    },
+    {
+      "id": "D12",
+      "field": "ml_image_quality",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "pending ML inference",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "ml_inference_not_run",
+      "fix_category": "future_work",
+      "fix_complexity": "high",
+      "extrapolation_risk": "N/A - ML inference not yet available"
+    },
+    {
+      "id": "D13",
+      "field": "image_properties",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "color_mode: color (83%) or grayscale (17%), document_age: modern (100%)",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "v2_1_0_field_not_populated",
+      "fix_category": "integration_gap",
+      "fix_complexity": "low",
+      "extrapolation_risk": "HIGH - same gap affects all datasets"
+    },
+    {
+      "id": "D14",
+      "field": "text_content",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "full text available in Docling GPU OCR batch files",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "docling_ocr_not_integrated",
+      "fix_category": "integration_gap",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "HIGH - same OCR data exists for many datasets but not integrated"
+    },
+    {
+      "id": "D15",
+      "field": "text_statistics",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "computable from text_content once D14 is resolved",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "depends_on_d14",
+      "fix_category": "integration_gap",
+      "fix_complexity": "low",
+      "extrapolation_risk": "HIGH - same gap"
+    },
+    {
+      "id": "D16",
+      "field": "handwriting_assessment",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "LLM enrichment found handwriting in 103/500 ori/ images (20.6%). Visual audit confirms 33% of audit samples have handwriting.",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "llm_data_not_integrated",
+      "fix_category": "integration_gap",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "MEDIUM - LLM data available for some datasets"
+    },
+    {
+      "id": "D17",
+      "field": "paper_size",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "A4 (estimated from dimensions + 300 DPI print resolution)",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "no_pipeline_step",
+      "fix_category": "future_work",
+      "fix_complexity": "medium",
+      "extrapolation_risk": "MEDIUM - estimation method needed for all datasets"
+    },
+    {
+      "id": "D18",
+      "field": "llm_scores",
+      "defect_type": "missing_field",
+      "current": "field not populated",
+      "correct": "LLM enrichment data available for 500 ori/ images",
+      "affected_count": 5500,
+      "affected_pct": 100.0,
+      "root_cause": "llm_data_not_integrated",
+      "fix_category": "integration_gap",
+      "fix_complexity": "low",
+      "extrapolation_risk": "HIGH - same integration gap for all datasets with LLM enrichment"
+    }
+  ],
+  "new_findings_from_audit": [
+    {
+      "id": "N01",
+      "field": "content_flags.has_code",
+      "finding_type": "schema_gap",
+      "description": "14% of audit samples contain programming code (Python, C), but no has_code flag exists in schema",
+      "affected_samples": ["train_ori_00326", "train_res_01045", "train_res_01832", "test_res_00207", "train_res_03064"],
+      "recommendation": "Consider adding has_code flag to content_flags in schema v2.2.0"
+    },
+    {
+      "id": "N02",
+      "field": "openlid_accuracy",
+      "finding_type": "enrichment_quality",
+      "description": "OpenLID misclassifies handwritten and mixed-language documents. test_ori_00045 classified as Assamese/Bengali (0.767 conf) when actually English+Chinese.",
+      "recommendation": "Add OpenLID confidence threshold (reject <0.5), cross-validate with LLM enrichment for handwritten content"
+    },
+    {
+      "id": "N03",
+      "field": "orientation_class",
+      "finding_type": "significant_variance",
+      "description": "22% of audit samples (8/36) are rotated 90 degrees clockwise. This is higher than expected and affects OCR/downstream.",
+      "recommendation": "Orientation detection is critical. LLM enrichment captures this for ori/ images. Need automated detection for res/ images."
+    },
+    {
+      "id": "N04",
+      "field": "capture_method",
+      "finding_type": "nuance_missing",
+      "description": "Some ori/ images show UI toolbars (screen capture) or AI chatbot output (CopyEdit labels), suggesting capture methods beyond camera_smartphone.",
+      "affected_samples": ["test_res_00568", "train_res_03064"],
+      "recommendation": "Consider screen_capture and ai_generated as additional capture_method values"
+    },
+    {
+      "id": "N05",
+      "field": "mixed_language",
+      "finding_type": "enrichment_quality",
+      "description": "5/36 audit samples (14%) have mixed English+Chinese content. Current schema supports single iso639_language, losing mixed-language information.",
+      "recommendation": "Consider adding secondary_language field or using BCP47 language tags that support multiple languages"
+    }
+  ],
+  "cross_dataset_extrapolation": {
+    "critical_defects_likely_shared": [
+      "D04 (script_family wrong enum) - UNIVERSAL: affects ALL datasets using the same mapping",
+      "D07 (bbox format xyxy vs xywh) - UNIVERSAL: affects ALL datasets with layout detections",
+      "D06 (default language override) - WIDE: affects all mixed-language datasets",
+      "D02 (config override ignores parser) - WIDE: affects all datasets with parser-derived capture_method",
+      "D05 (LLM enrichment not integrated) - WIDE: LLM enrichment exists for many datasets",
+      "D08 (content_flags all false) - UNIVERSAL: affects ALL datasets",
+      "D14 (OCR not integrated) - WIDE: Docling OCR exists for many datasets"
+    ],
+    "diqa_specific_defects": [
+      "D03 (ori/ MOS not parsed) - DIQA-specific CSV parsing",
+      "D09 (MOS to degradation mapping) - DIQA-specific quality scores",
+      "D11 (physical degradation from paper) - DIQA-specific distortion categories"
+    ],
+    "recommended_priority": "Fix D04, D07 FIRST (universal enum/format bugs), then D06, D02, D05 (wide-impact pipeline bugs), then D08, D14 (integration gaps)"
+  }
+}

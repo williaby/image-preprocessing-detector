@@ -45,7 +45,7 @@ import logging
 import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -486,7 +486,9 @@ def detect_all_scripts(text: str) -> list[ScriptCount]:
 
     for char in text:
         # Skip punctuation, numbers, whitespace
-        if char.isspace() or unicodedata.category(char).startswith(("P", "N", "S", "Z")):
+        if char.isspace() or unicodedata.category(char).startswith(
+            ("P", "N", "S", "Z")
+        ):
             continue
 
         code = ord(char)
@@ -503,7 +505,9 @@ def detect_all_scripts(text: str) -> list[ScriptCount]:
     total = sum(script_counts.values())
     results = []
     for script, count in script_counts.most_common():
-        results.append(ScriptCount(script=script, count=count, percentage=count / total))
+        results.append(
+            ScriptCount(script=script, count=count, percentage=count / total)
+        )
 
     return results
 
@@ -906,7 +910,11 @@ def update_enrichment(
 
     # Store votes for audit trail
     latest_data["language_detection_votes"] = [
-        {"method": v.method, "language": v.language, "confidence": round(v.confidence, 3)}
+        {
+            "method": v.method,
+            "language": v.language,
+            "confidence": round(v.confidence, 3),
+        }
         for v in result.votes
     ]
 
@@ -919,7 +927,7 @@ def update_enrichment(
     # Create new version
     new_version = {
         "version": current_version + 1,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "created_by": "enrich_language.py",
         "method": "tier_2_ml_inference",
         "description": "Layer 2 multi-factor multi-language detection",
@@ -928,7 +936,10 @@ def update_enrichment(
     }
 
     versions.append(new_version)
-    sample["enrichments"] = {"current_version": current_version + 1, "versions": versions}
+    sample["enrichments"] = {
+        "current_version": current_version + 1,
+        "versions": versions,
+    }
 
 
 def find_datasets_needing_enrichment() -> list[tuple[str, Path, int]]:
@@ -1055,13 +1066,25 @@ def process_dataset(
     # Apply slice
     end = end_idx if end_idx else len(samples_to_process)
     samples_to_process = samples_to_process[start_idx:end]
-    logger.info(f"Processing {len(samples_to_process)} samples (index {start_idx} to {end})")
+    logger.info(
+        f"Processing {len(samples_to_process)} samples (index {start_idx} to {end})"
+    )
 
     if not samples_to_process:
-        return {"processed": 0, "multi_language": 0, "single_language": 0, "undetermined": 0}
+        return {
+            "processed": 0,
+            "multi_language": 0,
+            "single_language": 0,
+            "undetermined": 0,
+        }
 
     # Process samples
-    stats = {"processed": 0, "multi_language": 0, "single_language": 0, "undetermined": 0}
+    stats = {
+        "processed": 0,
+        "multi_language": 0,
+        "single_language": 0,
+        "undetermined": 0,
+    }
 
     for idx, (sample_idx, sample) in enumerate(samples_to_process):
         source = sample.get("source", {})
@@ -1148,15 +1171,27 @@ def main() -> int:
         description="Enrich datasets with multi-factor multi-language detection"
     )
     parser.add_argument("--dataset", type=str, help="Specific dataset name to process")
-    parser.add_argument("--all", action="store_true", help="Process all datasets needing enrichment")
-    parser.add_argument("--list-datasets", action="store_true", help="List datasets needing enrichment")
+    parser.add_argument(
+        "--all", action="store_true", help="Process all datasets needing enrichment"
+    )
+    parser.add_argument(
+        "--list-datasets", action="store_true", help="List datasets needing enrichment"
+    )
     parser.add_argument("--start", type=int, default=0, help="Start index")
     parser.add_argument("--end", type=int, default=None, help="End index")
-    parser.add_argument("--batch-size", type=int, default=100, help="Save every N samples")
-    parser.add_argument("--model-dir", type=Path, default=MODEL_DIR, help="Language model directory")
-    parser.add_argument("--download-model", action="store_true", help="Download fastText model")
+    parser.add_argument(
+        "--batch-size", type=int, default=100, help="Save every N samples"
+    )
+    parser.add_argument(
+        "--model-dir", type=Path, default=MODEL_DIR, help="Language model directory"
+    )
+    parser.add_argument(
+        "--download-model", action="store_true", help="Download fastText model"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Don't save changes")
-    parser.add_argument("--no-ocr", action="store_true", help="Skip OCR, use metadata text only")
+    parser.add_argument(
+        "--no-ocr", action="store_true", help="Skip OCR, use metadata text only"
+    )
     parser.add_argument(
         "--ocr-languages",
         type=str,
@@ -1277,7 +1312,12 @@ def main() -> int:
         logger.info("Detection strategy: fastText (primary) + lingua (consensus)")
 
     # Process datasets
-    total_stats = {"processed": 0, "multi_language": 0, "single_language": 0, "undetermined": 0}
+    total_stats = {
+        "processed": 0,
+        "multi_language": 0,
+        "single_language": 0,
+        "undetermined": 0,
+    }
 
     for dataset_name, metadata_path in datasets_to_process:
         logger.info("=" * 60)

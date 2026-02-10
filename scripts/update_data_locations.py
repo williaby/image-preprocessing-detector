@@ -694,14 +694,9 @@ def build_data_locations_table(name: str, info: dict) -> str:
 
     # Images row
     if is_text_corpus:
-        lines.append(
-            "| **Images** | N/A | N/A | Text corpus - no images |"
-        )
+        lines.append("| **Images** | N/A | N/A | Text corpus - no images |")
     elif images == 0 and "zip" in str(notes).lower():
-        lines.append(
-            f"| **Images** | `{e_path}/` "
-            f"| ⚠️ Archives | {notes} |"
-        )
+        lines.append(f"| **Images** | `{e_path}/` | ⚠️ Archives | {notes} |")
     else:
         lines.append(
             f"| **Images** | `{e_path}/` "
@@ -790,15 +785,13 @@ def find_insertion_point(content: str) -> tuple[int, int, str]:
                 elif in_table and stripped == "":
                     end = j + 1
                     break
-                elif in_table and (stripped.startswith("#") or stripped.startswith("---")):
+                elif in_table and stripped.startswith(("#", "---")):
                     break
                 elif not in_table and stripped == "":
                     continue
-                elif not in_table and (
-                    stripped.startswith("|") or stripped == ""
-                ):
+                elif not in_table and (stripped.startswith("|") or stripped == ""):
                     continue
-                elif stripped.startswith("#") or stripped.startswith("---"):
+                elif stripped.startswith(("#", "---")):
                     break
                 else:
                     end = j + 1
@@ -817,7 +810,7 @@ def find_insertion_point(content: str) -> tuple[int, int, str]:
                 elif stripped == "":
                     end = j + 1
                     break
-                elif stripped.startswith("#") or stripped.startswith("["):
+                elif stripped.startswith(("#", "[")):
                     break
                 else:
                     end = j + 1

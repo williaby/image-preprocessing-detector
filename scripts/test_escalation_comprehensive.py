@@ -28,9 +28,11 @@ from scripts.language_escalation import (
 # Test Data
 # =============================================================================
 
+
 @dataclass
 class MockLocalResult:
     """Mock result from Tier 1a local detection."""
+
     primary_language: str = "und"
     primary_script: str | None = None
     detected_languages: list[str] = field(default_factory=list)
@@ -44,6 +46,7 @@ class MockLocalResult:
 @dataclass
 class MockVote:
     """Mock detector vote."""
+
     language: str
     confidence: float
     detector: str
@@ -52,6 +55,7 @@ class MockVote:
 # =============================================================================
 # Test 1: Script Validation
 # =============================================================================
+
 
 def test_script_validation():
     """Test script-language validation catches mismatches."""
@@ -68,13 +72,11 @@ def test_script_validation():
         ("zh", ["Hans"], True, "Chinese + Simplified Han = valid"),
         ("bo", ["Tibt"], True, "Tibetan + Tibetan script = valid"),
         ("dz", ["Tibt"], True, "Dzongkha + Tibetan script = valid"),
-
         # Mismatches
         ("en", ["Tibt"], False, "English + Tibetan script = INVALID"),
         ("ar", ["Latn"], False, "Arabic + Latin script = INVALID"),
         ("zh", ["Deva"], False, "Chinese + Devanagari = INVALID"),
         ("ru", ["Latn"], False, "Russian + Latin script = INVALID"),
-
         # Edge cases
         ("und", ["Latn"], True, "Undetermined language = always valid"),
         ("mul", ["Latn"], True, "Multiple languages = always valid"),
@@ -106,6 +108,7 @@ def test_script_validation():
 # Test 2: Tier 1b Free Vision Detection
 # =============================================================================
 
+
 def test_tier1b_vision():
     """Test Tier 1b free vision model detection."""
     print("\n" + "=" * 60)
@@ -114,7 +117,9 @@ def test_tier1b_vision():
 
     # Test images with known languages
     test_images = [
-        Path("/mnt/e/datasets/MLT-19/MLT19/test/ts_000035.jpg"),  # Should have Latin text
+        Path(
+            "/mnt/e/datasets/MLT-19/MLT19/test/ts_000035.jpg"
+        ),  # Should have Latin text
         Path("/mnt/e/datasets/MLT-19/MLT19/test/ts_000001.jpg"),  # Another test
     ]
 
@@ -133,19 +138,21 @@ def test_tier1b_vision():
         result = detect_via_vision_llm(image_path, model)
 
         if result:
-            print(f"    ✓ API call successful")
+            print("    ✓ API call successful")
             print(f"    Primary language: {result.get('primary_language', 'N/A')}")
             print(f"    Primary script: {result.get('primary_script', 'N/A')}")
             print(f"    Confidence: {result.get('total_confidence', 'N/A')}")
             print(f"    Is multilingual: {result.get('is_multilingual', 'N/A')}")
 
-            languages = result.get('languages', [])
+            languages = result.get("languages", [])
             if languages:
                 print(f"    Languages detected ({len(languages)}):")
                 for lang in languages[:5]:  # Show first 5
-                    print(f"      - {lang.get('code')}: {lang.get('confidence', 'N/A')}")
+                    print(
+                        f"      - {lang.get('code')}: {lang.get('confidence', 'N/A')}"
+                    )
         else:
-            print(f"    ✗ API call failed")
+            print("    ✗ API call failed")
             return False
 
     return True
@@ -154,6 +161,7 @@ def test_tier1b_vision():
 # =============================================================================
 # Test 3: Full Escalation Flow
 # =============================================================================
+
 
 def test_escalation_flow():
     """Test full escalation flow from Tier 1a → 1b → 2."""
@@ -240,7 +248,9 @@ def test_escalation_flow():
             passed += 1
         else:
             print(f"    ✗ Tier: {result.tier} (expected {scenario['expected_tier']})")
-            print(f"    ✗ Method: {result.method} (expected to contain '{scenario['expected_method_contains']}')")
+            print(
+                f"    ✗ Method: {result.method} (expected to contain '{scenario['expected_method_contains']}')"
+            )
 
     print(f"\n  Results: {passed}/{len(scenarios)} scenarios passed")
     return passed == len(scenarios)
@@ -249,6 +259,7 @@ def test_escalation_flow():
 # =============================================================================
 # Test 4: Review Queue
 # =============================================================================
+
 
 def test_review_queue():
     """Test human review queue population."""
@@ -309,14 +320,14 @@ def test_review_queue():
                 return False
 
             return True
-        else:
-            print("  ✗ Queue file not created")
-            return False
+        print("  ✗ Queue file not created")
+        return False
 
 
 # =============================================================================
 # Test 5: Script Coverage
 # =============================================================================
+
 
 def test_script_coverage():
     """Test that we have good script-language coverage."""
@@ -331,14 +342,23 @@ def test_script_coverage():
     print(f"  Languages mapped: {total_languages}")
 
     # Check key scripts
-    key_scripts = ["Latn", "Arab", "Deva", "Hans", "Hant", "Jpan", "Kore", "Cyrl", "Tibt"]
+    key_scripts = [
+        "Latn",
+        "Arab",
+        "Deva",
+        "Hans",
+        "Hant",
+        "Jpan",
+        "Kore",
+        "Cyrl",
+        "Tibt",
+    ]
     missing = [s for s in key_scripts if s not in SCRIPT_VALID_LANGUAGES]
 
     if missing:
         print(f"  ✗ Missing key scripts: {missing}")
         return False
-    else:
-        print(f"  ✓ All key scripts covered")
+    print("  ✓ All key scripts covered")
 
     # Sample coverage
     print("\n  Sample script mappings:")
@@ -352,6 +372,7 @@ def test_script_coverage():
 # =============================================================================
 # Main
 # =============================================================================
+
 
 def main():
     """Run all tests."""

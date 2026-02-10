@@ -97,9 +97,7 @@ def reconstruct_page_text(words: list[dict]) -> str:
     current_line.sort(key=lambda w: w["x"])
     lines.append(current_line)
 
-    return "\n".join(
-        " ".join(w["text"] for w in line) for line in lines
-    )
+    return "\n".join(" ".join(w["text"] for w in line) for line in lines)
 
 
 def build_annotations(words: list[dict]) -> list[dict]:
@@ -135,9 +133,9 @@ def save_batch(
     """Save a batch in the same format as process_datasets.py output."""
     ocr_path = output_dir / f"ocr_batch_{batch_num}.jsonl"
     with open(ocr_path, "w") as f:
-        for r in batch_results:
-            f.write(
-                json.dumps({
+        f.writelines(
+            json.dumps(
+                {
                     "source": r["filename"],
                     "text": r["text"],
                     "confidence": 1.0,
@@ -145,9 +143,11 @@ def save_batch(
                     "processing_time_ms": 0,
                     "success": True,
                     "error": None,
-                })
-                + "\n"
+                }
             )
+            + "\n"
+            for r in batch_results
+        )
 
     layout_data = {
         "info": {
@@ -164,11 +164,13 @@ def save_batch(
     global_ann_id = 0
     for img_id, r in enumerate(batch_results):
         if r["annotations"]:
-            layout_data["images"].append({
-                "id": img_id,
-                "file_name": r["filename"],
-                "gcs_path": r["filename"],
-            })
+            layout_data["images"].append(
+                {
+                    "id": img_id,
+                    "file_name": r["filename"],
+                    "gcs_path": r["filename"],
+                }
+            )
             for ann in r["annotations"]:
                 ann_copy = dict(ann)
                 ann_copy["image_id"] = img_id
@@ -185,9 +187,7 @@ def main() -> None:
     base_dir = Path("/mnt/e/image_detection/01_base_data/language/mlt19")
     gt_dir = base_dir / "TrainGT" / "TrainGT"
     img_dir = base_dir / "TrainImages" / "TrainImages"
-    output_dir = Path(
-        "/mnt/e/image_detection/metadata_registry/extracted/mlt19"
-    )
+    output_dir = Path("/mnt/e/image_detection/metadata_registry/extracted/mlt19")
 
     dry_run = "--dry-run" in sys.argv
 
@@ -225,12 +225,14 @@ def main() -> None:
         annotations = build_annotations(words)
         total_annotations += len(annotations)
 
-        batch_results.append({
-            "filename": image_name,
-            "split": "train",
-            "text": text,
-            "annotations": annotations,
-        })
+        batch_results.append(
+            {
+                "filename": image_name,
+                "split": "train",
+                "text": text,
+                "annotations": annotations,
+            }
+        )
 
         if len(batch_results) >= BATCH_SIZE:
             if not dry_run:
@@ -250,8 +252,10 @@ def main() -> None:
         total_processed += len(batch_results)
         batch_num += 1
 
-    print(f"\nDone: {total_processed} images, {batch_num} batches, "
-          f"{total_annotations} annotations, {total_text_chars:,} chars")
+    print(
+        f"\nDone: {total_processed} images, {batch_num} batches, "
+        f"{total_annotations} annotations, {total_text_chars:,} chars"
+    )
     if dry_run:
         print("(dry run - no files written)")
 

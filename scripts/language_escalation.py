@@ -33,7 +33,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +64,59 @@ PAID_VISION_MODELS = [
 
 # Script to valid languages mapping (for validation)
 SCRIPT_VALID_LANGUAGES: dict[str, set[str]] = {
-    "Latn": {"en", "es", "fr", "de", "it", "pt", "nl", "pl", "cs", "hu", "ro", "fi", "sv", "no", "da", "tr", "id", "ms", "tl", "sw", "hr", "sl", "et", "lv", "lt", "sq", "az", "uz", "mt", "cy", "ga", "gd", "eu", "ca", "gl", "af", "zu", "xh", "st", "tn", "sn", "ny", "mg", "ha", "ig", "yo", "so", "rw", "la", "eo", "vi"},
+    "Latn": {
+        "en",
+        "es",
+        "fr",
+        "de",
+        "it",
+        "pt",
+        "nl",
+        "pl",
+        "cs",
+        "hu",
+        "ro",
+        "fi",
+        "sv",
+        "no",
+        "da",
+        "tr",
+        "id",
+        "ms",
+        "tl",
+        "sw",
+        "hr",
+        "sl",
+        "et",
+        "lv",
+        "lt",
+        "sq",
+        "az",
+        "uz",
+        "mt",
+        "cy",
+        "ga",
+        "gd",
+        "eu",
+        "ca",
+        "gl",
+        "af",
+        "zu",
+        "xh",
+        "st",
+        "tn",
+        "sn",
+        "ny",
+        "mg",
+        "ha",
+        "ig",
+        "yo",
+        "so",
+        "rw",
+        "la",
+        "eo",
+        "vi",
+    },
     "Cyrl": {"ru", "uk", "bg", "sr", "mk", "kk", "ky", "tg", "mn", "be"},
     "Arab": {"ar", "fa", "ur", "ps", "ks", "sd", "ug", "ku"},
     "Deva": {"hi", "mr", "ne", "sa", "bho", "mai", "kok"},
@@ -135,12 +187,16 @@ class EscalationConfig:
 
     # Tier 1b: FREE vision model settings
     free_vision_model: str = "qwen/qwen-2.5-vl-7b-instruct:free"
-    free_fallback_models: list[str] = field(default_factory=lambda: FREE_VISION_MODELS[1:])
+    free_fallback_models: list[str] = field(
+        default_factory=lambda: FREE_VISION_MODELS[1:]
+    )
     tier1b_confidence_threshold: float = 0.7  # Escalate to Tier 2 if below
 
     # Tier 2: PAID vision model settings (escalation)
     paid_vision_model: str = "google/gemini-2.5-pro"
-    paid_fallback_models: list[str] = field(default_factory=lambda: PAID_VISION_MODELS[1:])
+    paid_fallback_models: list[str] = field(
+        default_factory=lambda: PAID_VISION_MODELS[1:]
+    )
     max_retries: int = 2
 
     # Script validation
@@ -373,7 +429,9 @@ def detect_via_vision_llm(
         return parsed
 
     except httpx.HTTPStatusError as e:
-        logger.error(f"Vision API HTTP error: {e.response.status_code} - {e.response.text}")
+        logger.error(
+            f"Vision API HTTP error: {e.response.status_code} - {e.response.text}"
+        )
         return None
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse vision API response as JSON: {e}")
@@ -423,7 +481,7 @@ def queue_for_review(
     queue_file = queue_dir / "pending_review.jsonl"
 
     entry = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "image_path": str(image_path),
         "reason": reason,
         "local_detection": {
@@ -509,11 +567,11 @@ class EscalationManager:
     def __init__(self, config: EscalationConfig | None = None):
         self.config = config or EscalationConfig()
         self._daily_spend = 0.0
-        self._last_reset = datetime.now(timezone.utc).date()
+        self._last_reset = datetime.now(UTC).date()
 
     def _check_budget(self, estimated_cost: float) -> bool:
         """Check if we're within daily budget."""
-        today = datetime.now(timezone.utc).date()
+        today = datetime.now(UTC).date()
         if today != self._last_reset:
             self._daily_spend = 0.0
             self._last_reset = today
@@ -581,7 +639,7 @@ class EscalationManager:
         model_used = None
 
         # Try free models (no cost)
-        free_models = [self.config.free_vision_model] + self.config.free_fallback_models
+        free_models = [self.config.free_vision_model, *self.config.free_fallback_models]
 
         for model in free_models[: self.config.max_retries + 1]:
             tier1b_result = detect_via_vision_llm(image_path, model)
@@ -595,7 +653,9 @@ class EscalationManager:
                 lang["code"] for lang in tier1b_result.get("languages", [])
             ]
             tier1b_scripts = [
-                lang.get("script") for lang in tier1b_result.get("languages", []) if lang.get("script")
+                lang.get("script")
+                for lang in tier1b_result.get("languages", [])
+                if lang.get("script")
             ]
             tier1b_primary_lang = tier1b_result.get("primary_language", "und")
 
@@ -608,9 +668,8 @@ class EscalationManager:
                 )
 
             # Check if Tier 1b is confident AND passes script validation
-            if (
-                tier1b_confidence >= self.config.tier1b_confidence_threshold
-                and (tier1b_validation is None or tier1b_validation.is_valid)
+            if tier1b_confidence >= self.config.tier1b_confidence_threshold and (
+                tier1b_validation is None or tier1b_validation.is_valid
             ):
                 return EscalationResult(
                     tier=1,  # Tier 1b (still "free tier")
@@ -674,7 +733,7 @@ class EscalationManager:
         cost = 0.0
 
         # Try paid models
-        paid_models = [self.config.paid_vision_model] + self.config.paid_fallback_models
+        paid_models = [self.config.paid_vision_model, *self.config.paid_fallback_models]
 
         for model in paid_models[: self.config.max_retries + 1]:
             tier2_result = detect_via_vision_llm(image_path, model)
@@ -690,7 +749,9 @@ class EscalationManager:
                 lang["code"] for lang in tier2_result.get("languages", [])
             ]
             tier2_scripts = [
-                lang.get("script") for lang in tier2_result.get("languages", []) if lang.get("script")
+                lang.get("script")
+                for lang in tier2_result.get("languages", [])
+                if lang.get("script")
             ]
             tier2_primary_lang = tier2_result.get("primary_language", "und")
 
@@ -839,7 +900,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Test language detection escalation")
     parser.add_argument("image", type=Path, help="Image file to analyze")
     parser.add_argument("--model", default="google/gemini-2.5-pro", help="Vision model")
-    parser.add_argument("--force-tier2", action="store_true", help="Force Tier 2 escalation")
+    parser.add_argument(
+        "--force-tier2", action="store_true", help="Force Tier 2 escalation"
+    )
     parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args()
 
@@ -899,12 +962,16 @@ def main() -> int:
 
         local_result = MinimalResult()
 
-    logger.info(f"Tier 1 result: {local_result.primary_language} ({local_result.confidence:.2f})")
+    logger.info(
+        f"Tier 1 result: {local_result.primary_language} ({local_result.confidence:.2f})"
+    )
 
     # Configure escalation
     config = EscalationConfig(
         vision_model=args.model,
-        confidence_threshold=1.0 if args.force_tier2 else 0.6,  # Force escalation if requested
+        confidence_threshold=1.0
+        if args.force_tier2
+        else 0.6,  # Force escalation if requested
     )
 
     # Run with escalation
@@ -920,7 +987,9 @@ def main() -> int:
     print(f"Primary Script: {result.primary_script}")
     print(f"Detected Languages: {result.detected_languages}")
     print(f"Confidence: {result.confidence:.3f}")
-    print(f"Confidence Interval: [{result.confidence_metrics.lower_bound:.3f}, {result.confidence_metrics.upper_bound:.3f}]")
+    print(
+        f"Confidence Interval: [{result.confidence_metrics.lower_bound:.3f}, {result.confidence_metrics.upper_bound:.3f}]"
+    )
     print(f"Variance: {result.confidence_metrics.variance:.3f}")
     print(f"Model Used: {result.model_used}")
     print(f"Cost: ${result.cost_usd:.4f}")

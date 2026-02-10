@@ -117,8 +117,10 @@ def load_coco_annotations(coco_dir: Path) -> dict[str, dict]:
                     "split": split_name,
                 }
 
-        print(f"    {len(image_lookup)} images, "
-              f"{len(coco_data.get('annotations', []))} annotations")
+        print(
+            f"    {len(image_lookup)} images, "
+            f"{len(coco_data.get('annotations', []))} annotations"
+        )
 
     return index
 
@@ -133,9 +135,9 @@ def save_batch(
     # OCR JSONL
     ocr_path = output_dir / f"ocr_batch_{batch_num}.jsonl"
     with open(ocr_path, "w") as f:
-        for r in batch_results:
-            f.write(
-                json.dumps({
+        f.writelines(
+            json.dumps(
+                {
                     "source": r["filename"],
                     "text": r["text"],
                     "confidence": 1.0,
@@ -143,9 +145,11 @@ def save_batch(
                     "processing_time_ms": 0,
                     "success": True,
                     "error": None,
-                })
-                + "\n"
+                }
             )
+            + "\n"
+            for r in batch_results
+        )
 
     # Layout JSON
     layout_data = {
@@ -163,11 +167,13 @@ def save_batch(
     global_ann_id = 0
     for img_id, r in enumerate(batch_results):
         if r["annotations"]:
-            layout_data["images"].append({
-                "id": img_id,
-                "file_name": r["filename"],
-                "gcs_path": r["filename"],
-            })
+            layout_data["images"].append(
+                {
+                    "id": img_id,
+                    "file_name": r["filename"],
+                    "gcs_path": r["filename"],
+                }
+            )
             for ann in r["annotations"]:
                 ann_copy = dict(ann)
                 ann_copy["image_id"] = img_id
@@ -181,14 +187,10 @@ def save_batch(
 
 
 def main() -> None:
-    base_dir = Path(
-        "/mnt/e/image_detection/01_base_data/documents/doclaynet"
-    )
+    base_dir = Path("/mnt/e/image_detection/01_base_data/documents/doclaynet")
     json_dir = base_dir / "ground_truth" / "json"
     coco_dir = base_dir / "ground_truth" / "coco"
-    output_dir = Path(
-        "/mnt/e/image_detection/metadata_registry/extracted/doclaynet"
-    )
+    output_dir = Path("/mnt/e/image_detection/metadata_registry/extracted/doclaynet")
 
     dry_run = "--dry-run" in sys.argv
 
@@ -246,24 +248,28 @@ def main() -> None:
                 if len(bbox) != 4:
                     continue
 
-                layout_annotations.append({
-                    "bbox": [float(v) for v in bbox],
-                    "coord_origin": "top-left",
-                    "category_id": ann.get("category_id", 0),
-                    "area": ann.get("area", 0.0),
-                    "iscrowd": ann.get("iscrowd", 0),
-                })
+                layout_annotations.append(
+                    {
+                        "bbox": [float(v) for v in bbox],
+                        "coord_origin": "top-left",
+                        "category_id": ann.get("category_id", 0),
+                        "area": ann.get("area", 0.0),
+                        "iscrowd": ann.get("iscrowd", 0),
+                    }
+                )
 
         total_annotations += len(layout_annotations)
 
-        batch_results.append({
-            "filename": image_name,
-            "split": split,
-            "text": text,
-            "annotations": layout_annotations,
-            "doc_category": metadata.get("doc_category", ""),
-            "collection": metadata.get("collection", ""),
-        })
+        batch_results.append(
+            {
+                "filename": image_name,
+                "split": split,
+                "text": text,
+                "annotations": layout_annotations,
+                "doc_category": metadata.get("doc_category", ""),
+                "collection": metadata.get("collection", ""),
+            }
+        )
 
         if len(batch_results) >= BATCH_SIZE:
             if not dry_run:
@@ -286,8 +292,10 @@ def main() -> None:
         batch_num += 1
 
     print(f"\nDone: {total_processed} documents, {batch_num} batches")
-    print(f"  Layout annotations: {total_annotations} "
-          f"({total_with_layout}/{total_processed} docs with layout)")
+    print(
+        f"  Layout annotations: {total_annotations} "
+        f"({total_with_layout}/{total_processed} docs with layout)"
+    )
     print(f"  Text: {total_text_chars:,} characters total")
 
     if dry_run:

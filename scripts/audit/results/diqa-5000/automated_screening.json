@@ -1,0 +1,2725 @@
+{
+  "dataset": "diqa-5000",
+  "metadata_path": "/mnt/e/image_detection/metadata_registry/json/diqa-5000_metadata.json",
+  "audited_at": "2026-02-10T15:45:16.266098+00:00",
+  "total_samples": 5500,
+  "passed_all": 5212,
+  "failed_any": 288,
+  "per_field_results": {
+    "split": {
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "capture_method": {
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "domain_level1": {
+      "pass": 5456,
+      "fail": 44,
+      "fail_rate_pct": 0.8
+    },
+    "iso639_language": {
+      "pass": 5489,
+      "fail": 11,
+      "fail_rate_pct": 0.2
+    },
+    "script_family": {
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "layout_detections": {
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "layout_bbox_valid": {
+      "pass": 5471,
+      "fail": 29,
+      "fail_rate_pct": 0.53
+    },
+    "content_flags_boolean": {
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "text_has_content": {
+      "pass": 5279,
+      "fail": 221,
+      "fail_rate_pct": 4.02
+    },
+    "orientation_class": {
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "image_properties_color_mode": {
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "handwriting_present": {
+      "pass": 5489,
+      "fail": 11,
+      "fail_rate_pct": 0.2
+    },
+    "quality_overall_mos": {
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    }
+  },
+  "failing_samples": [
+    {
+      "image_id": "25794b0b-8429-42c1-87b7-929ea2529b67",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b4014470-d149-4dd0-a22a-e29f29be3630",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "645d3ae4-358c-4754-aaeb-8ce9e1feb50d",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "5b87f8c1-0c91-4df6-ada6-129c395745f6",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "5b834bab-6fb1-4c02-968b-fa53708eb5c6",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "13833edc-9ed9-402a-b5d1-6dae78bac4fa",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [4]: w=0.0, h=1082.5161132812502 (must be >0)"
+      }
+    },
+    {
+      "image_id": "fc2ee62c-64fd-492f-9305-f1e0b6097821",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=1005.1614583333333 (must be >0)"
+      }
+    },
+    {
+      "image_id": "3f5b1405-5897-490b-ad2d-de7881abc747",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=1010.4514973958333 (must be >0)"
+      }
+    },
+    {
+      "image_id": "579c1c7a-f379-4f49-beeb-250185721615",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [6]: w=0.0, h=1005.1614583333333 (must be >0)"
+      }
+    },
+    {
+      "image_id": "abc871fa-72e6-4e86-b258-d8e55e7c3352",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=1005.1614583333333 (must be >0)"
+      }
+    },
+    {
+      "image_id": "6f5cd7ca-d86b-4f2a-9d4d-9a93f5b4fc9a",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=1010.4514973958333 (must be >0)"
+      }
+    },
+    {
+      "image_id": "af6d0d06-c6dc-48ae-b03b-f89793b5f523",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [6]: w=0.0, h=1005.1614583333333 (must be >0)"
+      }
+    },
+    {
+      "image_id": "04bf1392-3555-4720-9d64-514dec4b697b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c96cbd6f-dbf6-4210-a2db-9d563fc38fd8",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "849cc0c4-d778-41ed-8fc6-beb35e8af1f4",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [0]: w=436.21028645833326, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "e4152e67-b3df-40f9-9fed-39d84c1b5fa5",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [4]: w=1354.500020345052, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "b456a6db-d236-4c05-90be-a914b837b0eb",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [1]: w=1333.4999593098958, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "77ba7e92-2913-4560-914c-54c22de9ebad",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [4]: w=1354.500020345052, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "ef431fbe-3a2e-4487-a94c-cd3c1e195b67",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [1]: w=1333.4999593098958, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "763c43f9-66d5-4238-877c-4b3a077a6ef4",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [1]: w=1333.499979654948, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "2e65d35e-a500-4830-90b7-9f562551f416",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "43351d0c-0cbb-4842-bfe8-79eaecf1871f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "33099c10-b8cc-48a7-abd4-cda5b21f1f09",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ee98c655-b11e-4f57-8093-1908b12eea3c",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "6ad79343-2a3c-4256-bb3d-837fb8115d4e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "67e1f690-2e26-4d90-b37e-e06ff1238dc3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e189657f-83bf-4014-ae8e-6447ba4cde59",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "6daa41bb-30d0-41c1-96ef-41d9e9156edf",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f385f0d7-b31f-4a28-8b29-d76d8e448c89",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "a9dbdea2-2fb9-4617-823d-75ecc883e60b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "127fbae3-ff8c-4335-8136-5e09c9dd3d0a",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ba9c5683-70ee-42ac-88a5-685e77f56a11",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c6ebd8cb-cd27-485a-bf68-45bd0c8289c8",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [9]: w=908.8295440673828, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "3a598ab4-1578-46e0-b156-7ad5612c502c",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [9]: w=908.8295440673828, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "f5ac9863-ea6a-48bf-8871-25c3f30bbf05",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [8]: w=972.3692220052085, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "73e74a63-fd79-46a8-a252-09bb9e6979c6",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [4]: w=975.2936197916667, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "edf64c1b-4c42-40d3-9e38-b7b3604415e9",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "7d10bb38-582f-4431-9099-b6f487bc2fb0",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "b657afe6-ad54-43b1-9846-90b2ffcc5535",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b7f748fb-0ce2-4623-b274-a7c2b2484da2",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "431551fd-1465-4d68-a9fd-7a9a4e4316b3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e2bd0635-dbca-423a-be86-ed90ae3e43e2",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "text_has_content",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "text_has_content": "text_statistics.has_content=False",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "3649d6c3-e03a-4f50-988a-e230ae360323",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c9b6bb06-c840-488b-847a-2adcf1058f0b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "a95c0109-d0f3-4ac1-af62-4fe2a7eed097",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "0e498a24-cf83-4a5d-9c15-af73f9e9cede",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "31f4945b-f06e-4fa6-9e0c-2291f81fe88d",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "4d30c127-bfdb-4811-b68e-3674194b05c8",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "efd00c9f-46ab-440e-b6d4-c84ccfdbc666",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "1c64451d-423e-445a-8216-24fc49a58d17",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f7edcc4c-236f-4198-985e-1f9c88939383",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "0aaadb26-4689-4173-8b62-6a1a2522f8b9",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "0cf72a43-ce03-4a51-b612-8cffef22b6a9",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "92142a16-5ef8-4abd-acc7-3cdbbbcf033f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "a1edccc3-e1c0-4235-85ed-6f3d764108cc",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "0ce1dfb5-790e-4158-a028-137234ef0a74",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "759a462a-66ee-41c0-b019-f61f8e3b4d4e",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "8fd9c573-ff7c-4b7f-b3e7-dd3bcad613ce",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "a92e0476-f76f-4e82-91d9-96e6e8953c24",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "6c1650d5-9eb7-4791-9c12-78cf9fb14379",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e3d11dca-0f47-48cf-97c2-df6b44596eba",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "5247ec17-1d3b-458b-a7ab-41c59c4a4902",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [17]: w=994.0909016927084, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "eb328d71-15e5-410d-b45b-bc802adcd6f4",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "bd92f296-fcc6-4463-926e-3c3e9f908530",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f2211134-ec91-41a8-9cd4-79ecf0119fe2",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "fda646bc-1776-4a33-b1e1-c7e41157b553",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "05b766f0-3a8f-4cea-8fef-10e26f5376de",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "a0eb217e-2f00-4f5b-b8d4-78f8e85a9a3e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "46714001-c4ca-4fa5-910e-4b28be3c092f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e0db8ab1-a781-41bc-98c4-e8bd22acdf7f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "037921e1-71dd-4fb0-93cd-64c7e81e8cd7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "9d6d0454-3c7b-40ab-8713-c63ce504f593",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "372f40b6-83f7-43c0-8b42-8d703d64f264",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "2de55608-215a-48d0-b653-185eb087f918",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "af026e02-7cde-45f0-bfbe-a486de59dfe7",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [10]: w=1809.5340169270833, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "f16b395b-b1ef-422f-87e2-ce69affb0d9b",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [10]: w=1809.5340169270833, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "3f2abc89-7d8a-4a77-bd27-39fd281f1a0a",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "d1ede19d-a81d-4e8f-8afa-b7ddd91f693c",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "17d579b0-1383-4886-8363-88e86cfc64a4",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "80e452d7-8fe3-4ef0-920c-c92f5e1dce9e",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "c945e14c-e3ae-4fd4-b9b0-401197c06335",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "1a2114e3-41a9-4745-8632-11c7c1c266d0",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "33e626a8-6c10-41d0-b25f-d14d2b82be75",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "1d612765-bd84-49b8-818d-f3987cf5d8cc",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "542c2021-c2df-4bf6-a8de-68ae55edd191",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "be8e4d95-f951-4f61-8f24-e137082a826f",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "67d7c012-aec3-444f-a2ef-eb0cbba05c43",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [1]: w=296.45123291015625, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "b2c78810-84e6-4683-98ff-d7043e981ce7",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [1]: w=420.6402587890625, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "5de33ede-c799-48b9-8f49-53d21343f202",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "13001c46-dd58-4509-9302-f8c58658f789",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "65b0dec4-0356-49eb-9e04-2154444722e3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "49fca870-7da3-41a9-92e8-e95a9f68d3be",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "68d29d7d-a0f4-4b29-9836-fd51a40470b8",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "40892fa4-b4c3-4898-b089-b8d1c1f890f7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e426fdf4-1959-420f-8698-050c0d078c2f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "215e83b7-ddee-47de-8c99-442c6617c69d",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ab0202b7-0957-49c0-9123-1cb857b46d15",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "676f0c19-f127-46a7-874e-69dbbdaa0edb",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "acac5432-4caf-4545-b59c-add842fe4f76",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "052f7c78-5154-4c12-9db8-f8ff8395e3a4",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "61d2891c-6255-4433-b86b-7ae2f47bee1a",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "df94d3d9-c3e5-40bc-99fe-2b1ed4f114e8",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "4e21fef5-e996-4157-91d7-6bcc263630d8",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "1e03578e-db6a-45ca-8f8e-f5157a930fe7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "a1d0b4a8-25bf-41f2-8e0a-b3528d7fedc9",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e5a7b39c-7bd3-4d44-bf21-acb788a5289a",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "536679ea-5587-4ac5-8b6f-2bd9a51d760f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ab2eab45-2657-4ce6-8849-88abe1b0fcfa",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "38d966bb-e956-4160-a926-baff06144c26",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "121722c9-0e18-44bd-ab17-30315b7de3aa",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e298c295-3e8e-4735-ac1f-174cf0a1cb58",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "accda407-d4c4-4205-b0c8-15a9694fdcc7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "020a8182-ad90-4894-97ce-1cf86c4e1764",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ddc5c3f3-2ae7-46b9-95dd-f295578d360e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "03e77f83-513d-46bf-82ea-af3800f2a368",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "28fa0423-4259-4b12-b9fa-6a8c0d7c60cc",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "5685e31e-99fe-4cf5-ba3b-bf513ab7ab67",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "92367d42-88ca-45c2-a2bc-6be187472984",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ece5ab2b-f96d-41b5-8253-4f92b15272ba",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "375fe3c8-adf8-4d9d-b782-973c9ff49081",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "46226890-a546-4a7a-8bdb-87d371db2d70",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "fa9f9e2f-8fd7-4468-8bd2-381d609ab449",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "adbd228d-e860-4da2-a6d6-374a117be4c8",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "text_has_content",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "text_has_content": "text_statistics.has_content=False",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "503596d3-98cf-4c4c-9057-7fd97f76c67f",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "1b14fafc-eb82-439d-ba96-360e76dd66ba",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "0a9b8334-1a43-4988-9aca-7d919a6a9833",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "text_has_content",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "text_has_content": "text_statistics.has_content=False",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "892fd1b4-9c9d-46ec-b42e-fb18724f8c51",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "text_has_content",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "text_has_content": "text_statistics.has_content=False",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "0cef507f-0a49-439c-9e49-1c9402851c30",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "4346368c-0b4d-45df-900a-2bc297d469c9",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "78650c8a-0ad7-4cc2-96aa-c6ead41642e2",
+      "failed_fields": [
+        "domain_level1",
+        "iso639_language",
+        "handwriting_present"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "iso639_language": "iso639_language is null/missing",
+        "handwriting_present": "handwriting_present is missing"
+      }
+    },
+    {
+      "image_id": "dc92bba1-4e17-4d6a-89d6-5352501d177c",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "18cb4d7e-0cbb-4aa2-9af8-e19ade8dd838",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "8bec3cb0-dc40-42c0-ac3a-14f138a48f23",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "0e230a9d-aeca-4294-b4bd-aac80c6dacb4",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "acb66ddb-1878-481c-bd14-2c6190f45c57",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "8d6c96a5-bb61-4d90-b524-a71f2f739f3d",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "64b36890-cfa1-4345-a7e5-53ecbb0cfe5c",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "5f8fcbdb-38cb-4586-8547-1dfa40abcd7e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b2ded029-bf2b-4d6f-8a9e-a952d8324d21",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e64bf0cb-6566-4985-a28f-a86e9e068ab8",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "1b65662e-f84d-4071-b43b-a8cbf8ef698d",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "1fa2a224-004f-4b82-b6c5-5ab1b3a3edbf",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "29b632c8-427d-4086-a3cb-fcc90f1398b3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "68fce09c-bdad-49f2-a155-52e4a5fd8368",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "8ed6d8ed-0e30-4de6-b60d-1c89a1153265",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e8356a05-b802-4b89-a208-96fc1f701491",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "823ec40c-5813-42de-be89-a7b5f034bca3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "bb774661-c5eb-481e-8788-e2d7fd97405d",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "280d45e7-6693-408d-8746-92b09adf8036",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "875d1767-6aa5-4469-b080-f3306aadb376",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "d4df454d-ef1e-4279-bd78-565e421c6537",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "07ff055b-c6d7-4778-a0bb-8d5034e79bb8",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "521ad797-3ced-43b6-9927-75f186d2b314",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "3955b28a-7a62-412e-be5e-ea555b04deba",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "8f236f6c-24cc-4012-bd43-c57a4274e93b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "fdc68270-b8ea-4ec9-8fa9-40e227631a1c",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e46f0225-4971-4028-971f-ee0d67257441",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b5694574-9aba-47a4-894b-5765270a7080",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "03ee01a0-9746-4cf1-af32-d04763fcd27d",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c39db194-cb1e-4566-8364-497b70817329",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "4eedff59-62dc-4ec5-b412-d416865e3c09",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "aba09c75-4077-4e53-9994-d08448c97c61",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ee4ef0a6-e9f0-49b4-b048-8ae5d896da50",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "4a043d59-186b-41b5-b42b-f18affdf5c9c",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c6844888-d5b8-45aa-ab37-7ffe98ce9f84",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "53dcc285-c5d0-48d5-ad57-98aecbab6ef8",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b5edcdf6-f338-484b-9832-57aba93c6bee",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "2d066e3e-1f61-4ad9-a215-af9a6c4b6f93",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "732f8e6e-f54c-4960-8353-cb7c36003bb0",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "d09f3669-19ba-4e4a-887e-d174d35efb15",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "92e81887-8c8f-4f5f-8e56-5b6c8700029a",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "fc351692-0a17-4884-8b61-36537a4ed8c1",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "363041ad-e500-4ac4-acfb-ff1e7bfa2250",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c40f4f2e-faab-49cb-a4ad-0f13826a5f37",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b788ba55-13d7-4787-8e0d-25fff640ef87",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "dbe968b7-4f9a-4904-93d6-17e589961197",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f04134cb-69f6-4b76-9eb1-f363ee3c4303",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b51562c9-e856-4d83-878c-76004502947e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ecd3c161-09c3-4de5-a655-946b1409e81e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "19ff0623-b320-4f8d-b640-e5c827536766",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b47e2055-b747-4390-9923-12b2d8ea2acb",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "834b8408-98e7-42cc-b8c7-29359b17adae",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b73080a9-1755-4424-b7d9-c48023d93278",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c3f96918-4657-490d-8eff-8f4b75da8fd3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b60871ad-b5a6-46eb-83a5-021539702519",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "1721ab61-9151-43c1-94bf-b36c3e4a0983",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "0268a5eb-352a-459a-9190-ed2a66df4167",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "decd185f-fb75-4dd0-9bcd-0aeff2c08434",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "3f6ededb-da49-4022-8775-50b8afad61e9",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "4e5747d8-4964-4ba3-bf0b-5c9a311ec517",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "58ece7ee-690a-4161-9eb4-8ddd523190e2",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "0d432440-4a1b-4189-9a81-08442f6f59b7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "686344d1-cc6c-4cdc-87bc-b2934dc1c8b7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e3892916-e691-4cbb-950b-8afb166b8f9f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "92cb4a6b-48f4-42c4-8bdd-1dcbbf52aa54",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "6f26c147-7b4d-485d-8606-03daac2761eb",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f546f0cd-a319-48b6-aadc-2e49fb6b86ca",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "da3aa830-80b5-4912-bd4f-549a87f7dc41",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "db7afba3-6095-4ca4-ac5a-ddc82a72e2da",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "e34f144c-412b-4211-965a-560f0da5d419",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "8b8fe921-6c6c-4110-8cfa-c16acc9ace11",
+      "failed_fields": [
+        "domain_level1",
+        "text_has_content"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e3055783-e6ae-4c69-ae64-bb8aaa4bdccd",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "644b55b5-e2f2-4ac7-b4bb-78018671ea92",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "3a30b422-b31f-4eb2-b398-52268d77e819",
+      "failed_fields": [
+        "domain_level1",
+        "text_has_content"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "10d315fc-e64b-4f54-9f29-445399339975",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "985fccd4-0e37-4ef2-8ba7-a94729793d82",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "2813abd6-45e7-40cb-97da-bce27f77e45c",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "0da86816-888c-4935-b6a3-9fa58f18fabe",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "404a5cbb-b8e1-4b47-b12c-03bae8396a02",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "0cd5a23f-4097-4ca7-9ab7-2c8178daffd0",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "55970fc0-ee34-43e9-ab92-3d81f6d203e0",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "393aabe8-8532-4670-9e91-d62a067be9f4",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "0fa03daf-1a5d-4fc3-8fa4-7999df64e9a2",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "ae903d81-d28c-4518-8699-eae452e10015",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "6b8b1c26-d976-4cdb-bdc1-94d65379007f",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "e48cfe0f-622a-4d14-9639-4e761c801da8",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "2b851816-13c5-48ac-8378-df59aa0bd056",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "ea5aa414-0e97-403d-aa27-77eee168111c",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "a6d8b8d3-9c9a-4591-8925-5a1d75ddbd54",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "11e3bae4-b893-48d6-bbc0-9998690c664b",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [11]: w=422.19765218098956, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "44032fd7-7d86-4bae-ad50-a8d85b604720",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [1]: w=0.0, h=1056.5322265625002 (must be >0)"
+      }
+    },
+    {
+      "image_id": "d8ca489a-892b-408d-8a8f-5262ad21fe11",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [1]: w=0.0, h=1056.5322265625002 (must be >0)"
+      }
+    },
+    {
+      "image_id": "02e5a6fb-0516-4325-bb8e-1615bfc41c82",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "6be4b027-b73f-42d2-8bf2-740b87ef957b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "93c10946-ae5c-4d89-952b-48b56b16df86",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "fa948ea1-382f-4e74-aa4d-3e0f2cbed901",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b492cead-d0e3-4e8e-88c4-ed76391dc7c1",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c67b85a9-3573-483d-befb-bb8831983131",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "3c8cba8a-2db5-4543-841e-01460cb5ee74",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e36af47f-7a3e-4251-a288-68a9fb842cf5",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f77c06ac-1349-4a4d-a773-8d928996fc26",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "3e6e758a-0846-4b9c-a195-cc9e6b4923bc",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e9c8539b-cf16-41fa-a173-a8833221c4ab",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b843b0ea-56b5-45be-b96a-823050d304ac",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e9cd346f-e0fa-4673-b6cd-0c6d5c98f8cb",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "6aa3ef93-0b6d-4e52-a84b-4eb6666d360b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e7689fa7-1aaf-4c80-ab13-07dafc0e1a97",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b0eb0f2b-329a-4058-8333-bc15c3e0ce51",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "cc31923d-a209-4ba4-8422-f13658c39b2d",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "9c13c0ba-82da-4d05-8193-667a08306517",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "23828979-55b7-445e-82f9-36fe9fb6d595",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "89474d7d-f95a-424e-bcfb-e387535ff975",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "786583a5-e27f-413b-bf4c-f4a4c92802f4",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "8193f3cf-a7a8-4d40-8cae-f1a9f40b18a5",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "38f4ace3-84e0-4a88-b1b7-fe7741279b67",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "2b586d55-6df6-4189-8d64-fd728274fa4f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "12446998-73bd-4990-86cf-4e4dc42fe72b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "18d2bca6-64bf-4537-b3c4-c591e12f2bb3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "b98c6304-56e2-4da2-b2ef-4ec4446834e3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "a3147f32-d159-402c-af16-60311a7b561c",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "7c200a26-cd80-477f-9091-cee50dd555da",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "4b82d803-bc0f-444a-9f80-b93c6592e867",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "5fe2fc3e-5803-4e7b-b1a9-eb31a9d3e008",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "65576f2f-a6f4-47d6-90b5-4760d350a347",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "896d7684-6fbe-4643-bc47-3f0810dc5ab7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "4a5c37af-8495-49b1-81fe-e26f622152fc",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "43861436-f2a9-43a9-912d-8a567e1bf8c3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "95124f6b-52ad-4172-94b9-581f357fe7dd",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ea183c6d-fe25-4eb4-8d9c-e0ca2dfd3e35",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "76b55c13-5a79-4af9-b7e0-544b0b371603",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "14c373a5-4a58-4996-8168-e1b2d7e04a2c",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ed8f8849-919a-4998-b827-b8a3d507db5b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "8e3be877-a3e0-401b-a464-f3bd9bd22084",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "517ec024-97cc-416a-b5f0-88f3483cb131",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "deea36c1-e302-45f8-8144-10a2df2817b2",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [2]: w=654.1976318359374, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "4611b299-7e49-40bf-85ea-d7a1e42d3fe0",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [2]: w=654.1976318359374, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "d0667747-74c8-4d43-9bc9-58aca70e5716",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [5]: w=1813.441914876302, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "9dcfe491-7b30-40a8-9bea-392505c1e418",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [5]: w=1814.8012084960938, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "9b546d4b-f91a-4040-aba7-a52b76b8f0a5",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c43d3243-a602-4b8c-b0a1-12f17ba28725",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e95a44d1-9e14-4e70-b3bb-a1ef035c716f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "3f96d55c-913e-4faa-bfd5-cd14faacb37f",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "8257300f-5637-4198-be8d-d9eee22df952",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "bca5cd0b-f227-469d-8438-8f29dbafaff7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "6a2f1ace-7734-4b8f-ab74-86aa903403f7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f13b60e1-e829-44e4-88d8-f0f5065e01f4",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "e2a1f97d-c54a-4362-b265-bf87fc762de7",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ef5c9598-5d81-45a3-a09e-022b63c38d03",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "8cdb3d70-190c-43d9-99db-c4ff648a4a19",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "6ff81f9d-650b-4520-96ce-b0d0c0f31d00",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "d23ea7d0-6d59-4b4c-8573-715fabb74bb6",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "aa892d1e-40c9-4044-924f-7723c9881d61",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "794c066b-41b1-4235-9bb3-c58395339769",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "fd1b1742-6177-44e6-bf3d-7326fdf8dba1",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c16fba90-25f5-49b8-8235-0133737dbd09",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f1f72f81-50ff-44e7-8013-c6be24ac1572",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "d5122561-bd16-44ab-ae1f-68b6fb06ddfc",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "992184b4-e002-40ab-bbc9-fc11b2e8d83e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    }
+  ]
+}

@@ -70,9 +70,7 @@ def reconstruct_page_text(cells: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def build_cell_annotations(
-    cells: list[dict], img_id: int
-) -> list[dict]:
+def build_cell_annotations(cells: list[dict], img_id: int) -> list[dict]:
     """Create COCO-style cell annotations from PDF annotation bboxes."""
     annotations = []
     for ann_id, cell in enumerate(cells):
@@ -158,14 +156,16 @@ def parse_structure_xml(xml_path: Path) -> list[dict]:
         width = xmax - xmin
         height = ymax - ymin
 
-        annotations.append({
-            "bbox": [xmin, ymin, width, height],
-            "bbox_raw": [xmin, ymin, xmax, ymax],
-            "coord_origin": "top-left",
-            "category_name": cat_name,
-            "category_id": CATEGORY_MAP[cat_name],
-            "area": float(width * height),
-        })
+        annotations.append(
+            {
+                "bbox": [xmin, ymin, width, height],
+                "bbox_raw": [xmin, ymin, xmax, ymax],
+                "coord_origin": "top-left",
+                "category_name": cat_name,
+                "category_id": CATEGORY_MAP[cat_name],
+                "area": float(width * height),
+            }
+        )
 
     return annotations
 
@@ -180,9 +180,9 @@ def save_batch(
     # OCR JSONL
     ocr_path = output_dir / f"ocr_batch_{batch_num}.jsonl"
     with open(ocr_path, "w") as f:
-        for r in batch_results:
-            f.write(
-                json.dumps({
+        f.writelines(
+            json.dumps(
+                {
                     "source": r["filename"],
                     "text": r["text"],
                     "confidence": 1.0,
@@ -190,9 +190,11 @@ def save_batch(
                     "processing_time_ms": 0,
                     "success": True,
                     "error": None,
-                })
-                + "\n"
+                }
             )
+            + "\n"
+            for r in batch_results
+        )
 
     # Layout JSON
     layout_data = {
@@ -210,11 +212,13 @@ def save_batch(
     global_ann_id = 0
     for img_id, r in enumerate(batch_results):
         if r["annotations"]:
-            layout_data["images"].append({
-                "id": img_id,
-                "file_name": r["filename"],
-                "gcs_path": r["filename"],
-            })
+            layout_data["images"].append(
+                {
+                    "id": img_id,
+                    "file_name": r["filename"],
+                    "gcs_path": r["filename"],
+                }
+            )
             for ann in r["annotations"]:
                 ann_copy = dict(ann)
                 ann_copy["image_id"] = img_id
@@ -228,14 +232,10 @@ def save_batch(
 
 
 def main() -> None:
-    base_dir = Path(
-        "/mnt/e/image_detection/01_base_data/tables/fintabnet"
-    )
+    base_dir = Path("/mnt/e/image_detection/01_base_data/tables/fintabnet")
     pdf_ann_dir = base_dir / "FinTabNet.c-PDF_Annotations"
     structure_dir = base_dir / "FinTabNet.c-Structure"
-    output_dir = Path(
-        "/mnt/e/image_detection/metadata_registry/extracted/fintabnet"
-    )
+    output_dir = Path("/mnt/e/image_detection/metadata_registry/extracted/fintabnet")
 
     dry_run = "--dry-run" in sys.argv
 
@@ -273,7 +273,9 @@ def main() -> None:
             split = table.get("split", "unknown")
 
             # Derive image filename from structure_id
-            image_name = f"{structure_id}.jpg" if structure_id else json_path.stem + ".jpg"
+            image_name = (
+                f"{structure_id}.jpg" if structure_id else json_path.stem + ".jpg"
+            )
 
             # Reconstruct text from cells
             text = reconstruct_page_text(cells)
@@ -295,12 +297,14 @@ def main() -> None:
             all_annotations = cell_annotations + struct_annotations
             total_annotations += len(all_annotations)
 
-            batch_results.append({
-                "filename": image_name,
-                "split": split,
-                "text": text,
-                "annotations": all_annotations,
-            })
+            batch_results.append(
+                {
+                    "filename": image_name,
+                    "split": split,
+                    "text": text,
+                    "annotations": all_annotations,
+                }
+            )
 
             if len(batch_results) >= BATCH_SIZE:
                 if not dry_run:
@@ -322,8 +326,10 @@ def main() -> None:
         total_processed += len(batch_results)
         batch_num += 1
 
-    print(f"\nDone: {total_processed} tables, {batch_num} batches, "
-          f"{total_annotations} annotations, {total_text_chars:,} text chars")
+    print(
+        f"\nDone: {total_processed} tables, {batch_num} batches, "
+        f"{total_annotations} annotations, {total_text_chars:,} text chars"
+    )
 
     if dry_run:
         print("(dry run - no files written)")

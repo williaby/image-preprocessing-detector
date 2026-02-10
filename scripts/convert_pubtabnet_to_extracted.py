@@ -16,8 +16,16 @@ from pathlib import Path
 
 # HTML tags to strip from cell tokens
 HTML_TAGS = {
-    "<b>", "</b>", "<i>", "</i>", "<sup>", "</sup>",
-    "<sub>", "</sub>", "<br>", "<br/>",
+    "<b>",
+    "</b>",
+    "<i>",
+    "</i>",
+    "<sup>",
+    "</sup>",
+    "<sub>",
+    "</sub>",
+    "<br>",
+    "<br/>",
 }
 
 BATCH_SIZE = 200
@@ -118,9 +126,9 @@ def save_batch(
     # OCR JSONL
     ocr_path = output_dir / f"ocr_batch_{batch_num}.jsonl"
     with open(ocr_path, "w") as f:
-        for r in batch_results:
-            f.write(
-                json.dumps({
+        f.writelines(
+            json.dumps(
+                {
                     "source": r["filename"],
                     "text": r["text"],
                     "confidence": 1.0,  # Ground truth = perfect confidence
@@ -128,9 +136,11 @@ def save_batch(
                     "processing_time_ms": 0,
                     "success": True,
                     "error": None,
-                })
-                + "\n"
+                }
             )
+            + "\n"
+            for r in batch_results
+        )
 
     # Layout JSON
     layout_data = {
@@ -148,11 +158,13 @@ def save_batch(
     global_ann_id = 0
     for img_id, r in enumerate(batch_results):
         if r["annotations"]:
-            layout_data["images"].append({
-                "id": img_id,
-                "file_name": r["filename"],
-                "gcs_path": r["filename"],
-            })
+            layout_data["images"].append(
+                {
+                    "id": img_id,
+                    "file_name": r["filename"],
+                    "gcs_path": r["filename"],
+                }
+            )
             for ann in r["annotations"]:
                 ann_copy = dict(ann)
                 ann_copy["image_id"] = img_id
@@ -170,9 +182,7 @@ def main() -> None:
         "/mnt/e/image_detection/01_base_data/tables/pubtabnet/pubtabnet/"
         "PubTabNet_2.0.0.jsonl"
     )
-    output_dir = Path(
-        "/mnt/e/image_detection/metadata_registry/extracted/pubtabnet"
-    )
+    output_dir = Path("/mnt/e/image_detection/metadata_registry/extracted/pubtabnet")
 
     dry_run = "--dry-run" in sys.argv
 
@@ -198,12 +208,14 @@ def main() -> None:
             text = reconstruct_page_text(cells)
             annotations = build_layout_annotations(cells, img_id=0)
 
-            batch_results.append({
-                "filename": entry["filename"],
-                "split": entry.get("split", "unknown"),
-                "text": text,
-                "annotations": annotations,
-            })
+            batch_results.append(
+                {
+                    "filename": entry["filename"],
+                    "split": entry.get("split", "unknown"),
+                    "text": text,
+                    "annotations": annotations,
+                }
+            )
             total_annotations += len(annotations)
 
             if len(batch_results) >= BATCH_SIZE:
@@ -225,8 +237,10 @@ def main() -> None:
         total_processed += len(batch_results)
         batch_num += 1
 
-    print(f"\nDone: {total_processed} images, {batch_num} batches, "
-          f"{total_annotations} annotations")
+    print(
+        f"\nDone: {total_processed} images, {batch_num} batches, "
+        f"{total_annotations} annotations"
+    )
 
     if dry_run:
         print("(dry run - no files written)")

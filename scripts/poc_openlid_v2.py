@@ -63,20 +63,75 @@ LID176_MODEL_PATH = MODEL_DIR / "lid.176.bin"
 
 # ISO 639-3 to ISO 639-1 mapping (common languages)
 ISO639_3_TO_1: dict[str, str] = {
-    "eng": "en", "spa": "es", "fra": "fr", "deu": "de", "ita": "it",
-    "por": "pt", "nld": "nl", "pol": "pl", "rus": "ru", "ukr": "uk",
-    "ces": "cs", "ron": "ro", "ell": "el", "hun": "hu", "swe": "sv",
-    "dan": "da", "nor": "no", "fin": "fi", "zho": "zh", "cmn": "zh",
-    "jpn": "ja", "kor": "ko", "vie": "vi", "tha": "th", "ind": "id",
-    "msa": "ms", "hin": "hi", "ben": "bn", "pan": "pa", "tam": "ta",
-    "tel": "te", "mar": "mr", "guj": "gu", "kan": "kn", "mal": "ml",
-    "nep": "ne", "sin": "si", "urd": "ur", "arb": "ar", "arz": "ar",
-    "fas": "fa", "heb": "he", "tur": "tr", "amh": "am", "swa": "sw",
-    "tgl": "tl", "khm": "km", "lao": "lo", "mya": "my", "bod": "bo",
-    "dzo": "dz", "bul": "bg", "srp": "sr", "mkd": "mk", "slv": "sl",
-    "hrv": "hr", "bos": "bs", "slk": "sk", "lit": "lt", "lav": "lv",
-    "est": "et", "kat": "ka", "hye": "hy", "aze": "az", "uzb": "uz",
-    "kaz": "kk", "tgk": "tg", "mon": "mn", "bel": "be",
+    "eng": "en",
+    "spa": "es",
+    "fra": "fr",
+    "deu": "de",
+    "ita": "it",
+    "por": "pt",
+    "nld": "nl",
+    "pol": "pl",
+    "rus": "ru",
+    "ukr": "uk",
+    "ces": "cs",
+    "ron": "ro",
+    "ell": "el",
+    "hun": "hu",
+    "swe": "sv",
+    "dan": "da",
+    "nor": "no",
+    "fin": "fi",
+    "zho": "zh",
+    "cmn": "zh",
+    "jpn": "ja",
+    "kor": "ko",
+    "vie": "vi",
+    "tha": "th",
+    "ind": "id",
+    "msa": "ms",
+    "hin": "hi",
+    "ben": "bn",
+    "pan": "pa",
+    "tam": "ta",
+    "tel": "te",
+    "mar": "mr",
+    "guj": "gu",
+    "kan": "kn",
+    "mal": "ml",
+    "nep": "ne",
+    "sin": "si",
+    "urd": "ur",
+    "arb": "ar",
+    "arz": "ar",
+    "fas": "fa",
+    "heb": "he",
+    "tur": "tr",
+    "amh": "am",
+    "swa": "sw",
+    "tgl": "tl",
+    "khm": "km",
+    "lao": "lo",
+    "mya": "my",
+    "bod": "bo",
+    "dzo": "dz",
+    "bul": "bg",
+    "srp": "sr",
+    "mkd": "mk",
+    "slv": "sl",
+    "hrv": "hr",
+    "bos": "bs",
+    "slk": "sk",
+    "lit": "lt",
+    "lav": "lv",
+    "est": "et",
+    "kat": "ka",
+    "hye": "hy",
+    "aze": "az",
+    "uzb": "uz",
+    "kaz": "kk",
+    "tgk": "tg",
+    "mon": "mn",
+    "bel": "be",
 }
 
 # Test samples covering different scripts and languages
@@ -225,7 +280,9 @@ def detect_lid176(text: str, model: Any) -> DetectionResult:
     )
 
 
-def get_top_k_predictions(text: str, model: Any, k: int = 5, is_openlid: bool = True) -> list[tuple[str, float]]:
+def get_top_k_predictions(
+    text: str, model: Any, k: int = 5, is_openlid: bool = True
+) -> list[tuple[str, float]]:
     """Get top-k predictions from a model."""
     clean_text = clean_text_openlid(text) if is_openlid else " ".join(text.split())
     predictions = model.predict(clean_text, k=k)
@@ -250,7 +307,9 @@ def run_comparison(
     }
 
     print("\n" + "=" * 90)
-    print(f"{'Text (truncated)':<35} {'Expected':<10} {'OpenLID-v2':<20} {'lid.176':<15}")
+    print(
+        f"{'Text (truncated)':<35} {'Expected':<10} {'OpenLID-v2':<20} {'lid.176':<15}"
+    )
     print("=" * 90)
 
     for text, expected_lang, expected_script in samples:
@@ -302,7 +361,7 @@ def print_summary(results: dict[str, Any]) -> None:
     if openlid["total"] > 0:
         accuracy = openlid["correct"] / openlid["total"] * 100
         avg_latency = sum(openlid["latencies"]) / len(openlid["latencies"])
-        print(f"\nOpenLID-v2:")
+        print("\nOpenLID-v2:")
         print(f"  Accuracy: {openlid['correct']}/{openlid['total']} ({accuracy:.1f}%)")
         print(f"  Avg latency: {avg_latency:.2f}ms")
 
@@ -311,7 +370,7 @@ def print_summary(results: dict[str, Any]) -> None:
     if lid176["total"] > 0:
         accuracy = lid176["correct"] / lid176["total"] * 100
         avg_latency = sum(lid176["latencies"]) / len(lid176["latencies"])
-        print(f"\nlid.176.bin:")
+        print("\nlid.176.bin:")
         print(f"  Accuracy: {lid176['correct']}/{lid176['total']} ({accuracy:.1f}%)")
         print(f"  Avg latency: {avg_latency:.2f}ms")
 
@@ -332,7 +391,9 @@ def check_environment() -> None:
     try:
         import fasttext
 
-        print(f"fastText: {fasttext.__version__ if hasattr(fasttext, '__version__') else 'installed'}")
+        print(
+            f"fastText: {fasttext.__version__ if hasattr(fasttext, '__version__') else 'installed'}"
+        )
     except ImportError:
         print("fastText: NOT INSTALLED")
         print("  Install with: uv add fasttext")
@@ -357,14 +418,16 @@ def test_single_text(text: str, openlid_model: Any) -> None:
     print(f"Input: {text[:100]}{'...' if len(text) > 100 else ''}")
 
     result = detect_openlid(text, openlid_model)
-    print(f"\nResult:")
-    print(f"  Language: {result.lang_code} (raw: {result.raw_label.replace('__label__', '')})")
+    print("\nResult:")
+    print(
+        f"  Language: {result.lang_code} (raw: {result.raw_label.replace('__label__', '')})"
+    )
     print(f"  Script: {result.script_code}")
     print(f"  Confidence: {result.confidence:.4f}")
     print(f"  Latency: {result.latency_ms:.2f}ms")
 
     # Show top 5
-    print(f"\nTop 5 predictions:")
+    print("\nTop 5 predictions:")
     top_k = get_top_k_predictions(text, openlid_model, k=5)
     for i, (lang, conf) in enumerate(top_k, 1):
         print(f"  {i}. {lang}: {conf:.4f}")
@@ -373,9 +436,15 @@ def test_single_text(text: str, openlid_model: Any) -> None:
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="OpenLID-v2 Proof-of-Concept")
-    parser.add_argument("--skip-comparison", action="store_true", help="Skip comparison with lid.176.bin")
+    parser.add_argument(
+        "--skip-comparison",
+        action="store_true",
+        help="Skip comparison with lid.176.bin",
+    )
     parser.add_argument("--text", type=str, help="Test with custom text")
-    parser.add_argument("--download-only", action="store_true", help="Only download the model")
+    parser.add_argument(
+        "--download-only", action="store_true", help="Only download the model"
+    )
     args = parser.parse_args()
 
     # Environment check
@@ -425,16 +494,20 @@ def main() -> int:
     print("KEY FINDINGS")
     print("=" * 60)
     print(f"✓ NumPy {np.__version__} compatibility: WORKING")
-    print(f"✓ OpenLID-v2 provides language+script in single prediction")
-    print(f"✓ Label format: __label__<iso639-3>_<iso15924>")
+    print("✓ OpenLID-v2 provides language+script in single prediction")
+    print("✓ Label format: __label__<iso639-3>_<iso15924>")
 
     if lid176_model:
         openlid_acc = results["openlid"]["correct"] / results["openlid"]["total"] * 100
         lid176_acc = results["lid176"]["correct"] / results["lid176"]["total"] * 100
         if openlid_acc >= lid176_acc:
-            print(f"✓ OpenLID-v2 accuracy >= lid.176.bin ({openlid_acc:.0f}% vs {lid176_acc:.0f}%)")
+            print(
+                f"✓ OpenLID-v2 accuracy >= lid.176.bin ({openlid_acc:.0f}% vs {lid176_acc:.0f}%)"
+            )
         else:
-            print(f"⚠ OpenLID-v2 accuracy < lid.176.bin ({openlid_acc:.0f}% vs {lid176_acc:.0f}%)")
+            print(
+                f"⚠ OpenLID-v2 accuracy < lid.176.bin ({openlid_acc:.0f}% vs {lid176_acc:.0f}%)"
+            )
 
     return 0
 

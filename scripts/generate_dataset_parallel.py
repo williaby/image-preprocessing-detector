@@ -18,7 +18,6 @@ import argparse
 import json
 import logging
 import multiprocessing as mp
-import os
 import sys
 import time
 from dataclasses import dataclass
@@ -135,8 +134,8 @@ def generate_worker(task: WorkerTask) -> WorkerResult:
                 remaining = (task.samples_to_generate - samples_generated) / rate
                 logger.info(
                     f"Worker {task.worker_id}: {samples_generated}/{task.samples_to_generate} "
-                    f"({samples_generated/task.samples_to_generate*100:.1f}%) - "
-                    f"{rate:.1f} samples/sec - ETA: {remaining/60:.0f} min"
+                    f"({samples_generated / task.samples_to_generate * 100:.1f}%) - "
+                    f"{rate:.1f} samples/sec - ETA: {remaining / 60:.0f} min"
                 )
                 last_progress_report = now
 
@@ -155,7 +154,7 @@ def generate_worker(task: WorkerTask) -> WorkerResult:
 
     elapsed = time.time() - start_time
     logger.info(
-        f"Worker {task.worker_id}: Completed - {samples_generated} samples in {elapsed/60:.1f} min"
+        f"Worker {task.worker_id}: Completed - {samples_generated} samples in {elapsed / 60:.1f} min"
     )
 
     return WorkerResult(
@@ -329,8 +328,8 @@ def main() -> int:
     logger.info("=" * 60)
     logger.info(f"Total samples generated: {total_generated}")
     logger.info(f"Total samples failed: {total_failed}")
-    logger.info(f"Total time: {total_elapsed/3600:.2f} hours")
-    logger.info(f"Average rate: {total_generated/total_elapsed:.1f} samples/sec")
+    logger.info(f"Total time: {total_elapsed / 3600:.2f} hours")
+    logger.info(f"Average rate: {total_generated / total_elapsed:.1f} samples/sec")
 
     # Report per-worker stats
     for result in results:
@@ -346,7 +345,9 @@ def main() -> int:
 
     # Merge outputs
     stats = merge_worker_outputs(output_dir, args.workers)
-    logger.info(f"Final dataset: {stats['total_samples']} samples across {stats['num_scripts']} scripts")
+    logger.info(
+        f"Final dataset: {stats['total_samples']} samples across {stats['num_scripts']} scripts"
+    )
 
     # Save final stats
     stats_path = output_dir / "generation_stats.json"

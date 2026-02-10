@@ -68,7 +68,7 @@ def extract_capture_method(data: dict[str, Any]) -> str | None:
     cm = data.get("capture_method")
     if isinstance(cm, dict):
         return cm.get("method")
-    elif isinstance(cm, str):
+    if isinstance(cm, str):
         return cm
     return None
 
@@ -147,7 +147,7 @@ def extract_text_scope(data: dict[str, Any]) -> tuple[str | None, str | None]:
     ts = data.get("text_scope")
     if isinstance(ts, dict):
         return (ts.get("scope"), ts.get("content_type"))
-    elif isinstance(ts, str):
+    if isinstance(ts, str):
         # Flat format
         content_type = data.get("content_type") or data.get("text_scope_content_type")
         return (ts, content_type)
@@ -164,7 +164,13 @@ def extract_content_flags(data: dict[str, Any]) -> dict[str, bool]:
         Dictionary of flag_name -> bool
     """
     flags = {}
-    flag_names = ["has_table", "has_formula", "has_handwriting", "has_signature", "has_figure"]
+    flag_names = [
+        "has_table",
+        "has_formula",
+        "has_handwriting",
+        "has_signature",
+        "has_figure",
+    ]
 
     cf = data.get("content_flags")
     if isinstance(cf, dict):
@@ -348,7 +354,9 @@ def aggregate_dataset_metadata(
                         if deg_type:
                             stats["degradation_types"][deg_type] += 1
                             if severity is not None:
-                                stats["degradation_severities"][deg_type].append(severity)
+                                stats["degradation_severities"][deg_type].append(
+                                    severity
+                                )
 
         except Exception as e:
             if verbose:
@@ -433,7 +441,11 @@ def aggregate_dataset_metadata(
     if stats["script_codes"]:
         top_scripts = stats["script_codes"].most_common(10)
         stats["top_scripts"] = [
-            {"script": script, "count": count, "percentage": round(count / total * 100, 1)}
+            {
+                "script": script,
+                "count": count,
+                "percentage": round(count / total * 100, 1),
+            }
             for script, count in top_scripts
         ]
     else:
@@ -443,7 +455,11 @@ def aggregate_dataset_metadata(
     if stats["language_codes"]:
         top_languages = stats["language_codes"].most_common(10)
         stats["top_languages"] = [
-            {"language": lang, "count": count, "percentage": round(count / total * 100, 1)}
+            {
+                "language": lang,
+                "count": count,
+                "percentage": round(count / total * 100, 1),
+            }
             for lang, count in top_languages
         ]
     else:
@@ -508,10 +524,14 @@ def main():
         print(f"   Samples: {stats['total_samples']}")
 
         if stats.get("quality_summary"):
-            print(f"   Quality: {stats['quality_summary']['min']:.2f}-{stats['quality_summary']['max']:.2f} (μ={stats['quality_summary']['mean']:.2f})")
+            print(
+                f"   Quality: {stats['quality_summary']['min']:.2f}-{stats['quality_summary']['max']:.2f} (μ={stats['quality_summary']['mean']:.2f})"
+            )
 
         if stats.get("top_degradations"):
-            print(f"   Top degradations: {', '.join(d['type'] for d in stats['top_degradations'][:3])}")
+            print(
+                f"   Top degradations: {', '.join(d['type'] for d in stats['top_degradations'][:3])}"
+            )
 
     else:
         # Process all datasets in registry

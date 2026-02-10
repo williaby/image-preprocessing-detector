@@ -26,9 +26,7 @@ import logging
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
-from PIL import Image
 from tqdm import tqdm
 
 logging.basicConfig(
@@ -65,7 +63,7 @@ def load_huggingface_dataset():
     sys.exit(1)
 
 
-def get_coco_filename(example: dict) -> Tuple[Optional[str], Optional[str]]:
+def get_coco_filename(example: dict) -> tuple[str | None, str | None]:
     """Generate COCO filename from example metadata.
 
     Returns:
@@ -96,7 +94,7 @@ def get_coco_filename(example: dict) -> Tuple[Optional[str], Optional[str]]:
 
 def save_image(
     example: dict, output_dir: Path, skip_existing: bool = True
-) -> Tuple[str, bool, Optional[str]]:
+) -> tuple[str, bool, str | None]:
     """Save single image from HuggingFace example.
 
     Args:
@@ -206,7 +204,7 @@ def main():
     success_count = 0
     fail_count = 0
     skip_count = 0
-    errors: Dict[str, int] = {}
+    errors: dict[str, int] = {}
 
     logger.info(f"Starting conversion with {args.num_workers} workers...")
 
@@ -255,7 +253,7 @@ def main():
         logger.info(f"  ⏭️  Skipped (existing):    {skip_count:,} images")
     if fail_count > 0:
         logger.warning(f"  ❌ Failed:               {fail_count:,} images")
-        logger.warning(f"  Error breakdown:")
+        logger.warning("  Error breakdown:")
         for error_type, count in sorted(
             errors.items(), key=lambda x: x[1], reverse=True
         ):

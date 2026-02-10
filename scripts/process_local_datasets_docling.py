@@ -16,7 +16,6 @@ import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 import httpx
 
@@ -107,7 +106,8 @@ class LocalDatasetProcessor:
         image_extensions = {".png", ".jpg", ".jpeg", ".tiff", ".tif"}
 
         files = [
-            f for f in self.dataset_path.rglob("*")
+            f
+            for f in self.dataset_path.rglob("*")
             if f.suffix.lower() in image_extensions
             and not f.name.startswith(".")
             and "__MACOSX" not in str(f)
@@ -133,11 +133,13 @@ class LocalDatasetProcessor:
 
             # Request options for docling
             data = {
-                "options": json.dumps({
-                    "do_ocr": self.config.extract_text,
-                    "do_table_structure": True,
-                    "generate_markdown": True,
-                })
+                "options": json.dumps(
+                    {
+                        "do_ocr": self.config.extract_text,
+                        "do_table_structure": True,
+                        "generate_markdown": True,
+                    }
+                )
             }
 
             # Send to Docling API
@@ -167,7 +169,9 @@ class LocalDatasetProcessor:
                 markdown = doc.get("markdown", doc.get("md_content", ""))
             elif "text" in result_data:
                 text = result_data["text"]
-                markdown = result_data.get("markdown", result_data.get("md_content", ""))
+                markdown = result_data.get(
+                    "markdown", result_data.get("md_content", "")
+                )
 
             # Extract layout elements
             layout_elements = []
@@ -223,7 +227,9 @@ class LocalDatasetProcessor:
                     "file_name": r.file_name,
                     "text": r.text if self.config.extract_text else "",
                     "markdown": r.markdown if self.config.extract_text else "",
-                    "layout_elements": r.layout_elements if self.config.extract_layout else [],
+                    "layout_elements": r.layout_elements
+                    if self.config.extract_layout
+                    else [],
                     "tables": r.tables,
                     "processing_time_ms": r.processing_time_ms,
                     "success": r.success,
@@ -259,16 +265,20 @@ class LocalDatasetProcessor:
             ann_id = 0
             for img_id, r in enumerate(results):
                 if r.success and r.layout_elements:
-                    coco_data["images"].append({
-                        "id": img_id,
-                        "file_name": r.file_name,
-                        "file_path": r.file_path,
-                    })
+                    coco_data["images"].append(
+                        {
+                            "id": img_id,
+                            "file_name": r.file_name,
+                            "file_path": r.file_path,
+                        }
+                    )
                     for elem in r.layout_elements:
                         ann = {
                             "id": ann_id,
                             "image_id": img_id,
-                            "category_id": self._type_to_category_id(elem.get("type", "text")),
+                            "category_id": self._type_to_category_id(
+                                elem.get("type", "text")
+                            ),
                             "category_name": elem.get("type", "text"),
                         }
                         if "bbox" in elem:
@@ -286,17 +296,25 @@ class LocalDatasetProcessor:
     def _type_to_category_id(self, type_name: str) -> int:
         """Map element type to category ID."""
         mapping = {
-            "text": 0, "paragraph": 0,
+            "text": 0,
+            "paragraph": 0,
             "title": 1,
-            "section_header": 2, "heading": 2,
-            "list_item": 3, "list": 3,
+            "section_header": 2,
+            "heading": 2,
+            "list_item": 3,
+            "list": 3,
             "table": 4,
-            "figure": 5, "picture": 5, "image": 5,
+            "figure": 5,
+            "picture": 5,
+            "image": 5,
             "caption": 6,
             "footnote": 7,
-            "formula": 8, "equation": 8,
-            "page_header": 9, "header": 9,
-            "page_footer": 10, "footer": 10,
+            "formula": 8,
+            "equation": 8,
+            "page_header": 9,
+            "header": 9,
+            "page_footer": 10,
+            "footer": 10,
         }
         return mapping.get(type_name.lower(), 0)
 
@@ -326,7 +344,9 @@ class LocalDatasetProcessor:
             return
 
         # Process in batches
-        num_batches = (len(all_files) + self.config.batch_size - 1) // self.config.batch_size
+        num_batches = (
+            len(all_files) + self.config.batch_size - 1
+        ) // self.config.batch_size
         logger.info(f"Processing {len(all_files)} files in {num_batches} batches")
 
         total_success = 0
@@ -338,7 +358,9 @@ class LocalDatasetProcessor:
             end_idx = min(start_idx + self.config.batch_size, len(all_files))
             batch_files = all_files[start_idx:end_idx]
 
-            logger.info(f"=== Batch {batch_num + 1}/{num_batches} ({len(batch_files)} files) ===")
+            logger.info(
+                f"=== Batch {batch_num + 1}/{num_batches} ({len(batch_files)} files) ==="
+            )
 
             results = []
             for i, file_path in enumerate(batch_files):
@@ -347,7 +369,9 @@ class LocalDatasetProcessor:
 
                 status = "✓" if result.success else "✗"
                 if (i + 1) % 10 == 0 or not result.success:
-                    logger.info(f"  [{i + 1}/{len(batch_files)}] {status} {file_path.name} ({result.processing_time_ms:.0f}ms)")
+                    logger.info(
+                        f"  [{i + 1}/{len(batch_files)}] {status} {file_path.name} ({result.processing_time_ms:.0f}ms)"
+                    )
 
             # Save batch results
             self.save_results(results, batch_num)
@@ -360,12 +384,16 @@ class LocalDatasetProcessor:
             total_time += batch_time
 
             avg_time = batch_time / len(results) if results else 0
-            logger.info(f"Batch {batch_num + 1}: {batch_success} success, {len(results) - batch_success} failed, avg {avg_time:.0f}ms/file")
+            logger.info(
+                f"Batch {batch_num + 1}: {batch_success} success, {len(results) - batch_success} failed, avg {avg_time:.0f}ms/file"
+            )
 
         # Final summary
         logger.info("=== Processing complete ===")
         logger.info(f"Total: {total_success} success, {total_failed} failed")
-        logger.info(f"Total time: {total_time / 1000:.1f}s, avg {total_time / len(all_files):.0f}ms/file")
+        logger.info(
+            f"Total time: {total_time / 1000:.1f}s, avg {total_time / len(all_files):.0f}ms/file"
+        )
         logger.info(f"Output: {self.output_dir}")
 
 
@@ -375,14 +403,33 @@ def main():
     )
     parser.add_argument("dataset", nargs="?", help="Dataset name or path")
     parser.add_argument("--list", action="store_true", help="List available datasets")
-    parser.add_argument("--docling-url", default=DOCLING_API_URL, help="Docling API URL")
+    parser.add_argument(
+        "--docling-url", default=DOCLING_API_URL, help="Docling API URL"
+    )
     parser.add_argument("--batch-size", type=int, default=50, help="Files per batch")
-    parser.add_argument("--output-dir", type=Path, default=Path("processing_output"), help="Output directory")
-    parser.add_argument("--dry-run", action="store_true", help="List files without processing")
-    parser.add_argument("--layout-only", action="store_true", help="Extract layout only (skip text)")
-    parser.add_argument("--text-only", action="store_true", help="Extract text only (skip layout)")
-    parser.add_argument("--text-and-layout", action="store_true", help="Extract both text and layout (default)")
-    parser.add_argument("--timeout", type=float, default=120.0, help="Timeout per file in seconds")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("processing_output"),
+        help="Output directory",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="List files without processing"
+    )
+    parser.add_argument(
+        "--layout-only", action="store_true", help="Extract layout only (skip text)"
+    )
+    parser.add_argument(
+        "--text-only", action="store_true", help="Extract text only (skip layout)"
+    )
+    parser.add_argument(
+        "--text-and-layout",
+        action="store_true",
+        help="Extract both text and layout (default)",
+    )
+    parser.add_argument(
+        "--timeout", type=float, default=120.0, help="Timeout per file in seconds"
+    )
 
     args = parser.parse_args()
 
@@ -390,7 +437,11 @@ def main():
         print("Available datasets:")
         for name, path in sorted(DATASETS.items()):
             exists = "✓" if path.exists() else "✗"
-            count = len(list(path.rglob("*.jpg"))) + len(list(path.rglob("*.png"))) if path.exists() else 0
+            count = (
+                len(list(path.rglob("*.jpg"))) + len(list(path.rglob("*.png")))
+                if path.exists()
+                else 0
+            )
             print(f"  {exists} {name:30} -> {path} ({count} images)")
         return
 

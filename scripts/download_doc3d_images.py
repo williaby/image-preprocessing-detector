@@ -31,7 +31,9 @@ def main() -> None:
 
         if os.path.exists(dest) and os.path.getsize(dest) > 0:
             size_mb = os.path.getsize(dest) / (1024 * 1024)
-            print(f"[{i}/{total_zips}] SKIP img_{i}.zip (already exists, {size_mb:.1f} MB)")
+            print(
+                f"[{i}/{total_zips}] SKIP img_{i}.zip (already exists, {size_mb:.1f} MB)"
+            )
             continue
 
         print(f"[{i}/{total_zips}] Downloading img_{i}.zip ...")

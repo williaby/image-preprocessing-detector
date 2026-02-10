@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import gc
 import json
-import os
 import sys
 import tempfile
 import time
@@ -53,7 +52,7 @@ class MemorySnapshot:
     timestamp: float
 
     @classmethod
-    def capture(cls) -> "MemorySnapshot":
+    def capture(cls) -> MemorySnapshot:
         """Capture current memory state."""
         rss_mb = 0.0
         tracemalloc_mb = 0.0
@@ -183,8 +182,8 @@ def benchmark_bounded_cache_memory(
 
         # Get stats
         stats = cache.stats
-        memory_delta = after.tracemalloc_mb if HAS_TRACEMALLOC else (
-            after.rss_mb - before.rss_mb
+        memory_delta = (
+            after.tracemalloc_mb if HAS_TRACEMALLOC else (after.rss_mb - before.rss_mb)
         )
 
         results["cache_sizes"].append(cache_size)
@@ -248,8 +247,8 @@ def benchmark_unbounded_dict_memory(
 
         after = MemorySnapshot.capture()
 
-        memory_delta = after.tracemalloc_mb if HAS_TRACEMALLOC else (
-            after.rss_mb - before.rss_mb
+        memory_delta = (
+            after.tracemalloc_mb if HAS_TRACEMALLOC else (after.rss_mb - before.rss_mb)
         )
 
         results["num_entries"].append(num_entries)
@@ -332,8 +331,10 @@ def benchmark_streaming_jsonl_reader(
                 _ = reader.get(key)
                 access_times.append((time.perf_counter() - start_access) * 1000)
 
-            memory_delta = after.tracemalloc_mb if HAS_TRACEMALLOC else (
-                after.rss_mb - before.rss_mb
+            memory_delta = (
+                after.tracemalloc_mb
+                if HAS_TRACEMALLOC
+                else (after.rss_mb - before.rss_mb)
             )
             avg_access_time = sum(access_times) / len(access_times)
 
@@ -400,8 +401,8 @@ def benchmark_full_load_vs_streaming(
         load_time = time.perf_counter() - start
 
         after = MemorySnapshot.capture()
-        full_load_memory = after.tracemalloc_mb if HAS_TRACEMALLOC else (
-            after.rss_mb - before.rss_mb
+        full_load_memory = (
+            after.tracemalloc_mb if HAS_TRACEMALLOC else (after.rss_mb - before.rss_mb)
         )
 
         del full_cache
@@ -429,8 +430,8 @@ def benchmark_full_load_vs_streaming(
         stream_time = time.perf_counter() - start
 
         after = MemorySnapshot.capture()
-        streaming_memory = after.tracemalloc_mb if HAS_TRACEMALLOC else (
-            after.rss_mb - before.rss_mb
+        streaming_memory = (
+            after.tracemalloc_mb if HAS_TRACEMALLOC else (after.rss_mb - before.rss_mb)
         )
 
         del reader
@@ -443,7 +444,9 @@ def benchmark_full_load_vs_streaming(
             "index_time_s": stream_time,
         }
 
-        print(f"  Streaming:  Memory={streaming_memory:>6.1f}MB, Time={stream_time:.2f}s")
+        print(
+            f"  Streaming:  Memory={streaming_memory:>6.1f}MB, Time={stream_time:.2f}s"
+        )
 
         # Calculate savings
         memory_reduction = (
@@ -534,14 +537,18 @@ def run_benchmark() -> dict[str, Any]:
     print(f"  Memory used: {unbounded_100k_memory:.1f}MB")
 
     if unbounded_100k_memory > 0:
-        savings = (unbounded_100k_memory - bounded_10k_memory) / unbounded_100k_memory * 100
+        savings = (
+            (unbounded_100k_memory - bounded_10k_memory) / unbounded_100k_memory * 100
+        )
         print(f"\n  BoundedCache saves {savings:.0f}% memory!")
 
     print("\nStreamingJSONLReader (100K entries):")
     if 100_000 in streaming_results["num_entries"]:
         idx = streaming_results["num_entries"].index(100_000)
         print(f"  Memory used: {streaming_results['memory_mb'][idx]:.1f}MB")
-        print(f"  Random access: {streaming_results['random_access_time_ms'][idx]:.2f}ms")
+        print(
+            f"  Random access: {streaming_results['random_access_time_ms'][idx]:.2f}ms"
+        )
 
     # Validation
     print("\n" + "-" * 60)
@@ -556,7 +563,9 @@ def run_benchmark() -> dict[str, Any]:
     unbounded_10k_mem = unbounded_results["memory_mb"][idx_unbounded_10k]
     # Bounded 10K cache should be similar to unbounded 10K dict (both hold ~10K entries)
     memory_bounded = abs(bounded_10k_mem - unbounded_10k_mem) < 10  # Within 10MB
-    print(f"  BoundedCache memory bounded by size: {'PASS' if memory_bounded else 'FAIL'}")
+    print(
+        f"  BoundedCache memory bounded by size: {'PASS' if memory_bounded else 'FAIL'}"
+    )
 
     # Target: Streaming should use less memory than full load
     streaming_better = comparison_results["comparison"]["streaming_is_better"]

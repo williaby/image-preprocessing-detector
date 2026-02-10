@@ -41,10 +41,10 @@ def fix_layout_file(path: Path, dry_run: bool = False) -> dict:
         # Reconstruct raw coordinates from the buggy bbox
         # Original code did: bbox = [l, t, r-l, b-t] where t > b (PDF coords)
         # So: x=l, y=t, w=r-l, h=b-t (h negative because b < t in PDF coords)
-        l = x          # x was set to l
-        t = y          # y was set to t
-        r = x + w      # w = r - l, so r = x + w
-        b = y + h      # h = b - t, so b = y + h
+        l = x  # x was set to l
+        t = y  # y was set to t
+        r = x + w  # w = r - l, so r = x + w
+        b = y + h  # h = b - t, so b = y + h
 
         # Fix to proper COCO format
         x_min = min(l, r)

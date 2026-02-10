@@ -28,10 +28,9 @@ Usage:
 import argparse
 import json
 import logging
-import unicodedata
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -231,10 +230,14 @@ def detect_script_unicode(text: str) -> DetectionResult:
     # Map script to primary language if unambiguous
     primary_lang = SCRIPT_TO_PRIMARY_LANGUAGE.get(dominant_script)
     if primary_lang:
-        return DetectionResult(primary_lang, dominant_script, confidence, "unicode_script")
+        return DetectionResult(
+            primary_lang, dominant_script, confidence, "unicode_script"
+        )
 
     # Ambiguous script (Latin, Cyrillic, Han)
-    return DetectionResult("und", dominant_script, confidence, "unicode_script_ambiguous")
+    return DetectionResult(
+        "und", dominant_script, confidence, "unicode_script_ambiguous"
+    )
 
 
 def detect_language_fasttext(text: str, model: Any) -> DetectionResult:
@@ -423,7 +426,9 @@ def consensus_detect(
             if count >= 2:
                 # 2-of-3 majority
                 majority_votes = [v for v in votes if v.language == majority_lang]
-                avg_conf = sum(v.confidence for v in majority_votes) / len(majority_votes)
+                avg_conf = sum(v.confidence for v in majority_votes) / len(
+                    majority_votes
+                )
                 script = next((v.script for v in majority_votes if v.script), None)
 
                 return ConsensusResult(
@@ -504,14 +509,18 @@ def update_enrichment(
     latest_data["language_detection_confidence"] = round(result.confidence, 3)
     latest_data["language_detection_agreement"] = result.agreement
     latest_data["language_detection_votes"] = [
-        {"method": v.method, "language": v.language, "confidence": round(v.confidence, 3)}
+        {
+            "method": v.method,
+            "language": v.language,
+            "confidence": round(v.confidence, 3),
+        }
         for v in result.votes
     ]
 
     # Create new version
     new_version = {
         "version": current_version + 1,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "created_by": "enrich_mlt19_language.py",
         "method": "tier_2_ml_inference",
         "description": "Layer 2 multi-factor consensus language detection",
@@ -520,7 +529,10 @@ def update_enrichment(
     }
 
     versions.append(new_version)
-    sample["enrichments"] = {"current_version": current_version + 1, "versions": versions}
+    sample["enrichments"] = {
+        "current_version": current_version + 1,
+        "versions": versions,
+    }
 
 
 def download_fasttext_model(model_dir: Path) -> Path:
@@ -551,11 +563,15 @@ def main():
     )
     parser.add_argument("--start", type=int, default=0, help="Start index")
     parser.add_argument("--end", type=int, default=None, help="End index")
-    parser.add_argument("--batch-size", type=int, default=100, help="Save every N images")
+    parser.add_argument(
+        "--batch-size", type=int, default=100, help="Save every N images"
+    )
     parser.add_argument(
         "--metadata",
         type=Path,
-        default=Path("/mnt/e/image_detection/metadata_registry/json/mlt19_metadata.json"),
+        default=Path(
+            "/mnt/e/image_detection/metadata_registry/json/mlt19_metadata.json"
+        ),
     )
     parser.add_argument(
         "--dataset-path",
@@ -567,9 +583,13 @@ def main():
         type=Path,
         default=Path("/mnt/e/image_detection/models/language_detection"),
     )
-    parser.add_argument("--download-model", action="store_true", help="Download fastText model")
+    parser.add_argument(
+        "--download-model", action="store_true", help="Download fastText model"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Don't save changes")
-    parser.add_argument("--no-ocr", action="store_true", help="Skip OCR, use existing text only")
+    parser.add_argument(
+        "--no-ocr", action="store_true", help="Skip OCR, use existing text only"
+    )
     args = parser.parse_args()
 
     # Download model if requested
@@ -598,7 +618,7 @@ def main():
 
     # Try to load lingua
     try:
-        from lingua import Language, LanguageDetectorBuilder
+        from lingua import LanguageDetectorBuilder
 
         logger.info("Initializing lingua detector...")
         lingua_detector = LanguageDetectorBuilder.from_all_languages().build()
@@ -635,7 +655,10 @@ def main():
         orig_labels = sample.get("original_labels", {})
         raw_labels = orig_labels.get("raw_labels", {})
 
-        if raw_labels.get("split") == "test" and orig_labels.get("language_code") == "und":
+        if (
+            raw_labels.get("split") == "test"
+            and orig_labels.get("language_code") == "und"
+        ):
             test_samples.append((i, sample))
 
     logger.info(f"Found {len(test_samples)} test images needing enrichment")
@@ -643,7 +666,9 @@ def main():
     # Apply slice
     end_idx = args.end if args.end else len(test_samples)
     test_samples = test_samples[args.start : end_idx]
-    logger.info(f"Processing {len(test_samples)} images (index {args.start} to {end_idx})")
+    logger.info(
+        f"Processing {len(test_samples)} images (index {args.start} to {end_idx})"
+    )
 
     if not test_samples:
         logger.info("No images to process")
@@ -712,8 +737,12 @@ def main():
     # Summary
     logger.info("=" * 60)
     logger.info(f"Completed: {processed} images processed")
-    logger.info(f"Consensus achieved: {consensus_count} ({consensus_count/processed*100:.1f}%)")
-    logger.info(f"No consensus: {no_consensus_count} ({no_consensus_count/processed*100:.1f}%)")
+    logger.info(
+        f"Consensus achieved: {consensus_count} ({consensus_count / processed * 100:.1f}%)"
+    )
+    logger.info(
+        f"No consensus: {no_consensus_count} ({no_consensus_count / processed * 100:.1f}%)"
+    )
 
     return 0
 

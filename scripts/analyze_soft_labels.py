@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -66,7 +65,9 @@ class FieldReliability:
     provenance_tier: str
     is_soft_label: bool
     detection_method: str
-    label_category: str  # hard_label, soft_label, active_learning, unreliable, unassessed
+    label_category: (
+        str  # hard_label, soft_label, active_learning, unreliable, unassessed
+    )
 
 
 TIER_RANK: dict[str, int] = {
@@ -178,9 +179,7 @@ class DatasetReport:
     field_soft_label_counts: dict[str, Counter[bool]] = field(
         default_factory=lambda: defaultdict(Counter)
     )
-    openlid_stats: OpenLIDSecondaryStats = field(
-        default_factory=OpenLIDSecondaryStats
-    )
+    openlid_stats: OpenLIDSecondaryStats = field(default_factory=OpenLIDSecondaryStats)
 
 
 def classify_confidence(confidence: float | None) -> str:
@@ -269,9 +268,7 @@ def determine_is_soft_label(
     return True
 
 
-def analyze_capture_method(
-    data: dict[str, Any], root_method: str
-) -> FieldReliability:
+def analyze_capture_method(data: dict[str, Any], root_method: str) -> FieldReliability:
     """Analyze capture_method field reliability."""
     confidence = data.get("capture_confidence")
     source = data.get("capture_detection_method", "")
@@ -359,8 +356,12 @@ def analyze_language(data: dict[str, Any], root_method: str) -> FieldReliability
         tier = backfilled_tier or determine_provenance_tier(
             root_method, source=backfilled_method
         )
-        is_soft = backfilled_soft if backfilled_soft is not None else (
-            determine_is_soft_label(tier, backfilled_confidence, backfilled_method)
+        is_soft = (
+            backfilled_soft
+            if backfilled_soft is not None
+            else (
+                determine_is_soft_label(tier, backfilled_confidence, backfilled_method)
+            )
         )
         return FieldReliability(
             field_name="language",
@@ -387,9 +388,7 @@ def analyze_language(data: dict[str, Any], root_method: str) -> FieldReliability
     )
 
 
-def analyze_text_quality(
-    data: dict[str, Any], root_method: str
-) -> FieldReliability:
+def analyze_text_quality(data: dict[str, Any], root_method: str) -> FieldReliability:
     """Analyze text quality confidence from backfilled fields.
 
     Reads text_quality_confidence, text_quality_method, etc. set by
@@ -509,7 +508,9 @@ def analyze_layout_detections(
     # Create a summary field reliability for the array
     det_source = detections[0].get("source", "unknown") if detections else "unknown"
     flags_tier = data.get("content_flags_tier")
-    tier = determine_provenance_tier(root_method, field_tier=flags_tier, source=det_source)
+    tier = determine_provenance_tier(
+        root_method, field_tier=flags_tier, source=det_source
+    )
 
     assessment = FieldReliability(
         field_name="layout_detections",
@@ -523,9 +524,7 @@ def analyze_layout_detections(
     return [assessment], len(detections), avg_conf
 
 
-def analyze_sample(
-    sample: dict[str, Any], root_method: str
-) -> SampleAnalysis:
+def analyze_sample(sample: dict[str, Any], root_method: str) -> SampleAnalysis:
     """Run full soft label reliability analysis on a single sample.
 
     Args:
@@ -641,7 +640,7 @@ def _print_language_summary(report: DatasetReport) -> None:
                 break
 
     print(f"  {'LANGUAGE/SCRIPT CONFIDENCE':─<50}")
-    print(f"  Detection methods:")
+    print("  Detection methods:")
     for method, count in methods.most_common():
         pct = count / len(report.samples) * 100 if report.samples else 0
         print(f"    {method:30s} {count:6d} ({pct:5.1f}%)")
@@ -649,15 +648,15 @@ def _print_language_summary(report: DatasetReport) -> None:
     # OpenLID secondary validation stats
     stats = report.openlid_stats
     if stats.total_with_secondary > 0:
-        avg_conf = (
-            sum(stats.secondary_confidences) / len(stats.secondary_confidences)
+        avg_conf = sum(stats.secondary_confidences) / len(stats.secondary_confidences)
+        agree_pct = stats.agrees_count / stats.total_with_secondary * 100
+        print(
+            f"\n  OpenLID secondary validation ({stats.total_with_secondary} samples):"
         )
-        agree_pct = (
-            stats.agrees_count / stats.total_with_secondary * 100
-        )
-        print(f"\n  OpenLID secondary validation ({stats.total_with_secondary} samples):")
         print(f"    Agrees with primary:   {stats.agrees_count:6d} ({agree_pct:5.1f}%)")
-        print(f"    Disagrees:             {stats.disagrees_count:6d} ({100 - agree_pct:5.1f}%)")
+        print(
+            f"    Disagrees:             {stats.disagrees_count:6d} ({100 - agree_pct:5.1f}%)"
+        )
         print(f"    Avg OpenLID confidence: {avg_conf:.3f}")
         conf_band = format_confidence_band(stats.secondary_confidences)
         print(f"    Confidence band:       {conf_band}")
@@ -682,11 +681,13 @@ def _print_text_quality_summary(report: DatasetReport) -> None:
 
     print(f"  {'TEXT QUALITY CONFIDENCE':─<50}")
     if not methods or (len(methods) == 1 and "none" in methods):
-        print("  No text quality data available (run backfill_text_quality_confidence.py)")
+        print(
+            "  No text quality data available (run backfill_text_quality_confidence.py)"
+        )
         print()
         return
 
-    print(f"  Detection methods:")
+    print("  Detection methods:")
     for method, count in methods.most_common():
         pct = count / len(report.samples) * 100 if report.samples else 0
         print(f"    {method:30s} {count:6d} ({pct:5.1f}%)")
@@ -705,9 +706,7 @@ def format_confidence_band(values: list[float]) -> str:
         return "no data"
 
     hard = sum(1 for v in values if v >= HARD_LABEL_THRESHOLD)
-    soft = sum(
-        1 for v in values if SOFT_LABEL_THRESHOLD <= v < HARD_LABEL_THRESHOLD
-    )
+    soft = sum(1 for v in values if SOFT_LABEL_THRESHOLD <= v < HARD_LABEL_THRESHOLD)
     active = sum(
         1 for v in values if ACTIVE_LEARNING_THRESHOLD <= v < SOFT_LABEL_THRESHOLD
     )
@@ -798,9 +797,7 @@ def print_report(report: DatasetReport) -> None:
 
     if any(c > 0 for c in layout_counts):
         avg_count = sum(layout_counts) / len(layout_counts)
-        avg_conf = (
-            sum(layout_confs) / len(layout_confs) if layout_confs else 0
-        )
+        avg_conf = sum(layout_confs) / len(layout_confs) if layout_confs else 0
 
         print(f"  {'LAYOUT DETECTION STATISTICS':─<50}")
         print(f"  Avg detections per sample: {avg_count:.1f}")
@@ -811,7 +808,9 @@ def print_report(report: DatasetReport) -> None:
         for sample in report.samples:
             enrichment = sample.field_assessments
             # Get from raw data (stored in layout analysis)
-        print(f"  Samples with detections:   {sum(1 for c in layout_counts if c > 0)}/{len(layout_counts)}")
+        print(
+            f"  Samples with detections:   {sum(1 for c in layout_counts if c > 0)}/{len(layout_counts)}"
+        )
         print()
 
     # --- Language/Script Confidence with OpenLID Secondary ---
@@ -850,9 +849,7 @@ def print_report(report: DatasetReport) -> None:
     print(f"  Readiness: {readiness}")
     print(f"  Hard labels:  {hard_pct:.1f}%  (full training weight)")
     print(f"  Soft labels:  {soft_pct:.1f}%  (reduced weight / semi-supervised)")
-    print(
-        f"  Unassessed:   {unassessed_pct:.1f}%  (apply default policy)"
-    )
+    print(f"  Unassessed:   {unassessed_pct:.1f}%  (apply default policy)")
     print()
 
     # --- Sample-Level Composite (min across all fields) ---
@@ -895,7 +892,11 @@ def print_sample_detail(report: DatasetReport, num_samples: int = 3) -> None:
         rs = sample.reliability_summary
         composite_tag = rs.min_confidence_category if rs else "n/a"
         bottleneck = rs.min_confidence_field if rs else "n/a"
-        min_conf = f"{rs.min_confidence:.2f}" if rs and rs.min_confidence is not None else "null"
+        min_conf = (
+            f"{rs.min_confidence:.2f}"
+            if rs and rs.min_confidence is not None
+            else "null"
+        )
 
         print(f"\n  Sample: {sample.sample_id[:12]}...")
         print(
@@ -914,9 +915,7 @@ def print_sample_detail(report: DatasetReport, num_samples: int = 3) -> None:
             )
 
 
-def resolve_metadata_path(
-    dataset_name: str, metadata_dir: Path
-) -> Path | None:
+def resolve_metadata_path(dataset_name: str, metadata_dir: Path) -> Path | None:
     """Resolve a dataset name to its metadata JSON file path."""
     # Try canonical name patterns
     candidates = [
@@ -964,9 +963,11 @@ def main() -> None:
     args = parser.parse_args()
 
     print("\nSoft Label Reliability Analysis v2.0")
-    print(f"Schema: layer2_enrichment_v2.schema.json")
-    print(f"Thresholds: hard>={HARD_LABEL_THRESHOLD} soft>={SOFT_LABEL_THRESHOLD} "
-          f"active>={ACTIVE_LEARNING_THRESHOLD}")
+    print("Schema: layer2_enrichment_v2.schema.json")
+    print(
+        f"Thresholds: hard>={HARD_LABEL_THRESHOLD} soft>={SOFT_LABEL_THRESHOLD} "
+        f"active>={ACTIVE_LEARNING_THRESHOLD}"
+    )
     print(f"Metadata dir: {args.metadata_dir}")
 
     for dataset_name in args.datasets:

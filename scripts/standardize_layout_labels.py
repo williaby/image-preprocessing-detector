@@ -394,19 +394,25 @@ def standardize_dataset(
     dataset_dir = metadata_dir / dataset_name
     if dataset_dir.is_dir():
         return _standardize_per_image_dir(
-            dataset_dir, report, taxonomy, source_schema, dry_run,
+            dataset_dir,
+            report,
+            taxonomy,
+            source_schema,
+            dry_run,
         )
 
     # Try format 2: single-file with samples array
     single_file = metadata_dir / f"{dataset_name}_metadata.json"
     if single_file.exists():
         return _standardize_single_file(
-            single_file, report, taxonomy, source_schema, dry_run,
+            single_file,
+            report,
+            taxonomy,
+            source_schema,
+            dry_run,
         )
 
-    report.errors.append(
-        f"No metadata found: neither {dataset_dir} nor {single_file}"
-    )
+    report.errors.append(f"No metadata found: neither {dataset_dir} nor {single_file}")
     log.error(
         "dataset_metadata_not_found",
         dataset=dataset_name,
@@ -501,7 +507,11 @@ def _standardize_single_file(
 
     for record in samples:
         modified = _apply_standardize_record(
-            record, report, taxonomy, effective_schema, dry_run,
+            record,
+            report,
+            taxonomy,
+            effective_schema,
+            dry_run,
         )
         if modified:
             any_modified = True
@@ -777,7 +787,8 @@ def main() -> int:
             # Fallback: detect schema from enrichment metadata (YOLO, etc.)
             if schema is None:
                 schema = _detect_schema_from_metadata_file(
-                    metadata_dir, ds_name,
+                    metadata_dir,
+                    ds_name,
                 )
             targets.append((ds_name, schema))
     else:
@@ -786,7 +797,8 @@ def main() -> int:
         # Fallback: detect schema from enrichment metadata
         if schema is None:
             schema = _detect_schema_from_metadata_file(
-                metadata_dir, dataset_name,
+                metadata_dir,
+                dataset_name,
             )
         targets.append((dataset_name, schema))
 

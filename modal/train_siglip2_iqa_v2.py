@@ -197,7 +197,9 @@ class SigLIP2TrainingConfigV2:
         return {k: getattr(self, k) for k in self.__dataclass_fields__}
 
 
-def compute_vquala(srcc_overall: float, srcc_sharpness: float, srcc_color: float) -> float:
+def compute_vquala(
+    srcc_overall: float, srcc_sharpness: float, srcc_color: float
+) -> float:
     """Compute VQualA final score: 0.5*overall + 0.25*sharpness + 0.25*color."""
     return 0.5 * srcc_overall + 0.25 * srcc_sharpness + 0.25 * srcc_color
 
@@ -293,7 +295,9 @@ def train_siglip2_iqa_v2(
                     if i != j:
                         dot = torch.dot(projected[i], grads[j])
                         if dot < 0:
-                            projected[i] -= (dot / (torch.dot(grads[j], grads[j]) + 1e-8)) * grads[j]
+                            projected[i] -= (
+                                dot / (torch.dot(grads[j], grads[j]) + 1e-8)
+                            ) * grads[j]
 
             return torch.stack(projected).mean(dim=0)
 
@@ -320,7 +324,9 @@ def train_siglip2_iqa_v2(
             """Update shadow weights with EMA."""
             for name, param in self.model.named_parameters():
                 if param.requires_grad and name in self.shadow:
-                    new_average = (1.0 - self.decay) * param.data + self.decay * self.shadow[name]
+                    new_average = (
+                        1.0 - self.decay
+                    ) * param.data + self.decay * self.shadow[name]
                     self.shadow[name] = new_average.clone()
 
         def apply_shadow(self):
@@ -357,14 +363,18 @@ def train_siglip2_iqa_v2(
     print(f"Model: {config.model_id} ({config.model_variant})")
     print(f"Max Patches: {config.max_num_patches} (up from 576)")
     print(f"Total Epochs: {config.total_epochs} (15 warmup + 60 fine-tuning)")
-    print(f"Batch Size: {config.batch_size} × {config.gradient_accumulation_steps} = {config.batch_size * config.gradient_accumulation_steps}")
-    print(f"Scheduler: CosineAnnealingLR (replaces OneCycleLR)")
+    print(
+        f"Batch Size: {config.batch_size} x {config.gradient_accumulation_steps} = {config.batch_size * config.gradient_accumulation_steps}"
+    )
+    print("Scheduler: CosineAnnealingLR (replaces OneCycleLR)")
     print(f"LLRD: {config.use_llrd} (decay={config.llrd_decay})")
     print(f"PCGrad: {config.use_pcgrad}")
     print(f"Ranking Loss: {config.use_ranking_loss} (λ={config.ranking_loss_weight})")
     print(f"EMA: {config.use_ema} (starts epoch {config.ema_start_epoch})")
     print(f"Gradient Checkpointing: {config.use_gradient_checkpointing}")
-    print(f"Mixed Precision: {config.use_mixed_precision} ({config.mixed_precision_dtype})")
+    print(
+        f"Mixed Precision: {config.use_mixed_precision} ({config.mixed_precision_dtype})"
+    )
     print(f"Early Stopping Patience: {config.early_stopping_patience}")
     print(f"Target SRCC: {config.target_srcc}")
     print(f"Target VQualA: {config.target_vquala}")
@@ -376,7 +386,10 @@ def train_siglip2_iqa_v2(
 
     # Determine mixed precision dtype
     if config.use_mixed_precision:
-        if config.mixed_precision_dtype == "bfloat16" and torch.cuda.is_bf16_supported():
+        if (
+            config.mixed_precision_dtype == "bfloat16"
+            and torch.cuda.is_bf16_supported()
+        ):
             amp_dtype = torch.bfloat16
             print("Mixed precision: BF16 enabled (recommended for A100)")
         else:
@@ -415,7 +428,9 @@ def train_siglip2_iqa_v2(
     class GaussianNLLLoss(nn.Module):
         """Gaussian Negative Log-Likelihood for uncertainty estimation."""
 
-        def forward(self, mu: torch.Tensor, sigma_sq: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        def forward(
+            self, mu: torch.Tensor, sigma_sq: torch.Tensor, target: torch.Tensor
+        ) -> torch.Tensor:
             sigma_sq = torch.clamp(sigma_sq, min=1e-6)
             loss = 0.5 * torch.log(sigma_sq) + (target - mu) ** 2 / (2 * sigma_sq)
             return loss.mean()
@@ -475,11 +490,13 @@ def train_siglip2_iqa_v2(
 
             head_output_dim = 2 if uncertainty else 1
 
-            self.heads = nn.ModuleDict({
-                "overall": self._make_head(embed_dim, head_output_dim),
-                "sharpness": self._make_head(embed_dim, head_output_dim),
-                "color": self._make_head(embed_dim, head_output_dim),
-            })
+            self.heads = nn.ModuleDict(
+                {
+                    "overall": self._make_head(embed_dim, head_output_dim),
+                    "sharpness": self._make_head(embed_dim, head_output_dim),
+                    "color": self._make_head(embed_dim, head_output_dim),
+                }
+            )
 
             # Calibration temperatures
             self.register_buffer("temp_overall", torch.tensor(1.0))
@@ -528,7 +545,7 @@ def train_siglip2_iqa_v2(
             self,
             pixel_values: torch.Tensor,
             spatial_shapes: torch.Tensor | None = None,
-            pixel_attention_mask: torch.Tensor | None = None,
+            _pixel_attention_mask: torch.Tensor | None = None,
         ) -> dict[str, dict | torch.Tensor]:
             outputs = self.backbone.get_image_features(
                 pixel_values=pixel_values,
@@ -584,12 +601,14 @@ def train_siglip2_iqa_v2(
         param_groups = []
 
         # Heads get base LR
-        param_groups.append({
-            "params": list(model.heads.parameters()),
-            "lr": base_lr,
-            "weight_decay": weight_decay,
-            "name": "heads",
-        })
+        param_groups.append(
+            {
+                "params": list(model.heads.parameters()),
+                "lr": base_lr,
+                "weight_decay": weight_decay,
+                "name": "heads",
+            }
+        )
 
         # Backbone layers with LLRD
         layer_groups = model.get_layer_groups()
@@ -599,12 +618,14 @@ def train_siglip2_iqa_v2(
             # Layer 0 (shallowest) = base_lr * llrd_decay
             # Layer n (deepest) = base_lr * llrd_decay^(n+1)
             layer_lr = base_lr * (llrd_decay ** (i + 1))
-            param_groups.append({
-                "params": params,
-                "lr": layer_lr,
-                "weight_decay": weight_decay,
-                "name": f"backbone_layer_{num_layers - 1 - i}",
-            })
+            param_groups.append(
+                {
+                    "params": params,
+                    "lr": layer_lr,
+                    "weight_decay": weight_decay,
+                    "name": f"backbone_layer_{num_layers - 1 - i}",
+                }
+            )
 
         return param_groups
 
@@ -623,7 +644,8 @@ def train_siglip2_iqa_v2(
         marker_file = data_dir / ".download_complete"
         if marker_file.exists():
             all_csvs_exist = all(
-                (data_dir / split / f"{split}.csv").exists() for split in DIQA5000_SPLITS
+                (data_dir / split / f"{split}.csv").exists()
+                for split in DIQA5000_SPLITS
             )
             if all_csvs_exist:
                 print("DIQA-5000 already downloaded and validated, skipping...")
@@ -726,13 +748,15 @@ def train_siglip2_iqa_v2(
                     if not image_path.exists():
                         continue
 
-                    self.samples.append({
-                        "image_path": str(image_path),
-                        "image_id": image_filename.replace(".jpg", ""),
-                        "overall": float(row["overall"]),
-                        "sharpness": float(row["sharpness"]),
-                        "color_fidelity": float(row["color_fidelity"]),
-                    })
+                    self.samples.append(
+                        {
+                            "image_path": str(image_path),
+                            "image_id": image_filename.replace(".jpg", ""),
+                            "overall": float(row["overall"]),
+                            "sharpness": float(row["sharpness"]),
+                            "color_fidelity": float(row["color_fidelity"]),
+                        }
+                    )
 
             print(f"  {split}: {len(self.samples)} samples loaded")
 
@@ -803,7 +827,9 @@ def train_siglip2_iqa_v2(
     # Enable gradient checkpointing (TIER 3) - must be done before moving to device
     if config.use_gradient_checkpointing:
         model.backbone.gradient_checkpointing_enable()
-        print("Gradient checkpointing: Enabled (saves memory by recomputing activations)")
+        print(
+            "Gradient checkpointing: Enabled (saves memory by recomputing activations)"
+        )
 
     model = model.to(device)
 
@@ -852,7 +878,9 @@ def train_siglip2_iqa_v2(
     def custom_collate_fn(batch):
         pixel_values = torch.stack([item["pixel_values"] for item in batch])
         spatial_shapes = torch.stack([item["spatial_shapes"] for item in batch])
-        pixel_attention_mask = torch.stack([item["pixel_attention_mask"] for item in batch])
+        pixel_attention_mask = torch.stack(
+            [item["pixel_attention_mask"] for item in batch]
+        )
         labels = [item["labels"] for item in batch]
         image_ids = [item["image_id"] for item in batch]
         return {
@@ -899,7 +927,7 @@ def train_siglip2_iqa_v2(
 
         for dim in ["overall", "sharpness", "color"]:
             target = torch.tensor(
-                [l[dim] for l in labels], device=device, dtype=torch.float32
+                [lbl[dim] for lbl in labels], device=device, dtype=torch.float32
             )
 
             if config.uncertainty:
@@ -942,7 +970,11 @@ def train_siglip2_iqa_v2(
                 labels_list = batch["labels"]
 
                 # TIER 3: Mixed precision inference
-                with torch.amp.autocast(device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision):
+                with torch.amp.autocast(
+                    device_type="cuda",
+                    dtype=amp_dtype,
+                    enabled=config.use_mixed_precision,
+                ):
                     outputs = model(pixel_values, spatial_shapes)
                     loss, _ = compute_loss(outputs, labels_list, use_ranking=False)
 
@@ -955,7 +987,7 @@ def train_siglip2_iqa_v2(
                         preds = outputs[dim].cpu().numpy()
 
                     all_preds[dim].extend(preds)
-                    all_labels[dim].extend([l[dim] for l in labels_list])
+                    all_labels[dim].extend([lbl[dim] for lbl in labels_list])
 
         import numpy as np
 
@@ -1022,14 +1054,18 @@ def train_siglip2_iqa_v2(
         optimizer.zero_grad()
 
         for batch_idx, batch in enumerate(
-            tqdm(train_loader, desc=f"Phase 1 - Epoch {epoch + 1}/{config.phase1_epochs}")
+            tqdm(
+                train_loader, desc=f"Phase 1 - Epoch {epoch + 1}/{config.phase1_epochs}"
+            )
         ):
             pixel_values = batch["pixel_values"].to(device)
             spatial_shapes = batch["spatial_shapes"].to(device)
             labels_list = batch["labels"]
 
             # TIER 3: Mixed precision forward pass
-            with torch.amp.autocast(device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision):
+            with torch.amp.autocast(
+                device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision
+            ):
                 outputs = model(pixel_values, spatial_shapes)
 
                 if config.use_pcgrad:
@@ -1037,21 +1073,27 @@ def train_siglip2_iqa_v2(
                     losses = []
                     for dim in ["overall", "sharpness", "color"]:
                         target = torch.tensor(
-                            [l[dim] for l in labels_list], device=device, dtype=torch.float32
+                            [lbl[dim] for lbl in labels_list],
+                            device=device,
+                            dtype=torch.float32,
                         )
                         if config.uncertainty:
-                            loss = gnll_criterion(outputs[dim]["mu"], outputs[dim]["sigma_sq"], target)
+                            loss = gnll_criterion(
+                                outputs[dim]["mu"], outputs[dim]["sigma_sq"], target
+                            )
                         else:
                             loss = nin_criterion(outputs[dim], target)
                         losses.append(loss / config.gradient_accumulation_steps)
                 else:
-                    loss, _ = compute_loss(outputs, labels_list, use_ranking=config.use_ranking_loss)
+                    loss, _ = compute_loss(
+                        outputs, labels_list, use_ranking=config.use_ranking_loss
+                    )
                     loss = loss / config.gradient_accumulation_steps
 
             # Backward pass (outside autocast, handles scaler for FP16)
             if config.use_pcgrad:
                 pcgrad_optimizer.pc_backward(losses)
-                train_loss += sum(l.item() for l in losses)
+                train_loss += sum(loss_val.item() for loss_val in losses)
             else:
                 if scaler is not None:
                     scaler.scale(loss).backward()
@@ -1068,7 +1110,9 @@ def train_siglip2_iqa_v2(
                     scaler.unscale_(optimizer)
 
                 if config.gradient_clip > 0:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
+                    torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), config.gradient_clip
+                    )
 
                 if config.use_pcgrad:
                     pcgrad_optimizer.step()
@@ -1096,14 +1140,16 @@ def train_siglip2_iqa_v2(
         epoch_time = time.time() - epoch_start
         current_lr = optimizer.param_groups[0]["lr"]
 
-        history.append({
-            "phase": 1,
-            "epoch": epoch + 1,
-            "train_loss": train_loss,
-            **val_metrics,
-            "lr": current_lr,
-            "time": epoch_time,
-        })
+        history.append(
+            {
+                "phase": 1,
+                "epoch": epoch + 1,
+                "train_loss": train_loss,
+                **val_metrics,
+                "lr": current_lr,
+                "time": epoch_time,
+            }
+        )
 
         print(f"\nPhase 1 - Epoch {epoch + 1}/{config.phase1_epochs}:")
         print(f"  Train Loss: {train_loss:.4f}")
@@ -1151,7 +1197,7 @@ def train_siglip2_iqa_v2(
         print(f"  LLRD enabled: {len(param_groups)} parameter groups")
         for pg in param_groups[:3]:  # Print first few
             print(f"    {pg['name']}: lr={pg['lr']:.2e}")
-        print(f"    ...")
+        print("    ...")
     else:
         optimizer = torch.optim.AdamW(
             [
@@ -1186,14 +1232,18 @@ def train_siglip2_iqa_v2(
         optimizer.zero_grad()
 
         for batch_idx, batch in enumerate(
-            tqdm(train_loader, desc=f"Phase 2 - Epoch {epoch + 1}/{config.phase2_epochs}")
+            tqdm(
+                train_loader, desc=f"Phase 2 - Epoch {epoch + 1}/{config.phase2_epochs}"
+            )
         ):
             pixel_values = batch["pixel_values"].to(device)
             spatial_shapes = batch["spatial_shapes"].to(device)
             labels_list = batch["labels"]
 
             # TIER 3: Mixed precision forward pass
-            with torch.amp.autocast(device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision):
+            with torch.amp.autocast(
+                device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision
+            ):
                 outputs = model(pixel_values, spatial_shapes)
 
                 # TIER 2: Use PCGrad with gradient accumulation
@@ -1201,13 +1251,21 @@ def train_siglip2_iqa_v2(
                     losses = []
                     for dim in ["overall", "sharpness", "color"]:
                         target = torch.tensor(
-                            [l[dim] for l in labels_list], device=device, dtype=torch.float32
+                            [lbl[dim] for lbl in labels_list],
+                            device=device,
+                            dtype=torch.float32,
                         )
                         if config.uncertainty:
-                            gnll_loss = gnll_criterion(outputs[dim]["mu"], outputs[dim]["sigma_sq"], target)
+                            gnll_loss = gnll_criterion(
+                                outputs[dim]["mu"], outputs[dim]["sigma_sq"], target
+                            )
                             if config.use_ranking_loss:
-                                rank_loss = ranking_criterion(outputs[dim]["mu"], target)
-                                loss = gnll_loss + config.ranking_loss_weight * rank_loss
+                                rank_loss = ranking_criterion(
+                                    outputs[dim]["mu"], target
+                                )
+                                loss = (
+                                    gnll_loss + config.ranking_loss_weight * rank_loss
+                                )
                             else:
                                 loss = gnll_loss
                         else:
@@ -1220,13 +1278,15 @@ def train_siglip2_iqa_v2(
 
                         losses.append(loss / config.gradient_accumulation_steps)
                 else:
-                    loss, _ = compute_loss(outputs, labels_list, use_ranking=config.use_ranking_loss)
+                    loss, _ = compute_loss(
+                        outputs, labels_list, use_ranking=config.use_ranking_loss
+                    )
                     loss = loss / config.gradient_accumulation_steps
 
             # Backward pass (outside autocast, handles scaler for FP16)
             if config.use_pcgrad:
                 pcgrad_optimizer.pc_backward(losses)
-                train_loss += sum(l.item() for l in losses)
+                train_loss += sum(loss_val.item() for loss_val in losses)
             else:
                 if scaler is not None:
                     scaler.scale(loss).backward()
@@ -1242,7 +1302,9 @@ def train_siglip2_iqa_v2(
                     scaler.unscale_(optimizer)
 
                 if config.gradient_clip > 0:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), config.gradient_clip)
+                    torch.nn.utils.clip_grad_norm_(
+                        model.parameters(), config.gradient_clip
+                    )
 
                 if config.use_pcgrad:
                     pcgrad_optimizer.step()
@@ -1281,17 +1343,22 @@ def train_siglip2_iqa_v2(
         epoch_time = time.time() - epoch_start
         current_lr = optimizer.param_groups[0]["lr"]
 
-        history.append({
-            "phase": 2,
-            "epoch": global_epoch,
-            "train_loss": train_loss,
-            **val_metrics,
-            "lr": current_lr,
-            "time": epoch_time,
-            "ema_active": ema is not None and global_epoch >= config.ema_start_epoch,
-        })
+        history.append(
+            {
+                "phase": 2,
+                "epoch": global_epoch,
+                "train_loss": train_loss,
+                **val_metrics,
+                "lr": current_lr,
+                "time": epoch_time,
+                "ema_active": ema is not None
+                and global_epoch >= config.ema_start_epoch,
+            }
+        )
 
-        print(f"\nPhase 2 - Epoch {epoch + 1}/{config.phase2_epochs} (Global: {global_epoch}):")
+        print(
+            f"\nPhase 2 - Epoch {epoch + 1}/{config.phase2_epochs} (Global: {global_epoch}):"
+        )
         print(f"  Train Loss: {train_loss:.4f}")
         print(f"  Val Loss: {val_metrics['loss']:.4f}")
         print(f"  SRCC Overall: {val_metrics['srcc_overall']:.4f}")
@@ -1317,7 +1384,8 @@ def train_siglip2_iqa_v2(
                 "model_state_dict": model_state,
                 "config": config.to_dict(),
                 "metrics": val_metrics,
-                "ema_active": ema is not None and global_epoch >= config.ema_start_epoch,
+                "ema_active": ema is not None
+                and global_epoch >= config.ema_start_epoch,
             }
             torch.save(best_checkpoint, output_dir / "siglip2_iqa_best.pt")
             print("  ✓ New best VQualA! Saved checkpoint.")
@@ -1338,12 +1406,17 @@ def train_siglip2_iqa_v2(
 
         # Early stopping
         if patience_counter >= config.early_stopping_patience:
-            print(f"\nEarly stopping triggered after {patience_counter} epochs without improvement.")
+            print(
+                f"\nEarly stopping triggered after {patience_counter} epochs without improvement."
+            )
             print(f"Best VQualA achieved: {best_vquala:.4f}")
             break
 
         # Log if target achieved
-        if val_metrics["vquala"] >= config.target_vquala and val_metrics["srcc_overall"] >= config.target_srcc:
+        if (
+            val_metrics["vquala"] >= config.target_vquala
+            and val_metrics["srcc_overall"] >= config.target_srcc
+        ):
             print("  ✓ Target metrics achieved! Continuing to maximize performance...")
 
     # ========================================================================
@@ -1372,13 +1445,17 @@ def train_siglip2_iqa_v2(
                 labels_list = batch["labels"]
 
                 # TIER 3: Mixed precision inference
-                with torch.amp.autocast(device_type="cuda", dtype=amp_dtype, enabled=config.use_mixed_precision):
+                with torch.amp.autocast(
+                    device_type="cuda",
+                    dtype=amp_dtype,
+                    enabled=config.use_mixed_precision,
+                ):
                     outputs = model(pixel_values, spatial_shapes)
 
                 for dim in ["overall", "sharpness", "color"]:
                     predictions[dim].extend(outputs[dim]["mu"].cpu().numpy())
                     uncertainties[dim].extend(outputs[dim]["sigma_sq"].cpu().numpy())
-                    targets[dim].extend([l[dim] for l in labels_list])
+                    targets[dim].extend([lbl[dim] for lbl in labels_list])
 
         calibration_temps = {}
         for dim in ["overall", "sharpness", "color"]:
@@ -1386,20 +1463,23 @@ def train_siglip2_iqa_v2(
             uncerts = np.array(uncertainties[dim])
             targs = np.array(targets[dim])
 
-            def negative_log_likelihood(T):
-                scaled_sigma_sq = T * uncerts
-                nll = np.mean(
+            def negative_log_likelihood(
+                temperature, _uncerts=uncerts, _targs=targs, _preds=preds
+            ):
+                scaled_sigma_sq = temperature * _uncerts
+                return np.mean(
                     0.5 * np.log(scaled_sigma_sq + 1e-8)
-                    + (targs - preds) ** 2 / (2 * scaled_sigma_sq + 1e-8)
+                    + (_targs - _preds) ** 2 / (2 * scaled_sigma_sq + 1e-8)
                 )
-                return nll
 
-            result = minimize_scalar(negative_log_likelihood, bounds=(0.1, 10.0), method="bounded")
-            optimal_T = result.x
-            calibration_temps[dim] = optimal_T
+            result = minimize_scalar(
+                negative_log_likelihood, bounds=(0.1, 10.0), method="bounded"
+            )
+            optimal_temperature = result.x
+            calibration_temps[dim] = optimal_temperature
 
             srcc, _ = spearmanr(preds, targs)
-            print(f"  {dim}: T={optimal_T:.3f}, SRCC={srcc:.4f}")
+            print(f"  {dim}: T={optimal_temperature:.3f}, SRCC={srcc:.4f}")
 
         model.set_calibration_temps(calibration_temps)
         best_checkpoint["model_state_dict"] = model.state_dict()
@@ -1428,7 +1508,7 @@ def train_siglip2_iqa_v2(
 
     test_metrics = validate(test_loader)
 
-    print(f"\nTest Set Results:")
+    print("\nTest Set Results:")
     print(f"  SRCC Overall:   {test_metrics['srcc_overall']:.4f}")
     print(f"  SRCC Sharpness: {test_metrics['srcc_sharpness']:.4f}")
     print(f"  SRCC Color:     {test_metrics['srcc_color']:.4f}")
@@ -1471,14 +1551,24 @@ def train_siglip2_iqa_v2(
                 f"Early stopping patience ({config.early_stopping_patience})",
             ],
             "tier2": [
-                f"LLRD ({config.llrd_decay} decay per layer)" if config.use_llrd else "LLRD disabled",
-                f"MarginRankingLoss (λ={config.ranking_loss_weight})" if config.use_ranking_loss else "Ranking loss disabled",
-                f"PCGrad re-enabled" if config.use_pcgrad else "PCGrad disabled",
-                f"EMA (start epoch {config.ema_start_epoch})" if config.use_ema else "EMA disabled",
+                f"LLRD ({config.llrd_decay} decay per layer)"
+                if config.use_llrd
+                else "LLRD disabled",
+                f"MarginRankingLoss (λ={config.ranking_loss_weight})"
+                if config.use_ranking_loss
+                else "Ranking loss disabled",
+                "PCGrad re-enabled" if config.use_pcgrad else "PCGrad disabled",
+                f"EMA (start epoch {config.ema_start_epoch})"
+                if config.use_ema
+                else "EMA disabled",
             ],
             "tier3": [
-                "Gradient checkpointing" if config.use_gradient_checkpointing else "Gradient checkpointing disabled",
-                f"Mixed precision ({config.mixed_precision_dtype})" if config.use_mixed_precision else "Mixed precision disabled",
+                "Gradient checkpointing"
+                if config.use_gradient_checkpointing
+                else "Gradient checkpointing disabled",
+                f"Mixed precision ({config.mixed_precision_dtype})"
+                if config.use_mixed_precision
+                else "Mixed precision disabled",
             ],
         },
     }
@@ -1539,7 +1629,7 @@ def main(
     print(f"Test mode: {test}")
     print(f"Model: {model} ({MODEL_VARIANTS.get(model, 'unknown')})")
     print(f"Epochs: {epochs if not test else 2}")
-    print(f"Batch size: {batch_size} × {accumulation} = {batch_size * accumulation}")
+    print(f"Batch size: {batch_size} x {accumulation} = {batch_size * accumulation}")
     print(f"Max patches: {max_patches}")
     print(f"LLRD: {not no_llrd}")
     print(f"Ranking Loss: {not no_ranking_loss}")
@@ -1592,6 +1682,8 @@ def main(
         print("\n✓ Model ready for production!")
         print("Next steps:")
         print("  1. Download checkpoint:")
-        print("     modal volume get siglip2-iqa-results /results/siglip2_v2/siglip2_iqa_best.pt ./checkpoints/")
+        print(
+            "     modal volume get siglip2-iqa-results /results/siglip2_v2/siglip2_iqa_best.pt ./checkpoints/"
+        )
         print("  2. Run inference on new documents")
         print("  3. Consider training 400M variant for further gains")

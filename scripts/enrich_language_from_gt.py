@@ -31,10 +31,9 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import re
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -78,7 +77,8 @@ DATASETS_WITH_GT_TEXT: dict[str, dict[str, Any]] = {
     },
     # === Document layout with text ===
     "doclaynet": {
-        "annotation_file": BASE_DATA / "documents/doclaynet/ground_truth/coco/train.json",
+        "annotation_file": BASE_DATA
+        / "documents/doclaynet/ground_truth/coco/train.json",
         "format": "doclaynet_coco",
         "images": 80863,
     },
@@ -88,14 +88,10 @@ DATASETS_WITH_GT_TEXT: dict[str, dict[str, Any]] = {
         "format": "funsd_json",
         "images": 199,
     },
-    "funsd_plus": {
-        "annotation_dir": BASE_DATA / "forms/funsd_plus/annotations",
-        "format": "funsd_json",
-        "images": 1139,
-    },
     # === Table HTML ===
     "pubtabnet": {
-        "annotation_file": BASE_DATA / "tables/pubtabnet/pubtabnet/PubTabNet_2.0.0.jsonl",
+        "annotation_file": BASE_DATA
+        / "tables/pubtabnet/pubtabnet/PubTabNet_2.0.0.jsonl",
         "format": "pubtabnet_jsonl",
         "images": 519030,
     },
@@ -182,7 +178,8 @@ DATASETS_WITH_GT_TEXT: dict[str, dict[str, Any]] = {
     },
     # === Synthetic multiscript ===
     "synth-multiscript-250k": {
-        "annotation_file": E_DRIVE_ROOT / "03_training_datasets/synthetic_multiscript/metadata.parquet",
+        "annotation_file": E_DRIVE_ROOT
+        / "03_training_datasets/synthetic_multiscript/metadata.parquet",
         "format": "synth_multiscript",
         "images": 250000,
     },
@@ -229,7 +226,8 @@ DATASETS_WITH_GT_TEXT: dict[str, dict[str, Any]] = {
     },
     # === Known-language datasets (monolingual) ===
     "financebench": {
-        "annotation_file": E_DRIVE_ROOT / "02_benchmark_only/financebench/data/financebench_open_source.jsonl",
+        "annotation_file": E_DRIVE_ROOT
+        / "02_benchmark_only/financebench/data/financebench_open_source.jsonl",
         "format": "financebench_jsonl",
         "images": 54121,
         "known_language": "en",
@@ -335,6 +333,7 @@ DOCLING_OCR_DATASETS: dict[str, dict[str, Any]] = {
 @dataclass
 class LanguageResult:
     """Result of language detection."""
+
     language: str  # ISO 639-1/3
     script: str | None  # ISO 15924
     confidence: float
@@ -358,6 +357,7 @@ def get_openlid_detector():
             from image_preprocessing_detector.schema_utils.openlid_integration import (
                 OpenLIDDetector,
             )
+
             logger.info("Loading OpenLID-v2 detector...")
             _openlid_detector = OpenLIDDetector(auto_download=True)
             # Warm up
@@ -398,7 +398,10 @@ def detect_language(text: str) -> LanguageResult:
 # Text Extraction Functions
 # =============================================================================
 
-def extract_text_coco(annotation_file: Path, text_field: str = "utf8_string") -> dict[int, str]:
+
+def extract_text_coco(
+    annotation_file: Path, text_field: str = "utf8_string"
+) -> dict[int, str]:
     """Extract text from COCO-style annotations, aggregated per image."""
     logger.info(f"Loading COCO annotations from {annotation_file}")
 
@@ -601,7 +604,9 @@ def extract_text_cc_ocr(annotation_file: Path) -> dict[str, str]:
     return image_texts
 
 
-def extract_folder_based_labels(annotation_dir: Path, dataset_name: str) -> dict[str, str]:
+def extract_folder_based_labels(
+    annotation_dir: Path, dataset_name: str
+) -> dict[str, str]:
     """Extract labels from folder-based script identification datasets.
 
     For datasets like MDIW13, SIW-13, CVSI where folder name = script/language.
@@ -651,7 +656,11 @@ def extract_folder_based_labels(annotation_dir: Path, dataset_name: str) -> dict
     elif dataset_name == "cvsi":
         # CVSI has: {split}/{script}/
         for split_dir in annotation_dir.iterdir():
-            if split_dir.is_dir() and split_dir.name in ("Training", "Testing", "Validation"):
+            if split_dir.is_dir() and split_dir.name in (
+                "Training",
+                "Testing",
+                "Validation",
+            ):
                 for script_dir in split_dir.iterdir():
                     if script_dir.is_dir():
                         script_name = script_dir.name
@@ -660,7 +669,9 @@ def extract_folder_based_labels(annotation_dir: Path, dataset_name: str) -> dict
                             folder_scripts[script_name] = 0
                         folder_scripts[script_name] += img_count
 
-    logger.info(f"Found {len(folder_scripts)} script categories: {dict(folder_scripts)}")
+    logger.info(
+        f"Found {len(folder_scripts)} script categories: {dict(folder_scripts)}"
+    )
     return folder_scripts
 
 
@@ -826,7 +837,9 @@ def extract_text_ohr_bench_arrow(annotation_dir: Path) -> dict[str, str]:
                 table = reader.read_all()
 
             if "gt_text" not in table.column_names:
-                logger.warning(f"No gt_text column in {arrow_file}. Columns: {table.column_names}")
+                logger.warning(
+                    f"No gt_text column in {arrow_file}. Columns: {table.column_names}"
+                )
                 continue
 
             # Use doc_name + page_idx as ID if available
@@ -898,6 +911,7 @@ def extract_text_synth_multiscript(annotation_file: Path) -> dict[str, str]:
 
     try:
         import pandas as pd
+
         df = pd.read_parquet(annotation_file)
 
         image_texts: dict[str, str] = {}
@@ -981,6 +995,7 @@ SCRIPT_FOLDER_MAPPING: dict[str, tuple[str, str]] = {
 # Main Processing
 # =============================================================================
 
+
 def process_dataset(
     dataset_name: str,
     config: dict[str, Any],
@@ -1002,13 +1017,17 @@ def process_dataset(
     known_script = config.get("known_script")
 
     if known_lang and known_script:
-        logger.info(f"Dataset {dataset_name} has known language: {known_lang}/{known_script}")
+        logger.info(
+            f"Dataset {dataset_name} has known language: {known_lang}/{known_script}"
+        )
         stats["known_language"] = config.get("images", 0)
         stats["total"] = stats["known_language"]
 
         # Update metadata registry with known language
         if not dry_run:
-            update_registry_known_language(dataset_name, known_lang, known_script, config.get("images", 0))
+            update_registry_known_language(
+                dataset_name, known_lang, known_script, config.get("images", 0)
+            )
 
         return stats
 
@@ -1019,8 +1038,7 @@ def process_dataset(
     try:
         if fmt == "coco_text":
             image_texts = extract_text_coco(
-                config["annotation_file"],
-                config.get("text_field", "utf8_string")
+                config["annotation_file"], config.get("text_field", "utf8_string")
             )
         elif fmt in ("hiertext_json", "hiertext_jsonl"):
             image_texts = extract_text_hiertext(config["annotation_file"])
@@ -1039,9 +1057,11 @@ def process_dataset(
         elif fmt == "doclaynet_coco":
             # DocLayNet COCO format doesn't contain text, just layout boxes
             # Mark as English since it's primarily English documents
-            logger.info(f"DocLayNet has no text in COCO - using known language en/Latn")
+            logger.info("DocLayNet has no text in COCO - using known language en/Latn")
             if not dry_run:
-                update_registry_known_language(dataset_name, "en", "Latn", config.get("images", 0))
+                update_registry_known_language(
+                    dataset_name, "en", "Latn", config.get("images", 0)
+                )
             stats["known_language"] = config.get("images", 0)
             stats["total"] = stats["known_language"]
             return stats
@@ -1055,7 +1075,9 @@ def process_dataset(
             image_texts = extract_text_synth_multiscript(config["annotation_file"])
         elif fmt in ("mdiw13", "siw13", "cvsi"):
             # Folder-based script identification - process as known languages
-            folder_scripts = extract_folder_based_labels(config["annotation_dir"], dataset_name)
+            folder_scripts = extract_folder_based_labels(
+                config["annotation_dir"], dataset_name
+            )
             if folder_scripts:
                 # Save folder-based results
                 if not dry_run:
@@ -1161,7 +1183,7 @@ def update_registry_known_language(
         "sample_count": count,
         "confidence": 1.0,
         "method": "dataset_known_language",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     with open(output_file, "w") as f:
@@ -1198,11 +1220,15 @@ def save_folder_based_results(
         "enrichment_type": "folder_based_labels",
         "total_samples": total_images,
         "folder_counts": folder_scripts,
-        "language_distribution": dict(sorted(language_distribution.items(), key=lambda x: -x[1])),
-        "script_distribution": dict(sorted(script_distribution.items(), key=lambda x: -x[1])),
+        "language_distribution": dict(
+            sorted(language_distribution.items(), key=lambda x: -x[1])
+        ),
+        "script_distribution": dict(
+            sorted(script_distribution.items(), key=lambda x: -x[1])
+        ),
         "confidence": 1.0,
         "method": "folder_name_label",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     with open(output_file, "w") as f:
@@ -1236,11 +1262,15 @@ def save_multilingual_scripts_results(
         "enrichment_type": "manifest_labels",
         "total_samples": sum(scripts.values()),
         "script_counts": scripts,
-        "language_distribution": dict(sorted(language_distribution.items(), key=lambda x: -x[1])),
-        "script_distribution": dict(sorted(script_distribution.items(), key=lambda x: -x[1])),
+        "language_distribution": dict(
+            sorted(language_distribution.items(), key=lambda x: -x[1])
+        ),
+        "script_distribution": dict(
+            sorted(script_distribution.items(), key=lambda x: -x[1])
+        ),
         "confidence": 1.0,
         "method": "manifest_label",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     with open(output_file, "w") as f:
@@ -1271,13 +1301,15 @@ def save_language_results(
         if result.script:
             script_counts[result.script] += 1
 
-        sample_results.append({
-            "image_id": str(image_id),
-            "language": result.language,
-            "script": result.script,
-            "confidence": round(result.confidence, 3),
-            "method": result.method,
-        })
+        sample_results.append(
+            {
+                "image_id": str(image_id),
+                "language": result.language,
+                "script": result.script,
+                "confidence": round(result.confidence, 3),
+                "method": result.method,
+            }
+        )
 
     output = {
         "dataset": dataset_name,
@@ -1288,7 +1320,7 @@ def save_language_results(
         "avg_confidence": round(confidence_sum / max(1, detected_count), 3),
         "language_distribution": dict(sorted(lang_counts.items(), key=lambda x: -x[1])),
         "script_distribution": dict(sorted(script_counts.items(), key=lambda x: -x[1])),
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "method": "openlid_v2",
         "samples": sample_results[:1000],  # First 1000 for reference
     }
@@ -1305,7 +1337,9 @@ def list_datasets() -> None:
     print("=" * 70)
 
     total_images = 0
-    for name, config in sorted(DATASETS_WITH_GT_TEXT.items(), key=lambda x: -x[1].get("images", 0)):
+    for name, config in sorted(
+        DATASETS_WITH_GT_TEXT.items(), key=lambda x: -x[1].get("images", 0)
+    ):
         images = config.get("images", 0)
         total_images += images
         fmt = config.get("format", "unknown")
@@ -1315,7 +1349,9 @@ def list_datasets() -> None:
         ann_file = config.get("annotation_file") or config.get("annotation_dir")
         exists = "✓" if ann_file and Path(ann_file).exists() else "✗"
 
-        print(f"  {name:30} {images:>10,} images  [{fmt:20}] exists:{exists} known:{known}")
+        print(
+            f"  {name:30} {images:>10,} images  [{fmt:20}] exists:{exists} known:{known}"
+        )
 
     print(f"\nTotal: {len(DATASETS_WITH_GT_TEXT)} datasets, {total_images:,} images")
 
@@ -1324,7 +1360,9 @@ def list_datasets() -> None:
     print("=" * 70)
 
     docling_total = 0
-    for name, config in sorted(DOCLING_OCR_DATASETS.items(), key=lambda x: -x[1].get("images", 0)):
+    for name, config in sorted(
+        DOCLING_OCR_DATASETS.items(), key=lambda x: -x[1].get("images", 0)
+    ):
         images = config.get("images", 0)
         docling_total += images
         fmt = config.get("format", "unknown")
@@ -1336,7 +1374,9 @@ def list_datasets() -> None:
         print(f"  {name:30} {images:>10,} images  [{fmt:20}] exists:{exists}")
 
     print(f"\nTotal: {len(DOCLING_OCR_DATASETS)} datasets, {docling_total:,} images")
-    print(f"\nGrand Total: {len(DATASETS_WITH_GT_TEXT) + len(DOCLING_OCR_DATASETS)} datasets, {total_images + docling_total:,} images")
+    print(
+        f"\nGrand Total: {len(DATASETS_WITH_GT_TEXT) + len(DOCLING_OCR_DATASETS)} datasets, {total_images + docling_total:,} images"
+    )
 
 
 def main() -> int:
@@ -1346,11 +1386,19 @@ def main() -> int:
     )
     parser.add_argument("--dataset", type=str, help="Specific dataset to process")
     parser.add_argument("--all", action="store_true", help="Process all datasets")
-    parser.add_argument("--all-gt", action="store_true", help="Process all ground truth datasets only")
-    parser.add_argument("--all-docling", action="store_true", help="Process all Docling OCR datasets only")
+    parser.add_argument(
+        "--all-gt", action="store_true", help="Process all ground truth datasets only"
+    )
+    parser.add_argument(
+        "--all-docling",
+        action="store_true",
+        help="Process all Docling OCR datasets only",
+    )
     parser.add_argument("--list", action="store_true", help="List available datasets")
     parser.add_argument("--dry-run", action="store_true", help="Don't save results")
-    parser.add_argument("--batch-size", type=int, default=1000, help="Progress batch size")
+    parser.add_argument(
+        "--batch-size", type=int, default=1000, help="Progress batch size"
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -1378,7 +1426,13 @@ def main() -> int:
         return 1
 
     # Process datasets
-    total_stats = {"total": 0, "processed": 0, "detected": 0, "undetermined": 0, "known_language": 0}
+    total_stats = {
+        "total": 0,
+        "processed": 0,
+        "detected": 0,
+        "undetermined": 0,
+        "known_language": 0,
+    }
 
     for dataset_name, config in datasets_to_process:
         logger.info("=" * 60)

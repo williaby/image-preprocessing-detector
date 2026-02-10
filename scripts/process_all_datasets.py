@@ -323,7 +323,9 @@ def process_tier(
 
     tier_elapsed = time.perf_counter() - tier_start
 
-    print(f"\n{tier_label} complete: {total_images:,} images in {format_duration(tier_elapsed)}")
+    print(
+        f"\n{tier_label} complete: {total_images:,} images in {format_duration(tier_elapsed)}"
+    )
 
     return total_images, total_errors, tier_elapsed
 
@@ -489,7 +491,8 @@ Examples:
         help="Show processing plan without executing",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose logging",
     )

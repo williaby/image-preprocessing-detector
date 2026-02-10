@@ -25,8 +25,8 @@ import logging
 import re
 import sys
 from collections import Counter
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -222,8 +222,10 @@ def assess_language(data: dict[str, Any]) -> FieldAssessment:
 
     if backfilled_conf is not None and backfilled_method is not None:
         tier = backfilled_tier or _infer_tier(backfilled_method)
-        is_soft = backfilled_soft if backfilled_soft is not None else (
-            tier not in ("tier_0_exact", "tier_1_annotation")
+        is_soft = (
+            backfilled_soft
+            if backfilled_soft is not None
+            else (tier not in ("tier_0_exact", "tier_1_annotation"))
         )
         return FieldAssessment(
             field_name="language",
@@ -279,9 +281,7 @@ def assess_text_quality(data: dict[str, Any]) -> FieldAssessment:
     )
 
 
-def assess_content_flag(
-    data: dict[str, Any], flag_name: str
-) -> FieldAssessment:
+def assess_content_flag(data: dict[str, Any], flag_name: str) -> FieldAssessment:
     """Assess a single content flag reliability."""
     value = data.get(flag_name)
     flags_tier = data.get("content_flags_tier")
@@ -330,9 +330,7 @@ def assess_layout_detections(data: dict[str, Any]) -> FieldAssessment:
         )
 
     confidences = [
-        d.get("confidence")
-        for d in detections
-        if d.get("confidence") is not None
+        d.get("confidence") for d in detections if d.get("confidence") is not None
     ]
     avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
 
@@ -358,8 +356,13 @@ def _infer_tier(source: str | None) -> str:
         return "tier_1_annotation"
 
     model_sources = {
-        "doclayout_yolo", "docling", "ml_classifier",
-        "artifact_analysis", "openlid_v2", "fasttext", "tesseract",
+        "doclayout_yolo",
+        "docling",
+        "ml_classifier",
+        "artifact_analysis",
+        "openlid_v2",
+        "fasttext",
+        "tesseract",
     }
     if source in model_sources:
         return "tier_2_model"
@@ -416,12 +419,8 @@ def compute_sample_summary(
 
     hard_count = sum(1 for a in assessments if a.category == "hard_label")
     soft_count = sum(1 for a in assessments if a.category == "soft_label")
-    active_count = sum(
-        1 for a in assessments if a.category == "active_learning"
-    )
-    unreliable_count = sum(
-        1 for a in assessments if a.category == "unreliable"
-    )
+    active_count = sum(1 for a in assessments if a.category == "active_learning")
+    unreliable_count = sum(1 for a in assessments if a.category == "unreliable")
 
     field_summary = [
         {
@@ -436,9 +435,7 @@ def compute_sample_summary(
     summary = {
         "min_confidence": round(min_assessment.confidence, 4),
         "min_confidence_field": min_assessment.field_name,
-        "min_confidence_category": classify_confidence(
-            min_assessment.confidence
-        ),
+        "min_confidence_category": classify_confidence(min_assessment.confidence),
         "min_provenance_tier": min_tier_assessment.provenance_tier,
         "assessed_field_count": len(populated),
         "unassessed_field_count": 0,  # We no longer have null = unassessed
@@ -446,7 +443,7 @@ def compute_sample_summary(
         "hard_field_count": hard_count,
         "soft_field_count": soft_count,
         "field_summary": field_summary,
-        "computed_at": datetime.now(timezone.utc).isoformat(),
+        "computed_at": datetime.now(UTC).isoformat(),
     }
 
     return summary, assessments
@@ -554,7 +551,14 @@ def process_dataset(
             stats["skipped_no_enrichment"] += 1
             continue
 
-        data = versions[0].get("data", {})
+        # Use the latest version (current_version index, or last in list)
+        current_ver = enrichments.get("current_version", 1)
+        # Find version matching current_version, or default to last
+        data = versions[-1].get("data", {})
+        for v in versions:
+            if v.get("version") == current_ver:
+                data = v.get("data", {})
+                break
 
         # Check if already materialized
         existing = data.get("sample_reliability_summary")
@@ -572,9 +576,7 @@ def process_dataset(
         min_confidences.append(summary["min_confidence"])
 
     # Compute dataset-level bottlenecks
-    bottlenecks = compute_dataset_bottlenecks(
-        all_assessments, stats["materialized"]
-    )
+    bottlenecks = compute_dataset_bottlenecks(all_assessments, stats["materialized"])
     stats["bottlenecks"] = [asdict(b) for b in bottlenecks]
     stats["category_distribution"] = dict(category_dist)
 
@@ -586,24 +588,22 @@ def process_dataset(
     # Write updated metadata
     if not dry_run and stats["materialized"] > 0:
         metadata.setdefault("backfill_history", [])
-        metadata["backfill_history"].append({
-            "operation": "reliability_summary_materialization",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "stats": {
-                "materialized": stats["materialized"],
-                "already_had_summary": stats["already_has_summary"],
-                "bottlenecks": stats["bottlenecks"],
-            },
-        })
+        metadata["backfill_history"].append(
+            {
+                "operation": "reliability_summary_materialization",
+                "timestamp": datetime.now(UTC).isoformat(),
+                "stats": {
+                    "materialized": stats["materialized"],
+                    "already_had_summary": stats["already_has_summary"],
+                    "bottlenecks": stats["bottlenecks"],
+                },
+            }
+        )
 
         # Store dataset-level bottleneck info at metadata root
         metadata["reliability_bottlenecks"] = stats["bottlenecks"]
-        metadata["reliability_avg_min_confidence"] = stats[
-            "avg_min_confidence"
-        ]
-        metadata["reliability_category_distribution"] = stats[
-            "category_distribution"
-        ]
+        metadata["reliability_avg_min_confidence"] = stats["avg_min_confidence"]
+        metadata["reliability_category_distribution"] = stats["category_distribution"]
 
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
@@ -653,7 +653,7 @@ def update_dataset_doc(
         "",
         "##### Reliability & Bottlenecks",
         "",
-        f"> **Computed**: {datetime.now(timezone.utc).strftime('%Y-%m-%d')} "
+        f"> **Computed**: {datetime.now(UTC).strftime('%Y-%m-%d')} "
         f"| **Samples**: {total:,} | **Avg Min Confidence**: {avg_min:.3f}",
         "",
     ]
@@ -665,7 +665,10 @@ def update_dataset_doc(
         lines.append("| Category | Count | Pct |")
         lines.append("|----------|------:|----:|")
         for cat in [
-            "hard_label", "soft_label", "active_learning", "unreliable",
+            "hard_label",
+            "soft_label",
+            "active_learning",
+            "unreliable",
         ]:
             count = category_dist.get(cat, 0)
             pct = round(count / total * 100, 1) if total > 0 else 0.0
@@ -726,9 +729,7 @@ def find_all_datasets(metadata_dir: Path) -> list[str]:
 def main() -> None:
     """Run the reliability summary materialization."""
     parser = argparse.ArgumentParser(
-        description=(
-            "Materialize sample_reliability_summary into Layer 2 metadata"
-        ),
+        description=("Materialize sample_reliability_summary into Layer 2 metadata"),
     )
     parser.add_argument(
         "--datasets",
@@ -795,23 +796,23 @@ def main() -> None:
     for dataset_name in datasets:
         logger.info(f"Processing: {dataset_name}")
         stats = process_dataset(
-            dataset_name, args.metadata_dir, args.dry_run, args.force,
+            dataset_name,
+            args.metadata_dir,
+            args.dry_run,
+            args.force,
         )
 
         total_stats["total"] += stats["total"]
         total_stats["materialized"] += stats["materialized"]
         total_stats["already_has_summary"] += stats["already_has_summary"]
-        total_stats["skipped_no_enrichment"] += stats[
-            "skipped_no_enrichment"
-        ]
+        total_stats["skipped_no_enrichment"] += stats["skipped_no_enrichment"]
 
         # Per-dataset summary
         bottleneck_str = ""
         if stats["bottlenecks"]:
             top = stats["bottlenecks"][0]
             bottleneck_str = (
-                f" top_bottleneck={top['field_name']}"
-                f"({top['bottleneck_pct']}%)"
+                f" top_bottleneck={top['field_name']}({top['bottleneck_pct']}%)"
             )
 
         logger.info(
@@ -825,14 +826,18 @@ def main() -> None:
         # Update docs if requested
         if args.update_docs and not args.dry_run and stats["bottlenecks"]:
             updated = update_dataset_doc(
-                dataset_name, stats, args.docs_dir,
+                dataset_name,
+                stats,
+                args.docs_dir,
             )
             if updated:
                 total_stats["docs_updated"] += 1
-                all_bottlenecks.append({
-                    "dataset": dataset_name,
-                    "bottlenecks": stats["bottlenecks"],
-                })
+                all_bottlenecks.append(
+                    {
+                        "dataset": dataset_name,
+                        "bottlenecks": stats["bottlenecks"],
+                    }
+                )
 
     # Final summary
     print(f"\n{'=' * 60}")
@@ -854,9 +859,7 @@ def main() -> None:
         field_bottleneck_counts: Counter[str] = Counter()
         for entry in all_bottlenecks:
             for b in entry["bottlenecks"]:
-                field_bottleneck_counts[b["field_name"]] += (
-                    b["bottleneck_count"]
-                )
+                field_bottleneck_counts[b["field_name"]] += b["bottleneck_count"]
 
         for field_name, count in field_bottleneck_counts.most_common(5):
             print(f"  {field_name:25s} {count:8,} samples")

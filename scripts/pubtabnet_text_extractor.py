@@ -29,7 +29,9 @@ import logging
 import pickle
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Paths
@@ -142,7 +144,7 @@ def main():
         index = load_index()
         total = len(index)
         avg_len = sum(len(t) for t in index.values()) / total if total > 0 else 0
-        print(f"\nPubTabNet Text Index Statistics:")
+        print("\nPubTabNet Text Index Statistics:")
         print(f"  Total entries: {total:,}")
         print(f"  Average text length: {avg_len:.0f} chars")
         print(f"  Index file: {INDEX_PATH}")
