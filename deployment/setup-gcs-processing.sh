@@ -93,7 +93,7 @@ ssh "$DOCKER_HOST" "cd $DEPLOY_DIR && docker compose pull && docker compose up -
 # Step 7: Wait for health
 log_info "Waiting for Docling to be healthy..."
 healthy=false
-for i in {1..30}; do
+for _i in {1..30}; do
     if ssh "$DOCKER_HOST" "curl -sf http://localhost:5001/health" &>/dev/null; then
         log_info "Docling is healthy!"
         healthy=true
