@@ -96,7 +96,12 @@ DOCLING_CATEGORY_TO_CANONICAL: dict[str, str] = {
 
 # Text-bearing classes for text_area_ratio computation
 TEXT_REGION_CLASSES = {
-    "TEXT", "LIST_ITEM", "SECTION_HEADER", "TITLE", "CAPTION", "FOOTNOTE",
+    "TEXT",
+    "LIST_ITEM",
+    "SECTION_HEADER",
+    "TITLE",
+    "CAPTION",
+    "FOOTNOTE",
 }
 
 
@@ -126,7 +131,9 @@ def derive_layout_category(
 
 
 def compute_text_area_ratio(
-    detections: list[dict[str, Any]], img_w: int, img_h: int,
+    detections: list[dict[str, Any]],
+    img_w: int,
+    img_h: int,
 ) -> float:
     """Compute ratio of text-region area to total image area."""
     total_image_area = img_w * img_h
@@ -144,7 +151,8 @@ def compute_text_area_ratio(
 
 
 def check_split_leakage(
-    res_to_ori: dict[str, str], split_map: dict[str, str],
+    res_to_ori: dict[str, str],
+    split_map: dict[str, str],
 ) -> list[str]:
     """Check that no ori image appears in multiple splits.
 
@@ -281,27 +289,33 @@ def run_classical_iqa_batch(
                 elif name == "illumination":
                     sample_results["illumination_issue"] = result.has_issues
                     sample_results["illumination_uniformity"] = round(
-                        result.score, 4,
+                        result.score,
+                        4,
                     )
                     sample_results["illumination_confidence"] = round(
-                        result.confidence, 4,
+                        result.confidence,
+                        4,
                     )
                     sample_results["illumination_severity"] = result.severity.value
                 elif name == "jpeg_blockiness":
                     sample_results["jpeg_blockiness_detected"] = result.has_artifacts
                     sample_results["jpeg_blockiness_score"] = round(
-                        result.blockiness_score, 4,
+                        result.blockiness_score,
+                        4,
                     )
                     sample_results["jpeg_blockiness_confidence"] = round(
-                        result.confidence, 4,
+                        result.confidence,
+                        4,
                     )
                     sample_results["jpeg_blockiness_severity"] = result.severity.value
                 elif name == "binarization":
                     sample_results["binarization_quality"] = round(
-                        result.binarization_score, 4,
+                        result.binarization_score,
+                        4,
                     )
                     sample_results["binarization_confidence"] = round(
-                        result.confidence, 4,
+                        result.confidence,
+                        4,
                     )
                     sample_results["binarization_severity"] = result.severity.value
                 elif name == "bleed_through":
@@ -310,7 +324,8 @@ def run_classical_iqa_batch(
                     )
                     sample_results["bleed_through_score"] = round(result.severity, 4)
                     sample_results["bleed_through_confidence"] = round(
-                        result.confidence, 4,
+                        result.confidence,
+                        4,
                     )
                     sample_results["bleed_through_severity"] = (
                         result.severity_level.value
@@ -326,13 +341,19 @@ def run_classical_iqa_batch(
             rate = (idx + 1) / elapsed
             log.info(
                 "  IQA [%d/%d] %.1f images/sec, %d errors",
-                idx + 1, total, rate, errors,
+                idx + 1,
+                total,
+                rate,
+                errors,
             )
 
     elapsed = time.time() - start
     log.info(
         "Classical IQA complete: %d images in %.1f seconds (%.1f img/sec), %d errors",
-        len(results), elapsed, len(results) / elapsed if elapsed > 0 else 0, errors,
+        len(results),
+        elapsed,
+        len(results) / elapsed if elapsed > 0 else 0,
+        errors,
     )
 
     # Restore log level
@@ -342,8 +363,11 @@ def run_classical_iqa_batch(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as fh:
         json.dump(results, fh)
-    log.info("IQA cache written to %s (%.1f MB)", output_path,
-             output_path.stat().st_size / 1024 / 1024)
+    log.info(
+        "IQA cache written to %s (%.1f MB)",
+        output_path,
+        output_path.stat().st_size / 1024 / 1024,
+    )
 
     return results
 
@@ -1008,9 +1032,7 @@ def integrate_sample(
         data["text_scope_detection_method"] = "none"
 
     # Script family (D04 fix) - centralised lookup from iso_language_script
-    data["script_family"] = _get_script_family(
-        data.get("iso15924_script", "")
-    )
+    data["script_family"] = _get_script_family(data.get("iso15924_script", ""))
 
     # -------------------------------------------------------------------
     # 6. Layout detections (D07, D08) - egret_xlarge > docling_gpu > v1
@@ -1027,9 +1049,7 @@ def integrate_sample(
         # Raw detection confidence reflects bbox uncertainty, not overall
         # layout analysis reliability. Range: [0.70, 0.85].
         n_dets = len(egret_dets)
-        high_conf = sum(
-            1 for d in egret_dets if d.get("confidence", 0.9) >= 0.5
-        )
+        high_conf = sum(1 for d in egret_dets if d.get("confidence", 0.9) >= 0.5)
         calibrated_conf = 0.70 + 0.15 * (high_conf / n_dets) if n_dets else 0.60
         data["layout_confidence"] = round(calibrated_conf, 4)
         data["layout_detection_count"] = n_dets
@@ -1082,7 +1102,9 @@ def integrate_sample(
         data["layout_category"] = layout_cat
         data["layout_category_confidence"] = layout_cat_conf
         data["text_area_ratio"] = compute_text_area_ratio(
-            active_dets, width, height,
+            active_dets,
+            width,
+            height,
         )
     else:
         data["layout_category"] = "unknown"
@@ -1228,7 +1250,10 @@ def integrate_sample(
     # 12. Paper size (D17) - estimated
     # -------------------------------------------------------------------
     data["paper_size"] = estimate_paper_size(
-        width, height, dpi, capture_method=data.get("capture_method"),
+        width,
+        height,
+        dpi,
+        capture_method=data.get("capture_method"),
     )
 
     # -------------------------------------------------------------------

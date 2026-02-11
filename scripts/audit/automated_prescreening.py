@@ -44,9 +44,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-METADATA_REGISTRY_DIR = Path(
-    "/mnt/e/image_detection/metadata_registry/json"
-)
+METADATA_REGISTRY_DIR = Path("/mnt/e/image_detection/metadata_registry/json")
 
 
 def _metadata_path_for(dataset: str) -> Path:
@@ -57,9 +55,14 @@ def _metadata_path_for(dataset: str) -> Path:
 def _output_path_for(dataset: str) -> Path:
     """Derive output report path from dataset name."""
     return (
-        PROJECT_ROOT / "scripts" / "audit" / "results"
-        / dataset / "automated_screening.json"
+        PROJECT_ROOT
+        / "scripts"
+        / "audit"
+        / "results"
+        / dataset
+        / "automated_screening.json"
     )
+
 
 VALID_CAPTURE_METHODS = frozenset(
     {
@@ -590,10 +593,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--metadata-path",
         type=Path,
         default=None,
-        help=(
-            "Override the metadata JSON path. "
-            "Default: auto-derived from --dataset."
-        ),
+        help=("Override the metadata JSON path. Default: auto-derived from --dataset."),
     )
     parser.add_argument(
         "--output",
@@ -698,10 +698,12 @@ def _run_all_datasets(args: argparse.Namespace) -> int:
             result = run_prescreening(meta_file, dataset_name=dataset_name)
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as exc:
             logger.warning("Skipping %s: %s", dataset_name, exc)
-            cross_dataset_results.append({
-                "dataset": dataset_name,
-                "error": str(exc),
-            })
+            cross_dataset_results.append(
+                {
+                    "dataset": dataset_name,
+                    "error": str(exc),
+                }
+            )
             continue
 
         if not args.quiet:
@@ -718,13 +720,15 @@ def _run_all_datasets(args: argparse.Namespace) -> int:
         passed = result["passed_all"]
         pass_rate = round((passed / total) * 100, 2) if total > 0 else 0.0
 
-        cross_dataset_results.append({
-            "dataset": dataset_name,
-            "total_samples": total,
-            "passed_all": passed,
-            "failed_any": result["failed_any"],
-            "pass_rate_pct": pass_rate,
-        })
+        cross_dataset_results.append(
+            {
+                "dataset": dataset_name,
+                "total_samples": total,
+                "passed_all": passed,
+                "failed_any": result["failed_any"],
+                "pass_rate_pct": pass_rate,
+            }
+        )
 
         if result["failed_any"] > 0:
             any_failures = True
@@ -732,7 +736,10 @@ def _run_all_datasets(args: argparse.Namespace) -> int:
     # Write cross-dataset summary
     if not args.dry_run:
         summary_path = (
-            PROJECT_ROOT / "scripts" / "audit" / "results"
+            PROJECT_ROOT
+            / "scripts"
+            / "audit"
+            / "results"
             / "cross_dataset_summary.json"
         )
         summary_path.parent.mkdir(parents=True, exist_ok=True)
