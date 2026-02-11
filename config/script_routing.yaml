@@ -113,7 +113,7 @@ routing_rules:
   INDIC_OTHER:
     engine: "paddleocr"
     batch_size: 4
-    notes: "TODO: Test individual scripts, may need to split"
+    notes: "TODO(script-routing): Test individual Indic scripts, may need per-script engine selection"
 
   # ==========================================================================
   # Southeast Asian
@@ -136,7 +136,7 @@ routing_rules:
   SE_ASIAN_OTHER:
     engine: "tesseract"
     batch_size: 4
-    notes: "TODO: Test Khmer, Lao, Myanmar individually"
+    notes: "TODO(script-routing): Test Khmer, Lao, Myanmar individually for engine selection"
 
   # ==========================================================================
   # Catch-all

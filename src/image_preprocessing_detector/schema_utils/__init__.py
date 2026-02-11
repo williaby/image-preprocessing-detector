@@ -101,6 +101,7 @@ from image_preprocessing_detector.schema_utils.iso_language_script import (
     ScriptFamily,
     create_language_script_info,
     get_iso15924_script,
+    get_script_family,
     is_valid_iso15924_code,
     normalize_legacy_script,
     validate_script_code_for_ml,
@@ -169,7 +170,6 @@ __all__ = [
     "DEGRADATION_INDEX",
     "DEGRADATION_TO_ISSUE",
     "GROUP_RANGES",
-    # OpenLID-v2 Integration
     "ISO639_1_TO_3",
     "ISO639_3_TO_1",
     "LANGUAGE_TO_DEFAULT_SCRIPT",
@@ -182,17 +182,14 @@ __all__ = [
     "SCRIPT_TO_FAMILY",
     "SCRIPT_TO_LANGUAGES",
     "TEXT_SCOPE_SPECS",
-    # Bbox utilities
     "BBoxFormat",
     "BoundingBox",
     "ContentType",
-    # Dataset Source Tracking
     "DatasetCategory",
     "DatasetInfo",
     "DegradationGroup",
     "DegradationType",
     "FileIntegrity",
-    # ISO Language/Script
     "ISO639Language",
     "ISO15924Script",
     "ISOLanguageScriptInfo",
@@ -200,26 +197,21 @@ __all__ = [
     "LicenseType",
     "OpenLIDDetector",
     "OpenLIDResult",
-    # ISO Paper Sizes
     "PaperSize",
     "PaperSizeInfo",
     "PaperSizeSpec",
     "PaperSizeStandard",
-    # Degradation mapping
     "RuntimeIssueType",
     "SampleSourceInfo",
     "SchemaValidator",
     "ScriptFamily",
-    # Stream 1: Script ML Mapping
     "ScriptMLMapping",
     "SeverityLevel",
     "SourceInfo",
     "TextDensity",
-    # Text Scope
     "TextScope",
     "TextScopeInfo",
     "TextScopeSpec",
-    # Validation
     "ValidationResult",
     "aggregate_group_scores",
     "batch_standardize_detections",
@@ -246,6 +238,7 @@ __all__ = [
     "get_layer2_schema",
     "get_openlid_detector",
     "get_output_schema",
+    "get_script_family",
     "iqa_vector_to_runtime_issues",
     "is_scope_compatible",
     "is_valid_iso15924_code",

@@ -41,6 +41,10 @@ from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
+from image_preprocessing_detector.schema_utils.iso_language_script import (
+    get_script_family as _get_script_family,
+)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(message)s",
@@ -64,31 +68,7 @@ ORPHAN_CORRECTIONS_PATH = Path(
 )
 
 SCRIPT_VERSION = "2.0.0"
-ENRICHMENT_VERSION_TAG = "integrated_v3"
-
-# Valid script_family enum values (from schema)
-SCRIPT_FAMILY_MAPPING: dict[str, str] = {
-    "Arab": "arabic",
-    "Hebr": "arabic",
-    "Hans": "cjk",
-    "Hant": "cjk",
-    "Jpan": "cjk",
-    "Kore": "cjk",
-    "Deva": "indic",
-    "Beng": "indic",
-    "Guru": "indic",
-    "Gujr": "indic",
-    "Orya": "indic",
-    "Taml": "indic",
-    "Telu": "indic",
-    "Knda": "indic",
-    "Mlym": "indic",
-    "Sinh": "indic",
-    "Thai": "indic",
-    "Latn": "latin",
-    "Cyrl": "cyrillic",
-    "Grek": "latin",
-}
+ENRICHMENT_VERSION_TAG = "integrated_v4"
 
 # Content flag derivation from canonical layout classes
 TABLE_CLASSES = {"TABLE"}
@@ -109,6 +89,76 @@ DOCLING_CATEGORY_TO_CANONICAL: dict[str, str] = {
     "table": "TABLE",
     "text": "TEXT",
 }
+
+# Text-bearing classes for text_area_ratio computation
+TEXT_REGION_CLASSES = {
+    "TEXT", "LIST_ITEM", "SECTION_HEADER", "TITLE", "CAPTION", "FOOTNOTE",
+}
+
+
+# ---------------------------------------------------------------------------
+# Derived field helpers
+# ---------------------------------------------------------------------------
+def derive_layout_category(
+    detections: list[dict[str, Any]],
+) -> tuple[str, float]:
+    """Derive layout category (textual / tabular / mixed_content) from detections.
+
+    Returns:
+        Tuple of (category_name, confidence).
+    """
+    classes = [d.get("class", "").upper() for d in detections]
+    has_table = any(c in TABLE_CLASSES for c in classes)
+    has_figure = any(c in FIGURE_CLASSES for c in classes)
+    has_formula = any(c in FORMULA_CLASSES for c in classes)
+
+    if has_table and (has_figure or has_formula):
+        return "mixed_content", 0.8
+    elif has_table:
+        return "tabular", 0.85
+    elif has_figure or has_formula:
+        return "mixed_content", 0.75
+    else:
+        return "textual", 0.9
+
+
+def compute_text_area_ratio(
+    detections: list[dict[str, Any]], img_w: int, img_h: int,
+) -> float:
+    """Compute ratio of text-region area to total image area."""
+    total_image_area = img_w * img_h
+    if total_image_area <= 0:
+        return 0.0
+
+    text_area = sum(
+        d["bbox"][2] * d["bbox"][3]  # COCO xywh: w * h
+        for d in detections
+        if d.get("class", "").upper() in TEXT_REGION_CLASSES
+        and isinstance(d.get("bbox"), list)
+        and len(d["bbox"]) >= 4
+    )
+    return round(text_area / total_image_area, 4)
+
+
+def check_split_leakage(
+    res_to_ori: dict[str, str], split_map: dict[str, str],
+) -> list[str]:
+    """Check that no ori image appears in multiple splits.
+
+    Args:
+        res_to_ori: Mapping of res/ filename -> ori/ filename.
+        split_map: Mapping of filename -> split name.
+
+    Returns:
+        List of ori/ filenames that leak across splits (should be empty).
+    """
+    ori_splits: dict[str, set[str]] = {}
+    for res_filename, ori_filename in res_to_ori.items():
+        split = split_map.get(res_filename)
+        if split:
+            ori_splits.setdefault(ori_filename, set()).add(split)
+
+    return [ori for ori, splits in ori_splits.items() if len(splits) > 1]
 
 
 # ---------------------------------------------------------------------------
@@ -341,10 +391,9 @@ def load_mos_scores(
                 # Build res->ori mapping for domain/language transfer
                 res_to_ori[res_filename] = ori_filename
 
-                # Also store a reference for ori images (use average of its res variants)
-                # Use the first one encountered as representative
-                if ori_filename not in mos_index:
-                    mos_index[ori_filename] = scores
+                # NOTE: ori/ images do NOT have MOS scores. MOS is only
+                # collected for enhanced (res/) images. Do not assign
+                # res/ scores to ori/ parents.
 
     log.info(
         "  Loaded MOS scores for %d images, %d res->ori mappings",
@@ -399,11 +448,20 @@ def compute_text_statistics(text: str) -> dict[str, Any]:
 # Paper size estimation
 # ---------------------------------------------------------------------------
 def estimate_paper_size(
-    width_px: int, height_px: int, dpi: int | None = None
+    width_px: int,
+    height_px: int,
+    dpi: int | None = None,
+    capture_method: str | None = None,
 ) -> dict[str, Any]:
     """Estimate paper size from image dimensions.
 
-    Assumes 300 DPI if not specified (DIQA-5000 was printed at 300 DPI).
+    Args:
+        width_px: Image width in pixels.
+        height_px: Image height in pixels.
+        dpi: Known DPI of the image.  Falls back to 300 if not provided.
+        capture_method: How the image was captured (camera_smartphone, scanner, etc.).
+            Phone captures have unreliable DPI since 300 refers to print
+            resolution, not actual capture resolution.
     """
     effective_dpi = dpi if dpi and dpi > 0 else 300
 
@@ -433,13 +491,27 @@ def estimate_paper_size(
             best_distance = dist
             best_match = name
 
-    return {
+    # Base confidence from geometric match quality
+    confidence = 0.6 if best_distance < 2.0 else 0.3
+
+    result: dict[str, Any] = {
         "estimated_size": best_match,
         "estimated_width_in": round(width_in, 2),
         "estimated_height_in": round(height_in, 2),
         "assumed_dpi": effective_dpi,
-        "confidence": 0.6 if best_distance < 2.0 else 0.3,
+        "confidence": confidence,
     }
+
+    # Phone captures have unreliable DPI - 300 DPI fallback refers to
+    # print resolution, not actual camera capture resolution
+    if capture_method == "camera_smartphone" and not dpi:
+        result["confidence"] = min(confidence, 0.5)
+        result["estimation_note"] = (
+            "DPI unknown for phone-captured image; using 300 DPI "
+            "(print resolution) as approximation"
+        )
+
+    return result
 
 
 def load_orphan_corrections(path: Path) -> dict[str, dict[str, Any]]:
@@ -728,9 +800,9 @@ def integrate_sample(
         data["language_confidence"] = 0.0
         data["text_scope_detection_method"] = "none"
 
-    # Script family (D04 fix)
-    data["script_family"] = SCRIPT_FAMILY_MAPPING.get(
-        data.get("iso15924_script", ""), "other"
+    # Script family (D04 fix) - centralised lookup from iso_language_script
+    data["script_family"] = _get_script_family(
+        data.get("iso15924_script", "")
     )
 
     # -------------------------------------------------------------------
@@ -743,13 +815,17 @@ def integrate_sample(
         # Prefer egret-xlarge (17-class, per-detection confidence)
         data["layout_detections"] = egret_dets
         data["layout_source"] = "egret_xlarge"
-        avg_conf = (
-            sum(d.get("confidence", 0.9) for d in egret_dets) / len(egret_dets)
-            if egret_dets
-            else 0.9
+        # Calibrated confidence: base 0.70 for running SOTA egret model,
+        # +0.15 modulated by fraction of detections with confidence >= 0.5.
+        # Raw detection confidence reflects bbox uncertainty, not overall
+        # layout analysis reliability. Range: [0.70, 0.85].
+        n_dets = len(egret_dets)
+        high_conf = sum(
+            1 for d in egret_dets if d.get("confidence", 0.9) >= 0.5
         )
-        data["layout_confidence"] = round(avg_conf, 4)
-        data["layout_detection_count"] = len(egret_dets)
+        calibrated_conf = 0.70 + 0.15 * (high_conf / n_dets) if n_dets else 0.60
+        data["layout_confidence"] = round(calibrated_conf, 4)
+        data["layout_detection_count"] = n_dets
 
         flags = derive_content_flags(egret_dets)
         data["has_table"] = flags["has_table"]
@@ -758,7 +834,7 @@ def integrate_sample(
         data["has_code"] = flags["has_code"]
         data["content_flags_tier"] = "tier_2_model"
         data["content_flags_source"] = "egret_xlarge"
-        data["content_flags_confidence"] = round(avg_conf, 4)
+        data["content_flags_confidence"] = round(calibrated_conf, 4)
     elif layout_dets:
         data["layout_detections"] = layout_dets
         data["layout_source"] = "docling_gpu"
@@ -791,6 +867,20 @@ def integrate_sample(
             "content_flags_source", "doclayout_yolo"
         )
         data["content_flags_confidence"] = 0.7
+
+    # Derive layout_category and text_area_ratio from whichever detections we chose
+    active_dets = data.get("layout_detections", [])
+    if active_dets:
+        layout_cat, layout_cat_conf = derive_layout_category(active_dets)
+        data["layout_category"] = layout_cat
+        data["layout_category_confidence"] = layout_cat_conf
+        data["text_area_ratio"] = compute_text_area_ratio(
+            active_dets, width, height,
+        )
+    else:
+        data["layout_category"] = "unknown"
+        data["layout_category_confidence"] = 0.0
+        data["text_area_ratio"] = 0.0
 
     # Override content flags with LLM data (more reliable for has_handwriting)
     # For res/ images, transfer from their ori/ counterpart via CSV mapping
@@ -848,7 +938,7 @@ def integrate_sample(
     # -------------------------------------------------------------------
     mos = mos_index.get(filename)
 
-    if mos:
+    if mos and is_res:
         data["quality_overall_mos"] = mos["overall"]
         data["quality_sharpness_mos"] = mos["sharpness"]
         data["quality_color_fidelity_mos"] = mos["color_fidelity"]
@@ -856,6 +946,16 @@ def integrate_sample(
         data["quality_tier"] = mos_to_quality_tier(mos["overall"])
         data["quality_scores_confidence"] = 0.95
         data["quality_scores_source"] = "human_mos_itur_bt500"
+    elif is_ori:
+        # ori/ images are source degraded images - MOS only collected for res/
+        data["quality_overall_mos"] = None
+        data["quality_sharpness_mos"] = None
+        data["quality_color_fidelity_mos"] = None
+        data["quality_scores_confidence"] = 0.0
+        data["quality_scores_source"] = "none"
+        data["quality_mos_note"] = (
+            "ori/ images are source degraded images without MOS scores"
+        )
     else:
         data["quality_scores_confidence"] = 0.0
         data["quality_scores_source"] = "none"
@@ -896,19 +996,14 @@ def integrate_sample(
     # -------------------------------------------------------------------
     if is_ori:
         data["physical_degradation_present"] = True
-        data["physical_degradation_types"] = [
-            "shadow",
-            "occlusion",
-            "blur",
-            "creases",
-            "moire",
-        ]
+        data["physical_degradation_types"] = ["unknown_single_distortion"]
         data["physical_degradation_note"] = (
-            "DIQA-5000 ori/ images have real-world degradations. "
-            "Specific distortion category per image requires lookup table "
-            "not provided in the public dataset."
+            "Each DIQA-5000 ori/ image has exactly ONE distortion type "
+            "(shadow, occlusion, blur, creases, or moire) but the per-image "
+            "assignment is not provided in the public dataset. "
+            "100 images per distortion type across 500 ori/ images."
         )
-        data["physical_degradation_confidence"] = 0.7
+        data["physical_degradation_confidence"] = 0.5
     else:
         data["physical_degradation_present"] = False
         data["physical_degradation_types"] = []
@@ -925,7 +1020,9 @@ def integrate_sample(
     # -------------------------------------------------------------------
     # 12. Paper size (D17) - estimated
     # -------------------------------------------------------------------
-    data["paper_size"] = estimate_paper_size(width, height, dpi)
+    data["paper_size"] = estimate_paper_size(
+        width, height, dpi, capture_method=data.get("capture_method"),
+    )
 
     # -------------------------------------------------------------------
     # 13. Handwriting assessment (D16) - from LLM
@@ -1222,6 +1319,25 @@ def main() -> None:
     ocr_index = load_ocr_batches(OCR_BATCH_DIR)
     mos_index, res_to_ori = load_mos_scores(DATASET_DIR)
     orphan_corr = load_orphan_corrections(ORPHAN_CORRECTIONS_PATH)
+
+    # Data leakage check: ensure no ori/ parent appears across multiple splits
+    split_map: dict[str, str] = {}
+    for s in metadata["samples"]:
+        source = s.get("source", {})
+        fname = source.get("original_filename", "")
+        split_name = source.get("split", "")
+        if fname and split_name:
+            split_map[fname] = split_name
+
+    leaks = check_split_leakage(res_to_ori, split_map)
+    if leaks:
+        log.warning(
+            "DATA LEAKAGE: %d ori/ images appear in multiple splits: %s",
+            len(leaks),
+            leaks[:5],
+        )
+    else:
+        log.info("Data leakage check: PASSED (no ori/ images cross splits)")
 
     # Run integration
     stats = run_integration(

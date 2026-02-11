@@ -1,10 +1,10 @@
 {
   "dataset": "diqa-5000",
   "metadata_path": "/mnt/e/image_detection/metadata_registry/json/diqa-5000_metadata.json",
-  "audited_at": "2026-02-10T15:45:16.266098+00:00",
+  "audited_at": "2026-02-10T16:09:23.261445+00:00",
   "total_samples": 5500,
-  "passed_all": 5212,
-  "failed_any": 288,
+  "passed_all": 5248,
+  "failed_any": 252,
   "per_field_results": {
     "split": {
       "pass": 5500,
@@ -17,14 +17,14 @@
       "fail_rate_pct": 0.0
     },
     "domain_level1": {
-      "pass": 5456,
-      "fail": 44,
-      "fail_rate_pct": 0.8
+      "pass": 5467,
+      "fail": 33,
+      "fail_rate_pct": 0.6
     },
     "iso639_language": {
-      "pass": 5489,
-      "fail": 11,
-      "fail_rate_pct": 0.2
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
     },
     "script_family": {
       "pass": 5500,
@@ -37,9 +37,9 @@
       "fail_rate_pct": 0.0
     },
     "layout_bbox_valid": {
-      "pass": 5471,
-      "fail": 29,
-      "fail_rate_pct": 0.53
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
     },
     "content_flags_boolean": {
       "pass": 5500,
@@ -62,9 +62,9 @@
       "fail_rate_pct": 0.0
     },
     "handwriting_present": {
-      "pass": 5489,
-      "fail": 11,
-      "fail_rate_pct": 0.2
+      "pass": 5500,
+      "fail": 0,
+      "fail_rate_pct": 0.0
     },
     "quality_overall_mos": {
       "pass": 5500,
@@ -119,69 +119,6 @@
       }
     },
     {
-      "image_id": "13833edc-9ed9-402a-b5d1-6dae78bac4fa",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [4]: w=0.0, h=1082.5161132812502 (must be >0)"
-      }
-    },
-    {
-      "image_id": "fc2ee62c-64fd-492f-9305-f1e0b6097821",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=1005.1614583333333 (must be >0)"
-      }
-    },
-    {
-      "image_id": "3f5b1405-5897-490b-ad2d-de7881abc747",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=1010.4514973958333 (must be >0)"
-      }
-    },
-    {
-      "image_id": "579c1c7a-f379-4f49-beeb-250185721615",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [6]: w=0.0, h=1005.1614583333333 (must be >0)"
-      }
-    },
-    {
-      "image_id": "abc871fa-72e6-4e86-b258-d8e55e7c3352",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=1005.1614583333333 (must be >0)"
-      }
-    },
-    {
-      "image_id": "6f5cd7ca-d86b-4f2a-9d4d-9a93f5b4fc9a",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=1010.4514973958333 (must be >0)"
-      }
-    },
-    {
-      "image_id": "af6d0d06-c6dc-48ae-b03b-f89793b5f523",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [6]: w=0.0, h=1005.1614583333333 (must be >0)"
-      }
-    },
-    {
       "image_id": "04bf1392-3555-4720-9d64-514dec4b697b",
       "failed_fields": [
         "text_has_content"
@@ -197,60 +134,6 @@
       ],
       "details": {
         "text_has_content": "text_statistics.has_content=False"
-      }
-    },
-    {
-      "image_id": "849cc0c4-d778-41ed-8fc6-beb35e8af1f4",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [0]: w=436.21028645833326, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "e4152e67-b3df-40f9-9fed-39d84c1b5fa5",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [4]: w=1354.500020345052, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "b456a6db-d236-4c05-90be-a914b837b0eb",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [1]: w=1333.4999593098958, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "77ba7e92-2913-4560-914c-54c22de9ebad",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [4]: w=1354.500020345052, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "ef431fbe-3a2e-4487-a94c-cd3c1e195b67",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [1]: w=1333.4999593098958, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "763c43f9-66d5-4238-877c-4b3a077a6ef4",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [1]: w=1333.499979654948, h=0.0 (must be >0)"
       }
     },
     {
@@ -362,42 +245,6 @@
       }
     },
     {
-      "image_id": "c6ebd8cb-cd27-485a-bf68-45bd0c8289c8",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [9]: w=908.8295440673828, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "3a598ab4-1578-46e0-b156-7ad5612c502c",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [9]: w=908.8295440673828, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "f5ac9863-ea6a-48bf-8871-25c3f30bbf05",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [8]: w=972.3692220052085, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "73e74a63-fd79-46a8-a252-09bb9e6979c6",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [4]: w=975.2936197916667, h=0.0 (must be >0)"
-      }
-    },
-    {
       "image_id": "edf64c1b-4c42-40d3-9e38-b7b3604415e9",
       "failed_fields": [
         "text_has_content"
@@ -445,16 +292,10 @@
     {
       "image_id": "e2bd0635-dbca-423a-be86-ed90ae3e43e2",
       "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "text_has_content",
-        "handwriting_present"
+        "text_has_content"
       ],
       "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "text_has_content": "text_statistics.has_content=False",
-        "handwriting_present": "handwriting_present is missing"
+        "text_has_content": "text_statistics.has_content=False"
       }
     },
     {
@@ -629,15 +470,6 @@
       }
     },
     {
-      "image_id": "5247ec17-1d3b-458b-a7ab-41c59c4a4902",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [17]: w=994.0909016927084, h=0.0 (must be >0)"
-      }
-    },
-    {
       "image_id": "eb328d71-15e5-410d-b45b-bc802adcd6f4",
       "failed_fields": [
         "text_has_content"
@@ -746,24 +578,6 @@
       }
     },
     {
-      "image_id": "af026e02-7cde-45f0-bfbe-a486de59dfe7",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [10]: w=1809.5340169270833, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "f16b395b-b1ef-422f-87e2-ce69affb0d9b",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [10]: w=1809.5340169270833, h=0.0 (must be >0)"
-      }
-    },
-    {
       "image_id": "3f2abc89-7d8a-4a77-bd27-39fd281f1a0a",
       "failed_fields": [
         "domain_level1"
@@ -851,24 +665,6 @@
       ],
       "details": {
         "domain_level1": "domain_level1 is 'UNK'"
-      }
-    },
-    {
-      "image_id": "67d7c012-aec3-444f-a2ef-eb0cbba05c43",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [1]: w=296.45123291015625, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "b2c78810-84e6-4683-98ff-d7043e981ce7",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [1]: w=420.6402587890625, h=0.0 (must be >0)"
       }
     },
     {
@@ -1160,139 +956,30 @@
       }
     },
     {
-      "image_id": "46226890-a546-4a7a-8bdb-87d371db2d70",
-      "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "handwriting_present"
-      ],
-      "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "handwriting_present": "handwriting_present is missing"
-      }
-    },
-    {
-      "image_id": "fa9f9e2f-8fd7-4468-8bd2-381d609ab449",
-      "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "handwriting_present"
-      ],
-      "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "handwriting_present": "handwriting_present is missing"
-      }
-    },
-    {
       "image_id": "adbd228d-e860-4da2-a6d6-374a117be4c8",
       "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "text_has_content",
-        "handwriting_present"
+        "text_has_content"
       ],
       "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "text_has_content": "text_statistics.has_content=False",
-        "handwriting_present": "handwriting_present is missing"
-      }
-    },
-    {
-      "image_id": "503596d3-98cf-4c4c-9057-7fd97f76c67f",
-      "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "handwriting_present"
-      ],
-      "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "handwriting_present": "handwriting_present is missing"
-      }
-    },
-    {
-      "image_id": "1b14fafc-eb82-439d-ba96-360e76dd66ba",
-      "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "handwriting_present"
-      ],
-      "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "handwriting_present": "handwriting_present is missing"
+        "text_has_content": "text_statistics.has_content=False"
       }
     },
     {
       "image_id": "0a9b8334-1a43-4988-9aca-7d919a6a9833",
       "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "text_has_content",
-        "handwriting_present"
+        "text_has_content"
       ],
       "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "text_has_content": "text_statistics.has_content=False",
-        "handwriting_present": "handwriting_present is missing"
+        "text_has_content": "text_statistics.has_content=False"
       }
     },
     {
       "image_id": "892fd1b4-9c9d-46ec-b42e-fb18724f8c51",
       "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "text_has_content",
-        "handwriting_present"
+        "text_has_content"
       ],
       "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "text_has_content": "text_statistics.has_content=False",
-        "handwriting_present": "handwriting_present is missing"
-      }
-    },
-    {
-      "image_id": "0cef507f-0a49-439c-9e49-1c9402851c30",
-      "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "handwriting_present"
-      ],
-      "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "handwriting_present": "handwriting_present is missing"
-      }
-    },
-    {
-      "image_id": "4346368c-0b4d-45df-900a-2bc297d469c9",
-      "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "handwriting_present"
-      ],
-      "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "handwriting_present": "handwriting_present is missing"
-      }
-    },
-    {
-      "image_id": "78650c8a-0ad7-4cc2-96aa-c6ead41642e2",
-      "failed_fields": [
-        "domain_level1",
-        "iso639_language",
-        "handwriting_present"
-      ],
-      "details": {
-        "domain_level1": "domain_level1 is 'UNK'",
-        "iso639_language": "iso639_language is null/missing",
-        "handwriting_present": "handwriting_present is missing"
+        "text_has_content": "text_statistics.has_content=False"
       }
     },
     {
@@ -2101,33 +1788,6 @@
       }
     },
     {
-      "image_id": "11e3bae4-b893-48d6-bbc0-9998690c664b",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [11]: w=422.19765218098956, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "44032fd7-7d86-4bae-ad50-a8d85b604720",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [1]: w=0.0, h=1056.5322265625002 (must be >0)"
-      }
-    },
-    {
-      "image_id": "d8ca489a-892b-408d-8a8f-5262ad21fe11",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [1]: w=0.0, h=1056.5322265625002 (must be >0)"
-      }
-    },
-    {
       "image_id": "02e5a6fb-0516-4325-bb8e-1615bfc41c82",
       "failed_fields": [
         "text_has_content"
@@ -2503,42 +2163,6 @@
       ],
       "details": {
         "text_has_content": "text_statistics.has_content=False"
-      }
-    },
-    {
-      "image_id": "deea36c1-e302-45f8-8144-10a2df2817b2",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [2]: w=654.1976318359374, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "4611b299-7e49-40bf-85ea-d7a1e42d3fe0",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [2]: w=654.1976318359374, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "d0667747-74c8-4d43-9bc9-58aca70e5716",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [5]: w=1813.441914876302, h=0.0 (must be >0)"
-      }
-    },
-    {
-      "image_id": "9dcfe491-7b30-40a8-9bea-392505c1e418",
-      "failed_fields": [
-        "layout_bbox_valid"
-      ],
-      "details": {
-        "layout_bbox_valid": "1 bad bbox(es): [5]: w=1814.8012084960938, h=0.0 (must be >0)"
       }
     },
     {

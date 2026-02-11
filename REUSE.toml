@@ -247,13 +247,13 @@ path = [
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
-# Font files for synthetic document generation - various open licenses
+# Font files for synthetic document generation - SIL Open Font License
 # Covered under OFL-1.1 (SIL Open Font License) which is REUSE-compatible
 [[annotations]]
 path = [
     "fonts/**",
 ]
-SPDX-License-Identifier = "MIT"
+SPDX-License-Identifier = "OFL-1.1"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
 # Metadata registry aggregates and reports - CC0-1.0

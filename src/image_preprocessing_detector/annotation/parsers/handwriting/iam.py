@@ -53,9 +53,10 @@ Example:
 from __future__ import annotations
 
 import logging
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
+
+import defusedxml.ElementTree as ET  # noqa: N817
 
 from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser
@@ -214,7 +215,7 @@ class IAMParser(BaseParser):
             - full_text: Complete transcription
         """
         try:
-            tree = ET.parse(xml_path)  # noqa: S314 # Trusted dataset XML
+            tree = ET.parse(xml_path)
             root = tree.getroot()
 
             result: dict[str, Any] = {

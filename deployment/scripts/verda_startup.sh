@@ -25,7 +25,7 @@ cd /workspace
 python3 -m venv /workspace/venv
 source /workspace/venv/bin/activate
 
-# Install PyTorch with CUDA 12.6 support
+# Install PyTorch with CUDA 12.4 support
 pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 
@@ -71,6 +71,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -128,8 +129,8 @@ PARQUET_DATASETS = {
     "docsynth",
 }
 
-GCS_BUCKET = "image_detection_b"
-GCS_PREFIX = "image-preprocessing-detector"
+GCS_BUCKET = os.environ.get("GCS_BUCKET", "image_detection_b")
+GCS_PREFIX = os.environ.get("GCS_PREFIX", "image-preprocessing-detector")
 
 # DocLayout-YOLO class mapping (DocLayNet classes)
 LAYOUT_CLASSES = {

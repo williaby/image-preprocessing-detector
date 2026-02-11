@@ -353,8 +353,9 @@ uv run python scripts/enrich_language.py --dataset {dataset_name}
 
 ```bash
 # Create checkpoint directory
-mkdir -p tmp_cleanup/.checkpoint-{dataset}-$(date +%Y%m%d%H%M%S)
-CHECKPOINT_DIR="tmp_cleanup/.checkpoint-{dataset}-$(date +%Y%m%d%H%M%S)"
+CHECKPOINT_TS=$(date +%Y%m%d%H%M%S)
+CHECKPOINT_DIR="tmp_cleanup/.checkpoint-{dataset}-${CHECKPOINT_TS}"
+mkdir -p "$CHECKPOINT_DIR"
 
 # Backup all files that will be modified
 cp docs/datasets/source/{dataset}.md "$CHECKPOINT_DIR/"
@@ -409,7 +410,10 @@ grep "{dataset}" docs/datasets/DATASET_PROCESSING_STATUS.md
 
 ```bash
 # ROLLBACK: Restore from checkpoint
-cp "$CHECKPOINT_DIR"/* docs/
+cp "$CHECKPOINT_DIR"/{dataset}.md docs/datasets/source/
+cp "$CHECKPOINT_DIR"/DATASET_QUICK_REFERENCE.md docs/datasets/
+cp "$CHECKPOINT_DIR"/DATASET_PROCESSING_STATUS.md docs/datasets/
+cp "$CHECKPOINT_DIR"/DATASET_NAMING_STANDARD.md docs/datasets/
 echo "Rolled back to checkpoint"
 ```
 
@@ -551,5 +555,6 @@ uv run python scripts/metadata_completeness_report.py
 ls -la tmp_cleanup/.checkpoint-{dataset}-*
 
 # Restore from specific checkpoint
-cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/* docs/
+cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/{dataset}.md docs/datasets/source/
+cp tmp_cleanup/.checkpoint-{dataset}-{timestamp}/DATASET_*.md docs/datasets/
 ```

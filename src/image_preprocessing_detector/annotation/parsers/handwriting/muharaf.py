@@ -50,9 +50,10 @@ Example:
 from __future__ import annotations
 
 import logging
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
+
+import defusedxml.ElementTree as ET  # noqa: N817
 
 from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser
@@ -145,7 +146,7 @@ class MuharafParser(BaseParser):
             image_path: Path to image file (for dimensions)
             labels: OriginalLabels instance to populate
         """
-        tree = ET.parse(xml_path)  # noqa: S314 # Trusted dataset XML
+        tree = ET.parse(xml_path)
         root = tree.getroot()
 
         if labels.raw_labels is None:

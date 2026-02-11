@@ -41,9 +41,10 @@ Example:
 from __future__ import annotations
 
 import logging
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
+
+import defusedxml.ElementTree as ET  # noqa: N817
 
 from ...schemas.immutable import OriginalLabels
 from ..base import BaseParser
@@ -107,7 +108,7 @@ class NepaliHandwrittenParser(BaseParser):
         xml_path = image_path.with_suffix(".xml")
         if xml_path.exists():
             try:
-                tree = ET.parse(xml_path)  # noqa: S314
+                tree = ET.parse(xml_path)
                 root = tree.getroot()
 
                 # Extract image dimensions if available

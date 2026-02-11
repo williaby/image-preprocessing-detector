@@ -119,7 +119,7 @@ repos:
         args:
           - -c
           - |
-            PATTERN="^_[A-Z_]*_CACHE: dict"
+            PATTERN="^_[A-Z_]*_CACHE: (dict|Dict|Mapping)"
             SEARCH_PATH="src/image_preprocessing_detector/annotation/parsers/"
             if grep -rn "$PATTERN" "$SEARCH_PATH" 2>/dev/null \
                 | grep -v "_COCO_CACHE" \

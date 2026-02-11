@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Docling OCR Server with GraniteDocling VLM
 # Higher accuracy mode using IBM's GraniteDocling-258M model
 #
@@ -65,7 +63,9 @@ services:
       # Output directory
       - /mnt/unraid/appdata/docling/output:/data/output:rw
 
-    # Resource limits (VLM needs more RAM; enforced in Swarm mode)
+    # Resource limits (VLM needs more RAM)
+    mem_limit: 48g
+    cpus: 10
     deploy:
       resources:
         limits:

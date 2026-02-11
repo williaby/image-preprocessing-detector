@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Byron Williams <byronawilliams@gmail.com>
 # SPDX-License-Identifier: MIT
-"""Automated pre-screening validator for DIQA-5000 metadata samples.
+"""Automated pre-screening validator for Layer 2 metadata samples.
 
-Validates ALL 5,500 DIQA-5000 samples against a set of schema compliance
+Validates ALL samples in a dataset's metadata against schema compliance
 rules that go beyond structural JSON Schema validation.  These rules check
 **semantic readiness** for downstream training pipelines: splits are
 assigned, capture methods are recognized, languages are identified, layout
@@ -13,22 +13,18 @@ The script reads the *latest* enrichment version for each sample
 (``enrichments.current_version`` selects from ``enrichments.versions[]``)
 and applies 14 field-level validation rules.
 
-Results are written to
-``scripts/audit/results/diqa-5000/automated_screening.json``.
-
 CLI usage::
 
     PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \\
-        uv run python3 scripts/audit/automated_prescreening.py
+        uv run python3 scripts/audit/automated_prescreening.py --dataset diqa-5000
 
     # Dry run (count only, no file output)
     PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \\
-        uv run python3 scripts/audit/automated_prescreening.py --dry-run
+        uv run python3 scripts/audit/automated_prescreening.py --dataset diqa-5000 --dry-run
 
-    # Custom metadata path
+    # All datasets at once
     PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \\
-        uv run python3 scripts/audit/automated_prescreening.py \\
-            --metadata-path /path/to/diqa-5000_metadata.json
+        uv run python3 scripts/audit/automated_prescreening.py --all-datasets
 """
 
 from __future__ import annotations
@@ -48,17 +44,22 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-DEFAULT_METADATA_PATH = Path(
-    "/mnt/e/image_detection/metadata_registry/json/diqa-5000_metadata.json"
+METADATA_REGISTRY_DIR = Path(
+    "/mnt/e/image_detection/metadata_registry/json"
 )
-DEFAULT_OUTPUT_PATH = (
-    PROJECT_ROOT
-    / "scripts"
-    / "audit"
-    / "results"
-    / "diqa-5000"
-    / "automated_screening.json"
-)
+
+
+def _metadata_path_for(dataset: str) -> Path:
+    """Derive metadata JSON path from dataset name."""
+    return METADATA_REGISTRY_DIR / f"{dataset}_metadata.json"
+
+
+def _output_path_for(dataset: str) -> Path:
+    """Derive output report path from dataset name."""
+    return (
+        PROJECT_ROOT / "scripts" / "audit" / "results"
+        / dataset / "automated_screening.json"
+    )
 
 VALID_CAPTURE_METHODS = frozenset(
     {
@@ -78,6 +79,11 @@ VALID_SCRIPT_FAMILIES = frozenset(
         "arabic",
         "indic",
         "cyrillic",
+        "greek",
+        "hebrew",
+        "ethiopic",
+        "georgian",
+        "armenian",
         "other",
     }
 )
@@ -401,11 +407,13 @@ def _build_empty_field_counters() -> dict[str, dict[str, int]]:
 # ---------------------------------------------------------------------------
 def run_prescreening(
     metadata_path: Path,
+    dataset_name: str = "unknown",
 ) -> dict[str, Any]:
     """Run the full pre-screening audit across all samples.
 
     Args:
-        metadata_path: Path to the DIQA-5000 metadata JSON file.
+        metadata_path: Path to the dataset metadata JSON file.
+        dataset_name: Canonical dataset name for the report header.
 
     Returns:
         The complete result dictionary ready for JSON serialization.
@@ -470,7 +478,7 @@ def run_prescreening(
         }
 
     result: dict[str, Any] = {
-        "dataset": "diqa-5000",
+        "dataset": dataset_name,
         "metadata_path": str(metadata_path),
         "audited_at": datetime.now(UTC).isoformat(),
         "total_samples": total_samples,
@@ -498,8 +506,9 @@ def print_summary(result: dict[str, Any]) -> None:
     pass_rate = round((passed / total) * 100, 2) if total > 0 else 0.0
 
     print()
+    dataset = result.get("dataset", "unknown")
     print("=" * 72)
-    print("  DIQA-5000 AUTOMATED PRE-SCREENING RESULTS")
+    print(f"  {dataset.upper()} AUTOMATED PRE-SCREENING RESULTS")
     print("=" * 72)
     print(f"  Audited at:    {result['audited_at']}")
     print(f"  Metadata:      {result['metadata_path']}")
@@ -551,36 +560,46 @@ def build_parser() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser(
         description=(
-            "Validate all DIQA-5000 samples against schema compliance "
+            "Validate dataset metadata samples against schema compliance "
             "rules and produce a structured pre-screening report."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  # Run with defaults\n"
-            "  uv run python3 scripts/audit/automated_prescreening.py\n\n"
-            "  # Dry run (no file output)\n"
-            "  uv run python3 scripts/audit/automated_prescreening.py --dry-run\n\n"
+            "  # Single dataset\n"
+            "  uv run python3 scripts/audit/automated_prescreening.py --dataset diqa-5000\n\n"
+            "  # All datasets in metadata registry\n"
+            "  uv run python3 scripts/audit/automated_prescreening.py --all-datasets\n\n"
             "  # Custom paths\n"
             "  uv run python3 scripts/audit/automated_prescreening.py \\\n"
-            "      --metadata-path /path/to/metadata.json \\\n"
-            "      --output /path/to/results.json\n"
+            "      --dataset ohr-bench --metadata-path /path/to/metadata.json\n"
         ),
+    )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "--dataset",
+        type=str,
+        help="Canonical dataset name (e.g., diqa-5000, ohr-bench).",
+    )
+    group.add_argument(
+        "--all-datasets",
+        action="store_true",
+        help="Run prescreening on ALL datasets in metadata registry.",
     )
     parser.add_argument(
         "--metadata-path",
         type=Path,
-        default=DEFAULT_METADATA_PATH,
+        default=None,
         help=(
-            "Path to the DIQA-5000 metadata JSON file. "
-            f"Default: {DEFAULT_METADATA_PATH}"
+            "Override the metadata JSON path. "
+            "Default: auto-derived from --dataset."
         ),
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=DEFAULT_OUTPUT_PATH,
-        help=(f"Path for the output JSON report. Default: {DEFAULT_OUTPUT_PATH}"),
+        default=None,
+        help="Override the output JSON report path. Default: auto-derived.",
     )
     parser.add_argument(
         "--dry-run",
@@ -617,8 +636,19 @@ def main(argv: list[str] | None = None) -> int:
         format="%(levelname)s: %(message)s",
     )
 
+    if args.all_datasets:
+        return _run_all_datasets(args)
+    return _run_single_dataset(args)
+
+
+def _run_single_dataset(args: argparse.Namespace) -> int:
+    """Run prescreening on a single dataset."""
+    dataset_name: str = args.dataset
+    metadata_path = args.metadata_path or _metadata_path_for(dataset_name)
+    output_path = args.output or _output_path_for(dataset_name)
+
     try:
-        result = run_prescreening(args.metadata_path)
+        result = run_prescreening(metadata_path, dataset_name=dataset_name)
     except FileNotFoundError as exc:
         logger.error("%s", exc)
         return 2
@@ -630,7 +660,6 @@ def main(argv: list[str] | None = None) -> int:
         print_summary(result)
 
     if not args.dry_run:
-        output_path: Path = args.output
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as fh:
             json.dump(result, fh, indent=2, ensure_ascii=False)
@@ -641,6 +670,82 @@ def main(argv: list[str] | None = None) -> int:
     if result["failed_any"] > 0:
         return 1
     return 0
+
+
+def _run_all_datasets(args: argparse.Namespace) -> int:
+    """Run prescreening on all datasets in the metadata registry."""
+    if not METADATA_REGISTRY_DIR.exists():
+        logger.error("Metadata registry not found: %s", METADATA_REGISTRY_DIR)
+        return 2
+
+    # Find all *_metadata.json files
+    metadata_files = sorted(METADATA_REGISTRY_DIR.glob("*_metadata.json"))
+    if not metadata_files:
+        logger.error("No metadata files found in %s", METADATA_REGISTRY_DIR)
+        return 2
+
+    logger.info("Found %d metadata files", len(metadata_files))
+
+    cross_dataset_results: list[dict[str, Any]] = []
+    any_failures = False
+
+    for meta_file in metadata_files:
+        # Extract dataset name from filename: "diqa-5000_metadata.json" -> "diqa-5000"
+        dataset_name = meta_file.stem.replace("_metadata", "")
+        logger.info("--- Prescreening: %s ---", dataset_name)
+
+        try:
+            result = run_prescreening(meta_file, dataset_name=dataset_name)
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as exc:
+            logger.warning("Skipping %s: %s", dataset_name, exc)
+            cross_dataset_results.append({
+                "dataset": dataset_name,
+                "error": str(exc),
+            })
+            continue
+
+        if not args.quiet:
+            print_summary(result)
+
+        # Write individual report
+        if not args.dry_run:
+            output_path = _output_path_for(dataset_name)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, "w", encoding="utf-8") as fh:
+                json.dump(result, fh, indent=2, ensure_ascii=False)
+
+        total = result["total_samples"]
+        passed = result["passed_all"]
+        pass_rate = round((passed / total) * 100, 2) if total > 0 else 0.0
+
+        cross_dataset_results.append({
+            "dataset": dataset_name,
+            "total_samples": total,
+            "passed_all": passed,
+            "failed_any": result["failed_any"],
+            "pass_rate_pct": pass_rate,
+        })
+
+        if result["failed_any"] > 0:
+            any_failures = True
+
+    # Write cross-dataset summary
+    if not args.dry_run:
+        summary_path = (
+            PROJECT_ROOT / "scripts" / "audit" / "results"
+            / "cross_dataset_summary.json"
+        )
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary = {
+            "audited_at": datetime.now(UTC).isoformat(),
+            "datasets_scanned": len(metadata_files),
+            "results": cross_dataset_results,
+        }
+        with open(summary_path, "w", encoding="utf-8") as fh:
+            json.dump(summary, fh, indent=2, ensure_ascii=False)
+        logger.info("Cross-dataset summary written to %s", summary_path)
+
+    return 1 if any_failures else 0
 
 
 if __name__ == "__main__":

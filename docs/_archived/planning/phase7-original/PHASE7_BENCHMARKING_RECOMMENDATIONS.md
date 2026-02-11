@@ -4,7 +4,7 @@ title: "Phase 7 IQA Benchmarking: Analysis and Recommendations"
 description: "Comprehensive analysis of benchmarking gaps and actionable recommendations for improved model evaluation"
 tags:
   - planning
-  - phase7
+  - phase_7
   - benchmarking
   - evaluation
 status: published

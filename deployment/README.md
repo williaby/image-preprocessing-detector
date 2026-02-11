@@ -222,9 +222,12 @@ Edit `scripts/gcs_processor.py` arguments:
 
 ```bash
 python3 gcs_processor.py pubtabnet \
-  --workers 16 \        # Concurrent API requests
-  --batch-size 10000 \  # Files per batch
-  --use-tmpfs           # Use RAM for faster I/O
+  --workers 16 \
+  --batch-size 10000 \
+  --use-tmpfs
+# --workers: Concurrent API requests
+# --batch-size: Files per batch
+# --use-tmpfs: Use RAM for faster I/O
 ```
 
 ## Monitoring

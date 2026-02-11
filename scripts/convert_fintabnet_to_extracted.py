@@ -15,7 +15,7 @@ Output format matches process_datasets.py output:
 
 import json
 import sys
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
 from pathlib import Path
 
 BATCH_SIZE = 200

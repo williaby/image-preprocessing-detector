@@ -18,6 +18,8 @@ import argparse
 import asyncio
 import json
 import logging
+import shutil
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -158,8 +160,8 @@ class GCSDatasetProcessor:
         logger.info(f"Found {len(files)} files")
         return files
 
-    def download_batch(self, gcs_paths: list[str], batch_num: int) -> list[Path]:
-        """Download a batch of files from GCS."""
+    def _download_batch_sync(self, gcs_paths: list[str], batch_num: int) -> list[Path]:
+        """Download a batch of files from GCS (synchronous)."""
         batch_dir = self.input_dir / f"batch_{batch_num}"
         batch_dir.mkdir(exist_ok=True)
 
@@ -181,10 +183,12 @@ class GCSDatasetProcessor:
         logger.info(f"Downloaded {len(local_paths)} files to {batch_dir}")
         return local_paths
 
+    async def download_batch(self, gcs_paths: list[str], batch_num: int) -> list[Path]:
+        """Download a batch of files from GCS without blocking the event loop."""
+        return await asyncio.to_thread(self._download_batch_sync, gcs_paths, batch_num)
+
     async def process_file(self, file_path: Path) -> ExtractionResult:
         """Process a single file through Docling using round-robin load balancing."""
-        import time
-
         start = time.perf_counter()
         client = self._get_next_client()
 
@@ -307,8 +311,6 @@ class GCSDatasetProcessor:
 
     def cleanup_batch(self, batch_num: int) -> None:
         """Clean up local files for a batch."""
-        import shutil
-
         batch_dir = self.input_dir / f"batch_{batch_num}"
         if batch_dir.exists():
             shutil.rmtree(batch_dir)
@@ -357,7 +359,7 @@ class GCSDatasetProcessor:
             )
 
             # Download
-            local_paths = self.download_batch(batch_files, batch_num)
+            local_paths = await self.download_batch(batch_files, batch_num)
 
             # Process
             results = await self.process_batch(local_paths, batch_num)

@@ -256,6 +256,11 @@ class ScriptFamily(str, Enum):
     ARABIC = "arabic"
     INDIC = "indic"
     CYRILLIC = "cyrillic"
+    GREEK = "greek"
+    HEBREW = "hebrew"
+    ETHIOPIC = "ethiopic"
+    GEORGIAN = "georgian"
+    ARMENIAN = "armenian"
     OTHER = "other"
 
 
@@ -271,7 +276,7 @@ SCRIPT_TO_FAMILY: dict[str, ScriptFamily] = {
     "Hira": ScriptFamily.CJK,
     "Kana": ScriptFamily.CJK,
     "Arab": ScriptFamily.ARABIC,
-    "Hebr": ScriptFamily.ARABIC,  # RTL family
+    "Hebr": ScriptFamily.HEBREW,
     "Deva": ScriptFamily.INDIC,
     "Beng": ScriptFamily.INDIC,
     "Taml": ScriptFamily.INDIC,
@@ -288,11 +293,25 @@ SCRIPT_TO_FAMILY: dict[str, ScriptFamily] = {
     "Laoo": ScriptFamily.INDIC,
     "Tibt": ScriptFamily.INDIC,
     "Cyrl": ScriptFamily.CYRILLIC,
-    "Grek": ScriptFamily.OTHER,
-    "Armn": ScriptFamily.OTHER,
-    "Geor": ScriptFamily.OTHER,
-    "Ethi": ScriptFamily.OTHER,
+    "Grek": ScriptFamily.GREEK,
+    "Armn": ScriptFamily.ARMENIAN,
+    "Geor": ScriptFamily.GEORGIAN,
+    "Ethi": ScriptFamily.ETHIOPIC,
 }
+
+
+def get_script_family(script_code: str) -> str:
+    """Get script family string from ISO 15924 code.
+
+    Centralised lookup used by integration scripts and validators.
+
+    Args:
+        script_code: ISO 15924 4-letter script code (e.g. "Latn", "Grek").
+
+    Returns:
+        Script family name as a lowercase string (e.g. "latin", "greek").
+    """
+    return SCRIPT_TO_FAMILY.get(script_code, ScriptFamily.OTHER).value
 
 
 @dataclass(frozen=True)

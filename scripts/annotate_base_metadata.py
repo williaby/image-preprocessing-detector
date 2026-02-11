@@ -56,6 +56,10 @@ from pyarrow import ipc
 from PIL import Image
 from tqdm import tqdm
 
+from image_preprocessing_detector.schema_utils.iso_language_script import (
+    get_script_family as _get_script_family,
+)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -4195,37 +4199,8 @@ def apply_tiered_enrichment(
     # Script family (from config, with auto-derivation from ISO 15924)
     enrichment.script_family = config.get("script_family")
     if enrichment.script_family is None and enrichment.iso15924_script:
-        # Auto-derive script family from ISO 15924 code
-        script_family_mapping = {
-            # Arabic script family
-            "Arab": "arabic",
-            "Hebr": "arabic",  # Hebrew shares RTL characteristics
-            # CJK script family
-            "Hans": "cjk",
-            "Hant": "cjk",
-            "Jpan": "cjk",
-            "Kore": "cjk",
-            # Indic script family
-            "Deva": "indic",
-            "Beng": "indic",
-            "Gujr": "indic",
-            "Guru": "indic",
-            "Knda": "indic",
-            "Mlym": "indic",
-            "Orya": "indic",
-            "Taml": "indic",
-            "Telu": "indic",
-            "Tibt": "indic",
-            "Thai": "indic",  # Southeast Asian, grouped with indic
-            # Latin script family
-            "Latn": "latin",
-            # Cyrillic script family
-            "Cyrl": "cyrillic",
-            "Grek": "latin",  # Greek shares Latin-family characteristics
-        }
-        enrichment.script_family = script_family_mapping.get(
-            enrichment.iso15924_script, "other"
-        )
+        # Centralised lookup from iso_language_script module
+        enrichment.script_family = _get_script_family(enrichment.iso15924_script)
 
     # Paper size (from config if specified)
     enrichment.paper_size = config.get("paper_size")

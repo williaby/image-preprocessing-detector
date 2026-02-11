@@ -5,7 +5,7 @@ description: "Comprehensive root cause analysis of DIQA-5000 benchmark failure a
   redesign of training methodology"
 tags:
 - planning
-- phase7
+- phase_7
 - iqa
 - training
 - root_cause_analysis

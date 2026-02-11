@@ -4,7 +4,7 @@ title: "Critical Analysis of Phase 7 ResNet-50 IQA Training Methodology"
 description: "Academic critique of Phase 7 training approach, methodology, and documentation with evidence-based recommendations"
 tags:
   - critique
-  - phase7
+  - phase_7
   - training
   - analysis
   - methodology

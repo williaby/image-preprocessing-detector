@@ -26,7 +26,6 @@ Usage:
 import argparse
 import json
 import logging
-import pickle
 from pathlib import Path
 
 logging.basicConfig(
@@ -37,7 +36,7 @@ logger = logging.getLogger(__name__)
 # Paths
 PUBTABNET_PATH = Path("/mnt/e/image_detection/01_base_data/tables/pubtabnet/pubtabnet")
 JSONL_PATH = PUBTABNET_PATH / "PubTabNet_2.0.0.jsonl"
-INDEX_PATH = Path("/mnt/e/image_detection/metadata_registry/pubtabnet_text_index.pkl")
+INDEX_PATH = Path("/mnt/e/image_detection/metadata_registry/pubtabnet_text_index.json")
 
 
 def extract_text_from_tokens(tokens: list[str]) -> str:
@@ -91,23 +90,23 @@ def build_text_index() -> dict[str, str]:
 
 
 def save_index(index: dict[str, str]) -> None:
-    """Save index to pickle file."""
+    """Save index to JSON file."""
     INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(INDEX_PATH, "wb") as f:
-        pickle.dump(index, f)
+    with open(INDEX_PATH, "w", encoding="utf-8") as f:
+        json.dump(index, f)
     logger.info(f"Saved index to {INDEX_PATH}")
 
 
 def load_index() -> dict[str, str]:
-    """Load index from pickle file."""
+    """Load index from JSON file."""
     if not INDEX_PATH.exists():
         logger.warning(f"Index not found, building: {INDEX_PATH}")
         index = build_text_index()
         save_index(index)
         return index
 
-    with open(INDEX_PATH, "rb") as f:
-        return pickle.load(f)
+    with open(INDEX_PATH, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def get_text(filename: str, index: dict[str, str] | None = None) -> str | None:

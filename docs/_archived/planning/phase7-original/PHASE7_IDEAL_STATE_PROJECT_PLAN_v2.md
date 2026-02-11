@@ -4,7 +4,7 @@ title: "Phase 7 IQA Training - MVP Project Plan v2"
 description: "MVP-focused project plan for continuous-label IQA with ResNet-50 production model and ResNet-18 efficiency model"
 tags:
   - planning
-  - phase7
+  - phase_7
   - iqa
   - project_plan
   - mvp

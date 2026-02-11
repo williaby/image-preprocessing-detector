@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Docling OCR Server for Dataset Text Extraction
 # Deploy on Docker VM: 192.168.1.209
 #
@@ -58,7 +56,9 @@ services:
       # Output directory (for extracted text)
       - /mnt/unraid/appdata/docling/output:/data/output:rw
 
-    # Resource limits (enforced in Swarm mode; use runtime flags for standalone)
+    # Resource limits (Compose V2+ enforces deploy.resources)
+    mem_limit: 32g
+    cpus: 8
     deploy:
       resources:
         limits:

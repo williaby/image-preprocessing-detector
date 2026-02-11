@@ -4,7 +4,7 @@ title: "Phase 7 IQA Training - Sprint Implementation Plan"
 description: "Detailed technical implementation plan with actionable sprints for MVP v2.1"
 tags:
   - planning
-  - phase7
+  - phase_7
   - iqa
   - sprints
   - implementation

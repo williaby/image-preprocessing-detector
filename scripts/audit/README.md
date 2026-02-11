@@ -268,6 +268,131 @@ scripts/audit/
 3. Copy `audit_report_template.md` to `results/{name}/audit_report.md`.
 4. Fill in the template using compliance JSON output and manual inspection.
 
+## Cross-Dataset Defect Tracking
+
+### Defect Catalog (`defect_catalog.json`)
+
+Each dataset audit produces a defect catalog with this schema:
+
+```json
+{
+  "dataset": "diqa-5000",
+  "audit_version": "v4",
+  "audited_at": "2026-02-10T...",
+  "defects": [
+    {
+      "id": "DIQA-001",
+      "field": "physical_degradation_types",
+      "defect_type": "wrong_value",
+      "severity": "critical",
+      "description": "All 5 types assigned to every ori/ image (should be 1 per image)",
+      "affected_samples": 500,
+      "affected_pct": 9.1,
+      "status": "fixed",
+      "fix_version": "integrated_v4",
+      "extrapolates_to": []
+    }
+  ],
+  "summary": {
+    "total_defects": 5,
+    "by_severity": {"critical": 2, "high": 1, "medium": 1, "low": 1},
+    "by_status": {"fixed": 4, "accepted": 1}
+  }
+}
+```
+
+### Cross-Dataset Extrapolation Patterns
+
+Defects found during one dataset's audit often indicate systemic issues
+affecting other datasets processed through the same pipeline. Track these
+with the `extrapolates_to` field.
+
+Known cross-dataset defects from the DIQA-5000 audit:
+
+| Defect | Root Cause | Affected Datasets |
+|--------|-----------|-------------------|
+| Wrong script_family for Greek, Hebrew, Ethiopic, Georgian, Armenian scripts | Divergent local mappings in `annotate_base_metadata.py` | All ~46 datasets with non-Latin/CJK/Arabic/Indic/Cyrillic text |
+| VALID_SCRIPT_FAMILIES too restrictive (6 values) | Prescreening validator not updated for expanded families | All datasets audited before fix |
+| Paper size confidence too high for camera captures | `estimate_paper_size()` assumed 300 DPI for all captures | Any dataset with `camera_smartphone` capture method |
+
+### DIQA-Specific Defects (Not Extrapolating)
+
+| Defect | Root Cause | Why DIQA-Only |
+|--------|-----------|---------------|
+| All 5 distortion types assigned to ori/ | DIQA integration script over-assigned | Custom integration script |
+| MOS scores leaked from res/ to ori/ | MOS fallback in `load_mos_scores()` | DIQA-specific MOS handling |
+
+## Automated Prescreening
+
+The `automated_prescreening.py` tool runs lightweight validation checks
+on any dataset's Layer 2 metadata. It is faster than full schema compliance
+and catches common issues early.
+
+### Single Dataset
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/automated_prescreening.py --dataset diqa-5000
+```
+
+Output: `scripts/audit/results/diqa-5000/automated_screening.json`
+
+### All Datasets
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/automated_prescreening.py --all-datasets
+```
+
+Output:
+
+- Per-dataset: `scripts/audit/results/{dataset}/automated_screening.json`
+- Summary: `scripts/audit/results/cross_dataset_summary.json`
+
+The cross-dataset summary includes per-dataset pass rates and the most
+common failure patterns across all datasets.
+
+## Dataset Audit Priority Order
+
+After completing the DIQA-5000 deep audit, prioritize remaining datasets
+based on training importance, sample count, and known risk factors:
+
+### Tier 1: High Priority (Training-Critical)
+
+| Dataset | Samples | Training Purpose | Risk Factors |
+|---------|---------|-----------------|--------------|
+| ohr-bench | 8,500 | IQA teacher training | Foundation model data |
+| doclaynet | 81,000 | Layout detection | Large, high-impact |
+| synth-multiscript-250k | 250,000 | Script detection | Synthetic, new pipeline |
+
+### Tier 2: Medium Priority (Validation/Calibration)
+
+| Dataset | Samples | Training Purpose | Risk Factors |
+|---------|---------|-----------------|--------------|
+| pubtabnet | 568,000 | Table detection | Very large, scientific domain |
+| tablebank | 278,000 | Table detection | Multiple sources |
+| realdae | 1,200 | IQA benchmark | Camera captures, small |
+
+### Tier 3: Lower Priority (Supplementary)
+
+| Dataset | Samples | Training Purpose | Risk Factors |
+|---------|---------|-----------------|--------------|
+| mdiw13 | 290,000 | Multi-script | Legacy format |
+| mlt19 | 20,000 | Text detection | Multi-language |
+| fintabnet | 97,000 | Table detection | Financial domain |
+
+### Audit Workflow for Each Dataset
+
+1. **Run prescreening**: `--dataset {name}` to get quick pass/fail rates
+2. **Review paper/docs**: Read `docs/datasets/source/{name}.md` for expected values
+3. **Run schema compliance**: Full validation against v2.1.0 schema
+4. **Stratified sample**: Select 36 samples across relevant axes
+5. **Visual inspection**: Compare metadata against actual images
+6. **Multi-source comparison**: If multiple enrichment sources exist
+7. **Defect catalog**: Record findings with severity and extrapolation notes
+8. **Pipeline fixes**: Apply corrections to integration scripts
+9. **Re-run & validate**: Re-integrate, re-aggregate, re-screen
+
 ## Quick Reference: CLI Commands
 
 ```bash
@@ -286,6 +411,12 @@ python scripts/audit/audit_schema_compliance.py \
 python scripts/audit/audit_schema_compliance.py \
     --metadata-path /path/to/metadata.json \
     --output /path/to/report.json
+
+# Run prescreening on single dataset
+python scripts/audit/automated_prescreening.py --dataset diqa-5000
+
+# Run prescreening on all datasets
+python scripts/audit/automated_prescreening.py --all-datasets
 
 # Verbose mode for debugging
 python scripts/audit/audit_schema_compliance.py \

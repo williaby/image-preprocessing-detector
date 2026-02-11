@@ -4,8 +4,8 @@ title: "Phase 7 & Phase 9 Integration Strategy"
 description: "How Phase 7 ResNet-50/18 IQA models serve as foundation for Phase 9 element classifiers"
 tags:
   - planning
-  - phase7
-  - phase9
+  - phase_7
+  - phase_9
   - integration
   - transfer_learning
 status: draft

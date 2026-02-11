@@ -11,8 +11,8 @@
 
 set -euo pipefail
 
-DOCKER_HOST="byron@192.168.1.209"
-DEPLOY_DIR="/data/compose/docling"
+DOCKER_HOST="${DOCKER_HOST:-byron@192.168.1.209}"
+DEPLOY_DIR="${DEPLOY_DIR:-/data/compose/docling}"
 MODE="${1:-standard}"
 
 # Colors for output

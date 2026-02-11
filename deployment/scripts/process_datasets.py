@@ -9,6 +9,8 @@ Layout labels follow the Docling document model (docling-core).
 import argparse
 import json
 import logging
+import os
+import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -90,8 +92,8 @@ ZIP_DATASETS = {
     "ohr-bench": "pdfs.zip",  # value is the zip filename within the dataset dir
 }
 
-GCS_BUCKET = "image_detection_b"
-GCS_PREFIX = "image-preprocessing-detector"
+GCS_BUCKET = os.environ.get("GCS_BUCKET", "image_detection_b")
+GCS_PREFIX = os.environ.get("GCS_PREFIX", "image-preprocessing-detector")
 
 
 @dataclass
@@ -134,6 +136,9 @@ class UnifiedProcessor:
 
         # Initialize model
         self.docling_converter = None
+
+        # Global category map for consistent IDs across batches
+        self._category_map: dict[str, int] = {}
 
         # Directories
         self.input_dir = config.local_dir / "input"
@@ -433,13 +438,13 @@ class UnifiedProcessor:
         # Save layout results (Docling native schema)
         layout_path = dataset_output / f"layout_batch_{batch_num}.json"
 
-        # Collect unique category names from this batch
-        all_categories = set()
+        # Register new category names in global map for consistent IDs across batches
         for r in results:
             for ann in r.layout_annotations:
-                all_categories.add(ann.get("category_name", "unknown"))
-        sorted_categories = sorted(all_categories)
-        category_map = {name: idx for idx, name in enumerate(sorted_categories)}
+                cat_name = ann.get("category_name", "unknown")
+                if cat_name not in self._category_map:
+                    self._category_map[cat_name] = len(self._category_map)
+        category_map = self._category_map
 
         layout_data = {
             "info": {
@@ -779,8 +784,6 @@ class UnifiedProcessor:
             )
 
         # Cleanup extracted files
-        import shutil
-
         shutil.rmtree(str(extract_dir), ignore_errors=True)
 
         logger.info("=== Processing complete ===")

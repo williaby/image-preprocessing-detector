@@ -22,7 +22,6 @@ DOCLING_API="${DOCLING_API:-http://docling-serve:5001}"
 INPUT_DIR="/data/input"
 OUTPUT_DIR="/data/output"
 BATCH_SIZE="${2:-5000}"  # Default 5000 files per batch
-MAX_LOCAL_GB=30  # Maximum GB to download at once (enforced in download_batch)
 
 # Dataset mapping
 declare -A DATASET_PATHS=(
@@ -93,7 +92,7 @@ download_batch() {
     mkdir -p "$batch_dir"
 
     # Download files in parallel (gsutil cp -I expects newline-delimited paths)
-    printf '%s\n' $file_list | gsutil -m cp -I "$batch_dir/" 2>/dev/null
+    echo "$file_list" | gsutil -m cp -I "$batch_dir/"
 
     echo "$batch_dir"
 }
@@ -115,7 +114,8 @@ process_batch() {
     for file in "$batch_dir"/*; do
         [[ -f "$file" ]] || continue
 
-        local filename=$(basename "$file")
+        local filename
+        filename=$(basename "$file")
         local output_file="${output_batch}/${filename%.*}.json"
 
         # Call Docling API
@@ -123,9 +123,9 @@ process_batch() {
             -F "file=@${file}" \
             -F "output_format=json" \
             -o "$output_file" 2>/dev/null; then
-            ((processed++))
+            ((processed+=1))
         else
-            ((failed++))
+            ((failed+=1))
             log_warn "Failed to process: $filename"
         fi
 
@@ -175,8 +175,10 @@ main() {
 
     # List all files
     log_info "Listing files in GCS..."
-    local all_files=$(list_gcs_files)
-    local total_files=$(echo "$all_files" | wc -l)
+    local all_files
+    all_files=$(list_gcs_files)
+    local total_files
+    total_files=$(echo "$all_files" | wc -l)
 
     if [[ $total_files -eq 0 ]]; then
         log_error "No image files found in ${GCS_BUCKET}/${GCS_PATH}"
@@ -197,10 +199,12 @@ main() {
         log_info "=== Batch $batch_num of $num_batches ==="
 
         # Download
-        local batch_dir=$(download_batch "$batch_files" "$batch_num")
+        local batch_dir
+        batch_dir=$(download_batch "$batch_files" "$batch_num")
 
         # Process
-        local output_batch=$(process_batch "$batch_dir" "$batch_num")
+        local output_batch
+        output_batch=$(process_batch "$batch_dir" "$batch_num")
 
         # Upload
         upload_results "$output_batch" "$batch_num"
@@ -208,7 +212,7 @@ main() {
         # Cleanup
         cleanup_batch "$batch_dir" "$output_batch"
 
-        ((batch_num++))
+        ((batch_num+=1))
 
     done < <(echo "$all_files" | awk -v bs="$BATCH_SIZE" '{
         lines = lines ? lines "\n" $0 : $0; count++

@@ -13,8 +13,8 @@
 
 set -euo pipefail
 
-DOCKER_HOST="byron@192.168.1.209"
-DEPLOY_DIR="/data/compose/docling"
+DOCKER_HOST="${DOCKER_HOST:-byron@192.168.1.209}"
+DEPLOY_DIR="${DEPLOY_DIR:-/data/compose/docling}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Colors
@@ -92,21 +92,24 @@ ssh "$DOCKER_HOST" "cd $DEPLOY_DIR && docker compose pull && docker compose up -
 
 # Step 7: Wait for health
 log_info "Waiting for Docling to be healthy..."
+healthy=false
 for i in {1..30}; do
     if ssh "$DOCKER_HOST" "curl -sf http://localhost:5001/health" &>/dev/null; then
         log_info "Docling is healthy!"
+        healthy=true
         break
-    fi
-    if [[ $i -eq 30 ]]; then
-        log_warn "Health check timeout - container may still be starting"
     fi
     echo -n "."
     sleep 5
 done
+if [[ "$healthy" != "true" ]]; then
+    log_warn "Health check timeout after 150s - container may still be starting"
+fi
 
 # Step 8: Test GCS access
+GCS_BUCKET="${GCS_BUCKET:-image_detection_b}"
 log_info "Testing GCS access..."
-if ssh "$DOCKER_HOST" "GOOGLE_APPLICATION_CREDENTIALS=/data/docling/secrets/gcs-credentials.json gsutil ls gs://image_detection_b/ 2>/dev/null | head -3"; then
+if ssh "$DOCKER_HOST" "GOOGLE_APPLICATION_CREDENTIALS=/data/docling/secrets/gcs-credentials.json gsutil ls gs://${GCS_BUCKET}/ 2>/dev/null | head -3"; then
     log_info "GCS access confirmed!"
 else
     log_warn "GCS access test failed - check credentials"

@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Docling OCR Server with GCS Integration
 #
 # Architecture:
@@ -53,7 +51,9 @@ services:
       - /data/docling/input:/data/input:ro
       - /data/docling/output:/data/output:rw
 
-    # Resource limits (enforced in Swarm mode; use runtime flags for standalone)
+    # Resource limits (Compose V2+ enforces deploy.resources)
+    mem_limit: 32g
+    cpus: 8
     deploy:
       resources:
         limits:

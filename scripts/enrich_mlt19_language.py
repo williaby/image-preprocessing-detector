@@ -550,7 +550,7 @@ def download_fasttext_model(model_dir: Path) -> Path:
     logger.info(f"Downloading fastText model from {url}")
     logger.info("This is a 126MB download, please wait...")
 
-    urllib.request.urlretrieve(url, model_path)
+    urllib.request.urlretrieve(url, model_path)  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected  # noqa: S310 - hardcoded HTTPS URL, not user-controlled
     logger.info(f"Model saved to {model_path}")
 
     return model_path

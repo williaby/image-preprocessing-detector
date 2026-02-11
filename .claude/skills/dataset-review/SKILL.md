@@ -53,7 +53,7 @@ Auto-activates on keywords: review dataset, audit dataset, check dataset, datase
 
 ## Outputs
 
-- Updated `docs/datasets/DATASET_CATALOG.md` entry
+- Updated `docs/datasets/source/{dataset}.md` entry
 - Updated `docs/datasets/DATASET_QUICK_REFERENCE.md` row
 - Updated `docs/datasets/DATASET_PROCESSING_STATUS.md` status
 - Gap analysis: `tmp_cleanup/.tmp-{dataset}-gap-analysis.md`
@@ -67,7 +67,7 @@ This skill invokes the `dataset-catalog-agent` defined in `.claude/agents/datase
 ## Related Files
 
 - **Template**: docs/datasets/DATASET_TEMPLATE.md
-- **Catalog**: docs/datasets/DATASET_CATALOG.md
+- **Catalog**: docs/datasets/source/ (individual dataset files)
 - **Quick Reference**: docs/datasets/DATASET_QUICK_REFERENCE.md
 - **Processing Status**: docs/datasets/DATASET_PROCESSING_STATUS.md
 - **Naming Standard**: docs/datasets/DATASET_NAMING_STANDARD.md

@@ -194,7 +194,7 @@ class DocumentSample:
     def __post_init__(self) -> None:
         if not self.doc_id:
             # Generate unique ID from path hash
-            self.doc_id = hashlib.md5(str(self.source_path).encode()).hexdigest()[:12]
+            self.doc_id = hashlib.sha256(str(self.source_path).encode()).hexdigest()[:12]
 
 
 def scan_directory_fast(

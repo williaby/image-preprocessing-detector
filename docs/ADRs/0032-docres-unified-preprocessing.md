@@ -8,7 +8,7 @@ tags:
 - preprocessing
 - restoration
 - deep_learning
-- phase3
+- phase_3
 status: published
 owner: "core-maintainer"
 authors:

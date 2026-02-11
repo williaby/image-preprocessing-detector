@@ -2,10 +2,10 @@
 # Hub-and-spoke canonical superset for cross-schema label conversion
 #
 # Architecture:
-# - 57 canonical classes organized as a tree hierarchy
+# - 56 canonical classes organized as a tree hierarchy
 # - 11 DocLayNet top-level nodes (parent: null, doclaynet_index: 0-10)
 # - 46 extended classes from other schemas (each with parent -> DocLayNet class)
-# - 6 external schemas with class_mapping to canonical
+# - 7 external schemas with class_mapping to canonical
 #
 # This mapping can be updated without code changes!
 # Hot-reload supported via LayoutTaxonomy.reload()
@@ -14,7 +14,7 @@ version: "1.0.0"
 description: "Unified layout label taxonomy with cross-schema conversion"
 
 # ─────────────────────────────────────────────────────────────────────
-# Canonical class hierarchy (~57 classes)
+# Canonical class hierarchy (56 classes)
 # ─────────────────────────────────────────────────────────────────────
 # parent: null  -> DocLayNet top-level (coarsening target)
 # parent: X     -> X is the nearest DocLayNet ancestor
@@ -172,7 +172,7 @@ canonical_classes:
     parent: null
 
 # ─────────────────────────────────────────────────────────────────────
-# Schema definitions (6 schemas)
+# Schema definitions (7 schemas)
 # ─────────────────────────────────────────────────────────────────────
 # Each schema maps its native labels to canonical class names.
 schemas:
