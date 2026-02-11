@@ -45,6 +45,7 @@ pip3 install \
     "pymupdf>=1.23.0" \
     "opencv-python-headless>=4.8.0,<5.0.0" \
     "pydantic>=2.0.0" \
+    "pyyaml>=6.0" \
     "structlog>=23.1.0" \
     "rich>=13.0.0" \
     "atheris>=2.3.0"
