@@ -100,7 +100,9 @@ class GenerationConfig:
         pristine_ratio: Ratio of pristine (undegraded) samples (0-1)
     """
 
-    scripts: list[str] = field(default_factory=lambda: list(MVP_SCRIPTS))
+    scripts: list[str] = field(
+        default_factory=lambda: list(MVP_SCRIPTS)
+    )  # nosemgrep: python.lang.maintainability.return.return-not-in-function
     samples_per_script: int = 100
     layout_types: list[LayoutType] | None = None
     text_densities: list[TextDensity] | None = None

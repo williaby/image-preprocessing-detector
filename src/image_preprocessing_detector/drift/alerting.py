@@ -267,6 +267,38 @@ class LogDispatcher:
         return True
 
 
+def _validated_urlopen(url: str, data: bytes, timeout: int) -> int:
+    """Send data to a pre-validated webhook URL via POST.
+
+    Security: callers MUST validate the URL with _validate_webhook_url()
+    before calling. The URL scheme is restricted to HTTPS (or localhost HTTP
+    for testing) by the validation layer in each dispatcher's __init__.
+
+    Args:
+        url: Pre-validated webhook URL (HTTPS or localhost HTTP only)
+        data: JSON-encoded payload bytes
+        timeout: Request timeout in seconds
+
+    Returns:
+        HTTP response status code
+
+    Raises:
+        OSError: On network/connection errors
+        ValueError: On malformed URLs
+    """
+    import urllib.request
+
+    request = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+    with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec B310
+        return int(response.status)
+
+
 def _validate_webhook_url(url: str, allow_localhost_http: bool = True) -> None:
     """Validate webhook URL for security.
 
@@ -315,28 +347,16 @@ class WebhookDispatcher:
     def dispatch(self, alert: DriftAlert) -> bool:
         """Send alert to webhook."""
         try:
-            import urllib.request
-
             payload = json.dumps(alert.to_dict()).encode("utf-8")
-            request = urllib.request.Request(
-                self.webhook_url,
-                data=payload,
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
-            with urllib.request.urlopen(  # nosec B310
-                request, timeout=self.timeout
-            ) as response:
-                return bool(response.status == 200)
-
+            status = _validated_urlopen(self.webhook_url, payload, self.timeout)
         except (OSError, ValueError):
             # OSError covers urllib.error.URLError, socket errors, and timeouts
             # (TimeoutError is a subclass of OSError in Python 3.10+)
             # ValueError for malformed URLs
             logger.exception("Failed to dispatch alert to webhook")
             return False
+        else:
+            return status == 200
 
 
 class SlackDispatcher:
@@ -357,8 +377,6 @@ class SlackDispatcher:
     def dispatch(self, alert: DriftAlert) -> bool:
         """Send alert to Slack."""
         try:
-            import urllib.request
-
             # Format Slack message
             color = {
                 AlertSeverity.CRITICAL: "#FF0000",
@@ -406,25 +424,15 @@ class SlackDispatcher:
                 )
 
             data = json.dumps(payload).encode("utf-8")
-            request = urllib.request.Request(
-                self.webhook_url,
-                data=data,
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
-            with urllib.request.urlopen(  # nosec B310
-                request, timeout=30
-            ) as response:
-                return bool(response.status == 200)
-
+            status = _validated_urlopen(self.webhook_url, data, timeout=30)
         except (OSError, ValueError):
             # OSError covers urllib.error.URLError, socket errors, and timeouts
             # (TimeoutError is a subclass of OSError in Python 3.10+)
             # ValueError for malformed URLs or JSON encoding
             logger.exception("Failed to dispatch alert to Slack")
             return False
+        else:
+            return status == 200
 
 
 class DryRunDispatcher:

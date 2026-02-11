@@ -542,10 +542,12 @@ class DocumentRenderer:
         state = RenderState(current_y=regions[0].y if regions else self.margins[0])
 
         # Load fonts
-        body_size = random.randint(*FONT_SIZES["body"])
+        body_size = random.randint(*FONT_SIZES["body"])  # nosemgrep: gitlab.bandit.B311
         body_font = self._load_font(script_code, body_size, "body")
 
-        header_size = random.randint(*FONT_SIZES["header"])
+        header_size = random.randint(
+            *FONT_SIZES["header"]
+        )  # nosemgrep: gitlab.bandit.B311
         header_font = self._load_font(script_code, header_size, "header")
 
         # Render header if requested
@@ -631,7 +633,9 @@ class DocumentRenderer:
         header_rtl = header_config.is_rtl if header_config else False
 
         # Render header (larger font, at top)
-        header_size = random.randint(*FONT_SIZES["header"])
+        header_size = random.randint(
+            *FONT_SIZES["header"]
+        )  # nosemgrep: gitlab.bandit.B311
         header_font = self._load_font(header_script, header_size, "header")
 
         header_region = RenderRegion(
@@ -667,7 +671,9 @@ class DocumentRenderer:
             body_config = get_script_config(body_script)
             body_rtl = body_config.is_rtl if body_config else False
 
-            body_size = random.randint(*FONT_SIZES["body"])
+            body_size = random.randint(
+                *FONT_SIZES["body"]
+            )  # nosemgrep: gitlab.bandit.B311
             body_font = self._load_font(body_script, body_size, "body")
 
             body_region = RenderRegion(
@@ -728,7 +734,9 @@ class DocumentRenderer:
             region.is_rtl = is_rtl
 
             # Load font for this script
-            body_size = random.randint(*FONT_SIZES["body"])
+            body_size = random.randint(
+                *FONT_SIZES["body"]
+            )  # nosemgrep: gitlab.bandit.B311
             font = self._load_font(script_code, body_size, "body")
 
             # Render text
