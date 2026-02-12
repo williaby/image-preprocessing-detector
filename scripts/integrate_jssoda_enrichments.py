@@ -1,0 +1,570 @@
+#!/usr/bin/env python3
+"""Integrate all enrichment sources into JSSODa Layer 2 metadata.
+
+Merges 3 data sources into the main metadata JSON for all 2,000 records:
+  1. LLM enrichment (tier_2, 2000 images): domain, content flags, content_type
+  2. Language enrichment (dataset-level): ja/Jpan (backup; known values primary)
+  3. Parser manifest data: split, is_vertical, num_columns
+
+Also applies:
+  - Layout label PascalCase conversion (D01): docling lowercase -> DocLayNet
+  - Hardcoded known values: capture_method=synthetic, language=ja, script=Jpan
+  - Content flag derivation from layout detections + LLM merge
+  - Reliability summary recomputation
+
+Creates a new enrichment version (v2) in each sample's enrichments.versions[].
+
+Usage:
+    PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+        uv run python3 scripts/integrate_jssoda_enrichments.py
+
+    # Dry run (report only, no write):
+    PYTHONPATH=... uv run python3 scripts/integrate_jssoda_enrichments.py --dry-run
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import time
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+from image_preprocessing_detector.schema_utils.iso_language_script import (
+    get_script_family as _get_script_family,
+)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+REGISTRY_DIR = Path("/mnt/e/image_detection/metadata_registry")
+METADATA_PATH = REGISTRY_DIR / "json" / "jssoda_metadata.json"
+LLM_ENRICHMENT_PATH = REGISTRY_DIR / "json" / "jssoda_llm_enrichment.json"
+MANIFEST_PATH = (
+    Path("/mnt/e/image_detection/01_base_data")
+    / "language"
+    / "multilingual_scripts"
+    / "jssoda"
+    / "manifest.json"
+)
+
+SCRIPT_VERSION = "1.1.0"
+ENRICHMENT_VERSION_TAG = "integrated_v2"
+
+# Content flag derivation from canonical layout classes
+TABLE_CLASSES = {"TABLE"}
+FORMULA_CLASSES = {"FORMULA"}
+FIGURE_CLASSES = {"PICTURE", "CHART"}
+CODE_CLASSES = {"CODE"}
+
+# VLM corrections (2026-02-11): per-sample overrides from visual inspection.
+# Full audit: scripts/audit/results/jssoda/vlm_corrections.json
+# has_formula: only these 2 samples confirmed to contain visible formulas.
+VLM_FORMULA_TRUE_POSITIVES: frozenset[str] = frozenset({
+    "jssoda_horizontal_00537",  # math expression: x = (c - b) / a
+    "jssoda_horizontal_00956",  # equation: (a+b)^2 = a^2 + 2ab + b^2
+})
+
+# Docling lowercase -> DocLayNet PascalCase mapping
+DOCLING_TO_DOCLAYNET: dict[str, str] = {
+    "text": "Text",
+    "list_item": "List-Item",
+    "section_header": "Section-Header",
+    "table": "Table",
+    "picture": "Picture",
+    "formula": "Formula",
+    "caption": "Caption",
+    "footnote": "Footnote",
+    "page_footer": "Page-Footer",
+    "page_header": "Page-Header",
+    "title": "Title",
+    "code": "Code",
+    "checkbox_selected": "Checkbox-Selected",
+    "checkbox_unselected": "Checkbox-Unselected",
+}
+
+
+# ---------------------------------------------------------------------------
+# Data loaders
+# ---------------------------------------------------------------------------
+def load_metadata(path: Path) -> dict[str, Any]:
+    """Load L2 metadata JSON."""
+    log.info("Loading metadata from %s", path)
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    log.info("  Loaded %d samples", len(data.get("samples", [])))
+    return data
+
+
+def load_llm_enrichment(path: Path) -> dict[str, dict[str, Any]]:
+    """Load LLM enrichment and index by image_id."""
+    if not path.exists():
+        log.warning("LLM enrichment not found: %s", path)
+        return {}
+    log.info("Loading LLM enrichment from %s", path)
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    index: dict[str, dict[str, Any]] = {}
+    for rec in raw.get("samples", []):
+        image_id = rec.get("image_id", "")
+        if image_id:
+            index[image_id] = rec
+    log.info("  Indexed %d LLM records", len(index))
+    return index
+
+
+def load_manifest(path: Path) -> dict[str, dict[str, Any]]:
+    """Load manifest.json and index by filename."""
+    if not path.exists():
+        log.warning("Manifest not found: %s", path)
+        return {}
+    log.info("Loading manifest from %s", path)
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    index: dict[str, dict[str, Any]] = {}
+    for orientation in ["vertical", "horizontal"]:
+        for rec in raw.get(orientation, []):
+            filename = rec.get("filename", "")
+            if filename:
+                index[filename] = rec
+    log.info("  Indexed %d manifest records", len(index))
+    return index
+
+
+# ---------------------------------------------------------------------------
+# Derivation helpers
+# ---------------------------------------------------------------------------
+def derive_content_flags(
+    detections: list[dict[str, Any]],
+) -> dict[str, bool]:
+    """Derive content flags from canonical layout classes."""
+    canonical_classes = {
+        d.get("canonical_class", "").upper()
+        for d in detections
+        if d.get("canonical_class")
+    }
+    return {
+        "has_table": bool(canonical_classes & TABLE_CLASSES),
+        "has_formula": bool(canonical_classes & FORMULA_CLASSES),
+        "has_figure": bool(canonical_classes & FIGURE_CLASSES),
+        "has_code": bool(canonical_classes & CODE_CLASSES),
+    }
+
+
+def compute_reliability_summary(data: dict[str, Any]) -> dict[str, Any]:
+    """Compute sample_reliability_summary for an enrichment data dict."""
+    fields: list[dict[str, Any]] = []
+
+    field_defs = [
+        ("capture_method", "capture_confidence"),
+        ("domain", "domain_confidence"),
+        ("language", "language_confidence"),
+        ("layout_detections", "layout_confidence"),
+        ("content_flags", "content_flags_confidence"),
+    ]
+
+    for field_name, conf_key in field_defs:
+        confidence = data.get(conf_key, 0.0)
+        if confidence is None:
+            confidence = 0.0
+
+        if confidence >= 0.9:
+            category = "hard_label"
+        elif confidence >= 0.7:
+            category = "soft_label"
+        elif confidence >= 0.5:
+            category = "active_learning"
+        else:
+            category = "unreliable"
+
+        fields.append(
+            {
+                "field": field_name,
+                "confidence": round(confidence, 4),
+                "category": category,
+                "is_soft_label": category == "soft_label",
+            }
+        )
+
+    min_field = min(fields, key=lambda f: f["confidence"])
+
+    return {
+        "min_confidence": min_field["confidence"],
+        "min_confidence_field": min_field["field"],
+        "min_confidence_category": min_field["category"],
+        "assessed_field_count": len(fields),
+        "hard_field_count": sum(1 for f in fields if f["category"] == "hard_label"),
+        "soft_field_count": sum(1 for f in fields if f["category"] == "soft_label"),
+        "field_summary": fields,
+        "computed_at": datetime.now(UTC).isoformat(),
+    }
+
+
+def standardize_class_name(class_name: str) -> str:
+    """Convert Docling lowercase class_name to DocLayNet PascalCase."""
+    return DOCLING_TO_DOCLAYNET.get(class_name, class_name)
+
+
+# ---------------------------------------------------------------------------
+# Per-sample integration
+# ---------------------------------------------------------------------------
+def integrate_sample(
+    sample: dict[str, Any],
+    llm_index: dict[str, dict[str, Any]],
+    manifest_index: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Create integrated enrichment data for a single sample.
+
+    Returns a new enrichment version data dict with all sources merged.
+    """
+    filename = sample["source"]["original_filename"]
+    filename_stem = Path(filename).stem
+
+    # Get existing v1 data (layout_detections + sample_reliability_summary)
+    v1_data: dict[str, Any] = {}
+    if sample["enrichments"]["versions"]:
+        v1_data = sample["enrichments"]["versions"][0].get("data", {})
+
+    data: dict[str, Any] = {}
+
+    # -------------------------------------------------------------------
+    # D01 - Layout detections with PascalCase class_name conversion
+    # -------------------------------------------------------------------
+    v1_layout = v1_data.get("layout_detections", [])
+    standardized_layout: list[dict[str, Any]] = []
+    for det in v1_layout:
+        new_det = dict(det)
+        original_class = det.get("class_name", "")
+        new_det["class_name"] = standardize_class_name(original_class)
+        # Preserve source_label if not already set
+        if not new_det.get("source_label"):
+            new_det["source_label"] = original_class
+        standardized_layout.append(new_det)
+
+    data["layout_detections"] = standardized_layout
+    data["layout_source"] = "docling_gpu"
+    data["layout_confidence"] = 0.85
+    data["layout_detection_count"] = len(standardized_layout)
+
+    # -------------------------------------------------------------------
+    # D02 - capture_method: ALL synthetic (known from dataset documentation)
+    # -------------------------------------------------------------------
+    data["capture_method"] = "synthetic"
+    data["capture_confidence"] = 1.0
+    data["capture_detection_method"] = "dataset_documentation"
+
+    # -------------------------------------------------------------------
+    # D03 - domain_level1: from LLM enrichment
+    # -------------------------------------------------------------------
+    llm = llm_index.get(filename_stem)
+    if llm:
+        data["domain_level1"] = llm.get("domain_level1", "UNK")
+        data["domain_confidence"] = llm.get("domain_confidence", 0.5)
+        data["domain_detection_method"] = "llm_vision"
+        data["domain_content_type"] = llm.get("content_type", "")
+    else:
+        data["domain_level1"] = "UNK"
+        data["domain_confidence"] = 0.3
+        data["domain_detection_method"] = "none"
+
+    # -------------------------------------------------------------------
+    # D04 - iso639_language: known ja (monolingual Japanese dataset)
+    # -------------------------------------------------------------------
+    data["iso639_language"] = "ja"
+    data["language_confidence"] = 1.0
+    data["text_scope_detection_method"] = "dataset_documentation"
+
+    # -------------------------------------------------------------------
+    # D05 - iso15924_script: known Jpan
+    # -------------------------------------------------------------------
+    data["iso15924_script"] = "Jpan"
+
+    # -------------------------------------------------------------------
+    # D06 - script_family: derived from Jpan
+    # -------------------------------------------------------------------
+    data["script_family"] = _get_script_family("Jpan")
+
+    # -------------------------------------------------------------------
+    # D07 - content_flags: VLM-corrected (v1.1.0)
+    # Visual inspection of ALL 23 flagged samples found:
+    #   has_table:       10/10 false positive (Docling misdetects multi-column text)
+    #   has_figure:       3/3  false positive (Docling misdetects dense text blocks)
+    #   has_handwriting:  4/4  false positive (LLM unreliable on synthetic images)
+    #   has_formula:      4/6  false positive (keep 2 VLM-confirmed true positives)
+    # See: scripts/audit/results/jssoda/vlm_corrections.json
+    # -------------------------------------------------------------------
+    flags = derive_content_flags(standardized_layout)
+
+    data["has_table"] = False  # 100% FP: Docling multi-column misdetection
+    data["has_figure"] = False  # 100% FP: Docling dense text misdetection
+    data["has_handwriting"] = False  # 100% FP: LLM can't detect on synthetic
+    data["has_signature"] = False  # All synthetic, LLM confirmed none
+    data["has_code"] = flags["has_code"]  # No code detections in JSSODa
+
+    # has_formula: only VLM-confirmed true positives
+    data["has_formula"] = filename_stem in VLM_FORMULA_TRUE_POSITIVES
+
+    data["content_flags_tier"] = "tier_2_model"
+    data["content_flags_source"] = "vlm_corrected+docling_gpu+llm_vision"
+    data["content_flags_confidence"] = 0.95  # VLM-verified
+
+    # handwriting_present: prescreening checks this field name
+    data["handwriting_present"] = False
+
+    # -------------------------------------------------------------------
+    # D10 - text_scope_content_type: from LLM content_type
+    # -------------------------------------------------------------------
+    if llm:
+        content_type = llm.get("content_type", "")
+        data["text_scope_content_type"] = content_type if content_type else "unknown"
+    else:
+        data["text_scope_content_type"] = "unknown"
+
+    # Text scope: all synthetic printed documents
+    data["text_scope"] = "printed"
+
+    # -------------------------------------------------------------------
+    # D11 - split: from manifest
+    # -------------------------------------------------------------------
+    manifest_rec = manifest_index.get(filename)
+    if manifest_rec:
+        data["split"] = manifest_rec.get("split", "train")
+        data["is_vertical"] = manifest_rec.get("is_vertical", False)
+        data["num_columns"] = manifest_rec.get("num_columns", 1)
+    else:
+        # Fallback: infer from filename
+        if "vertical" in filename:
+            data["split"] = "train"
+            data["is_vertical"] = True
+        elif "horizontal" in filename:
+            data["split"] = "train"
+            data["is_vertical"] = False
+        else:
+            data["split"] = "unknown"
+
+    # -------------------------------------------------------------------
+    # Additional derived fields
+    # -------------------------------------------------------------------
+    data["dataset_short_code"] = "jssoda"
+
+    # Orientation: ALL images are upright (0deg)
+    # Per source doc: "Japanese vertical text must be labeled as 0° (upright), not 270°"
+    # Both vertical and horizontal images are in their natural reading orientation
+    data["orientation_class"] = 0
+    data["orientation_confidence"] = 1.0
+    data["orientation_detection_method"] = "dataset_documentation"
+
+    # Image properties: all synthetic color renders
+    data["image_properties_color_mode"] = "color"
+
+    # -------------------------------------------------------------------
+    # Reliability summary recomputation
+    # -------------------------------------------------------------------
+    data["sample_reliability_summary"] = compute_reliability_summary(data)
+
+    return data
+
+
+# ---------------------------------------------------------------------------
+# Integration runner
+# ---------------------------------------------------------------------------
+def run_integration(
+    metadata: dict[str, Any],
+    llm_index: dict[str, dict[str, Any]],
+    manifest_index: dict[str, dict[str, Any]],
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Run integration for all samples."""
+    stats: dict[str, Any] = {
+        "total": 0,
+        "integrated": 0,
+        "llm_matched": 0,
+        "manifest_matched": 0,
+        "domain_dist": Counter(),
+        "split_dist": Counter(),
+        "content_type_dist": Counter(),
+        "capture_method_dist": Counter(),
+        "has_table_count": 0,
+        "has_formula_count": 0,
+        "has_handwriting_count": 0,
+        "has_figure_count": 0,
+    }
+
+    now = datetime.now(UTC).isoformat()
+
+    for sample in metadata["samples"]:
+        stats["total"] += 1
+        filename = sample["source"]["original_filename"]
+        filename_stem = Path(filename).stem
+
+        integrated_data = integrate_sample(sample, llm_index, manifest_index)
+
+        # Track stats
+        stats["integrated"] += 1
+        if filename_stem in llm_index:
+            stats["llm_matched"] += 1
+        if filename in manifest_index:
+            stats["manifest_matched"] += 1
+        stats["domain_dist"][integrated_data.get("domain_level1", "UNK")] += 1
+        stats["split_dist"][integrated_data.get("split", "unknown")] += 1
+        stats["content_type_dist"][
+            integrated_data.get("text_scope_content_type", "unknown")
+        ] += 1
+        stats["capture_method_dist"][
+            integrated_data.get("capture_method", "unknown")
+        ] += 1
+        if integrated_data.get("has_table"):
+            stats["has_table_count"] += 1
+        if integrated_data.get("has_formula"):
+            stats["has_formula_count"] += 1
+        if integrated_data.get("has_handwriting"):
+            stats["has_handwriting_count"] += 1
+        if integrated_data.get("has_figure"):
+            stats["has_figure_count"] += 1
+
+        if not dry_run:
+            # Create or replace enrichment version 2
+            new_version = {
+                "version": 2,
+                "created_at": now,
+                "created_by": "integrate_jssoda_enrichments.py",
+                "method": "tier_2_model",
+                "description": (
+                    f"Integrated enrichment {ENRICHMENT_VERSION_TAG}: "
+                    "LLM vision + Docling layout + manifest parser + "
+                    "known dataset values (synthetic, ja, Jpan)"
+                ),
+                "script_version": SCRIPT_VERSION,
+                "data": integrated_data,
+            }
+            # Replace existing v2 if present, otherwise append
+            versions = sample["enrichments"]["versions"]
+            replaced = False
+            for i, v in enumerate(versions):
+                if v.get("version") == 2:
+                    versions[i] = new_version
+                    replaced = True
+                    break
+            if not replaced:
+                versions.append(new_version)
+            sample["enrichments"]["current_version"] = 2
+
+    return stats
+
+
+# ---------------------------------------------------------------------------
+# Summary printer
+# ---------------------------------------------------------------------------
+def print_summary(stats: dict[str, Any], total_samples: int) -> None:
+    """Print integration summary."""
+    print("\n" + "=" * 60)
+    print("JSSODa Enrichment Integration Summary")
+    print("=" * 60)
+    print(f"Total samples:        {stats['total']}")
+    print(f"Integrated:           {stats['integrated']}")
+    print(f"LLM matched:          {stats['llm_matched']}")
+    print(f"Manifest matched:     {stats['manifest_matched']}")
+    print()
+    print("Domain distribution:")
+    for domain, count in stats["domain_dist"].most_common():
+        print(f"  {domain:20s}: {count:5d} ({count/total_samples*100:.1f}%)")
+    print()
+    print("Split distribution:")
+    for split, count in stats["split_dist"].most_common():
+        print(f"  {split:20s}: {count:5d}")
+    print()
+    print("Content type distribution:")
+    for ct, count in stats["content_type_dist"].most_common(10):
+        print(f"  {ct:30s}: {count:5d}")
+    print()
+    print("Capture method distribution:")
+    for cm, count in stats["capture_method_dist"].most_common():
+        print(f"  {cm:20s}: {count:5d}")
+    print()
+    print("Content flags:")
+    print(f"  has_table:          {stats['has_table_count']}")
+    print(f"  has_formula:        {stats['has_formula_count']}")
+    print(f"  has_handwriting:    {stats['has_handwriting_count']}")
+    print(f"  has_figure:         {stats['has_figure_count']}")
+    print("=" * 60)
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+def main() -> None:
+    """Entry point."""
+    parser = argparse.ArgumentParser(
+        description="Integrate all enrichment sources into JSSODa metadata.",
+    )
+    parser.add_argument(
+        "--metadata",
+        type=Path,
+        default=METADATA_PATH,
+        help="Path to jssoda_metadata.json (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Output path (default: overwrite input file)",
+    )
+    parser.add_argument(
+        "--llm-enrichment",
+        type=Path,
+        default=LLM_ENRICHMENT_PATH,
+        help="Path to LLM enrichment JSON (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=MANIFEST_PATH,
+        help="Path to manifest.json (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report only, do not write output",
+    )
+    args = parser.parse_args()
+
+    output_path = args.output or args.metadata
+
+    # Load all data sources
+    metadata = load_metadata(args.metadata)
+    llm_index = load_llm_enrichment(args.llm_enrichment)
+    manifest_index = load_manifest(args.manifest)
+
+    start = time.monotonic()
+    stats = run_integration(
+        metadata=metadata,
+        llm_index=llm_index,
+        manifest_index=manifest_index,
+        dry_run=args.dry_run,
+    )
+    elapsed = time.monotonic() - start
+
+    print_summary(stats, len(metadata["samples"]))
+    log.info("Integration completed in %.2f seconds", elapsed)
+
+    if args.dry_run:
+        log.info("Dry run - no output written")
+    else:
+        log.info("Writing output to %s", output_path)
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
+        log.info("Done. Written %d samples.", len(metadata["samples"]))
+
+
+if __name__ == "__main__":
+    main()

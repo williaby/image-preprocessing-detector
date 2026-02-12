@@ -8,8 +8,8 @@ tags:
 title: Dataset Documentation Template
 ---
 
-> **Version**: 1.3.0
-> **Last Updated**: 2026-02-09
+> **Version**: 1.4.0
+> **Last Updated**: 2026-02-12
 > **Purpose**: Standardized template for comprehensive IQA dataset documentation
 > **Consensus**: Validated by Gemini 3 Pro (9/10) and Claude Sonnet 4.5 (8/10)
 
@@ -518,13 +518,62 @@ tablebank/
 
 ---
 
-#### 11. Reliability & Bottlenecks
+#### 11. Layer 2 Audit Summary
+
+> **Purpose**: Captures the results of a Layer 2 metadata audit (if performed). Populated
+> after running the [audit execution template](../audit/AUDIT_EXECUTION_TEMPLATE.md) and
+> [compute_scorecard.py](../../scripts/audit/compute_scorecard.py).
+>
+> **Applicability**: Required for all datasets that have completed a Layer 2 audit.
+> Delete this section if no audit has been performed.
+
+##### 11.1 Quality Scorecard
+
+> **Audit Date**: YYYY-MM-DD | **Grade**: X (NN.N/100) | **Auditor**: model-name
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 0.0 | 0.278 | |
+| Field Validity | 0.0 | 0.278 | |
+| Doc Completeness | 0.0 | 0.167 | |
+| Defect Rate | 0.0 | 0.167 | |
+| VLM Accuracy | 0.0 | 0.111 | |
+| **Overall** | **0.0** | | **Grade ?** |
+
+##### 11.2 Key Defects
+
+| ID | Field | Severity | Status | Description |
+|----|-------|----------|--------|-------------|
+| D01 | field_name | critical/high/medium/low | RESOLVED/DEFERRED | Brief description |
+
+##### 11.3 VLM Inspection Summary
+
+| Flag | Inspected | FP Rate | Notes |
+|------|----------:|--------:|-------|
+| has_formula | 0 | 0% | |
+| has_table | 0 | 0% | |
+| has_handwriting | 0 | 0% | |
+| has_figure | 0 | 0% | |
+
+**Track C Passing Accuracy**: 0% (0/0 samples)
+
+##### 11.4 Cross-Dataset Findings
+
+> List any Known Issues (KI-NNN) discovered or confirmed during this audit.
+
+- None
+
+**Audit Artifacts**: [scripts/audit/results/{dataset}/](../../scripts/audit/results/{dataset}/)
+
+---
+
+#### 12. Reliability & Bottlenecks
 
 > **Purpose**: Auto-generated composite reliability summary identifying the weakest enrichment fields per dataset. Populated by `materialize_reliability_summary.py`.
 >
 > **Methodology**: Each enrichment field is assigned a confidence score (0.0-1.0). Missing/unrun fields get confidence=0.0. The composite min_confidence across all fields determines each sample's overall reliability category.
 
-##### 11.1 Composite Category Distribution
+##### 12.1 Composite Category Distribution
 
 > **Computed**: YYYY-MM-DD | **Samples**: N | **Avg Min Confidence**: 0.XXX
 
@@ -537,7 +586,7 @@ tablebank/
 
 **Category Thresholds**: hard_label >= 0.9, soft_label >= 0.7, active_learning >= 0.5, unreliable < 0.5
 
-##### 11.2 Top Bottleneck Fields
+##### 12.2 Top Bottleneck Fields
 
 > The fields most frequently responsible for the lowest per-sample confidence.
 
@@ -601,7 +650,8 @@ The profiling script computes:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.3.0 | 2026-02-09 | Added Section 11 "Reliability & Bottlenecks" for auto-generated composite reliability summary with category distribution and top bottleneck fields per dataset |
+| 1.4.0 | 2026-02-12 | Added Section 11 "Layer 2 Audit Summary" for post-audit quality scorecard, VLM inspection results, key defects, and cross-dataset findings. Renumbered "Reliability & Bottlenecks" to Section 12 |
+| 1.3.0 | 2026-02-09 | Added Section 11 "Reliability & Bottlenecks" (now Section 12) for auto-generated composite reliability summary with category distribution and top bottleneck fields per dataset |
 | 1.2.0 | 2025-02-01 | Added Section 5.2 "Class/Category Definitions" for taxonomy documentation; Added Section 5.3 "Language & Script Coverage" for multilingual datasets; Added Section 6.5 "Benchmark Results" for published model performance; Added Section 10 "Dataset-Specific Notes" as freeform section for dataset-unique content (annotation caveats, implementation notes, external resources, custom metrics) |
 | 1.1.0 | 2025-02-01 | Added Section 2 "Source Data Inventory" with subsections for file types, split locations (train/test/val paths), labels, metadata, schema details, and parser potential |
 | 1.0.0 | 2025-12-17 | Initial template based on Gemini/Claude consensus |

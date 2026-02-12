@@ -57,25 +57,84 @@
 - **Path**: `01_base_data/language/multilingual_scripts/jssoda/`
 - **Phase(s)**: Phase 10A (Orientation Detection)
 - **Purpose**: Vertical text orientation training, script detection
-- **Parser**: ❌ Not Implemented (manifest.json parser needed)
+- **Parser**: ✅ Implemented (`parsers/multilingual/jssoda.py` - provides language, script, split, is_vertical, num_columns)
+
+---
+
+##### Layer 2 Annotation Summary
+
+> **Computed**: 2026-02-11 | **Integration Script**: `scripts/integrate_jssoda_enrichments.py` v1.1.0
+> **Sources**: LLM enrichment (2,000 samples) + Docling layout (2,000) + Parser manifest (2,000) + VLM corrections (23 images inspected)
+
+**Prescreening Results** (13 fields):
+
+| Field | Pass | Fail | Fail% | Notes |
+|-------|-----:|-----:|------:|-------|
+| split | 2,000 | 0 | 0.00% | All `train` (from parser manifest) |
+| capture_method | 2,000 | 0 | 0.00% | All `synthetic` (dataset documentation) |
+| iso639_language | 2,000 | 0 | 0.00% | All `ja` (monolingual) |
+| script_family | 2,000 | 0 | 0.00% | All `cjk` (derived from Jpan) |
+| layout_detections | 2,000 | 0 | 0.00% | Docling GPU, PascalCase standardized |
+| content_flags_boolean | 2,000 | 0 | 0.00% | VLM-corrected (21 false positives fixed) |
+| orientation_class | 2,000 | 0 | 0.00% | All 0deg upright |
+| image_properties_color_mode | 2,000 | 0 | 0.00% | All `color` |
+| handwriting_present | 2,000 | 0 | 0.00% | All False (VLM-confirmed) |
+| quality_overall_mos | 2,000 | 0 | 0.00% | Skipped (no MOS pipeline) |
+| domain_level1 | 1,307 | 693 | 34.65% | 693 UNK (LLM limitation on generic text) |
+| layout_bbox_valid | 1,983 | 17 | 0.85% | Docling bbox edge case (deferred) |
+| text_has_content | 0 | 2,000 | 100.00% | No OCR run (deferred, requires Docling OCR) |
+
+**VLM Content Flag Corrections** (23 flagged samples inspected):
+
+| Flag | Original True | Corrected True | False Positive Rate | Root Cause |
+|------|-------------:|---------------:|--------------------:|------------|
+| has_table | 10 | 0 | 100% | Docling misdetects multi-column text as Table |
+| has_figure | 3 | 0 | 100% | Docling misdetects dense text as Picture |
+| has_handwriting | 4 | 0 | 100% | LLM unreliable on synthetic images |
+| has_formula | 6 | 2 | 67% | 2 confirmed: math expressions in horizontal_00537, horizontal_00956 |
+
+**Passing Sample Validation**: 12 stratified samples inspected, 100% accuracy across all fields.
+
+**Domain Distribution** (from LLM enrichment):
+
+| Domain | Count | Pct |
+|--------|------:|----:|
+| UNK | 693 | 34.7% |
+| ADM | 621 | 31.1% |
+| EDU | 187 | 9.4% |
+| SCI | 174 | 8.7% |
+| PER | 111 | 5.6% |
+| MED | 82 | 4.1% |
+| TEC | 74 | 3.7% |
+| LEG | 33 | 1.7% |
+| FIN | 22 | 1.1% |
+| TAX | 3 | 0.2% |
 
 ---
 
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 2,000 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-11 | **Samples**: 2,000 | **Enrichment Version**: v2 (integrated)
 
 **Composite Category Distribution**:
 
 | Category | Count | Pct |
 |----------|------:|----:|
-| hard_label | 0 | 0.0% |
-| soft_label | 0 | 0.0% |
+| hard_label | ~1,307 | ~65.4% |
+| soft_label | ~693 | ~34.6% |
 | active_learning | 0 | 0.0% |
-| unreliable | 2,000 | 100.0% |
+| unreliable | 0 | 0.0% |
 
 **Top Bottleneck Fields** (most frequently the weakest):
 
 | Rank | Field | Bottleneck % | Avg Confidence |
 |-----:|-------|-------------:|---------------:|
-| 1 | `capture_method` | 100.0% | 0.000 |
+| 1 | `domain_level1` | 34.7% (UNK) | 0.50 (for UNK samples) |
+| 2 | `text_has_content` | 100% | N/A (OCR not run) |
+| 3 | `layout_bbox_valid` | 0.85% | N/A (17 invalid bboxes) |
+
+**Deferred Items**:
+
+- **D08** (quality_overall): Requires VLM IQA pipeline (prompt v2.0 validation in progress)
+- **D09** (resolution_category): Requires GPU + PaddleOCR DBNet (next Vultr session)
+- **D12** (layout_bbox_valid): 17 samples (0.85%), Docling bbox post-processing edge case

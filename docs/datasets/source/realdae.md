@@ -207,7 +207,8 @@ realdae/
 | **Avg File Size** | 1,675 KB |
 | **Color Space** | RGB |
 | **Capture Method** | Camera (Smartphone) |
-| **Domain** | General Documents |
+| **Domain** | Mixed (EDU 45%, PER 11%, FIN 9%, SCI 8%, UNK 7%, ADM 6%, TAX 5%, other 9%) |
+| **Languages** | Chinese 76%, English 19%, other 5% (see [Section 5.3](#53-language--script-coverage)) |
 
 ##### 4.1 Split Coverage
 
@@ -252,30 +253,57 @@ realdae/
 ##### 5.3 Language & Script Coverage
 
 > **Purpose**: Document language and script distribution for multilingual datasets.
-> **Applicability**: Not applicable - monolingual dataset.
+> **Applicability**: **Multilingual dataset** (despite paper claim of English-only).
+>
+> **CRITICAL (KI-009)**: The RealDAE paper describes "English documents" but LLM vision
+> analysis of 583 input images detected **74% Chinese, 22% English**, and 4% other languages.
+> The language/script values below are from LLM enrichment (post-audit), NOT source documentation.
 
-| Script/Language | ISO Code | Samples | Coverage | Notes |
-|-----------------|----------|---------|----------|-------|
-| Latin | Latn | ~1,200 | 100% | English documents [Inferred] |
+| Language | ISO 639 | Samples | Coverage | Notes |
+|----------|---------|---------|----------|-------|
+| Chinese | zh | 445 | 76.3% | Majority language (paper claimed 0%) |
+| English | en | 113 | 19.4% | Paper claimed 100% |
+| German | de | 3 | 0.5% | |
+| Japanese | ja | 3 | 0.5% | |
+| Polish | pl | 3 | 0.5% | |
+| Hungarian | hu | 3 | 0.5% | |
+| Danish | da | 3 | 0.5% | |
+| Other | hi, nl, es, etc. | 10 | 1.7% | |
 
-**Script Families Present**: Latin only
+| Script | ISO 15924 | Samples | Coverage | Notes |
+|--------|-----------|---------|----------|-------|
+| Simplified Chinese | Hans | 445 | 76.3% | |
+| Latin | Latn | 132 | 22.6% | |
+| Japanese | Jpan | 3 | 0.5% | |
+| Devanagari | Deva | 2 | 0.3% | |
+| Malayalam | Mlym | 1 | 0.2% | |
 
-> **Notes**: [Inferred] - Based on sample inspection and paper description,
-> all documents appear to be English-language with Latin script. No explicit
-> language annotations provided by source dataset.
+**Script Families Present**: CJK (76.8%), Latin (22.6%), Indic (0.5%)
+
+> **Source**: LLM enrichment (2026-02-12 audit). See KI-009 in
+> [CROSS_DATASET_KNOWN_ISSUES.json](../../scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json)
+> for details on documentation unreliability.
 
 #### 7. Known Issues & Limitations
+
+##### Source Dataset Limitations
 
 - **Small Dataset Size**: Only 600 pairs (1,200 images) - Limited diversity compared to other IQA datasets
 - **Limited Degradation Types**: Only 3 degradation categories (bleed-through, color cast, shadow) - Missing blur, noise, skew variations
 - **No Quality Scores**: No explicit quality scores provided - Must compute from paired comparison (PSNR/SSIM)
-- **English Only**: Monolingual dataset limits applicability to multilingual scenarios
 - **Camera Type Bias**: Specific camera capture conditions may not generalize to all mobile devices
-- **Document Type Bias**: Limited document type diversity (appears to be mostly printed text documents)
-- **Layer 2 Coverage**: Only 583 of 1,200 images in Layer 2 metadata (49% coverage, input images only)
 - **No Layout Annotations**: Dataset focused on enhancement, lacks semantic layout labels
 - **Test Set Size**: Only 150 pairs per split (50 per task) - Limited evaluation set
 - **GT Images Excluded**: Ground truth images not included in Layer 2 metadata (by design, not an issue)
+
+##### Layer 2 Audit Findings (2026-02-12)
+
+- **KI-009 (CRITICAL): Language documentation is wrong** - Paper claims "English documents" but LLM detection shows 74% Chinese, 22% English. **NEVER trust documentation-only language claims.** See [CROSS_DATASET_KNOWN_ISSUES.json](../../../scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json) KI-009.
+- **KI-008 (HIGH): script_family contained directionality** - Base metadata had `ltr` instead of `cjk`/`latin`/`indic`. Fixed in integration by deriving from `iso15924_script` via `get_script_family()`.
+- **KI-005 extended: LLM capture method unreliable for camera images** - LLM misclassified 38.8% of camera-captured images as `scanner_flatbed`. Dataset documentation override required.
+- **Content flag FP rates**: `has_handwriting` 30% FP, `has_figure` 50% secondary FP. Both flags are soft labels needing confidence threshold tuning before training use.
+- **Layer 2 Coverage**: Only 583 of 1,200 images in Layer 2 metadata (49% coverage, input images only)
+- **Document Type Diversity**: Predominantly Chinese educational/financial documents, not the English-only printed text described in the paper
 
 #### 10. Dataset-Specific Notes
 
@@ -325,9 +353,47 @@ realdae/
 
 ---
 
+##### Layer 2 Audit Summary
+
+> **Audit Date**: 2026-02-12 | **Grade**: B (85.9/100) | **Auditor**: claude-opus-4-6
+
+| Dimension | Score | Weight | Notes |
+|-----------|------:|-------:|-------|
+| Field Coverage | 99.0 | 0.278 | 13/13 fields screened |
+| Field Validity | 92.6 | 0.278 | 27 fields audited |
+| Doc Completeness | 54.6 | 0.167 | 6/11 sections populated |
+| Defect Rate | 91.4 | 0.167 | 14 defects (11 resolved, 1 partial, 2 deferred) |
+| VLM Accuracy | 75.0 | 0.111 | 57 images inspected (45 Track A + 12 Track C) |
+| **Overall** | **85.9** | | **Grade B** |
+
+**Prescreening**: 87.5% pass rate (510/583), 9/13 fields at 100%
+
+**Key Defects Resolved**:
+
+- D03/D04 (CRITICAL): Language/script corrected from English/Latn to per-sample LLM values
+- D05 (HIGH): script_family corrected from `ltr` to `cjk`/`latin`/`indic`
+- D06 (HIGH): Docling layout integrated (581/583 samples)
+- D07 (HIGH): Content flags derived from LLM + Docling layout
+
+**VLM Inspection Results** (57 images):
+
+| Flag | Inspected | FP Rate | Notes |
+|------|----------:|--------:|-------|
+| has_formula | 15 | 6.7% | 1 FP (medical notes misclassified) |
+| has_table | 10 | 0% | Clean; 4 FN found in other inspections |
+| has_handwriting | 10 | 30% | 3 FP (printed text misclassified as handwritten) |
+| has_figure | 10 | 0% primary | High secondary FP rate across Track A |
+
+**Audit Artifacts**: [scripts/audit/results/realdae/](../../../scripts/audit/results/realdae/)
+
 ##### Reliability & Bottlenecks
 
-> **Computed**: 2026-02-10 | **Samples**: 583 | **Avg Min Confidence**: 0.000
+> **Computed**: 2026-02-12 | **Samples**: 583 | **Avg Min Confidence**: 0.000
+>
+> **Note**: All samples show as "unreliable" because `text_quality` (D13, deferred)
+> has 0.000 confidence. This is the sole bottleneck field; all other enrichment fields
+> were populated by the integration script. See Layer 2 Audit Summary above for
+> post-integration quality assessment.
 
 **Composite Category Distribution**:
 
