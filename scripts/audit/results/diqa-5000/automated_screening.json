@@ -1,7 +1,7 @@
 {
   "dataset": "diqa-5000",
   "metadata_path": "/mnt/e/image_detection/metadata_registry/json/diqa-5000_metadata.json",
-  "audited_at": "2026-02-10T16:09:23.261445+00:00",
+  "audited_at": "2026-02-11T05:42:25.244745+00:00",
   "total_samples": 5500,
   "passed_all": 5248,
   "failed_any": 252,

@@ -1,0 +1,101 @@
+{
+  "dataset": "mlt19",
+  "inspection_date": "2026-02-12",
+  "inspector": "claude-opus-4.6-vlm",
+  "methodology": "Direct image inspection of all flagged samples + stratified failing samples across all failure categories + passing sample validation",
+  "total_images_inspected": 34,
+  "summary": {
+    "table_flagged": 14,
+    "table_true_positives": 12,
+    "table_false_positives": 2,
+    "table_tp_rate_pct": 85.7,
+    "formula_flagged": 6,
+    "formula_true_positives": 0,
+    "formula_false_positives": 6,
+    "formula_tp_rate_pct": 0.0,
+    "figure_override": "ALL set to False (scene photos are not embedded figures)",
+    "handwriting_discovered": 3,
+    "handwriting_note": "Not flagged by DocLayout-YOLO; found during VLM table/formula inspection"
+  },
+  "table_results": [
+    {"image_id": "ts_img_00093", "verdict": "TRUE", "reason": "Italian train departure board with clear grid columns"},
+    {"image_id": "ts_img_04896", "verdict": "FALSE", "reason": "Japanese warning label, text in boxes but no tabular structure"},
+    {"image_id": "ts_img_05637", "verdict": "TRUE", "reason": "Prayer times table with rows/columns; also has handwritten times"},
+    {"image_id": "tr_img_00238", "verdict": "FALSE", "reason": "Tile sign with decorative text, no table"},
+    {"image_id": "tr_img_03126", "verdict": "TRUE", "reason": "Chinese metro schedule with clear row/column grid"},
+    {"image_id": "tr_img_05080", "verdict": "TRUE", "reason": "Korean key manager contact info in grid structure"},
+    {"image_id": "tr_img_05409", "verdict": "TRUE", "reason": "Korean fire safety officer table with grid"},
+    {"image_id": "tr_img_05704", "verdict": "TRUE", "reason": "Korean warning with form/table below; also has handwritten phone number"},
+    {"image_id": "tr_img_05857", "verdict": "TRUE", "reason": "Korean schedule fragment with grid (partial table visible at top)"},
+    {"image_id": "tr_img_05950", "verdict": "TRUE", "reason": "Korean waste bag change info with table header visible"},
+    {"image_id": "tr_img_05965", "verdict": "TRUE", "reason": "Korean management number plate with clear grid rows/columns"},
+    {"image_id": "tr_img_06896", "verdict": "TRUE", "reason": "Japanese parking lot (Times) with weekday/weekend pricing grid"},
+    {"image_id": "tr_img_07480", "verdict": "TRUE", "reason": "Italian bank security notice with 3-row structured grid (icon + text)"},
+    {"image_id": "tr_img_07885", "verdict": "TRUE", "reason": "Italian store hours with day-of-week x morning/afternoon grid"}
+  ],
+  "formula_results": [
+    {"image_id": "ts_img_00714", "verdict": "FALSE", "reason": "Chinese business signs (real estate + dental clinic), no formula"},
+    {"image_id": "ts_img_09009", "verdict": "FALSE", "reason": "Korean tea ceremony sign with poetic text, no formula"},
+    {"image_id": "tr_img_00134", "verdict": "FALSE", "reason": "Arabic transport flyer (plain text + phone number), no formula"},
+    {"image_id": "tr_img_06196", "verdict": "FALSE", "reason": "Technics audio brand advertisement, no formula"},
+    {"image_id": "tr_img_07074", "verdict": "FALSE", "reason": "Italian conference poster about restoration, no formula"},
+    {"image_id": "tr_img_07588", "verdict": "FALSE", "reason": "Italian referendum notice (legal document), no formula; has handwriting"}
+  ],
+  "handwriting_corrections": [
+    {"image_id": "ts_img_05637", "has_handwriting": true, "evidence": "Handwritten prayer times '12:30' and '3:55'"},
+    {"image_id": "tr_img_05704", "has_handwriting": true, "evidence": "Handwritten phone number '042-821-1656'"},
+    {"image_id": "tr_img_07588", "has_handwriting": true, "evidence": "Handwritten 'BERGAMO', date '9', time entries"}
+  ],
+  "figure_override": {
+    "action": "ALL 19657 samples set has_figure=False",
+    "reason": "DocLayout-YOLO classifies entire scene photographs as 'figure' (66.2% flagged). Scene text images are photographs themselves, not documents with embedded figures. 'has_figure' in our schema means embedded charts/diagrams within a document, not the image content itself."
+  },
+  "domain_unk_inspection": {
+    "samples_inspected": 3,
+    "results": [
+      {"image_id": "tr_img_08567", "domain": "UNK", "verdict": "CORRECT", "reason": "Bangla highway milestone NH-60 - generic road signage, no specific domain"},
+      {"image_id": "tr_img_01443", "domain": "UNK", "verdict": "CORRECT", "reason": "English highway sign M1 West Gate (Australia) - generic transportation signage"},
+      {"image_id": "tr_img_00322", "domain": "UNK", "verdict": "CORRECT", "reason": "Arabic directional sign in Tunisia - generic street wayfinding"}
+    ],
+    "conclusion": "UNK is appropriate for generic scene text (road signs, street signs, wayfinding). Validates KI-007 applicability."
+  },
+  "domain_nonunk_inspection": {
+    "samples_inspected": 3,
+    "results": [
+      {"image_id": "tr_img_07826", "domain": "ADM", "verdict": "REASONABLE", "reason": "Multilingual safety warning sign (Italian/Romanian/Albanian/Arabic/English) - regulatory notice is administrative"},
+      {"image_id": "tr_img_03016", "domain": "FIN", "verdict": "QUESTIONABLE", "reason": "Chinese restaurant menu with prices and QR ordering. Menu prices != financial domain; UNK might be more appropriate but FIN is not entirely wrong"},
+      {"image_id": "tr_img_02718", "domain": "PER", "verdict": "CORRECT", "reason": "French graffiti memorial 'Pour Toujours / Terence Robert 1979-2014' - personal tribute"}
+    ],
+    "conclusion": "LLM domain assignments are mostly reasonable but some edge cases (e.g. restaurant menus as FIN). Scene text domain classification is inherently noisy."
+  },
+  "language_und_test_inspection": {
+    "samples_inspected": 3,
+    "results": [
+      {"image_id": "ts_img_01725", "current_lang": "und", "visible_language": "ar", "verdict": "KNOWN_GAP", "reason": "Arabic tailor shop sign (محل البركة). Test split has no GT and no enrichment coverage."},
+      {"image_id": "ts_img_09180", "current_lang": "und", "visible_language": "it", "verdict": "KNOWN_GAP", "reason": "Italian cafe (Caffetteria di Greta). Test split has no enrichment."},
+      {"image_id": "ts_img_01464", "current_lang": "und", "visible_language": "hi", "verdict": "KNOWN_GAP", "reason": "Hindi building sign (धम्मसेवक निवास). Test split has no enrichment."}
+    ],
+    "conclusion": "All test split language=und cases are correct (no source data available). Language is visually identifiable but we have no automated source. Future fix: run VLM language detection on test split."
+  },
+  "empty_layout_inspection": {
+    "samples_inspected": 3,
+    "results": [
+      {"image_id": "tr_img_09700", "verdict": "EXPECTED", "reason": "Hindi clinic sign (राज क्लिनिक). Text clearly visible but DocLayout-YOLO is trained on document layouts, not scene text signs."},
+      {"image_id": "tr_img_05286", "verdict": "EXPECTED", "reason": "Korean medical banner (통사고 한방치료). Large vertical text on banner. Not document layout."},
+      {"image_id": "ts_img_01147", "verdict": "EXPECTED", "reason": "German auto parts shop window (SG AUTOTEILE). Scene text through window. Not document layout."}
+    ],
+    "conclusion": "Empty layout_detections are EXPECTED for scene text. DocLayout-YOLO is optimized for document pages, not scene text signs/banners. 12.7% empty rate is acceptable."
+  },
+  "passing_sample_validation": {
+    "samples_inspected": 5,
+    "results": [
+      {"image_id": "tr_img_04302", "domain": "FIN", "lang": "en", "verdict": "DOMAIN_CORRECT_LANG_WRONG", "reason": "German Sparkasse banking ad (Kwitt). FIN correct (financial), but language is German not English. Parser maps 'Latin' -> 'en' regardless of actual European language."},
+      {"image_id": "tr_img_04066", "domain": "MED", "lang": "en", "verdict": "DOMAIN_CORRECT_LANG_WRONG", "reason": "German doctors sign (Ärzte Schloßstraße 111). MED correct (medical), but language is German not English."},
+      {"image_id": "tr_img_02229", "domain": "ADM", "lang": "en", "verdict": "DOMAIN_QUESTIONABLE_LANG_WRONG", "reason": "French Maserati brochure. ADM questionable (automotive marketing), language is French not English."},
+      {"image_id": "tr_img_06608", "domain": "FIN", "lang": "ja", "verdict": "ALL_CORRECT", "reason": "Japanese grocery store with 金曜日定休日 (closed Fridays) + prices. FIN reasonable (retail), ja correct."},
+      {"image_id": "tr_img_02028", "domain": "ADM", "lang": "en", "verdict": "DOMAIN_CORRECT_LANG_WRONG", "reason": "French park signs (Patrimoine arboré / Gestion differenciée). ADM correct (municipal), but language is French not English."}
+    ],
+    "conclusion": "Domain assignments are generally reasonable. Key systematic issue: MLT19 parser groups all Latin-script European languages (French, German, Italian) under 'Latin' class, which maps to 'en' (English). This is a KNOWN PARSER LIMITATION, not an integration bug.",
+    "known_issue": "KI-NEW: Parser 'Latin' language class maps French/German/Italian to 'en'. Affects ~2671 train samples (13.6% of dataset). Fix would require VLM or secondary language detection to distinguish European languages within Latin script."
+  }
+}

@@ -44,7 +44,7 @@ Review dataset catalog entry for cocotext (category: language, priority: P1)
 
 **Gate 0**: All prerequisites must pass before proceeding.
 
-- [ ] **Template version check**: docs/datasets/DATASET_TEMPLATE.md v1.2.0 or later
+- [ ] **Template version check**: docs/datasets/DATASET_TEMPLATE.md v1.4.0 or later
 - [ ] Dataset directory exists: `01_base_data/{category}/{dataset}/` or `02_benchmark_only/{dataset}/`
 - [ ] Canonical name validated in docs/datasets/DATASET_NAMING_STANDARD.md
 - [ ] Template readable: docs/datasets/DATASET_TEMPLATE.md
@@ -57,7 +57,7 @@ Review dataset catalog entry for cocotext (category: language, priority: P1)
 2. **Verify template version** (MUST be v1.2.0+ for Section 5.2-5.3, 6.5, 10 compliance)
 3. Check dataset directory exists using Glob
 4. Verify canonical name in naming standard
-5. If template version < 1.2.0 → STOP, update template first
+5. If template version < 1.4.0 → STOP, update template first
 6. If any other pre-flight fails, document blockers and STOP
 
 ### Phase 1: Current State Analysis
@@ -97,6 +97,8 @@ Review dataset catalog entry for cocotext (category: language, priority: P1)
 | 8. Representative Samples | Yes/No | Full/Partial/Empty | Optional |
 | 9. References | Yes/No | Full/Partial/Empty | |
 | 10. Dataset-Specific Notes | Yes/No | Full/Partial/Empty | Optional |
+| 11. Layer 2 Audit Summary | Yes/No | Full/Partial/Empty | If audited |
+| 12. Reliability & Bottlenecks | Yes/No | Full/Partial/Empty | Auto-generated |
 
 **Output**: Gap analysis saved to `tmp_cleanup/.tmp-{dataset}-gap-analysis.md`
 
@@ -325,7 +327,7 @@ uv run python scripts/validate_annotation_output.py --dataset {dataset_name} 2>/
 ```
 
 **Final Checklist**:
-- [ ] Catalog entry follows DATASET_TEMPLATE.md v1.2.0
+- [ ] Catalog entry follows DATASET_TEMPLATE.md v1.4.0
 - [ ] Canonical name used throughout all files
 - [ ] All template sections populated or appropriately marked
 - [ ] Parser audit complete with schema-derived matrix
@@ -345,13 +347,18 @@ uv run python scripts/validate_annotation_output.py --dataset {dataset_name} 2>/
 
 ### Documentation Files
 
-- **Template**: docs/datasets/DATASET_TEMPLATE.md (v1.2.0) - Authoritative format
+- **Template**: docs/datasets/DATASET_TEMPLATE.md (v1.4.0) - Authoritative format
 - **Gaps Report**: docs/planning/DATASET_GAPS_REPORT.md - Known issues and priorities
 - **Catalog**: docs/datasets/source/{dataset-name}.md
 - **Quick Reference**: docs/datasets/DATASET_QUICK_REFERENCE.md
 - **Processing Status**: docs/datasets/DATASET_PROCESSING_STATUS.md
 - **Naming Standard**: docs/datasets/DATASET_NAMING_STANDARD.md
 - **Layer 2 Schema**: docs/schema/layer2_enrichment.schema.json
+- **Audit Tracking**: docs/datasets/AUDIT_TRACKING_INDEX.md
+- **Audit Execution Template**: docs/audit/AUDIT_EXECUTION_TEMPLATE.md
+- **Scorecard Config**: config/audit_scorecard.yaml
+- **Audit Results**: scripts/audit/results/{dataset}/ (scorecard, defects, VLM corrections)
+- **Known Issues Registry**: scripts/audit/results/CROSS_DATASET_KNOWN_ISSUES.json
 
 ### Parser Architecture
 
@@ -403,6 +410,22 @@ uv run python scripts/metadata_completeness_report.py
 uv run python scripts/validate_datasets.py
 ```
 
+### Audit Integration
+
+```bash
+# Compute quality scorecard from audit artifacts
+uv run python scripts/audit/compute_scorecard.py --dataset {dataset_name}
+
+# Compute scorecard for all audited datasets and update tracking index
+uv run python scripts/audit/compute_scorecard.py --all-datasets --update-index
+
+# Materialize reliability summary into source doc
+uv run python scripts/materialize_reliability_summary.py --datasets {dataset_name}
+
+# Aggregate Layer 2 metadata statistics (run after integration)
+uv run python scripts/aggregate_layer2_metadata.py --dataset {dataset_name}
+```
+
 ### When to Run Scripts
 
 | Scenario | Script to Run |
@@ -413,6 +436,8 @@ uv run python scripts/validate_datasets.py
 | Language detection needed | `enrich_language.py` |
 | Completeness check | `metadata_completeness_report.py` |
 | Layer 2 stats needed | `aggregate_layer2_metadata.py` |
+| After Layer 2 audit | `compute_scorecard.py`, `materialize_reliability_summary.py` |
+| After enrichment integration | `aggregate_layer2_metadata.py`, `materialize_reliability_summary.py` |
 
 ## Output Standards
 

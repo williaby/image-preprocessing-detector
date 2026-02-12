@@ -328,6 +328,43 @@ def _check_handwriting_present(data: dict[str, Any]) -> tuple[bool, str | None]:
     return True, None
 
 
+# v2.3.0 optional field validators
+VALID_TEXT_DIRECTIONS = frozenset({"ltr", "rtl", "ttb"})
+
+
+def _check_text_direction(data: dict[str, Any]) -> tuple[bool, str | None]:
+    """Check text_direction is a valid enum if populated (v2.3.0).
+
+    This is an optional field - returns pass if not populated.
+    Only fails if populated with an invalid value.
+    """
+    val = data.get("text_direction")
+    if val is None:
+        return True, None
+    if val not in VALID_TEXT_DIRECTIONS:
+        return False, f"text_direction='{val}' not in {{ltr, rtl, ttb}}"
+    return True, None
+
+
+def _check_text_directions_present(
+    data: dict[str, Any],
+) -> tuple[bool, str | None]:
+    """Check text_directions_present items are valid enums if populated (v2.3.0).
+
+    This is an optional field - returns pass if not populated.
+    Only fails if populated with invalid values.
+    """
+    val = data.get("text_directions_present")
+    if val is None:
+        return True, None
+    if not isinstance(val, list):
+        return False, f"text_directions_present is not a list (type={type(val).__name__})"
+    invalid = [v for v in val if v not in VALID_TEXT_DIRECTIONS]
+    if invalid:
+        return False, f"text_directions_present has invalid values: {invalid}"
+    return True, None
+
+
 # ---------------------------------------------------------------------------
 # Validator registry
 # ---------------------------------------------------------------------------
@@ -348,6 +385,9 @@ _SIMPLE_VALIDATORS: list[tuple[str, Any]] = [
     ("orientation_class", _check_orientation_class),
     ("image_properties_color_mode", _check_image_properties_color_mode),
     ("handwriting_present", _check_handwriting_present),
+    # v2.3.0 optional fields (pass if not populated, fail only on invalid values)
+    ("text_direction", _check_text_direction),
+    ("text_directions_present", _check_text_directions_present),
 ]
 
 

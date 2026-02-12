@@ -1,0 +1,1090 @@
+{
+  "track_a": [
+    {
+      "id": "dc6f2c01-32fc-4cb3-aacc-1105c8a2f36b",
+      "filename": "dc6f2c01-32fc-4cb3-aacc-1105c8a2f36b",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "SCI",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": true,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_test/cmdd_planar_surface16_in.jpg",
+      "original_path": "task_shadow_test/cmdd_planar_surface16_in.jpg"
+    },
+    {
+      "id": "e9a845f6-d699-4b22-b055-6d085f008d19",
+      "filename": "e9a845f6-d699-4b22-b055-6d085f008d19",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/prcv_7a54f29fe91c25abcb2c1662c04a848d_in.jpg",
+      "original_path": "task_shadow_train/prcv_7a54f29fe91c25abcb2c1662c04a848d_in.jpg"
+    },
+    {
+      "id": "edbb1a06-47c5-4f66-bf83-b29e24331f9b",
+      "filename": "edbb1a06-47c5-4f66-bf83-b29e24331f9b",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": true,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/prcv_df14265eb31eecd889fd7831db309b46_in.jpg",
+      "original_path": "task_bleed_train/prcv_df14265eb31eecd889fd7831db309b46_in.jpg"
+    },
+    {
+      "id": "6728535c-5c1c-4e6d-a72e-c2e07c62dad4",
+      "filename": "6728535c-5c1c-4e6d-a72e-c2e07c62dad4",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": true,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/prcv_a5206003a5178bb661ad7c42a1682de3_in.jpg",
+      "original_path": "task_bleed_train/prcv_a5206003a5178bb661ad7c42a1682de3_in.jpg"
+    },
+    {
+      "id": "9a651241-f28f-41a2-b090-d3986c3ec09a",
+      "filename": "9a651241-f28f-41a2-b090-d3986c3ec09a",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "MED",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/web_20563366846_4bcfa31e59_o_in.jpg",
+      "original_path": "task_shadow_train/web_20563366846_4bcfa31e59_o_in.jpg"
+    },
+    {
+      "id": "d1839534-e8ef-48bb-a4ed-5fd432d68758",
+      "filename": "d1839534-e8ef-48bb-a4ed-5fd432d68758",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/prcv_2d10721f60c3d46cfe5867923dad206f_in.jpg",
+      "original_path": "task_shadow_train/prcv_2d10721f60c3d46cfe5867923dad206f_in.jpg"
+    },
+    {
+      "id": "6e8760f6-2a94-4450-a3eb-6156950c58e1",
+      "filename": "6e8760f6-2a94-4450-a3eb-6156950c58e1",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": true,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/prcv_88137e67af51ebb991d634c896d594c8_in.jpg",
+      "original_path": "task_bleed_train/prcv_88137e67af51ebb991d634c896d594c8_in.jpg"
+    },
+    {
+      "id": "3ef9d6bc-2e20-4e82-b611-2f53288aa7d4",
+      "filename": "3ef9d6bc-2e20-4e82-b611-2f53288aa7d4",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/origin1000_266_in.jpg",
+      "original_path": "task_bleed_train/origin1000_266_in.jpg"
+    },
+    {
+      "id": "43faf845-ba3a-4925-8498-df7e7e8a5bc6",
+      "filename": "43faf845-ba3a-4925-8498-df7e7e8a5bc6",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_test/prcv_32f8d629b296c7c04b252f18421b7dfb_in.jpg",
+      "original_path": "task_shadow_test/prcv_32f8d629b296c7c04b252f18421b7dfb_in.jpg"
+    },
+    {
+      "id": "7481e0ff-667a-441c-a8b1-f67d1c1de34a",
+      "filename": "7481e0ff-667a-441c-a8b1-f67d1c1de34a",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/origin1000_343_in.jpg",
+      "original_path": "task_bleed_train/origin1000_343_in.jpg"
+    },
+    {
+      "id": "ae3a23f1-b9c4-438d-863d-b1a2a9a2425f",
+      "filename": "ae3a23f1-b9c4-438d-863d-b1a2a9a2425f",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "FIN",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/origin1000_402_in.jpg",
+      "original_path": "task_bleed_train/origin1000_402_in.jpg"
+    },
+    {
+      "id": "35bd2521-c2c8-43ee-9954-1984009f6a05",
+      "filename": "35bd2521-c2c8-43ee-9954-1984009f6a05",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "SCI",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": true,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/cmdd_planar_surface23_in.jpg",
+      "original_path": "task_shadow_train/cmdd_planar_surface23_in.jpg"
+    },
+    {
+      "id": "d27796ce-7a85-440f-8951-f1ca11c13f72",
+      "filename": "d27796ce-7a85-440f-8951-f1ca11c13f72",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "TAX",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/origin1000_172_in.jpg",
+      "original_path": "task_bleed_test/origin1000_172_in.jpg"
+    },
+    {
+      "id": "df194640-27e1-464c-8a32-f643bc0dc8f9",
+      "filename": "df194640-27e1-464c-8a32-f643bc0dc8f9",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/origin1000_265_in.jpg",
+      "original_path": "task_bleed_train/origin1000_265_in.jpg"
+    },
+    {
+      "id": "f6f83025-5685-48fc-8ff0-b6e3ebadfbef",
+      "filename": "f6f83025-5685-48fc-8ff0-b6e3ebadfbef",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "SCI",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": true,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_formula",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_test/selfcollect_2_146_in.jpg",
+      "original_path": "task_shadow_test/selfcollect_2_146_in.jpg"
+    },
+    {
+      "id": "70c29697-4001-43b2-a380-cf2ae9a1163d",
+      "filename": "70c29697-4001-43b2-a380-cf2ae9a1163d",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "TAX",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/origin1000_195_in.jpg",
+      "original_path": "task_bleed_train/origin1000_195_in.jpg"
+    },
+    {
+      "id": "f1922a45-49f7-4d53-b269-f8974fbf44dd",
+      "filename": "f1922a45-49f7-4d53-b269-f8974fbf44dd",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/prcv_0df7a45ae7c33ce224e8edf3b407a283_in.jpg",
+      "original_path": "task_bleed_test/prcv_0df7a45ae7c33ce224e8edf3b407a283_in.jpg"
+    },
+    {
+      "id": "1d9f4c09-2a0e-4210-92e3-78acaebeb61d",
+      "filename": "1d9f4c09-2a0e-4210-92e3-78acaebeb61d",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/prcv_2d7086226edd2396d719c3049afeaf28_in.jpg",
+      "original_path": "task_bleed_test/prcv_2d7086226edd2396d719c3049afeaf28_in.jpg"
+    },
+    {
+      "id": "aed683f4-7c77-42c5-bd06-b20f6145897a",
+      "filename": "aed683f4-7c77-42c5-bd06-b20f6145897a",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "FIN",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/origin1000_242_in.jpg",
+      "original_path": "task_bleed_train/origin1000_242_in.jpg"
+    },
+    {
+      "id": "17ad4a31-d5ec-4816-bf30-0a59d3c70fc9",
+      "filename": "17ad4a31-d5ec-4816-bf30-0a59d3c70fc9",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/prcv_fd80c6b9b2080a4a227ccab97709e581_in.jpg",
+      "original_path": "task_bleed_test/prcv_fd80c6b9b2080a4a227ccab97709e581_in.jpg"
+    },
+    {
+      "id": "c8c458f5-6514-4a5d-956e-06a6a9d37721",
+      "filename": "c8c458f5-6514-4a5d-956e-06a6a9d37721",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/prcv_5d49090e69e269e564c38c38a5e9e4d7_in.jpg",
+      "original_path": "task_shadow_train/prcv_5d49090e69e269e564c38c38a5e9e4d7_in.jpg"
+    },
+    {
+      "id": "4205d806-d6cd-40fe-8d7b-ea87a80f8933",
+      "filename": "4205d806-d6cd-40fe-8d7b-ea87a80f8933",
+      "rel_path": "",
+      "lang": "ja",
+      "domain": "LEG",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_test/webnosource_22492759202_6e44c4edf0_o_in.jpg",
+      "original_path": "task_shadow_test/webnosource_22492759202_6e44c4edf0_o_in.jpg"
+    },
+    {
+      "id": "229455ae-107f-4d7a-aeba-700e70e16471",
+      "filename": "229455ae-107f-4d7a-aeba-700e70e16471",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/prcv_5fc24b7a1c82738d6305063081d7cdb7_in.jpg",
+      "original_path": "task_shadow_train/prcv_5fc24b7a1c82738d6305063081d7cdb7_in.jpg"
+    },
+    {
+      "id": "6169d587-6833-4419-8a2b-dc71cc9516af",
+      "filename": "6169d587-6833-4419-8a2b-dc71cc9516af",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/origin1000_181_in.jpg",
+      "original_path": "task_bleed_test/origin1000_181_in.jpg"
+    },
+    {
+      "id": "127c7127-93c4-4a9f-b8c7-0535a27cb9e1",
+      "filename": "127c7127-93c4-4a9f-b8c7-0535a27cb9e1",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "has_table",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/prcv_9dca0fed050fc118ab37f8b31ec8fbca_in.jpg",
+      "original_path": "task_bleed_train/prcv_9dca0fed050fc118ab37f8b31ec8fbca_in.jpg"
+    },
+    {
+      "id": "21ff3cab-39a6-4a9f-ab12-02b96fc3006a",
+      "filename": "21ff3cab-39a6-4a9f-ab12-02b96fc3006a",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "PER",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/webnosource_6459672349_fcfe56ff01_o_in.jpg",
+      "original_path": "task_shadow_train/webnosource_6459672349_fcfe56ff01_o_in.jpg"
+    },
+    {
+      "id": "3aae0493-1895-4a51-a87e-402d395e6c5e",
+      "filename": "3aae0493-1895-4a51-a87e-402d395e6c5e",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/prcv_9df7456cf959fadbb906efe174e8818a_in.jpg",
+      "original_path": "task_bleed_test/prcv_9df7456cf959fadbb906efe174e8818a_in.jpg"
+    },
+    {
+      "id": "b5fd0c85-9e53-4551-af48-efd56f2719d9",
+      "filename": "b5fd0c85-9e53-4551-af48-efd56f2719d9",
+      "rel_path": "",
+      "lang": "ml",
+      "domain": "FIN",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/webnosource_22835607893_30ef98f0bf_o_in.jpg",
+      "original_path": "task_shadow_train/webnosource_22835607893_30ef98f0bf_o_in.jpg"
+    },
+    {
+      "id": "30b0a845-23e5-4e91-8605-f2fe1aaed8d0",
+      "filename": "30b0a845-23e5-4e91-8605-f2fe1aaed8d0",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "MED",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_test/web_31840812921_ff5e13e225_o_in.jpg",
+      "original_path": "task_shadow_test/web_31840812921_ff5e13e225_o_in.jpg"
+    },
+    {
+      "id": "486a24c1-5a7b-4395-8498-7ce1f16e9bc5",
+      "filename": "486a24c1-5a7b-4395-8498-7ce1f16e9bc5",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/prcv_5e28e1c85861e4c9b6492a442200c6b5_in.jpg",
+      "original_path": "task_bleed_test/prcv_5e28e1c85861e4c9b6492a442200c6b5_in.jpg"
+    },
+    {
+      "id": "dcd7c2bd-082e-4ce7-a024-781d23871bab",
+      "filename": "dcd7c2bd-082e-4ce7-a024-781d23871bab",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/prcv_82bc1c1e78a8ced3b3798d67092e14f4_in.jpg",
+      "original_path": "task_shadow_train/prcv_82bc1c1e78a8ced3b3798d67092e14f4_in.jpg"
+    },
+    {
+      "id": "dc47e7de-d8e3-4d14-996d-c1e7a8a17f3a",
+      "filename": "dc47e7de-d8e3-4d14-996d-c1e7a8a17f3a",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/prcv_7276e975c421a9e6abf4ac5da14e7707_in.jpg",
+      "original_path": "task_bleed_test/prcv_7276e975c421a9e6abf4ac5da14e7707_in.jpg"
+    },
+    {
+      "id": "0576a12c-e5d7-4df2-ab26-642f21cd15cf",
+      "filename": "0576a12c-e5d7-4df2-ab26-642f21cd15cf",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "UNK",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_test/web_28671654695_c542e9fa7f_o_in.jpg",
+      "original_path": "task_bleed_test/web_28671654695_c542e9fa7f_o_in.jpg"
+    },
+    {
+      "id": "b07345e1-631b-4381-8e7e-b6b9d32a901f",
+      "filename": "b07345e1-631b-4381-8e7e-b6b9d32a901f",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "UNK",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/765_in.jpg",
+      "original_path": "task_color_train/765_in.jpg"
+    },
+    {
+      "id": "2ac32119-897c-4644-a429-359c2d7f9db0",
+      "filename": "2ac32119-897c-4644-a429-359c2d7f9db0",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "has_handwriting",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_test/prcv_857af4877fad8daa31ae6ffe5e838e1d_in.jpg",
+      "original_path": "task_shadow_test/prcv_857af4877fad8daa31ae6ffe5e838e1d_in.jpg"
+    },
+    {
+      "id": "0f855610-a359-4205-b48f-96c1d7857ef7",
+      "filename": "0f855610-a359-4205-b48f-96c1d7857ef7",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "PER",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_test/602_in.jpg",
+      "original_path": "task_color_test/602_in.jpg"
+    },
+    {
+      "id": "dc3bcc62-05b8-413b-9d0e-7972bc5aec35",
+      "filename": "dc3bcc62-05b8-413b-9d0e-7972bc5aec35",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "SCI",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/661_in.jpg",
+      "original_path": "task_color_train/661_in.jpg"
+    },
+    {
+      "id": "c0a4f4d4-6702-446e-8eeb-f74cf2e71e51",
+      "filename": "c0a4f4d4-6702-446e-8eeb-f74cf2e71e51",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/924_in.jpg",
+      "original_path": "task_color_train/924_in.jpg"
+    },
+    {
+      "id": "b2f1248c-d757-431d-8787-4ab0ede2ba3f",
+      "filename": "b2f1248c-d757-431d-8787-4ab0ede2ba3f",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "UNK",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/603_in.jpg",
+      "original_path": "task_color_train/603_in.jpg"
+    },
+    {
+      "id": "096d5013-2e07-4bfb-ac71-73d27a3b53ae",
+      "filename": "096d5013-2e07-4bfb-ac71-73d27a3b53ae",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/950_in.jpg",
+      "original_path": "task_color_train/950_in.jpg"
+    },
+    {
+      "id": "8e5a4ede-a68d-4c7d-96f7-43c6cd42d3a9",
+      "filename": "8e5a4ede-a68d-4c7d-96f7-43c6cd42d3a9",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_test/prcv_f72ad996964c743a5137c7d322c38509_in.jpg",
+      "original_path": "task_shadow_test/prcv_f72ad996964c743a5137c7d322c38509_in.jpg"
+    },
+    {
+      "id": "590c2e79-cc29-4eaf-b1d7-ef4177340436",
+      "filename": "590c2e79-cc29-4eaf-b1d7-ef4177340436",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/913_in.jpg",
+      "original_path": "task_color_train/913_in.jpg"
+    },
+    {
+      "id": "1ae1b6bc-1679-4fa8-99c9-636690bb5774",
+      "filename": "1ae1b6bc-1679-4fa8-99c9-636690bb5774",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "PER",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/894_in.jpg",
+      "original_path": "task_color_train/894_in.jpg"
+    },
+    {
+      "id": "e1c1d265-3525-4c51-9bdf-e5aaac7518d7",
+      "filename": "e1c1d265-3525-4c51-9bdf-e5aaac7518d7",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "MED",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/529_in.jpg",
+      "original_path": "task_color_train/529_in.jpg"
+    },
+    {
+      "id": "ae040a82-9b7f-4459-bf94-d7254074bb8a",
+      "filename": "ae040a82-9b7f-4459-bf94-d7254074bb8a",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "ADM",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "has_figure",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/webnosource_31197608692_12a279c1c2_o_in.jpg",
+      "original_path": "task_shadow_train/webnosource_31197608692_12a279c1c2_o_in.jpg"
+    }
+  ],
+  "track_c": [
+    {
+      "id": "74df1ecc-bf8a-402c-bdb3-d12485b6c0dd",
+      "filename": "74df1ecc-bf8a-402c-bdb3-d12485b6c0dd",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "EDU",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "passing_EDU",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/prcv_49f25f56cafa2eb7a6a1c3b8de0c0ad2_in.jpg",
+      "original_path": "task_shadow_train/prcv_49f25f56cafa2eb7a6a1c3b8de0c0ad2_in.jpg"
+    },
+    {
+      "id": "ff815b8c-880f-4304-8ad4-f0b5f6e19b5f",
+      "filename": "ff815b8c-880f-4304-8ad4-f0b5f6e19b5f",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "PER",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "passing_PER",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/769_in.jpg",
+      "original_path": "task_color_train/769_in.jpg"
+    },
+    {
+      "id": "b07696c6-a37c-4506-9360-8109f497c81f",
+      "filename": "b07696c6-a37c-4506-9360-8109f497c81f",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "FIN",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "passing_FIN",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/web_31277437226_094bc9dcdd_o_in.jpg",
+      "original_path": "task_shadow_train/web_31277437226_094bc9dcdd_o_in.jpg"
+    },
+    {
+      "id": "15086080-4828-443c-89a8-40c8df8a1636",
+      "filename": "15086080-4828-443c-89a8-40c8df8a1636",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "SCI",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "passing_SCI",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_color_train/940_in.jpg",
+      "original_path": "task_color_train/940_in.jpg"
+    },
+    {
+      "id": "44051d4b-56f9-4b7b-9970-6fdc8a0a3cc7",
+      "filename": "44051d4b-56f9-4b7b-9970-6fdc8a0a3cc7",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "ADM",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": true
+      },
+      "inspect_reason": "passing_ADM",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/webnosource_6034100570_b3ed65d4d6_o_in.jpg",
+      "original_path": "task_shadow_train/webnosource_6034100570_b3ed65d4d6_o_in.jpg"
+    },
+    {
+      "id": "cbf39cac-67bc-452a-82ad-a49217e6483e",
+      "filename": "cbf39cac-67bc-452a-82ad-a49217e6483e",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "TAX",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "passing_TAX",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/origin1000_34_in.jpg",
+      "original_path": "task_bleed_train/origin1000_34_in.jpg"
+    },
+    {
+      "id": "1ccfe25f-c9f3-4596-bbf8-cfa6ea16786e",
+      "filename": "1ccfe25f-c9f3-4596-bbf8-cfa6ea16786e",
+      "rel_path": "",
+      "lang": "zh",
+      "domain": "FIN",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "passing_zh",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_bleed_train/prcv_jj_1529239250163765623511_1_in.jpg",
+      "original_path": "task_bleed_train/prcv_jj_1529239250163765623511_1_in.jpg"
+    },
+    {
+      "id": "78369338-4b6a-471f-b0b1-6c11c9760c0b",
+      "filename": "78369338-4b6a-471f-b0b1-6c11c9760c0b",
+      "rel_path": "",
+      "lang": "en",
+      "domain": "ADM",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": true
+      },
+      "inspect_reason": "passing_en",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/web_20549783179_1e3fe15669_o_in.jpg",
+      "original_path": "task_shadow_train/web_20549783179_1e3fe15669_o_in.jpg"
+    },
+    {
+      "id": "aa175deb-9741-466e-8978-3d5051913746",
+      "filename": "aa175deb-9741-466e-8978-3d5051913746",
+      "rel_path": "",
+      "lang": "ja",
+      "domain": "LEG",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": true,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "passing_ja",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/webnosource_22517283931_b685152a2a_o_in.jpg",
+      "original_path": "task_shadow_train/webnosource_22517283931_b685152a2a_o_in.jpg"
+    },
+    {
+      "id": "50dabf56-036c-4701-b903-4d925978d482",
+      "filename": "50dabf56-036c-4701-b903-4d925978d482",
+      "rel_path": "",
+      "lang": "pl",
+      "domain": "PER",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "passing_pl",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/webnosource_8284536436_94fd7294a8_o_in.jpg",
+      "original_path": "task_shadow_train/webnosource_8284536436_94fd7294a8_o_in.jpg"
+    },
+    {
+      "id": "e0d2b9fd-b212-4787-9d4f-245305dbd46e",
+      "filename": "e0d2b9fd-b212-4787-9d4f-245305dbd46e",
+      "rel_path": "",
+      "lang": "hu",
+      "domain": "TAX",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": false,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": false,
+        "has_figure": false
+      },
+      "inspect_reason": "passing_hu",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/web_17029323659_5df9692390_k_in.jpg",
+      "original_path": "task_shadow_train/web_17029323659_5df9692390_k_in.jpg"
+    },
+    {
+      "id": "d2cf70ca-8e23-4ece-95ca-ac1c44816349",
+      "filename": "d2cf70ca-8e23-4ece-95ca-ac1c44816349",
+      "rel_path": "",
+      "lang": "da",
+      "domain": "PER",
+      "capture": "camera_smartphone",
+      "orientation": 0,
+      "handwriting": true,
+      "flags": {
+        "has_table": false,
+        "has_formula": false,
+        "has_handwriting": true,
+        "has_figure": false
+      },
+      "inspect_reason": "passing_da",
+      "image_path": "/mnt/e/image_detection/01_base_data/camera_captured/realdae/task_shadow_train/webnosource_26322678061_8c7a06341c_o_in.jpg",
+      "original_path": "task_shadow_train/webnosource_26322678061_8c7a06341c_o_in.jpg"
+    }
+  ],
+  "total_images": 57
+}

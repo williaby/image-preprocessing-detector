@@ -1,0 +1,4422 @@
+{
+  "report_metadata": {
+    "dataset": "jssoda",
+    "audit_sample_count": 36,
+    "created_at": "2026-02-11T14:08:28.922867+00:00",
+    "sources_discovered": [
+      "docling_layout",
+      "l2_metadata",
+      "llm_enrichment"
+    ],
+    "source_paths": {
+      "l2_metadata": "/mnt/e/image_detection/metadata_registry/json/jssoda_metadata.json",
+      "llm_enrichment": "/mnt/e/image_detection/metadata_registry/json/jssoda_llm_enrichment.json",
+      "language_enrichment": "/mnt/e/image_detection/metadata_registry/json/jssoda_language_enrichment.json",
+      "docling_layout": "/mnt/e/image_detection/metadata_registry/extracted/jssoda"
+    },
+    "fields_compared": [
+      "capture_method",
+      "domain_level1",
+      "iso639_language",
+      "script_family",
+      "orientation_class",
+      "has_table",
+      "has_formula",
+      "has_figure",
+      "has_handwriting",
+      "layout_class_count",
+      "color_mode",
+      "physical_degradation",
+      "split"
+    ]
+  },
+  "samples": [
+    {
+      "image_id": "jssoda_jssoda_horizontal_00006.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ADM"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00014.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "EDU"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00095.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "PER"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00139.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 3,
+            "docling_layout": 3
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00163.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "EDU"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00181.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00216.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "PER"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00227.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ADM"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00281.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00336.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ADM"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 1,
+            "docling_layout": 1
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00464.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "unknown"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00466.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 6,
+            "docling_layout": 6
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00586.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ADM"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00659.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00700.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00732.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "EDU"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 7,
+            "docling_layout": 7
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00778.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "unknown"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00806.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "LEG"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00809.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "PER"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00832.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "EDU"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00899.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00900.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ADM"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_horizontal_00909.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "FIN"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00275.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 7,
+            "docling_layout": 7
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00306.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00372.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "EDU"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00384.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ADM"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00491.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 6,
+            "docling_layout": 6
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00506.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "unknown"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 8,
+            "docling_layout": 8
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00538.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "MED"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00650.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "unknown"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00734.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ADM"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00739.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "UNK"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00812.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "born_digital"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "EDU"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 5,
+            "docling_layout": 5
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00926.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "unknown"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ADM"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    },
+    {
+      "image_id": "jssoda_jssoda_vertical_00945.png",
+      "sources_available": {
+        "l2_metadata": true,
+        "llm_enrichment": true,
+        "docling_layout": true
+      },
+      "fields": {
+        "capture_method": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "scanner_flatbed"
+          },
+          "pairwise_matches": {}
+        },
+        "domain_level1": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "LEG"
+          },
+          "pairwise_matches": {}
+        },
+        "iso639_language": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": "ja"
+          },
+          "pairwise_matches": {}
+        },
+        "script_family": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "orientation_class": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "has_table": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_formula": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_figure": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "has_handwriting": {
+          "sources": {
+            "l2_metadata": null,
+            "llm_enrichment": false,
+            "docling_layout": false
+          },
+          "pairwise_matches": {
+            "llm_enrichment": {
+              "docling_layout": true
+            }
+          }
+        },
+        "layout_class_count": {
+          "sources": {
+            "l2_metadata": 4,
+            "docling_layout": 4
+          },
+          "pairwise_matches": {
+            "l2_metadata": {
+              "docling_layout": true
+            }
+          }
+        },
+        "color_mode": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "physical_degradation": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        },
+        "split": {
+          "sources": {
+            "l2_metadata": null
+          },
+          "pairwise_matches": {}
+        }
+      }
+    }
+  ],
+  "agreement_metrics": {
+    "per_field": {
+      "capture_method": {
+        "pairwise_agreement": {}
+      },
+      "domain_level1": {
+        "pairwise_agreement": {}
+      },
+      "iso639_language": {
+        "pairwise_agreement": {}
+      },
+      "script_family": {
+        "pairwise_agreement": {}
+      },
+      "orientation_class": {
+        "pairwise_agreement": {}
+      },
+      "has_table": {
+        "pairwise_agreement": {
+          "docling_layout vs llm_enrichment": 1.0
+        }
+      },
+      "has_formula": {
+        "pairwise_agreement": {
+          "docling_layout vs llm_enrichment": 1.0
+        }
+      },
+      "has_figure": {
+        "pairwise_agreement": {
+          "docling_layout vs llm_enrichment": 1.0
+        }
+      },
+      "has_handwriting": {
+        "pairwise_agreement": {
+          "docling_layout vs llm_enrichment": 1.0
+        }
+      },
+      "layout_class_count": {
+        "pairwise_agreement": {
+          "docling_layout vs l2_metadata": 1.0
+        }
+      },
+      "color_mode": {
+        "pairwise_agreement": {}
+      },
+      "physical_degradation": {
+        "pairwise_agreement": {}
+      },
+      "split": {
+        "pairwise_agreement": {}
+      }
+    },
+    "pairwise": {
+      "docling_layout vs l2_metadata": {
+        "comparisons": 36,
+        "matches": 36,
+        "agreement_rate": 1.0
+      },
+      "docling_layout vs llm_enrichment": {
+        "comparisons": 144,
+        "matches": 144,
+        "agreement_rate": 1.0
+      }
+    }
+  },
+  "disagreements": [],
+  "disagreement_count": 0
+}

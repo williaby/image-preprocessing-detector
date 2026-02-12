@@ -1,0 +1,176 @@
+{
+  "dataset": "realdae",
+  "vlm_inspection_date": "2026-02-12",
+  "vlm_model": "claude-opus-4-6",
+  "method": "in-session multimodal vision (Read tool)",
+  "total_images_inspected": 57,
+  "passing_sample_accuracy": 0.75,
+  "track_a": {
+    "description": "Content flag verification (has_flag=TRUE samples)",
+    "total_images": 45,
+    "subsets": {
+      "has_formula": {"inspected": 15, "correct": 14, "fp_count": 1, "fn_count": 0},
+      "has_table": {"inspected": 10, "correct": 10, "fp_count": 0, "fn_count": 0},
+      "has_handwriting": {"inspected": 10, "correct": 7, "fp_count": 3, "fn_count": 0},
+      "has_figure": {"inspected": 10, "correct": 10, "fp_count": 0, "fn_count": 0}
+    },
+    "primary_flag_accuracy": 0.911,
+    "images_with_any_correction": 10,
+    "total_flag_corrections": 14,
+    "fp_corrections": 9,
+    "fn_corrections": 5,
+    "notes": "Secondary flag corrections found during primary flag inspection (e.g., checking has_formula image also revealed has_figure FP). has_handwriting has highest primary FP rate (30%)."
+  },
+  "track_c": {
+    "description": "Stratified passing sample validation",
+    "total_images": 12,
+    "correct": 9,
+    "with_corrections": 3,
+    "accuracy": 0.75,
+    "total_flag_corrections": 3,
+    "fp_corrections": 1,
+    "fn_corrections": 2,
+    "stratification": {
+      "by_domain": {"EDU": 1, "PER": 1, "FIN": 1, "SCI": 1, "ADM": 1, "TAX": 1},
+      "by_language": {"zh": 1, "en": 1, "ja": 1, "pl": 1, "hu": 1, "da": 1}
+    }
+  },
+  "overall_summary": {
+    "total_flag_corrections": 17,
+    "total_fp": 10,
+    "total_fn": 7,
+    "images_with_corrections": 13,
+    "image_level_accuracy": 0.772,
+    "flag_level_accuracy": 0.925,
+    "track_c_passing_accuracy": 0.75,
+    "fp_rates_by_flag": {
+      "has_formula": 0.067,
+      "has_table": 0.0,
+      "has_handwriting": 0.30,
+      "has_figure": 0.50
+    },
+    "notes": "has_figure has highest FP rate (50% when counting secondary flags across all Track A images). has_handwriting has 30% primary FP rate. Both flags need confidence threshold tuning or additional VLM validation before training use."
+  },
+  "corrections": [
+    {
+      "sample_id": "9a651241-f28f-41a2-b090-d3986c3ec09a",
+      "filename": "web_20563366846_4bcfa31e59_o_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_formula",
+      "changes": [
+        {"field": "has_formula", "old": true, "new": false, "reason": "Handwritten medical notes with no mathematical formulas"},
+        {"field": "has_figure", "old": true, "new": false, "reason": "No figures/diagrams/charts visible, only handwritten text"}
+      ]
+    },
+    {
+      "sample_id": "4205d806-d6cd-40fe-8d7b-ea87a80f8933",
+      "filename": "webnosource_22492759202_6e44c4edf0_o_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_table",
+      "changes": [
+        {"field": "has_figure", "old": true, "new": false, "reason": "Japanese legal registration form has only tabular structure and stamps, no figures"}
+      ]
+    },
+    {
+      "sample_id": "229455ae-107f-4d7a-aeba-700e70e16471",
+      "filename": "prcv_5fc24b7a1c82738d6305063081d7cdb7_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_table",
+      "changes": [
+        {"field": "has_figure", "old": true, "new": false, "reason": "Election process table and text, circled D is handwriting not a figure"}
+      ]
+    },
+    {
+      "sample_id": "127c7127-93c4-4a9f-b8c7-0535a27cb9e1",
+      "filename": "prcv_9dca0fed050fc118ab37f8b31ec8fbca_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_table",
+      "changes": [
+        {"field": "has_figure", "old": false, "new": true, "reason": "Geometric shape illustrations (cones, triangular pyramids) visible alongside table"}
+      ]
+    },
+    {
+      "sample_id": "b5fd0c85-9e53-4551-af48-efd56f2719d9",
+      "filename": "webnosource_22835607893_30ef98f0bf_o_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_handwriting",
+      "changes": [
+        {"field": "has_figure", "old": true, "new": false, "reason": "Malayalam handwritten note with arithmetic, no figures/diagrams"}
+      ]
+    },
+    {
+      "sample_id": "30b0a845-23e5-4e91-8605-f2fe1aaed8d0",
+      "filename": "web_31840812921_ff5e13e225_o_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_handwriting",
+      "changes": [
+        {"field": "has_table", "old": false, "new": true, "reason": "Medical prescription form has clear grid-lined table structure with columns (Drug, Dose, Route, etc.)"}
+      ]
+    },
+    {
+      "sample_id": "486a24c1-5a7b-4395-8498-7ce1f16e9bc5",
+      "filename": "prcv_5e28e1c85861e4c9b6492a442200c6b5_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_handwriting",
+      "changes": [
+        {"field": "has_handwriting", "old": true, "new": false, "reason": "All printed text (Forbidden City opening table), no handwriting visible"}
+      ]
+    },
+    {
+      "sample_id": "dcd7c2bd-082e-4ce7-a024-781d23871bab",
+      "filename": "prcv_82bc1c1e78a8ced3b3798d67092e14f4_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_handwriting",
+      "changes": [
+        {"field": "has_table", "old": false, "new": true, "reason": "x/y value table with grid lines visible"},
+        {"field": "has_formula", "old": false, "new": true, "reason": "Mathematical formula y=1/2x+3 prominently displayed"}
+      ]
+    },
+    {
+      "sample_id": "dc47e7de-d8e3-4d14-996d-c1e7a8a17f3a",
+      "filename": "prcv_7276e975c421a9e6abf4ac5da14e7707_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_handwriting",
+      "changes": [
+        {"field": "has_handwriting", "old": true, "new": false, "reason": "All printed text - chemistry true/false exercise with empty answer column"},
+        {"field": "has_table", "old": false, "new": true, "reason": "Chemistry statements organized in grid-lined table with judgment column"}
+      ]
+    },
+    {
+      "sample_id": "b07345e1-631b-4381-8e7e-b6b9d32a901f",
+      "filename": "765_in.jpg",
+      "track": "A",
+      "inspect_reason": "has_handwriting",
+      "changes": [
+        {"field": "has_handwriting", "old": true, "new": false, "reason": "Printed magazine page about facial recognition technology, no handwriting"}
+      ]
+    },
+    {
+      "sample_id": "cbf39cac-67bc-452a-82ad-a49217e6483e",
+      "filename": "origin1000_34_in.jpg",
+      "track": "C",
+      "inspect_reason": "passing_TAX",
+      "changes": [
+        {"field": "has_formula", "old": false, "new": true, "reason": "Explicit mathematical expressions: 应纳税额=销售额×征收率, ÷(1+征收率), with multiplication/division operators"}
+      ]
+    },
+    {
+      "sample_id": "1ccfe25f-c9f3-4596-bbf8-cfa6ea16786e",
+      "filename": "prcv_jj_1529239250163765623511_1_in.jpg",
+      "track": "C",
+      "inspect_reason": "passing_zh",
+      "changes": [
+        {"field": "has_table", "old": false, "new": true, "reason": "Clear sales data table with grid lines, headers (销售时段/甲种型号/乙种型号/销售收入)"}
+      ]
+    },
+    {
+      "sample_id": "78369338-4b6a-471f-b0b1-6c11c9760c0b",
+      "filename": "web_20549783179_1e3fe15669_o_in.jpg",
+      "track": "C",
+      "inspect_reason": "passing_en",
+      "changes": [
+        {"field": "has_figure", "old": true, "new": false, "reason": "Official notice with signatures only, no figures/diagrams/illustrations"}
+      ]
+    }
+  ]
+}

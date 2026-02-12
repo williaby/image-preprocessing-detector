@@ -194,12 +194,12 @@ class DatasetAuditConfig:
 _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     "diqa-5000": {
         "image_base_path": DEFAULT_IMAGE_ROOT / "diqa-5000",
-        "metadata_json_path": (DEFAULT_METADATA_ROOT / "diqa_5000_metadata.json"),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "diqa-5000_metadata.json"),
         "llm_enrichment_path": (
-            DEFAULT_METADATA_ROOT / "diqa_5000_llm_enrichment.json"
+            DEFAULT_METADATA_ROOT / "diqa-5000_llm_enrichment.json"
         ),
         "language_enrichment_path": (
-            DEFAULT_METADATA_ROOT / "diqa_5000_language_enrichment.json"
+            DEFAULT_METADATA_ROOT / "diqa-5000_language_enrichment.json"
         ),
         "stratification_axes": (
             "capture_method",
@@ -301,6 +301,77 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
             "capture_method",
             "domain_level1",
             "quality_overall",
+        ),
+    },
+    "jssoda": {
+        "image_base_path": (
+            Path("/mnt/e/image_detection/01_base_data")
+            / "language"
+            / "multilingual_scripts"
+            / "jssoda"
+        ),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "jssoda_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "jssoda_llm_enrichment.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "jssoda_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+            "resolution_category",
+        ),
+    },
+    "mlt19": {
+        "image_base_path": (
+            Path("/mnt/e/image_detection/01_base_data") / "language" / "mlt19"
+        ),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "mlt19_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "mlt19_llm_enrichment.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "mlt19_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "script_family",
+            "domain_level1",
+            "capture_method",
+        ),
+    },
+    "nepali-handwritten": {
+        "image_base_path": (
+            Path("/mnt/e/image_detection/01_base_data")
+            / "language"
+            / "nepali_handwritten"
+        ),
+        "metadata_json_path": (
+            DEFAULT_METADATA_ROOT / "nepali_handwritten_metadata.json"
+        ),
+        "language_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "nepali_handwritten_language_enrichment.json"
+        ),
+        "stratification_axes": (
+            "capture_method",
+            "resolution_category",
+            "has_handwriting",
+        ),
+    },
+    "realdae": {
+        "image_base_path": (
+            Path("/mnt/e/image_detection/01_base_data")
+            / "camera_captured"
+            / "realdae"
+        ),
+        "metadata_json_path": (DEFAULT_METADATA_ROOT / "realdae_metadata.json"),
+        "llm_enrichment_path": (
+            DEFAULT_METADATA_ROOT / "realdae_llm_enrichment.json"
+        ),
+        "stratification_axes": (
+            "capture_method",
+            "domain_level1",
+            "resolution_category",
         ),
     },
 }

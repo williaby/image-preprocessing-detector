@@ -1,0 +1,42 @@
+{
+  "dataset": "jssoda",
+  "audited_at": "2026-02-11",
+  "auditor": "claude-opus-4-6-vlm",
+  "methodology": "Stratified random sample of passing prescreening items (6 vertical, 6 horizontal) across diverse domains",
+  "total_samples_checked": 12,
+  "overall_accuracy": 1.0,
+  "fields_validated": [
+    "capture_method",
+    "iso639_language",
+    "iso15924_script",
+    "domain_level1",
+    "text_scope_content_type",
+    "content_flags",
+    "orientation_class",
+    "image_properties_color_mode"
+  ],
+  "per_field_accuracy": {
+    "capture_method": {"correct": 12, "total": 12, "accuracy": 1.0, "notes": "All confirmed synthetic (clean renders, no scan artifacts)"},
+    "iso639_language": {"correct": 12, "total": 12, "accuracy": 1.0, "notes": "All confirmed Japanese text"},
+    "iso15924_script": {"correct": 12, "total": 12, "accuracy": 1.0, "notes": "All confirmed Japanese script"},
+    "domain_level1": {"correct": 12, "total": 12, "accuracy": 1.0, "notes": "ADM, EDU, SCI, PER, MED all plausible for observed content"},
+    "text_scope_content_type": {"correct": 12, "total": 12, "accuracy": 1.0, "notes": "letter, memo, textbook, essay, research_report all match observed content"},
+    "content_flags": {"correct": 12, "total": 12, "accuracy": 1.0, "notes": "All False flags confirmed (no tables/figures/formulas/handwriting in passing samples)"},
+    "orientation_class": {"correct": 12, "total": 12, "accuracy": 1.0, "notes": "All 0deg upright confirmed"},
+    "image_properties_color_mode": {"correct": 12, "total": 12, "accuracy": 1.0, "notes": "All color synthetic renders confirmed"}
+  },
+  "samples": [
+    {"filename": "jssoda_vertical_00089.png", "orientation": "vertical", "domain": "SCI", "content_type": "research_report", "all_fields_correct": true},
+    {"filename": "jssoda_vertical_00435.png", "orientation": "vertical", "domain": "EDU", "content_type": "textbook", "all_fields_correct": true},
+    {"filename": "jssoda_vertical_00149.png", "orientation": "vertical", "domain": "ADM", "content_type": "memo", "all_fields_correct": true},
+    {"filename": "jssoda_vertical_00667.png", "orientation": "vertical", "domain": "EDU", "content_type": "textbook", "all_fields_correct": true},
+    {"filename": "jssoda_vertical_00433.png", "orientation": "vertical", "domain": "EDU", "content_type": "educational_article", "all_fields_correct": true},
+    {"filename": "jssoda_vertical_00189.png", "orientation": "vertical", "domain": "SCI", "content_type": "research_report", "all_fields_correct": true},
+    {"filename": "jssoda_horizontal_00062.png", "orientation": "horizontal", "domain": "ADM", "content_type": "letter", "all_fields_correct": true},
+    {"filename": "jssoda_horizontal_00575.png", "orientation": "horizontal", "domain": "ADM", "content_type": "memo", "all_fields_correct": true},
+    {"filename": "jssoda_horizontal_00802.png", "orientation": "horizontal", "domain": "PER", "content_type": "personal_document", "all_fields_correct": true},
+    {"filename": "jssoda_horizontal_00841.png", "orientation": "horizontal", "domain": "EDU", "content_type": "essay", "all_fields_correct": true},
+    {"filename": "jssoda_horizontal_00500.png", "orientation": "horizontal", "domain": "MED", "content_type": "research_report", "all_fields_correct": true},
+    {"filename": "jssoda_horizontal_00516.png", "orientation": "horizontal", "domain": "PER", "content_type": "personal_letter", "all_fields_correct": true}
+  ]
+}

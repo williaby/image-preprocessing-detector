@@ -1,0 +1,744 @@
+{
+  "dataset": "realdae",
+  "metadata_path": "/mnt/e/image_detection/metadata_registry/json/realdae_metadata.json",
+  "audited_at": "2026-02-12T21:21:07.069034+00:00",
+  "total_samples": 583,
+  "passed_all": 510,
+  "failed_any": 73,
+  "per_field_results": {
+    "split": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "capture_method": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "domain_level1": {
+      "pass": 542,
+      "fail": 41,
+      "fail_rate_pct": 7.03
+    },
+    "iso639_language": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "script_family": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "layout_detections": {
+      "pass": 581,
+      "fail": 2,
+      "fail_rate_pct": 0.34
+    },
+    "layout_bbox_valid": {
+      "pass": 563,
+      "fail": 20,
+      "fail_rate_pct": 3.43
+    },
+    "content_flags_boolean": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "text_has_content": {
+      "pass": 568,
+      "fail": 15,
+      "fail_rate_pct": 2.57
+    },
+    "orientation_class": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "image_properties_color_mode": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "handwriting_present": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    },
+    "quality_overall_mos": {
+      "pass": 583,
+      "fail": 0,
+      "fail_rate_pct": 0.0
+    }
+  },
+  "failing_samples": [
+    {
+      "image_id": "98c4249c-7489-44fe-9550-9d1d0d7a8a07",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [12]: w=1416.0624694824219, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "7493ba77-0661-44b8-8631-af0e82bdb5b6",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "0576a12c-e5d7-4df2-ab26-642f21cd15cf",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "912bd731-3d75-4c5b-a3be-de19defa6e61",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [17]: w=55.76521809895826, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "b17ebf43-a8cf-42db-b75c-9e3261116219",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "f0b930fc-c63d-4633-a3bb-63b79afe9b82",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [4]: w=827.7409871419271, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "00caceec-6197-4ba6-a9a1-2a9fde719da4",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "86e92b61-9369-4185-9bc5-d0ec7c823f8e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "614a4e28-1b19-4aec-a954-e09a9aa5e414",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [5]: w=1562.2660319010415, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "d6898d11-88f9-4132-a3ad-4cf90269eacf",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "b265ccba-1e97-430c-a888-73f133a16ad7",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "3aca4300-8f68-4902-b7de-06822b322912",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "102e74ef-6a14-4585-b445-a250402e642e",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "512f65e6-4521-447d-8314-54988f8287d1",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "d959214c-0061-40c0-826c-c97b2608a49c",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "521e1482-1573-45df-9459-1107f8b3cb3c",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [8]: w=1162.1490071614583, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "92ed9969-dc12-4500-9f45-bbab7e595754",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [3]: w=2049.436197916667, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "ecd4a727-c68a-4bf2-9e32-e00a379e4cbe",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "a15928e4-3c2b-4a39-bcb1-156446f6fc47",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [5]: w=1060.8139648437498, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "0d8147a4-27b1-4f97-bcb0-feb3b6cebcce",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [9]: w=1151.05322265625, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "f825d2bc-729d-4f75-a564-704f12363e22",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "1bea5dc1-ec8f-4902-9d20-99ff386094de",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [12]: w=1407.7340698242188, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "65f10690-840e-4d6b-8676-e60120fda037",
+      "failed_fields": [
+        "domain_level1",
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "layout_bbox_valid": "2 bad bbox(es): [4]: w=1516.9788411458335, h=0.0 (must be >0); [7]: w=1980.8617146809895, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "4c860107-52dd-4203-ba1c-1a2392815f77",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "1e97756a-4fd3-40e6-81cc-ca009754d412",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "dfb24369-c921-43c3-9443-7be5aa3b1b9b",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "53b848a6-b3cc-49c4-a181-d8ae8283178b",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "4b5f5093-cf12-4a4a-9c6e-6e5743ccfb38",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "29b19109-9b23-4aab-b80c-ab1bc8e278c6",
+      "failed_fields": [
+        "domain_level1",
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "layout_bbox_valid": "2 bad bbox(es): [10]: w=904.7871907552085, h=0.0 (must be >0); [11]: w=910.819091796875, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "20fe774c-fd4f-4159-999a-8f0031cd4e8b",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [3]: w=834.4148763020833, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "eb4e5260-5d4e-4ccd-ad38-0d5117adeee0",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "048fc235-979b-4208-b00d-146d2fab449d",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "b2f1248c-d757-431d-8787-4ab0ede2ba3f",
+      "failed_fields": [
+        "domain_level1",
+        "text_has_content"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'",
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "4597da39-a4c1-486c-8fff-cff1a3455483",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "d81b429c-d4c6-4981-b4d9-3708d481f71a",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "9b896e57-ec99-4bba-89d9-16e141ea2b0f",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "710c435c-4f48-4a6f-a32f-b375fd9f3df5",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "383826d5-cf95-4a58-9eeb-fc3dcf4f0fb8",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [0]: w=1156.1170247395833, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "a155d0bc-cfe1-4a16-a14d-0a07661a9dce",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [0]: w=0.0, h=109.74186197916697 (must be >0)"
+      }
+    },
+    {
+      "image_id": "b74bf217-b9a0-43ac-893a-c34590834e76",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "a90f2eda-6b24-4767-8e49-1b15d0e6c3ec",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "b07345e1-631b-4381-8e7e-b6b9d32a901f",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "f3a90bf8-9109-46ae-8e82-1a4ef18fe142",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "c933a67c-0836-4aee-907f-e8ea2beaac45",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [6]: w=807.3192545572916, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "8df33043-2048-479b-801f-4e0136e47212",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [11]: w=551.776611328125, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "89322534-41c8-426a-9273-0324ae6cfc12",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [2]: w=934.276611328125, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "bd925cf1-51d6-410f-8bbd-466422bc289e",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [0]: w=1850.6490071614585, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "0c81be4e-f8d4-4c51-8713-80722e9c8377",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "9c56c9f3-cff9-4cee-a166-930d72c10cb2",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "59c9276f-03b8-4141-8c9a-0f3345ffb7de",
+      "failed_fields": [
+        "layout_detections",
+        "text_has_content"
+      ],
+      "details": {
+        "layout_detections": "layout_detections is empty",
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "a681b5b6-b04a-4e06-a6f6-38279c82d7ea",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "0b4f97eb-72d6-498a-a8bb-1b4970894b54",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "0f8918b3-af89-4bd6-b101-6cae50ca11d2",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c1b92654-74f4-45d1-96f1-183b5e274a0b",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "b1e2c9be-16e7-407a-96d2-0b5f98518e13",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "d47f3b2a-309d-4fda-b308-7194890415c6",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "02405512-7ed5-4a8c-aae9-5829afc191d9",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "863f94b9-28a2-4eb3-a5a6-e47112a01e77",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "cc08d7fd-6b61-43f9-9e44-a1b2a94c4115",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "93c844f2-9703-4038-a4d7-b7c7c1986f8d",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "a99417ae-b043-4ab3-b3be-d244453721c5",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "9c37a053-5f75-4803-83aa-e4d4e2af68b3",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "913823f8-94e9-4058-ad31-eb78ea0ddf96",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "8075e03f-2a0d-4044-824c-333f62b80593",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "fea26b8a-73f7-4f41-9f19-6197b9c03fc2",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "2 bad bbox(es): [3]: w=135.0, h=0.0 (must be >0); [5]: w=146.8125, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "be1657a8-5298-4994-98be-56c3efcaca0e",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "5c7918a4-0fa3-438f-9888-ec320df14d61",
+      "failed_fields": [
+        "layout_bbox_valid"
+      ],
+      "details": {
+        "layout_bbox_valid": "1 bad bbox(es): [31]: w=2068.8386103312178, h=0.0 (must be >0)"
+      }
+    },
+    {
+      "image_id": "97d55816-90e4-42f0-ae17-87bfaea8dda4",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    },
+    {
+      "image_id": "827c11c7-dbbe-4f31-99f9-2b753e6e840b",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "ae040a82-9b7f-4459-bf94-d7254074bb8a",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "c3dfabaa-7453-4dbf-a35c-3795bc656970",
+      "failed_fields": [
+        "layout_detections",
+        "text_has_content"
+      ],
+      "details": {
+        "layout_detections": "layout_detections is empty",
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "498007c7-04df-483a-8b2e-a2c74845df3a",
+      "failed_fields": [
+        "text_has_content"
+      ],
+      "details": {
+        "text_has_content": "text_statistics.has_content=False"
+      }
+    },
+    {
+      "image_id": "1cd2ef0e-bb29-49ed-beb3-f7ab9e07ac5b",
+      "failed_fields": [
+        "domain_level1"
+      ],
+      "details": {
+        "domain_level1": "domain_level1 is 'UNK'"
+      }
+    }
+  ]
+}

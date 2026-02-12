@@ -1,7 +1,7 @@
 # Layer 2 Metadata Enrichment Audit Framework
 
 > **Status**: Active
-> **Schema**: `layer2_enrichment_v2.schema.json` (v2.1.0)
+> **Schema**: `layer2_enrichment_v2.schema.json` (v2.3.0)
 > **Scope**: All ~51 datasets in the Project A metadata registry
 
 ## Purpose
@@ -9,7 +9,7 @@
 Validate the quality and correctness of Layer 2 metadata enrichment for any
 dataset. The framework is dataset-agnostic: it reads the same JSON structure
 produced by `annotate_base_metadata.py` and applies a uniform set of checks
-against the v2.1.0 schema.
+against the v2.3.0 schema.
 
 The audit answers three questions:
 
@@ -112,7 +112,7 @@ A dataset passes audit if:
 
 ## Field-by-Field Checklist
 
-Checked against `layer2_enrichment_v2.schema.json` v2.1.0:
+Checked against `layer2_enrichment_v2.schema.json` v2.3.0:
 
 ### Root Fields
 
@@ -120,7 +120,7 @@ Checked against `layer2_enrichment_v2.schema.json` v2.1.0:
 |-------|----------|------|-----------|
 | `sample_id` | Yes | string (UUID) | Format: UUID v4 |
 | `enrichment_version` | Yes | integer >= 1 | Must increment |
-| `schema_version` | No | const "2.1.0" | Exact match |
+| `schema_version` | No | const "2.3.0" | Exact match |
 | `created_at` | Yes | string (ISO 8601) | Valid datetime |
 | `created_by` | Yes | string (minLength 1) | Non-empty |
 | `method` | Yes | enum | tier_0_exact, tier_1_annotation, tier_2_model, tier_3_heuristic |
@@ -130,11 +130,11 @@ Checked against `layer2_enrichment_v2.schema.json` v2.1.0:
 | Field | Type | Key Validations |
 |-------|------|----------------|
 | `capture_method` | CaptureMethodInfo | `.method` enum: born_digital, scanner_flatbed, scanner_adf, camera_professional, camera_smartphone, fax, synthetic, unknown |
-| `resolution` | ResolutionInfo | `.category` enum; `.pixels` = [w,h] positive ints; `.dpi` int >= 1; `.confidence` 0-1 |
+| `resolution` | ResolutionInfo | `.category` enum; `.pixels` = [w,h] positive ints; `.dpi` int >= 1; `.confidence` 0-1; `.character_height_rendered_px` number\|null (v2.3.0); `.output_size_px` int\|null (v2.3.0) |
 | `domain` | DomainInfo | `.level1` enum: TAX, LEG, FIN, TEC, SCI, ADM, MED, EDU, PER, UNK |
-| `structure` | StructureInfo | `.layout_type` enum; `.text_density` enum |
+| `structure` | StructureInfo | `.layout_type` enum; `.text_density` enum; `.text_directions_present` array of ltr/rtl/ttb\|null (v2.3.0) |
 | `quality` | QualityInfo | `.overall_score` 0-1; `.degradations[].severity_numeric` 0-1 |
-| `language` | LanguageInfo | `.language_code` 2-3 chars; `.script_code` 4 chars ISO 15924 |
+| `language` | LanguageInfo | `.language_code` 2-3 chars; `.script_code` 4 chars ISO 15924; `.text_direction` enum ltr/rtl/ttb\|null (v2.3.0) |
 | `languages` | LanguageInfo[] | Same as `language`; one entry has `is_primary=true` |
 | `text_scope` | TextScopeInfo | `.scope` enum; `.content_type` enum |
 | `paper_size` | PaperSizeInfo | `.detected_size` enum; `.orientation` enum |
@@ -241,17 +241,26 @@ counts. Produced by default when running the CLI.
 
 ## Directory Structure
 
-```
+```text
 scripts/audit/
-    __init__.py                   # Package marker
-    README.md                     # This file
-    audit_config.py               # Dataset-specific configuration
-    audit_schema_compliance.py    # Automated schema compliance checker
-    audit_report_template.md      # Markdown report template
-    results/                      # Per-dataset audit output
+    __init__.py                       # Package marker
+    README.md                         # This file
+    audit_config.py                   # Dataset-specific configuration
+    audit_schema_compliance.py        # Automated schema compliance checker
+    automated_prescreening.py         # Lightweight field validation
+    select_audit_samples.py           # Generic stratified sample selection
+    assemble_comparison.py            # Generic multi-source field comparison
+    audit_report_template.md          # Markdown report template
+    select_diqa_audit_samples.py      # DIQA-specific sample selection (reference)
+    assemble_diqa_comparison.py       # DIQA-specific comparison (reference)
+    results/                          # Per-dataset audit output
         {dataset-name}/
-            compliance.json       # Schema compliance JSON
-            audit_report.md       # Filled report
+            automated_screening.json  # Prescreening pass/fail
+            compliance.json           # Schema compliance JSON
+            sample_set.json           # Stratified audit samples
+            comparison_report.json    # Multi-source comparison
+            defect_catalog.json       # Defect catalog with taxonomy
+            audit_report.md           # Filled report
 ```
 
 ## Adding a New Dataset
@@ -385,13 +394,144 @@ based on training importance, sample count, and known risk factors:
 
 1. **Run prescreening**: `--dataset {name}` to get quick pass/fail rates
 2. **Review paper/docs**: Read `docs/datasets/source/{name}.md` for expected values
-3. **Run schema compliance**: Full validation against v2.1.0 schema
+3. **Run schema compliance**: Full validation against v2.3.0 schema
 4. **Stratified sample**: Select 36 samples across relevant axes
 5. **Visual inspection**: Compare metadata against actual images
 6. **Multi-source comparison**: If multiple enrichment sources exist
 7. **Defect catalog**: Record findings with severity and extrapolation notes
 8. **Pipeline fixes**: Apply corrections to integration scripts
 9. **Re-run & validate**: Re-integrate, re-aggregate, re-screen
+
+## Generic Stratified Sample Selection
+
+The `select_audit_samples.py` script selects representative audit samples
+using stratified sampling across configured axes. It replaces dataset-specific
+sample selection scripts with a single dataset-agnostic tool.
+
+### Usage
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/select_audit_samples.py --dataset diqa-5000
+
+# Dry-run mode (preview selection without writing files)
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/select_audit_samples.py \
+    --dataset diqa-5000 --dry-run
+
+# Override sample size and seed
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/select_audit_samples.py \
+    --dataset ohr-bench --sample-size 48 --seed 12345
+
+# Custom output path
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/select_audit_samples.py \
+    --dataset doclaynet --output /tmp/doclaynet_samples.json
+```
+
+Output: `scripts/audit/results/{dataset}/sample_set.json`
+
+### Features
+
+- **Dynamic sample sizing**: N<200 audit all, 200-10K use 36, N>=10K use ceil(sqrt(N))
+- **Proportional allocation**: Largest-remainder method across strata
+- **Config-driven axes**: Reads stratification axes from `audit_config.py`
+- **Reproducible**: Fixed random seed for deterministic selection
+- **Boolean axis handling**: Converts `has_table`/`has_handwriting` to `true`/`false` strings
+- **Quality bucketing**: Maps continuous `quality_overall` scores to low/medium/high tiers
+
+## Generic Multi-Source Comparison
+
+The `assemble_comparison.py` script auto-discovers enrichment sources and
+compares field values across all available sources for audit samples. Replaces
+dataset-specific comparison scripts.
+
+### Usage
+
+```bash
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/assemble_comparison.py --dataset diqa-5000
+
+# Dry-run mode (discover sources but don't write output)
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/assemble_comparison.py \
+    --dataset diqa-5000 --dry-run
+
+# Override comparison fields
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/assemble_comparison.py \
+    --dataset ohr-bench \
+    --fields capture_method domain_level1 resolution_category
+
+# Custom output path
+PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
+    uv run python3 scripts/audit/assemble_comparison.py \
+    --dataset doclaynet --output /tmp/doclaynet_comparison.json
+```
+
+Output: `scripts/audit/results/{dataset}/comparison_report.json`
+
+### Auto-Discovered Sources
+
+The script automatically discovers and loads these source types:
+
+| Source | Location | Loaded When |
+|--------|----------|-------------|
+| L2 metadata | `{METADATA_ROOT}/{dataset}_metadata.json` | Always (required) |
+| LLM enrichment | `{METADATA_ROOT}/{dataset}_llm_enrichment.json` | File exists |
+| Language enrichment | `{METADATA_ROOT}/{dataset}_language_enrichment.json` | File exists |
+| Docling layout | `metadata_registry/extracted/{dataset}/` | Directory exists |
+| Egret layout | `annotations/{dataset}/layout/` | Directory exists |
+| Resolution quality | `results/{dataset}_resolution_labels.json` | File exists |
+| Visual ground truth | `results/{dataset}/sample_set.json` (visual_gt) | File exists |
+
+### Default Comparison Fields
+
+```text
+capture_method, capture_confidence, domain_level1, domain_confidence,
+resolution_category, iso639_language, iso15924_script, script_family,
+has_table, has_handwriting, has_formula, has_figure, quality_overall
+```
+
+Override with `--fields field1 field2 ...`.
+
+## Layer 2 Audit Agent
+
+For fully automated deep audits, use the Layer 2 Audit Agent:
+
+**Agent definition**: `.claude/agents/layer2-audit-agent.md`
+
+### Invocation
+
+```text
+Run Layer 2 audit on ohr-bench (source_doc: docs/datasets/source/ohr-bench.md)
+```
+
+### Scope Options
+
+| Scope | Phases | Duration |
+|-------|--------|----------|
+| `prescreening_only` | 0-2 | ~5 min |
+| `compliance_only` | 0-3 | ~10 min |
+| `full` (default) | 0-7 | ~30-60 min |
+| `full` + `fix_defects=true` | 0-9 | Variable |
+
+### Agent Workflow Summary
+
+1. **Phase 0**: Pre-flight (registry check, metadata exists, schema version)
+2. **Phase 1**: Paper review (extract expected values from source doc)
+3. **Phase 2**: Automated prescreening (`automated_prescreening.py`)
+4. **Phase 3**: Schema compliance + referential integrity checks
+5. **Phase 4**: Field completeness analysis (streaming for >500MB files)
+6. **Phase 5**: Stratified sample selection (`select_audit_samples.py`)
+7. **Phase 6**: Multi-source comparison (`assemble_comparison.py`)
+8. **Phase 7**: Defect catalog with 12-type expanded taxonomy + audit report
+9. **Phase 8**: Logic fixes (approval required, tiered remediation)
+10. **Phase 9**: Data gap backfills (approval required, follows `integrate_resolution_quality.py` pattern)
+
+See `.claude/agents/layer2-audit-agent.md` for full workflow details, error
+handling matrix, and quality scoring rubric.
 
 ## Quick Reference: CLI Commands
 
@@ -417,6 +557,12 @@ python scripts/audit/automated_prescreening.py --dataset diqa-5000
 
 # Run prescreening on all datasets
 python scripts/audit/automated_prescreening.py --all-datasets
+
+# Run generic sample selection
+python scripts/audit/select_audit_samples.py --dataset diqa-5000
+
+# Run generic multi-source comparison
+python scripts/audit/assemble_comparison.py --dataset diqa-5000
 
 # Verbose mode for debugging
 python scripts/audit/audit_schema_compliance.py \
