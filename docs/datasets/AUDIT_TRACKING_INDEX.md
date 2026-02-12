@@ -155,7 +155,7 @@ Summary of known issues affecting multiple datasets. See [CROSS_DATASET_KNOWN_IS
 
 ### Process Overview
 
-```
+```text
 1. Pre-Audit Setup
    ├─ Register dataset in scripts/audit/audit_config.py
    ├─ Run scripts/audit/select_audit_samples.py (stratified 36 samples)

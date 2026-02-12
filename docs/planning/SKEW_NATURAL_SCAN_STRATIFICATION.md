@@ -187,11 +187,11 @@ Natural scans will NOT match the synthetic distribution (which is uniform). Expe
 
 | Range | Expected % | Count | Notes |
 |-------|-----------|-------|-------|
-| |angle| < 0.5 | 30% | 6,000 | Many well-scanned documents |
-| 0.5 <= |angle| < 2 | 35% | 7,000 | Common mild skew |
-| 2 <= |angle| < 5 | 20% | 4,000 | Moderate skew |
-| 5 <= |angle| < 15 | 10% | 2,000 | Large skew (ADF errors) |
-| |angle| >= 15 | 5% | 1,000 | Extreme (camera captures) |
+| \|angle\| < 0.5 | 30% | 6,000 | Many well-scanned documents |
+| 0.5 <= \|angle\| < 2 | 35% | 7,000 | Common mild skew |
+| 2 <= \|angle\| < 5 | 20% | 4,000 | Moderate skew |
+| 5 <= \|angle\| < 15 | 10% | 2,000 | Large skew (ADF errors) |
+| \|angle\| >= 15 | 5% | 1,000 | Extreme (camera captures) |
 
 If the natural distribution is too concentrated near zero, we can:
 

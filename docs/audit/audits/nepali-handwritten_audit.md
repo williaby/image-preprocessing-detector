@@ -146,8 +146,8 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 | 12 | `handwriting_present` | % | ⬜ | Must be boolean |
 | 13 | `quality_overall_mos` | % | ⬜ | Must be numeric 1.0-5.0 (context-dependent) |
 
-**Overall Pass Rate**: ___%
-**Fields at 100%**:___/13
+**Overall Pass Rate**: \_\_\_%
+**Fields at 100%**: \_\_\_/13
 **Fields at 0%**: ___ (indicates missing enrichment sources)
 
 ### Decision Point
@@ -412,8 +412,8 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 | `handwriting_present` | % | % | +/- % |
 | `quality_overall_mos` | % | % | +/- % |
 
-**Overall improvement**: +/- ___%
-**Fields improved to 100%**:___
+**Overall improvement**: +/- \_\_\_%
+**Fields improved to 100%**: \_\_\_
 
 **Notes**:
 
@@ -856,8 +856,8 @@ Based on [config/audit_scorecard.yaml](../../config/audit_scorecard.yaml):
 | Cross-Source Agreement | 0.10 | | | Pairwise agreement (if applicable) |
 | VLM Accuracy | 0.10 | | | Passing sample accuracy |
 
-**Total Score**: ___/100
-**Grade**:___
+**Total Score**: \_\_\_/100
+**Grade**: \_\_\_
 
 **Grade Thresholds**:
 

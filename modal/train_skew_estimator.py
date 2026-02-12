@@ -40,7 +40,7 @@ Usage:
 from __future__ import annotations
 
 import json
-import subprocess
+import subprocess  # nosec B404
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -448,10 +448,10 @@ def train(
     # --- Load data ---
     if test:
         # Test mode: download small subset directly from GCS (no volume)
-        data_dir = "/tmp/skew_test"
+        data_dir = "/tmp/skew_test"  # nosec B108
         _download_gcs_individual(data_dir, test_mode=True)
     else:
-        data_dir = "/tmp/skew_training"
+        data_dir = "/tmp/skew_training"  # nosec B108
         labels_check = Path(data_dir) / "train" / "labels.json"
 
         if not labels_check.exists():
@@ -469,7 +469,7 @@ def train(
             print(f"Extracting tar from volume to {data_dir}...")
             Path(data_dir).mkdir(parents=True, exist_ok=True)
             start_extract = time.monotonic()
-            subprocess.run(
+            subprocess.run(  # nosec B603 B607
                 ["tar", "xf", str(tar_on_volume), "-C", data_dir],
                 check=True,
             )

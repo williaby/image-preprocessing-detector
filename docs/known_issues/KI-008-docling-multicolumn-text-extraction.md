@@ -14,7 +14,7 @@ All multi-column documents processed through Docling's full text extraction pipe
 
 Docling processes documents through five sequential stages. The Table misclassification causes damage at three of them:
 
-```
+```text
 1. Layout Model (Egret/DocLayout-YOLO)
    |  Multi-column text labeled "Table" here  <-- ROOT CAUSE
    v

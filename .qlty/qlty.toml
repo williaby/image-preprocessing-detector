@@ -149,6 +149,13 @@ match.rules = ["radarlint-python:python:S3776"]
 match.file_patterns = ["scripts/**"]
 set.ignored = true
 
+# Ignore duplicated string literals in modal/ - filenames like "labels.json" are natural repetitions
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1192"]
+match.file_patterns = ["modal/**"]
+set.ignored = true
+
 # Ignore cognitive complexity in synthetic renderer - vertical text layout requires nested logic
 [[triage]]
 match.plugins = ["radarlint-python"]

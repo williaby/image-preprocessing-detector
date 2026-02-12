@@ -22,5 +22,8 @@
     "has_figure_true_rate": 0.083,
     "has_formula_true_rate": 0.0,
     "has_signature_true_rate": 0.167
-  }
+  },
+  "passing_sample_accuracy": 0.962,
+  "passing_sample_count": 12,
+  "passing_sample_accuracy_notes": "96.2% accuracy excluding orientation (93.2% including orientation) on 12 stratified Track C samples"
 }

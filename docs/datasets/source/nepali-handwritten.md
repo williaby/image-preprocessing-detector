@@ -185,6 +185,8 @@
 
 **Script Families Present**: Indic (Devanagari)
 
+**Text Direction**: Left-to-right (LTR) - standard for Devanagari script
+
 > **Note**: Monolingual dataset. Complements synthetic Hindi data (printed Devanagari) with real handwriting.
 
 ##### 6. IQA Profile
