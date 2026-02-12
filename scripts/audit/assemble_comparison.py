@@ -71,6 +71,8 @@ CONTENT_FLAG_FIELDS: frozenset[str] = frozenset(
     {"has_table", "has_formula", "has_figure", "has_handwriting"}
 )
 
+_NOT_CONFIGURED = "not configured"
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -335,7 +337,7 @@ def discover_sources(
             sources["l2_metadata"] = data
             _log("l2_metadata", len(data), config.metadata_json_path)
     else:
-        _skip("l2_metadata", config.metadata_json_path or "not configured")
+        _skip("l2_metadata", config.metadata_json_path or _NOT_CONFIGURED)
 
     # 2. LLM enrichment
     if config.llm_enrichment_path and config.llm_enrichment_path.exists():
@@ -350,7 +352,7 @@ def discover_sources(
     else:
         _skip(
             "llm_enrichment",
-            config.llm_enrichment_path or "not configured",
+            config.llm_enrichment_path or _NOT_CONFIGURED,
         )
 
     # 3. Language enrichment
@@ -366,7 +368,7 @@ def discover_sources(
     else:
         _skip(
             "language_enrichment",
-            config.language_enrichment_path or "not configured",
+            config.language_enrichment_path or _NOT_CONFIGURED,
         )
 
     # 4. Docling layout (config path or auto-discover from extracted/)
@@ -514,10 +516,6 @@ def extract_field_values(
     vgt_rec = _lookup_source(
         sources.get("visual_gt", {}), image_id, dataset
     )
-    res_rec = _lookup_source(
-        sources.get("resolution_quality", {}), image_id, dataset
-    )
-
     result: dict[str, dict[str, Any]] = {}
 
     for field_name in fields:
@@ -1004,7 +1002,7 @@ def print_summary(report: dict[str, Any]) -> None:
             continue
 
         avg_agreement = sum(pairs.values()) / len(pairs)
-        best_label = max(pairs, key=lambda k: pairs[k])
+        best_label = max(pairs, key=lambda k, pairs=pairs: pairs[k])
         best_val = pairs[best_label]
         print(
             f"  {field_name:<24s}  "

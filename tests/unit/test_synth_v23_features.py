@@ -450,7 +450,8 @@ class TestSchemaAdapterV23Fields:
             text_directions={"Jpan": "ttb", "Latn": "ltr"},
         )
         metadata = adapter.build_enrichment_metadata(sample)
-        structure = metadata.get("structure", {})
+        data = metadata.get("data", {})
+        structure = data.get("structure", {})
         directions = structure.get("text_directions_present")
         assert directions is not None
         assert set(directions) == {"ttb", "ltr"}
@@ -464,7 +465,8 @@ class TestSchemaAdapterV23Fields:
         adapter = Layer2SchemaAdapter()
         sample = self._make_sample(char_height_rendered_px=28.5)
         metadata = adapter.build_enrichment_metadata(sample)
-        resolution = metadata.get("resolution", {})
+        data = metadata.get("data", {})
+        resolution = data.get("resolution", {})
         assert resolution.get("character_height_rendered_px") == 28.5
 
 

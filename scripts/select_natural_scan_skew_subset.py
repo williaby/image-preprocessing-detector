@@ -50,8 +50,8 @@ import logging
 import random
 import sys
 import time
-from collections import Counter, defaultdict
-from dataclasses import asdict, dataclass, field
+from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -570,7 +570,7 @@ def assign_splits(
     Held-back scripts go exclusively to test. Remaining images are split
     80/10/10 using deterministic path hashing for reproducibility.
     """
-    rng = random.Random(seed)
+    _ = random.Random(seed)  # nosec B311
 
     for c in candidates:
         c.file_hash = compute_file_hash(c.path)
@@ -627,7 +627,7 @@ def stratified_select(
     Returns:
         Selected candidates list.
     """
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # nosec B311
     selected: list[ImageCandidate] = []
     remaining_budget = total_target
 

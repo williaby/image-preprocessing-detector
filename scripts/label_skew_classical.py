@@ -72,7 +72,7 @@ def detect_skew_classical(image_path: str) -> dict[str, Any]:
             return result
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        h, w = gray.shape
+        _, w = gray.shape
 
         # Hough Transform method
         angle_hough, conf_hough = _detect_hough(gray, w)

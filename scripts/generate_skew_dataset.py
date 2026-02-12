@@ -59,7 +59,7 @@ import math
 import random
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -100,7 +100,7 @@ def compute_bin_centers() -> list[float]:
 
 
 BIN_CENTERS = compute_bin_centers()
-assert len(BIN_CENTERS) == 42, f"Expected 42 bins, got {len(BIN_CENTERS)}"  # noqa: S101
+assert len(BIN_CENTERS) == 42, f"Expected 42 bins, got {len(BIN_CENTERS)}"
 
 
 def angle_to_bin(angle: float) -> int:
@@ -208,6 +208,7 @@ SCRIPT_TIER_WEIGHTS: dict[str, float] = {
 
 
 SKIP_DIRS = {"train", "val", "test", "augmented", "metadata", "__pycache__"}
+_PNG_GLOB = "*.png"
 
 
 def discover_source_images(
@@ -243,7 +244,7 @@ def discover_source_images(
                 name = script_dir.name
                 if name in SKIP_DIRS or name.startswith((".", "_")):
                     continue
-                imgs = list(script_dir.glob("*.png")) + list(script_dir.glob("*.jpg"))
+                imgs = list(script_dir.glob(_PNG_GLOB)) + list(script_dir.glob("*.jpg"))
                 if imgs:
                     images_by_script.setdefault(name, []).extend(imgs)
         # Sort per-script for deterministic ordering
@@ -258,7 +259,7 @@ def discover_source_images(
         name = script_dir.name
         if name in SKIP_DIRS or name.startswith((".", "_")):
             continue
-        imgs = list(script_dir.glob("*.png")) + list(script_dir.glob("*.jpg"))
+        imgs = list(script_dir.glob(_PNG_GLOB)) + list(script_dir.glob("*.jpg"))
         if imgs:
             images_by_script[name] = sorted(imgs)
 
@@ -269,7 +270,7 @@ def discover_source_images(
             if img_dir.exists():
                 for script_dir in sorted(img_dir.iterdir()):
                     if script_dir.is_dir():
-                        imgs = list(script_dir.glob("*.png"))
+                        imgs = list(script_dir.glob(_PNG_GLOB))
                         if imgs:
                             images_by_script.setdefault(script_dir.name, []).extend(imgs)
 
@@ -311,7 +312,7 @@ def discover_gcs_images(
         parts = relative.split("/")
         if len(parts) >= 2:
             script_code = parts[0]
-            if script_code.startswith(".") or script_code.startswith("_"):
+            if script_code.startswith((".", "_")):
                 continue
             if script_code in {"train", "val", "test", "augmented", "metadata"}:
                 continue
@@ -604,7 +605,7 @@ def build_generation_plan(
     Returns:
         GenerationPlan with items and statistics.
     """
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # nosec B311
     held_back = set(held_back_scripts or [])
 
     # Separate available vs held-back scripts
@@ -645,8 +646,8 @@ def build_generation_plan(
 
     # Statistics
     angle_counts = {alloc.name: 0 for alloc in ANGLE_DISTRIBUTION}
-    orient_counts = {str(o): 0 for o in ORIENTATION_CLASSES}
-    degrad_counts = {p: 0 for p in DEGRADATION_WEIGHTS}
+    orient_counts = dict.fromkeys((str(o) for o in ORIENTATION_CLASSES), 0)
+    degrad_counts = dict.fromkeys(DEGRADATION_WEIGHTS, 0)
     script_counts: dict[str, int] = {}
     split_counts = {"train": 0, "val": 0, "test": 0}
 

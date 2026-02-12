@@ -19,6 +19,9 @@ import pytest
 if TYPE_CHECKING:
     from image_preprocessing_detector.detection.deskew_pipeline import DeskewPipeline
 
+# Use modern numpy Generator API instead of legacy np.random functions (S6711)
+_rng = np.random.default_rng(42)
+
 
 class TestDeskewConfig:
     """Tests for DeskewConfig loading and defaults."""
@@ -87,7 +90,7 @@ class TestRotate90:
         """Rotation by 0 degrees returns a copy of the image."""
         from image_preprocessing_detector.detection.deskew_pipeline import _rotate_90
 
-        img = np.random.randint(0, 255, (100, 200, 3), dtype=np.uint8)
+        img = _rng.integers(0, 255, (100, 200, 3), dtype=np.uint8)
         rotated = _rotate_90(img, 0)
         assert rotated.shape == img.shape
         np.testing.assert_array_equal(rotated, img)
@@ -120,7 +123,7 @@ class TestRotate90:
         """Four 90-degree rotations return the original image."""
         from image_preprocessing_detector.detection.deskew_pipeline import _rotate_90
 
-        img = np.random.randint(0, 255, (50, 80, 3), dtype=np.uint8)
+        img = _rng.integers(0, 255, (50, 80, 3), dtype=np.uint8)
         result = img.copy()
         for _ in range(4):
             result = _rotate_90(result, 90)
@@ -136,7 +139,7 @@ class TestApplySkewCorrection:
             _apply_skew_correction,
         )
 
-        img = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+        img = _rng.integers(0, 255, (100, 100, 3), dtype=np.uint8)
         corrected = _apply_skew_correction(img, 0.0)
         # With zero rotation, image should be nearly identical
         # (floating point rounding may cause tiny differences)
@@ -187,7 +190,7 @@ class TestDeskewPipelineClassical:
         from image_preprocessing_detector.detection.deskew_pipeline import DeskewResult
 
         pipeline = self._make_pipeline()
-        img = np.random.randint(0, 255, (300, 400, 3), dtype=np.uint8)
+        img = _rng.integers(0, 255, (300, 400, 3), dtype=np.uint8)
         result = pipeline.process(img)
         assert isinstance(result, DeskewResult)
         assert result.method == "classical"
@@ -219,7 +222,7 @@ class TestDeskewPipelineClassical:
         )
         pipeline = DeskewPipeline(config=config)
         # Create an image with very mild skew (< 5 degrees)
-        img = np.random.randint(0, 255, (300, 400, 3), dtype=np.uint8)
+        img = _rng.integers(0, 255, (300, 400, 3), dtype=np.uint8)
         result = pipeline.process(img)
         # Classical detector on random noise will likely find small angle
         if not result.correction_applied:
@@ -237,7 +240,7 @@ class TestDeskewPipelineClassical:
             fallback_enabled=False,
         )
         pipeline = DeskewPipeline(config=config)
-        img = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
+        img = _rng.integers(0, 255, (100, 100, 3), dtype=np.uint8)
         result = pipeline.process(img)
         assert not result.correction_applied
         assert result.method == "none"

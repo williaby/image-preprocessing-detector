@@ -15,6 +15,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+# Use modern numpy Generator API instead of legacy np.random functions (S6711)
+_rng = np.random.default_rng(42)
+
 
 class TestBinConfig:
     """Tests for BinConfig non-uniform bin layout."""
@@ -270,7 +273,7 @@ class TestSkewEstimatorInference:
             model_path=Path("/fake/model.onnx"),
         )
         # Create a dummy BGR image
-        image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        image = _rng.integers(0, 255, (480, 640, 3), dtype=np.uint8)
         tensor = estimator._preprocess(image)
 
         assert tensor.shape == (1, 3, 384, 384)

@@ -530,7 +530,7 @@ def run_selection(
         ValueError: If the dataset name is not recognised.
         FileNotFoundError: If the metadata JSON is missing.
     """
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # nosec B311
 
     # Step 1: Load configuration
     config = load_dataset_config(

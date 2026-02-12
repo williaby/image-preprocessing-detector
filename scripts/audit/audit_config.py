@@ -39,6 +39,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SCHEMA_PATH = PROJECT_ROOT / "docs" / "schema" / "layer2_enrichment_v2.schema.json"
 DEFAULT_METADATA_ROOT = Path("/mnt/e/image_detection/metadata_registry/json")
 DEFAULT_IMAGE_ROOT = Path("/mnt/e/image_detection/01_base_datasets")
+_BASE_DATA_DIR = Path("/mnt/e/image_detection/01_base_data")
 DEFAULT_SAMPLE_SIZE = 36
 
 # Stratification axes supported by the sampling step.
@@ -305,7 +306,7 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "jssoda": {
         "image_base_path": (
-            Path("/mnt/e/image_detection/01_base_data")
+            _BASE_DATA_DIR
             / "language"
             / "multilingual_scripts"
             / "jssoda"
@@ -325,7 +326,7 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "mlt19": {
         "image_base_path": (
-            Path("/mnt/e/image_detection/01_base_data") / "language" / "mlt19"
+            _BASE_DATA_DIR / "language" / "mlt19"
         ),
         "metadata_json_path": (DEFAULT_METADATA_ROOT / "mlt19_metadata.json"),
         "llm_enrichment_path": (
@@ -342,7 +343,7 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "nepali-handwritten": {
         "image_base_path": (
-            Path("/mnt/e/image_detection/01_base_data")
+            _BASE_DATA_DIR
             / "language"
             / "nepali_handwritten"
         ),
@@ -360,7 +361,7 @@ _KNOWN_CONFIGS: dict[str, dict[str, Any]] = {
     },
     "realdae": {
         "image_base_path": (
-            Path("/mnt/e/image_detection/01_base_data")
+            _BASE_DATA_DIR
             / "camera_captured"
             / "realdae"
         ),

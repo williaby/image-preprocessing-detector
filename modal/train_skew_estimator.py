@@ -41,14 +41,16 @@ from __future__ import annotations
 
 import json
 import subprocess
-import sys
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import modal
+
+if TYPE_CHECKING:
+    import torch
 
 # ---------------------------------------------------------------------------
 # Modal app setup
@@ -56,9 +58,7 @@ import modal
 
 app = modal.App("skew-estimator-training")
 
-data_volume = modal.Volume.from_name(
-    "skew-training-data", create_if_missing=True
-)
+data_volume = modal.Volume.from_name("skew-training-data", create_if_missing=True)
 results_volume = modal.Volume.from_name(
     "skew-estimator-results", create_if_missing=True
 )
@@ -69,21 +69,18 @@ gcs_secret = modal.Secret.from_name("gcs-credentials")
 GCS_BUCKET = "image_detection_b"
 GCS_TAR_BLOB = "skew_training.tar"
 
-training_image = (
-    modal.Image.debian_slim(python_version="3.12")
-    .pip_install(
-        "torch==2.5.1",
-        "torchvision==0.20.1",
-        "numpy<2.0",
-        "Pillow>=11.0.0",
-        "timm>=1.0.0",
-        "albumentations>=1.3.0",
-        "scikit-learn>=1.3.0",
-        "google-cloud-storage>=2.10.0",
-        "onnx>=1.14.0",
-        "onnxruntime>=1.17.0",
-        "scipy>=1.11.0",
-    )
+training_image = modal.Image.debian_slim(python_version="3.12").pip_install(
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "numpy<2.0",
+    "Pillow>=11.0.0",
+    "timm>=1.0.0",
+    "albumentations>=1.3.0",
+    "scikit-learn>=1.3.0",
+    "google-cloud-storage>=2.10.0",
+    "onnx>=1.14.0",
+    "onnxruntime>=1.17.0",
+    "scipy>=1.11.0",
 )
 
 
@@ -143,7 +140,7 @@ def build_skew_dataset(
     split: str,
     input_size: int = 224,
     augment: bool = False,
-) -> "torch.utils.data.Dataset":
+) -> torch.utils.data.Dataset:
     """Build a skew training dataset from image directory + labels.json.
 
     Expected structure::
@@ -182,24 +179,28 @@ def build_skew_dataset(
         )
 
     if augment:
-        transform = transforms.Compose([
-            transforms.RandomResizedCrop(input_size, scale=(0.85, 1.0)),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225],
-            ),
-        ])
+        transform = transforms.Compose(
+            [
+                transforms.RandomResizedCrop(input_size, scale=(0.85, 1.0)),
+                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.1),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225],
+                ),
+            ]
+        )
     else:
-        transform = transforms.Compose([
-            transforms.Resize((input_size, input_size)),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225],
-            ),
-        ])
+        transform = transforms.Compose(
+            [
+                transforms.Resize((input_size, input_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225],
+                ),
+            ]
+        )
 
     orient_map = {0: 0, 90: 1, 180: 2, 270: 3}
 
@@ -325,8 +326,8 @@ def _auto_batch_size(backbone: str, input_size: int) -> int:
 
 
 def _benchmark_cpu_inference(
-    model: "torch.nn.Module",
-    config: "TrainingConfig",
+    model: torch.nn.Module,
+    config: TrainingConfig,
     run_id: str,
 ) -> dict[str, float]:
     """Time CPU inference for the trained model.
@@ -419,8 +420,6 @@ def train(
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    import numpy as np
-    from scipy import stats as sp_stats
     from torch.utils.data import DataLoader
 
     config = TrainingConfig(test_mode=test)
@@ -539,9 +538,7 @@ def train(
     train_dataset = build_skew_dataset(
         data_dir, "train", config.input_size, augment=True
     )
-    val_dataset = build_skew_dataset(
-        data_dir, "val", config.input_size, augment=False
-    )
+    val_dataset = build_skew_dataset(data_dir, "val", config.input_size, augment=False)
 
     train_loader = DataLoader(
         train_dataset,
@@ -572,9 +569,7 @@ def train(
         anneal_strategy="cos",
     )
 
-    bin_centers_tensor = torch.tensor(
-        bin_centers, dtype=torch.float32, device=device
-    )
+    bin_centers_tensor = torch.tensor(bin_centers, dtype=torch.float32, device=device)
     bin_half_widths_tensor = torch.tensor(
         bin_half_widths, dtype=torch.float32, device=device
     )
@@ -601,10 +596,7 @@ def train(
             best_val_mae = ckpt["best_val_mae"]
             patience_counter = ckpt.get("patience_counter", 0)
             history = ckpt.get("history", [])
-            print(
-                f"Resumed from epoch {start_epoch} "
-                f"(best MAE={best_val_mae:.4f})"
-            )
+            print(f"Resumed from epoch {start_epoch} (best MAE={best_val_mae:.4f})")
         else:
             print(f"WARNING: Checkpoint not found at {ckpt_path}, starting fresh")
 
@@ -632,20 +624,14 @@ def train(
 
             # Compute bin labels from angles
             with torch.no_grad():
-                diffs = (
-                    angles.unsqueeze(1) - bin_centers_tensor.unsqueeze(0)
-                ).abs()
+                diffs = (angles.unsqueeze(1) - bin_centers_tensor.unsqueeze(0)).abs()
                 bin_labels = diffs.argmin(dim=1)
 
             outputs = model(images)
 
             # Multi-task loss
-            orient_loss = F.cross_entropy(
-                outputs["orientation_logits"], orientations
-            )
-            bin_loss = F.cross_entropy(
-                outputs["skew_bin_logits"], bin_labels
-            )
+            orient_loss = F.cross_entropy(outputs["orientation_logits"], orientations)
+            bin_loss = F.cross_entropy(outputs["skew_bin_logits"], bin_labels)
 
             # SmoothL1 regression on residual from nearest bin center
             gt_bin_centers = bin_centers_tensor[bin_labels]
@@ -680,7 +666,10 @@ def train(
 
         # --- Validate ---
         val_metrics = _evaluate(
-            model, val_loader, bin_centers_tensor, bin_half_widths_tensor,
+            model,
+            val_loader,
+            bin_centers_tensor,
+            bin_half_widths_tensor,
             device,
         )
         val_mae = val_metrics["mae"]
@@ -750,10 +739,7 @@ def train(
         else:
             patience_counter += 1
             if patience_counter >= config.patience and not test:
-                print(
-                    f"Early stopping at epoch {epoch} "
-                    f"(patience={config.patience})"
-                )
+                print(f"Early stopping at epoch {epoch} (patience={config.patience})")
                 break
 
         results_volume.commit()
@@ -768,8 +754,15 @@ def train(
 
     # --- Test set evaluation ---
     test_metrics = _run_test_evaluation(
-        eval_model, data_dir, config, bin_centers, bin_half_widths,
-        bin_centers_tensor, bin_half_widths_tensor, device, run_id,
+        eval_model,
+        data_dir,
+        config,
+        bin_centers,
+        bin_half_widths,
+        bin_centers_tensor,
+        bin_half_widths_tensor,
+        device,
+        run_id,
     )
 
     # --- Export ONNX ---
@@ -814,11 +807,11 @@ def train(
 
 
 def _evaluate(
-    model: "torch.nn.Module",
-    loader: "torch.utils.data.DataLoader",
-    bin_centers_tensor: "torch.Tensor",
-    bin_half_widths_tensor: "torch.Tensor",
-    device: "torch.device",
+    model: torch.nn.Module,
+    loader: torch.utils.data.DataLoader,
+    bin_centers_tensor: torch.Tensor,
+    bin_half_widths_tensor: torch.Tensor,
+    device: torch.device,
 ) -> dict[str, float]:
     """Evaluate model on a data loader.
 
@@ -885,16 +878,10 @@ def _evaluate(
     if len(all_gt) > 2:
         srcc, _ = sp_stats.spearmanr(all_gt, all_pred)
 
-    within_05 = (
-        float(np.mean(np.array(all_errors) <= 0.5))
-        if all_errors
-        else 0.0
-    )
+    within_05 = float(np.mean(np.array(all_errors) <= 0.5)) if all_errors else 0.0
 
     synth_mae = float(np.mean(synth_errors)) if synth_errors else float("nan")
-    natural_mae = (
-        float(np.mean(natural_errors)) if natural_errors else float("nan")
-    )
+    natural_mae = float(np.mean(natural_errors)) if natural_errors else float("nan")
 
     return {
         "mae": mae,
@@ -909,14 +896,14 @@ def _evaluate(
 
 
 def _run_test_evaluation(
-    model: "torch.nn.Module",
+    model: torch.nn.Module,
     data_dir: str,
     config: TrainingConfig,
     bin_centers: list[float],
     bin_half_widths: list[float],
-    bin_centers_tensor: "torch.Tensor",
-    bin_half_widths_tensor: "torch.Tensor",
-    device: "torch.device",
+    bin_centers_tensor: torch.Tensor,
+    bin_half_widths_tensor: torch.Tensor,
+    device: torch.device,
     run_id: str,
 ) -> dict[str, Any]:
     """Run test set evaluation using best checkpoint.
@@ -924,9 +911,6 @@ def _run_test_evaluation(
     Returns:
         Dict with test metrics, or empty dict if no test set.
     """
-    import numpy as np
-    import torch
-    from scipy import stats as sp_stats
     from torch.utils.data import DataLoader
 
     test_dir = Path(data_dir) / "test"
@@ -970,8 +954,7 @@ def _run_test_evaluation(
     domain_info = ""
     if metrics["natural_count"] > 0:
         domain_info = (
-            f" | synth={metrics['synth_mae']:.3f}"
-            f" nat={metrics['natural_mae']:.3f}"
+            f" | synth={metrics['synth_mae']:.3f} nat={metrics['natural_mae']:.3f}"
         )
 
     print(
@@ -985,7 +968,7 @@ def _run_test_evaluation(
 
 
 def _export_onnx(
-    model: "torch.nn.Module",
+    model: torch.nn.Module,
     config: TrainingConfig,
     run_id: str,
 ) -> str:
@@ -1058,9 +1041,7 @@ def _setup_gcs_credentials() -> None:
         print("  WARNING: GCP_SA_KEY not found, trying default credentials")
 
 
-def _download_gcs_individual(
-    data_dir: str, test_mode: bool = False
-) -> None:
+def _download_gcs_individual(data_dir: str, test_mode: bool = False) -> None:
     """Download dataset as individual files from GCS (test mode fallback).
 
     For production use, prefer ``prepare_dataset()`` which downloads a
@@ -1110,26 +1091,21 @@ def _download_gcs_individual(
             image_blobs = image_blobs[:100]
             print(f"  [TEST] Limiting {split} to {len(image_blobs)} images")
 
-        def _download_blob(blob: Any) -> str:
+        def _download_blob(blob: Any, _images_dir: Path = local_images) -> str:
             filename = os.path.basename(blob.name)
-            local_path = local_images / filename
+            local_path = _images_dir / filename
             if not local_path.exists():
                 blob.download_to_filename(str(local_path))
             return filename
 
         downloaded = 0
         with ThreadPoolExecutor(max_workers=32) as executor:
-            futures = {
-                executor.submit(_download_blob, b): b for b in image_blobs
-            }
+            futures = {executor.submit(_download_blob, b): b for b in image_blobs}
             for future in as_completed(futures):
                 future.result()
                 downloaded += 1
                 if downloaded % 5000 == 0:
-                    print(
-                        f"  [{split}] Downloaded {downloaded}"
-                        f"/{len(image_blobs)}"
-                    )
+                    print(f"  [{split}] Downloaded {downloaded}/{len(image_blobs)}")
 
         total_downloaded += downloaded
         print(f"  [{split}] Complete: {downloaded} images")
@@ -1179,11 +1155,11 @@ def _compute_bin_half_widths() -> list[float]:
 
 # Zone definitions: (start_deg, end_deg, bin_width, num_bins)
 _BIN_ZONES = [
-    (-45.0, -15.0, 5.0, 6),   # extreme_neg
-    (-15.0, -5.0, 2.0, 5),    # moderate_neg
-    (-5.0, 5.0, 0.5, 20),     # critical
-    (5.0, 15.0, 2.0, 5),      # moderate_pos
-    (15.0, 45.0, 5.0, 6),     # extreme_pos
+    (-45.0, -15.0, 5.0, 6),  # extreme_neg
+    (-15.0, -5.0, 2.0, 5),  # moderate_neg
+    (-5.0, 5.0, 0.5, 20),  # critical
+    (5.0, 15.0, 2.0, 5),  # moderate_pos
+    (15.0, 45.0, 5.0, 6),  # extreme_pos
 ]
 
 

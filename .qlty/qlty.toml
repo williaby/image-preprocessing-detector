@@ -149,6 +149,13 @@ match.rules = ["radarlint-python:python:S3776"]
 match.file_patterns = ["scripts/**"]
 set.ignored = true
 
+# Ignore cognitive complexity in synthetic renderer - vertical text layout requires nested logic
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["**/synthetic/renderer.py"]
+set.ignored = true
+
 # Ignore "always returns same value" in scripts/ - intentional error handling patterns
 [[triage]]
 match.plugins = ["radarlint-python"]
