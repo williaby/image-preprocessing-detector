@@ -366,6 +366,10 @@ class TestResolutionQualityResultToDict:
             "num_valid_cc_regions",
             "height_cv",
             "flagged_for_review",
+            # Provenance fields (v2.2)
+            "label_provenance",
+            "label_source",
+            "label_confidence",
         }
         assert set(serialized.keys()) == expected_keys
 

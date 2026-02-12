@@ -76,6 +76,12 @@ RQ_FIELDS = [
     "resolution_quality_num_text_regions",
     "resolution_quality_height_cv",
     "resolution_quality_source",
+    # Provenance fields (v2.2)
+    "resolution_quality_label_provenance",
+    "resolution_quality_label_source",
+    "resolution_quality_label_confidence",
+    "resolution_quality_script_used",
+    "resolution_quality_script_confidence",
 ]
 
 
@@ -126,9 +132,10 @@ def extract_rq_fields(rq: dict[str, Any]) -> dict[str, Any]:
         rq: Single measurement result from label_resolution_quality.py.
 
     Returns:
-        Dict with 10 resolution quality fields for L2 enrichment.
+        Dict with 10-15 resolution quality fields for L2 enrichment
+        (10 core + up to 5 provenance fields when present).
     """
-    return {
+    fields: dict[str, Any] = {
         "resolution_quality_score": rq.get("resolution_quality_score"),
         "resolution_quality_confidence": rq.get("confidence_pct"),
         "resolution_quality_char_height_px": rq.get("char_height_px"),
@@ -140,6 +147,20 @@ def extract_rq_fields(rq: dict[str, Any]) -> dict[str, Any]:
         "resolution_quality_height_cv": rq.get("height_cv"),
         "resolution_quality_source": RQ_SOURCE_TAG,
     }
+
+    # Provenance fields (v2.2) — include if present in source data
+    for provenance_field in (
+        "label_provenance",
+        "label_source",
+        "label_confidence",
+        "script_used",
+        "script_confidence",
+    ):
+        value = rq.get(provenance_field)
+        if value is not None:
+            fields[f"resolution_quality_{provenance_field}"] = value
+
+    return fields
 
 
 def get_sample_filename(sample: dict[str, Any]) -> str | None:

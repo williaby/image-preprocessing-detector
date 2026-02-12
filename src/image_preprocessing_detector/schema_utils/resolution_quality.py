@@ -64,6 +64,88 @@ BUCKET_THRESHOLDS: dict[CoarseBucket, tuple[float, float]] = {
 
 
 @dataclass(frozen=True)
+class ScriptAwareMeasurementConfig:
+    """Per-script measurement parameters for resolution quality.
+
+    Used when script is known (synthetic data or high-confidence script detection)
+    to apply script-appropriate CC filtering and morphological operations.
+
+    Attributes:
+        script_family: Script family identifier ("cjk", "latin", "arabic", etc.).
+        cc_aspect_ratio_range: Valid component height/width ratio range for CC filtering.
+        morphological_closing_kernel: Kernel size (h, w) for reconnecting strokes.
+        min_script_confidence: Minimum script confidence required to use these params.
+    """
+
+    script_family: str
+    cc_aspect_ratio_range: tuple[float, float]
+    morphological_closing_kernel: tuple[int, int]
+    min_script_confidence: float = 0.8
+
+
+# Conservative starting defaults. Arabic CC aspect ratios are uncertain — standard CC
+# detects whole words in cursive Arabic, not individual characters. For Arabic, vertical
+# projection profiling (V2 Phase B) will be needed for accurate per-character measurement.
+SCRIPT_MEASUREMENT_CONFIGS: dict[str, ScriptAwareMeasurementConfig] = {
+    "cjk": ScriptAwareMeasurementConfig("cjk", (0.6, 1.4), (3, 3), 0.8),
+    "latin": ScriptAwareMeasurementConfig("latin", (0.2, 0.8), (1, 1), 0.8),
+    "arabic": ScriptAwareMeasurementConfig("arabic", (0.3, 1.5), (2, 1), 0.8),
+    "devanagari": ScriptAwareMeasurementConfig("devanagari", (0.4, 1.2), (2, 2), 0.8),
+    "mixed": ScriptAwareMeasurementConfig("mixed", (0.2, 5.0), (2, 2), 0.0),
+}
+
+_CJK_SCRIPTS = frozenset({"Hans", "Hant", "Jpan", "Kore"})
+_ARABIC_SCRIPTS = frozenset({"Arab"})
+_DEVANAGARI_SCRIPTS = frozenset({"Deva"})
+
+
+def resolve_script_family(iso15924_code: str) -> str:
+    """Map ISO 15924 script code to measurement family.
+
+    Args:
+        iso15924_code: ISO 15924 4-letter script code (e.g., "Latn", "Hans").
+
+    Returns:
+        Script family string: "cjk", "arabic", "devanagari", or "latin" (default).
+    """
+    if iso15924_code in _CJK_SCRIPTS:
+        return "cjk"
+    if iso15924_code in _ARABIC_SCRIPTS:
+        return "arabic"
+    if iso15924_code in _DEVANAGARI_SCRIPTS:
+        return "devanagari"
+    return "latin"
+
+
+def get_script_measurement_config(
+    iso15924_code: str | None = None,
+    script_confidence: float | None = None,
+) -> ScriptAwareMeasurementConfig:
+    """Get measurement config for a script, falling back to 'mixed' if uncertain.
+
+    Args:
+        iso15924_code: ISO 15924 script code, or None for unknown script.
+        script_confidence: Confidence of script detection (0-1), or None.
+
+    Returns:
+        ScriptAwareMeasurementConfig for the appropriate script family.
+    """
+    if iso15924_code is None:
+        return SCRIPT_MEASUREMENT_CONFIGS["mixed"]
+
+    family = resolve_script_family(iso15924_code)
+    config = SCRIPT_MEASUREMENT_CONFIGS.get(family, SCRIPT_MEASUREMENT_CONFIGS["mixed"])
+
+    if (
+        script_confidence is not None
+        and script_confidence < config.min_script_confidence
+    ):
+        return SCRIPT_MEASUREMENT_CONFIGS["mixed"]
+
+    return config
+
+
+@dataclass(frozen=True)
 class ResolutionQualityResult:
     """Per-image resolution quality measurement with confidence and range.
 
@@ -79,6 +161,14 @@ class ResolutionQualityResult:
         num_valid_cc_regions: Regions where Stage 2 CC analysis succeeded.
         height_cv: Coefficient of variation of per-region heights.
         flagged_for_review: True if low confidence or insufficient data.
+        label_provenance: Provenance tier for weak label pipeline.
+        label_source: Source identifier for the label.
+        label_confidence: Confidence in the label (0-1), used for training weight.
+        script_used: ISO 15924 code if script-aware measurement was used.
+        script_confidence: Confidence of script detection (None if N/A).
+        bucket_probabilities: Soft label distribution over 5 coarse buckets.
+        quality_score_std: Teacher's quality_score regression uncertainty (std dev).
+        char_height_std: Teacher's char_height regression uncertainty (std dev).
     """
 
     resolution_quality_score: float
@@ -93,9 +183,21 @@ class ResolutionQualityResult:
     height_cv: float
     flagged_for_review: bool
 
-    def to_dict(self) -> dict:
+    # Provenance fields for weak label pipeline
+    label_provenance: str = "tier_3_heuristic"
+    label_source: str = "paddleocr_dbnet_cc_v1"
+    label_confidence: float = 1.0
+    script_used: str | None = None
+    script_confidence: float | None = None
+
+    # Soft label fields for teacher-student knowledge transfer
+    bucket_probabilities: dict[str, float] | None = None
+    quality_score_std: float | None = None
+    char_height_std: float | None = None
+
+    def to_dict(self) -> dict[str, object]:
         """Serialize to JSON-compatible dictionary."""
-        return {
+        result: dict[str, object] = {
             "resolution_quality_score": round(self.resolution_quality_score, 4),
             "confidence_pct": round(self.confidence_pct, 4),
             "char_height_px": round(self.char_height_px, 2),
@@ -113,7 +215,23 @@ class ResolutionQualityResult:
             "num_valid_cc_regions": self.num_valid_cc_regions,
             "height_cv": round(self.height_cv, 4),
             "flagged_for_review": self.flagged_for_review,
+            "label_provenance": self.label_provenance,
+            "label_source": self.label_source,
+            "label_confidence": round(self.label_confidence, 4),
         }
+        if self.script_used is not None:
+            result["script_used"] = self.script_used
+        if self.script_confidence is not None:
+            result["script_confidence"] = round(self.script_confidence, 4)
+        if self.bucket_probabilities is not None:
+            result["bucket_probabilities"] = {
+                k: round(v, 6) for k, v in self.bucket_probabilities.items()
+            }
+        if self.quality_score_std is not None:
+            result["quality_score_std"] = round(self.quality_score_std, 6)
+        if self.char_height_std is not None:
+            result["char_height_std"] = round(self.char_height_std, 4)
+        return result
 
 
 def piecewise_quality_score(char_height_px: float) -> float:
@@ -431,3 +549,109 @@ def crop_polygon_region(
     cropped[mask == 0] = 255
 
     return cropped
+
+
+def measure_char_height_v2(
+    image_gray: NDArray[np.uint8],
+    script_family: str = "mixed",
+    use_sauvola: bool = True,
+) -> tuple[float | None, float | None]:
+    """Measure character height using V2 method (Sauvola + script-aware CC).
+
+    Shared measurement function used by both the synthetic generator and
+    the resolution quality labeling pipeline. Uses Sauvola binarization
+    (when available) for improved local thresholding, with script-aware
+    morphological closing and CC aspect ratio filtering.
+
+    Args:
+        image_gray: Grayscale image (uint8, single channel).
+        script_family: Script family for measurement parameters.
+            One of: "cjk", "latin", "arabic", "devanagari", "mixed".
+        use_sauvola: If True, attempt Sauvola binarization via
+            cv2.ximgproc.niBlackThreshold. Falls back to adaptive
+            threshold if opencv-contrib-python is not available.
+
+    Returns:
+        Tuple of (char_height_px, quality_score) where quality_score is
+        the piecewise mapping from height to 0-1 score. Returns
+        (None, None) if measurement fails (e.g., no text detected).
+    """
+    import cv2
+    import numpy as np
+
+    if image_gray.size < 64:
+        return None, None
+
+    config = SCRIPT_MEASUREMENT_CONFIGS.get(
+        script_family, SCRIPT_MEASUREMENT_CONFIGS["mixed"]
+    )
+
+    # Step 1: Binarize with Sauvola (preferred) or adaptive threshold
+    if use_sauvola:
+        try:
+            binary = cv2.ximgproc.niBlackThreshold(  # type: ignore[attr-defined]
+                image_gray,
+                maxValue=255,
+                type=cv2.THRESH_BINARY_INV,
+                blockSize=max(15, (min(image_gray.shape) // 8) | 1),
+                k=0.2,
+                binarizationMethod=cv2.ximgproc.BINARIZATION_SAUVOLA,  # type: ignore[attr-defined]
+            )
+        except (AttributeError, cv2.error):
+            # opencv-contrib-python not installed; fall back
+            binary = cv2.adaptiveThreshold(
+                image_gray,
+                255,
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY_INV,
+                blockSize=max(3, (min(image_gray.shape) // 4) | 1),
+                C=10,
+            )
+    else:
+        binary = cv2.adaptiveThreshold(
+            image_gray,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY_INV,
+            blockSize=max(3, (min(image_gray.shape) // 4) | 1),
+            C=10,
+        )
+
+    # Step 2: Script-aware morphological closing to reconnect strokes
+    kernel_h, kernel_w = config.morphological_closing_kernel
+    if kernel_h > 1 or kernel_w > 1:
+        # CJK: 3x3 reconnects radicals. Latin: 1x1 = no-op
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_w, kernel_h))
+        binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+
+    # Step 3: Connected component analysis with script-aware filtering
+    num_labels, _labels, stats, _ = cv2.connectedComponentsWithStats(
+        binary, connectivity=8
+    )
+    if num_labels < 2:
+        return None, None
+
+    heights = stats[1:, cv2.CC_STAT_HEIGHT].astype(np.float64)
+    widths = stats[1:, cv2.CC_STAT_WIDTH].astype(np.float64)
+    areas = stats[1:, cv2.CC_STAT_AREA].astype(np.float64)
+
+    aspect_ratios = heights / np.maximum(widths, 1.0)
+    total_area = float(image_gray.size)
+    min_area = max(4.0, total_area * 0.0001)
+    max_area = total_area * 0.5
+
+    ar_min, ar_max = config.cc_aspect_ratio_range
+    valid_mask = (
+        (areas > min_area)
+        & (areas < max_area)
+        & (aspect_ratios > ar_min)
+        & (aspect_ratios < ar_max)
+    )
+
+    valid_heights = heights[valid_mask]
+    if len(valid_heights) < 3:
+        return None, None
+
+    median_h = float(np.median(valid_heights))
+    quality_score = piecewise_quality_score(median_h)
+    return median_h, quality_score

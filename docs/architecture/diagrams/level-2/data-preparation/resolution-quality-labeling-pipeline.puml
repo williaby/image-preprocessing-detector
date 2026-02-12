@@ -1,0 +1,203 @@
+@startuml resolution-quality-labeling-pipeline
+!theme plain
+title Resolution Quality Labeling Pipeline (Dataset-Agnostic)
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+' Color definitions
+skinparam component {
+    BackgroundColor<<input>> LightPink
+    BackgroundColor<<stage1>> LightBlue
+    BackgroundColor<<stage2>> LightGreen
+    BackgroundColor<<scoring>> LightYellow
+    BackgroundColor<<integration>> Lavender
+    BackgroundColor<<output>> LightGray
+    BackgroundColor<<module>> Wheat
+}
+
+package "Input: Any Document Image Dataset" as input_pkg <<input>> {
+    database "Dataset Images\n(--input-dir)" as images {
+        collections "DIQA-5000 (5,500)"
+        collections "OHR-Bench (8,500)"
+        collections "RealDAE (1,200)"
+        collections "Any JPEG/PNG/TIFF"
+    }
+
+    note right of images
+        **No DPI metadata required**
+        Works with camera-captured,
+        scanned, or synthetic images.
+        Recursive directory scan.
+    end note
+}
+
+package "Stage 1: Text Region Detection (PaddleOCR DBNet)" as stage1_pkg <<stage1>> {
+    component "Orientation Correction\n(--fix-orientation)" as orient {
+        [PaddleOCR angle_cls]
+        [Correct 90/180/270]
+    }
+
+    component "DBNet Text Detection\n(det=True, rec=False)" as dbnet {
+        [Single-pass inference]
+        [4-point polygon output]
+        [~30-50 regions/page]
+    }
+
+    component "Coarse Height\n(Stage 1 measurement)" as coarse {
+        [Polygon edge distance]
+        [Precision: +/-3-5px]
+        [extract_line_height_from_polygon()]
+    }
+}
+
+package "Stage 2: Character Height Measurement (CC Analysis)" as stage2_pkg <<stage2>> {
+    component "Region Cropping\n(crop_polygon_region)" as crop {
+        [Polygon mask extraction]
+        [Configurable padding]
+        [Non-text pixels -> white]
+    }
+
+    component "Connected Component\nAnalysis" as cc {
+        [Adaptive binarization]
+        [CC height extraction]
+        [Aspect ratio filtering\n(0.2-5.0)]
+    }
+
+    component "Per-Region Height\n(measure_char_height_in_region)" as region_height {
+        [Median CC height per region]
+        [min_components threshold]
+        [Fallback to Stage 1 bbox]
+    }
+}
+
+package "Stage 3: Scoring & Aggregation" as scoring_pkg <<scoring>> {
+    component "Weighted Aggregation\n(aggregate_measurements)" as agg {
+        [Weighted median\n(by region area)]
+        [P25/P75 range]
+        [Height CV computation]
+    }
+
+    component "Piecewise Score Mapping\n(piecewise_quality_score)" as score {
+        [<16px -> 0.0-0.15\nneeds_major_upscale]
+        [16-32px -> 0.15-0.55\nneeds_light_upscale]
+        [32-48px -> 0.55-0.75\noptimal]
+        [48-96px -> 0.75-0.95\ngood]
+        [>96px -> 0.95-1.0\noversized]
+    }
+
+    component "Confidence & Flags\n(compute_confidence)" as confidence {
+        [region_factor * uniformity\n* method_factor]
+        [Flag if <3 regions\nor CV > 0.5]
+    }
+}
+
+package "L2 Integration\n(integrate_resolution_quality.py)" as integration_pkg <<integration>> {
+    component "Filename Matching" as matcher {
+        [Index by basename]
+        [Handle path variants]
+    }
+
+    component "Enrichment Writer" as writer {
+        [10 resolution_quality_* fields]
+        [--patch-current or\nnew version]
+        [Provenance tracking]
+    }
+}
+
+package "Core Module\n(schema_utils/resolution_quality.py)" as module_pkg <<module>> {
+    component "ResolutionQualityResult\n(frozen dataclass)" as result_class {
+        [resolution_quality_score: float]
+        [confidence_pct: float]
+        [char_height_px: float]
+        [coarse_bucket: CoarseBucket]
+        [measurement_method: str]
+        [to_dict() serialization]
+    }
+
+    component "CoarseBucket (Enum)" as bucket_enum {
+        [NEEDS_MAJOR_UPSCALE]
+        [NEEDS_LIGHT_UPSCALE]
+        [OPTIMAL]
+        [GOOD]
+        [OVERSIZED]
+    }
+
+    component "BUCKET_THRESHOLDS\n(contiguous ranges)" as thresholds {
+        [0-16, 16-32, 32-48]
+        [48-96, 96-inf]
+    }
+}
+
+package "Output Artifacts" as output_pkg <<output>> {
+    file "results/{dataset}_\nresolution_labels.json" as rq_json
+    file "metadata_registry/json/\n{dataset}_metadata.json\n(enriched)" as l2_json
+
+    note right of rq_json
+        **Per-Image Record (10 fields)**
+        resolution_quality_score: 0.62
+        confidence_pct: 0.85
+        char_height_px: 38.5
+        coarse_bucket: "optimal"
+        measurement_method: "stage_1_2"
+        + range, CV, region counts
+    end note
+}
+
+' Flow: Input -> Stage 1
+images --> orient : "image paths\n(recursive glob)"
+orient --> dbnet : "corrected\nimages"
+dbnet --> coarse : "4-point\npolygons"
+
+' Flow: Stage 1 -> Stage 2
+coarse --> crop : "polygon\ncoordinates"
+crop --> cc : "masked\nregions"
+cc --> region_height : "CC heights\nper region"
+
+' Flow: Stage 2 -> Scoring
+region_height --> agg : "per-region\nheights + areas"
+coarse --> agg : "bbox fallback\nheights"
+agg --> score : "weighted\nmedian height"
+agg --> confidence : "CV, region\ncounts"
+score --> result_class : "quality\nscore 0-1"
+confidence --> result_class : "confidence\n+ flags"
+bucket_enum --> score
+thresholds --> score
+
+' Flow: Scoring -> Output
+result_class --> rq_json : "serialize\nto_dict()"
+
+' Flow: Integration
+rq_json --> matcher : "load RQ\nresults"
+l2_json --> matcher : "load L2\nmetadata"
+matcher --> writer : "matched\nsamples"
+writer --> l2_json : "enriched\nmetadata"
+
+' Architecture notes
+note bottom of stage1_pkg
+    **PaddleOCR v2 ONLY**
+    paddleocr>=2.7,<3.0
+    GPU: CUDA 11.8 + cuDNN
+    CPU: Requires AVX-512
+    (fails on Broadwell)
+end note
+
+note bottom of stage2_pkg
+    **Why CC inside DBNet regions?**
+    - No non-text noise
+    - Local adaptive threshold
+    - Polygon mask isolation
+    - CJK-safe binarization
+    91.5% CC success rate
+end note
+
+note right of scoring_pkg
+    **Validation Results (DIQA-5000)**
+    Kruskal-Wallis H=141.6 (p=1.7e-30)
+    Cohen's d=0.91 (large effect)
+    3.0% anomaly rate (500 spot-check)
+    12.1 img/s on A100 GPU
+end note
+
+@enduml
