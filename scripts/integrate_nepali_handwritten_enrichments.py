@@ -823,13 +823,15 @@ def integrate_sample(
     # -------------------------------------------------------------------
     # TEXT SCOPE (all handwritten content)
     # -------------------------------------------------------------------
+    # text_scope: granularity of text (word-level handwriting samples)
+    # text_scope_content_type: whether printed/handwritten/scene_text
     if llm:
         content_type = llm.get("content_type", "")
-        data["text_scope_content_type"] = content_type if content_type else "alphanumeric"
+        data["text_scope_content_type"] = content_type if content_type else "handwritten"
     else:
-        data["text_scope_content_type"] = "alphanumeric"
+        data["text_scope_content_type"] = "handwritten"
 
-    data["text_scope"] = "handwritten"
+    data["text_scope"] = "word"
 
     # -------------------------------------------------------------------
     # IMAGE PROPERTIES
