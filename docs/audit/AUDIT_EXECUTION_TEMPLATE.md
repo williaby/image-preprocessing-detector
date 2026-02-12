@@ -150,8 +150,8 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 | 12 | `handwriting_present` | % | ⬜ | Must be boolean |
 | 13 | `quality_overall_mos` | % | ⬜ | Must be numeric 1.0-5.0 (context-dependent) |
 
-**Overall Pass Rate**: ___%
-**Fields at 100%**:___/13
+**Overall Pass Rate**: _**%
+**Fields at 100%**:**_/13
 **Fields at 0%**: ___ (indicates missing enrichment sources)
 
 ### Decision Point
@@ -416,8 +416,8 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 | `handwriting_present` | % | % | +/- % |
 | `quality_overall_mos` | % | % | +/- % |
 
-**Overall improvement**: +/- ___%
-**Fields improved to 100%**:___
+**Overall improvement**: +/- _**%
+**Fields improved to 100%**:**_
 
 **Notes**:
 
@@ -461,7 +461,7 @@ dataset size rather than being limited to a small fixed number.
 | **Track C passing** | max(10, 2% of dataset) | max(15, 5% of dataset) | max(25, 10% of dataset) |
 | **Total minimum** | max(15, 5% of dataset) | max(30, 15% of dataset) | max(60, 25% of dataset) |
 | **Total target** | max(40, 5% of dataset) | max(75, 15% of dataset) | max(120, 25% of dataset) |
-| **Adaptive expansion** | No | If any flag FP > 20%, add 10 | If any flag FP > 15%, inspect all TRUE |
+| **Adaptive expansion** | No | If any flag FP > 20%, inspect all TRUE | If any flag FP > 15%, inspect all TRUE |
 
 **Percentage floor examples**: For a 1,200-image dataset at Tier 2, the minimum is
 max(30, 180) = 180. For a 5,000-image dataset at Tier 3, max(60, 1250) = 1,250.
@@ -850,7 +850,7 @@ PYTHONPATH=/home/byron/dev/image_detection:$PYTHONPATH \
 | VLM images inspected (Tier 1) | max(40, 5%) | max(15, 5%) | | ⬜ | **REQUIRED** - Track A + Track C |
 | VLM images inspected (Tier 2) | max(75, 15%) | max(30, 15%) | | ⬜ | Enhanced: gaps or critical defects |
 | VLM images inspected (Tier 3) | max(120, 25%) | max(60, 25%) | | ⬜ | Comprehensive: major gaps or KI-009 |
-| Defects resolved | 80%+ | 60% | % | ⬜ | |
+| Defects resolved | 90%+ | 75% | % | ⬜ | |
 | Content flag FP rate | <5% | <15% | % | ⬜ | |
 | Adaptive expansion triggered | N/A | N/A | | ⬜ | If any flag FP > threshold, expand |
 | Cross-dataset findings documented | All | All critical/high | | ⬜ | |
@@ -868,8 +868,8 @@ Based on [config/audit_scorecard.yaml](../../config/audit_scorecard.yaml):
 | Cross-Source Agreement | 0.10 | | | Pairwise agreement (if applicable) |
 | VLM Accuracy | 0.10 | | | Passing sample accuracy |
 
-**Total Score**: ___/100
-**Grade**:___
+**Total Score**: _**/100
+**Grade**:**_
 
 **Grade Thresholds**:
 
