@@ -57,8 +57,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Script version for provenance tracking
-SCRIPT_VERSION = "1.0.0"
-MIGRATION_FORMAT_VERSION = "full_nested_v2.0"
+SCRIPT_VERSION = "1.1.0"
+MIGRATION_FORMAT_VERSION = "full_nested_v2.3"
 
 # Mapping for script_family normalization
 # Some legacy data uses "ltr" which should map to "latin"
@@ -152,11 +152,15 @@ def migrate_structure(flat_data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Structure object with available data or null placeholders
     """
-    return {
+    result: dict[str, Any] = {
         "text_density": flat_data.get("text_density"),
         "layout_type": flat_data.get("layout_type"),
         "element_types": flat_data.get("element_types", []),
     }
+    # v2.3.0: text_directions_present (defaults to null for pre-v2.3 data)
+    if "text_directions_present" in flat_data:
+        result["text_directions_present"] = flat_data["text_directions_present"]
+    return result
 
 
 def migrate_quality(flat_data: dict[str, Any]) -> dict[str, Any]:
@@ -219,7 +223,7 @@ def migrate_language(flat_data: dict[str, Any]) -> dict[str, Any]:
     if bcp47_tag is None and language_code and script_code:
         bcp47_tag = f"{language_code}-{script_code}"
 
-    return {
+    result = {
         "language_code": language_code,
         "script_code": script_code,
         "bcp47_tag": bcp47_tag,
@@ -229,6 +233,10 @@ def migrate_language(flat_data: dict[str, Any]) -> dict[str, Any]:
         "is_rtl": flat_data.get("is_rtl", is_rtl),
         "is_primary": flat_data.get("is_primary", True),
     }
+    # v2.3.0: text_direction (defaults to null for pre-v2.3 data)
+    if "text_direction" in flat_data:
+        result["text_direction"] = flat_data["text_direction"]
+    return result
 
 
 def migrate_text_scope(flat_data: dict[str, Any]) -> dict[str, Any] | None:
@@ -301,6 +309,13 @@ def migrate_sample_data(flat_data: dict[str, Any]) -> dict[str, Any]:
     # 2. Migrate resolution (flat → object)
     resolution = migrate_resolution(flat_data)
     if resolution:
+        # v2.3.0: character_height_rendered_px and output_size_px
+        if "character_height_rendered_px" in flat_data:
+            resolution["character_height_rendered_px"] = flat_data[
+                "character_height_rendered_px"
+            ]
+        if "output_size_px" in flat_data:
+            resolution["output_size_px"] = flat_data["output_size_px"]
         nested_data["resolution"] = resolution
 
     # 3. Migrate domain (flat → object)

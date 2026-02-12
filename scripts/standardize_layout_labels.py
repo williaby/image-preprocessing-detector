@@ -287,7 +287,9 @@ def standardize_record(
     """Standardize layout detections in a single metadata record.
 
     For each detection with a class_name, converts to canonical form
-    and writes canonical_class, source_schema, is_lossy back.
+    and writes canonical_class, source_schema, source_label, is_lossy,
+    conversion_confidence back. Also converts class_name to DocLayNet
+    PascalCase (e.g. ``text`` -> ``Text``, ``list_item`` -> ``List-Item``).
 
     Args:
         record: Full metadata JSON record (modified in-place if not dry_run).
@@ -341,7 +343,10 @@ def standardize_record(
             if not dry_run:
                 detection["canonical_class"] = canonical
                 detection["source_schema"] = source_schema
+                detection["source_label"] = class_name
                 detection["is_lossy"] = is_lossy
+                detection["class_name"] = doclaynet_label
+                detection["conversion_confidence"] = 0.0 if is_lossy else 1.0
                 modified = True
 
             if is_lossy:

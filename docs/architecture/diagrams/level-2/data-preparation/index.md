@@ -79,6 +79,59 @@ Three-layer pipeline for dataset annotation and label management implementing th
 
 ---
 
+### Resolution Quality Labeling Pipeline
+
+Dataset-agnostic two-stage pipeline for measuring character pixel height and computing resolution quality scores (0-1). Uses PaddleOCR DBNet for text region detection + connected component analysis for precise character measurement.
+
+![Resolution Quality Labeling Pipeline](resolution-quality-labeling-pipeline.svg)
+
+*PlantUML source: [`resolution-quality-labeling-pipeline.puml`](resolution-quality-labeling-pipeline.puml)*
+
+**Key Properties**:
+
+- **Dataset-agnostic**: Works with any camera-captured, scanned, or synthetic document images
+- **No DPI required**: Measures character pixel height directly, bypassing DPI metadata
+- **Two scripts**: `label_resolution_quality.py` (GPU labeling) + `integrate_resolution_quality.py` (L2 metadata merge)
+- **Coarse buckets**: needs_major_upscale (<16px), needs_light_upscale (16-32px), optimal (32-48px), good (48-96px), oversized (>96px)
+- **Validated on DIQA-5000**: 5,499/5,500 labeled, Kruskal-Wallis H=141.6, 3.0% anomaly rate
+
+| Module | File | Purpose |
+|--------|------|---------|
+| Core library | `schema_utils/resolution_quality.py` | Piecewise mapping, CC analysis, aggregation |
+| Labeling script | `scripts/label_resolution_quality.py` | GPU pipeline (PaddleOCR + CC) |
+| Integration script | `scripts/integrate_resolution_quality.py` | Merge into L2 metadata |
+| Tests | `tests/unit/test_resolution_quality.py` | 75 unit tests |
+
+---
+
+### Skew/Orientation Labeling Pipeline
+
+Dataset-agnostic CPU-only pipeline for predicting document skew angle and page orientation using a trained MobileNetV4-Conv-S ONNX model (3-head: orientation classification, skew bin classification, skew regression with per-bin residual clamping).
+
+![Skew/Orientation Labeling Pipeline](skew-orientation-labeling-pipeline.svg)
+
+*PlantUML source: [`skew-orientation-labeling-pipeline.puml`](skew-orientation-labeling-pipeline.puml)*
+
+**Key Properties**:
+
+- **Dataset-agnostic**: Works with any document images (camera-captured, scanned, synthetic)
+- **CPU-only**: ONNX Runtime CPUExecutionProvider, no GPU or Modal dependency (~17.5ms/image)
+- **Two scripts**: `label_skew_orientation.py` (ONNX inference) + `integrate_skew_orientation.py` (L2 metadata merge)
+- **42 non-uniform bins**: Critical zone (+-5 deg, 0.5 deg bins), moderate (+-5-15 deg, 2.0 deg), extreme (+-15-45 deg, 5.0 deg)
+- **Per-bin residual clamping**: Regression residual clamped to half bin width (0.25/1.0/2.5 deg)
+- **Trained on 90K images**: 71K synthetic + 19K natural scans, test MAE=0.956 deg, orient_acc=99.5%
+
+| Module | File | Purpose |
+|--------|------|---------|
+| Core library | `models/skew_estimator.py` | BinConfig, SkewEstimation, SkewEstimatorInference |
+| ONNX wrapper | `models/onnx_runtime.py` | ONNXModelRunner, ONNXSessionConfig |
+| Config | `config/skew_estimation.yaml` | Bin zones, model paths, thresholds |
+| ONNX model | `models/skew_estimator/skew_estimator_fp32.onnx` | 11MB FP32 model |
+| Labeling script | `scripts/label_skew_orientation.py` | Batch ONNX inference -> JSON |
+| Integration script | `scripts/integrate_skew_orientation.py` | Merge into L2 metadata |
+
+---
+
 ## Three-Layer Metadata Architecture
 
 The data preparation pipeline implements a versioned metadata schema with three distinct layers.
@@ -1274,6 +1327,8 @@ tests/
 
 - **Training Ingestion**: [`project-a-training-data-ingestion.puml`](project-a-training-data-ingestion.puml)
 - **Labeling Pipeline**: [`automated-data-labeling-pipeline.puml`](automated-data-labeling-pipeline.puml)
+- **Resolution Quality**: [`resolution-quality-labeling-pipeline.puml`](resolution-quality-labeling-pipeline.puml)
+- **Skew/Orientation**: [`skew-orientation-labeling-pipeline.puml`](skew-orientation-labeling-pipeline.puml)
 
 ### Core Package (V2)
 
@@ -1307,6 +1362,14 @@ tests/
 | `annotation/monitoring/metrics.py` | Monitoring Integration |
 | `schema_utils/layout_taxonomy.py` | Layout Label Taxonomy |
 | `build_training_labels.py` | Layer 3, Degradation Index, Anchor Score |
+| `schema_utils/resolution_quality.py` | Resolution Quality Labeling Pipeline |
+| `scripts/label_resolution_quality.py` | Resolution Quality Labeling Pipeline |
+| `scripts/integrate_resolution_quality.py` | Resolution Quality Labeling Pipeline |
+| `models/skew_estimator.py` | Skew/Orientation Labeling Pipeline |
+| `models/onnx_runtime.py` | Skew/Orientation Labeling Pipeline |
+| `config/skew_estimation.yaml` | Skew/Orientation Labeling Pipeline |
+| `scripts/label_skew_orientation.py` | Skew/Orientation Labeling Pipeline |
+| `scripts/integrate_skew_orientation.py` | Skew/Orientation Labeling Pipeline |
 
 ---
 
