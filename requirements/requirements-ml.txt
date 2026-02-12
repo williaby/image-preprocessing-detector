@@ -305,7 +305,7 @@ pathspec==0.12.1
     # via mkdocs
 pfzy==0.3.4
     # via inquirerpy
-pillow==12.1.0
+pillow==12.1.1
     # via
     #   doclayout-yolo
     #   image-preprocessing-detector
@@ -360,7 +360,7 @@ pydantic-settings==2.12.0
     # via image-preprocessing-detector
 pygments==2.19.2
     # via rich
-pymupdf==1.26.7
+pymupdf==1.27.1
     # via image-preprocessing-detector
 pyparsing==3.3.1
     # via matplotlib
