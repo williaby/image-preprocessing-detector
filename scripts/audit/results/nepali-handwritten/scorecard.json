@@ -1,0 +1,60 @@
+{
+  "dataset": "nepali-handwritten",
+  "computed_at": "2026-02-12T23:21:19.407524+00:00",
+  "scorecard_config_version": "1.0.0",
+  "artifacts_found": [
+    "automated_screening",
+    "compliance",
+    "defect_catalog",
+    "comparison_report",
+    "vlm_corrections",
+    "source_doc"
+  ],
+  "dimension_scores": {
+    "field_coverage": 86.67,
+    "field_validity": 100.0,
+    "doc_completeness": 45.45,
+    "defect_rate": 96.2,
+    "cross_source_agreement": null,
+    "vlm_accuracy": null
+  },
+  "overall_score": 84.89,
+  "grade": "D",
+  "dimensions": {
+    "field_coverage": {
+      "score": 86.67,
+      "original_weight": 0.25,
+      "effective_weight": 0.3125,
+      "weighted_contribution": 27.08
+    },
+    "field_validity": {
+      "score": 100.0,
+      "original_weight": 0.25,
+      "effective_weight": 0.3125,
+      "weighted_contribution": 31.25
+    },
+    "doc_completeness": {
+      "score": 45.45,
+      "original_weight": 0.15,
+      "effective_weight": 0.1875,
+      "weighted_contribution": 8.52
+    },
+    "defect_rate": {
+      "score": 96.2,
+      "original_weight": 0.15,
+      "effective_weight": 0.1875,
+      "weighted_contribution": 18.04
+    }
+  },
+  "excluded_dimensions": [
+    "cross_source_agreement",
+    "vlm_accuracy"
+  ],
+  "effective_weights": {
+    "field_coverage": 0.3125,
+    "field_validity": 0.3125,
+    "doc_completeness": 0.1875,
+    "defect_rate": 0.1875
+  },
+  "grade_cap_applied": "Grade capped from B to D: VLM inspection not performed. Content flags (has_table, has_figure, has_handwriting, has_formula) are unverified soft labels without VLM inspection. Training on unverified labels risks propagating systematic errors."
+}

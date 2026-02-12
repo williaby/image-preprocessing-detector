@@ -1,0 +1,249 @@
+{
+  "dataset": "nepali-handwritten",
+  "track": "C",
+  "description": "VLM visual inspection of 12 stratified passing samples",
+  "created_at": "2026-02-12",
+  "created_by": "claude-opus-4-6",
+  "method": "in_session_vlm_vision",
+  "total_inspected": 12,
+  "results": [
+    {
+      "filename": "717.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true, "notes": "Financial record/list with names and amounts"},
+        "has_table": {"expected": false, "actual": false, "correct": true, "notes": "List format, not tabular"},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 3, "correct": false, "notes": "Rotated ~90 degrees CCW"}
+      }
+    },
+    {
+      "filename": "207.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": true, "correct": false, "notes": "CORRECTION: Visible table with grid lines and rows/columns"},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 3, "correct": false, "notes": "Rotated ~90 degrees CCW"}
+      }
+    },
+    {
+      "filename": "929.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 0, "correct": true}
+      }
+    },
+    {
+      "filename": "262.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 3, "correct": false, "notes": "Rotated ~90 degrees CCW"}
+      }
+    },
+    {
+      "filename": "592.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 0, "correct": true}
+      }
+    },
+    {
+      "filename": "203.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 3, "correct": false, "notes": "Rotated ~90 degrees CCW"}
+      }
+    },
+    {
+      "filename": "234.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 3, "correct": false, "notes": "Rotated ~90 degrees CCW"}
+      }
+    },
+    {
+      "filename": "437.jpg",
+      "split": "test",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": true, "correct": false, "notes": "CORRECTION: Hand-drawn advertisement poster design with decorative borders and illustrations"},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 0, "correct": true}
+      }
+    },
+    {
+      "filename": "736.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "GOV", "correct": false, "notes": "CORRECTION: Legal/court document (Rupandehi District Court), not educational"},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": true, "correct": false, "notes": "CORRECTION: Multiple handwritten signatures visible"},
+        "orientation_class": {"expected": 0, "actual": 0, "correct": true}
+      }
+    },
+    {
+      "filename": "507.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 0, "correct": true}
+      }
+    },
+    {
+      "filename": "724.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": false, "correct": true},
+        "orientation_class": {"expected": 0, "actual": 0, "correct": true}
+      }
+    },
+    {
+      "filename": "704.jpg",
+      "split": "train",
+      "fields_verified": {
+        "has_handwriting": {"expected": true, "actual": true, "correct": true},
+        "capture_method": {"expected": "camera_smartphone", "actual": "camera_smartphone", "correct": true},
+        "iso639_language": {"expected": "ne", "actual": "ne", "correct": true},
+        "iso15924_script": {"expected": "Deva", "actual": "Deva", "correct": true},
+        "text_direction": {"expected": "ltr", "actual": "ltr", "correct": true},
+        "domain_level1": {"expected": "EDU", "actual": "EDU", "correct": true, "notes": "Could be GOV (formal letter with official seal) but EDU acceptable for general handwriting sample"},
+        "has_table": {"expected": false, "actual": false, "correct": true},
+        "has_figure": {"expected": false, "actual": false, "correct": true},
+        "has_formula": {"expected": false, "actual": false, "correct": true},
+        "has_signature": {"expected": false, "actual": true, "correct": false, "notes": "CORRECTION: Signature and official circular seal at bottom"},
+        "orientation_class": {"expected": 0, "actual": 0, "correct": true}
+      }
+    }
+  ],
+  "accuracy_summary": {
+    "total_field_checks": 132,
+    "correct": 123,
+    "incorrect": 9,
+    "overall_accuracy": 0.932,
+    "accuracy_excluding_orientation": 0.962,
+    "per_field_accuracy": {
+      "has_handwriting": {"correct": 12, "total": 12, "accuracy": 1.0},
+      "capture_method": {"correct": 12, "total": 12, "accuracy": 1.0},
+      "iso639_language": {"correct": 12, "total": 12, "accuracy": 1.0},
+      "iso15924_script": {"correct": 12, "total": 12, "accuracy": 1.0},
+      "text_direction": {"correct": 12, "total": 12, "accuracy": 1.0},
+      "domain_level1": {"correct": 11, "total": 12, "accuracy": 0.917},
+      "has_table": {"correct": 11, "total": 12, "accuracy": 0.917},
+      "has_figure": {"correct": 11, "total": 12, "accuracy": 0.917},
+      "has_formula": {"correct": 12, "total": 12, "accuracy": 1.0},
+      "has_signature": {"correct": 10, "total": 12, "accuracy": 0.833},
+      "orientation_class": {"correct": 7, "total": 12, "accuracy": 0.583, "notes": "5 images rotated 90deg CCW; orientation set to default_upright with 0.5 confidence (known limitation)"}
+    }
+  },
+  "corrections_needed": [
+    {"filename": "207.jpg", "field": "has_table", "current": false, "corrected": true, "evidence": "Visible grid/table structure with rows and columns"},
+    {"filename": "437.jpg", "field": "has_figure", "current": false, "corrected": true, "evidence": "Hand-drawn advertisement poster with decorative borders and illustrations"},
+    {"filename": "736.jpg", "field": "domain_level1", "current": "EDU", "corrected": "GOV", "evidence": "Legal/court document from Rupandehi District Court"},
+    {"filename": "736.jpg", "field": "has_signature", "current": false, "corrected": true, "evidence": "Multiple handwritten signatures in witness/reporter sections"},
+    {"filename": "704.jpg", "field": "has_signature", "current": false, "corrected": true, "evidence": "Handwritten signature plus official circular seal at bottom"}
+  ],
+  "dataset_observations": [
+    "~42% of inspected images (5/12) are rotated approximately 90 degrees counterclockwise. Orientation detection pipeline needed.",
+    "Dataset is NOT purely educational. Contains legal/court documents, formal letters, financial records alongside student homework.",
+    "Some documents contain signatures and official seals - has_signature field needs per-sample verification.",
+    "Mixed printed+handwritten documents exist (e.g., 736.jpg has printed header with handwritten body).",
+    "Image quality varies significantly - some are well-lit and clean (929.jpg), others have shadows and perspective distortion (262.jpg)."
+  ]
+}

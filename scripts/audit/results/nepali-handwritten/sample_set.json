@@ -1,0 +1,506 @@
+{
+  "dataset": "nepali-handwritten",
+  "sample_count": 36,
+  "created_at": "2026-02-12T23:16:29.003111+00:00",
+  "random_seed": 2026,
+  "selection_criteria": {
+    "total_population": 958,
+    "target_count": 36,
+    "stratification_axes": [
+      "capture_method",
+      "resolution_category",
+      "has_handwriting"
+    ],
+    "sizing_rule": "default_36 (200 <= N < 10000)"
+  },
+  "distribution_summary": {
+    "by_stratum": {
+      "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true": 31,
+      "capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true": 4,
+      "capture_method=camera_smartphone|resolution_category=medium_150-299|has_handwriting=true": 1
+    },
+    "by_axis": {
+      "capture_method": {
+        "camera_smartphone": 36
+      },
+      "resolution_category": {
+        "low_<150": 31,
+        "standard_300": 4,
+        "medium_150-299": 1
+      },
+      "has_handwriting": {
+        "true": 36
+      }
+    }
+  },
+  "samples": [
+    {
+      "sample_id": "bf536bbe-0e9b-4f9e-8bf1-4ea14baac9b7",
+      "image_path": "train/717.jpg",
+      "original_filename": "717.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "1617457b-ee25-4aa3-973b-28c1452512ca",
+      "image_path": "train/207.jpg",
+      "original_filename": "207.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "7c1bffbf-6923-4dca-9f74-98adf8b7e490",
+      "image_path": "train/929.jpg",
+      "original_filename": "929.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "78aca41f-3b8a-4993-bbef-523dbae32182",
+      "image_path": "train/262.jpg",
+      "original_filename": "262.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "df8d9426-aed6-413d-a349-7e20bf328505",
+      "image_path": "train/592.jpg",
+      "original_filename": "592.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "b9e664a3-dcd2-461e-b62f-afdf9af25406",
+      "image_path": "train/203.jpg",
+      "original_filename": "203.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "864eac24-633e-4b5f-8b1d-44d73c0c57dd",
+      "image_path": "train/234.jpg",
+      "original_filename": "234.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "58dbfe27-8dd7-4017-ae56-4bdb295c2cc4",
+      "image_path": "test/437.jpg",
+      "original_filename": "437.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "406052fb-368e-4d48-9972-8dd861a07d99",
+      "image_path": "train/736.jpg",
+      "original_filename": "736.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "2d95f785-cd69-4382-9317-55d1943ed2ad",
+      "image_path": "train/507.jpg",
+      "original_filename": "507.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "5c11b2ad-8e83-40d1-b33c-96bd6677ac7d",
+      "image_path": "train/724.jpg",
+      "original_filename": "724.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "057726a0-80c0-489d-bc04-e78f08a1d1df",
+      "image_path": "train/704.jpg",
+      "original_filename": "704.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "e3ad38e3-bef5-4e23-9e3d-ded8133e436d",
+      "image_path": "train/248.jpg",
+      "original_filename": "248.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "9b8352c9-4cb7-434b-8b91-d5f9b30bc597",
+      "image_path": "test/849.jpg",
+      "original_filename": "849.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "6cbc9f3a-bd93-44c1-9b35-6b3f4891c70e",
+      "image_path": "train/73.jpg",
+      "original_filename": "73.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "0b116e45-d0ca-423b-ac21-61ef77a957ef",
+      "image_path": "train/751.jpg",
+      "original_filename": "751.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "9f5d344c-2428-44d7-8b24-36aee5cb1c07",
+      "image_path": "train/200.jpg",
+      "original_filename": "200.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "a747888a-f8a4-4927-a19d-dff2f1bc1154",
+      "image_path": "test/400.jpg",
+      "original_filename": "400.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "67272a34-39b0-4638-9854-08ec754f869a",
+      "image_path": "train/756.jpg",
+      "original_filename": "756.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "ca48fb2f-c502-43ba-b57a-2e854331b914",
+      "image_path": "train/500.jpg",
+      "original_filename": "500.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "f60823b2-c30b-4703-983c-1bf890fcfc9a",
+      "image_path": "test/598.jpg",
+      "original_filename": "598.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "465d7e9f-47c3-49af-90cd-15026a16e1bf",
+      "image_path": "test/839.jpg",
+      "original_filename": "839.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "2f61933c-b541-457b-a82a-a03bf885681a",
+      "image_path": "train/297.jpg",
+      "original_filename": "297.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "c3020d48-98e5-4636-a25c-b37923237aa3",
+      "image_path": "train/887.jpg",
+      "original_filename": "887.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "9d625970-656a-44c4-b0fd-50e2ccd2d596",
+      "image_path": "train/77.jpg",
+      "original_filename": "77.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "bce4071a-dc51-43a1-9e14-b473ba88416a",
+      "image_path": "train/326.jpg",
+      "original_filename": "326.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "d889c370-99f5-4c42-b62f-716887b40dd9",
+      "image_path": "train/196.jpg",
+      "original_filename": "196.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "903fc413-739d-4c92-aae7-3f34eab8ae52",
+      "image_path": "train/882.jpg",
+      "original_filename": "882.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "50f50916-8bb4-4c99-b54d-05cdbfd74d8d",
+      "image_path": "train/669.jpg",
+      "original_filename": "669.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "1da6f6a1-ea6f-44e9-beb2-d81ff0e42ee6",
+      "image_path": "train/274.jpg",
+      "original_filename": "274.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "c2842628-2dfe-454e-ab9a-edcfa5854e3d",
+      "image_path": "train/647.jpg",
+      "original_filename": "647.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "low_<150",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=low_<150|has_handwriting=true"
+    },
+    {
+      "sample_id": "88477f07-394d-4cfb-8488-2d17047871a3",
+      "image_path": "test/468.jpeg",
+      "original_filename": "468.jpeg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "standard_300",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true"
+    },
+    {
+      "sample_id": "64af8eb5-463a-4c5f-bd26-5957696f88ac",
+      "image_path": "train/639.jpeg",
+      "original_filename": "639.jpeg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "standard_300",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true"
+    },
+    {
+      "sample_id": "84438ec3-fa2f-47c4-a583-3640fb602941",
+      "image_path": "train/11.jpg",
+      "original_filename": "11.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "standard_300",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true"
+    },
+    {
+      "sample_id": "7d9e958f-f266-4594-adcb-e0c998a9850e",
+      "image_path": "train/456.jpeg",
+      "original_filename": "456.jpeg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "standard_300",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=standard_300|has_handwriting=true"
+    },
+    {
+      "sample_id": "254b5260-3812-42f8-bc55-f4967ac29db8",
+      "image_path": "test/87.jpg",
+      "original_filename": "87.jpg",
+      "dataset_name": "nepali-handwritten",
+      "axis_values": {
+        "capture_method": "camera_smartphone",
+        "resolution_category": "medium_150-299",
+        "has_handwriting": "true"
+      },
+      "stratum_key": "capture_method=camera_smartphone|resolution_category=medium_150-299|has_handwriting=true",
+      "selection_reason": "stratum=capture_method=camera_smartphone|resolution_category=medium_150-299|has_handwriting=true"
+    }
+  ]
+}
