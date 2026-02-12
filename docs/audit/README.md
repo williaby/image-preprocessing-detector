@@ -294,7 +294,9 @@ more inspection. For datasets > 10K images, use Track B contact sheets for the p
 | Target total | max(40, 5%) | max(75, 15%) | max(120, 25%) |
 
 **Adaptive Expansion**: After the initial Track A batch, if any flag's FP rate exceeds the tier
-threshold (Tier 2: 20%, Tier 3: 15%), expand inspection for that flag before concluding Phase 6.
+threshold (Tier 2: 20%, Tier 3: 15%), expand to inspect **all TRUE samples** for that flag
+before concluding Phase 6. This ensures corrections are applied to every affected sample,
+not just a statistical sample.
 
 **Rationale**: The RealDAE audit demonstrated that datasets with significant metadata gaps
 (KI-009 language mismatch, 6 critical/high defects) benefit from higher inspection rates.
