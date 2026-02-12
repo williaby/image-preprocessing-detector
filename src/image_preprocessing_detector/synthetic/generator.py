@@ -30,6 +30,8 @@ Example:
 
 from __future__ import annotations
 
+import hashlib
+import io
 import logging
 import uuid
 from collections.abc import Iterator
@@ -53,14 +55,17 @@ from image_preprocessing_detector.synthetic.augmentation_hybrid import (
     HybridProfile,
 )
 from image_preprocessing_detector.synthetic.config import (
+    CJK_VERTICAL_RATIOS,
     COLOR_MODE_WEIGHTS,
     DOCUMENT_COMPOSITION_WEIGHTS,
+    ENGLISH_SECONDARY_WEIGHT,
     LAYOUT_WEIGHTS,
     MVP_SCRIPTS,
     QUALITY_TIER_WEIGHTS,
     RESOLUTION_TIER_WEIGHTS,
     RESOLUTION_TIERS,
     SCRIPT_CONFIGS,
+    SKEW_RANGE_DEGREES,
     TEXT_DENSITY_WEIGHTS,
     TWO_SCRIPT_COMBINATIONS,
     ColorMode,
@@ -120,7 +125,9 @@ class GenerationConfig:
     color_mode_enabled: bool = (
         False  # Apply random color mode conversion (grayscale/binarized)
     )
-    skew_augmentation: bool = False  # Apply random ±10° rotation with exact angle label
+    skew_augmentation: bool = (
+        False  # Apply random skew (SKEW_RANGE_DEGREES) with exact angle label
+    )
     orientation_augmentation: bool = (
         False  # Apply 0/90/180/270 rotation with class label
     )
@@ -374,10 +381,19 @@ class MultiScriptDocumentGenerator:
             result: Any = self._select_weighted(valid_pairs)  # type: ignore[arg-type]
             return result  # type: ignore[no-any-return]
 
-        # Fallback: random pair from available scripts
+        # Fallback: random pair with English secondary weighting
         if len(available_scripts) >= 2:
-            pair = self._rng.sample(available_scripts, 2)
-            return (pair[0], pair[1])
+            primary = self._rng.choice(available_scripts)
+            # Weight Latin at ENGLISH_SECONDARY_WEIGHT probability as secondary
+            other_scripts = [s for s in available_scripts if s != primary]
+            if (
+                "Latn" in other_scripts
+                and self._rng.random() < ENGLISH_SECONDARY_WEIGHT
+            ):
+                secondary = "Latn"
+            else:
+                secondary = self._rng.choice(other_scripts)
+            return (primary, secondary)
 
         # Last resort: use same script twice
         return (available_scripts[0], available_scripts[0])
@@ -509,8 +525,9 @@ class MultiScriptDocumentGenerator:
     def _apply_skew_augmentation(self, image: Any) -> tuple[Any, float]:
         """Apply random skew rotation with exact angle label.
 
-        Applies a random rotation between -10° and +10° with white fill.
-        The exact angle is stored as a tier_0_exact label for regression training.
+        Applies a random rotation within SKEW_RANGE_DEGREES (default ±22°)
+        with white fill. The exact angle is stored as a tier_0_exact label
+        for regression training.
 
         Args:
             image: PIL Image
@@ -518,7 +535,7 @@ class MultiScriptDocumentGenerator:
         Returns:
             Tuple of (rotated image, angle in degrees)
         """
-        angle = self._rng.uniform(-10.0, 10.0)
+        angle = self._rng.uniform(SKEW_RANGE_DEGREES[0], SKEW_RANGE_DEGREES[1])
         rotated = image.rotate(
             -angle,  # PIL rotates counter-clockwise, negate for clockwise convention
             expand=False,
@@ -624,6 +641,61 @@ class MultiScriptDocumentGenerator:
             logger.debug("Character height measurement failed: %s", e)
             return None, None
 
+    def _compute_image_sha256(self, image: Any) -> str:
+        """Compute SHA256 hash of a PIL Image for split registry integration.
+
+        Serializes the image to PNG bytes in memory and hashes the result.
+        This provides a content-addressable identifier for the pristine image.
+
+        Args:
+            image: PIL Image
+
+        Returns:
+            Hex-encoded SHA256 hash string
+        """
+        buf = io.BytesIO()
+        image.save(buf, format="PNG")
+        return hashlib.sha256(buf.getvalue()).hexdigest()
+
+    def _measure_char_height_rendered(self, image: Any) -> float | None:
+        """Measure actual rendered character height on the pristine image.
+
+        Uses connected component analysis on the clean rendered image
+        BEFORE any degradation or geometric transforms. This is the
+        key advantage of synthetic data: exact ground truth, not estimates.
+
+        Args:
+            image: Pristine rendered PIL Image (no degradation applied)
+
+        Returns:
+            Median character height in pixels, or None if measurement fails
+        """
+        char_height, _ = self._measure_char_height(image)
+        return char_height
+
+    def _select_text_direction(self, script_code: str) -> str:
+        """Select text direction for a script, supporting CJK vertical text.
+
+        For scripts in CJK_VERTICAL_RATIOS (Jpan, Hans, Hant), randomly
+        selects vertical (ttb) direction based on configured ratios.
+        Other scripts use their default direction from ScriptConfig.
+
+        Args:
+            script_code: ISO 15924 script code
+
+        Returns:
+            Text direction: "ltr", "rtl", or "ttb"
+        """
+        vertical_ratio = CJK_VERTICAL_RATIOS.get(script_code)
+        if vertical_ratio is not None and self._rng.random() < vertical_ratio:
+            return "ttb"
+
+        # Use default direction from config
+        config = SCRIPT_CONFIGS.get(script_code)
+        if config:
+            return config.direction
+        return "ltr"
+
     def _apply_geometric_transforms(
         self,
         image: Any,
@@ -720,6 +792,9 @@ class MultiScriptDocumentGenerator:
             logger.warning("No text available for script %s", script_code)
             return None
 
+        # Select text direction (supports CJK vertical text)
+        text_direction = self._select_text_direction(script_code)
+
         # Get renderer for the appropriate resolution tier
         tier_renderer = self._get_renderer_for_tier(resolution_tier)
         actual_dpi = self._get_resolution_for_tier(resolution_tier)
@@ -736,6 +811,23 @@ class MultiScriptDocumentGenerator:
         except Exception as e:
             logger.error("Rendering failed for %s: %s", script_code, e)
             return None
+
+        # Measure char_height_rendered_px on pristine image BEFORE any transforms
+        # This is the key advantage of synthetic data: exact ground truth
+        char_height_rendered = self._measure_char_height_rendered(image)
+
+        # Compute SHA256 of pristine image for split registry integration
+        base_image_sha256 = self._compute_image_sha256(image)
+
+        # Capture degradation seed for reproducible replay
+        degradation_seed = self._rng.randint(0, 2**31 - 1)
+
+        # Track font family used for this script
+        font_cache = self.font_manager.get_font_info(script_code)
+        font_families: list[str] = []
+        if font_cache and font_cache.fonts:
+            font_info = font_cache.default_font or font_cache.fonts[0]
+            font_families.append(font_info.path.stem)
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         # artifacts. Real scanners rotate/skew the physical document, then sensor
@@ -839,6 +931,9 @@ class MultiScriptDocumentGenerator:
                 "degradation_profile": degradation_profile.value,
                 "layout_type": layout_type.value,
                 "text_density": text_density.value,
+                "degradation_seed": degradation_seed,
+                "base_image_sha256": base_image_sha256,
+                "font_families_used": font_families,
             },
             is_pristine=is_pristine,
             resolution_tier=resolution_tier,
@@ -846,6 +941,10 @@ class MultiScriptDocumentGenerator:
         )
         if document_age is not None:
             sample.document_age = document_age
+
+        # Store v2.3 metadata
+        sample.text_directions = {script_code: text_direction}
+        sample.char_height_rendered_px = char_height_rendered
 
         # Store geometric transform metadata (applied before augmentation)
         if skew_angle is not None:
@@ -959,9 +1058,16 @@ class MultiScriptDocumentGenerator:
                         )
 
                 elif composition_type == "three":
-                    # Three-script document
+                    # Three-script document (ensure Latn is likely included)
                     if len(available_scripts) >= 3:
                         scripts = self._rng.sample(available_scripts, 3)
+                        # English secondary weighting: inject Latn if not present
+                        if (
+                            "Latn" in available_scripts
+                            and "Latn" not in scripts
+                            and self._rng.random() < ENGLISH_SECONDARY_WEIGHT
+                        ):
+                            scripts[self._rng.randint(1, 2)] = "Latn"
                         layout_type = self._select_multi_script_layout(3)
                         sample = self._generate_multi_script_sample(
                             scripts=scripts,
@@ -1171,6 +1277,9 @@ class MultiScriptDocumentGenerator:
         all_scripts: set[str] = set()
         all_languages: list[str] = []
 
+        # Select text direction for each script (v2.3: CJK vertical support)
+        script_directions: dict[str, str] = {}
+
         for script_code in scripts:
             text, language_code = self.corpus_manager.get_text_with_language(
                 script_code, text_density
@@ -1179,6 +1288,9 @@ class MultiScriptDocumentGenerator:
                 text_blocks_data.append((text, script_code, language_code))
                 all_scripts.add(script_code)
                 all_languages.append(language_code)
+                script_directions[script_code] = self._select_text_direction(
+                    script_code
+                )
 
         if not text_blocks_data:
             logger.warning("No text available for multi-script document")
@@ -1209,6 +1321,23 @@ class MultiScriptDocumentGenerator:
             except Exception as e:
                 logger.error("Multi-script rendering failed: %s", e)
                 return None
+
+        # Measure char_height_rendered_px on pristine image BEFORE any transforms
+        char_height_rendered = self._measure_char_height_rendered(image)
+
+        # Compute SHA256 of pristine image for split registry integration
+        base_image_sha256 = self._compute_image_sha256(image)
+
+        # Capture degradation seed for reproducible replay
+        degradation_seed = self._rng.randint(0, 2**31 - 1)
+
+        # Track font families used across all scripts
+        font_families: list[str] = []
+        for sc in all_scripts:
+            fc = self.font_manager.get_font_info(sc)
+            if fc and fc.fonts:
+                fi = fc.default_font or fc.fonts[0]
+                font_families.append(fi.path.stem)
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         # artifacts. Real scanners rotate/skew the physical document, then sensor
@@ -1311,6 +1440,9 @@ class MultiScriptDocumentGenerator:
                 "degradation_profile": degradation_profile.value,
                 "layout_type": layout_type.value,
                 "text_density": text_density.value,
+                "degradation_seed": degradation_seed,
+                "base_image_sha256": base_image_sha256,
+                "font_families_used": font_families,
             },
             is_pristine=is_pristine,
             resolution_tier=resolution_tier,
@@ -1318,6 +1450,13 @@ class MultiScriptDocumentGenerator:
         )
         if document_age is not None:
             sample.document_age = document_age
+
+        # Store v2.3 metadata
+        sample.char_height_rendered_px = char_height_rendered
+
+        # Store text direction metadata (v2.3: CJK vertical support)
+        if script_directions:
+            sample.text_directions = script_directions
 
         # Store geometric transform metadata (applied before augmentation)
         if skew_angle is not None:
@@ -1353,6 +1492,9 @@ class MultiScriptDocumentGenerator:
         all_scripts: set[str] = set()
         all_languages: list[str] = []
 
+        # Select text direction for each script (v2.3: CJK vertical support)
+        script_directions: dict[str, str] = {}
+
         for script_code in scripts:
             text, language_code = self.corpus_manager.get_text_with_language(
                 script_code, TextDensity.MEDIUM
@@ -1361,6 +1503,9 @@ class MultiScriptDocumentGenerator:
                 text_blocks_data.append((text, script_code, language_code))
                 all_scripts.add(script_code)
                 all_languages.append(language_code)
+                script_directions[script_code] = self._select_text_direction(
+                    script_code
+                )
 
         if not text_blocks_data:
             logger.error("No text available for any of the requested scripts")
@@ -1374,6 +1519,23 @@ class MultiScriptDocumentGenerator:
         except Exception as e:
             logger.error("Multi-script rendering failed: %s", e)
             return None
+
+        # Measure char_height_rendered_px on pristine image BEFORE any transforms
+        char_height_rendered = self._measure_char_height_rendered(image)
+
+        # Compute SHA256 of pristine image for split registry integration
+        base_image_sha256 = self._compute_image_sha256(image)
+
+        # Capture degradation seed for reproducible replay
+        degradation_seed = self._rng.randint(0, 2**31 - 1)
+
+        # Track font families used across all scripts
+        font_families: list[str] = []
+        for sc in all_scripts:
+            fc = self.font_manager.get_font_info(sc)
+            if fc and fc.fonts:
+                fi = fc.default_font or fc.fonts[0]
+                font_families.append(fi.path.stem)
 
         # Apply geometric transforms BEFORE augmentation to avoid "rotated noise"
         image, skew_angle, orientation_class = self._apply_geometric_transforms(image)
@@ -1410,9 +1572,19 @@ class MultiScriptDocumentGenerator:
                 "multi_script": True,
                 "scripts": list(all_scripts),
                 "degradation_profile": degradation_profile.value,
+                "degradation_seed": degradation_seed,
+                "base_image_sha256": base_image_sha256,
+                "font_families_used": font_families,
             },
             is_pristine=is_pristine,
         )
+
+        # Store v2.3 metadata
+        sample.char_height_rendered_px = char_height_rendered
+
+        # Store text direction metadata (v2.3: CJK vertical support)
+        if script_directions:
+            sample.text_directions = script_directions
 
         # Store geometric transform metadata (applied before augmentation)
         if skew_angle is not None:

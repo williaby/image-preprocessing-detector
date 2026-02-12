@@ -148,6 +148,29 @@ LAYOUT_TO_LAYER2: dict[LayoutType, str] = {
 # Distribution Weights for Dataset Generation
 # =============================================================================
 
+# Geometric transform ranges for base dataset generation
+# Base generates ±22° skew (expanded from ±10° to avoid coverage gaps
+# with the 42-bin skew estimator's critical/moderate zones).
+# Derived skew view scripts extend to ±45° for full-range training.
+SKEW_RANGE_DEGREES: tuple[float, float] = (-22.0, 22.0)
+
+# CJK vertical text (tategaki) generation ratios
+# For scripts supporting both horizontal and vertical writing
+CJK_VERTICAL_RATIOS: dict[str, float] = {
+    "Jpan": 0.30,  # 30% vertical (novels, newspapers, traditional docs)
+    "Hans": 0.10,  # 10% vertical (calligraphy, traditional signage)
+    "Hant": 0.10,  # 10% vertical (calligraphy, traditional signage)
+}
+
+# English as most common secondary language in multi-script compositions
+# When selecting a secondary script in multi-script generation,
+# Latn is weighted at this probability (vs uniform ~3.7% across 27 scripts)
+ENGLISH_SECONDARY_WEIGHT: float = 0.40
+
+# Output sizes for derived training views (pixels)
+# Primary size for training + 512px variant for 20% of samples
+OUTPUT_SIZES: list[int] = [224, 384, 512]
+
 # Resolution tiers for NaFlex optimization (variable resolution training)
 # 7-tier DPI distribution for multi-task training diversity
 # (expanded from 3 tiers to support resolution quality dataset generation)
@@ -184,7 +207,7 @@ QUALITY_TIER_WEIGHTS: dict[str, float] = {
 
 # Layout type weights matching script_dataset_structure.md (must sum to 1.0)
 LAYOUT_WEIGHTS: dict[LayoutType, float] = {
-    LayoutType.STACKED: 0.15,
+    LayoutType.STACKED: 0.14,  # Reduced from 0.15 to fund DENSE_TEXT increase
     LayoutType.HEADER_BODY: 0.15,
     LayoutType.COLUMNS: 0.12,
     LayoutType.FORM: 0.12,
@@ -194,7 +217,7 @@ LAYOUT_WEIGHTS: dict[LayoutType, float] = {
     LayoutType.CAPTIONED: 0.08,
     LayoutType.SINGLE_LINE: 0.05,
     LayoutType.SHORT_BLOCKS: 0.04,
-    LayoutType.DENSE_TEXT: 0.03,
+    LayoutType.DENSE_TEXT: 0.04,  # Increased from 0.03 for better dense text coverage
 }
 
 # Text density weights (must sum to 1.0)
@@ -319,6 +342,8 @@ class ScriptConfig:
     requires_shaping: bool = False
     min_font_size: int = 12
     max_font_size: int = 28
+    rq_min_font_size: int = 6  # Broader range for resolution quality training
+    rq_max_font_size: int = 48  # Covers all 5 coarse buckets across 7 DPI tiers
 
     def get_iso15924_enum(self) -> ISO15924Script | None:
         """Get the corresponding ISO15924Script enum value."""
@@ -1110,9 +1135,11 @@ def get_complex_scripts() -> list[ScriptConfig]:
 
 __all__ = [
     "BULGARIAN_CYRILLIC_LANGUAGES",
+    "CJK_VERTICAL_RATIOS",
     "COLOR_MODE_WEIGHTS",
     "DENSITY_TO_LAYER2",
     "DOCUMENT_COMPOSITION_WEIGHTS",
+    "ENGLISH_SECONDARY_WEIGHT",
     "FONT_RECOMMENDATIONS",
     "FONT_TIER_WEIGHTS",
     "HANDWRITING_FONTS",
@@ -1122,10 +1149,12 @@ __all__ = [
     "MIMICRY_FONTS",
     "MVP_SCRIPTS",
     "NASTALIQ_LANGUAGES",
+    "OUTPUT_SIZES",
     "QUALITY_TIER_WEIGHTS",
     "RESOLUTION_TIERS",
     "RESOLUTION_TIER_WEIGHTS",
     "SCRIPT_CONFIGS",
+    "SKEW_RANGE_DEGREES",
     "TEXT_DENSITY_WEIGHTS",
     "TWO_SCRIPT_COMBINATIONS",
     "ColorMode",

@@ -46,13 +46,39 @@
 | LOW | 0.40-0.60 | 20% | Heavy |
 | DEGRADED | 0.00-0.40 | 10% | Heavy + extras |
 
-##### Resolution Tiers (NaFlex Optimized)
+##### Resolution Tiers (7 DPI Tiers)
 
-| Tier | Width | % | Use Case |
-|------|-------|---|----------|
-| LOW | 500-700px | 20% | Fast inference, simple scripts |
-| MEDIUM | 700-1000px | 50% | SigLIP sweet spot |
-| HIGH | 1000-1400px | 30% | Complex scripts (CJK, Tibetan) |
+| Tier | DPI | Width Range | Weight | Use Case |
+|------|-----|-------------|--------|----------|
+| VERY_LOW | 72 | 500-700px | 8% | Screen-resolution documents |
+| LOW | 100 | 700-900px | 10% | Low-quality scans |
+| MEDIUM_LOW | 150 | 900-1200px | 12% | Draft-quality scans |
+| MEDIUM | 200 | 1200-1600px | 15% | Standard office scans |
+| STANDARD | 300 | 1800-2400px | 30% | Standard OCR quality |
+| HIGH | 400 | 2400-3200px | 15% | High-quality scans |
+| VERY_HIGH | 600 | 3600-4800px | 10% | Archival/professional |
+
+> **Note**: Legacy 3-tier (LOW/MEDIUM/HIGH) replaced by 7-tier DPI model in v2.
+> Font size range broadened to 6-48pt (from 12-28pt) for resolution quality training.
+
+##### Resolution Quality Labels (v2.2)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `character_height_px` | float | Best available char height (prefer clean) |
+| `character_height_clean_px` | float | Pre-degradation measurement |
+| `character_height_degraded_px` | float | Post-degradation measurement |
+| `character_height_analytical_px` | float | font_size_pt * DPI / 72 (theoretical) |
+| `resolution_quality_score` | float | Piecewise score 0-1 |
+| `coarse_bucket` | str | needs_major_upscale / needs_light_upscale / optimal / good / oversized |
+| `font_size_pt` | float | Pillow font size used |
+| `target_dpi` | int | DPI tier target |
+| `measurement_method` | str | sauvola_cc_v2 |
+| `label_provenance` | str | tier_0_exact (synthetic ground truth) |
+| `label_source` | str | synthetic_exact |
+| `label_confidence` | float | 1.0 (exact ground truth) |
+
+> Coarse bucket thresholds: <16px major, 16-32px light, 32-48px optimal, 48-96px good, >96px oversized
 
 ##### IQA Labels (8 Dimensions)
 

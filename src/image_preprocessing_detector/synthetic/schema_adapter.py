@@ -31,6 +31,9 @@ from image_preprocessing_detector.annotation.schemas.enums import (
     CaptureMethod,
     EnrichmentTier,
 )
+from image_preprocessing_detector.schema_utils.resolution_quality import (
+    classify_coarse_bucket,
+)
 from image_preprocessing_detector.synthetic.config import (
     DENSITY_TO_LAYER2,
     LAYOUT_TO_LAYER2,
@@ -220,6 +223,18 @@ class GeneratedSample:
     char_height_quality_score: float | None = None
     document_age: str | None = None
 
+    # Ground-truth generation parameters for resolution quality (v2.2)
+    font_size_pt: float | None = None  # Pillow font size used during rendering
+    target_dpi: int | None = None  # DPI tier target (72-600)
+    char_height_clean_px: float | None = None  # Pre-degradation measurement
+    char_height_degraded_px: float | None = None  # Post-degradation measurement
+    char_height_analytical_px: float | None = None  # font_size_pt * target_dpi / 72
+    char_height_rendered_px: float | None = None  # Measured from pristine image (v2.3)
+    output_size_px: int | None = None  # Derived view output size (v2.3)
+    text_directions: dict[str, str] | None = (
+        None  # script_code -> direction used (v2.3)
+    )
+
 
 # =============================================================================
 # Layer 2 Schema Adapter
@@ -320,6 +335,7 @@ class Layer2SchemaAdapter:
         language_code: str,
         is_primary: bool = True,
         confidence: float = 1.0,
+        text_direction: str | None = None,
     ) -> dict[str, Any]:
         """Build LanguageInfo dictionary from script/language codes.
 
@@ -332,6 +348,7 @@ class Layer2SchemaAdapter:
             language_code: Language code in OpenLID format (xxx_Yyyy) or ISO 639-1/3
             is_primary: Whether this is the primary/dominant language
             confidence: Detection confidence (1.0 for synthetic ground truth)
+            text_direction: Writing direction used ("ltr", "rtl", "ttb") or None
 
         Returns:
             LanguageInfo dictionary matching Layer 2 schema
@@ -353,7 +370,7 @@ class Layer2SchemaAdapter:
         # Use the authoritative script_code, not the embedded one
         bcp47_tag = f"{iso639_code}-{script_code}"
 
-        return {
+        result: dict[str, Any] = {
             "language_code": iso639_code,  # ISO 639-3 only, not OpenLID format
             "script_code": script_code,
             "bcp47_tag": bcp47_tag,
@@ -363,6 +380,10 @@ class Layer2SchemaAdapter:
             "is_rtl": is_rtl,
             "is_primary": is_primary,
         }
+        # v2.3.0: text_direction (per-language writing direction)
+        if text_direction is not None:
+            result["text_direction"] = text_direction
+        return result
 
     def build_layout_detections(
         self,
@@ -445,11 +466,16 @@ class Layer2SchemaAdapter:
                 if i < len(sample.language_codes)
                 else "und"  # Undetermined
             )
+            # v2.3.0: per-language text direction
+            text_dir: str | None = None
+            if sample.text_directions:
+                text_dir = sample.text_directions.get(script_code)
             languages.append(
                 self.build_language_info(
                     script_code=script_code,
                     language_code=lang_code,
                     is_primary=(i == 0),
+                    text_direction=text_dir,
                 )
             )
 
@@ -489,10 +515,16 @@ class Layer2SchemaAdapter:
                 "dpi": sample.resolution_dpi,
                 "category": resolution_category,
                 "pixels": [sample.width_px, sample.height_px],
-                # v2.1.0 fields
+                # v2.1.0: character height (prefer clean measurement)
                 **(
-                    {"character_height_px": round(sample.char_height_px, 2)}
-                    if sample.char_height_px is not None
+                    {
+                        "character_height_px": round(
+                            sample.char_height_clean_px or sample.char_height_px or 0.0,
+                            2,
+                        )
+                    }
+                    if (sample.char_height_clean_px or sample.char_height_px)
+                    is not None
                     else {}
                 ),
                 **(
@@ -505,6 +537,70 @@ class Layer2SchemaAdapter:
                     else {}
                 ),
                 "effective_dpi": sample.resolution_dpi,
+                # v2.2: DPI provenance + measurement detail (synthetic)
+                **(
+                    {"character_height_clean_px": round(sample.char_height_clean_px, 2)}
+                    if sample.char_height_clean_px is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "character_height_degraded_px": round(
+                            sample.char_height_degraded_px, 2
+                        )
+                    }
+                    if sample.char_height_degraded_px is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "character_height_analytical_px": round(
+                            sample.char_height_analytical_px, 2
+                        )
+                    }
+                    if sample.char_height_analytical_px is not None
+                    else {}
+                ),
+                **(
+                    {"font_size_pt": sample.font_size_pt}
+                    if sample.font_size_pt is not None
+                    else {}
+                ),
+                **(
+                    {"target_dpi": sample.target_dpi}
+                    if sample.target_dpi is not None
+                    else {}
+                ),
+                # v2.3.0: Measured rendered character height (ground truth)
+                **(
+                    {
+                        "character_height_rendered_px": round(
+                            sample.char_height_rendered_px, 2
+                        )
+                    }
+                    if sample.char_height_rendered_px is not None
+                    else {}
+                ),
+                # v2.3.0: Output size for derived views
+                **(
+                    {"output_size_px": sample.output_size_px}
+                    if sample.output_size_px is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "coarse_bucket": classify_coarse_bucket(
+                            sample.char_height_clean_px or sample.char_height_px or 0.0
+                        )
+                    }
+                    if (sample.char_height_clean_px or sample.char_height_px)
+                    is not None
+                    else {}
+                ),
+                "measurement_method": "sauvola_cc_v2",
+                "label_provenance": "tier_0_exact",
+                "label_source": "synthetic_exact",
+                "label_confidence": 1.0,
             },
             "domain": {
                 "level1": "UNK",  # Synthetic text has no specific domain
@@ -516,6 +612,16 @@ class Layer2SchemaAdapter:
                 "text_density": layer2_density,
                 "layout_type": layer2_layout,
                 "element_types": list(element_types),
+                # v2.3.0: text_directions_present (all directions in document)
+                **(
+                    {
+                        "text_directions_present": sorted(
+                            set(sample.text_directions.values())
+                        )
+                    }
+                    if sample.text_directions
+                    else {}
+                ),
             },
             "quality": {
                 "overall_score": sample.iqa_labels.overall_quality,
@@ -524,7 +630,14 @@ class Layer2SchemaAdapter:
                 ),
             },
             "language": self.build_language_info(
-                primary_script, primary_language, is_primary=True
+                primary_script,
+                primary_language,
+                is_primary=True,
+                text_direction=(
+                    sample.text_directions.get(primary_script)
+                    if sample.text_directions
+                    else None
+                ),
             ),
             # Only include 'languages' if there are multiple languages
             **({"languages": languages} if len(languages) > 1 else {}),
@@ -568,7 +681,7 @@ class Layer2SchemaAdapter:
         return {
             "sample_id": sample_uuid,
             "enrichment_version": 1,
-            "schema_version": "2.1.0",
+            "schema_version": "2.3.0",
             "created_at": datetime.now(UTC).isoformat(),
             "created_by": f"synthetic_generator_v{self.generator_version}",
             "method": EnrichmentTier.TIER_0_EXACT.value,

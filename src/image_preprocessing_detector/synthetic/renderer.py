@@ -424,6 +424,169 @@ class DocumentRenderer:
 
         return lines
 
+    def _render_vertical_text_block(
+        self,
+        draw: ImageDraw.ImageDraw,
+        text: str,
+        region: RenderRegion,
+        font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
+        script_code: str,
+        language_code: str,
+        state: RenderState,
+        is_header: bool = False,
+        is_caption: bool = False,
+        column_spacing: float = 1.5,
+    ) -> int:
+        """Render a vertical (top-to-bottom) text block for CJK tategaki.
+
+        Characters are placed top-to-bottom in columns that flow right-to-left.
+        This is the traditional East Asian vertical writing style used in
+        Japanese novels, newspapers, and Chinese calligraphy.
+
+        Args:
+            draw: ImageDraw object
+            text: Text to render
+            region: Region to render into
+            font: Font to use
+            script_code: ISO 15924 script code
+            language_code: ISO 639-1/3 language code
+            state: Current render state
+            is_header: Whether this is a header
+            is_caption: Whether this is a caption
+            column_spacing: Column spacing multiplier
+
+        Returns:
+            Height used in pixels (full region height for vertical text)
+        """
+        if not text.strip():
+            return 0
+
+        # Get character dimensions from a sample CJK character
+        sample_bbox = font.getbbox("\u4e00")  # "一" (CJK unified ideograph)
+        char_width = sample_bbox[2] - sample_bbox[0]
+        char_height = sample_bbox[3] - sample_bbox[1]
+        if char_width == 0:
+            char_width = getattr(font, "size", 16)
+        if char_height == 0:
+            char_height = getattr(font, "size", 16)
+
+        col_width = int(char_width * column_spacing)
+        max_chars_per_column = max(1, region.height // char_height)
+
+        # Strip whitespace and split into characters
+        chars = [c for c in text if not c.isspace() or c == "\n"]
+
+        # Columns flow right-to-left
+        x_offset = region.x + region.width - col_width
+        col_start_y = region.y
+        col_chars: list[str] = []
+        total_width_used = 0
+
+        for char in chars:
+            if char == "\n" or len(col_chars) >= max_chars_per_column:
+                # Render current column
+                if col_chars and x_offset >= region.x:
+                    self._draw_vertical_column(
+                        draw,
+                        col_chars,
+                        x_offset,
+                        col_start_y,
+                        char_height,
+                        font,
+                        script_code,
+                        language_code,
+                        state,
+                        is_header,
+                        is_caption,
+                    )
+                    total_width_used += col_width
+                col_chars = []
+                x_offset -= col_width
+                if x_offset < region.x:
+                    break  # Out of horizontal space
+                if char == "\n":
+                    continue
+
+            col_chars.append(char)
+
+        # Render remaining characters
+        if col_chars and x_offset >= region.x:
+            self._draw_vertical_column(
+                draw,
+                col_chars,
+                x_offset,
+                col_start_y,
+                char_height,
+                font,
+                script_code,
+                language_code,
+                state,
+                is_header,
+                is_caption,
+            )
+            total_width_used += col_width
+
+        return region.height if total_width_used > 0 else 0
+
+    def _draw_vertical_column(
+        self,
+        draw: ImageDraw.ImageDraw,
+        chars: list[str],
+        x: int,
+        start_y: int,
+        char_height: int,
+        font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
+        script_code: str,
+        language_code: str,
+        state: RenderState,
+        is_header: bool,
+        is_caption: bool,
+    ) -> None:
+        """Draw a single vertical column of characters.
+
+        Args:
+            draw: ImageDraw object
+            chars: Characters to render in this column
+            x: X position for column
+            start_y: Starting Y position
+            char_height: Height per character cell
+            font: Font to use
+            script_code: ISO 15924 script code
+            language_code: Language code
+            state: Render state for tracking blocks
+            is_header: Header flag
+            is_caption: Caption flag
+        """
+        y = start_y
+        column_text = "".join(chars)
+        column_height = len(chars) * char_height
+
+        for char in chars:
+            # Center each character horizontally within the column
+            char_bbox = font.getbbox(char)
+            cw = char_bbox[2] - char_bbox[0]
+            x_centered = x + (char_height - cw) // 2  # Approximate centering
+
+            draw.text(
+                (x_centered, y),
+                char,
+                font=font,
+                fill=self.text_color,
+            )
+            y += char_height
+
+        # Record the entire column as one text block
+        block = TextBlock(
+            text=column_text,
+            script_code=script_code,
+            language_code=language_code,
+            bbox=(x, start_y, char_height, column_height),
+            font_size=getattr(font, "size", 16),
+            is_header=is_header,
+            is_caption=is_caption,
+        )
+        state.text_blocks.append(block)
+
     def _render_text_block(
         self,
         draw: ImageDraw.ImageDraw,
@@ -436,6 +599,7 @@ class DocumentRenderer:
         is_header: bool = False,
         is_caption: bool = False,
         line_spacing: float = 1.5,
+        direction: str | None = None,
     ) -> int:
         """Render a text block and return height used.
 
@@ -450,10 +614,26 @@ class DocumentRenderer:
             is_header: Whether this is a header
             is_caption: Whether this is a caption
             line_spacing: Line spacing multiplier
+            direction: Text direction override ("ltr", "rtl", "ttb")
 
         Returns:
             Height used in pixels
         """
+        # Route to vertical renderer for TTB direction
+        if direction == "ttb":
+            return self._render_vertical_text_block(
+                draw,
+                text,
+                region,
+                font,
+                script_code,
+                language_code,
+                state,
+                is_header=is_header,
+                is_caption=is_caption,
+                column_spacing=line_spacing,
+            )
+
         lines = self._wrap_text(text, font, region.width, script_code)
         if not lines:
             return 0
