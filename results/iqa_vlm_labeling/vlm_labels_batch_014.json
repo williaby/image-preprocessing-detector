@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T08:30:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 14,
+  "labels": [
+    {
+      "image_id": "train/ori/train_ori_00190.jpg",
+      "id": "c9108dde-1807-498f-a8a6-3e4bc366febf",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese chemistry notes about chemical changes vs properties. Keyword identifiers for changes ('生成','变成') vs properties ('能够','具有','可以'). ROTATED 90 degrees clockwise. Sparse content, clean typed text."
+    },
+    {
+      "image_id": "train/ori/train_ori_00058.jpg",
+      "id": "c04815fb-c55d-40e3-93f6-6d1e074c0439",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.0,
+        "contrast": 2.5,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Python code printout. SDE trajectory simulations with theta parameter variations. Dense matplotlib plotting code. Paper has visible CREASES/WRINKLES creating shadows. Faded gray code text. Uneven illumination from paper damage."
+    },
+    {
+      "image_id": "test/ori/test_ori_00013.jpg",
+      "id": "99281d28-6d6b-47c1-858d-a62977773bf7",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese chemistry textbook. Section 七: Chemical formula calculations. Compound atom ratios, CaSiO3, Fe2O3, NH4NO3 exercises. ROTATED 90 degrees clockwise. Hand/fingers visible at top. Clean typed text."
+    },
+    {
+      "image_id": "val/ori/val_ori_00014.jpg",
+      "id": "ec71ea88-1ba6-4098-bc05-7be0b8ae5325",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese linear algebra textbook. Problems #5-9. Eigenvalue calculations, characteristic polynomials, diagonalization, Schur theorem. Dense mathematical content with matrices. Page slightly curled at bottom creating shadow."
+    },
+    {
+      "image_id": "test/ori/test_ori_00024.jpg",
+      "id": "c60105bc-3e4d-4eab-9e86-2431017c94d1",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese linear algebra textbook. Problems #6-15. Minimal/characteristic polynomials, eigenvalue calculations, matrix exponentials. MathType 5.0 watermark. Page fold at bottom. Some answers abbreviated as '略' (omitted)."
+    },
+    {
+      "image_id": "test/ori/test_ori_00069.jpg",
+      "id": "3e609c6c-7205-4a80-9b42-31288b9ef98d",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.2,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured English probability textbook, Chapter 2, page 19. Solutions to Problems 2.1-2.4. Binomial distribution, birthday problem (p=1/365, n=499), Poisson approximation. Same EXTREMELY FADED/WASHED OUT textbook series. Sharp but nearly invisible text."
+    },
+    {
+      "image_id": "train/ori/train_ori_00192.jpg",
+      "id": "aa6909eb-a598-46af-87b1-3958db711f84",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese I2S audio standard and DSP document, page 2. I2S timing diagram (SCLK, LRCK, SDATA signals). Section 2.3 waveform generation (sine, sawtooth via lookup tables, IIR filters). Good technical content with diagram."
+    },
+    {
+      "image_id": "train/ori/train_ori_00244.jpg",
+      "id": "77835a53-5c9a-46cf-b91a-855c860fb711",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 2.0,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese BIQA paper conclusion. Ladder structure, IMDT strategy, 汉堡包式 (hamburger) paper structure analysis. SEVERE shadow/lighting variation - bottom 60% of page significantly darker. Text readable in lit areas but illumination is catastrophic."
+    },
+    {
+      "image_id": "train/ori/train_ori_00164.jpg",
+      "id": "245d89c0-b2d6-4ace-986c-42b6f8b7b1b3",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.0,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured handwritten convex optimization homework. Dense KKT conditions, Lagrangian optimization, dual functions. Problems 5-6 with circle/ellipse constraint diagrams. Black ink on white. Small dense handwriting, somewhat faded."
+    },
+    {
+      "image_id": "val/ori/val_ori_00021.jpg",
+      "id": "6b8bcde0-b8ed-4dcb-980f-e93b95103b28",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 2.5,
+        "contrast": 2.8,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Screen capture of handwritten Chinese physics notes about uniform rectilinear motion. Velocity, acceleration formulas, v-t graph diagram. Black/blue ink with red annotations. Blue '题 P21' at bottom. Moderate moire from screen capture."
+    }
+  ]
+}

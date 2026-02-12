@@ -1,0 +1,250 @@
+{
+  "timestamp": "2026-02-11T05:29:57.506541+00:00",
+  "num_images": 500,
+  "results": [
+    {
+      "detector_name": "blur",
+      "mos_dimension": "mos_overall",
+      "srcc": -0.0963498745680189,
+      "srcc_pvalue": 0.031234680842797215,
+      "plcc": -0.23991511984417918,
+      "plcc_pvalue": 5.611680173295407e-08,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "blur",
+      "mos_dimension": "mos_sharpness",
+      "srcc": -0.1092952404945416,
+      "srcc_pvalue": 0.0144800775996877,
+      "plcc": -0.252300178333043,
+      "plcc_pvalue": 1.0634823776498086e-08,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "blur",
+      "mos_dimension": "mos_color_fidelity",
+      "srcc": -0.10611776455810784,
+      "srcc_pvalue": 0.01761410009291592,
+      "plcc": -0.2792006030476269,
+      "plcc_pvalue": 2.0939968496782742e-10,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "contrast",
+      "mos_dimension": "mos_overall",
+      "srcc": 0.2014271913714731,
+      "srcc_pvalue": 5.6418627094357776e-06,
+      "plcc": 0.21447599644085288,
+      "plcc_pvalue": 1.2966683223583287e-06,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "contrast",
+      "mos_dimension": "mos_sharpness",
+      "srcc": 0.30596282195701713,
+      "srcc_pvalue": 2.6944728046190577e-12,
+      "plcc": 0.31458946522249015,
+      "plcc_pvalue": 6.001708466004887e-13,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "contrast",
+      "mos_dimension": "mos_color_fidelity",
+      "srcc": 0.2274185110477275,
+      "srcc_pvalue": 2.747288828933376e-07,
+      "plcc": 0.2283739990455049,
+      "plcc_pvalue": 2.4407779125055185e-07,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "illumination",
+      "mos_dimension": "mos_overall",
+      "srcc": -0.27747313177994676,
+      "srcc_pvalue": 2.7306763814685254e-10,
+      "plcc": -0.25341365392591725,
+      "plcc_pvalue": 9.11738942916411e-09,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "illumination",
+      "mos_dimension": "mos_sharpness",
+      "srcc": -0.3787037201108401,
+      "srcc_pvalue": 1.6959822673196957e-18,
+      "plcc": -0.337296870029031,
+      "plcc_pvalue": 9.072747807909708e-15,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "illumination",
+      "mos_dimension": "mos_color_fidelity",
+      "srcc": -0.30522796634550103,
+      "srcc_pvalue": 3.055270292454074e-12,
+      "plcc": -0.2704525167483176,
+      "plcc_pvalue": 7.88168265873718e-10,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "jpeg_blockiness",
+      "mos_dimension": "mos_overall",
+      "srcc": -0.0554075970854598,
+      "srcc_pvalue": 0.2161610290342397,
+      "plcc": -0.09074045468236337,
+      "plcc_pvalue": 0.04254744709536129,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "jpeg_blockiness",
+      "mos_dimension": "mos_sharpness",
+      "srcc": -0.04584316222555143,
+      "srcc_pvalue": 0.30628111413531434,
+      "plcc": -0.08652228387950818,
+      "plcc_pvalue": 0.05317686448011875,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "jpeg_blockiness",
+      "mos_dimension": "mos_color_fidelity",
+      "srcc": -0.036614434822137436,
+      "srcc_pvalue": 0.4139578932554183,
+      "plcc": -0.06731010942017635,
+      "plcc_pvalue": 0.1328293245663657,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "binarization",
+      "mos_dimension": "mos_overall",
+      "srcc": 0.035325323377028865,
+      "srcc_pvalue": 0.4305988900077899,
+      "plcc": 0.05127671167704122,
+      "plcc_pvalue": 0.25243069533513285,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "binarization",
+      "mos_dimension": "mos_sharpness",
+      "srcc": 0.081689960892624,
+      "srcc_pvalue": 0.06798254259628614,
+      "plcc": 0.08642648000311176,
+      "plcc_pvalue": 0.05344189440270117,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "binarization",
+      "mos_dimension": "mos_color_fidelity",
+      "srcc": 0.0613902247941613,
+      "srcc_pvalue": 0.17050455653185828,
+      "plcc": 0.07972665805339993,
+      "plcc_pvalue": 0.07489344297888509,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "bleed_through",
+      "mos_dimension": "mos_overall",
+      "srcc": -0.11062604995833596,
+      "srcc_pvalue": 0.013320505025824665,
+      "plcc": -0.04638867163506969,
+      "plcc_pvalue": 0.3005552466274232,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "bleed_through",
+      "mos_dimension": "mos_sharpness",
+      "srcc": -0.09891413546509406,
+      "srcc_pvalue": 0.02698894499644295,
+      "plcc": 0.0014161459301529687,
+      "plcc_pvalue": 0.9748016138302446,
+      "num_samples": 500
+    },
+    {
+      "detector_name": "bleed_through",
+      "mos_dimension": "mos_color_fidelity",
+      "srcc": -0.10886004524024398,
+      "srcc_pvalue": 0.014878072768061155,
+      "plcc": -0.05643383072512194,
+      "plcc_pvalue": 0.20776153315373505,
+      "num_samples": 500
+    }
+  ],
+  "intercorrelation_matrix": {
+    "blur": {
+      "blur": 1.0,
+      "noise": 0.0,
+      "contrast": 0.4289,
+      "illumination": -0.1421,
+      "jpeg_blockiness": -0.0567,
+      "binarization": -0.1611,
+      "bleed_through": 0.6793,
+      "skew": 0.0
+    },
+    "noise": {
+      "blur": 0.0,
+      "noise": 1.0,
+      "contrast": 0.0,
+      "illumination": 0.0,
+      "jpeg_blockiness": 0.0,
+      "binarization": 0.0,
+      "bleed_through": 0.0,
+      "skew": 0.0
+    },
+    "contrast": {
+      "blur": 0.4289,
+      "noise": 0.0,
+      "contrast": 1.0,
+      "illumination": -0.7286,
+      "jpeg_blockiness": -0.0332,
+      "binarization": 0.1532,
+      "bleed_through": 0.4927,
+      "skew": 0.0
+    },
+    "illumination": {
+      "blur": -0.1421,
+      "noise": 0.0,
+      "contrast": -0.7286,
+      "illumination": 1.0,
+      "jpeg_blockiness": -0.0018,
+      "binarization": -0.1362,
+      "bleed_through": -0.193,
+      "skew": 0.0
+    },
+    "jpeg_blockiness": {
+      "blur": -0.0567,
+      "noise": 0.0,
+      "contrast": -0.0332,
+      "illumination": -0.0018,
+      "jpeg_blockiness": 1.0,
+      "binarization": 0.0598,
+      "bleed_through": -0.0766,
+      "skew": 0.0
+    },
+    "binarization": {
+      "blur": -0.1611,
+      "noise": 0.0,
+      "contrast": 0.1532,
+      "illumination": -0.1362,
+      "jpeg_blockiness": 0.0598,
+      "binarization": 1.0,
+      "bleed_through": -0.0653,
+      "skew": 0.0
+    },
+    "bleed_through": {
+      "blur": 0.6793,
+      "noise": 0.0,
+      "contrast": 0.4927,
+      "illumination": -0.193,
+      "jpeg_blockiness": -0.0766,
+      "binarization": -0.0653,
+      "bleed_through": 1.0,
+      "skew": 0.0
+    },
+    "skew": {
+      "blur": 0.0,
+      "noise": 0.0,
+      "contrast": 0.0,
+      "illumination": 0.0,
+      "jpeg_blockiness": 0.0,
+      "binarization": 0.0,
+      "bleed_through": 0.0,
+      "skew": 1.0
+    }
+  }
+}

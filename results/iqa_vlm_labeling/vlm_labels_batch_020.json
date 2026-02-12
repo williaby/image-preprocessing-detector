@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T10:00:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 20,
+  "labels": [
+    {
+      "image_id": "test/res/test_res_00173.jpg",
+      "id": "7fe9da8e-6471-450f-8d74-75e2ee1e1128",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese math textbook. §1 Sets and Logic, 1.1 集合初步 (Introduction to Sets). ROTATED 90 degrees clockwise. Finite/infinite sets, examples, ∈/∉ exercises. Clean typed text with good enhancement. Rotation reduces overall quality."
+    },
+    {
+      "image_id": "val/res/val_res_00388.jpg",
+      "id": "ee94ae65-3881-4d21-943b-b9d4d1cb0343",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese chemistry lab experiment 课堂实验四: 生石灰加水. ROTATED 90 degrees clockwise. CaO + H₂O = Ca(OH)₂ in box. Procedure and observations. Very sparse content. Clean enhancement but rotation degrades quality."
+    },
+    {
+      "image_id": "val/res/val_res_00422.jpg",
+      "id": "f557f6a3-69d1-4752-8bc5-8fba8da914f9",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese chemistry periodic table (first 36 elements H-Ba). ROTATED 90 degrees clockwise. Rounded rectangle border. Better contrast than original version (val_ori_00043). Slight yellowish tint at edges from enhancement. Rotation is main issue."
+    },
+    {
+      "image_id": "train/res/train_res_03450.jpg",
+      "id": "e4c63855-d4d8-4059-ac1f-d8ad672c6db1",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese chemistry textbook. ROTATED 90 degrees clockwise. Chemical formula exercises (H₂, CaCl₂, AlCl₃, Na₂SO₄, FeCl₂). Chemical formula meaning (macroscopic/microscopic, H₂O examples). Clean enhancement. Highest MOS (3.947) but rotation penalizes quality."
+    },
+    {
+      "image_id": "train/res/train_res_00176.jpg",
+      "id": "9f0787bc-038f-4e7a-96c0-94f959d7b6f1",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese chemistry notes. Elements/molecules/atoms comparison table (含义/区别) and relationship diagram. ROTATED 90 degrees clockwise. Enhanced version of train_ori_00018. Better contrast, clear table and diagram. Rotation is main issue."
+    },
+    {
+      "image_id": "train/res/train_res_00526.jpg",
+      "id": "bed912e4-4d2a-4f1c-9a6e-1349cf783046",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese math textbook. §1 Sets and Logic, 1.1 集合初步. ROTATED 90 degrees clockwise. Set definitions, number set symbols (N, Z, Q, R). Etymological notes (Zahlen, quotient). Clean enhancement. Rotation reduces overall quality."
+    },
+    {
+      "image_id": "train/res/train_res_01913.jpg",
+      "id": "555b1e90-2407-45e4-84f1-6f2574defc91",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced Chinese I2S audio standard and DSP document, page 2. I2S timing diagram (SCLK, LRCK, DATA). Section 2.3 waveform generation (lookup table, Taylor series, IIR filter). Section 3 algorithm flow. Good technical content with diagram. Properly oriented. Clean enhancement."
+    },
+    {
+      "image_id": "train/res/train_res_03447.jpg",
+      "id": "f4a69d08-0e36-4f03-aefd-aa8c9b2b0a4e",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese chemistry textbook. ROTATED 90 degrees clockwise. Nearly identical content to train_res_03450 - chemical formula exercises and meanings. H₂O microscopic/macroscopic examples. Clean enhancement. Rotation is main issue."
+    },
+    {
+      "image_id": "test/res/test_res_00612.jpg",
+      "id": "6d648713-8484-4201-a582-60855f73a49b",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced English probability textbook, page 43. Solutions to Problems 3.30-3.32. PDF/CDF derivations for Y=√|X|, Y=-ln|X|, Y=eˣ. Same washed-out probability textbook series but enhanced version - improved contrast vs original. Still somewhat gray but readable. Sharp text."
+    },
+    {
+      "image_id": "test/res/test_res_00812.jpg",
+      "id": "3d0c6c67-7838-49dd-b20c-c246be88590c",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced English IEEE IEEEtran LaTeX class document, page 7. Two-column dense text about abstract/index terms, sections, headings. Initial Drop Cap Letter section. Very dense academic formatting. Clean enhancement, good readability. Proper orientation."
+    }
+  ]
+}

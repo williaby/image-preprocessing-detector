@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T08:15:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 13,
+  "labels": [
+    {
+      "image_id": "train/ori/train_ori_00262.jpg",
+      "id": "681bd673-0465-49cf-a828-60c6f6b4d557",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Camera-captured IEEE IEEEtran LaTeX Class title page by Michael Shell. Two-column format. Abstract, Index Terms, Section I Introduction, Section II Class Options. Dense but well-structured academic template. Slightly faded but highly readable."
+    },
+    {
+      "image_id": "train/ori/train_ori_00009.jpg",
+      "id": "e3ea368f-bfb2-484d-a6fe-073ab64c3308",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese PID algorithm simulation document (Section 2.2.1). Python code for path tracking with theta_error/kp/ki/kd. Pentagon trajectory plot at bottom. Fingers visible at right holding page. Good readability."
+    },
+    {
+      "image_id": "train/ori/train_ori_00070.jpg",
+      "id": "2543cd5b-e3a0-4192-9614-8e8fd2b53856",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.0,
+        "contrast": 2.5,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Python code printout for SDE quadratic variation calculations. matplotlib plotting, sigma_hat trajectory analysis. Dense monospace code, somewhat faded gray. Paper slightly curled with edge shadows."
+    },
+    {
+      "image_id": "test/ori/test_ori_00062.jpg",
+      "id": "ed354da7-fbba-4551-bc1d-4b2ff3f1425c",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.2,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured English probability textbook page 43. Solutions to Problems 3.30-3.32. PDF/CDF derivations, exponential/uniform distributions. Text is SHARP but EXTREMELY FADED - same washed-out probability textbook series. Light gray text barely visible."
+    },
+    {
+      "image_id": "test/ori/test_ori_00040.jpg",
+      "id": "0098e2a5-e08b-4213-9602-209c19feb471",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Camera-captured Chinese Flask web application document. Sections 2.1.1 flask, 2.1.2 html, 2.1.3 page display. Python Flask code with @app.route, render_template, factory.state_machine(). Clean typed text with code blocks. Good structure."
+    },
+    {
+      "image_id": "train/ori/train_ori_00122.jpg",
+      "id": "29699c42-84df-457e-9880-499eb8f44ba0",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.0,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured handwritten linear algebra homework. Vector space dimension proofs, basis calculations (#33). Two-column problem/solution layout. Black ink on white. Small dense handwriting, somewhat faded/light. Readable but requires effort."
+    },
+    {
+      "image_id": "train/ori/train_ori_00108.jpg",
+      "id": "524a8303-6d82-465d-892b-4eb766fb29e5",
+      "scores": {
+        "sharpness": 3.5,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.5
+      },
+      "notes": "Camera-captured English academic writing textbook. Paragraph structure, coherence principles. Unit 4: Writing an Essay - Essay Structure. Very sharp, clean typed text. Good contrast. Well-formatted sections. Best quality image in this batch."
+    },
+    {
+      "image_id": "train/ori/train_ori_00050.jpg",
+      "id": "2ffd6fcf-23f9-435e-81dd-9b42886fdc07",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese physics lab document. §2 Light, 2.1.1 Plane mirror imaging experiment. Questions and experimental procedures. ROTATED 90 degrees clockwise. Hand/fingers visible. Clean typed text but rotation is major quality issue."
+    },
+    {
+      "image_id": "train/ori/train_ori_00159.jpg",
+      "id": "0cf72a43-ce03-4a51-b612-8cffef22b6a9",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 2.0,
+        "contrast": 2.5,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.2
+      },
+      "notes": "Screen capture of handwritten convex optimization notes (English). Convex sets/combinations/hull definitions. Multiple sketched diagrams of convex vs non-convex shapes. SEVERE red-green moire grid pattern across entire image. Content readable through moire but heavily degraded."
+    },
+    {
+      "image_id": "val/ori/val_ori_00007.jpg",
+      "id": "24ede374-3218-42f7-b636-d9d226908fed",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese math textbook. §1 Sets and Logic, 1.1 Introduction to Sets. Listing method, description method, examples with quadratic equations. ROTATED 90 degrees clockwise. Finger visible at bottom right. Clean typed text."
+    }
+  ]
+}

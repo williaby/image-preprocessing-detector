@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T09:15:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 17,
+  "labels": [
+    {
+      "image_id": "test/ori/test_ori_00087.jpg",
+      "id": "c9e01d03-d6b6-418f-bb3a-c7244341ce14",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured English IEEE IEEEtran LaTeX class document, page 23. Two-column dense text about IEEEeqnarray strut system, column type overriding. Very dense academic formatting. Grayish/faded from camera capture. Readable but low contrast."
+    },
+    {
+      "image_id": "val/ori/val_ori_00009.jpg",
+      "id": "5326d71a-76ec-4045-b519-0b2f8c049e38",
+      "scores": {
+        "sharpness": 3.5,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.5
+      },
+      "notes": "Camera-captured Chinese document about 共同富裕 (Common Prosperity) challenges and strategies. Clean typed text with bold heading. Hand/fingers visible at bottom right. Good contrast and readability. Well-structured with numbered sections. One of the best originals."
+    },
+    {
+      "image_id": "val/ori/val_ori_00017.jpg",
+      "id": "f3ed72de-eaad-4149-87ec-cb2b0b37fe4e",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 2.8,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese quantum communication document. Paper is CRUMPLED/WRINKLED with visible creases creating shadows across the page. Bell states, EPR paradox, quantum entanglement. Dense typed text with math. Content readable despite paper damage but uneven surface degrades quality."
+    },
+    {
+      "image_id": "test/ori/test_ori_00065.jpg",
+      "id": "b38be50b-ee29-4d27-aa29-5712e384f00e",
+      "scores": {
+        "sharpness": 3.5,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.5
+      },
+      "notes": "Camera-captured English academic writing textbook. Unit 1: Wording - Formality. Register concepts, five formality stages (Frozen/Formal/Consultative/Casual/Intimate). Clean typed text, good spacing. Slightly grayish but very readable. Well-structured sections."
+    },
+    {
+      "image_id": "train/ori/train_ori_00223.jpg",
+      "id": "9a809ae1-a262-4608-bb27-96f2a133a72c",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese chemistry textbook. Physical properties (color, state, melting/boiling points, density, solubility) and chemical properties (flammability, oxidizability, stability). ROTATED 90 degrees clockwise. Sparse content, clean typed text. Rotation reduces overall quality."
+    },
+    {
+      "image_id": "train/ori/train_ori_00246.jpg",
+      "id": "276c4586-f034-454d-820d-9e4f7b7e7a3b",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese ITU-R BT.500-14 standard, page 56. Section A8-3 Basic Test Units, A8-4 Scoring. Timing diagram for SRC-A-PVS-B-PVS-Vote N sequence. Clean typed text, slightly faded. Good structure with technical diagram."
+    },
+    {
+      "image_id": "train/ori/train_ori_00023.jpg",
+      "id": "8eee329c-5187-4267-96a6-52389d79a18b",
+      "scores": {
+        "sharpness": 3.5,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Camera-captured English academic writing textbook. Unit 3: Writing a Paragraph - Structure of a Paragraph. Topic sentence, supporting sentences, concluding sentence. Finger visible at left edge. Clean typed text, slightly faded. Good readability and structure."
+    },
+    {
+      "image_id": "train/ori/train_ori_00337.jpg",
+      "id": "ad8b2c7a-e33a-42a3-903d-256719f02332",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 2.2,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese chemistry notes about elements on Earth. ROTATED 90 degrees clockwise. Carbon as foundation of life (0.027% of Earth mass). DIAGONAL SHADOW pattern from window/light source creating severe uneven illumination. Sparse content, rotation + shadow issues."
+    },
+    {
+      "image_id": "train/ori/train_ori_00021.jpg",
+      "id": "10efa320-063c-4733-8974-9c42f374ccaf",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese physics textbook about mass measurement. ROTATED 90 degrees clockwise. Mass definition, units (kg, g, mg, t), conversion exercises. Fingers visible at top right. Clean typed text. Sparse content, rotation issue but otherwise good quality."
+    },
+    {
+      "image_id": "train/ori/train_ori_00097.jpg",
+      "id": "f4cb24a3-3921-493b-a1fc-4cc7c54fcfe8",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese document about H.264 video compression (MPEG-4 AVC). Frame types (I/P/B), intra/inter prediction, motion estimation, DCT transform, CAVLC/CABAC encoding. Dense typed text. Slightly faded/grayish. Shadow/light variation at upper right corner."
+    }
+  ]
+}

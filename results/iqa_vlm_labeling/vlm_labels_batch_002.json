@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T05:30:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 2,
+  "labels": [
+    {
+      "image_id": "train/ori/train_ori_00312.jpg",
+      "id": "a0143f4d-6878-4b93-8b30-7c6ba551cb9b",
+      "scores": {
+        "sharpness": 2.0,
+        "noise": 2.0,
+        "contrast": 2.8,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.0
+      },
+      "notes": "Screen capture of handwritten Chinese math notes (inequalities). Red ink on lined paper. Heavy moire pattern from screen capture. Toolbar visible at top."
+    },
+    {
+      "image_id": "train/ori/train_ori_00319.jpg",
+      "id": "d1c23fbb-8652-4a9e-b666-93d91035b03d",
+      "scores": {
+        "sharpness": 2.2,
+        "noise": 2.2,
+        "contrast": 2.5,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.2
+      },
+      "notes": "Screen capture of handwritten convex optimization notes. Black ink with table structure showing domains/conjugate functions. Mixed English/math. Moderate moire, faded."
+    },
+    {
+      "image_id": "train/ori/train_ori_00129.jpg",
+      "id": "fefbe7e2-4931-4696-b808-06387b620a55",
+      "scores": {
+        "sharpness": 1.5,
+        "noise": 1.5,
+        "contrast": 2.0,
+        "illumination": 2.0,
+        "compression": 2.5,
+        "overall": 1.5
+      },
+      "notes": "Screen capture of handwritten math notes. Extremely heavy moire/grid pattern makes text nearly illegible. Very faded. Chinese/English mix with set theory notation."
+    },
+    {
+      "image_id": "train/ori/train_ori_00220.jpg",
+      "id": "6cf77ea0-71a6-412a-9806-70e45d70c347",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 3.5,
+        "contrast": 2.0,
+        "illumination": 3.5,
+        "compression": 3.5,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese technical document about signal processing with MATLAB code. Section headers visible. Very faded/washed out but clean with even lighting."
+    },
+    {
+      "image_id": "test/ori/test_ori_00047.jpg",
+      "id": "fec19f65-e4be-4a60-8d69-d352ac3338ab",
+      "scores": {
+        "sharpness": 2.2,
+        "noise": 2.0,
+        "contrast": 3.0,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.2
+      },
+      "notes": "Screen capture of handwritten Chinese physics notes about mechanical waves. Black ink on lined paper with wave diagrams and equations. Moderate moire from screen."
+    },
+    {
+      "image_id": "train/ori/train_ori_00193.jpg",
+      "id": "d6a63ed0-2955-4fa1-bad0-69e3a78db949",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 3.5,
+        "contrast": 1.8,
+        "illumination": 3.5,
+        "compression": 3.5,
+        "overall": 2.2
+      },
+      "notes": "Camera-captured probability textbook page (English). PMF formulas, geometric random variables. Extremely faded/washed out - contrast is the major issue. Clean, even lighting."
+    },
+    {
+      "image_id": "train/ori/train_ori_00226.jpg",
+      "id": "b03054ae-860f-4cd8-aac9-ab6deeafa502",
+      "scores": {
+        "sharpness": 3.5,
+        "noise": 3.5,
+        "contrast": 3.5,
+        "illumination": 3.5,
+        "compression": 3.5,
+        "overall": 3.5
+      },
+      "notes": "Camera-captured Chinese document with Python code for ER network simulation. Clear code formatting with line numbers. Good contrast, clean capture. Best quality in this batch."
+    },
+    {
+      "image_id": "train/ori/train_ori_00068.jpg",
+      "id": "682e8420-4029-48b5-b133-795345ce0a55",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 3.2,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese tech document about Python error debugging. Contains traceback and solution code. Reasonable contrast, readable. Slight page curl visible."
+    },
+    {
+      "image_id": "train/ori/train_ori_00163.jpg",
+      "id": "935e35bb-2132-4f61-8158-06c8b1b3ebe2",
+      "scores": {
+        "sharpness": 1.8,
+        "noise": 1.8,
+        "contrast": 2.2,
+        "illumination": 2.2,
+        "compression": 2.5,
+        "overall": 1.8
+      },
+      "notes": "Screen capture of handwritten convex analysis notes. Red/black ink annotations. Very heavy moire pattern from screen. Set theory notation. Dark edges, uneven illumination."
+    },
+    {
+      "image_id": "train/ori/train_ori_00132.jpg",
+      "id": "3649d6c3-e03a-4f50-988a-e230ae360323",
+      "scores": {
+        "sharpness": 2.0,
+        "noise": 2.0,
+        "contrast": 2.5,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.0
+      },
+      "notes": "Screen capture of handwritten convex sets notes (Affine & convex sets). Black/red ink. Heavy moire from screen capture of lined paper. Line diagram included."
+    }
+  ]
+}

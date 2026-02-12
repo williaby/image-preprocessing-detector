@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T05:45:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 3,
+  "labels": [
+    {
+      "image_id": "train/res/train_res_01984.jpg",
+      "id": "9366d42c-20e7-46bd-88b1-59667605ca5e",
+      "scores": {
+        "sharpness": 3.5,
+        "noise": 3.0,
+        "contrast": 4.0,
+        "illumination": 3.5,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Enhanced probability textbook page. Over-processed/near-binarized - extremely high contrast black on white. Top content severely cropped with only parenthesis fragments. Formulas about moment generating functions. Sharp but harsh."
+    },
+    {
+      "image_id": "train/res/train_res_02254.jpg",
+      "id": "5fd567a5-1f36-43f7-a37a-55701e028e3f",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.0,
+        "contrast": 3.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced ER network Python code document. Chinese comments with line numbers. Good contrast from enhancement. Code formatting preserved. Cropped at bottom. Readable."
+    },
+    {
+      "image_id": "test/res/test_res_00471.jpg",
+      "id": "a2fc2478-d182-4824-a10c-bee22427eb9d",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 2.0,
+        "contrast": 3.0,
+        "illumination": 1.5,
+        "compression": 2.5,
+        "overall": 2.0
+      },
+      "notes": "Handwritten Chinese physics notes (energy/work). Blue ink. SEVERE dark artifact/shadow corruption in bottom-right quarter. Upper portion clear with inclined plane diagrams. Illumination catastrophically uneven."
+    },
+    {
+      "image_id": "train/res/train_res_03267.jpg",
+      "id": "e0b93977-aad0-4388-8ed5-9424517f0daf",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 2.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Enhanced Chinese document with Python code for Excel file operations. Unusual purple/pink color cast from enhancement. Code readable but color processing distracting. Chinese comments throughout."
+    },
+    {
+      "image_id": "train/res/train_res_01455.jpg",
+      "id": "b0993de8-0ead-4de4-b312-9e5e607299f6",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 2.2,
+        "contrast": 3.0,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Enhanced screen capture of handwritten Chinese math notes (exponents/roots). Toolbar visible at top. Moire still present despite enhancement. Black ink, generally readable."
+    },
+    {
+      "image_id": "train/res/train_res_02702.jpg",
+      "id": "1e562832-585f-4b2f-8a22-9295d78cc2b3",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 2.5,
+        "contrast": 3.0,
+        "illumination": 2.5,
+        "compression": 2.8,
+        "overall": 2.5
+      },
+      "notes": "Enhanced Chinese technical document about video quality assessment (SDSCE method). Contains codec performance graph. Dense text below. Top area partially degraded. Body text readable."
+    },
+    {
+      "image_id": "train/res/train_res_02028.jpg",
+      "id": "6a2b5afe-0794-4efe-8930-e5aea223d6ae",
+      "scores": {
+        "sharpness": 1.5,
+        "noise": 1.2,
+        "contrast": 2.0,
+        "illumination": 2.0,
+        "compression": 1.5,
+        "overall": 1.2
+      },
+      "notes": "Enhanced Chinese technical doc with MATLAB/signal processing code. Extremely noisy/degraded throughout - text barely readable. Enhancement introduced severe artifacts or original was very poor. Nearly illegible."
+    },
+    {
+      "image_id": "test/res/test_res_00717.jpg",
+      "id": "f8864703-f8f7-4e53-8384-4514e5c363f5",
+      "scores": {
+        "sharpness": 3.5,
+        "noise": 3.5,
+        "contrast": 3.2,
+        "illumination": 3.5,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced Chinese physics lab report about phyphox water column experiments. Clean typed text with numbered sections. Form header with name/ID fields. Good readability after enhancement."
+    },
+    {
+      "image_id": "train/res/train_res_01403.jpg",
+      "id": "f12b4327-c217-427b-ad26-c44c077647a8",
+      "scores": {
+        "sharpness": 2.0,
+        "noise": 1.8,
+        "contrast": 2.2,
+        "illumination": 2.5,
+        "compression": 2.5,
+        "overall": 2.0
+      },
+      "notes": "Enhanced handwritten Chinese physics problems (circular motion). Blue ink. Heavy moire pattern still dominates despite enhancement. Numbered problems with track/ball diagrams. Hard to read through moire."
+    },
+    {
+      "image_id": "test/res/test_res_00790.jpg",
+      "id": "dd585b47-4f62-48f6-ab55-03f409d518aa",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 3.5,
+        "contrast": 1.8,
+        "illumination": 3.5,
+        "compression": 3.5,
+        "overall": 2.2
+      },
+      "notes": "Enhanced probability textbook page (English). Geometric random variables, PMFs, expected values. Extremely faded/washed out - enhancement did not fix contrast issue. Clean but nearly invisible text. Page 27."
+    }
+  ]
+}

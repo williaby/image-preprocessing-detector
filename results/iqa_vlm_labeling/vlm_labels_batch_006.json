@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T06:30:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 6,
+  "labels": [
+    {
+      "image_id": "train/ori/train_ori_00249.jpg",
+      "id": "79dea383-04a7-4765-a279-a867ea197411",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese linear algebra textbook, page 5. Dense mathematical content with matrix proofs, Fourier matrix, determinants. Crisp typed text, clean page. Moderate grayish fading on text."
+    },
+    {
+      "image_id": "train/ori/train_ori_00082.jpg",
+      "id": "9aee4c2e-6154-4914-a9a6-d20d10388e3d",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.0,
+        "contrast": 2.5,
+        "illumination": 2.2,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese linear algebra with MathType 5.0 equation editor watermarks. Eigenvalues, Schur decomposition, block matrices. Prominent diagonal page fold/crease creating shadow across page. Illumination is the main issue."
+    },
+    {
+      "image_id": "train/ori/train_ori_00284.jpg",
+      "id": "bd85f996-0982-4e09-8526-f2d4eb9ed35b",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese document about face detection (Haar-like features, AdaBoost classifiers). Haar feature diagrams visible. Finger at left edge. Clean typed text with good structure. Moderate fading."
+    },
+    {
+      "image_id": "train/ori/train_ori_00307.jpg",
+      "id": "2e4343b9-0b54-4477-90fb-eb729963d765",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese document about Python TypeError debugging for get_mail function. Numbered debugging steps with Python code snippets. Well-structured, good readability. Slightly faded but better contrast than most."
+    },
+    {
+      "image_id": "train/ori/train_ori_00157.jpg",
+      "id": "0aaadb26-4689-4173-8b62-6a1a2522f8b9",
+      "scores": {
+        "sharpness": 2.0,
+        "noise": 2.0,
+        "contrast": 2.5,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.0
+      },
+      "notes": "Screen capture of handwritten convex optimization notes. Table structure (domain, conjugate functions). Fenchel's/Young's inequality. Heavy cyan/blue moire grid pattern severely degrades clarity. Black ink with red annotations."
+    },
+    {
+      "image_id": "train/ori/train_ori_00281.jpg",
+      "id": "56545f3c-7a8c-42e5-8d7c-6deb6fedf306",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese document with Python code for image frequency analysis (image_high_freq_counts). Improvement notes section. Finger visible at bottom right. Clean typed text, slightly faded gray."
+    },
+    {
+      "image_id": "train/ori/train_ori_00120.jpg",
+      "id": "c6c8289c-fd5e-4e2e-8f15-199d84002459",
+      "scores": {
+        "sharpness": 2.2,
+        "noise": 2.2,
+        "contrast": 2.8,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.2
+      },
+      "notes": "Screen capture of handwritten Chinese linear algebra notes about Schur's theorem and Cayley-Hamilton theorem. Red/pink annotations, black main text. Toolbar visible. Moderate moire pattern from screen capture."
+    },
+    {
+      "image_id": "train/ori/train_ori_00317.jpg",
+      "id": "5d85713c-8a9d-4e0b-bcbc-5984310105b4",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 2.5,
+        "contrast": 3.0,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Screen capture of handwritten Chinese convex analysis notes. Black ink, dense mathematical notation with set operations and proofs. Relatively clear handwriting, less moire than typical screen captures."
+    },
+    {
+      "image_id": "train/ori/train_ori_00315.jpg",
+      "id": "a92e0476-f76f-4e82-91d9-96e6e8953c24",
+      "scores": {
+        "sharpness": 2.0,
+        "noise": 1.8,
+        "contrast": 2.5,
+        "illumination": 2.2,
+        "compression": 3.0,
+        "overall": 2.0
+      },
+      "notes": "Screen capture of handwritten convex optimization notes (epigraphs, sublevel sets, concavity). Red and black ink. Heavy red-tinted moire/grid pattern. Small graph illustration with blue shading. Mixed Chinese/English. Dense but degraded by moire."
+    },
+    {
+      "image_id": "train/ori/train_ori_00133.jpg",
+      "id": "bd0ef873-4052-4c41-9e28-75ccb1cb8541",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 2.2,
+        "contrast": 3.0,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Screen capture of handwritten Chinese physics notes about uniform circular motion. Blue ink on lined paper. Kinematic diagrams, velocity/frequency/period formulas. Toolbar visible. Moderate moire pattern."
+    }
+  ]
+}
