@@ -86,6 +86,8 @@ classDiagram
         +integer dpi [nullable]
         +enum category
         +integer[2] pixels
+        +number character_height_rendered_px [nullable]
+        +integer output_size_px [nullable]
     }
 
     class DomainInfo {
@@ -99,6 +101,7 @@ classDiagram
         +enum text_density [nullable]
         +enum layout_type [nullable]
         +string[] element_types
+        +enum[] text_directions_present [nullable]
     }
 
     class QualityInfo {
@@ -121,6 +124,7 @@ classDiagram
         +enum script_code [ISO 15924]
         +string bcp47_tag
         +enum script_family
+        +enum text_direction [nullable]
         +number confidence [0-1]
         +string detection_method
         +boolean is_rtl

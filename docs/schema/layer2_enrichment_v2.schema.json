@@ -18,8 +18,8 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "2.1.0",
-      "description": "Schema version identifier. v2.0.0 introduces the label reliability mixin pattern. v2.1.0 adds geometric, physical degradation, ML IQA, image properties, OCR impact objects; expands ResolutionInfo, ContentFlags, StructureInfo."
+      "const": "2.3.0",
+      "description": "Schema version identifier. v2.0.0 introduces the label reliability mixin pattern. v2.1.0 adds geometric, physical degradation, ML IQA, image properties, OCR impact objects; expands ResolutionInfo, ContentFlags, StructureInfo. v2.3.0 adds text_direction to LanguageInfo, text_directions_present to StructureInfo, character_height_rendered_px and output_size_px to ResolutionInfo."
     },
     "created_at": {
       "type": "string",
@@ -358,6 +358,16 @@
           "type": ["integer", "null"],
           "minimum": 1,
           "description": "Effective DPI accounting for resampling. May differ from embedded DPI metadata if image was rescaled. v2.1.0 addition."
+        },
+        "character_height_rendered_px": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Actual rendered character height in pixels, measured from pristine image via CC analysis before any degradation. Synthetic-only ground truth -- more accurate than the analytical estimate (font_size_pt * DPI / 72) because it accounts for glyph metrics, font hinting, and rasterization. v2.3.0 addition."
+        },
+        "output_size_px": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Output image size in pixels for derived training views (e.g., 224, 384, 512). Records which resolution variant this metadata corresponds to. v2.3.0 addition."
         }
       },
       "additionalProperties": false
@@ -450,6 +460,14 @@
           "type": ["string", "null"],
           "enum": ["syntax_highlighted", "plain_monospace", "inline", "handwritten", null],
           "description": "How code is rendered in the document. v2.1.0 addition."
+        },
+        "text_directions_present": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "string",
+            "enum": ["ltr", "rtl", "ttb"]
+          },
+          "description": "All text writing directions present in the document (e.g., ['ltr', 'ttb'] for Japanese doc with both horizontal and vertical text blocks). v2.3.0 addition."
         }
       },
       "additionalProperties": false
@@ -610,6 +628,11 @@
           "type": "string",
           "description": "Method used for language/script detection",
           "examples": ["dataset_metadata", "tesseract", "fasttext", "openlid_v2", "mlmodel", "manual"]
+        },
+        "text_direction": {
+          "type": ["string", "null"],
+          "enum": ["ltr", "rtl", "ttb", null],
+          "description": "Writing direction used for this language in this sample. For scripts supporting multiple orientations (e.g., Japanese horizontal vs vertical tategaki), records the actual direction used. Overrides the default script direction. v2.3.0 addition."
         },
         "is_rtl": {
           "type": "boolean",

@@ -874,6 +874,61 @@ class OrientationDetection(BaseModel):
     )
 
 
+class DeskewDetection(BaseModel):
+    """ML-based deskew detection result from SkewNet pipeline.
+
+    Records both the coarse orientation correction and fine skew angle,
+    along with confidence, uncertainty, and whether correction was applied.
+    """
+
+    orientation_angle: OrientationAngle = Field(
+        default=OrientationAngle.UPRIGHT,
+        description="Detected coarse orientation (0, 90, 180, 270 degrees)",
+    )
+    orientation_confidence: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence for orientation classification",
+    )
+    orientation_corrected: bool = Field(
+        default=False,
+        description="Whether 90-degree orientation correction was applied",
+    )
+    skew_angle: float = Field(
+        default=0.0,
+        description="Fine skew angle in degrees (positive = clockwise)",
+    )
+    skew_confidence: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Confidence for skew bin classification",
+    )
+    skew_uncertainty: float = Field(
+        default=0.0,
+        ge=0.0,
+        description="Predicted uncertainty (sigma) from regression head",
+    )
+    skew_corrected: bool = Field(
+        default=False,
+        description="Whether fine skew correction was applied",
+    )
+    detection_method: str = Field(
+        default="ml",
+        description="Detection method: ml, classical, ml+fallback, none",
+    )
+    skipped_reason: str | None = Field(
+        default=None,
+        description="Reason correction was skipped, if applicable",
+    )
+    latency_ms: float = Field(
+        default=0.0,
+        ge=0.0,
+        description="Total deskew pipeline latency in milliseconds",
+    )
+
+
 class TransformHistory(BaseModel):
     """Records a single transformation applied to the image."""
 
@@ -1102,6 +1157,12 @@ class PageMetadata(BaseModel):
     orientation: OrientationDetection | None = Field(
         None,
         description="Phase 8: Orientation detection result (0°, 90°, 180°, 270° rotation)",
+    )
+
+    # ML-based deskew (SkewNet pipeline)
+    deskew: DeskewDetection | None = Field(
+        None,
+        description="ML-based deskew detection and correction result (orientation + fine skew)",
     )
 
     detected_issues: list[DetectedIssue] = Field(

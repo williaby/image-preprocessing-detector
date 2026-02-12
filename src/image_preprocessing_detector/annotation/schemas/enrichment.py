@@ -175,6 +175,7 @@ class EnrichmentData:
     text_density: str | None = None
     layout_type: str | None = None
     element_types: list[str] | None = None
+    text_directions_present: list[str] | None = None  # ["ltr","rtl","ttb"] v2.3
 
     # Quality/degradation (list of detected degradations)
     quality_overall: float | None = None
@@ -190,6 +191,7 @@ class EnrichmentData:
     iso15924_script: str | None = None
     script_family: str | None = None
     bcp47_tag: str | None = None
+    text_direction: str | None = None  # "ltr", "rtl", "ttb" v2.3
 
     # Text Scope (added v2.1)
     text_scope: str | None = None
@@ -259,6 +261,17 @@ class EnrichmentData:
     ml_iqa_model_name: str | None = None
     ml_iqa_model_version: str | None = None
 
+    # VLM quality assessment -- v2.2 (per-dimension quality from VLM evaluation)
+    vlm_iqa_sharpness: float | None = None  # 1-5 scale
+    vlm_iqa_noise: float | None = None  # 1-5 scale
+    vlm_iqa_contrast: float | None = None  # 1-5 scale
+    vlm_iqa_illumination: float | None = None  # 1-5 scale
+    vlm_iqa_compression: float | None = None  # 1-5 scale
+    vlm_iqa_overall: float | None = None  # 1-5 scale
+    vlm_iqa_model_name: str | None = None
+    vlm_iqa_model_version: str | None = None
+    vlm_iqa_prompt_version: str | None = None
+
     # Code detection -- v2.1 (ContentFlags + StructureInfo in JSON schema)
     has_code: bool | None = None
     code_confidence: float | None = None  # 0-1
@@ -269,6 +282,45 @@ class EnrichmentData:
     character_height_px: float | None = None
     resolution_quality_score: float | None = None  # 0-1
     effective_dpi: int | None = None
+
+    # DPI provenance + measurement detail -- v2.2
+    character_height_clean_px: float | None = None  # Pre-degradation (synthetic only)
+    character_height_degraded_px: float | None = None  # Post-degradation measurement
+    character_height_analytical_px: float | None = None  # font_size_pt * DPI / 72
+    character_height_rendered_px: float | None = (
+        None  # Measured from pristine image v2.3
+    )
+    resolution_quality_coarse_bucket: str | None = None  # CoarseBucket value
+    resolution_quality_measurement_method: str | None = (
+        None  # sauvola_cc_v2 | paddleocr_dbnet_cc_v1
+    )
+    font_size_pt: float | None = None  # Pillow font size (synthetic only)
+    target_dpi: int | None = None  # DPI tier target (synthetic only)
+    output_size_px: int | None = None  # Derived view output size (224/384/512) v2.3
+
+    # Weak label provenance -- v2.2
+    resolution_quality_label_provenance: str | None = (
+        None  # tier_0_exact | tier_2_model | tier_3_heuristic
+    )
+    resolution_quality_label_source: str | None = (
+        None  # synthetic_exact | weak_label_model_v1
+    )
+    resolution_quality_label_confidence: float | None = None  # 0-1
+    resolution_quality_script_used: str | None = None  # ISO 15924 code
+    resolution_quality_script_confidence: float | None = (
+        None  # script detection confidence
+    )
+
+    # Soft label fields for teacher-student transfer -- v2.2
+    resolution_quality_bucket_probabilities: dict[str, float] | None = (
+        None  # 5-bucket distribution
+    )
+    resolution_quality_score_std: float | None = (
+        None  # teacher quality_score uncertainty
+    )
+    resolution_quality_char_height_std: float | None = (
+        None  # teacher char_height uncertainty
+    )
 
     # Image properties (color mode, document age) -- v2.1
     color_mode: str | None = None  # "color", "grayscale", "binarized"
