@@ -1,7 +1,7 @@
 {
   "dataset": "nepali-handwritten",
   "metadata_path": "/mnt/e/image_detection/metadata_registry/json/nepali_handwritten_metadata.json",
-  "audited_at": "2026-02-12T23:15:18.811453+00:00",
+  "audited_at": "2026-02-12T23:16:10.034148+00:00",
   "total_samples": 958,
   "passed_all": 0,
   "failed_any": 958,
