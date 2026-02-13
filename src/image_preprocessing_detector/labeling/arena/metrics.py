@@ -378,15 +378,23 @@ class ArenaMetrics:
             "",
             f"{'Dimension':<12} {'PLCC':>8} {'SRCC':>8} {'MAE':>8} {'RMSE':>8}",
             "-" * 60,
-            f"{'Overall':<12} {self.overall.plcc:>8.4f} {self.overall.srcc:>8.4f} "
-            f"{self.overall.mae:>8.4f} {self.overall.rmse:>8.4f}",
-            f"{'Sharpness':<12} {self.sharpness.plcc:>8.4f} {self.sharpness.srcc:>8.4f} "
-            f"{self.sharpness.mae:>8.4f} {self.sharpness.rmse:>8.4f}",
-            f"{'Color':<12} {self.color.plcc:>8.4f} {self.color.srcc:>8.4f} "
-            f"{self.color.mae:>8.4f} {self.color.rmse:>8.4f}",
+            (
+                f"{'Overall':<12} {self.overall.plcc:>8.4f} {self.overall.srcc:>8.4f} "
+                f"{self.overall.mae:>8.4f} {self.overall.rmse:>8.4f}"
+            ),
+            (
+                f"{'Sharpness':<12} {self.sharpness.plcc:>8.4f} {self.sharpness.srcc:>8.4f} "
+                f"{self.sharpness.mae:>8.4f} {self.sharpness.rmse:>8.4f}"
+            ),
+            (
+                f"{'Color':<12} {self.color.plcc:>8.4f} {self.color.srcc:>8.4f} "
+                f"{self.color.mae:>8.4f} {self.color.rmse:>8.4f}"
+            ),
             "-" * 60,
-            f"{'Aggregate':<12} {self.aggregate.plcc:>8.4f} {self.aggregate.srcc:>8.4f} "
-            f"{self.aggregate.mae:>8.4f} {self.aggregate.rmse:>8.4f}",
+            (
+                f"{'Aggregate':<12} {self.aggregate.plcc:>8.4f} {self.aggregate.srcc:>8.4f} "
+                f"{self.aggregate.mae:>8.4f} {self.aggregate.rmse:>8.4f}"
+            ),
             "",
             f"Samples: {self.overall.num_samples}",
         ]
@@ -403,14 +411,22 @@ class ArenaMetrics:
             "",
             "| Dimension | PLCC | SRCC | MAE | RMSE |",
             "|-----------|------|------|-----|------|",
-            f"| Overall | {self.overall.plcc:.4f} | {self.overall.srcc:.4f} | "
-            f"{self.overall.mae:.4f} | {self.overall.rmse:.4f} |",
-            f"| Sharpness | {self.sharpness.plcc:.4f} | {self.sharpness.srcc:.4f} | "
-            f"{self.sharpness.mae:.4f} | {self.sharpness.rmse:.4f} |",
-            f"| Color | {self.color.plcc:.4f} | {self.color.srcc:.4f} | "
-            f"{self.color.mae:.4f} | {self.color.rmse:.4f} |",
-            f"| **Aggregate** | **{self.aggregate.plcc:.4f}** | **{self.aggregate.srcc:.4f}** | "
-            f"**{self.aggregate.mae:.4f}** | **{self.aggregate.rmse:.4f}** |",
+            (
+                f"| Overall | {self.overall.plcc:.4f} | {self.overall.srcc:.4f} | "
+                f"{self.overall.mae:.4f} | {self.overall.rmse:.4f} |"
+            ),
+            (
+                f"| Sharpness | {self.sharpness.plcc:.4f} | {self.sharpness.srcc:.4f} | "
+                f"{self.sharpness.mae:.4f} | {self.sharpness.rmse:.4f} |"
+            ),
+            (
+                f"| Color | {self.color.plcc:.4f} | {self.color.srcc:.4f} | "
+                f"{self.color.mae:.4f} | {self.color.rmse:.4f} |"
+            ),
+            (
+                f"| **Aggregate** | **{self.aggregate.plcc:.4f}** | **{self.aggregate.srcc:.4f}** | "
+                f"**{self.aggregate.mae:.4f}** | **{self.aggregate.rmse:.4f}** |"
+            ),
             "",
             f"*Samples: {self.overall.num_samples}*",
         ]

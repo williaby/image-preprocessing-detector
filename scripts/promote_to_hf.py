@@ -323,7 +323,7 @@ import torch
 from torchvision import transforms
 
 # Load model
-model = torch.load("model_final.pth")
+model = torch.load("model_final.pth", weights_only=True)
 model.eval()
 
 # Prepare image

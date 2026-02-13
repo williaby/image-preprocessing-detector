@@ -190,7 +190,7 @@ def run(
     click.echo("\n" + "=" * 60)
 
     if result.status.value == "completed":
-        click.echo(click.style("Benchmark COMPLETED", fg="green", bold=True))
+        click.secho("Benchmark COMPLETED", fg="green", bold=True)
         click.echo(f"Run ID: {result.run_id}")
         click.echo(f"Duration: {result.execution.duration_seconds:.2f}s")
         click.echo(f"Samples: {result.dataset.num_samples}")
@@ -204,7 +204,7 @@ def run(
 
         click.echo(f"\nResults saved to: {output}")
     else:
-        click.echo(click.style("Benchmark FAILED", fg="red", bold=True))
+        click.secho("Benchmark FAILED", fg="red", bold=True)
         click.echo(f"Error: {result.error_message}")
         sys.exit(1)
 
@@ -292,7 +292,7 @@ def leaderboard(
     click.echo(f"Loaded {count} results")
 
     if count == 0:
-        click.echo(click.style("No valid results found", fg="yellow"))
+        click.secho("No valid results found", fg="yellow")
         sys.exit(1)
 
     output_dir = Path(output)
@@ -319,7 +319,7 @@ def leaderboard(
 
         click.echo(f"Generated: {path}")
 
-    click.echo(click.style("\nLeaderboard generated successfully!", fg="green"))
+    click.secho("\nLeaderboard generated successfully!", fg="green")
 
 
 @arena.command()
@@ -388,16 +388,16 @@ def validate(
         click.echo(f"Computed Hash: {computed_hash}")
 
         if computed_hash == manifest_obj.result_hash:
-            click.echo(click.style("Hash MATCH", fg="green"))
+            click.secho("Hash MATCH", fg="green")
         else:
-            click.echo(click.style("Hash MISMATCH", fg="red"))
+            click.secho("Hash MISMATCH", fg="red")
             issues.append(
                 f"Hash mismatch: expected {manifest_obj.result_hash}, got {computed_hash}"
             )
 
         # Check run IDs
         if result_obj.run_id != manifest_obj.run_id:
-            click.echo(click.style("Run ID mismatch", fg="yellow"))
+            click.secho("Run ID mismatch", fg="yellow")
             issues.append(
                 f"Run ID mismatch: expected {manifest_obj.run_id}, got {result_obj.run_id}"
             )
@@ -411,7 +411,7 @@ def validate(
         if strict:
             sys.exit(1)
     else:
-        click.echo(click.style("\nValidation PASSED", fg="green", bold=True))
+        click.secho("\nValidation PASSED", fg="green", bold=True)
 
 
 @arena.command()

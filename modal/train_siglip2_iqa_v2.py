@@ -1817,7 +1817,7 @@ def _run_posthoc_calibration(
     print("Post-hoc STD Scaling Calibration")
     print("=" * 70)
 
-    best_state = torch.load(output_dir / _BEST_MODEL_FILENAME)
+    best_state = torch.load(output_dir / _BEST_MODEL_FILENAME, weights_only=True)
     model.load_state_dict(best_state["model_state_dict"])
     model.eval()
 
@@ -1905,7 +1905,7 @@ def _run_final_evaluation(
     print("Final Evaluation on Test Set")
     print("=" * 70)
 
-    best_state = torch.load(output_dir / _BEST_MODEL_FILENAME)
+    best_state = torch.load(output_dir / _BEST_MODEL_FILENAME, weights_only=True)
     model.load_state_dict(best_state["model_state_dict"])
 
     test_loader = DataLoader(

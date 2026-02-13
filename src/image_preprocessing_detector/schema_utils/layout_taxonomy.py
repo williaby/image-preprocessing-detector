@@ -29,6 +29,7 @@ Example:
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -123,9 +124,9 @@ class LayoutTaxonomy:
         # Build reverse mappings: schema -> {canonical -> [native_labels]}
         self._reverse_maps: dict[str, dict[str, list[str]]] = {}
         for schema_name, schema_def in self._schemas.items():
-            rev: dict[str, list[str]] = {}
+            rev: defaultdict[str, list[str]] = defaultdict(list)
             for native_label, canonical in schema_def.get("class_mapping", {}).items():
-                rev.setdefault(canonical, []).append(native_label)
+                rev[canonical].append(native_label)
             self._reverse_maps[schema_name] = rev
 
         # Clear caches

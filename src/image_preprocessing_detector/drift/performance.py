@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -395,11 +396,9 @@ class MetricsStore:
             return None
 
         # Compute average metrics
-        avg_metrics: dict[str, list[float]] = {}
+        avg_metrics: defaultdict[str, list[float]] = defaultdict(list)
         for result in filtered:
             for metric, value in result.metrics.items():
-                if metric not in avg_metrics:
-                    avg_metrics[metric] = []
                 avg_metrics[metric].append(value)
 
         aggregated_metrics: dict[str, float] = {

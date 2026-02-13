@@ -91,6 +91,7 @@ async def process_batch_job(
             ext = Path(filename).suffix.lower()
             with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp_file:
                 tmp_file.write(content)
+                tmp_file.flush()
                 tmp_path = Path(tmp_file.name)
 
             try:

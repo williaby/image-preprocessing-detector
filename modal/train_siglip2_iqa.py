@@ -1103,7 +1103,7 @@ def train_siglip2_iqa(
         print("=" * 70)
 
         # Load best model
-        best_state = torch.load(output_dir / "siglip2_iqa_best.pt")
+        best_state = torch.load(output_dir / "siglip2_iqa_best.pt", weights_only=True)
         model.load_state_dict(best_state["model_state_dict"])
         model.eval()
 
@@ -1176,7 +1176,7 @@ def train_siglip2_iqa(
     print("=" * 70)
 
     # Load best model
-    best_state = torch.load(output_dir / "siglip2_iqa_best.pt")
+    best_state = torch.load(output_dir / "siglip2_iqa_best.pt", weights_only=True)
     model.load_state_dict(best_state["model_state_dict"])
 
     test_loader = DataLoader(

@@ -624,6 +624,7 @@ class TestTempFileCleanup:
         try:
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                 tmp.write(b"test data")
+                tmp.flush()
                 tmp_path = Path(tmp.name)
 
             # Verify file exists

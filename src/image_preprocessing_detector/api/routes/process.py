@@ -356,6 +356,7 @@ async def process_single_document(
 
             # Write to temp file
             tmp_file.write(content)
+            tmp_file.flush()
             tmp_path = Path(tmp_file.name)
 
         # Process the document
