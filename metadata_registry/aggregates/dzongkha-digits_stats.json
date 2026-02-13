@@ -1,0 +1,84 @@
+{
+  "dataset_name": "dzongkha-digits",
+  "total_samples": 62,
+  "capture_methods": {
+    "camera_smartphone": 62
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "EDU": 62
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Tibt": 62
+  },
+  "script_families": {
+    "indic": 62
+  },
+  "language_codes": {
+    "dz": 62
+  },
+  "content_flags": {
+    "has_handwriting": 62
+  },
+  "text_scopes": {
+    "character": 62
+  },
+  "content_types": {
+    "handwritten": 62
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "camera_smartphone": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "EDU": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Tibt": 100.0
+  },
+  "script_families_pct": {
+    "indic": 100.0
+  },
+  "language_codes_pct": {
+    "dz": 100.0
+  },
+  "text_scopes_pct": {
+    "character": 100.0
+  },
+  "content_types_pct": {
+    "handwritten": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_handwriting": 100.0
+  },
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Tibt",
+      "count": 62,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "dz",
+      "count": 62,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "indic": 62
+  }
+}

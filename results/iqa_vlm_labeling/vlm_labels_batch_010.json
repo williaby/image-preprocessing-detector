@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T07:30:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 10,
+  "labels": [
+    {
+      "image_id": "train/ori/train_ori_00308.jpg",
+      "id": "24e1902a-4487-48d1-ba6b-d2cb6d9e4400",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 2.8,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Python code printout for stochastic differential equations. Coupled_SDE simulations, matplotlib plotting, quadratic variation. Physically CRUMPLED/WRINKLED paper. Dark wood surface at bottom. Readable code despite paper damage. Uneven illumination from creases."
+    },
+    {
+      "image_id": "train/ori/train_ori_00154.jpg",
+      "id": "ec0e04cc-8c3d-404d-aa84-6abfdfef30f7",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 2.5,
+        "contrast": 2.8,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Screen capture of handwritten Chinese math notes. Section 2.1.2 about quadratic equation solution sets, Vieta's formulas (x1+x2=-b/a, x1*x2=c/a). Red ink primary with dark annotations. Toolbar visible. Lined paper. Moderate moire from screen capture."
+    },
+    {
+      "image_id": "train/ori/train_ori_00230.jpg",
+      "id": "3428222e-bea0-4131-8415-baf22a1a8c7d",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured IEEE LaTeX IEEEtran class formatting document, page 25. Two-column dense technical text. \\phantom, \\vspace, IEEEeqnarray examples. Multiple equations (12a-14b). Grayish faded text typical of camera captures."
+    },
+    {
+      "image_id": "train/ori/train_ori_00073.jpg",
+      "id": "d0efed44-a2ca-460a-ac8c-055b4e0d5864",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured English research paper about adversarial attacks on image compression. Two-column. FGSM, PGD attack methods. Section IV with dense mathematical formulas. L_p distance metrics. Moderate fading."
+    },
+    {
+      "image_id": "train/ori/train_ori_00084.jpg",
+      "id": "8bf202d9-2286-4871-9f51-e29b45ffe015",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese linear algebra textbook page 32. Jordan canonical form problems (#15-20). Dense matrix notation, Hadamard matrices, eigenvalue proofs. Clean well-printed text. Slight page curl but good overall quality."
+    },
+    {
+      "image_id": "test/ori/test_ori_00037.jpg",
+      "id": "04ec590f-e83c-437a-824e-3351b5571989",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese linear algebra textbook page 38. Hadamard inequality, determinant problems, Ostrowski/Brauer theorems. Dense math with summation formulas. Shadow at right edge from page curl. Footnote about Hadamard (1865-1963)."
+    },
+    {
+      "image_id": "train/ori/train_ori_00076.jpg",
+      "id": "dfe0c3c4-d712-4269-8d0a-4ac4b0dbe163",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese research proposal about dense pedestrian detection. YOLO series, single-stage vs two-stage detectors. Clean typed Chinese text. Paper slightly curled at edges. Moderate fading on text."
+    },
+    {
+      "image_id": "train/ori/train_ori_00255.jpg",
+      "id": "a9ad0947-fa82-4e2f-8a6a-d55cb5a32dae",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 2.0,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese ITU-R BT.500-14 standard translation, page 41. Section A4-4 comparison methods. Table with -3 to +3 scale. Very prominent shadow/light stripe across middle-right of page causing severe illumination unevenness. Text clear where lit."
+    },
+    {
+      "image_id": "train/ori/train_ori_00200.jpg",
+      "id": "c195c441-cc60-4cee-ae34-733d2a48a1f5",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured English academic questionnaire about research methods. 5 questions: research skills, online databases (IEEE Xplore, ScienceDirect, Arxiv, WoS, DOAJ), research niche example (Qian Xuesen). Clean typed text, well-structured, minor fading."
+    },
+    {
+      "image_id": "val/ori/val_ori_00002.jpg",
+      "id": "0efe0e22-184e-4cea-9f25-f6d9d67301f0",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese scientific/philosophical document about civilization evolution, AI, deep learning, quantum computing, nanotechnology, biological engineering. Very dense typed text. Finger visible at left edge. Moderate fading."
+    }
+  ]
+}

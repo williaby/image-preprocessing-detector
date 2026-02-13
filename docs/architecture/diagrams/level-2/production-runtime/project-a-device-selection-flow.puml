@@ -42,33 +42,53 @@ else (no)
   endif
 endif
 
-partition "Student Inference" {
-  :Run ResNet-18 student\non primary_device\nfor all pages;
-  :Compute per-page uncertainty\n(e.g., entropy, top-2 margin);
-  :Compute discrepancy vs\nclassical IQA metrics;
+partition "MobileNetV4-Conv-S Pre-Correction" {
+  :Run MobileNetV4-Conv-S\non primary_device\nfor all pages (~3ms GPU);
+  :Extract 3-head predictions:\n- orientation (4-class)\n- skew (regression)\n- resolution quality (0-1);
+  :Compute per-head confidence scores;
 }
 
-:Determine high-risk docs\nfrom metadata/tags;
+partition "Pre-Correction Application" {
+  :Apply orientation correction;
+  :Apply deskew from skew prediction;
+  :Apply resolution upscaling if needed;
+}
 
-if (Any pages require\nteacher escalation?\n(high-risk OR high uncertainty\nOR large discrepancy)) then (yes)
-  if (Teacher fallback enabled\nin configuration?) then (yes)
-    partition "Teacher Device Selection" {
-      :Select teacher_device\n(local_gpu preferred,\nthen modal_gpu);
-      if (Teacher_device available\nand page/doc budgets not exceeded?) then (yes)
-        :Run ResNet-50 teacher\non flagged pages only;
-        :Merge IQA outputs\nTeacher overrides student\nfor those pages;
-      else (no)
-        :Skip teacher due to\nresource/budget limits;\nuse student-only IQA;
-      endif
-    }
-  else (no)
-    :Teacher fallback disabled;\nkeep student-only outputs;
-  endif
+partition "SigLIP 2 NAFlex Multi-Task Analysis" {
+  :Run SigLIP 2 NAFlex\non primary_device\nfor all pages (~50ms GPU);
+  :Extract 16-head predictions\nacross 5 groups:\n(IQA, Script, Orient+Skew,\nHandwriting, Page Attrs);
+  :Compute per-head confidence scores;
+}
+
+:Evaluate per-head confidence\nagainst thresholds;
+
+if (Any heads below\nconfidence threshold?) then (yes)
+  partition "Classical Fallback" {
+    if (Orientation conf < 0.7?) then (yes)
+      :Hough line-based orientation;
+    endif
+    if (Skew conf < 0.6?) then (yes)
+      :Classical Hough skew estimation;
+    endif
+    if (Resolution conf < 0.5?) then (yes)
+      :DPI metadata + char height;
+    endif
+    if (IQA conf < 0.5?) then (yes)
+      :Classical IQA detectors;
+    endif
+    if (Script conf < 0.6?) then (yes)
+      :OpenLID language -> script;
+    endif
+    if (Handwriting conf < 0.5?) then (yes)
+      :Connected component stroke analysis;
+    endif
+    :Merge classical results\nwith model predictions;
+  }
 else (no)
-  :No teacher escalation needed;\nkeep student-only outputs;
+  :All heads confident;\nuse model predictions directly;
 endif
 
-:Return final IQA metrics\n(student-only or teacher-enhanced)\nto downstream layout-lite,\ncorrections, and DQS routing;
+:Return final multi-task metrics\n(MobileNetV4 + SigLIP 2 + classical fallback)\nto downstream corrections,\nDQS, and routing;
 
 stop
 

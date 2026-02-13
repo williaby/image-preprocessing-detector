@@ -1,0 +1,50 @@
+{
+  "dataset_name": "omnidocbench",
+  "total_samples": 377,
+  "capture_methods": {
+    "born_digital": 377
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "UNK": 377
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {},
+  "script_families": {
+    "ltr": 68,
+    "cjk": 20
+  },
+  "language_codes": {},
+  "content_flags": {},
+  "text_scopes": {},
+  "content_types": {},
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "born_digital": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "UNK": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {},
+  "script_families_pct": {
+    "ltr": 18.0,
+    "cjk": 5.3
+  },
+  "language_codes_pct": {},
+  "text_scopes_pct": {},
+  "content_types_pct": {},
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {},
+  "top_degradations": [],
+  "top_scripts": []
+}

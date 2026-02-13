@@ -1,0 +1,132 @@
+{
+  "created_at": "2026-02-11T05:10:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 1,
+  "labels": [
+    {
+      "image_id": "train/ori/train_ori_00173.jpg",
+      "id": "489b02b3-dde6-4de3-905e-d9d88b4a1dee",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 3.5,
+        "contrast": 2.0,
+        "illumination": 3.5,
+        "compression": 3.5,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured probability textbook page. Text faded/washed out, moderate sharpness. Even illumination but low contrast."
+    },
+    {
+      "image_id": "val/ori/val_ori_00023.jpg",
+      "id": "5a5a4274-4301-4acf-9169-4b3f0fe90889",
+      "scores": {
+        "sharpness": 2.0,
+        "noise": 2.0,
+        "contrast": 3.0,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.0
+      },
+      "notes": "Screen capture of handwritten Chinese math notes on lined paper. Moire pattern from screen, red/black ink. Blur from screen capture."
+    },
+    {
+      "image_id": "test/ori/test_ori_00070.jpg",
+      "id": "9b0a663d-0be2-4a70-a32b-49b8543d3279",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.5,
+        "contrast": 2.2,
+        "illumination": 3.5,
+        "compression": 3.5,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured probability textbook page. Better than train_ori_00173 but still faded. Relatively clean with even lighting."
+    },
+    {
+      "image_id": "train/ori/train_ori_00322.jpg",
+      "scores": {
+        "sharpness": 2.2,
+        "noise": 2.0,
+        "contrast": 3.0,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.2
+      },
+      "notes": "Screen capture of handwritten Chinese math notes. Red/black ink on lined paper. Moire artifacts, moderate blur."
+    },
+    {
+      "image_id": "train/ori/train_ori_00309.jpg",
+      "scores": {
+        "sharpness": 2.0,
+        "noise": 2.0,
+        "contrast": 2.8,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.0
+      },
+      "notes": "Screen capture of handwritten Chinese physics notes with diagram. Blurry at edges, moire from lined paper. Contains vector diagram."
+    },
+    {
+      "image_id": "train/ori/train_ori_00206.jpg",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 3.0,
+        "contrast": 2.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured Chinese technical document about DSP/embedded systems with code snippets. Very faded/low contrast but relatively clean."
+    },
+    {
+      "image_id": "test/ori/test_ori_00053.jpg",
+      "scores": {
+        "sharpness": 2.0,
+        "noise": 2.0,
+        "contrast": 2.5,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.0
+      },
+      "notes": "Screen capture of dense handwritten Chinese math notes. Red/black ink, moire pattern. Hard to read due to density and blur."
+    },
+    {
+      "image_id": "test/ori/test_ori_00044.jpg",
+      "scores": {
+        "sharpness": 2.2,
+        "noise": 2.0,
+        "contrast": 3.0,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.2
+      },
+      "notes": "Screen capture of handwritten Chinese chemistry notes with formulas and electrolysis diagrams. Red/black ink on lined paper."
+    },
+    {
+      "image_id": "train/ori/train_ori_00145.jpg",
+      "scores": {
+        "sharpness": 1.8,
+        "noise": 1.8,
+        "contrast": 2.0,
+        "illumination": 2.0,
+        "compression": 2.5,
+        "overall": 1.8
+      },
+      "notes": "Screen capture of handwritten convex analysis notes (mixed Chinese/English). Heavy moire from grid paper, blurry, faded. Contains geometric diagrams."
+    },
+    {
+      "image_id": "train/ori/train_ori_00137.jpg",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 2.5,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Screen capture of handwritten Chinese linear algebra notes. Blue/black ink on lined paper. Clearer than most handwritten samples."
+    }
+  ]
+}

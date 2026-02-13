@@ -1,0 +1,194 @@
+@startuml domain-classification-pipeline
+!theme plain
+title Domain Classification & Metadata Enrichment Pipeline
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+' Color definitions
+skinparam component {
+    BackgroundColor<<config>> LightBlue
+    BackgroundColor<<prompt>> Lavender
+    BackgroundColor<<client>> LightGreen
+    BackgroundColor<<orchestrator>> LightYellow
+    BackgroundColor<<script>> Wheat
+    BackgroundColor<<external>> LightPink
+    BackgroundColor<<output>> LightGray
+}
+
+package "Configuration (config.py)" as config_pkg <<config>> {
+    component "DomainModelConfig\n(frozen dataclass)" as model_config {
+        [model_id]
+        [role]
+        [max_tokens=300]
+        [supports_vision]
+    }
+
+    component "DomainPipelineConfig\n(frozen dataclass)" as pipeline_config {
+        [text_confidence=0.85]
+        [vision_confidence=0.80]
+        [max_retries=3]
+        [rate_limit_delay=0.5s]
+    }
+
+    component "Model Roster" as roster {
+        [7 Free Text Models\n(deepseek-r1, llama-3.3,\nstep-3.5, qwen3-coder, ...)]
+        [3 Paid Vision Models\n(gemini-2.0-flash,\ngemini-flash-lite,\nqwen2.5-vl-3b)]
+    }
+}
+
+package "Prompt Templates (prompts.py)" as prompts_pkg <<prompt>> {
+    component "Text Prompt" as text_prompt {
+        [Domain Taxonomy\n(10 codes)]
+        [Language/Script\nDetection]
+        [Content Type\nClassification]
+    }
+
+    component "Vision Prompt" as vision_prompt {
+        [Domain + Language\n(same as text)]
+        [Capture Method\n(8 options)]
+        [Content Flags\n(5 booleans)]
+        [Orientation\n(portrait/landscape)]
+    }
+}
+
+package "OpenRouter Client (openrouter_client.py)" as client_pkg <<client>> {
+    component "OpenRouterClient" as client {
+        [Lazy OpenAI SDK Init\n(base_url=openrouter.ai)]
+        [HTTP-Referer +\nX-Title Headers]
+    }
+
+    component "classify_text()" as classify_text {
+        [Build text prompt]
+        [Call with retry]
+        [Parse text response\n(4 fields)]
+    }
+
+    component "classify_image()" as classify_image {
+        [Encode image\n(PIL resize + base64)]
+        [Build vision prompt]
+        [Parse vision response\n(11 fields)]
+    }
+
+    component "Retry Logic" as retry {
+        [Exponential backoff\n1s -> 2s -> 4s]
+        [JSON extraction\n(clean/markdown/brace)]
+    }
+}
+
+package "Orchestrator (classifier.py)" as orch_pkg <<orchestrator>> {
+    component "MetadataEnricher" as enricher {
+        [enrich_sample()]
+        [enrich_batch()]
+        [get_stats()]
+    }
+
+    component "Confidence Escalation" as escalation {
+        [Primary model call]
+        [Threshold check]
+        [Secondary model\nescalation]
+        [Take higher\nconfidence]
+    }
+}
+
+package "Enrichment Script\n(enrich_metadata_from_llm.py)" as script_pkg <<script>> {
+    component "Dataset Registry" as dataset_reg {
+        [14 text datasets\n(doclaynet, funsd,\npubtabnet, ...)]
+        [3 vision-only\ndatasets]
+    }
+
+    component "Text Extractors" as extractors {
+        [COCO format]
+        [FUNSD format]
+        [JSONL HTML]
+        [FinTabNet]
+        [Docling OCR]
+    }
+
+    component "CLI" as cli {
+        [--dataset / --all]
+        [--dry-run / --limit]
+        [--resume / --text-only]
+        [--vision-only]
+    }
+}
+
+cloud "OpenRouter API\n(openrouter.ai/api/v1)" as openrouter <<external>>
+
+database "E: Drive\n01_base_data/" as base_data <<external>>
+
+package "Output" as output_pkg <<output>> {
+    file "metadata_registry/json/\n{dataset}_llm_enrichment.json" as json_out
+    file "EnrichmentResult" as result {
+        [domain_level1 (3-letter)]
+        [domain_confidence (0-1)]
+        [iso639_language]
+        [iso15924_script]
+        [content_type]
+        [capture_method (vision)]
+        [has_table/formula/... (vision)]
+        [orientation (vision)]
+    }
+}
+
+' Flow: Script -> Orchestrator -> Client -> API
+dataset_reg --> extractors : "load\ntext/images"
+base_data --> extractors : "source\nfiles"
+extractors --> enricher : "SampleInput\n(text or image)"
+cli --> dataset_reg : "select\ndatasets"
+
+' Orchestrator routing
+enricher --> escalation : "route by\ninput type"
+escalation --> classify_text : "text available\n(free)"
+escalation --> classify_image : "image only\n(paid)"
+
+' Client -> API
+classify_text --> text_prompt : "build\nmessages"
+classify_image --> vision_prompt : "build\nmessages"
+text_prompt --> retry
+vision_prompt --> retry
+retry --> openrouter : "OpenAI SDK\n+ custom base_url"
+openrouter --> retry : "JSON\nresponse"
+
+' Config flow
+pipeline_config --> enricher : "thresholds\n& models"
+model_config --> roster
+roster --> pipeline_config
+
+' Output flow
+retry --> result : "parse\nresponse"
+result --> enricher : "EnrichmentResult"
+enricher --> json_out : "save per\ndataset"
+
+' Architecture notes
+note bottom of escalation
+    **Tiered Confidence Escalation**
+    Text path (free):
+      Primary (deepseek-r1) -> 0.85 threshold
+      -> Secondary (llama-3.3-70b)
+    Vision path (paid ~$0.00021/sample):
+      Primary (gemini-2.0-flash) -> 0.80 threshold
+      -> Secondary (qwen2.5-vl-3b)
+end note
+
+note right of result
+    **Multi-Field Extraction**
+    Text models: 4 fields (domain,
+      language, script, content_type)
+    Vision models: 11 fields
+      (all above + capture, flags,
+      orientation)
+    Extra fields cost ~$0.000016/sample
+end note
+
+note bottom of output_pkg
+    **Output Format**
+    Per-dataset JSON with:
+    - domain_distribution
+    - language_distribution
+    - model_usage & cost tracking
+    - per-sample enrichment results
+end note
+
+@enduml

@@ -220,4 +220,4 @@ is_low, score = assess_contrast(image, threshold=0.4)
 
 - [Schema API](schema.md) - DetectedIssue model
 - [Correction API](correction.md) - Applying fixes
-- [User Guide: IQA](../guides/iqa.md) - Quality assessment overview
+- [Reference: Detection Taxonomy](../reference/detection-taxonomy.md) - Quality issue classification

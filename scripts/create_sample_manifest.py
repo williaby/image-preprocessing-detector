@@ -40,7 +40,7 @@ ROOT_DIRS = {
     "ocr-quality": "/mnt/e/image_detection/01_base_data/ocr_quality/pics",
     "dibco": "/mnt/e/image_detection/02_benchmark_only/dibco/DIBCO",
     "funsd": "/mnt/e/image_detection/01_base_data/forms/funsd",
-    "sroie": "/mnt/e/image_detection/01_base_data/forms/sroie",
+    "sroie": "/mnt/e/image_detection/01_base_data/forms/sroie_icdar2019",
     "tobacco-800": "/mnt/e/image_detection/01_base_data/degraded/tobacco800",
 }
 

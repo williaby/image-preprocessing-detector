@@ -142,11 +142,67 @@ match.rules = ["radarlint-python:python:S3776"]
 match.file_patterns = ["modal/**"]
 set.ignored = true
 
+# Ignore cognitive complexity in scripts/ - data processing scripts have necessary complexity
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
+# Ignore duplicated string literals in modal/ - filenames like "labels.json" are natural repetitions
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1192"]
+match.file_patterns = ["modal/**"]
+set.ignored = true
+
+# Ignore cognitive complexity in synthetic renderer - vertical text layout requires nested logic
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3776"]
+match.file_patterns = ["**/synthetic/renderer.py"]
+set.ignored = true
+
+# Ignore "always returns same value" in scripts/ - intentional error handling patterns
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S3516"]
+match.file_patterns = ["scripts/**"]
+set.ignored = true
+
 # Ignore unused parameter warnings in Modal training scripts - kept for API consistency
 [[triage]]
 match.plugins = ["radarlint-python"]
 match.rules = ["radarlint-python:python:S1172"]
 match.file_patterns = ["modal/**"]
+set.ignored = true
+
+# Ignore float equality checks in tests - exact values from deterministic functions
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1244"]
+match.file_patterns = ["tests/**", "**/test_*.py"]
+set.ignored = true
+
+# Ignore commented-out code in tests - preserved for reference
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S125"]
+match.file_patterns = ["tests/**", "**/test_*.py"]
+set.ignored = true
+
+# Ignore unused local variable in tests - used for assertion setup
+[[triage]]
+match.plugins = ["radarlint-python"]
+match.rules = ["radarlint-python:python:S1481"]
+match.file_patterns = ["tests/**", "**/test_*.py"]
+set.ignored = true
+
+# Ignore B311 (random) in synthetic module - font size randomization, not crypto
+[[triage]]
+match.plugins = ["bandit"]
+match.rules = ["bandit:B311"]
+match.file_patterns = ["**/synthetic/**"]
 set.ignored = true
 
 [[plugin]]

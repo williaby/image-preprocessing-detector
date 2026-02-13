@@ -127,7 +127,7 @@ Build minimum viable product using classical computer vision techniques for imme
 - [ ] 80%+ test coverage maintained
 - [ ] Documentation complete
 
-See: [User Guide: Overview](../guides/overview.md) | [CLI Usage](../guides/configuration.md)
+See: [Project Plan](../planning/PROJECT_PLAN.md)
 
 ## Phase 2: ML-Based Image Quality Assessment
 
@@ -177,7 +177,7 @@ Replace classical IQA with deep learning models for improved accuracy and robust
 | **Latency (CPU)** | < 200ms | Intel Xeon |
 | **Model Size** | < 20MB | ONNX optimized |
 
-See: [IQA Guide](../guides/iqa.md#ml-based-iqa)
+See: [Detection Taxonomy](../reference/detection-taxonomy.md)
 
 ## Phase 3: Document Layout Detection
 
@@ -226,7 +226,7 @@ Add YOLOv8-based layout detection for text documents with hybrid per-element IQA
 | **Inference** | < 50ms | GPU (T4) |
 | **Throughput** | > 20 pages/sec | Batch processing |
 
-See: [Layout Detection Guide](../guides/layout.md)
+See: [Project Plan](../planning/PROJECT_PLAN.md)
 
 ## Phase 4: Production Hardening
 
@@ -249,7 +249,6 @@ Prepare system for production deployment with API, monitoring, and scalability.
 **Deployment**:
 
 - [ ] Docker containers
-- [ ] Kubernetes manifests
 - [ ] Horizontal scaling
 - [ ] GPU resource management
 

@@ -1,0 +1,48 @@
+{
+  "dataset_name": "pubtabnet",
+  "total_samples": 519030,
+  "capture_methods": {
+    "born_digital": 519030
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "SCI": 519030
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {},
+  "script_families": {},
+  "language_codes": {},
+  "content_flags": {
+    "has_table": 519030
+  },
+  "text_scopes": {},
+  "content_types": {},
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "born_digital": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "SCI": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {},
+  "script_families_pct": {},
+  "language_codes_pct": {},
+  "text_scopes_pct": {},
+  "content_types_pct": {},
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_table": 100.0
+  },
+  "top_degradations": [],
+  "top_scripts": []
+}

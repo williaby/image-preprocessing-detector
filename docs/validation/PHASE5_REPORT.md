@@ -83,7 +83,6 @@ Duration:  ~3 minutes
 | 5.2.3 | Batch endpoints | Job submission, status, results | 12 |
 | 5.2.4 | Auth & rate limits | API key auth, sliding window rate limiting | 24 |
 | 5.2.5 | Docker configuration | Dockerfile, docker-compose.yaml | - |
-| 5.2.6 | Kubernetes manifests | Full K8s deployment config | - |
 
 ### API Endpoints Delivered
 
@@ -114,14 +113,6 @@ Duration:  ~3 minutes
 - `docker-compose.yaml`: API, GPU, Redis services
 - `.dockerignore`: Build optimization
 
-**Kubernetes**:
-
-- Namespace, ConfigMap, Secret
-- Deployment (2 replicas, health checks)
-- Service, ServiceAccount
-- HPA (2-10 pods, CPU/memory scaling)
-- Ingress (NGINX with rate limiting)
-
 ---
 
 ## Milestone 5.3: Documentation & Final Integration (Week 20)
@@ -149,7 +140,7 @@ Duration:  ~3 minutes
 
 **Deployment Guide**:
 
-- Local, Docker, K8s, Modal paths
+- Local, Docker, Modal paths
 - Environment variable matrix
 - Troubleshooting guide
 - Performance tuning
@@ -196,7 +187,6 @@ Duration:  ~3 minutes
 
 - [x] API endpoints functional
 - [x] Docker build succeeds
-- [x] K8s manifests valid YAML
 - [x] Documentation renders correctly
 
 ---
@@ -209,7 +199,6 @@ Duration:  ~3 minutes
 | `416feeb` | feat(api): add batch processing endpoints (5.2.3) |
 | `b3ef412` | feat(api): add auth and rate limiting middleware (5.2.4) |
 | `fa9f9a4` | feat(docker): add Docker and Compose configuration (5.2.5) |
-| `9f82506` | feat(k8s): add Kubernetes manifests (5.2.6) |
 | (pending) | docs: add documentation and Phase 5 report (5.3.1-5.3.6) |
 
 ---
@@ -222,7 +211,7 @@ Duration:  ~3 minutes
 |------|------------|--------|
 | Low test coverage | Expanded test suite to 90%+ | Resolved |
 | API security | Implemented auth + rate limiting | Resolved |
-| Deployment complexity | Docker + K8s configs provided | Resolved |
+| Deployment complexity | Docker configs provided | Resolved |
 | Integration gaps | Handoff guide with examples | Resolved |
 
 ### Remaining Risks
@@ -264,7 +253,7 @@ Phase 5 successfully delivered:
 
 - **Comprehensive Testing**: 1282 tests with 90%+ coverage
 - **REST API**: 8 endpoints with auth and rate limiting
-- **Deployment**: Docker, Compose, and Kubernetes configs
+- **Deployment**: Docker and Compose configs
 - **Documentation**: API guide, deployment guide, model cards, ADRs
 
 The project is ready for Phase 6+ development and Project B integration.

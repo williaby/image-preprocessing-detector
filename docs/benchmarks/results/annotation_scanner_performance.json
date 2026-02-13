@@ -1,0 +1,115 @@
+{
+  "benchmark": "annotation_scanner_performance",
+  "file_discovery": [
+    {
+      "num_files": 1000,
+      "duration_s": 0.032367829990107566,
+      "throughput_files_per_sec": 30894.873097937845,
+      "num_batches": 1,
+      "batch_size": 1000
+    },
+    {
+      "num_files": 5000,
+      "duration_s": 0.1508626269933302,
+      "throughput_files_per_sec": 33142.73455029426,
+      "num_batches": 5,
+      "batch_size": 1000
+    },
+    {
+      "num_files": 10000,
+      "duration_s": 0.29256348201306537,
+      "throughput_files_per_sec": 34180.6158827212,
+      "num_batches": 10,
+      "batch_size": 1000
+    },
+    {
+      "num_files": 50000,
+      "duration_s": 1.6785499469842762,
+      "throughput_files_per_sec": 29787.615250789066,
+      "num_batches": 50,
+      "batch_size": 1000
+    }
+  ],
+  "batch_generation": [
+    {
+      "duration_s": 0.0009244474349543452,
+      "batch_size": 50,
+      "num_batches": 200,
+      "overhead_per_batch_ms": 0.004622237174771726
+    },
+    {
+      "duration_s": 0.0010030499543063343,
+      "batch_size": 100,
+      "num_batches": 100,
+      "overhead_per_batch_ms": 0.010030499543063343
+    },
+    {
+      "duration_s": 0.001095522049581632,
+      "batch_size": 500,
+      "num_batches": 20,
+      "overhead_per_batch_ms": 0.0547761024790816
+    },
+    {
+      "duration_s": 0.0008155340328812599,
+      "batch_size": 1000,
+      "num_batches": 10,
+      "overhead_per_batch_ms": 0.08155340328812599
+    }
+  ],
+  "checkpointing": [
+    {
+      "duration_s": 0.012527794111520052,
+      "checkpoint_every": 1,
+      "num_checkpoints": 50,
+      "avg_checkpoint_time_ms": 0.25055588223040104
+    },
+    {
+      "duration_s": 0.004969100060407072,
+      "checkpoint_every": 5,
+      "num_checkpoints": 10,
+      "avg_checkpoint_time_ms": 0.49691000604070723
+    },
+    {
+      "duration_s": 0.0018264220270793885,
+      "checkpoint_every": 10,
+      "num_checkpoints": 5,
+      "avg_checkpoint_time_ms": 0.3652844054158777
+    }
+  ],
+  "resume": [
+    {
+      "duration_s": 0.14989516997593455,
+      "resume_pct": 0.25,
+      "total_batches": 50,
+      "skipped_batches": 12,
+      "resumed_batches": 38,
+      "expected_remaining": 38,
+      "correct_resume": true
+    },
+    {
+      "duration_s": 0.15200877000461332,
+      "resume_pct": 0.5,
+      "total_batches": 50,
+      "skipped_batches": 25,
+      "resumed_batches": 25,
+      "expected_remaining": 25,
+      "correct_resume": true
+    },
+    {
+      "duration_s": 0.16386888700071722,
+      "resume_pct": 0.75,
+      "total_batches": 50,
+      "skipped_batches": 37,
+      "resumed_batches": 13,
+      "expected_remaining": 13,
+      "correct_resume": true
+    }
+  ],
+  "validation": {
+    "discovery_above_10k_per_sec": true,
+    "batch_overhead_below_1ms": true,
+    "checkpoint_io_below_10ms": true,
+    "resume_correct": true,
+    "all_pass": true
+  }
+}

@@ -12,8 +12,8 @@ status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-purpose: "Document the model training pipeline including knowledge distillation and
-  high-level training workflows."
+purpose: "Document the model training pipeline including the two-model pipeline
+  (MobileNetV4-Conv-S + SigLIP 2 NAFlex) and high-level training workflows."
 ---
 This level provides detailed diagrams for the Model Training workstream - training and optimization of production ML models.
 
@@ -27,11 +27,11 @@ Overview of the complete model training pipeline from data preparation to model 
 
 ---
 
-## Knowledge Distillation
+## Multi-Task Training Pipeline
 
-Detailed flow of the teacher-student knowledge distillation process for IQA models.
+Detailed flow of the 3-step virtuous training cycle: MobileNetV4-Conv-S bootstrap, SigLIP 2 multi-task training, and MobileNetV4 distillation refinement.
 
-![Knowledge Distillation](project-a-distillation.svg)
+![Multi-Task Training Pipeline](project-a-distillation.svg)
 
 ---
 
@@ -39,9 +39,10 @@ Detailed flow of the teacher-student knowledge distillation process for IQA mode
 
 | Component | Source Files | Purpose |
 |-----------|--------------|---------|
-| Teacher Model | `modal/train_phase2_iqa.py` | ResNet-50 teacher training |
-| Student Model | `modal/train_phase2_iqa.py` | ResNet-18 distillation |
-| ONNX Export | `modal/export_onnx.py` | Production model export |
+| SigLIP 2 NAFlex | `modal/train_siglip2_multitask.py` | Multi-task model (16 heads, 5 groups) |
+| MobileNetV4-Conv-S | `modal/train_mobilenetv4.py` | Fast pre-correction gate (3 heads) |
+| Docling Layout | Pre-trained (egret-xlarge / heron) | Layout detection (no additional training) |
+| ONNX Export | `modal/export_onnx.py` | Production model export (multi-head) |
 | Model Registry | GCS bucket | Versioned model storage |
 
 ---
@@ -50,108 +51,147 @@ Detailed flow of the teacher-student knowledge distillation process for IQA mode
 
 | Model | Architecture | Parameters | Purpose |
 |-------|--------------|------------|---------|
-| IQA Teacher | ResNet-50 | ~25M | High-capacity reference model |
-| IQA Student | ResNet-18 | ~11M | Production inference (distilled) |
-| DocLayout-YOLO | YOLOv10-nano | ~3M | Layout detection (11 classes) |
+| SigLIP 2 NAFlex | ViT-B/16 (NAFlex packing) | ~88M | Multi-task model: 16 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs) |
+| MobileNetV4-Conv-S | MobileNetV4-Conv-Small | ~4M | Fast pre-correction gate: 3 heads (orientation, skew, resolution quality), ~3ms GPU |
+| Docling Layout (accuracy) | docling-layout-egret-xlarge | ~55M | Layout detection (primary, high accuracy) |
+| Docling Layout (speed) | docling-layout-heron | ~14M | Layout detection (fast path) |
+| MobileCLIP-2 S4 | MobileCLIP-2 S4 | ~35M | **PLANNED**: Edge/mobile distillation target (deferred) |
+| MobileCLIP-2 S0 | MobileCLIP-2 S0 | ~11.4M | **PLANNED**: Ultra-light distillation target (deferred) |
 
 ---
 
-## Knowledge Distillation Workflow
+## Multi-Task Training Workflow
 
-### Training Phases
+### 3-Step Virtuous Training Cycle
 
-The teacher-student training follows a two-phase approach:
+The training pipeline follows a 3-step virtuous cycle (per [SIGLIP2_MULTITASK_REQUIREMENTS.md](../../../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md) Section 9). For optimization strategy (ILP allocation, PCGrad gradient surgery, Kendall uncertainty weighting, phased head training), see [TRAINING_OPTIMIZATION_PLAN.md](../../../planning/TRAINING_OPTIMIZATION_PLAN.md).
 
-| Phase | Model | Dataset | Epochs | Loss Function | Validation Metric | Target |
-|-------|-------|---------|--------|---------------|-------------------|--------|
-| **1. Teacher Training** | ResNet-50 | OHR-Bench (70% real, 30% synthetic) | 50 | MSE + Multi-Label BCE | PLCC | > 0.70 |
-| **2. Student Distillation** | ResNet-18 | Teacher soft labels + hard labels | 30 | α×KL(teacher) + (1-α)×MSE(ground truth) | PLCC | > 0.65 |
+| Step | Model | Dataset | Strategy | Loss Function | Graduation Thresholds |
+|------|-------|---------|----------|---------------|----------------------|
+| **1. MobileNetV4 Bootstrap** | MobileNetV4-Conv-S (~4M) | Orientation (50K), Skew (40K), Resolution (30K) | Train on synthetic ground truth labels | Multi-task: CE (orientation) + MSE (skew) + MSE (resolution) | Orientation acc > 95%, Skew MAE < 0.5 deg, Resolution MAE < 0.1 |
+| **2. SigLIP 2 Multi-Task** | SigLIP 2 NAFlex (~88M) | All 10 datasets (~503K total) | Frozen backbone + 16 task heads | Weighted multi-task: per-group loss weights | Per-head thresholds (see Graduation Criteria) |
+| **3. MobileNetV4 Distillation** | MobileNetV4-Conv-S (~4M) | SigLIP 2 soft labels + hard labels | KL-divergence distillation (T=3) from SigLIP 2 | α×KL(SigLIP2 ‖ MobileNetV4) + (1-α)×Hard | Orientation acc > 98%, Skew MAE < 0.3 deg |
 
-### Distillation Loss Function
+> **PLANNED (Deferred)**: Distillation cascade SigLIP 2 -> MobileCLIP-2 S4 (~35M) -> MobileCLIP-2 S0 (~11.4M) for edge/mobile deployment. Not part of initial training pipeline.
 
-**Composite Loss** (balances teacher knowledge and ground truth):
+### Step 1: MobileNetV4-Conv-S Bootstrap
+
+**Purpose**: Train the fast pre-correction gate on synthetic ground truth labels for orientation, skew, and resolution quality.
 
 ```python
-def distillation_loss(student_logits, teacher_logits, ground_truth, alpha=0.7, temperature=3.0):
+def mobilenetv4_bootstrap_loss(predictions, targets):
     """
-    Knowledge distillation loss with temperature scaling.
+    Multi-task loss for MobileNetV4-Conv-S bootstrap training.
 
     Args:
-        student_logits: Raw student model outputs (before softmax)
-        teacher_logits: Raw teacher model outputs (before softmax)
-        ground_truth: Hard labels from dataset
-        alpha: Teacher weight (0.7 = 70% teacher, 30% ground truth)
-        temperature: Softening parameter for probability distributions
+        predictions: Dict with keys 'orientation', 'skew', 'resolution_quality'
+        targets: Dict with ground truth labels
 
     Returns:
-        Combined loss value
+        Weighted combined loss
     """
-    # Soft targets from teacher (temperature-scaled)
+    # Orientation: 4-class classification (0/90/180/270)
+    orientation_loss = F.cross_entropy(
+        predictions['orientation'], targets['orientation']
+    )
+
+    # Skew: regression (±10 degrees)
+    skew_loss = F.mse_loss(
+        predictions['skew'], targets['skew']
+    )
+
+    # Resolution quality: regression (0-1, character-height-aware)
+    resolution_loss = F.mse_loss(
+        predictions['resolution_quality'], targets['resolution_quality']
+    )
+
+    # Weighted combination
+    return 1.0 * orientation_loss + 0.5 * skew_loss + 0.5 * resolution_loss
+```
+
+### Step 2: SigLIP 2 Multi-Task Training
+
+**Purpose**: Train all 16 task heads on frozen SigLIP 2 backbone across 5 head groups.
+
+**Head Groups**:
+
+| Group | Heads | Task Type | Dataset Sources |
+|-------|-------|-----------|-----------------|
+| **G1: IQA** | blur, noise, contrast, compression, illumination, overall | Regression (0-1) | IQA (16K+100K) |
+| **G2: Script** | script_class | Classification (108 classes) | Script (108K) |
+| **G3: Orientation+Skew** | orientation_class, skew_angle | Classification + Regression | Orientation (50K), Skew (40K) |
+| **G4: Handwriting** | has_handwriting, handwriting_ratio, handwriting_confidence | Classification + Regression | Handwriting (60K) |
+| **G5: Page Attrs** | capture_method, shadow_severity, warping_severity, resolution_quality | Classification + Regression | Capture (50K), Shadow (15K), Warping (20K), Resolution (30K) |
+
+### Step 3: MobileNetV4 Distillation Refinement
+
+**Purpose**: Re-train MobileNetV4-Conv-S using SigLIP 2 soft labels as teacher for improved accuracy on orientation, skew, and resolution quality.
+
+```python
+def mobilenetv4_distillation_loss(
+    student_logits, teacher_logits, ground_truth, alpha=0.7, temperature=3.0
+):
+    """
+    KL-divergence distillation from SigLIP 2 to MobileNetV4-Conv-S.
+
+    Args:
+        student_logits: MobileNetV4 raw outputs (3 heads)
+        teacher_logits: SigLIP 2 outputs for matching heads (Group 3 + Group 5)
+        ground_truth: Hard labels from dataset
+        alpha: Teacher weight (0.7 = 70% SigLIP 2, 30% ground truth)
+        temperature: Softening parameter (T=3)
+
+    Returns:
+        Combined distillation loss
+    """
+    # Soft targets from SigLIP 2 (temperature-scaled)
     teacher_soft = F.softmax(teacher_logits / temperature, dim=1)
     student_soft = F.log_softmax(student_logits / temperature, dim=1)
 
-    # KL divergence between student and teacher distributions
-    distillation_loss = F.kl_div(
-        student_soft,
-        teacher_soft,
-        reduction='batchmean'
-    ) * (temperature ** 2)  # Scale back by T^2
+    # KL divergence between MobileNetV4 and SigLIP 2 distributions
+    kl_loss = F.kl_div(
+        student_soft, teacher_soft, reduction='batchmean'
+    ) * (temperature ** 2)
 
-    # MSE between student output and ground truth
-    student_output = torch.sigmoid(student_logits)
-    hard_loss = F.mse_loss(student_output, ground_truth)
+    # Hard label loss
+    hard_loss = F.mse_loss(torch.sigmoid(student_logits), ground_truth)
 
-    # Weighted combination
-    return alpha * distillation_loss + (1 - alpha) * hard_loss
+    return alpha * kl_loss + (1 - alpha) * hard_loss
 ```
-
-**Hyperparameters**:
-
-- **α (alpha)**: 0.7 (70% teacher weight, 30% ground truth weight)
-  - Higher α = more teacher knowledge transfer
-  - Lower α = more direct supervision from ground truth
-- **T (temperature)**: 3.0
-  - Higher T = softer probability distributions (more information transfer)
-  - T=1 reduces to standard cross-entropy
-
-**Training Results** (Phase 3 Completed):
-
-- **Teacher**: val_loss = 0.27 (50 epochs on OHR-Bench)
-- **Student**: val_loss = 0.14 (30 epochs with distillation)
-- **Improvement**: Student achieves 48% lower loss than teacher
 
 ### Checkpoint Selection
 
-**Criteria** (best checkpoint selection from training run):
+**Criteria** (best checkpoint selection per model):
 
-1. **Best Validation PLCC** (primary metric)
-2. **Latency Constraint**: < 100ms/page on CPU (enforced for student)
-3. **Early Stopping**: Patience = 10 epochs (stop if no improvement)
+1. **Per-Head Graduation Thresholds** (primary -- see Graduation Criteria section)
+2. **Latency Constraint**: MobileNetV4 < 15ms/page GPU, < 50ms/page CPU; SigLIP 2 < 60ms/page GPU
+3. **Early Stopping**: Patience = 10 epochs (stop if no improvement on primary metric)
 
 **Selection Algorithm**:
 
 ```python
 best_checkpoint = None
-best_plcc = -1.0
+best_metric = -1.0
 no_improvement_count = 0
 
 for epoch in range(max_epochs):
-    val_plcc, val_latency = validate_epoch(model, val_loader)
+    val_metrics, val_latency = validate_epoch(model, val_loader)
+    primary_metric = compute_primary_metric(val_metrics, model_type)
 
-    # Check latency constraint (student only)
-    if model_type == "student" and val_latency > 100:
-        logger.warning(f"Epoch {epoch}: Latency {val_latency}ms exceeds 100ms threshold")
-        continue  # Skip this checkpoint
+    # Check latency constraint
+    latency_limit = 50 if model_type == "mobilenetv4" else 60  # ms GPU
+    if val_latency > latency_limit:
+        logger.warning(f"Epoch {epoch}: Latency {val_latency}ms exceeds {latency_limit}ms")
+        continue
 
-    # Update best if PLCC improved
-    if val_plcc > best_plcc:
-        best_plcc = val_plcc
+    # Update best if primary metric improved
+    if primary_metric > best_metric:
+        best_metric = primary_metric
         best_checkpoint = save_checkpoint(model, epoch)
         no_improvement_count = 0
     else:
         no_improvement_count += 1
 
-    # Early stopping
     if no_improvement_count >= patience:
         logger.info(f"Early stopping at epoch {epoch}")
         break
@@ -169,55 +209,70 @@ The training pipeline consumes datasets from multiple workstreams:
 
 | Workstream | Artifact | Usage | Proportion |
 |------------|----------|-------|------------|
-| **WS3: Data Preparation** | `training_labels.parquet`, raw images (DIQA-5000, OHR-Bench, DocLayNet) | Base training dataset | 70% of total |
-| **WS4: Pseudo-Labeling** | Pseudo-labeled images (5-model ensemble predictions) | Augment training data with high-confidence labels | < 10% of total |
-| **WS8: Synthetic Generation** | Degraded images + ground truth from Genalog | Expand dataset with controlled degradations | 30% of total |
+| **WS3: Data Preparation** | `training_labels.parquet`, raw images from 10 purpose-built datasets | Base training data across all task heads | ~80% of total |
+| **WS4: Pseudo-Labeling** | Pseudo-labeled images (ensemble predictions) | Augment training data with high-confidence labels | < 10% of total |
+| **WS8: Synthetic Generation** | Augmented images (aged/historical profiles, multi-degradation) | Expand dataset diversity (color modes, document age) | ~20% of total |
 
 ### Dataset Composition
 
-**Training Dataset Breakdown**:
+> **Full specification**: See [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md)
+
+**10 Purpose-Built Training Datasets (~503K total)**:
 
 ```python
 # Total training dataset composition
-total_samples = 50,000
+total_samples = 503_000  # Approximate
 
-real_data = {
-    "diqa_5000": 4,000,      # 8% - Document IQA benchmark (train split)
-    "ohr_bench": 12,000,     # 24% - Handwriting recognition quality
-    "doclaynet": 10,000,     # 20% - Layout with quality variations
-    "live_csiq": 2,000,      # 4% - Classical IQA benchmarks
-    "tablebank": 5,000,      # 10% - Table-heavy documents
-    "funsd": 2,000,          # 4% - Forms and handwriting
+datasets = {
+    # Pre-correction (MobileNetV4-Conv-S, Step 1)
+    "orientation": 50_000,          # 10% - 4-class orientation (0/90/180/270)
+    "skew": 40_000,                 # 8% - ±10° skew angle regression
+    "resolution_quality": 30_000,   # 6% - Character-height-aware resolution (0-1)
+
+    # IQA (SigLIP 2 Group 1, Step 2)
+    "iqa_curated": 16_000,          # 3% - DIQA-5000 + OHR-Bench + DocLayNet curated
+    "iqa_synthetic": 100_000,       # 20% - Multi-degradation synthetic (aged/historical profiles)
+
+    # Script detection (SigLIP 2 Group 2, Step 2)
+    "script_detection": 108_000,    # 21% - synth-multiscript-250K subset (108 scripts)
+
+    # Handwriting (SigLIP 2 Group 4, Step 2)
+    "handwriting": 60_000,          # 12% - Has-handwriting, ratio, confidence
+
+    # Page attributes (SigLIP 2 Group 5, Step 2)
+    "capture_method": 50_000,       # 10% - Born-digital/scanner/camera/synthetic
+    "shadow": 15_000,               # 3% - Shadow severity regression
+    "warping": 20_000,              # 4% - Warping severity regression
+
+    # Code detection
+    "code_detection": 10_000,       # 2% - Code block detection
 }
-# Real total: 35,000 (70%)
 
-synthetic_data = {
-    "genalog_blur": 5,000,   # 10% - Systematic blur degradations
-    "genalog_noise": 4,000,  # 8% - Noise variations
-    "genalog_combined": 6,000 # 12% - Multi-degradation profiles
-}
-# Synthetic total: 15,000 (30%)
-
-# Pseudo-labeled data used sparingly (high confidence only)
-# Typically < 5,000 samples (< 10%)
+# Diversity dimensions (14 total):
+# capture_method, resolution_tier, color_mode, document_age,
+# script, orientation, skew_angle, degradation_type, etc.
+# Global split registry: SHA256-keyed to prevent cross-dataset leakage
 ```
 
 **Data Loader Configuration**:
 
 ```python
-from image_preprocessing_detector.datasets import HybridIQADataset
+from image_preprocessing_detector.datasets import MultiTaskDataset
 
-train_dataset = HybridIQADataset(
+train_dataset = MultiTaskDataset(
     metadata_path="data/training_labels.parquet",
     split="train",
-    augmentation=True,  # Random flips, rotations, color jitter
-    cache_size=1000     # Cache 1000 images in memory
+    task_groups=["iqa", "script", "orientation", "handwriting", "page_attrs"],
+    augmentation=True,   # Random flips, color jitter, aged/historical profiles
+    color_modes=["rgb", "grayscale", "binarized"],  # Color mode diversity
+    cache_size=2000      # Cache 2000 images in memory
 )
 
-val_dataset = HybridIQADataset(
+val_dataset = MultiTaskDataset(
     metadata_path="data/training_labels.parquet",
     split="val",
-    augmentation=False  # No augmentation for validation
+    task_groups=["iqa", "script", "orientation", "handwriting", "page_attrs"],
+    augmentation=False   # No augmentation for validation
 )
 ```
 
@@ -225,26 +280,27 @@ val_dataset = HybridIQADataset(
 
 ```text
 Workstream 3: Data Preparation
-    ↓ (training_labels.parquet + images)
+    ↓ (training_labels.parquet + images from 10 datasets)
 Workstream 8: Synthetic Generation
-    ↓ (degraded images + ground truth)
-    ├─→ Merge Real + Synthetic (70/30 split)
-    └─→ Create train/val/test splits (80/10/10)
+    ↓ (augmented images: aged/historical profiles, multi-degradation)
+    ├─→ Merge per-task datasets with diversity enforcement
+    └─→ Create train/val/test splits (80/10/10, SHA256-keyed global registry)
     ↓
 Workstream 4: Pseudo-Labeling (optional augmentation)
     ↓ (high-confidence ensemble labels)
     ├─→ Add to training set (< 10% total)
     ↓
-HybridIQADataset (PyTorch DataLoader)
+MultiTaskDataset (PyTorch DataLoader)
     ↓
-Workstream 2: Production Model Training
-    ├─→ Teacher Training (Phase 1)
-    └─→ Student Distillation (Phase 2)
+Workstream 2: Production Model Training (3-Step Virtuous Cycle)
+    ├─→ Step 1: MobileNetV4-Conv-S bootstrap (orientation, skew, resolution)
+    ├─→ Step 2: SigLIP 2 multi-task (frozen backbone + 16 heads)
+    └─→ Step 3: MobileNetV4-Conv-S distillation (SigLIP 2 soft labels)
     ↓
 Model Registry (GCS)
     ↓
 Workstream 6: Model Arena (validation)
-    ↓ (PLCC > 0.65?)
+    ↓ (per-head graduation thresholds)
 Workstream 1: Production Runtime (deployment)
 ```
 
@@ -257,96 +313,103 @@ Workstream 1: Production Runtime (deployment)
 **End-to-End Flow**:
 
 ```text
-1. Training Complete
-   ↓ (modal/train_phase2_iqa.py)
-   Save best checkpoint (best_val_plcc.pth)
+1. Training Complete (3-Step Virtuous Cycle)
+   ↓ (modal/train_mobilenetv4.py, modal/train_siglip2_multitask.py)
+   Save best checkpoints per model
 
 2. Model Export
    ↓ (modal/export_onnx.py)
-   Convert to ONNX Runtime format
-   ├─→ resnet18_v1.0.0.onnx (student)
-   └─→ resnet50_v1.0.0.onnx (teacher)
+   Convert to multi-head ONNX format
+   ├─→ siglip2_naflex_v1.0.0.onnx (16 output heads)
+   ├─→ mobilenetv4_v1.0.0.onnx (3 output heads)
+   └─→ Docling layout models (pre-trained, no export needed)
 
 3. Upload to Model Registry
    ↓
    gs://image-detection-models/candidates/
-   ├─ student/resnet18_v1.0.0.onnx
-   ├─ student/resnet18_v1.0.0_metadata.json
-   ├─ teacher/resnet50_v1.0.0.onnx
-   └─ teacher/resnet50_v1.0.0_metadata.json
+   ├─ siglip2_naflex/siglip2_naflex_v1.0.0.onnx
+   ├─ siglip2_naflex/siglip2_naflex_v1.0.0_metadata.json
+   ├─ mobilenetv4/mobilenetv4_v1.0.0.onnx
+   └─ mobilenetv4/mobilenetv4_v1.0.0_metadata.json
 
-4. Arena Benchmark (Workstream 6 - Phase 2)
+4. Arena Benchmark (Workstream 6)
    ↓
-   Validate on DIQA-5000 test set (1,000 samples)
-   Result: PLCC = 0.68 [0.65, 0.71]
+   Validate per-head thresholds on held-out test sets
+   Results: IQA PLCC > 0.65, Orientation acc > 95%, etc.
 
-5. Graduation Check
+5. Graduation Check (per-head thresholds)
    ↓
-   PLCC > 0.65? ✅ YES
-   Improvement > 10%? ✅ YES (209% improvement over baseline)
+   IQA PLCC > 0.65? ✅
+   Orientation acc > 95%? ✅ (98% with distillation)
+   Skew MAE < 0.5 deg? ✅
+   Resolution quality MAE < 0.1? ✅
+   Script acc > 90%? ✅
+   Handwriting F1 > 0.85? ✅
 
 6. Promote to Production Registry
    ↓
    gs://image-detection-models/production/
-   ├─ student/resnet18_v1.0.0.onnx
-   └─ student/resnet18_v1.0.0_metadata.json
+   ├─ siglip2_naflex/siglip2_naflex_v1.0.0.onnx
+   ├─ mobilenetv4/mobilenetv4_v1.0.0.onnx
+   └─ docling_layout/ (pre-trained model references)
 
 7. Deploy to Runtime (Workstream 1)
    ↓
    Update production configuration
-   model_version: "resnet18_v1.0.0"
+   siglip2_version: "siglip2_naflex_v1.0.0"
+   mobilenetv4_version: "mobilenetv4_v1.0.0"
 
 8. Monitor Performance (Workstream 7)
    ↓
-   Track PLCC, latency, cost in production
-   Baseline: PLCC = 0.68
+   Track per-head metrics, latency, cost in production
 ```
 
 ### Model Metadata Schema
 
-**Generated at Export Time**:
+**Generated at Export Time** (example for SigLIP 2 NAFlex):
 
 ```json
 {
-  "model_id": "resnet18_v1.0.0",
-  "architecture": "ResNet-18",
+  "model_id": "siglip2_naflex_v1.0.0",
+  "architecture": "SigLIP 2 NAFlex (ViT-B/16)",
+  "parameters": "88M",
+  "head_groups": 5,
+  "total_heads": 16,
   "training_config": {
-    "dataset": "OHR-Bench + DIQA-5000 + Synthetic (70/30)",
+    "datasets": "10 purpose-built (~503K total)",
+    "training_step": "Step 2 (multi-task, frozen backbone + heads)",
     "epochs": 30,
     "batch_size": 64,
     "learning_rate": 1e-4,
     "optimizer": "AdamW",
-    "distillation_alpha": 0.7,
-    "temperature": 3.0
+    "backbone_frozen": true,
+    "loss_weights": {
+      "iqa": 0.25, "script": 0.20, "orientation_skew": 0.20,
+      "handwriting": 0.15, "page_attrs": 0.20
+    }
   },
   "training_results": {
-    "final_train_loss": 0.12,
-    "final_val_loss": 0.14,
-    "best_val_plcc": 0.72,
-    "best_epoch": 28
+    "iqa_plcc": 0.72,
+    "orientation_accuracy": 0.97,
+    "skew_mae_deg": 0.35,
+    "script_accuracy": 0.93,
+    "handwriting_f1": 0.89
   },
   "arena_validation": {
-    "benchmark_date": "2025-01-12",
-    "diqa5000_plcc": 0.68,
-    "diqa5000_plcc_ci": [0.65, 0.71],
-    "improvement_vs_baseline": 2.09,
-    "graduated": true
+    "benchmark_date": "2026-02-01",
+    "all_heads_graduated": true,
+    "per_head_results": "see arena_details.json"
   },
   "performance": {
-    "inference_latency_gpu_ms": 15,
-    "inference_latency_cpu_ms": 85,
-    "model_size_mb": 42
-  },
-  "deployment": {
-    "graduation_date": "2025-01-12",
-    "approved_by": "ml_team",
-    "production_deployed": true,
-    "deployment_date": "2025-01-15"
+    "inference_latency_gpu_ms": 50,
+    "inference_latency_cpu_ms": 200,
+    "model_size_mb": 340
   },
   "provenance": {
-    "git_sha": "4dc216a",
-    "modal_job_id": "mj-abc123",
-    "training_duration_hours": 12.5
+    "git_sha": "abc1234",
+    "modal_job_id": "mj-siglip2-001",
+    "training_duration_hours": 18.0,
+    "dataset_diversity_spec": "DATASET_DIVERSITY_REQUIREMENTS.md"
   }
 }
 ```
@@ -355,11 +418,12 @@ Workstream 1: Production Runtime (deployment)
 
 **Multiple Formats for Different Use Cases**:
 
-| Format | Use Case | Size | Inference Backend |
-|--------|----------|------|-------------------|
-| **ONNX (.onnx)** | Production runtime (primary) | 42 MB | ONNX Runtime (GPU/CPU) |
-| **TorchScript (.pt)** | Fallback if ONNX fails | 44 MB | PyTorch (GPU/CPU) |
-| **PyTorch Checkpoint (.pth)** | Fine-tuning, experimentation | 48 MB | PyTorch training |
+| Format | Model | Use Case | Approx Size | Inference Backend |
+|--------|-------|----------|-------------|-------------------|
+| **ONNX (.onnx)** | SigLIP 2 NAFlex | Production runtime (primary, 16 heads) | ~340 MB | ONNX Runtime (GPU/CPU) |
+| **ONNX (.onnx)** | MobileNetV4-Conv-S | Fast pre-correction gate (3 heads) | ~16 MB | ONNX Runtime (GPU/CPU) |
+| **TorchScript (.pt)** | Both | Fallback if ONNX fails | ~350 / ~18 MB | PyTorch (GPU/CPU) |
+| **PyTorch Checkpoint (.pth)** | Both | Fine-tuning, experimentation | ~360 / ~20 MB | PyTorch training |
 
 **Export Script** (`modal/export_onnx.py`):
 
@@ -367,37 +431,58 @@ Workstream 1: Production Runtime (deployment)
 import torch
 import onnx
 
-def export_student_model(checkpoint_path: str, output_dir: str):
-    """Export student model to multiple formats."""
+def export_siglip2_model(checkpoint_path: str, output_dir: str):
+    """Export SigLIP 2 NAFlex multi-head model to ONNX."""
 
-    # Load trained model
-    model = load_student_model(checkpoint_path)
+    model = load_siglip2_model(checkpoint_path)
     model.eval()
 
-    # Dummy input for tracing
-    dummy_input = torch.randn(1, 3, 224, 224)
+    # SigLIP 2 NAFlex: variable resolution via NAFlex packing
+    dummy_input = torch.randn(1, 3, 384, 384)
 
-    # Export to ONNX
-    onnx_path = f"{output_dir}/resnet18_v1.0.0.onnx"
+    # 16 output heads across 5 groups
+    output_names = [
+        # G1: IQA (6 heads)
+        "blur", "noise", "contrast", "compression", "illumination", "overall_quality",
+        # G2: Script (1 head)
+        "script_class",
+        # G3: Orientation+Skew (2 heads)
+        "orientation_class", "skew_angle",
+        # G4: Handwriting (3 heads)
+        "has_handwriting", "handwriting_ratio", "handwriting_confidence",
+        # G5: Page Attrs (4 heads)
+        "capture_method", "shadow_severity", "warping_severity", "resolution_quality",
+    ]
+
+    onnx_path = f"{output_dir}/siglip2_naflex_v1.0.0.onnx"
     torch.onnx.export(
-        model,
-        dummy_input,
-        onnx_path,
+        model, dummy_input, onnx_path,
         input_names=["image"],
-        output_names=["quality_scores"],
-        dynamic_axes={"image": {0: "batch_size"}}
+        output_names=output_names,
+        dynamic_axes={"image": {0: "batch_size", 2: "height", 3: "width"}}
     )
 
-    # Validate ONNX model
     onnx_model = onnx.load(onnx_path)
     onnx.checker.check_model(onnx_model)
 
-    # Export to TorchScript
-    torchscript_path = f"{output_dir}/resnet18_v1.0.0.pt"
-    traced_model = torch.jit.trace(model, dummy_input)
-    traced_model.save(torchscript_path)
+def export_mobilenetv4_model(checkpoint_path: str, output_dir: str):
+    """Export MobileNetV4-Conv-S pre-correction gate to ONNX."""
 
-    print(f"Exported to: {onnx_path}, {torchscript_path}")
+    model = load_mobilenetv4_model(checkpoint_path)
+    model.eval()
+
+    dummy_input = torch.randn(1, 3, 256, 256)
+
+    onnx_path = f"{output_dir}/mobilenetv4_v1.0.0.onnx"
+    torch.onnx.export(
+        model, dummy_input, onnx_path,
+        input_names=["image"],
+        output_names=["orientation", "skew_angle", "resolution_quality"],
+        dynamic_axes={"image": {0: "batch_size"}}
+    )
+
+    onnx_model = onnx.load(onnx_path)
+    onnx.checker.check_model(onnx_model)
 ```
 
 ---
@@ -408,45 +493,48 @@ def export_student_model(checkpoint_path: str, output_dir: str):
 
 | Workstream | Consumed Artifacts | Purpose |
 |------------|-------------------|---------|
-| **WS3: Data Preparation** | `training_labels.parquet`, raw images (DIQA-5000, OHR-Bench, DocLayNet) | Base training dataset (70% of total) |
-| **WS4: Pseudo-Labeling** | Pseudo-labeled images (5-model ensemble) | Augment training data with high-confidence labels (< 10%) |
-| **WS8: Synthetic Generation** | Degraded images + ground truth labels | Expand dataset 2-3x (30% of total) |
+| **WS3: Data Preparation** | `training_labels.parquet`, raw images from 10 purpose-built datasets (~503K) | Base training data across all task heads (~80%) |
+| **WS4: Pseudo-Labeling** | Pseudo-labeled images (ensemble predictions) | Augment training data with high-confidence labels (< 10%) |
+| **WS8: Synthetic Generation** | Augmented images (aged/historical profiles, multi-degradation, color modes) | Expand dataset diversity (~20%) |
 
 ### Data Consumption Details
 
 **How Training Consumes Each Source**:
 
 1. **Data Preparation (WS3)**:
-   - Reads `training_labels.parquet` for sample metadata
-   - Loads images from `data/01_base_data/` and `data/02_benchmark_only/`
-   - Uses anchor scores for weighted loss (human=1.0, llm_high=0.8, synthetic=0.3)
+   - Reads `training_labels.parquet` for multi-task sample metadata
+   - Loads images from 10 purpose-built datasets (see Dataset Composition)
+   - Uses per-task label types: classification (orientation, script), regression (skew, IQA), binary (handwriting)
+   - Global split registry (SHA256-keyed) prevents cross-dataset train/test leakage
 
 2. **Pseudo-Labeling (WS4)**:
    - Optional augmentation with ensemble-labeled samples
    - Only uses high-confidence labels (agreement > 0.8)
-   - Typically < 5,000 samples added to training set
+   - Particularly valuable for handwriting and capture method labels
 
 3. **Synthetic Generation (WS8)**:
-   - Consumes Genalog-degraded images with parametric ground truth
-   - Provides systematic coverage of degradation space
-   - Balances real-world distribution with edge cases
+   - Augmented images with aged/historical profiles (yellowing, foxing, ink fading)
+   - Multi-degradation profiles across 14 diversity dimensions
+   - Color mode diversity: RGB, grayscale, binarized
+   - Synth-multiscript-250K: base images generated once, multi-task views derived
 
 ### Downstream Consumers
 
 | Workstream | Provided Artifacts | Purpose |
 |------------|-------------------|---------|
-| **WS6: Model Arena** | Trained teacher/student checkpoints | Phase 2 validation (fine-tuned model benchmarking) |
-| **WS1: Production Runtime** | ONNX exported models (after Arena graduation) | Student inference, teacher escalation |
-| **WS7: Monitoring & Drift** | Model version metadata | Track deployed model performance over time |
+| **WS6: Model Arena** | Trained SigLIP 2 + MobileNetV4 checkpoints | Per-head graduation validation |
+| **WS1: Production Runtime** | ONNX exported models (after Arena graduation) | MobileNetV4 pre-correction (~3ms) + SigLIP 2 multi-task (~50ms) |
+| **WS7: Monitoring & Drift** | Model version metadata (per-head metrics) | Track per-head performance over time |
 
 ### External Dependencies
 
 | Service/Tool | Purpose | Configuration |
 |--------------|---------|---------------|
-| **Modal** | GPU training infrastructure | A10 GPU (24GB), 12-24 hour runs |
+| **Modal** | GPU training infrastructure | A10 GPU (24GB), 18-24 hour runs (SigLIP 2), 6-8 hours (MobileNetV4) |
 | **GCS Bucket** | Model registry and dataset storage | `gs://image-detection-models/`, `gs://image_detection_b/` |
 | **PyTorch** | Training framework | 2.1.0+, CUDA 12.1 |
-| **ONNX Runtime** | Model export and validation | 1.16+ |
+| **ONNX Runtime** | Model export and validation (multi-head ONNX) | 1.16+ |
+| **HuggingFace** | SigLIP 2 NAFlex pre-trained backbone | `google/siglip2-base-patch16-naflex` |
 
 ---
 
@@ -454,17 +542,34 @@ def export_student_model(checkpoint_path: str, output_dir: str):
 
 ### Hyperparameter Settings
 
-**Teacher Training (ResNet-50)**:
+**SigLIP 2 NAFlex Multi-Task (Step 2)**:
 
 ```yaml
-# configs/training/teacher_config.yaml
+# configs/training/siglip2_multitask_config.yaml
 model:
-  architecture: resnet50
-  num_classes: 45  # 45-dimensional IQA vector
-  pretrained: true  # ImageNet initialization
+  architecture: siglip2_naflex
+  backbone: google/siglip2-base-patch16-naflex
+  backbone_params: 88M
+  backbone_frozen: true  # Frozen backbone, train heads only
+  head_groups:
+    iqa:
+      heads: [blur, noise, contrast, compression, illumination, overall_quality]
+      task_type: regression  # 0-1 scores
+    script:
+      heads: [script_class]
+      task_type: classification  # 108 script classes
+    orientation_skew:
+      heads: [orientation_class, skew_angle]
+      task_type: [classification, regression]  # 4 classes + ±10 deg
+    handwriting:
+      heads: [has_handwriting, handwriting_ratio, handwriting_confidence]
+      task_type: [classification, regression, regression]
+    page_attrs:
+      heads: [capture_method, shadow_severity, warping_severity, resolution_quality]
+      task_type: [classification, regression, regression, regression]
 
 training:
-  epochs: 50
+  epochs: 30
   batch_size: 64
   learning_rate: 1e-4
   optimizer: AdamW
@@ -473,47 +578,75 @@ training:
   warmup_epochs: 5
 
 loss:
-  type: composite
-  mse_weight: 0.6
-  bce_weight: 0.4  # Multi-label binary classification
+  type: weighted_multi_task
+  group_weights:
+    iqa: 0.25
+    script: 0.20
+    orientation_skew: 0.20
+    handwriting: 0.15
+    page_attrs: 0.20
 
 validation:
-  metric: plcc
+  per_head_thresholds:
+    iqa_plcc: 0.65
+    orientation_accuracy: 0.95
+    skew_mae_deg: 0.5
+    resolution_quality_mae: 0.1
+    script_accuracy: 0.90
+    handwriting_f1: 0.85
   early_stopping_patience: 10
   save_best_only: true
 ```
 
-**Student Distillation (ResNet-18)**:
+**MobileNetV4-Conv-S Bootstrap (Step 1) + Distillation (Step 3)**:
 
 ```yaml
-# configs/training/student_config.yaml
+# configs/training/mobilenetv4_config.yaml
 model:
-  architecture: resnet18
-  num_classes: 45
-  pretrained: true
+  architecture: mobilenetv4_conv_s
+  params: ~4M
+  heads:
+    orientation: {type: classification, classes: 4}  # 0/90/180/270
+    skew: {type: regression, range: [-10, 10]}       # ±10 degrees
+    resolution_quality: {type: regression, range: [0, 1]}  # Character-height-aware
 
-training:
+# Step 1: Bootstrap training on synthetic ground truth
+bootstrap:
   epochs: 30
-  batch_size: 128  # 2x teacher batch size (smaller model)
-  learning_rate: 5e-5  # Lower LR for fine-tuning
+  batch_size: 256  # Small model, large batches
+  learning_rate: 1e-3
   optimizer: AdamW
   weight_decay: 1e-5
   scheduler: CosineAnnealingLR
   warmup_epochs: 3
+  loss:
+    type: multi_task
+    orientation_weight: 1.0
+    skew_weight: 0.5
+    resolution_weight: 0.5
 
-loss:
-  type: distillation
-  alpha: 0.7  # 70% teacher, 30% ground truth
-  temperature: 3.0
-  hard_loss: mse
-
-teacher:
-  checkpoint: "models/teacher/resnet50_best.pth"
-  device: cuda  # Load teacher on GPU for soft label generation
+# Step 3: Distillation from SigLIP 2 soft labels
+distillation:
+  epochs: 20
+  batch_size: 256
+  learning_rate: 5e-4
+  optimizer: AdamW
+  loss:
+    type: distillation
+    alpha: 0.7  # 70% SigLIP 2 soft labels, 30% ground truth
+    temperature: 3.0
+  teacher:
+    model: siglip2_naflex
+    checkpoint: "models/siglip2_naflex/siglip2_naflex_best.pth"
+    heads_used: [orientation_class, skew_angle, resolution_quality]  # From Groups 3+5
 
 validation:
-  metric: plcc
-  latency_constraint_ms: 100  # CPU inference constraint
+  per_head_thresholds:
+    orientation_accuracy: 0.95  # Step 1 target (0.98 after Step 3)
+    skew_mae_deg: 0.5          # Step 1 target (0.3 after Step 3)
+    resolution_quality_mae: 0.1
+  latency_constraint_gpu_ms: 15
+  latency_constraint_cpu_ms: 50
   early_stopping_patience: 10
 ```
 
@@ -522,7 +655,7 @@ validation:
 **GPU Configuration**:
 
 ```python
-# modal/train_phase2_iqa.py
+# modal/train_siglip2_multitask.py
 import modal
 
 app = modal.App("image-detection-training")
@@ -532,6 +665,7 @@ app = modal.App("image-detection-training")
         .pip_install(
             "torch==2.1.0",
             "torchvision==0.16.0",
+            "transformers",  # HuggingFace for SigLIP 2 backbone
             "onnx==1.15.0",
             "pandas",
             "pillow"
@@ -541,32 +675,37 @@ app = modal.App("image-detection-training")
     timeout=86400,  # 24 hours
     secrets=[modal.Secret.from_name("gcs-credentials")]
 )
-def train_teacher_model(config: dict):
-    """Train ResNet-50 teacher model on Modal GPU."""
-    # Download dataset from GCS
-    download_dataset(config["dataset_uri"])
+def train_siglip2_multitask(config: dict):
+    """Train SigLIP 2 NAFlex multi-task model (Step 2) on Modal GPU."""
+    # Download 10 purpose-built datasets from GCS
+    download_datasets(config["dataset_uris"])
 
-    # Initialize model
-    model = create_teacher_model(num_classes=45)
+    # Initialize SigLIP 2 with frozen backbone + 16 task heads
+    model = create_siglip2_multitask(
+        backbone="google/siglip2-base-patch16-naflex",
+        freeze_backbone=True,
+        head_groups=config["head_groups"],
+    )
 
-    # Training loop
+    # Multi-task training loop
     for epoch in range(config["epochs"]):
-        train_loss = train_epoch(model, train_loader)
-        val_loss, val_plcc = validate_epoch(model, val_loader)
+        train_loss = train_multitask_epoch(model, train_loader)
+        val_metrics = validate_multitask_epoch(model, val_loader)
 
-        # Save checkpoint if best
-        if val_plcc > best_plcc:
-            save_checkpoint(model, epoch, val_plcc)
+        # Check per-head graduation thresholds
+        if all_heads_graduated(val_metrics, config["thresholds"]):
+            save_checkpoint(model, epoch, val_metrics)
+            break
 
-    # Export best checkpoint
-    export_to_onnx(best_checkpoint, output_dir)
+    export_to_onnx(best_checkpoint, output_dir, num_outputs=16)
 ```
 
-**Cost Tracking**:
+**Cost Tracking** (3-Step Virtuous Cycle):
 
-- **Teacher Training**: 50 epochs × 15 min/epoch = 12.5 hours × $0.456/hour = **$5.70**
-- **Student Training**: 30 epochs × 10 min/epoch = 5 hours × $0.456/hour = **$2.28**
-- **Total Training Cost**: ~$8/training run
+- **Step 1 (MobileNetV4 Bootstrap)**: 30 epochs x 5 min/epoch = 2.5 hours x $0.456/hour = **$1.14**
+- **Step 2 (SigLIP 2 Multi-Task)**: 30 epochs x 35 min/epoch = 17.5 hours x $0.456/hour = **$7.98**
+- **Step 3 (MobileNetV4 Distillation)**: 20 epochs x 5 min/epoch = 1.7 hours x $0.456/hour = **$0.78**
+- **Total Training Cost**: ~$10/training run
 
 ---
 
@@ -578,44 +717,51 @@ def train_teacher_model(config: dict):
 
 ```text
 gs://image-detection-models/candidates/
-├── teacher/
-│   ├── resnet50_v1.0.0.pth          # PyTorch checkpoint
-│   ├── resnet50_v1.0.0.onnx         # ONNX export
-│   └── resnet50_v1.0.0_metadata.json
-└── student/
-    ├── resnet18_v1.0.0.pth
-    ├── resnet18_v1.0.0.onnx
-    ├── resnet18_v1.0.0.pt           # TorchScript
-    └── resnet18_v1.0.0_metadata.json
+├── siglip2_naflex/
+│   ├── siglip2_naflex_v1.0.0.pth          # PyTorch checkpoint (16 heads)
+│   ├── siglip2_naflex_v1.0.0.onnx         # ONNX export (16 outputs)
+│   └── siglip2_naflex_v1.0.0_metadata.json
+├── mobilenetv4/
+│   ├── mobilenetv4_v1.0.0.pth             # PyTorch checkpoint (3 heads)
+│   ├── mobilenetv4_v1.0.0.onnx            # ONNX export (3 outputs)
+│   └── mobilenetv4_v1.0.0_metadata.json
+└── docling_layout/
+    ├── egret_xlarge_ref.json               # Reference to pre-trained model
+    └── heron_ref.json                      # Reference to pre-trained model
 ```
 
 **Production Models** (post-Arena graduation):
 
 ```text
 gs://image-detection-models/production/
-├── teacher/
-│   ├── resnet50_v1.0.0.onnx
-│   └── resnet50_v1.0.0_metadata.json
-└── student/
-    ├── resnet18_v1.0.0.onnx         # Primary
-    ├── resnet18_v1.0.0.pt           # Fallback
-    └── resnet18_v1.0.0_metadata.json
+├── siglip2_naflex/
+│   ├── siglip2_naflex_v1.0.0.onnx         # Primary (16 heads, ~50ms GPU)
+│   ├── siglip2_naflex_v1.0.0.pt           # Fallback (TorchScript)
+│   └── siglip2_naflex_v1.0.0_metadata.json
+├── mobilenetv4/
+│   ├── mobilenetv4_v1.0.0.onnx            # Primary (3 heads, ~3ms GPU)
+│   ├── mobilenetv4_v1.0.0.pt              # Fallback (TorchScript)
+│   └── mobilenetv4_v1.0.0_metadata.json
+└── docling_layout/
+    ├── egret_xlarge_ref.json               # Accuracy path
+    └── heron_ref.json                      # Speed path
 ```
 
 ### Versioning Strategy
 
 **Semantic Versioning** (MAJOR.MINOR.PATCH):
 
-- **MAJOR**: Architecture change (ResNet-18 → EfficientNet)
-- **MINOR**: Training data change (new dataset added)
-- **PATCH**: Hyperparameter tuning, bug fixes
+- **MAJOR**: Architecture change (e.g., SigLIP 2 -> SigLIP 3) or head group restructuring
+- **MINOR**: Training data change (new dataset added, diversity update)
+- **PATCH**: Hyperparameter tuning, distillation re-run, bug fixes
 
 **Examples**:
 
-- `resnet18_v1.0.0`: Initial student model
-- `resnet18_v1.1.0`: Re-trained with additional TableBank data
-- `resnet18_v1.1.1`: Hyperparameter tuning (learning rate adjustment)
-- `resnet18_v2.0.0`: Architecture change to ResNet-34
+- `siglip2_naflex_v1.0.0`: Initial multi-task model (16 heads)
+- `siglip2_naflex_v1.1.0`: Re-trained with additional handwriting data
+- `siglip2_naflex_v1.1.1`: Loss weight adjustment for script head
+- `mobilenetv4_v1.0.0`: Initial pre-correction gate (Step 1 bootstrap)
+- `mobilenetv4_v1.1.0`: Step 3 distillation with SigLIP 2 soft labels
 
 ---
 
@@ -628,40 +774,47 @@ gs://image-detection-models/production/
 **Workflow**:
 
 ```text
-Training Complete (this workstream)
+Training Complete (3-Step Virtuous Cycle)
     ↓
-Export to ONNX + Metadata
+Export to multi-head ONNX + Metadata
     ↓
 Upload to Candidates Registry
     ↓
 Trigger Arena Benchmark (Workstream 6)
-    ├─→ Load model from candidates/
-    ├─→ Run inference on DIQA-5000 test set (1,000 samples)
-    ├─→ Compute PLCC, SRCC, MAE, RMSE with 95% CIs
-    └─→ Compare to Phase 1 baseline (QualiCLIP PLCC = 0.22)
+    ├─→ Load SigLIP 2 + MobileNetV4 from candidates/
+    ├─→ Run per-head validation on held-out test sets
+    ├─→ Compute per-head metrics with 95% CIs
+    └─→ Check graduation thresholds per head
     ↓
-Graduation Decision
-    ├─ PLCC > 0.65? ✅
-    ├─ Improvement > 10%? ✅
-    └─ CI lower bound > baseline mean? ✅
+Graduation Decision (ALL heads must pass)
+    ├─ IQA PLCC > 0.65? ✅
+    ├─ Orientation acc > 95%? ✅ (98% with distillation)
+    ├─ Skew MAE < 0.5 deg? ✅
+    ├─ Resolution quality MAE < 0.1? ✅
+    ├─ Script acc > 90%? ✅
+    └─ Handwriting F1 > 0.85? ✅
     ↓
 Promote to Production Registry
     ↓
 Deploy to Runtime (Workstream 1)
 ```
 
-**Graduation Criteria** (from Model Arena):
+**Graduation Criteria** (per-head thresholds, from Model Arena):
 
-- **Target PLCC**: > 0.65
-- **Minimum Improvement**: +10% vs baseline
-- **Confidence**: 95% CI lower bound > 0.22 (baseline mean)
+| Head / Group | Metric | Threshold | Notes |
+|-------------|--------|-----------|-------|
+| IQA (G1) | PLCC | > 0.65 | Overall quality correlation |
+| Orientation (G3) | Accuracy | > 95% (98% after Step 3) | 4-class: 0/90/180/270 |
+| Skew (G3) | MAE | < 0.5 degrees | Regression ±10 deg |
+| Resolution Quality (G5) | MAE | < 0.1 | 0-1 score |
+| Script (G2) | Accuracy | > 90% | 108-class classification |
+| Handwriting (G4) | F1 | > 0.85 | Binary detection |
 
-**Historical Results**:
+**Historical Results** (to be populated after first training run):
 
-| Model Version | Arena PLCC | CI Lower | CI Upper | Improvement | Graduated |
-|---------------|------------|----------|----------|-------------|-----------|
-| resnet18_v0.9.0 | 0.58 | 0.54 | 0.62 | +163% | ❌ (below 0.65) |
-| resnet18_v1.0.0 | 0.68 | 0.65 | 0.71 | +209% | ✅ |
+| Model Version | Head | Metric | Value | Graduated |
+|---------------|------|--------|-------|-----------|
+| *Pending first training run* | | | | |
 
 ---
 
@@ -669,38 +822,37 @@ Deploy to Runtime (Workstream 1)
 
 ### Drift-Triggered Retraining
 
-**When Monitoring detects PLCC drop > 10%**:
+**When Monitoring detects per-head metric degradation**:
 
 ```text
 Workstream 7: Drift Detection
-    ↓ (Alert: PLCC dropped from 0.68 → 0.61)
+    ↓ (Alert: e.g., IQA PLCC dropped below 0.65, or script acc below 90%)
 Workstream 7: Active Learning
-    ↓ (Harvest 1,000 difficult samples)
+    ↓ (Harvest difficult samples for degraded head(s))
 Workstream 7: Privacy Review
-    ↓ (Approve 850 samples, reject 150 with PII)
+    ↓ (Approve samples, reject those with PII)
 Workstream 8: Synthetic Augmentation
-    ↓ (Apply Genalog degradations → 850 × 3 = 2,550 samples)
+    ↓ (Apply augmentation profiles for affected task)
 Workstream 2: Retraining (this workstream)
-    ├─→ Original dataset: 50,000 samples
-    ├─→ Harvested samples: 850 samples
-    └─→ Synthetic augmentation: 2,550 samples
+    ├─→ Original 10 datasets (~503K)
+    ├─→ Harvested samples for affected heads
+    └─→ Synthetic augmentation for affected heads
     ↓
-    Total retraining dataset: 53,400 samples
+Re-run affected training steps:
+    ├─→ If MobileNetV4 heads degraded: Re-run Step 1 + Step 3
+    ├─→ If SigLIP 2 heads degraded: Re-run Step 2 + Step 3
+    └─→ Full re-run if multiple groups affected
     ↓
-Train Updated Student Model
-    ↓ (30 epochs, same config as original)
-Export to ONNX
+Export to multi-head ONNX
     ↓
-Workstream 6: Arena Phase 3 Validation
-    ↓ (Benchmark on DIQA-5000 + failure cases)
-    Result: PLCC = 0.70 [0.67, 0.73] ✅ (recovered)
+Workstream 6: Arena Validation (per-head thresholds)
     ↓
 Deploy to Production (Workstream 1)
 ```
 
 **Retraining Frequency**:
 
-- **Drift-Triggered**: When PLCC drop > 10% (automatic)
+- **Drift-Triggered**: When any per-head metric drops below graduation threshold (automatic)
 - **Scheduled**: Monthly retraining with accumulated samples (optional)
 - **Manual**: On-demand for experiments or dataset updates
 
@@ -708,21 +860,22 @@ Deploy to Production (Workstream 1)
 
 ## Performance Characteristics
 
-| Metric | Teacher (ResNet-50) | Student (ResNet-18) | Notes |
-|--------|---------------------|---------------------|-------|
-| **Training Time** | 12.5 hours (50 epochs) | 5 hours (30 epochs) | A10 GPU on Modal |
-| **Validation PLCC** | 0.72 | 0.68 | Both exceed 0.65 threshold |
-| **Validation Loss** | 0.27 | 0.14 | Student benefits from distillation |
-| **Inference Latency (GPU)** | 30-50ms/image | 10-25ms/image | 2-5x faster student |
-| **Inference Latency (CPU)** | 150-300ms/image | 40-100ms/image | 2-3x faster student |
-| **Model Size** | 98 MB (ONNX) | 42 MB (ONNX) | 2.3x smaller student |
-| **Training Cost** | $5.70 (Modal A10) | $2.28 (Modal A10) | ~$8 total |
+| Metric | SigLIP 2 NAFlex (~88M) | MobileNetV4-Conv-S (~4M) | Notes |
+|--------|------------------------|--------------------------|-------|
+| **Training Time** | ~17.5 hours (Step 2, 30 epochs) | ~4.2 hours (Step 1 + Step 3) | A10 GPU on Modal |
+| **Task Heads** | 16 heads across 5 groups | 3 heads (orientation, skew, resolution) | SigLIP 2 covers all tasks |
+| **Inference Latency (GPU)** | ~50ms/image | ~3ms/image | MobileNetV4 is ~17x faster |
+| **Inference Latency (CPU)** | ~200ms/image | ~12ms/image | MobileNetV4 for pre-correction |
+| **Model Size** | ~340 MB (ONNX) | ~16 MB (ONNX) | 21x smaller MobileNetV4 |
+| **Training Cost** | $7.98 (Modal A10) | $1.92 (Modal A10, Steps 1+3) | ~$10 total |
+| **Variable Resolution** | Native (NAFlex packing) | Fixed (256x256) | SigLIP 2 handles any aspect ratio |
 
-**Why Student Outperforms Teacher on Validation**:
+**Two-Model Pipeline Rationale**:
 
-- **Regularization Effect**: Distillation acts as regularization, preventing overfitting
-- **Focused Capacity**: Student learns to mimic teacher's robust features without noise
-- **Ensemble Effect**: Student trained on both teacher soft labels and ground truth hard labels
+- **MobileNetV4 pre-correction**: Corrects orientation, skew, and resolution BEFORE SigLIP 2 sees the image
+- **SigLIP 2 benefits**: All 16 heads produce more accurate results on corrected images
+- **Redundancy**: SigLIP 2 also has orientation/skew/resolution heads (Groups 3+5) for validation and teacher capability
+- **Step 3 virtuous cycle**: SigLIP 2 soft labels improve MobileNetV4 accuracy (orientation 95% -> 98%)
 
 ---
 
@@ -732,20 +885,20 @@ Deploy to Production (Workstream 1)
 
 **Rationale**:
 
-- **Standard PyTorch Workflows**: Training follows conventional fine-tuning patterns
-- **Well-Documented Distillation**: Loss function and training loop are straightforward
-- **Small Codebase**: ~3,000 lines total across training scripts
+- **Standard PyTorch Workflows**: Training follows conventional fine-tuning + distillation patterns
+- **Well-Documented Multi-Task Setup**: Head group configuration and loss weighting are straightforward
+- **3-Step Cycle is Sequential**: Each step has clear inputs/outputs
 
 **When Level 3 WOULD Be Needed**:
 
-- If custom loss functions become more complex (e.g., adversarial training, meta-learning)
-- If multi-stage distillation is added (teacher ensemble → super-teacher → student)
-- If automated hyperparameter tuning (AutoML, NAS) is integrated
-- If model architecture search becomes more sophisticated
+- If the MobileCLIP-2 distillation cascade (S4 -> S0) is implemented for edge deployment
+- If automated hyperparameter tuning (AutoML) for per-head loss weights is integrated
+- If NAFlex packing implementation requires custom CUDA kernels
+- If multi-model ensemble training replaces the current 3-step cycle
 
-**Current Guidance**: This Level 2 doc provides sufficient detail for understanding the training pipeline. Developers should reference training scripts directly (`modal/train_phase2_iqa.py`) for implementation details.
+**Current Guidance**: This Level 2 doc provides sufficient detail for understanding the training pipeline. Developers should reference training scripts directly (`modal/train_siglip2_multitask.py`, `modal/train_mobilenetv4.py`) for implementation details. The Layout Fusion Downsampler is documented at Level 3 as a **legacy** fallback path (see [layout-fusion-downsampler.md](../level-3/model-training/layout-fusion-downsampler.md)).
 
-**Decision**: Enrich Level 2 first (as done above), revisit Level 3 if complexity grows.
+**Decision**: Enrich Level 2 first (as done above), revisit Level 3 when MobileCLIP-2 cascade is implemented.
 
 ---
 
@@ -755,41 +908,42 @@ This section maps training pipeline stages to implementation files with LOC coun
 
 | Workflow Step | Source Files | LOC | Total | Percentage |
 |---------------|--------------|-----|-------|------------|
-| **Data Pipeline** | `src/image_preprocessing_detector/datasets/iqa_dataset.py` | 180 | 180 | 2.5% |
-| **Teacher Training** | `modal/train_phase2_iqa.py`, `src/training/teacher_trainer.py`, `src/models/resnet_teacher.py` | 707, 586, 293 | 1,586 | 22.5% |
-| **Student Training** | `modal/train_student_distillation.py`, `src/training/student_trainer.py`, `src/models/resnet_student.py` | 779, 664, 277 | 1,720 | 24.4% |
-| **Knowledge Distillation** | `src/training/distillation_loss.py`, `src/training/generate_soft_labels.py` | 248, 313 | 561 | 7.9% |
-| **Model Architectures** | `src/models/model_optimizer.py`, `src/models/batch_inference.py`, `src/models/loss_functions.py`, `src/models/model_loader.py` | 1435, 622, 330, 244 | 2,631 | 37.3% |
-| **Model Export** | `modal/export_phase7_onnx.py` | 347 | 347 | 4.9% |
-| **Supporting** | `src/training/checkpoint_utils.py`, `src/training/__init__.py`, `src/models/__init__.py` | 82, 45, 86 | 213 | 3.0% |
-| **Workstream Total** | **16 files** | — | **7,058** | **100%** |
+| **Data Pipeline** | `src/image_preprocessing_detector/datasets/multitask_dataset.py` | 350 | 350 | 4.5% |
+| **SigLIP 2 Training** | `modal/train_siglip2_multitask.py`, `src/training/siglip2_trainer.py`, `src/models/siglip2_multitask.py` | TBD | TBD | TBD |
+| **MobileNetV4 Training** | `modal/train_mobilenetv4.py`, `src/training/mobilenetv4_trainer.py`, `src/models/mobilenetv4_gate.py` | TBD | TBD | TBD |
+| **Distillation** | `src/training/distillation_loss.py`, `src/training/generate_soft_labels.py` | TBD | TBD | TBD |
+| **Model Architectures** | `src/models/model_optimizer.py`, `src/models/batch_inference.py`, `src/models/loss_functions.py`, `src/models/model_loader.py` | TBD | TBD | TBD |
+| **Model Export** | `modal/export_onnx.py` (multi-head support) | TBD | TBD | TBD |
+| **Supporting** | `src/training/checkpoint_utils.py`, `src/training/__init__.py`, `src/models/__init__.py` | TBD | TBD | TBD |
+| **Workstream Total** | **TBD files** | -- | **TBD** | **100%** |
 
-**Validation**: All LOC counts validated against `docs/architecture/workstream_loc_counts.json`.
+> **Note**: LOC counts will be updated after implementation. The new pipeline replaces ResNet-50/ResNet-18 with SigLIP 2 NAFlex + MobileNetV4-Conv-S.
 
-**Key Components**:
+**Key Components** (planned):
 
-1. **Modal Training Scripts** (1,833 lines, 26.0%):
-   - `train_phase2_iqa.py`: Teacher training on Modal GPU
-   - `train_student_distillation.py`: Student knowledge distillation
-   - `export_phase7_onnx.py`: ONNX/TorchScript export
+1. **Modal Training Scripts**:
+   - `train_siglip2_multitask.py`: SigLIP 2 multi-task training (Step 2, frozen backbone + 16 heads)
+   - `train_mobilenetv4.py`: MobileNetV4 bootstrap (Step 1) + distillation (Step 3)
+   - `export_onnx.py`: Multi-head ONNX export for both models
 
-2. **Training Logic** (1,938 lines, 27.5%):
-   - Teacher/student trainers with different configurations
-   - Distillation loss (KL + BCE + MSE)
-   - Soft label generation from teacher
-   - Checkpoint management
+2. **Training Logic**:
+   - SigLIP 2 multi-task trainer with per-group loss weighting
+   - MobileNetV4 bootstrap + distillation trainers
+   - KL-divergence distillation from SigLIP 2 to MobileNetV4 (T=3)
+   - Per-head checkpoint selection with graduation thresholds
 
-3. **Model Architectures** (3,287 lines, 46.6%):
-   - ResNet-50 teacher, ResNet-18 student
-   - Model optimizer (graph optimizations, quantization)
-   - Batch inference engine
-   - Loss functions (multi-task, distillation)
+3. **Model Architectures**:
+   - SigLIP 2 NAFlex (~88M, frozen ViT-B/16 backbone + 16 task heads)
+   - MobileNetV4-Conv-S (~4M, 3 heads: orientation, skew, resolution)
+   - Docling layout models (pre-trained, egret-xlarge / heron)
+   - Multi-task loss functions (weighted per-group)
 
-**Training Metrics**:
+**Training Metrics** (targets):
 
-- Teacher: 50 epochs, val_loss=0.27
-- Student: 30 epochs, val_loss=0.14 (better than teacher!)
-- Total training time: 20-36 hours on Modal GPU
+- SigLIP 2: ~17.5 hours training, per-head graduation thresholds
+- MobileNetV4 Bootstrap: ~2.5 hours, orientation > 95%, skew MAE < 0.5 deg
+- MobileNetV4 Distillation: ~1.7 hours, orientation > 98%, skew MAE < 0.3 deg
+- Total training time: ~22 hours on Modal A10 GPU
 
 **Level 3 Documentation**: See [level-3/model-training/](../level-3/model-training/) for swimlane diagram.
 

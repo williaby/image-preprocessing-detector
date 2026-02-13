@@ -10,47 +10,62 @@ skinparam rectangle {
 
 |Data Preparation|
 start
-:Collect IQA datasets\n(LIVE, CSIQ, OHR-Bench);
-:Generate synthetic degradations\n(blur, noise, compression);
-:Create annotation labels\n(quality scores, defect types);
-:Split train/val/test sets;
+:Collect 10 purpose-built datasets\n(~503K total: Orientation, Skew,\nResolution, IQA, Script,\nHandwriting, Capture, Shadow,\nWarping, Code);
+:Apply augmentation profiles\n(aged/historical, multi-degradation,\ncolor mode diversity);
+:Create annotation labels\n(per-task: classification, regression);
+:Split train/val/test sets\n(SHA256-keyed global registry);
 
-|Teacher Training|
-:Initialize ResNet-50 backbone\n(ImageNet pretrained);
-:Add multi-head IQA classifier\n(blur, noise, contrast, skew, compression);
-:Train on labeled IQA data\n(Modal GPU: T4/A10);
-:Validate on held-out set\n(target: mAP > 0.88);
-if (Teacher passes\nvalidation?) then (yes)
-  :Export Teacher checkpoint;
+|Step 1: MobileNetV4 Bootstrap|
+:Initialize MobileNetV4-Conv-S\n(~4M params, pretrained);
+:Add 3 task heads:\n- Orientation (4-class)\n- Skew regression (±10°)\n- Resolution quality (0-1);
+:Train on ground truth labels\n(Modal GPU: A10);
+:Validate per-head thresholds\n(orientation > 95%, skew MAE < 0.5°);
+if (MobileNetV4 passes\nvalidation?) then (yes)
+  :Export MobileNetV4 checkpoint;
 else (no)
   :Tune hyperparameters;
   :Retrain;
 endif
 
-|Knowledge Distillation|
-:Initialize ResNet-18 Student\n(random or pretrained);
-:Run Teacher forward passes\n(collect soft targets);
-:Train Student with:\nL = α·KL(T||S) + β·CE(hard);
-:Temperature scaling T=4.0;
-if (Student meets\ncriteria?) then (yes)
-  :Export to ONNX;
-  :Export to TorchScript;
+|Step 2: SigLIP 2 Multi-Task|
+:Load SigLIP 2 NAFlex backbone\n(~88M, frozen ViT-B/16);
+:Attach 16 task heads\n(5 groups: IQA, Script,\nOrientation+Skew, Handwriting,\nPage Attrs);
+:Train heads on all 10 datasets\n(weighted multi-task loss);
+if (All heads pass\ngraduation thresholds?) then (yes)
+  :Export SigLIP 2 checkpoint;
 else (no)
-  :Adjust α, β, T;
-  :Retrain Student;
+  :Adjust loss weights;
+  :Retrain;
+endif
+
+|Step 3: MobileNetV4 Distillation|
+:Generate SigLIP 2 soft labels\n(orientation, skew, resolution);
+:Re-train MobileNetV4-Conv-S\nwith KL-divergence (T=3);
+if (Improved thresholds?\norientation > 98%?) then (yes)
+  :Export to ONNX (3 heads);
+  :Export SigLIP 2 to ONNX (16 heads);
+else (no)
+  :Adjust alpha, temperature;
+  :Retrain MobileNetV4;
 endif
 
 |Deployment|
 :Register models in registry;
-:Deploy Student as default;
-:Keep Teacher for selective inference;
+:Deploy MobileNetV4 as pre-correction gate (~3ms);
+:Deploy SigLIP 2 as multi-task model (~50ms);
+:Docling layout models (pre-trained, no training);
 stop
 
 note right
   Training infrastructure:
-  - Modal serverless GPU
+  - Modal serverless GPU (A10)
   - GCS for datasets
-  - MLflow for tracking
+  - HuggingFace for SigLIP 2 backbone
+  - ~$10 total per training run
+
+  **PLANNED (Deferred)**:
+  MobileCLIP-2 distillation cascade
+  for edge/mobile deployment
 end note
 
 @enduml

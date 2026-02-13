@@ -1,0 +1,95 @@
+{
+  "benchmark": "annotation_cache_memory",
+  "python_version": "3.12.3 (main, Jan  8 2026, 11:30:50) [GCC 13.3.0]",
+  "has_psutil": true,
+  "has_tracemalloc": true,
+  "bounded_cache": {
+    "cache_sizes": [
+      1000,
+      5000,
+      10000,
+      50000
+    ],
+    "memory_mb": [
+      1.8184890747070312,
+      8.998764038085938,
+      17.995315551757812,
+      92.40546417236328
+    ],
+    "hit_rates": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "entries_processed": 100000
+  },
+  "unbounded_dict": {
+    "num_entries": [
+      1000,
+      5000,
+      10000,
+      50000,
+      100000
+    ],
+    "memory_mb": [
+      1.730926513671875,
+      8.621955871582031,
+      17.241958618164062,
+      87.0460205078125,
+      174.09012603759766
+    ]
+  },
+  "streaming_jsonl": {
+    "num_entries": [
+      1000,
+      10000,
+      50000,
+      100000
+    ],
+    "file_size_mb": [
+      1.0786056518554688,
+      10.786056518554688,
+      53.93028259277344,
+      107.86056518554688
+    ],
+    "memory_mb": [
+      0.21612548828125,
+      2.0598764419555664,
+      11.268074989318848,
+      22.59117317199707
+    ],
+    "index_time_s": [
+      0.024936369009083137,
+      0.24145659402711317,
+      1.2542061750136781,
+      2.578994817013154
+    ],
+    "random_access_time_ms": [
+      0.04229440004564822,
+      0.04210598795907572,
+      0.044569581223186105,
+      0.045307999826036394
+    ]
+  },
+  "full_vs_streaming": {
+    "full_load": {
+      "memory_mb": 119.42544174194336,
+      "load_time_s": 0.9285909970058128
+    },
+    "streaming": {
+      "memory_mb": 11.27051830291748,
+      "index_time_s": 1.3458383370016236
+    },
+    "comparison": {
+      "file_size_mb": 53.93028259277344,
+      "memory_reduction_pct": 90.56271583464518,
+      "streaming_is_better": true
+    }
+  },
+  "validation": {
+    "bounded_cache_memory_bounded": true,
+    "streaming_uses_less_memory": true,
+    "no_oom_100k_entries": true
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "dataset_name": "diqa-5000",
+  "total_samples": 5500,
+  "capture_methods": {
+    "camera_smartphone": 500,
+    "synthetic": 5000
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "EDU": 2255,
+    "TEC": 1364,
+    "SCI": 1683,
+    "ADM": 110,
+    "MED": 33,
+    "UNK": 33,
+    "FIN": 11,
+    "PER": 11
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Hans": 4114,
+    "Latn": 1257,
+    "Beng": 53,
+    "Hant": 76
+  },
+  "script_families": {
+    "cjk": 4190,
+    "latin": 1257,
+    "indic": 53
+  },
+  "language_codes": {
+    "zh": 4189,
+    "en": 1227,
+    "as": 53,
+    "nl": 1,
+    "scn": 29,
+    "yue": 1
+  },
+  "content_flags": {
+    "has_figure": 2924,
+    "has_table": 1128,
+    "has_formula": 3494,
+    "has_handwriting": 1144
+  },
+  "text_scopes": {},
+  "content_types": {},
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "camera_smartphone": 9.1,
+    "synthetic": 90.9
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "EDU": 41.0,
+    "TEC": 24.8,
+    "SCI": 30.6,
+    "ADM": 2.0,
+    "MED": 0.6,
+    "UNK": 0.6,
+    "FIN": 0.2,
+    "PER": 0.2
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Hans": 74.8,
+    "Latn": 22.9,
+    "Beng": 1.0,
+    "Hant": 1.4
+  },
+  "script_families_pct": {
+    "cjk": 76.2,
+    "latin": 22.9,
+    "indic": 1.0
+  },
+  "language_codes_pct": {
+    "zh": 76.2,
+    "en": 22.3,
+    "as": 1.0,
+    "nl": 0.0,
+    "scn": 0.5,
+    "yue": 0.0
+  },
+  "text_scopes_pct": {},
+  "content_types_pct": {},
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_figure": 53.2,
+    "has_table": 20.5,
+    "has_formula": 63.5,
+    "has_handwriting": 20.8
+  },
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Hans",
+      "count": 4114,
+      "percentage": 74.8
+    },
+    {
+      "script": "Latn",
+      "count": 1257,
+      "percentage": 22.9
+    },
+    {
+      "script": "Hant",
+      "count": 76,
+      "percentage": 1.4
+    },
+    {
+      "script": "Beng",
+      "count": 53,
+      "percentage": 1.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "zh",
+      "count": 4189,
+      "percentage": 76.2
+    },
+    {
+      "language": "en",
+      "count": 1227,
+      "percentage": 22.3
+    },
+    {
+      "language": "as",
+      "count": 53,
+      "percentage": 1.0
+    },
+    {
+      "language": "scn",
+      "count": 29,
+      "percentage": 0.5
+    },
+    {
+      "language": "nl",
+      "count": 1,
+      "percentage": 0.0
+    },
+    {
+      "language": "yue",
+      "count": 1,
+      "percentage": 0.0
+    }
+  ],
+  "script_family_summary": {
+    "cjk": 4190,
+    "latin": 1257,
+    "indic": 53
+  }
+}

@@ -1,0 +1,116 @@
+# Skew Estimation Configuration
+# Unified MobileNetV4-Conv-S with 3 heads: orientation, skew bins, skew regression
+# 4-model consensus: Gemini 2.5 Pro, Gemini 3 Pro Preview, DeepSeek R1, Grok 4
+
+model:
+  backbone: "mobilenetv4_conv_small"
+  pretrained_backbone: true
+  # Trained conv_small @ 224px: test MAE=0.956, CPU=17.5ms, orient_acc=99.5%
+  # Ablation showed 224 vs 320 vs 384 had marginal accuracy gain for more CPU.
+  input_size: 224
+  # ONNX model paths (relative to project root or absolute)
+  onnx_fp32_path: "models/skew_estimator/skew_estimator_fp32.onnx"
+  onnx_int8_path: "models/skew_estimator/skew_estimator_int8.onnx"
+
+# Head 1: Orientation Classification (4-class)
+orientation:
+  num_classes: 4
+  classes: [0, 90, 180, 270]  # degrees clockwise
+  confidence_threshold: 0.85  # min confidence to apply correction
+  # Below this threshold, fall back to classical orientation detection
+  fallback_threshold: 0.5
+
+# Head 2 + 3: Skew Detection (non-uniform bins + regression)
+# Non-uniform bin configuration:
+#   Critical zone (+-5 deg): 0.5 deg bins -> 20 bins
+#   Moderate zone (+-5-15 deg): 2.0 deg bins -> 10 bins
+#   Extreme zone (+-15-45 deg): 5.0 deg bins -> 12 bins
+#   Total: 42 bins
+skew:
+  total_bins: 42
+  range_degrees: 45.0  # +- this value
+  bins:
+    # Critical zone: -5 to +5 degrees, 0.5 deg bins
+    - zone: "critical"
+      start: -5.0
+      end: 5.0
+      width: 0.5
+      count: 20
+    # Moderate negative: -15 to -5 degrees, 2.0 deg bins
+    - zone: "moderate_neg"
+      start: -15.0
+      end: -5.0
+      width: 2.0
+      count: 5
+    # Moderate positive: 5 to 15 degrees, 2.0 deg bins
+    - zone: "moderate_pos"
+      start: 5.0
+      end: 15.0
+      width: 2.0
+      count: 5
+    # Extreme negative: -45 to -15 degrees, 5.0 deg bins
+    - zone: "extreme_neg"
+      start: -45.0
+      end: -15.0
+      width: 5.0
+      count: 6
+    # Extreme positive: 15 to 45 degrees, 5.0 deg bins
+    - zone: "extreme_pos"
+      start: 15.0
+      end: 45.0
+      width: 5.0
+      count: 6
+
+  # Regression head outputs residual within selected bin
+  regression:
+    # Maximum residual the regression head can predict (half of smallest bin width)
+    max_residual: 0.25
+    # Trained model outputs residual only [1], not (mu, sigma_sq) [2]
+    predict_uncertainty: false
+
+  # Correction thresholds
+  correction:
+    # Minimum angle to apply correction (below this, skip)
+    min_angle: 0.3
+    # Maximum angle before flagging for manual review
+    max_angle: 45.0
+    # Skip correction if uncertainty exceeds angle magnitude
+    uncertainty_gate: true
+
+# Inference configuration
+inference:
+  # ONNX Runtime execution provider
+  provider: "CPUExecutionProvider"
+  # Number of intra-op threads (0 = auto)
+  num_threads: 0
+  # Enable graph optimization
+  graph_optimization: "all"  # none, basic, extended, all
+
+# Fallback to classical detection
+fallback:
+  # When to trigger classical Hough fallback
+  enabled: true
+  # Fall back if orientation confidence below this
+  orientation_confidence_threshold: 0.5
+  # Fall back if skew bin max probability below this
+  skew_confidence_threshold: 0.3
+  # Fall back if predicted angle exceeds model range
+  angle_out_of_range: true
+
+# Training configuration (used by modal/train_skew_estimator.py)
+training:
+  epochs: 50
+  batch_size: 128
+  learning_rate: 0.001
+  warmup_epochs: 5
+  # QAT starts at this epoch
+  qat_start_epoch: 30
+  # Loss weights for multi-task training
+  loss_weights:
+    orientation: 0.2
+    skew_classification: 0.3
+    skew_regression: 0.5
+  # Early stopping
+  patience: 10
+  # Gaussian reweighting for critical zone samples
+  critical_zone_weight: 2.0  # weight multiplier for |angle| < 2 deg

@@ -14,9 +14,10 @@ purpose: "Document the output format and contract between Project A and Project 
 ---
 
 > **Status**: Production Ready
-> **Version**: 1.0.0
-> **Last Updated**: 2025-11-25
+> **Version**: 2.0.0-draft
+> **Last Updated**: 2026-02-10
 > **Audience**: Project B (OCR Orchestration) Team
+> **Schema Version**: v1.0 (current) + v2.0 (planned - SigLIP 2 integration)
 
 ## Executive Summary
 
@@ -78,6 +79,198 @@ output/
 | `has_non_latin` | boolean | Document contains non-Latin scripts |
 | `upscaling` | object | DPI upscaling metadata (if performed) |
 | `teacher_usage` | object | Teacher model escalation details |
+
+### v2.0 Planned Fields (SigLIP 2 Integration)
+
+> **Status**: Planned - Available after SigLIP 2 multi-task model deployment
+> **Source**: [SIGLIP2_MULTITASK_REQUIREMENTS.md](../planning/SIGLIP2_MULTITASK_REQUIREMENTS.md)
+> **Timeline**: Post Stream 1 schema foundation
+
+These fields will be added to `DocumentMetadata` and `pages` once the SigLIP 2 multi-task model is deployed.
+They are **optional** in v2.0 (absent if SigLIP 2 not available) and will become **recommended** in v3.0.
+
+#### Document-Level New Fields
+
+| Field | Type | Description | Routing Impact |
+|-------|------|-------------|----------------|
+| `script_detection` | object | Primary script detected across document | OCR engine selection (Tier 3 routing) |
+| `capture_method` | object | Predicted physical origin of document | Degradation prediction, correction selection |
+
+#### Per-Page New Fields (in `pages[]`)
+
+| Field | Type | Description | Routing Impact |
+|-------|------|-------------|----------------|
+| `script_detection` | object | Per-page script analysis | Per-page OCR engine routing |
+| `handwriting_assessment` | object | Handwriting presence and characteristics | OCR strategy escalation |
+| `page_attributes` | object | Physical page characteristics | Quality assessment, correction |
+| `resolution_quality` | object | Character-height-aware quality assessment | DPI adjustment decisions |
+
+#### script_detection (Per-Page)
+
+```json
+{
+  "script_detection": {
+    "primary_script": "Latn",
+    "primary_confidence": 0.92,
+    "script_family": "LATIN",
+    "has_non_latin": false,
+    "has_rtl": false,
+    "detection_method": "siglip2_multitask",
+    "script_probabilities": {
+      "Latn": 0.92,
+      "Cyrl": 0.05,
+      "Grek": 0.02,
+      "Zzzz": 0.01
+    }
+  }
+}
+```
+
+**Project B Impact**: Use `primary_script` to select OCR engine via script routing config.
+RTL scripts (`has_rtl: true`) require Tesseract with RTL mode. CJK scripts route to PaddleOCR.
+See `config/script_routing.yaml` for engine mapping.
+
+#### handwriting_assessment (Per-Page)
+
+```json
+{
+  "handwriting_assessment": {
+    "has_handwriting": true,
+    "presence_score": 0.75,
+    "handwriting_ratio": 0.30,
+    "legibility": "partially_legible",
+    "legibility_score": 0.55,
+    "content_type": "annotations",
+    "mixed_content": true
+  }
+}
+```
+
+| Field | Type | Values |
+|-------|------|--------|
+| `has_handwriting` | bool | Handwriting detected on page |
+| `presence_score` | float 0-1 | Confidence of handwriting presence |
+| `handwriting_ratio` | float 0-1 | Proportion of page area with handwriting |
+| `legibility` | enum | `legible`, `partially_legible`, `illegible`, `not_applicable` |
+| `legibility_score` | float 0-1 | Continuous legibility score |
+| `content_type` | enum | `annotations`, `form_fill`, `full_page`, `signatures`, `mixed`, `none`, `unknown` |
+| `mixed_content` | bool | Page has both printed and handwritten content |
+
+**Project B Impact**: `has_handwriting: true` with `legibility: "partially_legible"` should escalate to
+advanced OCR (Textract, Vision). `content_type: "form_fill"` suggests structured extraction.
+
+#### page_attributes (Per-Page)
+
+```json
+{
+  "page_attributes": {
+    "shadow_detected": true,
+    "shadow_score": 0.45,
+    "warping_detected": false,
+    "warping_score": 0.12,
+    "code_detected": false,
+    "code_confidence": 0.05,
+    "capture_method": "SCANNER_FLATBED",
+    "capture_method_confidence": 0.88
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `shadow_detected` | bool | Page has visible shadows (camera capture artifact) |
+| `shadow_score` | float 0-1 | Shadow severity (0=none, 1=severe) |
+| `warping_detected` | bool | Page has geometric warping/curl |
+| `warping_score` | float 0-1 | Warping severity |
+| `code_detected` | bool | Page contains source code / programming content |
+| `code_confidence` | float 0-1 | Code detection confidence |
+| `capture_method` | enum | `BORN_DIGITAL`, `SCANNER_FLATBED`, `SCANNER_ADF`, `CAMERA_PROFESSIONAL`, `CAMERA_SMARTPHONE`, `FAX`, `UNKNOWN` |
+| `capture_method_confidence` | float 0-1 | Capture method prediction confidence |
+
+**Project B Impact**: `shadow_detected` and `warping_detected` indicate camera-captured documents
+that may benefit from DocTr/DocRes pre-processing. `code_detected` suggests monospace font handling.
+
+#### resolution_quality (Per-Page)
+
+```json
+{
+  "resolution_quality": {
+    "estimated_char_height_px": 28,
+    "quality_score": 0.45,
+    "assessment": "borderline",
+    "recommended_action": "upscale_light"
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `estimated_char_height_px` | int | Estimated character height in pixels |
+| `quality_score` | float 0-1 | Resolution adequacy (0=too small, 0.7=optimal, 1.0=oversized) |
+| `assessment` | enum | `too_small`, `borderline`, `adequate`, `optimal`, `oversized` |
+| `recommended_action` | enum | `upscale_heavy`, `upscale_light`, `no_change`, `downscale` |
+
+**Project B Impact**: If Project A correction was applied, this reflects post-correction state.
+If `assessment: "too_small"` persists after correction, Project B should expect lower OCR accuracy.
+
+#### Updated Routing Decision Logic (v2.0)
+
+The routing decision tree gains script-awareness:
+
+```text
+START
+  |
+  +-> Use existing v1.0 routing logic (pdf_type, pre_ocr_risk, layout)
+  |
+  +-> ADDITIONALLY (v2.0):
+        |
+        +-> IF script_detection.has_rtl == true
+        |     -> Override engine to Tesseract RTL mode
+        |
+        +-> IF script_detection.script_family == "CJK"
+        |     -> Override engine to PaddleOCR
+        |
+        +-> IF handwriting_assessment.has_handwriting == true
+        |     AND handwriting_assessment.legibility_score < 0.5
+        |     -> Escalate to vision_simple or vision_structured
+        |
+        +-> IF page_attributes.shadow_score > 0.5
+        |     OR page_attributes.warping_score > 0.5
+        |     -> Consider DocTr/DocRes pre-processing
+        |
+        +-> IF page_attributes.code_detected == true
+              -> Use monospace-aware OCR settings
+```
+
+#### Updated pre_ocr_risk Formula (v2.0)
+
+```text
+pre_ocr_risk = 0.30 * degradation_score
+             + 0.20 * complexity_score
+             + 0.15 * (1 if pdf_type == "image_only" else 0)
+             + 0.10 * (1 - script_detection.primary_confidence)
+             + 0.10 * handwriting_assessment.presence_score
+             + 0.05 * page_attributes.shadow_score
+             + 0.05 * page_attributes.warping_score
+             + 0.05 * (1 - resolution_quality.quality_score)
+```
+
+---
+
+## Schema Version Migration (v1.0 -> v2.0)
+
+| Aspect | v1.0 (Current) | v2.0 (Planned) |
+|--------|----------------|----------------|
+| Script detection | `has_non_latin: bool` only | Full `script_detection` object with ISO 15924 |
+| Handwriting | `has_handwriting: bool` in page_layout_summary | Full `handwriting_assessment` object per page |
+| Capture method | Not present | `capture_method` at document and page level |
+| Page attributes | Not present | `page_attributes` object per page |
+| Resolution quality | `dpi_input`/`dpi_effective` only | `resolution_quality` with char-height analysis |
+| Routing | 4 strategies | 4 strategies + script-aware engine overrides |
+| pre_ocr_risk | 4-factor formula | 8-factor formula with new signals |
+
+**Backward Compatibility**: All v2.0 fields are optional. v1.0 consumers can ignore new fields.
+v2.0 consumers should check field presence before using (`if "script_detection" in page:`).
 
 ---
 
@@ -1080,7 +1273,7 @@ print('Valid!')
 
 For detailed pipeline flow visualization, see:
 
-- **PlantUML Diagram:** `docs/planning/workflows_opus/unified_primary_workflow.puml`
+- **PlantUML Diagram:** `docs/_archived/planning/workflows-opus/unified_primary_workflow.puml` (archived 2026-02-09)
 
 ---
 
@@ -1088,6 +1281,7 @@ For detailed pipeline flow visualization, see:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.0.0-draft | 2026-02-10 | Added v2.0 planned fields (script detection, handwriting, capture method, page attributes, resolution quality), schema migration guide, updated routing logic |
 | 1.0.0 | 2025-11-25 | Initial production specification |
 
 ---
@@ -1100,4 +1294,4 @@ For questions about Project A output:
 - **JSON Schema**: See `docs/schema/document_metadata.schema.json`
 - **Integration Issues**: Create issue in Project A repository
 - **Architecture Questions**: See `docs/development/RAG Pipeline/RAG-pipeline-project-overview.md`
-- **Pipeline Workflow**: See `docs/planning/workflows_opus/unified_primary_workflow.puml`
+- **Pipeline Workflow**: See `docs/_archived/planning/workflows-opus/unified_primary_workflow.puml` (archived 2026-02-09)

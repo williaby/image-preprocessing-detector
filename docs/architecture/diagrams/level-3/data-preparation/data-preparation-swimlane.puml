@@ -104,20 +104,20 @@ fork
   end note
 
 fork again
-  :Run ML IQA (Teacher-Student);
+  :Run ML IQA (Multi-Task Pipeline);
   note right
     **iqa_ml.py**
     LOC: 1,245 lines (30.6%)
 
     **Models**:
-    - ResNet-50 teacher (selective)
-    - ResNet-18 student (default)
+    - MobileNetV4-Conv-S (~3ms, 3 heads)
+    - SigLIP 2 NAFlex (~50ms, 16 heads)
 
     **Features**:
     - Quality score predictions
     - Distortion type (multi-label)
-    - Uncertainty estimates
-    - Ensemble scoring
+    - Per-head confidence scores
+    - Multi-task analysis
 
     **Output**: 12-dim feature vector
   end note
@@ -128,7 +128,8 @@ fork again
     **layout_lite.py**
     LOC: 524 lines (12.9%)
 
-    **Model**: YOLOv10-doc
+    **Models**: Docling layout models
+    (egret-xlarge / heron)
 
     **Detection**:
     - 11 DocLayNet classes
@@ -320,9 +321,9 @@ legend right
   **Key Files**:
   - annotate_base_metadata.py: 9 parsers, COCO cache, metadata gen
   - build_training_labels.py: 45-dim vector, anchor selection
-  - iqa_ml.py: ResNet teacher-student, distortion detection
+  - iqa_ml.py: MobileNetV4 + SigLIP 2 multi-task pipeline
   - iqa_classical.py: 8 CV detectors
-  - layout_lite.py: YOLOv10-doc, 11 classes
+  - layout_lite.py: Docling layout models (egret-xlarge/heron), 11+ classes
   - dqs_calculator.py: Quality scoring
 
   **Workstream: WS3 - Data Preparation**

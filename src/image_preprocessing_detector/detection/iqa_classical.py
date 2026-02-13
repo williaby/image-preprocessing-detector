@@ -198,7 +198,7 @@ class SkewDetector:
             # Calculate angles for all lines
             angles = []
             for line in lines:
-                x1, y1, x2, y2 = line[0]
+                x1, y1, x2, y2 = line[0]  # type: ignore[index]
                 # Skip vertical lines (infinite slope)
                 if x2 - x1 == 0:
                     continue
@@ -2093,7 +2093,6 @@ class BinarizationQualityDetector:
             scale = min(max_dim / h, max_dim / w)
             new_h, new_w = int(h * scale), int(w * scale)
             gray = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
-            h, w = gray.shape
 
         # Compute bimodality score (histogram analysis)
         bimodality_score, estimated_threshold = self._compute_bimodality(gray)
@@ -2609,7 +2608,9 @@ class BleedThroughDetector:
         # Calculate bleed intensity (average intensity of detected patterns)
         bleed_pixels = bg_diff[bleed_mask > 0]
         bleed_intensity = (
-            float(np.mean(bleed_pixels)) / 255.0 if len(bleed_pixels) > 0 else 0.0
+            float(np.mean(bleed_pixels.astype(np.float64))) / 255.0
+            if len(bleed_pixels) > 0
+            else 0.0
         )
 
         return bleed_mask, bleed_intensity, background_uniformity

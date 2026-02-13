@@ -2053,7 +2053,6 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ Single-document routes (stub: `/process` endpoint defined)
 - ✅ Docker configuration (Dockerfile, Dockerfile.gpu)
 - ✅ Docker Compose for local development
-- ✅ Kubernetes manifests (k8s/ directory with deployment templates)
 - ✅ E2E test suite (7 files, 2000+ lines):
   - test_pipeline_e2e.py (590+ lines)
   - test_phase2_complete.py
@@ -2069,7 +2068,7 @@ Albumentations pipeline (see Training Data Strategy)
 - ❌ Batch processing implementation (queue management, worker pools)
 - ❌ Integration with inference pipeline (endpoints don't call detection)
 - ❌ Model loading in API startup
-- ❌ Deployment automation (no helm charts, no CI/CD deployment)
+- ❌ Deployment automation (no CI/CD deployment)
 - ❌ Performance benchmarking framework
 - ❌ Load testing suite
 - ❌ API consumer documentation
@@ -2130,10 +2129,6 @@ Albumentations pipeline (see Training Data Strategy)
   - Multi-stage Dockerfile (<2GB target), health checks.
   - docker-compose with Redis/queue for local dev.
   - Smoke test container locally.
-- **Sprint 5.2.6**: Optional K8s manifests (2 hours)
-  - GPU and CPU Deployments, HPAs, PodDisruptionBudgets.
-  - Example values file for secrets/config maps.
-  - Validate manifests with kubeval/kubectl dry-run.
 
 #### Week 20: Documentation & Final Integration (Day 63-65, 7 sprints)
 
@@ -2142,7 +2137,7 @@ Albumentations pipeline (see Training Data Strategy)
   - Usage examples for /process and /batch.
   - Add curl snippets and sample responses.
 - **Sprint 5.3.2**: Deployment guide (2 hours)
-  - Local, container, K8s, and Modal configuration paths.
+  - Local, container, and Modal configuration paths.
   - Env var matrix and secrets checklist.
   - Troubleshooting section for cold starts and GPU detection.
 - **Sprint 5.3.3**: Model card updates (2 hours)
@@ -2168,7 +2163,6 @@ Albumentations pipeline (see Training Data Strategy)
 - ✅ Comprehensive test suite (80%+ coverage, 22 sprints)
 - ✅ FastAPI service with async endpoints
 - ✅ Docker container and Docker Compose
-- ✅ Kubernetes manifests (optional)
 - ✅ Complete documentation (API, deployment, models, integration)
 - ✅ Architecture Decision Records (5 ADRs)
 - ✅ Integration guide for Project B
@@ -2869,7 +2863,6 @@ These classifiers enhance routing decisions and quality assessment by providing 
 
 - Docker (service containerization)
 - Docker Compose (local development)
-- Kubernetes (production orchestration, optional)
 
 **Remote GPU (Optional):**
 

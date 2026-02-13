@@ -56,22 +56,23 @@ This directory contains operational runbooks for responding to alerts from the I
 
 ```bash
 # Check service health
-kubectl get pods -n imgprep -l app=imgprep
+docker ps --filter name=imgprep
 
 # View recent logs
-kubectl logs -n imgprep -l app=imgprep --tail=100
+docker logs imgprep-worker --tail=100
 
 # Restart workers
-kubectl rollout restart deployment/imgprep-worker -n imgprep
+docker restart imgprep-worker
 
 # Scale workers
-kubectl scale deployment/imgprep-worker --replicas=4 -n imgprep
+docker compose up -d --scale imgprep-worker=4
 
 # Check queue depth
 curl -s http://imgprep:8000/metrics | grep imgprep_queue_depth
 
 # Disable teacher model (emergency)
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_ENABLED=false -n imgprep
+export IMGPREP_TEACHER_ENABLED=false
+docker restart imgprep-worker
 ```
 
 ### Dashboard Links

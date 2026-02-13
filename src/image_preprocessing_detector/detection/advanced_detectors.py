@@ -341,7 +341,7 @@ def detect_perspective(image: np.ndarray) -> PerspectiveResult:
         )
 
     # Extract corners
-    corners = [(int(pt[0][0]), int(pt[0][1])) for pt in approx]
+    corners = [(int(pt[0][0]), int(pt[0][1])) for pt in approx]  # type: ignore[index]
 
     # Sort corners: top-left, top-right, bottom-right, bottom-left
     corners = sorted(corners, key=lambda x: x[1])  # Sort by y
@@ -814,9 +814,6 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
     if image is None or image.size == 0:
         raise ValueError("Invalid image")
 
-    # Image dimensions available for future aspect ratio checks
-    _h, _w = image.shape[:2]
-
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if len(image.shape) == 3 else image
 
@@ -847,7 +844,7 @@ def detect_text_orientation(image: np.ndarray) -> OrientationResult:
     angles = []
 
     for line in lines:
-        x1, y1, x2, y2 = line[0]
+        x1, y1, x2, y2 = line[0]  # type: ignore[index]
         angle = abs(np.arctan2(y2 - y1, x2 - x1) * 180 / np.pi)
         angles.append(angle)
 

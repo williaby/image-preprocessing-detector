@@ -1,0 +1,248 @@
+@startuml metadata-schema-architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle rectangle
+skinparam componentStyle rectangle
+
+title Metadata Schema Architecture (V2)\nThree-Layer Data Flow (Immutable → Enrichment → Training)
+footer Project A - Data Preparation | v2.0 | January 2026
+
+' ============================================================================
+' COLOR DEFINITIONS
+' ============================================================================
+!define IMMUTABLE_COLOR #FFF3E0
+!define ENRICHMENT_COLOR #E3F2FD
+!define TRAINING_COLOR #E8F5E9
+!define EXTERNAL_COLOR #FFEBEE
+!define UTILITY_COLOR #F3E5F5
+!define WORKFLOW_COLOR #F5F5DC
+
+' ============================================================================
+' EXTERNAL DATA SOURCES
+' ============================================================================
+rectangle "Source Datasets" as Sources #EXTERNAL_COLOR {
+    rectangle "IQA Benchmarks" as IQA {
+        [DIQA-5000\n(CSV: overall, sharpness, color_fidelity)]
+        [SmartDoc-QA\n(JSON: quality_score)]
+        [OCR-Quality\n(JSON: score)]
+    }
+    rectangle "Layout Datasets" as Layout {
+        [DocLayNet\n(COCO JSON)]
+        [TableBank\n(COCO JSON)]
+        [FUNSD\n(Custom JSON)]
+    }
+    rectangle "Handwriting" as HW {
+        [SignaTR6K\n(Directory)]
+        [NIST-SD19\n(Metadata)]
+        [PUCIT-OHUL\n(Urdu)]
+    }
+}
+
+note right of Sources
+  **Source:**
+  - /mnt/e/image_detection/01_base_data/
+  - /mnt/e/image_detection/02_benchmark_only/
+
+  **Documentation:**
+  [[docs/DATASET_CATALOG.md]]
+  [[docs/schema/LABEL_MAPPING_SPECIFICATION.md]]
+
+  **Registry:**
+  40 datasets, ~1.07M images
+end note
+
+' ============================================================================
+' LAYER 1: IMMUTABLE (Original Labels)
+' ============================================================================
+package "Layer 1: IMMUTABLE" as L1 #IMMUTABLE_COLOR {
+    rectangle "OriginalLabels Dataclass" as OL {
+        [DIQA Fields\ndiqa_overall, diqa_sharpness\ndiqa_color_fidelity, diqa_mos]
+        [Layout Fields\ndoclaynet_annotations\ntablebank_annotations]
+        [Handwriting Fields\nwriter_id, transcription\nis_genuine]
+        [Multilingual Fields\nlanguage_code, script_name\ntext_instances]
+    }
+
+    rectangle "Parser Registry (V2)" as Parsers {
+        [annotation/parsers/quality/\nDIQAParser, SmartDocParser\nOCRQualityParser]
+        [annotation/parsers/layout/\nDocLayNetParser, TableBankParser\nPubTabNetParser, FUNSDParser]
+        [annotation/parsers/handwriting/\nSignaTRParser, NISTParser\nMathsHandwritingParser]
+    }
+}
+
+note right of L1
+  **Source (V2):**
+  - annotation/schemas/immutable.py
+    (OriginalLabels, OriginalFileMetadata)
+  - annotation/parsers/registry.py
+    (ParserRegistry, 38+ parsers)
+  - annotation/parsers/base.py
+    (DatasetParser protocol)
+
+  **Principle:**
+  Exact preservation of source labels
+  Never modified after initial capture
+  Dataset-specific field names
+
+  **DIQA-5000 Terminology:**
+  |= CSV |= Schema |= Conceptual |
+  | overall | diqa_overall | Authentic |
+  | sharpness | diqa_sharpness | Technical |
+  | color_fidelity | diqa_color_fidelity | Aesthetic |
+end note
+
+' ============================================================================
+' LAYER 2: ENRICHMENT (Standardized)
+' ============================================================================
+package "Layer 2: ENRICHMENT" as L2 #ENRICHMENT_COLOR {
+    rectangle "EnrichmentData (V2)" as ED {
+        [Quality Normalization\nquality_overall (0-1)\nlayout_detections]
+        [Content Flags\nhas_table, has_formula\nhas_handwriting, has_figure]
+        [Capture Method\ncapture_method, domain\nresolution_category]
+        [Multi-Task Namespace\nmetadata.data.multi_task\ncolor_mode, document_age]
+    }
+
+    rectangle "Provider Pattern (V2)" as Providers {
+        [DoclingLayoutProvider\negret-xlarge / heron\nlayout detection]
+        [SigLIP2Provider\n16-head multi-task\n5 groups batch inference]
+        [Built-in Tiers\ntier_0 (by construction)\ntier_1 (existing annotations)]
+    }
+
+    rectangle "Schema Utilities" as Utils #UTILITY_COLOR {
+        [iso_language_script.py\nISO639Language, ISO15924Script\nScriptFamily, BCP47 tags]
+        [iso_paper_sizes.py\nPaperSize detection\nISO 216 compliance]
+        [text_scope.py\nTextScope classification\nScope estimation]
+        [dataset_source.py\nDATASET_REGISTRY\nProvenance tracking]
+    }
+}
+
+note right of L2
+  **Source (V2):**
+  - annotation/schemas/enrichment.py
+  - annotation/enrichment/manager.py
+  - annotation/enrichment/providers/
+    yolo.py, siglip.py, base.py
+
+  **Provider Tiers:**
+  Tier 0: By construction (content flags)
+  Tier 1: Existing annotations (COCO, MOS)
+  Tier 2: ML inference (Docling Layout, SigLIP 2)
+  Tier 3: Heuristics (fallback)
+
+  **Schema Utilities:**
+  - src/.../schema_utils/
+end note
+
+' ============================================================================
+' V2 WORKFLOW: THREE-STAGE PIPELINE
+' ============================================================================
+package "V2 Pipeline (annotation.workflow)" as Pipeline #WORKFLOW_COLOR {
+    rectangle "CPU Stage" as CPU {
+        [Parallel SHA256\n(ProcessPoolExecutor)]
+    }
+    rectangle "Parse Stage" as Parse {
+        [Sequential parsing\n(parser caches)]
+    }
+    rectangle "GPU Stage" as GPU {
+        [Single-thread batched\n(CUDA safety)]
+    }
+    rectangle "IO Stage" as IO {
+        [Checkpointed writes\n(atomic operations)]
+    }
+}
+
+' ============================================================================
+' LAYER 3: TRAINING (Task-Specific)
+' ============================================================================
+package "Layer 3: TRAINING" as L3 #TRAINING_COLOR {
+    rectangle "Partitioned Parquet (V2)" as Parquet {
+        [metadata_registry/parquet/\ndataset_name=X/\npart-0000.parquet]
+    }
+
+    rectangle "DataLoader Integration" as DL {
+        [DIQA5000Dataset\nlabels = {\n  overall, sharpness, color\n}]
+        [Normalization\n(score - 1.0) / 4.0\n→ 0-1 range]
+    }
+
+    rectangle "Model Heads" as Heads {
+        [SigLIP2 Multi-Head\noverall, sharpness, color]
+        [DeQA Specialists\nDIQA_overall, DIQA_sharpness\nDIQA_color]
+        [VQualA Metric\n0.5*overall + 0.25*sharp\n+ 0.25*color]
+    }
+}
+
+note right of L3
+  **Source:**
+  - modal/train_siglip2_iqa_v2.py
+  - src/.../labeling/deqa/config.py
+  - src/.../labeling/finetuning/dataset.py
+
+  **V2 Storage:**
+  Hive-style partitioning
+  O(1) per-dataset writes
+  pyarrow.dataset unified view
+
+  **Head Mapping:**
+  |= Schema |= Training |= Head |
+  | diqa_overall | overall | overall |
+  | diqa_sharpness | sharpness | sharpness |
+  | diqa_color_fidelity | color | color |
+end note
+
+' ============================================================================
+' DATA FLOW CONNECTIONS
+' ============================================================================
+
+' Sources to Layer 1
+Sources --> L1 : Raw labels\n(CSV, JSON, directory)
+
+' Layer 1 to Pipeline
+L1 --> Pipeline : ParsedSample
+
+' Pipeline to Layer 2
+Pipeline --> L2 : EnrichedSample
+
+' Layer 2 to Layer 3
+L2 --> L3 : SampleMetadata
+
+' Internal Layer 1 flows
+IQA --> Parsers
+Layout --> Parsers
+HW --> Parsers
+Parsers --> OL
+
+' Pipeline internal
+CPU --> Parse
+Parse --> GPU
+GPU --> IO
+
+' Internal Layer 2 flows
+OL --> ED : Enrich
+ED --> Providers : Provider chain
+Providers --> ED
+Utils ..> ED : Utilities
+
+' Internal Layer 3 flows
+ED --> Parquet : Export
+Parquet --> DL : Load
+DL --> Heads : Train
+
+' ============================================================================
+' LEGEND
+' ============================================================================
+legend right
+  |= Color |= Layer |
+  | <#FFEBEE> | External Sources |
+  | <#FFF3E0> | Layer 1: Immutable |
+  | <#E3F2FD> | Layer 2: Enrichment |
+  | <#E8F5E9> | Layer 3: Training |
+  | <#F5F5DC> | V2 Pipeline |
+  | <#F3E5F5> | Schema Utilities |
+
+  **V2 Architecture:**
+  annotation/ package (~19,600 LOC)
+  38+ dataset parsers
+  Provider pattern for ML enrichment
+  Three-stage CPU/GPU/IO pipeline
+endlegend
+
+@enduml

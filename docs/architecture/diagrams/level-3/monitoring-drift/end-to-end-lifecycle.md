@@ -172,11 +172,11 @@ activate Sampler
 
 Sampler -> Sampler: check_harvest_criteria()
 note right
-  **Harvest Triggers:**
-  1. High uncertainty (entropy > 0.7)
-  2. Teacher escalation
-  3. Classical/ML discrepancy > 0.2
-  4. Low confidence (< 0.5)
+  **Harvest Triggers (per-head):**
+  1. Per-head confidence drop below threshold
+  2. Cross-head disagreement
+  3. Classical-ML disagreement per head
+  4. Per-head entropy above threshold
   5. Manual flagging
 
   **Code:** drift/active_learning.py:150-200
@@ -365,10 +365,12 @@ alt Threshold Met
     **Modal Training Job:**
     - GPU: A10 or T4
     - Resume from last checkpoint
-    - Fine-tune on new samples
+    - Fine-tune multi-task model on new samples
+    - Head-specific retraining supported
+      (freeze unaffected heads)
     - Early stopping (patience=5)
 
-    **Code:** modal/train_student_distillation.py
+    **Code:** modal/train_multi_task.py (planned)
   end note
 
   Training --> Orchestrator: training_job_id
@@ -400,11 +402,14 @@ end
 Orchestrator -> Arena: submit_benchmark_job(new_model)
 activate Arena
 note right
-  **Model Arena Validation:**
-  - Benchmark on DIQA5000
-  - Compute PLCC, SRCC, MAE
-  - Compare to baseline
-  - Threshold: PLCC ≥ 0.88
+  **Model Arena Validation (multi-task):**
+  - Per-head benchmark on task-specific test sets
+  - Compute per-head metrics (PLCC, Acc, MAE, F1)
+  - Compare to per-head baselines
+  - All heads must meet thresholds:
+    IQA PLCC>0.65, Orient Acc>95%,
+    Skew MAE<0.5, Script Acc>90%,
+    Handwriting F1>0.85
 
   **Code:** src/.../arena/benchmark_runner.py
   **Reference:** WS6 Model Arena
@@ -417,11 +422,13 @@ deactivate Arena
 Orchestrator -> Orchestrator: evaluate_deployment_gate()
 activate Orchestrator
 note right
-  **Deployment Gates:**
-  1. PLCC ≥ 0.88 (quality threshold)
-  2. SRCC ≥ 0.85 (rank correlation)
-  3. MAE ≤ 0.15 (error threshold)
-  4. No regression vs baseline
+  **Deployment Gates (per-head):**
+  1. IQA PLCC > 0.65
+  2. Orientation Accuracy > 95%
+  3. Skew MAE < 0.5 degrees
+  4. Script Accuracy > 90%
+  5. Handwriting F1 > 0.85
+  6. No head regression vs baseline
 
   **Code:** drift/retraining.py:550-600
 end note
@@ -431,8 +438,9 @@ alt Gates Pass
   Orchestrator -> Orchestrator: mark_model_for_deployment()
   note right
     **Deployment Metadata:**
-    - model_id, version
-    - benchmark_results
+    - model_id, version (siglip2_naflex-v1.x)
+    - per_head_benchmark_results (16 heads)
+    - mobilenetv4_benchmark_results (3 heads)
     - approval_timestamp
     - deployment_tier (canary/full)
 
@@ -559,11 +567,13 @@ end note
 
 VALIDATING --> COMPLETED: gates_pass()
 note on link
-  **Conditions:**
-  - PLCC ≥ 0.88
-  - SRCC ≥ 0.85
-  - MAE ≤ 0.15
-  - No regression
+  **Conditions (per-head):**
+  - IQA PLCC > 0.65
+  - Orientation Acc > 95%
+  - Skew MAE < 0.5
+  - Script Acc > 90%
+  - Handwriting F1 > 0.85
+  - No head regression > 2%
 
   **Action:**
   - Mark for deployment
@@ -972,54 +982,65 @@ Before deploying a retrained model, the **Model Arena** validates quality thresh
 **Code Reference**: `drift/retraining.py:550-600`
 
 ```python
+# Per-head graduation thresholds for multi-task model
+PER_HEAD_THRESHOLDS = {
+    "iqa": {"metric": "plcc", "threshold": 0.65, "direction": "above"},
+    "orientation": {"metric": "accuracy", "threshold": 0.95, "direction": "above"},
+    "skew": {"metric": "mae", "threshold": 0.5, "direction": "below"},
+    "script": {"metric": "accuracy", "threshold": 0.90, "direction": "above"},
+    "handwriting": {"metric": "f1", "threshold": 0.85, "direction": "above"},
+}
+
 def evaluate_deployment_gate(
     job: RetrainingJob,
-    benchmark_results: BenchmarkResults
+    per_head_results: dict[str, BenchmarkResults],
 ) -> tuple[bool, str]:
-    """Evaluate if model meets deployment gates.
+    """Evaluate if multi-task model meets all per-head deployment gates.
 
     Returns:
         (passes, reason)
     """
     gates = []
 
-    # Gate 1: PLCC threshold
-    if benchmark_results.plcc < 0.88:
-        gates.append(f"PLCC below threshold: {benchmark_results.plcc:.3f} < 0.88")
+    for head, config in PER_HEAD_THRESHOLDS.items():
+        result = per_head_results.get(head)
+        if result is None:
+            gates.append(f"Missing benchmark for head: {head}")
+            continue
 
-    # Gate 2: SRCC threshold
-    if benchmark_results.srcc < 0.85:
-        gates.append(f"SRCC below threshold: {benchmark_results.srcc:.3f} < 0.85")
+        value = getattr(result, config["metric"])
+        threshold = config["threshold"]
 
-    # Gate 3: MAE threshold
-    if benchmark_results.mae > 0.15:
-        gates.append(f"MAE above threshold: {benchmark_results.mae:.3f} > 0.15")
+        if config["direction"] == "above" and value < threshold:
+            gates.append(f"{head} {config['metric']} below threshold: {value:.3f} < {threshold}")
+        elif config["direction"] == "below" and value > threshold:
+            gates.append(f"{head} {config['metric']} above threshold: {value:.3f} > {threshold}")
 
-    # Gate 4: No regression vs baseline
+    # Check no-regression rule (2% tolerance per head)
     baseline = load_baseline_benchmark()
-    if benchmark_results.plcc < baseline.plcc - 0.02:  # 2% tolerance
-        gates.append(
-            f"Regression vs baseline: "
-            f"{benchmark_results.plcc:.3f} < {baseline.plcc:.3f}"
-        )
+    for head, result in per_head_results.items():
+        if head in baseline and result.primary_metric < baseline[head] - 0.02:
+            gates.append(f"{head} regression vs baseline: {result.primary_metric:.3f}")
 
     if gates:
         reason = "; ".join(gates)
         logger.warning(f"Deployment gates failed for job {job.job_id}: {reason}")
         return False, reason
 
-    logger.info(f"Deployment gates passed for job {job.job_id}")
-    return True, "All gates passed"
+    logger.info(f"Deployment gates passed for job {job.job_id} (all heads)")
+    return True, "All per-head gates passed"
 ```
 
-### Gate Thresholds Summary
+### Gate Thresholds Summary (Per-Head)
 
-| Gate | Metric | Threshold | Rationale |
-|------|--------|-----------|-----------|
-| **Quality** | PLCC | ≥ 0.88 | Minimum correlation with human ratings |
-| **Ranking** | SRCC | ≥ 0.85 | Rank-order preservation |
-| **Error** | MAE | ≤ 0.15 | Acceptable average error (0-1 scale) |
-| **Regression** | PLCC delta | ≥ -0.02 | No more than 2% degradation vs baseline |
+| Head Group | Metric | Threshold | Rationale |
+|------------|--------|-----------|-----------|
+| **IQA** | PLCC | > 0.65 | Minimum correlation with human quality ratings |
+| **Orientation** | Accuracy | > 95% | Near-perfect 4-class orientation detection |
+| **Skew** | MAE | < 0.5 degrees | Sub-degree skew angle accuracy |
+| **Script** | Accuracy | > 90% | Reliable multi-script classification |
+| **Handwriting** | F1 | > 0.85 | Balanced handwriting detection |
+| **Regression** | Per-head delta | ≥ -2% | No head may regress beyond 2% of baseline |
 
 **Failure Handling**:
 

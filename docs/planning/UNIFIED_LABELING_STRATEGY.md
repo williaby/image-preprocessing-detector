@@ -18,13 +18,13 @@ title: Unified Labeling Strategy for Cross-Dataset Consistency
 
 ### Strategic References
 
-- [DeQA-Doc_Analysis_Deep_Dive.md](DeQA-Doc_Analysis_Deep_Dive.md) - VQualA 2025 winner methodology analysis
-- [DIQA-5000_Pseudo_Labels_v2.md](DIQA-5000_Pseudo_Labels_v2.md) - Original multi-model ensemble approach
+- [DeQA-Doc_Analysis_Deep_Dive.md](../_archived/planning/diqa-deqa-research/DeQA-Doc_Analysis_Deep_Dive.md) - VQualA 2025 winner methodology analysis (archived)
+- [DIQA-5000_Pseudo_Labels_v2.md](../_archived/planning/diqa-deqa-research/DIQA-5000_Pseudo_Labels_v2.md) - Original multi-model ensemble approach (archived)
 
 ### Dataset Documentation
 
 - [DATASET_CATALOG.md](../DATASET_CATALOG.md) - Inventory of all 22 datasets
-- [dataset-taxonomy-coverage.md](../reference/dataset-taxonomy-coverage.md) - Label coverage matrix
+- [dataset-taxonomy-coverage.md](../_archived/reference/dataset-taxonomy-coverage.md) - Label coverage matrix
 
 ### Existing Automated Labeling Pipeline
 
@@ -89,7 +89,7 @@ The core insight from DeQA-Doc is that we should train a model on **DIQA-5000 us
 
 ### Current State
 
-From [dataset-taxonomy-coverage.md](../reference/dataset-taxonomy-coverage.md):
+From [dataset-taxonomy-coverage.md](../_archived/reference/dataset-taxonomy-coverage.md):
 
 ```
 Perceptual Scores (Axis 7):
@@ -163,7 +163,7 @@ Based on analysis of the [DeQA-Doc repository](/home/byron/dev/DeQA-Doc/), we re
 | **OCR-Quality** | 1,000 | 1-dim (1-4) | OCR quality + multilingual | Local: `01_base_data/ocr_quality/` | **HIGH (NEW)** |
 | **DIBCO** | 131 | Binarization GT | Extreme degradation edge cases | Local: `02_benchmark_only/dibco/` | HIGH |
 | **FUNSD** | 199 | NER annotations | Real noisy scanned forms | Local: `01_base_data/forms/funsd/` | MEDIUM |
-| **SROIE** | 973 | Entity extraction | Mobile capture / thermal print | Local: `01_base_data/forms/sroie/` | MEDIUM |
+| **SROIE** | 973 | Entity extraction | Malaysian receipts (camera + scanner) | Local: `01_base_data/forms/sroie_icdar2019/` | MEDIUM |
 | **Tobacco-800** | 1,290 | N/A | Real archival degradation | Local: `01_base_data/degraded/tobacco800/` | MEDIUM |
 | **Total Stage 1** | **~13,363** | | Diverse anchor set | | |
 
@@ -684,7 +684,7 @@ def pseudo_label_dataset(
 
 ### Dataset Priority Order
 
-Based on [dataset-taxonomy-coverage.md](../reference/dataset-taxonomy-coverage.md):
+Based on [dataset-taxonomy-coverage.md](../_archived/reference/dataset-taxonomy-coverage.md):
 
 | Priority | Dataset | Images | Reason |
 |----------|---------|--------|--------|
@@ -1197,7 +1197,7 @@ def evaluate_model(model, validation_set):
 
 1. [DeQA-Doc_Analysis_Deep_Dive.md](DeQA-Doc_Analysis_Deep_Dive.md) - Soft-label methodology
 2. [DIQA-5000_Pseudo_Labels_v2.md](DIQA-5000_Pseudo_Labels_v2.md) - Original multi-model approach
-3. [dataset-taxonomy-coverage.md](../reference/dataset-taxonomy-coverage.md) - Label coverage matrix
+3. [dataset-taxonomy-coverage.md](../_archived/reference/dataset-taxonomy-coverage.md) - Label coverage matrix
 4. [DATASET_CATALOG.md](../DATASET_CATALOG.md) - Dataset inventory
 5. DeQA-Doc Paper: [arXiv:2507.12796](https://arxiv.org/abs/2507.12796)
 6. DocIQ Paper: [arXiv:2509.17012](https://arxiv.org/abs/2509.17012)

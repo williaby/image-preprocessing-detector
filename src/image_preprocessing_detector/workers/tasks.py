@@ -136,7 +136,7 @@ def run_iqa_analysis(
     image_b64: str,
     request_id: str | None = None,
     enable_teacher: bool = False,  # noqa: ARG001 - reserved for future use
-    doc_id: str | None = None,
+    doc_id: str | None = None,  # noqa: ARG001 - reserved for budget tracking
 ) -> dict[str, Any]:
     """Run IQA analysis on an image with device-priority routing.
 
@@ -151,7 +151,6 @@ def run_iqa_analysis(
         Dictionary with IQA scores and metadata including device selection
     """
     start_time = time.perf_counter()
-    _doc_id = doc_id or request_id or "unknown"
 
     try:
         # Decode image
@@ -247,7 +246,7 @@ def process_single_document(
     self: Task,
     file_content_b64: str,
     filename: str,
-    options: dict[str, Any] | None = None,
+    options: dict[str, Any] | None = None,  # noqa: ARG001 - reserved for processing options
 ) -> dict[str, Any]:
     """Process a single document.
 
@@ -261,7 +260,6 @@ def process_single_document(
         Dictionary with processing results
     """
     start_time = time.perf_counter()
-    _options = options or {}
 
     try:
         # Decode file content

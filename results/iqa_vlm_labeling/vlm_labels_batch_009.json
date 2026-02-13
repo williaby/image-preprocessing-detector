@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T07:15:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 9,
+  "labels": [
+    {
+      "image_id": "test/ori/test_ori_00049.jpg",
+      "id": "caa5c19d-dfb9-4116-9d0f-16542dd35fd4",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 2.5,
+        "contrast": 3.0,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Screen capture of handwritten Chinese physics notes about sliding friction. Blue ink. Friction direction diagrams, surface contact patterns, coefficient formulas. Toolbar visible. Moderate moire but relatively clear."
+    },
+    {
+      "image_id": "test/ori/test_ori_00068.jpg",
+      "id": "558d7118-45e9-4ac2-a0ff-d9a4d311c73b",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.5,
+        "contrast": 1.8,
+        "illumination": 3.5,
+        "compression": 3.5,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured English probability textbook, page 26. Solutions to Problems 2.22-2.23. Geometric random variables, card probabilities. EXTREMELY faded/washed out - text barely visible. Clean but contrast is catastrophically low."
+    },
+    {
+      "image_id": "train/ori/train_ori_00318.jpg",
+      "id": "6c1650d5-9eb7-4791-9c12-78cf9fb14379",
+      "scores": {
+        "sharpness": 2.5,
+        "noise": 2.5,
+        "contrast": 3.0,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.5
+      },
+      "notes": "Screen capture of handwritten Chinese linear algebra notes. Jordan canonical form problems (#28). Dense matrix computations, eigenvalues, Jordan blocks. Very small and dense. Some moire from screen capture."
+    },
+    {
+      "image_id": "test/ori/test_ori_00012.jpg",
+      "id": "9fd37349-8490-4342-884c-4f5fee36492a",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese thesis/research plan about crowd pedestrian detection. Project schedule 2022-2023. References section header. Finger visible. Clean typed text, good structure, slight fading."
+    },
+    {
+      "image_id": "train/ori/train_ori_00221.jpg",
+      "id": "b4c98428-fe16-4529-a38a-2e67a7dddcb6",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.5,
+        "contrast": 1.8,
+        "illumination": 3.5,
+        "compression": 3.5,
+        "overall": 2.5
+      },
+      "notes": "Camera-captured English probability textbook, page 17. Combinatorics problems (1.55, 1.56). Card distributions, multinomial coefficients. EXTREMELY faded/washed out like test_ori_00068. Clean but nearly invisible text."
+    },
+    {
+      "image_id": "train/ori/train_ori_00037.jpg",
+      "id": "d8af3006-452c-4d11-a8b4-884333ec7b23",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese scientific document about nuclear reactors, biological evolution (RNA, HMM), cognitive neuroscience (fMRI, beta waves). Original version of train_res_00362. Finger at top. Moderate fading."
+    },
+    {
+      "image_id": "train/ori/train_ori_00109.jpg",
+      "id": "d642856f-c07f-44a7-be42-c25de0fbf2e3",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 3.0,
+        "contrast": 3.0,
+        "illumination": 2.5,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Chinese document about quantum communication. BB84 protocol, quantum key distribution, photon polarization. Paper has visible wrinkles/creases causing uneven illumination. Good text clarity despite physical damage."
+    },
+    {
+      "image_id": "train/ori/train_ori_00055.jpg",
+      "id": "57db9ae1-3c68-4ae0-b195-7de52976dc73",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Camera-captured Chinese research proposal about pedestrian detection (PISA, ATSS algorithms). Feature map, anchor-based vs anchor-free. Finger at bottom right. Clean typed text, moderate fading."
+    },
+    {
+      "image_id": "train/ori/train_ori_00218.jpg",
+      "id": "759a462a-66ee-41c0-b019-f61f8e3b4d4e",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Camera-captured Chinese creative writing story outline. Story synopsis with 4 plot points about secrets, growth, reconciliation. Clean typed text, well-formatted bullet points. Good quality capture, best in this batch."
+    },
+    {
+      "image_id": "train/ori/train_ori_00105.jpg",
+      "id": "451ec25e-0301-47d4-b571-07ebbe1c8cfb",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 2.5,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Camera-captured Python code for stochastic differential equations. Matplotlib plotting, coupled_SDE simulations, sigma_hat trajectory parameters. Clean typed code, grayish fading. Edge shadows visible."
+    }
+  ]
+}

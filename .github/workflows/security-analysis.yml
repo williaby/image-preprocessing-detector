@@ -180,6 +180,10 @@ jobs:
           # - dulwich: Apache-2.0 or GPL-2.0+ (Git impl, Apache preferred)
           # - pygit2: GPL-2.0 with linking exception (libgit2 wrapper)
           # - zc-lockfile: No license detected (Zope component, likely ZPL)
+          # - llvmlite: Compound SPDX (BSD-2-Clause AND Apache-2.0 AND LLVM-exception)
+          # - easyocr: Apache-2.0 (OpenSSF score ~4/10 due to lack of branch
+          #     protection, signed releases, and fuzzing; 14K+ GitHub stars,
+          #     actively maintained, widely used for multilingual OCR)
           # See docs/security/LICENSE-EXCEPTIONS.md for detailed justification
           allow-dependencies-licenses: >-
             pkg:pypi/grandalf,
@@ -187,7 +191,9 @@ jobs:
             pkg:pypi/billiard,
             pkg:pypi/dulwich,
             pkg:pypi/pygit2,
-            pkg:pypi/zc-lockfile
+            pkg:pypi/zc-lockfile,
+            pkg:pypi/llvmlite,
+            pkg:pypi/easyocr
 
   # Comprehensive security tooling
   security-scanning:

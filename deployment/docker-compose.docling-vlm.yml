@@ -1,0 +1,98 @@
+# Docling OCR Server with GraniteDocling VLM
+# Higher accuracy mode using IBM's GraniteDocling-258M model
+#
+# Deploy on Docker VM: 192.168.1.209
+#
+# This version uses the VLM pipeline for better:
+#   - Formula recognition (97% vs 40%)
+#   - Code block extraction (98.8%)
+#   - Complex layout understanding
+#
+# Resource usage: ~24GB RAM (vs 16GB for standard mode)
+# Throughput: ~8-10 pg/s (vs 12 pg/s standard)
+#
+# Usage:
+#   docker compose -f docker-compose.docling-vlm.yml up -d
+
+services:
+  docling-serve:
+    image: quay.io/docling-project/docling-serve:latest
+    container_name: docling-serve-vlm
+    restart: unless-stopped
+
+    ports:
+      - "5001:5001"
+
+    environment:
+      # Server configuration
+      - DOCLING_SERVE_ENABLE_UI=true
+      - DOCLING_SERVE_HOST=0.0.0.0
+      - DOCLING_SERVE_PORT=5001
+
+      # Worker configuration (fewer workers for VLM)
+      - DOCLING_SERVE_WORKERS=4
+      - DOCLING_SERVE_TIMEOUT=600
+
+      # VLM Pipeline configuration
+      - DOCLING_PIPELINE=vlm
+      - DOCLING_VLM_MODEL=ibm-granite/granite-docling-258M
+      - DOCLING_VLM_FRAMEWORK=transformers
+
+      # CPU optimization (no GPU)
+      - DOCLING_DEVICE=cpu
+      - OMP_NUM_THREADS=12
+      - MKL_NUM_THREADS=12
+      - OPENBLAS_NUM_THREADS=12
+
+      # VLM batch settings (lower than standard due to memory)
+      - DOCLING_VLM_CONCURRENCY=4
+      - DOCLING_PAGE_BATCH_SIZE=4
+
+      # Memory optimization
+      - MALLOC_ARENA_MAX=4
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface
+
+    volumes:
+      # Model cache (persistent - GraniteDocling model ~1GB)
+      - docling-vlm-cache:/root/.cache
+
+      # Datasets (read-only NFS mount)
+      - /mnt/unraid/datasets:/data/datasets:ro
+
+      # Output directory
+      - /mnt/unraid/appdata/docling/output:/data/output:rw
+
+    # Resource limits (VLM needs more RAM)
+    mem_limit: 48g
+    cpus: 10
+    deploy:
+      resources:
+        limits:
+          cpus: '10'
+          memory: 48G
+        reservations:
+          cpus: '6'
+          memory: 24G
+
+    # Health check (longer start for model download)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s  # 5 min for model download
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+volumes:
+  docling-vlm-cache:
+    driver: local
+
+networks:
+  default:
+    name: docling-network

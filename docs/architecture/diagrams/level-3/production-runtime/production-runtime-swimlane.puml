@@ -172,7 +172,7 @@ if (Text detected?) then (yes)
       - src/image_preprocessing_detector/detection/layout_lite/layout_types.py (107 lines)
 
       **Purpose:**
-      - DocLayout-YOLO integration (11 DocLayNet classes)
+      - Docling layout integration (egret-xlarge accuracy, heron speed, 11 DocLayNet classes)
       - Coarse page attributes (layout_type, has_tables, has_figures, has_dense_math, has_handwriting)
       - Structural complexity scoring
 
@@ -188,21 +188,21 @@ if (Text detected?) then (yes)
   }
 endif
 
-partition "ML IQA (Teacher-Student)" {
-  :Run Student Model (ResNet-18);
+partition "MobileNetV4-Conv-S (Pre-Correction)" {
+  :Run MobileNetV4-Conv-S (3 heads);
   note left
     **Source Files:**
     - src/image_preprocessing_detector/detection/iqa_ml.py (1,303 lines)
     - src/image_preprocessing_detector/detection/hybrid_iqa.py (351 lines)
 
     **Model:**
-    - ResNet-18 student
-    - val_loss=0.14 (30 epochs)
+    - MobileNetV4-Conv-S
+    - 3 heads: orientation, skew, resolution quality
 
     **Device Selection:**
-    - Local GPU (preferred, 10-25ms)
-    - Modal GPU (fallback, 15-30ms)
-    - CPU (last resort, 40-100ms)
+    - Local GPU (preferred, ~3ms)
+    - Modal GPU (fallback, ~5ms)
+    - CPU (last resort, 8-12ms)
 
     **Total:** 1,654 lines
 
@@ -210,26 +210,44 @@ partition "ML IQA (Teacher-Student)" {
     [[level-3/production-runtime/device-orchestrator.md]]
   end note
 
-  if (High uncertainty/discrepancy?) then (yes)
-    :Run Teacher Model (ResNet-50);
+  :Apply pre-corrections\n(orientation, deskew, resolution);
+}
+
+partition "SigLIP 2 NAFlex (Multi-Task Analysis)" {
+  :Run SigLIP 2 NAFlex (16 heads, 5 groups);
+  note left
+    **Model:**
+    - SigLIP 2 NAFlex (88M params)
+    - 16 heads across 5 groups:
+      Group 1: IQA, Group 2: Script,
+      Group 3: Orientation+Skew,
+      Group 4: Handwriting, Group 5: Page Attrs
+
+    **Device:**
+    - Local GPU (~50ms)
+    - Modal GPU (~60ms)
+    - CPU (~150ms)
+
+    **Source:**
+    - Integrated in detection/iqa_ml.py
+  end note
+
+  if (Any head confidence below threshold?) then (yes)
+    :Classical fallback (6 head-specific rules);
     note right
       **Purpose:**
-      - Selective teacher inference
-      - Triggered by: entropy > 0.7, confidence < 0.5, discrepancy > 0.2
-      - Escalation rate: 5-15% of pages
-
-      **Model:**
-      - ResNet-50 teacher
-      - val_loss=0.27 (50 epochs)
-
-      **Device:**
-      - Modal GPU (30-50ms)
+      - Confidence-based classical fallback
+      - 6 rules: Hough orientation/skew,
+        DPI+char height, classical IQA,
+        OpenLID script, stroke analysis
+      - Fallback rate: 5-15% of pages (per-head)
 
       **Source:**
-      - Integrated in detection/iqa_ml.py
+      - detection/iqa_classical.py
+      - detection/orientation_detector.py
 
       **Documentation:**
-      [[level-3/production-runtime/pipeline-state-machine.md#ml-iqa-teacher]]
+      [[level-3/production-runtime/pipeline-state-machine.md#classical-fallback]]
     end note
   endif
 }

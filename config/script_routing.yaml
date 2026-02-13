@@ -1,0 +1,218 @@
+# Script Routing Configuration
+# Script -> OCR Engine Routing Rules
+#
+# Three-tier script architecture:
+# - Tier 1 (Storage): Full ISO 15924 codes stored in schema
+# - Tier 2 (ML Training): Grouped classes in script_ml_classes.yaml
+# - Tier 3 (Routing): Engine selection defined here
+#
+# UPDATE THIS FILE AFTER TESTING!
+# Hot-reload supported via ScriptRouter.reload()
+
+version: "1.0.0"
+last_tested: "2026-01-29"
+description: "Script -> OCR engine routing (update after testing!)"
+
+# Default engine when no specific routing rule matches
+default_engine: "auto"
+default_batch_size: 4
+
+# Routing rules: ML class -> engine config
+# These can reference ML classes OR specific ISO 15924 codes
+routing_rules:
+
+  # ==========================================================================
+  # Latin scripts - RapidOCR is fastest for Western languages
+  # ==========================================================================
+  LATN:
+    engine: "rapidocr"
+    batch_size: 8
+    notes: "Tested 2026-01-29, fastest for Latin scripts"
+
+  # ==========================================================================
+  # Cyrillic - RapidOCR also performs well
+  # ==========================================================================
+  CYRL:
+    engine: "rapidocr"
+    batch_size: 8
+    notes: "Good for Russian, Ukrainian, Bulgarian"
+
+  # ==========================================================================
+  # Greek
+  # ==========================================================================
+  GREK:
+    engine: "rapidocr"
+    batch_size: 8
+
+  # ==========================================================================
+  # RTL scripts - Need special handling
+  # ==========================================================================
+  ARAB:
+    engine: "tesseract"
+    batch_size: 4
+    rtl: true
+    lang_hint: "ara+fas+urd"
+    notes: "RTL requires Tesseract for proper handling"
+
+  HEBR:
+    engine: "tesseract"
+    batch_size: 4
+    rtl: true
+    lang_hint: "heb"
+
+  # ==========================================================================
+  # CJK - PaddleOCR best, but memory intensive
+  # ==========================================================================
+  HANS:
+    engine: "paddleocr"
+    batch_size: 2  # Memory intensive
+    lang_hint: "ch"
+    notes: "Simplified Chinese - reduce batch for memory"
+
+  HANT:
+    engine: "paddleocr"
+    batch_size: 2
+    lang_hint: "chinese_cht"
+    notes: "Traditional Chinese"
+
+  JPAN:
+    engine: "paddleocr"
+    batch_size: 2
+    lang_hint: "japan"
+
+  KORE:
+    engine: "paddleocr"
+    batch_size: 2
+    lang_hint: "korean"
+
+  # ==========================================================================
+  # Indic scripts - PaddleOCR has good support
+  # ==========================================================================
+  DEVA:
+    engine: "paddleocr"
+    batch_size: 4
+    lang_hint: "devanagari"
+    notes: "Hindi, Marathi, Nepali, Sanskrit"
+
+  BENG:
+    engine: "paddleocr"
+    batch_size: 4
+    lang_hint: "bengali"
+
+  TAML:
+    engine: "paddleocr"
+    batch_size: 4
+    lang_hint: "tamil"
+
+  TELU:
+    engine: "paddleocr"
+    batch_size: 4
+    lang_hint: "telugu"
+
+  # Grouped Indic - test to find best
+  INDIC_OTHER:
+    engine: "paddleocr"
+    batch_size: 4
+    notes: "TODO(script-routing): Test individual Indic scripts, may need per-script engine selection"
+
+  # ==========================================================================
+  # Southeast Asian
+  # ==========================================================================
+  THAI:
+    engine: "paddleocr"
+    batch_size: 4
+    lang_hint: "thai"
+
+  # ==========================================================================
+  # Tibetan - limited support everywhere
+  # ==========================================================================
+  TIBT:
+    engine: "tesseract"
+    batch_size: 2
+    vlm_escalation_threshold: 0.6
+    notes: "Limited accuracy, consider VLM escalation"
+
+  # SE Asian grouped
+  SE_ASIAN_OTHER:
+    engine: "tesseract"
+    batch_size: 4
+    notes: "TODO(script-routing): Test Khmer, Lao, Myanmar individually for engine selection"
+
+  # ==========================================================================
+  # Catch-all
+  # ==========================================================================
+  OTHER:
+    engine: "auto"
+    batch_size: 4
+    notes: "Let Docling auto-detect"
+
+  UNKNOWN:
+    engine: "auto"
+    batch_size: 4
+    vlm_escalation_threshold: 0.3
+    notes: "Unknown script - likely needs VLM"
+
+# ==========================================================================
+# Override rules for specific ISO 15924 codes
+# Use when a specific script needs different handling than its ML class
+# ==========================================================================
+iso15924_overrides:
+  # Example: Gujarati might need different engine than other INDIC_OTHER
+  # Gujr:
+  #   engine: "tesseract"
+  #   lang_hint: "guj"
+  #   notes: "PaddleOCR Gujarati model not good, use Tesseract"
+
+  # Myanmar has dedicated PaddleOCR support
+  Mymr:
+    engine: "paddleocr"
+    batch_size: 4
+    lang_hint: "myanmar"
+    notes: "PaddleOCR has Myanmar support"
+
+  # Khmer also has PaddleOCR support
+  Khmr:
+    engine: "paddleocr"
+    batch_size: 4
+    lang_hint: "khmer"
+
+# ==========================================================================
+# VLM escalation rules
+# ==========================================================================
+vlm_escalation:
+  # Escalate to VLM if confidence below threshold
+  confidence_threshold: 0.5
+
+  # Always escalate these scripts (poor OCR support)
+  always_escalate:
+    - "Tibt"  # Tibetan - very limited OCR support
+    - "Ethi"  # Ethiopic - limited OCR support
+    # Note: Mymr has iso15924_overrides routing to PaddleOCR for basic OCR,
+    # but remains in always_escalate for full pipeline escalation review
+    - "Mymr"  # Myanmar - escalate for review even with PaddleOCR override
+
+  # Escalate if script is unknown
+  escalate_unknown: true
+
+  # Escalate if document has mixed scripts with low confidence
+  mixed_script_threshold: 0.6
+
+# ==========================================================================
+# Engine-specific configuration
+# ==========================================================================
+engine_configs:
+  rapidocr:
+    max_batch_size: 16
+    gpu_memory_limit_mb: 2048
+    cpu_fallback: true
+
+  paddleocr:
+    max_batch_size: 4
+    gpu_memory_limit_mb: 4096
+    use_angle_cls: true
+    use_gpu: true
+
+  tesseract:
+    max_batch_size: 8
+    oem: 3  # LSTM only
+    default_psm: 3  # Fully automatic

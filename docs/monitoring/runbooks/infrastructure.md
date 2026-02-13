@@ -30,20 +30,20 @@ GPU memory usage has exceeded 90% on one or more devices.
 1. **Check current GPU memory usage**
 
    ```bash
-   kubectl exec -it deployment/imgprep-worker -n imgprep -- nvidia-smi
+   docker exec imgprep-worker nvidia-smi
    ```
 
 2. **Check for memory leaks**
 
    ```bash
    # Watch memory over time
-   kubectl exec -it deployment/imgprep-worker -n imgprep -- watch -n 5 nvidia-smi
+   docker exec imgprep-worker watch -n 5 nvidia-smi
    ```
 
 3. **Check batch sizes**
 
    ```bash
-   kubectl get deployment/imgprep-worker -n imgprep -o yaml | grep BATCH_SIZE
+   docker exec imgprep-worker printenv | grep BATCH_SIZE
    ```
 
 ### Resolution
@@ -52,17 +52,19 @@ GPU memory usage has exceeded 90% on one or more devices.
 
 ```bash
 # Restart workers to clear GPU memory
-kubectl rollout restart deployment/imgprep-worker -n imgprep
+docker restart imgprep-worker
 ```
 
 #### If recurring
 
 ```bash
 # Reduce batch size
-kubectl set env deployment/imgprep-worker IMGPREP_BATCH_SIZE=2 -n imgprep
+export IMGPREP_BATCH_SIZE=2
+docker restart imgprep-worker
 
 # Or disable teacher model temporarily
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_ENABLED=false -n imgprep
+export IMGPREP_TEACHER_ENABLED=false
+docker restart imgprep-worker
 ```
 
 ---
@@ -80,43 +82,42 @@ No models (student or teacher) are currently loaded, indicating GPU unavailabili
 
 ### Investigation Steps
 
-1. **Check pod status**
+1. **Check container status**
 
    ```bash
-   kubectl get pods -n imgprep -l app=imgprep-worker
-   kubectl describe pods -n imgprep -l app=imgprep-worker
+   docker ps --filter name=imgprep-worker
+   docker inspect imgprep-worker --format='{{.State.Status}}'
    ```
 
-2. **Check GPU availability on node**
+2. **Check GPU availability**
 
    ```bash
-   kubectl exec -it deployment/imgprep-worker -n imgprep -- nvidia-smi
+   docker exec imgprep-worker nvidia-smi
    ```
 
 3. **Check for device driver issues**
 
    ```bash
-   kubectl logs -n imgprep -l app=imgprep-worker | grep -i "cuda\|gpu\|driver"
+   docker logs imgprep-worker | grep -i "cuda\|gpu\|driver"
    ```
 
 ### Resolution
 
 ```bash
 # Restart workers
-kubectl rollout restart deployment/imgprep-worker -n imgprep
+docker restart imgprep-worker
 
-# If still failing, check node GPU allocation
-kubectl describe node <node-name> | grep -A5 nvidia.com/gpu
+# If still failing, check GPU availability on host
+nvidia-smi
 
-# If node GPU exhausted, scale to different node
-kubectl scale deployment/imgprep-worker --replicas=0 -n imgprep
-# Wait for pods to terminate
-kubectl scale deployment/imgprep-worker --replicas=4 -n imgprep
+# Stop and restart with fresh state
+docker compose down imgprep-worker
+docker compose up -d imgprep-worker
 ```
 
 ### Escalation
 
-If GPU remains unavailable after restart, escalate to DevOps for node investigation.
+If GPU remains unavailable after restart, escalate to DevOps for host investigation.
 
 ---
 
@@ -133,55 +134,55 @@ Worker count has dropped below minimum (2) or to zero.
 
 ### Investigation Steps
 
-1. **Check pod status**
+1. **Check container status**
 
    ```bash
-   kubectl get pods -n imgprep -l app=imgprep-worker -o wide
-   kubectl describe pods -n imgprep -l app=imgprep-worker | grep -A10 "Events:"
+   docker ps --filter name=imgprep-worker
+   docker inspect imgprep-worker --format='{{.State.Status}} {{.State.ExitCode}}'
    ```
 
 2. **Check for resource constraints**
 
    ```bash
-   kubectl describe pods -n imgprep -l app=imgprep-worker | grep -A5 "Requests:"
+   docker stats imgprep-worker --no-stream
    ```
 
-3. **Check node capacity**
+3. **Check host capacity**
 
    ```bash
-   kubectl describe nodes | grep -A10 "Allocated resources:"
+   free -h
+   df -h
    ```
 
 ### Resolution
 
-#### If pods are crashing
+#### If containers are crashing
 
 ```bash
 # Check crash reason
-kubectl logs -n imgprep -l app=imgprep-worker --previous
+docker logs imgprep-worker --tail=200
 
-# If OOM, increase memory limit
-kubectl patch deployment imgprep-worker -n imgprep -p \
-  '{"spec":{"template":{"spec":{"containers":[{"name":"worker","resources":{"limits":{"memory":"8Gi"}}}]}}}}'
+# If OOM, increase memory limit in docker-compose.yml
+# services.imgprep-worker.deploy.resources.limits.memory: "8g"
+docker compose up -d imgprep-worker
 ```
 
-#### If pods are pending
+#### If containers are not starting
 
 ```bash
-# Check for resource availability
-kubectl describe pods -n imgprep -l app=imgprep-worker | grep -A5 "Events:"
-
-# Scale down other workloads or request more nodes
+# Check resource availability on host
+docker stats --no-stream
+free -h
 ```
 
 #### Quick recovery
 
 ```bash
 # Force restart
-kubectl rollout restart deployment/imgprep-worker -n imgprep
+docker restart imgprep-worker
 
-# Scale up
-kubectl scale deployment/imgprep-worker --replicas=4 -n imgprep
+# Scale up via docker compose
+docker compose up -d --scale imgprep-worker=4
 ```
 
 ---
@@ -214,7 +215,7 @@ Processing queue has accumulated more items than can be processed in a reasonabl
 3. **Check worker status**
 
    ```bash
-   kubectl get pods -n imgprep -l app=imgprep-worker
+   docker ps --filter name=imgprep-worker
    ```
 
 4. **Check for processing bottleneck**
@@ -230,13 +231,14 @@ Processing queue has accumulated more items than can be processed in a reasonabl
 
 ```bash
 # Double worker count
-kubectl scale deployment/imgprep-worker --replicas=8 -n imgprep
+docker compose up -d --scale imgprep-worker=8
 ```
 
 #### Enable batch mode for faster processing
 
 ```bash
-kubectl set env deployment/imgprep-worker IMGPREP_BATCH_MODE=true -n imgprep
+export IMGPREP_BATCH_MODE=true
+docker restart imgprep-worker
 ```
 
 #### If teacher escalation is causing slowdown
@@ -246,18 +248,20 @@ kubectl set env deployment/imgprep-worker IMGPREP_BATCH_MODE=true -n imgprep
 curl -s http://imgprep:8000/metrics | grep imgprep_teacher_invocations
 
 # Temporarily disable teacher if > 30%
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_ENABLED=false -n imgprep
+export IMGPREP_TEACHER_ENABLED=false
+docker restart imgprep-worker
 ```
 
 #### For persistent backlog
 
 ```bash
 # Consider using Modal GPU for burst capacity
-kubectl set env deployment/imgprep-worker IMGPREP_MODAL_ENABLED=true -n imgprep
+export IMGPREP_MODAL_ENABLED=true
+docker restart imgprep-worker
 ```
 
 ### Prevention
 
-- Set up HPA (Horizontal Pod Autoscaler) based on queue depth
 - Monitor queue depth trends
 - Implement rate limiting at API gateway
+- Use Docker Compose scaling for burst capacity

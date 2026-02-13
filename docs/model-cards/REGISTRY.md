@@ -19,7 +19,7 @@ Complete inventory of all ML models used in Project A (Preprocessing, IQA & Coar
 >
 > - [TEMPLATE.md](TEMPLATE.md) - Standard model card template
 > - [detection-taxonomy.md](../reference/detection-taxonomy.md) - Detection categories and priorities
-> - [document-type-taxonomy.md](../reference/document-type-taxonomy.md) - Document classification hierarchy
+> - [document-type-taxonomy.md](../_archived/reference/document-type-taxonomy.md) - Document classification hierarchy (archived)
 
 ---
 

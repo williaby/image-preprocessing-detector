@@ -1,0 +1,147 @@
+{
+  "dataset": "nepali-handwritten",
+  "created_at": "2026-02-12",
+  "created_by": "claude-opus-4-6",
+  "method": "in_session_vlm_vision",
+  "description": "Manual text transcriptions from visual inspection of high-confidence nepali-handwritten samples. Word-level accuracy varies; line-level structure preserved. Intended for testing HTR pipelines, not as gold-standard GT.",
+  "notes": [
+    "Transcriptions produced by Claude Opus 4.6 multimodal vision on camera-captured handwritten Devanagari images.",
+    "Confidence ratings are subjective estimates of transcription accuracy.",
+    "Some characters may be confused (e.g., similar Devanagari conjuncts), especially in dense or cursive writing.",
+    "Images are NOT rotated/corrected before transcription - orientation noted per sample.",
+    "Two dedicated Devanagari HTR models exist on HuggingFace (syubraj/TrOCR_Nepali, paudelanil/trocr-devanagari-2) but are word-level only."
+  ],
+  "total_samples": 10,
+  "labels": [
+    {
+      "image_id": "train/1",
+      "file": "train/1.jpg",
+      "confidence": 0.93,
+      "confidence_label": "HIGH",
+      "orientation": "upright",
+      "document_type": "alphabet_number_practice",
+      "content_description": "Devanagari alphabet words (one word per letter) followed by number words 1-100 in Nepali",
+      "transcription": "अनार आमा इनार ईश्वर उख उन\nऋषि एकतारे ऐना ओखर औषधी\nअंगुर अः पद\n\nकमल खरायो गमला घर ङ: चरा\nछातो जरायो झण्डा गौरिसुँ टपरी\nठेकुरो डमरु ढक्कन ताराज थप्डी\nदमकल धनुष नुरिवल परेवा फलफुल\nबस भकुण्डो मक रुख रथ लस्सी\nवकिल शंख पटकाण सर्प हली\nक्षेत्री त्रिशूल ज्ञानी\n\nएक दुई तीन चार पाँच छ सात\nआठ नौ दश एघार बाह्र तेह्र चौध\nपन्ध्र सोह्र सत्र अठार उन्नाइस बीस\nएकाईस बाईस तेईस चौबीस पच्चीस\nछब्बीस सत्ताईस अट्ठाईस उन्तीस तीस\nएकतीस बत्तीस तेत्तीस चौतीस पैंतीस छत्तीस\nसैंतीस अठतीस उनन्चालीस चालीस चालीस\nएकचालीस बयालीस त्रिचालीस चौवालीस\nपैंतालीस छयालीस सत्तचालीस अठचालीस\nउनन्पचास एकाउन्न बाउन्न त्रिपन्न\nचौवालीस पचपन्न छपन्न सन्ताउन्न अन्ठा\nरैयन जौरी",
+      "line_count": 22
+    },
+    {
+      "image_id": "train/10",
+      "file": "train/10.jpg",
+      "confidence": 0.78,
+      "confidence_label": "GOOD",
+      "orientation": "upright",
+      "document_type": "school_essay",
+      "content_description": "Essay about water (pani) - its importance, chemical composition, and uses. Student: Salibhaya Chaupane, Class 7 'Ga', Pashupati Aawashiya Ma.Vi.",
+      "transcription": "नि:शुल्क उपहार हौ। पृथ्वीबाहेक अन्य ग्रहमा पानी\nहामी जमिन धेरै र पानी थोरै छ भन्ने ठान्छौ तर\nसफलको दुईतिहाइ भाग पानीले ओगटेको छ। हाम्रो\nन्छ। पानी दुई भाग हाईड्रोजन र एक भाग अक्सिजन\nदार्थ हो। पानीबिना प्राणी र बनस्पतिको जीवन सम्भ-\nअक्टोपस जस्ता केही जीवहरु त पानीमै बस्छन्।\nबनस्पति पानीमा नै बँस्छन। हाईड्रोला जस्ता वनस्पति-\nत्र जीवित रहन्छन्। भनिन्छ भ्यागुता, सर्प, गोही आदि\nर जमिन दुबैतिर बस्छन्। जमिनमा मात्र बस्ने प्राणी-\nखानुपर्छ। मरुभूमिका प्राणी र वनस्पतिलाई थोरै\nपनि पानी आवश्य पाहिन्छ। यसैलै पानी अमूल्य\nजीवनमा पानी आवश्यक छ। पिउन, खाना पकाउन,\nन, सरसफाइ गर्न अनेक कामका लागि पानी\nपाती पर्न, बिजुली निकाल्न, पेय पदार्थसँग सम्बन्धि-\nसञ्चालन गर्न पानी नै चाहिन्छ। एक जना वेयस्क मान-\nसदर २ लिटर पानी सेवन गर्नु आवश्यक हुन्छ।\n\nनाम :- साल्भिया न्यौपाने\nकक्षा :- ७ 'ग'\nविद्यालय :- पशुपति आवसिय मा.वि.",
+      "line_count": 19
+    },
+    {
+      "image_id": "train/25",
+      "file": "train/25.jpg",
+      "confidence": 0.82,
+      "confidence_label": "GOOD",
+      "orientation": "upright",
+      "document_type": "school_essay",
+      "content_description": "Essay titled 'Nepali Hastalekhan' (Nepali Handwriting) about the importance of studying. Student: Nishtha Thakur, Class 8 Dhaulagiri.",
+      "transcription": "नेपाली हस्तलेखन\n\nअध्ययन मानिसको लागि आशिर्वाद\nहो।अध्ययन गर्ने व्यक्तिले हामीलाई\nमहान र व्यक्तिसँग साक्षात्कार गराउँछ।\nयसले हाम्रो समयलाई फाइदाजनक\nतरीकाले उपभोग गर्न सिकाउँछ। हामी\nखराब सागी पुस्तकको संसारमा\nडुबेर आफ्नो चौतर्फी विकास गर्न\nसक्छौ। अध्ययनले युवावस्था र वृद्धकालमा\nहुने दिग्दारी हटाउँछ। अध्ययनबाट हुने\nफाइदाहरु :-\n\n• आमा बुबालाई आदर गर्न सिकाउँछ।\n• किताब जतन गर्न सिकाउँछ।\n• आफुभन्दा ठूलालाई मान्न गर्न सिकाउँछ।\n\nनाम :- निष्ठा ठकुर\nकक्षा : ८ धौलागिरी",
+      "line_count": 16
+    },
+    {
+      "image_id": "train/45",
+      "file": "train/45.jpg",
+      "confidence": 0.95,
+      "confidence_label": "HIGH",
+      "orientation": "upright",
+      "document_type": "calligraphy_practice",
+      "content_description": "Nepal national anthem (Sayaun Thunga Phulka) - first three stanzas in calligraphic Devanagari script",
+      "transcription": "सयौं थुँगा फुलका हामी एउटै माला नेपाली\nसार्वभौम भई फैलिएका मेची महाकाली।\n\nप्रकृतिका कोटी कोटी सम्पदाको आँचल\nवीरहरुका रगतले, स्वतन्त्र र अटल।\n\nज्ञानभुमि, शान्तिभुमि तराई, पहाड, हिमाल\nअखण्ड यो प्यारो हाम्रो मातृभुमि नेपाल।\n\nबहुल जाति...",
+      "line_count": 8
+    },
+    {
+      "image_id": "train/50",
+      "file": "train/50.jpg",
+      "confidence": 0.80,
+      "confidence_label": "GOOD",
+      "orientation": "upright",
+      "document_type": "school_notes",
+      "content_description": "Social studies textbook notes - Chapter 2: Social Study, Social Education and Social Science relationship. Includes numbered list of social science disciplines.",
+      "transcription": "पाठ २ सामाजिक अध्ययन, सामाजिक शिक्षा र\nसामाजिक विज्ञानको अन्तरसम्बन्ध।\nक्रियाकलाप\n\n(क) कक्षा ११ को सामाजिक अध्ययन तथा\nजीवनोपयोगी शिक्षाको विषयमा सा-\nमाजिक विज्ञानका कुन कुन विषय स-\nमावेश गरिस्को छ? छलकल गर्नुहोस:\n\n=> समाजका विभिन्न पक्ष एवम् मानव\nसँग सम्बन्धित बहुआयामिक विषयको\nतथ्यपरक र खोजमूलक अध्ययन गर्ने\nशास्त्रलै सामाजिक विज्ञान हो। यसका\nदोहरु निम्नानुसार छन्:\n(१) भूगोल          (७) नीतिशास्त्र\n(२) इतिहास        (८) मनोविज्ञान\n(३) अर्थशास्त्र\n(४) दर्शनशास्त्र\n(५) समाजशास्त्र\n(६) मानवशास्त्र\n(७) नागरिकशास्त्र\n(८) राजनीतिशास्त्र\n(९) बनसंरक्षणशास्त्र",
+      "line_count": 22
+    },
+    {
+      "image_id": "train/100",
+      "file": "train/100.jpg",
+      "confidence": 0.90,
+      "confidence_label": "HIGH",
+      "orientation": "upright",
+      "document_type": "child_handwriting_practice",
+      "content_description": "Young child's handwriting practice with large Devanagari words on lined paper. Simple vocabulary items.",
+      "transcription": "नङ काटा\nभोज लगाउ\nदाँत माझ\nपैसा कमाउ\nशंख बजाउ",
+      "line_count": 5
+    },
+    {
+      "image_id": "train/450",
+      "file": "train/450.jpeg",
+      "confidence": 0.78,
+      "confidence_label": "GOOD",
+      "orientation": "upright",
+      "document_type": "school_essay",
+      "content_description": "Two essay answers (Question 3 and Question 6) about democracy and social topics. Written on lined notebook paper.",
+      "transcription": "प्रश्न नं ३\nका छलस्वास्थ्यको उत्थानी 'पहिलो स्वच्छ विश्वसिल जगा\nसबकालाई सुरक्षित्को कारण कि हो?\nयू सारी सँसार्मा ग्वात सडकमी बिरगर्जमा जोखि\nदेखिएको तर छिकाकुराको, अत्ता प्राकृतिक, सार्वजनिक\nसम्पुर्ण तर किसिम् दुनियामा ज्ञक सुमाउन् वयस्कमा\nलम्बस्पत्चन गरिस्कमा पनि चासी वर्डस्पञ्चात्मणा\nसमुदायपूर्ण बरिणपतिलाउ प्रतिस्पर्धत्लन रचनात्मक गतिविधि\nनिर्मित कस्च दुभवमा सहकारकलाई समादिको ल।\n\nरावू कित्ल आम्बुदुहकलालाई किम चुनौतीमा फुरस्त\nकितविहित कहाँ?\nयु चुनावमा सबकारमनही विभिन्न विभिन्न बोलसेकमा,\nजातिसंख्या, ५ जालिक, उत्तरबाधारे। उत्तरसम्पर्कमा\nबहस्पत्मा बुस्तिह् उत्लन्चजनाछ काम्ना किस्स\nअत्मन्पुर्हलाई बधगुरामा सुत्र निस्पन्दिती शालही\nहो। प्रकाश, र धनवाज्ते अन्कित वायुद्वल\nपदमुस्ल्मा पार्कित्रप्रमा बराबर, धरिचेतीका स्वार्थ\nग्राम् उक्ल्मी खोस्कि पदयामा मत्र गर्दी बासे\nकियादमारबोले उपयुन्नता दुव्ह्लामको प्रयास गर्माछन्।\n\nप्रश्न नं ६\nप्रयास विस्तार गतिविधि\nकार गर्ने कित्त सम्बी सिर्जे, देवी सुदुर बिसी\nर दिस्तारी तान्किमा जस्मिक्र वा शास्त्रीको शिम्म\nसम्प्रद सृष्टिको गर्जाका मध्या ४२ को तर्फिको\nचात्रपुष्टको पाठ देख्मा सती।\" बुनावस्थ्रावामा\nउत्साही काला\" भर्ने पाठवाल मार विस्तार\nगर्नको व्याख्मी फर्ने सागर गतिप्रमें लग्ध।प्रकृ\nसोठको रुचलाँ।\" \" तारानाथ धर्मिश्री। दुवै\n",
+      "line_count": 27
+    },
+    {
+      "image_id": "train/500",
+      "file": "train/500.jpg",
+      "confidence": 0.80,
+      "confidence_label": "GOOD",
+      "orientation": "upright",
+      "document_type": "school_literature_qa",
+      "content_description": "Literature comprehension Q&A about a Nepali text. Numbered questions with structured answers about characters and themes.",
+      "transcription": "पाठ - २        जट्केटी\nमिति - ०७६/०१/२६\nप्रश्नमा - ३.४        पृष्ठ: ३२\n\nक) विरन्द्र प्रधानको उत्सव भन्तोहोस् :-\n\n(ख) ईश्वर अन्ज्ञा कस्ता केटी अनुभूतिमा गरिकी हो ?\n  => \"एउट मगानं कैयो ७० अनुरूपमा सबमाझिन हो ।\"\n\n(ख) केमालो सरुखा कुन घट्नावाट प्रभावित भ ?\n  => कमालो आरम्भ राजेन्द्र लक्ष्मी नवरुवरवाध-\n     हुँदैन घट्नावाट प्रभावित भ।\n\n(घ) कथा कुन कुन पाइको प्रथम कृ+मिका\n    हेहिकी हो ?\n  => कथाकमा राजेन्द्र लक्ष्मी र बहादुर शाहको भूमिका\n     प्रथम रूपमा देखिएको हो।\n\n(ङ) हवादुर शाह गरिस्त परेपानो घर्ने कृष्ण अनुभण्डेस्मा\nछ ?\n  => बहादुर शाह गरिस्त परेपानो छपमा गाँठी अनुभण्डेस्मा\nछ।",
+      "line_count": 18
+    },
+    {
+      "image_id": "train/550",
+      "file": "train/550.jpg",
+      "confidence": 0.85,
+      "confidence_label": "GOOD",
+      "orientation": "upright",
+      "document_type": "school_literature_qa",
+      "content_description": "Literary analysis Q&A about a Nepali poem/kavita. Clear handwriting with questions and answers about poetry elements.",
+      "transcription": "तल दिइएकी कवितेश पढी सोधिएका प्रश्नको उत्तर दिनुहोस्।\nप्रश्नहरु:\nक) शहरमलाई केले प्रमोद बनास्को हो?\n   उत्तर: शहरलाईपुँ बुढिका बानले प्रमोद बनास्को हो।\n\nख) कवि गल्तिले जिन्दगी कस्तो बन्छ?\n   कवि गल्तिले जिन्दगी सधैं सुन्दर बन्छ।\n\nग) कवितेश्रामा कुता सान्दर्भमसे प्रिय इगो इन्हु भन्लेको हो?\n   उत्तर: कविताशमा 'लाभका लागी सर्माप्ति भुने प्राणिसको भिर इगो\n   इन्हु भविष्य हो।\n\nघ) कवितारहाट के सन्देश पाइन्छ?\n   उत्तर: कवितारहाट कवि गर्विपर्न र ठाएकी पत्ना लाग्नुपर्ने\n   सन्देश पाइन्छ।",
+      "line_count": 13
+    },
+    {
+      "image_id": "train/900",
+      "file": "train/900.jpg",
+      "confidence": 0.90,
+      "confidence_label": "HIGH",
+      "orientation": "upright",
+      "document_type": "formal_demands_letter",
+      "content_description": "List of demands (Hamra Magaharu) related to college student health services. Mixed Nepali and English text. Large, clear handwriting.",
+      "transcription": "हाम्रा मागहरु\n\n१) विद्यार्थीको स्वास्थयलाई ध्यानमा राख्दै कलेजले विभिन्न\n   स्वास्थ्य सामग्री जस्तै Emergency Oxygen Kit, Wheelchair,\n   Pressure नाप्ने Machine, Proper First Aid Kit with all\n   basic Medicines तुरुन्तै उपलब्ध गराउन पर्यो।\n\n२) College Hour सम्म (६ बजेबाट २ बजे सम्म) एक जना\n   Certified Nurse/Health Instructor कलेजमा हुनु पर्यो।\n\n३) सार्चै कलेजमा स्वास्थ्य समस्या भरका अध्ययनरत\n   विद्यार्थीहरुका लागि उनिहरुकी समस्या बुझ्कि के औषधी\n   आवश्यक हुन्छ सो औषधी सिमित मात्रामा कलेजमा उपलब्ध\n   हुनुपर्यो।",
+      "line_count": 12
+    }
+  ],
+  "summary": {
+    "total_transcribed": 10,
+    "by_confidence": {
+      "HIGH": 4,
+      "GOOD": 6
+    },
+    "by_document_type": {
+      "alphabet_number_practice": 1,
+      "child_handwriting_practice": 1,
+      "calligraphy_practice": 1,
+      "formal_demands_letter": 1,
+      "school_essay": 3,
+      "school_literature_qa": 2,
+      "school_notes": 1
+    },
+    "total_lines": 162,
+    "avg_confidence": 0.851,
+    "all_upright": true,
+    "mixed_language_samples": ["train/900"]
+  }
+}

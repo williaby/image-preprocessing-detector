@@ -1,0 +1,115 @@
+@startuml synthetic-generation-swimlane
+title WS8: Synthetic Generation - Module Swimlane\nv1.0 | February 2026
+
+skinparam dpi 150
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+skinparam note {
+  BackgroundColor #F8F8F8
+  BorderColor #BBBBBB
+}
+
+|Configuration|
+start
+:Load generation config\n(DPI tier, color mode,\naugmentation profile);
+note right
+  **Source**: src/.../synthetic/config.py
+  **LOC**: ~300
+  7 DPI tiers: 72/100/150/200/300/400/600
+  ColorMode: COLOR(60%), GRAYSCALE(30%), BINARIZED(10%)
+  Pydantic v2 config models
+end note
+:Select scripts and fonts\n(30+ ISO 15924 scripts);
+:Determine composition\n(text blocks, spacing,\nmargins, columns);
+
+|Text Rendering|
+:Render multi-script text blocks\n(PIL/Pillow text drawing);
+:Apply font-specific adjustments\n(size, kerning, line height);
+:Compose page layout\n(single/multi-column,\nheaders, footers);
+note right
+  **Source**: src/.../synthetic/generator.py
+  **LOC**: ~400
+  MultiScriptDocumentGenerator class
+  _render_text_blocks() method
+end note
+
+|Geometric Transforms|
+:Apply orientation rotation\n(0, 90, 180, or 270 degrees);
+:Apply skew transform\n(random within +/-10 degrees);
+note right
+  **CRITICAL**: Applied BEFORE augmentation
+  _apply_geometric_transforms() method
+  Operates on clean rendered image
+  (Bug fix: was previously post-augmentation)
+end note
+
+|Augmentation Pipeline|
+:Select document age profile;
+if (Random draw) then (80% MODERN)
+  :No aging effects applied;
+else if (15% AGED)
+  :Apply yellowing tint\n(sepia color shift);
+  :Apply foxing spots\n(random brown patches);
+  :Apply ink fading\n(contrast reduction 10-20%);
+else (5% HISTORICAL)
+  :Apply heavy yellowing;
+  :Apply dense foxing;
+  :Apply severe ink fading\n(contrast reduction 30-50%);
+  :Apply edge degradation;
+endif
+note right
+  **Source**: src/.../synthetic/augmentation_hybrid.py
+  **LOC**: ~350
+  HybridAugmenter class
+  AGED/HISTORICAL profiles use
+  Albumentations transforms
+end note
+
+|Measurement|
+:Measure character height\n(_measure_char_height method);
+:Validate DPI against\nsafety rails (150-600);
+:Compute resolution quality\nscore from char_height\n(optimal: 32-48px);
+
+|Schema Adaptation|
+:Build multi-task metadata\n(nested under metadata.data.multi_task);
+:Compute IQA vector\n(45-dim from degradation params);
+:Set Tier 0 confidence\n(all fields = 1.0);
+:Record generation provenance\n(config hash, timestamp, seed);
+note right
+  **Source**: src/.../synthetic/schema_adapter.py
+  **LOC**: ~200
+  Fields populated:
+  - CaptureMethodInfo (3 fields)
+  - ResolutionInfo (6 fields)
+  - QualityInfo + MLImageQualityInfo (10)
+  - LanguageInfo + ContentFlags (16)
+  - GeometricInfo (7 fields)
+  - ImagePropertiesInfo (2 fields)
+  - TextScopeInfo (5 fields)
+  - PaperSizeInfo (5 fields)
+  - CodeDetection (4 fields)
+end note
+
+|Output|
+:Write to partitioned parquet\n(dataset_name=synth-multiscript/);
+:Write JSON with full detail;
+:Update generation manifest\n(sample count, config hash);
+note right
+  **CLI**: src/.../synthetic/cli.py (~150 LOC)
+  imgprep synth generate
+  --color-mode, --skew, --orientation
+  --augmenter hybrid
+end note
+note right
+  **WS8 Synthetic Generation Pipeline**
+  Total: ~1,400 LOC across 5 source files
+  Target: 250K multi-script documents
+  All labels at Tier 0 confidence (exact by construction)
+  Downstream: WS3 data prep, WS2 model training
+end note
+stop
+
+@enduml

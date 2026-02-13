@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T06:45:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 7,
+  "labels": [
+    {
+      "image_id": "train/res/train_res_01647.jpg",
+      "id": "d0ec31d0-b6ac-429a-810a-7fa93fc2a0a7",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 3.2,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced screen capture of handwritten Chinese physics notes about force decomposition. Blue/red ink. Force vector diagrams with component analysis. Toolbar visible. Enhancement cleaned moire well. Good structure."
+    },
+    {
+      "image_id": "test/res/test_res_00452.jpg",
+      "id": "31fd2640-ee99-4503-9b13-f319caa7fa51",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.5,
+        "illumination": 3.5,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced handwritten Chinese physics notes about massless/deformation-free objects (ropes, springs, light rods). Dense blue ink. Clean white background, excellent contrast. Well-written, good readability."
+    },
+    {
+      "image_id": "test/res/test_res_00479.jpg",
+      "id": "28f25a14-ad39-4b1c-9c7c-1eeab29a2d44",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced screen capture of handwritten Chinese physics notes about kinetic energy and work-energy theorem. Blue ink. Multiple worked examples with inclined plane diagrams. Toolbar partially visible. Clean enhancement."
+    },
+    {
+      "image_id": "train/res/train_res_00678.jpg",
+      "id": "0fd41a6c-16e7-42b8-ae48-a928be8aa248",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 3.2,
+        "illumination": 3.0,
+        "compression": 2.8,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese document with Python traceback error for mail program. Dense typed text with debugging solution, MONTH_TO_INT dictionary, date parsing code. Good contrast but extremely dense text layout."
+    },
+    {
+      "image_id": "train/res/train_res_01622.jpg",
+      "id": "85433cf9-fb45-40a6-9411-72162ca574e6",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.5,
+        "illumination": 3.5,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced handwritten convex optimization notes (English with Chinese annotations). Convex sets, cones, operations preserving convexity. Affine functions. Very clean white background, dark clear ink. Excellent enhancement quality."
+    },
+    {
+      "image_id": "train/res/train_res_00362.jpg",
+      "id": "a0e06521-daf6-4913-adba-9d9edd175d74",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.5,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese scientific document about nuclear reactors, RNA evolution, cognitive neuroscience (fMRI, beta waves). Typed text, well-structured paragraphs. Finger visible at bottom left. Shadow/smudge at bottom edge. Text slightly faded."
+    },
+    {
+      "image_id": "train/res/train_res_01661.jpg",
+      "id": "92cb4a6b-48f4-42c4-8bdd-1dcbbf52aa54",
+      "scores": {
+        "sharpness": 2.8,
+        "noise": 2.8,
+        "contrast": 2.8,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced screen capture of handwritten Chinese math/logic notes. Quantifiers, logical statements, set notation. Purple-tinted from enhancement. Toolbar visible at top. Circled logical symbols. Moderate quality."
+    },
+    {
+      "image_id": "train/res/train_res_01686.jpg",
+      "id": "f9d76a89-e8de-4a1b-9157-0b105cbfcccf",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.2,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced handwritten Chinese physics notes about mechanical vibration and waves. Black ink. Definitions, equilibrium/restoring force, amplitude/period/frequency formulas. Spring-mass diagrams. Clean enhancement, well-structured."
+    },
+    {
+      "image_id": "train/res/train_res_02982.jpg",
+      "id": "c8d6b454-8471-4d66-954e-a890b5f08247",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese document appendix with Python code for Brownian motion simulation. Functions for variation calculations. Clean typed code on white background. Dark wood texture visible at page edges."
+    },
+    {
+      "image_id": "test/res/test_res_00572.jpg",
+      "id": "88333a54-21fe-4b55-a97b-db2f3957879c",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.2,
+        "contrast": 3.2,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced handwritten convex optimization notes (English with Chinese annotations). Epigraph proof, Schur complement, matrix inequalities. Black ink with brown/red highlights. Clean white background. Epigraph diagram at bottom."
+    }
+  ]
+}

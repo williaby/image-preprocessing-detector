@@ -135,9 +135,9 @@ class PDFLoader:
 
         # Convert RGB to BGR for OpenCV compatibility
         if pix.n == 3:  # RGB
-            img_array = img_array[:, :, [2, 1, 0]]  # RGB → BGR
+            img_array = img_array[:, :, [2, 1, 0]]  # type: ignore[assignment]  # RGB → BGR
         elif pix.n == 4:  # RGBA
-            img_array = img_array[:, :, [2, 1, 0, 3]]  # RGBA → BGRA
+            img_array = img_array[:, :, [2, 1, 0, 3]]  # type: ignore[assignment]  # RGBA → BGRA
 
         # Determine if upscaling is needed
         needs_upscaling = dpi_input < self.target_dpi

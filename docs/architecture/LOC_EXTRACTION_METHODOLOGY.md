@@ -67,22 +67,22 @@ src/image_preprocessing_detector/workers/          # Celery task definitions
 **Owned Directories/Files**:
 
 ```bash
-modal/train_phase2_iqa.py                     # Teacher training (ResNet-50)
-modal/train_student_distillation.py          # Student distillation (ResNet-18)
+modal/train_siglip2_multitask.py              # SigLIP 2 NAFlex multi-task training (16 heads)
+modal/train_mobilenetv4_precorrection.py     # MobileNetV4-Conv-S pre-correction (3 heads)
 modal/export_phase7_onnx.py                   # Model export to ONNX/TorchScript
 src/image_preprocessing_detector/training/   # Training utilities, loss functions, dataloaders
-src/image_preprocessing_detector/models/     # Model architectures (ResNet teacher/student)
+src/image_preprocessing_detector/models/     # Model architectures (SigLIP 2, MobileNetV4, legacy ResNet)
 ```
 
-**Rationale**: Model Training implements the teacher-student training pipeline and model export logic.
+**Rationale**: Model Training implements the two-model multi-task training pipeline and model export logic.
 
 **Breakdown**:
 
-- modal/train_phase2_iqa.py: ~707 lines (teacher training)
-- modal/train_student_distillation.py: ~779 lines (knowledge distillation)
+- modal/train_siglip2_multitask.py: ~707 lines (SigLIP 2 NAFlex training)
+- modal/train_mobilenetv4_precorrection.py: ~779 lines (MobileNetV4-Conv-S training)
 - modal/export_phase7_onnx.py: ~347 lines (ONNX export)
 - src/.../training/: ~1,938 lines (trainers, loss functions, dataloaders)
-- src/.../models/: ~3,287 lines (ResNet architectures, model wrappers)
+- src/.../models/: ~3,287 lines (SigLIP 2, MobileNetV4, legacy ResNet architectures)
 
 ---
 
@@ -339,9 +339,9 @@ find src/image_preprocessing_detector/detection -name "*.py" \
 # Result: 9,917 lines across:
 #   - text_gate.py (~350 lines)
 #   - iqa_classical.py (~1,200 lines - 8 detectors)
-#   - iqa_ml.py (~800 lines - teacher/student inference)
+#   - iqa_ml.py (~800 lines - MobileNetV4 + SigLIP 2 multi-task inference)
 #   - hybrid_iqa.py (~400 lines)
-#   - layout_lite/ subdirectory (~7,000+ lines for DocLayout-YOLO + analyzers)
+#   - layout_lite/ subdirectory (~7,000+ lines for Docling layout models + analyzers)
 #   - advanced_detectors.py
 #   - discrepancy.py
 #   - orientation_detector.py
@@ -542,7 +542,7 @@ If directories don't exist yet (e.g., Labeling Models):
 
 **Scenario 3: Third-Party Wrappers**
 
-If workstream wraps external models (e.g., PyIQA models):
+If workstream wraps external models (e.g., PyIQA models, SigLIP 2):
 
 - **Count**: Only wrapper code, not the underlying library
 - **Example**: QualiCLIP wrapper (~50 lines) counts, not PyIQA library (thousands of lines)

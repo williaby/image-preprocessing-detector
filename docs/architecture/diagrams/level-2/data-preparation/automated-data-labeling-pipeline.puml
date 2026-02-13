@@ -1,6 +1,6 @@
 @startuml automated-data-labeling-pipeline
 !theme plain
-title Phase 7/9 Automated Data Labeling Pipeline
+title Automated Data Labeling Pipeline (V2 - Post-Refactoring)
 
 skinparam backgroundColor white
 skinparam componentStyle rectangle
@@ -13,6 +13,8 @@ skinparam component {
     BackgroundColor<<training>> LightYellow
     BackgroundColor<<output>> LightGray
     BackgroundColor<<external>> LightPink
+    BackgroundColor<<workflow>> Lavender
+    BackgroundColor<<monitoring>> Wheat
 }
 
 package "Data Sources (E: Drive)" as sources {
@@ -34,76 +36,130 @@ package "Data Sources (E: Drive)" as sources {
     }
 }
 
-package "Layer 1: IMMUTABLE (annotate_base_metadata.py)" as layer1 <<immutable>> {
-    component "Image Scanner" as scanner {
+package "annotation.workflow (Three-Stage Pipeline)" as workflow <<workflow>> {
+    component "Pre-flight Checks\n(preflight.py)" as preflight {
+        [Disk Space\nValidation]
+        [Path\nValidation]
+        [Model\nAvailability]
+    }
+
+    component "BatchScanner\n(scanner.py)" as scanner {
         [File Discovery\n(glob patterns)]
-        [SHA256 Hashing]
-        [PIL Metadata\nExtraction]
+        [Batch Accumulation\n(configurable size)]
+        [Checkpoint-aware\nResume]
     }
 
-    component "Label Parsers" as parsers {
-        [parse_diqa_labels\n(MOS scores)]
-        [parse_doclaynet_labels\n(COCO bboxes)]
-        [parse_tablebank_labels\n(COCO bboxes)]
-        [parse_funsd_labels\n(form annotations)]
-        [parse_signatr_labels\n(writer IDs)]
+    component "CPU Stage\n(ProcessPoolExecutor)" as cpu_stage {
+        [Parallel SHA256\nHashing]
+        [File Metadata\nExtraction]
     }
 
-    component "Original Data" as original {
-        [OriginalFileMetadata\n- format, dimensions\n- DPI, color_space]
-        [OriginalLabels\n- diqa_mos, live_dmos\n- doclaynet_annotations\n- tablebank_annotations]
+    component "Parse Stage\n(Sequential)" as parse_stage {
+        [Parser Registry\nLookup]
+        [Label Parsing\n(per-dataset)]
+    }
+
+    component "GPU Stage\n(Single Thread)" as gpu_stage {
+        [Batched Docling Layout\nInference]
+        [Batched SigLIP 2\nMulti-Task Prediction]
+    }
+
+    component "IO Stage\n(Checkpointed)" as io_stage {
+        [Parquet Writing\n(partitioned)]
+        [JSON Export\n(per-dataset)]
+        [Atomic\nCheckpoints]
     }
 }
 
-package "Layer 2: ENRICHMENT (annotate_base_metadata.py)" as layer2 <<enrichment>> {
-    component "Dataset Config" as config {
-        [capture_method\n(SCANNER_ADF, BORN_DIGITAL, etc.)]
-        [domain_level1\n(TAX, FIN, EDU, etc.)]
-        [Phase 9 Flags\n(has_table, has_formula,\nhas_handwriting, has_signature)]
+package "annotation.parsers (Layer 1: IMMUTABLE)" as layer1 <<immutable>> {
+    component "Parser Registry\n(registry.py)" as registry {
+        [Explicit Registration]
+        [Protocol-based\nExtensibility]
     }
 
-    component "EnrichmentData" as enrichment {
-        [resolution_dpi\nresolution_category\nresolution_pixels]
-        [capture_confidence\ndomain_confidence]
-        [LLM predictions\n(future enrichment)]
+    component "Dataset Parsers" as parsers {
+        [quality/\nDIQA, SmartDoc, OCR]
+        [layout/\nDocLayNet, TableBank, PubTabNet]
+        [handwriting/\nSignaTR, NIST, MathsHW]
+        [multilingual/\nMDIW, CC-OCR, Scripts]
+        [document/\nRVL-CDIP, OmniDocBench]
+    }
+
+    component "Original Data\n(schemas/immutable.py)" as original {
+        [OriginalFileMetadata\nformat, dimensions, DPI]
+        [OriginalLabels\ndiqa_mos, live_dmos\ndoclaynet_annotations\ntablebank_annotations]
+    }
+}
+
+package "annotation.enrichment (Layer 2: ENRICHMENT)" as layer2 <<enrichment>> {
+    component "EnrichmentManager\n(manager.py)" as manager {
+        [Tier-ordered\nExecution]
+        [Provider Fallback\nChain]
+        [Dead-letter\nQueue]
+    }
+
+    component "Providers\n(providers/)" as providers {
+        [DoclingLayoutProvider\n(layout detection)]
+        [SigLIP2Provider\n(16-head multi-task)]
+        [Built-in\n(tier 0-1 defaults)]
+    }
+
+    component "EnrichmentData\n(schemas/enrichment.py)" as enrichment {
+        [quality_overall\nlayout_detections]
+        [capture_method\ndomain_level1-3]
+        [text_density\nlayout_type]
     }
 
     component "Versioning" as versioning {
-        [EnrichmentVersion\n- version number\n- created_at\n- created_by\n- method]
+        [EnrichmentVersion\nversion, created_at\ncreated_by, method]
     }
 }
 
 package "Layer 3: TRAINING (build_training_labels.py)" as layer3 <<training>> {
     component "Score Normalization" as normalize {
-        [MOS/DMOS → 0-1 scale]
-        [anchor_score computation]
-        [anchor_source priority\n(human > llm_high > synthetic)]
+        [MOS/DMOS to 0-1]
+        [anchor_score\ncomputation]
+        [anchor_source\npriority]
     }
 
     component "IQA Vector Builder" as iqa_builder {
-        [45-dim iqa_vector\n(one per degradation type)]
-        [iqa_binary\n(thresholded presence)]
-        [DEGRADATION_INDEX\nmapping]
+        [45-dim iqa_vector]
+        [iqa_binary\n(thresholded)]
+        [DEGRADATION_INDEX]
     }
 
     component "Element Labels" as element_labels {
-        [ElementLabel extraction\nfrom COCO annotations]
-        [table_type classification]
+        [ElementLabel\nfrom COCO]
+        [table_type]
         [formula_complexity]
-        [signature_locations]
+    }
+}
+
+package "annotation.monitoring" as monitoring <<monitoring>> {
+    component "Prometheus Metrics\n(metrics.py)" as metrics {
+        [Pipeline Stage\nDuration]
+        [Batch Processing\nCounters]
+        [Error Tracking]
+    }
+
+    component "Structured Logging\n(logging.py)" as logging {
+        [JSON Events]
+        [Stage Progress]
+        [Error Context]
     }
 }
 
 package "Output Artifacts" as outputs <<output>> {
-    file "metadata_registry/\njson/*.json" as json_out
-    file "metadata_registry/\nsamples.parquet" as parquet_out
+    file "metadata_registry/\nparquet/dataset_name=X/\npart-0000.parquet" as parquet_out
+    file "metadata_registry/\njson/{dataset}/*.json" as json_out
     file "training_labels.parquet" as training_out
+    file ".checkpoints/\n{dataset}.json" as checkpoints
 
     note right of parquet_out
-        Flat columns for filtering:
-        - Phase 9 flags
-        - element counts
-        - JSON-serialized bboxes
+        **V2 Partitioned Storage**
+        Hive-style partitioning
+        O(1) per-dataset writes
+        No read-modify-write
     end note
 
     note right of training_out
@@ -114,40 +170,66 @@ package "Output Artifacts" as outputs <<output>> {
     end note
 }
 
-' Flow connections
+' Flow connections - Pre-flight
+preflight --> scanner : "validate\nbefore scan"
 base_data --> scanner
 benchmark --> scanner
-scanner --> parsers : "per-image\nprocessing"
-parsers --> original : "extract\nlabels"
 
-original --> enrichment : "combine with\nconfig defaults"
-config --> enrichment
+' Flow connections - Pipeline stages
+scanner --> cpu_stage : "batches of\nimage paths"
+cpu_stage --> parse_stage : "hashed\nsamples"
+parse_stage --> io_stage : "parsed\nsamples"
+
+' Parser integration
+registry --> parse_stage
+parsers --> registry : "registered\nparsers"
+parse_stage --> original : "extract\nlabels"
+
+' Enrichment flow (GPU stage)
+parse_stage --> gpu_stage : "parsed\nbatch"
+manager --> gpu_stage
+providers --> manager : "tier-ordered\nproviders"
+gpu_stage --> enrichment : "enrich\nsamples"
 enrichment --> versioning : "track\nprovenance"
 
-original --> json_out : "full detail\nper dataset"
-enrichment --> parquet_out : "flat view\nwith bboxes"
+' Output flow
+gpu_stage --> io_stage : "enriched\nbatch"
+io_stage --> parquet_out : "partitioned\nby dataset"
+io_stage --> json_out : "full detail\nper dataset"
+io_stage --> checkpoints : "atomic\ncheckpoint"
 versioning --> json_out
 
-parquet_out --> normalize : "read JSON\nregistry"
+' Training flow
+parquet_out --> normalize : "read\npartitions"
 json_out --> normalize
 normalize --> iqa_builder
 normalize --> element_labels
 iqa_builder --> training_out
 element_labels --> training_out
 
-' Performance note
-note bottom of layer1
-    **COCO Cache Optimization**
-    Load annotations once per dataset,
-    not per image (~100x faster)
+' Monitoring connections
+cpu_stage ..> metrics : "stage timing"
+parse_stage ..> metrics
+gpu_stage ..> metrics
+io_stage ..> metrics
+scanner ..> logging : "progress\nevents"
+gpu_stage ..> logging
+
+' Architecture notes
+note bottom of workflow
+    **V2 Three-Stage Pipeline**
+    CPU Stage: Parallel hashing (ProcessPoolExecutor)
+    Parse Stage: Sequential (parser caches)
+    GPU Stage: Single thread (CUDA safety)
+    IO Stage: Checkpointed writes
 end note
 
-' Architecture note
-note right of layer3
-    **Three-Layer Architecture**
-    Immutable: Original source data
-    Enrichment: Our derived annotations
-    Training: Computed on-demand
+note right of layer2
+    **Provider Pattern**
+    Tier 0: By construction (content flags)
+    Tier 1: Existing annotations (COCO, MOS)
+    Tier 2: ML inference (Docling Layout, SigLIP 2)
+    Tier 3: Heuristics (fallback)
 end note
 
 @enduml

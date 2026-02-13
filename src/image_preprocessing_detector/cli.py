@@ -859,5 +859,136 @@ def noise_check(
         sys.exit(1)
 
 
+# Register deskew command
+@cli.command("deskew")
+@click.argument("input_path", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Output JSON file path (default: stdout)",
+)
+@click.option(
+    "--save-image",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Save corrected image to this path",
+)
+@click.option(
+    "--config",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="Path to skew_estimation.yaml config",
+)
+@click.option(
+    "--classical-only",
+    is_flag=True,
+    help="Force classical Hough+Projection detection (skip ML)",
+)
+def deskew_cmd(
+    input_path: Path,
+    output: Path | None,
+    save_image: Path | None,
+    config: Path | None,
+    classical_only: bool,
+) -> None:
+    """Detect and correct skew in a document image.
+
+    Runs the ML-based SkewNet pipeline (orientation + fine skew) with
+    classical fallback. Reports detected angles, confidence, and
+    whether correction was applied.
+
+    Examples:
+        imgprep deskew scan.png
+        imgprep deskew scan.png --save-image corrected.png -o result.json
+        imgprep deskew scan.png --classical-only
+    """
+    import json
+
+    import cv2
+
+    from image_preprocessing_detector.detection.deskew_pipeline import (
+        DeskewConfig,
+        DeskewPipeline,
+    )
+
+    try:
+        image = cv2.imread(str(input_path))
+        if image is None:
+            click.echo(f"Error: Could not read image: {input_path}", err=True)
+            sys.exit(1)
+
+        if classical_only:
+            pipeline_config = DeskewConfig(
+                model_path=None,
+                fallback_enabled=True,
+            )
+        else:
+            pipeline_config = (
+                DeskewConfig.from_yaml(config) if config else DeskewConfig()
+            )
+
+        pipeline = DeskewPipeline(config=pipeline_config)
+        result = pipeline.process(image)
+
+        # Build result dict
+        result_data = {
+            "input": str(input_path),
+            "orientation_angle": result.orientation_angle,
+            "orientation_confidence": round(result.orientation_confidence, 4),
+            "orientation_corrected": result.orientation_applied,
+            "skew_angle": round(result.skew_angle, 4),
+            "skew_confidence": round(result.skew_confidence, 4),
+            "skew_uncertainty": round(result.skew_uncertainty, 4),
+            "correction_applied": result.correction_applied,
+            "method": result.method,
+            "latency_ms": result.latency_ms,
+        }
+        if result.skipped_reason:
+            result_data["skipped_reason"] = result.skipped_reason
+
+        # Output
+        json_str = json.dumps(result_data, indent=2)
+        if output:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json_str)
+            click.echo(f"Result saved to {output}")
+        else:
+            click.echo(json_str)
+
+        # Save corrected image
+        if save_image and result.correction_applied:
+            save_image.parent.mkdir(parents=True, exist_ok=True)
+            cv2.imwrite(str(save_image), result.corrected_image)
+            click.echo(f"Corrected image saved to {save_image}")
+
+        pipeline.close()
+
+    except Exception as e:
+        logger.error("Deskew failed", error=str(e), exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+# Register layout taxonomy command group
+try:
+    from image_preprocessing_detector.cli_layout import layout
+
+    cli.add_command(layout)
+except ImportError:
+    # Layout taxonomy module not available
+    pass
+
+# Register synthetic generation command group
+try:
+    from image_preprocessing_detector.synthetic.cli import synthetic
+
+    cli.add_command(synthetic)
+except ImportError:
+    # Synthetic module not available (missing optional dependencies)
+    pass
+
+
 if __name__ == "__main__":
     cli()

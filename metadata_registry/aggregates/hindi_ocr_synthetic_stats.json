@@ -1,0 +1,80 @@
+{
+  "dataset_name": "hindi_ocr_synthetic",
+  "total_samples": 80008,
+  "capture_methods": {
+    "born_digital": 80008
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "EDU": 80008
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {
+    "Deva": 80008
+  },
+  "script_families": {
+    "indic": 80008
+  },
+  "language_codes": {
+    "hi": 80008
+  },
+  "content_flags": {},
+  "text_scopes": {
+    "line": 80008
+  },
+  "content_types": {
+    "printed": 80008
+  },
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "born_digital": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "EDU": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {
+    "Deva": 100.0
+  },
+  "script_families_pct": {
+    "indic": 100.0
+  },
+  "language_codes_pct": {
+    "hi": 100.0
+  },
+  "text_scopes_pct": {
+    "line": 100.0
+  },
+  "content_types_pct": {
+    "printed": 100.0
+  },
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {},
+  "top_degradations": [],
+  "top_scripts": [
+    {
+      "script": "Deva",
+      "count": 80008,
+      "percentage": 100.0
+    }
+  ],
+  "top_languages": [
+    {
+      "language": "hi",
+      "count": 80008,
+      "percentage": 100.0
+    }
+  ],
+  "script_family_summary": {
+    "indic": 80008
+  }
+}

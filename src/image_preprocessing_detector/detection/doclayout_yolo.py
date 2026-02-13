@@ -200,6 +200,24 @@ class DocLayoutClass(str, Enum):
         }
         return self in doclaynet_classes
 
+    def to_canonical(self) -> str:
+        """Map this class to canonical taxonomy name.
+
+        Delegates to LayoutTaxonomy for config-driven conversion.
+        DocLayNet-native classes use the "doclaynet" schema;
+        DocStructBench classes use the "docstructbench" schema.
+
+        Returns:
+            Canonical class name (e.g. "CAPTION", "FIGURE_CAPTION").
+        """
+        from image_preprocessing_detector.schema_utils.layout_taxonomy import (
+            get_default_taxonomy,
+        )
+
+        taxonomy = get_default_taxonomy()
+        schema = "docstructbench" if not self.is_doclaynet_native else "doclaynet"
+        return taxonomy.to_canonical(self.value, schema)
+
 
 @dataclass
 class DetectedElement:

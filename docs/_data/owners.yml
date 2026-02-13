@@ -6,6 +6,7 @@ owners:
   cv-team: "@williaby/cv-team"
   ml-team: "@williaby/ml-team"
   docs-team: "@williaby/docs-team"
+  data-team: "@williaby/data-team"
   platform-team: "@williaby/platform-team"
   quality-team: "@williaby/quality-team"
   core-maintainer: "@williaby"

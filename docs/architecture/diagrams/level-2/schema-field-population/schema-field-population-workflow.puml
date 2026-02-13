@@ -1,0 +1,389 @@
+@startuml schema-field-population-workflow
+' NOTE: This diagram is too complex for SVG rendering.
+' See schema-field-population-summary.puml for the renderable version.
+!theme plain
+title Layer 2 Schema Field Population Workflow\nv2.1.0 | February 2026
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam activityDiamondBackgroundColor #FFFFCC
+
+' Color definitions matching project conventions
+skinparam component {
+    BackgroundColor<<tier0>> #E0F7FA
+    BackgroundColor<<tier1>> LightBlue
+    BackgroundColor<<tier2>> LightGreen
+    BackgroundColor<<tier3>> #FFF9C4
+    BackgroundColor<<training>> LightYellow
+    BackgroundColor<<output>> LightGray
+    BackgroundColor<<external>> LightPink
+    BackgroundColor<<gap>> #FFCDD2
+}
+
+' ============================================================================
+' LEGEND
+' ============================================================================
+legend right
+  |= Color |= Tier |= Confidence |
+  | <#E0F7FA> | Tier 0: Synthetic (exact) | 1.0 |
+  | <#ADD8E6> | Tier 1: Annotation-derived | 0.95 |
+  | <#90EE90> | Tier 2: ML Model inference | per-sample |
+  | <#FFF9C4> | Tier 3: Heuristic | 0.5-0.8 |
+  | <#FFCDD2> | Gap: Not yet wired/built | -- |
+  |= Symbol |= Status |
+  | IMPLEMENTED | Production-ready |
+  | STUBBED | Fields exist, values None |
+  | PLANNED | Design complete, not coded |
+  | NOT STARTED | No population path |
+endlegend
+
+' ============================================================================
+' SECTION 1: DATA SOURCES
+' ============================================================================
+package "Data Sources" as sources {
+    database "01_base_data/\n(46 datasets)" as base_data <<external>>
+    database "02_benchmark_only/\nDIQA-5000, LIVE, SmartDoc" as benchmark <<external>>
+    database "03_training_datasets/\norientation (50K)" as training_ds <<external>>
+    component "Synthetic Generator\n(generator.py)" as synth_gen <<tier0>>
+
+    note right of synth_gen
+        **Tier 0: All fields at conf=1.0**
+        schema_adapter.py populates:
+        - CaptureMethodInfo (3 fields)
+        - ResolutionInfo (6 fields, incl. char_height)
+        - QualityInfo + MLImageQualityInfo (10 fields)
+        - LanguageInfo + ContentFlags (16 fields)
+        - GeometricInfo (7 fields: orientation, skew)
+        - ImagePropertiesInfo (2 fields: color_mode, age)
+        - TextScopeInfo (5 fields)
+        - PaperSizeInfo (5 fields)
+        - DatasetSourceInfo (1 field)
+        - CodeDetection (4 fields)
+    end note
+}
+
+' ============================================================================
+' SECTION 2: PASS 0 - SYNTHETIC GENERATION (TIER 0)
+' ============================================================================
+package "Pass 0: Synthetic Generation" as pass0 <<tier0>> {
+    component "MultiScriptDocumentGenerator\n(synthetic/generator.py)" as generator {
+        [Text Block Rendering\n(30+ scripts)]
+        [Geometric Transforms\n(_apply_geometric_transforms)]
+        [Hybrid Augmentation\n(aged/historical profiles)]
+        [Char Height Measurement\n(_measure_char_height)]
+    }
+
+    component "SchemaAdapter\n(synthetic/schema_adapter.py)" as schema_adapter {
+        [IQA Vector (45-dim)\nfrom IQA_TO_DEGRADATION_MAPPING]
+        [Multi-Task Metadata\n(nested under metadata.data.multi_task)]
+    }
+
+    generator --> schema_adapter : "rendered image\n+ generation params"
+}
+
+' ============================================================================
+' SECTION 3: PASS 1 - BASE METADATA ANNOTATION (TIER 0-2)
+' ============================================================================
+package "Pass 1: Base Metadata Annotation" as pass1 {
+    component "annotate_base_metadata.py\n(DATASET_CONFIGS + DocLayout-YOLO)" as base_annotator {
+        [Layer 1: OriginalFileMetadata\n(SHA256, dimensions, format)]
+        [Layer 2 Base: capture_method,\ndomain, structure, quality]
+        [DocLayout-YOLO Inference\n(11 DocLayNet classes)]
+        [Content Flag Derivation\n(has_table, has_formula, has_code)]
+    }
+
+    component "DATASET_CONFIGS\n(per-dataset config dicts)" as ds_configs <<tier1>>
+    component "DocLayout-YOLO\n(docling-layout model)" as doclayout <<tier2>>
+
+    note bottom of base_annotator
+        **Fields Populated (Pass 1)**:
+        CaptureMethodInfo.method (Tier 1)
+        ResolutionInfo.dpi, .effective_dpi (Tier 1)
+        DomainInfo.level1-3 (Tier 1)
+        StructureInfo.text_density, .layout_type (Tier 1)
+        QualityInfo.overall_score (Tier 1-2)
+        ContentFlags.has_table/formula/figure (Tier 1-2)
+        ContentFlags.has_code (Tier 2, from layout)
+        LayoutDetections[].class_name, .bbox (Tier 2)
+        ImagePropertiesInfo.color_mode (Tier 3, Pillow)
+        ImagePropertiesInfo.document_age (Tier 1, known datasets)
+    end note
+
+    ds_configs --> base_annotator
+    doclayout --> base_annotator
+    base_data --> base_annotator
+    benchmark --> base_annotator
+}
+
+' ============================================================================
+' SECTION 4: PASS 2 - LANGUAGE ENRICHMENT (TIER 0-2)
+' ============================================================================
+package "Pass 2: Language Enrichment" as pass2 {
+    component "enrich_language_from_gt.py\n(ground-truth labels)" as lang_gt <<tier1>>
+    component "backfill_language_confidence.py\n(OpenLID-v2 inference)" as lang_ml <<tier2>>
+    component "run_language_enrichment.py\n(fastText + lingua-py)" as lang_heur <<tier3>>
+
+    note bottom of pass2
+        **Fields Populated (Pass 2)**:
+        LanguageInfo.iso639_language
+        LanguageInfo.iso15924_script
+        LanguageInfo.script_family
+        LanguageInfo.bcp47_tag
+        LanguageInfo.language_confidence
+        Multi-tier consensus voting
+        **Status**: IMPLEMENTED (4 scripts + 1 provider)
+    end note
+
+    lang_gt --> lang_ml : "fill gaps\nwhere GT missing"
+    lang_ml --> lang_heur : "fallback\nif OpenLID fails"
+}
+
+' ============================================================================
+' SECTION 5: PASS 3 - TEXT QUALITY BACKFILL (TIER 2-3)
+' ============================================================================
+package "Pass 3: Text Quality" as pass3 {
+    component "backfill_text_quality_confidence.py\n(OCR quality proxy)" as text_qual <<tier3>>
+
+    note right of text_qual
+        **Fields Populated**:
+        text_quality_confidence
+        (proxy from OCR output metrics)
+        **Status**: IMPLEMENTED
+    end note
+}
+
+' ============================================================================
+' SECTION 6: PASS 4 - LAYOUT TAXONOMY STANDARDIZATION (TIER 1)
+' ============================================================================
+package "Pass 4: Layout Taxonomy" as pass4 {
+    component "standardize_layout_labels.py\n(LayoutTaxonomy hub-and-spoke)" as layout_std <<tier1>>
+
+    note right of layout_std
+        **Fields Populated**:
+        LayoutDetection.canonical_class
+        LayoutDetection.source_schema
+        LayoutDetection.is_lossy
+        LayoutDetection.conversion_confidence
+        57 canonical classes across 6 schemas
+        Config: config/layout_taxonomy.yaml
+        **Status**: IMPLEMENTED
+    end note
+}
+
+' ============================================================================
+' SECTION 7: PASS 5 - DeQA/MLLM PSEUDO-LABELING (TIER 2)
+' ============================================================================
+package "Pass 5: DeQA Pseudo-Labeling [PLANNED]" as pass5 <<gap>> {
+    component "5-Model Ensemble\n(Modal GPU)" as deqa_ensemble {
+        [Track A: MUSIQ (sharpness)\nQualiCLIP (color)\nDocIQ-Replica (overall)]
+        [Track B: Qwen3-VL-8B\nInternVL3-8B]
+    }
+
+    component "modal/stage1_deqa_inference.py\nmodal/generate_pseudo_labels.py" as deqa_scripts
+
+    note bottom of pass5
+        **Fields Populated (when wired)**:
+        QualityInfo.overall_score (soft labels)
+        MLImageQualityInfo.blur/noise/contrast/
+          compression/skew/overall_score
+        MLImageQualityInfo.model_name, .model_version
+        **Status**: PLANNED (models exist, not wired to Layer 2)
+        **Gap**: Output stored in production schema,
+        NOT copied to Layer 2 EnrichmentData
+    end note
+
+    deqa_scripts --> deqa_ensemble
+}
+
+' ============================================================================
+' SECTION 8: PASS 6 - ML IQA TEACHER-STUDENT (TIER 2)
+' ============================================================================
+package "Pass 6: ML IQA [NOT WIRED]" as pass6 <<gap>> {
+    component "ResNet-50 Teacher\n(modal/teacher_inference.py)" as teacher <<tier2>>
+    component "ResNet-18 Student\n(detection/iqa_ml.py)" as student <<tier2>>
+
+    note bottom of pass6
+        **Fields That Should Be Populated**:
+        MLImageQualityInfo.blur_score
+        MLImageQualityInfo.noise_score
+        MLImageQualityInfo.contrast_score
+        MLImageQualityInfo.compression_score
+        MLImageQualityInfo.skew_score
+        MLImageQualityInfo.overall_score
+        **Status**: NOT WIRED (iqa_ml.py produces scores
+        but annotate_base_metadata.py does not copy
+        them to Layer 2 ml_image_quality object)
+    end note
+
+    teacher --> student : "knowledge\ndistillation"
+}
+
+' ============================================================================
+' SECTION 9: CLASSICAL CV DETECTORS (TIER 3)
+' ============================================================================
+package "Classical CV Detectors (Tier 3)" as classical {
+    component "8 IQA Detectors\n(detection/iqa_classical.py)\n< 25ms combined" as iqa_classical <<tier3>> {
+        [SkewDetector -> geometric.skew_angle_degrees]
+        [BlurDetector -> ml_image_quality.blur_score]
+        [NoiseDetector -> ml_image_quality.noise_score]
+        [ContrastDetector -> ml_image_quality.contrast_score]
+        [JPEGBlockinessDetector -> ml_image_quality.compression_score]
+        [IlluminationDetector -> quality.degradations[]]
+        [BinarizationQualityDetector -> quality.degradations[]]
+        [BleedThroughDetector -> quality.degradations[]]
+    }
+
+    component "6 Layout-Lite Detectors\n(detection/layout_lite/)" as layout_lite <<tier3>> {
+        [ColumnDetector -> structure.layout_type]
+        [TableDetector -> content_flags.has_table]
+        [FigureDetector -> content_flags.has_figure]
+        [FuzzyScanDetector -> physical_degradation.fuzzy_scan_score]
+        [WatermarkDetector -> physical_degradation.watermark_severity]
+        [BackgroundDetector -> image_properties.color_mode]
+    }
+
+    component "Orientation Ensemble\n(detection/orientation_detector.py)" as orient_det <<tier3>> {
+        [3-method ensemble\n-> geometric.orientation_class]
+    }
+}
+
+' ============================================================================
+' SECTION 10: ML MODELS - PLANNED (TIER 2)
+' ============================================================================
+package "Planned ML Models [NOT YET TRAINED]" as planned_ml <<gap>> {
+    component "MobileNetV4-Conv-S\n(~3ms pre-correction)" as mobilenet {
+        [Head 1: orientation_class (4-class)]
+        [Head 2: skew_angle (regression)]
+        [Head 3: resolution_quality (0-1)]
+    }
+
+    component "SigLIP 2 NAFlex\n(~50ms full analysis)" as siglip2 {
+        [Group 1: IQA (5 heads)]
+        [Group 2: Script (3 heads)]
+        [Group 3: Orientation + Skew (3 heads)]
+        [Group 4: Handwriting (2 heads)]
+        [Group 5: Shadow + Warping (3 heads)]
+    }
+
+    note bottom of planned_ml
+        **Fields These Will Populate**:
+        GeometricInfo.orientation_class (MNv4 H1 / SigLIP G3)
+        GeometricInfo.skew_angle_degrees (MNv4 H2 / SigLIP G3)
+        ResolutionInfo.resolution_quality_score (MNv4 H3)
+        PhysicalDegradationInfo.shadow_severity/type (SigLIP G5)
+        PhysicalDegradationInfo.warping_severity/type (SigLIP G5)
+        ContentFlags.has_handwriting (SigLIP G4)
+        **Status**: PLANNED (datasets ready/in-progress)
+    end note
+}
+
+' ============================================================================
+' SECTION 11: PASS 7 - RELIABILITY SUMMARY
+' ============================================================================
+package "Pass 7: Reliability Summary" as pass7 {
+    component "materialize_reliability_summary.py\n(min confidence across all fields)" as reliability
+
+    note right of reliability
+        **Fields Populated**:
+        sample_reliability_summary
+        (computed, not a schema field)
+        **Status**: IMPLEMENTED
+    end note
+}
+
+' ============================================================================
+' SECTION 12: PASS 8 - METADATA AGGREGATION
+' ============================================================================
+package "Pass 8: Metadata Aggregation" as pass8 {
+    component "aggregate_layer2_metadata.py\n(per-dataset statistics)" as aggregator
+
+    note right of aggregator
+        **Output**:
+        metadata_registry/aggregates/
+          {dataset}_stats.json
+        Capture methods, domains,
+        quality ranges, content flags
+        **Status**: IMPLEMENTED
+    end note
+}
+
+' ============================================================================
+' SECTION 13: LAYER 3 - TRAINING LABEL ASSEMBLY
+' ============================================================================
+package "Layer 3: Training Label Assembly" as layer3 <<training>> {
+    component "build_training_labels.py" as build_labels {
+        [Score Normalization\n(MOS/DMOS -> 0-1)]
+        [Anchor Score Priority Chain\n(human > ensemble > teacher > student > heuristic)]
+        [45-dim IQA Vector Builder\n(DEGRADATION_INDEX)]
+        [ElementLabel from COCO\n(table_type, formula_complexity)]
+    }
+
+    file "training_labels.parquet" as training_out
+    build_labels --> training_out
+}
+
+' ============================================================================
+' SECTION 14: OUTPUTS
+' ============================================================================
+package "Output Artifacts" as outputs <<output>> {
+    file "metadata_registry/\nparquet/dataset_name=X/\npart-0000.parquet" as parquet_out
+    file "metadata_registry/\njson/{dataset}/*.json" as json_out
+    file ".checkpoints/\n{dataset}.json" as checkpoints
+    file "metadata_registry/\naggregates/{dataset}_stats.json" as agg_out
+}
+
+' ============================================================================
+' FLOW CONNECTIONS - Sequential Passes
+' ============================================================================
+
+' Pass 0 (Synthetic) outputs
+synth_gen --> schema_adapter
+schema_adapter --> parquet_out : "synthetic\nsamples"
+
+' Pass 1 (Base Metadata) outputs
+base_annotator --> parquet_out : "partitioned\nby dataset"
+base_annotator --> json_out : "full detail\nper dataset"
+base_annotator --> checkpoints : "atomic\ncheckpoint"
+
+' Pass sequence
+pass1 --> pass2 : "language\nenrichment"
+pass2 --> pass3 : "text quality\nbackfill"
+pass3 --> pass4 : "layout\nstandardization"
+pass4 -[#FF0000,dashed]-> pass5 : "PLANNED"
+pass5 -[#FF0000,dashed]-> pass6 : "NOT WIRED"
+pass4 --> pass7 : "current\nproduction path"
+pass7 --> pass8
+
+' Classical detectors feed into Pass 1
+iqa_classical --> base_annotator : "Tier 3\nscores"
+layout_lite --> base_annotator : "Tier 3\ndetections"
+orient_det --> base_annotator : "Tier 3\norientation"
+
+' Aggregation output
+aggregator --> agg_out
+
+' Training assembly reads from outputs
+parquet_out --> build_labels : "read\npartitions"
+json_out --> build_labels
+
+' ============================================================================
+' WIRING GAP ANNOTATIONS
+' ============================================================================
+note bottom of outputs
+    **P0 Wiring Gaps (capability exists)**:
+    1. PageLayoutSummary -> PhysicalDegradationInfo (shadow, warping, watermark, fuzzy_scan)
+    2. iqa_ml.py scores -> MLImageQualityInfo (6 score fields)
+    3. Pillow metadata -> ImagePropertiesInfo (color_space, bit_depth)
+
+    **P1 Measurement Gaps (code needed)**:
+    4. _measure_char_height() for real images -> ResolutionInfo.character_height_px
+    5. Derived resolution_quality_score from char_height
+
+    **P2 Model Gaps (training required)**:
+    6. MobileNetV4 orientation/skew heads (datasets: 50K/40K)
+    7. SigLIP 2 Group 5 shadow/warping (datasets: 15K/20K)
+    8. Code language/rendering style detection
+end note
+
+@enduml

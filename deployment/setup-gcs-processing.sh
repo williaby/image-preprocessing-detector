@@ -1,0 +1,141 @@
+#!/bin/bash
+# Set up GCS-based Docling processing on Docker VM
+#
+# This script:
+#   1. Installs gcloud CLI
+#   2. Sets up service account authentication
+#   3. Creates processing directories
+#   4. Deploys Docling container
+#   5. Installs Python processing script
+#
+# Usage:
+#   ./setup-gcs-processing.sh
+
+set -euo pipefail
+
+DOCKER_HOST="${DOCKER_HOST:?"DOCKER_HOST env var must be set (e.g., user@host)"}"
+DEPLOY_DIR="${DEPLOY_DIR:-/data/compose/docling}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Check SSH connectivity
+log_info "Checking SSH connectivity..."
+if ! ssh -o ConnectTimeout=5 "$DOCKER_HOST" "echo 'Connected'" &>/dev/null; then
+    log_error "Cannot connect to Docker VM"
+    exit 1
+fi
+
+# Step 1: Install gcloud CLI if not present
+log_info "Checking gcloud CLI..."
+if ! ssh "$DOCKER_HOST" "which gcloud" &>/dev/null; then
+    log_info "Installing gcloud CLI..."
+    ssh "$DOCKER_HOST" "bash -s" << 'EOF'
+        # Add Google Cloud SDK repo
+        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+        curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+        sudo apt-get update && sudo apt-get install -y google-cloud-cli
+EOF
+else
+    log_info "gcloud CLI already installed"
+fi
+
+# Step 2: Create directories
+log_info "Creating directories..."
+# Extract username from DOCKER_HOST for chown (supports user@host format)
+REMOTE_USER="${DOCKER_HOST%%@*}"
+ssh "$DOCKER_HOST" "sudo mkdir -p /data/docling/{input,output,secrets,scripts} && sudo chown -R ${REMOTE_USER}:${REMOTE_USER} /data/docling"
+
+# Step 3: Copy service account credentials
+# Prefer dedicated service account keys over Application Default Credentials (ADC).
+# ADC tokens are user-scoped and may grant broader permissions than needed.
+log_info "Setting up GCS credentials..."
+if [[ -f ~/gcs-service-account.json ]]; then
+    scp ~/gcs-service-account.json "$DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
+    ssh "$DOCKER_HOST" "chmod 600 /data/docling/secrets/gcs-credentials.json"
+    log_info "Copied service account credentials"
+elif [[ -f ~/.config/gcloud/application_default_credentials.json ]]; then
+    log_warn "Using application default credentials (ADC)."
+    log_warn "ADC may contain broad user-scoped tokens. Prefer a dedicated service account key."
+    scp ~/.config/gcloud/application_default_credentials.json "$DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
+    ssh "$DOCKER_HOST" "chmod 600 /data/docling/secrets/gcs-credentials.json"
+    log_info "Copied application default credentials"
+else
+    log_warn "No GCS credentials found locally"
+    log_warn "Please copy your service account JSON to:"
+    log_warn "  $DOCKER_HOST:/data/docling/secrets/gcs-credentials.json"
+    log_warn ""
+    log_warn "Or authenticate interactively:"
+    log_warn "  ssh $DOCKER_HOST"
+    log_warn "  gcloud auth application-default login"
+fi
+
+# Step 4: Copy processing scripts
+log_info "Copying processing scripts..."
+[[ -f "$SCRIPT_DIR/scripts/gcs_processor.py" ]] || { log_error "Error: $SCRIPT_DIR/scripts/gcs_processor.py not found"; exit 1; }
+[[ -f "$SCRIPT_DIR/scripts/process-dataset-gcs.sh" ]] || { log_error "Error: $SCRIPT_DIR/scripts/process-dataset-gcs.sh not found"; exit 1; }
+scp "$SCRIPT_DIR/scripts/gcs_processor.py" "$DOCKER_HOST:/data/docling/scripts/"
+scp "$SCRIPT_DIR/scripts/process-dataset-gcs.sh" "$DOCKER_HOST:/data/docling/scripts/"
+ssh "$DOCKER_HOST" "chmod +x /data/docling/scripts/*.sh"
+
+# Step 5: Install Python dependencies for processor
+log_info "Installing Python dependencies..."
+ssh "$DOCKER_HOST" "pip3 install --user httpx google-cloud-storage"
+
+# Step 6: Deploy Docling container
+log_info "Deploying Docling container..."
+[[ -f "$SCRIPT_DIR/docker-compose.docling-gcs.yml" ]] || { log_error "Error: $SCRIPT_DIR/docker-compose.docling-gcs.yml not found"; exit 1; }
+ssh "$DOCKER_HOST" "sudo mkdir -p $DEPLOY_DIR"
+scp "$SCRIPT_DIR/docker-compose.docling-gcs.yml" "$DOCKER_HOST:$DEPLOY_DIR/docker-compose.yml"
+scp -r "$SCRIPT_DIR/scripts" "$DOCKER_HOST:$DEPLOY_DIR/"
+
+ssh "$DOCKER_HOST" "cd $DEPLOY_DIR && docker compose pull && docker compose up -d"
+
+# Step 7: Wait for health
+log_info "Waiting for Docling to be healthy..."
+healthy=false
+for _i in {1..30}; do
+    if ssh "$DOCKER_HOST" "curl -sf http://localhost:5001/health" &>/dev/null; then
+        log_info "Docling is healthy!"
+        healthy=true
+        break
+    fi
+    echo -n "."
+    sleep 5
+done
+if [[ "$healthy" != "true" ]]; then
+    log_error "Health check timeout after 150s - Docling container failed to become healthy"
+    exit 1
+fi
+
+# Step 8: Test GCS access
+GCS_BUCKET="${GCS_BUCKET:-image_detection_b}"
+log_info "Testing GCS access..."
+if ssh "$DOCKER_HOST" "GOOGLE_APPLICATION_CREDENTIALS=/data/docling/secrets/gcs-credentials.json gsutil ls gs://${GCS_BUCKET}/ 2>/dev/null | head -3"; then
+    log_info "GCS access confirmed!"
+else
+    log_warn "GCS access test failed - check credentials"
+fi
+
+echo ""
+log_info "=== Setup Complete ==="
+echo ""
+echo "Docling API:  http://192.168.1.209:5001"
+echo "Web UI:       http://192.168.1.209:5001/ui"
+echo ""
+echo "To process a dataset:"
+echo "  ssh $DOCKER_HOST"
+echo "  cd /data/docling/scripts"
+echo "  export GOOGLE_APPLICATION_CREDENTIALS=/data/docling/secrets/gcs-credentials.json"
+echo "  python3 gcs_processor.py pubtabnet --workers 8"
+echo ""
+echo "Or from this machine:"
+echo "  ssh $DOCKER_HOST 'cd /data/docling/scripts && GOOGLE_APPLICATION_CREDENTIALS=/data/docling/secrets/gcs-credentials.json python3 gcs_processor.py pubtabnet'"

@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T08:45:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 15,
+  "labels": [
+    {
+      "image_id": "test/res/test_res_00264.jpg",
+      "id": "f3197b68-0081-416d-981a-874adbfaf0d0",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese linear algebra textbook. Exercises 7-9 and Exercise 3 problems 1-3. Eigenvalue calculations, Jordan form, characteristic polynomials. Clean typed mathematical text. Good enhancement quality."
+    },
+    {
+      "image_id": "val/res/val_res_00234.jpg",
+      "id": "763c5f40-c656-4172-9494-a8c4bf5747f9",
+      "scores": {
+        "sharpness": 3.5,
+        "noise": 3.2,
+        "contrast": 3.5,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.5
+      },
+      "notes": "Enhanced handwritten Chinese physics notes. Simple harmonic motion, spring oscillation equations (F=-kx, T=2π√(m/k)). Diagrams of spring-mass systems. Bold black ink on white. Excellent handwriting quality. Very clean enhancement. Best quality in this batch."
+    },
+    {
+      "image_id": "train/res/train_res_00932.jpg",
+      "id": "742af35c-46cb-41f9-8e95-de4908aa05ff",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese linear algebra textbook page 30. Jordan canonical form problems. Dense matrix computations with eigenvalue decompositions. Clean typed text, slightly faded. Standard enhancement quality."
+    },
+    {
+      "image_id": "train/res/train_res_00246.jpg",
+      "id": "95dce77a-e51e-440f-a33a-38dce9320a2d",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese linear algebra textbook page 41. Normal matrices, Hermite/unitary matrix properties, Schur decomposition. Dense mathematical proofs. Clean typed text, good structure. Good enhancement quality."
+    },
+    {
+      "image_id": "train/res/train_res_01709.jpg",
+      "id": "bd64c5c2-c2ef-4f0b-a852-867a634a0022",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced Chinese SMTP debugging document with Python code. smtplib.SMTP(), email.mime examples. Mixed Chinese explanations and Python code blocks. Clean layout with good code formatting. Good enhancement."
+    },
+    {
+      "image_id": "train/res/train_res_01025.jpg",
+      "id": "f67252b7-2e49-46b7-ac4f-96a527ed2c95",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese linear algebra textbook Exercise 6. Unitary matrices, adjoint matrices, Hermitian properties. Dense mathematical proofs with matrix notation. Clean typed text, slightly faded."
+    },
+    {
+      "image_id": "train/res/train_res_01084.jpg",
+      "id": "ca213951-9f45-4db8-8b94-c456d84a727e",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.2,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese quantum communication document. BB84 protocol, quantum key distribution, eavesdropping detection. Very dense typed text with mathematical formulas and protocol descriptions. Slightly faded, dense layout reduces readability."
+    },
+    {
+      "image_id": "train/res/train_res_00815.jpg",
+      "id": "0ae4b83d-ae03-49ae-a61c-c97c2b831dff",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese linear algebra textbook. Schur theorem applications, normal matrices, block matrix operations. MathType 5.0 watermark visible. Dense mathematical notation. Clean but slightly faded text."
+    },
+    {
+      "image_id": "val/res/val_res_00131.jpg",
+      "id": "8abe57da-de28-4520-a703-439edd59ffcc",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced Chinese linear algebra textbook. Eigenvalue problems 5-9, Schur theorem, nilpotent matrices. Well-organized problem set with clean notation. Good enhancement quality, readable mathematical content."
+    },
+    {
+      "image_id": "train/res/train_res_01122.jpg",
+      "id": "ad0cec86-a44c-4e14-998e-b2d6ef8564cd",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.2,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Python SDE code printout. Second variation calculations, sigma parameter estimation. matplotlib plotting code. Dense monospace code text. Slightly faded from enhancement. Code readable but not optimally enhanced."
+    }
+  ]
+}

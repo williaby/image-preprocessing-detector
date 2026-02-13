@@ -6,8 +6,7 @@
 # - GPU/Modal budget limits approach
 # - Quality drift is detected
 #
-# Deploy with: kubectl apply -f prometheus_alerts.yaml
-# Or add to prometheus.yml under rule_files:
+# Add to prometheus.yml under rule_files:
 
 groups:
   - name: imgprep_errors

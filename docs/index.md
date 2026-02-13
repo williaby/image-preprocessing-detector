@@ -16,66 +16,65 @@ Welcome to the **Image Preprocessing Detector** documentation. This system intel
 ## Key Features
 
 - **Text Detection Gate**: Fast routing to specialized processing paths
-- **Classical Computer Vision**: Skew, blur, contrast, and noise detection
-- **Deep Learning**: YOLOv8 layout detection and ML-based image quality assessment
-- **Hybrid IQA**: Per-element quality assessment for embedded images in documents
-- **Correction Pipeline**: OpenCV-based corrections with guardrails
-- **JSON Output**: COCO-aligned metadata for downstream processors
+- **Classical IQA**: 8 detectors (skew, blur, contrast, noise, illumination, JPEG blockiness, binarization, bleed-through)
+- **ML IQA**: Teacher-student ResNet architecture (ResNet-50 teacher, ResNet-18 student)
+- **Layout-Lite**: Coarse page attribute classification (11 DocLayNet classes via YOLOv10-doc)
+- **DPI Upscaling**: Automatic resolution detection and upscaling for low-resolution inputs
+- **Correction Pipeline**: OpenCV-based corrections with guardrails and audit trail
+- **DQS & Routing**: Document Quality Score calculation with OCR routing recommendations
+- **JSON Output**: COCO-aligned metadata for downstream OCR processors
 
 ## Quick Start
 
-Install the package:
+Install and run:
 
 ```bash
-pip install image-preprocessing-detector
-```
-
-Process a document:
-
-```bash
-imgprep process input.pdf --output result.json
+uv sync --extra dev
+uv run imgprep process input.pdf --output result.json
 ```
 
 ## Architecture Overview
 
-The system uses a multi-stage pipeline with text detection fork:
+The system uses a multi-stage pipeline with text detection gate and DPI upscaling:
 
 ```text
-PDF/Image Input → Ingestion (300 DPI) → Text Gate
-                                           ↓         ↓
-                                      [NO TEXT]  [TEXT]
-                                           ↓         ↓
-                                   Classical IQA  YOLOv8 Layout
-                                           ↓         ↓
-                                      Correction Pipeline
+PDF/Image Input → DPI Detection & Upscaling → Ingestion (300 DPI)
+                                                    ↓
+                                              Text Gate
+                                           ↓            ↓
+                                      [NO TEXT]     [TEXT]
+                                           ↓            ↓
+                                    Classical IQA  Layout-Lite
+                                           ↓            ↓
+                                      ML IQA (Student + selective Teacher)
                                            ↓
-                                      JSON Output
-```text
+                                    Correction Pipeline
+                                           ↓
+                                    DQS & Routing → JSON Output
+```
 
 ## Navigation
 
-- **[Getting Started](guides/installation.md)**: Installation and setup instructions
-- **[User Guide](guides/overview.md)**: Comprehensive usage documentation
+- **[Guides](guides/deployment.md)**: Deployment and operational guides
 - **[API Reference](api/index.md)**: Complete API documentation
-- **[Security](../SECURITY.md)**: Security policies and practices
-- **[Development](development/contributing.md)**: Contributing guidelines
-
-## Documentation Sites
-
-This documentation is available on:
-
-- **GitHub Pages**: [https://williaby.github.io/image-preprocessing-detector/](https://williaby.github.io/image-preprocessing-detector/)
-- **ReadTheDocs**: [https://image-preprocessing-detector.readthedocs.io/](https://image-preprocessing-detector.readthedocs.io/)
+- **[Architecture](architecture/ARCHITECTURE_MAINTENANCE_GUIDE.md)**: System architecture (4-level hierarchy)
+- **[Planning](planning/PROJECT_PLAN.md)**: Project plan and active planning documents
+- **[Development](development/index.md)**: Contributing guidelines and dev setup
+- **[Datasets](datasets/DATASET_QUICK_REFERENCE.md)**: Dataset inventory (51 source datasets)
+- **[ADRs](ADRs/README.md)**: Architecture decision records
+- **[Model Cards](model-cards/REGISTRY.md)**: ML model documentation
 
 ## Project Status
 
-**Current Phase**: Phase 1 - MVP with Classical Methods
+- **Phase 0** (Complete): Foundation & Scaffolding
+- **Phase 1** (Complete): MVP with Classical Methods + DPI Upscaling + Enhanced IQA
+- **Phase 2** (Complete): Layout-Lite, DQS, Routing, PDF Classification
+- **Phase 3** (Complete): Teacher-Student ML IQA (ResNet-50/18)
+- **Phase 4** (98%): Device Priority & Production Hardening
+- **Phase 5** (40%): Testing, Documentation & Deployment
+- **Phase 6** (95%): Monitoring & Drift Detection
 
-- ✅ Phase 0: Foundation & Scaffolding (Complete)
-- 🚧 Phase 1: MVP with Classical Methods (In Progress)
-- ⏳ Phase 2: ML for Image Quality
-- ⏳ Phase 3: ML for Document Layout
-- ⏳ Phase 4: Production Hardening
+See [Project Plan](planning/PROJECT_PLAN.md) for detailed roadmap.
 
 ## License
 

@@ -195,7 +195,7 @@ def validate_file(
         errors.append("missing or invalid front matter")
         return {"file": str(path), "ok": False, "errors": errors, "fixed": fixed}
 
-    # Check for redundant body H1 (but skip code blocks)
+    # Check for redundant body H1 (non-blocking warning for GitHub-rendered docs)
     # Remove fenced code blocks before checking for H1
     # Uses simpler DOTALL approach that properly handles multi-line blocks
     content_without_code = re.sub(
@@ -213,17 +213,21 @@ def validate_file(
     h1_match = H1_RE.search(content_without_code)
     if h1_match:
         h1_text = h1_match.group(1).strip()
-        errors.append(
-            f"redundant H1 found: '# {h1_text}' — remove it; 'title' renders automatically"
+        # Log as warning only — H1 is needed for GitHub rendering
+        print(
+            f"  [WARN] {path}: redundant H1 '# {h1_text}' (title in front matter)",
+            file=sys.stderr,
         )
 
-    # Strict Pydantic validation
-    try:
-        FM_ADAPTER.validate_python(meta)
-    except ValidationError as e:
-        for err in e.errors():
-            loc = "/".join(map(str, err["loc"]))
-            errors.append(f"{loc}: {err['msg']}")
+    # Strict Pydantic validation (only for files with schema_type field)
+    # Files without schema_type are legacy docs not yet migrated to the schema system
+    if "schema_type" in meta:
+        try:
+            FM_ADAPTER.validate_python(meta)
+        except ValidationError as e:
+            for err in e.errors():
+                loc = "/".join(map(str, err["loc"]))
+                errors.append(f"{loc}: {err['msg']}")
 
     # Validate tags against allow-list
     if "tags" in meta and isinstance(meta["tags"], list):

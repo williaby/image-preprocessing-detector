@@ -50,14 +50,14 @@ The percentage of pages failing processing has exceeded thresholds.
 3. **Review application logs**
 
    ```bash
-   kubectl logs -n imgprep -l app=imgprep-worker --tail=500 | grep ERROR
+   docker logs imgprep-worker --tail=500 | grep ERROR
    ```
 
 4. **Check for correlation with specific inputs**
 
    ```bash
    # Look for patterns in error logs
-   kubectl logs -n imgprep -l app=imgprep-worker --tail=1000 | \
+   docker logs imgprep-worker --tail=1000 | \
      grep -E "error_code.*E[0-9]+" | \
      jq -r '.document_id' | sort | uniq -c | sort -rn
    ```
@@ -79,7 +79,7 @@ The percentage of pages failing processing has exceeded thresholds.
 
 ```bash
 # Check what invalid inputs are being submitted
-kubectl logs -n imgprep -l app=imgprep-worker --tail=1000 | \
+docker logs imgprep-worker --tail=1000 | \
   grep "E100" | jq '.details'
 
 # Add input validation at API gateway level if needed
@@ -89,7 +89,7 @@ kubectl logs -n imgprep -l app=imgprep-worker --tail=1000 | \
 
 ```bash
 # Restart workers to clear any corrupted state
-kubectl rollout restart deployment/imgprep-worker -n imgprep
+docker restart imgprep-worker
 
 # If IQA errors (E2002), check model status
 curl -s http://imgprep:8000/metrics | grep imgprep_model_loaded
@@ -99,11 +99,11 @@ curl -s http://imgprep:8000/metrics | grep imgprep_model_loaded
 
 ```bash
 # Check infrastructure health
-kubectl get pods -n imgprep -o wide
-kubectl describe pods -n imgprep -l app=imgprep-worker
+docker ps --filter name=imgprep
+docker inspect imgprep-worker --format='{{.State.Status}}'
 
 # Restart affected components
-kubectl rollout restart deployment/imgprep-worker -n imgprep
+docker restart imgprep-worker
 ```
 
 ### Prevention
@@ -126,14 +126,14 @@ More than 50 processing errors in 5 minutes indicates a systematic issue.
 
    ```bash
    # Same document?
-   kubectl logs -n imgprep -l app=imgprep-worker --tail=500 | \
+   docker logs imgprep-worker --tail=500 | \
      grep "E2" | jq '.document_id' | sort | uniq -c
    ```
 
 2. **Check for pattern in page types**
 
    ```bash
-   kubectl logs -n imgprep -l app=imgprep-worker --tail=500 | \
+   docker logs imgprep-worker --tail=500 | \
      grep "E2" | jq '.gate_result' | sort | uniq -c
    ```
 
@@ -149,8 +149,9 @@ If errors are from specific documents:
 If errors are widespread:
 
 ```bash
-# Rollback recent deployment if applicable
-kubectl rollout undo deployment/imgprep-worker -n imgprep
+# Rollback to previous image version
+docker compose pull imgprep-worker
+docker compose up -d imgprep-worker
 ```
 
 ---
@@ -163,35 +164,36 @@ Infrastructure errors indicate problems with GPUs, storage, or network.
 
 ### Investigation Steps
 
-1. **Check pod health**
+1. **Check container health**
 
    ```bash
-   kubectl get pods -n imgprep -o wide
-   kubectl describe pods -n imgprep | grep -A5 "Conditions:"
+   docker ps --filter name=imgprep -a
+   docker inspect imgprep-worker --format='{{.State.Status}} {{.State.ExitCode}}'
    ```
 
-2. **Check node health**
+2. **Check host health**
 
    ```bash
-   kubectl get nodes -o wide
-   kubectl describe nodes | grep -A10 "Conditions:"
+   free -h
+   df -h
+   docker stats --no-stream
    ```
 
 3. **Check GPU status**
 
    ```bash
-   kubectl exec -it deployment/imgprep-worker -n imgprep -- nvidia-smi
+   docker exec imgprep-worker nvidia-smi
    ```
 
 ### Resolution
 
 ```bash
 # Restart workers
-kubectl rollout restart deployment/imgprep-worker -n imgprep
+docker restart imgprep-worker
 
-# If GPU issues, cordon and drain node
-kubectl cordon <node-name>
-kubectl drain <node-name> --ignore-daemonsets
+# If GPU issues, restart with fresh state
+docker compose down imgprep-worker
+docker compose up -d imgprep-worker
 ```
 
 ### Escalation

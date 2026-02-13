@@ -53,7 +53,7 @@ More than 25% of pages are being escalated to the teacher model for inference.
 4. **Review input document characteristics**
 
    ```bash
-   kubectl logs -n imgprep -l app=imgprep-worker --tail=500 | \
+   docker logs imgprep-worker --tail=500 | \
      jq 'select(.model_selection == "teacher_uncertainty")' | \
      jq '.gate_result' | sort | uniq -c
    ```
@@ -64,7 +64,8 @@ More than 25% of pages are being escalated to the teacher model for inference.
 
 ```bash
 # Increase uncertainty threshold (fewer escalations)
-kubectl set env deployment/imgprep-worker IMGPREP_UNCERTAINTY_THRESHOLD=0.3 -n imgprep
+export IMGPREP_UNCERTAINTY_THRESHOLD=0.3
+docker restart imgprep-worker
 ```
 
 #### If document quality is unusual
@@ -78,7 +79,8 @@ kubectl set env deployment/imgprep-worker IMGPREP_UNCERTAINTY_THRESHOLD=0.3 -n i
 
 ```bash
 # Temporarily disable teacher model
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_ENABLED=false -n imgprep
+export IMGPREP_TEACHER_ENABLED=false
+docker restart imgprep-worker
 
 # Note: This will reduce quality for difficult documents
 ```
@@ -129,17 +131,20 @@ Teacher model invocations are being blocked, likely due to budget or rate limits
 
 ```bash
 # Increase daily budget limit
-kubectl set env deployment/imgprep-worker IMGPREP_DAILY_BUDGET=10 -n imgprep
+export IMGPREP_DAILY_BUDGET=10
+docker restart imgprep-worker
 
 # Or use local GPU instead of Modal
-kubectl set env deployment/imgprep-worker IMGPREP_TEACHER_DEVICE=gpu -n imgprep
+export IMGPREP_TEACHER_DEVICE=gpu
+docker restart imgprep-worker
 ```
 
 #### If rate limit
 
 ```bash
 # Reduce escalation rate by adjusting threshold
-kubectl set env deployment/imgprep-worker IMGPREP_UNCERTAINTY_THRESHOLD=0.35 -n imgprep
+export IMGPREP_UNCERTAINTY_THRESHOLD=0.35
+docker restart imgprep-worker
 ```
 
 ---
@@ -174,8 +179,8 @@ The distribution of quality scores has shifted significantly, indicating potenti
 3. **Review recent model changes**
 
    ```bash
-   # Check deployment history
-   kubectl rollout history deployment/imgprep-worker -n imgprep
+   # Check recent container image history
+   docker inspect imgprep-worker --format='{{.Config.Image}}'
    ```
 
 ### Resolution
@@ -189,7 +194,8 @@ The distribution of quality scores has shifted significantly, indicating potenti
 
    ```bash
    # Rollback to previous model version
-   kubectl set env deployment/imgprep-worker IMGPREP_MODEL_VERSION=v1.2.3 -n imgprep
+   export IMGPREP_MODEL_VERSION=v1.2.3
+   docker restart imgprep-worker
    ```
 
 3. **If input data changed**:

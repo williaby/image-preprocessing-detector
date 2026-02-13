@@ -617,10 +617,7 @@ modal secret list
 
 ## Additional Resources
 
-- **Complete Guide**: [modal-training.md](../guides/modal-training.md)
-- **Storage Setup**: [modal-storage.md](../guides/modal-storage.md)
-- **Quick Start**: [PHASE2_QUICKSTART.md](../PHASE2_QUICKSTART.md)
-- **Model Storage**: [MODEL_STORAGE.md](../MODEL_STORAGE.md)
+- **Model Storage**: [MODEL_STORAGE.md](MODEL_STORAGE.md)
 - **Modal Docs**: <https://modal.com/docs>
 
 ---

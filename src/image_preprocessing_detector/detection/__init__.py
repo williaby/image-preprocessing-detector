@@ -14,6 +14,12 @@ layout detection. Pre-trained models are available (no training required).
 Model configuration: configs/models/doclayout_yolo.yaml
 """
 
+# Deskew pipeline (ML-first with classical fallback)
+from image_preprocessing_detector.detection.deskew_pipeline import (
+    DeskewConfig,
+    DeskewPipeline,
+    DeskewResult,
+)
 from image_preprocessing_detector.detection.discrepancy import (
     ClassicalScoreAdapter,
     ClassicalScores,
@@ -108,6 +114,10 @@ except ImportError:
 __all__ = [
     # Classical IQA
     "BinarizationQualityDetector",
+    # Deskew pipeline
+    "DeskewConfig",
+    "DeskewPipeline",
+    "DeskewResult",
     "BinarizationQualityResult",
     "BleedThroughDetector",
     "BleedThroughResult",

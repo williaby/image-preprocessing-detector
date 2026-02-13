@@ -34,16 +34,18 @@ cd "$SRC/image-preprocessing-detector"
 # This avoids ~4GB of CUDA/PyTorch dependencies that cause disk space issues
 echo "Installing minimal fuzz dependencies (no CUDA/PyTorch)..."
 
-# Pin NumPy to <2.0 for PyInstaller compatibility (NumPy 2.x has _core module issues)
-pip3 install "numpy>=1.26.0,<2.0.0"
-
 # Install core dependencies manually (excluding heavy ML deps)
 # These are the only deps needed for the fuzz targets
+# NumPy is pinned to <2.0 in the SAME install command to prevent pip from
+# upgrading it when resolving other packages (e.g., opencv-python-headless).
+# NumPy 2.x has _core module issues with PyInstaller used by compile_python_fuzzer.
 pip3 install \
+    "numpy>=1.26.0,<2.0.0" \
     "pillow>=10.0.0" \
     "pymupdf>=1.23.0" \
     "opencv-python-headless>=4.8.0,<5.0.0" \
     "pydantic>=2.0.0" \
+    "pyyaml>=6.0" \
     "structlog>=23.1.0" \
     "rich>=13.0.0" \
     "atheris>=2.3.0"

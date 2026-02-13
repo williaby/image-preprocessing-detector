@@ -68,7 +68,7 @@ BenchLayer --> BenchmarkDB : 5. Save\nSubsets
 
 ' === INTEGRATION WITH OTHER WORKSTREAMS ===
 package "Workstream 2: Production Model Training" <<Rectangle>> #E3F2FD {
-  component "Teacher-Student\nResNet Training" as WS2Training #E3F2FD
+  component "Multi-Task\nSigLIP 2 + MobileNetV4\nTraining" as WS2Training #E3F2FD
   component "Model Validation" as WS2Validation #E3F2FD
 }
 
@@ -176,9 +176,10 @@ note as TraceSummary
   **Cost Savings**: $24,500 (98% vs manual)
 
   **Source Files**:
-  - src/.../augmentation/genalog_config.py
-  - src/.../augmentation/genalog_degrader.py
-  - benchmarks/adapters/synthetic_iqa_adapter.py
+  - src/.../synthetic/config.py
+  - src/.../synthetic/generator.py
+  - src/.../synthetic/augmentation_hybrid.py
+  - src/.../synthetic/schema_adapter.py
 end note
 
 @enduml

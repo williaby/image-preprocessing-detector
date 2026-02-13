@@ -9,11 +9,33 @@ SPDX-License-Identifier: MIT
 
 ## Status
 
-**⏳ Placeholder for Phase 4** - This folder is currently empty and will be populated during Phase 4: Production Hardening.
+**✅ Phase 5 Implementation Complete** - Annotation pipeline monitoring is now active.
 
-## What Will Go Here (Phase 4+)
+## Current Contents
 
-**✅ Will belong in monitoring/**:
+```text
+monitoring/
+├── grafana/
+│   └── annotation-dashboard.json  # Annotation pipeline dashboard
+├── prometheus/
+│   └── (alerting rules - planned)
+└── README.md
+```
+
+### grafana/annotation-dashboard.json
+
+A comprehensive Grafana dashboard for monitoring the annotation pipeline. Includes panels for:
+
+- **Pipeline Overview**: Active pipelines, batches/min, errors/min, throughput
+- **Pipeline Stage Performance**: Duration histograms (p50/p95) for cpu_hash, parse, gpu, io stages
+- **Batch Processing**: Throughput, duration, success/error rates by dataset
+- **Cache Performance**: Hit rates, sizes, eviction rates
+- **Parser Operations**: Latency and operation counts by parser
+- **Scanner & Checkpointing**: Scan duration, checkpoint operations, resume counts
+
+## What Belongs Here
+
+**✅ Belongs in monitoring/**:
 
 - Prometheus metric configurations
 - Grafana dashboard JSON files
@@ -22,64 +44,65 @@ SPDX-License-Identifier: MIT
 - Health check definitions
 - SLO/SLI definitions
 
-**❌ Will NOT belong here**:
+**❌ Does NOT belong here**:
 
 - **Application logs** → Gitignored in `logs/` (runtime logs)
 - **Training logs** → Google Drive or TensorBoard (training artifacts)
 - **CI/CD logs** → `.github/workflows/` (workflow logs)
 - **Development tools** → `tools/` (pre-deployment tools)
 
-## Planned Structure (Phase 4)
+## Annotation Pipeline Metrics
 
-```text
-monitoring/
-├── prometheus/
-│   ├── rules/
-│   │   ├── latency_alerts.yml
-│   │   ├── error_rate_alerts.yml
-│   │   └── throughput_alerts.yml
-│   └── prometheus.yml
-├── grafana/
-│   ├── dashboards/
-│   │   ├── iqa_performance.json
-│   │   ├── layout_detection.json
-│   │   └── system_health.json
-│   └── datasources.yml
-├── opentelemetry/
-│   └── otel-collector-config.yaml
-└── README.md
-```text
+The annotation pipeline exposes Prometheus metrics under the `imgprep_annotation_` namespace.
 
-## Planned Metrics (Phase 4)
+### Pipeline Metrics
 
-### Performance Metrics
+| Metric | Type | Description |
+|--------|------|-------------|
+| `imgprep_annotation_active_pipelines` | Gauge | Number of active pipeline instances |
+| `imgprep_annotation_pipeline_stage_duration_seconds` | Histogram | Duration by stage (cpu_hash, parse, gpu, io) |
+| `imgprep_annotation_pipeline_errors_total` | Counter | Errors by stage and error_type |
 
-- **Latency**: p50, p95, p99 per page
-- **Throughput**: pages/second per worker
-- **Queue Depth**: pending documents in queue
+### Batch Processing Metrics
 
-### Quality Metrics
+| Metric | Type | Description |
+|--------|------|-------------|
+| `imgprep_annotation_batches_processed_total` | Counter | Batches processed by dataset and status |
+| `imgprep_annotation_batch_size` | Histogram | Batch size distribution |
+| `imgprep_annotation_batch_duration_seconds` | Histogram | Batch processing duration |
+| `imgprep_annotation_batch_throughput_samples_per_second` | Gauge | Current throughput |
 
-- **IQA Accuracy**: mAP, F1 scores over time
-- **Layout Detection**: mAP@.50 over time
-- **Confidence Distribution**: confidence score histograms
+### Cache Metrics
 
-### System Health
+| Metric | Type | Description |
+|--------|------|-------------|
+| `imgprep_annotation_cache_operations_total` | Counter | Operations by cache_name and operation |
+| `imgprep_annotation_cache_hit_rate` | Gauge | Hit rate (0-1) |
+| `imgprep_annotation_cache_size` | Gauge | Current entries |
+| `imgprep_annotation_cache_evictions_total` | Counter | Evictions |
 
-- **CPU/Memory**: Resource utilization
-- **GPU Utilization**: GPU memory, compute usage
-- **Disk I/O**: Read/write throughput
-- **Network**: Request/response times
+### Parser Metrics
 
-### Business Metrics
+| Metric | Type | Description |
+|--------|------|-------------|
+| `imgprep_annotation_parse_operations_total` | Counter | Operations by parser and status |
+| `imgprep_annotation_parse_duration_seconds` | Histogram | Parse latency |
+| `imgprep_annotation_parse_errors_total` | Counter | Errors by parser and error_type |
+| `imgprep_annotation_samples_parsed_total` | Counter | Samples parsed |
 
-- **Documents Processed**: Total count, rate
-- **Error Rate**: Failed document processing
-- **Model Version**: Active model versions in production
+### Scanner Metrics
 
-## Integration (Phase 4)
+| Metric | Type | Description |
+|--------|------|-------------|
+| `imgprep_annotation_scan_operations_total` | Counter | Scans by dataset and status |
+| `imgprep_annotation_scan_duration_seconds` | Histogram | Scan duration |
+| `imgprep_annotation_files_discovered_total` | Counter | Files found |
+| `imgprep_annotation_checkpoint_operations_total` | Counter | Checkpoint operations |
+| `imgprep_annotation_scan_resume_total` | Counter | Resumed scans |
 
-### Prometheus
+## Integration
+
+### Prometheus Scrape Configuration
 
 ```yaml
 # prometheus/prometheus.yml
@@ -87,32 +110,53 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'image-preprocessing'
+  - job_name: 'annotation-pipeline'
     static_configs:
       - targets: ['localhost:8000']
-```text
+    metrics_path: '/metrics'
+```
 
-### Grafana Dashboards
+### Importing the Grafana Dashboard
 
-- IQA Performance: Visualize detection accuracy over time
-- System Health: CPU, memory, GPU utilization
-- Document Processing: Throughput, latency, error rates
+1. Open Grafana and navigate to **Dashboards > Import**
+2. Upload `grafana/annotation-dashboard.json` or paste its contents
+3. Select your Prometheus data source when prompted
+4. Click **Import**
 
-### Alerting Rules
+### Example Alerting Rules
 
 ```yaml
-# prometheus/rules/latency_alerts.yml
+# prometheus/rules/annotation_alerts.yml
 groups:
-  - name: latency
+  - name: annotation-alerts
     rules:
-      - alert: HighLatency
-        expr: histogram_quantile(0.95, rate(processing_duration_seconds_bucket[5m])) > 0.5
+      - alert: AnnotationPipelineErrors
+        expr: rate(imgprep_annotation_pipeline_errors_total[5m]) > 0.1
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "High p95 latency detected"
-```text
+          summary: Annotation pipeline errors detected
+          description: "Pipeline stage {{ $labels.stage }} has error rate > 0.1/s"
+
+      - alert: AnnotationLowCacheHitRate
+        expr: imgprep_annotation_cache_hit_rate < 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Low cache hit rate
+          description: "Cache {{ $labels.cache_name }} hit rate is {{ $value }}"
+
+      - alert: AnnotationSlowBatchProcessing
+        expr: histogram_quantile(0.95, rate(imgprep_annotation_batch_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Slow batch processing
+          description: "Batch p95 latency is {{ $value }}s"
+```
 
 ## Distinction from Other Folders
 
@@ -126,25 +170,14 @@ groups:
 - **monitoring/**: Production observability (post-deployment)
 - **tools/**: Development tooling (pre-deployment)
 
-## Current State
+## Dependencies
 
-- **`.gitkeep`**: Preserves empty folder structure for future use
-- **No active monitoring**: Will be implemented in Phase 4
-
-## Phase 4 Implementation Plan
-
-1. **Week 21-22**: Prometheus setup, basic metrics
-2. **Week 22-23**: Grafana dashboards for visualization
-3. **Week 23-24**: Alerting rules and incident response
-4. **Week 24**: OpenTelemetry integration for distributed tracing
-
-## Dependencies (Phase 4)
+The annotation monitoring module uses `prometheus_client` for metrics:
 
 ```toml
-# pyproject.toml - Will add in Phase 4
+# pyproject.toml
 [tool.poetry.dependencies]
 prometheus-client = "^0.20.0"
-opentelemetry-api = "^1.23.0"
-opentelemetry-sdk = "^1.23.0"
-opentelemetry-instrumentation-fastapi = "^0.44b0"
-```text
+```
+
+The module gracefully degrades if prometheus_client is not installed, using stub implementations that do nothing.

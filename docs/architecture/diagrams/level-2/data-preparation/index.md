@@ -2,7 +2,7 @@
 schema_type: common
 title: "Level 2: Data Preparation"
 description: "Detailed data preparation workflow for dataset ingestion, cataloging,
-  and metadata management"
+  and metadata management - Post-refactoring modular architecture"
 tags:
 - architecture
 - diagrams
@@ -14,9 +14,13 @@ status: published
 owner: "core-maintainer"
 authors:
 - name: "Byron Williams"
-purpose: "Document the data preparation pipeline including dataset ingestion, three-layer
-  metadata architecture, and storage strategy."
+purpose: "Document the refactored data preparation pipeline with modular annotation
+  package, three-layer metadata architecture, and production-hardened storage strategy."
 ---
+
+> **POST-REFACTORING**: This document describes the completed architecture after implementing
+> the [Metadata Annotation Refactoring Plan](../../../../planning/METADATA_ANNOTATION_REFACTORING_PLAN.md).
+> Phases 1-5 are complete. V1 architecture is archived.
 
 This level provides comprehensive documentation for the Data Preparation workstream, which handles dataset ingestion and cataloging. Datasets are kept in their **original form** without normalization to maintain standardization and reusability across different training configurations.
 
@@ -32,6 +36,24 @@ This level provides comprehensive documentation for the Data Preparation workstr
 - **Three-layer metadata architecture** - Immutable, Enrichment, Training layers
 - **Provenance tracking** - Full lineage for every sample
 - **Strict separation** - Training data vs. benchmark data
+- **Modular extensibility** - Plugin-based parser architecture
+- **Production reliability** - Atomic operations, checkpointing, validation
+
+---
+
+## Architecture Changes (V1 → V2)
+
+| Aspect | V1 (Current) | V2 (Post-Refactoring) |
+|--------|--------------|----------------------|
+| **Core Implementation** | `annotate_base_metadata.py` (3,853 LOC monolith) | `annotation/` package (~19,600 LOC modular) |
+| **Parser Architecture** | Inline functions in single file | Plugin registry with `DatasetParser` protocol |
+| **Hashing** | Partial SHA256 (64KB only) | Full-file SHA256 (breaking change) |
+| **Storage** | Single `samples.parquet` file | Partitioned Parquet (`dataset_name=X/`) |
+| **Checkpointing** | Dataset-level only | Hash-based intra-dataset resume |
+| **ML Integration** | Direct YOLO calls | Provider pattern with batching |
+| **Configuration** | Hardcoded paths | External YAML/env configuration |
+| **Testing** | Zero coverage | 80%+ coverage with unit/integration/E2E |
+| **Monitoring** | Print statements | Prometheus metrics + structured logging |
 
 ---
 
@@ -57,45 +79,142 @@ Three-layer pipeline for dataset annotation and label management implementing th
 
 ---
 
+### Resolution Quality Labeling Pipeline
+
+Dataset-agnostic two-stage pipeline for measuring character pixel height and computing resolution quality scores (0-1). Uses PaddleOCR DBNet for text region detection + connected component analysis for precise character measurement.
+
+![Resolution Quality Labeling Pipeline](resolution-quality-labeling-pipeline.svg)
+
+*PlantUML source: [`resolution-quality-labeling-pipeline.puml`](resolution-quality-labeling-pipeline.puml)*
+
+**Key Properties**:
+
+- **Dataset-agnostic**: Works with any camera-captured, scanned, or synthetic document images
+- **No DPI required**: Measures character pixel height directly, bypassing DPI metadata
+- **Two scripts**: `label_resolution_quality.py` (GPU labeling) + `integrate_resolution_quality.py` (L2 metadata merge)
+- **Coarse buckets**: needs_major_upscale (<16px), needs_light_upscale (16-32px), optimal (32-48px), good (48-96px), oversized (>96px)
+- **Validated on DIQA-5000**: 5,499/5,500 labeled, Kruskal-Wallis H=141.6, 3.0% anomaly rate
+
+| Module | File | Purpose |
+|--------|------|---------|
+| Core library | `schema_utils/resolution_quality.py` | Piecewise mapping, CC analysis, aggregation |
+| Labeling script | `scripts/label_resolution_quality.py` | GPU pipeline (PaddleOCR + CC) |
+| Integration script | `scripts/integrate_resolution_quality.py` | Merge into L2 metadata |
+| Tests | `tests/unit/test_resolution_quality.py` | 75 unit tests |
+
+---
+
+### Skew/Orientation Labeling Pipeline
+
+Dataset-agnostic CPU-only pipeline for predicting document skew angle and page orientation using a trained MobileNetV4-Conv-S ONNX model (3-head: orientation classification, skew bin classification, skew regression with per-bin residual clamping).
+
+![Skew/Orientation Labeling Pipeline](skew-orientation-labeling-pipeline.svg)
+
+*PlantUML source: [`skew-orientation-labeling-pipeline.puml`](skew-orientation-labeling-pipeline.puml)*
+
+**Key Properties**:
+
+- **Dataset-agnostic**: Works with any document images (camera-captured, scanned, synthetic)
+- **CPU-only**: ONNX Runtime CPUExecutionProvider, no GPU or Modal dependency (~17.5ms/image)
+- **Two scripts**: `label_skew_orientation.py` (ONNX inference) + `integrate_skew_orientation.py` (L2 metadata merge)
+- **42 non-uniform bins**: Critical zone (+-5 deg, 0.5 deg bins), moderate (+-5-15 deg, 2.0 deg), extreme (+-15-45 deg, 5.0 deg)
+- **Per-bin residual clamping**: Regression residual clamped to half bin width (0.25/1.0/2.5 deg)
+- **Trained on 90K images**: 71K synthetic + 19K natural scans, test MAE=0.956 deg, orient_acc=99.5%
+
+| Module | File | Purpose |
+|--------|------|---------|
+| Core library | `models/skew_estimator.py` | BinConfig, SkewEstimation, SkewEstimatorInference |
+| ONNX wrapper | `models/onnx_runtime.py` | ONNXModelRunner, ONNXSessionConfig |
+| Config | `config/skew_estimation.yaml` | Bin zones, model paths, thresholds |
+| ONNX model | `models/skew_estimator/skew_estimator_fp32.onnx` | 11MB FP32 model |
+| Labeling script | `scripts/label_skew_orientation.py` | Batch ONNX inference -> JSON |
+| Integration script | `scripts/integrate_skew_orientation.py` | Merge into L2 metadata |
+
+---
+
 ## Three-Layer Metadata Architecture
 
-The data preparation pipeline implements a versioned metadata schema with three distinct layers:
+The data preparation pipeline implements a versioned metadata schema with three distinct layers.
+
+**Schema Visualizations** (Mermaid diagrams with ER, class, and data flow views):
+
+- [Layer 2 Enrichment Schema](../../../../schema/layer2_enrichment_schema.md) - Derived annotations with provenance tracking
+- [Document Metadata Schema](../../../../schema/document_metadata_schema.md) - Project A → Project B handoff schema
+
+**JSON Schema Definitions**:
+
+- [layer2_enrichment.schema.json](../../../../schema/layer2_enrichment.schema.json)
+- [document_metadata.schema.json](../../../../schema/document_metadata.schema.json)
 
 ### Layer 1: IMMUTABLE (Original Labels)
 
 Preserves source dataset labels exactly as provided, ensuring reproducibility.
 
-| Data Class | Fields | Purpose |
-|------------|--------|---------|
-| `OriginalFileMetadata` | format, width_px, height_px, channels, bit_depth, file_size_bytes, dpi, color_space | Image file characteristics |
-| `OriginalLabels` | diqa_mos, live_dmos, csiq_dmos, doclaynet_annotations, tablebank_annotations, funsd_annotations | Source-specific labels |
+| Data Class | Module | Fields | Purpose |
+|------------|--------|--------|---------|
+| `OriginalFileMetadata` | `annotation/schemas/immutable.py` | format, width_px, height_px, channels, bit_depth, file_size_bytes, dpi, color_space | Image file characteristics |
+| `OriginalLabels` | `annotation/schemas/immutable.py` | diqa_mos, live_dmos, csiq_dmos, doclaynet_annotations, tablebank_annotations, funsd_annotations | Source-specific labels |
 
-**Key Implementation**: [scripts/annotate_base_metadata.py](../../../../../scripts/annotate_base_metadata.py) - Lines 363-523
+**Key Implementation**: [`src/image_preprocessing_detector/annotation/schemas/immutable.py`](../../../../../src/image_preprocessing_detector/annotation/schemas/immutable.py)
 
 ### Layer 2: ENRICHMENT (Derived Annotations)
 
 Our derived annotations with full provenance tracking and versioning.
 
-| Data Class | Fields | Purpose |
-|------------|--------|---------|
-| `EnrichmentData` | capture_method, resolution_category, domain_level1-3, text_density, layout_type, degradations, llm_predicted_mos | Computed metadata |
-| `EnrichmentVersion` | version, created_at, created_by, method, description | Version provenance |
+| Data Class | Module | Fields | Purpose |
+|------------|--------|--------|---------|
+| `EnrichmentData` | `annotation/schemas/enrichment.py` | capture_method, resolution_category, domain_level1-3, text_density, layout_type, degradations, llm_predicted_mos, color_mode (binarized/grayscale/color), document_age (modern/aged/historical) | Computed metadata |
+| `EnrichmentVersion` | `annotation/schemas/enrichment.py` | version, created_at, created_by, method, description | Version provenance |
 
-**Enrichment Methods**:
+**Enrichment Methods** (via Provider Pattern):
 
-- `automated` - Classical CV detector outputs
-- `manual` - Human annotation
-- `llm` - VLM-based quality prediction
+| Provider | Module | Tier | Purpose |
+|----------|--------|------|---------|
+| `YOLOProvider` | `annotation/enrichment/providers/yolo.py` | Tier 2 | Layout detection (multi-schema via LayoutTaxonomy, 57 canonical classes) |
+| `SigLIPProvider` | `annotation/enrichment/providers/siglip.py` | Tier 2 | SigLIP 2 multi-task enrichment (16 heads across 5 groups: IQA, Script, Orientation+Skew, Handwriting, Page Attrs) |
+| Built-in | `annotation/enrichment/tiering.py` | Tier 0-1 | Dataset-derived metadata |
+
+**Schema Utilities** (config-driven converters):
+
+| Utility | Module | Config | Purpose |
+|---------|--------|--------|---------|
+| `ScriptMLMapping` | `schema_utils/script_ml_mapping.py` | `config/script_ml_classes.yaml` | ISO 15924 → ML class mapping |
+| `LayoutTaxonomy` | `schema_utils/layout_taxonomy.py` | `config/layout_taxonomy.yaml` | 6-schema layout label conversion (~57 canonical classes) |
+
+### Label Provenance System
+
+All labels in the enrichment pipeline are tagged with a provenance tier that determines confidence and training weight:
+
+| Tier | Name | Source | Confidence | Training Weight | Example |
+|------|------|--------|------------|-----------------|---------|
+| **Tier 0** | `tier_0_exact` | Synthetic ground truth | 1.0 (exact) | 1.0 | Genalog degradation parameters, orientation from generation script |
+| **Tier 1** | `tier_1_annotation` | Human annotation | >= 0.9 | 1.0 | DIQA MOS scores, LIVE DMOS, COCO bounding boxes |
+| **Tier 2** | `tier_2_model` | Model-predicted | >= 0.7 | 0.8 * confidence | SigLIP 2 quality predictions, YOLO layout detections |
+| **Tier 3** | `tier_3_heuristic` | Rule-based derivation | >= 0.5 | 0.5 * confidence | Classical IQA detector scores, heuristic content flags |
+
+The provenance tier flows through all three metadata layers and is used by the training label builder to compute per-sample anchor weights.
+
+### Global Split Registry
+
+To prevent train/test leakage across the 10 purpose-built training datasets, a **Global Split Registry** ensures cross-dataset split consistency:
+
+- **Key**: SHA256 hash of the image file content
+- **Assignment**: Each unique image is assigned exactly one split (train/val/test) at first encounter
+- **Consistency**: If the same image appears in multiple datasets (e.g., orientation + skew), it receives the same split assignment everywhere
+- **Ratios**: Default 80/10/10 (train/val/test), configurable per dataset
+- **Storage**: Registry persisted as a Parquet file keyed by SHA256 hash
+
+See [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for per-dataset diversity specifications.
 
 ### Layer 3: TRAINING (Computed On-Demand)
 
 Training-ready labels computed from original + enrichment layers.
 
-| Data Class | Fields | Purpose |
-|------------|--------|---------|
-| `TrainingLabels` | iqa_vector (45-dim), iqa_binary, anchor_score, anchor_weight, element_labels | Model training inputs |
+| Data Class | Module | Fields | Purpose |
+|------------|--------|--------|---------|
+| `TrainingLabels` | `scripts/build_training_labels.py` | iqa_vector (45-dim), iqa_binary, anchor_score, anchor_weight, element_labels | Model training inputs |
 
-**Key Implementation**: [scripts/build_training_labels.py](../../../../../scripts/build_training_labels.py) - Lines 145-410
+**Key Implementation**: [`scripts/build_training_labels.py`](../../../../../scripts/build_training_labels.py) - Lines 145-410
 
 **Anchor Score Priority**:
 
@@ -108,7 +227,449 @@ Training-ready labels computed from original + enrichment layers.
 
 ---
 
-## Storage Strategy
+## Three-Tier Script Architecture (Stream 1)
+
+The annotation system uses a three-tier architecture for script (writing system) handling:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    Three-Tier Script Architecture                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐   │
+│  │   Tier 1         │    │   Tier 2         │    │   Tier 3         │   │
+│  │   STORAGE        │───▶│   ML TRAINING    │───▶│   ROUTING        │   │
+│  └──────────────────┘    └──────────────────┘    └──────────────────┘   │
+│         │                        │                        │              │
+│  Full ISO 15924           Grouped ML              OCR Engine             │
+│  codes stored             classes                 selection              │
+│  (e.g., "Latn",          (e.g., "LATN",         (e.g., rapidocr,       │
+│   "Gujr", "Deva")         "INDIC_OTHER")         paddleocr, tesseract)  │
+│                                                                          │
+│  ──────────────────────────────────────────────────────────────────────  │
+│  Config:                 Config:                 Config:                 │
+│  schema.py               script_ml_classes.yaml  script_routing.yaml    │
+│  (ISO15924Script enum)   (iso15924_to_ml_class)  (routing_rules)        │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Tier 1: Storage (ISO 15924)
+
+Full ISO 15924 4-letter script codes are stored in metadata, never aggregated.
+
+| Data Class | Module | Field | Purpose |
+|------------|--------|-------|---------|
+| `OriginalLabels` | `annotation/schemas/immutable.py` | `iso15924_script_code` | Standardized script code |
+| `LanguageInfo` | `schema.py` | `script` (ISO15924Script enum) | Schema-level storage |
+
+**Key Implementation**:
+
+- [`src/image_preprocessing_detector/schema_utils/iso_language_script.py`](../../../../../src/image_preprocessing_detector/schema_utils/iso_language_script.py) - ISO15924Script enum
+- Validation helpers: `is_valid_iso15924_code()`, `get_iso15924_script()`, `validate_script_code_for_ml()`
+
+### Tier 2: ML Training (Grouped Classes)
+
+Scripts are grouped into ~19 ML classes for training via configurable mapping.
+
+| Class | Module | Purpose |
+|-------|--------|---------|
+| `ScriptMLMapping` | `schema_utils/script_ml_mapping.py` | ISO 15924 → ML class mapping |
+
+**Configuration**: [`config/script_ml_classes.yaml`](../../../../../config/script_ml_classes.yaml)
+
+```yaml
+ml_classes: [LATN, CYRL, GREK, ARAB, HEBR, DEVA, BENG, TAML, TELU,
+             HANS, HANT, JPAN, KORE, THAI, TIBT, INDIC_OTHER,
+             SE_ASIAN_OTHER, OTHER, UNKNOWN]
+
+iso15924_to_ml_class:
+  Latn: LATN
+  Gujr: INDIC_OTHER  # Gujarati → grouped class
+  Hans: HANS
+  # ... 200+ mappings
+```
+
+**Key Features**:
+
+- Hot-reload without restart (`ScriptMLMapping.reload()`)
+- Class weights for imbalanced training
+- Bidirectional lookup (code → class, class → all codes)
+
+### Tier 3: Routing (OCR Engine Selection)
+
+ML classes are routed to specific OCR engines with optimized configurations.
+
+| Class | Module | Purpose |
+|-------|--------|---------|
+| `ScriptRouter` | `routing/script_router.py` | Script → OCR engine routing |
+
+**Configuration**: [`config/script_routing.yaml`](../../../../../config/script_routing.yaml)
+
+```yaml
+routing_rules:
+  LATN:
+    engine: "rapidocr"
+    batch_size: 8
+  HANS:
+    engine: "paddleocr"
+    batch_size: 2
+    lang_hint: "ch"
+  ARAB:
+    engine: "tesseract"
+    rtl: true
+
+vlm_escalation:
+  confidence_threshold: 0.5
+  always_escalate: ["Tibt", "Ethi"]
+```
+
+**Key Features**:
+
+- Priority system: ISO 15924 override → ML class rule → defaults
+- VLM escalation for low-confidence or unsupported scripts
+- RTL handling flags
+- Engine-specific configurations
+
+### Parser Integration
+
+Multilingual parsers populate the `iso15924_script_code` field:
+
+```python
+# In annotation/parsers/multilingual/*.py
+labels = OriginalLabels()
+labels.script_name = "Arabic"           # Human-readable name
+labels.iso15924_script_code = "Arab"    # ISO 15924 code (Tier 1)
+```
+
+**Updated Parsers**: mlt19, arabic_docs, tibhcr, nepali_handwritten, yarmouk, cvsi, siw13, mle2e, cc_ocr, mdiw13, hindi_ocr_synthetic, pucit_ohul, multilingual_scripts
+
+---
+
+## Layout Label Taxonomy (Cross-Schema Conversion)
+
+The annotation system uses a hub-and-spoke canonical superset for normalizing layout detection labels across six different schemas. This complements the Three-Tier Script Architecture (above) by solving the equivalent problem for layout labels rather than writing system codes.
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                  Layout Label Taxonomy (Hub-and-Spoke)                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌──────────────┐   │
+│  │ DocLayNet │ │ DocStruct │ │ PubLayNet │ │  Docling  │ │  DocSynth    │   │
+│  │ (11 cls)  │ │ Bench(10) │ │  (5 cls)  │ │ (23 cls)  │ │  300K (10)   │   │
+│  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └──────┬───────┘   │
+│        │             │             │             │              │             │
+│        │       ┌─────┴─────┐       │       ┌─────┴─────┐       │             │
+│        │       │   D4LA    │       │       │           │       │             │
+│        │       │ (27 cls)  │       │       │           │       │             │
+│        │       └─────┬─────┘       │       │           │       │             │
+│        ▼             ▼             ▼       ▼           ▼       ▼             │
+│  ┌────────────────────────────────────────────────────────────────────┐      │
+│  │               Canonical Superset (57 classes)                      │      │
+│  │     11 DocLayNet top-level + 46 extensions (tree hierarchy)        │      │
+│  └────────────────────────────────────────────────────────────────────┘      │
+│        │                                                                     │
+│        ├── to_canonical(label, schema) → canonical name                      │
+│        ├── from_canonical(canonical, target) → ConversionResult              │
+│        ├── convert(label, source, target) → with loss tracking               │
+│        ├── to_doclaynet(canonical) → coarsen via parent chain                │
+│        ├── build_mask_index_map(schema) → configurable mask channels         │
+│        └── build_doclaynet_index_map() → all labels → DocLayNet 0-10        │
+│                                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Supported Schemas (6 total)
+
+| Schema | Classes | Source | Config Key |
+|--------|---------|--------|------------|
+| **DocLayNet** | 11 | IBM DocLayNet dataset | `doclaynet` |
+| **DocStructBench** | 10 | DocLayout-YOLO training data | `docstructbench` |
+| **PubLayNet** | 5 | PubLayNet dataset | `publaynet` |
+| **Docling (DocItemLabel)** | 23 | `docling-core` library | `docling` |
+| **D4LA** | 27 | VGT/ICCV 2023 | `d4la` |
+| **DocSynth300K** | 10 | Synthetic (DocStructBench names) | `docsynth300k` |
+
+### Canonical Class Hierarchy (57 classes)
+
+The canonical superset organizes all layout labels into a tree with DocLayNet as root:
+
+| DocLayNet Parent | Extensions (child classes) | Source Schemas |
+|-----------------|---------------------------|----------------|
+| **CAPTION** (0) | FIGURE_CAPTION, TABLE_CAPTION, FORMULA_CAPTION, TABLE_NAME, FIGURE_NAME | DocStructBench, D4LA |
+| **FOOTNOTE** (1) | TABLE_FOOTNOTE, REFERENCE | DocStructBench, Docling, D4LA |
+| **FORMULA** (2) | ISOLATE_FORMULA, EQUATION | DocStructBench, D4LA |
+| **LIST_ITEM** (3) | LIST_TEXT, REGION_LIST, DOCUMENT_INDEX, CATALOG, ORDERED_LIST, UNORDERED_LIST | D4LA, Docling |
+| **PAGE_FOOTER** (4) | PAGE_FOOTER_D4LA, PAGE_NUMBER | D4LA |
+| **PAGE_HEADER** (5) | PAGE_HEADER_D4LA, LETTERHEAD | D4LA |
+| **PICTURE** (6) | FIGURE, CHART | DocStructBench, PubLayNet, Docling, D4LA |
+| **SECTION_HEADER** (7) | PARA_TITLE, REGION_TITLE | D4LA |
+| **TABLE** (8) | *(no extensions)* | All 6 schemas |
+| **TEXT** (9) | PLAIN_TEXT, PARA_TEXT, OTHER_TEXT, CODE, HANDWRITTEN_TEXT, PARAGRAPH, KEY_VALUE_REGION, LETTER_DEAR, LETTER_SIGN, ABSTRACT, AUTHOR, DATE, NUMBER, QUESTION, REGION_KV | DocStructBench, Docling, D4LA |
+| **TITLE** (10) | DOC_TITLE | D4LA |
+| **FORM** (new) | CHECKBOX_SELECTED, CHECKBOX_UNSELECTED, GRADING_SCALE, EMPTY_VALUE | Docling |
+| **ABANDONED** (new) | *(standalone)* | DocStructBench, DocSynth300K |
+| **UNKNOWN** (new) | *(standalone)* | Fallback for unrecognized labels |
+
+**Coarsening rule**: Any extended class maps to its DocLayNet parent by walking the `parent` chain. For example, `FIGURE_CAPTION` → `CAPTION` (index 0). Classes under FORM, ABANDONED, and UNKNOWN have no DocLayNet ancestor and map to `UNKNOWN` when coarsened.
+
+### Core Implementation
+
+| Class | Module | Purpose |
+|-------|--------|---------|
+| `LayoutTaxonomy` | `schema_utils/layout_taxonomy.py` | Config-driven conversion engine |
+| `ConversionResult` | `schema_utils/layout_taxonomy.py` | Frozen dataclass with loss tracking |
+| `get_default_taxonomy()` | `schema_utils/layout_taxonomy.py` | Module-level singleton |
+
+**Configuration**: [`config/layout_taxonomy.yaml`](../../../../../config/layout_taxonomy.yaml)
+
+**Key Features**:
+
+- Hot-reload without restart (`LayoutTaxonomy.reload()`)
+- Lossy conversion tracking (`ConversionResult.is_lossy`, `.loss_description`)
+- Configurable mask channels (`get_mask_channel_count("docling")` returns 23)
+- All-schema alias normalization (e.g., `list-item`, `list_item`, `listitem` all resolve)
+- DocLayNet index map includes all known labels from all schemas (144 entries -> 0-10)
+- Batch annotation conversion (`convert_annotations()` for annotation list processing)
+
+### Production Runtime Integration
+
+The taxonomy integrates with four production modules:
+
+| Module | Integration | Purpose |
+|--------|-------------|---------|
+| `DocLayoutClass` | `.to_canonical()` method | Normalize YOLO model output to canonical names |
+| `LayoutMaskGenerator` | Taxonomy-driven `CLASS_MAPPING` via `build_doclaynet_index_map()` or `build_mask_index_map(schema)` | Configurable mask channels per schema |
+| `DocLayoutIntegration` | `_normalize_to_canonical()` | Canonical complexity weights for structural scoring |
+| `ElementCategory` | `.from_canonical()` classmethod | Schema-level taxonomy bridge |
+
+**LayoutMaskGenerator schema configurability**: The mask generator accepts a `target_schema` parameter (default `"doclaynet"`) to control how many mask channels are produced and which class-to-index mapping is used. When `target_schema="doclaynet"`, it produces 11-channel masks using `build_doclaynet_index_map()` (all schema labels mapped to 0-10). For other schemas (e.g., `"docling"` with 23 channels), it uses `build_mask_index_map(schema)`.
+
+**ELEMENT_COMPLEXITY_WEIGHTS**: Complexity scoring in `DocLayoutIntegration` uses canonical taxonomy class names as keys (e.g., `TABLE`, `FIGURE`, `ISOLATE_FORMULA`, `CHART`, `HANDWRITTEN_TEXT`), enabling consistent weighting regardless of which detection model or schema produced the labels.
+
+### Standardization Tools
+
+| Tool | Location | Purpose |
+|------|----------|---------|
+| `imgprep layout list` | `cli_layout.py` | Show all schemas and class counts |
+| `imgprep layout compare <src> <tgt>` | `cli_layout.py` | Side-by-side mapping with loss indicators |
+| `standardize_layout_labels.py` | `scripts/` | Batch enrichment of existing metadata |
+| `audit_layout_labels.py` | `scripts/` | Coverage audit report across all datasets |
+
+### Tests
+
+- **File**: [`tests/unit/test_layout_taxonomy.py`](../../../../../tests/unit/test_layout_taxonomy.py)
+- **Count**: 147 tests covering all 6 schemas, round-trips, lossy flagging, aliases, mask indices
+
+---
+
+## Modular Package Architecture (V2)
+
+### Package Structure
+
+```text
+src/image_preprocessing_detector/annotation/
+├── __init__.py                     # Public API + create_orchestrator() factory
+├── schemas/
+│   ├── __init__.py
+│   ├── enums.py                    # CaptureMethod, DomainLevel1, etc.
+│   ├── immutable.py                # OriginalFileMetadata, OriginalLabels
+│   ├── enrichment.py               # EnrichmentData, EnrichmentVersion
+│   ├── sample.py                   # SampleMetadata (aggregate)
+│   └── migrations.py               # Schema version migrations + rollback
+├── config/
+│   ├── __init__.py
+│   ├── datasets.py                 # DATASET_CONFIGS registry
+│   ├── tiers.py                    # TIER_0_DATASETS, TIER_1_DATASETS
+│   └── settings.py                 # Configurable settings
+├── integrity/
+│   ├── __init__.py
+│   ├── hashing.py                  # Full-file SHA256, content hashing
+│   ├── checkpointing.py            # Intra-dataset checkpoints (hash-based)
+│   └── atomic.py                   # Atomic file operations (os.replace)
+├── parsers/
+│   ├── __init__.py                 # Parser registry + explicit registration
+│   ├── base.py                     # DatasetParser protocol
+│   ├── registry.py                 # Factory with explicit registration
+│   ├── quality/                    # DIQA, SmartDoc, OCR_Quality parsers
+│   ├── layout/                     # DocLayNet, TableBank, PubTabNet, FUNSD
+│   ├── handwriting/                # SignaTR, NIST_SD19, PUCIT-OHUL
+│   ├── multilingual/               # MDIW, CC-OCR, multilingual scripts
+│   └── document/                   # RVL-CDIP, OmniDocBench
+├── enrichment/
+│   ├── __init__.py
+│   ├── tiering.py                  # Tier classification
+│   ├── content_flags.py            # Content derivation
+│   ├── errors.py                   # Structured error hierarchy
+│   ├── manager.py                  # Provider orchestration + validation
+│   └── providers/
+│       ├── __init__.py
+│       ├── base.py                 # EnrichmentProvider protocol
+│       ├── yolo.py                 # DocLayout-YOLO provider
+│       └── siglip.py               # SigLIP weak labeling
+├── storage/
+│   ├── __init__.py
+│   ├── json_writer.py              # Per-dataset JSON output
+│   ├── parquet_writer.py           # Partitioned Parquet storage (628 LOC)
+│   └── cache.py                    # LRU-bounded cache + streaming JSONL (582 LOC)
+├── workflow/
+│   ├── __init__.py
+│   ├── pipeline.py                 # CPU/GPU separated pipeline (737 LOC)
+│   ├── scanner.py                  # Batch-aware scanner with checkpointing (628 LOC)
+│   ├── orchestrator.py             # Multi-dataset coordination (527 LOC)
+│   ├── preflight.py                # Pre-flight validation checks (744 LOC)
+│   └── progress.py                 # Progress tracking (311 LOC)
+├── monitoring/
+│   ├── __init__.py
+│   ├── metrics.py                  # Prometheus metrics + dashboard (636 LOC)
+│   └── logging.py                  # Structured logging (512 LOC)
+├── cli.py                          # Click CLI interface (772 LOC)
+└── compat.py                       # Backward compatibility shim
+```
+
+### Key Design Principles
+
+1. **Single Responsibility**: Each module has one clear purpose
+2. **Dependency Injection**: No global state, use `create_orchestrator()` factory
+3. **Protocol-Based**: Use `typing.Protocol` for extensibility
+4. **Configuration-Driven**: External YAML/env for paths and settings
+5. **Fail-Fast**: Explicit errors > silent defaults
+6. **Reuse-First**: Import from `schema_utils/` - NO duplication
+7. **CPU/GPU Separation**: Parallel CPU work, batched single-thread GPU inference
+
+---
+
+## Parser Architecture (V2)
+
+### DatasetParser Protocol
+
+```python
+@runtime_checkable
+class DatasetParser(Protocol):
+    """Protocol for dataset-specific label parsers."""
+
+    @property
+    def dataset_names(self) -> list[str]:
+        """Dataset names this parser handles."""
+        ...
+
+    def parse(
+        self,
+        dataset_path: Path,
+        image_path: Path,
+        config: dict[str, Any],
+    ) -> OriginalLabels:
+        """Parse labels for a single image."""
+        ...
+
+    def supports_batch(self) -> bool:
+        """Whether this parser supports batch operations."""
+        return False
+```
+
+### Parser Registry
+
+| Category | Parsers | Datasets |
+|----------|---------|----------|
+| **Quality** | `DIQAParser`, `SmartDocParser`, `OCRQualityParser` | diqa-5000, smartdoc-qa, ocr_quality |
+| **Layout** | `DocLayNetParser`, `TableBankParser`, `PubTabNetParser`, `FUNSDParser` | doclaynet, tablebank, pubtabnet, funsd |
+| **Handwriting** | `SignaTRParser`, `NISTParser`, `MathsHandwritingParser` | signatr6k, nist_sd19, maths_handwriting |
+| **Multilingual** | `MDIWParser`, `CCOCRParser` | mdiw, cc_ocr |
+| **Document** | `RVLCDIPParser`, `OmniDocBenchParser` | rvl_cdip, omnidocbench |
+
+**Adding a New Dataset**:
+
+```bash
+# Generate parser template
+imgprep annotation add-dataset --name my-dataset --interactive
+
+# Register parser (in parsers/registry.py)
+from .quality.my_dataset import MyDatasetParser
+registry.register(MyDatasetParser())
+```
+
+---
+
+## Pipeline Architecture (V2)
+
+### Three-Stage CPU/GPU Separated Pipeline
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    AnnotationPipeline                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
+│  │  CPU Stage  │───▶│  GPU Stage  │───▶│  IO Stage   │         │
+│  │ (Parallel)  │    │ (Single)    │    │ (Thread)    │         │
+│  └─────────────┘    └─────────────┘    └─────────────┘         │
+│        │                   │                   │                │
+│  ProcessPool-        Single thread       ThreadPool-            │
+│  Executor            batched GPU         Executor               │
+│  (workers=4)         inference           (writer)               │
+│                                                                 │
+│  • File hashing      • YOLO batches     • Parquet writes        │
+│  • Label parsing     • SigLIP batches   • JSON writes           │
+│  • Validation        • Quality scores   • Checkpoints           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Critical Design Decision**: GPU models (YOLO, SigLIP) run in a **single thread** to avoid CUDA pickle/fork issues. Only CPU-bound work (hashing, parsing) uses ProcessPoolExecutor.
+
+### Checkpointing Strategy
+
+| Aspect | V1 | V2 |
+|--------|----|----|
+| **Granularity** | Per-dataset only | Per-batch (every N batches) |
+| **Resume Key** | Processed count | `last_path + last_hash` |
+| **File Changes** | Full restart required | Automatic adjustment |
+| **Atomicity** | `os.rename()` | `os.replace()` with optional fsync |
+
+---
+
+## Storage Strategy (V2)
+
+### Partitioned Parquet Architecture
+
+**V1 Problem**: Single `samples.parquet` file requires read-modify-write for incremental updates, causing OOM on large datasets (500K+ samples).
+
+**V2 Solution**: Partitioned Parquet with Hive-style partitioning.
+
+```text
+metadata_registry/
+├── json/                           # Full detail per dataset (unchanged)
+│   ├── diqa-5000/
+│   ├── doclaynet/
+│   └── ...
+└── parquet/                        # Partitioned by dataset
+    ├── dataset_name=diqa-5000/
+    │   └── part-0000.parquet
+    ├── dataset_name=doclaynet/
+    │   └── part-0000.parquet
+    └── ...
+```
+
+**Benefits**:
+
+- O(1) per-dataset writes (atomic partition replacement)
+- No read-modify-write (no OOM risk)
+- `pyarrow.dataset` provides unified view for queries
+- Compatible with Spark, DuckDB, Polars
+
+**Query Example**:
+
+```python
+import pyarrow.dataset as ds
+
+# Read all data (unified view)
+dataset = ds.dataset("metadata_registry/parquet/", partitioning="hive")
+table = dataset.to_table()
+
+# Read single dataset efficiently
+filtered = dataset.to_table(filter=ds.field("dataset_name") == "doclaynet")
+```
 
 ### Dual-Storage Architecture
 
@@ -137,9 +698,10 @@ Training-ready labels computed from original + enrichment layers.
 │   ├── csiq/                       # CSIQ IQA benchmark
 │   ├── smartdoc-qa/                # Mobile document capture
 │   └── dibco/                      # Document binarization
-└── metadata_registry/              # Output artifacts
+└── metadata_registry/              # Output artifacts (V2 structure)
     ├── json/                       # Full detail per dataset
-    └── samples.parquet             # Flat view for querying
+    ├── parquet/                    # Partitioned by dataset_name
+    └── .checkpoints/               # Intra-dataset checkpoints
 ```
 
 ---
@@ -173,7 +735,7 @@ Training-ready labels computed from original + enrichment layers.
 
 ## Current Status: Layer 2 Annotation
 
-**Last Updated**: 2025-12-21
+**Last Updated**: 2026-01-26
 
 ### Annotation Completion: 24 of 24 datasets (100%)
 
@@ -182,6 +744,9 @@ All datasets have been successfully annotated with three-layer metadata (immutab
 **Output Location**: `/mnt/e/image_detection/metadata_registry/json/`
 **Total Size**: 2.2 GB
 **Schema Version**: 2.0
+
+> **Note**: Post-refactoring, all datasets will require re-annotation due to hash discontinuity
+> (full-file SHA256 replaces partial 64KB hashing). See [METADATA_ANNOTATION_REFACTORING_PLAN.md](../../../../planning/METADATA_ANNOTATION_REFACTORING_PLAN.md#breaking-change-notice).
 
 | Dataset | Samples | Output Size | Enrichment Tier | Status |
 |---------|---------|-------------|-----------------|--------|
@@ -216,20 +781,188 @@ All datasets have been successfully annotated with three-layer metadata (immutab
 - **Tier 1** (existing annotations): 5 datasets - COCO, MOS, or OCR ground truth
 - **Tier 2** (YOLO inference): 11 datasets - DocLayout-YOLO layout detection
 
-**Tools Created**:
+---
 
-- [annotate_base_metadata_incremental.py](../../../../../scripts/annotate_base_metadata_incremental.py) - Crash-resistant incremental processing
-- [monitor_annotation.sh](../../../../../scripts/monitor_annotation.sh) - Progress monitoring utility
+## Layer 2 Metadata Aggregation
 
-**Challenges Resolved**:
+**Purpose**: Compute dataset-level statistics from Layer 2 enrichment metadata for documentation and training planning.
 
-1. Large dataset timeouts: doclaynet (81K images), pubtabnet (519K images) - Resolved with `--no-yolo` flag
-2. File pattern mismatches: funsd_plus, im2latex - Fixed PNG→JPG patterns
-3. Missing image files: multimodal_textbook - Extracted from sample_100_images.zip
+**Added**: 2025-01-30 (Stream 1 integration)
+**Script**: [`scripts/aggregate_layer2_metadata.py`](../../../../../scripts/aggregate_layer2_metadata.py)
+**Output**: `metadata_registry/aggregates/{dataset_name}_stats.json`
+
+### Architecture Integration
+
+```text
+Layer 2 Enrichment Metadata      Aggregation Script           Dataset Documentation
+─────────────────────────        ──────────────────           ─────────────────────
+/mnt/e/.../metadata_registry/                                 docs/
+├── json/                    →   aggregate_layer2_      →    ├── DATASET_QUICK_REFERENCE.md
+│   ├── tablebank_meta.json      metadata.py                 │   (metadata-enriched tables)
+│   ├── fintabnet_meta.json                                  ├── DATASET_PROCESSING_STATUS.md
+│   └── ...                                                   └── DATASET_CATALOG.md
+└── aggregates/              ←   Output JSON stats
+    ├── tablebank_stats.json     (capture, domain,
+    ├── fintabnet_stats.json      quality, content flags)
+    └── ...
+```
+
+### Computed Statistics
+
+For each dataset with Layer 2 metadata, the aggregation script computes:
+
+| Statistic Category | Fields Extracted | Example Output | Use Case |
+|-------------------|------------------|----------------|----------|
+| **Capture Method** | `capture_method` from each sample | `{"born_digital": 100%}` | Predict degradation patterns |
+| **Domain Coverage** | `domain_level1` from each sample | `{"FIN": 100%}` | Domain-specific training |
+| **Quality Distribution** | `overall_score` from QualityInfo | `min: 0.85, max: 1.0, mean: 0.93` | Dataset difficulty assessment |
+| **Degradation Types** | `degradations[]` from QualityInfo | `{"compression": 12%, "blur": 8%}` | Degradation coverage |
+| **Content Flags** | `has_table`, `has_formula`, etc. | `{"has_table": 100%}` | Content type filtering |
+| **Script/Language** | `script_code`, `language_code` | `{"Latn": 95%, "Zyyy": 5%}` | Multilingual coverage |
+| **Layout Types** | `layout_type` from StructureInfo | `{"tabular": 100%}` | Layout diversity |
+| **Text Density** | `text_density` from StructureInfo | `{"dense": 70%, "moderate": 25%}` | Text coverage |
+| **Text Scope** | `scope` from TextScopeInfo | `{"page": 100%}` | Granularity assessment |
+| **Paper Sizes** | `detected_size` from PaperSizeInfo | `{"A4": 40%, "Letter": 55%}` | Regional coverage |
+
+### Workflow
+
+```bash
+# 1. Complete Layer 2 annotation for dataset(s)
+imgprep annotation scan --dataset tablebank --use-yolo
+
+# 2. Run aggregation script
+PYTHONPATH=$PWD:$PYTHONPATH python scripts/aggregate_layer2_metadata.py \
+    --layer2-dir /mnt/e/image_detection/metadata_registry/json \
+    --output-dir metadata_registry/aggregates \
+    --verbose
+
+# 3. Use aggregates to update documentation
+# (Manual or automated script to update DATASET_QUICK_REFERENCE.md)
+```
+
+### Current Aggregation Status (as of 2025-01-30)
+
+**Processed**: 20/40 datasets with Layer 2 metadata
+
+| Dataset | Samples | Capture Method | Domain | Content Flags | Notes |
+|---------|---------|----------------|--------|---------------|-------|
+| fintabnet | 97,475 | Born-digital (100%) | FIN (100%) | has_table (100%) | ⭐⭐⭐ Complete metadata |
+| pubtabnet | 519,030 | Born-digital (100%) | SCI (100%) | has_table (100%) | ⭐⭐⭐ Complete metadata |
+| tablebank | 10 | Born-digital (100%) | SCI (100%) | has_table (100%) | ⭐⭐⭐ Complete metadata (sample) |
+| doclaynet | 80,863 | Born-digital (100%) | Mixed | has_table (varies) | ⭐⭐⭐ Complete metadata |
+| realdae | 583 | Camera (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| smartdoc-qa | 4,260 | Camera (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| dibco | 212 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| funsd | 199 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| sroie | 973 | Camera/Scanner | FIN | - | ⭐⭐ Partial (needs Layer 2 rebuild) |
+| tobacco800 | 1,290 | Scanner (100%) | UNK | - | ⭐⭐ Partial (no content flags) |
+| ohr-bench | 8,303 | Unknown | UNK | - | ⭐ Minimal metadata |
+| ... | ... | ... | ... | ... | 10 more with minimal metadata |
+
+**Metadata Coverage**:
+
+- ⭐⭐⭐ **Good**: 4 datasets (capture + domain + content flags)
+- ⭐⭐ **Partial**: 6 datasets (capture + domain only)
+- ⭐ **Minimal**: 10 datasets (domain only or unknown capture)
+
+### Integration with Dataset Documentation
+
+The aggregated statistics are used in three-tier dataset documentation:
+
+1. **[DATASET_QUICK_REFERENCE.md](../../../../DATASET_QUICK_REFERENCE.md)** (~800 lines, ~8K tokens)
+   - Training tables enhanced with capture method, domain, content flags
+   - Metadata coverage indicators (⭐⭐⭐/⭐⭐/⭐)
+   - Token-optimized for training planning discussions
+
+2. **[DATASET_PROCESSING_STATUS.md](../../../../DATASET_PROCESSING_STATUS.md)** (~500 lines, ~5K tokens)
+   - Tracks format conversion and label extraction progress
+   - Shows which datasets need enrichment completion
+
+3. **[DATASET_CATALOG.md](../../../../DATASET_CATALOG.md)** (~4,300 lines, ~45K tokens)
+   - Comprehensive per-dataset documentation
+   - Deep technical details (used only when needed)
+
+**Token Efficiency**: 70-85% reduction for typical dataset queries vs loading full catalog
+
+### Pending Enrichment Tasks
+
+**Priority**: Complete enrichment for training-critical datasets
+
+| Priority | Datasets | Missing Fields | Impact |
+|----------|----------|----------------|--------|
+| **P0 (IQA Training)** | ohr-bench, diqa-5000, realdae | Quality scores, degradation types | Cannot show quality profiles in Quick Reference |
+| **P1 (Script Detection)** | synth-multiscript-250k, mdiw13, mlt19 | Language/script codes | Cannot show script coverage statistics |
+| **P2 (Layout Detection)** | All layout datasets | Layout types, text density | Cannot show layout diversity |
+| **P3 (Content Characterization)** | 16 datasets with UNK domain | Domain classification | Cannot filter by domain accurately |
+
+**Expected Timeline**: As Layer 2 enrichment pipeline adds quality assessment and script detection, re-run aggregation to populate missing fields.
+
+### Aggregation Script Reference
+
+**Location**: [`scripts/aggregate_layer2_metadata.py`](../../../../../scripts/aggregate_layer2_metadata.py)
+
+**Key Features**:
+
+- Processes single-file metadata format (`{dataset}_metadata.json`)
+- Extracts from `samples[].enrichments.versions[-1].data` (latest version)
+- Computes percentages, min/max/mean statistics
+- Handles missing fields gracefully (partial metadata)
+- Outputs JSON for programmatic consumption
+
+**Output Schema**:
+
+```json
+{
+  "dataset_name": "tablebank",
+  "total_samples": 278582,
+  "capture_methods_pct": {"born_digital": 100.0},
+  "domains_pct": {"SCI": 85.0, "TEC": 15.0},
+  "content_flags_pct": {"has_table": 100.0, "has_formula": 15.0},
+  "quality_summary": {"min": 0.85, "max": 1.00, "mean": 0.93},
+  "top_degradations": [{"type": "compression", "percentage": 12.0}],
+  "top_scripts": [{"script": "Latn", "percentage": 95.0}]
+}
+```
+
+**Related Documentation**:
+
+- [DATASET_METADATA_AGGREGATION_GUIDE.md](../../../../DATASET_METADATA_AGGREGATION_GUIDE.md) - Complete usage guide
+- [DATASET_AGGREGATION_SUMMARY.md](../../../../DATASET_AGGREGATION_SUMMARY.md) - Current aggregation results
+- [DATASET_QUICK_REFERENCE_ENHANCED_PROPOSAL.md](../../../../DATASET_QUICK_REFERENCE_ENHANCED_PROPOSAL.md) - Future enhancements
 
 ---
 
-## Key Scripts and Components
+## Key Scripts and Components (V2)
+
+### CLI Interface
+
+```bash
+# Dataset annotation
+imgprep annotation scan --dataset diqa-5000 --use-yolo
+imgprep annotation scan --all --parallel 4
+imgprep annotation scan --resume
+
+# Dataset management
+imgprep annotation add-dataset --name new-dataset --interactive
+imgprep annotation validate-config
+imgprep annotation list-datasets
+
+# Schema management
+imgprep annotation migrate --target-version 2.2 --dry-run
+imgprep annotation migrate --target-version 2.2 --apply
+imgprep annotation rollback --version 2.0 --file path/to/file.json
+
+# Utilities
+imgprep annotation stats
+imgprep annotation export --format parquet
+imgprep annotation verify-integrity
+imgprep annotation metrics  # Prometheus metrics endpoint
+
+# Layout taxonomy
+imgprep layout list                              # Show 6 schemas with class counts
+imgprep layout compare docstructbench doclaynet  # Side-by-side mapping with loss indicators
+imgprep layout compare docling d4la --format json
+```
 
 ### Dataset Download Scripts
 
@@ -241,165 +974,289 @@ All datasets have been successfully annotated with three-layer metadata (immutab
 | [download_table_datasets.py](../../../../../scripts/download_table_datasets.py) | Table datasets | TableBank, PubTabNet |
 | [download_phase3_datasets.py](../../../../../scripts/download_phase3_datasets.py) | ML training datasets | Phase 3 specific |
 
-### Metadata Processing Scripts
+### Metadata Processing (V2 Modules)
 
-| Script | Layer | Purpose | Output |
-|--------|-------|---------|--------|
-| [annotate_base_metadata.py](../../../../../scripts/annotate_base_metadata.py) | 1 & 2 | Scan datasets, extract/enrich metadata | `metadata_registry/` |
-| [build_training_labels.py](../../../../../scripts/build_training_labels.py) | 3 | Build training-ready labels | `training_labels.parquet` |
-| [validate_datasets.py](../../../../../scripts/validate_datasets.py) | Validation | Verify dataset presence/integrity | Report |
+| Module | Layer | Purpose | Location |
+|--------|-------|---------|----------|
+| `annotation.workflow.orchestrator` | 1 & 2 | Multi-dataset coordination | `annotation/workflow/orchestrator.py` |
+| `annotation.workflow.pipeline` | 1 & 2 | CPU/GPU separated pipeline | `annotation/workflow/pipeline.py` |
+| `annotation.parsers.*` | 1 | Dataset-specific parsing | `annotation/parsers/` |
+| `annotation.enrichment.manager` | 2 | Provider orchestration | `annotation/enrichment/manager.py` |
+| `schema_utils.layout_taxonomy` | 2 | Cross-schema layout label conversion | `schema_utils/layout_taxonomy.py` |
+| `annotation.storage.parquet_writer` | Output | Partitioned Parquet | `annotation/storage/parquet_writer.py` |
+| `build_training_labels.py` | 3 | Training-ready labels | `scripts/build_training_labels.py` |
 
-### Dataset Loaders
+### Layout Standardization Scripts
 
-| Module | Purpose | Splits |
-|--------|---------|--------|
-| [src/datasets/iqa_dataset.py](../../../../../src/image_preprocessing_detector/datasets/iqa_dataset.py) | PyTorch Dataset for IQA training | train/val/test |
+| Script | Purpose | CLI |
+|--------|---------|-----|
+| [`standardize_layout_labels.py`](../../../../../scripts/standardize_layout_labels.py) | Batch enrich metadata with canonical layout labels | `--dataset X --source-schema Y --dry-run` |
+| [`audit_layout_labels.py`](../../../../../scripts/audit_layout_labels.py) | Coverage audit across all datasets | `--metadata-dir /mnt/e/.../json --output report.txt` |
+
+### Compatibility Layer
+
+For backward compatibility during migration, thin wrapper scripts are preserved:
+
+| Script | V2 Behavior |
+|--------|-------------|
+| `scripts/annotate_base_metadata.py` | Imports from `annotation.cli`, preserves CLI interface |
+| `scripts/annotate_base_metadata_incremental.py` | Imports from `annotation.workflow`, preserves progress tracking |
 
 ---
 
-## Data Flow
+## Data Flow (V2)
 
 ```text
-External Sources                    Storage Tiers                      Downstream Workstreams
-─────────────────                   ─────────────                      ────────────────────────
+External Sources                    Annotation Package                 Storage / Downstream
+─────────────────                   ──────────────────                 ────────────────────
 
-┌──────────────┐                    ┌─────────────────┐
-│ HuggingFace  │───download_*.py───▶│ E: Drive        │
-│ (OHR-Bench,  │                    │ /01_base_data/  │
-│  OmniDoc...) │                    │ /02_benchmark/  │
-└──────────────┘                    └────────┬────────┘
-                                             │
-┌──────────────┐                             │ annotate_base_metadata.py
-│ GCS Bucket   │───gsutil rsync────▶         │
-│ (TableBank,  │                    ┌────────▼────────┐
-│  PubTabNet)  │                    │ metadata_registry│──────▶ Workstream 5
-└──────────────┘                    │ /json/          │        (Labeling Models)
-                                    │ /samples.parquet│
-┌──────────────┐                    └────────┬────────┘
-│ Direct URLs  │───wget─────────────▶        │
-│ (COCO-Text)  │                             │ build_training_labels.py
-└──────────────┘                             │
-                                    ┌────────▼────────┐
-┌──────────────┐                    │ training_labels │──────▶ Workstream 2
-│ Manual       │                    │ .parquet        │        (Prod Training)
-│ (LIVE/CSIQ)  │                    └────────┬────────┘
-└──────────────┘                             │
-                                             ▼
-                                    ┌─────────────────┐
-                                    │ HybridIQADataset│──────▶ Workstream 4
-                                    │ (PyTorch loader)│        (Pseudo-Labeling)
-                                    └─────────────────┘
+┌──────────────┐                    ┌─────────────────────────────┐
+│ HuggingFace  │───download_*.py───▶│ annotation.workflow         │
+│ GCS Bucket   │                    │   .orchestrator             │
+│ Direct URLs  │                    │   .pipeline (CPU/GPU sep)   │
+└──────────────┘                    └────────────┬────────────────┘
+                                                 │
+                                    ┌────────────▼────────────────┐
+                                    │ annotation.parsers          │
+                                    │   .registry.get_parser()    │
+                                    │   ├── quality/              │
+                                    │   ├── layout/               │
+                                    │   ├── handwriting/          │
+                                    │   └── document/             │
+                                    └────────────┬────────────────┘
+                                                 │
+                                    ┌────────────▼────────────────┐
+                                    │ annotation.enrichment       │
+                                    │   .manager (tier-ordered)   │
+                                    │   .providers/               │
+                                    │     ├── yolo.py (batched)   │
+                                    │     └── siglip.py           │
+                                    └────────────┬────────────────┘
+                                                 │
+                                    ┌────────────▼────────────────┐
+                                    │ annotation.storage          │
+                                    │   .json_writer (per-dataset)│
+                                    │   .parquet_writer           │───▶ Workstream 5
+                                    │     (partitioned)           │     (Labeling Models)
+                                    └────────────┬────────────────┘
+                                                 │
+                                    ┌────────────▼────────────────┐
+                                    │ build_training_labels.py    │───▶ Workstream 2
+                                    │   (Layer 3 computation)     │     (Prod Training)
+                                    └────────────┬────────────────┘
+                                                 │
+                                    ┌────────────▼────────────────┐
+                                    │ HybridIQADataset            │───▶ Workstream 4
+                                    │ (PyTorch DataLoader)        │     (Pseudo-Labeling)
+                                    └─────────────────────────────┘
 ```
 
 ---
 
-## Dataset Configuration System
+## Configuration System (V2)
 
-Each dataset is configured with known metadata mappings in `DATASET_CONFIGS`:
+### Environment Variables
 
-```python
-"tobacco800": {
-    "path": BASE_DATA / "degraded/tobacco800",
-    "pattern": "images/*.png",
-    "capture_method": CaptureMethod.SCANNER_ADF,
-    "domain": DomainLevel1.ADMINISTRATIVE,
-    "has_human_mos": False,
-    # Phase 9 content flags
-    "has_table": False,
-    "has_formula": False,
-    "has_handwriting": False,
-    "has_signature": False,
+```bash
+# Core paths
+export ANNOTATION_E_DRIVE_ROOT=/mnt/e/image_detection
+export ANNOTATION_METADATA_ROOT=/mnt/e/image_detection/metadata_registry
+
+# Processing
+export ANNOTATION_WORKERS=4
+export ANNOTATION_BATCH_SIZE=100
+export ANNOTATION_CACHE_SIZE=10000
+
+# ML Providers
+export ANNOTATION_YOLO_CONFIDENCE=0.25
+export ANNOTATION_SIGLIP_ENABLED=false
+```
+
+### YAML Configuration
+
+```yaml
+# config/annotation.yaml
+annotation:
+  paths:
+    e_drive_root: /mnt/e/image_detection
+    metadata_root: /mnt/e/image_detection/metadata_registry
+    checkpoint_dir: /mnt/e/image_detection/metadata_registry/.checkpoints
+
+  processing:
+    workers: 4
+    batch_size: 100
+    checkpoint_interval: 10  # batches
+    cache_size_limit: 10000
+
+  integrity:
+    hash_full_file: true  # MUST be true (P0-1 fix)
+    atomic_fsync: false
+    verify_on_write: true
+
+  enrichment:
+    yolo:
+      enabled: true
+      model_path: models/doclayout_yolo_docstructbench.pt
+      confidence_threshold: 0.25
+    siglip:
+      enabled: false
+      model_path: null
+      batch_size: 32
+
+  monitoring:
+    prometheus_enabled: true
+    prometheus_port: 9090
+    structured_logging: true
+```
+
+---
+
+## Monitoring Integration (V2)
+
+### Prometheus Metrics
+
+| Metric | Type | Labels | Purpose |
+|--------|------|--------|---------|
+| `annotation_images_processed_total` | Counter | dataset, status | Total images processed |
+| `annotation_batches_processed_total` | Counter | dataset, stage | Total batches by stage |
+| `annotation_errors_total` | Counter | dataset, error_type | Errors by type |
+| `annotation_batch_duration_seconds` | Histogram | dataset, stage | Batch processing time |
+| `annotation_checkpoint_progress` | Gauge | dataset | Checkpoint progress (0-1) |
+
+### Structured Logging
+
+```json
+{
+  "timestamp": "2025-01-26T10:30:00Z",
+  "level": "INFO",
+  "event": "batch_completed",
+  "dataset": "doclaynet",
+  "batch_size": 100,
+  "batch_number": 42,
+  "duration_ms": 1234,
+  "stage": "gpu",
+  "provider": "yolo"
 }
 ```
 
-### Capture Method Taxonomy
+---
 
-| Method | Description | Example Datasets |
-|--------|-------------|------------------|
-| `BORN_DIGITAL` | Native digital documents | DocLayNet, TableBank |
-| `SCANNER_FLATBED` | Flatbed scanner capture | NIST_SD19, Historical |
-| `SCANNER_ADF` | Automatic document feeder | Tobacco800, RVL-CDIP |
-| `CAMERA_PROFESSIONAL` | Professional camera | LIVE |
-| `CAMERA_SMARTPHONE` | Mobile phone capture | SmartDoc-QA, SROIE |
-| `FAX` | Fax transmission | Some administrative docs |
-| `UNKNOWN` | Unclassified | Mixed sources |
+## Error Handling (V2)
 
-### Domain Taxonomy
+### Structured Error Hierarchy
 
-| Code | Domain | Example Datasets |
-|------|--------|------------------|
-| `TAX` | Tax documents | NIST_SD6 |
-| `FIN` | Financial | NIST_DB2, SROIE |
-| `SCI` | Scientific | TableBank, PubTabNet |
-| `EDU` | Educational | MathVerse, Multimodal Textbook |
-| `ADM` | Administrative | Tobacco800, FUNSD |
-| `PER` | Personal | SignaTR6K, NIST_SD19 |
+```text
+EnrichmentError (base)
+├── ParserError           # Label parsing failures
+├── ModelInferenceError   # ML provider failures
+├── ProviderUnavailableError  # GPU not found, model missing
+└── ValidationError       # Schema validation failures
+```
+
+### Dead-Letter Queue
+
+Failed samples are tracked for later retry:
+
+```python
+# Get failed samples
+dlq = enrichment_manager.get_dead_letter_queue()
+for path, error in dlq:
+    logger.error(f"Failed: {path} - {error}")
+
+# Retry failed samples
+enrichment_manager.retry_dead_letter()
+```
 
 ---
 
-## Degradation Index (45-Dimensional)
+## Source File Traceability (V2)
 
-The IQA vector uses a 45-dimensional degradation index aligned with detection taxonomy:
+This section maps workflow steps to implementation files with actual LOC counts (as of Phase 5 completion).
 
-| Group | Indices | Degradation Types |
-|-------|---------|-------------------|
-| **Blur/Focus** | 0-5 | motion_blur, defocus_blur, gaussian_blur, lens_aberration, depth_of_field, camera_shake |
-| **Noise** | 6-12 | gaussian_noise, salt_pepper_noise, speckle_noise, film_grain, sensor_noise, quantization_noise, banding |
-| **Geometric** | 13-18 | skew, rotation, perspective, barrel_distortion, pincushion_distortion, page_curl |
-| **Illumination** | 19-25 | underexposure, overexposure, uneven_lighting, shadow, glare, vignetting, color_cast |
-| **Compression** | 26-29 | jpeg_artifacts, jpeg2000_artifacts, webp_artifacts, low_bitrate |
-| **Physical** | 30-36 | paper_yellowing, foxing, staining, bleed_through, fading, creasing, roller_marks |
-| **Text/Content** | 37-41 | faint_text, broken_characters, merged_characters, halftone_interference, moire_pattern |
-| **Scanner** | 42-44 | dust_scratches, scan_lines, edge_shadow |
+| Workflow Step | Source Files | Actual LOC | Purpose |
+|---------------|--------------|------------|---------|
+| **Schemas** | `annotation/schemas/*.py` | ~2,400 | Dataclasses, enums, migrations, validators |
+| **Configuration** | `annotation/config/*.py` | ~2,500 | Settings, dataset configs, validators, tiers |
+| **Integrity** | `annotation/integrity/*.py` | ~900 | Hashing, checkpoints, atomic ops |
+| **Parsers** | `annotation/parsers/**/*.py` | ~3,500 | 38+ dataset-specific parsers + registry |
+| **Enrichment** | `annotation/enrichment/**/*.py` | ~1,600 | Provider protocols, manager, errors, providers |
+| **Storage** | `annotation/storage/*.py` | ~1,200 | JSON writer, Parquet writer, LRU cache |
+| **Workflow** | `annotation/workflow/*.py` | ~2,950 | Pipeline, orchestrator, scanner, preflight, progress |
+| **Monitoring** | `annotation/monitoring/*.py` | ~1,150 | Prometheus metrics, structured logging |
+| **CLI** | `annotation/cli.py` | ~770 | Click interface |
+| **Layer 3** | `scripts/build_training_labels.py` | ~590 | Training label construction |
+| **Package Total** | **~70 modules** | **~19,600** | — |
+
+### Key Modules by Size
+
+| Module | LOC | Category | Purpose |
+|--------|-----|----------|---------|
+| `schemas/migrations.py` | 830 | Schemas | Schema version migrations |
+| `config/datasets.py` | 777 | Config | Dataset registry (24 datasets) |
+| `cli.py` | 772 | CLI | Click command interface |
+| `workflow/preflight.py` | 744 | Workflow | Pre-flight validation checks |
+| `schemas/validators.py` | 741 | Schemas | Field validators, type coercion |
+| `workflow/pipeline.py` | 737 | Workflow | CPU/GPU separated pipeline |
+| `integrity/checkpointing.py` | 686 | Integrity | Intra-dataset checkpoints |
+| `monitoring/metrics.py` | 636 | Monitoring | Prometheus instrumentation |
+| `workflow/scanner.py` | 628 | Workflow | Batch-aware scanner |
+| `storage/parquet_writer.py` | 628 | Storage | Partitioned Parquet output |
+| `storage/cache.py` | 582 | Storage | LRU-bounded caches |
+| `config/validators.py` | 565 | Config | Configuration validators |
+| `parsers/template.py` | 538 | Parsers | Parser template generator |
+| `workflow/orchestrator.py` | 527 | Workflow | Multi-dataset coordination |
+| `monitoring/logging.py` | 512 | Monitoring | Structured logging |
+| `enrichment/providers/siglip.py` | 477 | Enrichment | SigLIP quality prediction |
 
 ---
 
-## Label Parsers
+## Testing Strategy (V2)
 
-Dataset-specific parsers extract original labels while preserving source format:
+### Test Structure
 
-| Parser | Dataset | Extracted Fields |
-|--------|---------|------------------|
-| `parse_diqa_labels` | DIQA-5000 | MOS, MOS_std, distortion_type |
-| `parse_live_labels` | LIVE | DMOS, DMOS_std, ref_image |
-| `parse_doclaynet_labels` | DocLayNet | COCO annotations (11 classes) |
-| `parse_tablebank_labels` | TableBank | COCO table annotations |
-| `parse_funsd_labels` | FUNSD | Form field annotations |
-| `parse_signatr_labels` | SignaTR6K | writer_id, is_genuine |
+```text
+tests/
+├── unit/
+│   └── annotation/
+│       ├── test_schemas.py
+│       ├── test_hashing.py
+│       ├── test_atomic.py
+│       ├── test_checkpointing.py
+│       ├── test_parsers/
+│       ├── test_enrichment/
+│       └── test_storage/
+├── integration/
+│   └── annotation/
+│       ├── test_pipeline.py
+│       ├── test_workflow.py
+│       └── test_parquet_merge.py
+├── e2e/
+│   └── annotation/
+│       └── test_full_pipeline.py
+├── property/
+│   └── annotation/
+│       └── test_migrations.py
+└── fixtures/
+    └── annotation/
+        ├── sample_images/
+        ├── sample_annotations/
+        └── conftest.py
+```
 
-**COCO Cache Optimization**: Annotations are loaded once per dataset (not per image) for ~100x speedup.
+### Coverage Targets
 
----
+| Category | Target | Actual (Phase 5) | Focus |
+|----------|--------|------------------|-------|
+| Unit Tests | 90%+ | 88% | Individual functions, classes |
+| Integration Tests | 80%+ | 85% | Module interactions, pipeline |
+| E2E Tests | 70%+ | N/A | Full workflows (Phase 6) |
+| Property Tests | Key schemas | ✅ | Migration invariants |
 
-## Output Artifacts
+**Test Statistics (Phase 5 Complete)**:
 
-### Parquet Schema (samples.parquet)
-
-Flat columns for efficient filtering:
-
-| Column | Type | Purpose |
-|--------|------|---------|
-| `sample_id` | string | UUID |
-| `file_hash` | string | SHA256 (first 64KB) |
-| `dataset_name` | string | Source dataset |
-| `width_px`, `height_px` | int | Dimensions |
-| `diqa_mos`, `live_dmos`, `csiq_dmos` | float | Human scores |
-| `capture_method`, `domain_level1` | string | Taxonomy codes |
-| `has_table`, `has_formula`, `has_handwriting`, `has_signature` | bool | Phase 9 flags |
-| `doclaynet_annotations_json`, `tablebank_annotations_json` | string | Serialized COCO |
-| `table_count`, `formula_count` | int | Derived element counts |
-
-### Training Labels Schema (training_labels.parquet)
-
-| Column | Type | Purpose |
-|--------|------|---------|
-| `sample_id` | string | UUID |
-| `iqa_vector_json` | string | 45-dim severity vector |
-| `iqa_binary_json` | string | Binary presence flags |
-| `anchor_score` | float | 0-1 normalized quality |
-| `anchor_source` | string | human/llm_high/llm_medium/etc. |
-| `anchor_weight` | float | Training weight |
-| `element_labels_json` | string | Phase 9 bbox annotations |
+- **Total Tests**: 833 annotation tests
+- **Pass Rate**: 100% (all green)
+- **Coverage Threshold**: 80% enforced in CI
 
 ---
 
@@ -415,90 +1272,38 @@ Flat columns for efficient filtering:
 
 | Workstream | Consumed Artifacts | Purpose |
 |------------|--------------------|---------|
-| **2. Production Model Training** | `training_labels.parquet`, images | Train ResNet teacher/student |
-| **4. Pseudo-Labeling** | `samples.parquet`, images | Apply ensemble labeling |
+| **2. Production Model Training** | `parquet/`, images | Train MobileNetV4-Conv-S + SigLIP 2 NAFlex multi-task models on 10 purpose-built datasets (~503K total) |
+| **4. Pseudo-Labeling** | `parquet/`, images | Apply ensemble labeling |
 | **5. Labeling & Benchmarking Models** | Raw images, metadata | Train labeling models |
 | **8. Synthetic Data Generation** | Clean images | Degradation source material |
 
 ---
 
-## Level 3 Drill-Down Assessment
+## Migration Guide: V1 → V2
 
-Based on the complexity analysis, the following components warrant Level 3 documentation:
+### Breaking Changes
 
-### Recommended for Level 3
+1. **Sample ID Discontinuity**: Full-file SHA256 hashing changes ALL sample IDs
+   - **Impact**: Downstream systems relying on sample IDs will break
+   - **Action**: Full re-processing of ALL datasets required (~24-48 hours)
 
-| Component | Complexity | Rationale |
-|-----------|------------|-----------|
-| **Three-Layer Metadata Schema** | High | 1,235 lines in `annotate_base_metadata.py`, complex versioning logic |
-| **Label Parser System** | Medium | 9 parsers, COCO cache optimization, format-specific handling |
-| **Training Label Builder** | Medium | 45-dim vector construction, anchor priority logic |
+2. **Parquet Structure**: Single file → partitioned directory
+   - **Impact**: Existing queries may need adjustment
+   - **Action**: Use `pyarrow.dataset` for unified view
 
-### Not Recommended for Level 3
+3. **Configuration**: Hardcoded paths → external config
+   - **Impact**: Environment variables required
+   - **Action**: Set `ANNOTATION_*` env vars or provide YAML config
 
-| Component | Complexity | Rationale |
-|-----------|------------|-----------|
-| Download Scripts | Low | Simple gsutil/HuggingFace wrappers |
-| Dataset Validation | Low | Straightforward existence checks |
-| Storage Layout | Low | Well-documented directory structure |
+### Migration Steps
 
----
-
-## Source File Traceability
-
-This section maps workflow steps to implementation files with LOC counts, validating against the complete file inventory.
-
-| Workflow Step | Source Files | LOC | Total | Percentage |
-|---------------|--------------|-----|-------|------------|
-| **Layer 1: Dataset Parsing & Metadata** | `scripts/annotate_base_metadata.py` | 1,235 | 1,235 | 30.4% |
-| **Layer 2: Classical IQA** | `src/image_preprocessing_detector/detection/iqa_classical.py` | 892 | 892 | 21.9% |
-| **Layer 2: ML IQA** | `src/image_preprocessing_detector/detection/iqa_ml.py` | 1,245 | 1,245 | 30.6% |
-| **Layer 2: Layout Analysis** | `src/image_preprocessing_detector/detection/layout_lite.py` | 524 | 524 | 12.9% |
-| **Layer 2: DQS Calculation** | `src/image_preprocessing_detector/metrics/dqs_calculator.py` | 170 | 170 | 4.2% |
-| **Layer 3: Training Labels** | `scripts/build_training_labels.py` | 590 | 590 | 14.5% |
-| **Supporting Utilities** | Various helper modules | ~410 | 410 | 10.1% |
-| **Workstream Total** | **8 primary files** | — | **4,066** | **100%** |
-
-**Validation**: All LOC counts validated against `docs/architecture/FILE_INVENTORY_WITH_WORKSTREAM_MAPPINGS.md` (WS3 section).
-
-**Key Components**:
-
-1. **annotate_base_metadata.py** (1,235 lines):
-   - 9 dataset-specific parsers (Lines 635-852)
-   - Dataset configurations (Lines 101-361)
-   - Metadata generation (Lines 362-523)
-   - COCO cache optimization
-
-2. **build_training_labels.py** (590 lines):
-   - 45-dimensional degradation index (Lines 60-114)
-   - Anchor score priority algorithm (Lines 119-137, 208-290)
-   - Training label construction (Lines 145-171)
-   - Feature vector assembly
-
-3. **iqa_ml.py** (1,245 lines):
-   - ResNet-50 teacher model
-   - ResNet-18 student model
-   - Selective teacher inference
-   - 12-dimensional ML features
-
-4. **iqa_classical.py** (892 lines):
-   - 8 classical IQA detectors
-   - Blur, contrast, noise, skew analysis
-   - Illumination, JPEG blockiness, binarization
-   - Bleed-through detection
-
-5. **layout_lite.py** (524 lines):
-   - YOLOv10-doc model integration
-   - 11 DocLayNet element classes
-   - Structural complexity scoring
-   - 15-dimensional layout features
-
-6. **dqs_calculator.py** (170 lines):
-   - Document Quality Score computation
-   - Degradation + complexity weighting
-   - Pre-OCR risk assessment
-
-**Level 3 Documentation**: See [level-3/data-preparation/](../level-3/data-preparation/) for detailed implementation documentation.
+1. Deploy new `annotation/` package alongside existing scripts
+2. Run parallel validation (compare outputs with canonicalization)
+3. Update downstream consumers to use new sample IDs
+4. Migrate Parquet data to partitioned structure
+5. Switch scripts to thin wrappers
+6. Run full re-annotation for hash consistency
+7. Retire V1 architecture documentation
 
 ---
 
@@ -512,6 +1317,7 @@ This section maps workflow steps to implementation files with LOC counts, valida
 | **Level 2** | [Model Training](../model-training/index.md) | Downstream: production training |
 | **Level 2** | [Synthetic Generation](../synthetic-generation/index.md) | Downstream: data augmentation |
 | **Level 2** | [Labeling & Benchmarking](../labeling-benchmarking/index.md) | Downstream: labeling models |
+| **Planning** | [Refactoring Plan](../../../../planning/METADATA_ANNOTATION_REFACTORING_PLAN.md) | Implementation roadmap |
 
 ---
 
@@ -521,13 +1327,20 @@ This section maps workflow steps to implementation files with LOC counts, valida
 
 - **Training Ingestion**: [`project-a-training-data-ingestion.puml`](project-a-training-data-ingestion.puml)
 - **Labeling Pipeline**: [`automated-data-labeling-pipeline.puml`](automated-data-labeling-pipeline.puml)
+- **Resolution Quality**: [`resolution-quality-labeling-pipeline.puml`](resolution-quality-labeling-pipeline.puml)
+- **Skew/Orientation**: [`skew-orientation-labeling-pipeline.puml`](skew-orientation-labeling-pipeline.puml)
 
-### Core Scripts
+### Core Package (V2)
+
+- **Public API**: [`src/image_preprocessing_detector/annotation/__init__.py`](../../../../../src/image_preprocessing_detector/annotation/__init__.py)
+- **Pipeline**: [`src/image_preprocessing_detector/annotation/workflow/pipeline.py`](../../../../../src/image_preprocessing_detector/annotation/workflow/pipeline.py)
+- **Orchestrator**: [`src/image_preprocessing_detector/annotation/workflow/orchestrator.py`](../../../../../src/image_preprocessing_detector/annotation/workflow/orchestrator.py)
+
+### Legacy Scripts (Compatibility)
 
 - **Download Master**: [`scripts/download_all_datasets.py`](../../../../../scripts/download_all_datasets.py) (471 lines)
-- **Metadata Annotation**: [`scripts/annotate_base_metadata.py`](../../../../../scripts/annotate_base_metadata.py) (1,235 lines)
+- **Metadata Wrapper**: [`scripts/annotate_base_metadata.py`](../../../../../scripts/annotate_base_metadata.py) (thin wrapper)
 - **Training Labels**: [`scripts/build_training_labels.py`](../../../../../scripts/build_training_labels.py) (590 lines)
-- **Dataset Validation**: [`scripts/validate_datasets.py`](../../../../../scripts/validate_datasets.py) (430 lines)
 
 ### Data Documentation
 
@@ -538,13 +1351,28 @@ This section maps workflow steps to implementation files with LOC counts, valida
 
 ## Traceability
 
-| Source Code | Lines | This Document Section |
-|-------------|-------|----------------------|
-| `annotate_base_metadata.py` | 64-98 | Capture Method Taxonomy |
-| `annotate_base_metadata.py` | 101-354 | Dataset Configuration System |
-| `annotate_base_metadata.py` | 362-523 | Three-Layer Metadata Architecture |
-| `annotate_base_metadata.py` | 635-852 | Label Parsers |
-| `build_training_labels.py` | 60-137 | Degradation Index |
-| `build_training_labels.py` | 119-137 | Anchor Score Priority |
-| `download_all_datasets.py` | 47-183 | Dataset Inventory |
-| `data/README.md` | 19-162 | Storage Strategy |
+| Source Module | This Document Section |
+|---------------|----------------------|
+| `annotation/schemas/enums.py` | Capture Method Taxonomy, Domain Taxonomy |
+| `annotation/config/datasets.py` | Dataset Configuration System |
+| `annotation/schemas/immutable.py`, `enrichment.py` | Three-Layer Metadata Architecture |
+| `annotation/parsers/**/*.py` | Parser Architecture, Label Parsers |
+| `annotation/workflow/pipeline.py` | Pipeline Architecture |
+| `annotation/storage/parquet_writer.py` | Storage Strategy |
+| `annotation/monitoring/metrics.py` | Monitoring Integration |
+| `schema_utils/layout_taxonomy.py` | Layout Label Taxonomy |
+| `build_training_labels.py` | Layer 3, Degradation Index, Anchor Score |
+| `schema_utils/resolution_quality.py` | Resolution Quality Labeling Pipeline |
+| `scripts/label_resolution_quality.py` | Resolution Quality Labeling Pipeline |
+| `scripts/integrate_resolution_quality.py` | Resolution Quality Labeling Pipeline |
+| `models/skew_estimator.py` | Skew/Orientation Labeling Pipeline |
+| `models/onnx_runtime.py` | Skew/Orientation Labeling Pipeline |
+| `config/skew_estimation.yaml` | Skew/Orientation Labeling Pipeline |
+| `scripts/label_skew_orientation.py` | Skew/Orientation Labeling Pipeline |
+| `scripts/integrate_skew_orientation.py` | Skew/Orientation Labeling Pipeline |
+
+---
+
+*V2 Architecture - Post-refactoring implementation. Phases 1-5 of
+[METADATA_ANNOTATION_REFACTORING_PLAN.md](../../../../planning/METADATA_ANNOTATION_REFACTORING_PLAN.md) are complete.
+This document supersedes [index.v1-archived.md](index.v1-archived.md).*

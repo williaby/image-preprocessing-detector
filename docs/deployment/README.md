@@ -20,7 +20,6 @@ Complete guide for deploying the Image Preprocessing Detector API across differe
 - [Prerequisites](#prerequisites)
 - [Local Development](#local-development)
 - [Docker Deployment](#docker-deployment)
-- [Kubernetes Deployment](#kubernetes-deployment)
 - [Environment Configuration](#environment-configuration)
 - [Monitoring & Logging](#monitoring--logging)
 - [Troubleshooting](#troubleshooting)
@@ -34,9 +33,6 @@ The Image Preprocessing Detector API can be deployed in multiple configurations:
 1. **Local Development** - Direct Python execution with uv
 2. **Docker** - Containerized single-instance deployment
 3. **Docker Compose** - Multi-container local stack
-4. **Kubernetes** - Production-grade orchestrated deployment
-
-**Recommended for Production**: Kubernetes with Helm charts
 
 ---
 
@@ -52,13 +48,6 @@ The Image Preprocessing Detector API can be deployed in multiple configurations:
 
 - Docker 24.0+
 - Docker Compose 2.20+ (for compose deployments)
-
-### Kubernetes Deployments
-
-- Kubernetes 1.20+
-- Helm 3.8+
-- kubectl configured
-- Container registry access (GHCR, Docker Hub, etc.)
 
 ---
 
@@ -219,117 +208,6 @@ docker images image-preprocessing-detector:latest
 
 ---
 
-## Kubernetes Deployment
-
-### Using kubectl (Raw Manifests)
-
-```bash
-# Apply manifests directly
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-kubectl apply -f k8s/ingress.yaml
-kubectl apply -f k8s/hpa.yaml
-```
-
-### Using Helm (Recommended)
-
-#### Development Environment
-
-```bash
-helm install imgprep-api ./charts/image-preprocessing-detector \
-  -f charts/image-preprocessing-detector/values-dev.yaml \
-  --namespace imgprep-dev \
-  --create-namespace
-```
-
-#### Staging Environment
-
-```bash
-helm install imgprep-api ./charts/image-preprocessing-detector \
-  --namespace imgprep-staging \
-  --create-namespace \
-  --set image.tag=v1.0.0-rc.1 \
-  --set ingress.hosts[0].host=api-staging.example.com
-```
-
-#### Production Environment
-
-```bash
-helm install imgprep-api ./charts/image-preprocessing-detector \
-  -f charts/image-preprocessing-detector/values-prod.yaml \
-  --namespace imgprep-prod \
-  --create-namespace \
-  --set image.tag=v1.0.0 \
-  --set secrets.apiKeys="$PROD_API_KEYS"
-```
-
-### Helm Operations
-
-**Upgrade**:
-
-```bash
-helm upgrade imgprep-api ./charts/image-preprocessing-detector \
-  -f charts/image-preprocessing-detector/values-prod.yaml \
-  --namespace imgprep-prod \
-  --set image.tag=v1.1.0
-```
-
-**Rollback**:
-
-```bash
-helm rollback imgprep-api -n imgprep-prod
-```
-
-**Uninstall**:
-
-```bash
-helm uninstall imgprep-api -n imgprep-prod
-```
-
-**List Releases**:
-
-```bash
-helm list -A
-```
-
-### GPU Node Configuration
-
-**Node Labels** (if not auto-labeled):
-
-```bash
-kubectl label nodes <node-name> accelerator=nvidia-tesla-t4
-```
-
-**Helm Values** (`values-gpu.yaml`):
-
-```yaml
-gpu:
-  enabled: true
-  count: 1
-  type: "nvidia.com/gpu"
-
-nodeSelector:
-  accelerator: nvidia-tesla-t4
-
-tolerations:
-  - key: nvidia.com/gpu
-    operator: Exists
-    effect: NoSchedule
-```
-
-**Deploy**:
-
-```bash
-helm install imgprep-api ./charts/image-preprocessing-detector \
-  -f values-gpu.yaml \
-  --namespace imgprep-gpu
-```
-
----
-
 ## Environment Configuration
 
 ### Environment Variables Matrix
@@ -357,24 +235,6 @@ helm install imgprep-api ./charts/image-preprocessing-detector \
 echo "IMGPREP_API_KEYS=dev-key-1,dev-key-2" > .env
 ```
 
-#### Kubernetes
-
-```bash
-# Create secret
-kubectl create secret generic imgprep-api-secret \
-  --from-literal=api-keys="prod-key-1,prod-key-2" \
-  --from-literal=internal-callers='["10.0.0.0/8"]' \
-  -n imgprep-prod
-```
-
-#### Helm (Recommended)
-
-```bash
-# Via values file (encrypted with sops/sealed-secrets)
-helm install imgprep-api ./charts/image-preprocessing-detector \
-  --set secrets.apiKeys="prod-key-1,prod-key-2"
-```
-
 ---
 
 ## Monitoring & Logging
@@ -399,38 +259,12 @@ curl http://localhost:8000/ready
 curl http://localhost:8000/version
 ```
 
-### Kubernetes Probes
-
-Configured in Helm chart:
-
-```yaml
-livenessProbe:
-  httpGet:
-    path: /health
-    port: http
-  initialDelaySeconds: 30
-  periodSeconds: 10
-
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: http
-  initialDelaySeconds: 10
-  periodSeconds: 5
-```
-
 ### Logs
 
 **Docker**:
 
 ```bash
 docker logs -f imgprep-api
-```
-
-**Kubernetes**:
-
-```bash
-kubectl logs -l app.kubernetes.io/name=image-preprocessing-detector -f -n imgprep-prod
 ```
 
 **Structured Logging** (JSON format):
@@ -492,9 +326,6 @@ docker logs imgprep-api | grep "model"
 ```bash
 # Check container memory
 docker stats imgprep-api
-
-# In Kubernetes
-kubectl top pods -n imgprep-prod
 ```
 
 **Solutions**:
@@ -522,9 +353,6 @@ Enable verbose logging:
 ```bash
 # Environment variable
 export IMGPREP_API_LOG_LEVEL=DEBUG
-
-# Kubernetes
-kubectl set env deployment/imgprep-api IMGPREP_API_LOG_LEVEL=DEBUG -n imgprep-prod
 ```
 
 ### Performance Issues
@@ -536,9 +364,6 @@ kubectl set env deployment/imgprep-api IMGPREP_API_LOG_LEVEL=DEBUG -n imgprep-pr
 ```bash
 # Check GPU availability
 curl http://localhost:8000/ready | jq '.device'
-
-# Monitor processing time
-kubectl logs -l app.kubernetes.io/name=image-preprocessing-detector -n imgprep-prod | grep "processing_time_ms"
 ```
 
 **Solutions**:
@@ -548,52 +373,20 @@ kubectl logs -l app.kubernetes.io/name=image-preprocessing-detector -n imgprep-p
 - Scale horizontally (more replicas)
 - Pre-load models (eliminate cold start)
 
-### Rollback Procedure
-
-#### Helm
-
-```bash
-# List release history
-helm history imgprep-api -n imgprep-prod
-
-# Rollback to previous version
-helm rollback imgprep-api -n imgprep-prod
-
-# Rollback to specific revision
-helm rollback imgprep-api 3 -n imgprep-prod
-```
-
-#### Kubernetes (manual)
-
-```bash
-# Rollback deployment
-kubectl rollout undo deployment/imgprep-api -n imgprep-prod
-
-# Rollback to specific revision
-kubectl rollout undo deployment/imgprep-api --to-revision=2 -n imgprep-prod
-```
-
----
-
 ## Best Practices
 
 1. **Always test in staging before production**
-2. **Use Helm for multi-environment deployments**
-3. **Enable autoscaling in production (HPA)**
-4. **Monitor health/ready endpoints continuously**
-5. **Set resource limits to prevent resource exhaustion**
-6. **Use immutable image tags (not `latest`)**
-7. **Encrypt secrets (never commit plaintext)**
-8. **Configure log rotation for long-running containers**
-9. **Test rollback procedures regularly**
-10. **Document environment-specific configurations**
+2. **Monitor health/ready endpoints continuously**
+3. **Set resource limits to prevent resource exhaustion**
+4. **Use immutable image tags (not `latest`)**
+5. **Encrypt secrets (never commit plaintext)**
+6. **Configure log rotation for long-running containers**
+7. **Document environment-specific configurations**
 
 ---
 
 ## Additional Resources
 
 - [REST API Documentation](../api/rest-api.md)
-- [Helm Chart README](../../charts/image-preprocessing-detector/README.md)
 - [Load Testing Guide](../../tests/load/README.md)
 - [Docker Compose Examples](https://docs.docker.com/compose/)
-- [Kubernetes Best Practices](https://kubernetes.io/docs/concepts/configuration/overview/)

@@ -4,192 +4,235 @@ skinparam backgroundColor #FEFEFE
 skinparam defaultFontName "DejaVu Sans"
 skinparam defaultFontSize 11
 
-title Model Training Workstream (WS2) - Teacher-Student Pipeline
-caption Total LOC: 7,058 lines across 16 files | Generated: 2025-01-19 | See: layout-fusion-downsampler.md
+title Model Training Workstream (WS2) - SigLIP 2 + MobileNetV4 Two-Model Pipeline
+caption 3-Step Virtuous Training Cycle | ~503K images across 10 datasets | See: layout-fusion-downsampler.md (LEGACY fallback)
 
 |Data Preparation|
 start
-:Load Training Labels;
+:Load Multi-Task Training Labels;
 note right
   **Input**: TrainingLabels parquet
   From WS3 (Data Preparation)
 
-  **Contains**:
-  - 45-dim IQA vector
-  - Anchor scores
-  - Sample weights
-  - 108,000+ images
+  **10 Datasets (~503K total)**:
+  - Orientation (50K)
+  - Skew (40K)
+  - Resolution (30K)
+  - IQA (16K + 100K synthetic)
+  - Script (108K)
+  - Handwriting (60K)
+  - Capture (50K)
+  - Shadow (15K)
+  - Warping (20K)
+  - Code (10K)
 end note
 
-:Create PyTorch Dataset;
+:Create PyTorch MultiTaskDataset;
 note left
-  **datasets/iqa_dataset.py**
-  LOC: 180 lines (2.5%)
+  **datasets/multitask_dataset.py**
+  LOC: ~350 lines (TBD)
 
   **Functionality**:
   - Load parquet files
-  - Apply transforms
-  - Return tensors
+  - Per-task transforms
+  - Color mode diversity
+  - SHA256-keyed splits
   - Batch collation
 end note
 
-|Teacher Training (Phase 2)|
+|Step 1: MobileNetV4 Bootstrap|
 
-:Initialize ResNet-50 Teacher;
+:Initialize MobileNetV4-Conv-S;
 note right
-  **models/resnet_teacher.py**
-  LOC: 293 lines (4.2%)
+  **models/mobilenetv4_gate.py**
+  LOC: TBD
 
   **Architecture**:
-  - ResNet-50 backbone
-  - Multi-label head (45 degradations)
-  - Quality regression head
+  - MobileNetV4-Conv-Small backbone
+  - ~4M parameters
+  - 3 task heads:
+    Head 1: Orientation (4-class)
+    Head 2: Skew regression (±10°)
+    Head 3: Resolution quality (0-1)
 
-  **Note**: For DocIQ-Replica (DIQA-5000),
-  this includes Layout Fusion Downsampler
-  to preserve document structure during
-  1600×1600 → 400×400 downsampling.
-  See: layout-fusion-downsampler.md
+  **Latency**: ~3ms GPU, ~12ms CPU
 end note
 
-:Configure Teacher Training;
+:Configure MobileNetV4 Bootstrap Training;
 note left
-  **training/teacher_trainer.py**
-  LOC: 586 lines (8.3%)
+  **training/mobilenetv4_trainer.py**
+  LOC: TBD
 
   **Training Config**:
   - Optimizer: AdamW
   - LR schedule: CosineAnnealing
-  - Loss: Multi-task (BCE + MSE)
-  - Epochs: 50
-  - Batch size: 32
+  - Loss: CE + MSE + MSE (multi-task)
+  - Epochs: 30
+  - Batch size: 256
 end note
 
-:Run Teacher Training (Modal GPU);
+:Run MobileNetV4 Bootstrap (Modal GPU);
 note right
-  **modal/train_phase2_iqa.py**
-  LOC: 707 lines (10.0%)
+  **modal/train_mobilenetv4.py**
+  LOC: TBD
 
   **Modal Config**:
-  - GPU: T4 or A10
-  - Dataset: OHR-Bench (~18GB)
-  - Duration: 12-24 hours
+  - GPU: A10
+  - Datasets: Orientation + Skew + Resolution
+  - Duration: ~2.5 hours
   - Checkpointing: Every 5 epochs
 end note
 
-:Save Teacher Checkpoint;
+:Save MobileNetV4 Bootstrap Checkpoint;
 note left
-  **training/checkpoint_utils.py**
-  LOC: 82 lines (1.2%)
-
-  **Saved**:
-  - Model state_dict
-  - Optimizer state
-  - Training metrics
-  - Best val_loss
+  **Graduation Thresholds (Step 1)**:
+  - Orientation acc > 95%
+  - Skew MAE < 0.5 degrees
+  - Resolution quality MAE < 0.1
 end note
 
-|Student Training (Phase 3)|
+|Step 2: SigLIP 2 Multi-Task|
 
-:Initialize ResNet-18 Student;
+:Load SigLIP 2 NAFlex Backbone (Frozen);
 note right
-  **models/resnet_student.py**
-  LOC: 277 lines (3.9%)
+  **models/siglip2_multitask.py**
+  LOC: TBD
 
   **Architecture**:
-  - ResNet-18 backbone
-  - Multi-label head (45 degradations)
-  - Quality regression head
-  - Lighter than teacher
+  - SigLIP 2 NAFlex ViT-B/16
+  - ~88M params (backbone frozen)
+  - 16 task heads across 5 groups:
+    G1: IQA (6 regression)
+    G2: Script (1 classification)
+    G3: Orientation+Skew (1 cls + 1 reg)
+    G4: Handwriting (3 heads)
+    G5: Page Attrs (4 heads)
+
+  **Variable resolution via NAFlex packing**
+  (no downsampling required)
 end note
 
-:Generate Soft Labels (Teacher);
+:Configure SigLIP 2 Multi-Task Training;
 note left
-  **training/generate_soft_labels.py**
-  LOC: 313 lines (4.4%)
-
-  **Process**:
-  - Load teacher checkpoint
-  - Run inference on all data
-  - Save soft predictions
-  - Temperature scaling
-end note
-
-:Configure Student Training;
-note right
-  **training/student_trainer.py**
-  LOC: 664 lines (9.4%)
+  **training/siglip2_trainer.py**
+  LOC: TBD
 
   **Training Config**:
-  - Knowledge distillation
-  - Distillation loss + hard loss
-  - Alpha: 0.7 (distill weight)
-  - Temperature: 3.0
+  - Optimizer: AdamW
+  - LR schedule: CosineAnnealing
+  - Loss: Weighted multi-task
+    (per-group weights)
   - Epochs: 30
+  - Batch size: 64
+  - Backbone: FROZEN
 end note
 
-:Compute Distillation Loss;
-note left
-  **training/distillation_loss.py**
-  LOC: 248 lines (3.5%)
-
-  **Loss Components**:
-  - KL divergence (soft targets)
-  - BCE loss (hard labels)
-  - MSE loss (regression)
-  - Weighted combination
-end note
-
-:Run Student Training (Modal GPU);
+:Run SigLIP 2 Multi-Task Training (Modal GPU);
 note right
-  **modal/train_student_distillation.py**
-  LOC: 779 lines (11.0%)
+  **modal/train_siglip2_multitask.py**
+  LOC: TBD
 
   **Modal Config**:
-  - GPU: T4 (sufficient for student)
-  - Uses teacher soft labels
-  - Duration: 8-12 hours
-  - Faster than teacher
+  - GPU: A10
+  - All 10 datasets (~503K)
+  - Duration: ~17.5 hours
+  - Checkpointing: Every 3 epochs
 end note
 
-:Save Student Checkpoint;
-
-|Model Export (Phase 7)|
-
-:Load Best Student Checkpoint;
-
-:Optimize Model;
-note right
-  **models/model_optimizer.py**
-  LOC: 1,435 lines (20.3%)
-
-  **Optimizations**:
-  - Graph optimizations
-  - Constant folding
-  - Operator fusion
-  - Quantization-aware
-end note
-
-:Export to ONNX;
+:Save SigLIP 2 Multi-Task Checkpoint;
 note left
-  **modal/export_phase7_onnx.py**
-  LOC: 347 lines (4.9%)
+  **Graduation Thresholds (Step 2)**:
+  - IQA PLCC > 0.65
+  - Script acc > 90%
+  - Orientation acc > 95%
+  - Skew MAE < 0.5 deg
+  - Handwriting F1 > 0.85
+  - Resolution MAE < 0.1
+end note
 
-  **ONNX Export**:
+|Step 3: MobileNetV4 Distillation|
+
+:Generate SigLIP 2 Soft Labels;
+note right
+  **training/generate_soft_labels.py**
+  LOC: TBD
+
+  **Process**:
+  - Load SigLIP 2 checkpoint
+  - Run inference on training data
+  - Extract Groups 3+5 outputs
+    (orientation, skew, resolution)
+  - Save soft predictions
+  - Temperature scaling (T=3)
+end note
+
+:Configure MobileNetV4 Distillation;
+note left
+  **training/mobilenetv4_trainer.py**
+  (distillation mode)
+
+  **Training Config**:
+  - KL-divergence distillation
+  - Alpha: 0.7 (SigLIP 2 weight)
+  - Temperature: 3.0
+  - Epochs: 20
+  - Batch size: 256
+end note
+
+:Run MobileNetV4 Distillation (Modal GPU);
+note right
+  **modal/train_mobilenetv4.py**
+  (distillation mode)
+
+  **Modal Config**:
+  - GPU: A10
+  - Uses SigLIP 2 soft labels
+  - Duration: ~1.7 hours
+  - Faster than bootstrap
+end note
+
+:Save MobileNetV4 Distilled Checkpoint;
+note left
+  **Improved Thresholds (Step 3)**:
+  - Orientation acc > 98%
+    (was 95% in Step 1)
+  - Skew MAE < 0.3 deg
+    (was 0.5 in Step 1)
+end note
+
+|Model Export|
+
+:Load Best SigLIP 2 Checkpoint;
+
+:Export SigLIP 2 to ONNX;
+note right
+  **modal/export_onnx.py**
+  LOC: TBD
+
+  **ONNX Export (SigLIP 2)**:
+  - 16 output heads
   - Dynamic batch size
-  - FP16 precision
-  - Optimized for inference
+  - Variable resolution (NAFlex)
   - Validate outputs
 end note
 
-:Export to TorchScript;
-note right
-  **Export Format**: TorchScript
+:Load Best MobileNetV4 Checkpoint;
 
-  **Use Cases**:
+:Export MobileNetV4 to ONNX;
+note left
+  **ONNX Export (MobileNetV4)**:
+  - 3 output heads
+  - Dynamic batch size
+  - Fixed 256x256 input
+  - Validate outputs
+end note
+
+:Export Both to TorchScript;
+note right
+  **TorchScript (Fallback)**:
   - C++ deployment
   - Mobile deployment
-  - Faster inference
+  - Faster cold-start
 end note
 
 :Validate Exported Models;
@@ -198,7 +241,7 @@ note left
   - Compare outputs (PyTorch vs ONNX)
   - Benchmark latency
   - Check memory usage
-  - Verify numerical accuracy
+  - Verify per-head accuracy
 end note
 
 |Model Registry|
@@ -206,10 +249,10 @@ end note
 :Register Model Versions;
 note right
   **Model Registry**:
-  - Teacher: v2.0.0 (val_loss=0.27)
-  - Student: v2.1.0 (val_loss=0.14)
-  - ONNX: student-v2.1.0.onnx
-  - TorchScript: student-v2.1.0.pt
+  - SigLIP 2: siglip2_naflex_v1.0.0
+  - MobileNetV4: mobilenetv4_v1.0.0
+  - Docling Layout: pre-trained refs
+  - ONNX + TorchScript formats
 end note
 
 :Deploy to Production;
@@ -218,71 +261,56 @@ note left
   - Copy to model registry
   - Update version manifest
   - Notify WS1 (Production Runtime)
-  - Archive old versions
+  - MobileNetV4: pre-correction (~3ms)
+  - SigLIP 2: multi-task (~50ms)
 end note
 
 |Batch Inference|
 
-:Load Model for Inference;
+:Load Models for Inference;
 note right
   **models/batch_inference.py**
-  LOC: 622 lines (8.8%)
+  LOC: TBD
 
   **Capabilities**:
   - Batch processing
   - GPU/CPU fallback
   - Tensor caching
-  - Progress tracking
+  - Per-head output routing
 end note
 
-:Run Inference on Dataset;
+:Run Two-Model Pipeline;
 
-:Generate Predictions;
+:Generate Multi-Task Predictions;
 
 stop
 
 legend right
-  |= Component |= Files |= LOC |= Percentage |
-  | **Modal Training Scripts** | 3 | 1,833 | 26.0% |
-  | - train_phase2_iqa.py | 1 | 707 | 10.0% |
-  | - train_student_distillation.py | 1 | 779 | 11.0% |
-  | - export_phase7_onnx.py | 1 | 347 | 4.9% |
-  | **Training Logic** | 6 | 1,938 | 27.5% |
-  | - teacher_trainer.py | 1 | 586 | 8.3% |
-  | - student_trainer.py | 1 | 664 | 9.4% |
-  | - distillation_loss.py | 1 | 248 | 3.5% |
-  | - generate_soft_labels.py | 1 | 313 | 4.4% |
-  | - checkpoint_utils.py | 1 | 82 | 1.2% |
-  | - __init__.py | 1 | 45 | 0.6% |
-  | **Model Architectures** | 7 | 3,287 | 46.6% |
-  | - model_optimizer.py | 1 | 1,435 | 20.3% |
-  | - batch_inference.py | 1 | 622 | 8.8% |
-  | - loss_functions.py | 1 | 330 | 4.7% |
-  | - resnet_teacher.py | 1 | 293 | 4.2% |
-  | - resnet_student.py | 1 | 277 | 3.9% |
-  | - model_loader.py | 1 | 244 | 3.5% |
-  | - __init__.py | 1 | 86 | 1.2% |
-  |= **Total** |= **16** |= **7,058** |= **100%** |
+  |= Component |= Status |= Notes |
+  | **SigLIP 2 NAFlex** | Primary | 16 heads, ~50ms GPU |
+  | **MobileNetV4-Conv-S** | Primary | 3 heads, ~3ms GPU |
+  | **Docling Layout (egret-xlarge)** | Primary | Pre-trained, accuracy |
+  | **Docling Layout (heron)** | Primary | Pre-trained, speed |
+  | **Layout Fusion Downsampler** | LEGACY | ResNet-50 fallback path |
+  | **MobileCLIP-2 S4/S0** | PLANNED | Edge/mobile (deferred) |
+
+  **Training Duration (3-Step Cycle)**:
+  - Step 1 (MobileNetV4 Bootstrap): ~2.5 hours
+  - Step 2 (SigLIP 2 Multi-Task): ~17.5 hours
+  - Step 3 (MobileNetV4 Distillation): ~1.7 hours
+  - Total: ~22 hours on Modal A10 GPU
+  - Cost: ~$10/training run
 
   **Key Technologies**:
   - PyTorch 2.0+ for training
+  - HuggingFace for SigLIP 2 backbone
   - Modal for serverless GPU
-  - ONNX Runtime for inference
-  - Knowledge distillation (teacher-student)
-
-  **Training Duration**:
-  - Teacher: 12-24 hours (50 epochs)
-  - Student: 8-12 hours (30 epochs)
-  - Total: ~20-36 hours
-
-  **Model Performance**:
-  - Teacher val_loss: 0.27
-  - Student val_loss: 0.14
-  - Student is better (smaller, more robust)
+  - ONNX Runtime for multi-head inference
+  - 3-step virtuous training cycle
 
   **Workstream: WS2 - Model Training**
   **Level 3 Documentation**
-  **Generated: 2025-01-19**
+  **Updated: 2026-02-09**
 endlegend
 
 @enduml

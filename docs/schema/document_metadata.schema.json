@@ -48,16 +48,24 @@
     "languages": {
       "type": "array",
       "items": {
-        "type": "string",
-        "pattern": "^[a-z]{2}$"
+        "$ref": "#/$defs/DocumentLanguage"
       },
-      "description": "ISO 639-1 language codes detected",
-      "examples": [["en"], ["en", "es"]]
+      "description": "Detected languages with ISO codes and script information"
+    },
+    "primary_script_family": {
+      "type": "string",
+      "enum": ["latin", "cjk", "arabic", "indic", "cyrillic", "other"],
+      "description": "Primary script family for OCR engine selection"
     },
     "has_non_latin": {
       "type": "boolean",
       "default": false,
-      "description": "Document contains non-Latin scripts (CJK, Arabic, etc.)"
+      "description": "Document contains non-Latin scripts (CJK, Arabic, Indic, etc.)"
+    },
+    "has_rtl": {
+      "type": "boolean",
+      "default": false,
+      "description": "Document contains right-to-left scripts (Arabic, Hebrew)"
     },
     "pre_ocr_risk": {
       "type": "number",
@@ -179,6 +187,82 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Structural complexity for routing (0=simple, 1=complex)"
+        },
+        "handwriting_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "DEPRECATED: Use handwriting_assessment.presence_score instead. Handwriting presence confidence for VLM escalation."
+        },
+        "handwriting_assessment": {
+          "$ref": "#/$defs/HandwritingAssessment",
+          "description": "Graded handwriting assessment (presence, legibility, content_type)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "HandwritingAssessment": {
+      "type": "object",
+      "description": "Graded handwriting assessment with orthogonal dimensions: presence, legibility, content type. Consensus-validated schema extension for DQS integration.",
+      "properties": {
+        "presence": {
+          "type": "string",
+          "enum": ["NONE", "SPARSE", "MODERATE", "SUBSTANTIAL", "DOMINANT"],
+          "default": "NONE",
+          "description": "Graded handwriting presence (quantity). NONE=0%, SPARSE=<10%, MODERATE=10-30%, SUBSTANTIAL=30-60%, DOMINANT=>60%"
+        },
+        "presence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Continuous presence score (handwriting area ratio 0-1)"
+        },
+        "presence_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Confidence in presence classification"
+        },
+        "legibility": {
+          "type": "string",
+          "enum": ["NOT_APPLICABLE", "EXCELLENT", "GOOD", "FAIR", "POOR", "ILLEGIBLE"],
+          "default": "NOT_APPLICABLE",
+          "description": "Graded legibility (readability quality). Based on clinical Handwriting Legibility Scale (HLS). Higher values = harder to read."
+        },
+        "legibility_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Continuous legibility score (0=illegible, 1=excellent)"
+        },
+        "legibility_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Confidence in legibility classification"
+        },
+        "content_type": {
+          "type": "string",
+          "enum": ["not_applicable", "signatures_marks", "numeric", "alphanumeric", "prose", "mixed", "specialized"],
+          "default": "not_applicable",
+          "description": "Content type classification. signatures_marks=signatures/initials, numeric=numbers only, alphanumeric=mixed short, prose=long-form, specialized=math/symbols"
+        },
+        "content_type_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0,
+          "description": "Confidence in content type classification"
+        },
+        "detection_method": {
+          "type": "string",
+          "default": "none",
+          "description": "Detection method: siglip2_multitask, heuristic, ground_truth, hiertext, cocotext"
         }
       },
       "additionalProperties": false
@@ -344,6 +428,20 @@
           "items": {"$ref": "#/$defs/LanguageInfo"},
           "default": [],
           "description": "Detected languages/scripts"
+        },
+        "text_scope": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/TextScopeInfo"}
+          ],
+          "description": "Text content scope/granularity classification"
+        },
+        "paper_size": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/PaperSizeInfo"}
+          ],
+          "description": "ISO 216 paper size detection result"
         },
         "transform_history": {
           "type": "array",
@@ -537,19 +635,176 @@
       },
       "additionalProperties": false
     },
-    "LanguageInfo": {
+    "DocumentLanguage": {
       "type": "object",
-      "required": ["script", "confidence"],
+      "description": "Document-level language detection with ISO codes",
+      "required": ["language_code", "script_code"],
       "properties": {
-        "script": {
+        "language_code": {
           "type": "string",
-          "description": "Script name (Latin, CJK, Arabic, etc.)"
+          "pattern": "^[a-z]{2,3}$",
+          "description": "ISO 639-1 (2-letter) or ISO 639-3 (3-letter) language code",
+          "examples": ["en", "zh", "ar", "hi", "ja"]
+        },
+        "script_code": {
+          "type": "string",
+          "pattern": "^[A-Z][a-z]{3}$",
+          "description": "ISO 15924 script code",
+          "examples": ["Latn", "Hans", "Arab", "Deva"]
+        },
+        "bcp47_tag": {
+          "type": "string",
+          "description": "BCP 47 language tag (e.g., 'zh-Hans', 'sr-Cyrl')"
         },
         "confidence": {
           "type": "number",
           "minimum": 0,
           "maximum": 1,
           "description": "Detection confidence"
+        },
+        "is_primary": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this is the primary document language"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LanguageInfo": {
+      "type": "object",
+      "description": "Page-level language/script detection with ISO 15924",
+      "required": ["script_code", "confidence"],
+      "properties": {
+        "language_code": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z]{2,3}$",
+          "description": "ISO 639-1/3 language code (if determinable)"
+        },
+        "script_code": {
+          "type": "string",
+          "pattern": "^[A-Z][a-z]{3}$",
+          "description": "ISO 15924 script code",
+          "enum": [
+            "Latn", "Hans", "Hant", "Jpan", "Kore", "Hani",
+            "Deva", "Beng", "Taml", "Telu", "Gujr", "Knda", "Mlym", "Guru",
+            "Thai", "Khmr", "Mymr", "Laoo", "Tibt",
+            "Arab", "Hebr", "Cyrl", "Grek",
+            "Zzzz"
+          ]
+        },
+        "script_family": {
+          "type": "string",
+          "enum": ["latin", "cjk", "arabic", "indic", "cyrillic", "other"],
+          "description": "Script family for routing"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence"
+        },
+        "is_rtl": {
+          "type": "boolean",
+          "default": false,
+          "description": "Right-to-left script"
+        },
+        "region": {
+          "$ref": "#/$defs/COCOBoundingBox",
+          "description": "Region where this script was detected (optional)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "COCOBoundingBox": {
+      "type": "array",
+      "description": "COCO-format bounding box [x, y, width, height]",
+      "items": {"type": "number", "minimum": 0},
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "TextScopeInfo": {
+      "type": "object",
+      "description": "Text content scope/granularity classification",
+      "required": ["scope"],
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": ["character", "word", "phrase", "sentence", "line", "paragraph", "page", "document", "mixed", "unknown"],
+          "description": "Text scope from smallest (character) to largest (document)"
+        },
+        "content_type": {
+          "type": "string",
+          "enum": ["printed", "handwritten", "mixed", "scene_text", "synthetic", "unknown"],
+          "description": "Primary content type classification"
+        },
+        "density": {
+          "type": "string",
+          "enum": ["sparse", "light", "moderate", "dense", "very_dense"],
+          "description": "Text density based on text-to-image ratio"
+        },
+        "estimated_chars": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Estimated character count"
+        },
+        "estimated_words": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Estimated word count"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence (0-1)"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "How scope was determined",
+          "examples": ["dataset_metadata", "ocr_output", "dimension_heuristic", "manual"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "PaperSizeInfo": {
+      "type": "object",
+      "description": "ISO 216 paper size detection result",
+      "required": ["detected_size", "standard", "orientation"],
+      "properties": {
+        "detected_size": {
+          "type": "string",
+          "enum": ["A0", "A1", "A2", "A3", "A4", "A5", "A6", "B4", "B5", "Letter", "Legal", "Tabloid", "Ledger", "Executive", "Half-Letter", "Statement", "Custom", "Unknown"],
+          "description": "Detected paper size (ISO or ANSI standard)"
+        },
+        "standard": {
+          "type": "string",
+          "enum": ["iso", "ansi", "jis", "custom"],
+          "description": "Paper size standard/region"
+        },
+        "width_mm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Actual width in millimeters"
+        },
+        "height_mm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Actual height in millimeters"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": ["portrait", "landscape"],
+          "description": "Page orientation"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence (0-1)"
+        },
+        "is_exact_match": {
+          "type": "boolean",
+          "description": "True if dimensions match standard size exactly (<0.5% deviation)"
         }
       },
       "additionalProperties": false

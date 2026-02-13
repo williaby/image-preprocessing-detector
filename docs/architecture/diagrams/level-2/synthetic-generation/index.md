@@ -20,9 +20,9 @@ purpose: "Document the synthetic data generation infrastructure that expands tra
 ---
 The Synthetic Data Generation workstream provides **controlled document degradation** to expand training datasets for IQA models. By applying parametric degradations to clean documents, we generate labeled training data at scale with perfect ground truth.
 
-**Technology**: Microsoft Genalog (synthetic analog document degradation)
+**Technology**: Microsoft Genalog (synthetic analog document degradation) + custom multi-task generation pipeline with hybrid augmentation (DPI tiers, color modes, document aging, skew/orientation augmentation)
 
-**Status**: Infrastructure complete (~450 lines), Genalog integration in progress
+**Status**: Infrastructure complete (~450 lines), Genalog integration in progress, multi-task generation pipeline active for synth-multiscript-250K
 
 ---
 
@@ -67,9 +67,79 @@ Training Dataset (Workstream 2: Production Model Training)
 
 ---
 
+## Multi-Task Generation Pipeline
+
+The synthetic generation pipeline has been extended to support multi-task label generation for the two-model inference pipeline (MobileNetV4-Conv-S + SigLIP 2 NAFlex).
+
+### Resolution Tiers (7 DPI Levels)
+
+| Tier | DPI | Category | Use Case |
+|------|-----|----------|----------|
+| `ULTRA_LOW` | 72 | Screen-only | Web screenshots, low-res scans |
+| `LOW` | 100 | Draft quality | Quick previews |
+| `MEDIUM_LOW` | 150 | Moderate quality | Legacy scanners |
+| `MEDIUM` | 200 | Acceptable quality | Standard office scanners |
+| `STANDARD` | 300 | Production target | Default generation tier |
+| `HIGH` | 400 | High quality | Professional scanners |
+| `ULTRA_HIGH` | 600 | Archival quality | High-fidelity archival |
+
+### ColorMode Enum
+
+| Mode | Description | Synthetic Proportion |
+|------|-------------|---------------------|
+| `COLOR` | Full RGB color | ~60% of generated images |
+| `GRAYSCALE` | Single-channel grayscale | ~30% of generated images |
+| `BINARIZED` | Black/white binary | ~10% of generated images |
+
+### Document Aging Profiles
+
+| Profile | Probability | Effects Applied |
+|---------|-------------|-----------------|
+| `MODERN` | 80% (default) | No aging effects |
+| `AGED` | 15% | Yellowing, mild foxing, slight contrast reduction, ink fading |
+| `HISTORICAL` | 5% | Heavy yellowing, foxing, significant contrast reduction, ink fading, paper texture |
+
+### Augmentation Parameters
+
+- **Skew**: Continuous angle in range +/-10 degrees, stored as `fine_skew_angle` in metadata
+- **Orientation**: Discrete 4-class (0/90/180/270 degrees), stored as `orientation_class`
+- **Character height**: Measured in pixels, stored as `char_height_px` for resolution quality assessment
+
+> **Important**: Geometric transforms (skew, orientation) are applied BEFORE the degradation/augmentation pipeline to avoid "rotated noise" artifacts. See `_apply_geometric_transforms()` in `generator.py` and the [Training Optimization Plan](../../../planning/TRAINING_OPTIMIZATION_PLAN.md) Section 2 for details.
+
+### CLI Flags
+
+```bash
+# Multi-task generation with hybrid augmentation
+imgprep synthetic generate \
+    --color-mode COLOR \
+    --skew \
+    --orientation \
+    --augmenter hybrid \
+    --dpi-tier STANDARD
+```
+
+### Multi-Task Metadata Location
+
+All multi-task labels are stored at `metadata['data']['multi_task']` containing:
+
+```json
+{
+  "orientation_class": 0,
+  "fine_skew_angle": -2.3,
+  "char_height_px": 42,
+  "color_mode": "COLOR",
+  "document_age": "MODERN",
+  "dpi_tier": "STANDARD",
+  "resolution_dpi": 300
+}
+```
+
+---
+
 ## System Components
 
-### 1. Configuration Layer (`augmentation/genalog_config.py`)
+### 1. Configuration Layer (`synthetic/config.py`)
 
 **Lines**: ~294 lines
 **Status**: ✅ COMPLETE
@@ -111,7 +181,7 @@ enabled = config.get_enabled_degradations()  # ['blur', 'salt_pepper']
 
 ---
 
-### 2. Degradation Engine (`augmentation/genalog_degrader.py`)
+### 2. Generation Engine (`synthetic/generator.py`)
 
 **Lines**: ~314 lines
 **Status**: 🚧 Infrastructure complete, Genalog integration pending
@@ -318,7 +388,7 @@ def compute_ground_truth(config: DegradationConfig) -> dict:
 
 ## Integration with Training Pipeline
 
-### Workflow: Clean Docs → Synthetic Dataset → Model Training
+### Workflow: Clean Docs → Synthetic Dataset → Multi-Task Model Training
 
 ```
 1. Source Clean Documents
@@ -326,30 +396,48 @@ def compute_ground_truth(config: DegradationConfig) -> dict:
    ├─ Born-digital PDFs
    └─ Rendered text (synthetic base)
 
-2. Define Degradation Profiles
+2. Define Degradation & Augmentation Profiles
    ├─ Light degradation (blur σ=1.0, noise=0.01)
    ├─ Moderate degradation (blur σ=2.0, noise=0.02, morphological)
-   └─ Heavy degradation (blur σ=4.0, noise=0.04, bleed-through)
+   ├─ Heavy degradation (blur σ=4.0, noise=0.04, bleed-through)
+   ├─ Multi-task augmentation (skew ±10°, orientation 0/90/180/270)
+   └─ Document aging (AGED 15%, HISTORICAL 5%)
 
-3. Generate Degraded Images
+3. Generate Augmented Images
    └─ For each clean image:
        └─ For each profile:
-           ├─ Apply Genalog degradations
-           ├─ Compute ground truth labels
-           └─ Save (degraded_img, ground_truth)
+           ├─ Apply Genalog degradations + multi-task augmentations
+           ├─ Compute ground truth labels (tier_0_exact provenance)
+           ├─ Measure char_height, record color_mode, DPI tier
+           └─ Save (augmented_img, multi_task_metadata)
 
-4. Merge with Real Datasets
-   ├─ Real labeled data (DIQA-5000, OHR-Bench)
-   └─ Synthetic data (Genalog-generated)
+4. "Adjust, Not Redesign" Strategy (synth-multiscript-250K)
+   ├─ Generate base images ONCE
+   ├─ Derive multi-task training views from same base
+   └─ Add orientation, skew, resolution views without regeneration
 
-5. Train IQA Models (Workstream 2)
-   └─ Teacher-student ResNet on merged dataset
+5. Train Multi-Task Models (Workstream 2)
+   ├─ MobileNetV4-Conv-S (~3ms): 3 heads (orientation, skew, resolution quality)
+   └─ SigLIP 2 NAFlex (~50ms): 16 heads across 5 groups (IQA, Script,
+      Orientation+Skew, Handwriting, Page Attrs)
 ```
 
-**Dataset Composition** (Recommended):
+**Training Dataset Composition** (10 purpose-built datasets, ~503K total):
 
-- **70% Real Data**: DIQA-5000, OHR-Bench (preserve real-world distribution)
-- **30% Synthetic Data**: Genalog-generated (fill gaps in degradation space)
+| Dataset | Purpose | Target Size |
+|---------|---------|-------------|
+| Orientation | Orientation detection (4-class) | 50K |
+| Skew | Fine skew angle regression | 40K |
+| Resolution Quality | Resolution quality scoring | 30K |
+| IQA | Image quality assessment | 16K + 100K synthetic |
+| Script | Script/writing system detection | 108K |
+| Handwriting | Handwriting detection | 60K |
+| Capture Method | Capture method classification | 50K |
+| Shadow/Lighting | Shadow and lighting detection | 15K |
+| Warping/3D | Document warping and 3D effects | 20K |
+| Code/Math | Code and math detection | 10K |
+
+See [DATASET_DIVERSITY_REQUIREMENTS.md](../../../planning/DATASET_DIVERSITY_REQUIREMENTS.md) for per-dataset diversity specifications.
 
 ---
 
@@ -610,8 +698,10 @@ cp data/diqa5000/train/*.png data/merged_train/
 cp data/synthetic_v1/*.png data/merged_train/
 
 # Train model (Workstream 2)
-python -m image_preprocessing_detector.training.teacher_trainer \
+python -m image_preprocessing_detector.training.multi_task_trainer \
     --dataset data/merged_train/ \
+    --model mobilenetv4-conv-s \
+    --heads orientation,skew,resolution_quality \
     --epochs 50
 ```
 
@@ -646,11 +736,12 @@ This section maps synthetic generation pipeline components to implementation fil
 
 | Workflow Step | Source Files | LOC | Total | Percentage |
 |---------------|--------------|-----|-------|------------|
-| **Genalog Configuration** | `src/augmentation/genalog_config.py` | 293 | 293 | 27.5% |
-| **Genalog Degrader** | `src/augmentation/genalog_degrader.py` | 313 | 313 | 29.4% |
-| **Dataset Generation** | `scripts/generate_100k_iqa_dataset.py` | ~422 | 422 | 39.6% |
-| **Supporting** | `src/augmentation/__init__.py` | 38 | 38 | 3.6% |
-| **Workstream Total** | **4 primary files** | — | **1,066** | **100%** |
+| **Configuration** | `src/.../synthetic/config.py` | ~300 | 300 | — |
+| **Generator Engine** | `src/.../synthetic/generator.py` | ~400 | 400 | — |
+| **Hybrid Augmentation** | `src/.../synthetic/augmentation_hybrid.py` | ~350 | 350 | — |
+| **Schema Adapter** | `src/.../synthetic/schema_adapter.py` | ~200 | 200 | — |
+| **CLI** | `src/.../synthetic/cli.py` | ~150 | 150 | — |
+| **Workstream Total** | **5 primary files** | — | **~1,400** | **100%** |
 
 **Validation**: LOC count validated against `docs/architecture/workstream_loc_counts.json` (WS8: 1,066 lines).
 
@@ -709,20 +800,13 @@ This section maps synthetic generation pipeline components to implementation fil
 
 **Core Implementation**:
 
-- [genalog_config.py](../../../../../src/image_preprocessing_detector/augmentation/genalog_config.py) - Configuration (~294 lines)
-- [genalog_degrader.py](../../../../../src/image_preprocessing_detector/augmentation/genalog_degrader.py) - Degrader wrapper (~314 lines)
-- [**init**.py](../../../../../src/image_preprocessing_detector/augmentation/__init__.py) - Public API (~39 lines)
+- [config.py](../../../../../src/image_preprocessing_detector/synthetic/config.py) - Configuration (DPI tiers, ColorMode, augmentation params)
+- [generator.py](../../../../../src/image_preprocessing_detector/synthetic/generator.py) - Multi-task generation engine
+- [augmentation_hybrid.py](../../../../../src/image_preprocessing_detector/synthetic/augmentation_hybrid.py) - Hybrid augmentation pipeline (aging, degradation)
+- [schema_adapter.py](../../../../../src/image_preprocessing_detector/synthetic/schema_adapter.py) - Multi-task metadata schema adapter
+- [cli.py](../../../../../src/image_preprocessing_detector/synthetic/cli.py) - Synthetic generation CLI
 
-**Benchmarking**:
-
-- [synthetic_iqa_adapter.py](../../../../../benchmarks/adapters/synthetic_iqa_adapter.py) - Adapter (~423 lines)
-
-**Tests**:
-
-- `tests/unit/augmentation/test_genalog_config.py` - Configuration tests
-- `tests/unit/augmentation/test_genalog_degrader.py` - Degrader tests
-
-**Total Lines**: ~1,070+ (infrastructure complete, Genalog integration in progress)
+**Total Lines**: ~1,400+ (multi-task generation pipeline active)
 
 ---
 

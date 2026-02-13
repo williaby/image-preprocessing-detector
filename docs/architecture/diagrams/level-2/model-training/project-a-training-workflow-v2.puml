@@ -1,0 +1,127 @@
+' LEGACY: ResNet-50/ResNet-18 architecture (Phase 3).
+' Superseded by project-a-training-workflow-high-level.puml
+' and project-a-distillation.puml (SigLIP 2 + MobileNetV4).
+@startuml project-a-training-workflow-v2
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam activityBorderColor #333333
+skinparam activityBackgroundColor #E8F4FD
+skinparam arrowColor #333333
+
+title Project A - IQA Training Workflow v2 (Current Implementation)
+footer Updated: 2025-12-16 | Phase 7 MVP Dataset
+
+|#LightBlue|Data Preparation|
+start
+:Collect from 16 sources\n(E: drive organized);
+note right
+  **01_base_data/** (Training)
+  * degraded/: tobacco800, historical
+  * documents/: rvl_cdip, doclaynet
+  * forms/: nist_db2, nist_sd6, funsd+, sroie
+  * tables/: tablebank, pubtabnet
+  * handwriting/: nist_sd19, maths_handwriting
+  * formulas/: mathverse
+  * educational/: multimodal_textbook
+  ----
+  **02_benchmark_only/** (Eval)
+  * diqa-5000 (human MOS)
+  * dibco
+end note
+
+:consolidate_base_images.py\nSample 25K images (seed=42);
+:generate_iqa_dataset.py\nResize to 384x384 (Lanczos);
+
+:Apply augmentations\n(blur, noise, compression, lighting, geometric);
+
+:Calculate severity labels\n[0.0, 0.95] per dimension;
+:Calculate DQS score;
+note right
+  **DQS Formula:**
+  page_deg = 0.4*blur + 0.3*noise + 0.3*contrast
+  degradation = median(page_deg)
+  complexity = max(layout_complexity)
+end note
+
+:create_phase7_splits.py\nStratified 70/15/15 split;
+:create_phase7_tar_archives.py\nPackage + upload to GCS;
+
+|#LightGreen|Teacher Training|
+:Initialize ResNet-50\n(ImageNet pretrained);
+:Add 5-head IQA classifier\n(blur, noise, compression, contrast, geometric);
+note right
+  **Architecture:**
+  * Backbone: ResNet-50
+  * Dropout: 0.3
+  * Loss: Gaussian NLL
+  * Input: 384x384
+end note
+
+:Train on GCS dataset\n(Modal GPU: T4/A10);
+note right
+  **Hyperparameters:**
+  * Epochs: 100
+  * Batch: 32
+  * LR: 1e-4 (AdamW)
+  * Weight Decay: 0.02
+  * Warmup: 5 epochs
+  * Seed: 42
+end note
+
+:Validate on held-out set;
+if (Meets ECE and MAE targets?) then (yes)
+  :Export Teacher checkpoint\n(val_loss=0.27);
+else (no)
+  :Tune hyperparameters;
+  :Retrain (50 epochs);
+endif
+
+|#LightYellow|Knowledge Distillation|
+:Initialize ResNet-18 Student\n(random weights);
+:Run Teacher forward passes\n(collect soft targets + uncertainties);
+:Train Student with KL + CE loss;
+note right
+  **Distillation Config:**
+  * Temperature: T=4.0
+  * Alpha (soft): 0.7
+  * Beta (hard): 0.3
+  * Epochs: 30
+end note
+
+if (Student ECE gap acceptable?) then (yes)
+  :Export Student\n(val_loss=0.14);
+else (no)
+  :Adjust alpha, beta, T;
+  :Retrain Student;
+endif
+
+:Export to ONNX\n(CPU inference);
+:Export to TorchScript\n(GPU inference);
+
+|#Lavender|Model Registry|
+:Register in model registry\n(version, metrics, lineage);
+:Deploy Student as default;
+:Keep Teacher for selective inference;
+
+|#LightGray|Production Inference|
+:Document ingestion;
+if (High uncertainty or discrepancy?) then (yes)
+  :Invoke Teacher\n(selective inference);
+else (no)
+  :Use Student only\n(fast path);
+endif
+:Return IQA scores + DQS;
+stop
+
+legend right
+  |= Component |= Status |= Metric |
+  | Dataset (25K) | DONE | 858 MB |
+  | Teacher (ResNet-50) | DONE | val_loss=0.27 |
+  | Student (ResNet-18) | DONE | val_loss=0.14 |
+  | ONNX Export | DONE | - |
+  | TorchScript Export | DONE | - |
+  | Model Registry | DONE | - |
+endlegend
+
+@enduml

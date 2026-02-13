@@ -173,10 +173,10 @@ TRAINING_DATASETS = {
         "size_gb": 112,
         "description": "DocSynth-300K synthetic layout training dataset",
     },
-    "nist_db2": {
+    "nist-sd2": {
         "source": "gcs",
-        "gcs_path": f"{GCS_BUCKET}/datasets/nist_db2/",
-        "nfs_path": NFS_ROOT / "training/nist_db2",
+        "gcs_path": f"{GCS_BUCKET}/datasets/nist-sd2/",
+        "nfs_path": NFS_ROOT / "training/nist-sd2",
         "size_gb": 1.0,  # Estimate
         "description": "NIST Special Database 2 (handwriting)",
     },

@@ -216,6 +216,8 @@ path = [
     "pal_generated.code",  # PAL MCP generated code artifact
     "results/**/*.json",  # Generated result files
     "results/**/*.jsonl",  # Generated JSONL result files
+    "results/**/*.md",  # Generated result reports and analysis
+    "scripts/**/*.json",  # Script audit/result JSON files
 ]
 SPDX-License-Identifier = "CC0-1.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
@@ -234,6 +236,61 @@ path = [
     "scripts/**/*.bat",  # Windows batch scripts
 ]
 SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Deployment Python scripts - Apache-2.0 (source code)
+[[annotations]]
+path = [
+    "deployment/scripts/**/*.py",
+]
+SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Deployment configuration, shell scripts, and docs - CC0-1.0
+[[annotations]]
+path = [
+    "deployment/**/*.yml",
+    "deployment/**/*.yaml",
+    "deployment/**/*.sh",
+    "deployment/**/*.md",
+    "deployment/Dockerfile*",
+    ".shellcheckrc",
+    ".hadolint.yaml",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Font files for synthetic document generation - SIL Open Font License
+# Covered under OFL-1.1 (SIL Open Font License) which is REUSE-compatible
+[[annotations]]
+path = [
+    "fonts/**",
+]
+SPDX-License-Identifier = "OFL-1.1"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Metadata registry aggregates and reports - CC0-1.0
+[[annotations]]
+path = [
+    "metadata_registry/**",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Config directory YAML files - CC0-1.0
+[[annotations]]
+path = [
+    "config/**",
+]
+SPDX-License-Identifier = "CC0-1.0"
+SPDX-FileCopyrightText = "2025 Byron Williams"
+
+# Claude Code skills (dataset-review) - CC-BY-4.0
+[[annotations]]
+path = [
+    ".claude/skills/dataset-review/**",
+]
+SPDX-License-Identifier = "CC-BY-4.0"
 SPDX-FileCopyrightText = "2025 Byron Williams"
 
 # Third-party model weights - MIT (YOLOv10 uses Apache-2.0)

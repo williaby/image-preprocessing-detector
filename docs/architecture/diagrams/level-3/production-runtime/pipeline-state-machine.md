@@ -30,7 +30,7 @@ This document provides the complete state machine specification for the producti
 > - ✅ Text Gate (Phase 1)
 > - ✅ Classical IQA (Phase 1, 1C)
 > - ✅ Layout-Lite (Phase 2)
-> - ✅ ML IQA Student/Teacher (Phase 3)
+> - ✅ MobileNetV4-Conv-S + SigLIP 2 NAFlex (multi-task)
 > - ✅ Correction (Phase 1)
 > - ✅ DQS & Routing (Phase 2)
 > - ✅ Output Generation (Phase 0, 2)
@@ -51,7 +51,7 @@ This document provides the complete state machine specification for the producti
 
 ## Overview
 
-The production runtime processes documents through **13 well-defined states** with explicit entry/exit conditions, timeouts, and comprehensive error recovery. This state machine ensures predictable behavior, robust error handling, and complete audit trails.
+The production runtime processes documents through **16 well-defined states** with explicit entry/exit conditions, timeouts, and comprehensive error recovery. This state machine ensures predictable behavior, robust error handling, and complete audit trails.
 
 ### Design Principles
 
@@ -65,8 +65,8 @@ The production runtime processes documents through **13 well-defined states** wi
 
 | Characteristic | Value |
 |---------------|-------|
-| **Total States** | 13 (including terminal states) |
-| **Happy Path States** | 11 (INGESTION → OUTPUT) |
+| **Total States** | 16 (including terminal states) |
+| **Happy Path States** | 14 (INGESTION → OUTPUT) |
 | **Error States** | 2 (FAILED, PARTIAL_SUCCESS) |
 | **Average Latency** | 150ms/page (GPU), 500ms/page (CPU) |
 | **Maximum Timeout** | 600s total per document |
@@ -82,7 +82,7 @@ The production runtime processes documents through **13 well-defined states** wi
 skinparam backgroundColor #FEFEFE
 
 title Production Runtime Pipeline - Complete State Machine
-footer 13 States | GPU: 150ms/page | CPU: 500ms/page | Max: 600s total
+footer 16 States | GPU: 150ms/page | CPU: 500ms/page | Max: 600s total
 
 [*] --> INGESTION : Document received
 
@@ -172,12 +172,12 @@ CLASSICAL_IQA : **Source**: detection/iqa_classical.py (2,844 lines)
 CLASSICAL_IQA : **Source**: detection/advanced_detectors.py (892 lines)
 
 CLASSICAL_IQA --> LAYOUT_LITE : TEXT_DETECTED path
-CLASSICAL_IQA --> ML_IQA_STUDENT : NO_TEXT path
-CLASSICAL_IQA --> ML_IQA_STUDENT : Skip failed detectors (timeout)
+CLASSICAL_IQA --> MOBILENET_PRECORRECTION : NO_TEXT path
+CLASSICAL_IQA --> MOBILENET_PRECORRECTION : Skip failed detectors (timeout)
 
 state LAYOUT_LITE {
-  [*] --> DocLayoutYOLO
-  DocLayoutYOLO --> ColumnDetection
+  [*] --> DoclingLayout
+  DoclingLayout --> ColumnDetection
   ColumnDetection --> TableDetection
   TableDetection --> FigureDetection
   FigureDetection --> WatermarkDetection
@@ -194,61 +194,114 @@ LAYOUT_LITE : **Source**: detection/doclayout_yolo.py (801 lines)
 LAYOUT_LITE : **Source**: detection/layout_lite/analyzer.py (138 lines)
 LAYOUT_LITE : **Source**: detection/layout_lite/*.py (1,808 lines total)
 
-LAYOUT_LITE --> ML_IQA_STUDENT : Layout complete
-LAYOUT_LITE --> ML_IQA_STUDENT : Skip layout (timeout)
+LAYOUT_LITE --> MOBILENET_PRECORRECTION : Layout complete
+LAYOUT_LITE --> MOBILENET_PRECORRECTION : Skip layout (timeout)
 
-state ML_IQA_STUDENT {
+state MOBILENET_PRECORRECTION {
   [*] --> DeviceSelection
-  DeviceSelection --> LoadModel : Device available
-  LoadModel --> Inference
-  Inference --> [*]
+  DeviceSelection --> LoadMobileNet : Device available
+  LoadMobileNet --> OrientationHead
+  OrientationHead --> SkewHead
+  SkewHead --> ResolutionQualityHead
+  ResolutionQualityHead --> [*]
   DeviceSelection --> [*] : All devices unavailable
 }
-ML_IQA_STUDENT : **Entry**: IQA route determined
-ML_IQA_STUDENT : **Exit**: Student inference complete
-ML_IQA_STUDENT : **Timeout**: 100s
-ML_IQA_STUDENT : **Model**: ResNet-18, val_loss=0.14
-ML_IQA_STUDENT : **Performance**: 10-25ms (GPU), 40-100ms (CPU)
-ML_IQA_STUDENT : **Source**: detection/iqa_ml.py (1,303 lines)
-ML_IQA_STUDENT : **Source**: models/resnet_student.py (277 lines)
-ML_IQA_STUDENT : **Source**: utils/device_probe.py (183 lines)
+MOBILENET_PRECORRECTION : **Entry**: IQA route determined
+MOBILENET_PRECORRECTION : **Exit**: MobileNetV4-Conv-S inference complete (3 heads)
+MOBILENET_PRECORRECTION : **Timeout**: 15s
+MOBILENET_PRECORRECTION : **Model**: MobileNetV4-Conv-S, 3 heads (orientation, skew, resolution quality)
+MOBILENET_PRECORRECTION : **Performance**: ~3ms (GPU), 8-12ms (CPU)
+MOBILENET_PRECORRECTION : **Source**: detection/iqa_ml.py (1,303 lines)
+MOBILENET_PRECORRECTION : **Source**: utils/device_probe.py (183 lines)
 
-ML_IQA_STUDENT --> UNCERTAINTY_CHECK : Inference complete
-ML_IQA_STUDENT --> CORRECTION : Fallback to classical only (timeout)
+MOBILENET_PRECORRECTION --> PRE_CORRECTION : Inference complete
+MOBILENET_PRECORRECTION --> CORRECTION : Fallback to classical only (timeout)
 
-state UNCERTAINTY_CHECK {
-  [*] --> EntropyCalculation
-  EntropyCalculation --> DiscrepancyCheck
-  DiscrepancyCheck --> ThresholdEvaluation
-  ThresholdEvaluation --> [*]
+state PRE_CORRECTION {
+  [*] --> ApplyOrientation
+  ApplyOrientation --> ApplyDeskew
+  ApplyDeskew --> ApplyResolutionFix
+  ApplyResolutionFix --> [*]
 }
-UNCERTAINTY_CHECK : **Entry**: Student inference complete
-UNCERTAINTY_CHECK : **Exit**: Uncertainty evaluated
-UNCERTAINTY_CHECK : **Timeout**: 5s
-UNCERTAINTY_CHECK : **Triggers**: Entropy > 0.7, Confidence < 0.5, Discrepancy > 0.2
-UNCERTAINTY_CHECK : **Source**: detection/discrepancy.py (786 lines)
-UNCERTAINTY_CHECK : **Source**: detection/hybrid_iqa.py (351 lines)
+PRE_CORRECTION : **Entry**: MobileNetV4 inference complete
+PRE_CORRECTION : **Exit**: Orientation/skew/resolution corrections applied
+PRE_CORRECTION : **Timeout**: 20s
+PRE_CORRECTION : **Operations**: Orientation correction, deskew, resolution upscaling
+PRE_CORRECTION : **Source**: correction/corrections.py (1,222 lines)
 
-UNCERTAINTY_CHECK --> ML_IQA_TEACHER : High uncertainty/discrepancy
-UNCERTAINTY_CHECK --> CORRECTION : Low uncertainty
-UNCERTAINTY_CHECK --> CORRECTION : Skip evaluation (timeout)
+PRE_CORRECTION --> CONFIDENCE_CHECK : Pre-corrections applied
+PRE_CORRECTION --> CONFIDENCE_CHECK : Skip pre-corrections (timeout)
 
-state ML_IQA_TEACHER {
-  [*] --> ModalGPUSelection
-  ModalGPUSelection --> TeacherInference : Modal available
-  ModalGPUSelection --> [*] : Modal unavailable
-  TeacherInference --> [*]
+state CONFIDENCE_CHECK {
+  [*] --> EvaluateMobileNetHeads
+  EvaluateMobileNetHeads --> EvaluateSigLIP2Heads
+  EvaluateSigLIP2Heads --> PerHeadThresholdCheck
+  PerHeadThresholdCheck --> [*]
 }
-ML_IQA_TEACHER : **Entry**: High uncertainty detected
-ML_IQA_TEACHER : **Exit**: Teacher inference complete
-ML_IQA_TEACHER : **Timeout**: 200s
-ML_IQA_TEACHER : **Model**: ResNet-50, val_loss=0.27
-ML_IQA_TEACHER : **Escalation Rate**: 5-15% of pages
-ML_IQA_TEACHER : **Source**: models/resnet_teacher.py (293 lines)
-ML_IQA_TEACHER : **Source**: modal/teacher_inference.py (estimated)
+CONFIDENCE_CHECK : **Entry**: Pre-correction complete
+CONFIDENCE_CHECK : **Exit**: Per-head confidence evaluated across all model heads
+CONFIDENCE_CHECK : **Timeout**: 5s
+CONFIDENCE_CHECK : **Thresholds**: Orientation < 0.7, Skew < 0.6, Resolution < 0.5, IQA < 0.5, Script < 0.6, Handwriting < 0.5
+CONFIDENCE_CHECK : **Source**: detection/discrepancy.py (786 lines)
+CONFIDENCE_CHECK : **Source**: detection/hybrid_iqa.py (351 lines)
 
-ML_IQA_TEACHER --> CORRECTION : Teacher complete
-ML_IQA_TEACHER --> CORRECTION : Use student prediction (timeout)
+CONFIDENCE_CHECK --> SIGLIP2_ANALYSIS : All heads confident
+CONFIDENCE_CHECK --> SIGLIP2_ANALYSIS : Some heads need SigLIP 2 analysis
+CONFIDENCE_CHECK --> CLASSICAL_FALLBACK : Low confidence on specific heads
+CONFIDENCE_CHECK --> CORRECTION : Skip evaluation (timeout)
+
+state SIGLIP2_ANALYSIS {
+  [*] --> DeviceSelection2
+  DeviceSelection2 --> LoadSigLIP2 : Device available
+  LoadSigLIP2 --> IQAGroup
+  IQAGroup --> ScriptGroup
+  ScriptGroup --> OrientationSkewGroup
+  OrientationSkewGroup --> HandwritingGroup
+  HandwritingGroup --> PageAttrsGroup
+  PageAttrsGroup --> [*]
+  DeviceSelection2 --> [*] : All devices unavailable
+}
+SIGLIP2_ANALYSIS : **Entry**: Confidence check complete, multi-task analysis needed
+SIGLIP2_ANALYSIS : **Exit**: SigLIP 2 NAFlex inference complete (16 heads, 5 groups)
+SIGLIP2_ANALYSIS : **Timeout**: 200s
+SIGLIP2_ANALYSIS : **Model**: SigLIP 2 NAFlex, 88M params, 16 heads across 5 groups
+SIGLIP2_ANALYSIS : **Groups**: IQA, Script, Orientation+Skew, Handwriting, Page Attrs
+SIGLIP2_ANALYSIS : **Performance**: ~50ms (GPU), ~150ms (CPU)
+SIGLIP2_ANALYSIS : **Source**: detection/iqa_ml.py (1,303 lines)
+
+SIGLIP2_ANALYSIS --> CONFIDENCE_CHECK : Inference complete, re-evaluate confidence
+SIGLIP2_ANALYSIS --> CORRECTION : Use available predictions (timeout)
+
+state CLASSICAL_FALLBACK {
+  [*] --> CheckOrientationConf
+  CheckOrientationConf --> HoughOrientation : conf < 0.7
+  CheckOrientationConf --> CheckSkewConf : conf >= 0.7
+  HoughOrientation --> CheckSkewConf
+  CheckSkewConf --> HoughSkew : conf < 0.6
+  CheckSkewConf --> CheckResolutionConf : conf >= 0.6
+  HoughSkew --> CheckResolutionConf
+  CheckResolutionConf --> DPICharHeight : conf < 0.5
+  CheckResolutionConf --> CheckIQAConf : conf >= 0.5
+  DPICharHeight --> CheckIQAConf
+  CheckIQAConf --> ClassicalIQA : conf < 0.5
+  CheckIQAConf --> CheckScriptConf : conf >= 0.5
+  ClassicalIQA --> CheckScriptConf
+  CheckScriptConf --> OpenLIDMapping : conf < 0.6
+  CheckScriptConf --> CheckHandwritingConf : conf >= 0.6
+  OpenLIDMapping --> CheckHandwritingConf
+  CheckHandwritingConf --> StrokeAnalysis : conf < 0.5
+  CheckHandwritingConf --> [*] : conf >= 0.5
+  StrokeAnalysis --> [*]
+}
+CLASSICAL_FALLBACK : **Entry**: Head confidence below threshold
+CLASSICAL_FALLBACK : **Exit**: Head-specific classical fallback applied
+CLASSICAL_FALLBACK : **Timeout**: 30s
+CLASSICAL_FALLBACK : **Rules**: 6 head-specific fallback methods
+CLASSICAL_FALLBACK : **Source**: detection/iqa_classical.py (2,844 lines)
+CLASSICAL_FALLBACK : **Source**: detection/orientation_detector.py (608 lines)
+
+CLASSICAL_FALLBACK --> CORRECTION : Fallback complete
+CLASSICAL_FALLBACK --> CORRECTION : Use available predictions (timeout)
 
 state CORRECTION {
   [*] --> Deskew
@@ -347,17 +400,22 @@ stateDiagram-v2
     TEXT_GATE --> CLASSICAL_IQA : Gate complete
 
     CLASSICAL_IQA --> LAYOUT_LITE : TEXT_DETECTED
-    CLASSICAL_IQA --> ML_IQA_STUDENT : NO_TEXT
+    CLASSICAL_IQA --> MOBILENET_PRECORRECTION : NO_TEXT
 
-    LAYOUT_LITE --> ML_IQA_STUDENT : Layout complete
+    LAYOUT_LITE --> MOBILENET_PRECORRECTION : Layout complete
 
-    ML_IQA_STUDENT --> UNCERTAINTY_CHECK : Student complete
-    ML_IQA_STUDENT --> CORRECTION : Timeout fallback
+    MOBILENET_PRECORRECTION --> PRE_CORRECTION : Inference complete
+    MOBILENET_PRECORRECTION --> CORRECTION : Timeout fallback
 
-    UNCERTAINTY_CHECK --> ML_IQA_TEACHER : High uncertainty
-    UNCERTAINTY_CHECK --> CORRECTION : Low uncertainty
+    PRE_CORRECTION --> CONFIDENCE_CHECK : Pre-corrections applied
 
-    ML_IQA_TEACHER --> CORRECTION : Teacher complete
+    CONFIDENCE_CHECK --> SIGLIP2_ANALYSIS : Multi-task analysis needed
+    CONFIDENCE_CHECK --> CLASSICAL_FALLBACK : Low confidence heads
+    CONFIDENCE_CHECK --> CORRECTION : All heads confident
+
+    SIGLIP2_ANALYSIS --> CORRECTION : Analysis complete
+
+    CLASSICAL_FALLBACK --> CORRECTION : Fallback complete
 
     CORRECTION --> DQS_CALCULATION : Corrections applied
 
@@ -378,17 +436,21 @@ stateDiagram-v2
         Timeout: 30s
     end note
 
-    note right of ML_IQA_STUDENT
-        Device Priority:
-        1. Local GPU (10-25ms)
-        2. Modal GPU (15-30ms)
-        3. CPU (40-100ms)
+    note right of MOBILENET_PRECORRECTION
+        MobileNetV4-Conv-S:
+        3 heads, ~3ms GPU
+        Orientation, Skew, Resolution
     end note
 
-    note right of ML_IQA_TEACHER
-        Selective Inference:
-        5-15% of pages
-        Triggered by uncertainty
+    note right of SIGLIP2_ANALYSIS
+        SigLIP 2 NAFlex:
+        16 heads, 5 groups, ~50ms GPU
+        IQA, Script, Orient, Handwriting, PageAttrs
+    end note
+
+    note right of CLASSICAL_FALLBACK
+        6 head-specific rules:
+        Hough, DPI, OpenLID, stroke analysis
     end note
 ```
 
@@ -413,9 +475,11 @@ stateDiagram-v2
 | **PDF_CLASSIFICATION** | Preflight complete | PDF type determined | TEXT_GATE | 2-10s |
 | **TEXT_GATE** | Classification complete | Text presence determined | CLASSICAL_IQA | <10ms |
 | **CLASSICAL_IQA** | Text gate complete | 8 detectors complete | LAYOUT_LITE | 10-30s |
-| **LAYOUT_LITE** | TEXT_DETECTED + IQA complete | Layout classification complete | ML_IQA_STUDENT | 30-60s |
-| **ML_IQA_STUDENT** | Layout complete | Student inference complete | UNCERTAINTY_CHECK | 10-25ms (GPU) |
-| **UNCERTAINTY_CHECK** | Student complete | Uncertainty evaluated (low) | CORRECTION | 1-5s |
+| **LAYOUT_LITE** | TEXT_DETECTED + IQA complete | Layout classification complete | MOBILENET_PRECORRECTION | 30-60s |
+| **MOBILENET_PRECORRECTION** | Layout complete | MobileNetV4-Conv-S inference complete (3 heads) | PRE_CORRECTION | ~3ms (GPU), 8-12ms (CPU) |
+| **PRE_CORRECTION** | MobileNetV4 complete | Orientation/skew/resolution corrections applied | CONFIDENCE_CHECK | 10-20ms |
+| **CONFIDENCE_CHECK** | Pre-correction complete | Per-head confidence evaluated | SIGLIP2_ANALYSIS or CORRECTION | 1-5s |
+| **SIGLIP2_ANALYSIS** | Multi-task analysis needed | SigLIP 2 NAFlex inference complete (16 heads) | CORRECTION | ~50ms (GPU), ~150ms (CPU) |
 | **CORRECTION** | IQA complete | Corrections applied | DQS_CALCULATION | 20-50s |
 | **DQS_CALCULATION** | Corrections complete | DQS computed | ROUTING | 5-10s |
 | **ROUTING** | DQS computed | Routing recommendation generated | OUTPUT | 1-5s |
@@ -425,18 +489,18 @@ stateDiagram-v2
 
 ---
 
-### Error Recovery Path 1: Student Timeout → Teacher Escalation
+### Error Recovery Path 1: Low Confidence → Classical Fallback
 
 | State | Entry Condition | Exit Condition | Next State | Recovery Action |
 |-------|----------------|----------------|------------|-----------------|
-| **ML_IQA_STUDENT** | IQA route determined | Timeout after 100s | UNCERTAINTY_CHECK | Log warning, set high uncertainty flag |
-| **UNCERTAINTY_CHECK** | High uncertainty flag set | Uncertainty evaluated (high) | ML_IQA_TEACHER | Escalate to teacher model |
-| **ML_IQA_TEACHER** | High uncertainty | Teacher inference complete | CORRECTION | Use teacher prediction |
-| **CORRECTION** | Teacher complete | Corrections applied | DQS_CALCULATION | Continue pipeline |
+| **MOBILENET_PRECORRECTION** | IQA route determined | Inference complete, some heads low confidence | PRE_CORRECTION | Log warning, flag low-confidence heads |
+| **PRE_CORRECTION** | MobileNetV4 complete | Pre-corrections applied where confident | CONFIDENCE_CHECK | Apply corrections only from confident heads |
+| **CONFIDENCE_CHECK** | Pre-correction complete | Low confidence on specific heads | CLASSICAL_FALLBACK | Route to head-specific classical methods |
+| **CLASSICAL_FALLBACK** | Head confidence below threshold | Classical fallback complete | CORRECTION | Use classical result for low-confidence heads |
 
-**Purpose**: Handle difficult pages that student model cannot confidently assess
+**Purpose**: Handle pages where model heads cannot confidently assess specific attributes
 
-**Escalation Rate**: 5-15% of pages
+**Fallback Rate**: 5-15% of pages (per-head, varies by attribute)
 
 ---
 
@@ -444,9 +508,9 @@ stateDiagram-v2
 
 | State | Entry Condition | Exit Condition | Next State | Recovery Action |
 |-------|----------------|----------------|------------|-----------------|
-| **ML_IQA_STUDENT** | Device selection | Local GPU unavailable | ML_IQA_STUDENT | Try Modal GPU |
-| **ML_IQA_STUDENT** | Device selection | Modal GPU unavailable | ML_IQA_STUDENT | Try CPU |
-| **ML_IQA_STUDENT** | Device selection | All devices unavailable | CORRECTION | Fallback to classical IQA only |
+| **MOBILENET_PRECORRECTION** | Device selection | Local GPU unavailable | MOBILENET_PRECORRECTION | Try Modal GPU |
+| **MOBILENET_PRECORRECTION** | Device selection | Modal GPU unavailable | MOBILENET_PRECORRECTION | Try CPU |
+| **MOBILENET_PRECORRECTION** | Device selection | All devices unavailable | CORRECTION | Fallback to classical IQA only |
 
 **Purpose**: Ensure processing continues even when preferred devices are unavailable
 
@@ -459,7 +523,7 @@ stateDiagram-v2
 | State | Entry Condition | Exit Condition | Next State | Recovery Action |
 |-------|----------------|----------------|------------|-----------------|
 | **INGESTION** | Processing page 42 | Page 42 corrupted | INGESTION | Skip page, continue with page 43 |
-| **ML_IQA_STUDENT** | Processing page 57 | Inference timeout | UNCERTAINTY_CHECK | Use classical IQA prediction for page 57 |
+| **MOBILENET_PRECORRECTION** | Processing page 57 | Inference timeout | CONFIDENCE_CHECK | Use classical IQA prediction for page 57 |
 | **OUTPUT** | All pages processed | 15% pages failed | PARTIAL_SUCCESS | Flag failed pages in metadata |
 
 **Purpose**: Process as many pages as possible, isolate failures
@@ -477,9 +541,10 @@ stateDiagram-v2
 | State | Entry Condition | Exit Condition | Next State | Difference from Happy Path |
 |-------|----------------|----------------|------------|----------------------------|
 | **TEXT_GATE** | Gate complete | NO_TEXT determined | CLASSICAL_IQA | Same |
-| **CLASSICAL_IQA** | Text gate complete | 8 detectors complete | ML_IQA_STUDENT | **Skip LAYOUT_LITE** |
-| **ML_IQA_STUDENT** | Classical complete | Student inference complete | UNCERTAINTY_CHECK | Same |
-| **UNCERTAINTY_CHECK** | Student complete | Uncertainty evaluated | CORRECTION | Same |
+| **CLASSICAL_IQA** | Text gate complete | 8 detectors complete | MOBILENET_PRECORRECTION | **Skip LAYOUT_LITE** |
+| **MOBILENET_PRECORRECTION** | Classical complete | MobileNetV4 inference complete | PRE_CORRECTION | Same |
+| **PRE_CORRECTION** | MobileNetV4 complete | Pre-corrections applied | CONFIDENCE_CHECK | Same |
+| **CONFIDENCE_CHECK** | Pre-correction complete | Confidence evaluated | SIGLIP2_ANALYSIS or CORRECTION | Same |
 
 **Purpose**: Optimize pipeline for pure images (scanned photos, diagrams) by skipping text-specific layout analysis
 
@@ -496,10 +561,12 @@ stateDiagram-v2
 | **PDF_CLASSIFICATION** | 10s | Text extraction can be slow for large PDFs | Default to `image_only` |
 | **TEXT_GATE** | 10s | Should be < 10ms, buffer for safety | Default to `TEXT_DETECTED` |
 | **CLASSICAL_IQA** | 30s | 8 detectors, some computationally expensive | Skip failed detectors, continue |
-| **LAYOUT_LITE** | 60s | DocLayout-YOLO inference can be slow on CPU | Skip layout, use text-gate-only routing |
-| **ML_IQA_STUDENT** | 100s | GPU inference fast, CPU slow, Modal network latency | Fallback to classical only |
-| **UNCERTAINTY_CHECK** | 5s | Simple calculations | Skip teacher escalation |
-| **ML_IQA_TEACHER** | 200s | Modal GPU invocation + network | Use student prediction |
+| **LAYOUT_LITE** | 60s | Docling layout model inference can be slow on CPU | Skip layout, use text-gate-only routing |
+| **MOBILENET_PRECORRECTION** | 15s | MobileNetV4-Conv-S is fast (~3ms GPU, 8-12ms CPU) | Fallback to classical only |
+| **PRE_CORRECTION** | 20s | Apply orientation/skew/resolution corrections | Skip pre-corrections, flag in metadata |
+| **CONFIDENCE_CHECK** | 5s | Per-head threshold evaluation | Skip SigLIP 2, use classical fallback |
+| **SIGLIP2_ANALYSIS** | 200s | SigLIP 2 NAFlex 16-head inference (~50ms GPU, ~150ms CPU) | Use classical fallback for all heads |
+| **CLASSICAL_FALLBACK** | 30s | Head-specific classical methods (Hough, DPI, OpenLID, stroke) | Use default values for failed heads |
 | **CORRECTION** | 50s | Multiple CV operations per page | Skip corrections, flag in metadata |
 | **DQS_CALCULATION** | 10s | Weighted sum calculation | Default DQS = 0.5 |
 | **ROUTING** | 5s | Decision tree logic | Default to `OCR_ADVANCED` |
@@ -890,33 +957,32 @@ def handle_all_devices_unavailable(context: ProcessingContext):
 
 ---
 
-### ML_IQA_STUDENT State
+### MOBILENET_PRECORRECTION State
 
 **Source Files**:
 
 - [detection/iqa_ml.py:1-1303](../../../../src/image_preprocessing_detector/detection/iqa_ml.py) - Inference orchestration
-- [models/resnet_student.py:1-277](../../../../src/image_preprocessing_detector/models/resnet_student.py) - ResNet-18 architecture
 - [utils/device_probe.py:1-183](../../../../src/image_preprocessing_detector/utils/device_probe.py) - Device selection
 
 **Entry Condition**: Classical IQA complete (and layout-lite if TEXT_DETECTED)
 
-**Exit Condition**: Student model inference complete, predictions available
+**Exit Condition**: MobileNetV4-Conv-S inference complete, 3-head predictions available (orientation, skew, resolution quality)
 
-**Timeout**: 100 seconds
+**Timeout**: 15 seconds
 
 **Device Selection Algorithm**:
 
 ```python
-def select_device_for_student_inference():
-    # Priority 1: Local GPU
-    if device_probe.has_local_gpu() and device_probe.get_gpu_memory() > 4_000_000_000:
+def select_device_for_mobilenet_inference():
+    # Priority 1: Local GPU (~3ms)
+    if device_probe.has_local_gpu() and device_probe.get_gpu_memory() > 500_000_000:
         return "local_gpu"
 
-    # Priority 2: Modal GPU (if budget available)
+    # Priority 2: Modal GPU (~5ms including network)
     if budget_tracker.has_budget("modal_gpu"):
         return "modal_gpu"
 
-    # Priority 3: CPU
+    # Priority 3: CPU (8-12ms)
     if policy.allow_cpu:
         return "cpu"
 
@@ -924,11 +990,54 @@ def select_device_for_student_inference():
     raise NoDeviceAvailableError("All devices unavailable")
 ```
 
-**Performance Targets** (from [level-2/production-runtime/index.md:280-285](../../level-2/production-runtime/index.md#L280-L285)):
+**Performance Targets**:
 
-- Local GPU: 10-25ms/page
-- Modal GPU: 15-30ms/page
-- CPU: 40-100ms/page
+- Local GPU: ~3ms/page
+- Modal GPU: ~5ms/page (including network latency)
+- CPU: 8-12ms/page
+
+### SIGLIP2_ANALYSIS State
+
+**Source Files**:
+
+- [detection/iqa_ml.py:1-1303](../../../../src/image_preprocessing_detector/detection/iqa_ml.py) - Multi-task inference orchestration
+
+**Entry Condition**: Confidence check indicates multi-task analysis is needed
+
+**Exit Condition**: SigLIP 2 NAFlex inference complete, 16-head predictions across 5 groups available
+
+**Timeout**: 200 seconds
+
+**Model Characteristics**:
+
+- Architecture: SigLIP 2 NAFlex (88M params)
+- Heads: 16 across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs)
+- Performance: ~50ms (GPU), ~150ms (CPU)
+- Memory: ~2GB GPU VRAM
+
+### CLASSICAL_FALLBACK State
+
+**Source Files**:
+
+- [detection/iqa_classical.py:1-2844](../../../../src/image_preprocessing_detector/detection/iqa_classical.py) - Classical IQA detectors
+- [detection/orientation_detector.py:1-608](../../../../src/image_preprocessing_detector/detection/orientation_detector.py) - Hough-based orientation
+
+**Entry Condition**: Head confidence below threshold for one or more heads
+
+**Exit Condition**: Classical fallback applied for all low-confidence heads
+
+**Timeout**: 30 seconds
+
+**Fallback Rules**:
+
+| Head/Group | Threshold | Fallback Method |
+|-----------|-----------|-----------------|
+| Orientation (MobileNetV4) | < 0.7 | Hough line-based orientation detection |
+| Skew (MobileNetV4) | < 0.6 | Classical Hough skew estimation |
+| Resolution Quality (MobileNetV4) | < 0.5 | DPI metadata + connected component char height |
+| IQA (SigLIP 2 Group 1) | < 0.5 | Classical IQA detectors (iqa_classical.py) |
+| Script Detection (SigLIP 2 Group 2) | < 0.6 | OpenLID language -> script mapping |
+| Handwriting (SigLIP 2 Group 4) | < 0.5 | Connected component stroke analysis |
 
 ---
 
@@ -985,7 +1094,7 @@ iqa_pages_processed_total{status}  # status: success, failed, skipped
 logger.info(
     "state_transition",
     from_state="CLASSICAL_IQA",
-    to_state="ML_IQA_STUDENT",
+    to_state="MOBILENET_PRECORRECTION",
     page_number=42,
     duration_ms=25.3,
     trace_id=trace_id
@@ -997,7 +1106,7 @@ logger.info(
 ```python
 logger.warning(
     "state_timeout",
-    state="ML_IQA_STUDENT",
+    state="MOBILENET_PRECORRECTION",
     page_number=57,
     timeout_seconds=100,
     elapsed_seconds=105.2,
@@ -1031,5 +1140,5 @@ logger.error(
 
 ---
 
-*Last Updated: 2025-01-16*
-*Total States: 13 | Happy Path: 150ms/page (GPU) | Maximum Timeout: 600s*
+*Last Updated: 2026-02-09*
+*Total States: 16 | Happy Path: 150ms/page (GPU) | Maximum Timeout: 600s*

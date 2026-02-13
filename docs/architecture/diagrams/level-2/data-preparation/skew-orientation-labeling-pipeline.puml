@@ -1,0 +1,214 @@
+@startuml skew-orientation-labeling-pipeline
+!theme plain
+title Skew/Orientation Labeling Pipeline (Dataset-Agnostic)
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+
+' Color definitions
+skinparam component {
+    BackgroundColor<<input>> LightPink
+    BackgroundColor<<inference>> LightBlue
+    BackgroundColor<<decode>> LightGreen
+    BackgroundColor<<integration>> Lavender
+    BackgroundColor<<output>> LightGray
+    BackgroundColor<<module>> Wheat
+    BackgroundColor<<config>> Thistle
+}
+
+package "Input: Any Document Image Dataset" as input_pkg <<input>> {
+    database "Dataset Images\n(--input-dir)" as images {
+        collections "DIQA-5000 (5,500)"
+        collections "OHR-Bench (8,500)"
+        collections "RealDAE (1,200)"
+        collections "Any JPEG/PNG/TIFF"
+    }
+
+    note right of images
+        **No GPU required**
+        CPU-only ONNX inference
+        (~17.5ms/image mean)
+        Recursive directory scan.
+    end note
+}
+
+package "Preprocessing (SkewEstimatorInference._preprocess)" as preprocess_pkg <<inference>> {
+    component "Image Load\n(cv2.imread)" as imread {
+        [BGR uint8, any size]
+    }
+
+    component "Resize & Normalize" as resize {
+        [Resize to 224x224]
+        [BGR -> RGB]
+        [ImageNet normalize\nmean/std normalization]
+        [HWC -> CHW + batch dim]
+    }
+}
+
+package "ONNX Inference (ONNXModelRunner)" as onnx_pkg <<inference>> {
+    component "ONNX Runtime\n(CPUExecutionProvider)" as onnx {
+        [skew_estimator_fp32.onnx]
+        [MobileNetV4-Conv-S backbone]
+        [~11MB model, 17.5ms CPU]
+    }
+
+    component "3-Head Output" as heads {
+        [orientation_logits (1x4)]
+        [skew_bin_logits (1x42)]
+        [skew_regression (1x1)]
+    }
+}
+
+package "Decode (SkewEstimatorInference.predict)" as decode_pkg <<decode>> {
+    component "Orientation Decode" as orient_decode {
+        [Softmax -> probabilities]
+        [argmax -> class index]
+        [Map to 0/90/180/270 deg]
+        [Confidence: max probability]
+    }
+
+    component "Skew Bin Decode" as bin_decode {
+        [Softmax -> bin probabilities]
+        [argmax -> bin index (0-41)]
+        [Confidence: max probability]
+    }
+
+    component "Per-Bin Residual\nClamping" as residual {
+        [Critical zone (0.5 deg bins):\nclamp to +/-0.25 deg]
+        [Moderate zone (2.0 deg bins):\nclamp to +/-1.0 deg]
+        [Extreme zone (5.0 deg bins):\nclamp to +/-2.5 deg]
+    }
+
+    component "Final Angle\n(bin_to_angle)" as final_angle {
+        [angle = bin_center + clamped_residual]
+        [Range: -45 to +45 degrees]
+    }
+}
+
+package "Config (skew_estimation.yaml)" as config_pkg <<config>> {
+    component "42 Non-Uniform Bins" as bins {
+        [6 extreme_neg: -45 to -15, 5.0 deg]
+        [5 moderate_neg: -15 to -5, 2.0 deg]
+        [20 critical: -5 to +5, 0.5 deg]
+        [5 moderate_pos: +5 to +15, 2.0 deg]
+        [6 extreme_pos: +15 to +45, 5.0 deg]
+    }
+
+    component "BinConfig\n(frozen dataclass)" as binconfig {
+        [centers: 42 floats]
+        [half_widths: 42 floats]
+        [from_yaml() constructor]
+    }
+}
+
+package "L2 Integration\n(integrate_skew_orientation.py)" as integration_pkg <<integration>> {
+    component "Filename Matching" as matcher {
+        [Index by basename]
+        [Handle path variants]
+    }
+
+    component "Enrichment Writer" as writer {
+        [7 orientation/skew fields]
+        [--patch-current or\nnew version]
+        [Method: mobilenetv4_\nskew_estimator_v1]
+    }
+}
+
+package "Core Module\n(models/skew_estimator.py)" as module_pkg <<module>> {
+    component "SkewEstimation\n(frozen dataclass)" as estimation {
+        [orientation_class: int]
+        [orientation_confidence: float]
+        [skew_bin: int]
+        [skew_bin_confidence: float]
+        [skew_residual: float]
+        [skew_uncertainty: float]
+        [final_angle: float]
+    }
+
+    component "SkewEstimatorInference" as inference_cls {
+        [model_path: Path]
+        [bin_config: BinConfig]
+        [input_size: int (224)]
+        [predict(image) -> SkewEstimation]
+        [Lazy ONNX session init]
+    }
+}
+
+package "Output Artifacts" as output_pkg <<output>> {
+    file "results/{dataset}_\nskew_labels.json" as skew_json
+    file "metadata_registry/json/\n{dataset}_metadata.json\n(enriched)" as l2_json
+
+    note right of skew_json
+        **Per-Image Record (10 fields)**
+        orientation_class: 0
+        orientation_confidence: 0.998
+        skew_angle_degrees: -1.23
+        skew_bin: 18
+        skew_bin_confidence: 0.854
+        skew_residual: -0.23
+        processing_time_ms: 17.5
+        image_dimensions: (2480, 3508)
+    end note
+}
+
+' Flow: Input -> Preprocessing
+images --> imread : "image paths\n(recursive glob)"
+imread --> resize : "BGR image"
+
+' Flow: Preprocessing -> ONNX
+resize --> onnx : "float32 tensor\n(1,3,224,224)"
+onnx --> heads : "3 output\ntensors"
+
+' Flow: ONNX -> Decode
+heads --> orient_decode : "orientation\nlogits (1x4)"
+heads --> bin_decode : "skew_bin\nlogits (1x42)"
+heads --> residual : "regression\n(1x1)"
+
+' Flow: Decode internals
+bin_decode --> final_angle : "bin index"
+residual --> final_angle : "clamped\nresidual"
+binconfig --> final_angle : "bin centers\n+ half_widths"
+bins --> binconfig : "zone\ndefinitions"
+
+' Flow: Decode -> Output dataclass
+orient_decode --> estimation : "class +\nconfidence"
+final_angle --> estimation : "angle +\nbin confidence"
+estimation --> skew_json : "serialize\nto dict"
+
+' Flow: Integration
+skew_json --> matcher : "load skew\nresults"
+l2_json --> matcher : "load L2\nmetadata"
+matcher --> writer : "matched\nsamples"
+writer --> l2_json : "enriched\nmetadata"
+
+' Architecture notes
+note bottom of onnx_pkg
+    **MobileNetV4-Conv-S Backbone**
+    Trained 50 epochs on 90K images
+    (71K synthetic + 19K natural scans)
+    Test MAE=0.956, orient_acc=99.5%
+    CPU: mean=17.5ms, p95=18.8ms
+end note
+
+note bottom of decode_pkg
+    **Why per-bin clamping?**
+    Critical zone (|angle|<5 deg):
+    0.5 deg bins need tight +/-0.25
+    Extreme zone (|angle|>15 deg):
+    5.0 deg bins allow +/-2.5 range
+    Prevents bin-bleed artifacts
+end note
+
+note right of integration_pkg
+    **L2 Enrichment Fields**
+    orientation_class (0/90/180/270)
+    orientation_confidence (float)
+    orientation_detection_method (str)
+    skew_angle_degrees (float)
+    skew_confidence (float)
+    skew_detection_method (str)
+    orientation_corrected (None)
+end note
+
+@enduml

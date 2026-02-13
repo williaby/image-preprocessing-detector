@@ -1,289 +1,288 @@
 #!/bin/bash
-# Upload datasets to GCS bucket for backup and Colab training access
+# Dataset Upload Script for GCS Replication
+# Priority: DIQA-5000 -> Language/Script -> Remaining Tier 1
+# Excludes: doc3d (209GB - too large)
 #
-# Usage:
-#   ./scripts/upload_datasets_to_gcs.sh               # Upload all datasets
-#   ./scripts/upload_datasets_to_gcs.sh --dry-run     # Show what would be uploaded
-#   ./scripts/upload_datasets_to_gcs.sh --dataset signatr6k  # Upload specific dataset
+# Usage: ./scripts/upload_datasets_to_gcs.sh [--dry-run] [--tier N]
+#   --dry-run: Show what would be uploaded without actually uploading
+#   --tier N:  Upload only tier N (1=diqa, 2=language, 3=remaining)
 
-set -e
-
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+set -euo pipefail
 
 # Configuration
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DATA_DIR="${PROJECT_ROOT}/data"
-GCS_BUCKET="gs://image_detection_b"
-GCS_PREFIX="image-preprocessing-detector/datasets"
+GCS_BUCKET="gs://image_detection_b/image-preprocessing-detector/datasets"
+LOCAL_BASE="/mnt/e/image_detection"
+LOG_FILE="/home/byron/dev/image_detection/logs/gcs_upload_$(date +%Y%m%d_%H%M%S).log"
 
-# Helper functions
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+# Parse arguments
+DRY_RUN=false
+TIER_FILTER=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --dry-run) DRY_RUN=true; shift ;;
+        --tier) TIER_FILTER="$2"; shift 2 ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+# Ensure log directory exists
+mkdir -p "$(dirname "$LOG_FILE")"
+
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-log_section() {
-    echo -e "${BLUE}[====]${NC} $1"
-}
-
-# Check if GCS authentication is configured
-check_gcs_auth() {
-    if ! command -v gsutil &> /dev/null; then
-        log_error "gsutil not found. Please install Google Cloud SDK."
-        exit 1
-    fi
-
-    if ! gsutil ls "${GCS_BUCKET}/" &> /dev/null; then
-        log_error "Cannot access GCS bucket: ${GCS_BUCKET}"
-        log_warn "Run: source scripts/auth_gcs.sh"
-        exit 1
-    fi
-
-    log_info "✓ GCS authentication confirmed"
-}
-
-# Upload a dataset to GCS
+# Upload function with progress
 upload_dataset() {
-    local dataset_name="$1"
-    local dataset_path="$2"
-    local dry_run="${3:-false}"
+    local src="$1"
+    local dest_name="$2"
+    local description="$3"
 
-    if [ ! -d "$dataset_path" ]; then
-        log_warn "Dataset not found: $dataset_path (skipping)"
+    if [[ ! -d "$src" && ! -f "$src" ]]; then
+        log "SKIP: $src does not exist"
+        return 1
+    fi
+
+    local dest="${GCS_BUCKET}/${dest_name}/"
+
+    log "START: $description"
+    log "  Source: $src"
+    log "  Destination: $dest"
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "  DRY-RUN: Would upload $(du -sh "$src" 2>/dev/null | cut -f1)"
         return 0
     fi
 
-    # Skip empty directories
-    if [ -z "$(ls -A "$dataset_path")" ]; then
-        log_warn "Dataset is empty: $dataset_name (skipping)"
+    # Use gsutil with parallel composite uploads for large files
+    if gsutil -m -o GSUtil:parallel_composite_upload_threshold=150M cp -r "$src" "$dest" 2>&1 | tee -a "$LOG_FILE"; then
+        log "SUCCESS: $description uploaded"
         return 0
-    fi
-
-    # Calculate size
-    local size
-    size=$(du -sh "$dataset_path" | cut -f1)
-    log_section "Uploading: $dataset_name ($size)"
-
-    local gcs_dest="${GCS_BUCKET}/${GCS_PREFIX}/${dataset_name}/"
-
-    if [ "$dry_run" = true ]; then
-        log_info "[DRY-RUN] Would upload: $dataset_path -> $gcs_dest"
-        log_info "[DRY-RUN] Command: gsutil -m rsync -r -d $dataset_path $gcs_dest"
-        return 0
-    fi
-
-    # Use gsutil rsync for efficient upload
-    # -m: parallel upload
-    # -r: recursive
-    # -d: delete extra files in destination
-    log_info "Syncing to: $gcs_dest"
-
-    if gsutil -m rsync -r -d "$dataset_path" "$gcs_dest"; then
-        log_info "✓ Upload complete: $dataset_name"
     else
-        log_error "✗ Upload failed: $dataset_name"
+        log "ERROR: Failed to upload $description"
         return 1
     fi
 }
 
-# Main upload function
-upload_all_datasets() {
-    local dry_run="${1:-false}"
-    local specific_dataset="$2"
+# ============================================================================
+# TIER 1: DIQA-5000 (Benchmark - Currently Working On)
+# ============================================================================
+upload_tier1() {
+    log "=========================================="
+    log "TIER 1: DIQA-5000 Benchmark Dataset"
+    log "=========================================="
 
-    log_section "GCS Dataset Upload"
-    log_info "Project root: $PROJECT_ROOT"
-    log_info "Data directory: $DATA_DIR"
-    log_info "GCS bucket: $GCS_BUCKET"
-    log_info "GCS prefix: $GCS_PREFIX"
-    echo ""
-
-    # Check authentication
-    check_gcs_auth
-    echo ""
-
-    # Define datasets to upload
-    # Note: We exclude doclaynet (symlink to another project)
-    # and empty directories (docbank, rvl-cdip, tobacco800)
-
-    declare -A DATASETS
-
-    # Training datasets (Phase 2)
-    DATASETS[receipts_hitl]="${DATA_DIR}/training/receipts_hitl"
-    DATASETS[mobile_receipts_voxel51]="${DATA_DIR}/training/mobile_receipts_voxel51"
-    DATASETS[invoices_kaggle]="${DATA_DIR}/training/invoices_kaggle"
-
-    # Training datasets (Business documents)
-    DATASETS[nist_db2]="${DATA_DIR}/training/business_documents/sd02"
-    DATASETS[docile]="${DATA_DIR}/training/business_documents/docile"
-
-    # Training datasets (Phase 3+)
-    DATASETS[docsynth300k]="${DATA_DIR}/training/layout/docsynth300k"
-    DATASETS[pubtables1m]="${DATA_DIR}/training/tables/pubtables1m"
-    DATASETS[iam_handwriting]="${DATA_DIR}/training/specialized/handwriting/iam"
-
-    # Benchmark datasets
-    DATASETS[funsd]="${DATA_DIR}/benchmarks/external_iqa/funsd"
-    DATASETS[signatr6k]="${DATA_DIR}/benchmarks/signatr6k"
-    DATASETS[synthetic_iqa]="${DATA_DIR}/benchmarks/synthetic_iqa"
-    DATASETS[cocotext]="${DATA_DIR}/benchmarks/cocotext"
-    DATASETS[omnidocbench]="${DATA_DIR}/benchmarks/omnidocbench"
-    DATASETS[wili_2018]="${DATA_DIR}/benchmarks/wili_2018"
-    DATASETS[tablebank]="${DATA_DIR}/benchmarks/tablebank"
-    DATASETS[pubtabnet]="${DATA_DIR}/benchmarks/pubtabnet"
-    DATASETS[fintabnet]="${DATA_DIR}/benchmarks/fintabnet"
-
-    # Benchmark datasets (Phase 3+)
-    DATASETS[ohr_bench]="${DATA_DIR}/benchmarks/ohr-bench"
-
-    # If specific dataset requested, filter
-    if [ -n "$specific_dataset" ]; then
-        if [ -z "${DATASETS[$specific_dataset]}" ]; then
-            log_error "Unknown dataset: $specific_dataset"
-            log_info "Available datasets: ${!DATASETS[*]}"
-            return 1
-        fi
-
-        log_info "Uploading specific dataset: $specific_dataset"
-        upload_dataset "$specific_dataset" "${DATASETS[$specific_dataset]}" "$dry_run"
-    else
-        # Upload all datasets
-        log_info "Uploading all datasets..."
-        echo ""
-
-        local success_count=0
-        local total_count=${#DATASETS[@]}
-
-        for dataset_name in "${!DATASETS[@]}"; do
-            if upload_dataset "$dataset_name" "${DATASETS[$dataset_name]}" "$dry_run"; then
-                ((success_count++))
-            fi
-            echo ""
-        done
-
-        log_section "Upload Summary"
-        log_info "Successfully uploaded: $success_count/$total_count datasets"
-
-        if [ "$success_count" -eq "$total_count" ]; then
-            log_info "✓ All uploads complete!"
-        else
-            log_warn "Some uploads failed. Check errors above."
-            return 1
-        fi
-    fi
+    upload_dataset \
+        "${LOCAL_BASE}/02_benchmark_only/diqa-5000" \
+        "diqa-5000" \
+        "DIQA-5000 IQA Calibration Benchmark (5.3GB)"
 }
 
-# List what's currently in GCS
-list_gcs_contents() {
-    log_section "Current GCS Contents"
-    log_info "Bucket: ${GCS_BUCKET}/${GCS_PREFIX}/"
-    echo ""
+# ============================================================================
+# TIER 2: Language & Script Detection Datasets
+# ============================================================================
+upload_tier2() {
+    log "=========================================="
+    log "TIER 2: Language & Script Detection"
+    log "=========================================="
 
-    check_gcs_auth
+    # Priority order by size and importance
 
-    if gsutil ls -lh "${GCS_BUCKET}/${GCS_PREFIX}/" | head -100; then
-        echo ""
-        log_info "Use 'gsutil ls -lhr ${GCS_BUCKET}/${GCS_PREFIX}/' for full recursive listing"
-    else
-        log_warn "No datasets found in GCS (or bucket is empty)"
-    fi
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/mlt19" \
+        "mlt19" \
+        "MLT-19 Multilingual Text (14GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/arabic_docs_ocr" \
+        "arabic_docs_ocr" \
+        "Arabic Documents OCR (9.3GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/mdiw13" \
+        "mdiw13" \
+        "MDIW-13 Script Identification (4.4GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/yarmouk_ocr" \
+        "yarmouk_ocr" \
+        "Yarmouk OCR Dataset (2.8GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/yarmouk_ocr_images" \
+        "yarmouk_ocr_images" \
+        "Yarmouk OCR Images (14GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/multilingual_scripts" \
+        "multilingual_scripts" \
+        "Multilingual Scripts Collection (2.7GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/cc_ocr_extracted" \
+        "cc_ocr" \
+        "CC-OCR CJK Mixed (1.5GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/nepali_handwritten" \
+        "nepali_handwritten" \
+        "Nepali Handwritten Dataset (1.5GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/hindi_ocr_synthetic" \
+        "hindi_ocr_synthetic" \
+        "Hindi OCR Synthetic (920MB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/pucit_ohul_urdu" \
+        "pucit_ohul_urdu" \
+        "PUCIT-OHUL Urdu Dataset (583MB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/siw13" \
+        "siw13" \
+        "SIW-13 Script in Wild (104MB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/cvsi" \
+        "cvsi" \
+        "CVSI-2015 Video Script ID (43MB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/mle2e" \
+        "mle2e" \
+        "MLe2e Multi-Language E2E (19MB)"
+
+    # MIDV-500 (ID documents - large)
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/language/midv500_data" \
+        "midv500_data" \
+        "MIDV-500 ID Documents - Language (48GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/documents/midv500" \
+        "midv500" \
+        "MIDV-500 ID Documents (12GB)"
 }
 
-# Parse arguments
-DRY_RUN=false
-SPECIFIC_DATASET=""
-ACTION="upload"
+# ============================================================================
+# TIER 3: Remaining Core Training Datasets
+# ============================================================================
+upload_tier3() {
+    log "=========================================="
+    log "TIER 3: Remaining Core Training Data"
+    log "=========================================="
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --dry-run)
-            DRY_RUN=true
-            shift
-            ;;
-        --dataset)
-            SPECIFIC_DATASET="$2"
-            shift 2
-            ;;
-        --list)
-            ACTION="list"
-            shift
-            ;;
-        --help)
-            echo "Usage: $0 [OPTIONS]"
-            echo ""
-            echo "Options:"
-            echo "  --dry-run           Show what would be uploaded without uploading"
-            echo "  --dataset NAME      Upload specific dataset only"
-            echo "  --list              List current GCS contents"
-            echo "  --help              Show this help message"
-            echo ""
-            echo "Available datasets:"
-            echo ""
-            echo "Training datasets (Phase 2):"
-            echo "  - receipts_hitl           : HITL receipt OCR dataset (192 images, CC0 1.0)"
-            echo "  - mobile_receipts_voxel51 : Voxel51 scanned receipts (713 images, CC BY 4.0)"
-            echo "  - invoices_kaggle         : Kaggle invoice dataset (1,414 images, ODbL 1.0)"
-            echo ""
-            echo "Training datasets (Business documents):"
-            echo "  - nist_db2                : NIST DB2 tax forms (5,590 images, ~935MB, Free)"
-            echo "  - docile                  : DocILE business documents (6,680 annotated, Research)"
-            echo ""
-            echo "Training datasets (Phase 3+):"
-            echo "  - docsynth300k       : DocSynth-300K layout detection (~113 GB, Research)"
-            echo "  - pubtables1m        : PubTables-1M table structure (~25 GB, MIT)"
-            echo "  - iam_handwriting    : IAM Handwriting dataset (~266 MB, MIT)"
-            echo ""
-            echo "Benchmark datasets:"
-            echo "  - funsd           : FUNSD government forms (199 images, MIT)"
-            echo "  - signatr6k       : Signature detection dataset (~116 MB)"
-            echo "  - synthetic_iqa   : Synthetic IQA dataset (~345 KB)"
-            echo "  - cocotext        : COCO-Text annotations (~52 MB)"
-            echo "  - omnidocbench    : OmniDocBench benchmark (~1.16 GB)"
-            echo "  - wili_2018       : WiLI language identification (~128 MB)"
-            echo "  - tablebank       : TableBank table detection (~74 GB)"
-            echo "  - pubtabnet       : PubTabNet table structure (~27 GB)"
-            echo "  - fintabnet       : FinTabNet financial tables (~14 GB)"
-            echo ""
-            echo "Benchmark datasets (Phase 3+):"
-            echo "  - ohr_bench       : OHR-Bench RAG evaluation (~10 GB, CC-BY-4.0)"
-            echo ""
-            echo "Examples:"
-            echo "  $0                          # Upload all datasets"
-            echo "  $0 --dry-run                # Preview upload"
-            echo "  $0 --dataset tablebank      # Upload specific dataset"
-            echo "  $0 --list                   # Show GCS contents"
-            exit 0
+    # Documents
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/documents/rvl_cdip" \
+        "rvl_cdip" \
+        "RVL-CDIP Document Classification (2.8GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/documents/bhutan_financial" \
+        "bhutan_financial" \
+        "Bhutan Financial Statements (58MB)"
+
+    # Handwriting
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/handwriting/nist_sd19_pages" \
+        "nist_sd19" \
+        "NIST SD-19 Handwriting (351MB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/handwriting/hasyv2_original" \
+        "hasyv2" \
+        "HASYv2 Math Symbols (140MB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/handwriting/maths_handwriting" \
+        "maths_handwriting" \
+        "Maths Handwriting (177MB)"
+
+    # Formulas
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/formulas/im2latex" \
+        "im2latex" \
+        "im2latex-100k Formulas (65MB)"
+
+    # Degraded
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/degraded/tobacco800" \
+        "tobacco800" \
+        "Tobacco-800 Degraded Docs (88MB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/degraded/historical_degraded" \
+        "historical_degraded" \
+        "Historical Degraded Collection (4GB)"
+
+    # Camera Captured (excluding doc3d)
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/camera_captured/realdae" \
+        "realdae" \
+        "RealDAE Camera Captured (2.1GB)"
+
+    # IQA Reference
+    upload_dataset \
+        "${LOCAL_BASE}/01_base_data/ocr_quality" \
+        "ocr_quality" \
+        "OCR-Quality IQA Reference (1.2GB)"
+
+    # Benchmarks
+    upload_dataset \
+        "${LOCAL_BASE}/02_benchmark_only/dibco" \
+        "dibco" \
+        "DIBCO Binarization Benchmark (423MB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/02_benchmark_only/financebench" \
+        "financebench" \
+        "FinanceBench RAG QA (27GB)"
+
+    upload_dataset \
+        "${LOCAL_BASE}/02_benchmark_only/smartdoc-qa" \
+        "smartdoc-qa" \
+        "SmartDoc-QA Mobile Capture (39GB)"
+}
+
+# ============================================================================
+# Main Execution
+# ============================================================================
+main() {
+    log "=========================================="
+    log "GCS Dataset Upload Script Started"
+    log "Bucket: $GCS_BUCKET"
+    log "Dry Run: $DRY_RUN"
+    log "Tier Filter: ${TIER_FILTER:-all}"
+    log "=========================================="
+
+    # Verify GCS access
+    if ! gsutil ls "$GCS_BUCKET" > /dev/null 2>&1; then
+        log "ERROR: Cannot access GCS bucket. Check authentication."
+        exit 1
+    fi
+
+    case "${TIER_FILTER:-all}" in
+        1) upload_tier1 ;;
+        2) upload_tier2 ;;
+        3) upload_tier3 ;;
+        all|"")
+            upload_tier1
+            upload_tier2
+            upload_tier3
             ;;
         *)
-            log_error "Unknown option: $1"
-            echo "Use --help for usage information"
+            log "ERROR: Invalid tier. Use 1, 2, 3, or leave empty for all."
             exit 1
             ;;
     esac
-done
 
-# Execute action
-case $ACTION in
-    upload)
-        upload_all_datasets "$DRY_RUN" "$SPECIFIC_DATASET"
-        ;;
-    list)
-        list_gcs_contents
-        ;;
-    *)
-        log_error "Unknown action: $ACTION"
-        exit 1
-        ;;
-esac
+    log "=========================================="
+    log "Upload Complete!"
+    log "Log file: $LOG_FILE"
+    log "=========================================="
+}
+
+main "$@"

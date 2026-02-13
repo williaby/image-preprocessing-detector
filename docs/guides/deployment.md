@@ -10,7 +10,7 @@ status: published
 owner: core-maintainer
 authors:
   - name: "Byron Williams"
-purpose: "Provide deployment instructions for local, Docker, Kubernetes, and Modal environments."
+purpose: "Provide deployment instructions for local, Docker, and Modal environments."
 ---
 
 Complete guide for deploying the Image Preprocessing Detector API across different environments.
@@ -21,7 +21,6 @@ Complete guide for deploying the Image Preprocessing Detector API across differe
 |--------|----------|-------------|------------|
 | Local (Poetry) | Development | Yes (local) | Low |
 | Docker Compose | Single server | Optional | Medium |
-| Kubernetes | Production scale | Yes (node pools) | High |
 | Modal | Serverless GPU | Yes (auto-scale) | Low |
 
 ---
@@ -135,89 +134,6 @@ docker-compose down
 | (default) | api | CPU-only API on port 8000 |
 | production | api, redis | API + Redis for rate limiting |
 | gpu | api-gpu | GPU-enabled API on port 8001 |
-
----
-
-## Kubernetes Deployment
-
-### Prerequisites
-
-- Kubernetes cluster 1.25+
-- kubectl configured
-- NGINX Ingress Controller
-- (Optional) cert-manager for TLS
-
-### Quick Start
-
-```bash
-# Deploy all resources
-kubectl apply -k k8s/
-
-# Or step by step
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/service.yaml
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/hpa.yaml
-kubectl apply -f k8s/ingress.yaml
-```
-
-### Configure Secrets
-
-**Important**: Replace placeholder values before deploying.
-
-```bash
-# Create secret with real values
-kubectl create secret generic imgprep-secret \
-  --from-literal=IMGPREP_API_AUTH_ENABLED=true \
-  --from-literal=IMGPREP_API_API_KEYS='key1,key2,key3' \
-  --from-literal=IMGPREP_API_INTERNAL_CALLERS='["10.0.0.0/8"]' \
-  --namespace=imgprep
-```
-
-### Verify Deployment
-
-```bash
-# Check pods
-kubectl get pods -n imgprep
-
-# Check service
-kubectl get svc -n imgprep
-
-# Port forward for local access
-kubectl port-forward svc/imgprep-api 8000:80 -n imgprep
-
-# Test health
-curl http://localhost:8000/health
-```
-
-### Scaling
-
-```bash
-# Check HPA status
-kubectl get hpa -n imgprep
-
-# Manual scaling
-kubectl scale deployment imgprep-api --replicas=5 -n imgprep
-```
-
-### GPU Node Pools (GKE/EKS/AKS)
-
-For GPU support, use node selectors or tolerations:
-
-```yaml
-# Add to deployment.yaml
-spec:
-  template:
-    spec:
-      nodeSelector:
-        cloud.google.com/gke-accelerator: nvidia-tesla-t4
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
-```
 
 ---
 
@@ -342,8 +258,7 @@ Before deploying to production, ensure these secrets are configured:
 |--------|-------------|----------|
 | API Keys | `IMGPREP_API_API_KEYS` | If auth enabled |
 | GCS Credentials | Modal secret | If using Modal |
-| TLS Certificate | K8s secret | If using HTTPS |
-| Redis Password | Docker/K8s | If using Redis |
+| Redis Password | Docker env | If using Redis |
 
 ### Secure Secret Management
 
@@ -352,15 +267,6 @@ Before deploying to production, ensure these secrets are configured:
 ```bash
 # Use Docker secrets or environment files
 docker run --env-file .env.production ...
-```
-
-**Kubernetes**:
-
-```bash
-# Use sealed-secrets for GitOps
-kubeseal --format=yaml < secret.yaml > sealed-secret.yaml
-
-# Or external-secrets for Vault/AWS Secrets Manager
 ```
 
 ---
@@ -375,16 +281,8 @@ kubeseal --format=yaml < secret.yaml > sealed-secret.yaml
 
 **Solutions**:
 
-1. Configure Kubernetes readiness probe with sufficient `initialDelaySeconds`
-2. Pre-warm models on startup (configured by default)
-3. Use larger instance memory to cache models
-
-```yaml
-# K8s: Increase startup time allowance
-readinessProbe:
-  initialDelaySeconds: 30  # Increase from 5
-  periodSeconds: 10
-```
+1. Pre-warm models on startup (configured by default)
+2. Use larger instance memory to cache models
 
 ### GPU Detection Issues
 
@@ -429,13 +327,6 @@ docker run --gpus all -p 8000:8000 image-preprocessing-detector:gpu
 2. Increase container memory limits
 3. Process large PDFs page-by-page
 
-```yaml
-# K8s: Increase memory
-resources:
-  limits:
-    memory: "4Gi"  # Increase from 2Gi
-```
-
 ### Rate Limit Issues
 
 **Symptom**: 429 errors with valid usage
@@ -453,14 +344,7 @@ resources:
 **Solutions**:
 
 1. Increase client timeout
-2. Configure NGINX ingress timeouts:
-
-   ```yaml
-   nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-   nginx.ingress.kubernetes.io/proxy-body-size: "100m"
-   ```
-
-3. Use chunked uploads for very large files
+2. Use chunked uploads for very large files
 
 ---
 
@@ -472,22 +356,6 @@ The API exposes Prometheus-compatible metrics (when configured):
 
 ```bash
 curl http://localhost:8000/metrics
-```
-
-### Kubernetes Health Checks
-
-```yaml
-livenessProbe:
-  httpGet:
-    path: /health
-    port: 8000
-  periodSeconds: 30
-
-readinessProbe:
-  httpGet:
-    path: /ready
-    port: 8000
-  periodSeconds: 10
 ```
 
 ### Log Aggregation
@@ -524,8 +392,4 @@ IMGPREP_API_MAX_BATCH_SIZE=50   # GPU (memory limited)
 
 ### Caching
 
-Models are cached in memory after first load. For K8s, consider:
-
-- Using init containers for model download
-- Persistent volumes for model cache
-- Node-local SSD for faster loading
+Models are cached in memory after first load.

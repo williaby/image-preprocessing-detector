@@ -1,0 +1,184 @@
+# Audit Quality Scorecard Configuration
+# Version: 1.0.0
+# Last Updated: 2026-02-12
+#
+# Defines the 6-dimension weighted scoring rubric for Layer 2 metadata audit
+# quality assessment. Used by scripts/audit/compute_scorecard.py.
+#
+# Grade thresholds:
+#   A = 90+  (Excellent - ready for production training)
+#   B = 80+  (Good - minor gaps, usable with caveats)
+#   C = 70+  (Acceptable - significant gaps needing attention)
+#   D = 60+  (Below Standard - major remediation required)
+#   F = <60  (Failing - not suitable for use)
+
+version: "1.0.0"
+
+dimensions:
+  field_coverage:
+    weight: 0.25
+    description: "Percentage of 13 prescreening fields passing validation"
+    source_artifact: "automated_screening.json"
+    computation: "Average pass rate across 13 prescreening fields"
+    fields:
+      - split
+      - capture_method
+      - domain_level1
+      - iso639_language
+      - script_family
+      - layout_detections
+      - layout_bbox_valid
+      - content_flags_boolean
+      - text_has_content
+      - orientation_class
+      - image_properties_color_mode
+      - handwriting_present
+      - quality_overall_mos
+    notes: >
+      Fields at 0% indicate missing enrichment sources.
+      Fields deferred due to pipeline unavailability (e.g., text_has_content
+      without OCR) should be excluded from the denominator when computing
+      the adjusted score.
+
+  field_validity:
+    weight: 0.25
+    description: "Schema compliance validity rate across audited fields"
+    source_artifact: "compliance.json"
+    computation: "Average validity_pct from field_summary across all audited field groups"
+    field_groups:
+      - capture_resolution
+      - domain_language
+      - content_flags
+      - layout_detections
+      - geometric_quality
+      - text_document
+    notes: >
+      Validity checks type correctness, enum membership, range validation,
+      structural validity, and cross-field consistency.
+
+  doc_completeness:
+    weight: 0.15
+    description: "Documentation completeness of source dataset file"
+    source_artifact: "docs/datasets/source/{dataset_name}.md"
+    computation: "Count of populated sections / total expected sections"
+    expected_sections:
+      - "Overview"
+      - "Dataset Statistics"
+      - "File Format"
+      - "Label Schema"
+      - "IQA Sensitivity"
+      - "Known Limitations"
+      - "License & Citation"
+      - "Layer 2 Annotation Summary"
+      - "Reliability & Bottlenecks"
+      - "Processing Notes"
+      - "Version History"
+    total_sections: 11
+    notes: >
+      A section counts as populated if it contains more than just a heading
+      (i.e., has at least one non-empty line of content after the heading).
+
+  defect_rate:
+    weight: 0.15
+    description: "Inverse defect density - fewer defects = higher score"
+    source_artifact: "defect_catalog.json"
+    computation: "max(0, 100 - (open_defects * defect_penalty))"
+    defect_penalties:
+      critical: 15
+      high: 10
+      medium: 5
+      low: 2
+    status_weights:
+      RESOLVED: 0.0
+      PARTIALLY_RESOLVED: 0.5
+      DEFERRED: 0.3
+      OPEN: 1.0
+    notes: >
+      Only unresolved defects count against the score. Resolved defects
+      demonstrate thorough auditing. Deferred defects with documented
+      justification receive partial credit (0.3 weight).
+
+  cross_source_agreement:
+    weight: 0.10
+    description: "Agreement rate across multiple enrichment sources"
+    source_artifact: "comparison_report.json"
+    computation: "Mean pairwise agreement rate across all compared fields"
+    min_sources_required: 2
+    notes: >
+      If only one enrichment source exists (no cross-validation possible),
+      this dimension is excluded and its weight redistributed proportionally
+      to the remaining dimensions.
+
+  vlm_accuracy:
+    weight: 0.10
+    description: "VLM visual inspection accuracy on passing samples"
+    source_artifact: "vlm_corrections.json"
+    computation: "Passing sample accuracy rate from Track C validation"
+    required: true
+    min_samples_required: 10
+    notes: >
+      VLM inspection is MANDATORY. If not performed, the grade is capped
+      at D regardless of other dimension scores. A minimum of 10 passing
+      samples must be inspected for the score to be valid.
+
+grade_thresholds:
+  A: 90
+  B: 80
+  C: 70
+  D: 60
+  F: 0
+
+weight_redistribution:
+  description: >
+    When a non-required dimension cannot be computed (missing artifact or
+    insufficient data), its weight is redistributed proportionally to the
+    remaining dimensions. Required dimensions (vlm_accuracy) are NEVER
+    redistributed - instead, a grade cap is applied.
+  example: >
+    If cross_source_agreement (0.10) is unavailable, remaining dimensions
+    share the 0.10 weight. However, if vlm_accuracy (0.10, required) is
+    unavailable, the grade is capped at D regardless of the computed score.
+
+grade_caps:
+  description: >
+    When a required dimension is missing, the grade is capped to prevent
+    high grades on unverified data. This ensures VLM inspection cannot be
+    skipped without consequence.
+  missing_vlm_accuracy:
+    max_grade: "D"
+    max_score_label: "69.9 (capped)"
+    reason: >
+      Content flags (has_table, has_figure, has_handwriting, has_formula)
+      are unverified soft labels without VLM inspection. Training on
+      unverified labels risks propagating systematic errors.
+
+vlm_inspection_requirements:
+  description: >
+    Minimum VLM inspection counts required for a valid vlm_accuracy score.
+    These are enforced by compute_scorecard.py.
+  min_failing_samples: 5
+  min_passing_samples: 10
+  min_content_flag_checks: 5
+  notes: >
+    Track A: Inspect ALL content_flag=True samples (or 50, whichever is fewer).
+    Track C: Inspect at least 10 stratified passing samples.
+    Both tracks are required. Partial inspection (e.g., only Track C)
+    still triggers the grade cap.
+
+success_criteria:
+  prescreening_pass_rate:
+    target: 95
+    minimum: 85
+  fields_at_100_coverage:
+    target: 10
+    minimum: 8
+    out_of: 13
+  vlm_passing_accuracy:
+    target: 95
+    minimum: 90
+  defects_resolved_pct:
+    target: 80
+    minimum: 60
+  content_flag_fp_rate:
+    target: 5
+    maximum: 15

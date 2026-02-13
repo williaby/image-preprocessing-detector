@@ -1,0 +1,115 @@
+# Docling OCR Server with GCS Integration
+#
+# Architecture:
+#   GCS (datasets) → Docker VM (local processing) → GCS (extracted text)
+#
+# Workflow:
+#   1. Download dataset batch from GCS to local tmpfs/disk
+#   2. Process with Docling
+#   3. Upload extracted text to GCS
+#   4. Clean up local files
+#
+# Deploy: docker compose -f docker-compose.docling-gcs.yml up -d
+
+services:
+  docling-serve:
+    image: quay.io/docling-project/docling-serve:latest
+    container_name: docling-serve
+    restart: unless-stopped
+
+    ports:
+      - "5001:5001"
+
+    environment:
+      # Server configuration
+      - DOCLING_SERVE_ENABLE_UI=true
+      - DOCLING_SERVE_HOST=0.0.0.0
+      - DOCLING_SERVE_PORT=5001
+
+      # Worker configuration (optimized for 62GB RAM)
+      - DOCLING_SERVE_WORKERS=8
+      - DOCLING_SERVE_TIMEOUT=300
+
+      # CPU optimization
+      - DOCLING_DEVICE=cpu
+      - OMP_NUM_THREADS=8
+      - MKL_NUM_THREADS=8
+
+      # Batch processing
+      - DOCLING_OCR_BATCH_SIZE=128
+      - DOCLING_LAYOUT_BATCH_SIZE=128
+      - DOCLING_TABLE_BATCH_SIZE=16
+
+      # Memory optimization
+      - MALLOC_ARENA_MAX=4
+
+    volumes:
+      # Model cache
+      - docling-cache:/root/.cache
+
+      # Local processing directory (bind to host for GCS workflow)
+      - /data/docling/input:/data/input:ro
+      - /data/docling/output:/data/output:rw
+
+    # Resource limits (Compose V2+ enforces deploy.resources)
+    mem_limit: 32g
+    cpus: 8
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 32G
+        reservations:
+          cpus: '4'
+          memory: 16G
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+  # GCS Sync sidecar - handles download/upload
+  gcs-sync:
+    image: google/cloud-sdk:slim
+    container_name: docling-gcs-sync
+    restart: unless-stopped
+
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcs-credentials.json
+      - GCS_BUCKET=gs://image_detection_b/image-preprocessing-detector
+
+    volumes:
+      # GCS service account credentials
+      - /data/docling/secrets:/secrets:ro
+
+      # Shared directories with docling-serve
+      - /data/docling/input:/data/input:rw
+      - /data/docling/output:/data/output:ro
+
+      # Processing scripts
+      - ./scripts:/scripts:ro
+
+    # Keep container running for manual sync operations
+    command: ["tail", "-f", "/dev/null"]
+
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+
+volumes:
+  docling-cache:
+    driver: local
+
+networks:
+  default:
+    name: docling-network

@@ -1,0 +1,56 @@
+{
+  "dataset_name": "funsd",
+  "total_samples": 149,
+  "capture_methods": {
+    "scanner_adf": 149
+  },
+  "quality_scores": [],
+  "degradation_types": {},
+  "degradation_severities": {},
+  "domains": {
+    "ADM": 149
+  },
+  "layout_types": {},
+  "text_densities": {},
+  "script_codes": {},
+  "script_families": {
+    "ltr": 149
+  },
+  "language_codes": {},
+  "content_flags": {
+    "has_table": 149,
+    "has_handwriting": 149,
+    "has_signature": 149
+  },
+  "text_scopes": {},
+  "content_types": {},
+  "paper_sizes": {},
+  "paper_orientations": {},
+  "quality_summary": null,
+  "degradation_summaries": {},
+  "capture_methods_pct": {
+    "scanner_adf": 100.0
+  },
+  "degradation_types_pct": {},
+  "domains_pct": {
+    "ADM": 100.0
+  },
+  "layout_types_pct": {},
+  "text_densities_pct": {},
+  "script_codes_pct": {},
+  "script_families_pct": {
+    "ltr": 100.0
+  },
+  "language_codes_pct": {},
+  "text_scopes_pct": {},
+  "content_types_pct": {},
+  "paper_sizes_pct": {},
+  "paper_orientations_pct": {},
+  "content_flags_pct": {
+    "has_table": 100.0,
+    "has_handwriting": 100.0,
+    "has_signature": 100.0
+  },
+  "top_degradations": [],
+  "top_scripts": []
+}

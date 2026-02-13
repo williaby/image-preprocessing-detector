@@ -39,7 +39,7 @@ Pre-release validation checklist for Image Preprocessing Detector.
 ### Documentation
 
 - [x] API documentation complete (REST API guide)
-- [x] Deployment guide complete (local, Docker, K8s, Modal)
+- [x] Deployment guide complete (local, Docker, Modal)
 - [x] Model cards updated (teacher/student specs)
 - [x] ADRs current (35-36 added)
 - [x] Project B handoff guide complete
@@ -57,7 +57,6 @@ Pre-release validation checklist for Image Preprocessing Detector.
 
 - [x] Dockerfile validated
 - [x] docker-compose.yaml validated
-- [x] Kubernetes manifests complete
 - [x] Modal integration documented
 
 ---
@@ -148,16 +147,6 @@ jq '.result.ocr_routing_recommendation' result.json  # Should have routing
    docker-compose up -d
    ```
 
-   **Kubernetes**:
-
-   ```bash
-   # Rollback deployment
-   kubectl rollout undo deployment/imgprep-api -n imgprep
-
-   # Or specify revision
-   kubectl rollout undo deployment/imgprep-api --to-revision=N -n imgprep
-   ```
-
    **Poetry/Local**:
 
    ```bash
@@ -223,7 +212,7 @@ jq '.result.ocr_routing_recommendation' result.json  # Should have routing
 
 - Initial release of preprocessing and IQA pipeline
 - REST API for document processing
-- Docker and Kubernetes deployment support
+- Docker deployment support
 - Teacher-student ML architecture for IQA
 
 ## Features
@@ -247,7 +236,6 @@ jq '.result.ocr_routing_recommendation' result.json  # Should have routing
 
 - Local development (Poetry + uvicorn)
 - Docker Compose
-- Kubernetes (manifests included)
 - Modal (serverless GPU)
 
 ## Requirements

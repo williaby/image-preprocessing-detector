@@ -1252,7 +1252,7 @@ def process_document(file: UploadFile):
 
 **Gap Identified**: No health monitoring endpoints
 
-**Opportunity**: Kubernetes-style health checks
+**Opportunity**: Health checks
 
 ```python
 from fastapi import FastAPI

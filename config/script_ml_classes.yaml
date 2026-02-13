@@ -1,0 +1,139 @@
+# Script ML Classes Configuration
+# ISO 15924 to ML Training Class Mapping
+#
+# Three-tier script architecture:
+# - Tier 1 (Storage): Full ISO 15924 codes stored in schema
+# - Tier 2 (ML Training): Grouped classes defined here
+# - Tier 3 (Routing): OCR engine selection in script_routing.yaml
+#
+# This mapping can be updated without code changes!
+# Hot-reload supported via ScriptMLMapping.reload()
+
+version: "1.0.0"
+description: "ISO 15924 to ML training class mapping"
+
+# ML classes we train on (expand as training data allows)
+# These are the output classes for script detection models
+ml_classes:
+  - LATN       # Latin-based scripts
+  - CYRL       # Cyrillic
+  - GREK       # Greek
+  - ARAB       # Arabic script family
+  - HEBR       # Hebrew
+  - DEVA       # Devanagari
+  - BENG       # Bengali
+  - TAML       # Tamil
+  - TELU       # Telugu
+  - HANS       # Simplified Chinese
+  - HANT       # Traditional Chinese
+  - JPAN       # Japanese
+  - KORE       # Korean
+  - THAI       # Thai
+  - TIBT       # Tibetan
+  - INDIC_OTHER    # Other Indic scripts (grouped)
+  - SE_ASIAN_OTHER # Other Southeast Asian
+  - OTHER      # Everything else with training data
+  - UNKNOWN    # Cannot determine / no text
+
+# Mapping: ISO 15924 code -> ML class
+# Scripts not listed map to the unmapped_default value
+iso15924_to_ml_class:
+  # Latin and extensions
+  Latn: LATN
+  Latf: LATN  # Fraktur
+  Latg: LATN  # Gaelic
+
+  # Cyrillic
+  Cyrl: CYRL
+  Cyrs: CYRL  # Old Church Slavonic
+
+  # Greek
+  Grek: GREK
+
+  # Arabic family
+  Arab: ARAB
+  Aran: ARAB  # Nastaliq
+
+  # Hebrew
+  Hebr: HEBR
+
+  # Devanagari - keep separate, high volume
+  Deva: DEVA
+
+  # Bengali - keep separate, high volume
+  Beng: BENG
+
+  # Tamil - keep separate
+  Taml: TAML
+
+  # Telugu - keep separate
+  Telu: TELU
+
+  # CJK - each separate
+  Hans: HANS
+  Hant: HANT
+  Hani: HANS  # Generic Han -> Simplified as default
+  Jpan: JPAN
+  Hrkt: JPAN  # Hiragana + Katakana
+  Hira: JPAN
+  Kana: JPAN
+  Kore: KORE
+  Hang: KORE  # Hangul only
+
+  # Thai
+  Thai: THAI
+
+  # Tibetan
+  Tibt: TIBT
+
+  # Other Indic scripts -> grouped (can split later with more data)
+  Gujr: INDIC_OTHER   # Gujarati
+  Knda: INDIC_OTHER   # Kannada
+  Mlym: INDIC_OTHER   # Malayalam
+  Orya: INDIC_OTHER   # Odia
+  Sinh: INDIC_OTHER   # Sinhala
+  Guru: INDIC_OTHER   # Gurmukhi (Punjabi)
+
+  # Southeast Asian -> grouped
+  Khmr: SE_ASIAN_OTHER  # Khmer
+  Laoo: SE_ASIAN_OTHER  # Lao
+  Mymr: SE_ASIAN_OTHER  # Myanmar
+
+  # European scripts -> OTHER (limited data)
+  Armn: OTHER   # Armenian
+  Geor: OTHER   # Georgian
+
+  # African scripts -> OTHER
+  Ethi: OTHER   # Ethiopic
+
+  # Special codes
+  Zyyy: OTHER   # Common (punctuation, numbers)
+  Zinh: OTHER   # Inherited
+  Zzzz: UNKNOWN # Undetermined
+
+# Scripts we've seen but don't have training data for -> OTHER
+# These are preserved in Tier 1, just grouped for training
+unmapped_default: OTHER
+
+# Class weights for imbalanced training (optional)
+# Higher weight = more emphasis during training
+class_weights:
+  LATN: 1.0
+  CYRL: 1.2
+  GREK: 1.5
+  ARAB: 1.3
+  HEBR: 1.5
+  DEVA: 1.2
+  BENG: 1.3
+  TAML: 1.4
+  TELU: 1.4
+  HANS: 1.1
+  HANT: 1.2
+  JPAN: 1.1
+  KORE: 1.2
+  THAI: 1.3
+  TIBT: 2.0  # Rare, weight higher
+  INDIC_OTHER: 1.5
+  SE_ASIAN_OTHER: 1.8
+  OTHER: 1.5
+  UNKNOWN: 0.5  # De-emphasize unknowns

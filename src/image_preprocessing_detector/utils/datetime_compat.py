@@ -76,8 +76,7 @@ def utc_from_timestamp(timestamp: float) -> datetime:
 
 
 def local_now() -> datetime:
-    """
-    Get current time in the system's local timezone.
+    """Get current time in the system's local timezone.
 
     Returns:
         Timezone-aware datetime in local timezone
@@ -99,8 +98,7 @@ def timestamp_now() -> float:
 
 
 def parse_iso(iso_string: str, assume_utc: bool = True) -> datetime:
-    """
-    Parse ISO format datetime string with timezone handling.
+    """Parse ISO format datetime string with timezone handling.
 
     Args:
         iso_string: ISO format datetime string (e.g., "2023-01-01T12:00:00Z")
@@ -132,8 +130,7 @@ def parse_iso(iso_string: str, assume_utc: bool = True) -> datetime:
 
 
 def to_iso(dt: datetime, include_timezone: bool = True) -> str:
-    """
-    Convert datetime to ISO format string.
+    """Convert datetime to ISO format string.
 
     Args:
         dt: Datetime to convert
@@ -156,8 +153,7 @@ def to_iso(dt: datetime, include_timezone: bool = True) -> str:
 
 
 def is_aware(dt: datetime) -> bool:
-    """
-    Check if datetime is timezone-aware.
+    """Check if datetime is timezone-aware.
 
     Args:
         dt: Datetime object to check
@@ -169,8 +165,7 @@ def is_aware(dt: datetime) -> bool:
 
 
 def is_naive(dt: datetime) -> bool:
-    """
-    Check if datetime is naive (no timezone).
+    """Check if datetime is naive (no timezone).
 
     Args:
         dt: Datetime object to check
@@ -199,8 +194,7 @@ def ensure_aware(dt: datetime, tz: timezone | None = None) -> datetime:
 
 
 def naive_to_aware(dt: datetime, tz: timezone | None = None) -> datetime:
-    """
-    Convert naive datetime to aware.
+    """Convert naive datetime to aware.
 
     Args:
         dt: Naive datetime object
@@ -220,8 +214,7 @@ def naive_to_aware(dt: datetime, tz: timezone | None = None) -> datetime:
 
 
 def aware_to_naive(dt: datetime, preserve_utc: bool = True) -> datetime:
-    """
-    Convert aware datetime to naive.
+    """Convert aware datetime to naive.
 
     Args:
         dt: Timezone-aware datetime
@@ -246,8 +239,7 @@ def aware_to_naive(dt: datetime, preserve_utc: bool = True) -> datetime:
 
 @lru_cache(maxsize=128)
 def _normalize_for_comparison(dt: datetime) -> datetime:
-    """
-    Normalize datetime for comparison (cached for performance).
+    """Normalize datetime for comparison (cached for performance).
 
     Args:
         dt: Datetime to normalize
@@ -261,8 +253,7 @@ def _normalize_for_comparison(dt: datetime) -> datetime:
 
 
 def safe_compare(dt1: datetime, dt2: datetime) -> int:
-    """
-    Safely compare datetimes regardless of timezone awareness.
+    """Safely compare datetimes regardless of timezone awareness.
 
     Args:
         dt1: First datetime
@@ -283,8 +274,7 @@ def safe_compare(dt1: datetime, dt2: datetime) -> int:
 
 # Migration helpers - temporary functions to catch issues during migration
 def assert_datetime_aware(dt: datetime, context: str = "") -> datetime:
-    """
-    Temporary helper to catch naive datetime bugs during migration.
+    """Temporary helper to catch naive datetime bugs during migration.
 
     Args:
         dt: Datetime to check
@@ -330,8 +320,7 @@ def utcfromtimestamp_compat(timestamp: float) -> datetime:
 
 
 class MockDatetime:
-    """
-    Context manager for mocking utc_now() calls in tests.
+    """Context manager for mocking utc_now() calls in tests.
 
     Usage:
         with MockDatetime("2023-01-01T12:00:00Z"):
@@ -340,8 +329,7 @@ class MockDatetime:
     """
 
     def __init__(self, mock_time: str | datetime) -> None:
-        """
-        Initialize mock datetime context.
+        """Initialize mock datetime context.
 
         Args:
             mock_time: Time to mock (ISO string or datetime object)
@@ -375,8 +363,7 @@ class MockDatetime:
 
 
 def mock_now(mock_time: str | datetime | None = None) -> datetime:
-    """
-    Get mocked current time for testing, or real time if not mocking.
+    """Get mocked current time for testing, or real time if not mocking.
 
     Args:
         mock_time: Time to mock (ISO string or datetime object).

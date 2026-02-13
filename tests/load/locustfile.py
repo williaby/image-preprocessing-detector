@@ -215,7 +215,7 @@ class DocumentProcessorUser(HttpUser):
     def check_ready(self) -> None:
         """Readiness check (5x weight).
 
-        Simulates K8s readiness probes.
+        Simulates readiness probes.
         """
         self.client.get("/ready", name="/ready")
 

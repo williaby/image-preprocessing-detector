@@ -1,0 +1,1712 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/project-a/layer2-enrichment-v2.schema.json",
+  "title": "Layer2EnrichmentMetadata",
+  "description": "Project A Layer 2 Enrichment Schema v2 - Derived annotations with full provenance tracking and soft label reliability tagging. Additive changes from v1: all Info objects now carry optional standardized reliability fields (confidence, provenance_tier, is_soft_label, detection_method) using the flattened mixin pattern. layout_detections remains a plain array with methodology in the sibling layout_detections_metadata field. All new fields are optional/nullable for full backward compatibility with v1 data.",
+  "type": "object",
+  "required": ["sample_id", "enrichment_version", "created_at", "created_by", "method", "data"],
+  "properties": {
+    "sample_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID linking to Layer 1 sample record"
+    },
+    "enrichment_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number of this enrichment. v2+ records include soft label reliability fields."
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "2.3.0",
+      "description": "Schema version identifier. v2.0.0 introduces the label reliability mixin pattern. v2.1.0 adds geometric, physical degradation, ML IQA, image properties, OCR impact objects; expands ResolutionInfo, ContentFlags, StructureInfo. v2.3.0 adds text_direction to LanguageInfo, text_directions_present to StructureInfo, character_height_rendered_px and output_size_px to ResolutionInfo."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of enrichment creation"
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Pipeline or tool that created this enrichment",
+      "examples": ["annotate_base_metadata.py_v2.0.0", "doclayout_yolo_v1.0"]
+    },
+    "method": {
+      "type": "string",
+      "enum": ["tier_0_exact", "tier_1_annotation", "tier_2_model", "tier_3_heuristic"],
+      "description": "Default enrichment method tier. Individual fields may override this via their own provenance_tier."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of enrichment"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "data": {
+      "$ref": "#/$defs/EnrichmentData"
+    }
+  },
+  "$defs": {
+    "LabelReliabilityFieldSpec": {
+      "type": "object",
+      "description": "DOCUMENTATION ONLY - Not referenced directly. Defines the standard reliability mixin fields that SHOULD appear on every Info object. This is the contract for the flattened mixin pattern.\n\nStandard fields:\n- confidence: [number, null] 0-1 float. null = 'unassessed' (never evaluated). 0.0 = evaluated but zero confidence.\n- provenance_tier: enum matching root 'method' tiers. Overrides root tier for this specific field.\n- is_soft_label: boolean. true = label is inferred/predicted (model output, heuristic). false = ground truth or human-verified.\n- detection_method: string describing how the value was determined.\n\nThreshold guidance (pipeline config, NOT schema-enforced):\n- confidence >= 0.9: treat as hard label (full training weight)\n- 0.7 <= confidence < 0.9: soft label (reduced weight, suitable for semi-supervised)\n- 0.5 <= confidence < 0.7: low confidence (use for active learning sampling, not training)\n- confidence < 0.5: unreliable (exclude from training, flag for review)\n- confidence = null: unassessed (apply default policy per pipeline config)",
+      "properties": {
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier"
+        },
+        "is_soft_label": {
+          "type": "boolean"
+        },
+        "detection_method": {
+          "type": "string"
+        }
+      }
+    },
+    "ProvenanceTier": {
+      "type": "string",
+      "enum": ["tier_0_exact", "tier_1_annotation", "tier_2_model", "tier_3_heuristic"],
+      "description": "Provenance tier indicating the source reliability class. tier_0_exact: deterministic/by-construction (e.g., synthetic dataset properties). tier_1_annotation: human annotation or verified ground truth. tier_2_model: ML model prediction with confidence score. tier_3_heuristic: rule-based or heuristic inference."
+    },
+    "Provenance": {
+      "type": "object",
+      "description": "Reproducibility and audit trail fields",
+      "properties": {
+        "git_sha": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{7,40}$",
+          "description": "Git commit SHA at enrichment time"
+        },
+        "script_version": {
+          "type": ["string", "null"],
+          "pattern": "^\\d+\\.\\d+\\.\\d+",
+          "description": "Semantic version of enrichment script"
+        },
+        "model_checkpoint": {
+          "type": ["string", "null"],
+          "description": "Model checkpoint used (if tier_2_model)"
+        },
+        "config_hash": {
+          "type": ["string", "null"],
+          "description": "Hash of configuration used for reproducibility"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EnrichmentData": {
+      "type": "object",
+      "description": "Core enrichment data fields. Each sub-object carries standardized label reliability fields (confidence, provenance_tier, is_soft_label, detection_method) per the flattened mixin pattern.",
+      "properties": {
+        "capture_method": {
+          "$ref": "#/$defs/CaptureMethodInfo"
+        },
+        "resolution": {
+          "$ref": "#/$defs/ResolutionInfo"
+        },
+        "domain": {
+          "$ref": "#/$defs/DomainInfo"
+        },
+        "structure": {
+          "$ref": "#/$defs/StructureInfo"
+        },
+        "quality": {
+          "$ref": "#/$defs/QualityInfo"
+        },
+        "language": {
+          "$ref": "#/$defs/LanguageInfo"
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LanguageInfo"
+          },
+          "description": "All detected languages/scripts for multi-script documents. Use 'language' for single-script docs, or 'languages' for multi-script. The primary language should have is_primary=true."
+        },
+        "text_scope": {
+          "$ref": "#/$defs/TextScopeInfo"
+        },
+        "paper_size": {
+          "$ref": "#/$defs/PaperSizeInfo"
+        },
+        "content_flags": {
+          "$ref": "#/$defs/ContentFlags"
+        },
+        "llm_scores": {
+          "$ref": "#/$defs/LLMScores"
+        },
+        "layout_detections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LayoutDetection"
+          },
+          "description": "Layout element detections. Array-level methodology is in the sibling layout_detections_metadata field."
+        },
+        "layout_detections_metadata": {
+          "$ref": "#/$defs/LayoutDetectionMetadata",
+          "description": "Array-level methodology for layout_detections. Avoids repeating provenance on every item."
+        },
+        "handwriting_assessment": {
+          "$ref": "#/$defs/HandwritingAssessment"
+        },
+        "text_content": {
+          "$ref": "#/$defs/TextContent"
+        },
+        "text_statistics": {
+          "$ref": "#/$defs/TextStatistics"
+        },
+        "sample_reliability_summary": {
+          "$ref": "#/$defs/SampleReliabilitySummary",
+          "description": "Computed composite summarizing the worst-case reliability across all populated fields. Enables O(1) filtering for samples where all labels meet a quality threshold."
+        },
+        "geometric": {
+          "$ref": "#/$defs/GeometricInfo",
+          "description": "Geometric properties: orientation and skew. v2.1.0 addition."
+        },
+        "physical_degradation": {
+          "$ref": "#/$defs/PhysicalDegradationInfo",
+          "description": "Physical degradation artifacts: shadow, warping, watermark, fuzzy scan. v2.1.0 addition."
+        },
+        "ml_image_quality": {
+          "$ref": "#/$defs/MLImageQualityInfo",
+          "description": "ML IQA 6-dimension scores for direct tensor mapping. v2.1.0 addition."
+        },
+        "image_properties": {
+          "$ref": "#/$defs/ImagePropertiesInfo",
+          "description": "Image-level properties: color mode, document age. v2.1.0 addition."
+        },
+        "ocr_impact": {
+          "$ref": "#/$defs/OCRImpactInfo",
+          "description": "OCR performance feedback from Project B. v2.1.0 addition (P2 future-proofing)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "SampleReliabilitySummary": {
+      "type": "object",
+      "description": "Computed composite that captures the worst-case reliability across all populated enrichment fields for this sample. Provides O(1) filtering: query min_confidence_category='hard_label' to get only samples where EVERY assessed field meets the hard label threshold. Recomputed whenever any enrichment field is updated.",
+      "properties": {
+        "min_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Lowest confidence value across all assessed fields. null only if every field is unassessed."
+        },
+        "min_confidence_field": {
+          "type": ["string", "null"],
+          "description": "Name of the field with the lowest confidence (e.g., 'layout_detections', 'domain'). null if all unassessed."
+        },
+        "min_confidence_category": {
+          "type": "string",
+          "enum": ["hard_label", "soft_label", "active_learning", "unreliable", "unassessed"],
+          "description": "Training category of the weakest field. hard_label: min>=0.9, soft_label: min>=0.7, active_learning: min>=0.5, unreliable: min<0.5, unassessed: no confidence data."
+        },
+        "min_provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Lowest (least reliable) provenance tier across all fields. tier_3_heuristic < tier_2_model < tier_1_annotation < tier_0_exact."
+        },
+        "assessed_field_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of fields with non-null confidence values."
+        },
+        "unassessed_field_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of fields with null confidence (populated but unassessed)."
+        },
+        "unpopulated_field_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of schema fields not present in this sample's enrichment."
+        },
+        "hard_field_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Fields with confidence >= 0.9"
+        },
+        "soft_field_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Fields with confidence >= 0.7 and < 0.9"
+        },
+        "field_summary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "Enrichment field name"
+              },
+              "confidence": {
+                "type": ["number", "null"],
+                "description": "Field confidence (null = unassessed)"
+              },
+              "category": {
+                "type": "string",
+                "enum": ["hard_label", "soft_label", "active_learning", "unreliable", "unassessed"]
+              },
+              "is_soft_label": {
+                "type": "boolean"
+              }
+            },
+            "required": ["field", "category"]
+          },
+          "description": "Per-field summary array for quick iteration. One entry per assessed enrichment field."
+        },
+        "computed_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when this summary was last computed."
+        }
+      },
+      "required": ["min_confidence_category", "assessed_field_count"],
+      "additionalProperties": false
+    },
+    "CaptureMethodInfo": {
+      "type": "object",
+      "description": "Capture method detection result with label reliability mixin",
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["born_digital", "scanner_flatbed", "scanner_adf", "camera_professional", "camera_smartphone", "fax", "synthetic", "unknown"],
+          "description": "Detected capture method"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for this field. Overrides root method tier."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if capture method was inferred (model/heuristic), false if from dataset metadata or human-verified"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "How capture method was determined",
+          "examples": ["dataset_config", "pdf_metadata", "artifact_analysis", "ml_classifier"]
+        }
+      },
+      "required": ["method"],
+      "additionalProperties": false
+    },
+    "ResolutionInfo": {
+      "type": "object",
+      "description": "Resolution analysis result with label reliability mixin",
+      "properties": {
+        "dpi": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Detected DPI"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["low_<150", "medium_150-299", "standard_300", "high_>300"],
+          "description": "DPI category bin"
+        },
+        "pixels": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 1},
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Image dimensions [width, height]"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in DPI detection. 1.0 for PDF-embedded metadata, lower for estimated values. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "tier_0_exact for PDF metadata DPI, tier_3_heuristic for dimension-based estimation"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if DPI was estimated from pixel dimensions, false if from embedded metadata"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "How resolution was determined",
+          "examples": ["pdf_metadata", "exif", "dimension_heuristic", "pymupdf"]
+        },
+        "character_height_px": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Measured median character height in pixels. Key input for resolution quality score. v2.1.0 addition."
+        },
+        "resolution_quality_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Character-height-derived resolution quality (0-1). Mapping: <16px=0.0-0.15, 32-48px=0.55-0.75 optimal, >96px=0.95-1.0. MobileNetV4 Head 3 regression target. v2.1.0 addition."
+        },
+        "effective_dpi": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Effective DPI accounting for resampling. May differ from embedded DPI metadata if image was rescaled. v2.1.0 addition."
+        },
+        "character_height_rendered_px": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Actual rendered character height in pixels, measured from pristine image via CC analysis before any degradation. Synthetic-only ground truth -- more accurate than the analytical estimate (font_size_pt * DPI / 72) because it accounts for glyph metrics, font hinting, and rasterization. v2.3.0 addition."
+        },
+        "output_size_px": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Output image size in pixels for derived training views (e.g., 224, 384, 512). Records which resolution variant this metadata corresponds to. v2.3.0 addition."
+        }
+      },
+      "additionalProperties": false
+    },
+    "DomainInfo": {
+      "type": "object",
+      "description": "Document domain classification with label reliability mixin",
+      "properties": {
+        "level1": {
+          "type": "string",
+          "enum": ["TAX", "LEG", "FIN", "TEC", "SCI", "ADM", "MED", "EDU", "PER", "UNK"],
+          "description": "Primary domain code"
+        },
+        "level2": {
+          "type": ["string", "null"],
+          "description": "Secondary domain code"
+        },
+        "level3": {
+          "type": ["string", "null"],
+          "description": "Tertiary domain code"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Classification confidence. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for domain classification"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if domain was inferred, false if from dataset metadata"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "How domain was determined",
+          "examples": ["dataset_config", "filename_pattern", "content_classifier", "manual"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "StructureInfo": {
+      "type": "object",
+      "description": "Document structure analysis with label reliability mixin",
+      "properties": {
+        "text_density": {
+          "type": ["string", "null"],
+          "enum": ["sparse", "moderate", "dense", null],
+          "description": "Text density classification"
+        },
+        "layout_type": {
+          "type": ["string", "null"],
+          "enum": ["single_column", "multi_column", "three_column", "complex", "form_based", "tabular", "unknown", null],
+          "description": "Layout type classification"
+        },
+        "element_types": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Detected element types present"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in structure classification. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for structure analysis"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if structure was model-inferred, false if from layout annotations"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "How structure was determined",
+          "examples": ["doclayout_yolo", "layout_annotation", "heuristic", "manual"]
+        },
+        "code_language": {
+          "type": ["string", "null"],
+          "description": "Detected programming language of code content (if has_code is true in ContentFlags). v2.1.0 addition.",
+          "examples": ["python", "javascript", "java", "cpp", "sql", "html", "css", "bash", "r", "unknown"]
+        },
+        "code_rendering_style": {
+          "type": ["string", "null"],
+          "enum": ["syntax_highlighted", "plain_monospace", "inline", "handwritten", null],
+          "description": "How code is rendered in the document. v2.1.0 addition."
+        },
+        "text_directions_present": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "string",
+            "enum": ["ltr", "rtl", "ttb"]
+          },
+          "description": "All text writing directions present in the document (e.g., ['ltr', 'ttb'] for Japanese doc with both horizontal and vertical text blocks). v2.3.0 addition."
+        }
+      },
+      "additionalProperties": false
+    },
+    "QualityInfo": {
+      "type": "object",
+      "description": "Quality and degradation assessment with label reliability mixin for the composite score",
+      "properties": {
+        "overall_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Composite quality score (0=worst, 1=best)"
+        },
+        "degradations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Degradation"
+          },
+          "description": "List of detected degradations. Each degradation carries its own confidence."
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in the overall_score composite. null = unassessed. Derived from constituent degradation confidences."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for quality assessment. May differ from individual degradation tiers."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if quality score is model-derived, false if from human annotation"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Primary method for quality assessment",
+          "examples": ["classical_ensemble", "resnet18_student", "resnet50_teacher", "manual_annotation"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "Degradation": {
+      "type": "object",
+      "description": "Single detected degradation with per-item label reliability",
+      "required": ["type", "severity_numeric"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Degradation type from 45-type taxonomy",
+          "examples": ["blur", "noise", "skew", "contrast", "compression", "bleed_through"]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["none", "mild", "moderate", "severe"],
+          "description": "Categorical severity level"
+        },
+        "severity_numeric": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Numeric severity (0=none, 1=severe)"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for this degradation detection"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if degradation was model-predicted, false if human-annotated"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Method used for detection",
+          "examples": ["laplacian", "hough", "resnet18_student", "resnet50_teacher", "manual"]
+        },
+        "location": {
+          "type": "string",
+          "enum": ["global", "localized"],
+          "description": "Whether degradation affects whole image or region"
+        },
+        "region": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {"type": "number"},
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "COCO bbox [x, y, width, height] if localized"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "LanguageInfo": {
+      "type": "object",
+      "description": "ISO-compliant language and script detection metadata with label reliability mixin",
+      "properties": {
+        "language_code": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}$",
+          "description": "ISO 639-1 (2-letter) or ISO 639-3 (3-letter) language code",
+          "examples": ["en", "zh", "ar", "hi", "ja", "ko", "ru"]
+        },
+        "script_code": {
+          "type": "string",
+          "pattern": "^[A-Z][a-z]{3}$",
+          "description": "ISO 15924 script code (4-letter, Title case)",
+          "enum": [
+            "Latn", "Hans", "Hant", "Jpan", "Kore", "Hani",
+            "Deva", "Beng", "Taml", "Telu", "Gujr", "Knda", "Mlym", "Orya", "Sinh", "Guru",
+            "Thai", "Khmr", "Mymr", "Laoo", "Tibt",
+            "Arab", "Hebr",
+            "Cyrl", "Grek", "Armn", "Geor",
+            "Ethi", "Hang", "Hira", "Kana",
+            "Zyyy", "Zinh", "Zzzz"
+          ],
+          "examples": ["Latn", "Hans", "Arab", "Deva", "Cyrl"]
+        },
+        "bcp47_tag": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$",
+          "description": "BCP 47 / IETF language tag combining language-script-region",
+          "examples": ["en", "zh-Hans", "zh-Hant", "sr-Cyrl", "ar-Arab"]
+        },
+        "script_family": {
+          "type": "string",
+          "enum": ["latin", "cjk", "arabic", "indic", "cyrillic", "other"],
+          "description": "High-level script family for OCR routing decisions"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence (0-1). null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for language detection"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if language was model-detected, false if from dataset metadata or manual annotation"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Method used for language/script detection",
+          "examples": ["dataset_metadata", "tesseract", "fasttext", "openlid_v2", "mlmodel", "manual"]
+        },
+        "text_direction": {
+          "type": ["string", "null"],
+          "enum": ["ltr", "rtl", "ttb", null],
+          "description": "Writing direction used for this language in this sample. For scripts supporting multiple orientations (e.g., Japanese horizontal vs vertical tategaki), records the actual direction used. Overrides the default script direction. v2.3.0 addition."
+        },
+        "is_rtl": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if script is right-to-left (Arabic, Hebrew)"
+        },
+        "is_primary": {
+          "type": "boolean",
+          "default": true,
+          "description": "True if this is the primary/dominant language"
+        },
+        "openlid_validation": {
+          "type": ["object", "null"],
+          "description": "Secondary OpenLID validation result, stored when primary language is from known_language or folder_based label. Preserves the raw model output for disagreement analysis and active learning.",
+          "properties": {
+            "language_code": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}$",
+              "description": "OpenLID-detected language code"
+            },
+            "script_code": {
+              "type": "string",
+              "pattern": "^[A-Z][a-z]{3}$",
+              "description": "OpenLID-detected script code"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "OpenLID detection confidence (0-1)"
+            },
+            "agrees_with_primary": {
+              "type": "boolean",
+              "description": "True if OpenLID language matches the primary known_language assignment"
+            }
+          },
+          "required": ["language_code", "confidence"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["language_code", "script_code"],
+      "additionalProperties": false
+    },
+    "TextScopeInfo": {
+      "type": "object",
+      "description": "Text content scope/granularity classification with label reliability mixin",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": ["character", "word", "phrase", "sentence", "line", "paragraph", "page", "document", "mixed", "unknown"],
+          "description": "Text scope from smallest (character) to largest (document)"
+        },
+        "content_type": {
+          "type": "string",
+          "enum": ["printed", "handwritten", "mixed", "scene_text", "synthetic", "unknown"],
+          "description": "Primary content type classification"
+        },
+        "density": {
+          "type": "string",
+          "enum": ["sparse", "light", "moderate", "dense", "very_dense"],
+          "description": "Text density based on text-to-image ratio"
+        },
+        "estimated_chars": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Estimated character count"
+        },
+        "estimated_words": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Estimated word count"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence (0-1). null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for text scope classification"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if scope was inferred, false if from dataset metadata"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "How scope was determined",
+          "examples": ["dataset_metadata", "ocr_output", "dimension_heuristic", "manual"]
+        }
+      },
+      "required": ["scope"],
+      "additionalProperties": false
+    },
+    "PaperSizeInfo": {
+      "type": "object",
+      "description": "ISO 216 paper size detection result with label reliability mixin",
+      "properties": {
+        "detected_size": {
+          "type": "string",
+          "enum": ["A0", "A1", "A2", "A3", "A4", "A5", "A6", "B4", "B5", "Letter", "Legal", "Tabloid", "Ledger", "Executive", "Half-Letter", "Statement", "Custom", "Unknown"],
+          "description": "Detected paper size (ISO or ANSI standard)"
+        },
+        "standard": {
+          "type": "string",
+          "enum": ["iso", "ansi", "jis", "custom"],
+          "description": "Paper size standard/region"
+        },
+        "width_mm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Actual width in millimeters"
+        },
+        "height_mm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Actual height in millimeters"
+        },
+        "orientation": {
+          "type": "string",
+          "enum": ["portrait", "landscape"],
+          "description": "Page orientation"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence (0-1). null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for paper size detection"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if paper size was estimated, false if from PDF metadata or exact dimension match"
+        },
+        "is_exact_match": {
+          "type": "boolean",
+          "description": "True if dimensions match standard size exactly (<0.5% deviation)"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "How paper size was determined",
+          "examples": ["pdf_metadata", "dimension_matching", "dpi_calculation"]
+        }
+      },
+      "required": ["detected_size", "standard", "orientation"],
+      "additionalProperties": false
+    },
+    "ContentFlags": {
+      "type": "object",
+      "description": "Content type flags with per-flag confidence scores and label reliability mixin. Each boolean flag has a companion _confidence field (0-1, nullable) for granular reliability tracking.",
+      "properties": {
+        "has_table": {
+          "type": ["boolean", "null"],
+          "description": "Document contains tabular data"
+        },
+        "table_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in has_table detection. null = unassessed."
+        },
+        "has_formula": {
+          "type": ["boolean", "null"],
+          "description": "Document contains mathematical formulas"
+        },
+        "formula_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in has_formula detection. null = unassessed."
+        },
+        "has_handwriting": {
+          "type": ["boolean", "null"],
+          "description": "Document contains handwritten content"
+        },
+        "handwriting_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in has_handwriting detection. null = unassessed."
+        },
+        "has_signature": {
+          "type": ["boolean", "null"],
+          "description": "Document contains signatures"
+        },
+        "signature_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in has_signature detection. null = unassessed."
+        },
+        "has_figure": {
+          "type": ["boolean", "null"],
+          "description": "Document contains figures/images"
+        },
+        "figure_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in has_figure detection. null = unassessed."
+        },
+        "has_code": {
+          "type": ["boolean", "null"],
+          "description": "Document contains source code or code snippets. v2.1.0 addition."
+        },
+        "code_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in has_code detection. null = unassessed. v2.1.0 addition."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for content flag detection (applies to all flags unless per-flag differs)"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if flags were model-inferred, false if from ground truth annotations"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Primary method for content flag detection",
+          "examples": ["tier_0_exact_by_construction", "coco_annotation", "doclayout_yolo", "dataset_heuristic"]
+        },
+        "tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "DEPRECATED: Use provenance_tier instead. Kept for backward compatibility."
+        },
+        "source": {
+          "type": "string",
+          "description": "DEPRECATED: Use detection_method instead. Kept for backward compatibility.",
+          "examples": ["tier_0_exact_by_construction", "coco_annotation", "doclayout_yolo", "dataset_heuristic"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "LLMScores": {
+      "type": ["object", "null"],
+      "description": "LLM-predicted perceptual quality scores with label reliability mixin",
+      "properties": {
+        "predicted_mos": {
+          "type": ["number", "null"],
+          "minimum": 1,
+          "maximum": 5,
+          "description": "Predicted Mean Opinion Score (1-5 scale)"
+        },
+        "predicted_mos_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence specific to the MOS prediction. null = unassessed."
+        },
+        "predicted_normalized": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Normalized quality score (0=worst, 1=best)"
+        },
+        "predicted_normalized_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence specific to the normalized prediction. null = unassessed."
+        },
+        "prediction_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall model confidence in predictions (applies to all scores)"
+        },
+        "model_name": {
+          "type": ["string", "null"],
+          "description": "LLM model used for prediction",
+          "examples": ["llama3.2-vision-diqa-ft-v1", "gpt-4-vision"]
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Always tier_2_model for LLM scores"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": true,
+          "description": "Always true for LLM-predicted scores (these are inherently soft labels)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LayoutDetectionMetadata": {
+      "type": "object",
+      "description": "Array-level methodology for layout_detections. Stored as a sibling field to maintain backward compatibility (layout_detections remains a plain array). Provenance and methodology apply to all items in the array unless overridden per-item.",
+      "properties": {
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for layout detection methodology (applies to all items)"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if detections are model-predicted, false if from COCO/human annotations"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Model or method used for all detections in the array",
+          "examples": ["doclayout_yolo", "coco_annotation", "tablebank_annotation", "funsd_annotation"]
+        },
+        "model_version": {
+          "type": ["string", "null"],
+          "description": "Version of detection model if tier_2_model"
+        }
+      },
+      "additionalProperties": false
+    },
+    "LayoutDetection": {
+      "type": "object",
+      "description": "Single layout element detection. Carries per-item confidence and is_soft_label; array-level methodology is in the sibling layout_detections_metadata field.",
+      "required": ["class_name", "bbox", "confidence", "source"],
+      "properties": {
+        "class_name": {
+          "type": "string",
+          "description": "Element class name (DocLayNet 11-class taxonomy)",
+          "enum": ["Caption", "Footnote", "Formula", "List-Item", "Page-Footer", "Page-Header", "Picture", "Section-Header", "Table", "Text", "Title"],
+          "examples": ["Table", "Formula", "Picture", "Text", "Section-Header"]
+        },
+        "bbox": {
+          "$ref": "#/$defs/COCOBoundingBox"
+        },
+        "bbox_original": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {"type": "number"},
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "Original bbox before COCO conversion (for audit)"
+            }
+          ]
+        },
+        "bbox_source_format": {
+          "type": "string",
+          "enum": ["coco_xywh", "xyxy", "yolo_normalized"],
+          "default": "coco_xywh",
+          "description": "Original format before standardization"
+        },
+        "bbox_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Spatial confidence for bounding box precision (distinct from class confidence). null = same as class confidence."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Class detection confidence"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "Per-item soft label override. true if this specific detection is model-predicted."
+        },
+        "source": {
+          "type": "string",
+          "description": "Detection source",
+          "examples": ["doclayout_yolo", "coco_annotation", "tablebank", "funsd"]
+        },
+        "area": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Bounding box area in pixels (width * height)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "COCOBoundingBox": {
+      "type": "array",
+      "description": "COCO-format bounding box [x, y, width, height] where (x,y) is top-left corner",
+      "items": {"type": "number", "minimum": 0},
+      "minItems": 4,
+      "maxItems": 4,
+      "examples": [[100, 200, 300, 150]]
+    },
+    "TextContent": {
+      "type": "object",
+      "description": "Extracted or ground truth text content with label reliability mixin. This is the standardized storage location for text from any source (GT labels, OCR, transcription). Text statistics are computed from this field and inherit its confidence.",
+      "properties": {
+        "full_text": {
+          "type": "string",
+          "description": "Complete text content, concatenated if from multiple regions. Newlines preserved."
+        },
+        "segments": {
+          "type": ["array", "null"],
+          "items": {
+            "$ref": "#/$defs/TextSegment"
+          },
+          "description": "Optional segmented text with region/line-level granularity. Use when source provides positional info."
+        },
+        "source_type": {
+          "type": "string",
+          "enum": ["ground_truth", "ocr_tesseract", "ocr_doctr", "ocr_paddleocr", "ocr_easyocr", "transcription", "synthetic", "dataset_provided"],
+          "description": "Origin of the text content"
+        },
+        "source_file": {
+          "type": ["string", "null"],
+          "description": "Original file path or annotation ID the text was extracted from"
+        },
+        "source_format": {
+          "type": ["string", "null"],
+          "description": "Format of the source (e.g., 'coco_text_annotation', 'txt_file', 'xml_alto', 'json_ocr')",
+          "examples": ["coco_text_annotation", "txt_file", "xml_alto", "json_ocr", "hocr"]
+        },
+        "extraction_method": {
+          "type": ["string", "null"],
+          "description": "Parser or script that performed the extraction",
+          "examples": ["parse_cocotext_labels", "parse_iam_transcription", "doctr_v0.8"]
+        },
+        "extraction_timestamp": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when text was extracted"
+        },
+        "language_hint": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z]{2,3}$",
+          "description": "ISO 639 language code if known from source metadata"
+        },
+        "encoding": {
+          "type": "string",
+          "default": "utf-8",
+          "description": "Text encoding (always normalized to UTF-8 in storage)"
+        },
+        "is_complete": {
+          "type": "boolean",
+          "default": true,
+          "description": "False if text is partial (e.g., only visible text regions, truncated)"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall confidence in text accuracy. High for ground_truth, variable for OCR. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "tier_1_annotation for ground_truth, tier_2_model for OCR, tier_0_exact for synthetic"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if text is OCR-extracted (inherently noisy), false if human-verified ground truth"
+        }
+      },
+      "required": ["full_text", "source_type"],
+      "additionalProperties": false
+    },
+    "TextSegment": {
+      "type": "object",
+      "description": "A segment of text with optional positional information. Inherits provenance_tier and detection_method from parent TextContent; carries per-segment confidence and is_soft_label.",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Text content of this segment"
+        },
+        "segment_type": {
+          "type": "string",
+          "enum": ["line", "paragraph", "word", "region", "block", "cell"],
+          "description": "Granularity level of this segment"
+        },
+        "bbox": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {"type": "number"},
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "COCO bbox [x, y, width, height] if positional info available"
+            }
+          ]
+        },
+        "sequence_index": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Reading order index within the document"
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence for this specific segment. null = inherit from parent TextContent."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "Per-segment soft label override. Inherits from parent TextContent if not set."
+        },
+        "parent_element_id": {
+          "type": ["string", "null"],
+          "description": "Reference to layout_detections element if text is from a detected region"
+        }
+      },
+      "required": ["text"],
+      "additionalProperties": false
+    },
+    "TextStatistics": {
+      "type": "object",
+      "description": "Text statistics computed from text_content field. Reliability is inherited from the source text_content - if the text is OCR-derived, these statistics are estimates, not facts.",
+      "properties": {
+        "character_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of characters (including spaces and punctuation)"
+        },
+        "character_count_no_spaces": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Character count excluding whitespace"
+        },
+        "word_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of words (whitespace-delimited tokens)"
+        },
+        "sentence_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of sentences (detected via punctuation: . ! ?)"
+        },
+        "paragraph_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of paragraphs (detected via double newlines or explicit markers)"
+        },
+        "line_count": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of text lines (single newline delimited)"
+        },
+        "avg_word_length": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Average word length in characters"
+        },
+        "avg_sentence_length": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Average sentence length in words"
+        },
+        "avg_paragraph_length": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Average paragraph length in sentences"
+        },
+        "text_source": {
+          "type": "string",
+          "description": "Source of the text content",
+          "enum": ["ground_truth", "ocr_tesseract", "ocr_doctr", "ocr_paddleocr", "transcription", "synthetic"],
+          "examples": ["ground_truth", "ocr_tesseract"]
+        },
+        "text_source_file": {
+          "type": ["string", "null"],
+          "description": "Path or identifier of the source text file/annotation"
+        },
+        "computation_method": {
+          "type": "string",
+          "description": "Method used for tokenization and counting",
+          "examples": ["nltk", "spacy", "regex_simple", "unicode_segmentation"]
+        },
+        "inherited_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence inherited from parent text_content. If text_content.confidence is low (OCR source), these statistics are correspondingly unreliable. null = parent confidence was unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Inherited from text_content source tier. Statistics from ground_truth text are tier_1, from OCR are tier_2."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if statistics are derived from OCR/estimated text (inherently approximate)"
+        }
+      },
+      "required": ["character_count", "word_count", "text_source"],
+      "additionalProperties": false
+    },
+    "HandwritingAssessment": {
+      "type": "object",
+      "description": "Graded handwriting assessment with orthogonal dimensions: presence, legibility, content type. Each dimension carries its own confidence. Consensus-validated schema extension for DQS integration.",
+      "properties": {
+        "presence": {
+          "type": "string",
+          "enum": ["NONE", "SPARSE", "MODERATE", "SUBSTANTIAL", "DOMINANT"],
+          "description": "Graded handwriting presence (quantity). NONE=0%, SPARSE=<10%, MODERATE=10-30%, SUBSTANTIAL=30-60%, DOMINANT=>60%"
+        },
+        "presence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Continuous presence score (handwriting area ratio 0-1)"
+        },
+        "presence_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in presence classification. null = unassessed."
+        },
+        "legibility": {
+          "type": "string",
+          "enum": ["NOT_APPLICABLE", "EXCELLENT", "GOOD", "FAIR", "POOR", "ILLEGIBLE"],
+          "description": "Graded legibility (readability quality). Based on clinical Handwriting Legibility Scale (HLS). Higher values = harder to read."
+        },
+        "legibility_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Continuous legibility score (0=illegible, 1=excellent)"
+        },
+        "legibility_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in legibility classification. null = unassessed."
+        },
+        "content_type": {
+          "type": "string",
+          "enum": ["not_applicable", "signatures_marks", "numeric", "alphanumeric", "prose", "mixed", "specialized"],
+          "description": "Content type classification (what is written). signatures_marks=signatures/initials, numeric=numbers only, alphanumeric=mixed short, prose=long-form, specialized=math/symbols"
+        },
+        "content_type_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in content type classification. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for handwriting assessment (applies to all dimensions)"
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if assessment is model-predicted, false if from ground truth annotations"
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Detection method used",
+          "enum": ["none", "siglip2_multitask", "heuristic", "ground_truth", "hiertext", "cocotext"],
+          "examples": ["siglip2_multitask", "hiertext", "ground_truth"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "GeometricInfo": {
+      "type": "object",
+      "description": "Geometric properties: page orientation and skew angle. Groups affine/geometric transformations that are domain-independent. Supports MobileNetV4 heads 1+2 and SigLIP Group 3 training targets. v2.1.0 addition.",
+      "properties": {
+        "orientation_class": {
+          "type": ["integer", "null"],
+          "enum": [0, 90, 180, 270, null],
+          "description": "Page orientation in degrees clockwise. 4-class classification label."
+        },
+        "orientation_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in orientation classification. null = unassessed."
+        },
+        "orientation_corrected": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether orientation correction has been applied to the image."
+        },
+        "orientation_detection_method": {
+          "type": ["string", "null"],
+          "description": "Method used for orientation detection.",
+          "examples": ["mobilenetv4", "siglip2", "heuristic", "synthetic_exact", "exif_metadata"]
+        },
+        "skew_angle_degrees": {
+          "type": ["number", "null"],
+          "minimum": -180,
+          "maximum": 180,
+          "description": "Exact skew angle in degrees (+-180). Positive = clockwise rotation. Regression target for MobileNetV4 Head 2."
+        },
+        "skew_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in skew angle measurement. null = unassessed."
+        },
+        "skew_detection_method": {
+          "type": ["string", "null"],
+          "description": "Method used for skew detection.",
+          "examples": ["hough", "line_based", "ml_model", "synthetic_exact", "projection_profile"]
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall confidence for geometric assessment. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for geometric measurements."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if geometric values are model-predicted, false if from metadata or synthetic construction."
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Primary method for geometric analysis.",
+          "examples": ["mobilenetv4_geometric", "siglip2_group3", "hough_transform", "synthetic_exact"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "PhysicalDegradationInfo": {
+      "type": "object",
+      "description": "Physical image degradation artifacts: shadow, warping, watermark, fuzzy scan. Domain-driven grouping of physical degradations that are distinct from IQA signal quality metrics (blur/noise/contrast in QualityInfo). v2.1.0 addition.",
+      "properties": {
+        "shadow_severity": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Shadow severity score (0=none, 1=severe). Regression target for SigLIP Group 5."
+        },
+        "shadow_type": {
+          "type": ["string", "null"],
+          "enum": ["none", "hard", "soft", "mixed", null],
+          "description": "Shadow type classification."
+        },
+        "shadow_region": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "array",
+              "items": {"type": "number", "minimum": 0},
+              "minItems": 4,
+              "maxItems": 4,
+              "description": "COCO bbox [x, y, width, height] of primary shadow region."
+            }
+          ]
+        },
+        "shadow_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in shadow detection. null = unassessed."
+        },
+        "warping_severity": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Warping severity score (0=none, 1=severe). Regression target for SigLIP Group 5."
+        },
+        "warping_type": {
+          "type": ["string", "null"],
+          "enum": ["none", "page_curl", "fold", "perspective", "barrel", "pincushion", "wave", "complex", null],
+          "description": "Warping type classification."
+        },
+        "warping_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in warping detection. null = unassessed."
+        },
+        "watermark_severity": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Watermark severity score (0=none, 1=severe/opaque)."
+        },
+        "watermark_type": {
+          "type": ["string", "null"],
+          "enum": ["none", "text", "logo", "pattern", null],
+          "description": "Watermark type classification."
+        },
+        "watermark_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in watermark detection. null = unassessed."
+        },
+        "fuzzy_scan_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Fuzzy/photocopied scan score (0=clean, 1=heavily degraded). Detects multi-generation copy artifacts."
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall confidence for physical degradation assessment. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for physical degradation detection."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if degradation values are model-predicted, false if from annotations or synthetic construction."
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Primary method for physical degradation detection.",
+          "examples": ["siglip2_group5", "classical_cv", "synthetic_exact", "manual_annotation"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "MLImageQualityInfo": {
+      "type": "object",
+      "description": "ML IQA 6-dimension quality scores. Explicit named float fields for direct tensor mapping in training. Mirrors schema.py PageMetadata.ml_iqa dict. Distinct from QualityInfo.degradations (categorical array) -- this provides continuous regression targets for IQA heads. v2.1.0 addition.",
+      "properties": {
+        "blur_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Blur severity (0=sharp, 1=severe blur)."
+        },
+        "noise_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Noise severity (0=clean, 1=severe noise)."
+        },
+        "contrast_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Contrast deficiency (0=good contrast, 1=severe contrast issues)."
+        },
+        "compression_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Compression artifact severity (0=lossless, 1=severe JPEG artifacts)."
+        },
+        "skew_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Skew severity as quality impact (0=no skew, 1=severe skew)."
+        },
+        "overall_score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall image quality (0=worst, 1=best). Composite of all dimensions."
+        },
+        "model_name": {
+          "type": ["string", "null"],
+          "description": "ML model that produced these scores.",
+          "examples": ["resnet18_student", "resnet50_teacher", "siglip2_iqa"]
+        },
+        "model_version": {
+          "type": ["string", "null"],
+          "description": "Model version or checkpoint identifier."
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall confidence in ML IQA scores. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Always tier_2_model for ML-derived scores."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": true,
+          "description": "Always true for ML model predictions (inherently soft labels)."
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "ML model used for quality assessment.",
+          "examples": ["resnet18_student", "resnet50_teacher", "siglip2_group1"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ImagePropertiesInfo": {
+      "type": "object",
+      "description": "Image-level physical properties: color mode and document age. These are observable properties of the image itself (not semantic domain). v2.1.0 addition.",
+      "properties": {
+        "color_mode": {
+          "type": ["string", "null"],
+          "enum": ["color", "grayscale", "binarized", null],
+          "description": "Image color mode. binarized = black-and-white (1-bit)."
+        },
+        "color_space": {
+          "type": ["string", "null"],
+          "description": "Color space of the image.",
+          "examples": ["RGB", "CMYK", "Lab", "Gray", "sRGB"]
+        },
+        "bit_depth": {
+          "type": ["integer", "null"],
+          "enum": [1, 8, 16, 24, 32, null],
+          "description": "Bits per pixel."
+        },
+        "document_age": {
+          "type": ["string", "null"],
+          "enum": ["modern", "aged", "historical", null],
+          "description": "Estimated document age from visual appearance (yellowing, foxing, ink fading). modern=<20yr, aged=20-100yr, historical=>100yr."
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in image properties detection. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Provenance tier for image properties."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": false,
+          "description": "true if properties were model-inferred (e.g., document_age), false if from image metadata."
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "Method used for property detection.",
+          "examples": ["pillow_metadata", "cv2_analysis", "siglip2_classifier", "synthetic_exact"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "OCRImpactInfo": {
+      "type": "object",
+      "description": "OCR performance feedback from Project B. Tracks CER/WER, correction effectiveness, and routing outcomes. Not populated by Project A -- schema defined for Project B integration contract. v2.1.0 addition (P2 future-proofing).",
+      "properties": {
+        "ocr_engine": {
+          "type": ["string", "null"],
+          "description": "Primary OCR engine used.",
+          "examples": ["tesseract", "doctr", "paddleocr", "easyocr", "ensemble"]
+        },
+        "ocr_engine_version": {
+          "type": ["string", "null"],
+          "description": "Version of the OCR engine."
+        },
+        "page_index": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Page index this OCR result corresponds to (0-based)."
+        },
+        "char_error_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Character Error Rate vs ground truth (0=perfect, 1=all errors)."
+        },
+        "word_error_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Word Error Rate vs ground truth (0=perfect, 1=all errors)."
+        },
+        "ocr_confidence_mean": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Mean OCR engine confidence across all recognized characters/words."
+        },
+        "ocr_confidence_std": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Standard deviation of OCR engine confidence."
+        },
+        "ocr_timestamp": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when OCR was performed."
+        },
+        "corrections_applied": {
+          "type": ["array", "null"],
+          "items": {"type": "string"},
+          "description": "List of correction types applied before OCR (e.g., deskew, denoise, clahe)."
+        },
+        "ocr_quality_before_correction": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "CER on the uncorrected (original) image."
+        },
+        "ocr_quality_after_correction": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "CER on the corrected image. Difference from before = correction effectiveness."
+        },
+        "routing_strategy_recommended": {
+          "type": ["string", "null"],
+          "description": "OCR routing strategy recommended by Project A.",
+          "examples": ["ocr_fast", "ocr_advanced", "vision_simple", "vision_structured"]
+        },
+        "routing_strategy_used": {
+          "type": ["string", "null"],
+          "description": "OCR routing strategy actually used by Project B."
+        },
+        "routing_outcome": {
+          "type": ["string", "null"],
+          "enum": ["success", "partial_failure", "failure", null],
+          "description": "Outcome of the OCR routing decision."
+        },
+        "failure_reasons": {
+          "type": ["array", "null"],
+          "items": {"type": "string"},
+          "description": "Specific failure modes if routing_outcome is not success.",
+          "examples": [["timeout", "low_confidence", "script_unsupported", "memory_limit"]]
+        },
+        "per_script_accuracy": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "object",
+            "properties": {
+              "script_code": {
+                "type": "string",
+                "pattern": "^[A-Z][a-z]{3}$",
+                "description": "ISO 15924 script code."
+              },
+              "cer": {
+                "type": ["number", "null"],
+                "minimum": 0,
+                "maximum": 1,
+                "description": "CER for this script."
+              },
+              "wer": {
+                "type": ["number", "null"],
+                "minimum": 0,
+                "maximum": 1,
+                "description": "WER for this script."
+              }
+            },
+            "required": ["script_code"]
+          },
+          "description": "Per-script OCR accuracy breakdown for multi-script documents."
+        },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in OCR impact measurements. null = unassessed."
+        },
+        "provenance_tier": {
+          "$ref": "#/$defs/ProvenanceTier",
+          "description": "Always tier_2_model for OCR-derived metrics."
+        },
+        "is_soft_label": {
+          "type": "boolean",
+          "default": true,
+          "description": "Always true for OCR-derived metrics."
+        },
+        "detection_method": {
+          "type": "string",
+          "description": "OCR pipeline that produced these metrics.",
+          "examples": ["project_b_pipeline_v1", "tesseract_5.3", "doctr_0.8"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

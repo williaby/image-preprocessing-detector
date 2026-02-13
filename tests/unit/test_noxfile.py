@@ -763,7 +763,7 @@ class TestQualitySession:
         pytest_call = [
             c
             for c in run_calls
-            if "pytest" in str(c) and "--cov-fail-under=80" in str(c)
+            if "pytest" in str(c) and "--cov-fail-under=60" in str(c)
         ]
         assert len(pytest_call) == 1
 

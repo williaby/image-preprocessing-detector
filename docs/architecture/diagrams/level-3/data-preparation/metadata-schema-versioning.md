@@ -22,6 +22,15 @@ title: 'Level 3: Metadata Schema & Versioning System'
 
 The metadata schema system implements a **three-layer architectural pattern** for managing document quality assessment data throughout the training pipeline. It enforces immutability of original dataset labels while enabling progressive enrichment and flexible training label generation.
 
+### Visual Schema Documentation
+
+For interactive Mermaid diagrams showing entity relationships, class structures, and data flows:
+
+- [Layer 2 Enrichment Schema Visualization](../../../../schema/layer2_enrichment_schema.md) - ER diagrams, class diagrams, enum values
+- [Document Metadata Schema Visualization](../../../../schema/document_metadata_schema.md) - Output schema for Project B handoff
+
+**JSON Schema Definitions**: `docs/schema/layer2_enrichment.schema.json`, `docs/schema/document_metadata.schema.json`
+
 ### Key Principles
 
 1. **Layer 1 (IMMUTABLE)**: Original labels preserved exactly as provided by source datasets
@@ -184,13 +193,14 @@ enrichment_version = "classical_cv_v1.2.0"  # or "ml_iqa_v2.3.0"
    - Binarization quality (Otsu threshold)
    - Bleed-through (double-sided detection)
 
-2. **ML IQA** (teacher-student ResNet):
-   - Student model (ResNet-18) scores
-   - Teacher model (ResNet-50) scores (selective)
-   - Distortion type predictions (multi-label)
-   - Confidence scores
+2. **ML Analysis** (Two-model pipeline):
+   - MobileNetV4-Conv-S (~3ms, pre-correction): orientation, skew, resolution quality (3 heads)
+   - SigLIP 2 NAFlex (~50ms, full analysis): 16 heads across 5 groups (IQA, Script, Orientation+Skew, Handwriting, Page Attrs)
+   - Multi-task predictions with per-head confidence scores
 
-3. **Layout Analysis** (YOLOv10-doc):
+3. **Layout Analysis** (Docling layout models):
+   - docling-layout-egret-xlarge (accuracy-optimized)
+   - docling-layout-heron (speed-optimized)
    - Element detection (tables, figures, formulas, handwriting)
    - Layout type classification
    - Structural complexity scoring
@@ -199,6 +209,16 @@ enrichment_version = "classical_cv_v1.2.0"  # or "ml_iqa_v2.3.0"
    - Document Quality Score (DQS)
    - Pre-OCR risk score
    - Routing recommendations
+
+5. **Multi-Task Metadata** (stored at `metadata['data']['multi_task']`):
+   - Per-head predictions from SigLIP 2 (16 heads) and MobileNetV4-Conv-S (3 heads)
+   - Orientation class, fine skew angle, resolution quality
+   - Script family, handwriting detection, capture method
+   - Each prediction tagged with provenance tier and confidence
+
+6. **New Enrichment Dimensions**:
+   - `color_mode`: binarized / grayscale / color (derived from image analysis or synthetic generation)
+   - `document_age`: modern / aged / historical (derived from physical degradation patterns or synthetic aging profile)
 
 ### Layer 3: Training Labels
 
@@ -420,6 +440,15 @@ The training feature vector represents **severity of 45 degradation types** (fro
 - Add color space tracking (sRGB, AdobeRGB, etc.)
 - Add PDF-specific metadata (page count, embedded fonts)
 - Backward compatible (all new fields optional)
+
+**v1.2.0** (Planned - MINOR, Multi-Task Introduction):
+
+- Add `multi_task` namespace at `metadata['data']['multi_task']` containing per-head predictions
+- Add `color_mode` field (binarized/grayscale/color) to enrichment data
+- Add `document_age` field (modern/aged/historical) to enrichment data
+- Add label provenance tier (`tier_0_exact`, `tier_1_annotation`, `tier_2_model`, `tier_3_heuristic`) to all enrichment fields
+- Add global split registry reference (`split_assignment`: train/val/test) keyed by SHA256
+- Backward compatible (all new fields optional with sensible defaults)
 
 **v2.0.0** (Future - MAJOR):
 

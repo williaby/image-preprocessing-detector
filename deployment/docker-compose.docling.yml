@@ -1,0 +1,92 @@
+# Docling OCR Server for Dataset Text Extraction
+# Deploy on Docker VM: 192.168.1.209
+#
+# Prerequisites:
+#   1. NFS share mounted at /mnt/unraid/datasets (datasets)
+#   2. Port 5001 available
+#
+# Usage:
+#   docker compose -f docker-compose.docling.yml up -d
+#   curl http://192.168.1.209:5001/health
+
+services:
+  docling-serve:
+    image: quay.io/docling-project/docling-serve:latest
+    container_name: docling-serve
+    restart: unless-stopped
+
+    ports:
+      - "5001:5001"
+
+    environment:
+      # Server configuration
+      - DOCLING_SERVE_ENABLE_UI=true
+      - DOCLING_SERVE_HOST=0.0.0.0
+      - DOCLING_SERVE_PORT=5001
+
+      # Worker configuration (optimized for 62GB RAM, 12 threads)
+      - DOCLING_SERVE_WORKERS=8
+      - DOCLING_SERVE_TIMEOUT=300
+
+      # CPU optimization (no GPU)
+      - DOCLING_DEVICE=cpu
+      - OMP_NUM_THREADS=8
+      - MKL_NUM_THREADS=8
+      - OPENBLAS_NUM_THREADS=8
+
+      # Batch processing (leverage large RAM)
+      - DOCLING_OCR_BATCH_SIZE=128
+      - DOCLING_LAYOUT_BATCH_SIZE=128
+      - DOCLING_TABLE_BATCH_SIZE=16
+
+      # Memory optimization
+      - MALLOC_ARENA_MAX=4
+      - PYTHONUNBUFFERED=1
+
+      # Model selection (RapidOCR default, good for CPU)
+      - DOCLING_OCR_ENGINE=rapidocr
+
+    volumes:
+      # Model cache (persistent)
+      - docling-cache:/root/.cache
+
+      # Datasets (read-only NFS mount)
+      - /mnt/unraid/datasets:/data/datasets:ro
+
+      # Output directory (for extracted text)
+      - /mnt/unraid/appdata/docling/output:/data/output:rw
+
+    # Resource limits (Compose V2+ enforces deploy.resources)
+    mem_limit: 32g
+    cpus: 8
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 32G
+        reservations:
+          cpus: '4'
+          memory: 16G
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+volumes:
+  docling-cache:
+    driver: local
+
+networks:
+  default:
+    name: docling-network

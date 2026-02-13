@@ -27,6 +27,25 @@ How the system selects the optimal inference device (Local GPU, Modal GPU, or CP
 
 ---
 
+## Worker Architecture
+
+Celery worker pools, FastAPI routing, device orchestration, and message broker configuration.
+
+![Worker Architecture](project-a-worker-architecture.svg)
+
+**Key Components**:
+
+- **FastAPI Layer**: Health, process, and batch endpoints with middleware stack
+- **Message Broker**: Redis with 3 exchanges (default, gpu, batch)
+- **Worker Pools**: Default (concurrency 4), GPU (concurrency 2, pool=solo), Batch (concurrency 1)
+- **Device Orchestration**: Student (always local) vs Teacher (budget + policy enforced)
+- **Circuit Breaker**: Modal GPU fallback with state machine (CLOSED → OPEN → HALF_OPEN)
+- **Monitoring**: Flower dashboard, Prometheus metrics, structured logging
+
+**Total LOC**: 2,864+ lines (API + workers + orchestration + monitoring)
+
+---
+
 ## Primary Workflow - High Level
 
 High-level view of the document processing pipeline from ingestion to output.
@@ -51,8 +70,8 @@ Detailed activity diagram showing every step in the document processing pipeline
 | Ingestion | `src/ingestion/` | PDF/image loading and DPI handling |
 | Text Gate | `src/detection/text_gate.py` | Fast text presence detection |
 | Classical IQA | `src/detection/iqa_classical.py` | 7 classical CV detectors |
-| ML IQA | `src/detection/iqa_ml.py` | Teacher-student ResNet models |
-| Layout Detection | `src/detection/layout_lite.py` | DocLayout-YOLO (11 classes) |
+| ML IQA | `src/detection/iqa_ml.py` | MobileNetV4-Conv-S pre-correction + SigLIP 2 NAFlex multi-task analysis |
+| Layout Detection | `src/detection/layout_lite.py` | Docling layout models (egret-xlarge accuracy, heron speed) |
 | Corrections | `src/correction/` | Deskew, CLAHE, denoising |
 | DQS Calculator | `src/metrics/dqs_calculator.py` | Document Quality Score |
 | Routing | `src/routing/` | OCR strategy recommendation |
@@ -73,9 +92,11 @@ The production runtime processes documents through a series of well-defined stat
 | **TEXT_GATE** | Classification complete | Text presence determined | 10s | Default to TEXT_DETECTED |
 | **CLASSICAL_IQA** | Text gate: NO_TEXT or TEXT_DETECTED | Classical detectors complete (8 detectors) | 30s | Skip failed detectors |
 | **LAYOUT_LITE** | Text gate: TEXT_DETECTED | Layout classification complete (11 classes) | 60s | Skip layout, use text-gate-only routing |
-| **ML_IQA_STUDENT** | IQA route determined | Student inference complete | 100s | Fallback to classical only |
-| **UNCERTAINTY_CHECK** | Student inference complete | Uncertainty evaluated (entropy, discrepancy) | 5s | Skip teacher |
-| **ML_IQA_TEACHER** | High uncertainty/discrepancy detected | Teacher inference complete | 200s | Use student prediction |
+| **MOBILENET_PRECORRECTION** | IQA route determined | MobileNetV4-Conv-S inference complete (3 heads: orientation, skew, resolution quality) | 15s | Fallback to classical only |
+| **PRE_CORRECTION** | MobileNetV4 inference complete | Orientation/skew/resolution corrections applied | 20s | Skip pre-corrections, flag in metadata |
+| **CONFIDENCE_CHECK** | Pre-correction complete | Per-head confidence evaluated across all model heads | 5s | Skip SigLIP 2, use classical fallback |
+| **SIGLIP2_ANALYSIS** | Low confidence on any head | SigLIP 2 NAFlex multi-task inference complete (16 heads, 5 groups) | 200s | Use classical fallback for low-confidence heads |
+| **CLASSICAL_FALLBACK** | Head confidence below threshold | Head-specific classical fallback applied (6 rules) | 30s | Use default values for failed heads |
 | **CORRECTION** | IQA complete (classical + ML) | Corrections applied (deskew, CLAHE, etc.) | 50s | Skip corrections, flag in metadata |
 | **DQS_CALCULATION** | Corrections complete | Document Quality Score computed | 10s | Default DQS = 0.5 |
 | **ROUTING** | DQS computed | Routing recommendation generated | 5s | Default to OCR_ADVANCED |
@@ -87,22 +108,24 @@ The production runtime processes documents through a series of well-defined stat
 
 ```text
 INGESTION → PREFLIGHT → PDF_CLASSIFICATION → TEXT_GATE (TEXT_DETECTED) →
-CLASSICAL_IQA → LAYOUT_LITE → ML_IQA_STUDENT → UNCERTAINTY_CHECK (low) →
-CORRECTION → DQS_CALCULATION → ROUTING → OUTPUT
+CLASSICAL_IQA → LAYOUT_LITE → MOBILENET_PRECORRECTION → PRE_CORRECTION →
+CONFIDENCE_CHECK (high) → SIGLIP2_ANALYSIS → CORRECTION → DQS_CALCULATION → ROUTING → OUTPUT
 ```
 
 **Fallback Path (No Text, CPU Only)**:
 
 ```text
 INGESTION → PREFLIGHT → PDF_CLASSIFICATION → TEXT_GATE (NO_TEXT) →
-CLASSICAL_IQA → ML_IQA_STUDENT (CPU) → CORRECTION → DQS_CALCULATION → ROUTING → OUTPUT
+CLASSICAL_IQA → MOBILENET_PRECORRECTION (CPU) → PRE_CORRECTION →
+CONFIDENCE_CHECK → SIGLIP2_ANALYSIS → CORRECTION → DQS_CALCULATION → ROUTING → OUTPUT
 ```
 
-**Error Recovery Path (Student Fails, Teacher Escalation)**:
+**Error Recovery Path (Low Confidence, Classical Fallback)**:
 
 ```text
-INGESTION → ... → ML_IQA_STUDENT (TIMEOUT) → UNCERTAINTY_CHECK (high) →
-ML_IQA_TEACHER (Modal GPU) → CORRECTION → DQS_CALCULATION → ROUTING → OUTPUT
+INGESTION → ... → MOBILENET_PRECORRECTION → PRE_CORRECTION →
+CONFIDENCE_CHECK (low on some heads) → CLASSICAL_FALLBACK (6 head-specific rules) →
+CORRECTION → DQS_CALCULATION → ROUTING → OUTPUT
 ```
 
 ### Timeout Behavior
@@ -111,7 +134,7 @@ ML_IQA_TEACHER (Modal GPU) → CORRECTION → DQS_CALCULATION → ROUTING → OU
 
 - Short operations (< 15s): Text gate, PDF classification, DQS calculation
 - Medium operations (30-60s): Classical IQA, corrections, layout detection
-- Long operations (100-200s): ML IQA student/teacher inference
+- Long operations (100-200s): SigLIP 2 NAFlex multi-task inference
 
 **Total Pipeline Timeout**:
 
@@ -282,11 +305,11 @@ BudgetConfig(
 
 ### Performance Characteristics by Device
 
-| Device | Latency (Student) | Latency (Teacher) | Throughput | Cost/Page |
-|--------|------------------|-------------------|------------|-----------|
-| **Local GPU (T4)** | 10-25ms | 30-50ms | 40-100 pages/sec | $0.00 (free) |
-| **Modal GPU (T4)** | 15-30ms | 40-60ms | 30-65 pages/sec | $0.007 |
-| **CPU (Local)** | 40-100ms | 150-300ms | 10-25 pages/sec | $0.00 (free) |
+| Device | Latency (MobileNetV4) | Latency (SigLIP 2) | Throughput | Cost/Page |
+|--------|----------------------|---------------------|------------|-----------|
+| **Local GPU (T4)** | ~3ms | ~50ms | 40-100 pages/sec | $0.00 (free) |
+| **Modal GPU (T4)** | ~5ms | ~60ms | 30-65 pages/sec | $0.007 |
+| **CPU (Local)** | 8-12ms | ~150ms | 10-25 pages/sec | $0.00 (free) |
 
 **Policy Recommendations**:
 
@@ -306,9 +329,9 @@ BudgetConfig(
 
 **Note**: Production Runtime is independent during operation but consumes trained models from Workstream 2:
 
-- Student model (ResNet-18): Production inference
-- Teacher model (ResNet-50): Selective escalation
-- Layout model (YOLOv10-doc): Layout-lite detection
+- Pre-correction model (MobileNetV4-Conv-S): Fast orientation/skew/resolution inference
+- Multi-task model (SigLIP 2 NAFlex): 16-head analysis across 5 groups
+- Layout model (docling-layout-egret-xlarge / docling-layout-heron): Layout-lite detection
 
 ### Downstream Consumers
 
@@ -321,7 +344,7 @@ BudgetConfig(
 
 | Service/Tool | Purpose | Configuration | Fallback |
 |--------------|---------|---------------|----------|
-| **Modal GPU** | Serverless GPU inference (teacher escalation) | T4/A10, $30/month budget | CPU inference |
+| **Modal GPU** | Serverless GPU inference (SigLIP 2 multi-task analysis) | T4/A10, $30/month budget | CPU inference |
 | **Local GPU** | Primary inference device | CUDA 12.1+, 4GB+ VRAM | Modal or CPU |
 | **GCS Bucket** | Artifact storage (inputs, outputs) | `gs://rag-pipeline-prod/` | Local filesystem (dev) |
 | **Prometheus** | Metrics collection | Port 9090 | Logs only |
@@ -338,7 +361,7 @@ BudgetConfig(
 
 ```text
 Ingestion → Preflight → PDF Classification → Text Gate (NO_TEXT) →
-Classical IQA (8 detectors) → Student ML IQA → Correction → DQS → Routing → Output
+Classical IQA (8 detectors) → MobileNetV4 Pre-correction → Corrections → SigLIP 2 Analysis → DQS → Routing → Output
 ```
 
 **Characteristics**:
@@ -359,8 +382,9 @@ Classical IQA (8 detectors) → Student ML IQA → Correction → DQS → Routin
 
 ```text
 Ingestion → Preflight → PDF Classification → Text Gate (TEXT_DETECTED) →
-Classical IQA → Layout-Lite (11 classes) → Student ML IQA (full page + embedded elements) →
-Uncertainty Check → [Teacher if needed] → Correction → DQS → Routing → Output
+Classical IQA → Layout-Lite (11 classes) → MobileNetV4 Pre-correction →
+Pre-Correction → Confidence Check → SigLIP 2 Analysis → [Classical Fallback if needed] →
+Correction → DQS → Routing → Output
 ```
 
 **Characteristics**:
@@ -373,34 +397,40 @@ Uncertainty Check → [Teacher if needed] → Correction → DQS → Routing →
 
 ---
 
-### Mode 3: Teacher Escalation (High Uncertainty)
+### Mode 3: Confidence-Based Classical Fallback (Low Confidence)
 
 **Triggers** (from `src/detection/iqa_ml.py`):
 
-1. **High Entropy**: Student prediction entropy > 0.7
-2. **Low Confidence**: Student max probability < 0.5
-3. **Boundary Cases**: Quality score in [0.4, 0.6] (ambiguous range)
-4. **Discrepancy**: Classical vs ML IQA disagreement > 0.2
+Per-head confidence thresholds trigger head-specific classical fallback methods instead of re-running a larger model.
 
-**Escalation Flow**:
+**Fallback Rules**:
+
+| Head/Group | Threshold | Fallback Method |
+|-----------|-----------|-----------------|
+| Orientation (MobileNetV4) | < 0.7 | Hough line-based orientation detection |
+| Skew (MobileNetV4) | < 0.6 | Classical Hough skew estimation |
+| Resolution Quality (MobileNetV4) | < 0.5 | DPI metadata + connected component char height |
+| IQA (SigLIP 2 Group 1) | < 0.5 | Classical IQA detectors (iqa_classical.py) |
+| Script Detection (SigLIP 2 Group 2) | < 0.6 | OpenLID language -> script mapping |
+| Handwriting (SigLIP 2 Group 4) | < 0.5 | Connected component stroke analysis |
+
+**Fallback Flow**:
 
 ```text
-Student Prediction: quality=0.55, entropy=0.82
+MobileNetV4 Prediction: orientation=90deg (conf=0.55), skew=2.1deg (conf=0.82)
     ↓
-Uncertainty Check: entropy > 0.7 → ESCALATE
+Confidence Check: orientation conf 0.55 < 0.7 → CLASSICAL_FALLBACK for orientation
     ↓
-Device Selection: Local GPU available? NO → Modal GPU? YES → Use Modal GPU
+Classical Fallback: Hough line-based orientation → orientation=0deg (conf=0.91)
     ↓
-Teacher Inference: quality=0.48, entropy=0.35
-    ↓
-Reconciliation: Use teacher prediction (higher confidence)
+Reconciliation: Use classical result for orientation, keep MobileNetV4 result for skew
 ```
 
 **Performance Impact**:
 
-- **Escalation Rate**: Typically 5-15% of pages
-- **Latency Increase**: +30-50ms (Local GPU) or +40-60ms (Modal GPU)
-- **Cost**: $0.007/page for Modal GPU escalation
+- **Fallback Rate**: Typically 5-15% of pages (per-head, not all heads)
+- **Latency Increase**: +5-25ms per head requiring fallback (classical methods)
+- **Cost**: $0.00 (classical fallback is CPU-only, no Modal GPU needed)
 
 ---
 
@@ -443,15 +473,15 @@ def invoke_modal_gpu(image: np.ndarray) -> Prediction:
 
 ```python
 try:
-    prediction = student_model.predict_gpu(image, batch_size=32)
+    prediction = siglip2_model.predict_gpu(image, batch_size=32)
 except GPUOutOfMemory:
     logger.warning("gpu_oom", device="local", batch_size=32)
     # Reduce batch size and retry
-    prediction = student_model.predict_gpu(image, batch_size=8)
+    prediction = siglip2_model.predict_gpu(image, batch_size=8)
 except BudgetExhausted:
     logger.warning("modal_budget_exhausted", spent_usd=30.00)
     # Fallback to CPU
-    prediction = student_model.predict_cpu(image)
+    prediction = siglip2_model.predict_cpu(image)
 ```
 
 **Metrics**: `iqa_device_fallback_total{from="local_gpu", to="cpu", reason="oom"}`
@@ -504,16 +534,17 @@ for page_num, page_image in enumerate(pages):
 
 ```python
 try:
-    student_model = load_model("models/resnet18_student.onnx")
-except FileNotFoundError:
-    logger.critical("missing_model_file", model="student", path="models/resnet18_student.onnx")
+    mobilenet_model = load_model("models/mobilenetv4_conv_s.onnx")
+    siglip2_model = load_model("models/siglip2_naflex.onnx")
+except FileNotFoundError as e:
+    logger.critical("missing_model_file", model=str(e), path=str(e))
     # Alert to PagerDuty/Slack
     alert_manager.dispatch(
         AlertType.CRITICAL_ERROR,
-        message="Student model file missing - service degraded"
+        message=f"Model file missing - service degraded: {e}"
     )
     # Abort all processing until resolved
-    raise CriticalServiceError("Cannot operate without student model")
+    raise CriticalServiceError(f"Cannot operate without required model: {e}")
 ```
 
 **Metrics**: `iqa_critical_errors_total{error_code="MISSING_MODEL"}`
@@ -533,7 +564,7 @@ except FileNotFoundError:
 batch_size = 32 if device == "gpu" else 8
 for batch_start in range(0, len(pages), batch_size):
     batch = pages[batch_start : batch_start + batch_size]
-    predictions = student_model.predict_batch(batch)
+    predictions = siglip2_model.predict_batch(batch)
 ```
 
 **Benefits**:
@@ -590,26 +621,28 @@ await upload_task
 
 ```text
 gs://image-detection-models/production/
-├── student/
-│   ├── resnet18_v1.0.0.onnx         # Primary inference
-│   ├── resnet18_v1.0.0.pt           # TorchScript fallback
-│   └── resnet18_v1.0.0_metadata.json
-└── teacher/
-    ├── resnet50_v1.0.0.onnx
-    └── resnet50_v1.0.0_metadata.json
+├── mobilenetv4/
+│   ├── mobilenetv4_conv_s_v1.0.0.onnx     # Pre-correction inference (~3ms GPU)
+│   ├── mobilenetv4_conv_s_v1.0.0.pt       # TorchScript fallback
+│   └── mobilenetv4_conv_s_v1.0.0_metadata.json
+├── siglip2/
+│   ├── siglip2_naflex_v1.0.0.onnx         # Multi-task analysis (~50ms GPU)
+│   └── siglip2_naflex_v1.0.0_metadata.json
+└── docling_layout/
+    ├── egret_xlarge_v1.0.0.onnx            # Accuracy layout model
+    ├── heron_v1.0.0.onnx                   # Speed layout model
+    └── docling_layout_v1.0.0_metadata.json
 ```
 
 **Metadata Schema**:
 
 ```json
 {
-  "model_id": "resnet18_v1.0.0",
-  "architecture": "ResNet-18",
-  "training_date": "2025-01-10",
-  "arena_plcc": 0.68,
-  "arena_ci_lower": 0.65,
-  "arena_ci_upper": 0.71,
-  "graduation_date": "2025-01-12",
+  "model_id": "mobilenetv4_conv_s_v1.0.0",
+  "architecture": "MobileNetV4-Conv-S",
+  "heads": 3,
+  "head_names": ["orientation", "skew", "resolution_quality"],
+  "training_date": "2026-02-01",
   "approved_by": "ml_team",
   "production_deployed": true
 }
@@ -620,9 +653,16 @@ gs://image-detection-models/production/
 ```python
 from image_preprocessing_detector.utils.model_loader import load_production_model
 
-# Load latest validated model
-student = load_production_model(
-    model_type="student",
+# Load pre-correction model (fast, 3 heads)
+mobilenet = load_production_model(
+    model_type="mobilenetv4",
+    backend="onnx",
+    device="cuda"
+)
+
+# Load multi-task analysis model (16 heads, 5 groups)
+siglip2 = load_production_model(
+    model_type="siglip2",
     backend="onnx",
     device="cuda"
 )
@@ -651,19 +691,20 @@ metrics.record_page_processed(
 
 # After IQA inference
 metrics.record_quality_score(0.72, dimension="overall")
-metrics.record_inference_latency(15.3, model="student", device="local_gpu")
+metrics.record_inference_latency(3.1, model="mobilenetv4", device="local_gpu")
+metrics.record_inference_latency(48.7, model="siglip2", device="local_gpu")
 
-# If teacher escalation
-if escalated:
-    metrics.record_teacher_invocation(reason="high_entropy", device="modal_gpu")
+# If classical fallback triggered
+if fallback_triggered:
+    metrics.record_classical_fallback(head="orientation", reason="low_confidence", threshold=0.7)
 ```
 
 ### Active Learning Sample Harvesting
 
 **Harvest Triggers** (from Workstream 7 `drift/active_learning.py`):
 
-1. **High Entropy**: Student entropy > 0.7
-2. **Low Agreement**: Teacher-student gap > 0.15
+1. **High Entropy**: SigLIP 2 head entropy > 0.7
+2. **Low Agreement**: MobileNetV4 vs SigLIP 2 gap > 0.15
 3. **Quality Outlier**: Quality score < 0.2 or > 0.95
 4. **Drift Period**: Sample during detected drift window
 

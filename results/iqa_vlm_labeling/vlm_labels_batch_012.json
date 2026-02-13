@@ -1,0 +1,139 @@
+{
+  "created_at": "2026-02-11T08:00:00Z",
+  "model": "opus_4.6",
+  "model_version": "claude-opus-4-6",
+  "prompt_version": "1.0",
+  "batch": 12,
+  "labels": [
+    {
+      "image_id": "train/res/train_res_02546.jpg",
+      "id": "62fd2a09-11da-404c-ae28-602083583bc4",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese ITU-R BT.500-14 standard translation. Section A4-4 comparison methods. Table with -3 to +3 scale. Sections A4-4.1 through A4-4.3 (classification, non-classification, performance methods). Clean typed text, even illumination. Good enhancement."
+    },
+    {
+      "image_id": "test/res/test_res_00408.jpg",
+      "id": "ff9bead7-9321-4a5b-a943-290fbed47b14",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.2,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese journal article about H.263++ video coding. Two-column, page 3. Block motion compensation, OBMC, VLC coding, error resilience. Sections 3.1-3.3. Very dense two-column typed text. Clean enhancement."
+    },
+    {
+      "image_id": "train/res/train_res_01039.jpg",
+      "id": "bf6d8c1a-5cca-47ff-a693-2a05bb4df9a5",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese linear algebra textbook page 33. Jordan canonical form problems (#21-26). Dense math with eigenvalue computations, generalized eigenvectors. Large matrix P at bottom. Clean typed text, good enhancement."
+    },
+    {
+      "image_id": "val/res/val_res_00007.jpg",
+      "id": "7a657c53-3c22-4b71-8ccb-a206d3739a70",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese networking document. Two-column with comparison tables for 3G standards (WCDMA, CDMA2000, TD-SCDMA). Section 3: 4G overview. Decorative floral/cherry blossom border at right and bottom edges. Very dense, slightly faded."
+    },
+    {
+      "image_id": "train/res/train_res_02992.jpg",
+      "id": "0e807019-6c7d-4f27-b5f9-017b77eb877c",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced Chinese academic paper '从3G到4G的技术演进之路'. Vol. 43 No. 1, Jan 2024. Two-column format. Sections 1-3 covering 3G/4G evolution, WCDMA, CDMA2000, TD-SCDMA. Clean well-structured academic paper. Best quality in this batch."
+    },
+    {
+      "image_id": "train/res/train_res_02938.jpg",
+      "id": "0bbb4161-263b-4d11-b592-81a5d5f26625",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced Chinese linear algebra textbook page 14. Eigenvalue proofs, Vandermonde matrices (#49-55), graph adjacency matrix A(G). Clean typed mathematical text. Footnote about Vandermonde (1735-1796). Good enhancement."
+    },
+    {
+      "image_id": "train/res/train_res_01150.jpg",
+      "id": "a1219446-0130-427e-b089-dda7d216eefd",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.0,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.0
+      },
+      "notes": "Enhanced screen capture of handwritten convex optimization homework (作业3). Mixed English/Chinese. Proper convex functions, optimal sets, indicator functions. Three optimization formulations. Two graph illustrations with hatched convex regions. Toolbar visible. Clean handwriting."
+    },
+    {
+      "image_id": "train/res/train_res_01036.jpg",
+      "id": "c3589913-e36f-425c-90fb-ab9e88e27456",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.2,
+        "contrast": 2.8,
+        "illumination": 3.0,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese linear algebra textbook page 33. Same content as train_res_01039 but with PURPLE/VIOLET tint from enhancement. Jordan canonical form problems (#21-26). Text readable despite color shift. Enhancement artifact reduces effective contrast."
+    },
+    {
+      "image_id": "train/res/train_res_00539.jpg",
+      "id": "073adb08-03cc-4bd9-a1f8-4724c4adc395",
+      "scores": {
+        "sharpness": 3.0,
+        "noise": 3.2,
+        "contrast": 2.8,
+        "illumination": 2.8,
+        "compression": 3.0,
+        "overall": 2.8
+      },
+      "notes": "Enhanced Chinese linear algebra textbook page 44. Orthogonal matrices, rotation axes, reflection matrices (#16-19). Mathematical proofs with eigenvalues, Schur decomposition. Shadow/dark area at top right edge. Slight fading."
+    },
+    {
+      "image_id": "train/res/train_res_00633.jpg",
+      "id": "4a02c1cd-cc11-4525-be21-cd66d369188d",
+      "scores": {
+        "sharpness": 3.2,
+        "noise": 3.5,
+        "contrast": 3.0,
+        "illumination": 3.2,
+        "compression": 3.0,
+        "overall": 3.2
+      },
+      "notes": "Enhanced Chinese document with Python/matplotlib code for y-axis settings. plt.ylim(), Axes object methods. '改动部分' listing 3 numbered steps. Mixed Chinese explanations and code. Very clean layout, generous spacing. Excellent enhancement quality."
+    }
+  ]
+}

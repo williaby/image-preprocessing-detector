@@ -1750,7 +1750,7 @@ The application SHALL be **stateless**:
 **Rationale:**
 
 - Enables horizontal scaling
-- Kubernetes/Docker Swarm deployment-ready
+- Container orchestration deployment-ready
 - Fault tolerance (worker failures don't affect other requests)
 
 #### NFR-4.4: Monitoring & Observability
@@ -1844,9 +1844,9 @@ No secrets or API keys SHALL be hard-coded:
 - Model registry credentials (if used)
 - Cloud storage credentials (if used)
 
-**Kubernetes/Production:**
+**Production:**
 
-- Use Kubernetes Secrets or cloud secret managers (AWS Secrets Manager, GCP Secret Manager)
+- Use cloud secret managers (AWS Secrets Manager, GCP Secret Manager)
 
 #### NFR-5.4: Least Privilege
 
