@@ -545,7 +545,7 @@ class ArenaRunner:
                 gpu_name = torch.cuda.get_device_name(0)
                 info_parts.append(f"GPU: {gpu_name}")
         except ImportError:
-            pass
+            pass  # torch not installed; GPU info unavailable
 
         return " | ".join(info_parts)
 
@@ -558,7 +558,7 @@ class ArenaRunner:
                 cuda_version = torch.version.cuda
                 return str(cuda_version) if cuda_version is not None else None
         except ImportError:
-            pass
+            pass  # torch not installed; try nvidia-smi fallback
 
         # Try nvidia-smi fallback
         try:

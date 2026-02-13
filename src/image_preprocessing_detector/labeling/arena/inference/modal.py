@@ -342,7 +342,7 @@ class ModalBackend(InferenceBackend):
                     # Clamp to [0, 1] range
                     scores[key] = max(0.0, min(1.0, value))
                 except ValueError:
-                    pass
+                    pass  # regex matched non-numeric text; skip dimension
 
         return scores
 

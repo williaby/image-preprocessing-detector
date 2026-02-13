@@ -91,7 +91,6 @@ class InferenceBackend(ABC):
             ModelLoadError: If model cannot be loaded.
             IncompatibleModelError: If model is not compatible.
         """
-        ...
 
     @abstractmethod
     def unload(self) -> None:
@@ -100,7 +99,6 @@ class InferenceBackend(ABC):
         Should be called after inference is complete to free
         GPU memory and other resources.
         """
-        ...
 
     @abstractmethod
     def is_loaded(self) -> bool:
@@ -109,7 +107,6 @@ class InferenceBackend(ABC):
         Returns:
             True if model is loaded and ready for inference.
         """
-        ...
 
     @abstractmethod
     def predict(self, image: NDArray[np.uint8] | Image.Image) -> DIQAPrediction:
@@ -125,7 +122,6 @@ class InferenceBackend(ABC):
             InferenceError: If inference fails.
             ModelNotLoadedError: If model is not loaded.
         """
-        ...
 
     @abstractmethod
     def predict_batch(
@@ -144,7 +140,6 @@ class InferenceBackend(ABC):
             InferenceError: If inference fails.
             ModelNotLoadedError: If model is not loaded.
         """
-        ...
 
     @abstractmethod
     def get_provenance(self) -> ProvenanceInfo:
@@ -156,7 +151,6 @@ class InferenceBackend(ABC):
         Raises:
             ModelNotLoadedError: If model is not loaded.
         """
-        ...
 
     @abstractmethod
     def get_model_info(self) -> dict[str, Any]:
@@ -165,7 +159,6 @@ class InferenceBackend(ABC):
         Returns:
             Dictionary with model information (name, size, etc.)
         """
-        ...
 
     def warmup(self, num_iterations: int = 3) -> None:
         """Run warmup inference to prime the model.

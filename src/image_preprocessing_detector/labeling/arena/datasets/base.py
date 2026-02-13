@@ -71,34 +71,28 @@ class BenchmarkDataset(ABC):
     @abstractmethod
     def name(self) -> str:
         """Dataset name (e.g., 'diqa5000')."""
-        ...
 
     @property
     @abstractmethod
     def version(self) -> str:
         """Dataset version."""
-        ...
 
     @property
     @abstractmethod
     def split(self) -> str:
         """Dataset split (train/val/test)."""
-        ...
 
     @abstractmethod
     def __len__(self) -> int:
         """Return the number of samples in the dataset."""
-        ...
 
     @abstractmethod
     def __iter__(self) -> Iterator[DatasetSample]:
         """Iterate over dataset samples."""
-        ...
 
     @abstractmethod
     def __getitem__(self, idx: int) -> DatasetSample:
         """Get a specific sample by index."""
-        ...
 
     @property
     def dimensions(self) -> list[str]:
